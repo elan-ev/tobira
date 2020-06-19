@@ -13,13 +13,13 @@ use std::{
     future::Future,
 };
 
-use crate::api;
+use crate::{api, config};
 
 
 /// Starts the HTTP server. The future returned by this function must be awaited
 /// to actually run it.
 pub async fn serve(
-    addr: &SocketAddr,
+    config: &config::Http,
     root_node: api::RootNode,
     context: api::Context,
 ) -> Result<()> {
@@ -40,7 +40,13 @@ pub async fn serve(
     });
 
     // Start the server with our service.
-    Server::bind(&addr).serve(factory).await
+    let addr = SocketAddr::new(config.address, config.port);
+    let server = Server::bind(&addr).serve(factory);
+    println!("Listening on http://{}", server.local_addr());
+
+    server.await?;
+
+    Ok(())
 }
 
 /// The main "service" that answers HTTP requests.
