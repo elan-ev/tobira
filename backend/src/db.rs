@@ -1,11 +1,12 @@
 //! Database related things.
 
+use anyhow::Result;
 use tokio_postgres::NoTls;
-use deadpool_postgres::{Config, config::ConfigError, Pool};
+use deadpool_postgres::{Config, Pool};
 
 
 /// Creates a new database connection pool.
-pub fn create_pool() -> Result<Pool, ConfigError> {
+pub fn create_pool() -> Result<Pool> {
     // TODO: read config from file
     let config = Config {
         user: Some("postgres".into()),

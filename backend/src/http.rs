@@ -1,5 +1,6 @@
 //! The HTTP server, handler and routes.
 
+use anyhow::Result;
 use hyper::{
     Body, Method, Response, Server, StatusCode, Request,
     service::{make_service_fn, Service},
@@ -21,7 +22,7 @@ pub async fn serve(
     addr: &SocketAddr,
     root_node: api::RootNode,
     context: api::Context,
-) -> Result<(), hyper::Error> {
+) -> Result<()> {
     let root_node = Arc::new(root_node);
     let context = Arc::new(context);
 

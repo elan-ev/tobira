@@ -1,13 +1,15 @@
 //! The Olav backend server.
 
+use anyhow::{Context, Result};
+
+
 mod api;
 mod db;
 mod http;
 
 
-// TODO: figure out error handling
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     pretty_env_logger::init();
 
     let addr = ([127, 0, 0, 1], 3000).into();
