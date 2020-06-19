@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use log::{debug, info};
 use serde::Deserialize;
 use std::{
     fs,
@@ -44,6 +45,8 @@ impl Config {
     /// Loads the configuration from a specific TOML file.
     pub fn load_from(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
+        info!("Loading configuration from '{}'", path.display());
+
         let file = fs::read_to_string(path)
             .context(format!("failed to open '{}' as configuration file", path.display()))?;
         let out: Self = toml::from_str(&file)
@@ -57,6 +60,8 @@ impl Config {
     /// Performs some validation of the configuration to find some illegal or
     /// conflicting values.
     fn validate(&self) -> Result<()> {
+        debug!("Validating configuration...");
+
         macro_rules! assert_is_specified {
             ($($section:ident . $field:ident),* $(,)?) => {
                 $(

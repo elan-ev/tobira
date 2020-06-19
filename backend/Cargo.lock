@@ -869,6 +869,7 @@ dependencies = [
  "hyper",
  "juniper",
  "juniper_hyper",
+ "log",
  "pretty_env_logger",
  "serde",
  "tokio",

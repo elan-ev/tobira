@@ -5,6 +5,7 @@ use hyper::{
     Body, Method, Response, Server, StatusCode, Request,
     service::{make_service_fn, Service},
 };
+use log::{debug, info, trace};
 use std::{
     sync::Arc,
     net::SocketAddr,
@@ -29,6 +30,7 @@ pub async fn serve(
     // This factory is responsible to create new `RootService` instances
     // whenever hyper asks for one.
     let factory = make_service_fn(move |_| {
+        debug!("Creating a new hyper `Service`");
         let service = RootService {
             root_node: root_node.clone(),
             context: context.clone(),
@@ -42,7 +44,7 @@ pub async fn serve(
     // Start the server with our service.
     let addr = SocketAddr::new(config.address, config.port);
     let server = Server::bind(&addr).serve(factory);
-    println!("Listening on http://{}", server.local_addr());
+    info!("Listening on http://{}", server.local_addr());
 
     server.await?;
 
@@ -67,6 +69,14 @@ impl Service<Request<Body>> for RootService {
 
     /// This is the main entry point, called for each incoming request.
     fn call(&mut self, req: Request<Body>) -> Self::Future {
+        trace!(
+            "Incoming HTTP {:?} request to '{}{}'",
+            req.method(),
+            req.uri().path(),
+            req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
+        );
+
+
         match (req.method(), req.uri().path()) {
             // The interactive GraphQL API explorer/IDE.
             //
@@ -89,7 +99,8 @@ impl Service<Request<Body>> for RootService {
             }
 
             // 404 for everything else
-            _ => {
+            (method, path) => {
+                debug!("Responding with 404 to {:?} {}", method, path);
                 let result = async {
                     let mut response = Response::new(Body::empty());
                     *response.status_mut() = StatusCode::NOT_FOUND;
