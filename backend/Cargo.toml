@@ -12,3 +12,17 @@ publish = false
 
 
 [dependencies]
+deadpool-postgres = { version = "0.5", default-features = false }
+futures = "0.3.1"
+hyper = "0.13"
+pretty_env_logger = "0.4"
+tokio = { version = "0.2", features=["rt-threaded", "macros"] }
+tokio-postgres = "0.5"
+
+# These currently use a specific commit from the git repository. The lastest
+# released version is still completely sync and based on old dependencies. To
+# avoid having a difficult upgrade of the whole stack later, we already use this
+# newer version, even though it's not released yet. As soon as it is released,
+# we will use that release instead.
+juniper = { git = "https://github.com/graphql-rust/juniper.git", rev = "5b9c611" }
+juniper_hyper = { git = "https://github.com/graphql-rust/juniper.git", rev = "5b9c611" }
