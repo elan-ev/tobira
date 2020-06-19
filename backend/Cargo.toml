@@ -1,0 +1,14 @@
+[package]
+name = "portal"
+version = "0.1.0"
+authors = [
+    "The Opencast project",
+    "Julian Kniephoff <kniephoff@elan-ev.de>",
+    "Lars Kiesow <lkiesow@uos.de>",
+    "Lukas Kalbertodt <kalbertodt@elan-ev.de>",
+]
+edition = "2018"
+publish = false
+
+
+[dependencies]
