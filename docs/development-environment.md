@@ -8,10 +8,10 @@ TODO
 ## Local Database
 
 The Portal backend needs a postgres database.
-For development, it's the easiest to use Docker for this purpose.
+For development, it's easiest to use Docker for this purpose.
 You can probably just run the script `scripts/start-db.sh`, but below you can find information on how to do it manually.
 
-You can create and immediately start a matching docker container with this command:
+You can create and immediately start a suitable docker container with this command:
 
 ```
 docker run --name portal-dev-postgres \

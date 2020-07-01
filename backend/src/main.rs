@@ -31,7 +31,8 @@ async fn main() -> Result<()> {
     let root_node = api::root_node();
     let context = api::Context { db };
 
-    http::serve(&config.http, root_node, context).await?;
+    http::serve(&config.http, root_node, context).await
+        .context("failed to start HTTP server")?;
 
     Ok(())
 }

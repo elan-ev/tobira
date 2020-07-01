@@ -1,7 +1,7 @@
 //! Database related things.
 
 use anyhow::Result;
-use deadpool_postgres::{Config, Pool};
+use deadpool_postgres::{Config as PoolConfig, Pool};
 use log::{debug, info, trace};
 use tokio_postgres::NoTls;
 
@@ -10,18 +10,18 @@ use crate::config;
 
 /// Creates a new database connection pool.
 pub async fn create_pool(config: &config::Db) -> Result<Pool> {
-    let config = Config {
+    let pool_config = PoolConfig {
         user: Some(config.user().into()),
         password: Some(config.password().into()),
         host: Some(config.host().into()),
         port: Some(config.port),
         dbname: Some(config.database.clone()),
-        .. Config::default()
+        .. PoolConfig::default()
     };
 
-    trace!("Database configuration: {:#?}", config);
+    trace!("Database configuration: {:#?}", pool_config);
 
-    let pool = config.create_pool(NoTls)?;
+    let pool = pool_config.create_pool(NoTls)?;
     info!("Created database pool");
 
     // Test the connection by executing a simple query.
