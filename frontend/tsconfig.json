@@ -1,15 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es5",
     "jsx": "react",
-    "lib": ["dom", "es6"],
     "noEmit": true,
 
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
-    "removeComments": true,
     "strict": true,
   },
   "include": ["src"]
