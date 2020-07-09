@@ -21,6 +21,14 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
 
     trace!("Database configuration: {:#?}", pool_config);
 
+    debug!(
+        "Connecting to postgresql://{}:*****@{}:{}/{}",
+        config.user(),
+        config.host(),
+        config.port,
+        config.database,
+    );
+
     let pool = pool_config.create_pool(NoTls)?;
     info!("Created database pool");
 

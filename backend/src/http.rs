@@ -30,7 +30,7 @@ pub async fn serve(
     // This factory is responsible to create new `RootService` instances
     // whenever hyper asks for one.
     let factory = make_service_fn(move |_| {
-        debug!("Creating a new hyper `Service`");
+        trace!("Creating a new hyper `Service`");
         let service = RootService {
             root_node: root_node.clone(),
             context: context.clone(),
