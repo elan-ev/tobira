@@ -37,3 +37,25 @@ jobs:
       run: cargo test
     - name: Generate documenation
       run: cargo doc --no-deps
+
+  frontend:
+    name: 'Build, lint & test frontend'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+    - uses: actions/checkout@v2
+    - name: Restore NPM cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+    - name: Installing dependencies (npm ci)
+      run: npm ci
+    - name: Typecheck
+      run: npm run typecheck
+    - name: Build
+      run: npx webpack --mode=development --display-error-details
+    - name: Lint
+      run: npx eslint --max-warnings 0 src
