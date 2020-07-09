@@ -4,8 +4,13 @@
   "private": true,
   "description": "",
   "keywords": [],
-  "author": "The Opencast project",
   "license": "Apache-2.0",
+  "author": "The Opencast project",
+  "contributors": [
+    "Julian Kniephoff <kniephoff@elan-ev.de>",
+    "Lars Kiesow <lkiesow@uos.de>",
+    "Lukas Kalbertodt <kalbertodt@elan-ev.de>"
+  ],
 
   "scripts": {
     "build:dev": "webpack --progress --mode=development",
