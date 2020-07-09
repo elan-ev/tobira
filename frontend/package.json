@@ -4,8 +4,9 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "build:dev": "eslint src && webpack --progress --mode=development",
-    "build:release": "eslint src && webpack --progress --mode=production",
+    "build:dev": "webpack --progress --mode=development",
+    "build:release": "webpack --progress --mode=production",
+    "typecheck": "tsc",
     "lint": "eslint src"
   },
   "keywords": [],
