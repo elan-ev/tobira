@@ -1,7 +1,7 @@
 //! The Tobira backend server.
 
 use anyhow::{Context, Result};
-use log::{debug, info};
+use log::{info, trace};
 
 
 mod api;
@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
 
     let config = config::Config::from_default_locations()
         .context("failed to load configuration")?;
-    debug!("Using configuration: {:#?}", config);
+    trace!("Using configuration: {:#?}", config);
 
     let db = db::create_pool(&config.db).await
         .context("failed to create database connection pool")?;
