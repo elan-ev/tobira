@@ -12,13 +12,6 @@ publish = false
 description = "Backend of the Tobira video portal for Opencast"
 
 
-[features]
-# Enable this feature for a "production" build. The production builds differ
-# only in a few minor things from a normal build. For example, they disable some
-# configuration default values.
-prod = []
-
-
 [dependencies]
 anyhow = "1"
 deadpool-postgres = { version = "0.5", default-features = false }
