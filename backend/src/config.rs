@@ -29,15 +29,15 @@ impl Config {
         if let Some(path) = default_locations.iter().map(Path::new).find(|p| p.exists()) {
             Self::load_from(path)
         } else {
-            if cfg!(feature = "prod") {
+            if cfg!(debug_assertions) {
+                Ok(Self::default())
+            } else {
                 bail!(
                     "no configuration file found (note: this is a production build and \
                         thus, a configuration file is required). Hint: we checked the \
                         following paths: {}",
                     default_locations.join(", "),
                 );
-            } else {
-                Ok(Self::default())
             }
         }
     }
@@ -79,10 +79,10 @@ impl Config {
         }
 
         // Some fields have a default value for development builds. But in the
-        // binaries we deploy, we "disable" those default to make sure all
+        // binaries we deploy, we "disable" those defaults to make sure all
         // important values are manually configured. We return an error here, if
         // any of the following fields is not specified.
-        if cfg!(feature = "prod") {
+        if !cfg!(debug_assertions) {
             assert_is_specified!(
                 db.user,
                 db.password,
