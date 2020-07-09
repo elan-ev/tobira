@@ -11,14 +11,12 @@
     "Lars Kiesow <lkiesow@uos.de>",
     "Lukas Kalbertodt <kalbertodt@elan-ev.de>"
   ],
-
   "scripts": {
     "build:dev": "webpack --progress --mode=development",
     "build:release": "webpack --progress --mode=production",
     "typecheck": "tsc",
     "lint": "eslint src"
   },
-
   "dependencies": {
     "@babel/core": "^7.10.4",
     "@babel/preset-env": "^7.10.4",
