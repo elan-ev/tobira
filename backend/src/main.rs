@@ -1,4 +1,4 @@
-//! The Olav backend server.
+//! The video portal backend server.
 
 use anyhow::{Context, Result};
 use log::{debug, info};
@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
     }
     pretty_env_logger::init();
 
-    info!("Starting Olav backend...");
+    info!("Starting video portal backend...");
 
     let config = config::Config::from_default_locations()
         .context("failed to load configuration")?;
