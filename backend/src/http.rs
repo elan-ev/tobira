@@ -78,27 +78,8 @@ impl Service<Request<Body>> for RootService {
             req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
         );
 
-        /// Responds with the asset identified by the given name.
-        fn serve_asset(name: &str) -> <RootService as Service<Request<Body>>>::Future {
-            let body = Body::from(Assets::get(name).unwrap());
-            let mime_guess = mime_guess::from_path(name).first();
-            let out = async {
-                let mut builder = Response::builder();
-                if let Some(mime) = mime_guess {
-                    builder = builder.header("Content-Type", mime.to_string())
-                }
-
-                // TODO: content length
-                // TODO: lots of other headers maybe
-
-                Ok(builder.body(body).expect("bug: invalid response"))
-            };
-
-            Box::pin(out)
-        }
-
         match (req.method(), req.uri().path()) {
-            (&Method::GET, "/") => serve_asset("index.html"),
+            (&Method::GET, "/") => Assets::serve("index.html"),
 
             // The interactive GraphQL API explorer/IDE.
             //
@@ -121,14 +102,14 @@ impl Service<Request<Body>> for RootService {
 
             (&Method::GET, path) if Assets::get(&path[1..]).is_some() => {
                 // TODO: don't call `Assets::get` twice.
-                serve_asset(&path[1..])
+                Assets::serve(&path[1..])
             }
 
             // Since we do routing in the client, we need to serve the index for
             // basically any path. For now, we just assume that paths with `.`
             // in them refer to some file.
             // TODO: this heuristic is probably BS.
-            (&Method::GET, path) if !path.contains('.') => serve_asset("index.html"),
+            (&Method::GET, path) if !path.contains('.') => Assets::serve("index.html"),
 
             // 404 for everything else
             (method, path) => {
@@ -161,5 +142,24 @@ impl Assets {
         // - check that all things we want are here?
 
         Ok(())
+    }
+
+    /// Responds with the asset identified by the given name.
+    fn serve(name: &str) -> <RootService as Service<Request<Body>>>::Future {
+        let body = Body::from(Assets::get(name).unwrap());
+        let mime_guess = mime_guess::from_path(name).first();
+        let out = async {
+            let mut builder = Response::builder();
+            if let Some(mime) = mime_guess {
+                builder = builder.header("Content-Type", mime.to_string())
+            }
+
+            // TODO: content length
+            // TODO: lots of other headers maybe
+
+            Ok(builder.body(body).expect("bug: invalid response"))
+        };
+
+        Box::pin(out)
     }
 }
