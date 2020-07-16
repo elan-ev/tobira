@@ -1,8 +1,8 @@
 {
-  "name": "portal",
+  "name": "tobira",
   "version": "0.1.0",
   "private": true,
-  "description": "",
+  "description": "Frontend of the Tobira video portal for Opencast",
   "keywords": [],
   "license": "Apache-2.0",
   "author": "The Opencast project",

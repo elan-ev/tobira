@@ -1,4 +1,4 @@
-//! The video portal backend server.
+//! The Tobira backend server.
 
 use anyhow::{Context, Result};
 use log::{debug, info};
@@ -15,11 +15,11 @@ async fn main() -> Result<()> {
     // If no logging level was specified, we default to "debug", but just for
     // our own code.
     if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "portal=debug");
+        std::env::set_var("RUST_LOG", "tobira=debug");
     }
     pretty_env_logger::init();
 
-    info!("Starting video portal backend...");
+    info!("Starting Tobira backend...");
 
     let config = config::Config::from_default_locations()
         .context("failed to load configuration")?;
