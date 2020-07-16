@@ -11,6 +11,7 @@ edition = "2018"
 publish = false
 description = "Backend of the Tobira video portal for Opencast"
 
+default-run = "tobira"
 
 [dependencies]
 anyhow = "1"
