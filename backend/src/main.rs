@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
     trace!("Using configuration: {:#?}", config);
 
     let db = db::create_pool(&config.db).await
-        .context("failed to create database connection pool")?;
+        .context("failed to create database connection pool (database not running?)")?;
 
     let root_node = api::root_node();
     let context = api::Context { db };
