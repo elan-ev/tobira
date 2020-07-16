@@ -124,6 +124,12 @@ impl Service<Request<Body>> for RootService {
                 serve_asset(&path[1..])
             }
 
+            // Since we do routing in the client, we need to serve the index for
+            // basically any path. For now, we just assume that paths with `.`
+            // in them refer to some file.
+            // TODO: this heuristic is probably BS.
+            (&Method::GET, path) if !path.contains('.') => serve_asset("index.html"),
+
             // 404 for everything else
             (method, path) => {
                 debug!("Responding with 404 to {:?} {}", method, path);
