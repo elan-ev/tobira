@@ -7,7 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
-    "strict": true,
+    "strict": true
   },
   "include": ["src"]
 }
