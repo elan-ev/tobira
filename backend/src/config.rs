@@ -129,8 +129,7 @@ impl Db {
     const DEFAULT_USER: &'static str = "tobira";
     const DEFAULT_PASSWORD: &'static str = "tobira-dev-db-pw";
     const DEFAULT_HOST: &'static str = "localhost";
-    const DEFAULT_PROD_PORT: u16 = 5432;
-    const DEFAULT_DEV_PORT: u16 = 5435;
+    const DEFAULT_PORT: u16 = 5432;
     const DEFAULT_DATABASE: &'static str = "tobira";
 
     pub fn user(&self) -> &str {
@@ -146,17 +145,11 @@ impl Db {
 
 impl Default for Db {
     fn default() -> Self {
-        let port = if cfg!(feature = "prod") {
-            Self::DEFAULT_PROD_PORT
-        } else {
-            Self::DEFAULT_DEV_PORT
-        };
-
         Self {
             user: None,
             password: None,
             host: None,
-            port,
+            port: Self::DEFAULT_PORT,
             database: Self::DEFAULT_DATABASE.into(),
         }
     }
