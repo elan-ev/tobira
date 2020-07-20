@@ -1,5 +1,9 @@
 # Tobira: an Opencast Video Portal
 
+![CI Status (master)](https://img.shields.io/github/workflow/status/elan-ev/tobira/CI/master)
+![License](https://img.shields.io/github/license/elan-ev/tobira)
+![Status: alpha](https://img.shields.io/badge/status-alpha-red)
+
 __The project is in its *very* early stages, there is nothing to see here yet.__
 
 ## Structure
@@ -39,13 +43,3 @@ docker-compose down
 
 - [Building the backend](backend/README.md)
 - [Building the frontend](frontend/README.md)
-
-
----
-
-### License
-
-Licensed under <a href="LICENSE">Apache License, Version 2.0</a>.
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in this project by you, as defined in the Apache-2.0 license,
-shall be licensed as above, without any additional terms or conditions.
