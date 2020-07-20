@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  database:
+    container_name: tobira-dev-postgres
+    image: docker.io/library/postgres:12.3
+    restart: always
+    ports:
+      - 127.0.0.1:5432:5432
+    volumes:
+      - tobira-dev-postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=tobira-dev-db-pw
+      - POSTGRES_USER=tobira
+      - POSTGRES_DB=tobira
