@@ -3,10 +3,7 @@
 ## Install Rust and stuff
 
 You will need `rustc` and `cargo` to build the Tobira backend.
-The recommended way to obtain Rust is via `rustup`, a compiler version manager.
-Rustup also makes it very easy to install additional "components" (like `rustfmt` or a linter), to cross-compile and more.
-You can install it [from here](https://rustup.rs/).
-*However*, it should be no problem to install Rust from your package manager of choice, as long as the Rust version is somewhat recent.
+To get them, use [`rustup`](https://rustup.rs) or your package manager.
 
 ## Local Database
 
