@@ -10,6 +10,7 @@ generates:
       apolloReactCommonImportFrom: "@apollo/client"
       apolloReactComponentsImportFrom: "@apollo/client/react/components"
       apolloReactHooksImportFrom: "@apollo/client"
+      gqlImport: graphql.macro#gql
     plugins:
       - "typescript"
       - "typescript-operations"
