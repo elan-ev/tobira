@@ -1,0 +1,7 @@
+query allMovies {
+  movies { id, name, year }
+}
+
+query findMovie($id: Int!) {
+  movie(id: $id) { name, year }
+}

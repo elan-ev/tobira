@@ -1,0 +1,16 @@
+schema: "build/schema.graphql"
+documents: "src/**/*.graphql"
+generates:
+  src/generated/graphql.tsx:
+    config:
+      withComponent: false
+      withHOC: false
+      withHooks: true
+      eactApolloVersion: 3
+      apolloReactCommonImportFrom: "@apollo/client"
+      apolloReactComponentsImportFrom: "@apollo/client/react/components"
+      apolloReactHooksImportFrom: "@apollo/client"
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
