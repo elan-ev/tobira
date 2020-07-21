@@ -5,7 +5,7 @@ Tobira Backend
 Building the Tobira Backend
 ---------------------------
 
-Use [Cargo](https://doc.rust-lang.org/cargo/getting-started/first-steps.html]()) to download all necessary dependencies and to build the backend.
+Use [Cargo](https://doc.rust-lang.org/cargo/getting-started/first-steps.html) to download all necessary dependencies and to build the backend.
 
 Build and run the backend:
 

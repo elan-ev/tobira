@@ -6,7 +6,7 @@ __The project is in its *very* early stages, there is nothing to see here yet.__
 
 Tobira consists of two parts:
 
-- `backend` contains the video portal backend written in Rust which takes care of data persistens and communication to Opencast.
+- `backend` contains the video portal backend written in Rust which takes care of data persistence and communication to Opencast.
 - `frontend` contains the web interface written in Typescript/React.
 
 
