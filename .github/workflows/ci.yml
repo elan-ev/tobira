@@ -1,0 +1,58 @@
+name: CI
+
+on: [pull_request, push]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: --deny warnings
+
+jobs:
+  backend:
+    name: 'Build & test backend'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare cache key
+      run: |
+        cp Cargo.lock cache-fingerprint
+        echo $RUSTFLAGS >> cache-fingerprint
+        echo $(rustc -V) >> cache-fingerprint
+    - name: Restore cargo cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          backend/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('backend/cache-fingerprint') }}
+    - name: Build
+      run: cargo build --all-targets
+    - name: Test
+      run: cargo test
+    - name: Generate documenation
+      run: cargo doc --no-deps
+
+  frontend:
+    name: 'Build, lint & test frontend'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+    - uses: actions/checkout@v2
+    - name: Restore NPM cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+    - name: Installing dependencies (npm ci)
+      run: npm ci
+    - name: Typecheck
+      run: npm run typecheck
+    - name: Build
+      run: npx webpack --mode=development --display-error-details
+    - name: Lint
+      run: npx eslint --max-warnings 0 src
