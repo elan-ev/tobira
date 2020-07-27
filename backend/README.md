@@ -13,6 +13,12 @@ Build and run the backend:
 cargo run
 ```
 
+You can export the GraphQL schema of the API as a file with this command:
+
+```rust
+cargo run --bin export_schema -- schema.graphql
+```
+
 
 Configuration
 -------------
