@@ -13,3 +13,6 @@ services:
       - POSTGRES_PASSWORD=tobira-dev-db-pw
       - POSTGRES_USER=tobira
       - POSTGRES_DB=tobira
+
+volumes:
+  tobira-dev-postgres:
