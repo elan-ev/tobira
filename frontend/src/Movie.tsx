@@ -14,6 +14,11 @@ const MOVIE = gql`
     movie(id: $id) { name, year }
   }
 `;
+interface Movie {
+  id: number,
+  name: string,
+  year: string,
+}
 
 export const Movies: React.FC = () => {
   const { loading, error, data } = useQuery(ALL_MOVIES);
@@ -22,7 +27,7 @@ export const Movies: React.FC = () => {
   if (error) return <p>Error :(</p>;
 
   return <ul>
-    {data.movies.map(({ id, name, year }) => (
+    {data.movies.map(({ id, name, year }: Movie) => (
       <li key={name}>
         <Link to={`/movie/${id}`}>{name} ({year})</Link>
       </li>
