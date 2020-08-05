@@ -25,5 +25,7 @@ module.exports = (_env, argv) => ({
 
   plugins: [
     new HtmlWebpackPlugin({ inject: true, template: path.join(APP_PATH, 'index.html') }),
-  ]
+  ],
+
+  devtool: 'source-map',
 });
