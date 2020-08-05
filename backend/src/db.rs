@@ -1,6 +1,6 @@
 //! Database related things.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use deadpool_postgres::{Config as PoolConfig, Pool};
 use log::{debug, info, trace};
 use tokio_postgres::NoTls;
@@ -21,11 +21,20 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
 
     trace!("Database configuration: {:#?}", pool_config);
 
+    debug!(
+        "Connecting to postgresql://{}:*****@{}:{}/{}",
+        config.user(),
+        config.host(),
+        config.port,
+        config.database,
+    );
+
     let pool = pool_config.create_pool(NoTls)?;
     info!("Created database pool");
 
     // Test the connection by executing a simple query.
-    pool.get().await?.execute("SELECT 1", &[]).await?;
+    pool.get().await?.execute("SELECT 1", &[]).await
+        .context("failed to execute DB test query")?;
     debug!("Successfully tested database connection with test query");
 
     Ok(pool)

@@ -13,20 +13,15 @@ description = "Backend of the Tobira video portal for Opencast"
 
 default-run = "tobira"
 
-[features]
-# Enable this feature for a "production" build. The production builds differ
-# only in a few minor things from a normal build. For example, they disable some
-# configuration default values.
-prod = []
-
-
 [dependencies]
 anyhow = "1"
 deadpool-postgres = { version = "0.5", default-features = false }
 futures = "0.3.1"
 hyper = "0.13"
 log = "0.4"
+mime_guess = "2"
 pretty_env_logger = "0.4"
+rust-embed = "5.5"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "0.2", features = ["rt-threaded", "macros"] }
 tokio-postgres = "0.5"

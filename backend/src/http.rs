@@ -1,6 +1,6 @@
 //! The HTTP server, handler and routes.
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use hyper::{
     Body, Method, Response, Server, StatusCode, Request,
     service::{make_service_fn, Service},
@@ -24,13 +24,15 @@ pub async fn serve(
     root_node: api::RootNode,
     context: api::Context,
 ) -> Result<()> {
+    Assets::startup_check()?;
+
     let root_node = Arc::new(root_node);
     let context = Arc::new(context);
 
     // This factory is responsible to create new `RootService` instances
     // whenever hyper asks for one.
     let factory = make_service_fn(move |_| {
-        debug!("Creating a new hyper `Service`");
+        trace!("Creating a new hyper `Service`");
         let service = RootService {
             root_node: root_node.clone(),
             context: context.clone(),
@@ -76,13 +78,13 @@ impl Service<Request<Body>> for RootService {
             req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
         );
 
-
         match (req.method(), req.uri().path()) {
+            (&Method::GET, "/") => Assets::serve("index.html"),
+
             // The interactive GraphQL API explorer/IDE.
             //
             // TODO: do we want to remove this route in production?
-            // TODO: this should not be served from `/`. This is temporary.
-            (&Method::GET, "/graphiql") | (&Method::GET, "/") => {
+            (&Method::GET, "/graphiql") => {
                 let result = juniper_hyper::graphiql("/graphql", None);
                 Box::pin(result)
             }
@@ -98,6 +100,17 @@ impl Service<Request<Body>> for RootService {
                 Box::pin(result)
             }
 
+            (&Method::GET, path) if Assets::get(&path[1..]).is_some() => {
+                // TODO: don't call `Assets::get` twice.
+                Assets::serve(&path[1..])
+            }
+
+            // Since we do routing in the client, we need to serve the index for
+            // basically any path. For now, we just assume that paths with `.`
+            // in them refer to some file.
+            // TODO: this heuristic is probably BS.
+            (&Method::GET, path) if !path.contains('.') => Assets::serve("index.html"),
+
             // 404 for everything else
             (method, path) => {
                 debug!("Responding with 404 to {:?} {}", method, path);
@@ -110,5 +123,43 @@ impl Service<Request<Body>> for RootService {
                 Box::pin(result)
             }
         }
+    }
+}
+
+/// These are all static files we serve, including CSS and JS.
+#[derive(rust_embed::RustEmbed)]
+#[folder = "../frontend/build"]
+struct Assets;
+
+impl Assets {
+    fn startup_check() -> Result<()> {
+        if Self::get("index.html").is_none() {
+            bail!("'index.html' is missing from the assets");
+        }
+
+        // TODO:
+        // - somehow check that we didn't embed stuff we don't want
+        // - check that all things we want are here?
+
+        Ok(())
+    }
+
+    /// Responds with the asset identified by the given name.
+    fn serve(name: &str) -> <RootService as Service<Request<Body>>>::Future {
+        let body = Body::from(Assets::get(name).unwrap());
+        let mime_guess = mime_guess::from_path(name).first();
+        let out = async {
+            let mut builder = Response::builder();
+            if let Some(mime) = mime_guess {
+                builder = builder.header("Content-Type", mime.to_string())
+            }
+
+            // TODO: content length
+            // TODO: lots of other headers maybe
+
+            Ok(builder.body(body).expect("bug: invalid response"))
+        };
+
+        Box::pin(out)
     }
 }

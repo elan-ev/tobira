@@ -28,6 +28,10 @@ jobs:
           ~/.cargo/git
           backend/target
         key: ${{ runner.os }}-cargo-${{ hashFiles('backend/cache-fingerprint') }}
+    - name: Add dummy frontend assets
+      run: |
+        mkdir ../frontend/build
+        touch ../frontend/build/index.html
     - name: Build
       run: cargo build --all-targets
     - name: Test
