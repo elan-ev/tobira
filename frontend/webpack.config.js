@@ -2,7 +2,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 const APP_PATH = path.resolve(__dirname, 'src');
 
-module.exports = (env, argv) => ({
+module.exports = (_env, argv) => ({
   entry: APP_PATH,
 
   output: {
@@ -25,5 +25,7 @@ module.exports = (env, argv) => ({
 
   plugins: [
     new HtmlWebpackPlugin({ inject: true, template: path.join(APP_PATH, 'index.html') }),
-  ]
+  ],
+
+  devtool: 'source-map',
 });
