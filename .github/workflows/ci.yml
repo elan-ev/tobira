@@ -7,56 +7,68 @@ env:
   RUSTFLAGS: --deny warnings
 
 jobs:
-  backend:
-    name: 'Build & test backend'
+  main:
+    name: 'Build & test'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
     - uses: actions/checkout@v2
-    - name: Prepare cache key
+
+    # Backend cache: this cache stores cargo caches and compiled dependencies to
+    # speed up compiling the backend. We use a key consisting of the lock file,
+    # the compiler version and the global compiler flags. If either of the
+    # latter two change, everything is recompiled anyway. The lockfile is used,
+    # too, to avoid caching dependencies that have been removed already. Also
+    # compare: https://github.com/actions/cache/blob/main/examples.md#rust---cargo
+    - name: Prepare backend cache key
       run: |
-        cp Cargo.lock cache-fingerprint
-        echo $RUSTFLAGS >> cache-fingerprint
-        echo $(rustc -V) >> cache-fingerprint
-    - name: Restore cargo cache
+        cp backend/Cargo.lock cache-fingerprint
+        echo "$RUSTFLAGS $(rustc -V)" >> cache-fingerprint
+    - name: Restore backend cache
       uses: actions/cache@v2
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
           backend/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('backend/cache-fingerprint') }}
-    - name: Add dummy frontend assets
-      run: |
-        mkdir ../frontend/build
-        touch ../frontend/build/index.html
-    - name: Build
-      run: cargo build --all-targets
-    - name: Test
-      run: cargo test
-    - name: Generate documenation
-      run: cargo doc --no-deps
+        key: ${{ runner.os }}-cargo-${{ hashFiles('cache-fingerprint') }}
 
-  frontend:
-    name: 'Build, lint & test frontend'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-    - uses: actions/checkout@v2
+    # Frontend cache: only the NPM folder is cached, not the node_modules, as
+    # recommended here: https://github.com/actions/cache/blob/main/examples.md#node---npm
     - name: Restore NPM cache
       uses: actions/cache@v2
       with:
         path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-    - name: Installing dependencies (npm ci)
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+
+    # The actual building and testing!
+    - name: Build backend API and schema exporter
+      working-directory: backend
+      run: cargo build --bin export_schema
+    - name: Export API schema
+      working-directory: backend
+      run: |
+        mkdir ../frontend/build
+        cargo run --bin export_schema -- ../frontend/build/schema.graphql
+
+    - name: Installing frontend dependencies (npm ci)
+      working-directory: frontend
       run: npm ci
-    - name: Typecheck
+    - name: Typecheck frontend
+      working-directory: frontend
       run: npm run typecheck
-    - name: Build
+    - name: Build frontend
+      working-directory: frontend
       run: npx webpack --mode=development --display-error-details
-    - name: Lint
+    - name: Lint frontend
+      working-directory: frontend
       run: npx eslint --max-warnings 0 src
+
+    - name: Build backend
+      working-directory: backend
+      run: cargo build --all-targets
+    - name: Test backend
+      working-directory: backend
+      run: cargo test
+    - name: Generate documenation for backend
+      working-directory: backend
+      run: cargo doc --no-deps
