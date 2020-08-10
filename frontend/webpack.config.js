@@ -1,13 +1,13 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
-const APP_PATH = path.resolve(__dirname, "src");
+const { APP_PATH, OUT_PATH } = require("./constants");
 
 module.exports = (_env, argv) => ({
     entry: APP_PATH,
 
     output: {
         filename: "bundle.js",
-        path: path.resolve(__dirname, "build"),
+        path: OUT_PATH,
         publicPath: "/",
     },
 
