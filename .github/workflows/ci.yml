@@ -53,12 +53,12 @@ jobs:
     - name: Installing frontend dependencies (npm ci)
       working-directory: frontend
       run: npm ci
-    - name: Typecheck frontend
-      working-directory: frontend
-      run: npm run typecheck
     - name: Build frontend
       working-directory: frontend
       run: npx webpack --mode=development --display-error-details
+    - name: Typecheck frontend
+      working-directory: frontend
+      run: npm run typecheck
     - name: Lint frontend
       working-directory: frontend
       run: npx eslint --max-warnings 0 src
