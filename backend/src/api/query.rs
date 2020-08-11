@@ -24,14 +24,15 @@ impl Query {
 
 #[derive(Debug, Clone, Copy, juniper::GraphQLObject)]
 struct Movie {
-    id: i32,
+    // TODO Use `juniper::ID`?
+    id: &'static str,
     name: &'static str,
     year: i32,
 }
 
 const MOVIES: &[Movie] = &[
-    Movie { id: 0, name: "The Prestige", year: 2006 },
-    Movie { id: 1, name: "Ghost in the Shell", year: 1995 },
-    Movie { id: 2, name: "Atonement", year: 2007 },
-    Movie { id: 3, name: "I Origins", year: 2014 },
+    Movie { id: "0", name: "The Prestige", year: 2006 },
+    Movie { id: "1", name: "Ghost in the Shell", year: 1995 },
+    Movie { id: "2", name: "Atonement", year: 2007 },
+    Movie { id: "3", name: "I Origins", year: 2014 },
 ];
