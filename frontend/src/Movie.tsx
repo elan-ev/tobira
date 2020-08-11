@@ -1,15 +1,21 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { graphql, useLazyLoadQuery } from 'react-relay/hooks';
+import { MovieQuery } from './__generated__/MovieQuery.graphql';
+import { MoviesQuery } from './__generated__/MoviesQuery.graphql';
 
-const MOVIE = { id: 1, name: "Scott Pilgrim vs. the World", year: 2010 };
 
 export const Movies: React.FC = () => {
-  const loading = false, error = false;
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error!</p>;
-
-  const movies = [MOVIE];
+  const { movies } = useLazyLoadQuery<MoviesQuery>(graphql`
+    query MoviesQuery {
+      movies {
+        id
+        name
+        year
+      }
+    }
+  `, {});
 
   return <ul>
     {movies.map(({ id, name, year }) => (
@@ -23,11 +29,16 @@ export const Movies: React.FC = () => {
 export const Movie: React.FC = () => {
   const { id } = useParams();
 
-  const loading = false, error = false;
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error!</p>;
+  const { movie } = useLazyLoadQuery<MovieQuery>(graphql`
+    query MovieQuery($id: Int!) {
+      movie(id: $id) {
+        name
+        year
+      }
+    }
+  `, { id: Number(id) });
 
-  const movie = MOVIE;
+  if (!movie) throw new Error('Movie not found');
 
   return <div id={id}>
     Name: {movie.name}
