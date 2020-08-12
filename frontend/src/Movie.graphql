@@ -1,5 +1,6 @@
-query allMovies {
-  movies { id, name, year }
+query moviePage {
+  movies { id, name, year },
+  oldestMovie { name },
 }
 
 query findMovie($id: Int!) {

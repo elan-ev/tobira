@@ -6,7 +6,7 @@ import {
   Route,
 } from "react-router-dom";
 
-import { Movie, Movies } from './Movie';
+import { SingleMovie, MoviePage } from './Movie';
 
 export const App: React.FC = () => {
   const client = new ApolloClient({
@@ -19,10 +19,10 @@ export const App: React.FC = () => {
       <Router>
         <Switch>
           <Route path="/movie/:id">
-            <Movie />
+            <SingleMovie />
           </Route>
           <Route path="/">
-            <Movies />
+            <MoviePage />
           </Route>
         </Switch>
       </Router>
