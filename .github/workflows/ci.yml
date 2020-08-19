@@ -46,9 +46,7 @@ jobs:
       run: cargo build --bin export_schema
     - name: Export API schema
       working-directory: backend
-      run: |
-        mkdir ../frontend/build
-        cargo run --bin export_schema -- ../frontend/build/schema.graphql
+      run: cargo run --bin export_schema -- ../frontend/build/schema.graphql
 
     - name: Installing frontend dependencies (npm ci)
       working-directory: frontend
