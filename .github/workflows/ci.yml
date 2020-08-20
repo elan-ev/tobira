@@ -61,7 +61,7 @@ jobs:
       run: npx webpack --mode=development --display-error-details
     - name: Lint frontend
       working-directory: frontend
-      run: npx eslint --max-warnings 0 src
+      run: npx eslint --max-warnings 0 .
 
     - name: Build backend
       working-directory: backend

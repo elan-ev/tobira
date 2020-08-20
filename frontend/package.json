@@ -15,7 +15,8 @@
     "build:dev": "webpack --progress --mode=development",
     "build:release": "webpack --progress --mode=production",
     "typecheck": "tsc",
-    "lint": "eslint src"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@babel/core": "^7.10.5",
