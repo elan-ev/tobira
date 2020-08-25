@@ -1,17 +1,41 @@
 module.exports = {
-  root: true,
-  parser: '@typescript-eslint/parser',
-  plugins: [
-    '@typescript-eslint',
-  ],
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react/recommended',
-  ],
-  settings: {
-    react: {
-      version: 'detect'
-    }
-  }
+    parserOptions: {
+        ecmaVersion: 11,
+    },
+    extends: [
+        "eslint:recommended",
+    ],
+    rules: {
+        "indent": "error",
+        "quotes": ["error", "double", { avoidEscape: true }],
+        "semi": "error",
+        "comma-dangle": ["error", "always-multiline"],
+    },
+    overrides: [{
+        files: ["./*"],
+        env: {
+            node: true,
+        },
+    }, {
+        files: ["src/**/*.ts{,x}"],
+        parser: "@typescript-eslint/parser",
+        parserOptions: {
+            tsconfigRootDir: __dirname,
+            project: "./tsconfig.json",
+        },
+        extends: [
+            "plugin:@typescript-eslint/recommended",
+            "plugin:@typescript-eslint/recommended-requiring-type-checking",
+            "plugin:react/recommended",
+        ],
+        settings: {
+            react: {
+                version: "detect",
+            },
+        },
+    }],
+    ignorePatterns: [
+        "/build",
+        "!.*",
+    ],
 };
