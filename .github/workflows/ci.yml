@@ -46,22 +46,23 @@ jobs:
       run: cargo build --bin export_schema
     - name: Export API schema
       working-directory: backend
-      run: |
-        mkdir ../frontend/build
-        cargo run --bin export_schema -- ../frontend/build/schema.graphql
+      run: cargo run --bin export_schema -- ../frontend/build/schema.graphql
 
     - name: Installing frontend dependencies (npm ci)
       working-directory: frontend
       run: npm ci
+    - name: Generate GraphQL query types
+      working-directory: frontend
+      run: npx relay-compiler
     - name: Typecheck frontend
       working-directory: frontend
       run: npm run typecheck
-    - name: Build frontend
-      working-directory: frontend
-      run: npx webpack --mode=development --display-error-details
     - name: Lint frontend
       working-directory: frontend
       run: npx eslint --max-warnings 0 .
+    - name: Build frontend
+      working-directory: frontend
+      run: npx webpack --mode=development --display-error-details
 
     - name: Build backend
       working-directory: backend
