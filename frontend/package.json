@@ -18,6 +18,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
+  "browserslist": [
+    "defaults",
+    "not IE <= 11",
+    "not Edge <= 18"
+  ],
   "dependencies": {
     "@babel/core": "^7.11.4",
     "@babel/preset-env": "^7.11.0",
