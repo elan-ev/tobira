@@ -6,20 +6,19 @@ import { Root } from "./layout/Root";
 import { Realm } from "./page/Realm";
 import { NotFound } from "./page/NotFound";
 
-export const App: React.FC = () => {
-    return <>
-        <GlobalStyle />
-        <Router>
-            <Root>
-                <Switch>
-                    <Route exact path={["/", "/r/:path+"]} component={RealmPage} />
-                    <Route exact path={["404", "*"]} component={NotFound} />
-                </Switch>
-            </Root>
-        </Router>
-    </>;
-};
+export const App: React.FC = () => <>
+    <GlobalStyle />
+    <Router>
+        <Root>
+            <Switch>
+                <Route exact path={["/", "/r/:path+"]} component={RealmPage} />
+                <Route exact path={["404", "*"]} component={NotFound} />
+            </Switch>
+        </Root>
+    </Router>
+</>;
+
 
 const RealmPage: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
-    <Realm path={match.params.path?.split("/") || []} />
+    <Realm path={match.params.path?.split("/") ?? []} />
 );

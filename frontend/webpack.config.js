@@ -1,3 +1,5 @@
+"use strict";
+
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const path = require("path");
@@ -18,11 +20,11 @@ module.exports = (_env, argv) => ({
 
     module: {
         rules: [{
-            test: /\.(ts|js)x?$/,
+            test: /\.(ts|js)x?$/u,
             loader: "babel-loader",
-            ... argv.mode === "development" && { exclude: /node_modules/ },
+            ... argv.mode === "development" && { exclude: /node_modules/u },
         }, {
-            test: /\.yaml$/,
+            test: /\.yaml$/u,
             use: "yaml-loader",
             type: "json",
         }],
