@@ -35,6 +35,8 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
     // Test the connection by executing a simple query.
     pool.get().await?.execute("SELECT 1", &[]).await
         .context("failed to execute DB test query")?;
+    pool.get().await?.execute("SELECT * from realms where id = 0", &[]).await
+        .context("no root realm found")?;
     debug!("Successfully tested database connection with test query");
 
     Ok(pool)

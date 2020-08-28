@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
         .context("failed to create database connection pool (database not running?)")?;
 
     let root_node = api::root_node();
-    let context = api::Context { db };
+    let context = api::Context::new(db).await?;
 
     http::serve(&config.http, root_node, context).await
         .context("failed to start HTTP server")?;
