@@ -1,0 +1,59 @@
+default:
+  - command:
+      run: cargo run --bin export_schema -- ../frontend/build/schema.graphql
+      workdir: backend
+  - concurrently:
+    - http:
+        proxy: 127.0.0.1:3080
+    - run-task: frontend
+    - run-task: backend
+
+backend:
+  - set-workdir: backend
+  - watch:
+      paths:
+        - Cargo.toml
+        - Cargo.lock
+        - src/
+      run:
+        # TODO: We only need to reexport schema if something in `src/api/` changed
+        - on-change: cargo run --bin export_schema -- ../frontend/build/schema.graphql
+        - reload:
+        - cargo run
+
+frontend:
+  - set-workdir: frontend
+  - watch:
+      paths:
+        - .babelrc.js
+        - .eslintrc.js
+        - package-lock.json
+        - package.json
+        - tsconfig.json
+        - webpack.config.js
+        - src/
+      run:
+        - npx relay-compiler
+        - npx tsc --skipLibCheck
+        - npx eslint .
+        - npx webpack --mode=development --display=errors-only
+        - reload:
+
+# Creating a production build
+build:
+  - command:
+      run: cargo run --release --bin export_schema -- ../frontend/build/schema.graphql
+      workdir: backend
+  - command:
+      run: npx relay-compiler
+      workdir: frontend
+  - command:
+      run: npx webpack --progress --mode=production
+      workdir: frontend
+  - command:
+      run: cargo build --release
+      workdir: backend
+
+  # TODO: use OS independent operations
+  - mkdir -p deploy
+  - cp backend/target/release/tobira deploy
