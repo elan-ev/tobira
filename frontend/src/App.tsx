@@ -1,6 +1,12 @@
 import { jsx } from "@emotion/core";
 import React from "react";
 
+import { GlobalStyle } from "./GlobalStyle";
+import { Root } from "./layout/Root";
+
 export const App: React.FC = () => {
-    return <h1 css={{ color: "blue" }}>Yes Hello</h1>;
+    return <>
+        <GlobalStyle />
+        <Root />
+    </>;
 };
