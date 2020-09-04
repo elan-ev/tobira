@@ -10,6 +10,11 @@ module.exports = {
         "quotes": ["error", "double", { avoidEscape: true }],
         "semi": "error",
         "comma-dangle": ["error", "always-multiline"],
+
+        // `jsx` is the JSX factory that is imported in all files.
+        // Unfortunately, that lint does not understand it is used in JSX
+        // expressions, so we have to ignore that specific variable.
+        "@typescript-eslint/no-unused-vars": ["error", { "varsIgnorePattern": "^jsx$" }],
     },
     overrides: [{
         files: ["./*"],
