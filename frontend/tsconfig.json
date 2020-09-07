@@ -2,6 +2,7 @@
   "compilerOptions": {
     "jsx": "react",
     "noEmit": true,
+    "incremental": true,
 
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
