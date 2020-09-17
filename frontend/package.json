@@ -32,6 +32,7 @@
     "@emotion/core": "^10.0.35",
     "babel-loader": "^8.1.0",
     "babel-plugin-relay": "^10.0.1",
+    "copy-webpack-plugin": "^6.1.0",
     "graphql": "^15.3.0",
     "html-webpack-plugin": "^4.3.0",
     "react": "^16.13.1",
