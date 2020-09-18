@@ -1,5 +1,7 @@
 import { jsx } from "@emotion/core";
 import React from "react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCaretDown } from '@fortawesome/free-solid-svg-icons'
 
 
 type Props = {
@@ -39,5 +41,8 @@ const Search: React.FC = () => (
 
 const Menu: React.FC = () => (
     // TODO: carret down
-    <div>Not logged in</div>
+    <div>
+        Not logged in
+        <FontAwesomeIcon css={{ marginLeft: 4 }} icon={faCaretDown} />
+    </div>
 );
