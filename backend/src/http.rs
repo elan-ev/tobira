@@ -78,16 +78,19 @@ impl Service<Request<Body>> for RootService {
             req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
         );
 
-        match (req.method(), req.uri().path()) {
-            (&Method::GET, "/") => Assets::serve("index.html"),
+        let method = req.method();
+        let path = req.uri().path();
+
+        const ASSET_PREFIX: &str = "/assets/";
+        const REALM_PREFIX: &str = "/r/";
+
+        match (method, path) {
+            (&Method::GET, "/") => serve_index(),
 
             // The interactive GraphQL API explorer/IDE.
             //
             // TODO: do we want to remove this route in production?
-            (&Method::GET, "/graphiql") => {
-                let result = juniper_hyper::graphiql("/graphql", None);
-                Box::pin(result)
-            }
+            (&Method::GET, "/graphiql") => Box::pin(juniper_hyper::graphiql("/graphql", None)),
 
             // The actual GraphQL API.
             (&Method::GET, "/graphql") | (&Method::POST, "/graphql") => {
@@ -100,40 +103,38 @@ impl Service<Request<Body>> for RootService {
                 Box::pin(result)
             }
 
-            (&Method::GET, path) if Assets::get(&path[1..]).is_some() => {
-                // TODO: don't call `Assets::get` twice.
-                Assets::serve(&path[1..])
+            // Realm pages
+            (&Method::GET, path) if path.starts_with(REALM_PREFIX) => {
+                let _realm_path = path.strip_prefix(REALM_PREFIX).unwrap();
+                // TODO: check if path is valid
+
+                serve_index()
             }
 
-            // Since we do routing in the client, we need to serve the index for
-            // basically any path. For now, we just assume that paths with `.`
-            // in them refer to some file.
-            // TODO: this heuristic is probably BS.
-            (&Method::GET, path) if !path.contains('.') => Assets::serve("index.html"),
+            // Assets (JS files, fonts, ...)
+            (&Method::GET, path) if path.starts_with(ASSET_PREFIX) => {
+                let asset_path = path.strip_prefix(ASSET_PREFIX).unwrap();
+                Assets::serve(asset_path).unwrap_or_else(|| reply_404(method, path))
+            }
 
             // 404 for everything else
-            (method, path) => {
-                debug!("Responding with 404 to {:?} {}", method, path);
-                let result = async {
-                    let mut response = Response::new(Body::empty());
-                    *response.status_mut() = StatusCode::NOT_FOUND;
-                    Ok(response)
-                };
-
-                Box::pin(result)
-            }
+            (method, path) => reply_404(method, path),
         }
     }
 }
 
-/// These are all static files we serve, including CSS and JS.
+type ResponseFuture = <RootService as Service<Request<Body>>>::Future;
+
+/// These are all static files we serve, including JS, fonts and images.
 #[derive(rust_embed::RustEmbed)]
 #[folder = "../frontend/build"]
 struct Assets;
 
+const INDEX_FILE: &str = "index.html";
+
 impl Assets {
     fn startup_check() -> Result<()> {
-        if Self::get("index.html").is_none() {
+        if Self::get(INDEX_FILE).is_none() {
             bail!("'index.html' is missing from the assets");
         }
 
@@ -144,10 +145,17 @@ impl Assets {
         Ok(())
     }
 
-    /// Responds with the asset identified by the given name.
-    fn serve(name: &str) -> <RootService as Service<Request<Body>>>::Future {
-        let body = Body::from(Assets::get(name).unwrap());
-        let mime_guess = mime_guess::from_path(name).first();
+    /// Responds with the asset identified by the given path. If there exists no
+    /// asset with `path` or `path` is `INDEX_FILE`, `None` is returned.
+    fn serve(path: &str) -> Option<ResponseFuture> {
+        // The `index.html` here is not intended to be served directly. It is
+        // modified and sent on many other routes.
+        if path == INDEX_FILE {
+            return None;
+        }
+
+        let body = Body::from(Assets::get(path)?);
+        let mime_guess = mime_guess::from_path(path).first();
         let out = async {
             let mut builder = Response::builder();
             if let Some(mime) = mime_guess {
@@ -160,6 +168,42 @@ impl Assets {
             Ok(builder.body(body).expect("bug: invalid response"))
         };
 
-        Box::pin(out)
+        Some(Box::pin(out))
     }
+}
+
+/// Serves the main entry point of the application. This is replied to `/` and
+/// other "public routes", like `/r/lectures`. Basically everywhere where the
+/// user is supposed to see the website.
+fn serve_index() -> ResponseFuture {
+    let html = Assets::get(INDEX_FILE).unwrap();
+
+    // TODO: include useful data into the HTML file
+
+    let body = Body::from(html);
+    let out = async {
+        let mut builder = Response::builder();
+        builder = builder.header("Content-Type", "text/html; charset=UTF-8");
+
+        // TODO: content length
+        // TODO: lots of other headers maybe
+
+        Ok(builder.body(body).expect("bug: invalid response"))
+    };
+
+    Box::pin(out)
+}
+
+/// Replies with a 404 Not Found.
+fn reply_404(method: &Method, path: &str) -> ResponseFuture {
+    // TODO: have a simple and user calming body.
+
+    debug!("Responding with 404 to {:?} {}", method, path);
+    let result = async {
+        let mut response = Response::new(Body::empty());
+        *response.status_mut() = StatusCode::NOT_FOUND;
+        Ok(response)
+    };
+
+    Box::pin(result)
 }
