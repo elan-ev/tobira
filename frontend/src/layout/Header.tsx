@@ -29,7 +29,7 @@ export const Header: React.FC<Props> = ({ gridArea }) => {
 const Logo: React.FC = () => (
     <a href="/" css={{ height: "100%" }}>
         <img
-            src="assets/static/logo-large.svg"
+            src="/assets/static/logo-large.svg"
             css={{ height: "100%", padding: "4px 0", }}
         />
     </a>
