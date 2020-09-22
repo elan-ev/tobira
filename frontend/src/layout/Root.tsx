@@ -3,6 +3,7 @@ import React from "react";
 
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { Breadcrumbs } from "./Breadcrumbs";
 
 
 const HEADER_HEIGHT = 60;
@@ -24,8 +25,15 @@ export const Root: React.FC = () => {
             <Header gridArea="header" />
             <Sidebar gridArea="sidebar" />
             <main css={{ gridArea: "main", padding: 16 }}>
+                <Breadcrumbs path={DUMMY_PATH} />
                 main :)
             </main>
         </div>
     );
 };
+
+const DUMMY_PATH = [
+    { label: "Lectures", href: "/r/lectures" },
+    { label: "Math", href: "/r/lectures/math" },
+    { label: "Algebra I", href: "/r/lectures/math/algebra" },
+];
