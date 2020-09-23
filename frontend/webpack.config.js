@@ -1,5 +1,5 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CopyPlugin = require('copy-webpack-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const { APP_PATH, OUT_PATH, STATIC_PATH } = require("./constants");
 

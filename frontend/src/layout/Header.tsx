@@ -1,22 +1,21 @@
 import { jsx } from "@emotion/core";
 import React from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCaretDown } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
+import { Link } from "react-router-dom";
 
 
-type Props = {
-    gridArea: string,
-};
+const HEIGHT = 60;
 
-export const Header: React.FC<Props> = ({ gridArea }) => {
+export const Header: React.FC = () => {
     return (
         <div css={{
-            gridArea,
+            height: HEIGHT,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             backgroundColor: "white",
-            borderBottom: "2px solid #555",
+            borderBottom: "1px solid #bbb",
             padding: "0 8px",
         }}>
             <Logo />
@@ -27,12 +26,12 @@ export const Header: React.FC<Props> = ({ gridArea }) => {
 };
 
 const Logo: React.FC = () => (
-    <a href="/" css={{ height: "100%" }}>
+    <Link to="/" css={{ height: "100%" }}>
         <img
             src="/assets/static/logo-large.svg"
-            css={{ height: "100%", padding: "4px 0", }}
+            css={{ height: "100%", padding: "4px 0" }}
         />
-    </a>
+    </Link>
 );
 
 const Search: React.FC = () => (
@@ -40,7 +39,6 @@ const Search: React.FC = () => (
 );
 
 const Menu: React.FC = () => (
-    // TODO: carret down
     <div>
         Not logged in
         <FontAwesomeIcon css={{ marginLeft: 4 }} icon={faCaretDown} />

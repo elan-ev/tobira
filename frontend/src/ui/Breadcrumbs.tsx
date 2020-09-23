@@ -1,7 +1,7 @@
 import { jsx } from "@emotion/core";
 import React from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAngleRight, faHome } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAngleRight, faHome } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 
 
@@ -21,7 +21,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => (
                 <FontAwesomeIcon title="Home" icon={faHome} />
             </Segment>
             { path.map((segment, i) => (
-                <Segment target={segment.href} active={i == path.length - 1}>
+                <Segment key={i} target={segment.href} active={i == path.length - 1}>
                     { segment.label }
                 </Segment>
             )) }
@@ -37,7 +37,7 @@ type SegmentProps = {
 
 const Segment: React.FC<SegmentProps> = ({ target, active, first = false, children }) => (
     <li css={{ display: "inline" }} {...active && { "aria-current": "location" }}>
-        { !first && <FontAwesomeIcon icon={faAngleRight} css={{ margin: "0 8px" }}/> }
+        { !first && <FontAwesomeIcon icon={faAngleRight} css={{ margin: "0 8px", color: "#888" }}/> }
         { active ?  children : <Link to={target}>{ children }</Link> }
     </li>
 );

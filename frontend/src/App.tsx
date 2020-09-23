@@ -1,6 +1,6 @@
 import { jsx } from "@emotion/core";
 import React from "react";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 import { GlobalStyle } from "./GlobalStyle";
 import { Root } from "./layout/Root";
