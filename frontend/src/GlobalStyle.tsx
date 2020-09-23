@@ -59,5 +59,10 @@ const GLOBAL_STYLE = css({
     "body": {
         fontFamily: "'Open Sans', sans-serif",
         fontWeight: 400,
+
+        // From a set of popular phones, the iPhone 5 has the smallest viewport
+        // width: 320px. It does make sense to set a minimum width early on in
+        // order to know where we can stop caring.
+        minWidth: 320,
     },
 });
