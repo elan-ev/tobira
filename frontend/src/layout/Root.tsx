@@ -9,7 +9,7 @@ import { Breadcrumbs } from "./Breadcrumbs";
 const HEADER_HEIGHT = 60;
 const SIDEBAR_WIDTH = 250;
 
-export const Root: React.FC = () => {
+export const Root: React.FC = ({ children }) => {
     return (
         <div css={{
             display: "grid",
@@ -26,7 +26,7 @@ export const Root: React.FC = () => {
             <Sidebar gridArea="sidebar" />
             <main css={{ gridArea: "main", padding: 16 }}>
                 <Breadcrumbs path={DUMMY_PATH} />
-                main :)
+                { children }
             </main>
         </div>
     );
@@ -34,6 +34,6 @@ export const Root: React.FC = () => {
 
 const DUMMY_PATH = [
     { label: "Lectures", href: "/r/lectures" },
-    { label: "Math", href: "/r/lectures/math" },
+    { label: "Department of Mathematics", href: "/r/lectures/math" },
     { label: "Algebra I", href: "/r/lectures/math/algebra" },
 ];
