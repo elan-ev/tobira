@@ -34,9 +34,10 @@ frontend:
         - src/
       run:
         - npx relay-compiler
-        - npx tsc --skipLibCheck
-        - npx eslint .
-        - npx webpack --mode=development --display=errors-only
+        - concurrently:
+          - npx tsc --skipLibCheck
+          - npx eslint .
+          - npx webpack --mode=development --display=errors-only
         - reload:
 
 # Creating a production build
