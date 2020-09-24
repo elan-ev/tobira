@@ -1,6 +1,7 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 const path = require("path");
-const { APP_PATH, OUT_PATH } = require("./constants");
+const { APP_PATH, OUT_PATH, STATIC_PATH } = require("./constants");
 
 module.exports = (_env, argv) => ({
     entry: APP_PATH,
@@ -8,7 +9,7 @@ module.exports = (_env, argv) => ({
     output: {
         filename: "bundle.js",
         path: OUT_PATH,
-        publicPath: "/",
+        publicPath: "/assets/",
     },
 
     resolve: {
@@ -25,6 +26,9 @@ module.exports = (_env, argv) => ({
 
     plugins: [
         new HtmlWebpackPlugin({ inject: true, template: path.join(APP_PATH, "index.html") }),
+        new CopyPlugin({
+            patterns: [{ from: STATIC_PATH, to: path.join(OUT_PATH, "static") }],
+        }),
     ],
 
     devtool: "source-map",
