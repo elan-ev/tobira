@@ -105,7 +105,7 @@ impl Service<Request<Body>> for RootService {
 
             // Realm pages
             (&Method::GET, path) if path.starts_with(REALM_PREFIX) => {
-                let _realm_path = path.strip_prefix(REALM_PREFIX).unwrap();
+                let _realm_path = &path[REALM_PREFIX.len()..];
                 // TODO: check if path is valid
 
                 serve_index()
@@ -113,7 +113,7 @@ impl Service<Request<Body>> for RootService {
 
             // Assets (JS files, fonts, ...)
             (&Method::GET, path) if path.starts_with(ASSET_PREFIX) => {
-                let asset_path = path.strip_prefix(ASSET_PREFIX).unwrap();
+                let asset_path = &path[ASSET_PREFIX.len()..];
                 Assets::serve(asset_path).unwrap_or_else(|| reply_404(method, path))
             }
 

@@ -25,7 +25,7 @@ const CSS_RESETS = css({
     },
 
     // Useful body defaults
-    "body": {
+    body: {
         // It is useful for the body to always span the entire height of the viewport.
         minHeight: "100vh",
 
@@ -38,14 +38,8 @@ const CSS_RESETS = css({
     },
 
     // This improves the readability of underlines in links.
-    "a": {
+    a: {
         textDecorationSkipInk: "auto",
-    },
-
-    // Useful default resets for images.
-    "img": {
-        maxWidth: "100%",
-        display: "block",
     },
 
     // Some elements not inhereting fonts is a really confusing browser default.
@@ -56,7 +50,7 @@ const CSS_RESETS = css({
 
 // This is just styling for Tobira that we want to apply globally.
 const GLOBAL_STYLE = css({
-    "body": {
+    body: {
         fontFamily: "'Open Sans', sans-serif",
         fontWeight: 400,
 

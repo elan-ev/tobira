@@ -21,7 +21,7 @@ export const Realm: React.FC<Props> = ({ match }) => {
 
     const breadcrumbs = [];
     let path = "/r";
-    for (const id of ids.splice(1)) {
+    for (const id of ids.slice(1)) {
         path += "/" + REALMS[id].path;
         breadcrumbs.push({
             label: REALMS[id].name,
@@ -59,9 +59,9 @@ export const Realm: React.FC<Props> = ({ match }) => {
 // of realm ids starting with 0 (root).
 const resolvePath = (path: string): number[] | null => {
     const ids = [0];
-    for (const segment of path == "" ? [] : path.split("/")) {
+    for (const segment of path === "" ? [] : path.split("/")) {
         const lastId = ids[ids.length - 1];
-        const next = REALMS[lastId].children.find(child => REALMS[child].path == segment);
+        const next = REALMS[lastId].children.find(child => REALMS[child].path === segment);
         if (!next) {
             return null;
         }
@@ -79,7 +79,7 @@ type Realm = {
 };
 
 // Dummy data
-const REALMS: { [key: number]: Realm } = {
+const REALMS: Record<number, Realm> = {
     0: { path: "", name: "Home", parent: 0, children: [] },
     1: { path: "lectures", name: "Lectures", parent: 0, children: [] },
     2: { path: "conferences", name: "Conferences", parent: 0, children: [] },
@@ -97,6 +97,6 @@ const REALMS: { [key: number]: Realm } = {
 };
 
 // Add children
-for (const  [i, realm] of Object.entries(REALMS).splice(1)) {
+for (const [i, realm] of Object.entries(REALMS).slice(1)) {
     REALMS[realm.parent].children.push(Number(i));
 }
