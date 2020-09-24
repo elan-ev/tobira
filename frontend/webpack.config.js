@@ -25,7 +25,10 @@ module.exports = (_env, argv) => ({
     },
 
     plugins: [
-        new HtmlWebpackPlugin({ inject: true, template: path.join(APP_PATH, "index.html") }),
+        new HtmlWebpackPlugin({
+            inject: true,
+            template: path.join(APP_PATH, "index.html"),
+        }),
         new CopyPlugin({
             patterns: [{ from: STATIC_PATH, to: path.join(OUT_PATH, "static") }],
         }),
