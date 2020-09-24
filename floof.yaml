@@ -33,7 +33,7 @@ frontend:
         - webpack.config.js
         - src/
       run:
-        - npx relay-compiler
+        - npx relay-compiler --quiet
         - concurrently:
           - npx tsc --skipLibCheck
           - npx eslint .
