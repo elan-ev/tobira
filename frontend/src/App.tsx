@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route, RouteComponentProps } from "react-router-dom";
 
 import { GlobalStyle } from "./GlobalStyle";
 import { Root } from "./layout/Root";
@@ -12,10 +12,14 @@ export const App: React.FC = () => {
         <Router>
             <Root>
                 <Switch>
-                    <Route path={["/", "/r/:path+"]} exact component={Realm} />
-                    <Route path={["404", "*"]} exact component={NotFound} />
+                    <Route exact path={["/", "/r/:path+"]} component={RealmPage} />
+                    <Route exact path={["404", "*"]} component={NotFound} />
                 </Switch>
             </Root>
         </Router>
     </>;
 };
+
+const RealmPage: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
+    <Realm path={match.params.path?.split("/") || []} />
+);

@@ -1,35 +1,34 @@
 import React from "react";
-import { Link, match } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 
 
 type Props = {
-    match: match<{ path?: string }>,
+    path: string[],
 };
 
-export const Realm: React.FC<Props> = ({ match }) => {
-    const isRoot = !match.params.path;
-    const currentPath = match.params.path || "";
-    const ids = resolvePath(currentPath);
+export const Realm: React.FC<Props> = ({ path }) => {
+    const isRoot = path.length === 0;
+    const ids = resolvePath(path);
     if (ids == null) {
+        // TODO: that should obviously handled in a better way
         return <b>Realm path not found :(</b>;
     }
 
     const realmId = ids[ids.length - 1];
     const realm = REALMS[realmId];
 
+    // Prepare data for breadcrumbs
     const breadcrumbs = [];
-    let path = "/r";
+    let tmpPath = "/r";
     for (const id of ids.slice(1)) {
-        path += "/" + REALMS[id].path;
+        tmpPath += "/" + REALMS[id].path;
         breadcrumbs.push({
             label: REALMS[id].name,
-            href: path,
+            href: tmpPath,
         });
     }
-
-    const pathBase = "/r/" + (currentPath && currentPath + "/");
 
     return <>
         { !isRoot && <Breadcrumbs path={breadcrumbs} /> }
@@ -37,7 +36,7 @@ export const Realm: React.FC<Props> = ({ match }) => {
         <ul>
             { REALMS[realmId].children.map(id => (
                 <li key={id}>
-                    <Link to={pathBase + REALMS[id].path}>
+                    <Link to={"/r/" + path.concat(REALMS[id].path).join("/") }>
                         { REALMS[id].name }
                     </Link>
                 </li>
@@ -57,9 +56,9 @@ export const Realm: React.FC<Props> = ({ match }) => {
 
 // Looks up each segment of the `/` separated `path` as realm and returns a list
 // of realm ids starting with 0 (root).
-const resolvePath = (path: string): number[] | null => {
+const resolvePath = (path: string[]): number[] | null => {
     const ids = [0];
-    for (const segment of path === "" ? [] : path.split("/")) {
+    for (const segment of path) {
         const lastId = ids[ids.length - 1];
         const next = REALMS[lastId].children.find(child => REALMS[child].path === segment);
         if (!next) {
