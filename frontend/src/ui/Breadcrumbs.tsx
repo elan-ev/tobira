@@ -1,4 +1,3 @@
-import { jsx } from "@emotion/core";
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleRight, faHome } from "@fortawesome/free-solid-svg-icons";

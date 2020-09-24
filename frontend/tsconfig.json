@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "jsx",
-    "jsxFragmentFactory": "React.Fragment",
+    "jsx": "preserve",
     "noEmit": true,
     "incremental": true,
 

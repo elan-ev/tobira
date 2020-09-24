@@ -1,4 +1,3 @@
-import { jsx } from "@emotion/core";
 import React from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
@@ -8,7 +7,7 @@ import { Realm } from "./page/Realm";
 import { NotFound } from "./page/NotFound";
 
 export const App: React.FC = () => {
-    return <React.Fragment>
+    return <>
         <GlobalStyle />
         <Router>
             <Root>
@@ -18,5 +17,5 @@ export const App: React.FC = () => {
                 </Switch>
             </Root>
         </Router>
-    </React.Fragment>;
+    </>;
 };

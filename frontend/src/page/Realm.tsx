@@ -1,4 +1,3 @@
-import { jsx } from "@emotion/core";
 import React from "react";
 import { Link, match } from "react-router-dom";
 
@@ -32,7 +31,7 @@ export const Realm: React.FC<Props> = ({ match }) => {
 
     const pathBase = "/r/" + (currentPath && currentPath + "/");
 
-    return <React.Fragment>
+    return <>
         { !isRoot && <Breadcrumbs path={breadcrumbs} /> }
         <h1>{ realm.name }</h1>
         <ul>
@@ -53,7 +52,7 @@ export const Realm: React.FC<Props> = ({ match }) => {
             pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
             culpa qui officia deserunt mollit anim id est laborum.
         </p>
-    </React.Fragment>;
+    </>;
 };
 
 // Looks up each segment of the `/` separated `path` as realm and returns a list
