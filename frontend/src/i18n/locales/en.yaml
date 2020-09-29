@@ -2,6 +2,7 @@ language-name: English
 language: Language
 search: Search
 home: Home
+navigation: Navigation
 page-not-found:
   title: Page not found
   body: The requested resource does not exist. Sorry! :-(

@@ -1,10 +1,10 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
 import { graphql, useLazyLoadQuery } from "react-relay/hooks";
 import { RealmQuery } from "../query-types/RealmQuery.graphql";
 
 import { Breadcrumbs } from "../ui/Breadcrumbs";
+import { NavMain as MainLayout } from "../layout/NavMain";
 
 
 type Props = {
@@ -19,6 +19,7 @@ export const Realm: React.FC<Props> = ({ path }) => {
         query RealmQuery($path: String!) {
             realm: realmByPath(path: $path) {
                 name
+                path
                 parents { name path }
                 children { id name path }
             }
@@ -36,31 +37,32 @@ export const Realm: React.FC<Props> = ({ path }) => {
     }
 
     // Prepare data for breadcrumbs
-    const breadcrumbs = realm.parents.slice(1).map(({ name, path }) => ({
-        label: name,
-        href: `/r${path}`,
-    }));
+    const breadcrumbs = realm.parents
+        .slice(1)
+        .concat(realm)
+        .map(({ name, path }) => ({
+            label: name,
+            href: `/r${path}`,
+        }));
 
-    return <>
-        {!isRoot && <Breadcrumbs path={breadcrumbs} />}
-        <h1>{realm.name}</h1>
-        <ul>
-            {realm.children.map(({ id, path, name }) => (
-                <li key={id}>
-                    <Link to={`/r${path}`}>
-                        {name}
-                    </Link>
-                </li>
-            ))}
-        </ul>
-        <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-        </p>
-    </>;
+    return (
+        <MainLayout
+            title={isRoot ? undefined : realm.name}
+            breadcrumbs={isRoot ? undefined : <Breadcrumbs path={breadcrumbs} />}
+            navItems={realm.children.map(({ path, name }) => ({
+                label: name,
+                link: `/r${path}`,
+            }))}
+        >
+            <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+                ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+                aliquip ex ea commodo consequat. Duis aute irure dolor in
+                reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+                pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+                culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+        </MainLayout>
+    );
 };
