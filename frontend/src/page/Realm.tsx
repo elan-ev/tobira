@@ -11,7 +11,7 @@ type Props = {
     path: string;
 };
 
-export const Realm: React.FC<Props> = ({ path }) => {
+export const RealmPage: React.FC<Props> = ({ path }) => {
     const isRoot = path === "";
 
     // TODO Build this query from fragments!
@@ -47,8 +47,8 @@ export const Realm: React.FC<Props> = ({ path }) => {
 
     return (
         <MainLayout
-            title={isRoot ? undefined : realm.name}
-            breadcrumbs={isRoot ? undefined : <Breadcrumbs path={breadcrumbs} />}
+            title={realm.name}
+            breadcrumbs={<Breadcrumbs path={breadcrumbs} />}
             navItems={realm.children.map(({ path, name }) => ({
                 label: name,
                 link: `/r${path}`,

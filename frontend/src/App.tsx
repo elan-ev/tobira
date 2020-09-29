@@ -6,7 +6,8 @@ import { environment } from "./relay";
 
 import { GlobalStyle } from "./GlobalStyle";
 import { Root } from "./layout/Root";
-import { Realm } from "./page/Realm";
+import { RealmPage } from "./page/Realm";
+import { HomePage } from "./page/Home";
 import { NotFound } from "./page/NotFound";
 
 export const App: React.FC = () => (
@@ -15,7 +16,8 @@ export const App: React.FC = () => (
         <Router>
             <Root>
                 <Switch>
-                    <Route exact path={["/", "/r/:path+"]} component={RealmPage} />
+                    <Route exact path="/" component={HomeRoute} />
+                    <Route exact path="/r/:path+" component={RealmRoute} />
                     <Route exact path={["404", "*"]} component={NotFound} />
                 </Switch>
             </Root>
@@ -23,9 +25,14 @@ export const App: React.FC = () => (
     </RelayEnvironmentProvider>
 );
 
-
-const RealmPage: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
+const HomeRoute: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
     <Suspense fallback="Loading! (TODO)">
-        <Realm path={match.params.path ?? ""} />
+        <HomePage />
+    </Suspense>
+);
+
+const RealmRoute: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
+    <Suspense fallback="Loading! (TODO)">
+        <RealmPage path={match.params.path ?? ""} />
     </Suspense>
 );
