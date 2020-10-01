@@ -51,7 +51,7 @@ export const RealmPage: React.FC<Props> = ({ path }) => {
         .concat(realm)
         .map(({ name, path }) => ({
             label: name,
-            href: `/r${path}`,
+            link: `/r${path}`,
         }));
 
     const navItems = realm.children.length > 0
