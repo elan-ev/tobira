@@ -25,7 +25,7 @@ export const App: React.FC = () => (
     </RelayEnvironmentProvider>
 );
 
-const HomeRoute: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
+const HomeRoute: React.FC = () => (
     <Suspense fallback="Loading! (TODO)">
         <HomePage />
     </Suspense>

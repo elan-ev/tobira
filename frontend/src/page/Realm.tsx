@@ -5,6 +5,7 @@ import { RealmQuery } from "../query-types/RealmQuery.graphql";
 
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { NavMain as MainLayout } from "../layout/NavMain";
+import { unreachable } from "../util/err";
 
 
 type Props = {
@@ -18,10 +19,14 @@ export const RealmPage: React.FC<Props> = ({ path }) => {
     const { realm } = useLazyLoadQuery<RealmQuery>(graphql`
         query RealmQuery($path: String!) {
             realm: realmByPath(path: $path) {
+                id
                 name
                 path
                 parents { name path }
                 children { id name path }
+                parent {
+                    children { id name path }
+                }
             }
         }
     `, {
@@ -36,6 +41,10 @@ export const RealmPage: React.FC<Props> = ({ path }) => {
         return <b>{"Realm path not found :("}</b>;
     }
 
+    if (!realm.parent) {
+        return unreachable("non root realm has no parent");
+    }
+
     // Prepare data for breadcrumbs
     const breadcrumbs = realm.parents
         .slice(1)
@@ -45,14 +54,24 @@ export const RealmPage: React.FC<Props> = ({ path }) => {
             href: `/r${path}`,
         }));
 
+    const navItems = realm.children.length > 0
+        ? realm.children.map(({ path, name }) => ({
+            label: name,
+            link: `/r${path}`,
+            active: false,
+        }))
+        : realm.parent.children.map(({ id, name, path }) => ({
+            label: name,
+            link: `/r${path}`,
+            active: id === realm.id,
+        }));
+
     return (
         <MainLayout
             title={realm.name}
             breadcrumbs={<Breadcrumbs path={breadcrumbs} />}
-            navItems={realm.children.map(({ path, name }) => ({
-                label: name,
-                link: `/r${path}`,
-            }))}
+            navItems={navItems}
+            leafNode={realm.children.length === 0}
         >
             <p>
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do

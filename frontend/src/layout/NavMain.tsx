@@ -9,11 +9,21 @@ type Props = {
     title?: string;
     breadcrumbs?: React.ReactNode;
     navItems: NavItem[];
+
+    // Is this node a leaf node (i.e. does not have any children)? If so, the
+    // navigation items are expected to be the siblings of the current node
+    // instead of the children. Futhermore, the navigation is only shown for
+    // wide screens.
+    leafNode: boolean;
 };
 
 type NavItem = {
     label: string;
     link: string;
+
+    // If `leafNode` is set to true, one nav item has to have `active` set to
+    // true, too.
+    active: boolean;
 };
 
 // At this screen width, the layout changes from a sidebar for navigation (for
@@ -23,7 +33,7 @@ const BREAKPOINT = 720;
 // A layout for the `<main>` part of pages that require a navigation (mainly
 // realms). The navigation is either shown on the left as a sidebar (for large
 // screens) or inline below the page title (for small screens).
-export const NavMain: React.FC<Props> = ({ title, breadcrumbs, navItems, children }) => (
+export const NavMain: React.FC<Props> = ({ title, breadcrumbs, navItems, leafNode, children }) => (
     <div css={{
         // This funky expressions just means: above a screen width of 1100px,
         // the extra space will be 10% margin left and right. This is the middle
@@ -43,17 +53,18 @@ export const NavMain: React.FC<Props> = ({ title, breadcrumbs, navItems, childre
     }}>
         <div css={{ gridArea: "breadcrumbs" }}>{breadcrumbs}</div>
         <h1 css={{ gridArea: "title", margin: "12px 0" }}>{title}</h1>
-        <Nav items={navItems} />
+        <Nav items={navItems} leafNode={leafNode} />
         <div css={{ gridArea: "main" }}>{children}</div>
     </div>
 );
 
 type NavProps = {
     items: NavItem[];
+    leafNode: boolean;
 };
 
 // The navigation part of the layout.
-const Nav: React.FC<NavProps> = ({ items }) => {
+const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
     const [navExpanded, setNavExpanded] = useState(false);
     const { t } = useTranslation();
 
@@ -68,6 +79,7 @@ const Nav: React.FC<NavProps> = ({ items }) => {
             [`@media not all and (min-width: ${BREAKPOINT}px)`]: {
                 margin: 16,
                 border: "1px solid #888",
+                ...leafNode && { display: "none" },
             },
         }}>
             <div
@@ -106,17 +118,17 @@ const Nav: React.FC<NavProps> = ({ items }) => {
                     overflow: "hidden",
                 },
             }}>
-                {items.map((item, i) => (
-                    <li
-                        key={i}
-                        css={{ borderBottom: "1px solid #ccc" }}
-                    >
-                        <Link
+                {items.map((item, i) => {
+                    const baseStyle = { padding: "6px 12px", display: "block" };
+                    const inner = item.active
+                        ? <b css={{ ...baseStyle, backgroundColor: "#ddd" }}>
+                            {item.label}
+                        </b>
+                        : <Link
                             to={item.link}
                             css={{
-                                padding: "6px 12px",
+                                ...baseStyle,
                                 textDecoration: "none",
-                                display: "block",
                                 transition: "background-color 0.1s",
                                 "&:hover": {
                                     transitionDuration: "0.05s",
@@ -124,9 +136,14 @@ const Nav: React.FC<NavProps> = ({ items }) => {
                                     textDecoration: "underline",
                                 },
                             }}
-                        >{item.label}</Link>
-                    </li>
-                ))}
+                        >{item.label}</Link>;
+
+                    return (
+                        <li key={i} css={{ borderBottom: "1px solid #ccc" }}>
+                            {inner}
+                        </li>
+                    );
+                })}
             </ul>
         </nav>
     );

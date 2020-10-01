@@ -18,9 +18,11 @@ export const HomePage: React.FC = () => {
 
     return (
         <MainLayout
+            leafNode={false}
             navItems={realm.children.map(({ path, name }) => ({
                 label: name,
                 link: `/r${path}`,
+                active: false,
             }))}
         >
             <p>Welcome to Tobira :3</p>
