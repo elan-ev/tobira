@@ -24,7 +24,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => {
                     <FontAwesomeIcon title={t("home")} icon={faHome} />
                 </Segment>
                 {path.map((segment, i) => (
-                    <Segment key={i} target={segment.href} active={i == path.length - 1}>
+                    <Segment key={i} target={segment.href} active={i === path.length - 1}>
                         {segment.label}
                     </Segment>
                 ))}
