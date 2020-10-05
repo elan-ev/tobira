@@ -31,13 +31,13 @@ export const Realm: React.FC<Props> = ({ path }) => {
     }
 
     return <>
-        { !isRoot && <Breadcrumbs path={breadcrumbs} /> }
-        <h1>{ realm.name }</h1>
+        {!isRoot && <Breadcrumbs path={breadcrumbs} />}
+        <h1>{realm.name}</h1>
         <ul>
-            { REALMS[realmId].children.map(id => (
+            {REALMS[realmId].children.map(id => (
                 <li key={id}>
                     <Link to={"/r/" + path.concat(REALMS[id].path).join("/") }>
-                        { REALMS[id].name }
+                        {REALMS[id].name}
                     </Link>
                 </li>
             ))}

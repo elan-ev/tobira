@@ -23,11 +23,11 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => {
                 <Segment target="/" first active={path.length == 0}>
                     <FontAwesomeIcon title={t("home")} icon={faHome} />
                 </Segment>
-                { path.map((segment, i) => (
+                {path.map((segment, i) => (
                     <Segment key={i} target={segment.href} active={i == path.length - 1}>
-                        { segment.label }
+                        {segment.label}
                     </Segment>
-                )) }
+                ))}
             </ol>
         </nav>
     );
@@ -41,7 +41,7 @@ type SegmentProps = {
 
 const Segment: React.FC<SegmentProps> = ({ target, active, first = false, children }) => (
     <li css={{ display: "inline" }} {...active && { "aria-current": "location" }}>
-        { first || <FontAwesomeIcon icon={faAngleRight} css={{ margin: "0 8px", color: "#888" }}/> }
-        { active ? children : <Link to={target}>{ children }</Link> }
+        {first || <FontAwesomeIcon icon={faAngleRight} css={{ margin: "0 8px", color: "#888" }}/>}
+        {active ? children : <Link to={target}>{children}</Link>}
     </li>
 );
