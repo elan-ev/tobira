@@ -17,18 +17,15 @@ module.exports = (_env, argv) => ({
     },
 
     module: {
-        rules: [
-            {
-                test: /\.(ts|js)x?$/,
-                loader: "babel-loader",
-                ... argv.mode === "development" && { exclude: /node_modules/ },
-            },
-            {
-                test: /\.yaml$/,
-                use: "yaml-loader",
-                type: "json",
-            },
-        ],
+        rules: [{
+            test: /\.(ts|js)x?$/,
+            loader: "babel-loader",
+            ... argv.mode === "development" && { exclude: /node_modules/ },
+        }, {
+            test: /\.yaml$/,
+            use: "yaml-loader",
+            type: "json",
+        }],
     },
 
     plugins: [
