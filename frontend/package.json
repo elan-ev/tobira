@@ -34,6 +34,7 @@
     "@fortawesome/free-regular-svg-icons": "^5.14.0",
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
     "@fortawesome/react-fontawesome": "^0.1.11",
+    "@svgr/webpack": "^5.4.0",
     "@types/react-router-dom": "^5.1.5",
     "babel-loader": "^8.1.0",
     "babel-plugin-relay": "^10.0.1",
