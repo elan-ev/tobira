@@ -5,16 +5,17 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import enTranslations from "./locales/en.yaml";
 import deTranslations from "./locales/de.yaml";
 
-const resources = {
+export const languages = {
     en: { translation: enTranslations as ResourceLanguage },
     de: { translation: deTranslations as ResourceLanguage },
 };
 
+// TODO: wait for `init` to complete before rendering?
 void i18n
     .use(initReactI18next)
     .use(LanguageDetector)
     .init({
-        resources,
+        resources: languages,
         fallbackLng: "en",
         interpolation: {
             escapeValue: false,

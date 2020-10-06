@@ -43,6 +43,7 @@
     "html-webpack-plugin": "^4.3.0",
     "i18next": "^19.7.0",
     "i18next-browser-languagedetector": "^6.0.1",
+    "ionicons": "^5.2.1",
     "raw-loader": "^4.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",

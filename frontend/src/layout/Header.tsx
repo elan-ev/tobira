@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { languages } from "../i18n";
+import LanguageIcon from "ionicons/dist/svg/language.svg";
 
 
 const HEIGHT = 60;
@@ -58,9 +60,77 @@ const Search: React.FC = () => {
     );
 };
 
-const Menu: React.FC = () => (
-    <div>
-        Not logged in
-        <FontAwesomeIcon css={{ marginLeft: 4 }} icon={faCaretDown} />
-    </div>
-);
+const Menu: React.FC = () => {
+    const { t, i18n } = useTranslation();
+
+    type MenuState = "closed" | "language";
+    const [menuState, setMenuState] = useState<MenuState>("closed");
+    const toggleMenu = (state: MenuState) => {
+        setMenuState(menuState === state ? "closed" : state);
+    };
+
+    const menuContent = (() => {
+        switch (menuState) {
+            case "closed": return null;
+            case "language": return (
+                <ul css={{
+                    width: "100%",
+                    listStyle: "none",
+                    margin: 0,
+                    padding: 0,
+                }}>
+                    {Object.keys(languages).map(lng => (
+                        <li
+                            onClick={() => i18n.changeLanguage(lng)}
+                            key={lng}
+                            css={{
+                                padding: "4px 8px 4px 16px",
+                                cursor: "pointer",
+                                "&:hover": {
+                                    backgroundColor: "#ddd",
+                                },
+                            }}
+                        >{t("language-name", { lng })}</li>
+                    ))}
+                </ul>
+            );
+            // TODO: extract this helper function and give it a good name.
+            default: return ((x: never) => x)(menuState);
+        }
+    })();
+
+    return (
+        <div css={{ display: "flex", height: "100%", alignItems: "center", position: "relative" }}>
+            <LanguageIcon
+                onClick={() => toggleMenu("language")}
+                title={`${t("language")}: ${t("language-name")}`}
+                css={{
+                    fontSize: 38,
+                    margin: "0 8px",
+                    padding: 6,
+                    borderRadius: 4,
+                    cursor: "pointer",
+                    "&:hover": {
+                        backgroundColor: "#ddd",
+                    },
+                }}
+            />
+            <div>
+                Menu
+                <FontAwesomeIcon css={{ marginLeft: 4 }} icon={faCaretDown} size="lg" />
+            </div>
+            <div css={{
+                position: "absolute",
+                ...menuState === "closed" && { display: "none" },
+                top: "100%",
+                right: 0,
+                width: 180,
+                border: "1px solid #bbb",
+                borderTop: "1px dashed #bbb",
+                borderRight: "none",
+                maxWidth: "100vw",
+                backgroundColor: "white",
+            }}>{menuContent}</div>
+        </div>
+    );
+};

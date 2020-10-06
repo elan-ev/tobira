@@ -28,6 +28,8 @@ module.exports = {
         "padded-blocks": "off",
         "quote-props": "off",
         "no-magic-numbers": "off",
+        "max-lines-per-function": "off",
+        "default-case": "off",
         // `== null` is actually a useful check for `null` and `undefined` at the same time
         "no-eq-null": "off",
         "eqeqeq": ["error", "always", { null: "ignore" }],
@@ -113,6 +115,8 @@ module.exports = {
             "@typescript-eslint/typedef": "off",
             "@typescript-eslint/prefer-readonly-parameter-types": "off",
             "@typescript-eslint/no-magic-numbers": "off",
+            "@typescript-eslint/explicit-function-return-type": "off",
+            "@typescript-eslint/promise-function-async": "off",
             // The rationale these two/three are based on is mostly out of date
             "@typescript-eslint/prefer-interface": "off",
             "@typescript-eslint/no-type-alias": "off",

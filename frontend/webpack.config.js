@@ -33,7 +33,7 @@ module.exports = (_env, argv) => ({
             loader: "yaml-loader",
             type: "json",
         }, {
-            test: /\.svg$/,
+            test: /\.svg$/u,
             use: [{
                 loader: "@svgr/webpack",
                 options: {
