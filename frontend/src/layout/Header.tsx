@@ -37,22 +37,26 @@ const Logo: React.FC = () => (
 
 const SEARCH_HEIGHT = 35;
 
-const Search: React.FC = () => (
-    <input
-        type="text"
-        placeholder="Search"
-        css={{
-            flex: "1 1 0px",
-            margin: "0 16px",
-            minWidth: 50,
-            maxWidth: 280,
-            height: SEARCH_HEIGHT,
-            borderRadius: SEARCH_HEIGHT / 2,
-            border: "1.5px solid #ccc",
-            padding: `0 ${SEARCH_HEIGHT / 2}px`,
-        }}
-    />
-);
+const Search: React.FC = () => {
+    const { t } = useTranslation();
+
+    return (
+        <input
+            type="text"
+            placeholder={t("search")}
+            css={{
+                flex: "1 1 0px",
+                margin: "0 8px",
+                minWidth: 50,
+                maxWidth: 280,
+                height: SEARCH_HEIGHT,
+                borderRadius: SEARCH_HEIGHT / 2,
+                border: "1.5px solid #ccc",
+                padding: `0 ${SEARCH_HEIGHT / 2}px`,
+            }}
+        />
+    );
+};
 
 const Menu: React.FC = () => (
     <div>
