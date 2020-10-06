@@ -21,6 +21,10 @@ module.exports = (_env, argv) => ({
             test: /\.(ts|js)x?$/,
             loader: "babel-loader",
             ... argv.mode === "development" && { exclude: /node_modules/ },
+        }, {
+            test: /\.yaml$/,
+            use: "yaml-loader",
+            type: "json",
         }],
     },
 
