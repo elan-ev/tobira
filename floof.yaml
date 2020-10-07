@@ -1,6 +1,6 @@
 default:
   - command:
-      run: cargo run --bin export_schema -- ../frontend/build/schema.graphql
+      run: cargo run --bin export-schema -- ../frontend/build/schema.graphql
       workdir: backend
   - concurrently:
     - http:
@@ -10,16 +10,20 @@ default:
 
 backend:
   - set-workdir: backend
-  - watch:
-      paths:
-        - Cargo.toml
-        - Cargo.lock
-        - src/
-      run:
-        # TODO: We only need to reexport schema if something in `src/api/` changed
-        - on-change: cargo run --bin export_schema -- ../frontend/build/schema.graphql
-        - reload:
-        - cargo run
+  - concurrently:
+    - watch:
+        paths:
+          - api
+        run:
+          - on-change: cargo run --bin export-schema -- ../frontend/build/schema.graphql
+    - watch:
+        paths:
+          - Cargo.lock
+          - api/
+          - server/
+        run:
+          - reload:
+          - cargo run
 
 frontend:
   - set-workdir: frontend

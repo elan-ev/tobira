@@ -3,8 +3,7 @@
 use anyhow::{Context, Result};
 use log::{info, trace};
 
-
-mod api;
+pub(crate) use tobira_api as api;
 mod config;
 mod db;
 mod http;

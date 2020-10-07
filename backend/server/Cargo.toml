@@ -1,0 +1,35 @@
+[package]
+name = "tobira"
+version = "0.1.0"
+authors = [
+    "The Opencast project",
+    "Julian Kniephoff <kniephoff@elan-ev.de>",
+    "Lars Kiesow <lkiesow@uos.de>",
+    "Lukas Kalbertodt <kalbertodt@elan-ev.de>",
+]
+edition = "2018"
+publish = false
+description = "Backend of the Tobira video portal for Opencast"
+
+default-run = "tobira"
+
+[dependencies]
+anyhow = "1"
+deadpool-postgres = { version = "0.5", default-features = false }
+hyper = "0.13"
+log = "0.4"
+mime_guess = "2"
+pretty_env_logger = "0.4"
+rust-embed = "5.5"
+serde = { version = "1", features = ["derive"] }
+tobira-api = { path = "../api" }
+tokio = { version = "0.2", features = ["rt-threaded", "macros"] }
+tokio-postgres = "0.5"
+toml = "0.5"
+
+# These currently use a specific commit from the git repository. The lastest
+# released version is still completely sync and based on old dependencies. To
+# avoid having a difficult upgrade of the whole stack later, we already use this
+# newer version, even though it's not released yet. As soon as it is released,
+# we will use that release instead.
+juniper_hyper = { git = "https://github.com/graphql-rust/juniper.git", rev = "5b9c611" }

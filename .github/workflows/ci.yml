@@ -43,10 +43,10 @@ jobs:
     # The actual building and testing!
     - name: Build backend API and schema exporter
       working-directory: backend
-      run: cargo build --bin export_schema
+      run: cargo build --bin export-schema
     - name: Export API schema
       working-directory: backend
-      run: cargo run --bin export_schema -- ../frontend/build/schema.graphql
+      run: cargo run --bin export-schema -- ../frontend/build/schema.graphql
 
     - name: Installing frontend dependencies (npm ci)
       working-directory: frontend

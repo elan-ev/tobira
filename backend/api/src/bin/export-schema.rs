@@ -4,8 +4,7 @@
 use anyhow::Result;
 use std::path::Path;
 
-#[path = "../api/mod.rs"]
-mod api;
+use tobira_api as api;
 
 fn main() -> Result<()> {
     let schema = api::root_node().as_schema_language();
