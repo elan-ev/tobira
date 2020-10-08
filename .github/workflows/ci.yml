@@ -59,10 +59,13 @@ jobs:
 
     - name: Build backend
       working-directory: backend
-      run: cargo build --all-targets
+      run: cargo build
     - name: Test backend
       working-directory: backend
       run: cargo test
     - name: Generate documenation for backend
       working-directory: backend
       run: cargo doc --no-deps
+    - name: Make sure `schema.graphql` is up to date
+      working-directory: backend
+      run: cargo run --bin export-schema | diff -u --color=always - ../frontend/src/schema.graphql

@@ -22,7 +22,7 @@ fn main() -> Result<()> {
         }
         std::fs::write(target, schema)?;
     } else {
-        println!("{}", schema);
+        print!("{}", schema);
     }
 
     Ok(())
