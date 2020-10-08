@@ -134,6 +134,13 @@ const INDEX_FILE: &str = "index.html";
 
 impl Assets {
     fn startup_check() -> Result<()> {
+        // If we are in debug mode, the files are not embedded, but loaded on
+        // demand. And it's quite likely that not all files are ready when
+        // starting this server. So we just skip the initial check.
+        if cfg!(debug_assertions) {
+            return Ok(());
+        }
+
         if Self::get(INDEX_FILE).is_none() {
             bail!("'index.html' is missing from the assets");
         }
