@@ -1,6 +1,6 @@
 //! Database related things.
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use deadpool_postgres::{Config as PoolConfig, Pool};
 use log::{debug, info, trace};
 use tokio_postgres::NoTls;
@@ -33,10 +33,17 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
     info!("Created database pool");
 
     // Test the connection by executing a simple query.
-    pool.get().await?.execute("SELECT 1", &[]).await
+    let connection = pool.get().await
+        .context("failed to get DB connection")?;
+    connection.execute("SELECT 1", &[]).await
         .context("failed to execute DB test query")?;
-    pool.get().await?.execute("SELECT * from realms where id = 0", &[]).await
-        .context("no root realm found")?;
+    let n_roots = connection.execute("SELECT * from realms where id = 0", &[]).await
+        .context("failed to check")?;
+    if n_roots < 1 {
+        bail!("no root realm found");
+    } else if n_roots > 1 {
+        bail!("more than one root realm found");
+    }
     debug!("Successfully tested database connection with test query");
 
     Ok(pool)
