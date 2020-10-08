@@ -5,14 +5,14 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 
 
 type Props = {
-    path: string[],
+    path: string[];
 };
 
 export const Realm: React.FC<Props> = ({ path }) => {
     const isRoot = path.length === 0;
     const ids = resolvePath(path);
     if (ids == null) {
-        // TODO: that should obviously handled in a better way
+        // TODO: that should obviously be handled in a better way
         return <b>Realm path not found :(</b>;
     }
 
@@ -23,7 +23,7 @@ export const Realm: React.FC<Props> = ({ path }) => {
     const breadcrumbs = [];
     let tmpPath = "/r";
     for (const id of ids.slice(1)) {
-        tmpPath += "/" + REALMS[id].path;
+        tmpPath += `/${REALMS[id].path}`;
         breadcrumbs.push({
             label: REALMS[id].name,
             href: tmpPath,
@@ -36,7 +36,7 @@ export const Realm: React.FC<Props> = ({ path }) => {
         <ul>
             {REALMS[realmId].children.map(id => (
                 <li key={id}>
-                    <Link to={"/r/" + path.concat(REALMS[id].path).join("/") }>
+                    <Link to={`/r/${path.concat(REALMS[id].path).join("/")}`}>
                         {REALMS[id].name}
                     </Link>
                 </li>
@@ -61,7 +61,7 @@ const resolvePath = (path: string[]): number[] | null => {
     for (const segment of path) {
         const lastId = ids[ids.length - 1];
         const next = REALMS[lastId].children.find(child => REALMS[child].path === segment);
-        if (!next) {
+        if (next === undefined) {
             return null;
         }
         ids.push(next);
@@ -71,10 +71,10 @@ const resolvePath = (path: string[]): number[] | null => {
 };
 
 type Realm = {
-    path: string,
-    name: string,
-    parent: number,
-    children: number[],
+    path: string;
+    name: string;
+    parent: number;
+    children: number[];
 };
 
 // Dummy data
@@ -91,6 +91,7 @@ const REALMS: Record<number, Realm> = {
 
     8: { path: "algebra", name: "Linear Algebra I", parent: 4, children: [] },
     9: { path: "analysis", name: "Analysis", parent: 4, children: [] },
+    // eslint-disable-next-line max-len
     10: { path: "single-variable-calculus", name: "Single Variable Calculus", parent: 4, children: [] },
     11: { path: "probability", name: "Probability", parent: 4, children: [] },
 };

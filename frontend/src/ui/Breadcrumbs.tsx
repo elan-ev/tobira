@@ -6,13 +6,13 @@ import { useTranslation } from "react-i18next";
 
 
 type Props = {
-    path: Segment[],
+    path: Segment[];
 };
 
 type Segment = {
-    label: string,
-    href: string,
-}
+    label: string;
+    href: string;
+};
 
 export const Breadcrumbs: React.FC<Props> = ({ path }) => {
     const { t } = useTranslation();
@@ -20,7 +20,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => {
     return (
         <nav aria-label="breadcrumbs" css={{ marginBottom: 16 }}>
             <ol css={{ listStyle: "none", padding: 0, margin: 0 }}>
-                <Segment target="/" first active={path.length == 0}>
+                <Segment target="/" first active={path.length === 0}>
                     <FontAwesomeIcon title={t("home")} icon={faHome} />
                 </Segment>
                 {path.map((segment, i) => (
@@ -34,9 +34,9 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => {
 };
 
 type SegmentProps = {
-    target: string,
-    active: boolean,
-    first?: boolean,
+    target: string;
+    active: boolean;
+    first?: boolean;
 };
 
 const Segment: React.FC<SegmentProps> = ({ target, active, first = false, children }) => (

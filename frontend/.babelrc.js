@@ -1,4 +1,6 @@
-const package = require("./package.json");
+"use strict";
+
+const manifest = require("./package.json");
 
 module.exports = {
     plugins: [
@@ -6,9 +8,10 @@ module.exports = {
     ],
     presets: [
         ["@babel/preset-env", {
-            // Uncomment to see which transformations will be run during the build
-            //debug: true,
-            targets: package.browserslist,
+            // Set to `true` to show which transforms will be run
+            // during the build
+            debug: false,
+            targets: manifest.browserslist,
         }],
         "@babel/preset-typescript",
         "@babel/preset-react",

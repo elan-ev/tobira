@@ -6,29 +6,28 @@ import { Link } from "react-router-dom";
 
 const HEIGHT = 60;
 
-export const Header: React.FC = () => {
-    return (
-        <div css={{
-            height: HEIGHT,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            backgroundColor: "white",
-            borderBottom: "1px solid #bbb",
-            padding: "0 8px",
-        }}>
-            <Logo />
-            <Search />
-            <Menu />
-        </div>
-    );
-};
+export const Header: React.FC = () => (
+    <div css={{
+        height: HEIGHT,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: "white",
+        borderBottom: "1px solid #bbb",
+        padding: "0 8px",
+    }}>
+        <Logo />
+        <Search />
+        <Menu />
+    </div>
+);
 
 const Logo: React.FC = () => (
     <Link to="/" css={{ height: "100%", flex: "0 0 auto" }}>
-        <picture
-            css={{ height: "100%", "& > *": { height: "100%", padding: "4px 0" } }}
-        >
+        <picture css={{
+            height: "100%",
+            "& > *": { height: "100%", padding: "4px 0" },
+        }}>
             <source media="(min-width: 450px)" srcSet="/assets/static/logo-large.svg" />
             <img src="/assets/static/logo-small.svg" />
         </picture>
