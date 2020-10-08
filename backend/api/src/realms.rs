@@ -1,10 +1,9 @@
-use std::collections::HashMap;
+use deadpool_postgres::Pool;
 use futures::{stream::TryStreamExt, TryStream};
-
 use juniper::graphql_object;
+use std::collections::HashMap;
 
 use super::Context;
-use deadpool_postgres::Pool;
 
 
 pub(super) type Id = i32;
@@ -34,13 +33,13 @@ impl Realm {
     }
 
     fn children(&self, context: &Context) -> Vec<&Realm> {
-        if let Some(children) = context.realm_tree.children.get(&self.id) {
-            children.iter().map(
-                |child_id| &context.realm_tree.realms[&child_id],
-            ).collect()
-        } else {
-            vec![]
-        }
+        context.realm_tree.children.get(&self.id)
+            .map(|children| {
+                children.iter()
+                    .map(|child_id| &context.realm_tree.realms[&child_id])
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 }
 
@@ -69,10 +68,7 @@ impl Tree {
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
         let realms = Self::raw_from_db(db).await?
-            .map_ok(|realm| (
-                realm.id,
-                realm,
-            ))
+            .map_ok(|realm| (realm.id, realm))
             .try_collect::<HashMap<_, _>>().await?;
 
         // With this, and the `parent` member of the `Realm`,
