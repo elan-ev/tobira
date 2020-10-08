@@ -1,7 +1,4 @@
 default:
-  - command:
-      run: cargo run --bin export-schema -- ../frontend/build/schema.graphql
-      workdir: backend
   - concurrently:
     - http:
         proxy: 127.0.0.1:3080
@@ -15,7 +12,7 @@ backend:
         paths:
           - api
         run:
-          - on-change: cargo run --bin export-schema -- ../frontend/build/schema.graphql
+          - on-change: cargo run --bin export-schema -- ../frontend/src/schema.graphql
     - watch:
         paths:
           - Cargo.lock
@@ -47,7 +44,7 @@ frontend:
 # Creating a production build
 build:
   - command:
-      run: cargo run --release --bin export_schema -- ../frontend/build/schema.graphql
+      run: cargo run --release --bin export-schema -- ../frontend/src/schema.graphql
       workdir: backend
   - command:
       run: npx relay-compiler

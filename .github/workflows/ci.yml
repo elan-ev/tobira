@@ -41,13 +41,6 @@ jobs:
         key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
 
     # The actual building and testing!
-    - name: Build backend API and schema exporter
-      working-directory: backend
-      run: cargo build --bin export-schema
-    - name: Export API schema
-      working-directory: backend
-      run: cargo run --bin export-schema -- ../frontend/build/schema.graphql
-
     - name: Installing frontend dependencies (npm ci)
       working-directory: frontend
       run: npm ci

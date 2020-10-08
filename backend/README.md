@@ -16,11 +16,11 @@ cargo run
 You can export the GraphQL schema of the API as a file with this command:
 
 ```rust
-cargo run --bin export_schema -- ../frontend/build/schema.graphql
+cargo run --bin export-schema -- ../frontend/src/schema.graphql
 ```
 
-This puts the generated schema in the output folder of the frontend build
-where it is expected by that. See also [here](../frontend/README.md).
+This puts the generated schema in the correct folder expected by the frontend.
+See also [here](../frontend/README.md).
 
 
 Configuration
