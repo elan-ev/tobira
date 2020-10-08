@@ -750,9 +750,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.4.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b631f7e854af39a1739f401cf34a8a013dfe09eac4fa4dba91e9768bd28168d"
+checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
 
 [[package]]
 name = "opaque-debug"
@@ -1246,18 +1246,28 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "deadpool-postgres",
- "futures",
  "hyper",
- "juniper",
  "juniper_hyper",
  "log",
  "mime_guess",
  "pretty_env_logger",
  "rust-embed",
  "serde",
+ "tobira-api",
  "tokio",
  "tokio-postgres",
  "toml",
+]
+
+[[package]]
+name = "tobira-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "deadpool-postgres",
+ "futures",
+ "juniper",
+ "log",
 ]
 
 [[package]]

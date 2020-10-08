@@ -127,7 +127,7 @@ type ResponseFuture = <RootService as Service<Request<Body>>>::Future;
 
 /// These are all static files we serve, including JS, fonts and images.
 #[derive(rust_embed::RustEmbed)]
-#[folder = "../frontend/build"]
+#[folder = "../../frontend/build"]
 struct Assets;
 
 const INDEX_FILE: &str = "index.html";
