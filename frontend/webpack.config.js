@@ -20,12 +20,17 @@ module.exports = (_env, argv) => ({
 
     module: {
         rules: [{
-            test: /\.(ts|js)x?$/u,
+            test: /\.[jt]sx?$/u,
             loader: "babel-loader",
-            ... argv.mode === "development" && { exclude: /node_modules/u },
+            include: [
+                APP_PATH,
+                ...argv.mode === "development"
+                    ? []
+                    : [path.join(__dirname, "node_modules")],
+            ],
         }, {
             test: /\.yaml$/u,
-            use: "yaml-loader",
+            loader: "yaml-loader",
             type: "json",
         }],
     },
