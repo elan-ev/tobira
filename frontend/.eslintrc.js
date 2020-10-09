@@ -1,13 +1,11 @@
 "use strict";
 
-const magicNumberOptions = { ignore: [0, 1, 2] };
 const noUnusedVarsOptions = {
     args: "all",
     argsIgnorePattern: "^_",
     caughtErrors: "all",
     caughtErrorsIgnorePattern: "^_",
 };
-const indentation = 4;
 
 // eslint quote-props: "warn", "consistent-as-needed"
 module.exports = {
@@ -29,6 +27,7 @@ module.exports = {
         "prefer-named-capture-group": "off",
         "padded-blocks": "off",
         "quote-props": "off",
+        "no-magic-numbers": "off",
         // `== null` is actually a useful check for `null` and `undefined` at the same time
         "no-eq-null": "off",
         "eqeqeq": ["error", "always", { null: "ignore" }],
@@ -68,7 +67,7 @@ module.exports = {
         "key-spacing": "warn",
         "brace-style": "warn",
         "rest-spread-spacing": "warn",
-        "indent": ["warn", indentation, { SwitchCase: 1 }],
+        "indent": ["warn", 4, { SwitchCase: 1 }],
         "semi": "warn",
         "no-extra-semi": "warn",
         "semi-spacing": "warn",
@@ -79,7 +78,6 @@ module.exports = {
         "arrow-body-style": "warn",
         "multiline-ternary": ["warn", "always-multiline"],
         "max-len": ["warn", { code: 100 }],
-        "no-magic-numbers": ["warn", magicNumberOptions],
         "implicit-arrow-linebreak": "warn",
         "arrow-parens": ["warn", "as-needed"],
         "dot-location": ["warn", "property"],
@@ -114,6 +112,7 @@ module.exports = {
             "@typescript-eslint/no-use-before-define": "off",
             "@typescript-eslint/typedef": "off",
             "@typescript-eslint/prefer-readonly-parameter-types": "off",
+            "@typescript-eslint/no-magic-numbers": "off",
             // The rationale these two/three are based on is mostly out of date
             "@typescript-eslint/prefer-interface": "off",
             "@typescript-eslint/no-type-alias": "off",
@@ -122,7 +121,6 @@ module.exports = {
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],
             "@typescript-eslint/no-extra-parens": ["warn", "all", { ignoreJSX: "all" }],
-            "@typescript-eslint/no-magic-numbers": ["warn", magicNumberOptions],
             "@typescript-eslint/no-unused-vars": ["warn", noUnusedVarsOptions],
             // This checks some more things than `no-unused-vars`,
             // but is less configurable.
@@ -143,7 +141,6 @@ module.exports = {
             "semi": "off",
             "no-unused-vars": "off",
             "no-extra-parens": "off",
-            "no-magic-numbers": "off",
         },
         settings: {
             react: {
