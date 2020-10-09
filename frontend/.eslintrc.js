@@ -7,6 +7,8 @@ const noUnusedVarsOptions = {
     caughtErrors: "all",
     caughtErrorsIgnorePattern: "^_",
 };
+const indentation = 4;
+const indentOptions = [indentation, { SwitchCase: 1 }];
 
 // eslint quote-props: "warn", "consistent-as-needed"
 module.exports = {
@@ -27,7 +29,7 @@ module.exports = {
         "sort-imports": "off",
         "prefer-named-capture-group": "off",
         "padded-blocks": "off",
-        "quote-props": ["off"],
+        "quote-props": "off",
         // `== null` is actually a useful check for `null` and `undefined` at the same time
         "no-eq-null": "off",
         "eqeqeq": ["error", "always", { null: "ignore" }],
@@ -66,8 +68,8 @@ module.exports = {
         "array-element-newline": ["warn", "consistent"],
         "key-spacing": "warn",
         "brace-style": "warn",
-        "rest-spread-spacing": ["warn", "always"],
-        "indent": "warn",
+        "rest-spread-spacing": "warn",
+        "indent": ["warn", ...indentOptions],
         "semi": "warn",
         "no-extra-semi": "warn",
         "semi-spacing": "warn",
@@ -84,6 +86,7 @@ module.exports = {
         "dot-location": ["warn", "property"],
         "dot-notation": "warn",
         "no-tabs": "warn",
+        "no-extra-parens": "warn",
         // Unused things should also only warn
         "no-unused-vars": ["warn", noUnusedVarsOptions],
     },
@@ -128,7 +131,7 @@ module.exports = {
             // in `tsconfig.json`.
             "@typescript-eslint/no-unused-vars-experimental": "warn",
             "@typescript-eslint/semi": "warn",
-            "@typescript-eslint/indent": "warn",
+            "@typescript-eslint/indent": ["warn", ...indentOptions],
             "@typescript-eslint/naming-convention": ["warn", {
                 selector: "variable",
                 types: ["function"],
