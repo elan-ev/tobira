@@ -8,7 +8,6 @@ const noUnusedVarsOptions = {
     caughtErrorsIgnorePattern: "^_",
 };
 const indentation = 4;
-const indentOptions = [indentation, { SwitchCase: 1 }];
 
 // eslint quote-props: "warn", "consistent-as-needed"
 module.exports = {
@@ -69,7 +68,7 @@ module.exports = {
         "key-spacing": "warn",
         "brace-style": "warn",
         "rest-spread-spacing": "warn",
-        "indent": ["warn", ...indentOptions],
+        "indent": ["warn", indentation, { SwitchCase: 1 }],
         "semi": "warn",
         "no-extra-semi": "warn",
         "semi-spacing": "warn",
@@ -131,7 +130,7 @@ module.exports = {
             // in `tsconfig.json`.
             "@typescript-eslint/no-unused-vars-experimental": "warn",
             "@typescript-eslint/semi": "warn",
-            "@typescript-eslint/indent": ["warn", ...indentOptions],
+            "@typescript-eslint/indent": "warn",
             "@typescript-eslint/naming-convention": ["warn", {
                 selector: "variable",
                 types: ["function"],
