@@ -30,6 +30,7 @@ module.exports = {
         "no-magic-numbers": "off",
         "max-lines-per-function": "off",
         "default-case": "off",
+        "no-console": "off",
         "func-style": "off",
         "space-before-function-paren": ["warn", {
             "anonymous": "always",
@@ -116,6 +117,7 @@ module.exports = {
             // Turn off some intrusive rules
             "react/prop-types": "off",
             "react/react-in-jsx-scope": "off",
+            "react/display-name": "off",
             "@typescript-eslint/no-explicit-any": "off",
             "@typescript-eslint/no-use-before-define": "off",
             "@typescript-eslint/typedef": "off",

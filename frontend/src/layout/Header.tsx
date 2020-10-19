@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
+import { faCaretDown, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageIcon from "ionicons/dist/svg/language.svg";
 
 import { languages } from "../i18n";
-import { assertNever } from "../util/err";
+import { match } from "../util";
 
 
 const HEIGHT = 60;
@@ -63,42 +63,13 @@ const Search: React.FC = () => {
 };
 
 const Menu: React.FC = () => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
     type MenuState = "closed" | "language";
     const [menuState, setMenuState] = useState<MenuState>("closed");
     const toggleMenu = (state: MenuState) => {
         setMenuState(menuState === state ? "closed" : state);
     };
-
-    const menuContent = (() => {
-        switch (menuState) {
-            case "closed": return null;
-            case "language": return (
-                <ul css={{
-                    width: "100%",
-                    listStyle: "none",
-                    margin: 0,
-                    padding: 0,
-                }}>
-                    {Object.keys(languages).map(lng => (
-                        <li
-                            onClick={() => i18n.changeLanguage(lng)}
-                            key={lng}
-                            css={{
-                                padding: "4px 8px 4px 16px",
-                                cursor: "pointer",
-                                "&:hover": {
-                                    backgroundColor: "#ddd",
-                                },
-                            }}
-                        >{t("language-name", { lng })}</li>
-                    ))}
-                </ul>
-            );
-            default: return assertNever(menuState);
-        }
-    })();
 
     return (
         <div css={{ display: "flex", height: "100%", alignItems: "center", position: "relative" }}>
@@ -132,7 +103,44 @@ const Menu: React.FC = () => {
                 borderRight: "none",
                 maxWidth: "100vw",
                 backgroundColor: "white",
-            }}>{menuContent}</div>
+            }}>
+                {match(menuState, {
+                    "closed": () => null,
+                    "language": () => <LanguageList />,
+                })}
+            </div>
         </div>
+    );
+};
+
+const LanguageList = () => {
+    const { t, i18n } = useTranslation();
+
+    return (
+        <ul css={{
+            width: "100%",
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+        }}>
+            {Object.keys(languages).map(lng => (
+                <li
+                    onClick={() => i18n.changeLanguage(lng)}
+                    key={lng}
+                    css={{
+                        padding: "4px 8px 4px 12px",
+                        cursor: "pointer",
+                        "&:hover": {
+                            backgroundColor: "#ddd",
+                        },
+                    }}
+                >
+                    <div className="fa-fw" css={{ display: "inline-block", marginRight: 8 }}>
+                        {lng === i18n.language && <FontAwesomeIcon icon={faCheck} fixedWidth />}
+                    </div>
+                    {t("language-name", { lng })}
+                </li>
+            ))}
+        </ul>
     );
 };
