@@ -4,6 +4,6 @@ declare module "*.yaml" {
 }
 
 declare module "*.svg" {
-    const content: any;
-    export default content;
+    const Component: React.FC<React.SVGProps<SVGSVGElement>>;
+    export default Component;
 }

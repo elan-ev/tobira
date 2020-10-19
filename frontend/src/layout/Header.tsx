@@ -101,20 +101,21 @@ const Menu: React.FC = () => {
 
     return (
         <div css={{ display: "flex", height: "100%", alignItems: "center", position: "relative" }}>
-            <LanguageIcon
-                onClick={() => toggleMenu("language")}
-                title={`${t("language")}: ${t("language-name")}`}
-                css={{
-                    fontSize: 38,
-                    margin: "0 8px",
-                    padding: 6,
-                    borderRadius: 4,
-                    cursor: "pointer",
-                    "&:hover": {
-                        backgroundColor: "#ddd",
-                    },
-                }}
-            />
+            <div title={`${t("language")}: ${t("language-name")}`}>
+                <LanguageIcon
+                    onClick={() => toggleMenu("language")}
+                    css={{
+                        fontSize: 38,
+                        margin: "0 8px",
+                        padding: 6,
+                        borderRadius: 4,
+                        cursor: "pointer",
+                        "&:hover": {
+                            backgroundColor: "#ddd",
+                        },
+                    }}
+                />
+            </div>
             <div>
                 Menu
                 <FontAwesomeIcon css={{ marginLeft: 4 }} icon={faCaretDown} size="lg" />
