@@ -1,6 +1,10 @@
 use juniper::graphql_object;
 
-use super::{Context, realms::{self, Realm}};
+use crate::{
+    Context, Id,
+    realms::{self, Realm}
+};
+
 
 /// The root query object.
 pub struct Query;
@@ -17,10 +21,10 @@ impl Query {
 
     #[graphql(
         arguments(
-            id(default = 0)
+            id(default = Id::new(realms::KIND_PREFIX, 0))
         )
     )]
-    async fn realm(id: realms::Id, context: &Context) -> Option<&Realm> {
+    async fn realm(id: Id, context: &Context) -> Option<&Realm> {
         context.realm_tree.get_node(&id)
     }
 }

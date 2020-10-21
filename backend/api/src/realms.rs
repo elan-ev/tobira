@@ -3,40 +3,40 @@ use futures::{stream::TryStreamExt, TryStream};
 use juniper::graphql_object;
 use std::collections::HashMap;
 
-use super::Context;
+use crate::{Context, Id, Key};
 
 
-pub(super) type Id = i32;
+pub const KIND_PREFIX: &[u8; 2] = b"re";
 
 pub(super) struct Realm {
-    id: Id,
+    key: Key,
     name: String,
-    parent_id: Id,
+    parent_key: Key,
 }
 
 #[graphql_object(Context = Context)]
 impl Realm {
-    fn id(&self) -> &Id {
-        &self.id
+    fn id(&self) -> Id {
+        Id::new(KIND_PREFIX, self.key)
     }
 
     fn name(&self) -> &str {
         &self.name
     }
 
-    fn parent_id(&self) -> &Id {
-        &self.parent_id
+    fn parent_id(&self) -> Id {
+        Id::new(KIND_PREFIX, self.parent_key)
     }
 
     fn parent(&self, context: &Context) -> &Realm {
-        &context.realm_tree.realms[&self.parent_id]
+        &context.realm_tree.realms[&self.parent_key]
     }
 
     fn children(&self, context: &Context) -> Vec<&Realm> {
-        context.realm_tree.children.get(&self.id)
+        context.realm_tree.children.get(&self.key)
             .map(|children| {
                 children.iter()
-                    .map(|child_id| &context.realm_tree.realms[&child_id])
+                    .map(|child_key| &context.realm_tree.realms[&child_key])
                     .collect()
             })
             .unwrap_or_default()
@@ -44,8 +44,8 @@ impl Realm {
 }
 
 pub(super) struct Tree {
-    pub(super) realms: HashMap<Id, Realm>,
-    children: HashMap<Id, Vec<Id>>,
+    pub(super) realms: HashMap<u64, Realm>,
+    children: HashMap<u64, Vec<u64>>,
 }
 
 impl Tree {
@@ -57,10 +57,11 @@ impl Tree {
                 "select id, name, parent from realms",
                 std::iter::empty(),
             ).await?;
+
         Ok(row_stream.map_ok(|row| Realm {
-            id: row.get(0),
+            key: row.get::<_, i64>(0) as u64,
             name: row.get(1),
-            parent_id: row.get(2),
+            parent_key: row.get::<_, i64>(2) as u64,
         }))
     }
 
@@ -68,17 +69,17 @@ impl Tree {
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
         let realms = Self::raw_from_db(db).await?
-            .map_ok(|realm| (realm.id, realm))
+            .map_ok(|realm| (realm.key, realm))
             .try_collect::<HashMap<_, _>>().await?;
 
         // With this, and the `parent` member of the `Realm`,
         // we already have quick access to the data of a realm's parent.
         // To also get to the children quickly we maintain another map.
-        let mut children = HashMap::<_, Vec<_>>::new();
+        let mut children = <HashMap<_, Vec<_>>>::new();
 
-        for Realm { id, parent_id, .. } in realms.values() {
-            if id != parent_id {
-                children.entry(*parent_id).or_default().push(*id);
+        for Realm { key, parent_key, .. } in realms.values() {
+            if key != parent_key {
+                children.entry(*parent_key).or_default().push(*key);
             }
         }
 
@@ -86,6 +87,6 @@ impl Tree {
     }
 
     pub(super) fn get_node(&self, id: &Id) -> Option<&Realm> {
-        self.realms.get(id)
+        self.realms.get(&id.key_for(*KIND_PREFIX)?)
     }
 }

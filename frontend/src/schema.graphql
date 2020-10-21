@@ -6,13 +6,13 @@
 type Query {
   apiVersion: String!
   realms: [Realm!]!
-  realm(id: Int = 0): Realm
+  realm(id: ID = "re0000000000"): Realm
 }
 
 type Realm {
-  id: Int!
+  id: ID!
   name: String!
-  parentId: Int!
+  parentId: ID!
   parent: Realm!
   children: [Realm!]!
 }

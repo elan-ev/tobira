@@ -15,7 +15,7 @@ pub mod subscription;
 pub mod realms;
 mod id;
 
-pub use id::Id;
+pub use id::{Id, Key};
 
 
 /// Creates and returns the API root node.
