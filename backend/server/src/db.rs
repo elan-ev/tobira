@@ -1,6 +1,6 @@
 //! Database related things.
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use deadpool_postgres::{Config as PoolConfig, Pool};
 use log::{debug, info, trace};
 use tokio_postgres::NoTls;
@@ -37,12 +37,39 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
         .context("failed to get DB connection")?;
     connection.execute("SELECT 1", &[]).await
         .context("failed to execute DB test query")?;
+
+    // ensure database version exists
+    if connection.execute("SELECT * from version limit 1", &[]).await.is_err() {
+        info!("Creating table version");
+        connection.execute(
+            "create table version (version int not null)", &[]).await
+            .context("failed to schema for table 'realms'")?;
+    };
+    let n_version = connection.execute("SELECT * from version limit 1", &[]).await
+        .context("failed to check")?;
+    if n_version < 1 {
+        info!("Setting database version");
+        connection.execute("insert into version (version) values (0)", &[]).await
+            .context("failed to set database version")?;
+    }
+
+    // ensure table realms exist
+    if connection.execute("SELECT * from realms limit 1", &[]).await.is_err() {
+        info!("Creating table realms");
+        connection.execute("\
+            create table realms (\
+                id int generated always as identity (start with 0 minvalue 0) primary key,\
+                parent int not null references realms on delete restrict,\
+                name text not null\
+            )", &[]).await
+            .context("failed to schema for table 'realms'")?;
+    };
     let n_roots = connection.execute("SELECT * from realms where id = 0", &[]).await
         .context("failed to check")?;
     if n_roots < 1 {
-        bail!("no root realm found");
-    } else if n_roots > 1 {
-        bail!("more than one root realm found");
+        info!("Inserting root realm");
+        connection.execute("insert into realms (name, parent) values ('root', 0)", &[]).await
+            .context("failed insert root realm")?;
     }
     debug!("Successfully tested database connection with test query");
 
