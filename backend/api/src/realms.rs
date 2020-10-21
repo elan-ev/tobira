@@ -89,4 +89,8 @@ impl Tree {
     pub(super) fn get_node(&self, id: &Id) -> Option<&Realm> {
         self.realms.get(&id.key_for(*KIND_PREFIX)?)
     }
+
+    pub(super) fn root(&self) -> &Realm {
+        self.realms.get(&0).expect("bug: no root realm")
+    }
 }
