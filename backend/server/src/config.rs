@@ -127,7 +127,7 @@ pub struct Db {
 
 impl Db {
     const DEFAULT_USER: &'static str = "tobira";
-    const DEFAULT_PASSWORD: &'static str = "tobira-dev-db-pw";
+    const DEFAULT_PASSWORD: &'static str = "tobira";
     const DEFAULT_HOST: &'static str = "localhost";
     const DEFAULT_PORT: u16 = 5432;
     const DEFAULT_DATABASE: &'static str = "tobira";

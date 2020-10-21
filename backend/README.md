@@ -39,8 +39,8 @@ The backend loads configuration from `config.toml` in the current working direct
 user = "tobira"
 
 # Database password
-# Default: tobira-dev-db-pw
-password = "tobira-dev-db-pw"
+# Default: tobira
+password = "tobira"
 
 # Database host
 # Default: 127.0.0.1

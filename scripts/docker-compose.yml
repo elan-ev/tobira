@@ -10,7 +10,7 @@ services:
     volumes:
       - tobira-dev-postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=tobira-dev-db-pw
+      - POSTGRES_PASSWORD=tobira
       - POSTGRES_USER=tobira
       - POSTGRES_DB=tobira
 
