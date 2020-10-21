@@ -1,40 +1,56 @@
 Tobira Backend
 ==============
 
+GraphQL Schema
+--------------
 
-Building the Tobira Backend
----------------------------
-
-Use [Cargo](https://doc.rust-lang.org/cargo/getting-started/first-steps.html) to download all necessary dependencies and to build the backend.
-
-Build and run the backend:
+Export the GraphQL schema of the API.
+The frontend needs this.
 
 ```sh
-cargo run
-```
-
-You can export the GraphQL schema of the API as a file with this command:
-
-```rust
 cargo run --bin export-schema -- ../frontend/src/schema.graphql
 ```
 
-This puts the generated schema in the correct folder expected by the frontend.
-See also [here](../frontend/README.md).
 
+Building the Backend
+--------------------
+
+Use [Cargo](https://doc.rust-lang.org/cargo/getting-started/first-steps.html) to build the backend.
+This needs the frontend to be built.
+
+```sh
+# build only
+cargo build
+# build and run
+cargo run
+```
 
 Configuration
 -------------
 
-Create `config.toml` in the directory you are running the backend from.
-The file should look like this:
-
+The backend loads configuration from `config.toml` in the current working directory.
 
 ```toml
+# Database configuration
 [db]
+
+# Database user
+# Default: tobira
 user = "tobira"
+
+# Database password
+# Default: tobira-dev-db-pw
 password = "tobira-dev-db-pw"
+
+# Database host
+# Default: 127.0.0.1
 host = "127.0.0.1"
+
+# Database port
+# Default: 5432
 port = 5432
+
+# Database name
+# Default: tobira
 database = "tobira"
 ```
