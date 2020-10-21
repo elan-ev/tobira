@@ -13,6 +13,9 @@ pub mod query;
 pub mod subscription;
 
 pub mod realms;
+mod id;
+
+pub use id::Id;
 
 
 /// Creates and returns the API root node.
