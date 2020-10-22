@@ -6,9 +6,9 @@ use std::collections::HashMap;
 use crate::{Context, Id, Key};
 
 
-pub const KIND_PREFIX: &[u8; 2] = b"re";
+pub(crate) const KIND_PREFIX: &[u8; 2] = b"re";
 
-pub(super) struct Realm {
+pub(crate) struct Realm {
     key: Key,
     name: String,
     parent_key: Key,
@@ -43,13 +43,13 @@ impl Realm {
     }
 }
 
-pub(super) struct Tree {
-    pub(super) realms: HashMap<u64, Realm>,
+pub(crate) struct Tree {
+    pub(crate) realms: HashMap<u64, Realm>,
     children: HashMap<u64, Vec<u64>>,
 }
 
 impl Tree {
-    pub(super) async fn raw_from_db(
+    pub(crate) async fn raw_from_db(
         db: &Pool,
     ) -> anyhow::Result<impl TryStream<Ok = Realm, Error = impl std::error::Error>> {
         let row_stream = db.get().await?
@@ -65,7 +65,7 @@ impl Tree {
         }))
     }
 
-    pub(super) async fn from_db(db: &Pool) -> anyhow::Result<Self> {
+    pub(crate) async fn from_db(db: &Pool) -> anyhow::Result<Self> {
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
         let realms = Self::raw_from_db(db).await?
@@ -86,11 +86,11 @@ impl Tree {
         Ok(Tree { realms, children })
     }
 
-    pub(super) fn get_node(&self, id: &Id) -> Option<&Realm> {
+    pub(crate) fn get_node(&self, id: &Id) -> Option<&Realm> {
         self.realms.get(&id.key_for(*KIND_PREFIX)?)
     }
 
-    pub(super) fn root(&self) -> &Realm {
+    pub(crate) fn root(&self) -> &Realm {
         self.realms.get(&0).expect("bug: no root realm")
     }
 }

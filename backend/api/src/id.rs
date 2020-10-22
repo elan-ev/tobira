@@ -10,7 +10,7 @@ use std::convert::TryInto;
 ///
 /// Each key is encoded as 12 byte ASCII string.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Id {
+pub(crate) struct Id {
     /// The kind of node. Each different "thing" in our API has a different
     /// static prefix. For example, realms have the prefix `b"re"`. All IDs
     /// referring to a realm starts with `re`.
@@ -24,13 +24,13 @@ pub struct Id {
 }
 
 /// The type of key we are using.
-pub type Key = u64;
+pub(crate) type Key = u64;
 
 
 impl Id {
     /// Creates a new ID. The `kind` must only consist of alphanumeric ASCII
     /// characters.
-    pub fn new(kind: &'static [u8; 2], key: Key) -> Self {
+    pub(crate) fn new(kind: &'static [u8; 2], key: Key) -> Self {
         assert!(kind.iter().all(|b| b.is_ascii_alphanumeric()));
 
         Self {
