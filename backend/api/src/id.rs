@@ -28,6 +28,8 @@ pub(crate) type Key = u64;
 
 
 impl Id {
+    const INVALID_KIND: [u8; 2] = *b"!!";
+
     /// Creates a new ID. The `kind` must only consist of alphanumeric ASCII
     /// characters.
     pub(crate) fn new(kind: &'static [u8; 2], key: Key) -> Self {
@@ -36,6 +38,17 @@ impl Id {
         Self {
             kind: *kind,
             key,
+        }
+    }
+
+    /// Returns an ID that refers to no object at all. This is used to signal an
+    /// ID that cannot be parsed. We treat malformed IDs in this way to make IDs
+    /// truly opaque: that way, we just return "no node with that ID" instead of
+    /// distinguishing between "no node found" and "invalid ID syntax".
+    fn invalid() -> Self {
+        Self {
+            kind: Self::INVALID_KIND,
+            key: 0,
         }
     }
 
@@ -76,17 +89,22 @@ where
 
     fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
         let s = value.as_string_value()?;
-        if s.len() != 12 {
-            return None;
-        }
 
-        let s = s.as_bytes();
-        let kind = [s[0], s[1]];
-        let hi = decode_base85(s[2..7].try_into().unwrap())?;
-        let lo = decode_base85(s[7..12].try_into().unwrap())?;
-        let key = ((hi as u64) << 32) | lo as u64;
+        let out = (|| -> Option<Self> {
+            if s.len() != 12 {
+                return None;
+            }
 
-        Some(Self { kind, key })
+            let s = s.as_bytes();
+            let kind = [s[0], s[1]];
+            let hi = decode_base85(s[2..7].try_into().unwrap())?;
+            let lo = decode_base85(s[7..12].try_into().unwrap())?;
+            let key = ((hi as u64) << 32) | lo as u64;
+
+            Some(Self { kind, key })
+        })();
+
+        Some(out.unwrap_or_else(Self::invalid))
     }
 
     fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
