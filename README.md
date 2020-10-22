@@ -1,6 +1,6 @@
 # Tobira: an Opencast Video Portal
 
-![CI Status (master)](https://github.com/elan-ev/tobira/workflows/CI/badge.svg)
+![CI Status](https://github.com/elan-ev/tobira/workflows/CI/badge.svg)
 ![License](https://img.shields.io/github/license/elan-ev/tobira)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-red)
 
@@ -20,20 +20,15 @@ Tobira consists of two parts:
 
 Make sure you have the following tools installed:
 
-- backend
-    - `rustc`
-    - `cargo`
-- frontend
-    - `node`
-    - `npm`
-- optional
-    - [`floof`](https://github.com/LukasKalbertodt/floof)
+- backend: [`rustc` and `cargo`](https://rustup.rs)
+- frontend: [`node` and `npm`](https://nodejs.org)
+- (optional) build helper: [`floof`](https://github.com/LukasKalbertodt/floof)
 
 
 ### 2. Database
 
 Tobira needs a PostgreSQL database.
-The `scripts` directory contains a container compose file to easily spin one up.
+The `scripts` directory contains a [container compose file](https://docs.docker.com/compose) to easily spin one up.
 
 ```sh
 cd scripts/
@@ -42,6 +37,8 @@ docker-compose up -d
 # using podman
 podman-compose up -d
 ```
+
+Find more information in the [docker compose docs](https://docs.docker.com/compose).
 
 
 ### 3. GraphQL Schema
