@@ -1276,6 +1276,7 @@ dependencies = [
  "log",
  "paste",
  "static_assertions",
+ "tokio-postgres",
 ]
 
 [[package]]

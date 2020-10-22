@@ -14,6 +14,7 @@ pub mod subscription;
 
 mod realms;
 mod id;
+mod util;
 
 pub(crate) use id::{Id, Key};
 

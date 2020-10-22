@@ -3,7 +3,10 @@ use futures::{stream::TryStreamExt, TryStream};
 use juniper::graphql_object;
 use std::collections::HashMap;
 
-use crate::{Context, Id, Key};
+use crate::{
+    Context, Id, Key,
+    util::RowExt,
+};
 
 
 pub(crate) struct Realm {
@@ -57,9 +60,9 @@ impl Tree {
             ).await?;
 
         Ok(row_stream.map_ok(|row| Realm {
-            key: row.get::<_, i64>(0) as u64,
+            key: row.get_key(0),
             name: row.get(1),
-            parent_key: row.get::<_, i64>(2) as u64,
+            parent_key: row.get_key(2),
         }))
     }
 
