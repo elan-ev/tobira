@@ -16,6 +16,8 @@ anyhow = "1"
 deadpool-postgres = { version = "0.5", default-features = false }
 futures = "0.3.1"
 log = "0.4"
+paste = "1"
+static_assertions = "1"
 
 # These currently use a specific commit from the git repository. The lastest
 # released version is still completely sync and based on old dependencies. To

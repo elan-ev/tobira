@@ -1,5 +1,10 @@
+use paste::paste;
+use static_assertions::const_assert;
 use std::convert::TryInto;
 
+
+/// The type of key we are using.
+pub(crate) type Key = u64;
 
 /// An opaque, globally-unique identifier for all "nodes" that the GraphQL API
 /// might return.
@@ -23,23 +28,61 @@ pub(crate) struct Id {
     key: Key,
 }
 
-/// The type of key we are using.
-pub(crate) type Key = u64;
+
+// Macro to safely define a list of "kinds", each with a two alphanumeric ASCII
+// character prefix. This will create a function and a const associated with
+// `Id`.
+macro_rules! define_kinds {
+    ($($name:ident = $val:literal ,)+) => {
+        // Emit an associated const and function.
+        paste!(
+            impl Id {
+                $(
+                    pub(crate) const [<$name:upper _KIND>]: [u8; 2] = *$val;
+
+                    pub(crate) fn $name(key: Key) -> Self {
+                        Self {
+                            kind: Self:: [<$name:upper _KIND>],
+                            key,
+                        }
+                    }
+                )+
+            }
+        );
+
+        // Make sure all kinds are ASCII alphanumeric. Unfortunately, the error
+        // resulting from this is very ugly. But that's still better than no
+        // error at all.
+        $(
+            const_assert!($val[0].is_ascii_alphanumeric());
+            const_assert!($val[1].is_ascii_alphanumeric());
+        )+
+
+        // Make sure that all kind prefixes are different. Creating a dummy enum
+        // is the easiest way I could think of. The error message is not
+        // beautiful, but at least it fails to compile.
+        #[allow(non_camel_case_types)]
+        #[repr(u16)]
+        enum _KindChecker {
+            $( $name = u16::from_ne_bytes(*$val), )+
+        }
+    };
+}
+
+// Define all existing kinds of nodes.
+//
+// If you get a strange errors:
+// - "discriminant value `25970` already exists": you added a duplicate prefix.
+// - "evaluation of constant value failed": you added a prefix that's not
+//   alphanumeric ASCII.
+define_kinds![
+    realm = b"re",
+];
 
 
 impl Id {
+    /// See `invalid`.
     const INVALID_KIND: [u8; 2] = *b"!!";
-
-    /// Creates a new ID. The `kind` must only consist of alphanumeric ASCII
-    /// characters.
-    pub(crate) fn new(kind: &'static [u8; 2], key: Key) -> Self {
-        assert!(kind.iter().all(|b| b.is_ascii_alphanumeric()));
-
-        Self {
-            kind: *kind,
-            key,
-        }
-    }
 
     /// Returns an ID that refers to no object at all. This is used to signal an
     /// ID that cannot be parsed. We treat malformed IDs in this way to make IDs

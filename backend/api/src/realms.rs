@@ -6,8 +6,6 @@ use std::collections::HashMap;
 use crate::{Context, Id, Key};
 
 
-pub(crate) const KIND_PREFIX: &[u8; 2] = b"re";
-
 pub(crate) struct Realm {
     key: Key,
     name: String,
@@ -17,7 +15,7 @@ pub(crate) struct Realm {
 #[graphql_object(Context = Context)]
 impl Realm {
     fn id(&self) -> Id {
-        Id::new(KIND_PREFIX, self.key)
+        Id::realm(self.key)
     }
 
     fn name(&self) -> &str {
@@ -25,7 +23,7 @@ impl Realm {
     }
 
     fn parent_id(&self) -> Id {
-        Id::new(KIND_PREFIX, self.parent_key)
+        Id::realm(self.parent_key)
     }
 
     fn parent(&self, context: &Context) -> &Realm {
@@ -87,7 +85,7 @@ impl Tree {
     }
 
     pub(crate) fn get_node(&self, id: &Id) -> Option<&Realm> {
-        self.realms.get(&id.key_for(*KIND_PREFIX)?)
+        self.realms.get(&id.key_for(Id::REALM_KIND)?)
     }
 
     pub(crate) fn root(&self) -> &Realm {
