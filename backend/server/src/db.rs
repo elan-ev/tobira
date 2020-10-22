@@ -43,9 +43,7 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
     connection.execute(
         "create table if not exists version (version int not null)", &[]).await
         .context("failed to schema for table 'realms'")?;
-    let n_version = connection.execute("SELECT * from version limit 1", &[]).await
-        .context("failed to check")?;
-    if n_version < 1 {
+    if connection.query("SELECT count(*) < 1 from version", &[]).await?[0].get::<_, bool>(0) {
         info!("Setting database version");
         connection.execute("insert into version (version) values (0)", &[]).await
             .context("failed to set database version")?;
@@ -60,9 +58,7 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
             name text not null\
         )", &[]).await
         .context("failed to schema for table 'realms'")?;
-    let n_roots = connection.execute("SELECT count(*) from realms where id = 0", &[]).await
-        .context("failed to check")?;
-    if n_roots < 1 {
+    if connection.query("SELECT count(*) < 1 from realms where id = 0", &[]).await?[0].get::<_, bool>(0) {
         info!("Inserting root realm");
         connection.execute("insert into realms (name, parent) values ('root', 0)", &[]).await
             .context("failed insert root realm")?;
