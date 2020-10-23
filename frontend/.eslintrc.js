@@ -30,6 +30,12 @@ module.exports = {
         "no-magic-numbers": "off",
         "max-lines-per-function": "off",
         "default-case": "off",
+        "func-style": "off",
+        "space-before-function-paren": ["warn", {
+            "anonymous": "always",
+            "named": "never",
+            "asyncArrow": "always",
+        }],
         // `== null` is actually a useful check for `null` and `undefined` at the same time
         "no-eq-null": "off",
         "eqeqeq": ["error", "always", { null: "ignore" }],
@@ -117,6 +123,7 @@ module.exports = {
             "@typescript-eslint/no-magic-numbers": "off",
             "@typescript-eslint/explicit-function-return-type": "off",
             "@typescript-eslint/promise-function-async": "off",
+            "implicit-arrow-linebreak": "off",
             // The rationale these two/three are based on is mostly out of date
             "@typescript-eslint/prefer-interface": "off",
             "@typescript-eslint/no-type-alias": "off",
@@ -145,6 +152,13 @@ module.exports = {
             "semi": "off",
             "no-unused-vars": "off",
             "no-extra-parens": "off",
+
+            // Change strange defaults.
+            "@typescript-eslint/space-before-function-paren": ["warn", {
+                "anonymous": "always",
+                "named": "never",
+                "asyncArrow": "always",
+            }],
         },
         settings: {
             react: {

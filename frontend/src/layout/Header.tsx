@@ -3,8 +3,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { languages } from "../i18n";
 import LanguageIcon from "ionicons/dist/svg/language.svg";
+
+import { languages } from "../i18n";
+import { assertNever } from "../util/err";
 
 
 const HEIGHT = 60;
@@ -94,8 +96,7 @@ const Menu: React.FC = () => {
                     ))}
                 </ul>
             );
-            // TODO: extract this helper function and give it a good name.
-            default: return ((x: never) => x)(menuState);
+            default: return assertNever(menuState);
         }
     })();
 
