@@ -13,7 +13,7 @@ export const Realm: React.FC<Props> = ({ path }) => {
     const ids = resolvePath(path);
     if (ids == null) {
         // TODO: that should obviously be handled in a better way
-        return <b>Realm path not found :(</b>;
+        return <b>{"Realm path not found :("}</b>;
     }
 
     const realmId = ids[ids.length - 1];
