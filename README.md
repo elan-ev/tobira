@@ -1,6 +1,6 @@
 # Tobira: an Opencast Video Portal
 
-![CI Status (master)](https://img.shields.io/github/workflow/status/elan-ev/tobira/CI/master)
+![CI Status](https://github.com/elan-ev/tobira/workflows/CI/badge.svg)
 ![License](https://img.shields.io/github/license/elan-ev/tobira)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-red)
 
@@ -10,51 +10,85 @@ __The project is in its *very* early stages, there is nothing to see here yet.__
 
 Tobira consists of two parts:
 
+- `frontend` contains the web interface written in TypeScript/React.
 - `backend` contains the video portal backend written in Rust which takes care of data persistence and communication to Opencast.
-- `frontend` contains the web interface written in Typescript/React.
 
 
 ## How to build Tobira
 
-### Install Development Dependencies
+### 1. Development Tools
 
-You will need `rustc` and `cargo` to build the Tobira backend.
-To get them, use [`rustup`](https://rustup.rs) or your package manager.
+Make sure you have the following tools installed:
 
-You will need NPM to build the frontend.
+- backend: [`rustc` and `cargo`](https://rustup.rs)
+- frontend: [`node` and `npm`](https://nodejs.org)
+- (optional) build helper: [`floof`](https://github.com/LukasKalbertodt/floof)
 
 
-### Local Database
+### 2. Database
 
-To run Tobira, you need a PostgreSQL database.
-You can easily launch a database using docker-compose:
+Tobira needs a PostgreSQL database.
+The `scripts` directory contains a [container compose file](https://docs.docker.com/compose) to easily spin one up.
 
 ```sh
-cd scripts
+cd scripts/
+# using docker
 docker-compose up -d
+# using podman
+podman-compose up -d
 ```
 
-To shut down the container again:
+Find more information in the [docker compose docs](https://docs.docker.com/compose).
+
+
+### 3. GraphQL Schema
+
+Export the current API's GraphQL schema to be used by the frontend.
+You need to do this whenever the API changes.
+
 ```sh
-cd scripts
-docker-compose down
+cd backend/
+cargo run --bin export-schema -- ../frontend/src/schema.graphql
 ```
 
+### 4. Frontend
 
-### Building
+Use npm to build the TypeScript/React based frontend.
 
-For building a production version of Tobira once, check out these documents:
+```sh
+cd frontend/
+npm ci
+npx relay-compiler
+npm run build:dev
+```
 
-- [Building the backend](backend/README.md)
-- [Building the frontend](frontend/README.md)
+### 5. Backend
 
-If you plan to do development on Tobira, you probably don't want to execute all commands manually each time.
-Instead, you can use [the tool `floof`](https://github.com/LukasKalbertodt/floof) with the configuration file `floof.yaml` provided in this repository.
-This will watch all files, recompile/build whenever a file changes and provide a dev server that automatically reloads the page in your browser.
+Use cargo to build and run the Rust based backend.
 
-Once you installed `floof`, just run `floof` at the root of this repository.
-You might want to modify `floof.yaml` to better fit your development workflows:
+```sh
+cd backend/
+# build only
+cargo build
+# build and run
+cargo run
+```
 
-- Make a copy: `cp floof.yaml floofy.yaml`
-- Tell git to ignore your copy: `echo "/floofy.yaml" >> .git/info/exclude`
-- Run `floof -c floofy.yaml`
+## Auto-Rebuilds
+
+> Make sure to manually build once before trying this!
+
+You can use [`floof`](https://github.com/LukasKalbertodt/floof) to make builds easier.
+This will watch all files, recompile/build changes and provide a development server that automatically reloads Tobira.
+
+```sh
+# run floof
+floof
+# run with configuration file
+floof -c floofy.yaml
+```
+
+To locally modify the workflow:
+
+- Copy the configuration: `cp floof.yaml floofy.yaml`
+- Tell git to ignore your copy: `echo /floofy.yaml >> .git/info/exclude`
