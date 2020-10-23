@@ -108,6 +108,26 @@ impl Id {
     }
 }
 
+impl std::str::FromStr for Id {
+    // TODO: we might want to have more information about the error later, but
+    // the GraphQL API doesn't currently use it anyway.
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() != 12 {
+            return Err(());
+        }
+
+        let s = s.as_bytes();
+        let kind = [s[0], s[1]];
+        let hi = decode_base85(s[2..7].try_into().unwrap()).ok_or(())?;
+        let lo = decode_base85(s[7..12].try_into().unwrap()).ok_or(())?;
+        let key = ((hi as u64) << 32) | lo as u64;
+
+        Ok(Self { kind, key })
+    }
+}
+
 #[juniper::graphql_scalar(
     name = "ID",
     description = "An opaque, globally-unique identifier",
@@ -132,22 +152,7 @@ where
 
     fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
         let s = value.as_string_value()?;
-
-        let out = (|| -> Option<Self> {
-            if s.len() != 12 {
-                return None;
-            }
-
-            let s = s.as_bytes();
-            let kind = [s[0], s[1]];
-            let hi = decode_base85(s[2..7].try_into().unwrap())?;
-            let lo = decode_base85(s[7..12].try_into().unwrap())?;
-            let key = ((hi as u64) << 32) | lo as u64;
-
-            Some(Self { kind, key })
-        })();
-
-        Some(out.unwrap_or_else(Self::invalid))
+        Some(s.parse().unwrap_or(Self::invalid()))
     }
 
     fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
