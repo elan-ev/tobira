@@ -1,6 +1,10 @@
 use juniper::graphql_object;
 
-use super::{Context, realms::{self, Realm}};
+use crate::{
+    Context, Id,
+    realms::Realm,
+};
+
 
 /// The root query object.
 pub struct Query;
@@ -11,16 +15,19 @@ impl Query {
         "0.0"
     }
 
+    /// Returns a flat list of all realms.
     async fn realms(context: &Context) -> Vec<&Realm> {
         context.realm_tree.realms.values().collect()
     }
 
-    #[graphql(
-        arguments(
-            id(default = 0)
-        )
-    )]
-    async fn realm(id: realms::Id, context: &Context) -> Option<&Realm> {
+    /// Returns the realm with the specific ID or `None` if the ID does not
+    /// refer to a realm.
+    async fn realm(id: Id, context: &Context) -> Option<&Realm> {
         context.realm_tree.get_node(&id)
+    }
+
+    /// Returns the root realm.
+    async fn root_realm(context: &Context) -> &Realm {
+        context.realm_tree.root()
     }
 }

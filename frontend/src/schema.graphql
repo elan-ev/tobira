@@ -5,14 +5,21 @@
 
 type Query {
   apiVersion: String!
+  "Returns a flat list of all realms."
   realms: [Realm!]!
-  realm(id: Int = 0): Realm
+  """
+    Returns the realm with the specific ID or `None` if the ID does not
+    refer to a realm.
+  """
+  realm(id: ID!): Realm
+  "Returns the root realm."
+  rootRealm: Realm!
 }
 
 type Realm {
-  id: Int!
+  id: ID!
   name: String!
-  parentId: Int!
+  parentId: ID!
   parent: Realm!
   children: [Realm!]!
 }

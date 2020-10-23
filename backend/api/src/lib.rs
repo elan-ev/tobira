@@ -12,7 +12,11 @@ pub mod mutation;
 pub mod query;
 pub mod subscription;
 
-pub mod realms;
+mod realms;
+mod id;
+mod util;
+
+pub(crate) use id::{Id, Key};
 
 
 /// Creates and returns the API root node.
