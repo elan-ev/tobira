@@ -24,6 +24,7 @@ backend:
 
 frontend:
   - set-workdir: frontend
+  - npm i --no-save
   - watch:
       paths:
         - .babelrc.js
