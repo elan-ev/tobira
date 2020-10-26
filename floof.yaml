@@ -24,6 +24,7 @@ backend:
 
 frontend:
   - set-workdir: frontend
+  - npm i --no-save
   - watch:
       paths:
         - .babelrc.js
@@ -59,3 +60,13 @@ build:
   # TODO: use OS independent operations
   - mkdir -p deploy
   - cp backend/target/release/tobira deploy
+
+clean:
+  - command:
+      run: cargo clean
+      workdir: backend
+  # TODO: use OS independent operations
+  - rm -rf frontend/node_modules
+  - rm -rf frontend/build
+  - rm -rf frontend/src/query-types
+  - rm frontend/tsconfig.tsbuildinfo
