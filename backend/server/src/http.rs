@@ -1,14 +1,17 @@
 //! The HTTP server, handler and routes.
 
 use anyhow::{bail, Result};
+use futures::FutureExt;
 use hyper::{
     Body, Method, Server, StatusCode,
     service::{make_service_fn, service_fn},
 };
-use log::{debug, info, trace};
+use log::{debug, error, info, trace};
 use std::{
     convert::Infallible,
+    future::Future,
     net::SocketAddr,
+    panic::AssertUnwindSafe,
     sync::Arc,
 };
 
@@ -45,7 +48,9 @@ pub async fn serve(
     let factory = make_service_fn(move |_| {
         let ctx = Arc::clone(&ctx);
         async {
-            Ok::<_, Infallible>(service_fn(move |req| handle(req, Arc::clone(&ctx))))
+            Ok::<_, Infallible>(service_fn(move |req| {
+                handle_panic(handle(req, Arc::clone(&ctx)))
+            }))
         }
     });
 
@@ -57,6 +62,51 @@ pub async fn serve(
     server.await?;
 
     Ok(())
+}
+
+/// This just wraps another future and catches all panics that might occur when
+/// resolving/polling that given future. This ensures that we always answer with
+/// `500` instead of just crashing the thread and closing the connection.
+async fn handle_panic(
+    future: impl Future<Output = Result<Response, hyper::Error>>,
+) -> Result<Response, hyper::Error> {
+    // The `AssertUnwindSafe` is unfortunately necessary. The whole story of
+    // unwind safety is strange. What we are basically saying here is: "if the
+    // future panicks, the global/remaining application state is not 'broken'.
+    // It is safe to continue with the program in case of a panic."
+    //
+    // Hyper catches panics for us anyway, so this changes nothing except that
+    // our response is better.
+    match AssertUnwindSafe(future).catch_unwind().await {
+        Ok(response) => response,
+        Err(panic) => {
+            // The `panic` information is just an `Any` object representing the
+            // value the panic was invoked with. For most panics (which use
+            // `panic!` like `println!`), this is either `&str` or `String`.
+            let msg = panic.downcast_ref::<String>()
+                .map(|s| s.as_str())
+                .or(panic.downcast_ref::<&str>().map(|s| *s));
+
+            // TODO: improve output.
+            // - We probably want to print the HTTP request header line.
+            // - It would be great to also print everything the panic hook would
+            //   print, namely: location information and a backtrace. Do we
+            //   install our own panic hook? Or is stdout piped into the log
+            //   file anyway?
+            match msg {
+                Some(msg) => error!("HTTP handler panicked: '{}'", msg),
+                None => error!("HTTP handler panicked"),
+            }
+
+            // TODO: potentially improve the response
+            let error = Response::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body("Internal server error".into())
+                .unwrap();
+
+            Ok(error)
+        }
+    }
 }
 
 /// Context that the request handler has access to.
