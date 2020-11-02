@@ -1,6 +1,6 @@
 //! The HTTP server, handler and routes.
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use futures::FutureExt;
 use hyper::{
     Body, Method, Server, StatusCode,
@@ -29,7 +29,6 @@ pub async fn serve(
     api_root: api::RootNode,
     api_context: api::Context,
 ) -> Result<()> {
-    Assets::startup_check()?;
     let ctx = Arc::new(Context::new(api_root, api_context));
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
@@ -184,18 +183,6 @@ struct Assets;
 const INDEX_FILE: &str = "index.html";
 
 impl Assets {
-    fn startup_check() -> Result<()> {
-        if Self::get(INDEX_FILE).is_none() {
-            bail!("'index.html' is missing from the assets");
-        }
-
-        // TODO:
-        // - somehow check that we didn't embed stuff we don't want
-        // - check that all things we want are here?
-
-        Ok(())
-    }
-
     /// Responds with the asset identified by the given path. If there exists no
     /// asset with `path` or `path` is `INDEX_FILE`, `None` is returned.
     async fn serve(path: &str) -> Option<Response> {
