@@ -141,9 +141,9 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper
     let response = match (method, path) {
         (&Method::GET, "/") => serve_index().await,
 
-        // The interactive GraphQL API explorer/IDE.
-        //
-        // TODO: do we want to remove this route in production?
+        // The interactive GraphQL API explorer/IDE. We actually keep this in
+        // production as it does not hurt and in particular: does not expose any
+        // information that isn't already exposed by the API itself.
         (&Method::GET, "/graphiql") => juniper_hyper::graphiql("/graphql", None).await?,
 
         // The actual GraphQL API.
