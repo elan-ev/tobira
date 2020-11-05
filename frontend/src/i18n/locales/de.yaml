@@ -2,3 +2,6 @@ language-name: Deutsch
 language: Sprache
 search: Suche
 home: Startseite
+page-not-found:
+  title: Seite nicht gefunden
+  body: Die angefragte Resource existiert nicht. Sorry! :-(

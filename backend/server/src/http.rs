@@ -226,10 +226,22 @@ async fn serve_index() -> Response {
 
 /// Replies with a 404 Not Found.
 async fn reply_404(method: &Method, path: &str) -> Response {
-    // TODO: have a simple and user calming body.
-
     debug!("Responding with 404 to {:?} {}", method, path);
-    let mut response = Response::new(Body::empty());
-    *response.status_mut() = StatusCode::NOT_FOUND;
-    response
+
+    // We simply send the normal index and let the frontend router determinate
+    // this is a 404. That way, our 404 page looks like the main page and users
+    // are not confused. And it's easier to return to the normal page.
+    //
+    // TODO: I am somewhat uneasy about this code assuming the router of the
+    // frontend is the same as the backend router. Maybe we want to indicate to
+    // the frontend explicitly to show a 404 page? However, without redirecting
+    // to like `/404` because that's annoying for users.
+    let html = Assets::get(INDEX_FILE).unwrap();
+    let body = Body::from(html);
+
+    Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .header("Content-Type", "text/html; charset=UTF-8")
+        .body(body)
+        .unwrap()
 }

@@ -136,6 +136,7 @@ module.exports = {
             "react/jsx-curly-spacing": ["warn", { children: true }],
             "@typescript-eslint/no-extra-parens": ["warn", "all", { ignoreJSX: "all" }],
             "@typescript-eslint/no-unused-vars": ["warn", noUnusedVarsOptions],
+            "@typescript-eslint/comma-spacing": "warn",
             // This checks some more things than `no-unused-vars`,
             // but is less configurable.
             // Note that this is basically like setting `noUnusedLocals` and `noUnusedParameters`
