@@ -1,5 +1,5 @@
 [workspace]
-members = ["api", "server"]
+members = ["api", "macros", "server"]
 
 [profile.release]
 debug = 1
