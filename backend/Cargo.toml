@@ -1,2 +1,8 @@
 [workspace]
 members = ["api", "server"]
+
+[profile.release]
+debug = 1
+
+[profile.release.package."*"]
+debug = false
