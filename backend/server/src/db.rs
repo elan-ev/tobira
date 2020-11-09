@@ -11,11 +11,11 @@ use crate::config;
 /// Creates a new database connection pool.
 pub async fn create_pool(config: &config::Db) -> Result<Pool> {
     let pool_config = PoolConfig {
-        user: Some(config.user().into()),
-        password: Some(config.password().into()),
-        host: Some(config.host().into()),
-        port: Some(config.port),
-        dbname: Some(config.database.clone()),
+        user: Some(config.user.clone()),
+        password: Some(config.password.clone()),
+        host: Some(config.host.clone()),
+        port: Some(config.port()),
+        dbname: Some(config.database().into()),
         .. PoolConfig::default()
     };
 
@@ -23,10 +23,10 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
 
     debug!(
         "Connecting to postgresql://{}:*****@{}:{}/{}",
-        config.user(),
-        config.host(),
-        config.port,
-        config.database,
+        config.user,
+        config.host,
+        config.port(),
+        config.database(),
     );
 
     let pool = pool_config.create_pool(NoTls)?;

@@ -1,0 +1,7 @@
+# Configuration for dev environments: unless you are a Tobira developer, you are
+# not intersted in this file.
+
+[db]
+user = "tobira"
+password = "tobira"
+host = "127.0.0.1"
