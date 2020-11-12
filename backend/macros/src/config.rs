@@ -8,7 +8,7 @@
 // - Configure what other traits to derive (e.g. `Clone`)
 
 use proc_macro2::{Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{
     Error, Ident,
     parse::{Parse, ParseStream},
@@ -22,18 +22,18 @@ use std::fmt::{self, Write};
 pub(crate) fn run(input: TokenStream) -> Result<TokenStream, Error> {
     let input = syn::parse2::<Input>(input)?;
 
+    let visibility = quote! { pub(crate) };
     let toml = gen_toml(&input);
-    let types = gen_types(&input);
-    let util_code = util_code();
+    let root_mod = gen_root_mod(&input, &visibility);
+    let raw_mod = gen_raw_mod(&input, &visibility);
+    let util_mod = gen_util_mod(&visibility);
 
     Ok(quote! {
         const TOML_TEMPLATE: &str = #toml;
 
-        #types
-
-        mod util {
-            #util_code
-        }
+        #root_mod
+        #raw_mod
+        #util_mod
     })
 }
 
@@ -42,123 +42,108 @@ pub(crate) fn run(input: TokenStream) -> Result<TokenStream, Error> {
 // ===== Generating the output
 // ==============================================================================================
 
-fn util_code() -> TokenStream {
+fn gen_util_mod(visibility: &TokenStream) -> TokenStream {
     quote! {
-        use std::fmt::{self, Write};
+        mod util {
+            use std::fmt::{self, Write};
 
-        #[derive(Debug)]
-        pub(crate) struct TryFromError {
-            pub(crate) path: &'static str,
-        }
-
-        impl fmt::Display for TryFromError {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                std::write!(f, "required configuration value is missing: '{}'", self.path)
+            #[derive(Debug)]
+            #visibility struct TryFromError {
+                #visibility path: &'static str,
             }
-        }
 
-        impl std::error::Error for TryFromError {}
+            impl fmt::Display for TryFromError {
+                fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                    std::write!(f, "required configuration value is missing: '{}'", self.path)
+                }
+            }
+
+            impl std::error::Error for TryFromError {}
+        }
     }
 }
 
-fn gen_types(input: &Input) -> TokenStream {
-    fn gen_recursive(
-        raw_types: &mut TokenStream,
-        user_types: &mut TokenStream,
-        name: &Ident,
-        doc: &[String],
-        fields: &[Node],
-    ) {
-        let type_name = to_camel_case(name);
+fn gen_raw_mod(input: &Input, visibility: &TokenStream) -> TokenStream {
+    let mut contents = TokenStream::new();
+    visit(input, |node, path| {
+        if let Node::Internal { name, children, .. } = node {
+            let type_name = to_camel_case(name);
 
-        let mut raw_field_tokens = TokenStream::new();
-        let mut overwrite_with_fields = TokenStream::new();
-        let mut user_field_tokens = TokenStream::new();
-        let mut try_from_fields = TokenStream::new();
-
-        let visibility = quote! { pub(crate) };
-        for node in fields {
-            match node {
-                Node::Leaf { doc, name, ty, .. } => {
-                    let inner = as_option(&ty).unwrap_or(&ty);
-
-                    raw_field_tokens.extend(quote! {
-                        #visibility #name: Option<#inner>,
-                    });
-                    overwrite_with_fields.extend(quote! {
-                        #name: self.#name.or(other.#name),
-                    });
-                    user_field_tokens.extend(quote! {
-                        #( #[doc = #doc] )*
-                        #visibility #name: #ty,
-                    });
-                    try_from_fields.extend(quote! {
-                        #name: src.#name.ok_or(util::TryFromError { path: "TODO" })?,
-                    });
+            let raw_fields = collect_tokens(children, |node| {
+                match node {
+                    Node::Leaf { name, ty, .. } => {
+                        let inner = as_option(&ty).unwrap_or(&ty);
+                        quote! { #visibility #name: Option<#inner>, }
+                    },
+                    Node::Internal { name, .. } => {
+                        let child_type_name = to_camel_case(name);
+                        quote! {
+                            #[serde(default)]
+                            #visibility #name: #child_type_name,
+                        }
+                    },
                 }
-                Node::Object { name, .. } => {
-                    let type_name = to_camel_case(name);
+            });
 
-                    raw_field_tokens.extend(quote! {
-                        #[serde(default)]
-                        #visibility #name: #type_name,
-                    });
-                    overwrite_with_fields.extend(quote! {
+            let default_fields = collect_tokens(children, |node| {
+                match node {
+                    Node::Leaf { name, default: None, .. } => quote! { #name: None, },
+                    Node::Leaf { name, default: Some(expr), ty, .. } => {
+                        let inner_type = as_option(ty).unwrap_or(ty);
+                        let path = format!("{}.{}", path.join("."), name);
+                        let msg = format!(
+                            "default configuration value for '{}' cannot be deserialized as '{}'",
+                            path,
+                            inner_type.to_token_stream(),
+                        );
+
+                        quote! {
+                            #name: Some({
+                                let result: Result<_, serde::de::value::Error>
+                                    = Deserialize::deserialize(#expr.into_deserializer());
+                                result.expect(#msg)
+                            }),
+                        }
+                    },
+                    Node::Internal { name, .. } => {
+                        let child_type_name = to_camel_case(name);
+                        quote! {
+                            #name: #child_type_name::default_values(),
+                        }
+                    }
+                }
+            });
+
+            let overwrite_with_fields = collect_tokens(children, |node| {
+                match node {
+                    Node::Leaf { name, .. } => quote! {
+                        #name: other.#name.or(self.#name),
+                    },
+                    Node::Internal { name, .. } => quote! {
                         #name: self.#name.overwrite_with(other.#name),
-                    });
-                    user_field_tokens.extend(quote! {
-                        #visibility #name: #type_name,
-                    });
-                    try_from_fields.extend(quote! {
-                        #name: std::convert::TryFrom::try_from(src.#name)?,
-                    })
+                    }
                 }
-            }
+            });
+
+            contents.extend(quote! {
+                #[derive(Debug, Default, serde::Deserialize)]
+                #[serde(deny_unknown_fields)]
+                #visibility struct #type_name {
+                    #raw_fields
+                }
+
+                impl #type_name {
+                    #visibility fn default_values() -> Self {
+                        Self { #default_fields }
+                    }
+
+                    #visibility fn overwrite_with(self, other: Self) -> Self {
+                        Self { #overwrite_with_fields }
+                    }
+                }
+            });
         }
-
-        raw_types.extend(quote! {
-            #[derive(Debug, Default, serde::Deserialize)]
-            #[serde(deny_unknown_fields)]
-            #visibility struct #type_name {
-                #raw_field_tokens
-            }
-
-            impl #type_name {
-                #visibility fn overwrite_with(self, other: Self) -> Self {
-                    Self { #overwrite_with_fields }
-                }
-            }
-        });
-        user_types.extend(quote! {
-            #( #[doc = #doc] )*
-            #[derive(Debug)]
-            #visibility struct #type_name {
-                #user_field_tokens
-            }
-
-            impl std::convert::TryFrom<raw::#type_name> for #type_name {
-                type Error = util::TryFromError;
-                fn try_from(src: raw::#type_name) -> Result<Self, Self::Error> {
-                    Ok(Self {
-                        #try_from_fields
-                    })
-                }
-            }
-        });
-
-        // Recurse on all children.
-        for node in fields {
-            if let Node::Object { doc, name, children } = node {
-                gen_recursive(raw_types, user_types, name, doc, children);
-            }
-        }
-    }
-
-    let mut raw_types = TokenStream::new();
-    let mut user_types = TokenStream::new();
-    let root_name = Ident::new("config", Span::call_site());
-    gen_recursive(&mut raw_types, &mut user_types, &root_name, &input.doc, &input.fields);
-
+    });
 
     quote! {
         /// Types where all configuration values are optional.
@@ -174,18 +159,72 @@ fn gen_types(input: &Input) -> TokenStream {
         /// These types implement `serde::Deserialize`.
         mod raw {
             use super::*;
+            use serde::{Deserialize, de::IntoDeserializer};
 
-            #raw_types
+            #contents
         }
-
-        #user_types
     }
+}
+
+fn gen_root_mod(input: &Input, visibility: &TokenStream) -> TokenStream {
+    let mut out = TokenStream::new();
+    visit(input, |node, path| {
+        if let Node::Internal { name, doc, children } = node {
+            let type_name = to_camel_case(name);
+
+            let user_fields = collect_tokens(children, |node| {
+                match node {
+                    Node::Leaf { name, doc, ty, .. } => quote! {
+                        #( #[doc = #doc] )*
+                        #visibility #name: #ty,
+                    },
+                    Node::Internal { name, .. } => {
+                        let child_type_name = to_camel_case(name);
+                        quote! {
+                            #visibility #name: #child_type_name,
+                        }
+                    },
+                }
+            });
+
+            let try_from_fields = collect_tokens(children, |node| {
+                match node {
+                    Node::Leaf { name, .. } => {
+                        let path = format!("{}.{}", path.join("."), name);
+                        quote! {
+                            #name: src.#name.ok_or(self::util::TryFromError { path: #path })?,
+                        }
+                    },
+                    Node::Internal { name, .. } => quote! {
+                        #name: std::convert::TryFrom::try_from(src.#name)?,
+                    },
+                }
+            });
+
+            out.extend(quote! {
+                #( #[doc = #doc] )*
+                #[derive(Debug)]
+                #visibility struct #type_name {
+                    #user_fields
+                }
+
+                impl std::convert::TryFrom<raw::#type_name> for #type_name {
+                    type Error = util::TryFromError;
+                    fn try_from(src: raw::#type_name) -> Result<Self, Self::Error> {
+                        Ok(Self {
+                            #try_from_fields
+                        })
+                    }
+                }
+            });
+        }
+    });
+
+    out
 }
 
 /// Generates the TOML template file.
 fn gen_toml(input: &Input) -> String {
-    let mut out = String::new();
-
     /// Writes all doc comments to the file.
     fn write_doc(out: &mut String, doc: &[String]) {
         for line in doc {
@@ -203,21 +242,24 @@ fn gen_toml(input: &Input) -> String {
         }
     }
 
-    fn gen_recursive(out: &mut String, path: Vec<&syn::Ident>, fields: &[Node]) {
-        // If a new subsection starts, we always print the header, even if not
-        // strictly necessary.
-        if !path.is_empty() {
-            let joined_path = path.iter()
-                .map(|ident| ident.to_string())
-                .collect::<Vec<_>>()
-                .join(".");
-            writeln!(out, "[{}]", joined_path).unwrap();
-        }
 
-        // First just emit all leaf nodes/direct fields.
-        for node in fields {
-            if let Node::Leaf { doc, name, ty, default, example } = node {
-                write_doc(out, doc);
+    let mut out = String::new();
+    visit(input, |node, path| {
+        match node {
+            Node::Internal { doc, .. } => {
+                write_doc(&mut out, doc);
+
+                // If a new subsection starts, we always print the header, even if not
+                // strictly necessary.
+                if path.is_empty() {
+                    add_empty_line(&mut out);
+                } else {
+                    writeln!(out, "[{}]", path.join(".")).unwrap();
+                }
+            }
+
+            Node::Leaf { doc, name, ty, default, example } => {
+                write_doc(&mut out, doc);
 
                 // Add note about default value or the value being required.
                 match default {
@@ -243,26 +285,12 @@ fn gen_toml(input: &Input) -> String {
 
                 // Commented out example.
                 writeln!(out, "#{} = {}", name, example).unwrap();
-                add_empty_line(out);
+                add_empty_line(&mut out);
             }
         }
-        add_empty_line(out);
+    });
 
-        // Recurse on all children.
-        for node in fields {
-            if let Node::Object { doc, name, children } = node {
-                write_doc(out, doc);
-                let mut child_path = path.clone();
-                child_path.push(name);
-                gen_recursive(out, child_path, children);
-            }
-        }
-    };
-
-    write_doc(&mut out, &input.doc);
-    add_empty_line(&mut out);
-    gen_recursive(&mut out, vec![], &input.fields);
-
+    // Make sure there is only a single trailing newline.
     while out.ends_with("\n\n") {
         out.pop();
     }
@@ -270,6 +298,34 @@ fn gen_toml(input: &Input) -> String {
     out
 }
 
+/// Visits all nodes in depth-first session (visiting the parent before its
+/// children).
+fn visit<F>(input: &Input, mut visitor: F)
+where
+    F: FnMut(&Node, &[String]),
+{
+    let mut stack = vec![(&input.root, vec![])];
+    while let Some((node, path)) = stack.pop() {
+        visitor(&node, &path);
+
+        if let Node::Internal { children, .. } = node {
+            for child in children.iter().rev() {
+                let mut child_path = path.clone();
+                child_path.push(child.name().to_string());
+                stack.push((child, child_path));
+            }
+        }
+    }
+}
+
+/// Iterates over `it`, calling `f` for each element, collecting all returned
+/// token streams into one.
+fn collect_tokens<T>(
+    it: impl IntoIterator<Item = T>,
+    f: impl FnMut(T) -> TokenStream,
+) -> TokenStream {
+    it.into_iter().map(f).collect()
+}
 
 fn to_camel_case(ident: &Ident) -> Ident {
     let s = ident.to_string();
@@ -285,8 +341,7 @@ fn to_camel_case(ident: &Ident) -> Ident {
 /// The parsed input to the `gen_config` macro.
 #[derive(Debug)]
 struct Input {
-    doc: Vec<String>,
-    fields: Vec<Node>,
+    root: Node,
 }
 
 /// One node in the tree of the configuration format. Can either be a leaf node
@@ -294,7 +349,7 @@ struct Input {
 /// children.
 #[derive(Debug)]
 enum Node {
-    Object {
+    Internal {
         doc: Vec<String>,
         name: syn::Ident,
         children: Vec<Node>,
@@ -312,14 +367,33 @@ impl Parse for Input {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
         let mut outer_attrs = input.call(syn::Attribute::parse_inner)?;
         let doc = extract_doc(&mut outer_attrs)?;
-        let fields = input.call(<Punctuated<_, syn::Token![,]>>::parse_terminated)?;
+        let children = input.call(<Punctuated<_, syn::Token![,]>>::parse_terminated)?;
         assert_no_extra_attrs(&outer_attrs)?;
 
-        Ok(Self {
+        let root = Node::Internal {
             doc,
-            fields: fields.into_iter().collect(),
-        })
+            name: Ident::new("config", Span::call_site()),
+            children: children.into_iter().collect(),
+        };
+
+        Ok(Self { root })
     }
+}
+
+impl Node {
+    fn name(&self) -> &syn::Ident {
+        match self {
+            Self::Internal { name, .. } => name,
+            Self::Leaf { name, .. } => name,
+        }
+    }
+
+    // fn doc(&self) -> &[String] {
+    //     match self {
+    //         Self::Internal { doc, .. } => doc,
+    //         Self::Leaf { doc, .. } => doc,
+    //     }
+    // }
 }
 
 impl Parse for Node {
@@ -332,13 +406,13 @@ impl Parse for Node {
         let _: syn::Token![:] = input.parse()?;
 
         let out = if input.lookahead1().peek(syn::token::Brace) {
-            // --- A nested object ---
+            // --- A nested Internal ---
 
             let inner;
             syn::braced!(inner in input);
             let fields = inner.call(<Punctuated<_, syn::Token![,]>>::parse_terminated)?;
 
-            Self::Object {
+            Self::Internal {
                 doc,
                 name,
                 children: fields.into_iter().collect(),
@@ -409,7 +483,7 @@ impl Parse for Expr {
     }
 }
 
-impl quote::ToTokens for Expr {
+impl ToTokens for Expr {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             Self::Str(lit) => lit.to_tokens(tokens),
