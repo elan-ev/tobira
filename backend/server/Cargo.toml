@@ -24,6 +24,7 @@ pretty_env_logger = "0.4"
 rust-embed = "5.5"
 serde = { version = "1", features = ["derive"] }
 tobira-api = { path = "../api" }
+tobira-macros = { path = "../macros" }
 tokio = { version = "0.2", features = ["rt-threaded", "macros"] }
 tokio-postgres = "0.5"
 toml = "0.5"

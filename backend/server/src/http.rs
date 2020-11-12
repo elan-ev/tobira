@@ -24,7 +24,7 @@ type Request<T = Body> = hyper::Request<T>;
 
 /// Starts the HTTP server. The future returned by this function must be awaited
 /// to actually run it.
-pub async fn serve(
+pub(crate) async fn serve(
     config: &config::Http,
     api_root: api::RootNode,
     api_context: api::Context,

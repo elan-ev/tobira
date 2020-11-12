@@ -2,31 +2,29 @@
 
 use anyhow::{bail, Context, Result};
 use deadpool_postgres::{Config as PoolConfig, Pool};
-use log::{debug, info, trace};
+use log::{debug, info};
 use tokio_postgres::NoTls;
 
 use crate::config;
 
 
 /// Creates a new database connection pool.
-pub async fn create_pool(config: &config::Db) -> Result<Pool> {
+pub(crate) async fn create_pool(config: &config::Db) -> Result<Pool> {
     let pool_config = PoolConfig {
         user: Some(config.user.clone()),
         password: Some(config.password.clone()),
         host: Some(config.host.clone()),
-        port: Some(config.port()),
-        dbname: Some(config.database().into()),
+        port: Some(config.port),
+        dbname: Some(config.database.clone()),
         .. PoolConfig::default()
     };
-
-    trace!("Database configuration: {:#?}", pool_config);
 
     debug!(
         "Connecting to postgresql://{}:*****@{}:{}/{}",
         config.user,
         config.host,
-        config.port(),
-        config.database(),
+        config.port,
+        config.database,
     );
 
     let pool = pool_config.create_pool(NoTls)?;

@@ -1,23 +1,44 @@
 use anyhow::{bail, Context, Result};
 use log::{debug, info};
-use serde::Deserialize;
 use std::{
+    convert::TryInto,
     fs,
-    net::{IpAddr, Ipv4Addr},
+    net::IpAddr,
     path::Path,
 };
 
 
-/// Configuration root.
-///
-/// This is automatically deserialized from a TOML file.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Config {
-    #[serde(default)]
-    pub http: Http,
 
-    pub db: Db,
+tobira_macros::gen_config! {
+    //! Configuration for Tobira.
+
+    http: {
+        /// The port the HTTP server should listen on.
+        port: u16 = 3080,
+
+        /// The bind address to listen on.
+        address: IpAddr = "127.0.0.1",
+    },
+    db: {
+        /// The username of the database user.
+        #[example = "tobira"]
+        user: String,
+
+        /// The password of the database user.
+        #[example = "k7SXDj4bwuuodcZ8TBYQ"]
+        password: String,
+
+        /// The host the database server is running on.
+        #[example = "127.0.0.1"]
+        host: String,
+
+        /// The port the database server is listening on. (Just useful if your
+        /// database server is not running on the default PostgreSQL port).
+        port: u16 = 5432,
+
+        /// The name of the database to use.
+        database: String = "tobira",
+    },
 }
 
 impl Config {
@@ -32,7 +53,7 @@ impl Config {
             Self::load_from(path)
         } else {
             bail!(
-                "no configuration file found. Hint: we checked the following paths: {}",
+                "no configuration file found. Note: we checked the following paths: {}",
                 default_locations.join(", "),
             );
         }
@@ -45,12 +66,14 @@ impl Config {
 
         let file = fs::read_to_string(path)
             .context(format!("failed to open '{}' as configuration file", path.display()))?;
-        let out: Self = toml::from_str(&file)
-            .context(format!("failed to deserialize '{}' as Config", path.display()))?;
+        let raw: raw::Config = toml::from_str(&file)
+            .context(format!("failed to deserialize '{}' as configuration", path.display()))?;
+        let merged = raw::Config::default_values().overwrite_with(raw);
+        let config: Self = merged.try_into()?;
 
-        out.validate()?;
+        config.validate()?;
 
-        Ok(out)
+        Ok(config)
     }
 
     /// Performs some validation of the configuration to find some illegal or
@@ -59,49 +82,5 @@ impl Config {
         debug!("Validating configuration...");
 
         Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(deny_unknown_fields, default)]
-pub struct Http {
-    pub port: u16,
-    pub address: IpAddr,
-}
-
-impl Http {
-    const DEFAULT_PORT: u16 = 3080;
-    const DEFAULT_ADDRESS: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
-}
-
-impl Default for Http {
-    fn default() -> Self {
-        Self {
-            port: Self::DEFAULT_PORT,
-            address: Self::DEFAULT_ADDRESS,
-        }
-    }
-}
-
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Db {
-    pub user: String,
-    pub password: String,
-    pub host: String,
-    port: Option<u16>,
-    database: Option<String>,
-}
-
-impl Db {
-    const DEFAULT_PORT: u16 = 5432;
-    const DEFAULT_DATABASE: &'static str = "tobira";
-
-    pub fn port(&self) -> u16 {
-        self.port.unwrap_or(Self::DEFAULT_PORT)
-    }
-    pub fn database(&self) -> &str {
-        self.database.as_deref().unwrap_or(Self::DEFAULT_DATABASE)
     }
 }

@@ -1261,6 +1261,7 @@ dependencies = [
  "rust-embed",
  "serde",
  "tobira-api",
+ "tobira-macros",
  "tokio",
  "tokio-postgres",
  "toml",
