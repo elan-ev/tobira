@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, Context, Result};
 use log::{debug, info};
 use std::{
     convert::TryInto,
@@ -8,7 +8,14 @@ use std::{
 };
 
 
+/// The locations where Tobira will look for a configuration file. The first
+/// existing file in this list is used.
+// TODO: does the absolute path break on Windows? I hope it just results in
+// "file not found". Or do we want to have a different path for Windows?
+const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
 
+// This macro generates a bunch of structs and other items describing our
+// configuration.
 tobira_macros::gen_config! {
     //! Configuration for Tobira.
 
@@ -45,18 +52,16 @@ impl Config {
     /// Tries to find a config file from a list of possible default config file
     /// locations. The first config file is loaded via [`Self::load_from`].
     pub fn from_default_locations() -> Result<Self> {
-        // TODO: there should be more useful default locations. This is OS
-        // dependent.
-        let default_locations = ["config.toml"];
-
-        if let Some(path) = default_locations.iter().map(Path::new).find(|p| p.exists()) {
-            Self::load_from(path)
-        } else {
-            bail!(
+        let path = DEFAULT_PATHS.iter()
+            .map(Path::new)
+            .find(|p| p.exists())
+            .ok_or(anyhow!(
                 "no configuration file found. Note: we checked the following paths: {}",
-                default_locations.join(", "),
-            );
-        }
+                DEFAULT_PATHS.join(", "),
+            ))?;
+
+        let config = Self::load_from(path)?;
+        Ok(config)
     }
 
     /// Loads the configuration from a specific TOML file.
