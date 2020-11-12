@@ -3,10 +3,14 @@
 //! I thought a lot about configuration and as far as I see it, a proc macro is
 //! basically required to avoid duplicate code, docs or values.
 
-use proc_macro2::TokenStream;
+// TODO:
+// - Make visibility configurable
+// - Configure what other traits to derive (e.g. `Clone`)
+
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{
-    Error,
+    Error, Ident,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
     spanned::Spanned,
@@ -19,9 +23,17 @@ pub(crate) fn run(input: TokenStream) -> Result<TokenStream, Error> {
     let input = syn::parse2::<Input>(input)?;
 
     let toml = gen_toml(&input);
+    let types = gen_types(&input);
+    let util_code = util_code();
 
     Ok(quote! {
-        const TOML: &str = #toml;
+        const TOML_TEMPLATE: &str = #toml;
+
+        #types
+
+        mod util {
+            #util_code
+        }
     })
 }
 
@@ -29,6 +41,146 @@ pub(crate) fn run(input: TokenStream) -> Result<TokenStream, Error> {
 // ==============================================================================================
 // ===== Generating the output
 // ==============================================================================================
+
+fn util_code() -> TokenStream {
+    quote! {
+        use std::fmt::{self, Write};
+
+        #[derive(Debug)]
+        pub(crate) struct TryFromError {
+            pub(crate) path: &'static str,
+        }
+
+        impl fmt::Display for TryFromError {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                std::write!(f, "required configuration value is missing: '{}'", self.path)
+            }
+        }
+
+        impl std::error::Error for TryFromError {}
+    }
+}
+
+fn gen_types(input: &Input) -> TokenStream {
+    fn gen_recursive(
+        raw_types: &mut TokenStream,
+        user_types: &mut TokenStream,
+        name: &Ident,
+        doc: &[String],
+        fields: &[Node],
+    ) {
+        let type_name = to_camel_case(name);
+
+        let mut raw_field_tokens = TokenStream::new();
+        let mut overwrite_with_fields = TokenStream::new();
+        let mut user_field_tokens = TokenStream::new();
+        let mut try_from_fields = TokenStream::new();
+
+        let visibility = quote! { pub(crate) };
+        for node in fields {
+            match node {
+                Node::Leaf { doc, name, ty, .. } => {
+                    let inner = as_option(&ty).unwrap_or(&ty);
+
+                    raw_field_tokens.extend(quote! {
+                        #visibility #name: Option<#inner>,
+                    });
+                    overwrite_with_fields.extend(quote! {
+                        #name: self.#name.or(other.#name),
+                    });
+                    user_field_tokens.extend(quote! {
+                        #( #[doc = #doc] )*
+                        #visibility #name: #ty,
+                    });
+                    try_from_fields.extend(quote! {
+                        #name: src.#name.ok_or(util::TryFromError { path: "TODO" })?,
+                    });
+                }
+                Node::Object { name, .. } => {
+                    let type_name = to_camel_case(name);
+
+                    raw_field_tokens.extend(quote! {
+                        #[serde(default)]
+                        #visibility #name: #type_name,
+                    });
+                    overwrite_with_fields.extend(quote! {
+                        #name: self.#name.overwrite_with(other.#name),
+                    });
+                    user_field_tokens.extend(quote! {
+                        #visibility #name: #type_name,
+                    });
+                    try_from_fields.extend(quote! {
+                        #name: std::convert::TryFrom::try_from(src.#name)?,
+                    })
+                }
+            }
+        }
+
+        raw_types.extend(quote! {
+            #[derive(Debug, Default, serde::Deserialize)]
+            #[serde(deny_unknown_fields)]
+            #visibility struct #type_name {
+                #raw_field_tokens
+            }
+
+            impl #type_name {
+                #visibility fn overwrite_with(self, other: Self) -> Self {
+                    Self { #overwrite_with_fields }
+                }
+            }
+        });
+        user_types.extend(quote! {
+            #( #[doc = #doc] )*
+            #[derive(Debug)]
+            #visibility struct #type_name {
+                #user_field_tokens
+            }
+
+            impl std::convert::TryFrom<raw::#type_name> for #type_name {
+                type Error = util::TryFromError;
+                fn try_from(src: raw::#type_name) -> Result<Self, Self::Error> {
+                    Ok(Self {
+                        #try_from_fields
+                    })
+                }
+            }
+        });
+
+        // Recurse on all children.
+        for node in fields {
+            if let Node::Object { doc, name, children } = node {
+                gen_recursive(raw_types, user_types, name, doc, children);
+            }
+        }
+    }
+
+    let mut raw_types = TokenStream::new();
+    let mut user_types = TokenStream::new();
+    let root_name = Ident::new("config", Span::call_site());
+    gen_recursive(&mut raw_types, &mut user_types, &root_name, &input.doc, &input.fields);
+
+
+    quote! {
+        /// Types where all configuration values are optional.
+        ///
+        /// The types in this module also represent the full configuration tree,
+        /// but all values are optional. That's useful for intermediate steps or
+        /// "layers" of configuration sources. Imagine that the three layers:
+        /// environment variables, a TOML file and the fixed default values. The
+        /// only thing that matters is that required values are present after
+        /// merging all sources, but each individual source can be missing
+        /// required values.
+        ///
+        /// These types implement `serde::Deserialize`.
+        mod raw {
+            use super::*;
+
+            #raw_types
+        }
+
+        #user_types
+    }
+}
 
 /// Generates the TOML template file.
 fn gen_toml(input: &Input) -> String {
@@ -80,7 +232,7 @@ fn gen_toml(input: &Input) -> String {
                         if !doc.is_empty() {
                             writeln!(out, "#").unwrap();
                         }
-                        writeln!(out, "# Required: this value must be specified!").unwrap();
+                        writeln!(out, "# Required! This value must be specified.").unwrap();
                     }
                 }
 
@@ -118,6 +270,13 @@ fn gen_toml(input: &Input) -> String {
     out
 }
 
+
+fn to_camel_case(ident: &Ident) -> Ident {
+    let s = ident.to_string();
+    let first = s.chars().next().unwrap();
+    let out = format!("{}{}", first.to_uppercase(), &s[first.len_utf8()..]);
+    Ident::new(&out, ident.span())
+}
 
 // ==============================================================================================
 // ===== Parsing the input
@@ -247,6 +406,17 @@ impl Parse for Expr {
         };
 
         Ok(out)
+    }
+}
+
+impl quote::ToTokens for Expr {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Self::Str(lit) => lit.to_tokens(tokens),
+            Self::Int(lit) => lit.to_tokens(tokens),
+            Self::Float(lit) => lit.to_tokens(tokens),
+            Self::Bool(lit) => lit.to_tokens(tokens),
+        }
     }
 }
 
