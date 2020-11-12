@@ -3,6 +3,8 @@ members = ["api", "server"]
 
 [profile.release]
 debug = 1
+codegen-units = 1
+lto = true
 
 [profile.release.package."*"]
 debug = false
