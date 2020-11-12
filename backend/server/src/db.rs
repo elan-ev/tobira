@@ -38,10 +38,11 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
     connection.execute("SELECT 1", &[]).await
         .context("failed to execute DB test query")?;
 
-    // ensure database version exists
-    info!("Creating table version");
-    connection.execute(
-        "create table if not exists version (version int not null)", &[]).await
+    // Ensure database 'version' exists
+    info!("Creating table 'version'");
+     connection
+        .execute("create table if not exists version (version int not null)", &[])
+        .await
         .context("failed to schema for table 'realms'")?;
     if connection.query("SELECT count(*) < 1 from version", &[]).await?[0].get::<_, bool>(0) {
         info!("Setting database version");
@@ -50,7 +51,7 @@ pub async fn create_pool(config: &config::Db) -> Result<Pool> {
     }
 
     // ensure table realms exist
-    info!("Creating table realms");
+    info!("Creating table 'realms'");
     connection.execute("\
         create table if not exists realms (\
             id int generated always as identity (start with 0 minvalue 0) primary key,\
