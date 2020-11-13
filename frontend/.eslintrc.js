@@ -170,6 +170,7 @@ module.exports = {
     }],
     ignorePatterns: [
         "/build",
+        "/src/query-types",
         "!.*",
     ],
 };
