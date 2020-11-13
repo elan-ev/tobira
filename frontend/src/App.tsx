@@ -1,12 +1,15 @@
 import React from "react";
 import { BrowserRouter as Router, Switch, Route, RouteComponentProps } from "react-router-dom";
 
+import { RelayEnvironmentProvider } from "react-relay/hooks";
+import { environment } from "./relay";
+
 import { GlobalStyle } from "./GlobalStyle";
 import { Root } from "./layout/Root";
 import { Realm } from "./page/Realm";
 import { NotFound } from "./page/NotFound";
 
-export const App: React.FC = () => <>
+export const App: React.FC = () => <RelayEnvironmentProvider {...{ environment }}>
     <GlobalStyle />
     <Router>
         <Root>
@@ -16,7 +19,7 @@ export const App: React.FC = () => <>
             </Switch>
         </Root>
     </Router>
-</>;
+</RelayEnvironmentProvider>;
 
 
 const RealmPage: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
