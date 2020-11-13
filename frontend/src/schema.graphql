@@ -27,6 +27,7 @@ type Realm {
   parentId: ID!
   path: String!
   parent: Realm!
+  parents: [Realm!]!
   children: [Realm!]!
 }
 

@@ -3,7 +3,7 @@ use anyhow::Context as _;
 use deadpool_postgres::Pool;
 use futures::{stream::TryStreamExt, TryStream};
 use juniper::graphql_object;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use crate::{
     Context, Id, Key,
@@ -38,6 +38,23 @@ impl Realm {
 
     fn parent(&self, context: &Context) -> &Realm {
         &context.realm_tree.realms[&self.parent_key]
+    }
+
+    fn parents(&self, context: &Context) -> Vec<&Realm> {
+        let mut parents = VecDeque::new();
+        let mut generation = self;
+
+        // Add all the parents up to the root (which might be ourselves already,
+        // in which case this never runs)
+        while generation.parent_key != 0 {
+            generation = context.realm_tree.realms.get(&generation.parent_key).unwrap();
+            parents.push_front(generation);
+        }
+        // Always add the root
+        generation = context.realm_tree.realms.get(&generation.parent_key).unwrap();
+        parents.push_front(generation);
+
+        parents.into()
     }
 
     fn children(&self, context: &Context) -> Vec<&Realm> {
