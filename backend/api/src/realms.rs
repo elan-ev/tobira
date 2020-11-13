@@ -1,3 +1,5 @@
+use anyhow::Context as _;
+
 use deadpool_postgres::Pool;
 use futures::{stream::TryStreamExt, TryStream};
 use juniper::graphql_object;
@@ -13,6 +15,7 @@ pub(crate) struct Realm {
     key: Key,
     name: String,
     parent_key: Key,
+    path: String,
 }
 
 #[graphql_object(Context = Context)]
@@ -27,6 +30,10 @@ impl Realm {
 
     fn parent_id(&self) -> Id {
         Id::realm(self.parent_key)
+    }
+
+    fn path(&self) -> &str {
+        &self.path
     }
 
     fn parent(&self, context: &Context) -> &Realm {
@@ -47,6 +54,7 @@ impl Realm {
 pub(crate) struct Tree {
     pub(crate) realms: HashMap<u64, Realm>,
     children: HashMap<u64, Vec<u64>>,
+    from_path: HashMap<String, u64>,
 }
 
 impl Tree {
@@ -55,7 +63,7 @@ impl Tree {
     ) -> anyhow::Result<impl TryStream<Ok = Realm, Error = impl std::error::Error>> {
         let row_stream = db.get().await?
             .query_raw(
-                "select id, name, parent from realms",
+                "select id, name, parent, path from realms",
                 std::iter::empty(),
             ).await?;
 
@@ -63,13 +71,14 @@ impl Tree {
             key: row.get_key(0),
             name: row.get(1),
             parent_key: row.get_key(2),
+            path: row.get(3),
         }))
     }
 
     pub(crate) async fn from_db(db: &Pool) -> anyhow::Result<Self> {
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
-        let realms = Self::raw_from_db(db).await?
+        let mut realms = Self::raw_from_db(db).await?
             .map_ok(|realm| (realm.key, realm))
             .try_collect::<HashMap<_, _>>().await?;
 
@@ -84,7 +93,48 @@ impl Tree {
             }
         }
 
-        Ok(Tree { realms, children })
+        // We also need a map from the full path to the proper realm,
+        // and conversely, we want to cache the full path inside the realm.
+        let from_path = index_by_path(&mut realms, &children)?;
+
+        fn index_by_path(
+            realms: &mut HashMap<u64, Realm>,
+            children: &HashMap<u64, Vec<u64>>,
+        ) -> anyhow::Result<HashMap<String, u64>> {
+
+            let mut index = HashMap::new();
+
+            index.insert("".to_string(), 0);
+
+            recurse(0, realms, children, &mut index)?;
+
+            fn recurse(
+                parent: u64,
+                realms: &mut HashMap<u64, Realm>,
+                children: &HashMap<u64, Vec<u64>>,
+                index: &mut HashMap<String, u64>,
+            ) -> anyhow::Result<()> {
+
+                let parent_path = realms.get(&parent).context("realm structure invalid")?.path.clone();
+
+                if let Some(current_children) = children.get(&parent) {
+                    for child_id in current_children {
+
+                        let child = realms.get_mut(child_id).context("realm structure invalid")?;
+                        child.path = format!("{}/{}", parent_path, child.path);
+                        index.insert(child.path.clone(), *child_id);
+
+                        recurse(*child_id, realms, children, index)?;
+                    }
+                }
+
+                Ok(())
+            }
+
+            Ok(index)
+        }
+
+        Ok(Tree { realms, children, from_path })
     }
 
     pub(crate) fn get_node(&self, id: &Id) -> Option<&Realm> {
@@ -92,6 +142,10 @@ impl Tree {
     }
 
     pub(crate) fn root(&self) -> &Realm {
-        self.realms.get(&0).expect("bug: no root realm")
+        self.realms.get(&0).unwrap()
+    }
+
+    pub(crate) fn from_path(&self, path: &str) -> Option<&Realm> {
+        self.realms.get(self.from_path.get(path)?)
     }
 }

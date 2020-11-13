@@ -11,7 +11,12 @@ type Query {
     Returns the realm with the specific ID or `None` if the ID does not
     refer to a realm.
   """
-  realm(id: ID!): Realm
+  realmById(id: ID!): Realm
+  """
+    Returns the realm with the specific path or `None` if the path does not
+    refer to a realm.
+  """
+  realmByPath(path: String!): Realm
   "Returns the root realm."
   rootRealm: Realm!
 }
@@ -20,6 +25,7 @@ type Realm {
   id: ID!
   name: String!
   parentId: ID!
+  path: String!
   parent: Realm!
   children: [Realm!]!
 }

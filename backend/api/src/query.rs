@@ -22,8 +22,14 @@ impl Query {
 
     /// Returns the realm with the specific ID or `None` if the ID does not
     /// refer to a realm.
-    async fn realm(id: Id, context: &Context) -> Option<&Realm> {
+    async fn realm_by_id(id: Id, context: &Context) -> Option<&Realm> {
         context.realm_tree.get_node(&id)
+    }
+
+    /// Returns the realm with the specific path or `None` if the path does not
+    /// refer to a realm.
+    async fn realm_by_path(path: String, context: &Context) -> Option<&Realm> {
+        context.realm_tree.from_path(&path)
     }
 
     /// Returns the root realm.
