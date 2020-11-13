@@ -1,32 +1,46 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+import { graphql, useLazyLoadQuery } from "react-relay/hooks";
+import { RealmQuery } from "../query-types/RealmQuery.graphql";
+
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 
 
 type Props = {
-    path: string[];
+    path: string;
 };
 
 export const Realm: React.FC<Props> = ({ path }) => {
-    const isRoot = path.length === 0;
-    const ids = resolvePath(path);
-    if (ids == null) {
+    const isRoot = path === "";
+
+    // TODO Build this query from fragments!
+    const { realm } = useLazyLoadQuery<RealmQuery>(graphql`
+        query RealmQuery($path: String!) {
+            realm: realmByPath(path: $path) {
+                name
+                parents { name path }
+                children { id name path }
+            }
+        }
+    `, {
+        // The API expects a "leading" slash to non-root paths to separate
+        // the first component from the root path segment `''`
+        path: isRoot ? "" : `/${path}`,
+    });
+
+    if (!realm) {
         // TODO: that should obviously be handled in a better way
+        //   Also: I'm not sure whether that's still the only cause for error.
         return <b>{"Realm path not found :("}</b>;
     }
 
-    const realmId = ids[ids.length - 1];
-    const realm = REALMS[realmId];
-
     // Prepare data for breadcrumbs
     const breadcrumbs = [];
-    let tmpPath = "/r";
-    for (const id of ids.slice(1)) {
-        tmpPath += `/${REALMS[id].path}`;
+    for (const { name, path } of realm.parents.slice(1)) {
         breadcrumbs.push({
-            label: REALMS[id].name,
-            href: tmpPath,
+            label: name,
+            href: `/r${path}`,
         });
     }
 
@@ -34,10 +48,10 @@ export const Realm: React.FC<Props> = ({ path }) => {
         {!isRoot && <Breadcrumbs path={breadcrumbs} />}
         <h1>{realm.name}</h1>
         <ul>
-            {REALMS[realmId].children.map(id => (
+            {realm.children.map(({ id, path, name }) => (
                 <li key={id}>
-                    <Link to={`/r/${path.concat(REALMS[id].path).join("/")}`}>
-                        {REALMS[id].name}
+                    <Link to={`/r${path}`}>
+                        {name}
                     </Link>
                 </li>
             ))}
@@ -53,50 +67,3 @@ export const Realm: React.FC<Props> = ({ path }) => {
         </p>
     </>;
 };
-
-// Looks up each segment of the `/` separated `path` as realm and returns a list
-// of realm ids starting with 0 (root).
-const resolvePath = (path: string[]): number[] | null => {
-    const ids = [0];
-    for (const segment of path) {
-        const lastId = ids[ids.length - 1];
-        const next = REALMS[lastId].children.find(child => REALMS[child].path === segment);
-        if (next === undefined) {
-            return null;
-        }
-        ids.push(next);
-    }
-
-    return ids;
-};
-
-type Realm = {
-    path: string;
-    name: string;
-    parent: number;
-    children: number[];
-};
-
-// Dummy data
-const REALMS: Record<number, Realm> = {
-    0: { path: "", name: "Home", parent: 0, children: [] },
-    1: { path: "lectures", name: "Lectures", parent: 0, children: [] },
-    2: { path: "conferences", name: "Conferences", parent: 0, children: [] },
-    3: { path: "campus", name: "Campus", parent: 0, children: [] },
-
-    4: { path: "math", name: "Department of Mathematics", parent: 1, children: [] },
-    5: { path: "cs", name: "Department of Computer Science", parent: 1, children: [] },
-    6: { path: "physics", name: "Department of Physics", parent: 1, children: [] },
-    7: { path: "bio", name: "Department of Biology", parent: 1, children: [] },
-
-    8: { path: "algebra", name: "Linear Algebra I", parent: 4, children: [] },
-    9: { path: "analysis", name: "Analysis", parent: 4, children: [] },
-    // eslint-disable-next-line max-len
-    10: { path: "single-variable-calculus", name: "Single Variable Calculus", parent: 4, children: [] },
-    11: { path: "probability", name: "Probability", parent: 4, children: [] },
-};
-
-// Add children
-for (const [i, realm] of Object.entries(REALMS).slice(1)) {
-    REALMS[realm.parent].children.push(Number(i));
-}
