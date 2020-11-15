@@ -189,10 +189,23 @@ fn gen_root_mod(input: &Input, visibility: &TokenStream) -> TokenStream {
 
             let try_from_fields = collect_tokens(children, |node| {
                 match node {
-                    Node::Leaf { name, .. } => {
-                        let path = format!("{}.{}", path.join("."), name);
-                        quote! {
-                            #name: src.#name.ok_or(self::util::TryFromError { path: #path })?,
+                    Node::Leaf { name, ty, .. } => {
+                        match as_option(ty) {
+                            // If this value is optional, we just move it as it can never fail.
+                            Some(_) => quote! { #name: src.#name, },
+
+                            // Otherwise, we return an error if the value hasn't been specified.
+                            None => {
+                                let path = match path.is_empty() {
+                                    true => name.to_string(),
+                                    false => format!("{}.{}", path.join("."), name),
+                                };
+
+                                quote! {
+                                    #name: src.#name
+                                        .ok_or(self::util::TryFromError { path: #path })?,
+                                }
+                            }
                         }
                     },
                     Node::Internal { name, .. } => quote! {
