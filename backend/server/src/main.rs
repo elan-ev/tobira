@@ -1,6 +1,6 @@
 //! The Tobira backend server.
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use log::{info, trace};
 use std::env;
 use structopt::StructOpt;
@@ -43,7 +43,12 @@ async fn main() -> Result<()> {
 
     match args.cmd {
         None => start_server(&args).await?,
-        Some(Command::WriteConfig { target }) => config::write_template(target.as_ref())?,
+        Some(Command::WriteConfig { target }) => {
+            if args.config.is_some() {
+                bail!("`-c/--config` parameter is not valid for this subcommand");
+            }
+            config::write_template(target.as_ref())?
+        },
     }
 
     Ok(())
