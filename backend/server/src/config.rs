@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use log::{debug, info};
+use secrecy::Secret;
 use std::{
     convert::TryInto,
     fs,
@@ -27,7 +28,7 @@ tobira_macros::gen_config! {
 
         /// The password of the database user.
         #[example = "k7SXDj4bwuuodcZ8TBYQ"]
-        password: String,
+        password: Secret<String>,
 
         /// The host the database server is running on.
         #[example = "127.0.0.1"]
