@@ -20,13 +20,6 @@ const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
 tobira_macros::gen_config! {
     //! Configuration for Tobira.
 
-    http: {
-        /// The port the HTTP server should listen on.
-        port: u16 = 3080,
-
-        /// The bind address to listen on.
-        address: IpAddr = "127.0.0.1",
-    },
     db: {
         /// The username of the database user.
         #[example = "tobira"]
@@ -47,6 +40,26 @@ tobira_macros::gen_config! {
         /// The name of the database to use.
         database: String = "tobira",
     },
+    http: {
+        /// The port the HTTP server should listen on.
+        port: u16 = 3080,
+
+        /// The bind address to listen on.
+        address: IpAddr = "127.0.0.1",
+    },
+    log: {
+        /// Determines how many messages are logged. Log messages below
+        /// this level are not emitted. Possible values: "trace", "debug",
+        /// "info", "warn", "error" and "off".
+        level: log::LevelFilter = "debug",
+
+        /// If this is set, log messages are also written to this file.
+        #[example = "/var/log/tobira.log"]
+        file: Option<String>,
+
+        /// If this is set to `false`, log messages are not written to stdout.
+        stdout: bool = true,
+    },
 }
 
 impl Config {
@@ -61,7 +74,9 @@ impl Config {
                 DEFAULT_PATHS.join(", "),
             ))?;
 
-        let config = Self::load_from(path)?;
+        let config = Self::load_from(path)
+            .context(format!("failed to load configuration from '{}'", path.display()))?;
+
         Ok(config)
     }
 
@@ -77,13 +92,13 @@ impl Config {
         let merged = raw::Config::default_values().overwrite_with(raw);
         let config: Self = merged.try_into()?;
 
-        config.validate()?;
+        config.validate().context("failed to validate configuration")?;
 
         Ok(config)
     }
 
-    /// Performs some validation of the configuration to find some illegal or
-    /// conflicting values.
+    /// Performs some validation of the configuration to find some
+    /// illegal or conflicting values.
     fn validate(&self) -> Result<()> {
         debug!("Validating configuration...");
 
