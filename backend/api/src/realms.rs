@@ -16,6 +16,7 @@ pub(crate) struct Realm {
     name: String,
     parent_key: Option<Key>,
     path_segment: String,
+    child_keys: Vec<Key>,
 }
 
 impl Realm {
@@ -60,19 +61,14 @@ impl Realm {
     }
 
     fn children(&self, context: &Context) -> Vec<&Realm> {
-        context.realm_tree.children.get(&self.key)
-            .map(|children| {
-                children.iter()
-                    .map(|child_key| &context.realm_tree.realms[&child_key])
-                    .collect()
-            })
-            .unwrap_or_default()
+        self.child_keys.iter()
+            .map(|child| &context.realm_tree.realms[&child])
+            .collect()
     }
 }
 
 pub(crate) struct Tree {
     pub(crate) realms: HashMap<u64, Realm>,
-    children: HashMap<u64, Vec<u64>>,
     from_path: HashMap<String, u64>,
 }
 
@@ -92,6 +88,7 @@ impl Tree {
                     name: row.get(1),
                     parent_key: if key == 0 { None } else { Some(row.get_key(2)) },
                     path_segment: row.get(3),
+                    child_keys: vec![],
                 }
             })
             .map_ok(|realm| (realm.key, realm))
@@ -99,54 +96,57 @@ impl Tree {
 
         // With this, and the `parent` member of the `Realm`,
         // we already have quick access to the data of a realm's parent.
-        // To also get to the children quickly we maintain another map.
-        let mut children = <HashMap<_, Vec<_>>>::new();
-
-        for Realm { key, parent_key, .. } in realms.values() {
-            if let Some(parent_key) = parent_key {
-                children.entry(*parent_key).or_default().push(*key);
-            }
+        // To also get to the children quickly we maintain a corresponding list
+        // for each realm
+        let keys = realms.values()
+            .filter_map(
+                |realm| realm.parent_key.map(
+                    |parent_key| (realm.key, parent_key)
+                )
+            )
+            .collect::<Vec<_>>();
+        for (key, parent_key) in keys {
+            let parent = realms.get_mut(&parent_key).context("invalid parent")?;
+            parent.child_keys.push(key);
         }
+
+        // After this point, we should know the tree structure to be valid.
+        // That is, we can now safely panic if we can't find things in our maps/lists;
+        // that's totally a bug in this code, then, not an inconsistency in the db.
 
         // We also need a map from the full path to the proper realm,
         // and conversely, we want to cache the full path inside the realm.
-        let from_path = index_by_path(&mut realms, &children)?;
+        let from_path = index_by_path(&mut realms);
 
         fn index_by_path(
             realms: &mut HashMap<u64, Realm>,
-            children: &HashMap<u64, Vec<u64>>,
-        ) -> anyhow::Result<HashMap<String, u64>> {
+        ) -> HashMap<String, u64> {
 
             let mut index = HashMap::new();
 
-            fill_index_recursively(0, "", realms, children, &mut index)?;
+            fill_index_recursively(0, "", realms, &mut index);
 
             fn fill_index_recursively(
                 parent: u64,
                 full_path: &str,
-                realms: &mut HashMap<u64, Realm>,
-                children: &HashMap<u64, Vec<u64>>,
+                realms: &HashMap<u64, Realm>,
                 index: &mut HashMap<String, u64>,
-            ) -> anyhow::Result<()> {
-
+            ) {
                 index.insert(full_path.to_owned(), parent);
 
-                if let Some(current_children) = children.get(&parent) {
-                    for child_id in current_children {
-                        let child = realms.get(child_id).context("realm structure invalid")?;
-                        let path = [full_path, &child.path_segment].join("/");
+                let parent = &realms[&parent];
+                for child_key in &parent.child_keys {
+                    let child = &realms[&child_key];
+                    let path = [full_path, &child.path_segment].join("/");
 
-                        fill_index_recursively(*child_id, &path, realms, children, index)?;
-                    }
+                    fill_index_recursively(*child_key, &path, realms, index);
                 }
-
-                Ok(())
             }
 
-            Ok(index)
+            index
         }
 
-        Ok(Tree { realms, children, from_path })
+        Ok(Tree { realms, from_path })
     }
 
     pub(crate) fn get_node(&self, id: &Id) -> Option<&Realm> {
