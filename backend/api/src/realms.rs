@@ -3,7 +3,7 @@ use anyhow::Context as _;
 use deadpool_postgres::Pool;
 use futures::{stream::TryStreamExt, TryStream};
 use juniper::graphql_object;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 use crate::{
     Context, Id, Key,
@@ -14,8 +14,17 @@ use crate::{
 pub(crate) struct Realm {
     key: Key,
     name: String,
-    parent_key: Key,
+    parent_key: Option<Key>,
     path: String,
+}
+
+impl Realm {
+    fn walk_up<'a>(&'a self, context: &'a Context) -> impl Iterator<Item = &'a Self> {
+        std::iter::successors(
+            Some(self),
+            move |child| child.parent_key.map(|parent_key| &context.realm_tree.realms[&parent_key])
+        )
+    }
 }
 
 #[graphql_object(Context = Context)]
@@ -28,33 +37,22 @@ impl Realm {
         &self.name
     }
 
-    fn parent_id(&self) -> Id {
-        Id::realm(self.parent_key)
+    fn parent_id(&self) -> Option<Id> {
+        self.parent_key.map(Id::realm)
     }
 
     fn path(&self) -> &str {
         &self.path
     }
 
-    fn parent(&self, context: &Context) -> &Realm {
-        &context.realm_tree.realms[&self.parent_key]
+    fn parent(&self, context: &Context) -> Option<&Realm> {
+        self.parent_key.map(|parent_key| &context.realm_tree.realms[&parent_key])
     }
 
     fn parents(&self, context: &Context) -> Vec<&Realm> {
-        let mut parents = VecDeque::new();
-        let mut generation = self;
-
-        // Add all the parents up to the root (which might be ourselves already,
-        // in which case this never runs)
-        while generation.parent_key != 0 {
-            generation = context.realm_tree.realms.get(&generation.parent_key).unwrap();
-            parents.push_front(generation);
-        }
-        // Always add the root
-        generation = context.realm_tree.realms.get(&generation.parent_key).unwrap();
-        parents.push_front(generation);
-
-        parents.into()
+        let mut parents = self.walk_up(context).skip(1).collect::<Vec<_>>();
+        parents.reverse();
+        parents
     }
 
     fn children(&self, context: &Context) -> Vec<&Realm> {
@@ -84,11 +82,14 @@ impl Tree {
                 std::iter::empty(),
             ).await?;
 
-        Ok(row_stream.map_ok(|row| Realm {
-            key: row.get_key(0),
-            name: row.get(1),
-            parent_key: row.get_key(2),
-            path: row.get(3),
+        Ok(row_stream.map_ok(|row| {
+            let key = row.get_key(0);
+            Realm {
+                key,
+                name: row.get(1),
+                parent_key: if key == 0 { None } else { Some(row.get_key(2)) },
+                path: row.get(3),
+            }
         }))
     }
 
@@ -105,7 +106,7 @@ impl Tree {
         let mut children = <HashMap<_, Vec<_>>>::new();
 
         for Realm { key, parent_key, .. } in realms.values() {
-            if key != parent_key {
+            if let Some(parent_key) = parent_key {
                 children.entry(*parent_key).or_default().push(*key);
             }
         }

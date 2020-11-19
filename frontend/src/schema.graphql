@@ -24,9 +24,9 @@ type Query {
 type Realm {
   id: ID!
   name: String!
-  parentId: ID!
+  parentId: ID
   path: String!
-  parent: Realm!
+  parent: Realm
   parents: [Realm!]!
   children: [Realm!]!
 }
