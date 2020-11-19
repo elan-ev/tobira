@@ -15,7 +15,7 @@ pub(crate) struct Realm {
     key: Key,
     name: String,
     parent_key: Option<Key>,
-    path: String,
+    path_segment: String,
 }
 
 impl Realm {
@@ -41,8 +41,12 @@ impl Realm {
         self.parent_key.map(Id::realm)
     }
 
-    fn path(&self) -> &str {
-        &self.path
+    fn path(&self, context: &Context) -> String {
+        let mut segments = self.walk_up(context)
+            .map(|realm| &*realm.path_segment)
+            .collect::<Vec<_>>();
+        segments.reverse();
+        segments.join("/")
     }
 
     fn parent(&self, context: &Context) -> Option<&Realm> {
@@ -87,7 +91,7 @@ impl Tree {
                     key,
                     name: row.get(1),
                     parent_key: if key == 0 { None } else { Some(row.get_key(2)) },
-                    path: row.get(3),
+                    path_segment: row.get(3),
                 }
             })
             .map_ok(|realm| (realm.key, realm))
@@ -115,27 +119,24 @@ impl Tree {
 
             let mut index = HashMap::new();
 
-            index.insert("".to_string(), 0);
+            fill_index_recursively(0, "", realms, children, &mut index)?;
 
-            recurse(0, realms, children, &mut index)?;
-
-            fn recurse(
+            fn fill_index_recursively(
                 parent: u64,
+                full_path: &str,
                 realms: &mut HashMap<u64, Realm>,
                 children: &HashMap<u64, Vec<u64>>,
                 index: &mut HashMap<String, u64>,
             ) -> anyhow::Result<()> {
 
-                let parent_path = realms.get(&parent).context("realm structure invalid")?.path.clone();
+                index.insert(full_path.to_owned(), parent);
 
                 if let Some(current_children) = children.get(&parent) {
                     for child_id in current_children {
+                        let child = realms.get(child_id).context("realm structure invalid")?;
+                        let path = [full_path, &child.path_segment].join("/");
 
-                        let child = realms.get_mut(child_id).context("realm structure invalid")?;
-                        child.path = format!("{}/{}", parent_path, child.path);
-                        index.insert(child.path.clone(), *child_id);
-
-                        recurse(*child_id, realms, children, index)?;
+                        fill_index_recursively(*child_id, &path, realms, children, index)?;
                     }
                 }
 
