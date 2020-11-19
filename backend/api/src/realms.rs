@@ -1,7 +1,7 @@
 use anyhow::Context as _;
 
 use deadpool_postgres::Pool;
-use futures::{stream::TryStreamExt, TryStream};
+use futures::stream::TryStreamExt;
 use juniper::graphql_object;
 use std::collections::HashMap;
 
@@ -73,30 +73,23 @@ pub(crate) struct Tree {
 }
 
 impl Tree {
-    pub(crate) async fn raw_from_db(
-        db: &Pool,
-    ) -> anyhow::Result<impl TryStream<Ok = Realm, Error = impl std::error::Error>> {
-        let row_stream = db.get().await?
-            .query_raw(
-                "select id, name, parent, path_segment from realms",
-                std::iter::empty(),
-            ).await?;
-
-        Ok(row_stream.map_ok(|row| {
-            let key = row.get_key(0);
-            Realm {
-                key,
-                name: row.get(1),
-                parent_key: if key == 0 { None } else { Some(row.get_key(2)) },
-                path: row.get(3),
-            }
-        }))
-    }
-
     pub(crate) async fn from_db(db: &Pool) -> anyhow::Result<Self> {
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
-        let mut realms = Self::raw_from_db(db).await?
+        let mut realms = db.get().await?
+            .query_raw(
+                "select id, name, parent, path_segment from realms",
+                std::iter::empty(),
+            ).await?
+            .map_ok(|row| {
+                let key = row.get_key(0);
+                Realm {
+                    key,
+                    name: row.get(1),
+                    parent_key: if key == 0 { None } else { Some(row.get_key(2)) },
+                    path: row.get(3),
+                }
+            })
             .map_ok(|realm| (realm.key, realm))
             .try_collect::<HashMap<_, _>>().await?;
 
