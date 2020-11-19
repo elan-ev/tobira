@@ -27,5 +27,17 @@ pub(crate) enum Command {
     WriteConfig {
         /// Target file. If not specified, the template is written to stdout.
         target: Option<PathBuf>,
-    }
+    },
+
+    /// Database operations.
+    Db {
+        #[structopt(subcommand)]
+        cmd: DbCommand,
+    },
+}
+
+#[derive(Debug, StructOpt)]
+pub(crate) enum DbCommand {
+    /// Removes all data and tables from the database.
+    Clear,
 }

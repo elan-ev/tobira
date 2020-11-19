@@ -33,31 +33,27 @@ async fn main() -> Result<()> {
     let args = Args::from_args();
 
     // Dispatch subcommand.
-    match args.cmd {
-        None => start_server(&args).await?,
+    match &args.cmd {
+        None => {
+            let config = load_config_and_init_logger(&args)?;
+            start_server(&config).await?;
+        }
         Some(Command::WriteConfig { target }) => {
             if args.config.is_some() {
                 bail!("`-c/--config` parameter is not valid for this subcommand");
             }
             config::write_template(target.as_ref())?
-        },
+        }
+        Some(Command::Db { cmd }) => {
+            let config = load_config_and_init_logger(&args)?;
+            db::cmd::run(cmd, &config.db).await?;
+        }
     }
 
     Ok(())
 }
 
-async fn start_server(args: &Args) -> Result<()> {
-    // Load configuration.
-    let config = match &args.config {
-        Some(path) => Config::load_from(path)
-            .context(format!("failed to load config from '{}'", path.display()))?,
-        None => Config::from_default_locations()?,
-    };
-
-    // Initialize logger. Unfortunately, we can only do this here
-    // after reading the config.
-    logger::init(&config.log)?;
-
+async fn start_server(config: &Config) -> Result<()> {
     info!("Starting Tobira backend...");
     trace!("Configuration: {:#?}", config);
 
@@ -71,4 +67,19 @@ async fn start_server(args: &Args) -> Result<()> {
         .context("failed to start HTTP server")?;
 
     Ok(())
+}
+
+fn load_config_and_init_logger(args: &Args) -> Result<Config> {
+    // Load configuration.
+    let config = match &args.config {
+        Some(path) => Config::load_from(path)
+            .context(format!("failed to load config from '{}'", path.display()))?,
+        None => Config::from_default_locations()?,
+    };
+
+    // Initialize logger. Unfortunately, we can only do this here
+    // after reading the config.
+    logger::init(&config.log)?;
+
+    Ok(config)
 }
