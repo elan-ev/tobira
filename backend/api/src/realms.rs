@@ -80,7 +80,7 @@ impl Tree {
     ) -> anyhow::Result<impl TryStream<Ok = Realm, Error = impl std::error::Error>> {
         let row_stream = db.get().await?
             .query_raw(
-                "select id, name, parent, path from realms",
+                "select id, name, parent, path_segment from realms",
                 std::iter::empty(),
             ).await?;
 
