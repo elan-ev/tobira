@@ -154,7 +154,7 @@ impl Tree {
     }
 
     pub(crate) fn root(&self) -> &Realm {
-        self.realms.get(&0).unwrap()
+        &self.realms[&0]
     }
 
     pub(crate) fn from_path(&self, path: &str) -> Option<&Realm> {
