@@ -36,13 +36,10 @@ export const Realm: React.FC<Props> = ({ path }) => {
     }
 
     // Prepare data for breadcrumbs
-    const breadcrumbs = [];
-    for (const { name, path } of realm.parents.slice(1)) {
-        breadcrumbs.push({
-            label: name,
-            href: `/r${path}`,
-        });
-    }
+    const breadcrumbs = realm.parents.slice(1).map(({ name, path }) => ({
+        label: name,
+        href: `/r${path}`,
+    }));
 
     return <>
         {!isRoot && <Breadcrumbs path={breadcrumbs} />}

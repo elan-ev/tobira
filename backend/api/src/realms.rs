@@ -76,11 +76,14 @@ impl Tree {
     pub(crate) async fn from_db(db: &Pool) -> anyhow::Result<Self> {
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
-        let mut realms = db.get().await?
+        let mut realms = db
+            .get()
+            .await?
             .query_raw(
                 "select id, name, parent, path_segment from realms",
                 std::iter::empty(),
-            ).await?
+            )
+            .await?
             .map_ok(|row| {
                 let key = row.get_key(0);
                 Realm {
@@ -92,21 +95,21 @@ impl Tree {
                 }
             })
             .map_ok(|realm| (realm.key, realm))
-            .try_collect::<HashMap<_, _>>().await?;
+            .try_collect::<HashMap<_, _>>()
+            .await?;
 
         // With this, and the `parent` member of the `Realm`,
         // we already have quick access to the data of a realm's parent.
         // To also get to the children quickly we maintain a corresponding list
         // for each realm
         let keys = realms.values()
-            .filter_map(
-                |realm| realm.parent_key.map(
-                    |parent_key| (realm.key, parent_key)
-                )
-            )
+            .filter_map(|realm| {
+                realm.parent_key.map(|parent_key| (realm.key, parent_key))
+            })
             .collect::<Vec<_>>();
         for (key, parent_key) in keys {
-            let parent = realms.get_mut(&parent_key).context("invalid parent")?;
+            let parent = realms.get_mut(&parent_key)
+                .with_context(|| format!("invalid parent {} of {}", parent_key, key))?;
             parent.child_keys.push(key);
         }
 
@@ -114,8 +117,7 @@ impl Tree {
         // That is, we can now safely panic if we can't find things in our maps/lists;
         // that's totally a bug in this code, then, not an inconsistency in the db.
 
-        // We also need a map from the full path to the proper realm,
-        // and conversely, we want to cache the full path inside the realm.
+        // We also need a map from the full path to the proper realm.
         let from_path = index_by_path(&mut realms);
 
         fn index_by_path(
@@ -158,6 +160,6 @@ impl Tree {
     }
 
     pub(crate) fn from_path(&self, path: &str) -> Option<&Realm> {
-        self.realms.get(self.from_path.get(path)?)
+        self.from_path.get(path).map(|key| &self.realms[key])
     }
 }
