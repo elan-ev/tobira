@@ -19,15 +19,6 @@ pub(crate) struct Realm {
     child_keys: Vec<Key>,
 }
 
-impl Realm {
-    fn walk_up<'a>(&'a self, context: &'a Context) -> impl Iterator<Item = &'a Self> {
-        std::iter::successors(
-            Some(self),
-            move |child| child.parent_key.map(|parent_key| &context.realm_tree.realms[&parent_key])
-        )
-    }
-}
-
 #[graphql_object(Context = Context)]
 impl Realm {
     fn id(&self) -> Id {
@@ -43,11 +34,7 @@ impl Realm {
     }
 
     fn path(&self, context: &Context) -> String {
-        let mut segments = self.walk_up(context)
-            .map(|realm| &*realm.path_segment)
-            .collect::<Vec<_>>();
-        segments.reverse();
-        segments.join("/")
+        Tree::path(self, &context.realm_tree.realms)
     }
 
     fn parent(&self, context: &Context) -> Option<&Realm> {
@@ -55,7 +42,9 @@ impl Realm {
     }
 
     fn parents(&self, context: &Context) -> Vec<&Realm> {
-        let mut parents = self.walk_up(context).skip(1).collect::<Vec<_>>();
+        let mut parents = Tree::walk_up(self, &context.realm_tree.realms)
+            .skip(1)
+            .collect::<Vec<_>>();
         parents.reverse();
         parents
     }
@@ -118,37 +107,26 @@ impl Tree {
         // that's totally a bug in this code, then, not an inconsistency in the db.
 
         // We also need a map from the full path to the proper realm.
-        let from_path = index_by_path(&mut realms);
-
-        fn index_by_path(
-            realms: &mut HashMap<Key, Realm>,
-        ) -> HashMap<String, Key> {
-
-            let mut index = HashMap::new();
-
-            fill_index_recursively(0, "", realms, &mut index);
-
-            fn fill_index_recursively(
-                parent: Key,
-                full_path: &str,
-                realms: &HashMap<Key, Realm>,
-                index: &mut HashMap<String, Key>,
-            ) {
-                index.insert(full_path.to_owned(), parent);
-
-                let parent = &realms[&parent];
-                for child_key in &parent.child_keys {
-                    let child = &realms[&child_key];
-                    let path = [full_path, &child.path_segment].join("/");
-
-                    fill_index_recursively(*child_key, &path, realms, index);
-                }
-            }
-
-            index
-        }
+        let from_path = realms.iter()
+            .map(|(key, realm)| (Tree::path(realm, &realms), *key))
+            .collect::<HashMap<_, _>>();
 
         Ok(Tree { realms, from_path })
+    }
+
+    fn walk_up<'a>(realm: &'a Realm, realms: &'a HashMap<Key, Realm>) -> impl Iterator<Item = &'a Realm> {
+        std::iter::successors(
+            Some(realm),
+            move |child| child.parent_key.map(|parent_key| &realms[&parent_key])
+        )
+    }
+
+    fn path(realm: &Realm, realms: &HashMap<Key, Realm>) -> String {
+        let mut segments = Tree::walk_up(realm, realms)
+            .map(|realm| &*realm.path_segment)
+            .collect::<Vec<_>>();
+        segments.reverse();
+        segments.join("/")
     }
 
     pub(crate) fn get_node(&self, id: &Id) -> Option<&Realm> {
