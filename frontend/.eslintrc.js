@@ -37,6 +37,7 @@ module.exports = {
             "named": "never",
             "asyncArrow": "always",
         }],
+        "no-shadow": "off",
         // `== null` is actually a useful check for `null` and `undefined` at the same time
         "no-eq-null": "off",
         "eqeqeq": ["error", "always", { null: "ignore" }],
@@ -170,6 +171,7 @@ module.exports = {
     }],
     ignorePatterns: [
         "/build",
+        "/src/query-types",
         "!.*",
     ],
 };
