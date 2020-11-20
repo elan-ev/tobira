@@ -68,8 +68,8 @@ impl Realm {
 }
 
 pub(crate) struct Tree {
-    pub(crate) realms: HashMap<u64, Realm>,
-    from_path: HashMap<String, u64>,
+    pub(crate) realms: HashMap<Key, Realm>,
+    from_path: HashMap<String, Key>,
 }
 
 impl Tree {
@@ -121,18 +121,18 @@ impl Tree {
         let from_path = index_by_path(&mut realms);
 
         fn index_by_path(
-            realms: &mut HashMap<u64, Realm>,
-        ) -> HashMap<String, u64> {
+            realms: &mut HashMap<Key, Realm>,
+        ) -> HashMap<String, Key> {
 
             let mut index = HashMap::new();
 
             fill_index_recursively(0, "", realms, &mut index);
 
             fn fill_index_recursively(
-                parent: u64,
+                parent: Key,
                 full_path: &str,
-                realms: &HashMap<u64, Realm>,
-                index: &mut HashMap<String, u64>,
+                realms: &HashMap<Key, Realm>,
+                index: &mut HashMap<String, Key>,
             ) {
                 index.insert(full_path.to_owned(), parent);
 
