@@ -25,7 +25,7 @@ rust-embed = "5.5"
 secrecy = { version = "0.7", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 structopt = "0.3"
-termcolor = "1.0"
+termcolor = "1.1.1"
 tobira-api = { path = "../api" }
 tobira-macros = { path = "../macros" }
 tokio = { version = "0.2", features = ["rt-threaded", "macros"] }

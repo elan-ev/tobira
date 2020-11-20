@@ -88,18 +88,21 @@ fn write(record: &Record, out: &mut impl WriteColor) -> Result<()> {
     level_style.set_fg(Some(level_color));
     level_style.set_bold(level_bold);
 
-    // TODO: this should be dimmer/fainter than the message text
-    let dim_style = ColorSpec::new();
+    let mut dim_style = ColorSpec::new();
+    dim_style.set_dimmed(true);
 
     let body_color = match record.level() {
         Level::Error => Some(Color::Red),
         Level::Warn => Some(Color::Yellow),
         Level::Info => Some(Color::Green),
-        Level::Debug => Some(Color::Blue),
-        Level::Trace => Some(Color::Magenta),
+        Level::Debug => None,
+        Level::Trace => None,
     };
     let mut body_style = ColorSpec::new();
     body_style.set_fg(body_color);
+    if record.level() == Level::Trace {
+        body_style.set_dimmed(true);
+    }
 
 
     // Print time, level and target.
