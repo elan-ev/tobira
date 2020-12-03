@@ -341,10 +341,9 @@ fn collect_tokens<T>(
 }
 
 fn to_camel_case(ident: &Ident) -> Ident {
-    let s = ident.to_string();
-    let first = s.chars().next().unwrap();
-    let out = format!("{}{}", first.to_uppercase(), &s[first.len_utf8()..]);
-    Ident::new(&out, ident.span())
+    use heck::CamelCase;
+
+    Ident::new(&ident.to_string().to_camel_case(), ident.span())
 }
 
 // ==============================================================================================
