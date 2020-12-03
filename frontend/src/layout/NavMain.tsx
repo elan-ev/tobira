@@ -8,14 +8,7 @@ import { useTranslation } from "react-i18next";
 type Props = {
     title?: string;
     breadcrumbs?: React.ReactNode;
-    navItems: NavItem[];
-
-    // Is this node a leaf node (i.e. does not have any children)? If so, the
-    // navigation items are expected to be the siblings of the current node
-    // instead of the children. Futhermore, the navigation is only shown for
-    // wide screens.
-    leafNode: boolean;
-};
+} & NavProps;
 
 type NavItem = {
     label: string;
@@ -33,7 +26,7 @@ const BREAKPOINT = 720;
 // A layout for the `<main>` part of pages that require a navigation (mainly
 // realms). The navigation is either shown on the left as a sidebar (for large
 // screens) or inline below the page title (for small screens).
-export const NavMain: React.FC<Props> = ({ title, breadcrumbs, navItems, leafNode, children }) => (
+export const NavMain: React.FC<Props> = ({ title, breadcrumbs, children, ...navProps }) => (
     <div css={{
         // This funky expressions just means: above a screen width of 1100px,
         // the extra space will be 10% margin left and right. This is the middle
@@ -53,13 +46,18 @@ export const NavMain: React.FC<Props> = ({ title, breadcrumbs, navItems, leafNod
     }}>
         <div css={{ gridArea: "breadcrumbs" }}>{breadcrumbs}</div>
         <h1 css={{ gridArea: "title", margin: "12px 0" }}>{title}</h1>
-        <Nav items={navItems} leafNode={leafNode} />
+        <Nav {...navProps} />
         <div css={{ gridArea: "main" }}>{children}</div>
     </div>
 );
 
 type NavProps = {
     items: NavItem[];
+
+    // Is this node a leaf node (i.e. does not have any children)? If so, the
+    // navigation items are expected to be the siblings of the current node
+    // instead of the children. Futhermore, the navigation is only shown for
+    // wide screens.
     leafNode: boolean;
 };
 

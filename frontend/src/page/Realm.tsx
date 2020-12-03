@@ -70,7 +70,7 @@ export const RealmPage: React.FC<Props> = ({ path }) => {
         <MainLayout
             title={realm.name}
             breadcrumbs={<Breadcrumbs path={breadcrumbs} />}
-            navItems={navItems}
+            items={navItems}
             leafNode={realm.children.length === 0}
         >
             <p>
