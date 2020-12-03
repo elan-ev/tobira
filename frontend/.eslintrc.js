@@ -37,7 +37,10 @@ module.exports = {
             "named": "never",
             "asyncArrow": "always",
         }],
+        "no-inline-comments": "off",
+        "prefer-destructuring": "off",
         "no-shadow": "off",
+        "newline-per-chained-call": "off",
         // `== null` is actually a useful check for `null` and `undefined` at the same time
         "no-eq-null": "off",
         "eqeqeq": ["error", "always", { null: "ignore" }],

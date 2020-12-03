@@ -11,20 +11,20 @@ type Props = {
 
 type Segment = {
     label: string;
-    href: string;
+    link: string;
 };
 
 export const Breadcrumbs: React.FC<Props> = ({ path }) => {
     const { t } = useTranslation();
 
     return (
-        <nav aria-label="breadcrumbs" css={{ marginBottom: 16 }}>
+        <nav aria-label="breadcrumbs">
             <ol css={{ listStyle: "none", padding: 0, margin: 0 }}>
                 <Segment target="/" first active={path.length === 0}>
                     <FontAwesomeIcon title={t("home")} icon={faHome} />
                 </Segment>
                 {path.map((segment, i) => (
-                    <Segment key={i} target={segment.href} active={i === path.length - 1}>
+                    <Segment key={i} target={segment.link} active={i === path.length - 1}>
                         {segment.label}
                     </Segment>
                 ))}
