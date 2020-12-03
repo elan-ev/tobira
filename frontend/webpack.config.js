@@ -1,5 +1,6 @@
 "use strict";
 
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const path = require("path");
@@ -44,6 +45,7 @@ module.exports = (_env, argv) => ({
     },
 
     plugins: [
+        new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({
             inject: true,
             template: path.join(APP_PATH, "index.html"),
