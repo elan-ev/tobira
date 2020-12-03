@@ -2,6 +2,7 @@
 
 use anyhow::{Context, Result};
 use log::{info, trace};
+use std::env;
 
 pub(crate) use tobira_api as api;
 mod config;
@@ -11,10 +12,20 @@ mod http;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // If `RUST_BACKTRACE` wasn't already set, we default to `1`. Backtraces are
+    // almost always useful for debugging. Generating a backtrace is somewhat
+    // costly, which is why it is disabled by default. However, we don't expect
+    // panics to occur regularly, so it shouldn't be a problem. Only
+    // consideration: maaaybe this is a way to DOS tobira? If someone finds a
+    // request that triggers a panic?
+    if env::var("RUST_BACKTRACE") == Err(env::VarError::NotPresent) {
+        env::set_var("RUST_BACKTRACE", "1");
+    }
+
     // If no logging level was specified, we default to "debug", but just for
     // our own code.
-    if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "tobira=debug");
+    if env::var("RUST_LOG") == Err(env::VarError::NotPresent) {
+        env::set_var("RUST_LOG", "tobira=debug");
     }
     pretty_env_logger::init();
 

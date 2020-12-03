@@ -1252,6 +1252,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "deadpool-postgres",
+ "futures",
  "hyper",
  "juniper_hyper",
  "log",

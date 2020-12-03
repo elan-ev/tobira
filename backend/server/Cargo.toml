@@ -16,6 +16,7 @@ default-run = "tobira"
 [dependencies]
 anyhow = "1"
 deadpool-postgres = { version = "0.5", default-features = false }
+futures = "0.3"
 hyper = "0.13"
 log = "0.4"
 mime_guess = "2"
