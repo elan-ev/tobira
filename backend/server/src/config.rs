@@ -1,5 +1,3 @@
-use anyhow::{anyhow, Context, Result};
-use log::{debug, info};
 use secrecy::Secret;
 use std::{
     convert::TryInto,
@@ -8,6 +6,8 @@ use std::{
     net::IpAddr,
     path::{Path, PathBuf},
 };
+
+use tobira_util::prelude::*;
 
 
 /// The locations where Tobira will look for a configuration file. The first

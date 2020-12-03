@@ -1274,6 +1274,7 @@ dependencies = [
  "termcolor",
  "tobira-api",
  "tobira-macros",
+ "tobira-util",
  "tokio",
  "tokio-postgres",
  "toml",
@@ -1290,6 +1291,7 @@ dependencies = [
  "log",
  "paste",
  "static_assertions",
+ "tobira-util",
  "tokio-postgres",
 ]
 
@@ -1301,6 +1303,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tobira-util"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "log",
 ]
 
 [[package]]

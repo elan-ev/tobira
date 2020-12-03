@@ -28,6 +28,7 @@ structopt = "0.3"
 termcolor = "1.1.1"
 tobira-api = { path = "../api" }
 tobira-macros = { path = "../macros" }
+tobira-util = { path = "../util" }
 tokio = { version = "0.2", features = ["rt-threaded", "macros"] }
 tokio-postgres = "0.5"
 toml = "0.5"

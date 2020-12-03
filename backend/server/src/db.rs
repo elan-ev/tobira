@@ -1,11 +1,10 @@
 //! Database related things.
 
-use anyhow::{bail, Context, Result};
 use deadpool_postgres::{Config as PoolConfig, Pool};
-use log::{debug, info};
 use secrecy::ExposeSecret;
 use tokio_postgres::NoTls;
 
+use tobira_util::prelude::*;
 use crate::config;
 
 

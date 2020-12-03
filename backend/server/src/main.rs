@@ -1,9 +1,9 @@
 //! The Tobira backend server.
 
-use anyhow::{bail, Context, Result};
-use log::{info, trace};
 use std::env;
 use structopt::StructOpt;
+
+use tobira_util::prelude::*;
 use crate::{
     args::{Args, Command},
     config::Config,

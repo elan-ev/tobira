@@ -1,4 +1,3 @@
-use anyhow::Result;
 use log::{Level, LevelFilter, Log, Metadata, Record};
 use std::{
     fs::{File, OpenOptions},
@@ -6,8 +5,8 @@ use std::{
 };
 use termcolor::{Color, ColorChoice, ColorSpec, NoColor, StandardStream, WriteColor};
 
+use tobira_util::prelude::*;
 use crate::config;
-
 
 
 /// Our own `Log` implementation.
