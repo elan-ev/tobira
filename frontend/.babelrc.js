@@ -3,6 +3,9 @@
 const manifest = require("./package.json");
 
 module.exports = {
+    parserOpts: {
+        strictMode: true,
+    },
     plugins: [
         "relay",
     ],
