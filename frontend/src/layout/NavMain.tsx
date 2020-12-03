@@ -11,6 +11,7 @@ type Props = {
 } & NavProps;
 
 type NavItem = {
+    id: string;
     label: string;
     link: string;
 
@@ -116,7 +117,7 @@ const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
                     overflow: "hidden",
                 },
             }}>
-                {items.map((item, i) => {
+                {items.map(item => {
                     const baseStyle = { padding: "6px 12px", display: "block" };
                     const inner = item.active
                         ? <b css={{ ...baseStyle, backgroundColor: "#ddd" }}>
@@ -137,7 +138,7 @@ const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
                         >{item.label}</Link>;
 
                     return (
-                        <li key={i} css={{ borderBottom: "1px solid #ccc" }}>
+                        <li key={item.id} css={{ borderBottom: "1px solid #ccc" }}>
                             {inner}
                         </li>
                     );

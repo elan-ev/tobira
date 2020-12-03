@@ -55,12 +55,14 @@ export const RealmPage: React.FC<Props> = ({ path }) => {
         }));
 
     const navItems = realm.children.length > 0
-        ? realm.children.map(({ path, name }) => ({
+        ? realm.children.map(({ id, path, name }) => ({
+            id,
             label: name,
             link: `/r${path}`,
             active: false,
         }))
         : realm.parent.children.map(({ id, name, path }) => ({
+            id,
             label: name,
             link: `/r${path}`,
             active: id === realm.id,

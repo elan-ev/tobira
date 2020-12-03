@@ -11,7 +11,7 @@ export const HomePage: React.FC = () => {
             realm: rootRealm {
                 name
                 path
-                children { name path }
+                children { id name path }
             }
         }
     `, {});
@@ -19,7 +19,8 @@ export const HomePage: React.FC = () => {
     return (
         <MainLayout
             leafNode={false}
-            items={realm.children.map(({ path, name }) => ({
+            items={realm.children.map(({ id, path, name }) => ({
+                id,
                 label: name,
                 link: `/r${path}`,
                 active: false,
