@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Switch, Route, RouteComponentProps } from "react-router-dom";
 
-import { RelayEnvironmentProvider } from "react-relay/hooks";
+import { RelayEnvironmentProvider } from "relay-hooks";
 import { environment } from "./relay";
 
 import { GlobalStyle } from "./GlobalStyle";

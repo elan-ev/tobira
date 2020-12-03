@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-import { graphql, useLazyLoadQuery } from "react-relay/hooks";
+import { graphql, useLazyLoadQuery } from "relay-hooks";
 import { RealmQuery } from "../query-types/RealmQuery.graphql";
 
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -15,7 +15,7 @@ export const Realm: React.FC<Props> = ({ path }) => {
     const isRoot = path === "";
 
     // TODO Build this query from fragments!
-    const { realm } = useLazyLoadQuery<RealmQuery>(graphql`
+    const { props } = useLazyLoadQuery<RealmQuery>(graphql`
         query RealmQuery($path: String!) {
             realm: realmByPath(path: $path) {
                 name
@@ -29,11 +29,12 @@ export const Realm: React.FC<Props> = ({ path }) => {
         path: isRoot ? "" : `/${path}`,
     });
 
-    if (!realm) {
+    if (!props?.realm) {
         // TODO: that should obviously be handled in a better way
         //   Also: I'm not sure whether that's still the only cause for error.
         return <b>{"Realm path not found :("}</b>;
     }
+    const { realm } = props;
 
     // Prepare data for breadcrumbs
     const breadcrumbs = realm.parents.slice(1).map(({ name, path }) => ({

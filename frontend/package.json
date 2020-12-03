@@ -53,6 +53,7 @@
     "relay-compiler": "^10.1.0",
     "relay-compiler-language-typescript": "^13.0.2",
     "relay-config": "^10.1.0",
+    "relay-hooks": "^3.7.0",
     "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12",
     "yaml-loader": "^0.6.0"
