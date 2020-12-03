@@ -6,7 +6,6 @@
 
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": true,
     "noImplicitReturns": true,
     "strict": true
   },
