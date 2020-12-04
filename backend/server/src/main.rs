@@ -1,10 +1,16 @@
 //! The Tobira backend server.
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use log::{info, trace};
 use std::env;
+use structopt::StructOpt;
+use crate::{
+    args::{Args, Command},
+    config::Config,
+};
 
 pub(crate) use tobira_api as api;
+mod args;
 mod config;
 mod db;
 mod http;
@@ -31,9 +37,30 @@ async fn main() -> Result<()> {
 
     info!("Starting Tobira backend...");
 
-    let config = config::Config::from_default_locations()
-        .context("failed to load configuration")?;
-    trace!("Using configuration: {:#?}", config);
+    // Parse CLI args.
+    let args = Args::from_args();
+    trace!("Command line arguments: {:#?}", args);
+
+    match args.cmd {
+        None => start_server(&args).await?,
+        Some(Command::WriteConfig { target }) => {
+            if args.config.is_some() {
+                bail!("`-c/--config` parameter is not valid for this subcommand");
+            }
+            config::write_template(target.as_ref())?
+        },
+    }
+
+    Ok(())
+}
+
+async fn start_server(args: &Args) -> Result<()> {
+    // Load configuration
+    let config = match &args.config {
+        Some(path) => Config::load_from(path),
+        None => Config::from_default_locations(),
+    }.context("failed to load configuration")?;
+    trace!("Configuration: {:#?}", config);
 
     let db = db::create_pool(&config.db).await
         .context("failed to create database connection pool (database not running?)")?;

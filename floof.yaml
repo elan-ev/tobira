@@ -18,6 +18,7 @@ backend:
           - Cargo.lock
           - api/
           - server/
+          - macros/
         run:
           - reload:
           - cargo run
