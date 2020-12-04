@@ -59,6 +59,8 @@ async fn start_server(config: &Config) -> Result<()> {
 
     let db = db::create_pool(&config.db).await
         .context("failed to create database connection pool (database not running?)")?;
+    db::migrate(&mut *db.get().await?).await
+        .context("failed to check/run DB migrations")?;
 
     let root_node = api::root_node();
     let context = api::Context::new(db).await?;
