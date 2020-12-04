@@ -3,8 +3,9 @@ use log::{debug, info};
 use std::{
     convert::TryInto,
     fs,
+    io::{self, Write},
     net::IpAddr,
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 
@@ -88,4 +89,20 @@ impl Config {
 
         Ok(())
     }
+}
+
+/// Writes the generated TOML config template file to the given destination or
+/// stdout.
+pub(crate) fn write_template(path: Option<&PathBuf>) -> Result<()> {
+    info!(
+        "Writing configuration template to '{}'",
+        path.map(|p| p.display().to_string()).unwrap_or("<stdout>".into()),
+    );
+
+    match path {
+        Some(path) => fs::write(path, TOML_TEMPLATE)?,
+        None => io::stdout().write_all(TOML_TEMPLATE.as_bytes())?,
+    }
+
+    Ok(())
 }

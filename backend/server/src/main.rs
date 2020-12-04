@@ -5,7 +5,7 @@ use log::{info, trace};
 use std::env;
 use structopt::StructOpt;
 use crate::{
-    args::Args,
+    args::{Args, Command},
     config::Config,
 };
 
@@ -41,6 +41,15 @@ async fn main() -> Result<()> {
     let args = Args::from_args();
     trace!("Command line arguments: {:#?}", args);
 
+    match args.cmd {
+        None => start_server(&args).await?,
+        Some(Command::WriteConfig { target }) => config::write_template(target.as_ref())?,
+    }
+
+    Ok(())
+}
+
+async fn start_server(args: &Args) -> Result<()> {
     // Load configuration
     let config = match &args.config {
         Some(path) => Config::load_from(path),
