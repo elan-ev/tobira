@@ -7,6 +7,7 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(
     about = "Video portal for Opencast.",
+    after_help = "When run without subcommand, the Tobira backend server is started.",
     setting(structopt::clap::AppSettings::VersionlessSubcommands),
 )]
 pub(crate) struct Args {
