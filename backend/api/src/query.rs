@@ -11,7 +11,7 @@ pub struct Query;
 
 #[graphql_object(Context = Context)]
 impl Query {
-    fn apiVersion() -> &str {
+    fn api_version() -> &str {
         "0.0"
     }
 
