@@ -1,6 +1,6 @@
 //! Database related things.
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc, offset::TimeZone};
 use deadpool_postgres::{Config as PoolConfig, Pool};
 use futures::TryStreamExt;
 use once_cell::sync::Lazy;
@@ -112,7 +112,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
     #[derive(Debug)]
     struct RawMigration {
         name: String,
-        applied_on: NaiveDateTime,
+        applied_on: DateTime<Utc>,
         script: String,
     }
 
@@ -128,7 +128,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
             row.get::<_, i64>(0) as u64,
             RawMigration {
                 name: row.get(1),
-                applied_on: row.get(2),
+                applied_on: Utc.from_utc_datetime(&row.get(2)),
                 script: row.get(3),
             }
         ))
@@ -196,7 +196,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
                 .context(format!("failed to run script for '{}-{}'", id, migration.name))?;
 
             let query = "insert into __db_migrations (id, name, applied_on, script) \
-                values ($1, $2, now(), $3)";
+                values ($1, $2, now() at time zone 'utc', $3)";
             // let params = ;
             transaction.execute(query, &[&(*id as i64), &migration.name, &migration.script])
                 .await
