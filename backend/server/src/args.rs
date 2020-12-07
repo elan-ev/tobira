@@ -46,4 +46,8 @@ pub(crate) enum DbCommand {
         /// Path to a file containing an SQL script.
         script: PathBuf,
     },
+
+    /// Runs the database migrations that also automatically run when starting
+    /// the server.
+    Migrate,
 }

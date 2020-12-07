@@ -17,6 +17,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
     // Dispatch command
     match cmd {
         DbCommand::Clear => clear(&mut db, config).await,
+        DbCommand::Migrate => super::migrate(&mut db).await,
         DbCommand::Script { script } => run_script(&db, &script).await,
     }
 }
