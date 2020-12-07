@@ -21,7 +21,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
 
 
 async fn clear(db: &Db) -> Result<()> {
-    let tables = query::all_table_names(db).await?;
+    let tables = query::all_table_names(&**db).await?;
     if tables.is_empty() {
         info!("The database does not contain any tables, so there is nothing to do.");
         return Ok(());

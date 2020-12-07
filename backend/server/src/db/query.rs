@@ -1,11 +1,10 @@
 use anyhow::Result;
 use futures::stream::TryStreamExt;
-
-use super::Db;
+use tokio_postgres::GenericClient;
 
 
 /// Returns meta information about all tables in the `public` schema.
-pub(super) async fn all_table_names(db: &Db) -> Result<Vec<String>> {
+pub(super) async fn all_table_names(db: &impl GenericClient) -> Result<Vec<String>> {
     let rows = db.query_raw(
             "select table_name from information_schema.tables where table_schema='public'",
             std::iter::empty(),
@@ -17,7 +16,7 @@ pub(super) async fn all_table_names(db: &Db) -> Result<Vec<String>> {
 }
 
 /// Checks if a table with the name `table_name` exists in the public schema.
-pub(super) async fn does_table_exist(db: &Db, table_name: &str) -> Result<bool> {
+pub(super) async fn does_table_exist(db: &impl GenericClient, table_name: &str) -> Result<bool> {
     let row = db.query_one(
         "select exists(
             select * from information_schema.tables

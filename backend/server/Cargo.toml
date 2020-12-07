@@ -30,7 +30,7 @@ termcolor = "1.1.1"
 tobira-api = { path = "../api" }
 tobira-macros = { path = "../macros" }
 tobira-util = { path = "../util" }
-tokio = { version = "0.2", features = ["rt-threaded", "macros"] }
+tokio = { version = "0.2", features = ["rt-threaded", "macros", "time"] }
 tokio-postgres = { version = "0.5", features = ["with-chrono-0_4"] }
 toml = "0.5"
 
