@@ -53,28 +53,6 @@ pub(crate) async fn create_pool(config: &config::Db) -> Result<Pool> {
     Ok(pool)
 }
 
-/// Drops all tables specified in `table_names`.
-async fn drop_tables(db: &Db, table_names: &[String]) -> Result<()> {
-    // Oof, so I somehow haven't found a good way to drop a table with a dynamic
-    // name. `drop table $1` does not work. So the solution now is just to
-    // require very simple table name which don't require escaping and then,
-    // dare I say it, doing string concatination to build the query. I don't see
-    // a way how this could lead to SQL injections.
-    for name in table_names {
-        if !name.chars().all(|c| c.is_ascii_alphabetic() || c == '_') {
-            bail!("cannot automatically drop table '{}' as it contains forbidden chars", name);
-        }
-
-        db.execute(&*format!("drop table {}", name), &[])
-            .await
-            .context(format!("failed to drop table '{}'", name))?;
-
-        info!("Dropped table '{}'", name);
-    }
-
-    Ok(())
-}
-
 /// Makes sure the database schema is up to date by checking the active
 /// migrations and applying all missing ones.
 ///
