@@ -1,7 +1,7 @@
-use anyhow::{Context, Result};
-use log::info;
+use std::path::Path;
 use tokio_postgres::IsolationLevel;
 
+use tobira_util::prelude::*;
 use crate::{
     args::DbCommand,
     config,
@@ -17,6 +17,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
     // Dispatch command
     match cmd {
         DbCommand::Clear => clear(&mut db, config).await,
+        DbCommand::Script { script } => run_script(&db, &script).await,
     }
 }
 
@@ -70,6 +71,17 @@ async fn clear(db: &mut Db, config: &config::Db) -> Result<()> {
     tx.commit().await.context("failed to commit clear transaction")?;
 
     info!("Dropped and recreated schema 'public'");
+
+    Ok(())
+}
+
+async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
+    let script = tokio::fs::read_to_string(script_path)
+        .await
+        .context(format!("failed to read script file '{}'", script_path.display()))?;
+
+    db.batch_execute(&script).await.context("failed to execute script")?;
+    info!("Successfully ran SQL script");
 
     Ok(())
 }

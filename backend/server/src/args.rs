@@ -40,4 +40,10 @@ pub(crate) enum Command {
 pub(crate) enum DbCommand {
     /// Removes all data and tables from the database.
     Clear,
+
+    /// Runs an `.sql` script with the configured database connection.
+    Script {
+        /// Path to a file containing an SQL script.
+        script: PathBuf,
+    },
 }
