@@ -54,12 +54,12 @@ impl Log for Logger {
 
         if let Some(stdout) = &self.stdout {
             // We ignore a poisened mutex. The stdout handle doesn't contain
-            // anything "state" that other threads could have tainted. The worst
+            // any "state" that other threads could have tainted. The worst
             // that could happen is slightly weird formatting.
             //
             // We also ignore possible errors writing to `stdout`. Because...
             // what are we supposed to do? It's better the server keeps running
-            // without logs than the server going down?
+            // without logs than the server going down, right?
             let mut stdout = stdout.lock().unwrap_or_else(|e| e.into_inner());
             let _ = write(record, &mut *stdout);
         }
