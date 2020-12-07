@@ -2,7 +2,8 @@
 
 use deadpool_postgres::Pool;
 
-use self::{
+use tobira_util::prelude::*;
+use crate::{
     mutation::Mutation,
     query::Query,
     subscription::Subscription,
@@ -36,7 +37,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub async fn new(db: Pool) -> anyhow::Result<Self> {
+    pub async fn new(db: Pool) -> Result<Self> {
         let realm_tree = realms::Tree::from_db(&db).await?;
         Ok(Self {
             db,

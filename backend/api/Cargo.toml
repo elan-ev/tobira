@@ -18,6 +18,7 @@ futures = "0.3.1"
 log = "0.4"
 paste = "1"
 static_assertions = "1"
+tobira-util = { path = "../util" }
 tokio-postgres = "0.5"
 
 # These currently use a specific commit from the git repository. The lastest

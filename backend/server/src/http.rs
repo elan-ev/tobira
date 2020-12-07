@@ -1,12 +1,10 @@
 //! The HTTP server, handler and routes.
 
-use anyhow::Result;
 use futures::FutureExt;
 use hyper::{
     Body, Method, Server, StatusCode,
     service::{make_service_fn, service_fn},
 };
-use log::{debug, error, info, trace};
 use std::{
     convert::Infallible,
     future::Future,
@@ -15,6 +13,7 @@ use std::{
     sync::Arc,
 };
 
+use tobira_util::prelude::*;
 use crate::{api, config};
 
 // Our requests and responses always use the hyper provided body type.

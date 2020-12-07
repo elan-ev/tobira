@@ -1,10 +1,9 @@
-use anyhow::Context as _;
-
 use deadpool_postgres::Pool;
 use futures::stream::TryStreamExt;
 use juniper::graphql_object;
 use std::collections::HashMap;
 
+use tobira_util::prelude::*;
 use crate::{
     Context, Id, Key,
     util::RowExt,
@@ -62,7 +61,9 @@ pub(crate) struct Tree {
 }
 
 impl Tree {
-    pub(crate) async fn from_db(db: &Pool) -> anyhow::Result<Self> {
+    pub(crate) async fn from_db(db: &Pool) -> Result<Self> {
+        debug!("Loading realms from database");
+
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
         let mut realms = db
@@ -110,6 +111,8 @@ impl Tree {
         let from_path = realms.iter()
             .map(|(key, realm)| (Tree::path(realm, &realms), *key))
             .collect::<HashMap<_, _>>();
+
+        debug!("Loaded {} realms from the database", realms.len());
 
         Ok(Tree { realms, from_path })
     }

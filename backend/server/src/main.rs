@@ -1,9 +1,9 @@
 //! The Tobira backend server.
 
-use anyhow::{bail, Context, Result};
-use log::{info, trace};
 use std::env;
 use structopt::StructOpt;
+
+use tobira_util::prelude::*;
 use crate::{
     args::{Args, Command},
     config::Config,
@@ -14,6 +14,7 @@ mod args;
 mod config;
 mod db;
 mod http;
+mod logger;
 
 
 #[tokio::main]
@@ -28,19 +29,10 @@ async fn main() -> Result<()> {
         env::set_var("RUST_BACKTRACE", "1");
     }
 
-    // If no logging level was specified, we default to "debug", but just for
-    // our own code.
-    if env::var("RUST_LOG") == Err(env::VarError::NotPresent) {
-        env::set_var("RUST_LOG", "tobira=debug");
-    }
-    pretty_env_logger::init();
-
-    info!("Starting Tobira backend...");
-
     // Parse CLI args.
     let args = Args::from_args();
-    trace!("Command line arguments: {:#?}", args);
 
+    // Dispatch subcommand.
     match args.cmd {
         None => start_server(&args).await?,
         Some(Command::WriteConfig { target }) => {
@@ -55,11 +47,18 @@ async fn main() -> Result<()> {
 }
 
 async fn start_server(args: &Args) -> Result<()> {
-    // Load configuration
+    // Load configuration.
     let config = match &args.config {
-        Some(path) => Config::load_from(path),
-        None => Config::from_default_locations(),
-    }.context("failed to load configuration")?;
+        Some(path) => Config::load_from(path)
+            .context(format!("failed to load config from '{}'", path.display()))?,
+        None => Config::from_default_locations()?,
+    };
+
+    // Initialize logger. Unfortunately, we can only do this here
+    // after reading the config.
+    logger::init(&config.log)?;
+
+    info!("Starting Tobira backend...");
     trace!("Configuration: {:#?}", config);
 
     let db = db::create_pool(&config.db).await
