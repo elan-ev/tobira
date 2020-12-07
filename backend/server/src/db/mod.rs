@@ -15,7 +15,7 @@ pub(crate) mod cmd;
 mod query;
 
 
-/// Convenience type alias. Every function who needs to operate on the database
+/// Convenience type alias. Every function that needs to operate on the database
 /// can just accept a `db: &Db` parameter.
 type Db = deadpool_postgres::ClientWrapper;
 
@@ -47,13 +47,7 @@ pub(crate) async fn create_pool(config: &config::Db) -> Result<Pool> {
         .context("failed to get DB connection")?;
     client.execute("SELECT 1", &[]).await
         .context("failed to execute DB test query")?;
-    // let n_roots = connection.execute("SELECT * from realms where id = 0", &[]).await
-    //     .context("failed to check")?;
-    // if n_roots < 1 {
-    //     bail!("no root realm found");
-    // } else if n_roots > 1 {
-    //     bail!("more than one root realm found");
-    // }
+
     debug!("Successfully tested database connection with test query");
 
     Ok(pool)
@@ -138,9 +132,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
 
     // Make sure the IDs are consecutive
     if !active_migrations.keys().copied().eq(1..active_migrations.len() as u64 + 1) {
-        bail!(
-            "The IDs of the active migrations are not consecutive. That is unexpected."
-        );
+        bail!("The IDs of the active migrations are not consecutive. This is unexpected.");
     }
 
     // Make sure existing migration match the ones we know about.

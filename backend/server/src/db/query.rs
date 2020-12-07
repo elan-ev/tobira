@@ -11,7 +11,7 @@ pub(super) async fn all_table_names(db: &Db) -> Result<Vec<String>> {
             std::iter::empty(),
         )
         .await?
-        .map_ok(|row| row.get::<_, String>("table_name"));
+        .map_ok(|row| row.get::<_, String>(0));
 
     Ok(rows.try_collect().await?)
 }
