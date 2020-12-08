@@ -1,5 +1,12 @@
-use std::path::Path;
+use std::{
+    io,
+    os::unix::process::CommandExt,
+    path::Path,
+    process::Command,
+};
 use tokio_postgres::IsolationLevel;
+
+use secrecy::ExposeSecret;
 
 use tobira_util::prelude::*;
 use crate::{
@@ -10,6 +17,11 @@ use super::{Db, create_pool, query};
 
 
 pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
+
+    if let DbCommand::Console = cmd {
+        console(config).map(|_| ())?
+    }
+
     // Connect to database
     let pool = create_pool(config).await?;
     let mut db = pool.get().await?;
@@ -19,6 +31,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
         DbCommand::Clear => clear(&mut db, config).await,
         DbCommand::Migrate => super::migrate(&mut db).await,
         DbCommand::Script { script } => run_script(&db, &script).await,
+        DbCommand::Console => unreachable!("already handled above"),
     }
 }
 
@@ -86,3 +99,18 @@ async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
 
     Ok(())
 }
+
+fn console(config: &config::Db) -> Result<NeverReturns, io::Error> {
+    Err(Command::new("psql")
+        .args(&[format!(
+            "postgresql://{}:{}@{}:{}/{}",
+            config.user,
+            config.password.expose_secret(),
+            config.host,
+            config.port,
+            config.database,
+        )])
+        .exec())
+}
+
+enum NeverReturns {}

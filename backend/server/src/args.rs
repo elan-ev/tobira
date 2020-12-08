@@ -50,4 +50,7 @@ pub(crate) enum DbCommand {
     /// Runs the database migrations that also automatically run when starting
     /// the server.
     Migrate,
+
+    /// Connects to the database and gives you an SQL prompt.
+    Console,
 }
