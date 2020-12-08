@@ -28,26 +28,12 @@ cargo run
 Configuration
 -------------
 
-The backend loads configuration from `config.toml` in the current working directory.
+The backend loads its configuration from the first file found at the following locations:
+- `config.toml`
+- `/etc/tobira/config.toml`
+To generate an example configuration file with further documentation, run:
 
-```toml
-# Database configuration
-[db]
-
-# Database user
-user = "tobira"
-
-# Database password
-password = "tobira"
-
-# Database host
-host = "127.0.0.1"
-
-# Database port
-# Default: 5432
-port = 5432
-
-# Database name
-# Default: tobira
-database = "tobira"
+```sh
+tobira write-config               # write to stdout
+tobira write-config config.toml   # write to 'config.toml'
 ```
