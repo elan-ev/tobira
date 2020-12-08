@@ -97,6 +97,9 @@ module.exports = {
         "dot-notation": "warn",
         "no-tabs": "warn",
         "no-extra-parens": "warn",
+        "max-statements-per-line": "warn",
+        "curly": "warn",
+        "no-else-return": "warn",
         // Unused things should also only warn
         "no-unused-vars": ["warn", noUnusedVarsOptions],
     },
@@ -153,6 +156,9 @@ module.exports = {
                 format: ["PascalCase", "camelCase"],
             }],
             "@typescript-eslint/member-delimiter-style": "warn",
+            "@typescript-eslint/brace-style": "warn",
+            "@typescript-eslint/lines-between-class-members": "warn",
+            "@typescript-eslint/explicit-member-accessibility": "warn",
 
             // Turn off base rules overridden by `@typescript-eslint` rules
             "indent": "off",
