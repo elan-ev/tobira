@@ -33,20 +33,45 @@ async fn main() -> Result<()> {
     let args = Args::from_args();
 
     // Dispatch subcommand.
-    match args.cmd {
-        None => start_server(&args).await?,
+    match &args.cmd {
+        None => {
+            let config = load_config_and_init_logger(&args)?;
+            start_server(&config).await?;
+        }
         Some(Command::WriteConfig { target }) => {
             if args.config.is_some() {
                 bail!("`-c/--config` parameter is not valid for this subcommand");
             }
             config::write_template(target.as_ref())?
-        },
+        }
+        Some(Command::Db { cmd }) => {
+            let config = load_config_and_init_logger(&args)?;
+            db::cmd::run(cmd, &config.db).await?;
+        }
     }
 
     Ok(())
 }
 
-async fn start_server(args: &Args) -> Result<()> {
+async fn start_server(config: &Config) -> Result<()> {
+    info!("Starting Tobira backend...");
+    trace!("Configuration: {:#?}", config);
+
+    let db = db::create_pool(&config.db).await
+        .context("failed to create database connection pool (database not running?)")?;
+    db::migrate(&mut *db.get().await?).await
+        .context("failed to check/run DB migrations")?;
+
+    let root_node = api::root_node();
+    let context = api::Context::new(db).await?;
+
+    http::serve(&config.http, root_node, context).await
+        .context("failed to start HTTP server")?;
+
+    Ok(())
+}
+
+fn load_config_and_init_logger(args: &Args) -> Result<Config> {
     // Load configuration.
     let config = match &args.config {
         Some(path) => Config::load_from(path)
@@ -58,17 +83,5 @@ async fn start_server(args: &Args) -> Result<()> {
     // after reading the config.
     logger::init(&config.log)?;
 
-    info!("Starting Tobira backend...");
-    trace!("Configuration: {:#?}", config);
-
-    let db = db::create_pool(&config.db).await
-        .context("failed to create database connection pool (database not running?)")?;
-
-    let root_node = api::root_node();
-    let context = api::Context::new(db).await?;
-
-    http::serve(&config.http, root_node, context).await
-        .context("failed to start HTTP server")?;
-
-    Ok(())
+    Ok(config)
 }
