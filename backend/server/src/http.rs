@@ -5,8 +5,10 @@ use hyper::{
     Body, Method, Server, StatusCode,
     service::{make_service_fn, service_fn},
 };
+use hyperlocal::UnixServerExt;
 use std::{
     convert::Infallible,
+    fs,
     future::Future,
     net::SocketAddr,
     panic::AssertUnwindSafe,
@@ -43,21 +45,42 @@ pub(crate) async fn serve(
     // All our logic is encoded in the function `handle`. The only thing we are
     // doing here is to pass the context to that function, and clone its `Arc`
     // accordingly.
-    let factory = make_service_fn(move |_| {
-        let ctx = Arc::clone(&ctx);
-        async {
-            Ok::<_, Infallible>(service_fn(move |req| {
-                handle_panic(handle(req, Arc::clone(&ctx)))
-            }))
+    // 
+    // We wrap the factory definition in a macro because we need two slightly 
+    // different factories. One for binding to a unix socket and one for 
+    // binding to a TCP socket. The code for defining the factory is exactly 
+    // the same, but due to type inference, it results in a different type. The
+    // macro avoids code duplication.
+    macro_rules! factory {
+        () => {
+            make_service_fn(move |_| {
+                let ctx = Arc::clone(&ctx);
+                async {
+                    Ok::<_, Infallible>(service_fn(move |req| {
+                        handle_panic(handle(req, Arc::clone(&ctx)))
+                    }))
+                }
+            })
         }
-    });
+    }
+
 
     // Start the server with our service.
-    let addr = SocketAddr::new(config.address, config.port);
-    let server = Server::bind(&addr).serve(factory);
-    info!("Listening on http://{}", server.local_addr());
-
-    server.await?;
+    if let Some(unix_socket) = &config.unix_socket {
+        // Bind to Unix domain socket.
+        if unix_socket.exists() {
+            fs::remove_file(unix_socket)?;
+        }
+        let server = Server::bind_unix(&unix_socket)?.serve(factory!());
+        info!("Listening on unix://{}", unix_socket.display());
+        server.await?;
+    } else {
+        // Bind to TCP socket.
+        let addr = SocketAddr::new(config.address, config.port);
+        let server = Server::bind(&addr).serve(factory!());
+        info!("Listening on http://{}", server.local_addr());
+        server.await?;
+    }
 
     Ok(())
 }

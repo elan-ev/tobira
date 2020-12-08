@@ -42,11 +42,16 @@ tobira_macros::gen_config! {
         database: String = "tobira",
     },
     http: {
-        /// The port the HTTP server should listen on.
+        /// The TCP port the HTTP server should listen on.
         port: u16 = 3080,
 
         /// The bind address to listen on.
         address: IpAddr = "127.0.0.1",
+
+        /// Unix domain socket to listen on. Specifying this will overwrite 
+        /// the TCP configuration.
+        #[example = "/tmp/tobira.socket"]
+        unix_socket: Option<PathBuf>,
     },
     log: {
         /// Determines how many messages are logged. Log messages below
