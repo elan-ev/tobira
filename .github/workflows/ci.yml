@@ -1,4 +1,4 @@
-name: CI
+name: Build, test and deploy
 
 on: [pull_request, push]
 
@@ -8,8 +8,7 @@ env:
 
 jobs:
   main:
-    name: 'Build & test'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
 
@@ -59,7 +58,7 @@ jobs:
 
     - name: Build backend
       working-directory: backend
-      run: cargo build
+      run: cargo build --release
     - name: Test backend
       working-directory: backend
       run: cargo test
@@ -69,3 +68,32 @@ jobs:
     - name: Make sure `schema.graphql` is up to date
       working-directory: backend
       run: cargo run --bin export-schema | diff -u --color=always - ../frontend/src/schema.graphql
+
+    # Deployment
+    - name: Prepare binary and demo data for deployment
+      run: |
+        cp -v backend/target/release/tobira .deployment/files/
+        cp -v scripts/fixtures.sql .deployment/files/
+
+    - name: prepare deploy key
+      env:
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      run: |
+        install -dm 700 ~/.ssh/
+        echo "${DEPLOY_KEY}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan tobira.opencast.org >> ~/.ssh/known_hosts
+      if: ${{ github.event_name == 'push' }}
+
+    - name: install ansible postgres extensions
+      run: ansible-galaxy collection install community.general
+
+    - name: deploy tobira branch
+      working-directory: .deployment
+      run: >
+        ansible-playbook
+        --private-key=~/.ssh/id_ed25519
+        --extra-vars="branch='${GITHUB_REF#refs/heads/}'"
+        -u github
+        deploy.yml
+      if: ${{ github.event_name == 'push' }}
