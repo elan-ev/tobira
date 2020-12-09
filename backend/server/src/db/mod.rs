@@ -258,4 +258,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     2: "id-generation",
     3: "realms",
     4: "series",
+    5: "events",
 ];
