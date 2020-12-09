@@ -17,9 +17,8 @@ use super::{Db, create_pool, query};
 
 
 pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
-
     if let DbCommand::Console = cmd {
-        console(config).map(|_| ())?
+        return console(config).map(|_| ());
     }
 
     // Connect to database
@@ -100,17 +99,22 @@ async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn console(config: &config::Db) -> Result<NeverReturns, io::Error> {
-    Err(Command::new("psql")
-        .args(&[format!(
-            "postgresql://{}:{}@{}:{}/{}",
-            config.user,
-            config.password.expose_secret(),
-            config.host,
-            config.port,
-            config.database,
-        )])
-        .exec())
+fn console(config: &config::Db) -> Result<NeverReturns> {
+    let connection_uri = format!(
+        "postgresql://{}:{}@{}:{}/{}",
+        config.user,
+        config.password.expose_secret(),
+        config.host,
+        config.port,
+        config.database,
+    );
+    let error = Command::new("psql").arg(connection_uri).exec();
+    let message = match error.kind() {
+        io::ErrorKind::NotFound => "`psql` was not found in your `PATH`",
+        io::ErrorKind::PermissionDenied => "you don't have sufficient permissions to execute `psql`",
+        _ => "an error occured while trying to execute `psql`",
+    };
+    Err(error).context(message)
 }
 
 enum NeverReturns {}
