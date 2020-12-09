@@ -1,5 +1,12 @@
-use std::path::Path;
+use std::{
+    io,
+    os::unix::process::CommandExt,
+    path::Path,
+    process::Command,
+};
 use tokio_postgres::IsolationLevel;
+
+use secrecy::ExposeSecret;
 
 use tobira_util::prelude::*;
 use crate::{
@@ -10,6 +17,10 @@ use super::{Db, create_pool, query};
 
 
 pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
+    if let DbCommand::Console = cmd {
+        return console(config).map(|_| ());
+    }
+
     // Connect to database
     let pool = create_pool(config).await?;
     let mut db = pool.get().await?;
@@ -19,6 +30,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
         DbCommand::Clear => clear(&mut db, config).await,
         DbCommand::Migrate => super::migrate(&mut db).await,
         DbCommand::Script { script } => run_script(&db, &script).await,
+        DbCommand::Console => unreachable!("already handled above"),
     }
 }
 
@@ -86,3 +98,27 @@ async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
 
     Ok(())
 }
+
+fn console(config: &config::Db) -> Result<NeverReturns> {
+    let connection_uri = format!(
+        "postgresql://{}:{}@{}:{}/{}",
+        config.user,
+        config.password.expose_secret(),
+        config.host,
+        config.port,
+        config.database,
+    );
+    let error = Command::new("psql").arg(connection_uri).exec();
+    let message = match error.kind() {
+        io::ErrorKind::NotFound => "`psql` was not found in your `PATH`",
+        io::ErrorKind::PermissionDenied => "you don't have sufficient permissions to execute `psql`",
+        _ => "an error occured while trying to execute `psql`",
+    };
+    Err(error).context(message)
+}
+
+/// An empty `enum` for signaling the fact that a function (potentially) never returns.
+/// Note that you can't construct a value of this type, so a function returning it
+/// can never return. A function returning `Result<NeverReturns>` never returns
+/// when it succeeds, but it might still fail.
+enum NeverReturns {}
