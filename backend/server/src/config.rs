@@ -61,7 +61,7 @@ tobira_macros::gen_config! {
 
         /// If this is set, log messages are also written to this file.
         #[example = "/var/log/tobira.log"]
-        file: Option<String>,
+        file: Option<PathBuf>,
 
         /// If this is set to `false`, log messages are not written to stdout.
         stdout: bool = true,
