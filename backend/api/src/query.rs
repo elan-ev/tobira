@@ -2,7 +2,7 @@ use juniper::graphql_object;
 
 use crate::{
     Context, Id,
-    realms::Realm,
+    model::realm::Realm,
 };
 
 

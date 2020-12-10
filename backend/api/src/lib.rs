@@ -13,7 +13,7 @@ pub mod mutation;
 pub mod query;
 pub mod subscription;
 
-mod realms;
+mod model;
 mod id;
 mod util;
 
@@ -33,12 +33,12 @@ pub type RootNode = juniper::RootNode<'static, Query, Mutation, Subscription>;
 pub struct Context {
     #[allow(dead_code)] // TODO
     db: Pool,
-    realm_tree: realms::Tree,
+    realm_tree: model::realm::Tree,
 }
 
 impl Context {
     pub async fn new(db: Pool) -> Result<Self> {
-        let realm_tree = realms::Tree::from_db(&db).await?;
+        let realm_tree = model::realm::Tree::from_db(&db).await?;
         Ok(Self {
             db,
             realm_tree,
