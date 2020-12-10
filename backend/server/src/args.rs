@@ -55,4 +55,7 @@ pub(crate) enum DbCommand {
     /// This just starts the `psql` client, so make sure that is installed
     /// and accessible in your `PATH`.
     Console,
+
+    /// Equivalent to `db clear` followed by `db migrate`.
+    Reset,
 }

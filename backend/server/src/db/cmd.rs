@@ -27,15 +27,30 @@ pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
 
     // Dispatch command
     match cmd {
-        DbCommand::Clear => clear(&mut db, config).await,
-        DbCommand::Migrate => super::migrate(&mut db).await,
-        DbCommand::Script { script } => run_script(&db, &script).await,
+        DbCommand::Clear => {
+            clear(&mut db, config).await?;
+        }
+        DbCommand::Migrate => super::migrate(&mut db).await?,
+        DbCommand::Reset => {
+            let cleared = clear(&mut db, config).await?;
+            if cleared {
+                super::migrate(&mut db).await?;
+            }
+        }
+        DbCommand::Script { script } => run_script(&db, &script).await?,
         DbCommand::Console => unreachable!("already handled above"),
     }
+
+    Ok(())
 }
 
 
-async fn clear(db: &mut Db, config: &config::Db) -> Result<()> {
+/// Clears the whole database by removing and re-creating the `public` schema.
+///
+/// This also has a interactive check, asking the user to confirm the removal.
+/// If the user did not confirm and the database is not changed, `false` is
+/// returned; `true` otherwise.
+async fn clear(db: &mut Db, config: &config::Db) -> Result<bool> {
     let tx = db.build_transaction()
         .isolation_level(IsolationLevel::Serializable)
         .start()
@@ -71,7 +86,7 @@ async fn clear(db: &mut Db, config: &config::Db) -> Result<()> {
     std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
     if line.trim() != "yes" {
         println!("Answer was not 'yes'. Aborting.");
-        return Ok(());
+        return Ok(false);
     }
 
     // We clear everything by dropping the 'public' schema. This is suggested
@@ -85,7 +100,7 @@ async fn clear(db: &mut Db, config: &config::Db) -> Result<()> {
 
     info!("Dropped and recreated schema 'public'");
 
-    Ok(())
+    Ok(true)
 }
 
 async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
