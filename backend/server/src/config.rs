@@ -52,6 +52,9 @@ tobira_macros::gen_config! {
         /// the TCP configuration.
         #[example = "/tmp/tobira.socket"]
         unix_socket: Option<PathBuf>,
+
+        /// Unix domain socket file permissions.
+        unix_socket_permissions: u32 = 0o755,
     },
     log: {
         /// Determines how many messages are logged. Log messages below

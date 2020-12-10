@@ -11,6 +11,7 @@ use std::{
     fs,
     future::Future,
     net::SocketAddr,
+    os::unix::fs::PermissionsExt,
     panic::AssertUnwindSafe,
     sync::Arc,
 };
@@ -73,6 +74,8 @@ pub(crate) async fn serve(
         }
         let server = Server::bind_unix(&unix_socket)?.serve(factory!());
         info!("Listening on unix://{}", unix_socket.display());
+        let permissions = fs::Permissions::from_mode(config.unix_socket_permissions);
+        fs::set_permissions(unix_socket, permissions)?;
         server.await?;
     } else {
         // Bind to TCP socket.
