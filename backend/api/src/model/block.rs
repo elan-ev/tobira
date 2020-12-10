@@ -1,16 +1,21 @@
 //! Blocks that make up the content of realm pages.
 
-use juniper::{graphql_interface, GraphQLEnum, GraphQLObject};
-use postgres_types::FromSql;
-use crate::Id;
+use anyhow::anyhow;
+use futures::TryStreamExt;
+use juniper::{graphql_interface, FieldResult, GraphQLEnum, GraphQLObject};
+use postgres_types::{FromSql, ToSql};
+
+use tobira_util::prelude::*;
+use tokio_postgres::Row;
+use crate::{Context, Id, id::Key, util::RowExt};
 
 
-/// The `Block` interface: a UI element that belongs to a realm.
+/// A `Block`: a UI element that belongs to a realm.
 #[graphql_interface(for = [Text, VideoList])]
 pub(crate) trait Block {
-    // To avoid code duplication, all the shared data is stored in `SharedData` and
-    // only a `shared` method is mandatory. All other method (in particular, all
-    // that are visible to GraphQL) are defined in the trait already.
+    // To avoid code duplication, all the shared data is stored in `SharedData`
+    // and only a `shared` method is mandatory. All other method (in particular,
+    // all that are visible to GraphQL) are defined in the trait already.
     #[graphql(skip)]
     fn shared(&self) -> &SharedData;
 
@@ -93,4 +98,72 @@ impl Block for VideoList {
     fn shared(&self) -> &SharedData {
         &self.shared
     }
+}
+
+impl BlockValue {
+    /// Fetches all blocks for the given realm from the database.
+    pub(crate) async fn fetch_for_realm(realm_key: Key, context: &Context) -> FieldResult<Vec<Self>> {
+        context.db.get()
+            .await?
+            .query_raw(
+                "select id, type, index, title, text_content, videolist_series,
+                    videolist_layout, videolist_order
+                    from blocks
+                    where realm_id=$1
+                    order by index asc",
+                [realm_key as i64].iter().map(|x| x as &dyn ToSql),
+            )
+            .await?
+            .map_err(anyhow::Error::from)
+            .and_then(|row| async move {
+                let ty: BlockType = row.get(1);
+                let shared = SharedData {
+                    id: Id::block(row.get_key(0)),
+                    index: row.get::<_, i16>(2).into(),
+                    title: row.get(3),
+                };
+
+                let block = match ty {
+                    BlockType::Text => {
+                        Text {
+                            shared,
+                            content: get_type_dependent(&row, 4, "text", "text_content")?,
+                        }.into()
+                    }
+                    BlockType::VideoList => {
+                        VideoList {
+                            shared,
+                            series: Id::series(
+                                get_type_dependent::<i64>(
+                                    &row,
+                                    5,
+                                    "videolist",
+                                    "videolist_series",
+                                )? as u64
+                            ),
+                            layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
+                            order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
+                        }.into()
+                    }
+                };
+
+                Ok(block)
+            })
+            .try_collect()
+            .await
+            .map_err(Into::into)
+    }
+}
+
+/// Helper functions to fetch fields from the table that are bound to a type of
+/// block. For example, "text" blocks need to have the "text_content" column
+/// set (non-null).
+fn get_type_dependent<'a, T: FromSql<'a>>(
+    row: &'a Row,
+    idx: usize,
+    type_name: &str,
+    field_name: &str,
+) -> Result<T> {
+    row.get::<_, Option<_>>(idx)
+        .ok_or(anyhow!("DB broken: block with type='{}' has null `{}`", type_name, field_name))
 }

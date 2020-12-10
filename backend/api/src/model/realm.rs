@@ -1,11 +1,12 @@
 use deadpool_postgres::Pool;
 use futures::stream::TryStreamExt;
-use juniper::graphql_object;
+use juniper::{FieldResult, graphql_object};
 use std::collections::HashMap;
 
 use tobira_util::prelude::*;
 use crate::{
     Context, Id, Key,
+    model::block::BlockValue,
     util::RowExt,
 };
 
@@ -52,6 +53,15 @@ impl Realm {
         self.child_keys.iter()
             .map(|child| &context.realm_tree.realms[&child])
             .collect()
+    }
+
+    /// Returns the (content) blocks of this realm.
+    async fn blocks(&self, context: &Context) -> FieldResult<Vec<BlockValue>> {
+        // TODO: this method can very easily lead to an N+1 query problem.
+        // However, it is unlikely that we ever have that problem: the frontend
+        // will only show one realm at a time, so the query will also only
+        // request the blocks of one realm.
+        BlockValue::fetch_for_realm(self.key, context).await
     }
 }
 
