@@ -9,6 +9,7 @@ create table events (
     -- Meta data
     title text not null,
     description text,
+    series bigint references series,
 
     -- Media
     video text
