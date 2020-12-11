@@ -27,7 +27,7 @@ create table __xtea_keys (
     key bytea unique not null unique check (octet_length(key) = 16) default gen_random_bytes(16)
 );
 
-create procedure prepare_randomized_ids(entity text)
+create function prepare_randomized_ids(entity text) returns void
 language plpgsql
 as $$ begin
     execute 'create sequence ' || quote_ident('__' || entity || '_ids') || ';';

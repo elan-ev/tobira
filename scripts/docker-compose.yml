@@ -3,7 +3,7 @@ version: '2'
 services:
   database:
     container_name: tobira-dev-postgres
-    image: docker.io/library/postgres:12.3
+    image: docker.io/library/postgres:10
     restart: always
     ports:
       - 127.0.0.1:5432:5432
