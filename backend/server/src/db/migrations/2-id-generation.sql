@@ -40,8 +40,8 @@ create function randomized_id(entity text) returns bigint
 language sql
 as $$
     select xtea(
-        nextval(('__' || entity || '_ids')::regclass),
-        (select key from __xtea_keys where entity = entity),
+        nextval(('__' || $1 || '_ids')::regclass),
+        (select key from __xtea_keys where entity = $1),
         true
     );
 $$;
