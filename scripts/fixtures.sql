@@ -1,4 +1,4 @@
-create procedure department(name text)
+create function department(name text) returns void
 language plpgsql
 as $$
 declare
@@ -21,8 +21,8 @@ begin
     end loop;
 end; $$;
 
-call department('Mathematics');
-call department('Computer Science');
-call department('Physics');
+select department('Mathematics');
+select department('Computer Science');
+select department('Physics');
 
-drop procedure department;
+drop function department;
