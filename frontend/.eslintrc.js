@@ -32,10 +32,15 @@ module.exports = {
         "default-case": "off",
         "no-console": "off",
         "func-style": "off",
+        "no-underscore-dangle": "off",
         "space-before-function-paren": ["warn", {
             "anonymous": "always",
             "named": "never",
             "asyncArrow": "always",
+        }],
+        "camelcase": ["warn", {
+            allow: ["\\$key$"],
+            ignoreImports: true,
         }],
         "no-inline-comments": "off",
         "prefer-destructuring": "off",

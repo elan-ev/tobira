@@ -4,6 +4,7 @@ import { graphql, useLazyLoadQuery } from "react-relay/hooks";
 import { RealmQuery } from "../query-types/RealmQuery.graphql";
 
 import { Breadcrumbs } from "../ui/Breadcrumbs";
+import { Blocks } from "../ui/Blocks";
 import { NavMain as MainLayout } from "../layout/NavMain";
 import { unreachable } from "../util/err";
 
@@ -27,6 +28,7 @@ export const RealmPage: React.FC<Props> = ({ path }) => {
                 parent {
                     children { id name path }
                 }
+                ... Blocks_blocks
             }
         }
     `, {
@@ -75,15 +77,7 @@ export const RealmPage: React.FC<Props> = ({ path }) => {
             items={navItems}
             leafNode={realm.children.length === 0}
         >
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-                ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-                aliquip ex ea commodo consequat. Duis aute irure dolor in
-                reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-                pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-                culpa qui officia deserunt mollit anim id est laborum.
-            </p>
+            <Blocks realm={realm} />
         </MainLayout>
     );
 };
