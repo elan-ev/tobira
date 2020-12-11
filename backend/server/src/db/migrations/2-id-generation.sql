@@ -17,7 +17,7 @@
 -- -- [...]
 -- ```
 
-create extension pgcrypto;
+create extension if not exists pgcrypto;
 
 -- Create a table to hold encryption keys for the `xtea` function,
 -- one per relation where we want to "randomize" the IDs, to avoid
