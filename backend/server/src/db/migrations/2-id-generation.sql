@@ -24,7 +24,7 @@ create extension pgcrypto;
 -- being able to cross-guess the sequence.
 create table __xtea_keys (
     entity text primary key,
-    key bytea not null unique check (octet_length(key) = 16) default gen_random_bytes(16)
+    key bytea unique not null unique check (octet_length(key) = 16) default gen_random_bytes(16)
 );
 
 create procedure prepare_randomized_ids(entity text)
