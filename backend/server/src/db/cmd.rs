@@ -3,6 +3,7 @@ use std::{
     os::unix::process::CommandExt,
     path::Path,
     process::Command,
+    process::exit
 };
 use tokio_postgres::IsolationLevel;
 
@@ -86,7 +87,7 @@ async fn clear(db: &mut Db, config: &config::Db) -> Result<bool> {
     std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
     if line.trim() != "yes" {
         println!("Answer was not 'yes'. Aborting.");
-        return Ok(false);
+        exit(1);
     }
 
     // We clear everything by dropping the 'public' schema. This is suggested
