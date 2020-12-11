@@ -1,4 +1,4 @@
-call prepare_randomized_ids('event');
+select prepare_randomized_ids('event');
 
 create table events (
     id bigint primary key default randomized_id('event'),

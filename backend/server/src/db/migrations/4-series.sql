@@ -1,4 +1,4 @@
-call prepare_randomized_ids('series');
+select prepare_randomized_ids('series');
 
 create table series (
     id bigint primary key default randomized_id('series'),
