@@ -2,3 +2,4 @@
 //! API.
 
 pub(crate) mod realm;
+pub(crate) mod block;
