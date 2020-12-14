@@ -1,9 +1,6 @@
 use juniper::graphql_object;
 
-use crate::{
-    Context, Id,
-    realms::Realm,
-};
+use crate::{Context, Id, model::realm::Realm};
 
 
 /// The root query object.

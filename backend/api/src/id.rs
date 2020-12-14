@@ -77,6 +77,8 @@ macro_rules! define_kinds {
 //   alphanumeric ASCII.
 define_kinds![
     realm = b"re",
+    block = b"bl",
+    series = b"se",
 ];
 
 
