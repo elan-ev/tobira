@@ -30,7 +30,9 @@ create table __xtea_keys (
 create function prepare_randomized_ids(entity text) returns void
 language plpgsql
 as $$ begin
-    execute 'create sequence ' || quote_ident('__' || entity || '_ids') || ';';
+    execute 'create sequence '
+        || quote_ident('__' || entity || '_ids')
+        || ' minvalue -9223372036854775808 cycle;';
     insert into __xtea_keys (entity) values (entity);
 end; $$;
 
