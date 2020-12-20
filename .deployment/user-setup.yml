@@ -1,0 +1,23 @@
+---
+
+- hosts: all
+  become: true
+
+  tasks:
+    - name: create admin users
+      user:
+        name: github
+
+    - name: set up admin authorized keys
+      authorized_key:
+        user: github
+        state: present
+        key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG+mrJMXebhLEls6tPDWU7A5bs33PKpxQ2x/EltUaYtg
+        exclusive: true
+
+    - name: allow github to sudo without a password
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^github '
+        line: 'github ALL=(ALL) NOPASSWD: ALL'

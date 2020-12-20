@@ -1,0 +1,261 @@
+---
+# vim: et:ts=2:sw=2:sts=2
+
+- hosts: all
+
+  vars:
+    # default branch
+    # will usually be overwritten by --extra-vars='branch=<branch>'
+    branch: master
+    b64_branch: "{{ branch  | b64encode | replace('=', '') }}"
+    id: "{{ branch | regex_replace('[^a-zA-Z0-9]', '') }}-{{ b64_branch }}"
+
+  tasks:
+
+    - name: install dependencies
+      become: true
+      package:
+        state: present
+        name:
+          - postgresql-server
+          - postgresql-contrib
+          - python3-psycopg2
+          - nginx
+
+    # DATABASE
+
+    - name: initialize database
+      become: true
+      command:
+        cmd: postgresql-setup --initdb
+        creates: /var/lib/pgsql/data/postgresql.conf
+
+    - name: set auth to scram-sha-256
+      become: true
+      lineinfile:
+        path: /var/lib/pgsql/data/postgresql.conf
+        regexp: '^password_encryption'
+        line: "password_encryption = 'scram-sha-256'"
+      notify: restart postgresql
+
+    - name: configure postgres access
+      become: true
+      copy:
+        src: pg_hba.conf
+        dest: /var/lib/pgsql/data/pg_hba.conf
+        owner: postgres
+        group: postgres
+        mode: '0644'
+      notify: restart postgresql
+
+    - name: start and enable database
+      become: true
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    # Migration with data currently does not work.
+    # That is why we drop and re-create the database for now.
+    - name: stop and disable tobira
+      become: true
+      systemd:
+        name: tobira-{{ id }}
+        state: stopped
+      ignore_errors: true
+
+    - name: drop database
+      become: true
+      become_user: postgres
+      community.general.postgresql_db:
+        name: tobira-{{ id }}
+        state: absent
+    # End of migration hack.
+
+    - name: create tobira postgres user
+      become: true
+      become_user: postgres
+      community.general.postgresql_user:
+        name: tobira-{{ id }}
+        password: tobira-{{ b64_branch }}
+
+    - name: create database
+      become: true
+      become_user: postgres
+      community.general.postgresql_db:
+        name: tobira-{{ id }}
+        owner: tobira-{{ id }}
+
+    - name: add pgcrypto extension
+      become: true
+      become_user: postgres
+      community.general.postgresql_ext:
+        name: pgcrypto
+        db: tobira-{{ id }}
+
+    # TOBIRA
+
+    - name: create tobira users
+      become: true
+      user:
+        name: tobira
+
+    - name: create application directory
+      become: true
+      file:
+        path: /opt/tobira/{{ id }}
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: create socket directory
+      become: true
+      file:
+        path: /opt/tobira/{{ id }}/socket
+        state: directory
+        owner: tobira
+        group: tobira
+        setype: httpd_sys_rw_content_t
+        mode: '0755'
+
+    - name: deploy tobira and configuration
+      become: true
+      copy:
+        src: tobira
+        dest: /opt/tobira/{{ id }}/
+        owner: root
+        group: root
+        mode: '0755'
+      notify: restart tobira
+
+    - name: deploy configuration
+      become: true
+      template:
+        src: config.toml
+        dest: /opt/tobira/{{ id }}/
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart tobira
+
+    - name: deploy demo data
+      become: true
+      copy:
+        src: fixtures.sql
+        dest: /opt/tobira/{{ id }}/
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: run database migration
+      become: true
+      become_user: tobira
+      command:
+        cmd: /opt/tobira/{{ id }}/tobira db migrate
+        chdir: /opt/tobira/{{ id }}/
+
+    - name: insert demo data
+      become: true
+      become_user: tobira
+      command:
+        cmd: /opt/tobira/{{ id }}/tobira db script fixtures.sql
+        chdir: /opt/tobira/{{ id }}/
+
+    - name: install tobira service files
+      become: true
+      template:
+        src: tobira.service
+        dest: /etc/systemd/system/tobira-{{ id }}.service
+        mode: '0644'
+        owner: root
+        group: root
+      notify: restart tobira
+
+    - name: start and enable tobira
+      become: true
+      systemd:
+        daemon_reload: true
+        name: tobira-{{ id }}
+        state: started
+        enabled: true
+
+    # NGINX
+
+    - name: deploy nginx configuration
+      become: true
+      template:
+        src: '{{ item.src }}'
+        dest: /etc/nginx/{{ item.dest }}
+        mode: '0644'
+        owner: root
+        group: root
+      loop:
+        - src: nginx.conf
+          dest: nginx.conf
+        - src: nginx-host.conf
+          dest: conf.d/tobira-{{ id }}.conf
+      notify: reload nginx
+
+    - name: create ssl directory
+      become: true
+      file:
+        path: /etc/nginx/ssl
+        state: directory
+        owner: nginx
+        mode: '0755'
+
+    - name: initial configuration for certificates
+      become: true
+      copy:
+        src: ssl/{{ item.src }}
+        dest: /etc/nginx/ssl/{{ item.dest }}
+        owner: root
+        group: root
+        force: false
+        mode: '0640'
+      loop:
+        - src: certificate.pem
+          dest: '{{ inventory_hostname }}.crt'
+        - src: key.pem
+          dest: '{{ inventory_hostname }}.key'
+        - src: dhparam.pem
+          dest: dhparam.pem
+      notify: reload nginx
+
+    - name: configure firewall
+      become: true
+      firewalld:
+        service: '{{ item }}'
+        state: enabled
+        permanent: yes
+        immediate: yes
+      loop:
+        - http
+        - https
+
+    - name: start and enable nginx
+      become: true
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
+
+  handlers:
+    - name: restart postgresql
+      become: true
+      service:
+        name: postgresql
+        state: restarted
+
+    - name: restart tobira
+      become: true
+      service:
+        name: tobira-{{ id }}
+        state: restarted
+
+    - name: reload nginx
+      become: true
+      service:
+        name: nginx
+        state: reloaded

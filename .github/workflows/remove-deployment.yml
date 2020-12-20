@@ -1,0 +1,37 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Remove deployment
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  delete:
+
+jobs:
+  main:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: prepare deploy key
+      env:
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      run: |
+        install -dm 700 ~/.ssh/
+        echo "${DEPLOY_KEY}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan tobira.opencast.org >> ~/.ssh/known_hosts
+
+    - name: install ansible postgres extensions
+      run: ansible-galaxy collection install community.general
+
+    - name: remove deployment
+      working-directory: .deployment
+      env:
+        BRANCH: ${{ github.event.ref }}
+      run: >
+        ansible-playbook
+        --private-key=~/.ssh/id_ed25519
+        --extra-vars="branch='${BRANCH}'"
+        -u github
+        remove-deployment.yml

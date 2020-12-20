@@ -1,0 +1,9 @@
+[db]
+database = "tobira-{{ id }}"
+user = "tobira-{{ id }}"
+password = "tobira-{{ b64_branch }}"
+host = "127.0.0.1"
+
+[http]
+unix_socket = "/opt/tobira/{{ id }}/socket/tobira.sock"
+unix_socket_permissions = 0o777

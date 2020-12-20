@@ -1,0 +1,63 @@
+---
+# vim: et:ts=2:sw=2:sts=2
+
+- hosts: all
+
+  vars:
+    # default branch
+    # will usually be opverwritten by --extra-vars='branch=<breanch>'
+    branch: master
+    b64_branch: "{{ branch  | b64encode | replace('=', '') }}"
+    id: "{{ branch | regex_replace('[^a-zA-Z0-9]', '') }}-{{ b64_branch }}"
+
+  tasks:
+
+    - name: stop and disable tobira
+      become: true
+      systemd:
+        name: tobira-{{ id }}
+        state: stopped
+        enabled: false
+      ignore_errors: true
+
+    - name: remove deployed files and folders
+      become: true
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - /opt/tobira/{{ id }}
+        - /etc/systemd/system/tobira-{{ id }}.service
+        - /etc/nginx/conf.d/tobira-{{ id }}.conf
+      notify: reload nginx
+
+    - name: force systemd to reread configs
+      become: true
+      systemd:
+        daemon_reload: yes
+
+    - name: reset failed units
+      become: true
+      command:
+        cmd: systemctl reset-failed
+
+    - name: drop database
+      become: true
+      become_user: postgres
+      community.general.postgresql_db:
+        name: tobira-{{ id }}
+        state: absent
+
+    - name: drop tobira postgres user
+      become: true
+      become_user: postgres
+      community.general.postgresql_user:
+        name: tobira-{{ id }}
+        state: absent
+
+  handlers:
+    - name: reload nginx
+      become: true
+      service:
+        name: nginx
+        state: reloaded
