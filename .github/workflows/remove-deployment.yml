@@ -9,6 +9,7 @@ on:
 
 jobs:
   main:
+    if: github.repository_owner == 'elan-ev'
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2

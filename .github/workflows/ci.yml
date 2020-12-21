@@ -96,4 +96,4 @@ jobs:
         --extra-vars="branch='${GITHUB_REF#refs/heads/}'"
         -u github
         deploy.yml
-      if: ${{ github.event_name == 'push' }}
+      if: ${{ github.event_name == 'push' && github.repository_owner == 'elan-ev' }}
