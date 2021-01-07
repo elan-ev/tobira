@@ -87,6 +87,7 @@ jobs:
 
     - name: install ansible postgres extensions
       run: ansible-galaxy collection install community.general
+      if: ${{ github.event_name == 'push' && github.repository_owner == 'elan-ev' }}
 
     - name: deploy tobira branch
       working-directory: .deployment
