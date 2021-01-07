@@ -1,6 +1,6 @@
 import React from "react";
 import { graphql, useFragment } from "react-relay/hooks";
-import type {
+import {
     Blocks_blocks as QueryResult,
     Blocks_blocks$key,
 } from "../query-types/Blocks_blocks.graphql";
@@ -15,7 +15,7 @@ type Props = {
 type BlockData = QueryResult["blocks"][0];
 
 export const Blocks: React.FC<Props> = ({ realm }) => {
-    const blocks = useFragment(
+    const { blocks } = useFragment(
         graphql`
             fragment Blocks_blocks on Realm {
                 blocks {
@@ -27,7 +27,7 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
             }
         `,
         realm,
-    ).blocks;
+    );
 
     return <>{
         blocks.map(block => match(block.__typename, {
