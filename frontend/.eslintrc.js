@@ -101,7 +101,7 @@ module.exports = {
         "dot-location": ["warn", "property"],
         "dot-notation": "warn",
         "no-tabs": "warn",
-        "no-extra-parens": "warn",
+        "no-extra-parens": ["warn", "all", { enforceForArrowConditionals: false }],
         "max-statements-per-line": "warn",
         "curly": "warn",
         "no-else-return": "warn",
@@ -145,7 +145,11 @@ module.exports = {
 
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],
-            "@typescript-eslint/no-extra-parens": ["warn", "all", { ignoreJSX: "all" }],
+            "@typescript-eslint/no-extra-parens": [
+                "warn",
+                "all",
+                { enforceForArrowConditionals: false, ignoreJSX: "all" },
+            ],
             "@typescript-eslint/no-unused-vars": ["warn", noUnusedVarsOptions],
             "@typescript-eslint/comma-spacing": "warn",
             // This checks some more things than `no-unused-vars`,
