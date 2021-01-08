@@ -143,7 +143,16 @@ const MainMenu: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => {
         },
     };
 
-    return (
+    return <>
+        <div css={{
+            borderBottom: "1px solid #bbb",
+            textAlign: "center",
+            minWidth: 220,
+            padding: 8,
+        }}>
+            {t("login.not-logged-in")}
+            <LoginButton closeMenu={closeMenu}/>
+        </div>
         <ul css={{
             width: "100%",
             listStyle: "none",
@@ -168,6 +177,32 @@ const MainMenu: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => {
                 </Link>
             </li>
         </ul>
+    </>;
+};
+
+const LoginButton: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => {
+    const { t } = useTranslation();
+
+    return (
+        <Link
+            to="/login"
+            onClick={closeMenu}
+            css={{
+                display: "inline-block",
+                marginTop: 8,
+                padding: "4px 8px",
+                fontSize: 18,
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+                border: "2px solid #495dce",
+                borderRadius: 3,
+                "&:hover": {
+                    boxShadow: "0 0 5px #0000004d",
+                },
+            }}
+        >
+            {t("login.button-label")}
+        </Link>
     );
 };
 

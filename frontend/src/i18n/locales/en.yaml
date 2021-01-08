@@ -20,3 +20,7 @@ main-menu:
   theme: Theme
   settings: Settings
   about: About
+
+login:
+  button-label: Login
+  not-logged-in: You are not logged in.

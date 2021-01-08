@@ -21,3 +21,7 @@ main-menu:
   theme: Design
   settings: Einstellungen
   about: Info
+
+login:
+  button-label: Einloggen
+  not-logged-in: Sie sind nicht eingeloggt.
