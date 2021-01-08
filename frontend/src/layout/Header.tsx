@@ -117,7 +117,7 @@ const ActionIcons: React.FC = () => {
                 {match(menuState, {
                     "closed": () => null,
                     "language": () => <LanguageList />,
-                    "menu": () => <MainMenu />,
+                    "menu": () => <MainMenu closeMenu={() => setMenuState("closed")} />,
                 })}
             </div>
         </div>
@@ -125,7 +125,7 @@ const ActionIcons: React.FC = () => {
 };
 
 // The main menu with several links and functions.
-const MainMenu = () => {
+const MainMenu: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => {
     const { t } = useTranslation();
     const iconStyle = {
         display: "inline-block",
@@ -156,13 +156,13 @@ const MainMenu = () => {
                 {t("main-menu.theme")}
             </li>
             <li>
-                <Link to="/settings" css={itemStyle}>
+                <Link to="/settings" css={itemStyle} onClick={closeMenu}>
                     <FontAwesomeIcon icon={faCog} fixedWidth css={iconStyle} />
                     {t("main-menu.settings")}
                 </Link>
             </li>
             <li>
-                <Link to="/about" css={itemStyle}>
+                <Link to="/about" css={itemStyle} onClick={closeMenu}>
                     <FontAwesomeIcon icon={faInfoCircle} fixedWidth css={iconStyle} />
                     {t("main-menu.about")}
                 </Link>
