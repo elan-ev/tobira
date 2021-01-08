@@ -103,13 +103,25 @@ const ActionIcons: React.FC = () => {
                 borderTop: "none",
                 borderRight: "none",
                 maxWidth: "100vw",
-                backgroundColor: "white",
+                "&::after": {
+                    content: "''",
+                    position: "absolute",
+                    top: 10,
+                    bottom: -2,
+                    left: 0,
+                    right: 0,
+                    zIndex: -1,
+                    backgroundColor: "#0000001a",
+                    boxShadow: "0 0 7px 3px #0000001a",
+                },
             }}>
-                {match(menuState, {
-                    "closed": () => null,
-                    "language": () => <LanguageList />,
-                    "menu": () => <MainMenu closeMenu={() => setMenuState("closed")} />,
-                })}
+                <div css={{ backgroundColor: "white" }}>
+                    {match(menuState, {
+                        "closed": () => null,
+                        "language": () => <LanguageList />,
+                        "menu": () => <MainMenu closeMenu={() => setMenuState("closed")} />,
+                    })}
+                </div>
             </div>
         </div>
     );
@@ -135,7 +147,7 @@ const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, isActive, child
             display: "flex",
             alignItems: "center",
             ...isActive && {
-                "&:after": {
+                "&::after": {
                     content: "''",
                     display: "block" as const,
                     position: "absolute" as const,
