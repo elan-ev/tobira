@@ -32,6 +32,7 @@ module.exports = {
         "default-case": "off",
         "no-console": "off",
         "func-style": "off",
+        "max-lines": "off",
         "no-underscore-dangle": "off",
         "space-before-function-paren": ["warn", {
             "anonymous": "always",
