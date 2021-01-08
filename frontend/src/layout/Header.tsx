@@ -11,6 +11,7 @@ import { match } from "../util";
 
 
 const HEIGHT = 60;
+const HEADER_BORDER_WIDTH = 1;
 
 export const Header: React.FC = () => (
     <div css={{
@@ -19,7 +20,7 @@ export const Header: React.FC = () => (
         alignItems: "center",
         justifyContent: "space-between",
         backgroundColor: "white",
-        borderBottom: "1px solid #bbb",
+        borderBottom: `${HEADER_BORDER_WIDTH}px solid #bbb`,
     }}>
         <Logo />
         <Search />
@@ -73,43 +74,33 @@ const ActionIcons: React.FC = () => {
         setMenuState(menuState === state ? "closed" : state);
     };
 
-    const iconSize = 30;
-    const iconDivStyle = {
-        padding: 6,
-        margin: "0 4px",
-        borderRadius: 4,
-        lineHeight: 0,
-        cursor: "pointer",
-        fontSize: iconSize,
-        "&:hover": {
-            backgroundColor: "#ddd",
-        },
-    };
-
     return (
-        <div css={{ display: "flex", height: "100%", alignItems: "center", position: "relative" }}>
-            <div
+        <div css={{ display: "flex", height: "100%", position: "relative" }}>
+            <ActionIcon
                 title={`${t("language")}: ${t("language-name")}`}
                 onClick={() => toggleMenu("language")}
-                css={iconDivStyle}
+                isActive={menuState === "language"}
             >
                 <LanguageIcon />
-            </div>
-            <div
+            </ActionIcon>
+
+            <ActionIcon
                 title={t("main-menu.label")}
                 onClick={() => toggleMenu("menu")}
-                css={iconDivStyle}
+                isActive={menuState === "menu"}
             >
                 <MenuIcon />
-            </div>
+            </ActionIcon>
+
             <div css={{
                 position: "absolute",
                 ...menuState === "closed" && { display: "none" },
-                top: "100%",
+                top: `calc(100% + ${HEADER_BORDER_WIDTH}px)`,
                 right: 0,
+                zIndex: 20,
                 minWidth: 180,
                 border: "1px solid #bbb",
-                borderTop: "1px dashed #bbb",
+                borderTop: "none",
                 borderRight: "none",
                 maxWidth: "100vw",
                 backgroundColor: "white",
@@ -120,6 +111,65 @@ const ActionIcons: React.FC = () => {
                     "menu": () => <MainMenu closeMenu={() => setMenuState("closed")} />,
                 })}
             </div>
+        </div>
+    );
+};
+
+type ActionIconProps = {
+    onClick: () => void;
+    title: string;
+    isActive: boolean;
+};
+
+// A single icon/button on the right of the header. There is some trickery
+// involved to make this arrow/triangle indicator when a specific icon is
+// active.
+const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, isActive, children }) => {
+    const iconSize = 28;
+    const arrowSize = 14;
+
+    return (
+        <div css={{
+            height: "100%",
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            ...isActive && {
+                "&:after": {
+                    content: "''",
+                    display: "block" as const,
+                    position: "absolute" as const,
+                    bottom: -arrowSize / 2,
+                    backgroundColor: "white",
+                    zIndex: 10,
+                    width: arrowSize,
+                    height: arrowSize,
+                    borderTop: "1px solid #bbb",
+                    borderLeft: "1px solid #bbb",
+                    transform: "rotate(45deg)",
+
+                    // Horizontally center
+                    left: 0,
+                    right: 0,
+                    margin: "auto",
+                },
+            },
+        }}>
+            <div
+                title={title}
+                onClick={onClick}
+                css={{
+                    padding: 5,
+                    margin: "0 4px",
+                    borderRadius: 4,
+                    lineHeight: 0,
+                    cursor: "pointer",
+                    fontSize: iconSize,
+                    "&:hover": {
+                        backgroundColor: "#ddd",
+                    },
+                }}
+            >{children}</div>
         </div>
     );
 };
