@@ -9,6 +9,7 @@ import { Root } from "./layout/Root";
 import { RealmPage } from "./page/Realm";
 import { HomePage } from "./page/Home";
 import { NotFound } from "./page/NotFound";
+import { About } from "./page/About";
 
 
 export const App: React.FC = () => (
@@ -19,6 +20,7 @@ export const App: React.FC = () => (
                 <Switch>
                     <Route exact path="/" component={HomeRoute} />
                     <Route exact path="/r/:path+" component={RealmRoute} />
+                    <Route exact path="/about" component={About} />
                     <Route exact path={["404", "*"]} component={NotFound} />
                 </Switch>
             </Root>
