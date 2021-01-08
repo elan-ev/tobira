@@ -6,3 +6,9 @@ navigation: Navigation
 page-not-found:
   title: Page not found
   body: The requested resource does not exist. Sorry! :-(
+
+main-menu:
+  label: Menu
+  theme: Theme
+  settings: Settings
+  about: About

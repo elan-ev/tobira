@@ -6,3 +6,9 @@ navigation: Navigation
 page-not-found:
   title: Seite nicht gefunden
   body: Die angefragte Resource existiert nicht. Sorry! :-(
+
+main-menu:
+  label: Menü
+  theme: Design
+  settings: Einstellungen
+  about: Info
