@@ -36,7 +36,7 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                 title={block.title}
                 content={unwrap(block, "content")}
             />,
-            "VideoList": () => <VideoListBlock title={block.title} />,
+            "VideoList": () => <VideoListBlock key={block.id} title={block.title} />,
         }))
     }</>;
 };
