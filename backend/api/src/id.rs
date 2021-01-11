@@ -1,6 +1,6 @@
 use paste::paste;
 use static_assertions::const_assert;
-use std::convert::TryInto;
+use std::{convert::TryInto, fmt};
 
 
 /// The type of key we are using.
@@ -71,7 +71,7 @@ macro_rules! define_kinds {
 
 // Define all existing kinds of nodes.
 //
-// If you get a strange errors:
+// If you get a strange error:
 // - "discriminant value `25970` already exists": you added a duplicate prefix.
 // - "evaluation of constant value failed": you added a prefix that's not
 //   alphanumeric ASCII.
@@ -110,23 +110,46 @@ impl Id {
     }
 }
 
+/// The URL-safe base64 alphabet.
+const BASE64_DIGITS: &[u8; 64] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
 impl std::str::FromStr for Id {
     // TODO: we might want to have more information about the error later, but
     // the GraphQL API doesn't currently use it anyway.
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 12 {
+        if s.len() != 13 {
             return Err(());
         }
 
         let s = s.as_bytes();
         let kind = [s[0], s[1]];
-        let hi = decode_base85(s[2..7].try_into().unwrap()).ok_or(())?;
-        let lo = decode_base85(s[7..12].try_into().unwrap()).ok_or(())?;
-        let key = ((hi as u64) << 32) | lo as u64;
+        let key = decode_base64(&s[2..]).ok_or(())?;
 
         Ok(Self { kind, key })
+    }
+}
+
+impl fmt::Display for Id {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut out = [b' '; 13];
+        out[0] = self.kind[0];
+        out[1] = self.kind[1];
+
+        // Base64 encoding. After this loop, `n` is always 0, because `u64::MAX`
+        // divided by 64 eleven times is 0.
+        let mut n = self.key;
+        for i in (2..out.len()).rev() {
+            out[i] = BASE64_DIGITS[(n % 64) as usize];
+            n /= 64;
+        }
+        debug_assert!(n == 0);
+
+        std::str::from_utf8(&out)
+            .expect("bug: base64 did produce non-ASCII character")
+            .fmt(f)
     }
 }
 
@@ -139,17 +162,7 @@ where
     S: juniper::ScalarValue
 {
     fn resolve(&self) -> juniper::Value {
-        let mut out = [0; 12];
-        out[0] = self.kind[0];
-        out[1] = self.kind[1];
-
-        out[2..7].copy_from_slice(&encode_base85((self.key >> 32) as u32));
-        out[7..12].copy_from_slice(&encode_base85(self.key as u32));
-
-        let s = std::str::from_utf8(&out)
-            .expect("bug: base85 did produce non ASCII character")
-            .to_owned();
-        juniper::Value::scalar(s)
+        juniper::Value::scalar(self.to_string())
     }
 
     fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
@@ -162,55 +175,10 @@ where
     }
 }
 
-
-// ============================================================================
-// ===== Our base 85 encoding
-// ============================================================================
-
-/// Base 85 has no single formal definition and there are a few different
-/// implementations out there. They differ in how they do padding, how they
-/// chunk and in the alphabet. We use the alphabet suggested in RFC 1924 [1] as
-/// it can be represented in JSON without escaping. Note however that we don't
-/// use the same chunking as the mentioned RFC.
-///
-/// [1]: https://tools.ietf.org/html/rfc1924
-const BASE85_DIGITS: &[u8; 85] = b"\
-    0123456789\
-    ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-    abcdefghijklmnopqrstuvwxyz\
-    !#$%&()*+-;<=>?@^_`{|}~\
-";
-
-/// Encodes 4 bytes (one chunk) as base85, resulting in 5 ASCII bytes.
-fn encode_base85(v: u32) -> [u8; 5] {
-    // "Ascii 85" uses big endian encoding, but there is no official spec anyway
-    // and we do not need to stick to any rules. Our IDs do not interact with
-    // anything and are not supposed to be understood. We just need to be
-    // internally consistent. So we use little endian byte order. Let's be real,
-    // Tobira will only ever run on little endian machines. We still enforce a
-    // specific byte order here to be consistent across CPUs.
-    let mut v = v.to_le();
-
-    // Repeatedly divide by 85.
-    let mut out = [0u8; 5];
-    for i in (0..out.len()).rev() {
-        out[i] = BASE85_DIGITS[(v % 85) as usize];
-        v = v / 85;
-    }
-
-    out
-}
-
-/// Base 85 decodes one chunk of 5 ASCII bytes into the represented 4 bytes of
-/// data. Returns `None` if the the input contains invalid digits or encodes a
-/// number larger than `u32::MAX`.
-///
-/// This should return `Result` with useful error information once juniper can
-/// actually use that error information.
-fn decode_base85(s: [u8; 5]) -> Option<u32> {
-    /// The reverse lookup table to `BASE85_DIGITS`. If you index by an ASCII value, you
+fn decode_base64(src: &[u8]) -> Option<Key> {
+    /// The reverse lookup table to `BASE64_DIGITS`. If you index by an ASCII value, you
     /// either get the corresponding digit value OR `0xFF`, signalling that the
-    /// character is not a valid base85 character.
+    /// character is not a valid base64 character.
     const DECODE_TABLE: [u8; 256] = create_decode_table();
 
     const fn create_decode_table() -> [u8; 256] {
@@ -219,8 +187,8 @@ fn decode_base85(s: [u8; 5]) -> Option<u32> {
         // If you wonder why we are using `while` instead of a more idiomatic loop:
         // const fns are still somewhat limited and do not allow `for`.
         let mut i = 0;
-        while i < BASE85_DIGITS.len() {
-            out[BASE85_DIGITS[i] as usize] = i as u8;
+        while i < BASE64_DIGITS.len() {
+            out[BASE64_DIGITS[i] as usize] = i as u8;
             i += 1;
         }
 
@@ -236,62 +204,78 @@ fn decode_base85(s: [u8; 5]) -> Option<u32> {
         Some(raw as u64)
     }
 
-    let v = lookup(s[4])?
-        + lookup(s[3])? * 85u64.pow(1)
-        + lookup(s[2])? * 85u64.pow(2)
-        + lookup(s[1])? * 85u64.pow(3)
-        + lookup(s[0])? * 85u64.pow(4);
+    let src: [u8; 11] = src.try_into().ok()?;
 
-    let v: u32 = v.try_into().ok()?;
+    // Make sure the string doesn't decode to a number > `u64::MAX`. Luckily,
+    // checking that is easy. `u64::MAX` encodes to `P__________`, so the next
+    // higher number would carry through and make the highest digit a `Q`. So we
+    // just make sure the first digit is between 'A' and 'P'.
+    if src[0] > b'P' || src[0] < b'A' {
+        return None;
+    }
 
-    // See `encode_base85` regarding endianess.
-    Some(u32::from_le(v))
+    src.iter()
+        .rev()
+        .enumerate()
+        .map(|(i, &d)| lookup(d).map(|n| n * 64u64.pow(i as u32)))
+        .sum()
 }
 
 
 #[cfg(test)]
 mod tests {
-    use super::{decode_base85, encode_base85, BASE85_DIGITS};
+    use std::str::FromStr;
+    use super::{Id, Key, BASE64_DIGITS};
 
     #[test]
     fn simple() {
         #[track_caller]
-        fn check(v: u32, s: [u8; 5]) {
-            assert_eq!(encode_base85(v), s);
-            assert_eq!(decode_base85(s), Some(v));
+        fn check(kind: [u8; 2], key: Key, s: &str) {
+            let left = Id { kind, key };
+            assert_eq!(left.to_string(), s);
+            assert_eq!(Id::from_str(s), Ok(left));
         }
 
-        check(0, *b"00000");
-        check(83, *b"0000}");
-        check(84, *b"0000~");
-        check(85, *b"00010");
-        check(86, *b"00011");
-        check(u32::MAX - 1, *b"|NsB~");
-        check(u32::MAX, *b"|NsC0");
+        check(Id::REALM_KIND, 0, "reAAAAAAAAAAA");
+        check(Id::REALM_KIND, 1, "reAAAAAAAAAAB");
+        check(Id::REALM_KIND, 62, "reAAAAAAAAAA-");
+        check(Id::BLOCK_KIND, 63, "blAAAAAAAAAA_");
+        check(Id::BLOCK_KIND, 64, "blAAAAAAAAABA");
+        check(Id::REALM_KIND, 65, "reAAAAAAAAABB");
+
+        check(Id::SERIES_KIND, u64::MAX - 1, "seP_________-");
+        check(Id::SERIES_KIND, u64::MAX, "seP__________");
     }
 
     #[test]
     fn invalid_decode() {
-        // Invalid characters
-        assert_eq!(decode_base85(*br"00\00"), None);
-        assert_eq!(decode_base85(*b"aa\0aa"), None);
+        // Wrong length
+        assert_eq!(Id::from_str(""), Err(()));
+        assert_eq!(Id::from_str("re"), Err(()));
+        assert_eq!(Id::from_str("reAAAAAAAAAAAA"), Err(()));
 
-        // Encoded value > u32::MAX
-        assert_eq!(decode_base85(*b"|NsC1"), None);
-        assert_eq!(decode_base85(*b"~~~~~"), None);
+        // Invalid characters
+        assert_eq!(Id::from_str("re0000000000*"), Err(()));
+        assert_eq!(Id::from_str("re0000000000?"), Err(()));
+        assert_eq!(Id::from_str("re0000000000/"), Err(()));
+
+        // Encoded value > u64::MAX
+        assert_eq!(Id::from_str("seQAAAAAAAAAA"), Err(()));
+        assert_eq!(Id::from_str("se___________"), Err(()));
     }
 
     #[test]
     fn always_ascii() {
-        // We don't want to test all 4 billion possible u32 values, but by
-        // checking all two bytes patterns (and testing them in different shift
-        // positions), we should have good coverage. We just want to make sure
-        // we don't emit strange or non-ASCII characters.
+        // We can't test all possible u64 values, but by checking all two bytes
+        // patterns (and testing them in different shift positions), we should
+        // have good coverage. We just want to make sure we don't emit strange
+        // or non-ASCII characters.
         for n in 0..=u16::MAX {
-            for &shift in &[0, 8, 16] {
-                let encoded = encode_base85((n as u32) << shift);
-                assert!(encoded.iter().all(|b| BASE85_DIGITS.contains(b)));
-                assert!(encoded.is_ascii());
+            for &shift in &[0, 8, 16, 24, 32, 40, 48] {
+                let id = Id { kind: Id::REALM_KIND, key: (n as u64) << shift };
+                let s = id.to_string();
+                assert_eq!(s[..2].as_bytes(), Id::REALM_KIND);
+                assert!(s[2..].bytes().all(|d| BASE64_DIGITS.contains(&d)));
             }
         }
     }
