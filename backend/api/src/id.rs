@@ -78,7 +78,7 @@ macro_rules! define_kinds {
 define_kinds![
     realm = b"re",
     block = b"bl",
-    series = b"se",
+    series = b"sr",
 ];
 
 
@@ -243,8 +243,8 @@ mod tests {
         check(Id::BLOCK_KIND, 64, "blAAAAAAAAABA");
         check(Id::REALM_KIND, 65, "reAAAAAAAAABB");
 
-        check(Id::SERIES_KIND, u64::MAX - 1, "seP_________-");
-        check(Id::SERIES_KIND, u64::MAX, "seP__________");
+        check(Id::SERIES_KIND, u64::MAX - 1, "srP_________-");
+        check(Id::SERIES_KIND, u64::MAX, "srP__________");
     }
 
     #[test]
@@ -260,8 +260,8 @@ mod tests {
         assert_eq!(Id::from_str("re0000000000/"), Err(()));
 
         // Encoded value > u64::MAX
-        assert_eq!(Id::from_str("seQAAAAAAAAAA"), Err(()));
-        assert_eq!(Id::from_str("se___________"), Err(()));
+        assert_eq!(Id::from_str("srQAAAAAAAAAA"), Err(()));
+        assert_eq!(Id::from_str("sr___________"), Err(()));
     }
 
     #[test]
