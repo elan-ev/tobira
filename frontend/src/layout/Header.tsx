@@ -270,6 +270,7 @@ const LoginButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
 
 const LanguageList = () => {
     const { t, i18n } = useTranslation();
+    const currentLng = i18n.languages.find(lng => Object.keys(languages).includes(lng));
 
     return (
         <ul css={{
@@ -279,47 +280,24 @@ const LanguageList = () => {
             margin: 0,
             padding: 0,
         }}>
-            {Object.keys(languages).map(lng => {
-                // We check whether a language is active by simply translating
-                // with the automatically determined language and with the
-                // specific one. If the result is the same, that's the current
-                // language.
-                //
-                // I do realize that it could be that one language "foo" has
-                // only the string "language-name" translated and thus, the
-                // whole page would be shown with the fallback language (en),
-                // but the language menu would still show "foo" as active
-                // language. Or imagine the other way around: everything except
-                // "language-name" is translated. But both of these cases should
-                // be avoided anyway when creating a translation.
-                //
-                // Why don't we just use `i18n.language` or `i18n.languages`?
-                // Those will return strings we don't fully have control over,
-                // like "en-US". We could just "parse" those strings to get only
-                // the language part out and compare it to our language keys,
-                // but as far as I know, i18n does not document what strings can
-                // be returned there.
-                const isActive = t("language-name", { lng }) === t("language-name");
-
-                return (
-                    <li
-                        onClick={() => i18n.changeLanguage(lng)}
-                        key={lng}
-                        css={{
-                            padding: "6px 8px 6px 12px",
-                            cursor: "pointer",
-                            "&:hover": {
-                                backgroundColor: "#ddd",
-                            },
-                        }}
-                    >
-                        <div className="fa-fw" css={{ display: "inline-block", marginRight: 16 }}>
-                            {isActive && <FontAwesomeIcon icon={faCheck} fixedWidth />}
-                        </div>
-                        {t("language-name", { lng })}
-                    </li>
-                );
-            })}
+            {Object.keys(languages).map(lng => (
+                <li
+                    onClick={() => i18n.changeLanguage(lng)}
+                    key={lng}
+                    css={{
+                        padding: "6px 8px 6px 12px",
+                        cursor: "pointer",
+                        "&:hover": {
+                            backgroundColor: "#ddd",
+                        },
+                    }}
+                >
+                    <div className="fa-fw" css={{ display: "inline-block", marginRight: 16 }}>
+                        {currentLng === lng && <FontAwesomeIcon icon={faCheck} fixedWidth />}
+                    </div>
+                    {t("language-name", { lng })}
+                </li>
+            ))}
         </ul>
     );
 };
