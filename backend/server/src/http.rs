@@ -162,6 +162,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper
 
     const ASSET_PREFIX: &str = "/assets/";
     const REALM_PREFIX: &str = "/r/";
+    const PLAYER_PREFIX: &str = "/v/";
 
     let response = match (method, path) {
         (&Method::GET, "/") | (&Method::GET, "/about") => serve_index().await,
@@ -181,6 +182,11 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper
             let _realm_path = &path[REALM_PREFIX.len()..];
             // TODO: check if path is valid
 
+            serve_index().await
+        }
+
+        // The player page
+        (&Method::GET, path) if path.starts_with(PLAYER_PREFIX) => {
             serve_index().await
         }
 
