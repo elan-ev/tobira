@@ -46,10 +46,10 @@ pub(crate) async fn serve(
     // All our logic is encoded in the function `handle`. The only thing we are
     // doing here is to pass the context to that function, and clone its `Arc`
     // accordingly.
-    // 
-    // We wrap the factory definition in a macro because we need two slightly 
-    // different factories. One for binding to a unix socket and one for 
-    // binding to a TCP socket. The code for defining the factory is exactly 
+    //
+    // We wrap the factory definition in a macro because we need two slightly
+    // different factories. One for binding to a unix socket and one for
+    // binding to a TCP socket. The code for defining the factory is exactly
     // the same, but due to type inference, it results in a different type. The
     // macro avoids code duplication.
     macro_rules! factory {
@@ -164,7 +164,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper
     const REALM_PREFIX: &str = "/r/";
 
     let response = match (method, path) {
-        (&Method::GET, "/") => serve_index().await,
+        (&Method::GET, "/") | (&Method::GET, "/about") => serve_index().await,
 
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any

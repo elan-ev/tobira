@@ -32,6 +32,7 @@ module.exports = {
         "default-case": "off",
         "no-console": "off",
         "func-style": "off",
+        "max-lines": "off",
         "no-underscore-dangle": "off",
         "space-before-function-paren": ["warn", {
             "anonymous": "always",
@@ -76,6 +77,7 @@ module.exports = {
         "keyword-spacing": "warn",
         "space-unary-ops": "warn",
         "func-call-spacing": "warn",
+        "no-multi-spaces": "warn",
         "function-call-argument-newline": ["warn", "consistent"],
         "function-paren-newline": ["warn", "consistent"],
         "object-property-newline": ["warn", {
