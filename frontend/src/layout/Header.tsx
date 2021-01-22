@@ -213,7 +213,7 @@ const MainMenu: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => {
             padding: 8,
         }}>
             {t("login.not-logged-in")}
-            <LoginButton closeMenu={closeMenu}/>
+            <LoginButton onClick={closeMenu}/>
         </div>
         <ul css={{
             width: "100%",
@@ -242,13 +242,13 @@ const MainMenu: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => {
     </>;
 };
 
-const LoginButton: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => {
+const LoginButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
     const { t } = useTranslation();
 
     return (
         <Link
             to="/login"
-            onClick={closeMenu}
+            onClick={onClick}
             css={{
                 display: "inline-block",
                 marginTop: 8,
