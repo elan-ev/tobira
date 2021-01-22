@@ -1,5 +1,6 @@
 use anyhow::Result;
 use futures::stream::TryStreamExt;
+use tobira_util::db::NO_PARAMS;
 use tokio_postgres::GenericClient;
 
 
@@ -7,7 +8,7 @@ use tokio_postgres::GenericClient;
 pub(super) async fn all_table_names(db: &impl GenericClient) -> Result<Vec<String>> {
     let rows = db.query_raw(
             "select table_name from information_schema.tables where table_schema='public'",
-            std::iter::empty(),
+            NO_PARAMS,
         )
         .await?
         .map_ok(|row| row.get::<_, String>(0));
