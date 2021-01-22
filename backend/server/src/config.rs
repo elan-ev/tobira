@@ -73,6 +73,10 @@ tobira_macros::gen_config! {
         stdout: bool = true,
     },
     assets: {
+        /// Path to internal assets. This is only relevant for Tobira developers. This
+        /// must not be set for production builds of Tobira.
+        internal: PathBuf = "../frontend/build",
+
         logo: {
             /// Path to the "normal", wide logo that is shown on desktop screens.
             #[example = "/etc/tobira/logo-large.svg"]

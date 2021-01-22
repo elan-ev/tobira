@@ -80,6 +80,7 @@ impl Assets {
         path_overrides.insert("logo-small.svg".into(), config.logo.small.clone());
 
         let config = Config {
+            base_path: Some(config.internal.clone()),
             path_overrides,
             .. Config::default()
         };
