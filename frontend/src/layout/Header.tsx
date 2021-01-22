@@ -75,7 +75,7 @@ const ActionIcons: React.FC = () => {
     };
 
     return (
-        <div css={{ display: "flex", height: "100%", position: "relative" }}>
+        <div css={{ display: "flex", height: "100%", position: "relative", paddingRight: 4 }}>
             <ActionIcon
                 title={`${t("language")}: ${t("language-name")}`}
                 onClick={() => toggleMenu("language")}
