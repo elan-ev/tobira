@@ -20,9 +20,9 @@ export const App: React.FC = () => (
             <Root>
                 <Switch>
                     <Route exact path="/" component={HomeRoute} />
-                    <Route path="/about" component={About} />
+                    <Route exact path="/about" component={About} />
                     <Route path="/r/:path+" component={RealmRoute} />
-                    <Route path="/v/:id" component={PlayerRoute} />
+                    <Route exact path="/v/:id" component={PlayerRoute} />
                     <Route component={NotFound} />
                 </Switch>
             </Root>
