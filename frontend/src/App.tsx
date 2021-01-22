@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { BrowserRouter as Router, Switch, Route, RouteComponentProps } from "react-router-dom";
 
 import { RelayEnvironmentProvider } from "react-relay/hooks";
-import { environment, APIError } from "./relay";
+import { environment, ServerError, APIError } from "./relay";
 
 import { GlobalStyle } from "./GlobalStyle";
 import { Root } from "./layout/Root";
@@ -59,15 +59,13 @@ class APIErrorBoundary extends React.Component<unknown, boolean> {
     }
 
     public static getDerivedStateFromError(error: unknown) {
-        if (error instanceof APIError) {
+        if (error instanceof ServerError) {
             // >= 400 response from the API
             return true;
-        } else if (error instanceof Error && error.name === "RelayNetwork") {
-            // **Probably** got no `data` in the API response.
-            // However, there is no way to distinguish this from potential further errors
-            // of the same "type", other than comparing messages (which contain data about
-            // the request). Let's hope the Relay folks change that when they introduce
-            // additional error scenarios in the future.
+        } else if (error instanceof APIError) {
+            // OK response, but it contained GraphQL errors.
+            // It might be a good idea to handle these in more specific error boundaries.
+            // For now, though, we just lump it in with the rest.
             return true;
         }
         // Not our problem
