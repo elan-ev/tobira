@@ -5,3 +5,7 @@
 user = "tobira"
 password = "tobira"
 host = "127.0.0.1"
+
+[assets]
+logo.large = "logo-large.svg"
+logo.small = "logo-small.svg"

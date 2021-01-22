@@ -17,7 +17,7 @@ use std::{
 };
 
 use tobira_util::prelude::*;
-use crate::{api, config};
+use crate::{api, config::Config};
 use self::assets::Assets;
 
 mod assets;
@@ -31,11 +31,11 @@ type Request<T = Body> = hyper::Request<T>;
 /// Starts the HTTP server. The future returned by this function must be awaited
 /// to actually run it.
 pub(crate) async fn serve(
-    config: &config::Http,
+    config: &Config,
     api_root: api::RootNode,
     api_context: api::Context,
 ) -> Result<()> {
-    let assets = Assets::init().await?;
+    let assets = Assets::init(&config.assets).await.context("failed to initialize assets")?;
     let ctx = Arc::new(Context::new(api_root, api_context, assets));
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
@@ -72,19 +72,19 @@ pub(crate) async fn serve(
 
 
     // Start the server with our service.
-    if let Some(unix_socket) = &config.unix_socket {
+    if let Some(unix_socket) = &config.http.unix_socket {
         // Bind to Unix domain socket.
         if unix_socket.exists() {
             fs::remove_file(unix_socket)?;
         }
         let server = Server::bind_unix(&unix_socket)?.serve(factory!());
         info!("Listening on unix://{}", unix_socket.display());
-        let permissions = fs::Permissions::from_mode(config.unix_socket_permissions);
+        let permissions = fs::Permissions::from_mode(config.http.unix_socket_permissions);
         fs::set_permissions(unix_socket, permissions)?;
         server.await?;
     } else {
         // Bind to TCP socket.
-        let addr = SocketAddr::new(config.address, config.port);
+        let addr = SocketAddr::new(config.http.address, config.http.port);
         let server = Server::bind(&addr).serve(factory!());
         info!("Listening on http://{}", server.local_addr());
         server.await?;

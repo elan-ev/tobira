@@ -21,6 +21,12 @@ const parseFrontendConfig: () => FrontendConfig = () => {
 };
 
 type FrontendConfig = {
+    logo: LogoConfig;
+};
+
+type LogoConfig = {
+    large: string;
+    small: string;
 };
 
 export const FRONTEND_CONFIG: FrontendConfig = parseFrontendConfig();

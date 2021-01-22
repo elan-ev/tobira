@@ -72,6 +72,18 @@ tobira_macros::gen_config! {
         /// If this is set to `false`, log messages are not written to stdout.
         stdout: bool = true,
     },
+    assets: {
+        logo: {
+            /// Path to the "normal", wide logo that is shown on desktop screens.
+            #[example = "/etc/tobira/logo-large.svg"]
+            large: PathBuf,
+
+            /// Path to the small, close to square logo used for small screens, mostly
+            /// on mobile phones.
+            #[example = "/etc/tobira/logo-small.svg"]
+            small: PathBuf,
+        },
+    },
 }
 
 impl Config {
@@ -139,6 +151,9 @@ impl Config {
         if let Some(p) = &mut self.log.file {
             fix_path(&base, p);
         }
+
+        fix_path(&base, &mut self.assets.logo.large);
+        fix_path(&base, &mut self.assets.logo.small);
 
         Ok(())
     }

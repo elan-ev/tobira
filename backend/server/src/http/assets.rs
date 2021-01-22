@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+
 use hyper::Body;
 use reinda::{assets, Config, Setup};
 
 use tobira_util::prelude::*;
+use crate::config;
 use super::Response;
 
 
@@ -15,6 +18,9 @@ const ASSETS: Setup = assets! {
         append: b"//# sourceMappingURL=/assets/{{: path:bundle.js.map :}}"
     },
     "bundle.js.map": { hash },
+
+    "logo-large.svg": { hash, dynamic },
+    "logo-small.svg": { hash, dynamic },
 
     "fonts.css": {
         template,
@@ -65,11 +71,22 @@ pub(crate) struct Assets {
 }
 
 impl Assets {
-    pub(crate) async fn init() -> Result<Self> {
+    pub(crate) async fn init(config: &config::Assets) -> Result<Self> {
         // TODO: temporary
         let runtime = tokio::runtime::Handle::current();
 
-        let assets = reinda::Assets::new(ASSETS, Config::default()).await?;
+        let mut path_overrides = HashMap::new();
+        path_overrides.insert("logo-large.svg".into(), config.logo.large.clone());
+        path_overrides.insert("logo-small.svg".into(), config.logo.small.clone());
+
+        let config = Config {
+            path_overrides,
+            .. Config::default()
+        };
+
+        let assets = reinda::Assets::new(ASSETS, config).await
+            .context("failed to prepare asset files")?;
+        info!("Prepared {} assets", assets.asset_ids().count());
 
         Ok(Self { assets, runtime } )
     }
