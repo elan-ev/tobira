@@ -8,6 +8,7 @@ import { GlobalStyle } from "./GlobalStyle";
 import { Root } from "./layout/Root";
 import { RealmPage } from "./page/Realm";
 import { HomePage } from "./page/Home";
+import { PlayerPage } from "./page/Player";
 import { NotFound } from "./page/NotFound";
 import { About } from "./page/About";
 
@@ -21,6 +22,7 @@ export const App: React.FC = () => (
                     <Route exact path="/" component={HomeRoute} />
                     <Route path="/about" component={About} />
                     <Route path="/r/:path+" component={RealmRoute} />
+                    <Route path="/v/:id" component={PlayerRoute} />
                     <Route component={NotFound} />
                 </Switch>
             </Root>
@@ -37,6 +39,12 @@ const HomeRoute: React.FC = () => (
 const RealmRoute: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
     <APIWrapper>
         <RealmPage path={match.params.path ?? ""} />
+    </APIWrapper>
+);
+
+const PlayerRoute: React.FC<RouteComponentProps<{ id: string }>> = ({ match }) => (
+    <APIWrapper>
+        <PlayerPage id={match.params.id} />
     </APIWrapper>
 );
 
