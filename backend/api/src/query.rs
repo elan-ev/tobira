@@ -1,6 +1,6 @@
-use juniper::graphql_object;
+use juniper::{graphql_object, FieldResult};
 
-use crate::{Context, Id, model::realm::Realm};
+use crate::{Context, Id, model::{realm::Realm, event::Event}};
 
 
 /// The root query object.
@@ -39,5 +39,10 @@ impl Query {
     /// Returns the root realm.
     fn root_realm(context: &Context) -> &Realm {
         context.realm_tree.root()
+    }
+
+    /// Returns an event by its ID.
+    async fn event(id: Id, context: &Context) -> FieldResult<Option<Event>> {
+        Event::from_context(id, context).await
     }
 }

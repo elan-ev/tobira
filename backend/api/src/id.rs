@@ -79,6 +79,7 @@ define_kinds![
     realm = b"re",
     block = b"bl",
     series = b"sr",
+    event = b"ev",
 ];
 
 
