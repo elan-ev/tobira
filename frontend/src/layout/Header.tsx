@@ -292,6 +292,13 @@ const LanguageList = () => {
                 // language. Or imagine the other way around: everything except
                 // "language-name" is translated. But both of these cases should
                 // be avoided anyway when creating a translation.
+                //
+                // Why don't we just use `i18n.language` or `i18n.languages`?
+                // Those will return strings we don't fully have control over,
+                // like "en-US". We could just "parse" those strings to get only
+                // the language part out and compare it to our language keys,
+                // but as far as I know, i18n does not document what strings can
+                // be returned there.
                 const isActive = t("language-name", { lng }) === t("language-name");
 
                 return (
