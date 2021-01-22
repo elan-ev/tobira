@@ -212,7 +212,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
                     backoff_duration,
                 );
 
-                tokio::time::delay_for(backoff_duration).await;
+                tokio::time::sleep(backoff_duration).await;
                 continue;
             }
 
