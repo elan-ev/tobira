@@ -109,7 +109,7 @@ impl BlockValue {
                 "select id, type, index, title, text_content, videolist_series,
                     videolist_layout, videolist_order
                     from blocks
-                    where realm_id=$1
+                    where realm_id = $1
                     order by index asc",
                 [realm_key as i64].iter().map(|x| x as &dyn ToSql),
             )
