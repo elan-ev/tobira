@@ -7,3 +7,7 @@ host = "127.0.0.1"
 [http]
 unix_socket = "/opt/tobira/{{ id }}/socket/tobira.sock"
 unix_socket_permissions = 0o777
+
+[assets]
+logo.large = "/opt/tobira/{{ id }}/logo-large.svg"
+logo.small = "/opt/tobira/{{ id }}/logo-small.svg"

@@ -58,7 +58,7 @@ jobs:
 
     - name: Build backend
       working-directory: backend
-      run: cargo build --release
+      run: cargo build
     - name: Test backend
       working-directory: backend
       run: cargo test
@@ -70,10 +70,15 @@ jobs:
       run: cargo run --bin export-schema | diff -u --color=always - ../frontend/src/schema.graphql
 
     # Deployment
+    - name: Build server binary for CI
+      working-directory: backend/server
+      run: cargo build --features=embed-in-debug
     - name: Prepare binary and demo data for deployment
       run: |
-        cp -v backend/target/release/tobira .deployment/files/
+        cp -v backend/target/debug/tobira .deployment/files/
         cp -v scripts/fixtures.sql .deployment/files/
+        cp -v backend/logo-large.svg .deployment/files/
+        cp -v backend/logo-small.svg .deployment/files/
 
     - name: prepare deploy key
       env:
