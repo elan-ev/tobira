@@ -1,17 +1,17 @@
 import React from "react";
 
 import { graphql, useLazyLoadQuery } from "react-relay/hooks";
-import { PlayerQuery } from "../query-types/PlayerQuery.graphql";
+import { VideoQuery } from "../query-types/VideoQuery.graphql";
 
 
 type Props = {
     id: string;
 };
 
-export const PlayerPage: React.FC<Props> = ({ id }) => {
-    const { event } = useLazyLoadQuery<PlayerQuery>(
+export const VideoPage: React.FC<Props> = ({ id }) => {
+    const { event } = useLazyLoadQuery<VideoQuery>(
         graphql`
-            query PlayerQuery($id: ID!) {
+            query VideoQuery($id: ID!) {
                 event(id: $id) {
                     title
                     video

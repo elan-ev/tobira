@@ -8,7 +8,7 @@ import { GlobalStyle } from "./GlobalStyle";
 import { Root } from "./layout/Root";
 import { RealmPage } from "./page/Realm";
 import { HomePage } from "./page/Home";
-import { PlayerPage } from "./page/Player";
+import { VideoPage } from "./page/Video";
 import { NotFound } from "./page/NotFound";
 import { About } from "./page/About";
 
@@ -22,7 +22,7 @@ export const App: React.FC = () => (
                     <Route exact path="/" component={HomeRoute} />
                     <Route exact path="/about" component={About} />
                     <Route path="/r/:path+" component={RealmRoute} />
-                    <Route exact path="/v/:id" component={PlayerRoute} />
+                    <Route exact path="/v/:id" component={VideoRoute} />
                     <Route component={NotFound} />
                 </Switch>
             </Root>
@@ -42,9 +42,9 @@ const RealmRoute: React.FC<RouteComponentProps<{ path?: string }>> = ({ match })
     </APIWrapper>
 );
 
-const PlayerRoute: React.FC<RouteComponentProps<{ id: string }>> = ({ match }) => (
+const VideoRoute: React.FC<RouteComponentProps<{ id: string }>> = ({ match }) => (
     <APIWrapper>
-        <PlayerPage id={match.params.id} />
+        <VideoPage id={match.params.id} />
     </APIWrapper>
 );
 
