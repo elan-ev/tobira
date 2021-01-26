@@ -106,14 +106,23 @@ impl Assets {
         let data = self.assets.get(path).await.unwrap_or_else(|e| {
             panic!("failed to read asset '{}': {}", path, e);
         })?;
-        let mime_guess = mime_guess::from_path(path).first();
+
+        // Prepare HTTP headers
         let mut builder = Response::builder();
+        builder = builder.header("content-length", data.len());
+
+        // Mime type
+        let mime_guess = mime_guess::from_path(path).first();
         if let Some(mime) = mime_guess {
-            builder = builder.header("Content-Type", mime.to_string())
+            builder = builder.header("content-type", mime.to_string())
         }
 
-        // TODO: content length
-        // TODO: lots of other headers maybe
+        // Caching header if the filename contains a content hash. We can unwrap
+        // the `lookup` call as we know from above that the path is valid.
+        if self.assets.asset_info(self.assets.lookup(path).unwrap()).is_filename_hashed() {
+            // This is one year in seconds.
+            builder = builder.header("cache-control", "public, max-age=31536000");
+        }
 
         // TODO: here we copy the asset in memory, which is very unfortunate. We
         // can fix this by removing `to_vec` as soon as we update hyper to 0.14.
