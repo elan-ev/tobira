@@ -18,6 +18,7 @@ module.exports = {
     rules: {
         // Turn off or reconfigure some rather opinionated and intrusive rules
         "max-statements": "off",
+        "max-classes-per-file": "off",
         "no-warning-comments": "off",
         "no-ternary": "off",
         "id-length": "off",

@@ -25,6 +25,9 @@ pub(crate) struct Id {
     /// `kind`. This is typically exactly the primary bigint database key. This
     /// data is encoded with base85 (well, our own flavor of it) to compactly
     /// represent it in a JSON string.
+    ///
+    /// Note that this is a private field. To get to it, you need to prove
+    /// that you know what kind of ID it is using [`Self::key_for`].
     key: Key,
 }
 
@@ -79,6 +82,7 @@ define_kinds![
     realm = b"re",
     block = b"bl",
     series = b"sr",
+    event = b"ev",
 ];
 
 

@@ -2,12 +2,13 @@ import React, { Suspense } from "react";
 import { BrowserRouter as Router, Switch, Route, RouteComponentProps } from "react-router-dom";
 
 import { RelayEnvironmentProvider } from "react-relay/hooks";
-import { environment, APIError } from "./relay";
+import { environment, ServerError, APIError } from "./relay";
 
 import { GlobalStyle } from "./GlobalStyle";
 import { Root } from "./layout/Root";
 import { RealmPage } from "./page/Realm";
 import { HomePage } from "./page/Home";
+import { VideoPage } from "./page/Video";
 import { NotFound } from "./page/NotFound";
 import { About } from "./page/About";
 
@@ -19,9 +20,10 @@ export const App: React.FC = () => (
             <Root>
                 <Switch>
                     <Route exact path="/" component={HomeRoute} />
-                    <Route exact path="/r/:path+" component={RealmRoute} />
                     <Route exact path="/about" component={About} />
-                    <Route exact path={["404", "*"]} component={NotFound} />
+                    <Route path="/r/:path+" component={RealmRoute} />
+                    <Route exact path="/v/:id" component={VideoRoute} />
+                    <Route component={NotFound} />
                 </Switch>
             </Root>
         </Router>
@@ -37,6 +39,12 @@ const HomeRoute: React.FC = () => (
 const RealmRoute: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
     <APIWrapper>
         <RealmPage path={match.params.path ?? ""} />
+    </APIWrapper>
+);
+
+const VideoRoute: React.FC<RouteComponentProps<{ id: string }>> = ({ match }) => (
+    <APIWrapper>
+        <VideoPage id={match.params.id} />
     </APIWrapper>
 );
 
@@ -59,15 +67,13 @@ class APIErrorBoundary extends React.Component<unknown, boolean> {
     }
 
     public static getDerivedStateFromError(error: unknown) {
-        if (error instanceof APIError) {
+        if (error instanceof ServerError) {
             // >= 400 response from the API
             return true;
-        } else if (error instanceof Error && error.name === "RelayNetwork") {
-            // **Probably** got no `data` in the API response.
-            // However, there is no way to distinguish this from potential further errors
-            // of the same "type", other than comparing messages (which contain data about
-            // the request). Let's hope the Relay folks change that when they introduce
-            // additional error scenarios in the future.
+        } else if (error instanceof APIError) {
+            // OK response, but it contained GraphQL errors.
+            // It might be a good idea to handle these in more specific error boundaries.
+            // For now, though, we just lump it in with the rest.
             return true;
         }
         // Not our problem

@@ -61,7 +61,7 @@ impl Realm {
         // However, it is unlikely that we ever have that problem: the frontend
         // will only show one realm at a time, so the query will also only
         // request the blocks of one realm.
-        BlockValue::fetch_for_realm(self.key, context).await
+        BlockValue::load_for_realm(self.key, context).await
     }
 }
 
@@ -71,7 +71,7 @@ pub(crate) struct Tree {
 }
 
 impl Tree {
-    pub(crate) async fn from_db(db: &Pool) -> Result<Self> {
+    pub(crate) async fn load(db: &Pool) -> Result<Self> {
         debug!("Loading realms from database");
 
         // We store the nodes of the realm tree in a hash map
