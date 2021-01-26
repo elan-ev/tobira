@@ -30,7 +30,7 @@ impl Event {
 }
 
 impl Event {
-    pub async fn from_context(id: Id, context: &Context) -> FieldResult<Option<Self>> {
+    pub async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
         let result = if let Some(key) = id.key_for(Id::EVENT_KIND) {
             context.db.get()
                 .await?

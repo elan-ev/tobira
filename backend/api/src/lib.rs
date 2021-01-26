@@ -38,7 +38,7 @@ pub struct Context {
 
 impl Context {
     pub async fn new(db: Pool) -> Result<Self> {
-        let realm_tree = model::realm::Tree::from_db(&db).await?;
+        let realm_tree = model::realm::Tree::load(&db).await?;
         Ok(Self {
             db,
             realm_tree,

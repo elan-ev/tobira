@@ -43,6 +43,6 @@ impl Query {
 
     /// Returns an event by its ID.
     async fn event(id: Id, context: &Context) -> FieldResult<Option<Event>> {
-        Event::from_context(id, context).await
+        Event::load_by_id(id, context).await
     }
 }
