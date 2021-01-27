@@ -35,7 +35,8 @@ pub(crate) async fn serve(
     api_root: api::RootNode,
     api_context: api::Context,
 ) -> Result<()> {
-    let ctx = Arc::new(Context::new(api_root, api_context));
+    let assets = Assets::init().await?;
+    let ctx = Arc::new(Context::new(api_root, api_context, assets));
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
     // this code likely results in strange lifetime errors.
@@ -141,13 +142,15 @@ async fn handle_panic(
 struct Context {
     api_root: Arc<api::RootNode>,
     api_context: Arc<api::Context>,
+    assets: Assets,
 }
 
 impl Context {
-    fn new(api_root: api::RootNode, api_context: api::Context) -> Self {
+    fn new(api_root: api::RootNode, api_context: api::Context, assets: Assets) -> Self {
         Self {
             api_root: Arc::new(api_root),
             api_context: Arc::new(api_context),
+            assets,
         }
     }
 }
@@ -169,7 +172,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper
     const PLAYER_PREFIX: &str = "/v/";
 
     let response = match (method, path) {
-        (&Method::GET, "/") | (&Method::GET, "/about") => assets::serve_index().await,
+        (&Method::GET, "/") | (&Method::GET, "/about") => ctx.assets.serve_index().await,
 
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
@@ -186,26 +189,46 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper
             let _realm_path = &path[REALM_PREFIX.len()..];
             // TODO: check if path is valid
 
-            assets::serve_index().await
+            ctx.assets.serve_index().await
         }
 
         // The player page
         (&Method::GET, path) if path.starts_with(PLAYER_PREFIX) => {
-            assets::serve_index().await
+            ctx.assets.serve_index().await
         }
 
         // Assets (JS files, fonts, ...)
         (&Method::GET, path) if path.starts_with(ASSET_PREFIX) => {
             let asset_path = &path[ASSET_PREFIX.len()..];
-            match Assets::serve(asset_path).await {
+            match ctx.assets.serve(asset_path).await {
                 Some(r) => r,
-                None => assets::reply_404(method, path).await,
+                None => reply_404(&ctx.assets, method, path).await,
             }
         }
 
         // 404 for everything else
-        (method, path) => assets::reply_404(method, path).await,
+        (method, path) => reply_404(&ctx.assets, method, path).await,
     };
 
     Ok(response)
+}
+
+/// Replies with a 404 Not Found.
+pub(crate) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> Response {
+    debug!("Responding with 404 to {:?} '{}'", method, path);
+
+    // We simply send the normal index and let the frontend router determinate
+    // this is a 404. That way, our 404 page looks like the main page and users
+    // are not confused. And it's easier to return to the normal page.
+    //
+    // TODO: I am somewhat uneasy about this code assuming the router of the
+    // frontend is the same as the backend router. Maybe we want to indicate to
+    // the frontend explicitly to show a 404 page? However, without redirecting
+    // to like `/404` because that's annoying for users.
+    let html = assets.index().await;
+    Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .header("Content-Type", "text/html; charset=UTF-8")
+        .body(html)
+        .unwrap()
 }

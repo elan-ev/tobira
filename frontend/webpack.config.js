@@ -47,13 +47,16 @@ module.exports = (_env, argv) => ({
     plugins: [
         new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({
-            inject: true,
+            inject: false,
             template: path.join(APP_PATH, "index.html"),
         }),
         new CopyPlugin({
-            patterns: [{ from: STATIC_PATH, to: path.join(OUT_PATH, "static") }],
+            patterns: [
+                { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
+                { from: STATIC_PATH, to: OUT_PATH },
+            ],
         }),
     ],
 
-    devtool: "source-map",
+    devtool: "hidden-source-map",
 });

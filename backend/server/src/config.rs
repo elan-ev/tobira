@@ -48,7 +48,7 @@ tobira_macros::gen_config! {
         /// The bind address to listen on.
         address: IpAddr = "127.0.0.1",
 
-        /// Unix domain socket to listen on. Specifying this will overwrite 
+        /// Unix domain socket to listen on. Specifying this will overwrite
         /// the TCP configuration.
         #[example = "/tmp/tobira.socket"]
         unix_socket: Option<PathBuf>,
