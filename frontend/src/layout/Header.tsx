@@ -8,7 +8,7 @@ import MenuIcon from "ionicons/dist/svg/ellipsis-vertical.svg";
 
 import { languages } from "../i18n";
 import { match } from "../util";
-import { FRONTEND_CONFIG } from "../frontend-config";
+import CONFIG from "../config";
 
 
 const HEIGHT = 60;
@@ -32,10 +32,10 @@ export const Header: React.FC = () => (
 const Logo: React.FC = () => (
     <Link to="/" css={{ height: "100%", flex: "0 0 auto" }}>
         <picture css={{ height: "100%" }}>
-            <source media="(min-width: 450px)" srcSet={FRONTEND_CONFIG.logo.large} />
+            <source media="(min-width: 450px)" srcSet={CONFIG.logo.large} />
             <img
                 css={{ height: "100%", padding: "4px 8px" }}
-                src={FRONTEND_CONFIG.logo.small}
+                src={CONFIG.logo.small}
             />
         </picture>
     </Link>

@@ -5,7 +5,7 @@ import { bug } from "./util/err";
 const ID = "tobira-frontend-config";
 
 // Loads the frontend config and returns it as object.
-const parseFrontendConfig: () => FrontendConfig = () => {
+const parseConfig: () => Config = () => {
     const tag = document.getElementById(ID);
     if (tag === null) {
         return bug(`No <script> tag with ID '${ID}' in HTML: cannot load frontend config`);
@@ -17,10 +17,10 @@ const parseFrontendConfig: () => FrontendConfig = () => {
     // We just cast the parsed type without checking. We might want to add a
     // check later, but it's not that important because this value is completely
     // controlled by us.
-    return JSON.parse(tag.text) as FrontendConfig;
+    return JSON.parse(tag.text) as Config;
 };
 
-type FrontendConfig = {
+type Config = {
     logo: LogoConfig;
 };
 
@@ -29,4 +29,5 @@ type LogoConfig = {
     small: string;
 };
 
-export const FRONTEND_CONFIG: FrontendConfig = parseFrontendConfig();
+const CONFIG: Config = parseConfig();
+export default CONFIG;
