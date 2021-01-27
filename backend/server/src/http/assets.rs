@@ -121,7 +121,7 @@ impl Assets {
         // the `lookup` call as we know from above that the path is valid.
         if self.assets.asset_info(self.assets.lookup(path).unwrap()).is_filename_hashed() {
             // This is one year in seconds.
-            builder = builder.header("cache-control", "public, max-age=31536000");
+            builder = builder.header("cache-control", "public, max-age=31536000, immutable");
         }
 
         // TODO: here we copy the asset in memory, which is very unfortunate. We
