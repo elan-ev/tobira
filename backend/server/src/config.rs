@@ -20,6 +20,9 @@ const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
 // configuration.
 tobira_macros::gen_config! {
     //! Configuration for Tobira.
+    //!
+    //! All relative paths are relative to the location of this configuration
+    //! file.
 
     db: {
         /// The username of the database user.
@@ -48,7 +51,7 @@ tobira_macros::gen_config! {
         /// The bind address to listen on.
         address: IpAddr = "127.0.0.1",
 
-        /// Unix domain socket to listen on. Specifying this will overwrite 
+        /// Unix domain socket to listen on. Specifying this will overwrite
         /// the TCP configuration.
         #[example = "/tmp/tobira.socket"]
         unix_socket: Option<PathBuf>,
@@ -68,6 +71,22 @@ tobira_macros::gen_config! {
 
         /// If this is set to `false`, log messages are not written to stdout.
         stdout: bool = true,
+    },
+    assets: {
+        /// Path to internal assets. This is only relevant for Tobira developers. This
+        /// must not be set for production builds of Tobira.
+        internal: PathBuf = "../frontend/build",
+
+        logo: {
+            /// Path to the "normal", wide logo that is shown on desktop screens.
+            #[example = "/etc/tobira/logo-large.svg"]
+            large: PathBuf,
+
+            /// Path to the small, close to square logo used for small screens, mostly
+            /// on mobile phones.
+            #[example = "/etc/tobira/logo-small.svg"]
+            small: PathBuf,
+        },
     },
 }
 
@@ -99,9 +118,10 @@ impl Config {
         let raw: raw::Config = toml::from_str(&file)
             .context(format!("failed to deserialize '{}' as configuration", path.display()))?;
         let merged = raw::Config::default_values().overwrite_with(raw);
-        let config: Self = merged.try_into()?;
+        let mut config: Self = merged.try_into()?;
 
         config.validate().context("failed to validate configuration")?;
+        config.fix_paths(path)?;
 
         Ok(config)
     }
@@ -110,6 +130,34 @@ impl Config {
     /// illegal or conflicting values.
     fn validate(&self) -> Result<()> {
         debug!("Validating configuration...");
+
+        Ok(())
+    }
+
+    /// Goes through all paths in the configuration and changes relative paths
+    /// to be absolute based on the path of the configuration file itself.
+    fn fix_paths(&mut self, config_path: &Path) -> Result<()> {
+        fn fix_path(base_path: &Path, path: &mut PathBuf) {
+            if path.is_relative() {
+                *path = base_path.join(&path);
+            }
+        }
+
+        let absolute_config_path = config_path.canonicalize()
+            .context("failed to canonicalize config path")?;
+        let base = absolute_config_path.parent()
+            .expect("config file path has no parent");
+
+        if let Some(p) = &mut self.http.unix_socket {
+            fix_path(&base, p);
+        }
+
+        if let Some(p) = &mut self.log.file {
+            fix_path(&base, p);
+        }
+
+        fix_path(&base, &mut self.assets.logo.large);
+        fix_path(&base, &mut self.assets.logo.small);
 
         Ok(())
     }

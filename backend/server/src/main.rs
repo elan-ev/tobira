@@ -2,6 +2,7 @@
 
 use std::env;
 use structopt::StructOpt;
+use tokio_compat_02::FutureExt;
 
 use tobira_util::prelude::*;
 use crate::{
@@ -36,7 +37,7 @@ async fn main() -> Result<()> {
     match &args.cmd {
         None => {
             let config = load_config_and_init_logger(&args)?;
-            start_server(&config).await?;
+            start_server(&config).compat().await?;
         }
         Some(Command::WriteConfig { target }) => {
             if args.config.is_some() {
@@ -46,7 +47,7 @@ async fn main() -> Result<()> {
         }
         Some(Command::Db { cmd }) => {
             let config = load_config_and_init_logger(&args)?;
-            db::cmd::run(cmd, &config.db).await?;
+            db::cmd::run(cmd, &config.db).compat().await?;
         }
     }
 
@@ -65,7 +66,7 @@ async fn start_server(config: &Config) -> Result<()> {
     let root_node = api::root_node();
     let context = api::Context::new(db).await?;
 
-    http::serve(&config.http, root_node, context).await
+    http::serve(&config, root_node, context).await
         .context("failed to start HTTP server")?;
 
     Ok(())

@@ -3,7 +3,7 @@
 use anyhow::anyhow;
 use futures::TryStreamExt;
 use juniper::{graphql_interface, FieldResult, GraphQLEnum, GraphQLObject};
-use postgres_types::{FromSql, ToSql};
+use postgres_types::FromSql;
 
 use tobira_util::prelude::*;
 use tokio_postgres::Row;
@@ -111,7 +111,7 @@ impl BlockValue {
                     from blocks
                     where realm_id = $1
                     order by index asc",
-                [realm_key as i64].iter().map(|x| x as &dyn ToSql),
+                &[realm_key as i64],
             )
             .await?
             .map_err(anyhow::Error::from)

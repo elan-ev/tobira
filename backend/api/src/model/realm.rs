@@ -3,7 +3,10 @@ use futures::stream::TryStreamExt;
 use juniper::{FieldResult, graphql_object};
 use std::collections::HashMap;
 
-use tobira_util::prelude::*;
+use tobira_util::{
+    prelude::*,
+    db::NO_PARAMS,
+};
 use crate::{
     Context, Id, Key,
     model::block::BlockValue,
@@ -81,7 +84,7 @@ impl Tree {
             .await?
             .query_raw(
                 "select id, name, parent, path_segment from realms",
-                std::iter::empty(),
+                NO_PARAMS,
             )
             .await?
             .map_ok(|row| {

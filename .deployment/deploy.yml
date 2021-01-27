@@ -119,7 +119,7 @@
         setype: httpd_sys_rw_content_t
         mode: '0755'
 
-    - name: deploy tobira and configuration
+    - name: deploy tobira executable
       become: true
       copy:
         src: tobira
@@ -127,6 +127,19 @@
         owner: root
         group: root
         mode: '0755'
+      notify: restart tobira
+
+    - name: deploy demo assets
+      become: true
+      copy:
+        src: "{{ item }}"
+        dest: /opt/tobira/{{ id }}/
+        owner: root
+        group: root
+        mode: '0644'
+      with_items:
+        - logo-small.svg
+        - logo-large.svg
       notify: restart tobira
 
     - name: deploy configuration

@@ -8,7 +8,10 @@ use secrecy::ExposeSecret;
 use std::{collections::BTreeMap, time::Duration};
 use tokio_postgres::{NoTls, IsolationLevel, error::SqlState};
 
-use tobira_util::prelude::*;
+use tobira_util::{
+    prelude::*,
+    db::NO_PARAMS,
+};
 use crate::config;
 
 pub(crate) mod cmd;
@@ -110,7 +113,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
         // Retrieve all active migrations from the DB.
         let active_migrations = tx.query_raw(
                 "select id, name, applied_on, script from __db_migrations",
-                std::iter::empty(),
+                NO_PARAMS,
             )
             .await?
             .map_ok(|row| (
@@ -212,7 +215,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
                     backoff_duration,
                 );
 
-                tokio::time::delay_for(backoff_duration).await;
+                tokio::time::sleep(backoff_duration).await;
                 continue;
             }
 

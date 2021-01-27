@@ -17,7 +17,11 @@ use std::{
 };
 
 use tobira_util::prelude::*;
-use crate::{api, config};
+use crate::{api, config::Config};
+use self::assets::Assets;
+
+mod assets;
+
 
 // Our requests and responses always use the hyper provided body type.
 type Response<T = Body> = hyper::Response<T>;
@@ -27,11 +31,12 @@ type Request<T = Body> = hyper::Request<T>;
 /// Starts the HTTP server. The future returned by this function must be awaited
 /// to actually run it.
 pub(crate) async fn serve(
-    config: &config::Http,
+    config: &Config,
     api_root: api::RootNode,
     api_context: api::Context,
 ) -> Result<()> {
-    let ctx = Arc::new(Context::new(api_root, api_context));
+    let assets = Assets::init(&config.assets).await.context("failed to initialize assets")?;
+    let ctx = Arc::new(Context::new(api_root, api_context, assets));
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
     // this code likely results in strange lifetime errors.
@@ -67,19 +72,19 @@ pub(crate) async fn serve(
 
 
     // Start the server with our service.
-    if let Some(unix_socket) = &config.unix_socket {
+    if let Some(unix_socket) = &config.http.unix_socket {
         // Bind to Unix domain socket.
         if unix_socket.exists() {
             fs::remove_file(unix_socket)?;
         }
         let server = Server::bind_unix(&unix_socket)?.serve(factory!());
         info!("Listening on unix://{}", unix_socket.display());
-        let permissions = fs::Permissions::from_mode(config.unix_socket_permissions);
+        let permissions = fs::Permissions::from_mode(config.http.unix_socket_permissions);
         fs::set_permissions(unix_socket, permissions)?;
         server.await?;
     } else {
         // Bind to TCP socket.
-        let addr = SocketAddr::new(config.address, config.port);
+        let addr = SocketAddr::new(config.http.address, config.http.port);
         let server = Server::bind(&addr).serve(factory!());
         info!("Listening on http://{}", server.local_addr());
         server.await?;
@@ -137,13 +142,15 @@ async fn handle_panic(
 struct Context {
     api_root: Arc<api::RootNode>,
     api_context: Arc<api::Context>,
+    assets: Assets,
 }
 
 impl Context {
-    fn new(api_root: api::RootNode, api_context: api::Context) -> Self {
+    fn new(api_root: api::RootNode, api_context: api::Context, assets: Assets) -> Self {
         Self {
             api_root: Arc::new(api_root),
             api_context: Arc::new(api_context),
+            assets,
         }
     }
 }
@@ -165,7 +172,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper
     const PLAYER_PREFIX: &str = "/v/";
 
     let response = match (method, path) {
-        (&Method::GET, "/") | (&Method::GET, "/about") => serve_index().await,
+        (&Method::GET, "/") | (&Method::GET, "/about") => ctx.assets.serve_index().await,
 
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
@@ -182,82 +189,33 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper
             let _realm_path = &path[REALM_PREFIX.len()..];
             // TODO: check if path is valid
 
-            serve_index().await
+            ctx.assets.serve_index().await
         }
 
         // The player page
         (&Method::GET, path) if path.starts_with(PLAYER_PREFIX) => {
-            serve_index().await
+            ctx.assets.serve_index().await
         }
 
         // Assets (JS files, fonts, ...)
         (&Method::GET, path) if path.starts_with(ASSET_PREFIX) => {
             let asset_path = &path[ASSET_PREFIX.len()..];
-            match Assets::serve(asset_path).await {
+            match ctx.assets.serve(asset_path).await {
                 Some(r) => r,
-                None => reply_404(method, path).await,
+                None => reply_404(&ctx.assets, method, path).await,
             }
         }
 
         // 404 for everything else
-        (method, path) => reply_404(method, path).await,
+        (method, path) => reply_404(&ctx.assets, method, path).await,
     };
 
     Ok(response)
 }
 
-/// These are all static files we serve, including JS, fonts and images.
-#[derive(rust_embed::RustEmbed)]
-#[folder = "../../frontend/build"]
-struct Assets;
-
-const INDEX_FILE: &str = "index.html";
-
-impl Assets {
-    /// Responds with the asset identified by the given path. If there exists no
-    /// asset with `path` or `path` is `INDEX_FILE`, `None` is returned.
-    async fn serve(path: &str) -> Option<Response> {
-        // The `index.html` here is not intended to be served directly. It is
-        // modified and sent on many other routes.
-        if path == INDEX_FILE {
-            return None;
-        }
-
-        let body = Body::from(Assets::get(path)?);
-        let mime_guess = mime_guess::from_path(path).first();
-        let mut builder = Response::builder();
-        if let Some(mime) = mime_guess {
-            builder = builder.header("Content-Type", mime.to_string())
-        }
-
-        // TODO: content length
-        // TODO: lots of other headers maybe
-
-        Some(builder.body(body).expect("bug: invalid response"))
-    }
-}
-
-/// Serves the main entry point of the application. This is replied to `/` and
-/// other "public routes", like `/r/lectures`. Basically everywhere where the
-/// user is supposed to see the website.
-async fn serve_index() -> Response {
-    let html = Assets::get(INDEX_FILE).unwrap();
-
-    // TODO: include useful data into the HTML file
-
-    let body = Body::from(html);
-    let mut builder = Response::builder();
-    builder = builder.header("Content-Type", "text/html; charset=UTF-8");
-
-    // TODO: content length
-    // TODO: lots of other headers maybe
-
-    builder.body(body).expect("bug: invalid response")
-}
-
 /// Replies with a 404 Not Found.
-async fn reply_404(method: &Method, path: &str) -> Response {
-    debug!("Responding with 404 to {:?} {}", method, path);
+pub(crate) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> Response {
+    debug!("Responding with 404 to {:?} '{}'", method, path);
 
     // We simply send the normal index and let the frontend router determinate
     // this is a 404. That way, our 404 page looks like the main page and users
@@ -267,12 +225,10 @@ async fn reply_404(method: &Method, path: &str) -> Response {
     // frontend is the same as the backend router. Maybe we want to indicate to
     // the frontend explicitly to show a 404 page? However, without redirecting
     // to like `/404` because that's annoying for users.
-    let html = Assets::get(INDEX_FILE).unwrap();
-    let body = Body::from(html);
-
+    let html = assets.index().await;
     Response::builder()
         .status(StatusCode::NOT_FOUND)
         .header("Content-Type", "text/html; charset=UTF-8")
-        .body(body)
+        .body(html)
         .unwrap()
 }
