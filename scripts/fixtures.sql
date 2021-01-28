@@ -26,6 +26,15 @@ begin
         );
     insert into blocks (realm_id, type, index, videolist_series, videolist_layout, videolist_order)
         values (0, 'videolist', 1, series_university_highlights, 'horizontal', 'new_to_old');
+
+    insert into events (opencast_id, title, video, description, series)
+        values (
+            'bbb',
+            'Big Buck Bunny',
+            'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
+            'Big Buck Bunny (code-named Project Peach) is a 2008 short computer-animated comedy film featuring animals of the forest, made by the Blender Institute, part of the Blender Foundation.',
+            series_university_highlights
+        );
 end; $$;
 
 
@@ -109,11 +118,3 @@ select main();
 drop function main;
 drop function department;
 drop function create_departments;
-
-insert into events (opencast_id, title, video, description)
-    values (
-        'bbb',
-        'Big Buck Bunny',
-        'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
-        'Big Buck Bunny (code-named Project Peach) is a 2008 short computer-animated comedy film featuring animals of the forest, made by the Blender Institute, part of the Blender Foundation.'
-    );
