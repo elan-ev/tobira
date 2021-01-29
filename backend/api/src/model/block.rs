@@ -2,7 +2,7 @@
 
 use anyhow::anyhow;
 use futures::TryStreamExt;
-use juniper::{graphql_interface, FieldResult, GraphQLEnum, GraphQLObject};
+use juniper::{graphql_interface, graphql_object, FieldResult, GraphQLEnum, GraphQLObject};
 use postgres_types::FromSql;
 
 use tobira_util::prelude::*;
@@ -82,11 +82,7 @@ impl Block for Text {
     }
 }
 
-/// A block just showing the list of videos in an Opencast series
-#[derive(GraphQLObject)]
-#[graphql(impl = BlockValue)]
 pub(crate) struct VideoList {
-    #[graphql(skip)]
     pub(crate) shared: SharedData,
     pub(crate) series: Id,
     pub(crate) layout: VideoListLayout,
@@ -97,6 +93,22 @@ pub(crate) struct VideoList {
 impl Block for VideoList {
     fn shared(&self) -> &SharedData {
         &self.shared
+    }
+}
+
+/// A block just showing the list of videos in an Opencast series
+#[graphql_object(impl = BlockValue)]
+impl VideoList {
+    fn series(&self) -> Id {
+        self.series
+    }
+
+    fn layout(&self) -> VideoListLayout {
+        self.layout
+    }
+
+    fn order(&self) -> VideoListOrder {
+        self.order
     }
 }
 
