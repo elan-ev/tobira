@@ -22,7 +22,7 @@ enum VideoListOrder {
   OLD_TO_NEW
 }
 
-"A block just showing some text."
+"A block just showing the list of videos in an Opencast series"
 type VideoList implements Block {
   series: ID!
   layout: VideoListLayout!

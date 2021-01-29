@@ -82,7 +82,7 @@ impl Block for Text {
     }
 }
 
-/// A block just showing some text.
+/// A block just showing the list of videos in an Opencast series
 #[derive(GraphQLObject)]
 #[graphql(impl = BlockValue)]
 pub(crate) struct VideoList {
