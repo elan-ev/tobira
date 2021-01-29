@@ -67,7 +67,7 @@
     - name: drop database
       become: true
       become_user: postgres
-      community.general.postgresql_db:
+      community.postgresql.postgresql_db:
         name: tobira-{{ id }}
         state: absent
     # End of migration hack.
@@ -75,21 +75,21 @@
     - name: create tobira postgres user
       become: true
       become_user: postgres
-      community.general.postgresql_user:
+      community.postgresql.postgresql_user:
         name: tobira-{{ id }}
         password: tobira-{{ b64_branch }}
 
     - name: create database
       become: true
       become_user: postgres
-      community.general.postgresql_db:
+      community.postgresql.postgresql_db:
         name: tobira-{{ id }}
         owner: tobira-{{ id }}
 
     - name: add pgcrypto extension
       become: true
       become_user: postgres
-      community.general.postgresql_ext:
+      community.postgresql.postgresql_ext:
         name: pgcrypto
         db: tobira-{{ id }}
 
