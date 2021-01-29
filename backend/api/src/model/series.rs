@@ -1,6 +1,6 @@
 use juniper::{graphql_object, FieldResult};
 
-use crate::{Context, id::Key, Id, util::RowExt};
+use crate::{Context, id::Key, Id, model::event::Event, util::RowExt};
 
 
 pub(crate) struct Series {
@@ -9,7 +9,7 @@ pub(crate) struct Series {
     description: Option<String>,
 }
 
-#[graphql_object]
+#[graphql_object(Context = Context)]
 impl Series {
     fn id(&self) -> Id {
         Id::series(self.key)
@@ -23,7 +23,9 @@ impl Series {
         self.description.as_deref()
     }
 
-    // TODO Return events
+    async fn events(&self, context: &Context) -> FieldResult<Vec<Event>> {
+        Event::load_for_series(self.key, context).await
+    }
 }
 
 impl Series {

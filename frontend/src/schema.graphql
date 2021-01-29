@@ -14,6 +14,7 @@ type Series {
   id: ID!
   title: String!
   description: String
+  events: [Event!]!
 }
 
 "A `Block`: a UI element that belongs to a realm."
