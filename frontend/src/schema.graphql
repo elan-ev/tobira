@@ -8,6 +8,14 @@ type Event {
   title: String!
   video: String!
   description: String
+  series: Series
+}
+
+type Series {
+  id: ID!
+  title: String!
+  description: String
+  events: [Event!]!
 }
 
 "A `Block`: a UI element that belongs to a realm."
@@ -22,9 +30,9 @@ enum VideoListOrder {
   OLD_TO_NEW
 }
 
-"A block just showing some text."
+"A block just showing the list of videos in an Opencast series"
 type VideoList implements Block {
-  series: ID!
+  series: Series!
   layout: VideoListLayout!
   order: VideoListOrder!
 }

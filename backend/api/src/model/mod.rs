@@ -3,4 +3,5 @@
 
 pub(crate) mod realm;
 pub(crate) mod event;
+pub(crate) mod series;
 pub(crate) mod block;
