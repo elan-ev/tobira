@@ -7,11 +7,11 @@ use postgres_types::FromSql;
 
 use tobira_util::prelude::*;
 use tokio_postgres::Row;
-use crate::{Context, Id, id::Key, util::RowExt};
+use crate::{Context, Id, id::Key, model::series::Series, util::RowExt};
 
 
 /// A `Block`: a UI element that belongs to a realm.
-#[graphql_interface(for = [Text, VideoList])]
+#[graphql_interface(Context = Context, for = [Text, VideoList])]
 pub(crate) trait Block {
     // To avoid code duplication, all the shared data is stored in `SharedData`
     // and only a `shared` method is mandatory. All other method (in particular,
@@ -68,7 +68,7 @@ pub(crate) struct SharedData {
 
 /// A block just showing some text.
 #[derive(GraphQLObject)]
-#[graphql(impl = BlockValue)]
+#[graphql(Context = Context, impl = BlockValue)]
 pub(crate) struct Text {
     #[graphql(skip)]
     pub(crate) shared: SharedData,
@@ -97,10 +97,11 @@ impl Block for VideoList {
 }
 
 /// A block just showing the list of videos in an Opencast series
-#[graphql_object(impl = BlockValue)]
+#[graphql_object(Context = Context, impl = BlockValue)]
 impl VideoList {
-    fn series(&self) -> Id {
-        self.series
+    async fn series(&self, context: &Context) -> FieldResult<Series> {
+        // `unwrap` is okay here because of our foreign key constraint
+        Ok(Series::load_by_id(self.series, context).await?.unwrap())
     }
 
     fn layout(&self) -> VideoListLayout {

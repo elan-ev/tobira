@@ -10,6 +10,12 @@ type Event {
   description: String
 }
 
+type Series {
+  id: ID!
+  title: String!
+  description: String
+}
+
 "A `Block`: a UI element that belongs to a realm."
 interface Block {
   id: ID!
@@ -24,7 +30,7 @@ enum VideoListOrder {
 
 "A block just showing the list of videos in an Opencast series"
 type VideoList implements Block {
-  series: ID!
+  series: Series!
   layout: VideoListLayout!
   order: VideoListOrder!
 }
