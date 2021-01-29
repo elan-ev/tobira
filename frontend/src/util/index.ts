@@ -41,3 +41,8 @@ export function match<T extends string | number, Out>(
         ? arms[value]!()
         : (arms[value] as (() => Out) | undefined ?? fallback)();
 }
+
+// Retrieves the key of an ID by stripping the "kind" prefix.
+export function keyOfId(id: string): string {
+    return id.substring(2);
+}

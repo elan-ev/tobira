@@ -5,7 +5,7 @@ import {
     Blocks_blocks$key,
 } from "../query-types/Blocks_blocks.graphql";
 
-import { match } from "../util";
+import { match, keyOfId } from "../util";
 import { unreachable } from "../util/err";
 
 
@@ -23,6 +23,12 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                     title
                     __typename
                     ... on Text { content }
+                    ... on VideoList {
+                        series {
+                            title
+                            events { id title thumbnail duration }
+                        }
+                    }
                 }
             }
         `,
@@ -36,7 +42,11 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                 title={block.title}
                 content={unwrap(block, "content")}
             />,
-            "VideoList": () => <VideoListBlock key={block.id} title={block.title} />,
+            "VideoList": () => <VideoListBlock
+                key={block.id}
+                title={block.title}
+                series={unwrap(block, "series")}
+            />,
         }))
     }</>;
 };
@@ -57,7 +67,12 @@ const TextBlock: React.FC<TextProps> = ({ title, content }) => (
     </Block>
 );
 
-const VideoListBlock: React.FC<{ title: string | null }> = ({ title }) => {
+type VideoListProps = {
+    title: string | null;
+    series: NonNullable<BlockData["series"]>;
+};
+
+const VideoListBlock: React.FC<VideoListProps> = ({ title, series }) => {
     const [THUMB_WIDTH, THUMB_HEIGHT] = [16, 9].map(x => x * 13);
 
     return (
@@ -67,12 +82,12 @@ const VideoListBlock: React.FC<{ title: string | null }> = ({ title }) => {
                 display: "flex",
                 flexWrap: "wrap",
             }}>
-                {DUMMY_VIDEOS.map(v => {
-                    const url = `/v/${v.id}`;
+                {series.events.map(event => {
+                    const url = `/v/${keyOfId(event.id)}`;
 
                     return (
                         <div
-                            key={v.id}
+                            key={event.id}
                             css={{
                                 margin: "12px 8px",
                                 width: THUMB_WIDTH,
@@ -81,7 +96,7 @@ const VideoListBlock: React.FC<{ title: string | null }> = ({ title }) => {
                         >
                             <a href={url} css={{ position: "relative", display: "block" }}>
                                 <img
-                                    src={v.thumbnail}
+                                    src={event.thumbnail}
                                     width={THUMB_WIDTH}
                                     height={THUMB_HEIGHT}
                                     css={{ display: "block" }}
@@ -96,14 +111,14 @@ const VideoListBlock: React.FC<{ title: string | null }> = ({ title }) => {
                                     padding: "0 4px",
                                     color: "white",
                                 }}>
-                                    {formatLength(v.length)}
+                                    {formatLength(event.duration)}
                                 </div>
                             </a>
 
                             <h3 css={{
                                 fontSize: 16,
                             }}>
-                                <a href={url}>{v.title}</a>
+                                <a href={url}>{event.title}</a>
                             </h3>
                         </div>
                     );
@@ -155,48 +170,3 @@ function unwrap<K extends keyof BlockData>(block: BlockData, field: K): NonNulla
 
     return v;
 }
-
-const DUMMY_VIDEOS = [
-    {
-        id: 0,
-        title: "Programmieren in Rust: Einführung",
-        length: 5123,
-        thumbnail: "https://i.imgur.com/QtsTbCi.jpg",
-    },
-    {
-        id: 1,
-        title: "Programmieren in Rust: Module",
-        length: 5018,
-        thumbnail: "https://i.imgur.com/aoRSWgJ.jpg",
-    },
-    {
-        id: 2,
-        title: "The Physics behind a flying Bumblebee",
-        length: 47,
-        thumbnail: "https://i.imgur.com/TuS6Qxg.jpg",
-    },
-    {
-        id: 3,
-        title: "Programmieren in Rust: Performance & Effizienz",
-        length: 5329,
-        thumbnail: "https://i.imgur.com/4y40tkN.jpg",
-    },
-    {
-        id: 4,
-        title: "Spring (Open Blender Movie)",
-        length: 464,
-        thumbnail: "https://i.imgur.com/JhUYB7C.jpg",
-    },
-    {
-        id: 5,
-        title: "Cosmos Laundromat (Open Blender Movie)",
-        length: 730,
-        thumbnail: "https://i.imgur.com/qGOL4Jy.jpg",
-    },
-    {
-        id: 6,
-        title: "Programmieren in Rust: Stack & Heap",
-        length: 5399,
-        thumbnail: "https://i.imgur.com/XBDOO2R.jpg",
-    },
-];
