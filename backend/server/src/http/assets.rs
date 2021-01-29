@@ -19,6 +19,10 @@ const ASSETS: Setup = assets! {
     },
     "bundle.js.map": { hash },
 
+    // Static files for the plyr media player.
+    "blank.mp4": { hash },
+    "plyr.svg": { hash },
+
     "logo-large.svg": { hash, dynamic },
     "logo-small.svg": { hash, dynamic },
 

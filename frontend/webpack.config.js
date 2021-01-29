@@ -5,6 +5,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const { APP_PATH, OUT_PATH, STATIC_PATH } = require("./constants");
+const plyrDistPath = path.join(__dirname, "node_modules", "plyr", "dist");
 
 module.exports = (_env, argv) => ({
     entry: APP_PATH,
@@ -41,6 +42,9 @@ module.exports = (_env, argv) => ({
                     icon: true,
                 },
             }],
+        }, {
+            test: /\.css$/u,
+            loader: "css-loader",
         }],
     },
 
@@ -54,6 +58,8 @@ module.exports = (_env, argv) => ({
             patterns: [
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
                 { from: STATIC_PATH, to: OUT_PATH },
+                { from: path.join(plyrDistPath, "blank.mp4"), to: OUT_PATH },
+                { from: path.join(plyrDistPath, "plyr.svg"), to: OUT_PATH },
             ],
         }),
     ],

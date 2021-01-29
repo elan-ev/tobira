@@ -22,11 +22,17 @@ const parseConfig: () => Config = () => {
 
 type Config = {
     logo: LogoConfig;
+    plyr: PlyrConfig;
 };
 
 type LogoConfig = {
     large: string;
     small: string;
+};
+
+type PlyrConfig = {
+    blankVideo: string;
+    svg: string;
 };
 
 const CONFIG: Config = parseConfig();

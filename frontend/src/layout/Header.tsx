@@ -11,7 +11,7 @@ import { match } from "../util";
 import CONFIG from "../config";
 
 
-const HEIGHT = 60;
+export const HEIGHT = 60;
 const HEADER_BORDER_WIDTH = 1;
 
 export const Header: React.FC = () => (
