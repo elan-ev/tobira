@@ -7,6 +7,8 @@ type Event {
   id: ID!
   title: String!
   video: String!
+  thumbnail: String!
+  duration: Float!
   description: String
   series: Series
 }

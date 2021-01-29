@@ -34,6 +34,7 @@ module.exports = {
         "no-console": "off",
         "func-style": "off",
         "max-lines": "off",
+        "no-else-return": "off",
         "no-underscore-dangle": "off",
         "space-before-function-paren": ["warn", {
             "anonymous": "always",
@@ -107,7 +108,6 @@ module.exports = {
         "no-extra-parens": ["warn", "all", { enforceForArrowConditionals: false }],
         "max-statements-per-line": "warn",
         "curly": "warn",
-        "no-else-return": "warn",
         // Unused things should also only warn
         "no-unused-vars": ["warn", noUnusedVarsOptions],
     },
@@ -148,6 +148,7 @@ module.exports = {
 
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],
+            "@typescript-eslint/quotes": "warn",
             "@typescript-eslint/no-extra-parens": [
                 "warn",
                 "all",
