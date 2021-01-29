@@ -9,6 +9,7 @@ pub(crate) struct Event {
     key: Key,
     title: String,
     video: String,
+    thumbnail: String,
     description: Option<String>,
     series: Option<Key>,
 }
@@ -25,6 +26,10 @@ impl Event {
 
     fn video(&self) -> &str {
         &self.video
+    }
+
+    fn thumbnail(&self) -> &str {
+        &self.thumbnail
     }
 
     fn description(&self) -> Option<&str> {
@@ -46,7 +51,7 @@ impl Event {
             context.db.get()
                 .await?
                 .query_opt(
-                    "select id, title, video, description, series
+                    "select id, title, video, thumbnail, description, series
                         from events
                         where id = $1",
                     &[&(key as i64)],
@@ -64,7 +69,7 @@ impl Event {
         let result = context.db.get()
             .await?
             .query_raw(
-                "select id, title, video, description, series
+                "select id, title, video, thumbnail, description, series
                     from events
                     where series = $1",
                 &[series_key as i64],
@@ -82,8 +87,9 @@ impl Event {
             key: row.get_key(0),
             title: row.get(1),
             video: row.get(2),
-            description: row.get(3),
-            series: row.get::<_, Option<i64>>(4).map(|series| series as u64),
+            thumbnail: row.get(3),
+            description: row.get(4),
+            series: row.get::<_, Option<i64>>(5).map(|series| series as u64),
         }
     }
 }

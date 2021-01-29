@@ -12,5 +12,6 @@ create table events (
     series bigint references series,
 
     -- Media
+    thumbnail text not null,
     video text not null
 );
