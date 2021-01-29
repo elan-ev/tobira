@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { graphql, useFragment } from "react-relay/hooks";
 import {
     Blocks_blocks as QueryResult,
@@ -94,7 +95,7 @@ const VideoListBlock: React.FC<VideoListProps> = ({ title, series }) => {
                                 "& a": { color: "black", textDecoration: "none" },
                             }}
                         >
-                            <a href={url} css={{ position: "relative", display: "block" }}>
+                            <Link to={url} css={{ position: "relative", display: "block" }}>
                                 <img
                                     src={event.thumbnail}
                                     width={THUMB_WIDTH}
@@ -113,12 +114,12 @@ const VideoListBlock: React.FC<VideoListProps> = ({ title, series }) => {
                                 }}>
                                     {formatLength(event.duration)}
                                 </div>
-                            </a>
+                            </Link>
 
                             <h3 css={{
                                 fontSize: 16,
                             }}>
-                                <a href={url}>{event.title}</a>
+                                <Link to={url}>{event.title}</Link>
                             </h3>
                         </div>
                     );
@@ -137,10 +138,8 @@ const formatLength = (totalSeconds: number) => {
 
     if (hours > 0) {
         return `${hours}:${pad(minutes)}:${pad(seconds)}`;
-    } else if (minutes > 0) {
-        return `${minutes}:${pad(seconds)}`;
     } else {
-        return `0:${pad(seconds)}`;
+        return `${minutes}:${pad(seconds)}`;
     }
 };
 
