@@ -127,44 +127,46 @@ impl BlockValue {
                 &[realm_key as i64],
             )
             .await?
-            .map_err(anyhow::Error::from)
-            .and_then(|row| async move {
-                let ty: BlockType = row.get(1);
-                let shared = SharedData {
-                    id: Id::block(row.get_key(0)),
-                    index: row.get::<_, i16>(2).into(),
-                    title: row.get(3),
-                };
-
-                let block = match ty {
-                    BlockType::Text => {
-                        Text {
-                            shared,
-                            content: get_type_dependent(&row, 4, "text", "text_content")?,
-                        }.into()
-                    }
-                    BlockType::VideoList => {
-                        VideoList {
-                            shared,
-                            series: Id::series(
-                                get_type_dependent::<i64>(
-                                    &row,
-                                    5,
-                                    "videolist",
-                                    "videolist_series",
-                                )? as u64
-                            ),
-                            layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
-                            order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
-                        }.into()
-                    }
-                };
-
-                Ok(block)
-            })
+            .err_into::<anyhow::Error>()
+            .and_then(|row| async move { Self::from_row(row) })
             .try_collect()
             .await
             .map_err(Into::into)
+    }
+
+    fn from_row(row: Row) -> Result<BlockValue> {
+        let ty: BlockType = row.get(1);
+        let shared = SharedData {
+            id: Id::block(row.get_key(0)),
+            index: row.get::<_, i16>(2).into(),
+            title: row.get(3),
+        };
+
+        let block = match ty {
+            BlockType::Text => {
+                Text {
+                    shared,
+                    content: get_type_dependent(&row, 4, "text", "text_content")?,
+                }.into()
+            }
+            BlockType::VideoList => {
+                VideoList {
+                    shared,
+                    series: Id::series(
+                        get_type_dependent::<i64>(
+                            &row,
+                            5,
+                            "videolist",
+                            "videolist_series",
+                        )? as u64
+                    ),
+                    layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
+                    order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
+                }.into()
+            }
+        };
+
+        Ok(block)
     }
 }
 
