@@ -8,6 +8,7 @@ type Event {
   title: String!
   video: String!
   description: String
+  series: Series
 }
 
 type Series {

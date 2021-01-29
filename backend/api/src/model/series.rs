@@ -30,24 +30,28 @@ impl Series {
 
 impl Series {
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
-        let result = if let Some(key) = id.key_for(Id::SERIES_KIND) {
-            context.db.get()
-                .await?
-                .query_opt(
-                    "select id, title, description
+        if let Some(key) = id.key_for(Id::SERIES_KIND) {
+            Self::load_by_key(key, context).await
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub(crate) async fn load_by_key(key: Key, context: &Context) -> FieldResult<Option<Series>> {
+        let result = context.db.get()
+            .await?
+            .query_opt(
+                "select id, title, description
                         from series
                         where id = $1",
-                    &[&(key as i64) as _],
-                )
-                .await?
-                .map(|row| Self {
-                    key: row.get_key(0),
-                    title: row.get(1),
-                    description: row.get(2),
-                })
-        } else {
-            None
-        };
+                &[&(key as i64) as _],
+            )
+            .await?
+            .map(|row| Self {
+                key: row.get_key(0),
+                title: row.get(1),
+                description: row.get(2),
+            });
 
         Ok(result)
     }
