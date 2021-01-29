@@ -42,9 +42,9 @@ impl Series {
             .await?
             .query_opt(
                 "select id, title, description
-                        from series
-                        where id = $1",
-                &[&(key as i64) as _],
+                    from series
+                    where id = $1",
+                &[&(key as i64)],
             )
             .await?
             .map(|row| Self {

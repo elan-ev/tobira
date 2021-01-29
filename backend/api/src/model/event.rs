@@ -65,8 +65,8 @@ impl Event {
             .await?
             .query_raw(
                 "select id, title, video, description, series
-                        from events
-                        where series = $1",
+                    from events
+                    where series = $1",
                 &[series_key as i64],
             )
             .await?
