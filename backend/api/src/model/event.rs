@@ -30,7 +30,7 @@ impl Event {
 }
 
 impl Event {
-    pub async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
+    pub(crate) async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
         let result = if let Some(key) = id.key_for(Id::EVENT_KIND) {
             context.db.get()
                 .await?
@@ -41,7 +41,7 @@ impl Event {
                     &[&(key as i64) as _],
                 )
                 .await?
-                .map(|row| Event {
+                .map(|row| Self {
                     key: row.get_key(0),
                     title: row.get(1),
                     video: row.get(2),
