@@ -38,7 +38,7 @@ impl Event {
                     "select id, title, video, description
                         from events
                         where id = $1",
-                    &[&(key as i64) as _],
+                    &[&(key as i64)],
                 )
                 .await?
                 .map(|row| Self {
