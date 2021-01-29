@@ -79,8 +79,7 @@ impl Tree {
 
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
-        let mut realms = db
-            .get()
+        let mut realms = db.get()
             .await?
             .query_raw(
                 "select id, name, parent, path_segment from realms",
