@@ -49,6 +49,9 @@ build:
       run: cargo run --release --bin export-schema -- ../frontend/src/schema.graphql
       workdir: backend
   - command:
+      run: npm ci
+      workdir: frontend
+  - command:
       run: npx relay-compiler
       workdir: frontend
   - command:
