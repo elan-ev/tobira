@@ -74,7 +74,6 @@ type Query {
 type Realm {
   id: ID!
   name: String!
-  parentId: ID
   path: String!
   parent: Realm
   parents: [Realm!]!

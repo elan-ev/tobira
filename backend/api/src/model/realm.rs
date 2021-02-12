@@ -32,10 +32,6 @@ impl Realm {
         &self.name
     }
 
-    fn parent_id(&self) -> Option<Id> {
-        self.parent_key.map(Id::realm)
-    }
-
     fn path(&self, context: &Context) -> String {
         Tree::path(self, &context.realm_tree.realms)
     }
