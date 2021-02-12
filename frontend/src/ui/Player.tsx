@@ -1,6 +1,6 @@
 import React from "react";
 import Plyr from "plyr-react";
-import plyrCss from "plyr-react/dist/plyr.css";
+import plyrCss from "plyr/dist/plyr.css";
 import { Global, InterpolationWithTheme } from "@emotion/core";
 
 import CONFIG from "../config";
