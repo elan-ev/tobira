@@ -9,6 +9,6 @@ declare module "*.svg" {
 }
 
 declare module "*.css" {
-    const value: any;
+    const value: string;
     export default value;
 }

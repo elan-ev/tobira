@@ -1,7 +1,7 @@
 import React from "react";
 import Plyr from "plyr-react";
 import plyrCss from "plyr/dist/plyr.css";
-import { Global, InterpolationWithTheme } from "@emotion/core";
+import { Global } from "@emotion/core";
 
 import CONFIG from "../config";
 import { MAIN_PADDING } from "../layout/Root";
@@ -54,7 +54,7 @@ export const Player: React.FC<PlayerProps> = ({ mediaUrl, embedded = false }) =>
     };
 
     return <>
-        <Global styles={plyrCss as InterpolationWithTheme<any>} />
+        <Global styles={plyrCss} />
         <div css={{
             // TODO: here we need to adjust the colors of the player based on
             // the colors from the configuration.
