@@ -1,7 +1,8 @@
 import React from "react";
-
 import { graphql, useLazyLoadQuery } from "react-relay/hooks";
+
 import { VideoQuery } from "../query-types/VideoQuery.graphql";
+import { Player } from "../ui/Player";
 
 
 type Props = {
@@ -30,8 +31,8 @@ export const VideoPage: React.FC<Props> = ({ id }) => {
 
     const { title, video, description } = event;
     return <>
+        <Player mediaUrl={video} />
         <h1>{title}</h1>
-        <video src={video} controls />
         <p>{description}</p>
     </>;
 };
