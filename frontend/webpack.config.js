@@ -44,15 +44,7 @@ module.exports = (_env, argv) => ({
             }],
         }, {
             test: /\.css$/u,
-            use: [
-                "to-string-loader",
-                {
-                    loader: "css-loader",
-                    options: {
-                        esModule: false,
-                    },
-                },
-            ],
+            loader: "raw-loader",
         }],
     },
 
