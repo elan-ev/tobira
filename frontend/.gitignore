@@ -2,3 +2,4 @@
 /build
 /src/query-types
 /tsconfig.tsbuildinfo
+/.eslintcache

@@ -39,7 +39,7 @@ frontend:
         - npx relay-compiler
         - concurrently:
           - npx tsc --skipLibCheck
-          - npx eslint .
+          - npx eslint . --cache
           - npx webpack --mode=development --display=errors-only
         - reload:
 
