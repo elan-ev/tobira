@@ -35,17 +35,17 @@ async fn main() -> Result<()> {
 
     // Dispatch subcommand.
     match &args.cmd {
-        None => {
+        Command::Serve => {
             let config = load_config_and_init_logger(&args)?;
             start_server(&config).compat().await?;
         }
-        Some(Command::WriteConfig { target }) => {
+        Command::WriteConfig { target } => {
             if args.config.is_some() {
                 bail!("`-c/--config` parameter is not valid for this subcommand");
             }
             config::write_template(target.as_ref())?
         }
-        Some(Command::Db { cmd }) => {
+        Command::Db { cmd } => {
             let config = load_config_and_init_logger(&args)?;
             db::cmd::run(cmd, &config.db).compat().await?;
         }

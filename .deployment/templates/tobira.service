@@ -7,7 +7,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/tobira/{{ id }}/
-ExecStart=/opt/tobira/{{ id }}/tobira
+ExecStart=/opt/tobira/{{ id }}/tobira serve
 Restart=always
 User=tobira
 

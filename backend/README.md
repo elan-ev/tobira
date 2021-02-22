@@ -21,8 +21,8 @@ This needs the frontend to be built.
 ```sh
 # build only
 cargo build
-# build and run
-cargo run
+# build and start backend server
+cargo run -- serve
 ```
 
 Configuration
