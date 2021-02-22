@@ -1,5 +1,6 @@
 //! The HTTP server, handler and routes.
 
+use deadpool_postgres::Pool;
 use futures::FutureExt;
 use hyper::{
     Body, Method, Server, StatusCode,
@@ -17,7 +18,7 @@ use std::{
 };
 
 use tobira_util::prelude::*;
-use crate::{api, config::Config};
+use crate::{api, config::Config, db};
 use self::assets::Assets;
 
 mod assets;
@@ -33,10 +34,15 @@ type Request<T = Body> = hyper::Request<T>;
 pub(crate) async fn serve(
     config: &Config,
     api_root: api::RootNode,
-    api_context: api::Context,
 ) -> Result<()> {
     let assets = Assets::init(&config.assets).await.context("failed to initialize assets")?;
-    let ctx = Arc::new(Context::new(api_root, api_context, assets));
+
+    let db = db::create_pool(&config.db).await
+        .context("failed to create database connection pool (database not running?)")?;
+    db::migrate(&mut *db.get().await?).await
+        .context("failed to check/run DB migrations")?;
+
+    let ctx = Arc::new(Context::new(api_root, assets, db));
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
     // this code likely results in strange lifetime errors.
@@ -147,15 +153,15 @@ async fn handle_internal_errors(
 /// Context that the request handler has access to.
 struct Context {
     api_root: Arc<api::RootNode>,
-    api_context: Arc<api::Context>,
+    db: Pool,
     assets: Assets,
 }
 
 impl Context {
-    fn new(api_root: api::RootNode, api_context: api::Context, assets: Assets) -> Self {
+    fn new(api_root: api::RootNode, assets: Assets, db: Pool) -> Self {
         Self {
             api_root: Arc::new(api_root),
-            api_context: Arc::new(api_context),
+            db,
             assets,
         }
     }
@@ -187,7 +193,11 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
 
         // The actual GraphQL API.
         (&Method::GET, "/graphql") | (&Method::POST, "/graphql") => {
-            juniper_hyper::graphql(ctx.api_root.clone(), ctx.api_context.clone(), req).await?
+            juniper_hyper::graphql(
+                ctx.api_root.clone(),
+                Arc::new(api::Context::new(ctx.db.get().await?).await?),
+                req
+            ).await?
         }
 
         // Realm pages

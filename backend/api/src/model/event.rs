@@ -53,8 +53,7 @@ impl Event {
 impl Event {
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
         let result = if let Some(key) = id.key_for(Id::EVENT_KIND) {
-            context.db.get()
-                .await?
+            context.db
                 .query_opt(
                     "select id, title, video, thumbnail, duration, description, series
                         from events
@@ -71,8 +70,7 @@ impl Event {
     }
 
     pub(crate) async fn load_for_series(series_key: Key, context: &Context) -> FieldResult<Vec<Self>> {
-        let result = context.db.get()
-            .await?
+        let result = context.db
             .query_raw(
                 "select id, title, video, thumbnail, duration, description, series
                     from events

@@ -116,8 +116,7 @@ impl VideoList {
 impl BlockValue {
     /// Fetches all blocks for the given realm from the database.
     pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> FieldResult<Vec<Self>> {
-        context.db.get()
-            .await?
+        context.db
             .query_raw(
                 "select id, type, index, title, text_content, videolist_series,
                     videolist_layout, videolist_order

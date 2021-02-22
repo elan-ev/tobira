@@ -1,6 +1,7 @@
 //! Definition of the GraphQL API.
 
-use deadpool_postgres::Pool;
+use deadpool::managed::Object;
+use deadpool_postgres::ClientWrapper;
 
 use tobira_util::prelude::*;
 use crate::{
@@ -29,14 +30,17 @@ pub fn root_node() -> RootNode {
 pub type RootNode = juniper::RootNode<'static, Query, Mutation, Subscription>;
 
 
+// TODO I don't like the specificity of this type ...
+pub type DbConnection = Object<ClientWrapper, tokio_postgres::error::Error>;
+
 /// The context that is accessible to every resolver in our API.
 pub struct Context {
-    db: Pool,
+    db: DbConnection,
     realm_tree: model::realm::Tree,
 }
 
 impl Context {
-    pub async fn new(db: Pool) -> Result<Self> {
+    pub async fn new(db: DbConnection) -> Result<Self> {
         let realm_tree = model::realm::Tree::load(&db).await?;
         Ok(Self {
             db,
