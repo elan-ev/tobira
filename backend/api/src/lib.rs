@@ -31,7 +31,6 @@ pub type RootNode = juniper::RootNode<'static, Query, Mutation, Subscription>;
 
 /// The context that is accessible to every resolver in our API.
 pub struct Context {
-    #[allow(dead_code)] // TODO
     db: Pool,
     realm_tree: model::realm::Tree,
 }
