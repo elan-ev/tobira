@@ -63,7 +63,7 @@ pub(crate) async fn serve(
                 let ctx = Arc::clone(&ctx);
                 async {
                     Ok::<_, Infallible>(service_fn(move |req| {
-                        handle_panic(handle(req, Arc::clone(&ctx)))
+                        handle_internal_errors(handle(req, Arc::clone(&ctx)))
                     }))
                 }
             })
@@ -96,9 +96,19 @@ pub(crate) async fn serve(
 /// This just wraps another future and catches all panics that might occur when
 /// resolving/polling that given future. This ensures that we always answer with
 /// `500` instead of just crashing the thread and closing the connection.
-async fn handle_panic(
-    future: impl Future<Output = Result<Response, hyper::Error>>,
-) -> Result<Response, hyper::Error> {
+async fn handle_internal_errors(
+    future: impl Future<Output = Result<Response>>,
+) -> Result<Response, Infallible> {
+    fn internal_server_error() -> Response {
+        Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body("Internal server error".into())
+            .unwrap()
+    }
+
+    // TODO: We want to log lots of information about the exact HTTP request in
+    // the error case.
+
     // The `AssertUnwindSafe` is unfortunately necessary. The whole story of
     // unwind safety is strange. What we are basically saying here is: "if the
     // future panicks, the global/remaining application state is not 'broken'.
@@ -107,7 +117,11 @@ async fn handle_panic(
     // Hyper catches panics for us anyway, so this changes nothing except that
     // our response is better.
     match AssertUnwindSafe(future).catch_unwind().await {
-        Ok(response) => response,
+        Ok(Ok(response)) => Ok(response),
+        Ok(Err(e)) => {
+            error!("INTERNAL SERVER ERROR: HTTP handler returned `Err(_)`: {:?}", e);
+            Ok(internal_server_error())
+        }
         Err(panic) => {
             // The `panic` information is just an `Any` object representing the
             // value the panic was invoked with. For most panics (which use
@@ -116,24 +130,16 @@ async fn handle_panic(
                 .map(|s| s.as_str())
                 .or(panic.downcast_ref::<&str>().map(|s| *s));
 
-            // TODO: improve output.
-            // - We probably want to print the HTTP request header line.
-            // - It would be great to also print everything the panic hook would
-            //   print, namely: location information and a backtrace. Do we
-            //   install our own panic hook? Or is stdout piped into the log
-            //   file anyway?
+            // TODO: It would be great to also log everything the panic hook
+            // would print, namely: location information and a backtrace. Do we
+            // install our own panic hook? Or is stdout piped into the log file
+            // anyway?
             match msg {
-                Some(msg) => error!("HTTP handler panicked: '{}'", msg),
-                None => error!("HTTP handler panicked"),
+                Some(msg) => error!("INTERNAL SERVER ERROR: HTTP handler panicked: '{}'", msg),
+                None => error!("INTERNAL SERVER ERROR: HTTP handler panicked"),
             }
 
-            // TODO: potentially improve the response
-            let error = Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body("Internal server error".into())
-                .unwrap();
-
-            Ok(error)
+            Ok(internal_server_error())
         }
     }
 }
@@ -156,7 +162,7 @@ impl Context {
 }
 
 /// This is the main entry point, called for each incoming request.
-async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response, hyper::Error> {
+async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
     trace!(
         "Incoming HTTP {:?} request to '{}{}'",
         req.method(),
