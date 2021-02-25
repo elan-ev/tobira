@@ -7,7 +7,6 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(
     about = "Video portal for Opencast.",
-    after_help = "When run without subcommand, the Tobira backend server is started.",
     setting(structopt::clap::AppSettings::VersionlessSubcommands),
 )]
 pub(crate) struct Args {
@@ -17,11 +16,14 @@ pub(crate) struct Args {
     pub(crate) config: Option<PathBuf>,
 
     #[structopt(subcommand)]
-    pub(crate) cmd: Option<Command>,
+    pub(crate) cmd: Command,
 }
 
 #[derive(Debug, StructOpt)]
 pub(crate) enum Command {
+    /// Starts the backend HTTP server.
+    Serve,
+
     /// Outputs a template for the configuration file (which includes
     /// descriptions or all options).
     WriteConfig {

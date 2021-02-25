@@ -70,8 +70,8 @@ Use cargo to build and run the Rust based backend.
 cd backend/
 # build only
 cargo build
-# build and run
-cargo run
+# build and start backend server
+cargo run -- serve
 ```
 
 ## Auto-Rebuilds

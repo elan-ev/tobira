@@ -21,7 +21,7 @@ backend:
           - macros/
         run:
           - reload:
-          - cargo run
+          - cargo run -- serve
 
 frontend:
   - set-workdir: frontend
