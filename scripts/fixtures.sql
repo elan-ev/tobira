@@ -25,11 +25,11 @@ begin
             0, 'text', 0,
             'Welcome to Tobira! This database contains dummy data intended for development. Have fun!'
         );
-    insert into blocks (realm_id, type, index, videolist_series, videolist_layout, videolist_order)
-        values (0, 'videolist', 1, series_university_highlights, 'grid', 'new_to_old');
+    insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order)
+        values (0, 'series', 1, series_university_highlights, 'grid', 'new_to_old');
 
-    insert into blocks (realm_id, type, index, videolist_series, videolist_layout, videolist_order)
-        values (events_realm_id, 'videolist', 1, series_christmas, 'grid', 'new_to_old');
+    insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order)
+        values (events_realm_id, 'series', 1, series_christmas, 'grid', 'new_to_old');
 
 
     -- Add a bunch of events/videos

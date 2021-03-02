@@ -13,11 +13,15 @@ type Event {
   series: Series
 }
 
-type Series {
+type Realm {
   id: ID!
-  title: String!
-  description: String
-  events: [Event!]!
+  name: String!
+  path: String!
+  parent: Realm
+  parents: [Realm!]!
+  children: [Realm!]!
+  "Returns the (content) blocks of this realm."
+  blocks: [Block!]!
 }
 
 "A `Block`: a UI element that belongs to a realm."
@@ -32,15 +36,8 @@ enum VideoListOrder {
   OLD_TO_NEW
 }
 
-"A block just showing the list of videos in an Opencast series"
-type VideoList implements Block {
-  series: Series!
-  layout: VideoListLayout!
-  order: VideoListOrder!
-}
-
 "A block just showing some text."
-type Text implements Block {
+type TextBlock implements Block {
   content: String!
 }
 
@@ -71,15 +68,18 @@ type Query {
   event(id: ID!): Event
 }
 
-type Realm {
+"A block just showing the list of videos in an Opencast series"
+type SeriesBlock implements Block {
+  series: Series!
+  layout: VideoListLayout!
+  order: VideoListOrder!
+}
+
+type Series {
   id: ID!
-  name: String!
-  path: String!
-  parent: Realm
-  parents: [Realm!]!
-  children: [Realm!]!
-  "Returns the (content) blocks of this realm."
-  blocks: [Block!]!
+  title: String!
+  description: String
+  events: [Event!]!
 }
 
 enum VideoListLayout {

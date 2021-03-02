@@ -23,8 +23,8 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                     id
                     title
                     __typename
-                    ... on Text { content }
-                    ... on VideoList {
+                    ... on TextBlock { content }
+                    ... on SeriesBlock {
                         series {
                             title
                             events { id title thumbnail duration }
@@ -38,12 +38,12 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
 
     return <>{
         blocks.map(block => match(block.__typename, {
-            "Text": () => <TextBlock
+            "TextBlock": () => <TextBlock
                 key={block.id}
                 title={block.title}
                 content={unwrap(block, "content")}
             />,
-            "VideoList": () => <VideoListBlock
+            "SeriesBlock": () => <SeriesBlock
                 key={block.id}
                 title={block.title}
                 series={unwrap(block, "series")}
@@ -68,12 +68,12 @@ const TextBlock: React.FC<TextProps> = ({ title, content }) => (
     </Block>
 );
 
-type VideoListProps = {
+type SeriesProps = {
     title: string | null;
     series: NonNullable<BlockData["series"]>;
 };
 
-const VideoListBlock: React.FC<VideoListProps> = ({ title, series }) => {
+const SeriesBlock: React.FC<SeriesProps> = ({ title, series }) => {
     const [THUMB_WIDTH, THUMB_HEIGHT] = [16, 9].map(x => x * 13);
 
     return (
