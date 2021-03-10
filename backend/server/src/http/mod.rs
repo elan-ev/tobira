@@ -18,7 +18,7 @@ use std::{
 };
 
 use tobira_util::prelude::*;
-use crate::{api, config::Config, db};
+use crate::{api, config::Config};
 use self::assets::Assets;
 
 mod assets;
