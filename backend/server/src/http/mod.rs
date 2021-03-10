@@ -193,11 +193,12 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
 
         // The actual GraphQL API.
         (&Method::GET, "/graphql") | (&Method::POST, "/graphql") => {
-            juniper_hyper::graphql(
-                ctx.api_root.clone(),
-                Arc::new(api::Context::new(ctx.db.get().await?).await?),
-                req
-            ).await?
+            let request_context = Arc::new(
+                api::Context::new(
+                    ctx.db.get().await?
+                ).await?
+            );
+            juniper_hyper::graphql(ctx.api_root.clone(), request_context, req).await?
         }
 
         // Realm pages
