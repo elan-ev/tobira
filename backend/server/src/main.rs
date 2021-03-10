@@ -58,7 +58,14 @@ async fn start_server(config: &Config) -> Result<()> {
     info!("Starting Tobira backend...");
     trace!("Configuration: {:#?}", config);
 
-    http::serve(&config, api::root_node()).await
+    let db = db::create_pool(&config.db).await
+        .context("failed to create database connection pool (database not running?)")?;
+    db::migrate(&mut *db.get().await?).await
+        .context("failed to check/run DB migrations")?;
+
+    let root_node = api::root_node();
+
+    http::serve(&config, root_node, db).await
         .context("failed to start HTTP server")?;
 
     Ok(())

@@ -34,13 +34,9 @@ type Request<T = Body> = hyper::Request<T>;
 pub(crate) async fn serve(
     config: &Config,
     api_root: api::RootNode,
+    db: Pool,
 ) -> Result<()> {
     let assets = Assets::init(&config.assets).await.context("failed to initialize assets")?;
-
-    let db = db::create_pool(&config.db).await
-        .context("failed to create database connection pool (database not running?)")?;
-    db::migrate(&mut *db.get().await?).await
-        .context("failed to check/run DB migrations")?;
 
     let ctx = Arc::new(Context::new(api_root, assets, db));
 
