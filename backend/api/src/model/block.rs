@@ -11,7 +11,7 @@ use crate::{Context, Id, id::Key, model::series::Series, util::RowExt};
 
 
 /// A `Block`: a UI element that belongs to a realm.
-#[graphql_interface(Context = Context, for = [Text, VideoList])]
+#[graphql_interface(Context = Context, for = [TextBlock, SeriesBlock])]
 pub(crate) trait Block {
     // To avoid code duplication, all the shared data is stored in `SharedData`
     // and only a `shared` method is mandatory. All other method (in particular,
@@ -35,8 +35,8 @@ pub(crate) trait Block {
 pub(crate) enum BlockType {
     #[postgres(name = "text")]
     Text,
-    #[postgres(name = "videolist")]
-    VideoList,
+    #[postgres(name = "series")]
+    Series,
 }
 
 #[derive(Debug, Clone, Copy, FromSql, GraphQLEnum)]
@@ -69,20 +69,20 @@ pub(crate) struct SharedData {
 /// A block just showing some text.
 #[derive(GraphQLObject)]
 #[graphql(Context = Context, impl = BlockValue)]
-pub(crate) struct Text {
+pub(crate) struct TextBlock {
     #[graphql(skip)]
     pub(crate) shared: SharedData,
     pub(crate) content: String,
 }
 
 #[graphql_interface]
-impl Block for Text {
+impl Block for TextBlock {
     fn shared(&self) -> &SharedData {
         &self.shared
     }
 }
 
-pub(crate) struct VideoList {
+pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
     pub(crate) series: Id,
     pub(crate) layout: VideoListLayout,
@@ -90,7 +90,7 @@ pub(crate) struct VideoList {
 }
 
 #[graphql_interface]
-impl Block for VideoList {
+impl Block for SeriesBlock {
     fn shared(&self) -> &SharedData {
         &self.shared
     }
@@ -98,7 +98,7 @@ impl Block for VideoList {
 
 /// A block just showing the list of videos in an Opencast series
 #[graphql_object(Context = Context, impl = BlockValue)]
-impl VideoList {
+impl SeriesBlock {
     async fn series(&self, context: &Context) -> FieldResult<Series> {
         // `unwrap` is okay here because of our foreign key constraint
         Ok(Series::load_by_id(self.series, context).await?.unwrap())
@@ -119,7 +119,7 @@ impl BlockValue {
         context.db.get()
             .await?
             .query_raw(
-                "select id, type, index, title, text_content, videolist_series,
+                "select id, type, index, title, text_content, series_id,
                     videolist_layout, videolist_order
                     from blocks
                     where realm_id = $1
@@ -144,21 +144,16 @@ impl BlockValue {
 
         let block = match ty {
             BlockType::Text => {
-                Text {
+                TextBlock {
                     shared,
                     content: get_type_dependent(&row, 4, "text", "text_content")?,
                 }.into()
             }
-            BlockType::VideoList => {
-                VideoList {
+            BlockType::Series => {
+                SeriesBlock {
                     shared,
                     series: Id::series(
-                        get_type_dependent::<i64>(
-                            &row,
-                            5,
-                            "videolist",
-                            "videolist_series",
-                        )? as u64
+                        get_type_dependent::<i64>(&row, 5, "videolist", "series_id")? as u64
                     ),
                     layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
                     order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,

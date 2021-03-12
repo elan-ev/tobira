@@ -7,7 +7,7 @@
 
 select prepare_randomized_ids('block');
 
-create type block_type as enum ('text', 'videolist');
+create type block_type as enum ('text', 'series');
 create type video_list_layout as enum ('horizontal', 'vertical', 'grid');
 create type video_list_order as enum ('new_to_old', 'old_to_new');
 
@@ -22,8 +22,10 @@ create table blocks (
     -- Text blocks
     text_content text,
 
-    -- Video list blocks
-    videolist_series bigint references series on delete restrict,
+    -- Series blocks
+    series_id bigint references series on delete restrict,
+
+    -- All videolist-like blocks
     videolist_layout video_list_layout,
     videolist_order video_list_order
 );
