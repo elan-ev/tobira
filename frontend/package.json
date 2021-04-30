@@ -14,7 +14,7 @@
   "scripts": {
     "build:dev": "webpack --progress --mode=development",
     "build:release": "webpack --progress --mode=production",
-    "typecheck": "tsc",
+    "typecheck": "tsc --skipLibCheck",
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --fix"
   },
