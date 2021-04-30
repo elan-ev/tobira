@@ -38,8 +38,8 @@ frontend:
       run:
         - npx relay-compiler
         - concurrently:
-          - npx tsc --skipLibCheck
-          - npx eslint . --cache
+          - npm run typecheck
+          - npm run lint
           - npx webpack --mode=development --display=errors-only
         - reload:
 

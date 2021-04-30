@@ -48,7 +48,7 @@ jobs:
       run: npx relay-compiler
     - name: Typecheck frontend
       working-directory: frontend
-      run: npm run typecheck
+      run: tsc
     - name: Lint frontend
       working-directory: frontend
       run: npx eslint --max-warnings 0 .
