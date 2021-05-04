@@ -3,7 +3,7 @@ use std::{
     fs::{File, OpenOptions},
     sync::Mutex,
 };
-use termcolor::{Color, ColorChoice, ColorSpec, NoColor, StandardStream, WriteColor};
+use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
 
 use tobira_util::prelude::*;
 use crate::config;
@@ -76,41 +76,29 @@ impl Log for Logger {
 
 fn write(record: &Record, out: &mut impl WriteColor) -> Result<()> {
     // Figure out styles/colors for the parts of the message.
-    let (level_color, level_bold) = match record.level() {
-        Level::Error => (Color::Red, true),
-        Level::Warn => (Color::Yellow, true),
-        Level::Info => (Color::Green, false),
-        Level::Debug => (Color::Blue, false),
-        Level::Trace => (Color::Magenta, false),
+    let dim_style = bunt::style!("dimmed");
+    let level_style = match record.level() {
+        Level::Error => bunt::style!("red+bold"),
+        Level::Warn => bunt::style!("yellow+bold"),
+        Level::Info => bunt::style!("green"),
+        Level::Debug => bunt::style!("blue"),
+        Level::Trace => bunt::style!("magenta"),
     };
-    let mut level_style = ColorSpec::new();
-    level_style.set_fg(Some(level_color));
-    level_style.set_bold(level_bold);
-
-    let mut dim_style = ColorSpec::new();
-    dim_style.set_dimmed(true);
-
-    let body_color = match record.level() {
-        Level::Error => Some(Color::Red),
-        Level::Warn => Some(Color::Yellow),
-        Level::Info => Some(Color::Green),
-        Level::Debug => None,
-        Level::Trace => None,
+    let body_style = match record.level() {
+        Level::Error => bunt::style!("red"),
+        Level::Warn => bunt::style!("yellow"),
+        Level::Info => bunt::style!(""),
+        Level::Debug => bunt::style!("dimmed"),
+        Level::Trace => bunt::style!("black+intense"),
     };
-    let mut body_style = ColorSpec::new();
-    body_style.set_fg(body_color);
-    if record.level() == Level::Trace {
-        body_style.set_dimmed(true);
-    }
-
 
     // Print time, level and target.
     out.set_color(&dim_style)?;
-    write!(out, "{}[", chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S.%3f]"))?;
+    write!(out, "{} ", chrono::Local::now().format("%Y-%m-%d %H:%M:%S.%3f"))?;
     out.set_color(&level_style)?;
     write!(out, "{:5}", record.level())?;
     out.set_color(&dim_style)?;
-    write!(out, "][{}]", record.target())?;
+    write!(out, " {} >", record.target())?;
 
     // Print actual message
     let msg = record.args().to_string();
@@ -125,10 +113,10 @@ fn write(record: &Record, out: &mut impl WriteColor) -> Result<()> {
     // Print remaining lines with a padding such that the message is
     // nicely aligned. I know this only works if the target is ASCII,
     // but that's a fair assumption.
-    let padding = "[2020-11-15][18:45:35.972][INFO ]".len() + 2 + record.target().len();
+    let padding = "2021-05-04 19:40:18.270 DEBUG ".len() + 2 + record.target().len();
     for line in lines {
         out.set_color(&dim_style)?;
-        write!(out, "{:padding$}|", "", padding = padding - 1)?;
+        write!(out, "{:padding$}>", "", padding = padding - 1)?;
         out.set_color(&body_style)?;
         write!(out, "  {msg}", msg = line)?;
         out.reset()?;
