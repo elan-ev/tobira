@@ -92,7 +92,8 @@ async fn harvest(config: &Config) -> Result<()> {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct HarvestResponse {
-    includes_items_until: Timestamp,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    includes_items_until: DateTime<Utc>,
     has_more: bool,
     items: Vec<HarvestItem>,
 }
@@ -107,12 +108,14 @@ enum HarvestItem {
         title: String,
         description: Option<String>,
         part_of: Option<String>,
-        updated: Timestamp,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
     },
     #[serde(rename_all = "camelCase")]
     EventDeleted {
         id: String,
-        updated: Timestamp,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
     },
 }
 
