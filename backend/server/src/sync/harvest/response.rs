@@ -25,10 +25,20 @@ pub(super) enum HarvestItem {
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
+
     #[serde(rename_all = "camelCase")]
     EventDeleted {
         id: String,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
+}
+
+impl HarvestItem {
+    pub(super) fn updated(&self) -> DateTime<Utc> {
+        match *self {
+            Self::Event { updated, .. } => updated,
+            Self::EventDeleted { updated, .. } =>  updated,
+        }
+    }
 }
