@@ -1,3 +1,5 @@
+use std::net::Ipv6Addr;
+
 use chrono::{DateTime, Utc};
 use hyper14::{
     Request, Body,
@@ -37,7 +39,12 @@ impl HarvestClient {
         } else {
             Scheme::HTTPS
         };
-        let authority = config.opencast.host.parse::<Authority>().expect("bug: invalid config");
+        let host = if config.opencast.host.parse::<Ipv6Addr>().is_ok() {
+            format!("[{}]", config.opencast.host)
+        } else {
+            config.opencast.host.clone()
+        };
+        let authority = host.parse::<Authority>().expect("bug: invalid config");
 
         // Prepare authentication
         let credentials = format!(
