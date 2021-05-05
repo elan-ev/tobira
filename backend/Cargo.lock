@@ -131,6 +131,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "bunt"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25ae469fdd2750327907287e2aa8487964f7015e968bbdf71d4309d6f4b6360e"
+dependencies = [
+ "bunt-macros",
+ "termcolor",
+]
+
+[[package]]
+name = "bunt-macros"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32e7b5e5ba5b913f8d68407ae2083d166ab0cd306521e9259d58a63f456f699b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-xid",
+]
+
+[[package]]
 name = "byteorder"
 version = "1.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1527,6 +1548,7 @@ name = "tobira"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bunt",
  "chrono",
  "deadpool-postgres",
  "futures",

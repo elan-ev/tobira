@@ -18,6 +18,7 @@ embed-in-debug = ["reinda/debug-is-prod"]
 
 [dependencies]
 anyhow = "1"
+bunt = "0.2.4"
 chrono = "0.4"
 deadpool-postgres = { version = "0.7", default-features = false }
 futures = "0.3.1"
