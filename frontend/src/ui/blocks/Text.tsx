@@ -23,7 +23,13 @@ const CODE_BACKGROUND_COLOR = "#f9f9f6";
 
 // We override some components emitted by the Markdown parser to add CSS.
 const MARKDOWN_COMPONENTS: TransformOptions["components"] = {
-    p: ({ node, ...props }) => <p css={{ margin: "16px 0" }} {...props} />,
+    p: ({ node, ...props }) => <p
+        css={{
+            margin: "16px 0",
+            maxWidth: 800,
+        }}
+        {...props}
+    />,
     blockquote: ({ node, ...props }) => <blockquote
         css={{
             borderLeft: "4px solid #e5e5e5",
@@ -45,6 +51,8 @@ const MARKDOWN_COMPONENTS: TransformOptions["components"] = {
         css={{
             backgroundColor: CODE_BACKGROUND_COLOR,
             padding: "8px",
+            overflowX: "auto",
+            maxWidth: "100%",
         }}
         {...props}
     />,
@@ -54,7 +62,7 @@ export const TextBlock: React.FC<Props> = ({ title, content }) => (
     <Block>
         <Title title={title} />
         <div css={{
-            maxWidth: 800,
+            maxWidth: 1200,
             padding: "6px 10px",
             "& > *:first-child": { marginTop: 0 },
             "& > *:last-child": { marginBottom: 0 },
