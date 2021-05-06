@@ -186,7 +186,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
         (&Method::GET, "/graphiql") => juniper_hyper::graphiql("/graphql", None).await?,
 
         // The actual GraphQL API.
-        (&Method::GET, "/graphql") | (&Method::POST, "/graphql") => {
+        (&Method::POST, "/graphql") => {
             juniper_hyper::graphql(ctx.api_root.clone(), ctx.api_context.clone(), req).await?
         }
 
