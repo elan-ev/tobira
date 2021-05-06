@@ -46,7 +46,7 @@ export const NavMain: React.FC<Props> = ({ title, breadcrumbs, children, ...navP
         },
     }}>
         <div css={{ gridArea: "breadcrumbs" }}>{breadcrumbs}</div>
-        <h1 css={{ gridArea: "title", margin: "12px 0" }}>{title}</h1>
+        {title !== undefined && <h1 css={{ gridArea: "title", margin: "12px 0" }}>{title}</h1>}
         <Nav {...navProps} />
         <div css={{ gridArea: "main" }}>{children}</div>
     </div>
