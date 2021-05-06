@@ -5,6 +5,7 @@ const noUnusedVarsOptions = {
     argsIgnorePattern: "^_",
     caughtErrors: "all",
     caughtErrorsIgnorePattern: "^_",
+    ignoreRestSiblings: true,
 };
 
 // eslint quote-props: "warn", "consistent-as-needed"
