@@ -38,8 +38,8 @@ frontend:
       run:
         - npx relay-compiler
         - concurrently:
-          - npm run typecheck
-          - npm run lint
+          - npm run --silent typecheck
+          - npm run --silent lint
           - npx webpack --mode=development --display=errors-only
         - reload:
 
