@@ -170,28 +170,36 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
         req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
     );
 
-    let method = req.method();
+    let method = req.method().clone();
     let path = req.uri().path();
 
     const ASSET_PREFIX: &str = "/assets/";
     const REALM_PREFIX: &str = "/r/";
     const PLAYER_PREFIX: &str = "/v/";
 
-    let response = match (method, path) {
-        (&Method::GET, "/") | (&Method::GET, "/about") => ctx.assets.serve_index().await,
+    let response = match path {
+        // The GraphQL endpoint. This is the only path for which POST is
+        // allowed.
+        "/graphql" if method == Method::POST => {
+            juniper_hyper::graphql(ctx.api_root.clone(), ctx.api_context.clone(), req).await?
+        }
+
+        // From this point on, we only support GET and HEAD requests. All others
+        // will result in 404.
+        _ if method != Method::GET && method != Method::HEAD => {
+            reply_404(&ctx.assets, &method, path).await
+        }
+
+        // Standard routes
+        "/" | "/about" => ctx.assets.serve_index().await,
 
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
         // information that isn't already exposed by the API itself.
-        (&Method::GET, "/graphiql") => juniper_hyper::graphiql("/graphql", None).await?,
-
-        // The actual GraphQL API.
-        (&Method::POST, "/graphql") => {
-            juniper_hyper::graphql(ctx.api_root.clone(), ctx.api_context.clone(), req).await?
-        }
+        "/graphiql" => juniper_hyper::graphiql("/graphql", None).await?,
 
         // Realm pages
-        (&Method::GET, path) if path.starts_with(REALM_PREFIX) => {
+        path if path.starts_with(REALM_PREFIX) => {
             let _realm_path = &path[REALM_PREFIX.len()..];
             // TODO: check if path is valid
 
@@ -199,21 +207,19 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
         }
 
         // The player page
-        (&Method::GET, path) if path.starts_with(PLAYER_PREFIX) => {
-            ctx.assets.serve_index().await
-        }
+        path if path.starts_with(PLAYER_PREFIX) => ctx.assets.serve_index().await,
 
         // Assets (JS files, fonts, ...)
-        (&Method::GET, path) if path.starts_with(ASSET_PREFIX) => {
+        path if path.starts_with(ASSET_PREFIX) => {
             let asset_path = &path[ASSET_PREFIX.len()..];
             match ctx.assets.serve(asset_path).await {
                 Some(r) => r,
-                None => reply_404(&ctx.assets, method, path).await,
+                None => reply_404(&ctx.assets, &method, path).await,
             }
         }
 
         // 404 for everything else
-        (method, path) => reply_404(&ctx.assets, method, path).await,
+        path => reply_404(&ctx.assets, &method, path).await,
     };
 
     Ok(response)
