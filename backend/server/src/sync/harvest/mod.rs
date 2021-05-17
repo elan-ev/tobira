@@ -64,14 +64,17 @@ pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> 
             Err(e) => request_failed!("Harvest request failed: {:?}", e),
         };
 
-        trace!("HTTP response: {:#?}", response);
         if response.status != StatusCode::OK {
+            trace!("HTTP response: {:#?}", response);
             request_failed!("Harvest API returned unexepcted HTTP code {}", response.status);
         }
 
         let harvest_data = match serde_json::from_slice::<HarvestResponse>(&body) {
             Ok(v) => v,
-            Err(e) => request_failed!("Failed to deserialize response from harvesting API: {}", e),
+            Err(e) => {
+                trace!("HTTP response: {:#?}", response);
+                request_failed!("Failed to deserialize response from harvesting API: {}", e);
+            }
         };
 
         // Communication with Opencast succeeded: reset backoff time.
