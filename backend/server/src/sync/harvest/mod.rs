@@ -21,7 +21,7 @@ mod response;
 
 const HARVEST_LIMIT: u64 = 2;
 
-const INITIAL_BACKOFF: Duration = Duration::from_secs(2);
+const INITIAL_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
 
 const POLL_PERIOD: Duration = Duration::from_secs(30);
@@ -32,8 +32,7 @@ const POLL_PERIOD: Duration = Duration::from_secs(30);
 pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
-    // TODO: replace by `ZERO` constant in two days.
-    let mut backoff = Duration::from_secs(0);
+    let mut backoff = INITIAL_BACKOFF;
 
     /// Helper macro to call in case of not being able to get a proper response
     /// from Opencast. Forwards all arguments to `error!`, increases `backoff`
@@ -44,14 +43,9 @@ pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> 
 
             // We increase the backoff duration exponentially until we hit the
             // defined maximum.
-            // TODO: replace by `ZERO` constant in two days.
-            backoff = if backoff == Duration::from_secs(0) {
-                INITIAL_BACKOFF
-            } else {
-                min(MAX_BACKOFF, 2 * backoff)
-            };
-            info!("Waiting {:.0?} due to error before trying again", backoff);
+            info!("Waiting {:.1?} due to error before trying again", backoff);
             tokio::time::sleep(backoff).await;
+            backoff = min(MAX_BACKOFF, backoff.mul_f32(1.5));
 
             continue;
         }};
@@ -79,6 +73,9 @@ pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> 
             Ok(v) => v,
             Err(e) => request_failed!("Failed to deserialize response from harvesting API: {}", e),
         };
+
+        // Communication with Opencast succeeded: reset backoff time.
+        backoff = INITIAL_BACKOFF;
 
 
         // Write received data into the database, updating the sync status if
