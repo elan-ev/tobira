@@ -18,12 +18,20 @@ begin
     perform create_departments();
     events_realm_id := create_top_level_realm('Events', 'This university has very nice events. So very nice.');
     perform create_top_level_realm('Campus', 'Videos about life on the campus, the library, and more.');
-    perform create_top_level_realm('Conferences', 'Videos from conferences our university hosts. Like Gamescom, ComicCon, BlizzCon, recon, and RustFest.eu.');
+    perform create_top_level_realm('Conferences', E'Videos from conferences our university hosts. Like: '
+        '\n- Gamescom \n- ComicCon \n- BlizzCon \n- recon \n- RustFest.eu');
 
     insert into blocks (realm_id, type, index, text_content)
         values (
             0, 'text', 0,
-            'Welcome to Tobira! This database contains dummy data intended for development. Have fun!'
+            E'**Welcome to Tobira!**\n\n'
+            'Tobira is a video portal for [Opencast](https://opencast.org). Note that it is still '
+            'in its *early* stages of development! Everything you see here might still change. '
+            'Tobira is fully open source and you can find it''s source '
+            'code [here](https://github.com/elan-ev/tobira).\n\n'
+            'What you are seeing here is the most recent development build (the latest `master`) '
+            'containing a bunch of dummy data. All text and videos you can see here are just for '
+            'testing.'
         );
     insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order)
         values (0, 'series', 1, series_university_highlights, 'grid', 'new_to_old');

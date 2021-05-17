@@ -1,19 +1,20 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { graphql, useFragment } from "react-relay/hooks";
 import {
     Blocks_blocks as QueryResult,
     Blocks_blocks$key,
 } from "../query-types/Blocks_blocks.graphql";
 
-import { match, keyOfId } from "../util";
+import { match } from "../util";
 import { unreachable } from "../util/err";
+import { TextBlock } from "./blocks/Text";
+import { SeriesBlock } from "./blocks/Series";
 
 
 type Props = {
     realm: Blocks_blocks$key;
 };
-type BlockData = QueryResult["blocks"][0];
+export type BlockData = QueryResult["blocks"][0];
 
 export const Blocks: React.FC<Props> = ({ realm }) => {
     const { blocks } = useFragment(
@@ -52,103 +53,11 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
     }</>;
 };
 
-type TextProps = {
-    title: string | null;
-    content: string;
-};
-
-const TextBlock: React.FC<TextProps> = ({ title, content }) => (
-    <Block>
-        <Title title={title} />
-        <div css={{
-            maxWidth: 800,
-            borderLeft: "4px solid #e5e5e5",
-            padding: "6px 10px",
-        }}>{content}</div>
-    </Block>
-);
-
-type SeriesProps = {
-    title: string | null;
-    series: NonNullable<BlockData["series"]>;
-};
-
-const SeriesBlock: React.FC<SeriesProps> = ({ title, series }) => {
-    const [THUMB_WIDTH, THUMB_HEIGHT] = [16, 9].map(x => x * 13);
-
-    return (
-        <Block>
-            <Title title={title} />
-            <div css={{
-                display: "flex",
-                flexWrap: "wrap",
-            }}>
-                {series.events.map(event => {
-                    const url = `/v/${keyOfId(event.id)}`;
-
-                    return (
-                        <div
-                            key={event.id}
-                            css={{
-                                margin: "12px 8px",
-                                width: THUMB_WIDTH,
-                                "& a": { color: "black", textDecoration: "none" },
-                            }}
-                        >
-                            <Link to={url} css={{ position: "relative", display: "block" }}>
-                                <img
-                                    src={event.thumbnail}
-                                    width={THUMB_WIDTH}
-                                    height={THUMB_HEIGHT}
-                                    css={{ display: "block" }}
-                                />
-                                <div css={{
-                                    position: "absolute",
-                                    right: 6,
-                                    bottom: 6,
-                                    backgroundColor: "hsla(0, 0%, 0%, 0.75)",
-                                    border: "1px solid black",
-                                    borderRadius: 4,
-                                    padding: "0 4px",
-                                    color: "white",
-                                }}>
-                                    {formatLength(event.duration)}
-                                </div>
-                            </Link>
-
-                            <h3 css={{
-                                fontSize: 16,
-                            }}>
-                                <Link to={url}>{event.title}</Link>
-                            </h3>
-                        </div>
-                    );
-                })}
-            </div>
-        </Block>
-    );
-};
-
-const formatLength = (totalSeconds: number) => {
-    const seconds = totalSeconds % 60;
-    const minutes = Math.floor(totalSeconds / 60) % 60;
-    const hours = Math.floor(totalSeconds / (60 * 60));
-
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-
-    if (hours > 0) {
-        return `${hours}:${pad(minutes)}:${pad(seconds)}`;
-    } else {
-        return `${minutes}:${pad(seconds)}`;
-    }
-};
-
-const Title: React.FC<{ title: string | null }> = ({ title }) => (
+export const Title: React.FC<{ title: string | null }> = ({ title }) => (
     title === null ? null : <h2>{title}</h2>
 );
 
-
-const Block: React.FC = ({ children }) => (
+export const Block: React.FC = ({ children }) => (
     <div css={{ margin: "30px 0" }}>{children}</div>
 );
 

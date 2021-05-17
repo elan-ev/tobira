@@ -37,16 +37,19 @@ export const NavMain: React.FC<Props> = ({ title, breadcrumbs, children, ...navP
         [`@media (min-width: ${BREAKPOINT}px)`]: {
             display: "grid",
             columnGap: 32,
+            // The `minmax(0, 1fr)` instead of `1fr` is necessary to give that
+            // column a definite minumum size of 0 as otherwise it would
+            // overflow when large.
             grid: `
                 "nav  breadcrumbs" auto
                 "nav  title"       auto
                 "nav  main"        1fr
-                / fit-content(27%) 1fr
+                / fit-content(27%) minmax(0, 1fr)
             `,
         },
     }}>
         <div css={{ gridArea: "breadcrumbs" }}>{breadcrumbs}</div>
-        <h1 css={{ gridArea: "title", margin: "12px 0" }}>{title}</h1>
+        {title !== undefined && <h1 css={{ gridArea: "title", margin: "12px 0" }}>{title}</h1>}
         <Nav {...navProps} />
         <div css={{ gridArea: "main" }}>{children}</div>
     </div>
