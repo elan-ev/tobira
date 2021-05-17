@@ -12,11 +12,10 @@ type Props = {
 // We don't just want to allow everything, so here we explicitly list what we
 // support. Notably missing:
 //
-// - img (we might want to allow them but need to figure out storage first)
 // - headings (if we allow them, we need to map `#` to h2 or h3 so that they
 //   don't interfere with other headings on the page.)
 const ALLOWED_MARKDOWN_TAGS = [
-    "p", "blockquote", "pre", "ul", "ol", "li", "a", "em", "strong", "code", "hr",
+    "p", "blockquote", "pre", "ul", "ol", "li", "a", "em", "strong", "code", "hr", "img",
 ];
 
 const CODE_BACKGROUND_COLOR = "#f9f9f6";
@@ -53,6 +52,13 @@ const MARKDOWN_COMPONENTS: TransformOptions["components"] = {
             padding: "8px",
             overflowX: "auto",
             maxWidth: "100%",
+        }}
+        {...props}
+    />,
+    img: ({ node, ...props }) => <img
+        css={{
+            maxWidth: "100%",
+            display: "block",
         }}
         {...props}
     />,
