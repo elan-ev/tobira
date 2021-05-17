@@ -187,7 +187,11 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
         _ if method != Method::GET && method != Method::HEAD => {
-            reply_404(&ctx.assets, &method, path).await
+            Response::builder()
+                .status(StatusCode::METHOD_NOT_ALLOWED)
+                .header("Content-Type", "text/plain; charset=UTF-8")
+                .body(Body::from("405 Method not allowed"))
+                .unwrap()
         }
 
         // Standard routes
