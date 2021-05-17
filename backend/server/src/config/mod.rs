@@ -207,13 +207,15 @@ pub(crate) fn write_template(path: Option<&PathBuf>) -> Result<()> {
 
 impl Opencast {
     fn validate(&self) -> Result<()> {
+        let host_as_ip = self.host.parse::<IpAddr>();
+
         // We only allow HTTP if the host resolves to a loopback (local)
         // address. We send the unencrypted `sync_password`, so HTTPS is
         // required.
         if self.use_insecure_connection {
             debug!("Checking whether Opencast host '{}' is a loopback address", self.host);
 
-            let is_loopback = if let Ok(addr) = self.host.parse::<IpAddr>() {
+            let is_loopback = if let Ok(addr) = host_as_ip {
                 addr.is_loopback()
             } else {
                 let mut socket_addrs = if self.host.contains(':') {
@@ -241,7 +243,7 @@ impl Opencast {
         // Check that the host field is either a valid IP addr or a valid host.
         // Thats not quite the same IPv6, as those have to be encloded in [] in
         // an URI.
-        if self.host.parse::<IpAddr>().is_err() {
+        if host_as_ip.is_err() {
             // TODO: this should be a custom parser or whatever so that the
             // struct can hold an `Authority`. Blocked by "config lib".
             self.host.parse::<hyper::http::uri::Authority>()
