@@ -40,6 +40,13 @@ jobs:
 
           const fs = require('fs');
           fs.writeFileSync('${{github.workspace}}/artifacts.zip', Buffer.from(download.data));
+
+          // The artifact is not needed anymore
+          github.actions.deleteArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: deployFiles.id,
+          })
     - run: unzip -u artifacts.zip
 
     - name: Prepare files for deployment
