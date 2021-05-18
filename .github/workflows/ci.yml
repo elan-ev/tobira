@@ -74,6 +74,12 @@ jobs:
       working-directory: backend/server
       run: cargo build --features=embed-in-debug
 
+    # Prepare the ID (used in the subdomain) for deployment. This has to be done
+    # here because in the `deploy` workflow, we don't have access to the correct
+    # `GITHUB_REF` anymore.
+    - name: Write deploy ID to file
+      run: ./.deployment/deploy-id.sh > deploy-id
+
     # Archive files to be used in the `deploy` workflow
     - name: Archive deployment files as artifact
       uses: actions/upload-artifact@v2
@@ -84,3 +90,4 @@ jobs:
           scripts/fixtures.sql
           backend/logo-large.svg
           backend/logo-small.svg
+          deploy-id
