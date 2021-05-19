@@ -2,6 +2,8 @@ name: Remove deployment
 
 on:
   delete:
+  pull_request_target:
+    types: [ closed ]
 
 jobs:
   main:
@@ -22,13 +24,19 @@ jobs:
     - name: install ansible postgres extensions
       run: ansible-galaxy collection install community.postgresql
 
+    - name: Write deploy ID (for branch) to file
+      run: ./.deployment/deploy-id.sh "${{ github.event.ref }}" > deploy-id
+      if: github.event_name == 'delete'
+
+    - name: Write deploy ID (for PR) to file
+      run: ./.deployment/deploy-id.sh "refs/pull/${{ github.event.pull_request.number }}/merge" > deploy-id
+      if: github.event_name != 'delete'
+
     - name: remove deployment
       working-directory: .deployment
-      env:
-        BRANCH: ${{ github.event.ref }}
       run: >
         ansible-playbook
         --private-key=~/.ssh/id_ed25519
-        --extra-vars="deployid='${./deploy-id.sh}'"
+        --extra-vars="deployid='$(cat ../deploy-id)'"
         -u github
         remove-deployment.yml

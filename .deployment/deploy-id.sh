@@ -1,13 +1,19 @@
 #!/bin/bash
 
-# Reads the GITHUB_REF env variable and prints an ID that can be used as
-# subdomain and identifier.
+# Reads the first argument and prints an ID that can be used as subdomain and
+# identifier.
 
-if [[ $GITHUB_REF == refs/pull/* ]]; then
-    tmp="${GITHUB_REF#refs/pull/}"
+ref="$1"
+if [[ "$ref" == "" ]]; then
+    echo "No argument given or empty argument!"
+    exit 1
+fi
+
+if [[ $ref == refs/pull/* ]]; then
+    tmp="${ref#refs/pull/}"
     echo "pr${tmp%/merge}"
 else
-    branch="${GITHUB_REF#refs/heads/}"
+    branch="${ref#refs/heads/}"
     branch_short="${branch:0:40}"
 
     # We need to set `LC_ALL` here as `a-z` depends on the locale and might

@@ -78,7 +78,7 @@ jobs:
     # here because in the `deploy` workflow, we don't have access to the correct
     # `GITHUB_REF` anymore.
     - name: Write deploy ID to file
-      run: ./.deployment/deploy-id.sh > deploy-id
+      run: ./.deployment/deploy-id.sh "$GITHUB_REF" > deploy-id
 
     # Archive files to be used in the `deploy` workflow
     - name: Archive deployment files as artifact
