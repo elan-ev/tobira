@@ -74,7 +74,7 @@
       become_user: postgres
       community.postgresql.postgresql_user:
         name: tobira-{{ id }}
-        password: tobira-{{ b64_branch }}
+        password: tobira-{{ id }}
 
     - name: create database
       become: true

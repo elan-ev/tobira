@@ -1,7 +1,7 @@
 [db]
 database = "tobira-{{ id }}"
 user = "tobira-{{ id }}"
-password = "tobira-{{ b64_branch }}"
+password = "tobira-{{ id }}"
 host = "127.0.0.1"
 
 [http]
