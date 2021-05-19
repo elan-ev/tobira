@@ -42,7 +42,7 @@
     "copy-webpack-plugin": "^6.4.1",
     "graphql": "^15.5.0",
     "html-webpack-plugin": "^4.5.2",
-    "i18next": "^19.9.2",
+    "i18next": "^20.2.4",
     "i18next-browser-languagedetector": "^6.1.1",
     "ionicons": "^5.5.1",
     "plyr-react": "^3.0.7",
