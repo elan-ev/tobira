@@ -73,6 +73,6 @@ jobs:
       run: >
         ansible-playbook
         --private-key=~/.ssh/id_ed25519
-        --extra-vars="deployid='$(cat deploy-id)'"
+        --extra-vars="deployid='$(cat ../deploy-id)'"
         -u github
         deploy.yml
