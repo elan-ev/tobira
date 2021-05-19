@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSitemap } from "@fortawesome/free-solid-svg-icons";
+import { faSitemap, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 
 import { Link } from "../router";
@@ -89,19 +89,23 @@ const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
                 ...leafNode && { display: "none" },
             },
         }}>
+            <div css={{
+                // This is required to make the parent `div` (a grid item)
+                // span up to 300px wide. This is basically the only way to
+                // get this grid item span a percentage with a maximum
+                // width.
+                minWidth: 300,
+            }} />
             <div
                 onClick={() => setNavExpanded(prev => !prev)}
                 css={{
-                    padding: "6px 12px",
-                    fontSize: 18,
-
-                    // This is required to make the parent `div` (a grid item)
-                    // span up to 300px wide. This is basically the only way to
-                    // get this grid item span a percentage with a maximum
-                    // width.
-                    minWidth: 300,
+                    display: "none",
 
                     [`@media not all and (min-width: ${BREAKPOINT}px)`]: {
+                        display: "block",
+                        padding: "6px 12px",
+                        fontSize: 18,
+
                         cursor: "pointer",
                         "&:hover": {
                             backgroundColor: "#eee",
@@ -117,7 +121,7 @@ const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
                 listStyle: "none",
                 margin: 0,
                 padding: 0,
-                borderTop: "2px solid #888",
+                borderTop: "1px solid #ccc",
 
                 [`@media not all and (min-width: ${BREAKPOINT}px)`]: {
                     borderTop: navExpanded ? "1px solid #888" : "none",
@@ -126,7 +130,14 @@ const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
                 },
             }}>
                 {items.map(item => {
-                    const baseStyle = { padding: "6px 12px", display: "block" };
+                    const TRANSITION_DURATION = "0.1s";
+                    const baseStyle = {
+                        padding: "6px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                    };
+
                     const inner = item.active
                         ? <b css={{ ...baseStyle, backgroundColor: "#ddd" }}>
                             {item.label}
@@ -136,14 +147,28 @@ const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
                             css={{
                                 ...baseStyle,
                                 textDecoration: "none",
-                                transition: "background-color 0.1s",
+                                transition: `background-color ${TRANSITION_DURATION}`,
+
+                                "& > svg": {
+                                    fontSize: 22,
+                                    color: "#bbb",
+                                    transition: `color ${TRANSITION_DURATION}`,
+                                },
+
                                 "&:hover": {
                                     transitionDuration: "0.05s",
                                     backgroundColor: "#eee",
                                     textDecoration: "underline",
+                                    "& > svg": {
+                                        transitionDuration: "0.05s",
+                                        color: "#888",
+                                    },
                                 },
                             }}
-                        >{item.label}</Link>;
+                        >
+                            <div>{item.label}</div>
+                            <FontAwesomeIcon icon={faChevronRight} />
+                        </Link>;
 
                     return (
                         <li key={item.id} css={{ borderBottom: "1px solid #ccc" }}>
