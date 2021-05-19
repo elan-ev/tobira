@@ -1,6 +1,6 @@
 import React from "react";
 import { graphql, useFragment } from "react-relay/hooks";
-import {
+import type {
     Blocks_blocks as QueryResult,
     Blocks_blocks$key,
 } from "../query-types/Blocks_blocks.graphql";

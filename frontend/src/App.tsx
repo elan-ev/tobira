@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
-import { BrowserRouter as Router, Switch, Route, RouteComponentProps } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import type { RouteComponentProps } from "react-router-dom";
 
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { environment, ServerError, APIError } from "./relay";

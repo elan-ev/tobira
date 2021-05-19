@@ -1,6 +1,6 @@
 import React from "react";
 import { graphql, useLazyLoadQuery } from "react-relay/hooks";
-import { HomeQuery } from "../query-types/HomeQuery.graphql";
+import type { HomeQuery } from "../query-types/HomeQuery.graphql";
 
 import { NavMain as MainLayout } from "../layout/NavMain";
 import { Blocks } from "../ui/Blocks";

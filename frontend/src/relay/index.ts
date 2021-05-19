@@ -1,4 +1,5 @@
-import { GraphQLSingularResponse, Environment, Store, RecordSource, Network } from "relay-runtime";
+import { Environment, Store, RecordSource, Network } from "relay-runtime";
+import type { GraphQLSingularResponse } from "relay-runtime";
 
 import { hasErrors, APIError, ServerError } from "./errors";
 

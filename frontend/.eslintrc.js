@@ -142,6 +142,11 @@ module.exports = {
             "@typescript-eslint/explicit-function-return-type": "off",
             "@typescript-eslint/promise-function-async": "off",
             "implicit-arrow-linebreak": "off",
+            "@typescript-eslint/sort-type-union-intersection-members": "off",
+            "@typescript-eslint/comma-dangle": "off",
+            "@typescript-eslint/object-curly-spacing": ["warn", "always"],
+            "@typescript-eslint/no-confusing-void-expression": "off",
+            "@typescript-eslint/no-shadow": "off",
             // The rationale these two/three are based on is mostly out of date
             "@typescript-eslint/prefer-interface": "off",
             "@typescript-eslint/no-type-alias": "off",
