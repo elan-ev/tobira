@@ -47,7 +47,18 @@ jobs:
               repo: context.repo.repo,
               artifact_id: deployFiles.id,
           })
-    - run: unzip -u artifacts.zip
+
+    # We could run `unzip -o` to overwrite all files, but that could easily lead
+    # to security problems as the workflow creating the zip file can add
+    # arbitrary files. Right now it does not matter as this workflow explicitly
+    # only runs for trusted users, but being more careful here is better. So we
+    # explicitly remove the file we expect to get overwriten.
+    - name: extract artifacts
+      run: |
+        rm scripts/fixtures.sql || true
+        rm backend/logo-large.svg || true
+        rm backend/logo-small.svg || true
+        unzip artifacts.zip
 
     - name: Prepare files for deployment
       run: |
