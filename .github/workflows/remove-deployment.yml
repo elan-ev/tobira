@@ -1,9 +1,5 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Remove deployment
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   delete:
 
@@ -24,7 +20,7 @@ jobs:
         ssh-keyscan tobira.opencast.org >> ~/.ssh/known_hosts
 
     - name: install ansible postgres extensions
-      run: ansible-galaxy collection install community.general
+      run: ansible-galaxy collection install community.postgresql
 
     - name: remove deployment
       working-directory: .deployment
@@ -33,6 +29,6 @@ jobs:
       run: >
         ansible-playbook
         --private-key=~/.ssh/id_ed25519
-        --extra-vars="branch='${BRANCH}'"
+        --extra-vars="deployid='${./deploy-id.sh}'"
         -u github
         remove-deployment.yml
