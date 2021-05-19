@@ -18,7 +18,13 @@ module.exports = {
             targets: manifest.browserslist,
         }],
         "@babel/preset-typescript",
-        "@babel/preset-react",
+        [
+            "@babel/preset-react",
+            {
+                "runtime": "automatic",
+                "importSource": "@emotion/react",
+            },
+        ],
         "@emotion/babel-preset-css-prop",
     ],
 };
