@@ -39,6 +39,18 @@ jobs:
         path: ~/.npm
         key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
 
+    # Figure out build mode
+    - name: Determine build mode
+      id: build_mode
+      run: |
+        if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
+          echo "::set-output name=cargo::--release"
+          echo "::set-output name=webpack::production"
+        else
+          echo "::set-output name=cargo::--features=embed-in-debug"
+          echo "::set-output name=webpack::development"
+        fi
+
     # The actual building and testing!
     - name: Installing frontend dependencies (npm ci)
       working-directory: frontend
@@ -54,7 +66,7 @@ jobs:
       run: npx eslint --max-warnings 0 .
     - name: Build frontend
       working-directory: frontend
-      run: npx webpack --mode=development --display-error-details
+      run: npx webpack --mode=${{ steps.build_mode.outputs.webpack }} --display-error-details
 
     - name: Build backend
       working-directory: backend
@@ -72,7 +84,7 @@ jobs:
     # Prepare binary for deployment
     - name: Build server binary for test deployment
       working-directory: backend/server
-      run: cargo build --features=embed-in-debug
+      run: cargo build ${{ steps.build_mode.outputs.cargo }}
 
     # Prepare the ID (used in the subdomain) for deployment. This has to be done
     # here because in the `deploy` workflow, we don't have access to the correct
