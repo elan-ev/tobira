@@ -8,6 +8,7 @@ module.exports = {
     },
     plugins: [
         "relay",
+        "@emotion",
         "@babel/plugin-proposal-nullish-coalescing-operator",
     ],
     presets: [
@@ -25,6 +26,5 @@ module.exports = {
                 "importSource": "@emotion/react",
             },
         ],
-        "@emotion/babel-preset-css-prop",
     ],
 };

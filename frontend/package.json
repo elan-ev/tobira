@@ -29,8 +29,7 @@
     "@babel/preset-env": "^7.14.2",
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
-    "@emotion/babel-preset-css-prop": "^10.2.1",
-    "@emotion/core": "^10.1.1",
+    "@emotion/react": "^11.4.0",
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
     "@fortawesome/free-regular-svg-icons": "^5.15.3",
     "@fortawesome/free-solid-svg-icons": "^5.15.3",
@@ -61,6 +60,7 @@
     "yaml-loader": "^0.6.0"
   },
   "devDependencies": {
+    "@emotion/babel-plugin": "^11.3.0",
     "@types/react": "^17.0.6",
     "@types/react-dom": "^17.0.5",
     "@types/react-relay": "^11.0.1",
