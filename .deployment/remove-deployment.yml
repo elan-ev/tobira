@@ -4,11 +4,8 @@
 - hosts: all
 
   vars:
-    # default branch
-    # will usually be opverwritten by --extra-vars='branch=<breanch>'
-    branch: master
-    b64_branch: "{{ branch  | b64encode | replace('=', '') }}"
-    id: "{{ branch | regex_replace('[^a-zA-Z0-9]', '') }}-{{ b64_branch }}"
+    # will usually be overwritten by --extra-vars='deployid=<id>'
+    id: "{{ deployid }}"
 
   tasks:
 
