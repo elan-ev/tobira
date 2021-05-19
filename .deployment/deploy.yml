@@ -106,6 +106,15 @@
         group: root
         mode: '0755'
 
+    - name: create logging directory
+      become: true
+      file:
+        path: /var/log/tobira
+        state: directory
+        owner: tobira
+        group: tobira
+        mode: '0755'
+
     - name: create socket directory
       become: true
       file:

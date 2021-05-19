@@ -11,3 +11,6 @@ unix_socket_permissions = 0o777
 [assets]
 logo.large = "/opt/tobira/{{ id }}/logo-large.svg"
 logo.small = "/opt/tobira/{{ id }}/logo-small.svg"
+
+[log]
+file = "/var/log/tobira/{{ id }}.log"
