@@ -27,7 +27,7 @@ begin
             E'**Welcome to Tobira!**\n\n'
             'Tobira is a video portal for [Opencast](https://opencast.org). Note that it is still '
             'in its *early* stages of development! Everything you see here might still change. '
-            'Tobira is fully open source and you can find it''s source '
+            'Tobira is fully open source and you can find its source '
             'code [here](https://github.com/elan-ev/tobira).\n\n'
             'What you are seeing here is the most recent development build (the latest `master`) '
             'containing a bunch of dummy data. All text and videos you can see here are just for '
