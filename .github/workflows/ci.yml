@@ -45,9 +45,11 @@ jobs:
       run: |
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
           echo "::set-output name=cargo::--release"
+          echo "::set-output name=targetdir::target/release"
           echo "::set-output name=webpack::production"
         else
           echo "::set-output name=cargo::--features=embed-in-debug"
+          echo "::set-output name=targetdir::target/debug"
           echo "::set-output name=webpack::development"
         fi
 
@@ -93,12 +95,14 @@ jobs:
       run: ./.deployment/deploy-id.sh "$GITHUB_REF" > deploy-id
 
     # Archive files to be used in the `deploy` workflow
+    - name: Move deploy binary
+      run: mv backend/${{ steps.build_mode.outputs.targetdir }}/tobira tobira
     - name: Archive deployment files as artifact
       uses: actions/upload-artifact@v2
       with:
         name: test-deployment-files
         path: |
-          backend/target/debug/tobira
+          tobira
           scripts/fixtures.sql
           backend/logo-large.svg
           backend/logo-small.svg
