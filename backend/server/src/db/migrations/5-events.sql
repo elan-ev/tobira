@@ -4,7 +4,7 @@ create table events (
     id bigint primary key default randomized_id('event'),
 
     -- Opencast internal data
-    opencast_id text not null,
+    opencast_id text not null unique,
 
     -- Meta data
     title text not null,

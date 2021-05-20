@@ -263,4 +263,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     4: "series",
     5: "events",
     6: "blocks",
+    7: "sync-status",
 ];

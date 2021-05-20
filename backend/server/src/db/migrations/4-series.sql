@@ -4,7 +4,7 @@ create table series (
     id bigint primary key default randomized_id('series'),
 
     -- Opencast internal data
-    opencast_id text not null,
+    opencast_id text not null unique,
 
     -- Meta data
     title text not null,

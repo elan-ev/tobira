@@ -16,6 +16,7 @@ mod config;
 mod db;
 mod http;
 mod logger;
+mod sync;
 
 
 #[tokio::main]
@@ -49,13 +50,17 @@ async fn main() -> Result<()> {
             let config = load_config_and_init_logger(&args)?;
             db::cmd::run(cmd, &config.db).compat().await?;
         }
+        Command::Sync => {
+            let config = load_config_and_init_logger(&args)?;
+            sync::run(&config).await?;
+        }
     }
 
     Ok(())
 }
 
 async fn start_server(config: &Config) -> Result<()> {
-    info!("Starting Tobira backend...");
+    info!("Starting Tobira backend ...");
     trace!("Configuration: {:#?}", config);
 
     let db = db::create_pool(&config.db).await

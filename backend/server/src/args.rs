@@ -36,6 +36,10 @@ pub(crate) enum Command {
         #[structopt(subcommand)]
         cmd: DbCommand,
     },
+
+    /// Starts a process continuiously fetching data from and generally keeping
+    /// Tobira in sync with the configured Opencast instance.
+    Sync,
 }
 
 #[derive(Debug, StructOpt)]
