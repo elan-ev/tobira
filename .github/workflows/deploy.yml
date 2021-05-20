@@ -62,7 +62,7 @@ jobs:
 
     - name: Prepare files for deployment
       run: |
-        cp -v backend/target/debug/tobira .deployment/files/
+        cp -v tobira .deployment/files/
         cp -v scripts/fixtures.sql .deployment/files/
         cp -v backend/logo-large.svg .deployment/files/
         cp -v backend/logo-small.svg .deployment/files/
