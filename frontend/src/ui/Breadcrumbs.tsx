@@ -6,10 +6,10 @@ import { useTranslation } from "react-i18next";
 
 
 type Props = {
-    path: Segment[];
+    path: PathSegment[];
 };
 
-type Segment = {
+type PathSegment = {
     label: string;
     link: string;
 };

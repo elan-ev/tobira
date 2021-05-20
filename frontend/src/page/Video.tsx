@@ -1,7 +1,7 @@
 import React from "react";
 import { graphql, useLazyLoadQuery } from "react-relay/hooks";
 
-import { VideoQuery } from "../query-types/VideoQuery.graphql";
+import type { VideoQuery } from "../query-types/VideoQuery.graphql";
 import { Player } from "../ui/Player";
 
 

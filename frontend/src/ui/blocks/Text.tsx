@@ -1,5 +1,6 @@
 import React from "react";
-import ReactMarkdown, { TransformOptions } from "react-markdown";
+import ReactMarkdown from "react-markdown";
+import type { TransformOptions } from "react-markdown";
 
 import { Block, Title } from "../Blocks";
 

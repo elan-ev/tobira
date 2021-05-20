@@ -8,6 +8,7 @@ module.exports = {
     },
     plugins: [
         "relay",
+        "@babel/plugin-proposal-nullish-coalescing-operator",
     ],
     presets: [
         ["@babel/preset-env", {

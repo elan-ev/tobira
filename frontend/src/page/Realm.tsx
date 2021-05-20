@@ -1,7 +1,7 @@
 import React from "react";
 
 import { graphql, useLazyLoadQuery } from "react-relay/hooks";
-import { RealmQuery } from "../query-types/RealmQuery.graphql";
+import type { RealmQuery } from "../query-types/RealmQuery.graphql";
 
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
