@@ -219,7 +219,7 @@ impl Opencast {
                 addr.is_loopback()
             } else {
                 let mut socket_addrs = if self.host.contains(':') {
-                    // If the host is not parsable as an IP6 address (checked
+                    // If the host is not parsable as an IPv6 address (checked
                     // above), a colon means that the port is included in the
                     // string.
                     self.host.to_socket_addrs()?
@@ -241,8 +241,8 @@ impl Opencast {
         }
 
         // Check that the host field is either a valid IP addr or a valid host.
-        // Thats not quite the same IPv6, as those have to be encloded in [] in
-        // an URI.
+        // That's not quite the same for IPv6, as those have to be enclosed in
+        // `[]` in a URI.
         if host_as_ip.is_err() {
             // TODO: this should be a custom parser or whatever so that the
             // struct can hold an `Authority`. Blocked by "config lib".

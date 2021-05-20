@@ -6,7 +6,7 @@ mod harvest;
 mod status;
 
 pub(crate) async fn run(config: &Config) -> Result<()> {
-    info!("Starting Tobira <-> Opencast synchronization server ...");
+    info!("Starting Tobira <-> Opencast synchronization daemon ...");
     trace!("Configuration: {:#?}", config);
 
     // Open DB connection, check consistency and migrate if necessary.

@@ -38,7 +38,7 @@ pub(crate) enum Command {
     },
 
     /// Starts a process continuiously fetching data from and generally keeping
-    /// in sync with the configured Opencast instance.
+    /// Tobira in sync with the configured Opencast instance.
     Sync,
 }
 
