@@ -20,13 +20,17 @@ type NavItem = {
     active: boolean;
 };
 
-// At this screen width, the layout changes from a sidebar for navigation (for
-// larger screens) and the navigation inlined (for smaller screens).
+/**
+ * At this screen width, the layout changes from a sidebar for navigation (for
+ * larger screens) and the navigation inlined (for smaller screens).
+ */
 const BREAKPOINT = 720;
 
-// A layout for the `<main>` part of pages that require a navigation (mainly
-// realms). The navigation is either shown on the left as a sidebar (for large
-// screens) or inline below the page title (for small screens).
+/**
+ * A layout for the `<main>` part of pages that require a navigation (mainly
+ * realms). The navigation is either shown on the left as a sidebar (for large
+ * screens) or inline below the page title (for small screens).
+ */
 export const NavMain: React.FC<Props> = ({ title, breadcrumbs, children, ...navProps }) => (
     <div css={{
         // This funky expressions just means: above a screen width of 1100px,
@@ -65,7 +69,7 @@ type NavProps = {
     leafNode: boolean;
 };
 
-// The navigation part of the layout.
+/** The navigation part of the layout. */
 const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
     const [navExpanded, setNavExpanded] = useState(false);
     const { t } = useTranslation();

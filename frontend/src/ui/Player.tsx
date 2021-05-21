@@ -11,10 +11,12 @@ import { HEIGHT as HEADER_HEIGHT } from "../layout/Header";
 type PlayerProps = {
     mediaUrl: string;
 
-    // `true` if this player appears on some content block. `false` if the
-    // player is on the dedicated player page. A `false` just leads to the
-    // player taking up more screen space, growing larger than its parent
-    // container. Defaults to `false`.
+    /**
+     * `true` if this player appears on some content block. `false` if the
+     * player is on the dedicated player page. A `false` just leads to the
+     * player taking up more screen space, growing larger than its parent
+     * container. Defaults to `false`.
+     */
     embedded?: boolean;
 };
 
