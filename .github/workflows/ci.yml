@@ -68,7 +68,7 @@ jobs:
       run: npx eslint --max-warnings 0 .
     - name: Build frontend
       working-directory: frontend
-      run: npx webpack --mode=${{ steps.build_mode.outputs.webpack }} --display-error-details
+      run: npx webpack --mode=${{ steps.build_mode.outputs.webpack }}
 
     - name: Build backend
       working-directory: backend

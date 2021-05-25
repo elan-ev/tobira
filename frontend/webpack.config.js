@@ -43,7 +43,7 @@ module.exports = (_env, argv) => ({
             }],
         }, {
             test: /\.css$/u,
-            loader: "raw-loader",
+            type: "asset/source",
         }],
     },
 

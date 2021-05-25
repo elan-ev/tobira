@@ -40,7 +40,7 @@ frontend:
         - concurrently:
           - npm run --silent typecheck
           - npm run --silent lint
-          - npx webpack --mode=development --display=errors-only
+          - npx webpack --mode=development --no-stats
         - reload:
 
 # Creating a production build
