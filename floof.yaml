@@ -31,21 +31,9 @@ frontend:
     - npx relay-compiler --watch
     - watch:
         paths: ["build"]
+        debounce: 50
         run:
           - reload:
-    - watch:
-        paths:
-          - .babelrc.js
-          - .eslintrc.js
-          - package-lock.json
-          - package.json
-          - tsconfig.json
-          - webpack.config.js
-          - src/
-        run:
-          - concurrently:
-            - npm run --silent typecheck
-            - npm run --silent lint
 
 # Creating a production build
 build:

@@ -1,6 +1,7 @@
 "use strict";
 
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const { APP_PATH, OUT_PATH, STATIC_PATH } = require("./constants");
@@ -49,6 +50,17 @@ module.exports = (_env, argv) => ({
 
     plugins: [
         new CleanWebpackPlugin(),
+        new ForkTsCheckerWebpackPlugin({
+            eslint: {
+                files: ["."],
+                options: {
+                    cache: true,
+                },
+            },
+            typescript: {
+                mode: "write-references",
+            },
+        }),
         new CopyPlugin({
             patterns: [
                 { from: path.join(APP_PATH, "index.html"), to: path.join(OUT_PATH) },
