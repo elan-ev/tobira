@@ -1,10 +1,10 @@
 import { bug } from "./util/err";
 
 
-// The ID of the HTML element containing our configuration.
+/** The ID of the HTML element containing our configuration. */
 const ID = "tobira-frontend-config";
 
-// Loads the frontend config and returns it as object.
+/** Loads the frontend config and returns it as object. */
 const parseConfig: () => Config = () => {
     const tag = document.getElementById(ID);
     if (tag === null) {

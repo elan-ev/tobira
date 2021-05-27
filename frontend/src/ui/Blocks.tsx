@@ -61,11 +61,13 @@ export const Block: React.FC = ({ children }) => (
     <div css={{ margin: "30px 0" }}>{children}</div>
 );
 
-// A helper function to getting block-type dependent fields as non-null values.
+/** A helper function to getting block-type dependent fields as non-null values. */
 function unwrap<K extends keyof BlockData>(block: BlockData, field: K): NonNullable<BlockData[K]> {
-    // This is a function because for some reason, inlining this check below
-    // confused the TS compiler. In that case it wouldn't understand that
-    // `return v` in the end is actually a non-null value.
+    /**
+     * This is a function because for some reason, inlining this check below
+     * confused the TS compiler. In that case it wouldn't understand that
+     * `return v` in the end is actually a non-null value.
+     */
     function isNotNullish<T>(value: T): value is NonNullable<T> {
         return value !== undefined && value !== null;
     }

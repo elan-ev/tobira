@@ -65,7 +65,7 @@ const Search: React.FC = () => {
     );
 };
 
-// The icons on the right side of the header: changing language and main menu.
+/** The icons on the right side of the header: changing language and main menu. */
 const ActionIcons: React.FC = () => {
     const { t } = useTranslation();
 
@@ -134,9 +134,11 @@ type ActionIconProps = {
     isActive: boolean;
 };
 
-// A single icon/button on the right of the header. There is some trickery
-// involved to make this arrow/triangle indicator when a specific icon is
-// active.
+/**
+ * A single icon/button on the right of the header. There is some trickery
+ * involved to make this arrow/triangle indicator when a specific icon is
+ * active.
+ */
 const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, isActive, children }) => {
     const iconSize = 28;
     const arrowSize = 14;
@@ -187,7 +189,7 @@ const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, isActive, child
     );
 };
 
-// The main menu with several links and functions.
+/** The main menu with several links and functions. */
 const MainMenu: React.FC<{ closeMenu: () => void }> = ({ closeMenu }) => {
     const { t } = useTranslation();
     const iconStyle = {
