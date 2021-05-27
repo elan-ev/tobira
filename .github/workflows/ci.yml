@@ -107,3 +107,4 @@ jobs:
           backend/logo-large.svg
           backend/logo-small.svg
           deploy-id
+          .deployment/templates/config.toml

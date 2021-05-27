@@ -27,7 +27,7 @@ jobs:
           const artifacts = await github.actions.listWorkflowRunArtifacts({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: ${{github.event.workflow_run.id }},
+              run_id: ${{ github.event.workflow_run.id }},
           });
           const deployFiles = artifacts.data.artifacts
               .filter(a => a.name == "test-deployment-files")[0];
@@ -55,6 +55,7 @@ jobs:
     # explicitly remove the file we expect to get overwriten.
     - name: extract artifacts
       run: |
+        rm .deployment/templates/config.toml || true
         rm scripts/fixtures.sql || true
         rm backend/logo-large.svg || true
         rm backend/logo-small.svg || true
