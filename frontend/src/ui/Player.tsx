@@ -1,7 +1,7 @@
 import React from "react";
 import Plyr from "plyr-react";
 import plyrCss from "plyr/dist/plyr.css";
-import { Global } from "@emotion/core";
+import { Global } from "@emotion/react";
 
 import CONFIG from "../config";
 import { MAIN_PADDING } from "../layout/Root";
