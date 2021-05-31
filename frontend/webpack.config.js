@@ -1,7 +1,6 @@
 "use strict";
 
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const { APP_PATH, OUT_PATH, STATIC_PATH } = require("./constants");
@@ -44,18 +43,15 @@ module.exports = (_env, argv) => ({
             }],
         }, {
             test: /\.css$/u,
-            loader: "raw-loader",
+            type: "asset/source",
         }],
     },
 
     plugins: [
         new CleanWebpackPlugin(),
-        new HtmlWebpackPlugin({
-            inject: false,
-            template: path.join(APP_PATH, "index.html"),
-        }),
         new CopyPlugin({
             patterns: [
+                { from: path.join(APP_PATH, "index.html"), to: path.join(OUT_PATH) },
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
                 { from: STATIC_PATH, to: OUT_PATH },
                 { from: path.join(plyrDistPath, "blank.mp4"), to: OUT_PATH },
