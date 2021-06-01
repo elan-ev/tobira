@@ -26,22 +26,14 @@ backend:
 frontend:
   - set-workdir: frontend
   - npm i --no-save
-  - watch:
-      paths:
-        - .babelrc.js
-        - .eslintrc.js
-        - package-lock.json
-        - package.json
-        - tsconfig.json
-        - webpack.config.js
-        - src/
-      run:
-        - npx relay-compiler
-        - concurrently:
-          - npm run --silent typecheck
-          - npm run --silent lint
-          - npx webpack --mode=development --no-stats
-        - reload:
+  - concurrently:
+    - npx webpack watch --mode=development --no-stats
+    - npx relay-compiler --watch
+    - watch:
+        paths: ["build"]
+        debounce: 50
+        run:
+          - reload:
 
 # Creating a production build
 build:
