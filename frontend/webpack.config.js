@@ -9,6 +9,7 @@ const plyrDistPath = path.join(__dirname, "node_modules", "plyr", "dist");
 
 module.exports = (_env, argv) => ({
     entry: APP_PATH,
+    context: __dirname,
 
     output: {
         filename: "bundle.js",
