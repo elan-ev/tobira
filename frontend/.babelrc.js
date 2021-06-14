@@ -9,7 +9,6 @@ module.exports = {
     plugins: [
         "relay",
         "@emotion",
-        "@babel/plugin-proposal-nullish-coalescing-operator",
     ],
     presets: [
         ["@babel/preset-env", {
