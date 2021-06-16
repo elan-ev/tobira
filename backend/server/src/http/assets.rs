@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use hyper::Body;
-use reinda::{assets, Config, Setup};
+use reinda::{assets, Setup};
 
 use tobira_util::prelude::*;
-use crate::config;
+use crate::config::{self, Config};
 use super::Response;
 
 
@@ -69,18 +69,21 @@ pub(crate) struct Assets {
 }
 
 impl Assets {
-    pub(crate) async fn init(config: &config::Assets) -> Result<Self> {
+    pub(crate) async fn init(config: &Config) -> Result<Self> {
         let mut path_overrides = HashMap::new();
-        path_overrides.insert("logo-large.svg".into(), config.logo.large.clone());
-        path_overrides.insert("logo-small.svg".into(), config.logo.small.clone());
+        path_overrides.insert("logo-large.svg".into(), config.assets.logo.large.clone());
+        path_overrides.insert("logo-small.svg".into(), config.assets.logo.small.clone());
 
-        let config = Config {
-            base_path: Some(config.internal.clone()),
+        let mut variables = HashMap::new();
+        variables.insert("theme-css".to_string(), build_theme(&config.theme));
+
+        let reinda_config = reinda::Config {
+            base_path: Some(config.assets.internal.clone()),
             path_overrides,
-            .. Config::default()
+            variables,
         };
 
-        let assets = reinda::Assets::new(ASSETS, config).await
+        let assets = reinda::Assets::new(ASSETS, reinda_config).await
             .context("failed to prepare asset files")?;
         info!("Prepared {} assets", assets.asset_ids().count());
 
@@ -146,4 +149,16 @@ impl Assets {
 
         builder.body(html).expect("bug: invalid response")
     }
+}
+
+// TODO: this function doesn't quite fit into this module, move it somewhere else.
+fn build_theme(config: &config::Theme) -> String {
+    format!(
+        ":root {{
+            --header-height: {}px;
+            --header-padding: {}px;
+        }}",
+        config.header_height,
+        config.header_padding,
+    )
 }

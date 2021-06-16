@@ -16,12 +16,12 @@ const HEADER_BORDER_WIDTH = 1;
 
 export const Header: React.FC = () => (
     <div css={{
-        height: HEIGHT,
+        height: "var(--header-height)",
         display: "flex",
+        padding: "var(--header-padding)",
         alignItems: "center",
         justifyContent: "space-between",
         backgroundColor: "white",
-        borderBottom: `${HEADER_BORDER_WIDTH}px solid #bbb`,
     }}>
         <Logo />
         <Search />
@@ -34,7 +34,7 @@ const Logo: React.FC = () => (
         <picture css={{ height: "100%" }}>
             <source media="(min-width: 450px)" srcSet={CONFIG.logo.large} />
             <img
-                css={{ height: "100%", padding: "4px 8px" }}
+                css={{ height: "100%" }}
                 src={CONFIG.logo.small}
             />
         </picture>

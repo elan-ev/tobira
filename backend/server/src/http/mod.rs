@@ -35,7 +35,7 @@ pub(crate) async fn serve(
     api_root: api::RootNode,
     api_context: api::Context,
 ) -> Result<()> {
-    let assets = Assets::init(&config.assets).await.context("failed to initialize assets")?;
+    let assets = Assets::init(config).await.context("failed to initialize assets")?;
     let ctx = Arc::new(Context::new(api_root, api_context, assets));
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching

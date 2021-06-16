@@ -112,7 +112,11 @@ tobira_macros::gen_config! {
         /// Password of the user used to communicate with Opencast.
         #[example = "D5ntdAKwSx84JdSEpTHYr8nt"]
         sync_password: Secret<String>,
-    }
+    },
+    theme: {
+        header_height: u32 = 70,
+        header_padding: u32 = 10,
+    },
 }
 
 impl Config {
