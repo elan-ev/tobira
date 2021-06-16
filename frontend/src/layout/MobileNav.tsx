@@ -1,4 +1,5 @@
 import React from "react";
+import { Nav } from "./NavMain";
 
 
 
@@ -26,10 +27,23 @@ export const MobileNav: React.FC<Props> = ({ hide }) => (
                 position: "absolute",
                 top: 0,
                 right: 0,
-                backgroundColor: "green",
+                backgroundColor: "#F1F1F1",
                 minHeight: "calc(100vh - var(--header-height))",
                 width: "clamp(220px, 70%, 500px)",
             }}
-        ></div>
+        >
+            <NavSection />
+        </div>
     </div>
 );
+
+const NavSection: React.FC = () => {
+    const items = [
+        { id: "lectures", label: "Lectures", link: "/r/lectures", active: false },
+        { id: "events", label: "Events", link: "/r/events", active: false },
+        { id: "campus", label: "Campus", link: "/r/campus", active: false },
+        { id: "conferences", label: "Conferences", link: "/r/conferences", active: false },
+    ];
+
+    return <Nav items={items} leafNode={false} />;
+};

@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSitemap, faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { useTranslation } from "react-i18next";
+import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 import { Link } from "../router";
 
@@ -50,7 +49,7 @@ export const NavMain: React.FC<Props> = ({ title, breadcrumbs, children, ...navP
     }}>
         <div css={{ gridArea: "breadcrumbs" }}>{breadcrumbs}</div>
         {title !== undefined && <h1 css={{ gridArea: "title", margin: "12px 0" }}>{title}</h1>}
-        <Nav {...navProps} />
+        <NavBox><Nav {...navProps} /></NavBox>
         <div css={{ gridArea: "main" }}>{children}</div>
     </div>
 );
@@ -65,113 +64,83 @@ type NavProps = {
     leafNode: boolean;
 };
 
-/** The navigation part of the layout. */
-const Nav: React.FC<NavProps> = ({ items, leafNode }) => {
-    const [navExpanded, setNavExpanded] = useState(false);
-    const { t } = useTranslation();
+export const Nav: React.FC<NavProps> = ({ items }) => (
+    <ul css={{
+        listStyle: "none",
+        margin: 0,
+        padding: 0,
+        borderTop: "1px solid #ccc",
+    }}>
+        {items.map(item => {
+            const TRANSITION_DURATION = "0.1s";
+            const baseStyle = {
+                padding: "6px 12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+            };
 
-    return (
-        <nav css={{
-            gridArea: "nav",
+            const inner = item.active
+                ? <b css={{ ...baseStyle, backgroundColor: "#ddd" }}>
+                    {item.label}
+                </b>
+                : <Link
+                    to={item.link}
+                    css={{
+                        ...baseStyle,
+                        textDecoration: "none",
+                        transition: `background-color ${TRANSITION_DURATION}`,
 
-            // This is necessary for the `fit-content` column width to correctly
-            // apply.
-            overflow: "hidden",
-
-            [`@media not all and (min-width: ${BREAKPOINT}px)`]: {
-                margin: 16,
-                border: "1px solid #888",
-                ...leafNode && { display: "none" },
-            },
-        }}>
-            <div css={{
-                // This is required to make the parent `div` (a grid item)
-                // span up to 300px wide. This is basically the only way to
-                // get this grid item span a percentage with a maximum
-                // width.
-                minWidth: 300,
-            }} />
-            <div
-                onClick={() => setNavExpanded(prev => !prev)}
-                css={{
-                    display: "none",
-
-                    [`@media not all and (min-width: ${BREAKPOINT}px)`]: {
-                        display: "block",
-                        padding: "6px 12px",
-                        fontSize: 18,
-
-                        cursor: "pointer",
-                        "&:hover": {
-                            backgroundColor: "#eee",
+                        "& > svg": {
+                            fontSize: 22,
+                            color: "#bbb",
+                            transition: `color ${TRANSITION_DURATION}`,
                         },
-                    },
-                }}
-            >
-                {/* TODO: this icon is not optimal */}
-                <FontAwesomeIcon icon={faSitemap} css={{ marginRight: 8 }} />
-                <b>{t("navigation")}</b>
-            </div>
-            <ul css={{
-                listStyle: "none",
-                margin: 0,
-                padding: 0,
-                borderTop: "1px solid #ccc",
 
-                [`@media not all and (min-width: ${BREAKPOINT}px)`]: {
-                    borderTop: navExpanded ? "1px solid #888" : "none",
-                    height: navExpanded ? "auto" : 0,
-                    overflow: "hidden",
-                },
-            }}>
-                {items.map(item => {
-                    const TRANSITION_DURATION = "0.1s";
-                    const baseStyle = {
-                        padding: "6px 12px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                    };
+                        "&:hover": {
+                            transitionDuration: "0.05s",
+                            backgroundColor: "#eee",
+                            textDecoration: "underline",
+                            "& > svg": {
+                                transitionDuration: "0.05s",
+                                color: "#888",
+                            },
+                        },
+                    }}
+                >
+                    <div>{item.label}</div>
+                    <FontAwesomeIcon icon={faChevronRight} />
+                </Link>;
 
-                    const inner = item.active
-                        ? <b css={{ ...baseStyle, backgroundColor: "#ddd" }}>
-                            {item.label}
-                        </b>
-                        : <Link
-                            to={item.link}
-                            css={{
-                                ...baseStyle,
-                                textDecoration: "none",
-                                transition: `background-color ${TRANSITION_DURATION}`,
+            return (
+                <li key={item.id} css={{ borderBottom: "1px solid #ccc" }}>
+                    {inner}
+                </li>
+            );
+        })}
+    </ul>
+);
 
-                                "& > svg": {
-                                    fontSize: 22,
-                                    color: "#bbb",
-                                    transition: `color ${TRANSITION_DURATION}`,
-                                },
+/** The navigation part of the layout. */
+const NavBox: React.FC = ({ children }) => (
+    <nav css={{
+        gridArea: "nav",
 
-                                "&:hover": {
-                                    transitionDuration: "0.05s",
-                                    backgroundColor: "#eee",
-                                    textDecoration: "underline",
-                                    "& > svg": {
-                                        transitionDuration: "0.05s",
-                                        color: "#888",
-                                    },
-                                },
-                            }}
-                        >
-                            <div>{item.label}</div>
-                            <FontAwesomeIcon icon={faChevronRight} />
-                        </Link>;
+        // This is necessary for the `fit-content` column width to correctly
+        // apply.
+        overflow: "hidden",
 
-                    return (
-                        <li key={item.id} css={{ borderBottom: "1px solid #ccc" }}>
-                            {inner}
-                        </li>
-                    );
-                })}
-            </ul>
-        </nav>
-    );
-};
+        [`@media not all and (min-width: ${BREAKPOINT}px)`]: {
+            display: "none",
+        },
+    }}>
+        <div css={{
+            // This is required to make the parent `div` (a grid item)
+            // span up to 300px wide. This is basically the only way to
+            // get this grid item span a percentage with a maximum
+            // width.
+            minWidth: 300,
+        }} />
+        {children}
+    </nav>
+);
