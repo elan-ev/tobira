@@ -42,7 +42,7 @@ module.exports = {
             "named": "never",
             "asyncArrow": "always",
         }],
-        "lines-around-comment": ["warn", { "allowBlockStart": true }],
+        "lines-around-comment": "off",
         "camelcase": ["warn", {
             allow: ["\\$key$"],
             ignoreImports: true,
@@ -192,7 +192,7 @@ module.exports = {
                 "named": "never",
                 "asyncArrow": "always",
             }],
-            "lines-around-comment": ["warn", { "allowBlockStart": true }],
+            "lines-around-comment": "off",
         },
         settings: {
             react: {
