@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faInfoCircle, faCog, faMoon } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import LanguageIcon from "ionicons/dist/svg/language.svg";
-import MenuIcon from "ionicons/dist/svg/ellipsis-vertical.svg";
+import MenuIcon from "ionicons/dist/svg/menu.svg";
+import MenuCloseIcon from "ionicons/dist/svg/close.svg";
 
 import { languages } from "../i18n";
 import { match } from "../util";
@@ -14,7 +15,13 @@ import { Link } from "../router";
 export const HEIGHT = 60;
 const HEADER_BORDER_WIDTH = 1;
 
-export const Header: React.FC = () => (
+
+type Props = {
+    burgerVisible: boolean;
+    setBurgerVisible: (visible: boolean) => void;
+};
+
+export const Header: React.FC<Props> = ({ burgerVisible, setBurgerVisible }) => (
     <header css={{
         height: "var(--header-height)",
         display: "flex",
@@ -25,8 +32,8 @@ export const Header: React.FC = () => (
         backgroundColor: "white",
     }}>
         <Logo />
-        <Search />
-        <ActionIcons />
+        {!burgerVisible && <Search />}
+        <ActionIcons setBurgerVisible={setBurgerVisible} burgerVisible={burgerVisible} />
     </header>
 );
 
@@ -66,8 +73,14 @@ const Search: React.FC = () => {
     );
 };
 
+
+type ActionButtonProps = {
+    burgerVisible: boolean;
+    setBurgerVisible: (visible: boolean) => void;
+};
+
 /** The icons on the right side of the header: changing language and main menu. */
-const ActionIcons: React.FC = () => {
+const ActionIcons: React.FC<ActionButtonProps> = ({ setBurgerVisible, burgerVisible }) => {
     const { t } = useTranslation();
 
     type MenuState = "closed" | "language" | "menu";
@@ -77,21 +90,21 @@ const ActionIcons: React.FC = () => {
     };
 
     return (
-        <div css={{ display: "flex", height: "100%", position: "relative", paddingRight: 4 }}>
-            <ActionIcon
+        <div css={{ display: "flex", height: "100%", position: "relative" }}>
+            {!burgerVisible && <ActionIcon
                 title={`${t("language")}: ${t("language-name")}`}
                 onClick={() => toggleMenu("language")}
                 isActive={menuState === "language"}
             >
                 <LanguageIcon />
-            </ActionIcon>
+            </ActionIcon>}
 
             <ActionIcon
                 title={t("main-menu.label")}
-                onClick={() => toggleMenu("menu")}
+                onClick={() => setBurgerVisible(!burgerVisible)}
                 isActive={menuState === "menu"}
             >
-                <MenuIcon />
+                {burgerVisible ? <MenuCloseIcon /> : <MenuIcon />}
             </ActionIcon>
 
             <div css={{
