@@ -16,6 +16,7 @@ backend:
     - watch:
         paths:
           - Cargo.lock
+          - config.toml
           - api/
           - server/
           - macros/
