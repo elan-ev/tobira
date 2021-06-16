@@ -15,7 +15,7 @@ export const HEIGHT = 60;
 const HEADER_BORDER_WIDTH = 1;
 
 export const Header: React.FC = () => (
-    <div css={{
+    <header css={{
         height: "var(--header-height)",
         display: "flex",
         padding: "var(--header-padding)",
@@ -26,7 +26,7 @@ export const Header: React.FC = () => (
         <Logo />
         <Search />
         <ActionIcons />
-    </div>
+    </header>
 );
 
 const Logo: React.FC = () => (
