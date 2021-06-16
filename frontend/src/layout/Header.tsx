@@ -1,7 +1,7 @@
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBars, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
-import MenuIcon from "ionicons/dist/svg/menu.svg";
-import MenuCloseIcon from "ionicons/dist/svg/close.svg";
 
 import CONFIG from "../config";
 import { Link } from "../router";
@@ -83,7 +83,9 @@ const ActionIcons: React.FC<ActionButtonProps> = ({ setBurgerVisible, burgerVisi
                 title={t("main-menu.label")}
                 onClick={() => setBurgerVisible(!burgerVisible)}
             >
-                {burgerVisible ? <MenuCloseIcon /> : <MenuIcon />}
+                {burgerVisible
+                    ? <FontAwesomeIcon icon={faTimes} fixedWidth />
+                    : <FontAwesomeIcon icon={faBars} fixedWidth />}
             </ActionIcon>
         </div>
     );
