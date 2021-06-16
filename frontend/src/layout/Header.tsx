@@ -18,7 +18,7 @@ export const Header: React.FC = () => (
     <header css={{
         height: "var(--header-height)",
         display: "flex",
-        padding: "var(--header-padding)",
+        padding: "var(--header-padding) min(5vw, var(--header-padding))",
         marginBottom: "16px",
         alignItems: "center",
         justifyContent: "space-between",
@@ -31,11 +31,11 @@ export const Header: React.FC = () => (
 );
 
 const Logo: React.FC = () => (
-    <Link to="/" css={{ height: "100%", flex: "0 0 auto" }}>
+    <Link to="/" css={{ height: "100%", flex: "0 1 auto" }}>
         <picture css={{ height: "100%" }}>
             <source media="(min-width: 450px)" srcSet={CONFIG.logo.large} />
             <img
-                css={{ height: "100%" }}
+                css={{ height: "100%", maxWidth: "100%" }}
                 src={CONFIG.logo.small}
             />
         </picture>
