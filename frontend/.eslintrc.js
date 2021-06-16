@@ -162,7 +162,7 @@ module.exports = {
                 "all",
                 { enforceForArrowConditionals: false, ignoreJSX: "all" },
             ],
-            "@typescript-eslint/no-unused-vars": ["warn", noUnusedVarsOptions],
+            "@typescript-eslint/no-unused-vars": "off",
             "@typescript-eslint/comma-spacing": "warn",
             // This checks some more things than `no-unused-vars`,
             // but is less configurable.
