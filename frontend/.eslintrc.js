@@ -43,6 +43,7 @@ module.exports = {
             "asyncArrow": "always",
         }],
         "lines-around-comment": "off",
+        "no-multiple-empty-lines": ["warn", { max: 5 }],
         "camelcase": ["warn", {
             allow: ["\\$key$"],
             ignoreImports: true,
