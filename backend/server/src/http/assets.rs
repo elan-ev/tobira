@@ -71,8 +71,8 @@ pub(crate) struct Assets {
 impl Assets {
     pub(crate) async fn init(config: &Config) -> Result<Self> {
         let mut path_overrides = HashMap::new();
-        path_overrides.insert("logo-large.svg".into(), config.assets.logo.large.clone());
-        path_overrides.insert("logo-small.svg".into(), config.assets.logo.small.clone());
+        path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.clone());
+        path_overrides.insert("logo-small.svg".into(), config.theme.logo.small.clone());
 
         let mut variables = HashMap::new();
         variables.insert("theme-css".to_string(), build_theme(&config.theme));
