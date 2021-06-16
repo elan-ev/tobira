@@ -28,8 +28,9 @@ export const MobileNav: React.FC<Props> = ({ hide }) => (
                 top: 0,
                 right: 0,
                 backgroundColor: "#F1F1F1",
-                minHeight: "calc(100vh - var(--header-height))",
-                width: "clamp(220px, 70%, 500px)",
+                height: "100%",
+                width: "clamp(260px, 75%, 450px)",
+                overflowY: "auto",
             }}
         >
             <NavSection />
