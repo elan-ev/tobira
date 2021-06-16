@@ -69,4 +69,7 @@ const GLOBAL_STYLE = css({
     h2: {
         fontSize: 24,
     },
+    a: {
+        color: "var(--navigation-color)",
+    },
 });

@@ -116,6 +116,10 @@ tobira_macros::gen_config! {
             #[example = "/etc/tobira/logo-small.svg"]
             small: PathBuf,
         },
+
+        color: {
+            navigation: String = "#357C58",
+        },
     },
 }
 

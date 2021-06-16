@@ -157,8 +157,10 @@ fn build_theme(config: &config::Theme) -> String {
         ":root {{
             --header-height: {}px;
             --header-padding: {}px;
+            --navigation-color: {};
         }}",
         config.header_height,
         config.header_padding,
+        config.color.navigation,
     )
 }
