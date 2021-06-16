@@ -19,6 +19,7 @@ export const Header: React.FC = () => (
         height: "var(--header-height)",
         display: "flex",
         padding: "var(--header-padding)",
+        marginBottom: "16px",
         alignItems: "center",
         justifyContent: "space-between",
         backgroundColor: "white",
