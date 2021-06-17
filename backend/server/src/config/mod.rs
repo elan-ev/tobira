@@ -106,6 +106,23 @@ tobira_macros::gen_config! {
         header_height: u32 = 70,
         header_padding: u32 = 10,
 
+        /// Path to CSS file that includes all used font files and sets the variable
+        /// `--main-font` in the `:root` selector. For example:
+        ///
+        /// ```
+        /// :root {
+        ///     --main-font: 'Open Sans';
+        /// }
+        ///
+        /// @font-face { font-family: 'Open Sans'; src: ...; }
+        /// ```
+        ///
+        /// If not set, the default font will be used.
+        #[example = "fonts.css"]
+        fonts: Option<String>,
+
+
+
         logo: {
             /// Path to the "normal", wide logo that is shown on desktop screens.
             #[example = "/etc/tobira/logo-large.svg"]

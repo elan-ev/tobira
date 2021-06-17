@@ -1,3 +1,7 @@
+:root {
+    --main-font: 'Open Sans';
+}
+
 /* Open Sans is licensed under the Apache-2.0 license. */
 @font-face {
     font-family: 'Open Sans';

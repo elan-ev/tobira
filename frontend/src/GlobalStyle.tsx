@@ -52,7 +52,7 @@ const CSS_RESETS = css({
 /** This is just styling for Tobira that we want to apply globally. */
 const GLOBAL_STYLE = css({
     body: {
-        fontFamily: "'Open Sans', sans-serif",
+        fontFamily: "var(--main-font), sans-serif",
         fontWeight: 400,
 
         // 16px is a good default body text size according to the internet (TM).

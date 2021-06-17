@@ -73,6 +73,9 @@ impl Assets {
         let mut path_overrides = HashMap::new();
         path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.clone());
         path_overrides.insert("logo-small.svg".into(), config.theme.logo.small.clone());
+        if let Some(fonts_css) = &config.theme.fonts {
+            path_overrides.insert("fonts.css".into(), fonts_css.into());
+        }
 
         let mut variables = HashMap::new();
         variables.insert("theme-css".to_string(), build_theme(&config.theme));
