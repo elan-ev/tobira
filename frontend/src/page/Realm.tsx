@@ -1,8 +1,10 @@
 import React from "react";
 
-import { graphql, useLazyLoadQuery } from "react-relay/hooks";
+import { graphql, loadQuery, usePreloadedQuery } from "react-relay/hooks";
+import type { PreloadedQuery } from "react-relay/hooks";
 import type { RealmQuery } from "../query-types/RealmQuery.graphql";
 
+import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
 import { NavMain as MainLayout } from "../layout/NavMain";
@@ -11,39 +13,35 @@ import type { Route } from "../router";
 import { Root } from "../layout/Root";
 
 
-export const RealmRoute: Route<Record<string, string>> = {
+export const RealmRoute: Route<PreloadedQuery<RealmQuery>> = {
     path: "/r/*",
-    prepare: params => params,
-    render: params => <Root><RealmPage path={params.wild} /></Root>,
+    prepare: params => loadQuery(relayEnv, query, { path: `/${params.wild}` }),
+    render: queryRef => <Root><RealmPage queryRef={queryRef} /></Root>,
 };
+
+// TODO Build this query from fragments!
+const query = graphql`
+    query RealmQuery($path: String!) {
+        realm: realmByPath(path: $path) {
+            id
+            name
+            path
+            parents { name path }
+            children { id name path }
+            parent {
+                children { id name path }
+            }
+            ... Blocks_blocks
+        }
+    }
+`;
 
 type Props = {
-    path: string;
+    queryRef: PreloadedQuery<RealmQuery>;
 };
 
-const RealmPage: React.FC<Props> = ({ path }) => {
-    const isRoot = path === "";
-
-    // TODO Build this query from fragments!
-    const { realm } = useLazyLoadQuery<RealmQuery>(graphql`
-        query RealmQuery($path: String!) {
-            realm: realmByPath(path: $path) {
-                id
-                name
-                path
-                parents { name path }
-                children { id name path }
-                parent {
-                    children { id name path }
-                }
-                ... Blocks_blocks
-            }
-        }
-    `, {
-        // The API expects a "leading" slash to non-root paths to separate
-        // the first component from the root path segment `''`
-        path: isRoot ? "" : `/${path}`,
-    });
+const RealmPage: React.FC<Props> = ({ queryRef }) => {
+    const { realm } = usePreloadedQuery(query, queryRef);
 
     if (!realm) {
         // TODO: that should obviously be handled in a better way
