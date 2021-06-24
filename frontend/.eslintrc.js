@@ -153,6 +153,7 @@ module.exports = {
             "@typescript-eslint/prefer-interface": "off",
             "@typescript-eslint/no-type-alias": "off",
             "@typescript-eslint/consistent-type-definitions": "off",
+            "@typescript-eslint/no-empty-function": "off",
 
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],
