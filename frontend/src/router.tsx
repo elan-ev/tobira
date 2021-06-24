@@ -32,7 +32,15 @@ type StrictRoutesTy = { [I in Indices]: VerifyRoutes<ArrT[I]> };
 const _VERIFIED: StrictRoutesTy = ROUTES;
 
 
-/** The definition of one route. */
+/**
+ * The definition of one route.
+ *
+ * If what the `prepare` function returns (the type parameter `Prepared`) has a
+ * method called `dispose`, it will be called automatically once the route
+ * unmounts. This is mostly just useful for `PreparedQuery` of relay. Just be
+ * aware of that in case you return anything that has a `dispose` method which
+ * is not supposed to be called.
+ */
 export type Route<Prepared> = {
     /**
      * The path of the route, allowing parameters and wildcards.
@@ -135,6 +143,18 @@ export const Router: React.FC<RouterProps> = ({ initialRoute }) => {
         window.addEventListener("popstate", onPopState);
         return () => window.removeEventListener("popstate", onPopState);
     }, []);
+
+    // We sometimes need to dispose of a prepared value when switching to
+    // another route. We do that here. If this method does not exist, we just
+    // do nothing.
+    useEffect(() => () => {
+        /* eslint-disable */
+        const prepared = activeRoute.prepared;
+        if (typeof prepared?.dispose === "function") {
+            prepared?.dispose();
+        }
+        /* eslint-enable */
+    });
 
     return (
         <RoutingContext.Provider value={{ setActiveRoute }}>
