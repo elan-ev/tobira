@@ -13,7 +13,7 @@ description = "GraphQL API of the Tobira video portal for Opencast"
 
 [dependencies]
 anyhow = "1"
-deadpool-postgres = { version = "0.7", default-features = false }
+deadpool-postgres = { version = "0.9", default-features = false }
 futures = "0.3.1"
 juniper = { git = "https://github.com/LukasKalbertodt/juniper", branch = "tokio1" }
 log = "0.4"
