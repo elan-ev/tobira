@@ -97,7 +97,7 @@ pub(crate) async fn serve(
 /// resolving/polling that given future. This ensures that we always answer with
 /// `500` instead of just crashing the thread and closing the connection.
 async fn handle_internal_errors(
-    future: impl Future<Output = Result<Response>>,
+    future: impl Future<Output = Response>,
 ) -> Result<Response, Infallible> {
     fn internal_server_error() -> Response {
         Response::builder()
@@ -117,11 +117,7 @@ async fn handle_internal_errors(
     // Hyper catches panics for us anyway, so this changes nothing except that
     // our response is better.
     match AssertUnwindSafe(future).catch_unwind().await {
-        Ok(Ok(response)) => Ok(response),
-        Ok(Err(e)) => {
-            error!("INTERNAL SERVER ERROR: HTTP handler returned `Err(_)`: {:?}", e);
-            Ok(internal_server_error())
-        }
+        Ok(response) => Ok(response),
         Err(panic) => {
             // The `panic` information is just an `Any` object representing the
             // value the panic was invoked with. For most panics (which use
@@ -162,7 +158,7 @@ impl Context {
 }
 
 /// This is the main entry point, called for each incoming request.
-async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
+async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     trace!(
         "Incoming HTTP {:?} request to '{}{}'",
         req.method(),
@@ -177,11 +173,11 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
     const REALM_PREFIX: &str = "/r/";
     const PLAYER_PREFIX: &str = "/v/";
 
-    let response = match path {
+    match path {
         // The GraphQL endpoint. This is the only path for which POST is
         // allowed.
         "/graphql" if method == Method::POST => {
-            juniper_hyper::graphql(ctx.api_root.clone(), ctx.api_context.clone(), req).await?
+            juniper_hyper::graphql(ctx.api_root.clone(), ctx.api_context.clone(), req).await
         }
 
         // From this point on, we only support GET and HEAD requests. All others
@@ -200,7 +196,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
         // information that isn't already exposed by the API itself.
-        "/graphiql" => juniper_hyper::graphiql("/graphql", None).await?,
+        "/graphiql" => juniper_hyper::graphiql("/graphql", None).await,
 
         // Realm pages
         path if path.starts_with(REALM_PREFIX) => {
@@ -224,9 +220,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Result<Response> {
 
         // 404 for everything else
         path => reply_404(&ctx.assets, &method, path).await,
-    };
-
-    Ok(response)
+    }
 }
 
 /// Replies with a 404 Not Found.

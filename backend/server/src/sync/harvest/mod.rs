@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use hyper14::http::status::StatusCode;
+use hyper::http::status::StatusCode;
 
 use tobira_util::prelude::*;
 use tokio_postgres::GenericClient;
