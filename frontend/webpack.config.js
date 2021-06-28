@@ -61,6 +61,7 @@ module.exports = (_env, argv) => ({
             typescript: {
                 mode: "write-references",
             },
+            formatter: "basic",
         }),
         new CopyPlugin({
             patterns: [
