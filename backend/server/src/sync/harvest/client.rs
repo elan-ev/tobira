@@ -1,7 +1,7 @@
 use std::net::Ipv6Addr;
 
 use chrono::{DateTime, Utc};
-use hyper14::{
+use hyper::{
     Request, Body,
     body::Bytes,
     client::{Client, HttpConnector},
@@ -94,7 +94,7 @@ impl HarvestClient {
             .with_context(|| format!("failed to GET {}", uri))?;
 
         let (parts, body) = response.into_parts();
-        let body = hyper14::body::to_bytes(body).await
+        let body = hyper::body::to_bytes(body).await
             .with_context(|| format!("failed to download body from {}", uri))?;
         Ok((parts, body))
     }

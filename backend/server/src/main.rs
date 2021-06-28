@@ -2,7 +2,6 @@
 
 use std::env;
 use structopt::StructOpt;
-use tokio_compat_02::FutureExt;
 
 use tobira_util::prelude::*;
 use crate::{
@@ -38,7 +37,7 @@ async fn main() -> Result<()> {
     match &args.cmd {
         Command::Serve => {
             let config = load_config_and_init_logger(&args)?;
-            start_server(&config).compat().await?;
+            start_server(&config).await?;
         }
         Command::WriteConfig { target } => {
             if args.config.is_some() {
@@ -48,7 +47,7 @@ async fn main() -> Result<()> {
         }
         Command::Db { cmd } => {
             let config = load_config_and_init_logger(&args)?;
-            db::cmd::run(cmd, &config.db).compat().await?;
+            db::cmd::run(cmd, &config.db).await?;
         }
         Command::Sync => {
             let config = load_config_and_init_logger(&args)?;

@@ -66,19 +66,10 @@ const INDEX_FILE: &str = "index.html";
 
 pub(crate) struct Assets {
     assets: reinda::Assets,
-
-    // TODO: this is temporary until we update hyper to tokio 1.0. We need to
-    // explicitly store the runtime here to use the tokio 1.0 runtime inside of
-    // the handler functions as those are called within the hyper handler, which
-    // is a tokio 0.2 runtime.
-    runtime: tokio::runtime::Handle,
 }
 
 impl Assets {
     pub(crate) async fn init(config: &config::Assets) -> Result<Self> {
-        // TODO: temporary
-        let runtime = tokio::runtime::Handle::current();
-
         let mut path_overrides = HashMap::new();
         path_overrides.insert("logo-large.svg".into(), config.logo.large.clone());
         path_overrides.insert("logo-small.svg".into(), config.logo.small.clone());
@@ -93,7 +84,7 @@ impl Assets {
             .context("failed to prepare asset files")?;
         info!("Prepared {} assets", assets.asset_ids().count());
 
-        Ok(Self { assets, runtime } )
+        Ok(Self { assets } )
     }
 
     /// Responds with the asset identified by the given path. If there exists no
@@ -105,8 +96,6 @@ impl Assets {
             return None;
         }
 
-        // TODO: temporary
-        let _guard = self.runtime.enter();
         let data = self.assets.get(path).await.unwrap_or_else(|e| {
             panic!("failed to read asset '{}': {}", path, e);
         })?;
@@ -128,22 +117,16 @@ impl Assets {
             builder = builder.header("cache-control", "public, max-age=31536000, immutable");
         }
 
-        // TODO: here we copy the asset in memory, which is very unfortunate. We
-        // can fix this by removing `to_vec` as soon as we update hyper to 0.14.
-        let body = Body::from(data.to_vec());
+        let body = Body::from(data);
         Some(builder.body(body).expect("bug: invalid response"))
     }
 
     pub(crate) async fn index(&self) -> Body {
-        // TODO: temporary
-        let _guard = self.runtime.enter();
-
         // We treat the `index.html` missing as internal server error. We are
         // not a general file server. We require this index file to function.
         self.assets.get(INDEX_FILE).await
             .expect("failed to read 'index.html'")
             .expect("`index.html` missing in internal assets")
-            .to_vec()  // TODO: remove this copy once we update to hyper 0.14
             .into()
     }
 
