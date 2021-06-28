@@ -29,6 +29,7 @@ const query = graphql`
             children { id name path }
             parent {
                 children { id name path }
+                path
             }
             ... Blocks_blocks
         }
@@ -75,8 +76,13 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
             active: id === realm.id,
         }));
 
+    const nav = {
+        parentLink: realm.parent.path === "" ? "/" : `/r${realm.parent.path}`,
+        items: navItems,
+    };
+
     return (
-        <Root nav={{ items: navItems }}>
+        <Root nav={nav}>
             <div><Breadcrumbs path={breadcrumbs} /></div>
             <h1 css={{ margin: "12px 0" }}>{realm.name}</h1>
             <Blocks realm={realm} />

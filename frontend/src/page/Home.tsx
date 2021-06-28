@@ -34,6 +34,7 @@ const HomePage: React.FC<Props> = ({ queryRef }) => {
     const { realm } = usePreloadedQuery(query, queryRef);
 
     const nav = {
+        parentLink: null,
         items: realm.children.map(({ id, path, name }) => ({
             id,
             label: name,

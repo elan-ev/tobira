@@ -39,7 +39,7 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
     }
 
     // TODO
-    const nav = { items: [] };
+    const nav = { parentLink: null, items: [] };
 
     const { title, video, description } = event;
     return (

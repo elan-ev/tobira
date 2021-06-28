@@ -1,6 +1,6 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
@@ -14,6 +14,12 @@ import type { NavigationRootQuery } from "../query-types/NavigationRootQuery.gra
  */
 export type Navigation = {
     items: NavItem[];
+
+    /**
+     * If the navigation is not currently showing the root realms, this is a
+     * link to the parent realm
+     */
+    parentLink: string | null;
 };
 
 type NavItem = {
@@ -64,72 +70,85 @@ export const MobileNav: React.FC<MobileProps> = ({ nav, hide }) => (
                 overflowY: "auto",
             }}
         >
-            <Nav nav={nav} />
+            {nav.parentLink !== null && (
+                <Link
+                    to={nav.parentLink}
+                    css={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        padding: "2px 5px",
+                        margin: 6,
+                        border: "1px solid #C5C5C5",
+                        borderRadius: 4,
+                        ...ITEM_LINK_BASE_STYLE,
+                    }}
+                >
+                    <FontAwesomeIcon icon={faChevronLeft} css={{ marginRight: 6 }}/>
+                    Back
+                </Link>
+            )}
+            <ul css={{
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+                borderTop: "1px solid #ccc",
+            }}>
+                {nav.items.map(item => <Item key={item.id} item={item} />)}
+            </ul>
         </div>
     </div>
 );
 
+const TRANSITION_DURATION = "0.1s";
+const ITEM_LINK_BASE_STYLE = {
+    textDecoration: "none",
+    transition: `background-color ${TRANSITION_DURATION}`,
 
-type NavProps = {
-    nav: Navigation;
+    "& > svg": {
+        fontSize: 22,
+        color: "#A9A9A9",
+        transition: `color ${TRANSITION_DURATION}`,
+    },
+
+    "&:hover": {
+        transitionDuration: "0.05s",
+        backgroundColor: "#E2E2E2",
+        "& > svg": {
+            transitionDuration: "0.05s",
+            color: "#6F6F6F",
+        },
+    },
 };
 
-export const Nav: React.FC<NavProps> = ({ nav }) => (
-    <ul css={{
-        listStyle: "none",
-        margin: 0,
-        padding: 0,
-        borderTop: "1px solid #ccc",
-    }}>
-        {nav.items.map(item => {
-            const TRANSITION_DURATION = "0.1s";
-            const baseStyle = {
-                padding: "6px 12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-            };
+const Item: React.FC<{ item: NavItem }> = ({ item }) => {
+    const baseStyle = {
+        padding: "6px 12px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+    };
 
-            const inner = item.active
-                ? <b css={{ ...baseStyle, backgroundColor: "#ddd" }}>
-                    {item.label}
-                </b>
-                : <Link
-                    to={item.link}
-                    css={{
-                        ...baseStyle,
-                        textDecoration: "none",
-                        transition: `background-color ${TRANSITION_DURATION}`,
+    const inner = item.active
+        ? <b css={{ ...baseStyle, backgroundColor: "#C5C5C5" }}>
+            {item.label}
+        </b>
+        : <Link
+            to={item.link}
+            css={{
+                ...baseStyle,
+                ...ITEM_LINK_BASE_STYLE,
+            }}
+        >
+            <div>{item.label}</div>
+            <FontAwesomeIcon icon={faChevronRight} />
+        </Link>;
 
-                        "& > svg": {
-                            fontSize: 22,
-                            color: "#bbb",
-                            transition: `color ${TRANSITION_DURATION}`,
-                        },
-
-                        "&:hover": {
-                            transitionDuration: "0.05s",
-                            backgroundColor: "#eee",
-                            textDecoration: "underline",
-                            "& > svg": {
-                                transitionDuration: "0.05s",
-                                color: "#888",
-                            },
-                        },
-                    }}
-                >
-                    <div>{item.label}</div>
-                    <FontAwesomeIcon icon={faChevronRight} />
-                </Link>;
-
-            return (
-                <li key={item.id} css={{ borderBottom: "1px solid #ccc" }}>
-                    {inner}
-                </li>
-            );
-        })}
-    </ul>
-);
+    return (
+        <li css={{ borderBottom: "1px solid #C5C5C5" }}>
+            {inner}
+        </li>
+    );
+};
 
 /**
  * Some routes don't need to fetch data themselves, but only for navigation.
@@ -147,6 +166,7 @@ export const ROOT_NAV_QUERY = graphql`
 export const rootNavFromQuery = (query: PreloadedQuery<NavigationRootQuery>): Navigation => {
     const { realm } = usePreloadedQuery(ROOT_NAV_QUERY, query);
     return {
+        parentLink: null,
         items: realm.children.map(({ id, path, name }) => ({
             id,
             label: name,
