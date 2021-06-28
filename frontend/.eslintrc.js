@@ -179,7 +179,7 @@ module.exports = {
             }],
             "@typescript-eslint/member-delimiter-style": "warn",
             "@typescript-eslint/brace-style": "warn",
-            "@typescript-eslint/lines-between-class-members": "warn",
+            "@typescript-eslint/lines-between-class-members": "off",
             "@typescript-eslint/explicit-member-accessibility": "warn",
 
             // Turn off base rules overridden by `@typescript-eslint` rules

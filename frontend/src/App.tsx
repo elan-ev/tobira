@@ -6,6 +6,7 @@ import { environment, ServerError, APIError } from "./relay";
 import { GlobalStyle } from "./GlobalStyle";
 import { Router } from "./router";
 import type { MatchedRoute } from "./router";
+import { MenuProvider } from "./layout/MenuState";
 
 
 type Props = {
@@ -16,7 +17,9 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
     <RelayEnvironmentProvider {...{ environment }}>
         <GlobalStyle />
         <APIWrapper>
-            <Router initialRoute={initialRoute} />
+            <MenuProvider>
+                <Router initialRoute={initialRoute} />
+            </MenuProvider>
         </APIWrapper>
     </RelayEnvironmentProvider>
 );

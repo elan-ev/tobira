@@ -5,22 +5,19 @@ import { useTranslation } from "react-i18next";
 
 import CONFIG from "../config";
 import { Link } from "../router";
+import { useMenu } from "./MenuState";
 
 
 export const HEIGHT = 60;
 
 
-type Props = {
-    burgerVisible: boolean;
-    setBurgerVisible: (visible: boolean) => void;
-};
-
-export const Header: React.FC<Props> = ({ burgerVisible, setBurgerVisible }) => {
+export const Header: React.FC = () => {
     const { t } = useTranslation();
     const [searchActive, setSearchActive] = useState(false);
+    const menu = useMenu();
 
-    if (searchActive && burgerVisible) {
-        console.log("unexpected state: search active and burger visible");
+    if (searchActive && menu.state !== "closed") {
+        console.warn("unexpected state: search active and a menu visible");
     }
 
     const content = (() => {
@@ -34,21 +31,23 @@ export const Header: React.FC<Props> = ({ burgerVisible, setBurgerVisible }) => 
         } else {
             return <>
                 <Logo />
-                {!burgerVisible && <SearchField variant="desktop" />}
+                {menu.state === "closed" && <SearchField variant="desktop" />}
                 <div css={{ display: "flex", height: "100%", position: "relative" }}>
-                    {!burgerVisible && <ActionIcon
-                        title={t("search")}
-                        onClick={() => setSearchActive(true)}
-                        smallScreensOnly={true}
-                    >
-                        <FontAwesomeIcon icon={faSearch} fixedWidth />
-                    </ActionIcon>}
+                    {menu.state === "closed" && (
+                        <ActionIcon
+                            title={t("search")}
+                            onClick={() => setSearchActive(true)}
+                            smallScreensOnly={true}
+                        >
+                            <FontAwesomeIcon icon={faSearch} fixedWidth />
+                        </ActionIcon>
+                    )}
 
                     <ActionIcon
                         title={t("main-menu.label")}
-                        onClick={() => setBurgerVisible(!burgerVisible)}
+                        onClick={() => menu.toggleMenu("burger")}
                     >
-                        {burgerVisible
+                        {menu.state === "burger"
                             ? <FontAwesomeIcon icon={faTimes} fixedWidth />
                             : <FontAwesomeIcon icon={faBars} fixedWidth />}
                     </ActionIcon>
