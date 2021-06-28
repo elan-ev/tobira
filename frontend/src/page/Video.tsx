@@ -12,7 +12,7 @@ import { Root } from "../layout/Root";
 export const VideoRoute: Route<PreloadedQuery<VideoQuery>> = {
     path: "/v/:id",
     prepare: params => loadQuery(relayEnv, query, { id: `ev${params.id}` }),
-    render: queryRef => <Root><VideoPage queryRef={queryRef} /></Root>,
+    render: queryRef => <VideoPage queryRef={queryRef} />,
 };
 
 const query = graphql`
@@ -38,10 +38,15 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
         </>;
     }
 
+    // TODO
+    const nav = { items: [] };
+
     const { title, video, description } = event;
-    return <>
-        <Player mediaUrl={video} />
-        <h1>{title}</h1>
-        <p>{description}</p>
-    </>;
+    return (
+        <Root nav={nav}>
+            <Player mediaUrl={video} />
+            <h1>{title}</h1>
+            <p>{description}</p>
+        </Root>
+    );
 };

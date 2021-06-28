@@ -1,11 +1,17 @@
 import React, { useState } from "react";
 
 import { Header } from "./Header";
-import { MobileNav } from "./MobileNav";
+import { MobileNav } from "./Navigation";
+import type { Navigation } from "./Navigation";
 
 export const MAIN_PADDING = 16;
 
-export const Root: React.FC = ({ children }) => {
+
+type Props = {
+    nav: Navigation;
+};
+
+export const Root: React.FC<Props> = ({ nav, children }) => {
     const [burgerVisible, setBurgerVisible] = useState(false);
 
     return (
@@ -21,8 +27,10 @@ export const Root: React.FC = ({ children }) => {
             },
         }}>
             <Header setBurgerVisible={setBurgerVisible} burgerVisible={burgerVisible} />
-            {burgerVisible && <MobileNav hide={() => setBurgerVisible(false)} />}
-            <main css={{ padding: MAIN_PADDING }}>{children}</main>
+            {burgerVisible && <MobileNav nav={nav} hide={() => setBurgerVisible(false)} />}
+            <main css={{ padding: MAIN_PADDING }}>
+                {children}
+            </main>
         </div>
     );
 };

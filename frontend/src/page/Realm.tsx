@@ -7,7 +7,6 @@ import type { RealmQuery } from "../query-types/RealmQuery.graphql";
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
-import { NavMain as MainLayout } from "../layout/NavMain";
 import { unreachable } from "../util/err";
 import type { Route } from "../router";
 import { Root } from "../layout/Root";
@@ -16,7 +15,7 @@ import { Root } from "../layout/Root";
 export const RealmRoute: Route<PreloadedQuery<RealmQuery>> = {
     path: "/r/*",
     prepare: params => loadQuery(relayEnv, query, { path: `/${params.wild}` }),
-    render: queryRef => <Root><RealmPage queryRef={queryRef} /></Root>,
+    render: queryRef => <RealmPage queryRef={queryRef} />,
 };
 
 // TODO Build this query from fragments!
@@ -77,13 +76,10 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
         }));
 
     return (
-        <MainLayout
-            title={realm.name}
-            breadcrumbs={<Breadcrumbs path={breadcrumbs} />}
-            items={navItems}
-            leafNode={realm.children.length === 0}
-        >
+        <Root nav={{ items: navItems }}>
+            <div><Breadcrumbs path={breadcrumbs} /></div>
+            <h1 css={{ margin: "12px 0" }}>{realm.name}</h1>
             <Blocks realm={realm} />
-        </MainLayout>
+        </Root>
     );
 };

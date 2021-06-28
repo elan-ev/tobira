@@ -1,10 +1,9 @@
 import React from "react";
-import { graphql, loadQuery, usePreloadedQuery } from "react-relay/hooks";
+import { graphql, usePreloadedQuery } from "react-relay/hooks";
 import type { PreloadedQuery } from "react-relay/hooks";
 import type { HomeQuery } from "../query-types/HomeQuery.graphql";
 
-import { NavMain as MainLayout } from "../layout/NavMain";
-import { environment as relayEnv } from "../relay";
+import { loadQuery } from "../relay";
 import { Blocks } from "../ui/Blocks";
 import type { Route } from "../router";
 import { Root } from "../layout/Root";
@@ -12,8 +11,8 @@ import { Root } from "../layout/Root";
 
 export const HomeRoute: Route<PreloadedQuery<HomeQuery>> = {
     path: "/",
-    prepare: () => loadQuery(relayEnv, query, {}),
-    render: queryRef => <Root><HomePage queryRef={queryRef} /></Root>,
+    prepare: () => loadQuery(query, {}),
+    render: queryRef => <HomePage queryRef={queryRef} />,
 };
 
 const query = graphql`
@@ -34,17 +33,18 @@ type Props = {
 const HomePage: React.FC<Props> = ({ queryRef }) => {
     const { realm } = usePreloadedQuery(query, queryRef);
 
+    const nav = {
+        items: realm.children.map(({ id, path, name }) => ({
+            id,
+            label: name,
+            link: `/r${path}`,
+            active: false,
+        })),
+    };
+
     return (
-        <MainLayout
-            leafNode={false}
-            items={realm.children.map(({ id, path, name }) => ({
-                id,
-                label: name,
-                link: `/r${path}`,
-                active: false,
-            }))}
-        >
+        <Root nav={nav}>
             <Blocks realm={realm} />
-        </MainLayout>
+        </Root>
     );
 };
