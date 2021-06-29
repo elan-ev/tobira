@@ -22,6 +22,9 @@ main-menu:
   settings: Settings
   about: About
 
+user:
+  settings: User settings
+
 login:
   button-label: Login
-  not-logged-in: You are not logged in.
+  not-logged-in: Not logged in

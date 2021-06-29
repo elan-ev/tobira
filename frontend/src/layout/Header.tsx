@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faBars, faSearch, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faBars, faSearch, faTimes, faUser } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import type { Interpolation, Theme } from "@emotion/react";
 
@@ -41,7 +41,7 @@ export const Header: React.FC = () => {
                             onClick={() => setSearchActive(true)}
                             extraCss={{
                                 display: "none",
-                                [`@media (max-width: ${SEARCH_BREAKPOINT}px)`]: {
+                                [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                                     display: "flex",
                                 },
                             }}
@@ -49,6 +49,13 @@ export const Header: React.FC = () => {
                             <FontAwesomeIcon icon={faSearch} fixedWidth />
                         </ActionIcon>
                     )}
+
+                    <ActionIcon
+                        title={t("user.settings")}
+                        onClick={() => {}}
+                    >
+                        <FontAwesomeIcon icon={faUser} fixedWidth />
+                    </ActionIcon>
 
                     <ActionIcon
                         title={t("main-menu.label")}
@@ -97,7 +104,6 @@ const Logo: React.FC = () => (
 
 
 const SEARCH_HEIGHT = 35;
-const SEARCH_BREAKPOINT = 600;
 
 type SearchFieldProps = {
     variant: "desktop" | "mobile";
@@ -109,7 +115,7 @@ const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const extraCss = variant === "desktop"
         ? {
             maxWidth: 280,
-            [`@media (max-width: ${SEARCH_BREAKPOINT}px)`]: {
+            [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                 display: "none",
             }
         }

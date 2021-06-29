@@ -23,6 +23,9 @@ main-menu:
   settings: Einstellungen
   about: Info
 
+user:
+  settings: Nutzereinstellungen
+
 login:
   button-label: Einloggen
-  not-logged-in: Sie sind nicht eingeloggt.
+  not-logged-in: Nicht eingeloggt
