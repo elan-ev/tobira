@@ -155,8 +155,6 @@ const ActionIcon: React.FC<ActionIconProps> = ({
     extraCss = {},
     children,
 }) => {
-    const iconSize = 28;
-
     return (
         <div css={{
             height: "100%",
@@ -173,9 +171,12 @@ const ActionIcon: React.FC<ActionIconProps> = ({
                     borderRadius: 4,
                     lineHeight: 0,
                     cursor: "pointer",
-                    fontSize: iconSize,
+                    fontSize: 28,
                     "&:hover": {
                         backgroundColor: "#ddd",
+                    },
+                    "@media (max-width: 450px)": {
+                        fontSize: 24,
                     },
                 }}
             >{children}</div>
