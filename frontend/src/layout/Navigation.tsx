@@ -47,23 +47,20 @@ type DesktopProps = {
 };
 
 export const DesktopNav: React.FC<DesktopProps> = ({ nav, layoutCss }) => (
-    <div css={{
+    <ul css={{
         backgroundColor: "#F1F1F1",
-        borderRadius: 4,
         border: "1px solid #C5C5C5",
-        borderTop: "none",
-        borderBottom: "none",
+        borderRadius: 4,
+        listStyle: "none",
+        margin: 0,
+        padding: 0,
+        "& > li:last-of-type": {
+            borderBottom: "none",
+        },
         ...(layoutCss as Record<string, unknown>),
     }}>
-        <ul css={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            borderTop: "1px solid #ccc",
-        }}>
-            {nav.items.map(item => <Item key={item.id} item={item} />)}
-        </ul>
-    </div>
+        {nav.items.map(item => <Item key={item.id} item={item} />)}
+    </ul>
 );
 
 
