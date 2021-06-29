@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faBars, faSearch, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
+import type { Interpolation, Theme } from "@emotion/react";
 
 import CONFIG from "../config";
 import { Link } from "../router";
 import { useMenu } from "./MenuState";
+import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 
 
 export const HEIGHT = 60;
@@ -37,7 +39,12 @@ export const Header: React.FC = () => {
                         <ActionIcon
                             title={t("search")}
                             onClick={() => setSearchActive(true)}
-                            smallScreensOnly={true}
+                            extraCss={{
+                                display: "none",
+                                [`@media (max-width: ${SEARCH_BREAKPOINT}px)`]: {
+                                    display: "flex",
+                                },
+                            }}
                         >
                             <FontAwesomeIcon icon={faSearch} fixedWidth />
                         </ActionIcon>
@@ -46,6 +53,11 @@ export const Header: React.FC = () => {
                     <ActionIcon
                         title={t("main-menu.label")}
                         onClick={() => menu.toggleMenu("burger")}
+                        extraCss={{
+                            [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+                                display: "none",
+                            },
+                        }}
                     >
                         {menu.state === "burger"
                             ? <FontAwesomeIcon icon={faTimes} fixedWidth />
@@ -127,14 +139,14 @@ const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
 type ActionIconProps = {
     onClick: () => void;
     title: string;
-    smallScreensOnly?: boolean;
+    extraCss?: Interpolation<Theme>;
 };
 
 /** A single button with icon in the header. */
 const ActionIcon: React.FC<ActionIconProps> = ({
     title,
     onClick,
-    smallScreensOnly = false,
+    extraCss = {},
     children,
 }) => {
     const iconSize = 28;
@@ -144,12 +156,7 @@ const ActionIcon: React.FC<ActionIconProps> = ({
             height: "100%",
             display: "flex",
             alignItems: "center",
-            ...smallScreensOnly && {
-                display: "none",
-                [`@media (max-width: ${SEARCH_BREAKPOINT}px)`]: {
-                    display: "flex",
-                },
-            }
+            ...(extraCss as Record<string, unknown>),
         }}>
             <div
                 title={title}

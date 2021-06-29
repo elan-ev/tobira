@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Header } from "./Header";
-import { MobileNav } from "./Navigation";
+import { DesktopNav, MobileNav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import type { Navigation } from "./Navigation";
 import { useMenu } from "./MenuState";
 
@@ -29,8 +29,21 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
         }}>
             <Header />
             {menu.state === "burger" && <MobileNav nav={nav} hide={() => menu.close()} />}
-            <main css={{ padding: MAIN_PADDING }}>
-                {children}
+            <main css={{
+                padding: MAIN_PADDING,
+                display: "flex",
+                alignItems: "flex-start",
+            }}>
+                <DesktopNav nav={nav} layoutCss={{
+                    flex: "1 0 12.5%",
+                    minWidth: 240,
+                    maxWidth: 360,
+                    marginRight: 32,
+                    [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
+                        display: "none",
+                    },
+                }} />
+                <div css={{ flex: "12 0 0" }}>{children}</div>
             </main>
         </div>
     );

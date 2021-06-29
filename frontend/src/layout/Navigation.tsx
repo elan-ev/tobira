@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
+import type { Interpolation, Theme } from "@emotion/react";
 
 import { Link } from "../router";
 import type { NavigationRootQuery } from "../query-types/NavigationRootQuery.graphql";
@@ -35,6 +36,35 @@ type NavItem = {
     /** Whether this item is currently the active route. */
     active: boolean;
 };
+
+/** The breakpoint, in pixels, where mobile/desktop navigations are swapped. */
+export const BREAKPOINT = 850;
+
+
+type DesktopProps = {
+    nav: Navigation;
+    layoutCss: Interpolation<Theme>;
+};
+
+export const DesktopNav: React.FC<DesktopProps> = ({ nav, layoutCss }) => (
+    <div css={{
+        backgroundColor: "#F1F1F1",
+        borderRadius: 4,
+        border: "1px solid #C5C5C5",
+        borderTop: "none",
+        borderBottom: "none",
+        ...(layoutCss as Record<string, unknown>),
+    }}>
+        <ul css={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            borderTop: "1px solid #ccc",
+        }}>
+            {nav.items.map(item => <Item key={item.id} item={item} />)}
+        </ul>
+    </div>
+);
 
 
 type MobileProps = {
