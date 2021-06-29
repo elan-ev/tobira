@@ -17,9 +17,10 @@ type Props = {
 export type BlockData = QueryResult["blocks"][0];
 
 export const Blocks: React.FC<Props> = ({ realm }) => {
-    const { blocks } = useFragment(
+    const { path, blocks } = useFragment(
         graphql`
             fragment Blocks_blocks on Realm {
+                path
                 blocks {
                     id
                     title
@@ -47,6 +48,7 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
             "SeriesBlock": () => <SeriesBlock
                 key={block.id}
                 title={block.title}
+                realmPath={path}
                 series={unwrap(block, "series")}
             />,
         }))

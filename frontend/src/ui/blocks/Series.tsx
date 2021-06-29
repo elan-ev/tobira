@@ -9,9 +9,10 @@ import { Link } from "../../router";
 type Props = {
     title: string | null;
     series: NonNullable<BlockData["series"]>;
+    realmPath: string;
 };
 
-export const SeriesBlock: React.FC<Props> = ({ title, series }) => {
+export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => {
     const [THUMB_WIDTH, THUMB_HEIGHT] = [16, 9].map(x => x * 13);
 
     return (
@@ -22,7 +23,7 @@ export const SeriesBlock: React.FC<Props> = ({ title, series }) => {
                 flexWrap: "wrap",
             }}>
                 {series.events.map(event => {
-                    const url = `/v/${keyOfId(event.id)}`;
+                    const url = `${realmPath}/v/${keyOfId(event.id)}`;
 
                     return (
                         <div

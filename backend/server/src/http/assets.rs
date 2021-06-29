@@ -15,7 +15,7 @@ const ASSETS: Setup = assets! {
     "bundle.js": {
         template,
         hash,
-        append: b"//# sourceMappingURL=/assets/{{: path:bundle.js.map :}}"
+        append: b"//# sourceMappingURL=/~assets/{{: path:bundle.js.map :}}"
     },
     "bundle.js.map": { hash },
 
@@ -136,9 +136,9 @@ impl Assets {
             .into()
     }
 
-    /// Serves the main entry point of the application. This is replied to `/` and
-    /// other "public routes", like `/r/lectures`. Basically everywhere where the
-    /// user is supposed to see the website.
+    /// Serves the main entry point of the application. This is replied to `/`
+    /// and other "public routes", like `/lectures`. Basically everywhere where
+    /// the user is supposed to see the website.
     pub(crate) async fn serve_index(&self) -> Response {
         let html = self.index().await;
 

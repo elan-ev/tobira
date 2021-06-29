@@ -38,7 +38,7 @@ const HomePage: React.FC<Props> = ({ queryRef }) => {
         items: realm.children.map(({ id, path, name }) => ({
             id,
             label: name,
-            link: `/r${path}`,
+            link: `${path}`,
             active: false,
         })),
     };

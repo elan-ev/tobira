@@ -10,7 +10,7 @@ import type { Route } from "../router";
 
 
 export const AboutRoute: Route<PreloadedQuery<NavigationRootQuery>> = {
-    path: "/about",
+    path: "/~tobira",
     prepare: () => loadQuery(ROOT_NAV_QUERY, {}),
     render: queryRef => <About queryRef={queryRef} />,
 };

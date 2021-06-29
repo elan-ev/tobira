@@ -9,7 +9,7 @@ import type { NavigationRootQuery } from "../query-types/NavigationRootQuery.gra
 
 
 export const NotFoundRoute: Route<PreloadedQuery<NavigationRootQuery>> = {
-    path: "*",
+    path: ".*",
     prepare: () => loadQuery(ROOT_NAV_QUERY, {}),
     render: queryRef => <NotFound queryRef={queryRef} />,
 };

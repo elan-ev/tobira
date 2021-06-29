@@ -197,7 +197,7 @@ export const rootNavFromQuery = (query: PreloadedQuery<NavigationRootQuery>): Na
         items: realm.children.map(({ id, path, name }) => ({
             id,
             label: name,
-            link: `/r${path}`,
+            link: `${path}`,
             active: false,
         })),
     };

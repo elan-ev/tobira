@@ -48,7 +48,6 @@
     "react-i18next": "^11.8.15",
     "react-markdown": "^6.0.2",
     "react-relay": "^11.0.2",
-    "regexparam": "^2.0.0",
     "relay-compiler": "^11.0.2",
     "relay-compiler-language-typescript": "^14.0.0",
     "relay-config": "^11.0.2",

@@ -12,9 +12,12 @@ import type { Route } from "../router";
 import { Root } from "../layout/Root";
 
 
+/** A valid realm path segment */
+export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
+
 export const RealmRoute: Route<PreloadedQuery<RealmQuery>> = {
-    path: "/r/*",
-    prepare: params => loadQuery(relayEnv, query, { path: `/${params.wild}` }),
+    path: `((/${PATH_SEGMENT_REGEX})+)`,
+    prepare: ([path]) => loadQuery(relayEnv, query, { path }),
     render: queryRef => <RealmPage queryRef={queryRef} />,
 };
 
@@ -59,25 +62,25 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
         .concat(realm)
         .map(({ name, path }) => ({
             label: name,
-            link: `/r${path}`,
+            link: `${path}`,
         }));
 
     const navItems = realm.children.length > 0
         ? realm.children.map(({ id, path, name }) => ({
             id,
             label: name,
-            link: `/r${path}`,
+            link: `${path}`,
             active: false,
         }))
         : realm.parent.children.map(({ id, name, path }) => ({
             id,
             label: name,
-            link: `/r${path}`,
+            link: `${path}`,
             active: id === realm.id,
         }));
 
     const nav = {
-        parentLink: realm.parent.path === "" ? "/" : `/r${realm.parent.path}`,
+        parentLink: realm.parent.path === "" ? "/" : `${realm.parent.path}`,
         items: navItems,
     };
 

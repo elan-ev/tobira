@@ -14,7 +14,7 @@ module.exports = (_env, argv) => ({
     output: {
         filename: "bundle.js",
         path: OUT_PATH,
-        publicPath: "/assets/",
+        publicPath: "/~assets/",
     },
 
     resolve: {
