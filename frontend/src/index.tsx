@@ -7,4 +7,5 @@ import { matchInitialRoute } from "./router";
 const initialRoute = matchInitialRoute();
 const root = document.createElement("div");
 document.body.appendChild(root);
-ReactDOM.render(<App initialRoute={initialRoute} />, root);
+const reactRoot = ReactDOM.createRoot(root);
+reactRoot.render(<App initialRoute={initialRoute} />);

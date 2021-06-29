@@ -9,7 +9,11 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "strict": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "typeRoots": [
+        "src/typings",
+        "node_modules/@types"
+    ]
   },
   "include": ["src"]
 }

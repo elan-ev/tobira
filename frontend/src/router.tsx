@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, startTransition } from "react";
 import { parse } from "regexparam";
 
 import { AboutRoute } from "./page/About";
@@ -190,7 +190,9 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
 
         e.preventDefault();
         const href = (e.currentTarget as HTMLAnchorElement).href;
-        context.setActiveRoute(matchRoute(href));
+        startTransition(() => {
+            context.setActiveRoute(matchRoute(href));
+        });
 
         history.pushState(null, "", href);
 
