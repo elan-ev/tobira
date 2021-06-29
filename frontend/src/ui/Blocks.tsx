@@ -58,7 +58,12 @@ export const Title: React.FC<{ title: string | null }> = ({ title }) => (
 );
 
 export const Block: React.FC = ({ children }) => (
-    <div css={{ margin: "30px 0" }}>{children}</div>
+    <div css={{
+        margin: "30px 0",
+        ":first-of-type": {
+            marginTop: 0,
+        },
+    }}>{children}</div>
 );
 
 /** A helper function to getting block-type dependent fields as non-null values. */
