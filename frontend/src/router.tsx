@@ -1,11 +1,11 @@
 import React, { useEffect, useState, startTransition } from "react";
 import { parse } from "regexparam";
 
-import { AboutRoute } from "./page/About";
-import { HomeRoute } from "./page/Home";
-import { NotFoundRoute } from "./page/NotFound";
-import { RealmRoute } from "./page/Realm";
-import { VideoRoute } from "./page/Video";
+import { AboutRoute } from "./routes/About";
+import { HomeRoute } from "./routes/Home";
+import { NotFoundRoute } from "./routes/NotFound";
+import { RealmRoute } from "./routes/Realm";
+import { VideoRoute } from "./routes/Video";
 import { bug } from "./util/err";
 
 
