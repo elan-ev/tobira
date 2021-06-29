@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 
 
-type MenuState = "closed" | "burger";
+type MenuState = "closed" | "burger" | "search";
 class Menu {
     public readonly state: MenuState;
     private readonly setState: (state: MenuState) => void;
