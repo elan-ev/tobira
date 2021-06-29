@@ -103,8 +103,6 @@ const Logo: React.FC = () => (
 );
 
 
-const SEARCH_HEIGHT = 35;
-
 type SearchFieldProps = {
     variant: "desktop" | "mobile";
 };
@@ -131,11 +129,17 @@ const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 flex: "1 1 0px",
                 margin: "0 8px",
                 minWidth: 50,
-                height: SEARCH_HEIGHT,
-                borderRadius: SEARCH_HEIGHT / 2,
+                height: 35,
+                borderRadius: 4,
                 border: "1.5px solid #ccc",
-                padding: `0 ${SEARCH_HEIGHT / 2}px`,
-                ...extraCss
+                padding: `0 12px`,
+                "&:focus": {
+                    outline: "none",
+                    // TODO: make color configurable
+                    boxShadow: "0 0 0 1px #007A96",
+                    borderColor: "#007A96",
+                },
+                ...extraCss,
             }}
         />
     );
