@@ -14,11 +14,15 @@ import { match } from "../util";
 export const HEIGHT = 60;
 
 
-export const Header: React.FC = () => {
+type Props = {
+    hideNavIcon?: boolean;
+};
+
+export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
     const menu = useMenu();
 
     const content = match(menu.state, {
-        "closed": () => <DefaultMode />,
+        "closed": () => <DefaultMode hideNavIcon={hideNavIcon} />,
         "search": () => <SearchMode />,
         "burger": () => <OpenMenuMode />,
     });
@@ -64,7 +68,7 @@ const OpenMenuMode: React.FC = () => {
     </>;
 };
 
-const DefaultMode: React.FC = () => {
+const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
     const { t } = useTranslation();
     const menu = useMenu();
 
@@ -89,17 +93,19 @@ const DefaultMode: React.FC = () => {
                 <FontAwesomeIcon icon={faUser} fixedWidth />
             </ActionIcon>
 
-            <ActionIcon
-                title={t("main-menu.label")}
-                onClick={() => menu.toggleMenu("burger")}
-                extraCss={{
-                    [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
-                        display: "none",
-                    },
-                }}
-            >
-                <FontAwesomeIcon icon={faBars} fixedWidth />
-            </ActionIcon>
+            {!hideNavIcon && (
+                <ActionIcon
+                    title={t("main-menu.label")}
+                    onClick={() => menu.toggleMenu("burger")}
+                    extraCss={{
+                        [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+                            display: "none",
+                        },
+                    }}
+                >
+                    <FontAwesomeIcon icon={faBars} fixedWidth />
+                </ActionIcon>
+            )}
         </ButtonContainer>
     </>;
 };

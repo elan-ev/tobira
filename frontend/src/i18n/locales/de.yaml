@@ -7,7 +7,13 @@ home: Startseite
 navigation: Navigation
 page-not-found:
   title: Seite nicht gefunden
-  body: Die angefragte Resource existiert nicht. Sorry! :-(
+  explanation: >
+    Die von Ihnen gewünschte Seite existiert nicht. Sie wurde möglicherweise
+    gelöscht und umbenannt. Falls Sie die Adresse/URL manuell eingegeben haben,
+    prüfen Sie diese auf Fehler.
+  actions: >
+    Sie können versuchen <1>die Startseite</1> zu besuchen oder die Suche zu
+    benutzen, um die gewünschte Seite zu finden.
 
 about:
   title: Information

@@ -1,34 +1,42 @@
-import { useTranslation } from "react-i18next";
-import type { PreloadedQuery } from "react-relay";
+import { Trans, useTranslation } from "react-i18next";
+import { faFrown } from "@fortawesome/free-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import { Root } from "../layout/Root";
-import { rootNavFromQuery, ROOT_NAV_QUERY } from "../layout/Navigation";
+import { MAIN_PADDING, OUTER_CONTAINER_MARGIN } from "../layout/Root";
+import { Header } from "../layout/Header";
+import { Link } from "../router";
 import type { Route } from "../router";
-import { loadQuery } from "../relay";
-import type { NavigationRootQuery } from "../query-types/NavigationRootQuery.graphql";
 
 
-export const NotFoundRoute: Route<PreloadedQuery<NavigationRootQuery>> = {
+export const NotFoundRoute: Route<void> = {
     path: ".*",
-    prepare: () => loadQuery(ROOT_NAV_QUERY, {}),
-    render: queryRef => <NotFound queryRef={queryRef} />,
+    prepare: () => {},
+    render: () => <NotFound />,
 };
 
-type Props = {
-    queryRef: PreloadedQuery<NavigationRootQuery>;
-};
-
-const NotFound: React.FC<Props> = ({ queryRef }) => {
+export const NotFound: React.FC = () => {
     const { t } = useTranslation();
 
-    // TODO: we could add some hints what might went wrong or how to resolve the
-    // problem.
     return (
-        <Root nav={rootNavFromQuery(queryRef)}>
-            <div css={{ margin: "0 auto", maxWidth: 600 }}>
-                <h1>{t("page-not-found.title")}</h1>
-                <p css={{ margin: "16px 0" }}>{t("page-not-found.body")}</p>
-            </div>
-        </Root>
+        <div css={{ margin: OUTER_CONTAINER_MARGIN }}>
+            <Header hideNavIcon={true} />
+            <main css={{
+                padding: MAIN_PADDING,
+                margin: "0 auto",
+                maxWidth: 500,
+            }}>
+                <FontAwesomeIcon
+                    icon={faFrown}
+                    css={{ margin: "0 auto", display: "block", fontSize: 90 }}
+                />
+                <h1 css={{ textAlign: "center", margin: "30px 0" }}>
+                    {t("page-not-found.title")}
+                </h1>
+                <p css={{ margin: "16px 0" }}>{t("page-not-found.explanation")}</p>
+                <Trans i18nKey="page-not-found.actions">
+                    foo<Link to="/">bar</Link>
+                </Trans>
+            </main>
+        </div>
     );
 };
