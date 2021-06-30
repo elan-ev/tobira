@@ -17,7 +17,7 @@ import { NotFound } from "./NotFound";
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
 
 export const RealmRoute: Route<PreloadedQuery<RealmQuery>> = {
-    path: `((/${PATH_SEGMENT_REGEX})+)`,
+    path: `((?:/${PATH_SEGMENT_REGEX})+)`,
     prepare: ([path]) => loadQuery(relayEnv, query, { path }),
     render: queryRef => <RealmPage queryRef={queryRef} />,
 };

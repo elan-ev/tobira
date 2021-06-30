@@ -12,9 +12,9 @@ import { NotFound } from "./NotFound";
 
 
 export const VideoRoute: Route<PreloadedQuery<VideoQuery>> = {
-    path: `((/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
+    path: `((?:/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
     // TODO: check if video belongs to realm
-    prepare: ([_path, _, videoId]) => loadQuery(relayEnv, query, { id: `ev${videoId}` }),
+    prepare: ([_path, videoId]) => loadQuery(relayEnv, query, { id: `ev${videoId}` }),
     render: queryRef => <VideoPage queryRef={queryRef} />,
 };
 
