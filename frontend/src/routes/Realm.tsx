@@ -7,7 +7,6 @@ import type { RealmQuery } from "../query-types/RealmQuery.graphql";
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
-import { unreachable } from "../util/err";
 import type { Route } from "../router";
 import { Root } from "../layout/Root";
 import { NotFound } from "./NotFound";
@@ -17,7 +16,7 @@ import { NotFound } from "./NotFound";
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
 
 export const RealmRoute: Route<PreloadedQuery<RealmQuery>> = {
-    path: `((?:/${PATH_SEGMENT_REGEX})+)`,
+    path: `((?:/${PATH_SEGMENT_REGEX})*)`,
     prepare: ([path]) => loadQuery(relayEnv, query, { path }),
     render: queryRef => <RealmPage queryRef={queryRef} />,
 };
@@ -51,11 +50,6 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
         return <NotFound kind="page" />;
     }
 
-    if (!realm.parent) {
-        return unreachable("non root realm has no parent");
-    }
-
-    // Prepare data for breadcrumbs
     const breadcrumbs = realm.parents
         .slice(1)
         .concat(realm)
@@ -64,6 +58,7 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
             link: `${path}`,
         }));
 
+    const isRoot = realm.parent === null;
     const navItems = realm.children.length > 0
         ? realm.children.map(({ id, path, name }) => ({
             id,
@@ -71,22 +66,24 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
             link: `${path}`,
             active: false,
         }))
-        : realm.parent.children.map(({ id, name, path }) => ({
+        : (realm.parent?.children ?? []).map(({ id, name, path }) => ({
             id,
             label: name,
             link: `${path}`,
             active: id === realm.id,
         }));
 
-    const nav = {
-        parentLink: realm.parent.path === "" ? "/" : `${realm.parent.path}`,
-        items: navItems,
-    };
+    let parentLink = null;
+    if (realm.parent !== null) {
+        parentLink = realm.parent.path === "" ? "/" : `${realm.parent.path}`;
+    }
 
     return (
-        <Root nav={nav}>
-            <div><Breadcrumbs path={breadcrumbs} /></div>
-            <h1 css={{ margin: "12px 0" }}>{realm.name}</h1>
+        <Root nav={{ parentLink, items: navItems }}>
+            {!isRoot && <>
+                <div><Breadcrumbs path={breadcrumbs} /></div>
+                <h1 css={{ margin: "12px 0" }}>{realm.name}</h1>
+            </>}
             <Blocks realm={realm} />
         </Root>
     );

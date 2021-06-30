@@ -1,7 +1,6 @@
 import React, { useEffect, useState, startTransition } from "react";
 
 import { AboutRoute } from "./routes/About";
-import { HomeRoute } from "./routes/Home";
 import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
@@ -14,7 +13,6 @@ import { bug } from "./util/err";
  */
 const ROUTES = [
     AboutRoute,
-    HomeRoute,
     RealmRoute,
     VideoRoute,
 
