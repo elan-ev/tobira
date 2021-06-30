@@ -188,11 +188,6 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 .unwrap()
         }
 
-        // The interactive GraphQL API explorer/IDE. We actually keep this in
-        // production as it does not hurt and in particular: does not expose any
-        // information that isn't already exposed by the API itself.
-        "/graphiql" => juniper_hyper::graphiql("/graphql", None).await,
-
         // Assets (JS files, fonts, ...)
         path if path.starts_with(ASSET_PREFIX) => {
             let asset_path = &path[ASSET_PREFIX.len()..];
@@ -201,9 +196,18 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 None => reply_404(&ctx.assets, &method, path).await,
             }
         }
-        // Special, internal routes, starting with `/~`.
+
+
+        // ----- Special, internal routes, starting with `/~` ----------------------------------
         "/~tobira" => ctx.assets.serve_index().await,
+
+        // The interactive GraphQL API explorer/IDE. We actually keep this in
+        // production as it does not hurt and in particular: does not expose any
+        // information that isn't already exposed by the API itself.
+        "/~graphiql" => juniper_hyper::graphiql("/graphql", None).await,
+
         path if path.starts_with("/~") => reply_404(&ctx.assets, &method, path).await,
+
 
         // Currently we just reply with our `index.html` to everything else.
         // That's of course not optimal because for many paths, our frontend
