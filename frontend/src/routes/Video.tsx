@@ -8,6 +8,7 @@ import { Player } from "../ui/Player";
 import type { Route } from "../router";
 import { Root } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
+import { NotFound } from "./NotFound";
 
 
 export const VideoRoute: Route<PreloadedQuery<VideoQuery>> = {
@@ -34,10 +35,7 @@ type Props = {
 const VideoPage: React.FC<Props> = ({ queryRef }) => {
     const { event } = usePreloadedQuery(query, queryRef);
     if (!event) {
-        return <>
-            <h1>Not found</h1>
-            <p>The video you are looking for could not be found</p>
-        </>;
+        return <NotFound kind="video" />;
     }
 
     // TODO

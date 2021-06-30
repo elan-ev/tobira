@@ -5,11 +5,17 @@ close: Close
 back: Back
 home: Home
 navigation: Navigation
-page-not-found:
-  title: Page not found
-  explanation: >
+not-found:
+  page-not-found: Page not found
+  video-not-found: Video not found
+  page-explanation: >
     The page you want to visit does not exist. It might have been removed or
-    renamed. If you entered the address/URL manually, please double check it for
+    renamed.
+  video-explanation: >
+    The video you want to watch does not exist. It might have been removed or
+    moved.
+  url-typo: >
+    If you entered the address/URL manually, please double check it for
     spelling mistakes.
   actions: >
     You can try visiting <1>the homepage</1> or using the search bar to find the

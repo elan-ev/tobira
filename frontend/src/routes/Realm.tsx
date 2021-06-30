@@ -10,6 +10,7 @@ import { Blocks } from "../ui/Blocks";
 import { unreachable } from "../util/err";
 import type { Route } from "../router";
 import { Root } from "../layout/Root";
+import { NotFound } from "./NotFound";
 
 
 /** A valid realm path segment */
@@ -47,9 +48,7 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
     const { realm } = usePreloadedQuery(query, queryRef);
 
     if (!realm) {
-        // TODO: that should obviously be handled in a better way
-        //   Also: I'm not sure whether that's still the only cause for error.
-        return <b>{"Realm path not found :("}</b>;
+        return <NotFound kind="page" />;
     }
 
     if (!realm.parent) {
