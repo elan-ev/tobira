@@ -1,8 +1,9 @@
 import React from "react";
 import { useTranslation, Trans } from "react-i18next";
+import { usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
-import { rootNavFromQuery, ROOT_NAV_QUERY } from "../layout/Navigation";
+import { navFromQuery, ROOT_NAV_QUERY } from "../layout/Navigation";
 import { Root } from "../layout/Root";
 import type { NavigationRootQuery } from "../query-types/NavigationRootQuery.graphql";
 import { loadQuery } from "../relay";
@@ -21,9 +22,10 @@ type Props = {
 
 const About: React.FC<Props> = ({ queryRef }) => {
     const { t } = useTranslation();
+    const { realm } = usePreloadedQuery(ROOT_NAV_QUERY, queryRef);
 
     return (
-        <Root nav={rootNavFromQuery(queryRef)}>
+        <Root navSource={navFromQuery(realm)}>
             <div css={{ margin: "0 auto", maxWidth: 600 }}>
                 <h1>{t("about.title")}</h1>
                 <p css={{ margin: "16px 0" }}>

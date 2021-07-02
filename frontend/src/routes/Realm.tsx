@@ -10,6 +10,7 @@ import { Blocks } from "../ui/Blocks";
 import type { Route } from "../router";
 import { Root } from "../layout/Root";
 import { NotFound } from "./NotFound";
+import { navFromQuery } from "../layout/Navigation";
 
 
 /** A valid realm path segment */
@@ -29,12 +30,9 @@ const query = graphql`
             name
             path
             parents { name path }
-            children { id name path }
-            parent {
-                children { id name path }
-                path
-            }
+            parent { id }
             ... Blocks_blocks
+            ... NavigationData
         }
     }
 `;
@@ -59,27 +57,9 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
         }));
 
     const isRoot = realm.parent === null;
-    const navItems = realm.children.length > 0
-        ? realm.children.map(({ id, path, name }) => ({
-            id,
-            label: name,
-            link: `${path}`,
-            active: false,
-        }))
-        : (realm.parent?.children ?? []).map(({ id, name, path }) => ({
-            id,
-            label: name,
-            link: `${path}`,
-            active: id === realm.id,
-        }));
-
-    let parentLink = null;
-    if (realm.parent !== null) {
-        parentLink = realm.parent.path === "" ? "/" : `${realm.parent.path}`;
-    }
 
     return (
-        <Root nav={{ parentLink, items: navItems }}>
+        <Root navSource={navFromQuery(realm)}>
             {!isRoot && <>
                 <div><Breadcrumbs path={breadcrumbs} /></div>
                 <h1 css={{ margin: "12px 0" }}>{realm.name}</h1>

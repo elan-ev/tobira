@@ -2,7 +2,7 @@ import React from "react";
 
 import { Header } from "./Header";
 import { DesktopNav, MobileNav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
-import type { Navigation } from "./Navigation";
+import type { NavSource } from "./Navigation";
 import { useMenu } from "./MenuState";
 
 
@@ -14,10 +14,10 @@ export const MAIN_PADDING = 16;
 export const OUTER_CONTAINER_MARGIN = "0 calc(max(0px, 100% - 1100px) * 0.1)";
 
 type Props = {
-    nav: Navigation;
+    navSource: NavSource;
 };
 
-export const Root: React.FC<Props> = ({ nav, children }) => {
+export const Root: React.FC<Props> = ({ navSource, children }) => {
     const menu = useMenu();
 
     return (
@@ -29,13 +29,13 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
             },
         }}>
             <Header />
-            {menu.state === "burger" && <MobileNav nav={nav} hide={() => menu.close()} />}
+            {menu.state === "burger" && <MobileNav source={navSource} hide={() => menu.close()} />}
             <main css={{
                 padding: MAIN_PADDING,
                 display: "flex",
                 alignItems: "flex-start",
             }}>
-                <DesktopNav nav={nav} layoutCss={{
+                <DesktopNav source={navSource} layoutCss={{
                     flex: "1 0 12.5%",
                     minWidth: 240,
                     maxWidth: 360,
