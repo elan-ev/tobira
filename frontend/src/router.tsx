@@ -12,11 +12,11 @@ const ROUTES: Route<any>[] = [
     // TODO: remove dummy routes
     {
         path: "/",
-        prepare: params => {
+        prepare: (params: Record<string, string>) => {
             console.log(params);
             return "prepare home";
         },
-        render: prepared => {
+        render: (prepared: string) => {
             console.log(prepared);
             return <>
                 <h1>Home</h1>
@@ -26,16 +26,25 @@ const ROUTES: Route<any>[] = [
     },
     {
         path: "/r/*",
-        prepare: params => {
+        prepare: (params: Record<string, string>) => {
             console.log(params);
             return "prepare realm";
         },
-        render: prepared => {
+        render: (prepared: string) => {
             console.log(prepared);
             return <h1>Realm</h1>;
         },
     },
-];
+] as const;
+
+// Typecheck `ROUTES` to make sure that the `prepare` return type and
+// `render` parameter type match for each individual route. If you get a
+// strange error here, check your types in the route defintion.
+type ArrT = typeof ROUTES;
+type VerifyRoutes<T> = T extends Route<infer U> ? Route<U> : never;
+type Indices = Exclude<keyof ArrT, keyof any[]>;
+type StrictRoutesTy = { [I in Indices]: VerifyRoutes<ArrT[I]> };
+const _VERIFIED: StrictRoutesTy = ROUTES;
 
 
 /** The definition of one route. */
