@@ -1,8 +1,16 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Root } from "../layout/Root";
+import type { Route } from "../router";
 
 
-export const NotFound: React.FC = () => {
+export const NotFoundRoute: Route<void> = {
+    path: "*",
+    prepare: () => {},
+    render: () => <Root><NotFound /></Root>,
+};
+
+const NotFound: React.FC = () => {
     const { t } = useTranslation();
 
     // TODO: we could add some hints what might went wrong or how to resolve the

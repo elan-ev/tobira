@@ -34,8 +34,8 @@ const MARKDOWN_COMPONENTS: TransformOptions["components"] = {
         css={{
             borderLeft: "4px solid #e5e5e5",
             padding: "2px 8px",
-            "& > *:first-child": { marginTop: 0 },
-            "& > *:last-child": { marginBottom: 0 },
+            "& > *:first-of-type": { marginTop: 0 },
+            "& > *:last-of-type": { marginBottom: 0 },
         }}
         {...props}
     />,
@@ -71,8 +71,8 @@ export const TextBlock: React.FC<Props> = ({ title, content }) => (
         <div css={{
             maxWidth: 1200,
             padding: "6px 10px",
-            "& > *:first-child": { marginTop: 0 },
-            "& > *:last-child": { marginBottom: 0 },
+            "& > *:first-of-type": { marginTop: 0 },
+            "& > *:last-of-type": { marginBottom: 0 },
         }}>
             <ReactMarkdown allowedElements={ALLOWED_MARKDOWN_TAGS} components={MARKDOWN_COMPONENTS}>
                 {content}

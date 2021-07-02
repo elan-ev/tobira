@@ -42,7 +42,8 @@ module.exports = {
             "named": "never",
             "asyncArrow": "always",
         }],
-        "lines-around-comment": ["warn", { "allowBlockStart": true }],
+        "lines-around-comment": "off",
+        "no-multiple-empty-lines": ["warn", { max: 5 }],
         "camelcase": ["warn", {
             allow: ["\\$key$"],
             ignoreImports: true,
@@ -152,6 +153,7 @@ module.exports = {
             "@typescript-eslint/prefer-interface": "off",
             "@typescript-eslint/no-type-alias": "off",
             "@typescript-eslint/consistent-type-definitions": "off",
+            "@typescript-eslint/no-empty-function": "off",
 
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],
@@ -161,7 +163,7 @@ module.exports = {
                 "all",
                 { enforceForArrowConditionals: false, ignoreJSX: "all" },
             ],
-            "@typescript-eslint/no-unused-vars": ["warn", noUnusedVarsOptions],
+            "@typescript-eslint/no-unused-vars": "off",
             "@typescript-eslint/comma-spacing": "warn",
             // This checks some more things than `no-unused-vars`,
             // but is less configurable.
@@ -192,7 +194,7 @@ module.exports = {
                 "named": "never",
                 "asyncArrow": "always",
             }],
-            "lines-around-comment": ["warn", { "allowBlockStart": true }],
+            "lines-around-comment": "off",
         },
         settings: {
             react: {

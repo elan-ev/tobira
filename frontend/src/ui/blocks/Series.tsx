@@ -1,9 +1,10 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
 import { keyOfId } from "../../util";
 import { Block, Title } from "../Blocks";
 import type { BlockData } from "../Blocks";
+import { Link } from "../../router";
+
 
 type Props = {
     title: string | null;

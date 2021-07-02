@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faInfoCircle, faCog, faMoon } from "@fortawesome/free-solid-svg-icons";
-import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageIcon from "ionicons/dist/svg/language.svg";
 import MenuIcon from "ionicons/dist/svg/ellipsis-vertical.svg";
@@ -9,6 +8,7 @@ import MenuIcon from "ionicons/dist/svg/ellipsis-vertical.svg";
 import { languages } from "../i18n";
 import { match } from "../util";
 import CONFIG from "../config";
+import { Link } from "../router";
 
 
 export const HEIGHT = 60;
