@@ -7,6 +7,8 @@ import { GlobalStyle } from "./GlobalStyle";
 import { Router } from "./router";
 import type { MatchedRoute } from "./router";
 import { MenuProvider } from "./layout/MenuState";
+import { CacheProvider } from "@emotion/react";
+import createEmotionCache from "@emotion/cache";
 
 
 type Props = {
@@ -17,12 +19,30 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
     <RelayEnvironmentProvider {...{ environment }}>
         <GlobalStyle />
         <APIWrapper>
-            <MenuProvider>
-                <Router initialRoute={initialRoute} />
-            </MenuProvider>
+            <SilenceEmotionWarnings>
+                <MenuProvider>
+                    <Router initialRoute={initialRoute} />
+                </MenuProvider>
+            </SilenceEmotionWarnings>
         </APIWrapper>
     </RelayEnvironmentProvider>
 );
+
+/**
+ * This thingy is kind of sad. In short: emotion-js emits warnings whenever one
+ * uses `:first-child` selectors in CSS. That's because stuff can break when
+ * doing server side rendering and using those selectors, since emotion will
+ * insert `<style>` tags. This is the best way to disable the warning globally.
+ * We don't need that warning because we won't do SSR.
+ *
+ * Full story: https://github.com/emotion-js/emotion/issues/1105
+ */
+const SilenceEmotionWarnings: React.FC = ({ children }) => {
+    const cache = createEmotionCache({ key: "css" });
+    cache.compat = true;
+
+    return <CacheProvider value={cache}>{children}</CacheProvider>;
+};
 
 const APIWrapper: React.FC = ({ children }) => (
     <APIErrorBoundary>
