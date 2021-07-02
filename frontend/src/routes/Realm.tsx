@@ -62,7 +62,7 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
         <Root navSource={navFromQuery(realm)}>
             {!isRoot && <>
                 <div><Breadcrumbs path={breadcrumbs} /></div>
-                <h1 css={{ margin: "12px 0" }}>{realm.name}</h1>
+                <h1>{realm.name}</h1>
             </>}
             <Blocks realm={realm} />
         </Root>

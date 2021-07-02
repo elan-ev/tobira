@@ -44,7 +44,13 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
                         display: "none",
                     },
                 }} />
-                <div css={{ flex: "12 0 0" }}>{children}</div>
+                <div css={{
+                    flex: "12 0 0",
+                    "& > h1": { margin: "12px 0" },
+                    "& > h1:first-child": { marginTop: 0 },
+                }}>
+                    {children}
+                </div>
             </main>
         </div>
     );
