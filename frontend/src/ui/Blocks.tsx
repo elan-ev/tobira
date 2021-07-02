@@ -42,12 +42,12 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
         blocks.map(block => match(block.__typename, {
             "TextBlock": () => <TextBlock
                 key={block.id}
-                title={block.title}
+                title={block.title ?? undefined}
                 content={unwrap(block, "content")}
             />,
             "SeriesBlock": () => <SeriesBlock
                 key={block.id}
-                title={block.title}
+                title={block.title ?? undefined}
                 realmPath={path}
                 series={unwrap(block, "series")}
             />,
@@ -55,8 +55,8 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
     }</>;
 };
 
-export const Title: React.FC<{ title: string | null }> = ({ title }) => (
-    title === null ? null : <h2>{title}</h2>
+export const Title: React.FC<{ title?: string }> = ({ title }) => (
+    title === undefined ? null : <h2>{title}</h2>
 );
 
 export const Block: React.FC = ({ children }) => (

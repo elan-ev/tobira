@@ -7,7 +7,7 @@ import { Link } from "../../router";
 
 
 type Props = {
-    title: string | null;
+    title?: string;
     series: NonNullable<BlockData["series"]>;
     realmPath: string;
 };

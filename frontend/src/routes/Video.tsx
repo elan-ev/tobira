@@ -4,12 +4,13 @@ import type { PreloadedQuery } from "react-relay/hooks";
 
 import type { VideoQuery } from "../query-types/VideoQuery.graphql";
 import { environment as relayEnv } from "../relay";
-import { Player } from "../ui/Player";
 import type { Route } from "../router";
 import { Root } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
 import { NotFound } from "./NotFound";
 import { navFromQuery } from "../layout/Navigation";
+import { VideoBlock } from "../ui/blocks/Video";
+import { TextBlock } from "../ui/blocks/Text";
 
 
 export const VideoRoute: Route<PreloadedQuery<VideoQuery>> = {
@@ -48,9 +49,9 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
     const { title, video, description } = event;
     return (
         <Root navSource={navFromQuery(realm)}>
-            <Player mediaUrl={video} />
             <h1>{title}</h1>
-            <p>{description}</p>
+            <VideoBlock mediaUrl={video} />
+            {description !== null && <TextBlock content={description} />}
         </Root>
     );
 };
