@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { parse } from "regexparam";
 
+import { AboutRoute } from "./page/About";
+import { HomeRoute } from "./page/Home";
+import { NotFoundRoute } from "./page/NotFound";
+import { RealmRoute } from "./page/Realm";
+import { VideoRoute } from "./page/Video";
 import { bug } from "./util/err";
 
 
@@ -8,33 +13,13 @@ import { bug } from "./util/err";
  * All routes of this application. The order of routes matters since the first
  * matching route is used.
  */
-const ROUTES: Route<any>[] = [
-    // TODO: remove dummy routes
-    {
-        path: "/",
-        prepare: (params: Record<string, string>) => {
-            console.log(params);
-            return "prepare home";
-        },
-        render: (prepared: string) => {
-            console.log(prepared);
-            return <>
-                <h1>Home</h1>
-                <Link to="/r/foo">Click</Link>
-            </>;
-        },
-    },
-    {
-        path: "/r/*",
-        prepare: (params: Record<string, string>) => {
-            console.log(params);
-            return "prepare realm";
-        },
-        render: (prepared: string) => {
-            console.log(prepared);
-            return <h1>Realm</h1>;
-        },
-    },
+const ROUTES = [
+    AboutRoute,
+    HomeRoute,
+    RealmRoute,
+    VideoRoute,
+
+    NotFoundRoute,
 ] as const;
 
 // Typecheck `ROUTES` to make sure that the `prepare` return type and
@@ -113,7 +98,6 @@ const matchRoute = (href: string): MatchedRoute<any> => {
     const route = ROUTES[index];
 
     return {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         prepared: route.prepare(params),
         render: route.render,
     };

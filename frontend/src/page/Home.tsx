@@ -4,9 +4,17 @@ import type { HomeQuery } from "../query-types/HomeQuery.graphql";
 
 import { NavMain as MainLayout } from "../layout/NavMain";
 import { Blocks } from "../ui/Blocks";
+import type { Route } from "../router";
+import { Root } from "../layout/Root";
 
 
-export const HomePage: React.FC = () => {
+export const HomeRoute: Route<void> = {
+    path: "/",
+    prepare: () => {},
+    render: () => <Root><HomePage /></Root>,
+};
+
+const HomePage: React.FC = () => {
     const { realm } = useLazyLoadQuery<HomeQuery>(graphql`
         query HomeQuery {
             realm: rootRealm {

@@ -1,8 +1,16 @@
 import React from "react";
 import { useTranslation, Trans } from "react-i18next";
+import { Root } from "../layout/Root";
+import type { Route } from "../router";
 
 
-export const About: React.FC = () => {
+export const AboutRoute: Route<void> = {
+    path: "/about",
+    prepare: () => {},
+    render: () => <Root><About /></Root>,
+};
+
+const About: React.FC = () => {
     const { t } = useTranslation();
 
     return (

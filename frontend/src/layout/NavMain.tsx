@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSitemap } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
+
+import { Link } from "../router";
 
 
 type Props = {

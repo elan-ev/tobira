@@ -1,54 +1,25 @@
 import React, { Suspense } from "react";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import type { RouteComponentProps } from "react-router-dom";
 
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { environment, ServerError, APIError } from "./relay";
 
 import { GlobalStyle } from "./GlobalStyle";
-import { Root } from "./layout/Root";
-import { RealmPage } from "./page/Realm";
-import { HomePage } from "./page/Home";
-import { VideoPage } from "./page/Video";
-import { NotFound } from "./page/NotFound";
-import { About } from "./page/About";
+import { Router } from "./router";
+import type { MatchedRoute } from "./router";
 
 
-export const App: React.FC = () => (
+type Props = {
+    initialRoute: MatchedRoute<any>;
+};
+
+export const App: React.FC<Props> = ({ initialRoute }) => (
     <RelayEnvironmentProvider {...{ environment }}>
         <GlobalStyle />
-        <Router>
-            <Root>
-                <Switch>
-                    <Route exact path="/" component={HomeRoute} />
-                    <Route exact path="/about" component={About} />
-                    <Route path="/r/:path+" component={RealmRoute} />
-                    <Route exact path="/v/:id" component={VideoRoute} />
-                    <Route component={NotFound} />
-                </Switch>
-            </Root>
-        </Router>
+        <APIWrapper>
+            <Router initialRoute={initialRoute} />
+        </APIWrapper>
     </RelayEnvironmentProvider>
 );
-
-const HomeRoute: React.FC = () => (
-    <APIWrapper>
-        <HomePage />
-    </APIWrapper>
-);
-
-const RealmRoute: React.FC<RouteComponentProps<{ path?: string }>> = ({ match }) => (
-    <APIWrapper>
-        <RealmPage path={match.params.path ?? ""} />
-    </APIWrapper>
-);
-
-const VideoRoute: React.FC<RouteComponentProps<{ id: string }>> = ({ match }) => (
-    <APIWrapper>
-        <VideoPage id={match.params.id} />
-    </APIWrapper>
-);
-
 
 const APIWrapper: React.FC = ({ children }) => (
     <APIErrorBoundary>

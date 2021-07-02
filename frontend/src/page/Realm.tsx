@@ -7,13 +7,21 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
 import { NavMain as MainLayout } from "../layout/NavMain";
 import { unreachable } from "../util/err";
+import type { Route } from "../router";
+import { Root } from "../layout/Root";
 
+
+export const RealmRoute: Route<Record<string, string>> = {
+    path: "/r/*",
+    prepare: params => params,
+    render: params => <Root><RealmPage path={params.wild} /></Root>,
+};
 
 type Props = {
     path: string;
 };
 
-export const RealmPage: React.FC<Props> = ({ path }) => {
+const RealmPage: React.FC<Props> = ({ path }) => {
     const isRoot = path === "";
 
     // TODO Build this query from fragments!

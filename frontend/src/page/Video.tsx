@@ -3,13 +3,21 @@ import { graphql, useLazyLoadQuery } from "react-relay/hooks";
 
 import type { VideoQuery } from "../query-types/VideoQuery.graphql";
 import { Player } from "../ui/Player";
+import type { Route } from "../router";
+import { Root } from "../layout/Root";
 
+
+export const VideoRoute: Route<Record<string, string>> = {
+    path: "/v/:id",
+    prepare: params => params,
+    render: params => <Root><VideoPage id={params.id} /></Root>,
+};
 
 type Props = {
     id: string;
 };
 
-export const VideoPage: React.FC<Props> = ({ id }) => {
+const VideoPage: React.FC<Props> = ({ id }) => {
     const { event } = useLazyLoadQuery<VideoQuery>(
         graphql`
             query VideoQuery($id: ID!) {
