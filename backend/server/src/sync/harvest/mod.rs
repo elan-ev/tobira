@@ -19,7 +19,7 @@ mod response;
 
 // TODO: make (some of) this stuff configurable.
 
-const HARVEST_LIMIT: u64 = 2;
+const PREFERRED_AMOUNT: u64 = 2;
 
 const INITIAL_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
@@ -59,7 +59,8 @@ pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> 
 
 
         // Send request to API and deserialize data.
-        let (response, body) = match client.send(sync_status.harvested_until, HARVEST_LIMIT).await {
+        let req = client.send(sync_status.harvested_until, PREFERRED_AMOUNT);
+        let (response, body) = match req.await {
             Ok(v) => v,
             Err(e) => request_failed!("Harvest request failed: {:?}", e),
         };
