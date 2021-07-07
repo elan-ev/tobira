@@ -35,7 +35,7 @@ pub(crate) async fn serve(
     api_root: api::RootNode,
     api_context: api::Context,
 ) -> Result<()> {
-    let assets = Assets::init(&config.assets).await.context("failed to initialize assets")?;
+    let assets = Assets::init(config).await.context("failed to initialize assets")?;
     let ctx = Arc::new(Context::new(api_root, api_context, assets));
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
@@ -169,9 +169,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     let method = req.method().clone();
     let path = req.uri().path();
 
-    const ASSET_PREFIX: &str = "/assets/";
-    const REALM_PREFIX: &str = "/r/";
-    const PLAYER_PREFIX: &str = "/v/";
+    const ASSET_PREFIX: &str = "/~assets/";
 
     match path {
         // The GraphQL endpoint. This is the only path for which POST is
@@ -190,25 +188,6 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 .unwrap()
         }
 
-        // Standard routes
-        "/" | "/about" => ctx.assets.serve_index().await,
-
-        // The interactive GraphQL API explorer/IDE. We actually keep this in
-        // production as it does not hurt and in particular: does not expose any
-        // information that isn't already exposed by the API itself.
-        "/graphiql" => juniper_hyper::graphiql("/graphql", None).await,
-
-        // Realm pages
-        path if path.starts_with(REALM_PREFIX) => {
-            let _realm_path = &path[REALM_PREFIX.len()..];
-            // TODO: check if path is valid
-
-            ctx.assets.serve_index().await
-        }
-
-        // The player page
-        path if path.starts_with(PLAYER_PREFIX) => ctx.assets.serve_index().await,
-
         // Assets (JS files, fonts, ...)
         path if path.starts_with(ASSET_PREFIX) => {
             let asset_path = &path[ASSET_PREFIX.len()..];
@@ -218,8 +197,32 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
             }
         }
 
-        // 404 for everything else
-        path => reply_404(&ctx.assets, &method, path).await,
+
+        // ----- Special, internal routes, starting with `/~` ----------------------------------
+        "/~tobira" => ctx.assets.serve_index().await,
+
+        // The interactive GraphQL API explorer/IDE. We actually keep this in
+        // production as it does not hurt and in particular: does not expose any
+        // information that isn't already exposed by the API itself.
+        "/~graphiql" => juniper_hyper::graphiql("/graphql", None).await,
+
+        path if path.starts_with("/~") => reply_404(&ctx.assets, &method, path).await,
+
+
+        // Currently we just reply with our `index.html` to everything else.
+        // That's of course not optimal because for many paths, our frontend
+        // will show 404. It would be nice to reply 404 from the server
+        // instead. But in order to do that, we would have to duplicate some
+        // logic here. And since then we need to do a database lookup anyway,
+        // we should probably already use that data and include it in the
+        // `index.html`.
+        //
+        // I think doing all that is a good idea as soon as our routing logic is
+        // fixed and doesn't change anymore. But for now, we avoid the
+        // duplicate logic. So yeah:
+        //
+        // TODO: fix that at some point ^
+        _ => ctx.assets.serve_index().await,
     }
 }
 

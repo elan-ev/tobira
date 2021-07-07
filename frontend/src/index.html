@@ -4,20 +4,21 @@
     <title>Tobira</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>{{: include:fonts.css :}}</style>
+    <style>{{: var:theme-css :}}</style>
     <script id="tobira-frontend-config" type="application/json">
       {
         "logo": {
-          "large": "/assets/{{: path:logo-large.svg :}}",
-          "small": "/assets/{{: path:logo-small.svg :}}"
+          "large": "/~assets/{{: path:logo-large.svg :}}",
+          "small": "/~assets/{{: path:logo-small.svg :}}"
         },
         "plyr": {
-          "blankVideo": "/assets/{{: path:blank.mp4 :}}",
-          "svg": "/assets/{{: path:plyr.svg :}}"
+          "blankVideo": "/~assets/{{: path:blank.mp4 :}}",
+          "svg": "/~assets/{{: path:plyr.svg :}}"
         }
       }
     </script>
   </head>
   <body>
-    <script src="/assets/{{: path:bundle.js :}}"></script>
+    <script src="/~assets/{{: path:bundle.js :}}"></script>
   </body>
 </html>

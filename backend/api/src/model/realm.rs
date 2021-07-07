@@ -149,6 +149,8 @@ impl Tree {
     }
 
     pub(crate) fn from_path(&self, path: &str) -> Option<&Realm> {
+        // We accept path with and without a trailing slash.
+        let path = if path.ends_with('/') { &path[..path.len() - 1] } else { path };
         self.from_path.get(path).map(|key| &self.realms[key])
     }
 }

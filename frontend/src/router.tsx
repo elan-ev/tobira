@@ -1,11 +1,9 @@
 import React, { useEffect, useState, startTransition } from "react";
-import { parse } from "regexparam";
 
-import { AboutRoute } from "./page/About";
-import { HomeRoute } from "./page/Home";
-import { NotFoundRoute } from "./page/NotFound";
-import { RealmRoute } from "./page/Realm";
-import { VideoRoute } from "./page/Video";
+import { AboutRoute } from "./routes/About";
+import { NotFoundRoute } from "./routes/NotFound";
+import { RealmRoute } from "./routes/Realm";
+import { VideoRoute } from "./routes/Video";
 import { bug } from "./util/err";
 
 
@@ -15,7 +13,6 @@ import { bug } from "./util/err";
  */
 const ROUTES = [
     AboutRoute,
-    HomeRoute,
     RealmRoute,
     VideoRoute,
 
@@ -43,16 +40,21 @@ const _VERIFIED: StrictRoutesTy = ROUTES;
  */
 export type Route<Prepared> = {
     /**
-     * The path of the route, allowing parameters and wildcards.
-     * See <https://github.com/lukeed/regexparam>.
+     * A regex describing the route's path. If the regex matches the path, the
+     * route is taken. Regex may contain capture groups. All captures are
+     * passed to `prepare`.
      */
     path: string;
 
     /**
      * A function that is called as soon as the route becomes active. In
      * particular, called outside of a React rendering context.
+     *
+     * It is passed the route parameters which are simply the captures from the
+     * path regex. This is the array returned by `RegExp.exec` but with the
+     * first element (the whole match) removed.
      */
-    prepare: (routeParams: Record<string, string>) => Prepared;
+    prepare: (routeParams: string[]) => Prepared;
 
     /**
      * The function for rendering this route. The value that `prepare` returned
@@ -79,20 +81,16 @@ const matchRoute = (href: string): MatchedRoute<any> => {
 
     const match = ROUTES
         .map((route, index) => {
-            // Convert the path description to a regex and see if it matches. If
-            // not, early return null.
-            const path = parse(route.path);
-            const matches = path.pattern.exec(currentPath);
-            if (matches === null) {
+            // Use the route's regex to check whether the current path matches.
+            // We modify the regex to make sure the whole path matches and that
+            // a trailing slash is always optional.
+            const regex = new RegExp(`^${route.path}/?$`, "u");
+            const params = regex.exec(currentPath);
+            if (params === null) {
                 return null;
             }
 
-            // If the regex matches, we extract the path parameters.
-            const params: Record<string, string> = {};
-            for (let i = 0; i < path.keys.length; i += 1) {
-                params[path.keys[i]] = matches[i + 1];
-            }
-            return { params, index };
+            return { params: params.slice(1), index };
         })
         .find(x => x != null);
 

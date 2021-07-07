@@ -1,5 +1,12 @@
+import { loadQuery as relayLoadQuery } from "react-relay";
+import type { PreloadableConcreteRequest, PreloadedQuery } from "react-relay";
 import { Environment, Store, RecordSource, Network } from "relay-runtime";
-import type { GraphQLSingularResponse } from "relay-runtime";
+import type {
+    GraphQLSingularResponse,
+    GraphQLTaggedNode,
+    OperationType,
+    VariablesOf,
+} from "relay-runtime";
 
 import { hasErrors, APIError, ServerError } from "./errors";
 
@@ -25,5 +32,14 @@ export const environment = new Environment({
         },
     ),
 });
+
+/** Like `loadQuery` from relay, but using our environment */
+export function loadQuery<TQuery extends OperationType>(
+    preloadableRequest: GraphQLTaggedNode | PreloadableConcreteRequest<TQuery>,
+    variables: VariablesOf<TQuery>,
+): PreloadedQuery<TQuery> {
+    return relayLoadQuery(environment, preloadableRequest, variables);
+}
+
 
 export * from "./errors";

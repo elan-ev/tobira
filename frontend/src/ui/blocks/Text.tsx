@@ -6,7 +6,7 @@ import { Block, Title } from "../Blocks";
 
 
 type Props = {
-    title: string | null;
+    title?: string;
     content: string;
 };
 

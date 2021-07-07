@@ -14,7 +14,7 @@ module.exports = (_env, argv) => ({
     output: {
         filename: "bundle.js",
         path: OUT_PATH,
-        publicPath: "/assets/",
+        publicPath: "/~assets/",
     },
 
     resolve: {
@@ -61,6 +61,7 @@ module.exports = (_env, argv) => ({
             typescript: {
                 mode: "write-references",
             },
+            formatter: "basic",
         }),
         new CopyPlugin({
             patterns: [

@@ -7,6 +7,13 @@ create table realms (
     parent bigint not null references realms on delete restrict,
     name text not null,
     path_segment text not null
+
+    -- This makes sure that a realm path segment consists of an alphanumeric
+    -- character followed by one or more alphanumeric characters or hyphens. In
+    -- particular, this implies path segments are at least two characters long.
+    -- This check is disabled for the root realm as it has an empty path
+    -- segment.
+    constraint valid_alphanum_path check (id = 0 or path_segment ~* '^[[:alnum:]][[:alnum:]\-]+$')
 );
 
 -- Insert the root realm. Since that realm has to have the ID=0, we have to

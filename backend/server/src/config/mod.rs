@@ -80,17 +80,6 @@ tobira_macros::gen_config! {
         /// Path to internal assets. This is only relevant for Tobira developers. This
         /// must not be set for production builds of Tobira.
         internal: PathBuf = "../frontend/build",
-
-        logo: {
-            /// Path to the "normal", wide logo that is shown on desktop screens.
-            #[example = "/etc/tobira/logo-large.svg"]
-            large: PathBuf,
-
-            /// Path to the small, close to square logo used for small screens, mostly
-            /// on mobile phones.
-            #[example = "/etc/tobira/logo-small.svg"]
-            small: PathBuf,
-        },
     },
     opencast: {
         /// Host of the connected Opencast instance. This host has to be reachable
@@ -112,7 +101,43 @@ tobira_macros::gen_config! {
         /// Password of the user used to communicate with Opencast.
         #[example = "D5ntdAKwSx84JdSEpTHYr8nt"]
         sync_password: Secret<String>,
-    }
+    },
+    theme: {
+        header_height: u32 = 70,
+        header_padding: u32 = 10,
+
+        /// Path to CSS file that includes all used font files and sets the variable
+        /// `--main-font` in the `:root` selector. For example:
+        ///
+        /// ```
+        /// :root {
+        ///     --main-font: 'Open Sans';
+        /// }
+        ///
+        /// @font-face { font-family: 'Open Sans'; src: ...; }
+        /// ```
+        ///
+        /// If not set, the default font will be used.
+        #[example = "fonts.css"]
+        fonts: Option<String>,
+
+
+
+        logo: {
+            /// Path to the "normal", wide logo that is shown on desktop screens.
+            #[example = "/etc/tobira/logo-large.svg"]
+            large: PathBuf,
+
+            /// Path to the small, close to square logo used for small screens, mostly
+            /// on mobile phones.
+            #[example = "/etc/tobira/logo-small.svg"]
+            small: PathBuf,
+        },
+
+        color: {
+            navigation: String = "#357C58",
+        },
+    },
 }
 
 impl Config {
@@ -182,8 +207,8 @@ impl Config {
             fix_path(&base, p);
         }
 
-        fix_path(&base, &mut self.assets.logo.large);
-        fix_path(&base, &mut self.assets.logo.small);
+        fix_path(&base, &mut self.theme.logo.large);
+        fix_path(&base, &mut self.theme.logo.small);
 
         Ok(())
     }

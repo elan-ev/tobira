@@ -1,11 +1,25 @@
 language-name: Deutsch
 language: Sprache
 search: Suche
+close: Schließen
+back: Zurück
 home: Startseite
 navigation: Navigation
-page-not-found:
-  title: Seite nicht gefunden
-  body: Die angefragte Resource existiert nicht. Sorry! :-(
+not-found:
+  page-not-found: Seite nicht gefunden
+  video-not-found: Video nicht gefunden
+  page-explanation: >
+    Die von Ihnen gewünschte Seite existiert nicht. Sie wurde möglicherweise
+    gelöscht und umbenannt.
+  video-explanation: >
+    Das von Ihnen gewünschte Video existiert nicht. Es wurde möglicherweise
+    gelöscht oder verschoben.
+  url-typo: >
+    Falls Sie die Adresse/URL manuell eingegeben haben, prüfen Sie diese auf
+    Fehler.
+  actions: >
+    Sie können versuchen <1>die Startseite</1> zu besuchen oder die Suche zu
+    benutzen, um die gewünschte Seite zu finden.
 
 about:
   title: Information
@@ -22,6 +36,9 @@ main-menu:
   settings: Einstellungen
   about: Info
 
+user:
+  settings: Nutzereinstellungen
+
 login:
   button-label: Einloggen
-  not-logged-in: Sie sind nicht eingeloggt.
+  not-logged-in: Nicht eingeloggt
