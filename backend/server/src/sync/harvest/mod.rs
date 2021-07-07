@@ -105,7 +105,7 @@ async fn store_in_db(
     let mut upserted_events = 0;
     let mut removed_events = 0;
     let mut upserted_series = 0;
-    let removed_series = 0;
+    let mut removed_series = 0;
 
     for item in items {
         // Make sure we haven't received this update yet. The code below can
@@ -117,50 +117,51 @@ async fn store_in_db(
         }
 
         match item {
-            HarvestItem::Event { id, title, description, .. } => {
+            HarvestItem::Event { id, title, description, part_of, .. } => {
+                let series = match part_of {
+                    None => None,
+                    Some(part_of) => {
+                        db.query_opt("select id from series where opencast_id = $1", &[part_of])
+                            .await?
+                            .map(|row| row.get::<_, i64>(0))
+                    },
+                };
+
                 // We upsert the event data.
                 let query = "\
                     insert into events \
-                    (opencast_id, title, description, duration, series, thumbnail, video) \
-                    values ($1, $2, $3, 1337, null, 'TODO', 'TODO') \
+                    (opencast_id, title, description, series, part_of, duration, thumbnail, video) \
+                    values ($1, $2, $3, $4, $5, 1337, 'TODO', 'TODO') \
                     on conflict (opencast_id) \
                     do update set \
                         title = excluded.title, \
                         description = excluded.description, \
                         series = excluded.series, \
+                        part_of = excluded.part_of, \
+                        duration = excluded.duration, \
                         thumbnail = excluded.thumbnail, \
                         video = excluded.video; \
                     ";
-                db.execute(query, &[id, title, description]).await?;
+                db.execute(query, &[id, title, description, &series, part_of]).await?;
 
                 debug!("Inserted or update event {} ({})", id, title);
                 upserted_events += 1;
 
-                // TODO: handle series
                 // TODO: fix duration, thumbnail and video, obviously
                 // TODO: we might actually want to store the `updated` field
                 //       and make sure we don't overwrite with older data.
             }
 
-            HarvestItem::EventDeleted { id, .. } => {
+            HarvestItem::EventDeleted { id: opencast_id, .. } => {
                 let rows_affected = db
-                    .execute("delete from events where opencast_id = $1", &[id])
+                    .execute("delete from events where opencast_id = $1", &[opencast_id])
                     .await?;
-
-                match rows_affected {
-                    // This case is just fine: it is deleted anyway, so if we
-                    // don't have it, then we don't have to do anything.
-                    0 => debug!("Deleted event {} from OC did not exist in our database", id),
-
-                    // The expected case
-                    1 => debug!("Removed event {}", id),
-                    _ => unreachable!("DB unique constraints violation"),
-                }
-
+                check_affected_rows_removed(rows_affected, "event", &opencast_id);
                 removed_events += 1;
             }
 
-            HarvestItem::Series { id, title, description, .. } => {
+            HarvestItem::Series { id: opencast_id, title, description, .. } => {
+                // We first simply upsert the series.
                 let query = "\
                     insert into series \
                     (opencast_id, title, description) \
@@ -168,14 +169,42 @@ async fn store_in_db(
                     on conflict (opencast_id) \
                     do update set \
                         title = excluded.title, \
-                        description = excluded.description; \
+                        description = excluded.description \
+                    returning id
                 ";
-                db.execute(query, &[id, title, description]).await?;
+                let new_id = db.query_one(query, &[opencast_id, title, description])
+                    .await?
+                    .get::<_, i64>(0);
 
-                debug!("Inserted or updated series {} ({})", id, title);
+                // But now we have to fix the foreign key for any events that
+                // previously referenced this series (via the Opencast UUID)
+                // but did not have the correct foreign key yet.
+                let query = "update events set series = $1 where part_of = $2 and series <> $1";
+                let updated_events = db.execute(query, &[&new_id, opencast_id]).await?;
+
+                debug!("Inserted or updated series {} ({})", opencast_id, title);
+                if updated_events != 0 {
+                    debug!(
+                        "Fixed foreign series key of {} event(s) after upserting series {} ({})",
+                        updated_events,
+                        opencast_id,
+                        title,
+                    );
+                }
                 upserted_series += 1;
             },
-            HarvestItem::SeriesDeleted { .. } => todo!(),
+
+            HarvestItem::SeriesDeleted { id: opencast_id, .. } => {
+                // We simply remove the series and do not care about any linked
+                // events. The foreign key has `on delete set null`. That's
+                // what we want: treat it as if the event has no series
+                // attached to it. Also see the comment on the migration.
+                let rows_affected = db
+                    .execute("delete from series where opencast_id = $1", &[opencast_id])
+                    .await?;
+                check_affected_rows_removed(rows_affected, "series", &opencast_id);
+                removed_series += 1;
+            }
         }
     }
 
@@ -193,4 +222,14 @@ async fn store_in_db(
     }
 
     Ok(())
+}
+
+fn check_affected_rows_removed(rows_affected: u64, entity: &str, opencast_id: &str) {
+    // The 0 rows affected case is fine: it is deleted anyway, so if we don't
+    // have it, then we don't have to do anything.
+    match rows_affected {
+        0 => debug!("The deleted {} {} from OC did not exist in our database", entity, opencast_id),
+        1 => debug!("Removed {} {}", entity, opencast_id),
+        _ => unreachable!("DB unique constraints violation when removing a {}", entity),
+    }
 }

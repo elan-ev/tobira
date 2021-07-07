@@ -10,7 +10,22 @@ create table events (
     title text not null,
     description text,
     duration int not null, -- in seconds
-    series bigint references series,
+
+    -- Series.
+    --
+    -- Due to the harvesting API and other factors, it's possible that for some
+    -- time (usually very shortly), we have an event that references a series
+    -- that we don't know about yet. We deal with that by storing `part_of`
+    -- which is the raw OC series ID of the event. If we have no series with
+    -- that ID, `series` stays `null` and we pretend the event is not part of
+    -- any series. Once we gain knowledge about the series, we fill the
+    -- `series` field with the corresponding ID.
+    --
+    -- With that, it works the same way if a series is deleted: we just set
+    -- `series` to `null` and pretend like the event is not associated with any
+    -- series.
+    series bigint references series on delete set null,
+    part_of text,
 
     -- Media
     thumbnail text not null,
