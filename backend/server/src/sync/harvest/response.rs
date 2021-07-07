@@ -32,6 +32,22 @@ pub(super) enum HarvestItem {
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
+
+    #[serde(rename_all = "camelCase")]
+    Series {
+        id: String,
+        title: String,
+        description: Option<String>,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
+    },
+
+    #[serde(rename_all = "camelCase")]
+    SeriesDeleted {
+        id: String,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
+    },
 }
 
 impl HarvestItem {
@@ -39,6 +55,8 @@ impl HarvestItem {
         match *self {
             Self::Event { updated, .. } => updated,
             Self::EventDeleted { updated, .. } =>  updated,
+            Self::Series { updated, .. } => updated,
+            Self::SeriesDeleted { updated, .. } => updated,
         }
     }
 }

@@ -67,7 +67,7 @@ pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> 
 
         if response.status != StatusCode::OK {
             trace!("HTTP response: {:#?}", response);
-            request_failed!("Harvest API returned unexepcted HTTP code {}", response.status);
+            request_failed!("Harvest API returned unexpected HTTP code {}", response.status);
         }
 
         let harvest_data = match serde_json::from_slice::<HarvestResponse>(&body) {
@@ -104,6 +104,8 @@ async fn store_in_db(
 ) -> Result<()> {
     let mut upserted_events = 0;
     let mut removed_events = 0;
+    let mut upserted_series = 0;
+    let removed_series = 0;
 
     for item in items {
         // Make sure we haven't received this update yet. The code below can
@@ -131,7 +133,7 @@ async fn store_in_db(
                     ";
                 db.execute(query, &[id, title, description]).await?;
 
-                debug!("Inserted or update event {}", id);
+                debug!("Inserted or update event {} ({})", id, title);
                 upserted_events += 1;
 
                 // TODO: handle series
@@ -157,14 +159,38 @@ async fn store_in_db(
 
                 removed_events += 1;
             }
+
+            HarvestItem::Series { id, title, description, .. } => {
+                let query = "\
+                    insert into series \
+                    (opencast_id, title, description) \
+                    values ($1, $2, $3) \
+                    on conflict (opencast_id) \
+                    do update set \
+                        title = excluded.title, \
+                        description = excluded.description; \
+                ";
+                db.execute(query, &[id, title, description]).await?;
+
+                debug!("Inserted or updated series {} ({})", id, title);
+                upserted_series += 1;
+            },
+            HarvestItem::SeriesDeleted { .. } => todo!(),
         }
     }
 
-    info!(
-        "Upserted {} events, and removed {} events in this harvest",
-        upserted_events,
-        removed_events,
-    );
+    if upserted_events == 0 && upserted_series == 0 && removed_events == 0 && removed_series == 0 {
+        info!("Harvest outcome: nothing changed!");
+    } else {
+        info!(
+            "Harvest outcome: upserted {} events, upserted {} series, \
+                removed {} events, removed {} series",
+            upserted_events,
+            upserted_series,
+            removed_events,
+            removed_series,
+        );
+    }
 
     Ok(())
 }
