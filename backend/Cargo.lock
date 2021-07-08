@@ -678,8 +678,9 @@ checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
 
 [[package]]
 name = "juniper"
-version = "0.15.5"
-source = "git+https://github.com/LukasKalbertodt/juniper?branch=tokio1#5665857ef344795d145c00755acd5c6adc1b3800"
+version = "0.15.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "637ffa8a8d8a05aed3331449e311f145864adcd82442d82e54d0522decb7cecf"
 dependencies = [
  "async-trait",
  "bson",
@@ -699,8 +700,9 @@ dependencies = [
 
 [[package]]
 name = "juniper_codegen"
-version = "0.15.5"
-source = "git+https://github.com/LukasKalbertodt/juniper?branch=tokio1#5665857ef344795d145c00755acd5c6adc1b3800"
+version = "0.15.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a040e09482a45e77dd2dafa0d9d2651d17faf0ac674da0c93eabc3075ee24997"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -710,8 +712,9 @@ dependencies = [
 
 [[package]]
 name = "juniper_hyper"
-version = "0.7.0"
-source = "git+https://github.com/LukasKalbertodt/juniper?branch=tokio1#5665857ef344795d145c00755acd5c6adc1b3800"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a502579036a091b0b55defae02c48d35edaabdbce68954cd9c735610652af00e"
 dependencies = [
  "futures",
  "hyper",
