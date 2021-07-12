@@ -69,11 +69,12 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
         blankVideo: CONFIG.plyr.blankVideo,
         iconUrl: CONFIG.plyr.svg,
 
-        // TODO:
-        // - `aspectRatio`
-        //
-        // We (will) know these things about the videos, setting them here will
-        // lead to less visual jumps and also earlier duration information.
+        // Set ratio to avoid visual jumps. I'm slightly uncomfortable doing
+        // that as the reported resolution could be garbage and the user will
+        // be stuck with an incorrect aspect ratio. I would like to give the
+        // video preference once it's loaded. But for not we just assume the
+        // resolution is correct.
+        ratio: `${aspectRatio[0]}:${aspectRatio[1]}`,
     };
 
     return <>
