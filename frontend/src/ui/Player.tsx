@@ -65,6 +65,7 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
             default: defaultQuality,
             options: qualities,
         },
+        invertTime: false,
         blankVideo: CONFIG.plyr.blankVideo,
         iconUrl: CONFIG.plyr.svg,
 
