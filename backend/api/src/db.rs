@@ -1,7 +1,7 @@
-use postgres_types::ToSql;
+use postgres_types::{FromSql, ToSql};
 
 
-#[derive(Debug, ToSql)]
+#[derive(Debug, FromSql, ToSql)]
 #[postgres(name = "event_track")]
 pub struct EventTrack {
     pub uri: String,

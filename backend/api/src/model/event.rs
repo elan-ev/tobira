@@ -1,18 +1,32 @@
+use chrono::{DateTime, Utc};
 use futures::stream::TryStreamExt;
 use tokio_postgres::Row;
-use juniper::{graphql_object, FieldResult};
+use juniper::{GraphQLObject, graphql_object, FieldResult};
 
-use crate::{Context, Id, id::Key, model::series::Series, util::RowExt};
+use crate::{Context, Id, db::EventTrack, id::Key, model::series::Series, util::RowExt};
 
 
 pub(crate) struct Event {
     key: Key,
-    title: String,
-    video: String,
-    thumbnail: String,
-    description: Option<String>,
-    duration: u32,
     series: Option<Key>,
+
+    title: String,
+    description: Option<String>,
+    duration: Option<i32>,
+    created: DateTime<Utc>,
+    updated: DateTime<Utc>,
+    creator: Option<String>,
+
+    thumbnail: String,
+    tracks: Vec<Track>,
+}
+
+#[derive(GraphQLObject)]
+struct Track {
+    uri: String,
+    flavor: String,
+    mimetype: Option<String>,
+    resolution: Option<Vec<i32>>,
 }
 
 #[graphql_object(Context = Context)]
@@ -20,25 +34,30 @@ impl Event {
     fn id(&self) -> Id {
         Id::event(self.key)
     }
-
     fn title(&self) -> &str {
         &self.title
     }
-
-    fn video(&self) -> &str {
-        &self.video
+    fn description(&self) -> Option<&str> {
+        self.description.as_deref()
     }
-
+    /// Duration in ms.
+    fn duration(&self) -> Option<f64> {
+        self.duration.map(Into::into)
+    }
     fn thumbnail(&self) -> &str {
         &self.thumbnail
     }
-
-    fn duration(&self) -> f64 {
-        self.duration.into()
+    fn tracks(&self) -> &[Track] {
+        &self.tracks
     }
-
-    fn description(&self) -> Option<&str> {
-        self.description.as_deref()
+    fn created(&self) -> DateTime<Utc> {
+        self.created
+    }
+    fn updated(&self) -> DateTime<Utc> {
+        self.updated
+    }
+    fn creator(&self) -> &Option<String> {
+        &self.creator
     }
 
     async fn series(&self, context: &Context) -> FieldResult<Option<Series>> {
@@ -56,9 +75,7 @@ impl Event {
             context.db.get()
                 .await?
                 .query_opt(
-                    "select id, title, video, thumbnail, duration, description, series
-                        from events
-                        where id = $1",
+                    &*format!("select {} from events where id = $1", Self::COL_NAMES),
                     &[&(key as i64)],
                 )
                 .await?
@@ -74,9 +91,7 @@ impl Event {
         let result = context.db.get()
             .await?
             .query_raw(
-                "select id, title, video, thumbnail, duration, description, series
-                    from events
-                    where series = $1",
+                &*format!("select {} from events where series = $1", Self::COL_NAMES),
                 &[series_key as i64],
             )
             .await?
@@ -87,15 +102,32 @@ impl Event {
         Ok(result)
     }
 
+    const COL_NAMES: &'static str
+        = "id, series, title, description, duration, created, updated, creator, thumbnail, tracks";
+
     fn from_row(row: Row) -> Self {
         Self {
             key: row.get_key(0),
-            title: row.get(1),
-            video: row.get(2),
-            thumbnail: row.get(3),
-            duration: row.get::<_, i32>(4) as u32,
-            description: row.get(5),
-            series: row.get::<_, Option<i64>>(6).map(|series| series as u64),
+            series: row.get::<_, Option<i64>>(1).map(|series| series as u64),
+            title: row.get(2),
+            description: row.get(3),
+            duration: row.get(4),
+            created: row.get(5),
+            updated: row.get(6),
+            creator: row.get(7),
+            thumbnail: row.get(8),
+            tracks: row.get::<_, Vec<EventTrack>>(9).into_iter().map(Track::from).collect(),
+        }
+    }
+}
+
+impl From<EventTrack> for Track {
+    fn from(src: EventTrack) -> Self {
+        Self {
+            uri: src.uri,
+            flavor: src.flavor,
+            mimetype: src.mimetype,
+            resolution: src.resolution,
         }
     }
 }

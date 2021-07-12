@@ -11,6 +11,7 @@ import { NotFound } from "./NotFound";
 import { navFromQuery } from "../layout/Navigation";
 import { VideoBlock } from "../ui/blocks/Video";
 import { TextBlock } from "../ui/blocks/Text";
+import type { Track } from "../ui/Player";
 
 
 export const VideoRoute: Route<PreloadedQuery<VideoQuery>> = {
@@ -25,8 +26,8 @@ const query = graphql`
     query VideoQuery($id: ID!, $realmPath: String!) {
         event(id: $id) {
             title
-            video
             description
+            tracks { uri flavor mimetype resolution }
         }
         realm: realmByPath(path: $realmPath) {
             ... NavigationData
@@ -46,11 +47,11 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
         return <NotFound kind="video" />;
     }
 
-    const { title, video, description } = event;
+    const { title, tracks, description } = event;
     return (
         <Root navSource={navFromQuery(realm)}>
             <h1>{title}</h1>
-            <VideoBlock mediaUrl={video} />
+            <VideoBlock tracks={tracks as Track[]} />
             {description !== null && <TextBlock content={description} />}
         </Root>
     );
