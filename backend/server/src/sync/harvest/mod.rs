@@ -166,12 +166,13 @@ async fn store_in_db(
                 removed_events += 1;
             }
 
-            HarvestItem::Series { id: opencast_id, title, description, .. } => {
+            HarvestItem::Series { id: opencast_id, title, description, updated } => {
                 // We first simply upsert the series.
                 let new_id = upsert(db, "series", "opencast_id", &[
                     ("opencast_id", &opencast_id),
                     ("title", &title),
                     ("description", &description),
+                    ("updated", &updated),
                 ]).await?;
 
                 // But now we have to fix the foreign key for any events that
