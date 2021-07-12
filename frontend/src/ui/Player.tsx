@@ -30,7 +30,6 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
             size: track.resolution?.[1] ?? undefined,
         })),
     };
-    console.log(source);
 
     // Determine all available qualities. As default quality, we use the largest
     // one equal to or below 1080. 1080p is a good default, at least for
@@ -44,6 +43,8 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
     qualities.sort((a, b) => a - b);
     const defaultQuality = Math.max(...qualities.filter(h => h <= 1080));
 
+    const aspectRatio = tracks[0].resolution ?? [16, 9];
+    const aspectRatioNum = aspectRatio[0] / aspectRatio[1];
 
     const options = {
         // Compared to the default, "pip" and "airplay" were removed.
@@ -68,7 +69,6 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
         iconUrl: CONFIG.plyr.svg,
 
         // TODO:
-        // - `duration`
         // - `aspectRatio`
         //
         // We (will) know these things about the videos, setting them here will
@@ -91,8 +91,8 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
             // still rip it out.
             "& > div": {
                 // TODO: replace with real aspect ratio
-                maxWidth: "calc((80vh - var(--header-height)) * 1.777)",
-                minWidth: "max(50%, 320px)",
+                maxWidth: `calc((90vh - var(--header-height) - 80px) * ${aspectRatioNum})`,
+                minWidth: "320px",
                 margin: "auto",
             },
         }}>
