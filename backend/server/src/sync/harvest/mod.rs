@@ -6,7 +6,7 @@ use std::{
 use hyper::http::status::StatusCode;
 
 use tobira_util::prelude::*;
-use tokio_postgres::GenericClient;
+use tokio_postgres::{GenericClient, types::ToSql};
 use crate::config::Config;
 use super::status::SyncStatus;
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
@@ -117,7 +117,7 @@ async fn store_in_db(
         }
 
         match item {
-            HarvestItem::Event { id, title, description, part_of, .. } => {
+            HarvestItem::Event { id: opencast_id, title, description, part_of, .. } => {
                 let series = match part_of {
                     None => None,
                     Some(part_of) => {
@@ -128,23 +128,18 @@ async fn store_in_db(
                 };
 
                 // We upsert the event data.
-                let query = "\
-                    insert into events \
-                    (opencast_id, title, description, series, part_of, duration, thumbnail, video) \
-                    values ($1, $2, $3, $4, $5, 1337, 'TODO', 'TODO') \
-                    on conflict (opencast_id) \
-                    do update set \
-                        title = excluded.title, \
-                        description = excluded.description, \
-                        series = excluded.series, \
-                        part_of = excluded.part_of, \
-                        duration = excluded.duration, \
-                        thumbnail = excluded.thumbnail, \
-                        video = excluded.video; \
-                    ";
-                db.execute(query, &[id, title, description, &series, part_of]).await?;
+                upsert(db, "events", "opencast_id", &[
+                    ("opencast_id", opencast_id),
+                    ("series", &series),
+                    ("part_of", part_of),
+                    ("title", title),
+                    ("description", description),
+                    ("duration", &1337),
+                    ("thumbnail", &"TODO"),
+                    ("video", &"TODO"),
+                ]).await?;
 
-                debug!("Inserted or update event {} ({})", id, title);
+                debug!("Inserted or update event {} ({})", opencast_id, title);
                 upserted_events += 1;
 
                 // TODO: fix duration, thumbnail and video, obviously
@@ -162,19 +157,11 @@ async fn store_in_db(
 
             HarvestItem::Series { id: opencast_id, title, description, .. } => {
                 // We first simply upsert the series.
-                let query = "\
-                    insert into series \
-                    (opencast_id, title, description) \
-                    values ($1, $2, $3) \
-                    on conflict (opencast_id) \
-                    do update set \
-                        title = excluded.title, \
-                        description = excluded.description \
-                    returning id
-                ";
-                let new_id = db.query_one(query, &[opencast_id, title, description])
-                    .await?
-                    .get::<_, i64>(0);
+                let new_id = upsert(db, "series", "opencast_id", &[
+                    ("opencast_id", opencast_id),
+                    ("title", title),
+                    ("description", description),
+                ]).await?;
 
                 // But now we have to fix the foreign key for any events that
                 // previously referenced this series (via the Opencast UUID)
@@ -232,4 +219,50 @@ fn check_affected_rows_removed(rows_affected: u64, entity: &str, opencast_id: &s
         1 => debug!("Removed {} {}", entity, opencast_id),
         _ => unreachable!("DB unique constraints violation when removing a {}", entity),
     }
+}
+
+/// Inserts a new row or updates an existing one if the value in `unique_col`
+/// already exists. Returns the value of the `id` column, which is assumed to
+/// be `i64`.
+async fn upsert(
+    db: &impl GenericClient,
+    table_name: &str,
+    unique_col: &str,
+    cols: &[(&str, &(dyn ToSql + Sync))],
+) -> Result<i64> {
+    let mut query_col_names = String::new();
+    let mut query_col_values = String::new();
+    let mut query_update = String::new();
+    let mut values = Vec::new();
+    for (i, (name, value)) in cols.iter().copied().enumerate() {
+        if !query_col_names.is_empty() {
+            query_col_names += ", ";
+        }
+        query_col_names += name;
+
+        if !query_col_values.is_empty() {
+            query_col_values += ", ";
+        }
+        query_col_values += &format!("${}", i + 1);
+
+        if !query_update.is_empty() {
+            query_update += ", ";
+        }
+        if name != unique_col {
+            query_update += &format!("{0} = excluded.{0}", name);
+        }
+
+        values.push(value);
+    }
+
+    let query = format!(
+        "insert into {} ({}) values ({}) on conflict ({}) do update set {} returning id",
+        table_name,
+        query_col_names,
+        query_col_values,
+        unique_col,
+        query_update,
+    );
+
+    Ok(db.query_one(&*query, &values).await?.get::<_, i64>(0))
 }
