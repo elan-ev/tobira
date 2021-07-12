@@ -1,15 +1,17 @@
 select prepare_randomized_ids('event');
 
+create type event_track as (
+    uri text,
+    flavor text,
+    mimetype text,
+    resolution integer[2]
+);
+
 create table events (
     id bigint primary key default randomized_id('event'),
 
-    -- Opencast internal data
+    -- The Opencast UUID
     opencast_id text not null unique,
-
-    -- Meta data
-    title text not null,
-    description text,
-    duration int not null, -- in seconds
 
     -- Series.
     --
@@ -27,7 +29,15 @@ create table events (
     series bigint references series on delete set null,
     part_of text,
 
+    -- Meta data
+    title text not null,
+    description text,
+    duration int, -- in ms
+    created timestamp with time zone not null,
+    updated timestamp with time zone not null,
+    creator text,
+
     -- Media
-    thumbnail text not null,
-    video text not null
+    thumbnail text not null, -- URL to an image
+    tracks event_track[] not null
 );

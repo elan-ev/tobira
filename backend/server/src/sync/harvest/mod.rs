@@ -5,6 +5,7 @@ use std::{
 
 use hyper::http::status::StatusCode;
 
+use tobira_api::db::EventTrack;
 use tobira_util::prelude::*;
 use tokio_postgres::{GenericClient, types::ToSql};
 use crate::config::Config;
@@ -84,7 +85,7 @@ pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> 
 
         // Write received data into the database, updating the sync status if
         // everything worked out alright.
-        store_in_db(&harvest_data.items, &sync_status, db).await?;
+        store_in_db(harvest_data.items, &sync_status, db).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, db).await?;
         if !harvest_data.has_more {
             debug!(
@@ -98,7 +99,7 @@ pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> 
 }
 
 async fn store_in_db(
-    items: &[HarvestItem],
+    items: Vec<HarvestItem>,
     sync_status: &SyncStatus,
     db: &impl GenericClient,
 ) -> Result<()> {
@@ -117,8 +118,19 @@ async fn store_in_db(
         }
 
         match item {
-            HarvestItem::Event { id: opencast_id, title, description, part_of, .. } => {
-                let series = match part_of {
+            HarvestItem::Event {
+                id: opencast_id,
+                title,
+                description,
+                part_of,
+                tracks,
+                created,
+                creator,
+                duration,
+                thumbnail,
+                updated,
+            } => {
+                let series = match &part_of {
                     None => None,
                     Some(part_of) => {
                         db.query_opt("select id from series where opencast_id = $1", &[part_of])
@@ -129,27 +141,26 @@ async fn store_in_db(
 
                 // We upsert the event data.
                 upsert(db, "events", "opencast_id", &[
-                    ("opencast_id", opencast_id),
+                    ("opencast_id", &opencast_id),
                     ("series", &series),
-                    ("part_of", part_of),
-                    ("title", title),
-                    ("description", description),
-                    ("duration", &1337),
-                    ("thumbnail", &"TODO"),
-                    ("video", &"TODO"),
+                    ("part_of", &part_of),
+                    ("title", &title),
+                    ("description", &description),
+                    ("duration", &duration),
+                    ("created", &created),
+                    ("updated", &updated),
+                    ("creator", &creator),
+                    ("thumbnail", &thumbnail),
+                    ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),
                 ]).await?;
 
                 debug!("Inserted or update event {} ({})", opencast_id, title);
                 upserted_events += 1;
-
-                // TODO: fix duration, thumbnail and video, obviously
-                // TODO: we might actually want to store the `updated` field
-                //       and make sure we don't overwrite with older data.
             }
 
             HarvestItem::EventDeleted { id: opencast_id, .. } => {
                 let rows_affected = db
-                    .execute("delete from events where opencast_id = $1", &[opencast_id])
+                    .execute("delete from events where opencast_id = $1", &[&opencast_id])
                     .await?;
                 check_affected_rows_removed(rows_affected, "event", &opencast_id);
                 removed_events += 1;
@@ -158,16 +169,16 @@ async fn store_in_db(
             HarvestItem::Series { id: opencast_id, title, description, .. } => {
                 // We first simply upsert the series.
                 let new_id = upsert(db, "series", "opencast_id", &[
-                    ("opencast_id", opencast_id),
-                    ("title", title),
-                    ("description", description),
+                    ("opencast_id", &opencast_id),
+                    ("title", &title),
+                    ("description", &description),
                 ]).await?;
 
                 // But now we have to fix the foreign key for any events that
                 // previously referenced this series (via the Opencast UUID)
                 // but did not have the correct foreign key yet.
                 let query = "update events set series = $1 where part_of = $2 and series <> $1";
-                let updated_events = db.execute(query, &[&new_id, opencast_id]).await?;
+                let updated_events = db.execute(query, &[&new_id, &opencast_id]).await?;
 
                 debug!("Inserted or updated series {} ({})", opencast_id, title);
                 if updated_events != 0 {
@@ -187,7 +198,7 @@ async fn store_in_db(
                 // what we want: treat it as if the event has no series
                 // attached to it. Also see the comment on the migration.
                 let rows_affected = db
-                    .execute("delete from series where opencast_id = $1", &[opencast_id])
+                    .execute("delete from series where opencast_id = $1", &[&opencast_id])
                     .await?;
                 check_affected_rows_removed(rows_affected, "series", &opencast_id);
                 removed_series += 1;
