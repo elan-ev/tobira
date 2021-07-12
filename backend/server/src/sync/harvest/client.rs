@@ -1,4 +1,4 @@
-use std::net::Ipv6Addr;
+use std::{net::Ipv6Addr, time::Duration};
 
 use chrono::{DateTime, Utc};
 use hyper14::{
@@ -90,7 +90,9 @@ impl HarvestClient {
             .expect("bug: failed to build request");
 
         debug!("Sending harvest request (since = {:?}): GET {}", since, uri);
-        let response = self.http_client.request(req).await
+
+        let response = tokio::time::timeout(Duration::from_secs(60), self.http_client.request(req)).await
+            .with_context(|| format!("client request timed out"))?
             .with_context(|| format!("failed to GET {}", uri))?;
 
         let (parts, body) = response.into_parts();
