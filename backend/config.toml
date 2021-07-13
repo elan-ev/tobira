@@ -1,5 +1,5 @@
-# Configuration for devevelopment environments: unless you are a Tobira
-# developer, you are not intersted in this file.
+# Configuration for development environments: unless you are a Tobira
+# developer, you are not interested in this file.
 
 [db]
 user = "tobira"
