@@ -1,5 +1,5 @@
-# Configuration for devevelopment environments: unless you are a Tobira
-# developer, you are not intersted in this file.
+# Configuration for development environments: unless you are a Tobira
+# developer, you are not interested in this file.
 
 [db]
 user = "tobira"
@@ -14,7 +14,7 @@ logo.small = "logo-small.svg"
 level = "trace"
 
 [opencast]
-host = "localhost:8080"
+host = "127.0.0.1:4090"
 use_insecure_connection = true
 sync_user = "admin"
 sync_password = "opencast"
