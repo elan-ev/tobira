@@ -14,7 +14,7 @@ logo.small = "logo-small.svg"
 level = "trace"
 
 [opencast]
-host = "127.0.0.1:4090"
+host = "localhost:8080"
 use_insecure_connection = true
 sync_user = "admin"
 sync_password = "opencast"
