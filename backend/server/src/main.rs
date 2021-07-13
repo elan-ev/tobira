@@ -12,6 +12,7 @@ use crate::{
 pub(crate) use tobira_api as api;
 mod args;
 mod config;
+mod create_tree;
 mod db;
 mod http;
 mod logger;
@@ -52,6 +53,10 @@ async fn main() -> Result<()> {
         Command::Sync => {
             let config = load_config_and_init_logger(&args)?;
             sync::run(&config).await?;
+        }
+        Command::CreateTree { input_file } => {
+            let config = load_config_and_init_logger(&args)?;
+            create_tree::run(&input_file, &config).await?;
         }
     }
 

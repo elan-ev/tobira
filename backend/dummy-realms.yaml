@@ -1,0 +1,119 @@
+# A realm tree definition for development. Can be imported with
+# `cargo run -- create-tree dummy-realms.yaml`
+
+name: ""
+path: ""
+blocks:
+  - text:
+      body: |
+        **Welcome to Tobira!**
+
+        Tobira is a video portal for [Opencast](https://opencast.org). Note that it is still
+        in its *early* stages of development! Everything you see here might still change.
+        Tobira is fully open source and you can find its source
+        code [here](https://github.com/elan-ev/tobira).
+
+        What you are seeing here is the most recent development build (the latest `master`)
+        containing a bunch of dummy data. All text and videos you can see here are just for
+        testing.
+
+  - series:
+      title: The best cat videos
+      series_title: Cats
+
+children:
+  - path: campus
+    name: Campus
+    blocks:
+      - text:
+          body: Videos about life on the campus, the canteen and more.
+      - series:
+          title: Campus Introduction
+          series_title: SciFi Chicken
+
+  - path: library
+    name: Library
+    blocks:
+      - text:
+          body: Videos about life on the campus, the library, and more.
+
+  - path: conferences
+    name: Conferences
+    blocks:
+      - text:
+          body: |
+            Videos from conferences our university hosts. Like:
+            - Gamescom
+            - ComicCon
+            - BlizzCon
+            - recon
+            - RustFest.eu
+
+  - path: events
+    name: Events
+    blocks:
+      - text:
+          body: This university has very nice events. So very nice.
+
+  - path: lectures
+    name: Lectures
+    blocks:
+      - text:
+          body: Here you can see all lecture recordings, separated by departments.
+    children:
+      - path: math
+        name: Mathematics
+        children:
+          - { path: "2021", name: "2021" }
+          - { path: "2020", name: "2020" }
+          - { path: "2019", name: "2019" }
+          - { path: "2018", name: "2018" }
+      - path: cs
+        name: Computer Science
+        children:
+          - { path: "2021", name: "2021" }
+          - { path: "2020", name: "2020" }
+          - { path: "2019", name: "2019" }
+          - { path: "2018", name: "2018" }
+      - path: physics
+        name: Physics
+        children:
+          - { path: "2021", name: "2021" }
+          - { path: "2020", name: "2020" }
+          - { path: "2019", name: "2019" }
+          - { path: "2018", name: "2018" }
+      - path: psychology
+        name: Psychology
+        children:
+          - { path: "2021", name: "2021" }
+          - { path: "2020", name: "2020" }
+          - { path: "2019", name: "2019" }
+          - { path: "2018", name: "2018" }
+      - path: neuroscience
+        name: Neuroscience
+        children:
+          - { path: "2021", name: "2021" }
+          - { path: "2020", name: "2020" }
+          - { path: "2019", name: "2019" }
+          - { path: "2018", name: "2018" }
+      - path: philosophy
+        name: Philosophy
+        children:
+          - { path: "2021", name: "2021" }
+          - { path: "2020", name: "2020" }
+          - { path: "2019", name: "2019" }
+          - { path: "2018", name: "2018" }
+      - path: bio
+        name: Biology
+        children:
+          - { path: "2021", name: "2021" }
+          - { path: "2020", name: "2020" }
+          - { path: "2019", name: "2019" }
+          - { path: "2018", name: "2018" }
+      - path: economics
+        name: Economics
+        children:
+          - { path: "2021", name: "2021" }
+          - { path: "2020", name: "2020" }
+          - { path: "2019", name: "2019" }
+          - { path: "2018", name: "2018" }
