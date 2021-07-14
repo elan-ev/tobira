@@ -161,9 +161,8 @@ const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 padding: "0 12px",
                 "&:focus": {
                     outline: "none",
-                    // TODO: make color configurable
-                    boxShadow: "0 0 0 1px #007A96",
-                    borderColor: "#007A96",
+                    boxShadow: "0 0 0 1px var(--accent-color)",
+                    borderColor: "var(--accent-color)",
                 },
                 ...extraCss,
             }}

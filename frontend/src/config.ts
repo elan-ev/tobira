@@ -39,8 +39,11 @@ type PlyrConfig = {
 type ThemeConfig = {
     headerHeight: number;
     headerPadding: number;
-    navigationColor: string;
-    grey50: string;
+    color: {
+        navigation: string;
+        accent: string;
+        grey50: string;
+    };
 };
 
 const CONFIG: Config = parseConfig();

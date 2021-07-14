@@ -159,7 +159,10 @@ fn build_theme(theme: &config::Theme) -> String {
     serde_json::json!({
         "headerHeight": theme.header_height,
         "headerPadding": theme.header_padding,
-        "navigationColor": theme.color.navigation,
-        "grey50": theme.color.grey50,
+        "color": {
+            "navigation": theme.color.navigation,
+            "accent": theme.color.accent,
+            "grey50": theme.color.grey50,
+        },
     }).to_string()
 }

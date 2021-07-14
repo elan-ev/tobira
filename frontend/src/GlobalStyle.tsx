@@ -140,8 +140,10 @@ const lighten = (l: number, amount: number): number => (
 
 /** Setting values from the theme (and ones derived from it) as CSS variables */
 const themeVars = () => {
-    const [navHue, navSat, navLight] = rgbToHsl(hexCodeToRgb(CONFIG.theme.navigationColor));
-    const [greyHue, greySat, _] = rgbToHsl(hexCodeToRgb(CONFIG.theme.grey50));
+    const theme = CONFIG.theme;
+    const [navHue, navSat, navLight] = rgbToHsl(hexCodeToRgb(theme.color.navigation));
+    const [accentHue, accentSat, accentLight] = rgbToHsl(hexCodeToRgb(theme.color.accent));
+    const [greyHue, greySat, _] = rgbToHsl(hexCodeToRgb(theme.color.grey50));
 
     const hsl = (base: string, lightness: number): string => (
         `hsl(var(--${base}-hue), var(--${base}-sat), ${lightness}%)`
@@ -149,13 +151,17 @@ const themeVars = () => {
 
     return css({
         ":root": {
-            "--header-height": `${CONFIG.theme.headerHeight}px`,
-            "--header-padding": `${CONFIG.theme.headerPadding}px`,
+            "--header-height": `${theme.headerHeight}px`,
+            "--header-padding": `${theme.headerPadding}px`,
 
             "--nav-hue": 360 * navHue,
             "--nav-sat": `${100 * navSat}%`,
             "--nav-color": hsl("nav", 100 * navLight),
             "--nav-color-darker": hsl("nav", 100 * lighten(navLight, -40)),
+
+            "--accent-hue": 360 * accentHue,
+            "--accent-sat": `${100 * accentSat}%`,
+            "--accent-color": hsl("accent", 100 * accentLight),
 
             "--grey-hue": 360 * greyHue,
             "--grey-sat": `${100 * greySat}%`,
