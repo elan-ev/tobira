@@ -201,8 +201,9 @@ const ActionIcon: React.FC<ActionIconProps> = ({
                 lineHeight: 0,
                 cursor: "pointer",
                 fontSize: 28,
+                opacity: "0.75",
                 "&:hover": {
-                    backgroundColor: "#ddd",
+                    opacity: "1",
                 },
                 "@media (max-width: 450px)": {
                     fontSize: 24,
