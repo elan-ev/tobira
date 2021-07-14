@@ -74,7 +74,11 @@ const GLOBAL_STYLE = css({
         fontSize: 24,
     },
     a: {
-        color: "var(--navigation-color)",
+        color: "var(--nav-color)",
+        textDecoration: "none",
+        "&:hover": {
+            color: "var(--nav-color-darker)",
+        },
     },
 });
 
@@ -123,23 +127,43 @@ const hexCodeToRgb = (hex: string): Triplet => {
     return [r, g, b];
 };
 
+/**
+ * Lightens or darkens the brightness value `l` according to `amount`. If
+ * `amount` is positive, the lightness is brought `amount`% towards 1
+ * (maximum). If it's negative, it's brought `-amount`% towards 0 (minimum).
+ */
+const lighten = (l: number, amount: number): number => (
+    amount > 0
+        ? l + (1 - l) * (amount / 100)
+        : l * (1 + amount / 100)
+);
+
 /** Setting values from the theme (and ones derived from it) as CSS variables */
 const themeVars = () => {
-    const [greyHue, greySaturation, _] = rgbToHsl(hexCodeToRgb(CONFIG.theme.grey50));
+    const [navHue, navSat, navLight] = rgbToHsl(hexCodeToRgb(CONFIG.theme.navigationColor));
+    const [greyHue, greySat, _] = rgbToHsl(hexCodeToRgb(CONFIG.theme.grey50));
+
+    const hsl = (base: string, lightness: number): string => (
+        `hsl(var(--${base}-hue), var(--${base}-sat), ${lightness}%)`
+    );
 
     return css({
         ":root": {
             "--header-height": `${CONFIG.theme.headerHeight}px`,
             "--header-padding": `${CONFIG.theme.headerPadding}px`,
-            "--navigation-color": CONFIG.theme.navigationColor,
+
+            "--nav-hue": 360 * navHue,
+            "--nav-sat": `${100 * navSat}%`,
+            "--nav-color": hsl("nav", 100 * navLight),
+            "--nav-color-darker": hsl("nav", 100 * lighten(navLight, -40)),
 
             "--grey-hue": 360 * greyHue,
-            "--grey-saturation": `${100 * greySaturation}%`,
-            "--grey97": "hsl(var(--grey-hue), var(--grey-saturation), 97%)",
-            "--grey92": "hsl(var(--grey-hue), var(--grey-saturation), 92%)",
-            "--grey80": "hsl(var(--grey-hue), var(--grey-saturation), 80%)",
-            "--grey65": "hsl(var(--grey-hue), var(--grey-saturation), 65%)",
-            "--grey40": "hsl(var(--grey-hue), var(--grey-saturation), 40%)",
+            "--grey-sat": `${100 * greySat}%`,
+            "--grey97": hsl("grey", 97),
+            "--grey92": hsl("grey", 92),
+            "--grey80": hsl("grey", 80),
+            "--grey65": hsl("grey", 65),
+            "--grey40": hsl("grey", 40),
         },
     });
 };
