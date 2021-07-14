@@ -1,10 +1,13 @@
 import { css, Global } from "@emotion/react";
 import React from "react";
 
+import CONFIG from "./config";
+
 
 export const GlobalStyle: React.FC = () => <>
     <Global styles={CSS_RESETS} />
     <Global styles={GLOBAL_STYLE} />
+    <Global styles={THEME_VARS} />
 </>;
 
 /**
@@ -71,5 +74,14 @@ const GLOBAL_STYLE = css({
     },
     a: {
         color: "var(--navigation-color)",
+    },
+});
+
+/** Setting values from the theme (and ones derived from it) as CSS variables */
+const THEME_VARS = css({
+    ":root": {
+        "--header-height": `${CONFIG.theme.headerHeight}px`,
+        "--header-padding": `${CONFIG.theme.headerPadding}px`,
+        "--navigation-color": CONFIG.theme.navigationColor,
     },
 });

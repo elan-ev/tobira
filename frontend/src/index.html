@@ -4,7 +4,6 @@
     <title>Tobira</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>{{: include:fonts.css :}}</style>
-    <style>{{: var:theme-css :}}</style>
     <script id="tobira-frontend-config" type="application/json">
       {
         "logo": {
@@ -14,7 +13,8 @@
         "plyr": {
           "blankVideo": "/~assets/{{: path:blank.mp4 :}}",
           "svg": "/~assets/{{: path:plyr.svg :}}"
-        }
+        },
+        "theme": {{: var:theme-json :}}
       }
     </script>
   </head>

@@ -23,6 +23,7 @@ const parseConfig: () => Config = () => {
 type Config = {
     logo: LogoConfig;
     plyr: PlyrConfig;
+    theme: ThemeConfig;
 };
 
 type LogoConfig = {
@@ -33,6 +34,12 @@ type LogoConfig = {
 type PlyrConfig = {
     blankVideo: string;
     svg: string;
+};
+
+type ThemeConfig = {
+    headerHeight: number;
+    headerPadding: number;
+    navigationColor: string;
 };
 
 const CONFIG: Config = parseConfig();
