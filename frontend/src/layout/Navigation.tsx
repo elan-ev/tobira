@@ -6,6 +6,9 @@ import type { Interpolation, Theme } from "@emotion/react";
 
 import { Link } from "../router";
 import type { NavigationData$key } from "../query-types/NavigationData.graphql";
+import CONFIG from "../config";
+import { prefersBlackText } from "../util/color";
+import { useTranslation } from "react-i18next";
 
 
 /**
@@ -31,12 +34,11 @@ export const navFromQuery = (fragRef: NavigationData$key): NavSource => (
  */
 export type Navigation = {
     items: NavItem[];
-
-    /**
-     * If the navigation is not currently showing the root realms, this is a
-     * link to the parent realm
-     */
-    parentLink: string | null;
+    currentName: string | null;
+    parent: null | {
+        name: string;
+        link: string;
+    };
 };
 
 type NavItem = {
@@ -100,6 +102,7 @@ type ViaQueryProps<InnerProps> = ForwardProps<InnerProps> & {
  * component with said data.
  */
 function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<InnerProps>) {
+    const { t } = useTranslation();
     const realm = useFragment(
         graphql`
             fragment NavigationData on Realm {
@@ -107,8 +110,10 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
                 name
                 children { id name path }
                 parent {
-                    children { id name path }
+                    isRoot
+                    name
                     path
+                    children { id name path }
                 }
             }
         `,
@@ -129,11 +134,14 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
             active: id === realm.id,
         }));
 
-    let parentLink = null;
-    if (realm.parent !== null) {
-        parentLink = realm.parent.path === "" ? "/" : `${realm.parent.path}`;
-    }
-    const nav = { items, parentLink };
+    const nav = {
+        items,
+        currentName: realm.name,
+        parent: realm.parent && {
+            name: realm.parent.isRoot ? t("home") : realm.parent.name,
+            link: realm.parent.path === "" ? "/" : `${realm.parent.path}`,
+        },
+    };
 
     return React.createElement(Component, { nav, ...innerProps });
 }
@@ -205,28 +213,41 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                 overflowY: "auto",
             }}
         >
-            {nav.parentLink !== null && (
+            {nav.parent !== null && <>
                 <Link
-                    to={nav.parentLink}
+                    to={nav.parent.link}
                     css={{
-                        display: "inline-flex",
+                        padding: "6px 12px",
+                        display: "flex",
                         alignItems: "center",
-                        padding: "2px 5px",
-                        margin: 6,
-                        border: "1px solid var(--grey80)",
-                        borderRadius: 4,
                         ...ITEM_LINK_BASE_STYLE,
                     }}
                 >
-                    <FontAwesomeIcon icon={faChevronLeft} css={{ marginRight: 6 }}/>
-                    Back
+                    <FontAwesomeIcon
+                        icon={faChevronLeft}
+                        css={{ marginRight: 6, width: "16px !important" }}
+                    />
+                    {nav.parent.name}
                 </Link>
-            )}
+                <div css={{
+                    padding: 16,
+                    paddingLeft: 12 + 22,
+                    fontSize: 18,
+                    fontWeight: "bold",
+                    backgroundColor: "var(--accent-color)",
+                    ...prefersBlackText(CONFIG.theme.color.accent)
+                        ? { color: "black", textShadow: "1px 1px 0 white" }
+                        : { color: "white", textShadow: "1px 1px 0 black" },
+                }}>{nav.currentName}</div>
+            </>}
             <ul css={{
                 listStyle: "none",
                 margin: 0,
                 padding: 0,
-                borderTop: "1px solid var(--grey80)",
+                ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
+                "& > li > a": {
+                    paddingLeft: 12 + 22,
+                },
             }}>
                 {nav.items.map(item => <Item key={item.id} item={item} />)}
             </ul>

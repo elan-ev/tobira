@@ -2,7 +2,7 @@ import { css, Global } from "@emotion/react";
 import React from "react";
 
 import CONFIG from "./config";
-import { bug } from "./util/err";
+import { hexCodeToRgb, rgbToHsl, lighten } from "./util/color";
 
 
 export const GlobalStyle: React.FC = () => <>
@@ -82,72 +82,20 @@ const GLOBAL_STYLE = css({
     },
 });
 
-type Triplet = [number, number, number];
-
-/**
- * Converts an RGB color to HSL. All components of input and output are between
- * 0 and 1.
- */
-const rgbToHsl = ([r, g, b]: Triplet): Triplet => {
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const range = max - min;
-
-    const l = (max + min) / 2;
-    const s = range === 0 ? 0 : range / (1 - Math.abs(2 * l - 1));
-
-    let h;
-    if (r === g && g === b) {
-        h = 0;
-    } else if (r > g && r > b) {
-        h = (g - b) / range + (g < b ? 6 : 0);
-    } else if (g > b) {
-        h = (b - r) / range + 2;
-    } else {
-        h = (r - g) / range + 4;
-    }
-    h /= 6;
-
-    return [h, s, l];
-};
-
-/**
- * Extracts the RGB values from a six digit hex code with leading `#`. Returned
- * values are between 0 and 1.
- */
-const hexCodeToRgb = (hex: string): Triplet => {
-    if (hex.length !== 7) {
-        bug("invalid color input");
-    }
-
-    const r = parseInt(hex.slice(1, 3), 16) / 255;
-    const g = parseInt(hex.slice(3, 5), 16) / 255;
-    const b = parseInt(hex.slice(5, 7), 16) / 255;
-
-    return [r, g, b];
-};
-
-/**
- * Lightens or darkens the brightness value `l` according to `amount`. If
- * `amount` is positive, the lightness is brought `amount`% towards 1
- * (maximum). If it's negative, it's brought `-amount`% towards 0 (minimum).
- */
-const lighten = (l: number, amount: number): number => (
-    amount > 0
-        ? l + (1 - l) * (amount / 100)
-        : l * (1 + amount / 100)
-);
-
 /** Setting values from the theme (and ones derived from it) as CSS variables */
 const themeVars = () => {
     const theme = CONFIG.theme;
-    const [navHue, navSat, navLight] = rgbToHsl(hexCodeToRgb(theme.color.navigation));
-    const [accentHue, accentSat, accentLight] = rgbToHsl(hexCodeToRgb(theme.color.accent));
-    const [greyHue, greySat, _] = rgbToHsl(hexCodeToRgb(theme.color.grey50));
 
-    const hsl = (base: string, lightness: number): string => (
-        `hsl(var(--${base}-hue), var(--${base}-sat), ${lightness}%)`
-    );
+    const nav = hexCodeToRgb(theme.color.navigation);
+    const accent = hexCodeToRgb(theme.color.accent);
+    const grey = hexCodeToRgb(theme.color.grey50);
+
+    const [navHue, navSat, navLight] = rgbToHsl(nav);
+    const [accentHue, accentSat, accentLight] = rgbToHsl(accent);
+    const [greyHue, greySat, _] = rgbToHsl(grey);
+
+    const hsl = (base: string, lightness: number): string =>
+        `hsl(var(--${base}-hue), var(--${base}-sat), ${lightness}%)`;
 
     return css({
         ":root": {

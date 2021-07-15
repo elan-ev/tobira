@@ -78,22 +78,23 @@ type SeriesBlock implements Block {
   order: VideoListOrder!
 }
 
-type Series {
-  id: ID!
-  title: String!
-  description: String
-  events: [Event!]!
-}
-
 type Realm {
   id: ID!
   name: String!
+  isRoot: Boolean!
   path: String!
   parent: Realm
   parents: [Realm!]!
   children: [Realm!]!
   "Returns the (content) blocks of this realm."
   blocks: [Block!]!
+}
+
+type Series {
+  id: ID!
+  title: String!
+  description: String
+  events: [Event!]!
 }
 
 enum VideoListLayout {
