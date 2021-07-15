@@ -40,6 +40,7 @@ type ThemeConfig = {
     headerHeight: number;
     headerPadding: number;
     navigationColor: string;
+    grey50: string;
 };
 
 const CONFIG: Config = parseConfig();

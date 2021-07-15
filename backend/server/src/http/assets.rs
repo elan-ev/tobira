@@ -160,5 +160,6 @@ fn build_theme(theme: &config::Theme) -> String {
         "headerHeight": theme.header_height,
         "headerPadding": theme.header_padding,
         "navigationColor": theme.color.navigation,
+        "grey50": theme.color.grey50,
     }).to_string()
 }

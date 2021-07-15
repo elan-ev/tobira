@@ -2,12 +2,13 @@ import { css, Global } from "@emotion/react";
 import React from "react";
 
 import CONFIG from "./config";
+import { bug } from "./util/err";
 
 
 export const GlobalStyle: React.FC = () => <>
     <Global styles={CSS_RESETS} />
     <Global styles={GLOBAL_STYLE} />
-    <Global styles={THEME_VARS} />
+    <Global styles={themeVars()} />
 </>;
 
 /**
@@ -77,11 +78,68 @@ const GLOBAL_STYLE = css({
     },
 });
 
+type Triplet = [number, number, number];
+
+/**
+ * Converts an RGB color to HSL. All components of input and output are between
+ * 0 and 1.
+ */
+const rgbToHsl = ([r, g, b]: Triplet): Triplet => {
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const range = max - min;
+
+    const l = (max + min) / 2;
+    const s = range === 0 ? 0 : range / (1 - Math.abs(2 * l - 1));
+
+    let h;
+    if (r === g && g === b) {
+        h = 0;
+    } else if (r > g && r > b) {
+        h = (g - b) / range + (g < b ? 6 : 0);
+    } else if (g > b) {
+        h = (b - r) / range + 2;
+    } else {
+        h = (r - g) / range + 4;
+    }
+    h /= 6;
+
+    return [h, s, l];
+};
+
+/**
+ * Extracts the RGB values from a six digit hex code with leading `#`. Returned
+ * values are between 0 and 1.
+ */
+const hexCodeToRgb = (hex: string): Triplet => {
+    if (hex.length !== 7) {
+        bug("invalid color input");
+    }
+
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+    return [r, g, b];
+};
+
 /** Setting values from the theme (and ones derived from it) as CSS variables */
-const THEME_VARS = css({
-    ":root": {
-        "--header-height": `${CONFIG.theme.headerHeight}px`,
-        "--header-padding": `${CONFIG.theme.headerPadding}px`,
-        "--navigation-color": CONFIG.theme.navigationColor,
-    },
-});
+const themeVars = () => {
+    const [greyHue, greySaturation, _] = rgbToHsl(hexCodeToRgb(CONFIG.theme.grey50));
+
+    return css({
+        ":root": {
+            "--header-height": `${CONFIG.theme.headerHeight}px`,
+            "--header-padding": `${CONFIG.theme.headerPadding}px`,
+            "--navigation-color": CONFIG.theme.navigationColor,
+
+            "--grey-hue": 360 * greyHue,
+            "--grey-saturation": `${100 * greySaturation}%`,
+            "--grey97": "hsl(var(--grey-hue), var(--grey-saturation), 97%)",
+            "--grey92": "hsl(var(--grey-hue), var(--grey-saturation), 92%)",
+            "--grey80": "hsl(var(--grey-hue), var(--grey-saturation), 80%)",
+            "--grey65": "hsl(var(--grey-hue), var(--grey-saturation), 65%)",
+            "--grey40": "hsl(var(--grey-hue), var(--grey-saturation), 40%)",
+        },
+    });
+};

@@ -152,8 +152,8 @@ export const DesktopNav: React.FC<NavSourceProp & DesktopProps> = ({ source, ...
 
 const DesktopNavImpl: React.FC<NavDataProp & DesktopProps> = ({ nav, layoutCss }) => (
     <ul css={{
-        backgroundColor: "#F1F1F1",
-        border: "1px solid #C5C5C5",
+        backgroundColor: "var(--grey97)",
+        border: "1px solid var(--grey80)",
         borderRadius: 4,
         listStyle: "none",
         margin: 0,
@@ -199,7 +199,7 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                 position: "absolute",
                 top: 0,
                 right: 0,
-                backgroundColor: "#F1F1F1",
+                backgroundColor: "var(--grey97)",
                 height: "100%",
                 width: "clamp(260px, 75%, 450px)",
                 overflowY: "auto",
@@ -213,7 +213,7 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                         alignItems: "center",
                         padding: "2px 5px",
                         margin: 6,
-                        border: "1px solid #C5C5C5",
+                        border: "1px solid var(--grey80)",
                         borderRadius: 4,
                         ...ITEM_LINK_BASE_STYLE,
                     }}
@@ -226,7 +226,7 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                 listStyle: "none",
                 margin: 0,
                 padding: 0,
-                borderTop: "1px solid #ccc",
+                borderTop: "1px solid var(--grey80)",
             }}>
                 {nav.items.map(item => <Item key={item.id} item={item} />)}
             </ul>
@@ -245,16 +245,16 @@ const ITEM_LINK_BASE_STYLE = {
 
     "& > svg": {
         fontSize: 22,
-        color: "#A9A9A9",
+        color: "var(--grey65)",
         transition: `color ${TRANSITION_DURATION}`,
     },
 
     "&:hover": {
         transitionDuration: "0.05s",
-        backgroundColor: "#E2E2E2",
+        backgroundColor: "var(--grey92)",
         "& > svg": {
             transitionDuration: "0.05s",
-            color: "#6F6F6F",
+            color: "var(--grey40)",
         },
     },
 };
@@ -268,7 +268,7 @@ const Item: React.FC<{ item: NavItem }> = ({ item }) => {
     };
 
     const inner = item.active
-        ? <b css={{ ...baseStyle, backgroundColor: "#C5C5C5" }}>
+        ? <b css={{ ...baseStyle, backgroundColor: "var(--grey80)" }}>
             {item.label}
         </b>
         : <Link
@@ -283,7 +283,7 @@ const Item: React.FC<{ item: NavItem }> = ({ item }) => {
         </Link>;
 
     return (
-        <li css={{ borderBottom: "1px solid #C5C5C5" }}>
+        <li css={{ borderBottom: "1px solid var(--grey80)" }}>
             {inner}
         </li>
     );

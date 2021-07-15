@@ -157,7 +157,7 @@ const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 minWidth: 50,
                 height: 35,
                 borderRadius: 4,
-                border: "1.5px solid #ccc",
+                border: "1.5px solid var(--grey80)",
                 padding: "0 12px",
                 "&:focus": {
                     outline: "none",
