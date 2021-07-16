@@ -81,8 +81,8 @@ function unwrap<K extends keyof BlockData>(block: BlockData, field: K): NonNulla
 
     const v = block[field];
     if (!isNotNullish(v)) {
-        return unreachable(`field '${field}' of block is null, but that should ` +
-            `never happen for the type '${block.__typename}'`);
+        return unreachable(`field '${field}' of block is null, but that should `
+            + `never happen for the type '${block.__typename}'`);
     }
 
     return v;
