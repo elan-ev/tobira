@@ -25,7 +25,7 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
             margin: OUTER_CONTAINER_MARGIN,
             ...menu.state === "burger" && {
                 overflow: "hidden",
-                height: "100vh",
+                height: "100%",
             },
         }}>
             <Header />

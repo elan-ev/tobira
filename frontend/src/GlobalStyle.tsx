@@ -29,10 +29,14 @@ const CSS_RESETS = css({
         margin: 0,
     },
 
+    html: {
+        height: "100%",
+    },
+
     // Useful body defaults
     body: {
         // It is useful for the body to always span the entire height of the viewport.
-        minHeight: "100vh",
+        height: "100%",
 
         // This only affects scrolling that "is triggered by the navigation or
         // CSSOM scrolling APIs". For anchors, smooth scrolling is useful.
@@ -66,6 +70,11 @@ const GLOBAL_STYLE = css({
         // width: 320px. It does make sense to set a minimum width early on in
         // order to know where we can stop caring.
         minWidth: 320,
+
+        "& > div": {
+            height: "100%",
+            overflow: "auto",
+        },
     },
     h1: {
         fontSize: 32,
