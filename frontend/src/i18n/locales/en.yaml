@@ -29,6 +29,10 @@ about:
     Tobira, like Opencast, is free open source software. For more information
     and to report bugs, please visit <1>its GitHub repository</1>.
 
+footer:
+  about-tobira: About Tobira
+  legal-notice: Legal Notice
+
 main-menu:
   label: Menu
   theme: Theme

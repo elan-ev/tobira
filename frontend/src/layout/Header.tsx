@@ -9,6 +9,7 @@ import { Link } from "../router";
 import { useMenu } from "./MenuState";
 import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import { match } from "../util";
+import { OUTER_CONTAINER_MARGIN } from "./Root";
 
 
 export const HEIGHT = 60;
@@ -29,6 +30,7 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
 
     return (
         <header css={{
+            margin: OUTER_CONTAINER_MARGIN,
             height: "var(--header-height)",
             display: "flex",
             padding: "var(--header-padding) min(5vw, var(--header-padding))",

@@ -30,6 +30,10 @@ about:
     kostenlose Open-Source-Software. Weitere Informationen und die Möglichkeit,
     Fehler zu melden, gibt es im <1>GitHub-Repository des Projekts</1>.
 
+footer:
+  about-tobira: Über Tobira
+  legal-notice: Impressum
+
 main-menu:
   label: Menü
   theme: Design
