@@ -98,7 +98,7 @@ module.exports = {
             project: "./tsconfig.json",
         },
         extends: [
-            "plugin:@typescript-eslint/all",
+            "plugin:@typescript-eslint/recommended",
             "plugin:react/recommended",
         ],
         // TODO We probably need to disable more ESLint rules here, right?
@@ -108,22 +108,9 @@ module.exports = {
             "react/react-in-jsx-scope": "off",
             "react/display-name": "off",
             "@typescript-eslint/no-explicit-any": "off",
-            "@typescript-eslint/no-use-before-define": "off",
-            "@typescript-eslint/typedef": "off",
-            "@typescript-eslint/prefer-readonly-parameter-types": "off",
-            "@typescript-eslint/no-magic-numbers": "off",
-            "@typescript-eslint/explicit-function-return-type": "off",
-            "@typescript-eslint/promise-function-async": "off",
             "implicit-arrow-linebreak": "off",
-            "@typescript-eslint/sort-type-union-intersection-members": "off",
-            "@typescript-eslint/comma-dangle": "off",
             "@typescript-eslint/object-curly-spacing": ["warn", "always"],
-            "@typescript-eslint/no-confusing-void-expression": "off",
-            "@typescript-eslint/no-shadow": "off",
             // The rationale these two/three are based on is mostly out of date
-            "@typescript-eslint/prefer-interface": "off",
-            "@typescript-eslint/no-type-alias": "off",
-            "@typescript-eslint/consistent-type-definitions": "off",
             "@typescript-eslint/no-empty-function": "off",
 
             // Make style issues warnings
@@ -150,7 +137,6 @@ module.exports = {
             }],
             "@typescript-eslint/member-delimiter-style": "warn",
             "@typescript-eslint/brace-style": "warn",
-            "@typescript-eslint/lines-between-class-members": "off",
             "@typescript-eslint/explicit-member-accessibility": "warn",
 
             // Turn off base rules overridden by `@typescript-eslint` rules
@@ -158,6 +144,7 @@ module.exports = {
             "semi": "off",
             "no-unused-vars": "off",
             "no-extra-parens": "off",
+            "lines-between-class-members": "off",
 
             // Change strange defaults.
             "@typescript-eslint/space-before-function-paren": ["warn", {
@@ -165,7 +152,6 @@ module.exports = {
                 "named": "never",
                 "asyncArrow": "always",
             }],
-            "lines-around-comment": "off",
         },
         settings: {
             react: {
