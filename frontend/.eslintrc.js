@@ -14,51 +14,22 @@ module.exports = {
         ecmaVersion: 11,
     },
     extends: [
-        "eslint:all",
+        "eslint:recommended",
     ],
     rules: {
         // Turn off or reconfigure some rather opinionated and intrusive rules
-        "max-statements": "off",
-        "max-classes-per-file": "off",
-        "no-warning-comments": "off",
-        "no-ternary": "off",
-        "id-length": "off",
-        "sort-keys": "off",
-        "sort-vars": "off",
-        "sort-imports": "off",
-        "prefer-named-capture-group": "off",
-        "padded-blocks": "off",
-        "quote-props": "off",
-        "no-magic-numbers": "off",
-        "max-lines-per-function": "off",
-        "default-case": "off",
-        "no-console": "off",
-        "func-style": "off",
-        "max-lines": "off",
-        "no-else-return": "off",
-        "no-underscore-dangle": "off",
         "space-before-function-paren": ["warn", {
             "anonymous": "always",
             "named": "never",
             "asyncArrow": "always",
         }],
-        "lines-around-comment": "off",
         "no-multiple-empty-lines": ["warn", { max: 5 }],
         "camelcase": ["warn", {
             allow: ["\\$key$"],
             ignoreImports: true,
         }],
-        "no-inline-comments": "off",
-        "prefer-destructuring": "off",
-        "no-shadow": "off",
-        "newline-per-chained-call": "off",
         // `== null` is actually a useful check for `null` and `undefined` at the same time
-        "no-eq-null": "off",
         "eqeqeq": ["error", "always", { null: "ignore" }],
-        // Everything this protects against is already covered by
-        // - `no-shadow-restricted-names`
-        // - `strict`
-        "no-undefined": "off",
         "no-void": ["error", { allowAsStatement: true }],
 
         // Style lints should only `"warn"`
