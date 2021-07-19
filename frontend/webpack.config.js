@@ -54,9 +54,6 @@ module.exports = (_env, argv) => ({
         new ForkTsCheckerWebpackPlugin({
             eslint: {
                 files: ["."],
-                options: {
-                    cache: true,
-                },
             },
             typescript: {
                 mode: "write-references",
