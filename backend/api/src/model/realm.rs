@@ -1,6 +1,6 @@
-use deadpool_postgres::Pool;
 use futures::stream::TryStreamExt;
 use juniper::{FieldResult, graphql_object};
+use tokio_postgres::GenericClient;
 use std::collections::HashMap;
 
 use tobira_util::{
@@ -74,13 +74,12 @@ pub(crate) struct Tree {
 }
 
 impl Tree {
-    pub(crate) async fn load(db: &Pool) -> Result<Self> {
+    pub(crate) async fn load(db: &impl GenericClient) -> Result<Self> {
         debug!("Loading realms from database");
 
         // We store the nodes of the realm tree in a hash map
         // accessible by the database ID
-        let mut realms = db.get()
-            .await?
+        let mut realms = db
             .query_raw(
                 "select id, name, parent, path_segment from realms",
                 NO_PARAMS,
