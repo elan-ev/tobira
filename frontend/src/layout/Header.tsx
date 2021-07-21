@@ -141,7 +141,7 @@ const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             maxWidth: 280,
             [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                 display: "none",
-            }
+            },
         }
         : {
             width: "100%",

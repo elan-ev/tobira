@@ -82,7 +82,7 @@ type ForwardProps<InnerProps> = {
  * extracting from the given query).
  */
 function Dispatch<InnerProps>(
-    { source, Component, innerProps }: ForwardProps<InnerProps> & NavSourceProp
+    { source, Component, innerProps }: ForwardProps<InnerProps> & NavSourceProp,
 ) {
     if (source.kind === "static") {
         return React.createElement(Component, { nav: source.data, ...innerProps });
