@@ -197,8 +197,8 @@ as $$
 declare
     realm_id realms.id%type;
 begin
-    insert into realms (name, parent, path)
-        values (name, 0, '/' || replace(lower(name), ' ', '-'))
+    insert into realms (name, parent, path_segment)
+        values (name, 0, replace(lower(name), ' ', '-'))
         returning id into realm_id;
 
     insert into blocks (realm_id, type, index, text_content)
@@ -215,8 +215,8 @@ as $$
 declare
     root realms.id%type;
 begin
-    insert into realms (name, parent, path)
-        values ('Lectures', 0, '/lectures')
+    insert into realms (name, parent, path_segment)
+        values ('Lectures', 0, 'lectures')
         returning id into root;
 
     insert into blocks (realm_id, type, index, title, text_content)
@@ -239,8 +239,8 @@ declare
     root realms.id%type;
     y_root realms.id%type;
 begin
-    insert into realms (name, parent, path)
-        values (name, lectures_root, '/lectures/' || replace(lower(name), ' ', '-'))
+    insert into realms (name, parent, path_segment)
+        values (name, lectures_root, replace(lower(name), ' ', '-'))
         returning id into root;
 
     insert into blocks (realm_id, type, index, title, text_content)
@@ -253,14 +253,14 @@ begin
         ));
 
     for y in 2020 .. 2021 loop
-        insert into realms (name, parent, path)
-            values (y, root, '/lectures/' || replace(lower(name), ' ', '-') || '/' || y::text)
+        insert into realms (name, parent, path_segment)
+            values (y, root, y::text)
             returning id into y_root;
 
-        insert into realms (name, parent, path)
-            values ('Summer', y_root, '/lectures/' || replace(lower(name), ' ', '-') || '/' || y::text || '/summer');
-        insert into realms (name, parent, path)
-            values ('Winter', y_root, '/lectures/' || replace(lower(name), ' ', '-') || '/' || y::text || '/winter');
+        insert into realms (name, parent, path_segment)
+            values ('Summer', y_root, 'summer');
+        insert into realms (name, parent, path_segment)
+            values ('Winter', y_root, 'winter');
     end loop;
 end; $$;
 
