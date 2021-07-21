@@ -6,22 +6,15 @@
 type Event {
   id: ID!
   title: String!
-  video: String!
-  thumbnail: String!
-  duration: Float!
   description: String
+  "Duration in ms."
+  duration: Float
+  thumbnail: String!
+  tracks: [Track!]!
+  created: DateTimeUtc!
+  updated: DateTimeUtc!
+  creator: String
   series: Series
-}
-
-type Realm {
-  id: ID!
-  name: String!
-  path: String!
-  parent: Realm
-  parents: [Realm!]!
-  children: [Realm!]!
-  "Returns the (content) blocks of this realm."
-  blocks: [Block!]!
 }
 
 "A `Block`: a UI element that belongs to a realm."
@@ -35,6 +28,9 @@ enum VideoListOrder {
   NEW_TO_OLD
   OLD_TO_NEW
 }
+
+"DateTime"
+scalar DateTimeUtc
 
 "A block just showing some text."
 type TextBlock implements Block {
@@ -68,6 +64,13 @@ type Query {
   event(id: ID!): Event
 }
 
+type Track {
+  uri: String!
+  flavor: String!
+  mimetype: String
+  resolution: [Int!]
+}
+
 "A block just showing the list of videos in an Opencast series"
 type SeriesBlock implements Block {
   series: Series!
@@ -80,6 +83,17 @@ type Series {
   title: String!
   description: String
   events: [Event!]!
+}
+
+type Realm {
+  id: ID!
+  name: String!
+  path: String!
+  parent: Realm
+  parents: [Realm!]!
+  children: [Realm!]!
+  "Returns the (content) blocks of this realm."
+  blocks: [Block!]!
 }
 
 enum VideoListLayout {

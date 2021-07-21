@@ -13,6 +13,7 @@ description = "GraphQL API of the Tobira video portal for Opencast"
 
 [dependencies]
 anyhow = "1"
+chrono = { version = "0.4", features = ["serde"] }
 deadpool-postgres = { version = "0.9", default-features = false }
 futures = "0.3.1"
 juniper = "0.15.7"

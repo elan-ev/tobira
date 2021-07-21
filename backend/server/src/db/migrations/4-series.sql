@@ -8,5 +8,6 @@ create table series (
 
     -- Meta data
     title text not null,
-    description text
+    description text,
+    updated timestamp with time zone not null
 );

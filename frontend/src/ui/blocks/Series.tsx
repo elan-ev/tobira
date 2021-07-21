@@ -41,18 +41,20 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => {
                                     height={THUMB_HEIGHT}
                                     css={{ display: "block" }}
                                 />
-                                <div css={{
-                                    position: "absolute",
-                                    right: 6,
-                                    bottom: 6,
-                                    backgroundColor: "hsla(0, 0%, 0%, 0.75)",
-                                    border: "1px solid black",
-                                    borderRadius: 4,
-                                    padding: "0 4px",
-                                    color: "white",
-                                }}>
-                                    {formatLength(event.duration)}
-                                </div>
+                                {event.duration != null && (
+                                    <div css={{
+                                        position: "absolute",
+                                        right: 6,
+                                        bottom: 6,
+                                        backgroundColor: "hsla(0, 0%, 0%, 0.75)",
+                                        border: "1px solid black",
+                                        borderRadius: 4,
+                                        padding: "0 4px",
+                                        color: "white",
+                                    }}>
+                                        {formatLength(event.duration)}
+                                    </div>
+                                )}
                             </Link>
 
                             <h3 css={{
@@ -68,7 +70,8 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => {
     );
 };
 
-const formatLength = (totalSeconds: number) => {
+const formatLength = (totalMs: number) => {
+    const totalSeconds = Math.round(totalMs / 1000);
     const seconds = totalSeconds % 60;
     const minutes = Math.floor(totalSeconds / 60) % 60;
     const hours = Math.floor(totalSeconds / (60 * 60));

@@ -67,13 +67,13 @@ impl HarvestClient {
     pub(super) async fn send(
         &self,
         since: DateTime<Utc>,
-        limit: u64,
+        preferred_amount: u64,
     ) -> Result<(response::Parts, Bytes)> {
         let pq = format!(
-            "{}?since={}&limit={}",
+            "{}?since={}&preferredAmount={}",
             Self::API_PATH,
             since.timestamp_millis(),
-            limit,
+            preferred_amount,
         );
 
         let uri = Uri::builder()

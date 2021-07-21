@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use tobira_api::db::EventTrack;
 
 
 /// What the harvesting API returns.
@@ -23,11 +24,33 @@ pub(super) enum HarvestItem {
         description: Option<String>,
         part_of: Option<String>,
         #[serde(with = "chrono::serde::ts_milliseconds")]
+        created: DateTime<Utc>,
+        creator: Option<String>,
+        duration: Option<i32>,
+        tracks: Vec<Track>,
+        thumbnail: Option<String>,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
 
     #[serde(rename_all = "camelCase")]
     EventDeleted {
+        id: String,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
+    },
+
+    #[serde(rename_all = "camelCase")]
+    Series {
+        id: String,
+        title: String,
+        description: Option<String>,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
+    },
+
+    #[serde(rename_all = "camelCase")]
+    SeriesDeleted {
         id: String,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
@@ -39,6 +62,28 @@ impl HarvestItem {
         match *self {
             Self::Event { updated, .. } => updated,
             Self::EventDeleted { updated, .. } =>  updated,
+            Self::Series { updated, .. } => updated,
+            Self::SeriesDeleted { updated, .. } => updated,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(super) struct Track {
+    uri: String,
+    flavor: String,
+    mimetype: Option<String>,
+    resolution: Option<[i32; 2]>,
+}
+
+impl Into<EventTrack> for Track {
+    fn into(self) -> EventTrack {
+        EventTrack {
+            uri: self.uri,
+            flavor: self.flavor,
+            mimetype: self.mimetype,
+            resolution: self.resolution.map(Into::into),
         }
     }
 }

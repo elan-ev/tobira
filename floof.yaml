@@ -12,7 +12,7 @@ backend:
         paths:
           - api
         run:
-          - on-change: cargo run --bin export-schema -- ../frontend/src/schema.graphql
+          - cargo run --bin export-schema -- ../frontend/src/schema.graphql
     - watch:
         paths:
           - Cargo.lock

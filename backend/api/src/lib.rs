@@ -9,6 +9,7 @@ use crate::{
     subscription::Subscription,
 };
 
+pub mod db;
 pub mod mutation;
 pub mod query;
 pub mod subscription;
