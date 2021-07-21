@@ -12,8 +12,6 @@ pub(crate) struct Realm {
     key: Key,
     parent_key: Option<Key>,
     name: String,
-
-    /// Full realm path. Empty string for root realm.
     path: String,
 }
 
@@ -42,7 +40,7 @@ impl Realm {
 
         let result = context.db
             .query_opt(
-                "select parent, name, full_realm_path(id)
+                "select parent, name, path
                     from realms
                     where id = $1",
                 &[&(key as i64)],
@@ -78,7 +76,7 @@ impl Realm {
             .query_opt(
                 "select id, parent, name
                     from realms
-                    where full_realm_path(id) = $1",
+                    where path = $1",
                 &[&path],
             )
             .await?
@@ -127,7 +125,7 @@ impl Realm {
     async fn ancestors(&self, context: &Context) -> FieldResult<Vec<Realm>> {
         let result = context.db
             .query_raw(
-                "select id, parent, name, full_realm_path(id)
+                "select id, parent, name, path
                     from ancestors_of_realm($1)
                     where height <> 0 and id <> 0",
                 &[&(self.key as i64)],
@@ -151,7 +149,7 @@ impl Realm {
     async fn children(&self, context: &Context) -> FieldResult<Vec<Self>> {
         let result = context.db
             .query_raw(
-                "select id, name, path_segment
+                "select id, name, path
                     from realms
                     where parent = $1",
                 &[&(self.key as i64)],
@@ -162,7 +160,7 @@ impl Realm {
                     key: row.get_key(0),
                     parent_key: Some(self.key),
                     name: row.get(1),
-                    path: format!("{}/{}", self.path, row.get::<_, String>(2)),
+                    path: row.get(2),
                 }
             })
             .try_collect()

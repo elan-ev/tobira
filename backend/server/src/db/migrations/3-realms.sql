@@ -7,16 +7,19 @@ create table realms (
     id bigint primary key default randomized_id('realm'),
     parent bigint references realms on delete restrict,
     name text not null,
-    path_segment text not null
+    path text not null,
 
     -- This makes sure that a realm path segment consists of an alphanumeric
     -- character followed by one or more alphanumeric characters or hyphens. In
     -- particular, this implies path segments are at least two characters long.
     -- This check is disabled for the root realm as it has an empty path
     -- segment.
-    constraint valid_alphanum_path check (id = 0 or path_segment ~* '^[[:alnum:]][[:alnum:]\-]+$'),
+    constraint valid_alphanum_path check (id = 0 or path ~* '^(/[[:alnum:]][[:alnum:]\-]+)+$'),
     constraint has_parent check (id = 0 or parent is not null)
 );
+
+-- Full path to realm lookups happen on nearly every page view
+create unique index idx_realm_path on realms (path);
 
 -- Insert the root realm. Since that realm has to have the ID=0, we have to
 -- set the sequence to a specific value. We can just apply inverse xtea to 0
@@ -26,7 +29,7 @@ select setval(
     xtea(0, (select key from __xtea_keys where entity = 'realm'), false),
     false
 );
-insert into realms (name, parent, path_segment) values ('', null, '');
+insert into realms (name, parent, path) values ('', null, '');
 
 
 -- Returns all ancestors of the given realm, including the root realm and the
@@ -37,31 +40,19 @@ create function ancestors_of_realm(realm_id bigint)
         id bigint,
         parent bigint,
         name text,
-        path_segment text,
+        path text,
         height int
     )
     language 'sql'
     stable
 as $$
-with recursive ancestors(id, parent, name, path_segment) as (
+with recursive ancestors(id, parent, name, path) as (
     select *, 0 as height from realms
     where id = realm_id
   union
-    select r.id, r.parent, r.name, r.path_segment, a.height + 1 as height from ancestors a
+    select r.id, r.parent, r.name, r.path, a.height + 1 as height from ancestors a
     join realms r on a.parent = r.id
     where a.id <> 0
 )
 SELECT * FROM ancestors order by height desc
-$$;
-
-
--- Returns the full realm path for the given realm. Returns an empty string for
--- the root realm. For non-root realms, the string starts with `/`, e.g.
--- `/foo/bar`.
-create function full_realm_path(realm_id bigint)
-    returns text
-    language 'sql'
-    stable
-as $$
-select string_agg(path_segment, '/') from (SELECT * FROM ancestors_of_realm(realm_id)) as t;
 $$;
