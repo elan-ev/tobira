@@ -38,7 +38,7 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
     const qualities = Array.from(new Set(
         tracks
             .map(t => t.resolution?.[1])
-            .filter((h): h is number => h != null)
+            .filter((h): h is number => h != null),
     ));
     qualities.sort((a, b) => a - b);
     const defaultQuality = Math.max(...qualities.filter(h => h <= 1080));
