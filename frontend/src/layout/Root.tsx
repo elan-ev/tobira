@@ -84,34 +84,11 @@ export const InitialLoading: React.FC = () => {
         "100%": { opacity: 0.5 },
     });
 
-    const rotation = keyframes({
-        "0%": { transform: "rotate(0)" },
-        "100%": { transform: "rotate(360deg)" },
-    });
-
     return (
         <Outer>
             <Header />
             <Main>
-                <div css={{
-                    margin: "auto",
-                    marginTop: "min(120px, 20vh)",
-                    "& > svg": {
-                        width: 50,
-                        height: 50,
-                        animation: `2s linear infinite none ${rotation}`,
-                    },
-                    "& > svg > circle": {
-                        fill: "none",
-                        stroke: "black",
-                        strokeWidth: 4,
-                        strokeDasharray: 83, // 2/3 of circumference
-                        strokeLinecap: "round",
-                    },
-                }}>
-                    <svg viewBox="0 0 50 50">
-                        <circle cx="25" cy="25" r="20" />
-                    </svg>
+                <div css={{ margin: "auto", marginTop: "min(120px, 20vh)" }}>
                     <div css={{
                         marginTop: 32,
                         animation: `${pulsing} 1.2s infinite`,
