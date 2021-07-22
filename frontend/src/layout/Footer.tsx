@@ -27,6 +27,8 @@ export const Footer: React.FC = () => {
             }}>
                 <li><Link to="/~legal">{t("footer.legal-notice")}</Link></li>
                 <li><Link to="/~tobira">{t("footer.about-tobira")}</Link></li>
+                {/* TODO: Remove this or restrict this to dev builds */}
+                <li><a href="/~graphiql">Graph<em>i</em>QL</a></li>
             </ul>
         </footer>
     );
