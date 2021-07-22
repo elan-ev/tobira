@@ -9,6 +9,7 @@ import type { MatchedRoute } from "./router";
 import { MenuProvider } from "./layout/MenuState";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
+import { InitialLoading } from "./layout/Root";
 
 
 type Props = {
@@ -48,7 +49,7 @@ const SilenceEmotionWarnings: React.FC = ({ children }) => {
 
 const APIWrapper: React.FC = ({ children }) => (
     <APIErrorBoundary>
-        <Suspense fallback="Loading! (TODO)">
+        <Suspense fallback={<InitialLoading />}>
             {children}
         </Suspense>
     </APIErrorBoundary>
