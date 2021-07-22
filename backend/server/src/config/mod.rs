@@ -134,8 +134,18 @@ tobira_macros::gen_config! {
             small: PathBuf,
         },
 
+        // TODO: make sure color format is valid
         color: {
             navigation: String = "#357C58",
+
+            /// Accent color with large contrast to navigation color.
+            accent: String = "#007A96",
+
+            /// Grey tone with 50% lightness/brightness. Several brighter and
+            /// darker variants of this are created automatically. This is
+            /// configurable in case you want to have a slightly colored grey,
+            /// e.g. slightly warm.
+            grey50: String = "#808080",
         },
     },
 }

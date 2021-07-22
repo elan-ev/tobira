@@ -6,6 +6,9 @@ import type { Interpolation, Theme } from "@emotion/react";
 
 import { Link } from "../router";
 import type { NavigationData$key } from "../query-types/NavigationData.graphql";
+import CONFIG from "../config";
+import { prefersBlackText } from "../util/color";
+import { useTranslation } from "react-i18next";
 
 
 /**
@@ -31,12 +34,11 @@ export const navFromQuery = (fragRef: NavigationData$key): NavSource => (
  */
 export type Navigation = {
     items: NavItem[];
-
-    /**
-     * If the navigation is not currently showing the root realms, this is a
-     * link to the parent realm
-     */
-    parentLink: string | null;
+    currentName: string | null;
+    parent: null | {
+        name: string;
+        link: string;
+    };
 };
 
 type NavItem = {
@@ -100,6 +102,7 @@ type ViaQueryProps<InnerProps> = ForwardProps<InnerProps> & {
  * component with said data.
  */
 function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<InnerProps>) {
+    const { t } = useTranslation();
     const realm = useFragment(
         graphql`
             fragment NavigationData on Realm {
@@ -107,8 +110,10 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
                 name
                 children { id name path }
                 parent {
-                    children { id name path }
+                    isRoot
+                    name
                     path
+                    children { id name path }
                 }
             }
         `,
@@ -129,11 +134,14 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
             active: id === realm.id,
         }));
 
-    let parentLink = null;
-    if (realm.parent !== null) {
-        parentLink = realm.parent.path === "" ? "/" : `${realm.parent.path}`;
-    }
-    const nav = { items, parentLink };
+    const nav = {
+        items,
+        currentName: realm.name,
+        parent: realm.parent && {
+            name: realm.parent.isRoot ? t("home") : realm.parent.name,
+            link: realm.parent.path === "" ? "/" : `${realm.parent.path}`,
+        },
+    };
 
     return React.createElement(Component, { nav, ...innerProps });
 }
@@ -152,8 +160,8 @@ export const DesktopNav: React.FC<NavSourceProp & DesktopProps> = ({ source, ...
 
 const DesktopNavImpl: React.FC<NavDataProp & DesktopProps> = ({ nav, layoutCss }) => (
     <ul css={{
-        backgroundColor: "#F1F1F1",
-        border: "1px solid #C5C5C5",
+        backgroundColor: "var(--grey97)",
+        border: "1px solid var(--grey80)",
         borderRadius: 4,
         listStyle: "none",
         margin: 0,
@@ -199,34 +207,47 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                 position: "absolute",
                 top: 0,
                 right: 0,
-                backgroundColor: "#F1F1F1",
+                backgroundColor: "var(--grey97)",
                 height: "100%",
                 width: "clamp(260px, 75%, 450px)",
                 overflowY: "auto",
             }}
         >
-            {nav.parentLink !== null && (
+            {nav.parent !== null && <>
                 <Link
-                    to={nav.parentLink}
+                    to={nav.parent.link}
                     css={{
-                        display: "inline-flex",
+                        padding: "6px 12px",
+                        display: "flex",
                         alignItems: "center",
-                        padding: "2px 5px",
-                        margin: 6,
-                        border: "1px solid #C5C5C5",
-                        borderRadius: 4,
                         ...ITEM_LINK_BASE_STYLE,
                     }}
                 >
-                    <FontAwesomeIcon icon={faChevronLeft} css={{ marginRight: 6 }}/>
-                    Back
+                    <FontAwesomeIcon
+                        icon={faChevronLeft}
+                        css={{ marginRight: 6, width: "16px !important" }}
+                    />
+                    {nav.parent.name}
                 </Link>
-            )}
+                <div css={{
+                    padding: 16,
+                    paddingLeft: 12 + 22,
+                    fontSize: 18,
+                    fontWeight: "bold",
+                    backgroundColor: "var(--accent-color)",
+                    ...prefersBlackText(CONFIG.theme.color.accent)
+                        ? { color: "black", textShadow: "1px 1px 0 white" }
+                        : { color: "white", textShadow: "1px 1px 0 black" },
+                }}>{nav.currentName}</div>
+            </>}
             <ul css={{
                 listStyle: "none",
                 margin: 0,
                 padding: 0,
-                borderTop: "1px solid #ccc",
+                ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
+                "& > li > a": {
+                    paddingLeft: 12 + 22,
+                },
             }}>
                 {nav.items.map(item => <Item key={item.id} item={item} />)}
             </ul>
@@ -245,16 +266,16 @@ const ITEM_LINK_BASE_STYLE = {
 
     "& > svg": {
         fontSize: 22,
-        color: "#A9A9A9",
+        color: "var(--grey65)",
         transition: `color ${TRANSITION_DURATION}`,
     },
 
     "&:hover": {
         transitionDuration: "0.05s",
-        backgroundColor: "#E2E2E2",
+        backgroundColor: "var(--grey92)",
         "& > svg": {
             transitionDuration: "0.05s",
-            color: "#6F6F6F",
+            color: "var(--grey40)",
         },
     },
 };
@@ -268,7 +289,7 @@ const Item: React.FC<{ item: NavItem }> = ({ item }) => {
     };
 
     const inner = item.active
-        ? <b css={{ ...baseStyle, backgroundColor: "#C5C5C5" }}>
+        ? <b css={{ ...baseStyle, backgroundColor: "var(--grey80)" }}>
             {item.label}
         </b>
         : <Link
@@ -283,7 +304,7 @@ const Item: React.FC<{ item: NavItem }> = ({ item }) => {
         </Link>;
 
     return (
-        <li css={{ borderBottom: "1px solid #C5C5C5" }}>
+        <li css={{ borderBottom: "1px solid var(--grey80)" }}>
             {inner}
         </li>
     );

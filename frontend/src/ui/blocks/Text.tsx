@@ -19,7 +19,7 @@ const ALLOWED_MARKDOWN_TAGS = [
     "p", "blockquote", "pre", "ul", "ol", "li", "a", "em", "strong", "code", "hr", "img",
 ];
 
-const CODE_BACKGROUND_COLOR = "#f9f9f6";
+const CODE_BACKGROUND_COLOR = "var(--grey97)";
 
 // We override some components emitted by the Markdown parser to add CSS.
 const MARKDOWN_COMPONENTS: TransformOptions["components"] = {
@@ -32,7 +32,7 @@ const MARKDOWN_COMPONENTS: TransformOptions["components"] = {
     />,
     blockquote: ({ node, ...props }) => <blockquote
         css={{
-            borderLeft: "4px solid #e5e5e5",
+            borderLeft: "4px solid var(--grey80)",
             padding: "2px 8px",
             "& > *:first-of-type": { marginTop: 0 },
             "& > *:last-of-type": { marginBottom: 0 },

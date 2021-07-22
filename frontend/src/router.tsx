@@ -1,9 +1,11 @@
-import React, { useEffect, useState, startTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
+import { Transition } from "react-transition-group";
 
 import { AboutRoute } from "./routes/About";
 import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
+import { match } from "./util";
 import { bug } from "./util/err";
 
 
@@ -130,7 +132,12 @@ type RouterProps = {
  * change the route.
  */
 export const Router: React.FC<RouterProps> = ({ initialRoute }) => {
-    const [activeRoute, setActiveRoute] = useState(initialRoute);
+    const [activeRoute, setActiveRouteRaw] = useState(initialRoute);
+    const [isPending, startTransition] = useTransition();
+
+    const setActiveRoute = (newRoute: MatchedRoute<any>) => {
+        startTransition(() => setActiveRouteRaw(newRoute));
+    };
 
     // We need to listen to `popstate` events.
     useEffect(() => {
@@ -156,6 +163,7 @@ export const Router: React.FC<RouterProps> = ({ initialRoute }) => {
 
     return (
         <RoutingContext.Provider value={{ setActiveRoute }}>
+            <LoadingIndicator isPending={isPending} />
             {activeRoute.render(activeRoute.prepared)}
         </RoutingContext.Provider>
     );
@@ -188,9 +196,7 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
 
         e.preventDefault();
         const href = (e.currentTarget as HTMLAnchorElement).href;
-        startTransition(() => {
-            context.setActiveRoute(matchRoute(href));
-        });
+        context.setActiveRoute(matchRoute(href));
 
         history.pushState(null, "", href);
 
@@ -208,3 +214,41 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
  * the application.
  */
 export const matchInitialRoute: () => MatchedRoute<any> = () => matchRoute(window.location.href);
+
+/** A thin colored line at the top of the page indicating a page load */
+const LoadingIndicator: React.FC<{ isPending: boolean }> = ({ isPending }) => {
+    const START_DURATION = 1200;
+    const EXIT_DURATION = 150;
+
+    // TODO: maybe disable this for `prefers-reduced-motion: reduce`
+    return <Transition in={isPending} timeout={EXIT_DURATION}>{state => (
+        <div css={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            height: 4,
+            backgroundColor: "var(--accent-color)",
+            ...match(state, {
+                "entering": () => ({
+                    width: "70%",
+                    transition: `width ${START_DURATION}ms`,
+                }),
+                "entered": () => ({
+                    width: "70%",
+                    transition: `width ${START_DURATION}ms`,
+                }),
+                "exiting": () => ({
+                    width: "100%",
+                    opacity: 0,
+                    transition: `width ${EXIT_DURATION}ms, `
+                        + `opacity ${0.2 * EXIT_DURATION}ms ease ${0.8 * EXIT_DURATION}ms`,
+                }),
+                "exited": () => ({
+                    width: "0%",
+                    transition: "none",
+                }),
+                "unmounted": () => ({}),
+            }),
+        }} />
+    )}</Transition>;
+};

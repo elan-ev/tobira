@@ -78,7 +78,7 @@ impl Assets {
         }
 
         let mut variables = HashMap::new();
-        variables.insert("theme-css".to_string(), build_theme(&config.theme));
+        variables.insert("theme-json".to_string(), build_theme(&config.theme));
 
         let reinda_config = reinda::Config {
             base_path: Some(config.assets.internal.clone()),
@@ -155,15 +155,14 @@ impl Assets {
 }
 
 // TODO: this function doesn't quite fit into this module, move it somewhere else.
-fn build_theme(config: &config::Theme) -> String {
-    format!(
-        ":root {{
-            --header-height: {}px;
-            --header-padding: {}px;
-            --navigation-color: {};
-        }}",
-        config.header_height,
-        config.header_padding,
-        config.color.navigation,
-    )
+fn build_theme(theme: &config::Theme) -> String {
+    serde_json::json!({
+        "headerHeight": theme.header_height,
+        "headerPadding": theme.header_padding,
+        "color": {
+            "navigation": theme.color.navigation,
+            "accent": theme.color.accent,
+            "grey50": theme.color.grey50,
+        },
+    }).to_string()
 }

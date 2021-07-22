@@ -4,6 +4,7 @@ import { Header } from "./Header";
 import { DesktopNav, MobileNav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import type { NavSource } from "./Navigation";
 import { useMenu } from "./MenuState";
+import { Footer } from "./Footer";
 
 
 export const MAIN_PADDING = 16;
@@ -22,16 +23,20 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
 
     return (
         <div css={{
-            margin: OUTER_CONTAINER_MARGIN,
+            minHeight: "100%",
+            display: "flex",
+            flexDirection: "column",
             ...menu.state === "burger" && {
                 overflow: "hidden",
-                height: "100vh",
+                height: "100%",
             },
         }}>
             <Header />
             {menu.state === "burger" && <MobileNav source={navSource} hide={() => menu.close()} />}
             <main css={{
+                margin: OUTER_CONTAINER_MARGIN,
                 padding: MAIN_PADDING,
+                flexGrow: 1,
                 display: "flex",
                 alignItems: "flex-start",
             }}>
@@ -52,6 +57,7 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
                     {children}
                 </div>
             </main>
+            <Footer />
         </div>
     );
 };

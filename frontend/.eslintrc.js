@@ -67,7 +67,7 @@ module.exports = {
             allowAllPropertiesOnSameLine: true,
         }],
         "one-var": ["warn", "never"],
-        "operator-linebreak": "warn",
+        "operator-linebreak": ["warn", "before"],
         "padding-line-between-statements": "warn",
         "quotes": ["warn", "double", { avoidEscape: true }],
         "rest-spread-spacing": "warn",

@@ -42,7 +42,12 @@ type SegmentProps = {
 
 const Segment: React.FC<SegmentProps> = ({ target, active, first = false, children }) => (
     <li css={{ display: "inline" }} {...active && { "aria-current": "location" }}>
-        {first || <FontAwesomeIcon icon={faAngleRight} css={{ margin: "0 8px", color: "#888" }}/>}
+        {first || (
+            <FontAwesomeIcon
+                icon={faAngleRight}
+                css={{ margin: "0 8px", color: "var(--grey65)" }}
+            />
+        )}
         {active ? children : <Link to={target}>{children}</Link>}
     </li>
 );

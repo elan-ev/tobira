@@ -9,6 +9,7 @@ import { Link } from "../router";
 import { useMenu } from "./MenuState";
 import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import { match } from "../util";
+import { OUTER_CONTAINER_MARGIN } from "./Root";
 
 
 export const HEIGHT = 60;
@@ -29,6 +30,7 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
 
     return (
         <header css={{
+            margin: OUTER_CONTAINER_MARGIN,
             height: "var(--header-height)",
             display: "flex",
             padding: "var(--header-padding) min(5vw, var(--header-padding))",
@@ -157,13 +159,12 @@ const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 minWidth: 50,
                 height: 35,
                 borderRadius: 4,
-                border: "1.5px solid #ccc",
+                border: "1.5px solid var(--grey80)",
                 padding: "0 12px",
                 "&:focus": {
                     outline: "none",
-                    // TODO: make color configurable
-                    boxShadow: "0 0 0 1px #007A96",
-                    borderColor: "#007A96",
+                    boxShadow: "0 0 0 1px var(--accent-color)",
+                    borderColor: "var(--accent-color)",
                 },
                 ...extraCss,
             }}
@@ -201,8 +202,9 @@ const ActionIcon: React.FC<ActionIconProps> = ({
                 lineHeight: 0,
                 cursor: "pointer",
                 fontSize: 28,
+                opacity: "0.75",
                 "&:hover": {
-                    backgroundColor: "#ddd",
+                    opacity: "1",
                 },
                 "@media (max-width: 450px)": {
                     fontSize: 24,

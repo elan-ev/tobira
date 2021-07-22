@@ -32,6 +32,10 @@ impl Realm {
         &self.name
     }
 
+    fn is_root(&self) -> bool {
+        self.key == 0
+    }
+
     fn path(&self, context: &Context) -> String {
         Tree::path(self, &context.realm_tree.realms)
     }
