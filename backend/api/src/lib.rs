@@ -1,6 +1,5 @@
 //! Definition of the GraphQL API.
 
-use tobira_util::prelude::*;
 use crate::{
     mutation::Mutation,
     query::Query,
@@ -33,16 +32,11 @@ pub type RootNode = juniper::RootNode<'static, Query, Mutation, Subscription>;
 /// The context that is accessible to every resolver in our API.
 pub struct Context {
     db: tx::Transaction,
-    realm_tree: model::realm::Tree,
 }
 
 impl Context {
-    pub async fn new(db: Transaction) -> Result<Self> {
-        let realm_tree = model::realm::Tree::load(&**db).await?;
-        Ok(Self {
-            db,
-            realm_tree,
-        })
+    pub fn new(db: Transaction) -> Self {
+        Self { db }
     }
 }
 

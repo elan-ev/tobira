@@ -287,8 +287,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
         Arc::new(static_tx)
     };
 
-    let api_context = api::Context::new(Transaction::new(tx.clone())).await
-        .expect("failed to load realm tree"); // TODO
+    let api_context = api::Context::new(Transaction::new(tx.clone()));
     let out = juniper_hyper::graphql(ctx.api_root.clone(), Arc::new(api_context), req).await;
 
     // Check whether we own the last remaining handle of this Arc.
