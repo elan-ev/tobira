@@ -46,3 +46,9 @@ user:
 login:
   button-label: Einloggen
   not-logged-in: Nicht eingeloggt
+
+video:
+  creator: Von
+  created: Erstellt
+  updated: Zuletzt angepasst
+  part-of-series: Teil von
