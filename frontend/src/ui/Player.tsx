@@ -80,8 +80,7 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
     return <>
         <Global styles={plyrCss} />
         <div css={{
-            // TODO: here we need to adjust the colors of the player based on
-            // the colors from the configuration.
+            "--plyr-color-main": "var(--accent-color)",
 
             // We want to make sure that the video player never takes up too
             // much height in the viewport. That could make scrolling hard or

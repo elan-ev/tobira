@@ -118,6 +118,7 @@ const matchRoute = (href: string): MatchedRoute<any> => {
  */
 const RoutingContext = React.createContext<Context | null>(null);
 type Context = {
+    activeRoute: MatchedRoute<any>;
     setActiveRoute: (newRoute: MatchedRoute<any>) => void;
 };
 
@@ -126,12 +127,8 @@ type RouterProps = {
     initialRoute: MatchedRoute<any>;
 };
 
-/**
- * Always renders the currently active route. The given intial route is rendered
- * first, but clicks on `<Link>`  elements or going back in the browser can
- * change the route.
- */
-export const Router: React.FC<RouterProps> = ({ initialRoute }) => {
+/** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
+export const Router: React.FC<RouterProps> = ({ initialRoute, children }) => {
     const [activeRoute, setActiveRouteRaw] = useState(initialRoute);
     const [isPending, startTransition] = useTransition();
 
@@ -162,11 +159,24 @@ export const Router: React.FC<RouterProps> = ({ initialRoute }) => {
     });
 
     return (
-        <RoutingContext.Provider value={{ setActiveRoute }}>
+        <RoutingContext.Provider value={{ setActiveRoute, activeRoute }}>
             <LoadingIndicator isPending={isPending} />
-            {activeRoute.render(activeRoute.prepared)}
+            {children}
         </RoutingContext.Provider>
     );
+};
+
+/**
+ * Renders the currently matched route. Has to be used somewhere inside of a
+ * `<Router>`.
+ */
+export const ActiveRoute: React.FC = () => {
+    const context = React.useContext(RoutingContext);
+    if (context === null) {
+        throw new Error("<ActiveRoute> used without a parent <Router>! That's not allowed.");
+    }
+
+    return context.activeRoute.render(context.activeRoute.prepared);
 };
 
 

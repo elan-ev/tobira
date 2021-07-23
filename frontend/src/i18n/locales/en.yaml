@@ -1,6 +1,7 @@
 language-name: English
 language: Language
 search: Search
+loading: Loading...
 close: Close
 back: Back
 home: Home
@@ -21,13 +22,14 @@ not-found:
     You can try visiting <1>the homepage</1> or using the search bar to find the
     page you are looking for.
 
-about:
-  title: About
+about-tobira:
+  title: About “Tobira”
   body: >
-    Tobira is a video portal for Opencast. It allows its users to browse, watch
-    and organize all episodes and series of the conntected Opencast instance.
-    Tobira, like Opencast, is free open source software. For more information
-    and to report bugs, please visit <1>its GitHub repository</1>.
+    This video portal is powered by Tobira, a video portal software for
+    Opencast. It allows its users to browse, watch and organize all episodes
+    and series of the connected Opencast instance. Tobira, like Opencast, is
+    free open source software. For more information and to report bugs, please
+    visit <1>its GitHub repository</1>.
 
 footer:
   about-tobira: About Tobira
@@ -45,3 +47,9 @@ user:
 login:
   button-label: Login
   not-logged-in: Not logged in
+
+video:
+  creator: By
+  created: Created
+  updated: Last update
+  part-of-series: Part of

@@ -27,9 +27,9 @@ const About: React.FC<Props> = ({ queryRef }) => {
     return (
         <Root navSource={navFromQuery(realm)}>
             <div css={{ margin: "0 auto", maxWidth: 600 }}>
-                <h1>{t("about.title")}</h1>
+                <h1>{t("about-tobira.title")}</h1>
                 <p css={{ margin: "16px 0" }}>
-                    <Trans i18nKey="about.body">
+                    <Trans i18nKey="about-tobira.body">
                         Description.
                         <a href="https://github.com/elan-ev/tobira">GitHub repo</a>
                     </Trans>

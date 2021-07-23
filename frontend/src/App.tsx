@@ -4,11 +4,12 @@ import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { environment, ServerError, APIError } from "./relay";
 
 import { GlobalStyle } from "./GlobalStyle";
-import { Router } from "./router";
+import { ActiveRoute, Router } from "./router";
 import type { MatchedRoute } from "./router";
 import { MenuProvider } from "./layout/MenuState";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
+import { InitialLoading } from "./layout/Root";
 
 
 type Props = {
@@ -18,13 +19,15 @@ type Props = {
 export const App: React.FC<Props> = ({ initialRoute }) => (
     <RelayEnvironmentProvider {...{ environment }}>
         <GlobalStyle />
-        <APIWrapper>
-            <SilenceEmotionWarnings>
-                <MenuProvider>
-                    <Router initialRoute={initialRoute} />
-                </MenuProvider>
-            </SilenceEmotionWarnings>
-        </APIWrapper>
+        <SilenceEmotionWarnings>
+            <Router initialRoute={initialRoute}>
+                <APIWrapper>
+                    <MenuProvider>
+                        <ActiveRoute />
+                    </MenuProvider>
+                </APIWrapper>
+            </Router>
+        </SilenceEmotionWarnings>
     </RelayEnvironmentProvider>
 );
 
@@ -46,7 +49,7 @@ const SilenceEmotionWarnings: React.FC = ({ children }) => {
 
 const APIWrapper: React.FC = ({ children }) => (
     <APIErrorBoundary>
-        <Suspense fallback="Loading! (TODO)">
+        <Suspense fallback={<InitialLoading />}>
             {children}
         </Suspense>
     </APIErrorBoundary>
