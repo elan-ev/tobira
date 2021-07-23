@@ -71,11 +71,6 @@ $$ language plpgsql;
 -- can run. In order to achieve that, we install both, `before update` and
 -- `after update` triggers. Both call this function, which distinguishes the
 -- two cases with `TG_WHEN`.
---
--- One last problem is that, since we set the `full_path` to fire the trigger,
--- we cannot raise an exception anymore when users incorrectly set the value.
--- Well, we can, with a hack. We just set the full path to a very particular
--- value to signal that the trigger, and not a user, set this.
 create function update_full_realm_path() returns trigger as $$
 begin
     -- If only the name changed, we don't need to update anything.
@@ -90,7 +85,7 @@ begin
     if TG_WHEN = 'BEFORE' then
         -- If there was an attempt to change the full path directly and it wasn't
         -- us, we raise an exception.
-        if NEW.full_path <> OLD.full_path and NEW.full_path <> '__fixpath_oRiV4qGFmZ' then
+        if NEW.full_path <> OLD.full_path and pg_trigger_depth() = 1 then
             raise exception 'do not change the full path directly (for realm %)', OLD.id;
         end if;
 
@@ -101,7 +96,7 @@ begin
     else
         -- In the "after" handler, we update all children to recursively fire
         -- this trigger.
-        update realms set full_path = '__fixpath_oRiV4qGFmZ' where parent = NEW.id;
+        update realms set full_path = '' where parent = NEW.id;
         return null;
     end if;
 end;
