@@ -4,7 +4,7 @@ members = ["api", "macros", "server", "util"]
 [profile.release]
 debug = 1
 codegen-units = 1
-lto = true
+lto = "thin"
 
 [profile.release.package."*"]
 debug = false
