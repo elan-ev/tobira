@@ -38,6 +38,6 @@ create table events (
     creator text,
 
     -- Media
-    thumbnail text not null, -- URL to an image
+    thumbnail text, -- URL to an image
     tracks event_track[] not null
 );

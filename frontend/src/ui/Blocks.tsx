@@ -29,7 +29,14 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                     ... on SeriesBlock {
                         series {
                             title
-                            events { id title thumbnail duration created }
+                            events {
+                                id
+                                title
+                                thumbnail
+                                duration
+                                created
+                                tracks { resolution }
+                            }
                         }
                     }
                 }
