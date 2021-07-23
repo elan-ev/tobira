@@ -39,27 +39,22 @@ type TextBlock implements Block {
 
 type Query {
   apiVersion: String!
-  "Returns a flat list of all realms."
-  realms: [Realm!]!
+  "Returns the root realm."
+  rootRealm: Realm!
   """
     Returns the realm with the specific ID or `None` if the ID does not
     refer to a realm.
   """
   realmById(id: ID!): Realm
   """
-    Returns the realm with the specific path or `None` if the path does not
+    Returns the realm with the given path or `None` if the path does not
     refer to a realm.
 
-    Every realm has its own "path segment", and the full path of a realm
-    is just the concatenation of all the path segments between the root realm
-    and the realm in question, delimited by `"/"`. The root realm is assumed
-    to have a path segment of `""`, and with the above rule so is its full
-    path. The path of every other realm will start with `"/"` delimiting the
-    root realm path segement from the second segment in the path.
+    Paths with and without trailing slash are accepted and treated equally.
+    The paths `""` and `"/"` refer to the root realm. All other paths have
+    to start with `"/"`.
   """
   realmByPath(path: String!): Realm
-  "Returns the root realm."
-  rootRealm: Realm!
   "Returns an event by its ID."
   event(id: ID!): Event
 }
@@ -82,9 +77,20 @@ type Realm {
   id: ID!
   name: String!
   isRoot: Boolean!
+  """
+    Returns the full path of this realm. `""` for the root realm. For
+    non-root realms, the path always starts with `/` and never has a
+    trailing `/`.
+  """
   path: String!
+  "Returns the immediate parent of this realm."
   parent: Realm
-  parents: [Realm!]!
+  """
+    Returns all ancestors between the root realm to this realm
+    (excluding both, the root realm and this realm).
+  """
+  ancestors: [Realm!]!
+  "Returns all immediate children of this realm."
   children: [Realm!]!
   "Returns the (content) blocks of this realm."
   blocks: [Block!]!

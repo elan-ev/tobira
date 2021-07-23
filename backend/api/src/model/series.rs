@@ -38,8 +38,7 @@ impl Series {
     }
 
     pub(crate) async fn load_by_key(key: Key, context: &Context) -> FieldResult<Option<Series>> {
-        let result = context.db.get()
-            .await?
+        let result = context.db
             .query_opt(
                 "select id, title, description
                     from series

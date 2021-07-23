@@ -12,33 +12,25 @@ impl Query {
         "0.0"
     }
 
-    /// Returns a flat list of all realms.
-    fn realms(context: &Context) -> Vec<&Realm> {
-        context.realm_tree.realms.values().collect()
+    /// Returns the root realm.
+    fn root_realm() -> Realm {
+        Realm::root()
     }
 
     /// Returns the realm with the specific ID or `None` if the ID does not
     /// refer to a realm.
-    fn realm_by_id(id: Id, context: &Context) -> Option<&Realm> {
-        context.realm_tree.get_node(&id)
+    async fn realm_by_id(id: Id, context: &Context) -> FieldResult<Option<Realm>> {
+        Realm::load_by_id(id, context).await
     }
 
-    /// Returns the realm with the specific path or `None` if the path does not
+    /// Returns the realm with the given path or `None` if the path does not
     /// refer to a realm.
     ///
-    /// Every realm has its own "path segment", and the full path of a realm
-    /// is just the concatenation of all the path segments between the root realm
-    /// and the realm in question, delimited by `"/"`. The root realm is assumed
-    /// to have a path segment of `""`, and with the above rule so is its full
-    /// path. The path of every other realm will start with `"/"` delimiting the
-    /// root realm path segement from the second segment in the path.
-    fn realm_by_path(path: String, context: &Context) -> Option<&Realm> {
-        context.realm_tree.from_path(&path)
-    }
-
-    /// Returns the root realm.
-    fn root_realm(context: &Context) -> &Realm {
-        context.realm_tree.root()
+    /// Paths with and without trailing slash are accepted and treated equally.
+    /// The paths `""` and `"/"` refer to the root realm. All other paths have
+    /// to start with `"/"`.
+    async fn realm_by_path(path: String, context: &Context) -> FieldResult<Option<Realm>> {
+        Realm::load_by_path(path, context).await
     }
 
     /// Returns an event by its ID.
