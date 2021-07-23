@@ -227,7 +227,7 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                 </Link>
                 <div css={{
                     padding: 16,
-                    paddingLeft: 12 + 22,
+                    paddingLeft: 12 + 22 + 6,
                     fontSize: 18,
                     fontWeight: "bold",
                     backgroundColor: "var(--accent-color)",
@@ -241,8 +241,8 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                 margin: 0,
                 padding: 0,
                 ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
-                "& > li > a": {
-                    paddingLeft: 12 + 22,
+                "& > li > a, & > li > b": {
+                    paddingLeft: 12 + 22 + 6,
                 },
             }}>
                 {nav.items.map(item => <Item key={item.id} item={item} />)}
