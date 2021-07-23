@@ -10,6 +10,7 @@ fn opencast_validate() {
         use_insecure_connection: false,
         sync_user: "tobira".into(),
         sync_password: Secret::new("password".into()),
+        preferred_harvest_size: 500,
     };
 
     let loopback_hosts = [

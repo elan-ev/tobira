@@ -9,7 +9,7 @@ type Event {
   description: String
   "Duration in ms."
   duration: Float
-  thumbnail: String!
+  thumbnail: String
   tracks: [Track!]!
   created: DateTimeUtc!
   updated: DateTimeUtc!

@@ -17,7 +17,7 @@ pub(crate) struct Event {
     updated: DateTime<Utc>,
     creator: Option<String>,
 
-    thumbnail: String,
+    thumbnail: Option<String>,
     tracks: Vec<Track>,
 }
 
@@ -44,8 +44,8 @@ impl Event {
     fn duration(&self) -> Option<f64> {
         self.duration.map(Into::into)
     }
-    fn thumbnail(&self) -> &str {
-        &self.thumbnail
+    fn thumbnail(&self) -> Option<&str> {
+        self.thumbnail.as_deref()
     }
     fn tracks(&self) -> &[Track] {
         &self.tracks
