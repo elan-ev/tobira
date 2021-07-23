@@ -29,7 +29,7 @@ const query = graphql`
             id
             name
             path
-            parents { name path }
+            ancestors { name path }
             parent { id }
             ... Blocks_blocks
             ... NavigationData
@@ -48,8 +48,7 @@ const RealmPage: React.FC<Props> = ({ queryRef }) => {
         return <NotFound kind="page" />;
     }
 
-    const breadcrumbs = realm.parents
-        .slice(1)
+    const breadcrumbs = realm.ancestors
         .concat(realm)
         .map(({ name, path }) => ({
             label: name,

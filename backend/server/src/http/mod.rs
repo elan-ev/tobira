@@ -1,5 +1,7 @@
 //! The HTTP server, handler and routes.
 
+use api::Transaction;
+use deadpool_postgres::Pool;
 use futures::FutureExt;
 use hyper::{
     Body, Method, Server, StatusCode,
@@ -10,6 +12,7 @@ use std::{
     convert::Infallible,
     fs,
     future::Future,
+    mem,
     net::SocketAddr,
     os::unix::fs::PermissionsExt,
     panic::AssertUnwindSafe,
@@ -33,10 +36,10 @@ type Request<T = Body> = hyper::Request<T>;
 pub(crate) async fn serve(
     config: &Config,
     api_root: api::RootNode,
-    api_context: api::Context,
+    db: Pool,
 ) -> Result<()> {
     let assets = Assets::init(config).await.context("failed to initialize assets")?;
-    let ctx = Arc::new(Context::new(api_root, api_context, assets));
+    let ctx = Arc::new(Context::new(api_root, db, assets));
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
     // this code likely results in strange lifetime errors.
@@ -99,13 +102,6 @@ pub(crate) async fn serve(
 async fn handle_internal_errors(
     future: impl Future<Output = Response>,
 ) -> Result<Response, Infallible> {
-    fn internal_server_error() -> Response {
-        Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body("Internal server error".into())
-            .unwrap()
-    }
-
     // TODO: We want to log lots of information about the exact HTTP request in
     // the error case.
 
@@ -143,15 +139,15 @@ async fn handle_internal_errors(
 /// Context that the request handler has access to.
 struct Context {
     api_root: Arc<api::RootNode>,
-    api_context: Arc<api::Context>,
+    db_pool: Pool,
     assets: Assets,
 }
 
 impl Context {
-    fn new(api_root: api::RootNode, api_context: api::Context, assets: Assets) -> Self {
+    fn new(api_root: api::RootNode, db_pool: Pool, assets: Assets) -> Self {
         Self {
             api_root: Arc::new(api_root),
-            api_context: Arc::new(api_context),
+            db_pool,
             assets,
         }
     }
@@ -174,9 +170,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     match path {
         // The GraphQL endpoint. This is the only path for which POST is
         // allowed.
-        "/graphql" if method == Method::POST => {
-            juniper_hyper::graphql(ctx.api_root.clone(), ctx.api_context.clone(), req).await
-        }
+        "/graphql" if method == Method::POST => handle_api(req, &ctx).await,
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
@@ -243,5 +237,100 @@ pub(crate) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> R
         .status(StatusCode::NOT_FOUND)
         .header("Content-Type", "text/html; charset=UTF-8")
         .body(html)
+        .unwrap()
+}
+
+async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
+    // Get a connection for this request.
+    let mut connection = match ctx.db_pool.get().await {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Failed to obtain DB connection for API request: {}", e);
+            return service_unavailable();
+        }
+    };
+
+    let tx = match connection.transaction().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            error!("Failed to start transaction for API request: {}", e);
+            return internal_server_error();
+        }
+    };
+
+    // Okay, lets take a deep breath.
+    //
+    // Unfortunately, `juniper` does not support contexts with a lifetime
+    // parameter. However, we'd like to have one SQL transaction per API
+    // request. The transaction type (`deadpool_postgres::Transaction`) borrows
+    // from the DB connection (`tokio_postgres::Client`) and thus has a
+    // lifetime parameter. This makes sense for the API of that library since
+    // it statically prevents a number of logic bugs. But it is inconvenient
+    // for us.
+    //
+    // Unfortunately, we think the best solution for us is to use `unsafe` here
+    // to just get rid of the lifetime parameter. We can pretend that the
+    // lifetime is `'static`. Of course, we then have to make sure that the
+    // transaction does not outlive the borrowed connection. We do that by
+    // putting the transaction into an `Arc`. That way we can check whether
+    // there still exists a reference after calling the API handlers. The
+    // transaction is not `Clone` and `Arc` only gives an immutable reference
+    // to the underlying value. So even a buggy handler could not move the
+    // transaction out of the `Arc`.
+    //
+    // Unfortunately, `connection` is not treated as borrowed after this unsafe
+    // block. So we must make sure not to access it at all until we get rid of
+    // the transaction (by committing it below).
+    type PgTx<'a> = deadpool_postgres::Transaction<'a>;
+    let tx = unsafe {
+        let static_tx = mem::transmute::<PgTx<'_>, PgTx<'static>>(tx);
+        Arc::new(static_tx)
+    };
+
+    let api_context = api::Context::new(Transaction::new(tx.clone()));
+    let out = juniper_hyper::graphql(ctx.api_root.clone(), Arc::new(api_context), req).await;
+
+    // Check whether we own the last remaining handle of this Arc.
+    match Arc::try_unwrap(tx) {
+        Err(_) => {
+            // There are still other handles, meaning that the API handler
+            // incorrect stored the transaction in some static variable. This
+            // is our fault and should NEVER happen. If it does happen, we
+            // would have UB after this function exits. We can't have that. And
+            // since panicking only brings down the current thread, we have to
+            // reach for more drastic measures.
+            error!("FATAL BUG: API handler kept reference to transaction. Ending process.");
+            std::process::abort();
+        }
+        Ok(tx) => {
+            match tx.commit().await {
+                // If the transaction succeeded we can return the generated response.
+                Ok(_) => out,
+
+                // Otherwise, we would like to retry a couple times, but for now
+                // we just immediately reply 5xx.
+                //
+                // TODO: write `graphql_hyper` logic ourselves to be able to put
+                // all of this code in a loop and retry a couple times.
+                Err(e) => {
+                    error!("Failed to commit transaction for API request: {}", e);
+                    service_unavailable()
+                }
+            }
+        }
+    }
+}
+
+fn service_unavailable() -> Response {
+    Response::builder()
+        .status(StatusCode::SERVICE_UNAVAILABLE)
+        .body("Server error: service unavailable. Potentially try again later.".into())
+        .unwrap()
+}
+
+fn internal_server_error() -> Response {
+    Response::builder()
+        .status(StatusCode::INTERNAL_SERVER_ERROR)
+        .body("Internal server error".into())
         .unwrap()
 }

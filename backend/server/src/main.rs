@@ -73,9 +73,7 @@ async fn start_server(config: &Config) -> Result<()> {
         .context("failed to check/run DB migrations")?;
 
     let root_node = api::root_node();
-    let context = api::Context::new(db).await?;
-
-    http::serve(&config, root_node, context).await
+    http::serve(&config, root_node, db).await
         .context("failed to start HTTP server")?;
 
     Ok(())

@@ -1,8 +1,5 @@
 //! Definition of the GraphQL API.
 
-use deadpool_postgres::Pool;
-
-use tobira_util::prelude::*;
 use crate::{
     mutation::Mutation,
     query::Query,
@@ -16,9 +13,11 @@ pub mod subscription;
 
 mod model;
 mod id;
+mod tx;
 mod util;
 
 pub(crate) use id::{Id, Key};
+pub use tx::Transaction;
 
 
 /// Creates and returns the API root node.
@@ -32,17 +31,12 @@ pub type RootNode = juniper::RootNode<'static, Query, Mutation, Subscription>;
 
 /// The context that is accessible to every resolver in our API.
 pub struct Context {
-    db: Pool,
-    realm_tree: model::realm::Tree,
+    db: tx::Transaction,
 }
 
 impl Context {
-    pub async fn new(db: Pool) -> Result<Self> {
-        let realm_tree = model::realm::Tree::load(&db).await?;
-        Ok(Self {
-            db,
-            realm_tree,
-        })
+    pub fn new(db: Transaction) -> Self {
+        Self { db }
     }
 }
 
