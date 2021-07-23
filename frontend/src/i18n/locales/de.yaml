@@ -22,13 +22,14 @@ not-found:
     Sie können versuchen <1>die Startseite</1> zu besuchen oder die Suche zu
     benutzen, um die gewünschte Seite zu finden.
 
-about:
-  title: Information
+about-tobira:
+  title: Informationen über „Tobira“
   body: >
-    Tobira ist ein Videoportal für Opencast. Es erlaubt seinen Nutzern, alle
-    Episoden und Serien aus der verbundenen Opencast-Instanz zu durchstöbern,
-    anzuschauen und zu organisieren. Tobira, wie auch Opencast selber, ist
-    kostenlose Open-Source-Software. Weitere Informationen und die Möglichkeit,
+    Dieses Videoportal nutzt Tobira, eine Videoportal-Software für
+    Opencast. Es erlaubt seinen Nutzern, alle Episoden und Serien aus der
+    verbundenen Opencast-Instanz zu durchstöbern, anzuschauen und zu
+    organisieren. Tobira, wie auch Opencast selber, ist kostenlose
+    Open-Source-Software. Weitere Informationen und die Möglichkeit,
     Fehler zu melden, gibt es im <1>GitHub-Repository des Projekts</1>.
 
 footer:
