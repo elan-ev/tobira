@@ -1,15 +1,15 @@
 use secrecy::Secret;
 
-use super::Opencast;
+use super::SyncConfig;
 
 
 #[test]
-fn opencast_validate() {
-    let fill = || Opencast {
+fn config_validate() {
+    let fill = || SyncConfig {
         host: "localhost".into(),
         use_insecure_connection: false,
-        sync_user: "tobira".into(),
-        sync_password: Secret::new("password".into()),
+        user: "tobira".into(),
+        password: Secret::new("password".into()),
         preferred_harvest_size: 500,
     };
 
@@ -26,7 +26,7 @@ fn opencast_validate() {
 
     for &host in &loopback_hosts {
         for &use_insecure_connection in &[true, false] {
-            let config = Opencast { host: host.into(), use_insecure_connection, ..fill() };
+            let config = SyncConfig { host: host.into(), use_insecure_connection, ..fill() };
             if let Err(e) = config.validate() {
                 panic!("Failed to validate {:#?}: {}", config, e);
             }
@@ -44,7 +44,7 @@ fn opencast_validate() {
 
     for &host in &non_loopback_hosts {
         // Check that it validates fine when using HTTPS
-        let config_secure = Opencast {
+        let config_secure = SyncConfig {
             host: host.into(),
             use_insecure_connection: false,
             ..fill()
@@ -54,14 +54,14 @@ fn opencast_validate() {
         }
 
         // ... but that it fails to validate using HTTP
-        let config_insecure = Opencast {
+        let config_insecure = SyncConfig {
             host: host.into(),
             use_insecure_connection: true,
             ..fill()
         };
         if config_insecure.validate().is_ok() {
             panic!(
-                "Opencast config validated successfully, but shouldn't! \n{:#?}",
+                "Sync config validated successfully, but shouldn't! \n{:#?}",
                 config_insecure,
             );
         }

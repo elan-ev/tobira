@@ -4,7 +4,7 @@ use hyper::Body;
 use reinda::{assets, Setup};
 
 use tobira_util::prelude::*;
-use crate::config::{self, Config};
+use crate::{config::Config, theme::ThemeConfig};
 use super::Response;
 
 
@@ -159,7 +159,7 @@ impl Assets {
 }
 
 // TODO: this function doesn't quite fit into this module, move it somewhere else.
-fn build_theme(theme: &config::Theme) -> String {
+fn build_theme(theme: &ThemeConfig) -> String {
     serde_json::json!({
         "headerHeight": theme.header_height,
         "headerPadding": theme.header_padding,

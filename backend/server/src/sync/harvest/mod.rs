@@ -4,12 +4,11 @@ use std::{
 };
 
 use hyper::http::status::StatusCode;
+use tokio_postgres::{GenericClient, types::ToSql};
 
 use tobira_api::db::EventTrack;
 use tobira_util::prelude::*;
-use tokio_postgres::{GenericClient, types::ToSql};
-use crate::config::Config;
-use super::status::SyncStatus;
+use super::{SyncConfig, status::SyncStatus};
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
 
 
@@ -28,7 +27,7 @@ const POLL_PERIOD: Duration = Duration::from_secs(30);
 
 /// Continuiously fetches from the harvesting API and writes new data into our
 /// database.
-pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> {
+pub(crate) async fn run(config: &SyncConfig, db: &impl GenericClient) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
     let mut backoff = INITIAL_BACKOFF;
@@ -60,7 +59,7 @@ pub(crate) async fn run(config: &Config, db: &impl GenericClient) -> Result<()> 
         // Send request to API and deserialize data.
         let req = client.send(
             sync_status.harvested_until,
-            config.opencast.preferred_harvest_size.into(),
+            config.preferred_harvest_size.into(),
         );
         let (response, body) = match req.await {
             Ok(v) => v,

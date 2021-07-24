@@ -1,12 +1,30 @@
 use log::{Level, LevelFilter, Log, Metadata, Record};
 use std::{
     fs::{File, OpenOptions},
+    path::PathBuf,
     sync::Mutex,
 };
 use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
 
 use tobira_util::prelude::*;
-use crate::config;
+
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct LogConfig {
+    /// Determines how many messages are logged. Log messages below
+    /// this level are not emitted. Possible values: "trace", "debug",
+    /// "info", "warn", "error" and "off".
+    #[config(default = "debug")]
+    pub(crate) level: log::LevelFilter,
+
+    /// If this is set, log messages are also written to this file.
+    /// Example: "/var/log/tobira.log".
+    pub(crate) file: Option<PathBuf>,
+
+    /// If this is set to `false`, log messages are not written to stdout.
+    #[config(default = true)]
+    pub(crate) stdout: bool,
+}
 
 
 /// Our own `Log` implementation.
@@ -17,7 +35,7 @@ struct Logger {
 }
 
 /// Installs our own logger globally. Must only be called once!
-pub(crate) fn init(config: &config::Log) -> Result<()> {
+pub(crate) fn init(config: &LogConfig) -> Result<()> {
     let stdout = match config.stdout {
         // TODO: we might want to pass color choice via args
         true => Some(Mutex::new(StandardStream::stdout(ColorChoice::Always))),

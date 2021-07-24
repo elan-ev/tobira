@@ -195,6 +195,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "confique"
+version = "0.1.0"
+dependencies = [
+ "confique-macro",
+ "serde",
+ "toml",
+]
+
+[[package]]
+name = "confique-macro"
+version = "0.0.1"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1587,6 +1606,7 @@ dependencies = [
  "base64",
  "bunt",
  "chrono",
+ "confique",
  "deadpool-postgres",
  "futures",
  "hostname",
@@ -1605,7 +1625,6 @@ dependencies = [
  "structopt",
  "termcolor",
  "tobira-api",
- "tobira-macros",
  "tobira-util",
  "tokio",
  "tokio-postgres",

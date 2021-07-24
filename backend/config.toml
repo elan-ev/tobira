@@ -2,19 +2,16 @@
 # developer, you are not interested in this file.
 
 [db]
-user = "tobira"
 password = "tobira"
-host = "127.0.0.1"
-
 
 [log]
 level = "trace"
 
-[opencast]
+[sync]
 host = "localhost:8080"
 use_insecure_connection = true
-sync_user = "admin"
-sync_password = "opencast"
+user = "admin"
+password = "opencast"
 preferred_harvest_size = 3
 
 [theme]
