@@ -81,7 +81,11 @@ impl Assets {
         variables.insert("theme-json".to_string(), build_theme(&config.theme));
 
         let reinda_config = reinda::Config {
-            base_path: Some(config.assets.internal.clone()),
+            base_path: if cfg!(debug_assertions) {
+                Some("../frontend/build".into())
+            } else {
+                None
+            },
             path_overrides,
             variables,
         };

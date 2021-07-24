@@ -76,11 +76,6 @@ tobira_macros::gen_config! {
         /// If this is set to `false`, log messages are not written to stdout.
         stdout: bool = true,
     },
-    assets: {
-        /// Path to internal assets. This is only relevant for Tobira developers. This
-        /// must not be set for production builds of Tobira.
-        internal: PathBuf = "../frontend/build",
-    },
     opencast: {
         /// Host of the connected Opencast instance. This host has to be reachable
         /// via HTTPS (or HTTP, see `use_insecure_connection`). If no port is specified
