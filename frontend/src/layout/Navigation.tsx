@@ -178,76 +178,47 @@ const DesktopNavImpl: React.FC<NavDataProp & DesktopProps> = ({ nav, layoutCss }
 
 // ===== Mobile Navigation =======================================================================
 
-type MobileProps = {
-    /** Function that hides the burger menu. */
-    hide: () => void;
-};
-
-export const MobileNav: React.FC<NavSourceProp & MobileProps> = ({ source, ...innerProps }) => (
+export const MobileNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
     <Dispatch source={source} Component={MobileNavImpl} innerProps={innerProps} />
 );
 
-const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
-    <div
-        onClick={hide}
-        css={{
-            position: "absolute",
-            top: "var(--header-height)",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            backgroundColor: "#000000a0",
-        }}
-    >
-        <div
-            onClick={e => e.stopPropagation()}
-            css={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                backgroundColor: "var(--grey97)",
-                height: "100%",
-                width: "clamp(260px, 75%, 450px)",
-                overflowY: "auto",
-            }}
-        >
-            {nav.parent !== null && <>
-                <Link
-                    to={nav.parent.link}
-                    css={{
-                        padding: "6px 12px",
-                        display: "flex",
-                        alignItems: "center",
-                        ...ITEM_LINK_BASE_STYLE,
-                    }}
-                >
-                    <FiChevronLeft css={{ marginRight: 6 }}/>
-                    {nav.parent.name}
-                </Link>
-                <div css={{
-                    padding: 16,
-                    paddingLeft: 12 + 22 + 6,
-                    fontSize: 18,
-                    fontWeight: "bold",
-                    backgroundColor: "var(--accent-color)",
-                    ...prefersBlackText(CONFIG.theme.color.accent)
-                        ? { color: "black", textShadow: "1px 1px 0 white" }
-                        : { color: "white", textShadow: "1px 1px 0 black" },
-                }}>{nav.currentName}</div>
-            </>}
-            <ul css={{
-                listStyle: "none",
-                margin: 0,
-                padding: 0,
-                ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
-                "& > li > a, & > li > b": {
-                    paddingLeft: 12 + 22 + 6,
-                },
-            }}>
-                {nav.items.map(item => <Item key={item.id} item={item} />)}
-            </ul>
-        </div>
+const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
+    <div>
+        {nav.parent !== null && <>
+            <Link
+                to={nav.parent.link}
+                css={{
+                    padding: "6px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    ...ITEM_LINK_BASE_STYLE,
+                }}
+            >
+                <FiChevronLeft css={{ marginRight: 6 }}/>
+                {nav.parent.name}
+            </Link>
+            <div css={{
+                padding: 16,
+                paddingLeft: 12 + 22 + 6,
+                fontSize: 18,
+                fontWeight: "bold",
+                backgroundColor: "var(--accent-color)",
+                ...prefersBlackText(CONFIG.theme.color.accent)
+                    ? { color: "black", textShadow: "1px 1px 0 white" }
+                    : { color: "white", textShadow: "1px 1px 0 black" },
+            }}>{nav.currentName}</div>
+        </>}
+        <ul css={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
+            "& > li > a, & > li > b": {
+                paddingLeft: 12 + 22 + 6,
+            },
+        }}>
+            {nav.items.map(item => <Item key={item.id} item={item} />)}
+        </ul>
     </div>
 );
 

@@ -1,12 +1,13 @@
 import React from "react";
 import { keyframes } from "@emotion/react";
+import { useTranslation } from "react-i18next";
 
 import { Header } from "./Header";
 import { DesktopNav, MobileNav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import type { NavSource } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
-import { useTranslation } from "react-i18next";
+import { BurgerMenu } from "./Burger";
 
 
 export const MAIN_PADDING = 16;
@@ -26,7 +27,11 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
     return (
         <Outer disableScrolling={menu.state === "burger"}>
             <Header />
-            {menu.state === "burger" && <MobileNav source={navSource} hide={() => menu.close()} />}
+            {menu.state === "burger" && (
+                <BurgerMenu hide={() => menu.close()}>
+                    <MobileNav source={navSource} />
+                </BurgerMenu>
+            )}
             <Main>
                 <DesktopNav source={navSource} layoutCss={{
                     flex: "1 0 12.5%",
@@ -100,4 +105,3 @@ export const InitialLoading: React.FC = () => {
         </Outer>
     );
 };
-
