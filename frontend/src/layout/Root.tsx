@@ -8,6 +8,7 @@ import type { NavSource } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
 import { BurgerMenu } from "./Burger";
+import { SideBox } from "../ui";
 
 
 export const MAIN_PADDING = 16;
@@ -42,7 +43,7 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
                         display: "none",
                     },
                 }}>
-                    <DesktopNav source={navSource} />
+                    <SideBox><DesktopNav source={navSource} /></SideBox>
                 </div>
                 <div css={{
                     flex: "12 0 0",

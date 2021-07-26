@@ -2,11 +2,11 @@ import React from "react";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
 
-import { Link } from "../router";
 import type { NavigationData$key } from "../query-types/NavigationData.graphql";
 import CONFIG from "../config";
 import { prefersBlackText } from "../util/color";
 import { useTranslation } from "react-i18next";
+import { LinkList, LinkWithIcon } from "../ui";
 
 
 /**
@@ -153,19 +153,7 @@ export const DesktopNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) =
 );
 
 const DesktopNavImpl: React.FC<NavDataProp> = ({ nav }) => (
-    <ul css={{
-        backgroundColor: "var(--grey97)",
-        border: "1px solid var(--grey80)",
-        borderRadius: 4,
-        listStyle: "none",
-        margin: 0,
-        padding: 0,
-        "& > li:last-of-type": {
-            borderBottom: "none",
-        },
-    }}>
-        {nav.items.map(item => <Item key={item.id} item={item} />)}
-    </ul>
+    <LinkList items={nav.items.map(item => <Item key={item.id} item={item} />)} />
 );
 
 
@@ -179,18 +167,10 @@ export const MobileNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) =>
 const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
     <div>
         {nav.parent !== null && <>
-            <Link
-                to={nav.parent.link}
-                css={{
-                    padding: "6px 12px",
-                    display: "flex",
-                    alignItems: "center",
-                    ...ITEM_LINK_BASE_STYLE,
-                }}
-            >
+            <LinkWithIcon to={nav.parent.link} iconPos="left" css={{ padding: "6px 12px" }}>
                 <FiChevronLeft css={{ marginRight: 6 }}/>
                 {nav.parent.name}
-            </Link>
+            </LinkWithIcon>
             <div css={{
                 padding: 16,
                 paddingLeft: 12 + 22 + 6,
@@ -202,73 +182,40 @@ const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
                     : { color: "white", textShadow: "1px 1px 0 black" },
             }}>{nav.currentName}</div>
         </>}
-        <ul css={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
-            "& > li > a, & > li > b": {
-                paddingLeft: 12 + 22 + 6,
-            },
-        }}>
-            {nav.items.map(item => <Item key={item.id} item={item} />)}
-        </ul>
+        <LinkList
+            items={nav.items.map(item => <Item key={item.id} item={item} />)}
+            css={{
+                borderBottom: "1px solid var(--grey80)",
+                ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
+                "& > li": {
+                    borderBottom: "1px solid var(--grey80)",
+                    "& > a, & > b": {
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "6px 12px",
+                        paddingLeft: 12 + 22 + 6,
+                    },
+                },
+            }}
+        />
     </div>
 );
 
-
-
-// ===== Other stuff ??????=======================================================================
-
-const TRANSITION_DURATION = "0.1s";
-const ITEM_LINK_BASE_STYLE = {
-    textDecoration: "none",
-    transition: `background-color ${TRANSITION_DURATION}`,
-
-    "& > svg": {
-        fontSize: 22,
-        color: "var(--grey65)",
-        transition: `color ${TRANSITION_DURATION}`,
-    },
-
-    "&:hover": {
-        transitionDuration: "0.05s",
-        backgroundColor: "var(--grey92)",
-        "& > svg": {
-            transitionDuration: "0.05s",
-            color: "var(--grey40)",
-        },
-    },
-};
-
 const Item: React.FC<{ item: NavItem }> = ({ item }) => {
-    const baseStyle = {
-        padding: "6px 12px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-    };
-
-    const inner = item.active
-        ? <b css={{ ...baseStyle, backgroundColor: "var(--grey80)" }}>
-            {item.label}
-        </b>
-        : <Link
-            to={item.link}
-            css={{
-                ...baseStyle,
-                ...ITEM_LINK_BASE_STYLE,
-            }}
-        >
-            <div>{item.label}</div>
-            <FiChevronRight />
-        </Link>;
-
-    return (
-        <li css={{ borderBottom: "1px solid var(--grey80)" }}>
-            {inner}
-        </li>
-    );
+    if (item.active) {
+        return (
+            <b css={{ backgroundColor: "var(--grey80)" }}>
+                {item.label}
+            </b>
+        );
+    } else {
+        return (
+            <LinkWithIcon to={item.link} iconPos="right">
+                <div>{item.label}</div>
+                <FiChevronRight />
+            </LinkWithIcon>
+        );
+    }
 };
 
 /**
