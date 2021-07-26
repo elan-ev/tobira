@@ -20,9 +20,10 @@ export const OUTER_CONTAINER_MARGIN = "0 calc(max(0px, 100% - 1100px) * 0.1)";
 
 type Props = {
     navSource: NavSource;
+    belowNav?: JSX.Element;
 };
 
-export const Root: React.FC<Props> = ({ navSource, children }) => {
+export const Root: React.FC<Props> = ({ navSource, belowNav = null, children }) => {
     const menu = useMenu();
 
     return (
@@ -31,6 +32,7 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
             {menu.state === "burger" && (
                 <BurgerMenu hide={() => menu.close()}>
                     <MobileNav source={navSource} />
+                    {belowNav}
                 </BurgerMenu>
             )}
             <Main>
@@ -44,6 +46,7 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
                     },
                 }}>
                     <SideBox><DesktopNav source={navSource} /></SideBox>
+                    {belowNav && <SideBox>{belowNav}</SideBox>}
                 </div>
                 <div css={{
                     flex: "12 0 0",

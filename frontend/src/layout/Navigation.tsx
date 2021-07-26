@@ -173,7 +173,7 @@ const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
             </LinkWithIcon>
             <div css={{
                 padding: 16,
-                paddingLeft: 12 + 22 + 6,
+                paddingLeft: 12 + 22 + 12,
                 fontSize: 18,
                 fontWeight: "bold",
                 backgroundColor: "var(--accent-color)",
@@ -193,7 +193,7 @@ const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
                         display: "flex",
                         alignItems: "center",
                         padding: "6px 12px",
-                        paddingLeft: 12 + 22 + 6,
+                        paddingLeft: 12 + 22 + 12,
                     },
                 },
             }}

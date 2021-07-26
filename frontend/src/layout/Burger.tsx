@@ -21,6 +21,9 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, children }) => (
     >
         <div css={{
             position: "absolute",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
             top: 0,
             right: 0,
             backgroundColor: "var(--grey97)",

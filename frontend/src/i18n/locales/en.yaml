@@ -53,3 +53,7 @@ video:
   created: Created
   updated: Last update
   part-of-series: Part of
+
+realm:
+  edit-sub-pages: Edit sub pages
+  edit-page-content: Edit page content

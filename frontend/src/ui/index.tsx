@@ -71,6 +71,10 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({ to, iconPos, childre
                     fontSize: 22,
                     color: "var(--grey65)",
                     transition: `color ${TRANSITION_DURATION}`,
+                    ...match(iconPos, {
+                        "left": () => ({ marginRight: 12 } as Record<string, unknown>),
+                        "right": () => ({ marginLeft: 12 } as Record<string, unknown>),
+                    }),
                 },
 
                 "&:hover": {
