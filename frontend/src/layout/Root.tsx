@@ -33,7 +33,7 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
                 </BurgerMenu>
             )}
             <Main>
-                <DesktopNav source={navSource} layoutCss={{
+                <div css={{
                     flex: "1 0 12.5%",
                     minWidth: 240,
                     maxWidth: 360,
@@ -41,7 +41,9 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
                     [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                         display: "none",
                     },
-                }} />
+                }}>
+                    <DesktopNav source={navSource} />
+                </div>
                 <div css={{
                     flex: "12 0 0",
                     "& > h1": { margin: "12px 0" },

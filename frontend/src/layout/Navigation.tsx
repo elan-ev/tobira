@@ -1,7 +1,6 @@
 import React from "react";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
-import type { Interpolation, Theme } from "@emotion/react";
 
 import { Link } from "../router";
 import type { NavigationData$key } from "../query-types/NavigationData.graphql";
@@ -149,15 +148,11 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
 
 // ===== Desktop Navigation ======================================================================
 
-type DesktopProps = {
-    layoutCss: Interpolation<Theme>;
-};
-
-export const DesktopNav: React.FC<NavSourceProp & DesktopProps> = ({ source, ...innerProps }) => (
+export const DesktopNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
     <Dispatch source={source} Component={DesktopNavImpl} innerProps={innerProps} />
 );
 
-const DesktopNavImpl: React.FC<NavDataProp & DesktopProps> = ({ nav, layoutCss }) => (
+const DesktopNavImpl: React.FC<NavDataProp> = ({ nav }) => (
     <ul css={{
         backgroundColor: "var(--grey97)",
         border: "1px solid var(--grey80)",
@@ -168,7 +163,6 @@ const DesktopNavImpl: React.FC<NavDataProp & DesktopProps> = ({ nav, layoutCss }
         "& > li:last-of-type": {
             borderBottom: "none",
         },
-        ...(layoutCss as Record<string, unknown>),
     }}>
         {nav.items.map(item => <Item key={item.id} item={item} />)}
     </ul>
