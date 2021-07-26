@@ -58,3 +58,15 @@ video:
 realm:
   edit-sub-pages: Unterseiten bearbeiten
   edit-page-content: Seiteninhalt bearbeiten
+
+manage:
+  overview: Übersicht
+  realm-tree:
+    title: Seitenstruktur
+    heading: Unterseiten von „{{realm}}“ bearbeiten
+    landing-text: >
+      Um die Struktur einer Seite zu bearbeiten, besuchen Sie diese auf gewöhnte
+      Weise und klicken Sie auf den Button „Unterseiten bearbeiten“ am linken
+      Rand.
+  realm-content:
+    title: Seiteninhalt

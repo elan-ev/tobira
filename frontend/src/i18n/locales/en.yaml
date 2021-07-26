@@ -57,3 +57,14 @@ video:
 realm:
   edit-sub-pages: Edit sub pages
   edit-page-content: Edit page content
+
+manage:
+  overview: Overview
+  realm-tree:
+    title: Page structure
+    heading: Edit sub pages of “{{realm}}”
+    landing-text: >
+      In order to edit the structure of a page, please visit said page as usual
+      and then click the button “Edit sub pages” on the left half of the website.
+  realm-content:
+    title: Page content

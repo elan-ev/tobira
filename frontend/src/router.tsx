@@ -5,6 +5,8 @@ import { AboutRoute } from "./routes/About";
 import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
+import { ManageRoute } from "./routes/manage";
+import { ManageRealmTreeRoute } from "./routes/manage/RealmTree";
 import { match } from "./util";
 import { bug } from "./util/err";
 
@@ -17,6 +19,9 @@ const ROUTES = [
     AboutRoute,
     RealmRoute,
     VideoRoute,
+
+    ManageRoute,
+    ManageRealmTreeRoute,
 
     NotFoundRoute,
 ] as const;
