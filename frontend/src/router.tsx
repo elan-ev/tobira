@@ -56,7 +56,7 @@ export type Route<Prepared> = {
      * path regex. This is the array returned by `RegExp.exec` but with the
      * first element (the whole match) removed.
      */
-    prepare: (routeParams: string[]) => Prepared;
+    prepare: (routeParams: string[], getParams: URLSearchParams) => Prepared;
 
     /**
      * The function for rendering this route. The value that `prepare` returned
@@ -79,7 +79,8 @@ export type MatchedRoute<Prepared> = {
  * matched route or throwing an error if no route matches.
  */
 const matchRoute = (href: string): MatchedRoute<any> => {
-    const currentPath = new URL(href).pathname;
+    const url = new URL(href);
+    const currentPath = url.pathname;
 
     const match = ROUTES
         .map((route, index) => {
@@ -106,7 +107,7 @@ const matchRoute = (href: string): MatchedRoute<any> => {
     const route = ROUTES[index];
 
     return {
-        prepared: route.prepare(params),
+        prepared: route.prepare(params, url.searchParams),
         render: route.render,
     };
 };
