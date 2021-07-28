@@ -8,6 +8,7 @@ export const SideBox: React.FC = ({ children }) => (
         backgroundColor: "var(--grey97)",
         border: "1px solid var(--grey80)",
         borderRadius: 4,
+        overflow: "hidden",
         "&:not(:first-child)": {
             marginTop: 32,
         },

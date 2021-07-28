@@ -204,7 +204,7 @@ const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
 const Item: React.FC<{ item: NavItem }> = ({ item }) => {
     if (item.active) {
         return (
-            <b css={{ backgroundColor: "var(--grey80)" }}>
+            <b css={{ backgroundColor: "var(--grey92)", borderLeft: "4px solid var(--grey80)" }}>
                 {item.label}
             </b>
         );
