@@ -197,6 +197,8 @@ dependencies = [
 [[package]]
 name = "confique"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d03ce884e7d511d514fc49dd0486dabdfe3b05d5ee0d51cad2c4cae6be7159f5"
 dependencies = [
  "confique-macro",
  "serde",
@@ -206,6 +208,8 @@ dependencies = [
 [[package]]
 name = "confique-macro"
 version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9813135988357800dd162ec2923e455d3f1482de2a4dda20bc269b124a7cb3bc"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -1646,16 +1650,6 @@ dependencies = [
  "static_assertions",
  "tobira-util",
  "tokio-postgres",
-]
-
-[[package]]
-name = "tobira-macros"
-version = "0.1.0"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
