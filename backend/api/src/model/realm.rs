@@ -35,7 +35,7 @@ impl Realm {
         }
     }
 
-    async fn load_by_key(key: Key, context: &Context) -> FieldResult<Option<Self>> {
+    pub(crate) async fn load_by_key(key: Key, context: &Context) -> FieldResult<Option<Self>> {
         if key == 0 {
             return Ok(Some(Self::root()));
         }

@@ -24,6 +24,16 @@ interface Block {
   title: String
 }
 
+type Mutation {
+  """
+    Sets the order of all children of a specific realm.
+
+    `childIndices` must contain at least one element, i.e. do not call this
+    for realms without children.
+  """
+  setChildOrder(parent: ID!, childIndices: [ChildIndex!]!): Realm!
+}
+
 enum VideoListOrder {
   NEW_TO_OLD
   OLD_TO_NEW
@@ -57,6 +67,11 @@ type Query {
   realmByPath(path: String!): Realm
   "Returns an event by its ID."
   event(id: ID!): Event
+}
+
+input ChildIndex {
+  id: ID!
+  index: Int!
 }
 
 type Track {
@@ -112,4 +127,5 @@ enum VideoListLayout {
 
 schema {
   query: Query
+  mutation: Mutation
 }

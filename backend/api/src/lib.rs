@@ -22,7 +22,7 @@ pub use tx::Transaction;
 
 /// Creates and returns the API root node.
 pub fn root_node() -> RootNode {
-    RootNode::new(Query, Mutation::new(), Subscription::new())
+    RootNode::new(Query, Mutation, Subscription::new())
 }
 
 /// Type of our API root node.
