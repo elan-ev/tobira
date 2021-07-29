@@ -5,8 +5,7 @@ import { Block, Title } from "../Blocks";
 import type { BlockData } from "../Blocks";
 import { Link } from "../../router";
 import { useTranslation } from "react-i18next";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlayCircle, faVolumeUp } from "@fortawesome/free-solid-svg-icons";
+import { FiFilm, FiVolume2 } from "react-icons/fi";
 
 
 type Props = {
@@ -47,7 +46,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
         // We have no thumbnail. If the resolution is `null` as well, we are
         // dealing with an audio-only event and show an appropriate icon.
         // Otherwise we use a generic icon.
-        const icon = event.tracks.every(t => t.resolution == null) ? faVolumeUp : faPlayCircle;
+        const icon = event.tracks.every(t => t.resolution == null) ? <FiVolume2 /> : <FiFilm />;
 
         thumbnail = (
             <div css={{
@@ -59,9 +58,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 40,
-            }}>
-                <FontAwesomeIcon icon={icon} />
-            </div>
+            }}>{icon}</div>
         );
     }
 

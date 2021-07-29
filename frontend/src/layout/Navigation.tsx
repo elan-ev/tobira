@@ -1,6 +1,5 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
 import type { Interpolation, Theme } from "@emotion/react";
 
@@ -223,15 +222,12 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                         ...ITEM_LINK_BASE_STYLE,
                     }}
                 >
-                    <FontAwesomeIcon
-                        icon={faChevronLeft}
-                        css={{ marginRight: 6, width: "16px !important" }}
-                    />
+                    <FiChevronLeft css={{ marginRight: 6 }}/>
                     {nav.parent.name}
                 </Link>
                 <div css={{
                     padding: 16,
-                    paddingLeft: 12 + 22,
+                    paddingLeft: 12 + 22 + 6,
                     fontSize: 18,
                     fontWeight: "bold",
                     backgroundColor: "var(--accent-color)",
@@ -245,8 +241,8 @@ const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
                 margin: 0,
                 padding: 0,
                 ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
-                "& > li > a": {
-                    paddingLeft: 12 + 22,
+                "& > li > a, & > li > b": {
+                    paddingLeft: 12 + 22 + 6,
                 },
             }}>
                 {nav.items.map(item => <Item key={item.id} item={item} />)}
@@ -300,7 +296,7 @@ const Item: React.FC<{ item: NavItem }> = ({ item }) => {
             }}
         >
             <div>{item.label}</div>
-            <FontAwesomeIcon icon={faChevronRight} />
+            <FiChevronRight />
         </Link>;
 
     return (
