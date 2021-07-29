@@ -1,6 +1,8 @@
 -- Creates the realms table, inserts the always-present root realm and adds
 -- useful realm-related functions.
 
+create type realm_order as enum ('by_index', 'alphabetic:asc', 'alphabetic:desc');
+
 select prepare_randomized_ids('realm');
 
 create table realms (
@@ -9,8 +11,14 @@ create table realms (
     name text not null,
     path_segment text not null,
 
-    -- Index to define an order of this realm and all its siblings.
-    index int not null default 0,
+    -- Index to define an order of this realm and all its siblings. It defaults
+    -- to max int such that newly added realms appear after manually ordered
+    -- ones.
+    index int not null default 2147483647,
+
+    -- Ordering of the children. If this is not 'by_index', the 'index' field of
+    -- the children is ignored. We sort again in the frontend then.
+    child_order realm_order not null default 'alphabetic:asc',
 
     -- This is calculated by DB triggers: operations never have to set this value.
     full_path text not null,
@@ -133,16 +141,17 @@ create function ancestors_of_realm(realm_id bigint)
         name text,
         path_segment text,
         index int,
+        child_order realm_order,
         full_path text,
         height int
     )
     language 'sql'
 as $$
-with recursive ancestors(id, parent, name, path_segment, index, full_path) as (
+with recursive ancestors(id, parent, name, path_segment, index, child_order, full_path) as (
     select *, 0 as height from realms
     where id = realm_id
   union
-    select r.id, r.parent, r.name, r.path_segment, r.index, r.full_path, a.height + 1 as height
+    select r.id, r.parent, r.name, r.path_segment, r.index, r.child_order, r.full_path, a.height + 1 as height
     from ancestors a
     join realms r on a.parent = r.id
     where a.id <> 0

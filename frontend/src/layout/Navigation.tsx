@@ -7,6 +7,7 @@ import CONFIG from "../config";
 import { prefersBlackText } from "../util/color";
 import { useTranslation } from "react-i18next";
 import { LinkList, LinkWithIcon } from "../ui";
+import { match } from "../util";
 
 
 /**
@@ -100,17 +101,19 @@ type ViaQueryProps<InnerProps> = ForwardProps<InnerProps> & {
  * component with said data.
  */
 function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<InnerProps>) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const realm = useFragment(
         graphql`
             fragment NavigationData on Realm {
                 id
                 name
+                childOrder
                 children { id name path }
                 parent {
                     isRoot
                     name
                     path
+                    childOrder
                     children { id name path }
                 }
             }
@@ -118,19 +121,37 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
         fragRef,
     );
 
-    const items = realm.children.length > 0
-        ? realm.children.map(({ id, path, name }) => ({
-            id,
-            label: name,
-            link: `${path}`,
-            active: false,
-        }))
-        : (realm.parent?.children ?? []).map(({ id, name, path }) => ({
-            id,
-            label: name,
-            link: `${path}`,
-            active: id === realm.id,
-        }));
+    const [childOrder, items] = realm.children.length > 0
+        ? [
+            realm.childOrder,
+            realm.children.map(({ id, path, name }) => ({
+                id,
+                label: name,
+                link: `${path}`,
+                active: false,
+            })),
+        ]
+        : [
+            // The case where `realm.parent` is `null` only happens when there
+            // is only the root realm. So we can use dummy values as long as
+            // nothing crashes.
+            realm.parent?.childOrder ?? "ALPHABETIC_ASC",
+            (realm.parent?.children ?? []).map(({ id, name, path }) => ({
+                id,
+                label: name,
+                link: `${path}`,
+                active: id === realm.id,
+            })),
+        ];
+
+    match(childOrder, {
+        "ALPHABETIC_ASC": () => {
+            items.sort((a, b) => a.label.localeCompare(b.label, i18n.language));
+        },
+        "ALPHABETIC_DESC": () => {
+            items.sort((a, b) => b.label.localeCompare(a.label, i18n.language));
+        },
+    }, () => {});
 
     const nav = {
         items,

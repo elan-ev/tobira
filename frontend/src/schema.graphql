@@ -31,7 +31,7 @@ type Mutation {
     `childIndices` must contain at least one element, i.e. do not call this
     for realms without children.
   """
-  setChildOrder(parent: ID!, childIndices: [ChildIndex!]!): Realm!
+  setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
 }
 
 enum VideoListOrder {
@@ -69,6 +69,12 @@ type Query {
   event(id: ID!): Event
 }
 
+enum RealmOrder {
+  BY_INDEX
+  ALPHABETIC_ASC
+  ALPHABETIC_DESC
+}
+
 input ChildIndex {
   id: ID!
   index: Int!
@@ -94,6 +100,11 @@ type Realm {
   isRoot: Boolean!
   index: Int!
   """
+    Specifies how the children of this realm should be ordered (e.g. in the
+    navigation list). That's the responsibility of the frontend.
+  """
+  childOrder: RealmOrder!
+  """
     Returns the full path of this realm. `""` for the root realm. For
     non-root realms, the path always starts with `/` and never has a
     trailing `/`.
@@ -106,7 +117,12 @@ type Realm {
     (excluding both, the root realm and this realm).
   """
   ancestors: [Realm!]!
-  "Returns all immediate children of this realm."
+  """
+    Returns all immediate children of this realm. The children are always
+    ordered by the internal index. If `childOrder` returns an ordering
+    different from `BY_INDEX`, the frontend is supposed to sort the
+    children.
+  """
   children: [Realm!]!
   "Returns the (content) blocks of this realm."
   blocks: [Block!]!

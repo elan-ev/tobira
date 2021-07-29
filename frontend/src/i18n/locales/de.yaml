@@ -72,6 +72,8 @@ manage:
       Um die Struktur einer Seite zu bearbeiten, besuchen Sie diese auf gewöhnte
       Weise und klicken Sie auf den Button „Unterseiten bearbeiten“ am linken
       Rand.
-    sort-alphabetically: Unterseiten alphabetisch sortieren
+    sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
+    sort-alphabetically-desc: Alphabetisch absteigend sortieren
+    order-manually: Manuell ordnen
   realm-content:
     title: Seiteninhalt

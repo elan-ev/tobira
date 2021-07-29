@@ -1,5 +1,6 @@
 use futures::stream::TryStreamExt;
-use juniper::{FieldResult, graphql_object};
+use juniper::{FieldResult, graphql_object, GraphQLEnum};
+use postgres_types::{FromSql, ToSql};
 
 use crate::{
     Context, Id, Key,
@@ -8,23 +9,41 @@ use crate::{
 };
 
 
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
+#[postgres(name = "realm_order")]
+pub(crate) enum RealmOrder {
+    #[postgres(name = "by_index")]
+    ByIndex,
+    #[postgres(name = "alphabetic:asc")]
+    AlphabeticAsc,
+    #[postgres(name = "alphabetic:desc")]
+    AlphabeticDesc,
+}
+
 pub(crate) struct Realm {
     key: Key,
     parent_key: Option<Key>,
     name: String,
     full_path: String,
     index: i32,
+    child_order: RealmOrder,
 }
 
 impl Realm {
-    pub(crate) fn root() -> Self {
-        Self {
+    pub(crate) async fn root(context: &Context) -> FieldResult<Self> {
+        let row = context.db
+            .query_one("select name, child_order from realms where id = 0", &[])
+            .await?;
+
+        Ok(Self {
             key: 0,
             parent_key: None,
-            name: String::new(),
+            name: row.get(0),
             full_path: String::new(),
             index: 0,
-        }
+            child_order: row.get(1),
+        })
     }
 
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
@@ -37,12 +56,12 @@ impl Realm {
 
     pub(crate) async fn load_by_key(key: Key, context: &Context) -> FieldResult<Option<Self>> {
         if key == 0 {
-            return Ok(Some(Self::root()));
+            return Ok(Some(Self::root(context).await?));
         }
 
         let result = context.db
             .query_opt(
-                "select parent, name, full_path, index
+                "select parent, name, full_path, index, child_order
                     from realms
                     where id = $1",
                 &[&(key as i64)],
@@ -54,6 +73,7 @@ impl Realm {
                 name: row.get(1),
                 full_path: row.get(2),
                 index: row.get(3),
+                child_order: row.get(4),
             });
 
         Ok(result)
@@ -67,7 +87,7 @@ impl Realm {
 
         // Check for root realm.
         if path.is_empty() {
-            return Ok(Some(Self::root()));
+            return Ok(Some(Self::root(context).await?));
         }
 
         // All non-root paths have to start with `/`.
@@ -77,7 +97,7 @@ impl Realm {
 
         let result = context.db
             .query_opt(
-                "select id, parent, name, index
+                "select id, parent, name, index, child_order
                     from realms
                     where full_path = $1",
                 &[&path],
@@ -89,6 +109,7 @@ impl Realm {
                 name: row.get(2),
                 full_path: path,
                 index: row.get(3),
+                child_order: row.get(4),
             });
 
         Ok(result)
@@ -113,6 +134,12 @@ impl Realm {
         self.index
     }
 
+    /// Specifies how the children of this realm should be ordered (e.g. in the
+    /// navigation list). That's the responsibility of the frontend.
+    fn child_order(&self) -> RealmOrder {
+        self.child_order
+    }
+
     /// Returns the full path of this realm. `""` for the root realm. For
     /// non-root realms, the path always starts with `/` and never has a
     /// trailing `/`.
@@ -133,7 +160,7 @@ impl Realm {
     async fn ancestors(&self, context: &Context) -> FieldResult<Vec<Realm>> {
         let result = context.db
             .query_raw(
-                "select id, parent, name, full_path, index
+                "select id, parent, name, full_path, index, child_order
                     from ancestors_of_realm($1)
                     where height <> 0 and id <> 0",
                 &[&(self.key as i64)],
@@ -146,6 +173,7 @@ impl Realm {
                     name: row.get(2),
                     full_path: row.get(3),
                     index: row.get(4),
+                    child_order: row.get(5),
                 }
             })
             .try_collect()
@@ -154,14 +182,17 @@ impl Realm {
         Ok(result)
     }
 
-    /// Returns all immediate children of this realm.
+    /// Returns all immediate children of this realm. The children are always
+    /// ordered by the internal index. If `childOrder` returns an ordering
+    /// different from `BY_INDEX`, the frontend is supposed to sort the
+    /// children.
     async fn children(&self, context: &Context) -> FieldResult<Vec<Self>> {
         let result = context.db
             .query_raw(
-                "select id, name, full_path, index
+                "select id, name, full_path, index, child_order
                     from realms
                     where parent = $1
-                    order by (index, name)",
+                    order by index",
                 &[&(self.key as i64)],
             )
             .await?
@@ -172,6 +203,7 @@ impl Realm {
                     name: row.get(1),
                     full_path: row.get(2),
                     index: row.get(3),
+                    child_order: row.get(4),
                 }
             })
             .try_collect()

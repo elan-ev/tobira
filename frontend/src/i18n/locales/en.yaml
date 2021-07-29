@@ -70,6 +70,8 @@ manage:
     landing-text: >
       In order to edit the structure of a page, please visit said page as usual
       and then click the button “Edit sub pages” on the left half of the website.
-    sort-alphabetically: Sort subpages alphabetically
+    sort-alphabetically-asc: Sort alphabetically ascending
+    sort-alphabetically-desc: Sort alphabetically descending
+    order-manually: Manually order
   realm-content:
     title: Page content
