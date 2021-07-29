@@ -3,8 +3,11 @@ language: Sprache
 search: Suche
 loading: Lade...
 close: Schließen
+save: Speichern
 back: Zurück
 home: Startseite
+direction-up: Hoch
+direction-down: Runter
 navigation: Navigation
 not-found:
   page-not-found: Seite nicht gefunden
@@ -69,5 +72,6 @@ manage:
       Um die Struktur einer Seite zu bearbeiten, besuchen Sie diese auf gewöhnte
       Weise und klicken Sie auf den Button „Unterseiten bearbeiten“ am linken
       Rand.
+    sort-alphabetically: Unterseiten alphabetisch sortieren
   realm-content:
     title: Seiteninhalt

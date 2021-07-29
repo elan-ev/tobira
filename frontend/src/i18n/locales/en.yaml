@@ -3,8 +3,11 @@ language: Language
 search: Search
 loading: Loading...
 close: Close
+save: Save
 back: Back
 home: Home
+direction-up: Up
+direction-down: Down
 navigation: Navigation
 not-found:
   page-not-found: Page not found
@@ -67,5 +70,6 @@ manage:
     landing-text: >
       In order to edit the structure of a page, please visit said page as usual
       and then click the button “Edit sub pages” on the left half of the website.
+    sort-alphabetically: Sort subpages alphabetically
   realm-content:
     title: Page content
