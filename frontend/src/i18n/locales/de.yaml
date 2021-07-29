@@ -64,6 +64,7 @@ manage:
   realm-tree:
     title: Seitenstruktur
     heading: Unterseiten von „{{realm}}“ bearbeiten
+    heading-root: Unterseiten der Startseite bearbeiten
     landing-text: >
       Um die Struktur einer Seite zu bearbeiten, besuchen Sie diese auf gewöhnte
       Weise und klicken Sie auf den Button „Unterseiten bearbeiten“ am linken

@@ -70,8 +70,12 @@ const Impl: React.FC<ImplProps> = ({ queryRef }) => {
         return <p>Error: Path invalid</p>;
     }
 
+    const heading = realm.name === ""
+        ? t("manage.realm-tree.heading-root")
+        : t("manage.realm-tree.heading", { realm: realm.name });
+
     return <>
-        <h1>{t("manage.realm-tree.heading", { realm: realm.name })}</h1>
+        <h1>{heading}</h1>
         <p>TODO</p>
     </>;
 };

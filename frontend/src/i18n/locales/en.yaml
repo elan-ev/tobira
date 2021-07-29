@@ -63,6 +63,7 @@ manage:
   realm-tree:
     title: Page structure
     heading: Edit sub pages of “{{realm}}”
+    heading-root: Edit sub pages of the homepage
     landing-text: >
       In order to edit the structure of a page, please visit said page as usual
       and then click the button “Edit sub pages” on the left half of the website.
