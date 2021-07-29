@@ -184,7 +184,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     );
 
     let method = req.method().clone();
-    let path = req.uri().path();
+    let path = req.uri().path().trim_end_matches('/');
 
     const ASSET_PREFIX: &str = "/~assets/";
 
@@ -214,7 +214,6 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
-        // TODO: handle trailing slashes
         "/~tobira"
         | "/~manage"
         | "/~manage/realm-tree"
