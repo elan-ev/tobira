@@ -19,7 +19,7 @@ backend:
           - config.toml
           - api/
           - server/
-          - macros/
+          - util/
         run:
           - reload:
           - cargo run -- serve
