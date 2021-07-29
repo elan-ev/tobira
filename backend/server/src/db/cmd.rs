@@ -9,14 +9,11 @@ use tokio_postgres::IsolationLevel;
 use secrecy::ExposeSecret;
 
 use tobira_util::prelude::*;
-use crate::{
-    args::DbCommand,
-    config,
-};
-use super::{Db, create_pool, query};
+use crate::args::DbCommand;
+use super::{Db, DbConfig, create_pool, query};
 
 
-pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
+pub(crate) async fn run(cmd: &DbCommand, config: &DbConfig) -> Result<()> {
     if let DbCommand::Console = cmd {
         return console(config).map(|_| ());
     }
@@ -46,7 +43,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &config::Db) -> Result<()> {
 /// This also has a interactive check, asking the user to confirm the removal.
 /// If the user did not confirm and the database is not changed, `false` is
 /// returned; `true` otherwise.
-async fn clear(db: &mut Db, config: &config::Db) -> Result<()> {
+async fn clear(db: &mut Db, config: &DbConfig) -> Result<()> {
     let tx = db.build_transaction()
         .isolation_level(IsolationLevel::Serializable)
         .start()
@@ -110,7 +107,7 @@ async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn console(config: &config::Db) -> Result<NeverReturns> {
+fn console(config: &DbConfig) -> Result<NeverReturns> {
     let connection_uri = format!(
         "postgresql://{}:{}@{}:{}/{}",
         config.user,

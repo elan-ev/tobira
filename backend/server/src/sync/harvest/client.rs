@@ -14,7 +14,7 @@ use hyper_tls::HttpsConnector;
 use secrecy::{ExposeSecret, Secret};
 
 use tobira_util::prelude::*;
-use crate::config::Config;
+use crate::sync::SyncConfig;
 
 
 
@@ -29,28 +29,28 @@ pub(super) struct HarvestClient {
 impl HarvestClient {
     const API_PATH: &'static str = "/tobira/harvest";
 
-    pub(super) fn new(config: &Config) -> Self {
+    pub(super) fn new(config: &SyncConfig) -> Self {
         // Prepare HTTP client
         let http_client = Client::builder().build(HttpsConnector::new());
 
         // Prepare URL
-        let scheme = if config.opencast.use_insecure_connection {
+        let scheme = if config.use_insecure_connection {
             Scheme::HTTP
         } else {
             Scheme::HTTPS
         };
-        let host = if config.opencast.host.parse::<Ipv6Addr>().is_ok() {
-            format!("[{}]", config.opencast.host)
+        let host = if config.host.parse::<Ipv6Addr>().is_ok() {
+            format!("[{}]", config.host)
         } else {
-            config.opencast.host.clone()
+            config.host.clone()
         };
         let authority = host.parse::<Authority>().expect("bug: invalid config");
 
         // Prepare authentication
         let credentials = format!(
             "{}:{}",
-            config.opencast.sync_user,
-            config.opencast.sync_password.expose_secret(),
+            config.user,
+            config.password.expose_secret(),
         );
         let auth_header = format!("Basic {}", base64::encode(credentials));
 

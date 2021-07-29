@@ -17,6 +17,7 @@ mod db;
 mod http;
 mod logger;
 mod sync;
+mod theme;
 
 
 #[tokio::main]

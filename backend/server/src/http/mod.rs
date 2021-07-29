@@ -13,9 +13,10 @@ use std::{
     fs,
     future::Future,
     mem,
-    net::SocketAddr,
+    net::{IpAddr, SocketAddr},
     os::unix::fs::PermissionsExt,
     panic::AssertUnwindSafe,
+    path::PathBuf,
     sync::Arc,
 };
 
@@ -24,6 +25,26 @@ use crate::{api, config::Config};
 use self::assets::Assets;
 
 mod assets;
+
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct HttpConfig {
+    /// The TCP port the HTTP server should listen on.
+    #[config(default = 3080)]
+    pub(crate) port: u16,
+
+    /// The bind address to listen on.
+    #[config(default = "127.0.0.1")]
+    pub(crate) address: IpAddr,
+
+    /// Unix domain socket to listen on. Specifying this will overwrite
+    /// the TCP configuration. Example: "/tmp/tobira.socket".
+    pub(crate) unix_socket: Option<PathBuf>,
+
+    /// Unix domain socket file permissions.
+    #[config(default = 0o755)]
+    pub(crate) unix_socket_permissions: u32,
+}
 
 
 // Our requests and responses always use the hyper provided body type.

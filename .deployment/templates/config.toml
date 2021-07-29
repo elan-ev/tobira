@@ -2,7 +2,6 @@
 database = "tobira-{{ id }}"
 user = "tobira-{{ id }}"
 password = "tobira-{{ id }}"
-host = "127.0.0.1"
 
 [http]
 unix_socket = "/opt/tobira/{{ id }}/socket/tobira.sock"
@@ -11,10 +10,10 @@ unix_socket_permissions = 0o777
 [log]
 file = "/var/log/tobira/{{ id }}.log"
 
-[opencast]
+[sync]
 host = "develop.opencast.org"
-sync_user = "admin"
-sync_password = "opencast"
+user = "admin"
+password = "opencast"
 
 [theme]
 logo.large = "/opt/tobira/{{ id }}/logo-large.svg"

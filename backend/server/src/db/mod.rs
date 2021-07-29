@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc, offset::TimeZone};
 use deadpool_postgres::{Config as PoolConfig, Pool};
 use futures::TryStreamExt;
 use once_cell::sync::Lazy;
-use secrecy::ExposeSecret;
+use secrecy::{ExposeSecret, Secret};
 use std::{collections::BTreeMap, time::Duration};
 use tokio_postgres::{NoTls, IsolationLevel, error::SqlState};
 
@@ -12,10 +12,34 @@ use tobira_util::{
     prelude::*,
     db::NO_PARAMS,
 };
-use crate::config;
 
 pub(crate) mod cmd;
 mod query;
+
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct DbConfig {
+    /// The username of the database user.
+    #[config(default = "tobira")]
+    user: String,
+
+    /// The password of the database user.
+    password: Secret<String>,
+
+    /// The host the database server is running on.
+    #[config(default = "127.0.0.1")]
+    host: String,
+
+    /// The port the database server is listening on. (Just useful if your
+    /// database server is not running on the default PostgreSQL port).
+    #[config(default = 5432)]
+    port: u16,
+
+    /// The name of the database to use.
+    #[config(default = "tobira")]
+    database: String,
+}
+
 
 
 /// Convenience type alias. Every function that needs to operate on the database
@@ -24,7 +48,7 @@ type Db = deadpool_postgres::ClientWrapper;
 
 
 /// Creates a new database connection pool.
-pub(crate) async fn create_pool(config: &config::Db) -> Result<Pool> {
+pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
     let pool_config = PoolConfig {
         user: Some(config.user.clone()),
         password: Some(config.password.expose_secret().clone()),
