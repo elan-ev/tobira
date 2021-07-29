@@ -13,6 +13,7 @@ pub(crate) struct Realm {
     parent_key: Option<Key>,
     name: String,
     full_path: String,
+    index: i32,
 }
 
 impl Realm {
@@ -22,6 +23,7 @@ impl Realm {
             parent_key: None,
             name: String::new(),
             full_path: String::new(),
+            index: 0,
         }
     }
 
@@ -40,7 +42,7 @@ impl Realm {
 
         let result = context.db
             .query_opt(
-                "select parent, name, full_path
+                "select parent, name, full_path, index
                     from realms
                     where id = $1",
                 &[&(key as i64)],
@@ -51,6 +53,7 @@ impl Realm {
                 parent_key: Some(row.get_key(0)),
                 name: row.get(1),
                 full_path: row.get(2),
+                index: row.get(3),
             });
 
         Ok(result)
@@ -74,7 +77,7 @@ impl Realm {
 
         let result = context.db
             .query_opt(
-                "select id, parent, name
+                "select id, parent, name, index
                     from realms
                     where full_path = $1",
                 &[&path],
@@ -85,6 +88,7 @@ impl Realm {
                 parent_key: Some(row.get_key(1)),
                 name: row.get(2),
                 full_path: path,
+                index: row.get(3),
             });
 
         Ok(result)
@@ -103,6 +107,10 @@ impl Realm {
 
     fn is_root(&self) -> bool {
         self.key == 0
+    }
+
+    fn index(&self) -> i32 {
+        self.index
     }
 
     /// Returns the full path of this realm. `""` for the root realm. For
@@ -125,7 +133,7 @@ impl Realm {
     async fn ancestors(&self, context: &Context) -> FieldResult<Vec<Realm>> {
         let result = context.db
             .query_raw(
-                "select id, parent, name, full_path
+                "select id, parent, name, full_path, index
                     from ancestors_of_realm($1)
                     where height <> 0 and id <> 0",
                 &[&(self.key as i64)],
@@ -137,6 +145,7 @@ impl Realm {
                     parent_key: Some(row.get_key(1)),
                     name: row.get(2),
                     full_path: row.get(3),
+                    index: row.get(4),
                 }
             })
             .try_collect()
@@ -149,9 +158,10 @@ impl Realm {
     async fn children(&self, context: &Context) -> FieldResult<Vec<Self>> {
         let result = context.db
             .query_raw(
-                "select id, name, full_path
+                "select id, name, full_path, index
                     from realms
-                    where parent = $1",
+                    where parent = $1
+                    order by (index, name)",
                 &[&(self.key as i64)],
             )
             .await?
@@ -161,6 +171,7 @@ impl Realm {
                     parent_key: Some(self.key),
                     name: row.get(1),
                     full_path: row.get(2),
+                    index: row.get(3),
                 }
             })
             .try_collect()

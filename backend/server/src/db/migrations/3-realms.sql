@@ -9,6 +9,9 @@ create table realms (
     name text not null,
     path_segment text not null,
 
+    -- Index to define an order of this realm and all its siblings.
+    index int not null default 0,
+
     -- This is calculated by DB triggers: operations never have to set this value.
     full_path text not null,
 
@@ -129,16 +132,17 @@ create function ancestors_of_realm(realm_id bigint)
         parent bigint,
         name text,
         path_segment text,
+        index int,
         full_path text,
         height int
     )
     language 'sql'
 as $$
-with recursive ancestors(id, parent, name, path_segment, full_path) as (
+with recursive ancestors(id, parent, name, path_segment, index, full_path) as (
     select *, 0 as height from realms
     where id = realm_id
   union
-    select r.id, r.parent, r.name, r.path_segment, r.full_path, a.height + 1 as height
+    select r.id, r.parent, r.name, r.path_segment, r.index, r.full_path, a.height + 1 as height
     from ancestors a
     join realms r on a.parent = r.id
     where a.id <> 0
