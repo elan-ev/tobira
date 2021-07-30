@@ -1,0 +1,107 @@
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { graphql, usePreloadedQuery } from "react-relay";
+import type { PreloadedQuery } from "react-relay";
+
+import { Root } from "../../../layout/Root";
+import type {
+    RealmManageQuery,
+    RealmManageQueryResponse,
+} from "../../../query-types/RealmManageQuery.graphql";
+import { loadQuery } from "../../../relay";
+import type { Route } from "../../../router";
+import { navData } from "..";
+import { ChildOrder } from "./ChildOrder";
+
+
+// Route definition
+
+export const PATH = "/~manage/realm";
+
+export const ManageRealmRoute: Route<Props> = {
+    path: PATH,
+    prepare: (_, getParams) => {
+        const path = getParams.get("path");
+        return {
+            queryRef: path == null ? null : loadQuery(query, { path }),
+        };
+    },
+    render: props => <DispatchPathSpecified {...props} />,
+};
+
+
+const query = graphql`
+    query RealmManageQuery($path: String!) {
+        realm: realmByPath(path: $path) {
+            name
+            isRoot
+            ... ChildOrderEditData
+        }
+    }
+`;
+
+
+type Props = {
+    queryRef: null | PreloadedQuery<RealmManageQuery>;
+};
+
+/**
+ * Entry point: checks if a path is given. If so forwards to `DispatchRealmExists`,
+ * otherwise shows a landing page.
+ */
+const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => {
+    const { t } = useTranslation();
+
+    const inner = queryRef == null ? <LandingPage /> : <DispatchRealmExists queryRef={queryRef} />;
+    return <Root navSource={navData(t, PATH)}>{inner}</Root>;
+};
+
+
+/** If no realm path is given, we just tell the user how to get going */
+const LandingPage: React.FC = () => {
+    const { t } = useTranslation();
+
+    return <>
+        <h1>{t("manage.realm.nav-label")}</h1>
+
+        <p css={{ maxWidth: 600 }}>{t("manage.realm.landing-page.body")}</p>
+    </>;
+};
+
+
+type DispatchRealmExistsProps = {
+    queryRef: PreloadedQuery<RealmManageQuery>;
+};
+
+/**
+ * Just checks if the realm path points to a realm. If so, forwards to `SettingsPage`;
+ * `PathInvalid` otherwise.
+ */
+const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) => {
+    const { realm } = usePreloadedQuery(query, queryRef);
+    return !realm
+        ? <PathInvalid />
+        : <SettingsPage realm={realm} />;
+};
+
+
+// TODO: improve
+const PathInvalid: React.FC = () => <p>Error: Path invalid</p>;
+
+
+type SettingsPageProps = {
+    realm: Exclude<RealmManageQueryResponse["realm"], null>;
+};
+
+/** The actual settings page */
+const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
+    const { t } = useTranslation();
+    const heading = realm.isRoot
+        ? t("manage.realm.heading-root")
+        : t("manage.realm.heading", { realm: realm.name });
+
+    return <>
+        <h1>{heading}</h1>
+        <ChildOrder fragRef={realm} />
+    </>;
+};

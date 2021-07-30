@@ -4,7 +4,7 @@ import { NavSource } from "../../layout/Navigation";
 
 import { Root } from "../../layout/Root";
 import { Route } from "../../router";
-import { PATH as PATH_REALM_TREE } from "./RealmTree";
+import { PATH as PATH_REALM } from "./Realm";
 
 const PATH = "/~manage";
 
@@ -39,8 +39,7 @@ export const navData = (t: TFunction, currentPath: string): NavSource => {
         data: {
             items: [
                 item(PATH, "manage.overview"),
-                item(PATH_REALM_TREE, "manage.realm-tree.title"),
-                item("/~manage/realm-content", "manage.realm-content.title"),
+                item(PATH_REALM, "manage.realm.nav-label"),
             ],
             currentName: null,
             parent: null,

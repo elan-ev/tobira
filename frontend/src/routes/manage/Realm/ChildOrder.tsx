@@ -1,92 +1,20 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useMutation, usePreloadedQuery } from "react-relay";
-import type { PreloadedQuery } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 
-import { Root } from "../../layout/Root";
-import type { RealmTreeManageQuery } from "../../query-types/RealmTreeManageQuery.graphql";
-import { loadQuery } from "../../relay";
-import type { Route } from "../../router";
-import { navData } from ".";
 import { FiArrowDown, FiArrowUp } from "react-icons/fi";
-import { match } from "../../util";
-import { bug } from "../../util/err";
-import { RealmOrder } from "../../query-types/NavigationData.graphql";
+import { match } from "../../../util";
+import { bug } from "../../../util/err";
+import { RealmOrder } from "../../../query-types/NavigationData.graphql";
 import {
-    RealmTreeOrderEditData,
-    RealmTreeOrderEditData$key,
-} from "../../query-types/RealmTreeOrderEditData.graphql";
+    ChildOrderEditData,
+    ChildOrderEditData$key,
+} from "../../../query-types/ChildOrderEditData.graphql";
 
 
-export const PATH = "/~manage/realm-tree";
-
-export const ManageRealmTreeRoute: Route<Props> = {
-    path: "/~manage/realm-tree",
-    prepare: (_, getParams) => {
-        const path = getParams.get("path");
-        return {
-            queryRef: path == null ? null : loadQuery(query, { path }),
-        };
-    },
-    render: props => <ManageRealmTree {...props} />,
-};
-
-
-// ===============================================================================================
-// ===== Just some plumbing/forwarding code ======================================================
-// ===============================================================================================
-
-type Props = {
-    queryRef: null | PreloadedQuery<RealmTreeManageQuery>;
-};
-
-/**
- * Entry point: checks if a path is given. If so forwards to `CheckRealmExists`,
- * otherwise shows a landing page.
- */
-const ManageRealmTree: React.FC<Props> = ({ queryRef }) => {
-    const { t } = useTranslation();
-
-    const inner = queryRef == null ? <LandingPage /> : <CheckRealmExists queryRef={queryRef} />;
-    return <Root navSource={navData(t, PATH)}>{inner}</Root>;
-};
-
-/** If no realm path is given, we just tell the user how to get going */
-const LandingPage: React.FC = () => {
-    const { t } = useTranslation();
-
-    return <>
-        <h1>{t("manage.realm-tree.title")}</h1>
-
-        <p css={{ maxWidth: 600 }}>{t("manage.realm-tree.landing-text")}</p>
-    </>;
-};
-
-type CheckRealmExistsProps = {
-    queryRef: PreloadedQuery<RealmTreeManageQuery>;
-};
-
-/**
- * Just checks if the realm path points to a realm. If so, forwards to `Impl`;
- * `PathInvalid` otherwise.
- */
-const CheckRealmExists: React.FC<CheckRealmExistsProps> = ({ queryRef }) => {
-    const { realm } = usePreloadedQuery(query, queryRef);
-    return !realm
-        ? <PathInvalid />
-        : <Impl fragRef={realm} />;
-};
-
-// TODO: improve
-const PathInvalid: React.FC = () => <p>Error: Path invalid</p>;
-
-
-// ===============================================================================================
-// ===== GraphQL query and mutation ==============================================================
-// ===============================================================================================
 
 const fragment = graphql`
-    fragment RealmTreeOrderEditData on Realm {
+    fragment ChildOrderEditData on Realm {
         id
         name
         childOrder
@@ -94,48 +22,35 @@ const fragment = graphql`
     }
 `;
 
-const query = graphql`
-    query RealmTreeManageQuery($path: String!) {
-        realm: realmByPath(path: $path) {
-            ... RealmTreeOrderEditData
-        }
-    }
-`;
+
 
 // We request the exact same data as in the query so that relay can update all
 // internal data and everything is up to date.
 const mutation = graphql`
-    mutation RealmTreeSaveChildOrderMutation(
+    mutation ChildOrderMutation(
         $parent: ID!,
         $order: RealmOrder!,
         $indices: [ChildIndex!],
     ) {
         setChildOrder(parent: $parent, childOrder: $order, childIndices: $indices) {
-            ... RealmTreeOrderEditData
+            ... ChildOrderEditData
         }
     }
 `;
 
 
-// ===============================================================================================
-// ===== Actual implementation ===================================================================
-// ===============================================================================================
 
-type Child = RealmTreeOrderEditData["children"][0];
+type Child = ChildOrderEditData["children"][0];
 type SortOrder = "by-index" | "alphabetical:asc" | "alphabetical:desc";
 
-type ImplProps = {
-    fragRef: RealmTreeOrderEditData$key;
+type Props = {
+    fragRef: ChildOrderEditData$key;
 };
 
 /** The actual implementation with a given realm path */
-const Impl: React.FC<ImplProps> = ({ fragRef }) => {
+export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
     const { t, i18n } = useTranslation();
     const realm = useFragment(fragment, fragRef);
-
-    const heading = realm.name === ""
-        ? t("manage.realm-tree.heading-root")
-        : t("manage.realm-tree.heading", { realm: realm.name });
 
     const intialSortOrder = match<RealmOrder, SortOrder>(realm.childOrder, {
         "ALPHABETIC_ASC": () => "alphabetical:asc",
@@ -210,18 +125,18 @@ const Impl: React.FC<ImplProps> = ({ fragRef }) => {
     });
 
     return <>
-        <h1>{heading}</h1>
+        <h2>{t("manage.realm.children.heading")}</h2>
         <div>
             <SortOrderOption
-                label={t("manage.realm-tree.sort-alphabetically-asc")}
+                label={t("manage.realm.children.sort-alphabetically-asc")}
                 order="alphabetical:asc"
             />
             <SortOrderOption
-                label={t("manage.realm-tree.sort-alphabetically-desc")}
+                label={t("manage.realm.children.sort-alphabetically-desc")}
                 order="alphabetical:desc"
             />
             <SortOrderOption
-                label={t("manage.realm-tree.order-manually") + ":"}
+                label={t("manage.realm.children.order-manually") + ":"}
                 order="by-index"
             />
 

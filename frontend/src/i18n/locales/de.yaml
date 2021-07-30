@@ -59,21 +59,25 @@ video:
   part-of-series: Teil von
 
 realm:
-  edit-sub-pages: Unterseiten bearbeiten
+  page-settings: Seiteneinstellungen
   edit-page-content: Seiteninhalt bearbeiten
+  add-sub-page: Unterseite hinzufügen
 
 manage:
   overview: Übersicht
-  realm-tree:
-    title: Seitenstruktur
-    heading: Unterseiten von „{{realm}}“ bearbeiten
-    heading-root: Unterseiten der Startseite bearbeiten
-    landing-text: >
-      Um die Struktur einer Seite zu bearbeiten, besuchen Sie diese auf gewöhnte
-      Weise und klicken Sie auf den Button „Unterseiten bearbeiten“ am linken
-      Rand.
-    sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
-    sort-alphabetically-desc: Alphabetisch absteigend sortieren
-    order-manually: Manuell ordnen
-  realm-content:
-    title: Seiteninhalt
+  realm:
+    nav-label: Seiteneinstellungen
+    heading: Einstellungen zur Seite „{{realm}}“
+    heading-root: Einstellungen zur Startseite
+
+    landing-page:
+      body: >
+        Um Einstellungen einer Seite zu bearbeiten, besuchen Sie diese auf gewohnte
+        Weise und klicken Sie auf den Button „Seiteneinstellungen“ am linken
+        Rand.
+
+    children:
+      heading: Reihenfolge Unterseiten
+      sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
+      sort-alphabetically-desc: Alphabetisch absteigend sortieren
+      order-manually: Manuell ordnen

@@ -58,20 +58,24 @@ video:
   part-of-series: Part of
 
 realm:
-  edit-sub-pages: Edit sub pages
+  page-settings: Page settings
   edit-page-content: Edit page content
+  add-sub-page: Add sub page
 
 manage:
   overview: Overview
-  realm-tree:
-    title: Page structure
-    heading: Edit sub pages of “{{realm}}”
-    heading-root: Edit sub pages of the homepage
-    landing-text: >
-      In order to edit the structure of a page, please visit said page as usual
-      and then click the button “Edit sub pages” on the left half of the website.
-    sort-alphabetically-asc: Sort alphabetically ascending
-    sort-alphabetically-desc: Sort alphabetically descending
-    order-manually: Manually order
-  realm-content:
-    title: Page content
+  realm:
+    nav-label: Page settings
+    heading: Settings of page „{{realm}}“
+    heading-root: Homepage settings
+
+    landing-page:
+      body: >
+        In order to edit the structure of a page, please visit said page as usual
+        and then click the button “Page settings” on the left half of the website.
+
+    children:
+      heading: Order of subpages
+      sort-alphabetically-asc: Sort alphabetically ascending
+      sort-alphabetically-desc: Sort alphabetically descending
+      order-manually: Manually order

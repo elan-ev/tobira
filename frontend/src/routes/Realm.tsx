@@ -4,7 +4,7 @@ import { graphql, loadQuery, usePreloadedQuery } from "react-relay/hooks";
 import type { PreloadedQuery } from "react-relay/hooks";
 import type { RealmQuery } from "../query-types/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
-import { FiLayout, FiList } from "react-icons/fi";
+import { FiLayout, FiPlus, FiTool } from "react-icons/fi";
 
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -79,13 +79,17 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     const { t } = useTranslation();
 
     const items = [
-        <LinkWithIcon key={0} to={`/~manage/realm-tree?path=${path}`} iconPos="left">
-            <FiList />
-            {t("realm.edit-sub-pages")}
+        <LinkWithIcon key={0} to={`/~manage/realm?path=${path}`} iconPos="left">
+            <FiTool />
+            {t("realm.page-settings")}
         </LinkWithIcon>,
-        <LinkWithIcon key={1} to={`/~manage/realm-content?path=${path}`} iconPos="left">
+        <LinkWithIcon key={1} to={`/~manage/realm/content?path=${path}`} iconPos="left">
             <FiLayout />
             {t("realm.edit-page-content")}
+        </LinkWithIcon>,
+        <LinkWithIcon key={1} to={`/~manage/realm/add-child?parent=${path}`} iconPos="left">
+            <FiPlus />
+            {t("realm.add-sub-page")}
         </LinkWithIcon>,
     ];
 
