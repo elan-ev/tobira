@@ -115,10 +115,15 @@ impl Realm {
         debug!("Set 'child_order' of realm {} to {:?}", parent, child_order);
 
 
-        // We can unwrap the inner option because we know the realm exists. We
-        // checked above that there is at least one child and confirmed we see
-        // that one child in the DB when using `parent = $parent_key`.
-        Realm::load_by_key(parent_key, &context).await.map(Option::unwrap)
+        // Load the updated realm. If the realm does not exist, we either
+        // noticed the error above or the above queries did not change
+        // anything.
+        Realm::load_by_key(parent_key, &context)
+            .await
+            .and_then(|realm| realm.ok_or_else(|| FieldError::new(
+                "`parent` realm does not exist (for `setChildOrder`)",
+                juniper::Value::Null,
+            )))
     }
 }
 
