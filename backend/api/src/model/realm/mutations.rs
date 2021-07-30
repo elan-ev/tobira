@@ -125,10 +125,50 @@ impl Realm {
                 juniper::Value::Null,
             )))
     }
+
+    pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> FieldResult<Realm> {
+        let key = id.key_for(Id::REALM_KIND).ok_or_else(|| FieldError::new(
+            "`id` does not refer to a realm",
+            juniper::Value::Null,
+        ))?;
+        let parent_key = set.parent.map(|parent| {
+            parent.key_for(Id::REALM_KIND).ok_or_else(|| FieldError::new(
+                "`parent` does not refer to a realm",
+                juniper::Value::Null,
+            ))
+        }).transpose()?;
+
+        let affected_rows = context.db
+            .execute(
+                "update realms set
+                    parent = coalesce($2, parent),
+                    name = coalesce($3, name),
+                    path_segment = coalesce($4, path_segment)
+                    where id = $1",
+                &[&(key as i64), &parent_key.map(|k| k as i64), &set.name, &set.path_segment],
+            )
+            .await?;
+
+        if affected_rows != 1 {
+            return Err(FieldError::new(
+                "id does not refer to an existing realm",
+                juniper::Value::Null,
+            ));
+        }
+
+        Self::load_by_key(key, context).await.map(Option::unwrap)
+    }
 }
 
 #[derive(juniper::GraphQLInputObject)]
 pub(crate) struct ChildIndex {
     id: Id,
     index: i32,
+}
+
+#[derive(juniper::GraphQLInputObject)]
+pub(crate) struct UpdateRealm {
+    parent: Option<Id>,
+    name: Option<String>,
+    path_segment: Option<String>,
 }

@@ -17,13 +17,6 @@ type Event {
   series: Series
 }
 
-"A `Block`: a UI element that belongs to a realm."
-interface Block {
-  id: ID!
-  index: Int!
-  title: String
-}
-
 type Mutation {
   """
     Sets the order of all children of a specific realm.
@@ -32,6 +25,8 @@ type Mutation {
     for realms without children.
   """
   setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
+  "Updates a realm's data."
+  updateRealm(id: ID!, set: UpdateRealm!): Realm!
 }
 
 enum VideoListOrder {
@@ -80,18 +75,38 @@ input ChildIndex {
   index: Int!
 }
 
-type Track {
-  uri: String!
-  flavor: String!
-  mimetype: String
-  resolution: [Int!]
-}
-
 "A block just showing the list of videos in an Opencast series"
 type SeriesBlock implements Block {
   series: Series!
   layout: VideoListLayout!
   order: VideoListOrder!
+}
+
+type Series {
+  id: ID!
+  title: String!
+  description: String
+  events: [Event!]!
+}
+
+"A `Block`: a UI element that belongs to a realm."
+interface Block {
+  id: ID!
+  index: Int!
+  title: String
+}
+
+input UpdateRealm {
+  parent: ID
+  name: String
+  pathSegment: String
+}
+
+type Track {
+  uri: String!
+  flavor: String!
+  mimetype: String
+  resolution: [Int!]
 }
 
 type Realm {
@@ -126,13 +141,6 @@ type Realm {
   children: [Realm!]!
   "Returns the (content) blocks of this realm."
   blocks: [Block!]!
-}
-
-type Series {
-  id: ID!
-  title: String!
-  description: String
-  events: [Event!]!
 }
 
 enum VideoListLayout {
