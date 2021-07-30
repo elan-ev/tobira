@@ -9,6 +9,10 @@ use crate::{
 };
 
 
+mod mutations;
+
+pub(crate) use mutations::ChildIndex;
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
 #[postgres(name = "realm_order")]
