@@ -12,6 +12,7 @@ import { loadQuery } from "../../../relay";
 import type { Route } from "../../../router";
 import { navData } from "..";
 import { ChildOrder } from "./ChildOrder";
+import { General } from "./General";
 
 
 // Route definition
@@ -35,6 +36,7 @@ const query = graphql`
         realm: realmByPath(path: $path) {
             name
             isRoot
+            ... GeneralRealmData
             ... ChildOrderEditData
         }
     }
@@ -102,6 +104,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
 
     return <>
         <h1>{heading}</h1>
+        <General fragRef={realm} />
         <ChildOrder fragRef={realm} />
     </>;
 };

@@ -9,6 +9,8 @@ home: Home
 direction-up: Up
 direction-down: Down
 navigation: Navigation
+rename: Rename
+
 not-found:
   page-not-found: Page not found
   video-not-found: Video not found
@@ -73,6 +75,9 @@ manage:
       body: >
         In order to edit the structure of a page, please visit said page as usual
         and then click the button “Page settings” on the left half of the website.
+
+    general:
+      name-must-not-be-empty: Name must not be empty
 
     children:
       heading: Order of subpages

@@ -9,6 +9,8 @@ home: Startseite
 direction-up: Hoch
 direction-down: Runter
 navigation: Navigation
+rename: Umbenennen
+
 not-found:
   page-not-found: Seite nicht gefunden
   video-not-found: Video nicht gefunden
@@ -75,6 +77,9 @@ manage:
         Um Einstellungen einer Seite zu bearbeiten, besuchen Sie diese auf gewohnte
         Weise und klicken Sie auf den Button „Seiteneinstellungen“ am linken
         Rand.
+
+    general:
+      name-must-not-be-empty: Name darf nicht leer sein
 
     children:
       heading: Reihenfolge Unterseiten
