@@ -86,9 +86,9 @@ create function update_full_realm_path() returns trigger as $$
 begin
     -- If only the name changed, we don't need to update anything.
     if
-        NEW.path_segment = OLD.path_segment and
-        NEW.parent = OLD.parent and
-        NEW.full_path = OLD.full_path
+        NEW.path_segment is not distinct from OLD.path_segment and
+        NEW.parent is not distinct from OLD.parent and
+        NEW.full_path is not distinct from OLD.full_path
     then
         return NEW;
     end if;
