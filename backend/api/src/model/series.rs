@@ -1,6 +1,6 @@
 use juniper::{graphql_object, FieldResult};
 
-use crate::{Context, id::Key, Id, model::event::Event, util::RowExt};
+use crate::{Context, id::Key, Id, model::event::Event};
 
 
 pub(crate) struct Series {
@@ -43,11 +43,11 @@ impl Series {
                 "select id, title, description
                     from series
                     where id = $1",
-                &[&(key as i64)],
+                &[&key],
             )
             .await?
             .map(|row| Self {
-                key: row.get_key(0),
+                key: row.get(0),
                 title: row.get(1),
                 description: row.get(2),
             });

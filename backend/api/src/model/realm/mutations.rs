@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use futures::TryStreamExt;
 use juniper::{FieldError, FieldResult};
-use crate::{id::Id, model::realm::{Realm, RealmOrder}, util::RowExt};
+use crate::{id::Id, model::realm::{Realm, RealmOrder}};
 
 use super::Context;
 use tobira_util::prelude::*;
@@ -59,9 +59,9 @@ impl Realm {
 
             // Retrieve the current children of the given realm
             let current_children: Vec<(_, i32)> = context.db
-                .query_raw("select id, index from realms where parent = $1", [parent_key as i64])
+                .query_raw("select id, index from realms where parent = $1", [parent_key])
                 .await?
-                .map_ok(|row| (row.get_key(0), row.get(1)))
+                .map_ok(|row| (row.get(0), row.get(1)))
                 .try_collect()
                 .await?;
 
@@ -86,7 +86,7 @@ impl Realm {
             // Write new indices to the DB.
             for (key, index) in child_indices {
                 context.db
-                    .execute("update realms set index = $1 where id = $2", &[&index, &(key as i64)])
+                    .execute("update realms set index = $1 where id = $2", &[&index, &key])
                     .await?;
             }
         } else {
@@ -100,7 +100,7 @@ impl Realm {
             context.db
                 .execute(
                     "update realms set index = default where parent = $1",
-                    &[&(parent_key as i64)],
+                    &[&parent_key],
                 )
                 .await?;
         }
@@ -109,7 +109,7 @@ impl Realm {
         context.db
             .execute(
                 "update realms set child_order = $1 where id = $2",
-                &[&child_order, &(parent_key as i64)],
+                &[&child_order, &parent_key],
             )
             .await?;
         debug!("Set 'child_order' of realm {} to {:?}", parent, child_order);
@@ -145,7 +145,7 @@ impl Realm {
                     name = coalesce($3, name),
                     path_segment = coalesce($4, path_segment)
                     where id = $1",
-                &[&(key as i64), &parent_key.map(|k| k as i64), &set.name, &set.path_segment],
+                &[&key, &parent_key, &set.name, &set.path_segment],
             )
             .await?;
 

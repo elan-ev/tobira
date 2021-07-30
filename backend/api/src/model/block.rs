@@ -7,7 +7,7 @@ use postgres_types::FromSql;
 
 use tobira_util::prelude::*;
 use tokio_postgres::Row;
-use crate::{Context, Id, id::Key, model::series::Series, util::RowExt};
+use crate::{Context, Id, id::Key, model::series::Series};
 
 
 /// A `Block`: a UI element that belongs to a realm.
@@ -123,7 +123,7 @@ impl BlockValue {
                     from blocks
                     where realm_id = $1
                     order by index asc",
-                &[realm_key as i64],
+                &[realm_key],
             )
             .await?
             .err_into::<anyhow::Error>()
@@ -136,7 +136,7 @@ impl BlockValue {
     fn from_row(row: Row) -> Result<BlockValue> {
         let ty: BlockType = row.get(1);
         let shared = SharedData {
-            id: Id::block(row.get_key(0)),
+            id: Id::block(row.get(0)),
             index: row.get::<_, i16>(2).into(),
             title: row.get(3),
         };
@@ -152,7 +152,7 @@ impl BlockValue {
                 SeriesBlock {
                     shared,
                     series: Id::series(
-                        get_type_dependent::<i64>(&row, 5, "videolist", "series_id")? as u64
+                        get_type_dependent(&row, 5, "videolist", "series_id")?
                     ),
                     layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
                     order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,

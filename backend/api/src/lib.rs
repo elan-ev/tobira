@@ -14,7 +14,6 @@ pub mod subscription;
 mod model;
 mod id;
 mod tx;
-mod util;
 
 pub(crate) use id::{Id, Key};
 pub use tx::Transaction;

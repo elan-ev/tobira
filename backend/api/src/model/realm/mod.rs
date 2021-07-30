@@ -5,7 +5,6 @@ use postgres_types::{FromSql, ToSql};
 use crate::{
     Context, Id, Key,
     model::block::BlockValue,
-    util::RowExt,
 };
 
 
@@ -41,7 +40,7 @@ impl Realm {
             .await?;
 
         Ok(Self {
-            key: 0,
+            key: Key(0),
             parent_key: None,
             name: row.get(0),
             full_path: String::new(),
@@ -59,7 +58,7 @@ impl Realm {
     }
 
     pub(crate) async fn load_by_key(key: Key, context: &Context) -> FieldResult<Option<Self>> {
-        if key == 0 {
+        if key.0 == 0 {
             return Ok(Some(Self::root(context).await?));
         }
 
@@ -68,12 +67,12 @@ impl Realm {
                 "select parent, name, full_path, index, child_order
                     from realms
                     where id = $1",
-                &[&(key as i64)],
+                &[&key],
             )
             .await?
             .map(|row| Self {
                 key,
-                parent_key: Some(row.get_key(0)),
+                parent_key: Some(row.get(0)),
                 name: row.get(1),
                 full_path: row.get(2),
                 index: row.get(3),
@@ -108,8 +107,8 @@ impl Realm {
             )
             .await?
             .map(|row| Self {
-                key: row.get_key(0),
-                parent_key: Some(row.get_key(1)),
+                key: row.get(0),
+                parent_key: Some(row.get(1)),
                 name: row.get(2),
                 full_path: path,
                 index: row.get(3),
@@ -131,7 +130,7 @@ impl Realm {
     }
 
     fn is_root(&self) -> bool {
-        self.key == 0
+        self.key.0 == 0
     }
 
     fn index(&self) -> i32 {
@@ -167,13 +166,13 @@ impl Realm {
                 "select id, parent, name, full_path, index, child_order
                     from ancestors_of_realm($1)
                     where height <> 0 and id <> 0",
-                &[&(self.key as i64)],
+                &[&self.key],
             )
             .await?
             .map_ok(|row| {
                 Self {
-                    key: row.get_key(0),
-                    parent_key: Some(row.get_key(1)),
+                    key: row.get(0),
+                    parent_key: Some(row.get(1)),
                     name: row.get(2),
                     full_path: row.get(3),
                     index: row.get(4),
@@ -197,12 +196,12 @@ impl Realm {
                     from realms
                     where parent = $1
                     order by index",
-                &[&(self.key as i64)],
+                &[&self.key],
             )
             .await?
             .map_ok(|row| {
                 Self {
-                    key: row.get_key(0),
+                    key: row.get(0),
                     parent_key: Some(self.key),
                     name: row.get(1),
                     full_path: row.get(2),

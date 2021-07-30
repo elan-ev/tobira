@@ -1,10 +1,50 @@
+use bytes::BytesMut;
 use paste::paste;
+use postgres_types::{FromSql, ToSql};
 use static_assertions::const_assert;
 use std::{convert::TryInto, fmt};
 
 
-/// The type of key we are using.
-pub(crate) type Key = u64;
+/// The type of key we are using. Implements `ToSql` and `FromSql` by casting
+/// to/from `i64`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) struct Key(pub(crate) u64);
+
+impl ToSql for Key {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        (self.0 as i64).to_sql(ty, out)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        <i64 as ToSql>::accepts(ty)
+    }
+
+    fn to_sql_checked(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        (self.0 as i64).to_sql_checked(ty, out)
+    }
+}
+
+impl<'a> FromSql<'a> for Key {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        i64::from_sql(ty, raw).map(|i| Key(i as u64))
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        <i64 as FromSql>::accepts(ty)
+    }
+}
+
 
 /// An opaque, globally-unique identifier for all "nodes" that the GraphQL API
 /// might return.
@@ -97,7 +137,7 @@ impl Id {
     fn invalid() -> Self {
         Self {
             kind: Self::INVALID_KIND,
-            key: 0,
+            key: Key(0),
         }
     }
 
@@ -144,7 +184,7 @@ impl fmt::Display for Id {
 
         // Base64 encoding. After this loop, `n` is always 0, because `u64::MAX`
         // divided by 64 eleven times is 0.
-        let mut n = self.key;
+        let mut n = self.key.0;
         for i in (2..out.len()).rev() {
             out[i] = BASE64_DIGITS[(n % 64) as usize];
             n /= 64;
@@ -222,7 +262,8 @@ fn decode_base64(src: &[u8]) -> Option<Key> {
         .rev()
         .enumerate()
         .map(|(i, &d)| lookup(d).map(|n| n * 64u64.pow(i as u32)))
-        .sum()
+        .sum::<Option<u64>>()
+        .map(Key)
 }
 
 
@@ -234,8 +275,8 @@ mod tests {
     #[test]
     fn simple() {
         #[track_caller]
-        fn check(kind: [u8; 2], key: Key, s: &str) {
-            let left = Id { kind, key };
+        fn check(kind: [u8; 2], key: u64, s: &str) {
+            let left = Id { kind, key: Key(key) };
             assert_eq!(left.to_string(), s);
             assert_eq!(Id::from_str(s), Ok(left));
         }
@@ -276,7 +317,7 @@ mod tests {
         // or non-ASCII characters.
         for n in 0..=u16::MAX {
             for &shift in &[0, 8, 16, 24, 32, 40, 48] {
-                let id = Id { kind: Id::REALM_KIND, key: (n as u64) << shift };
+                let id = Id { kind: Id::REALM_KIND, key: Key((n as u64) << shift) };
                 let s = id.to_string();
                 assert_eq!(s[..2].as_bytes(), Id::REALM_KIND);
                 assert!(s[2..].bytes().all(|d| BASE64_DIGITS.contains(&d)));
