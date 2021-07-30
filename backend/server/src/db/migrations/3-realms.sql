@@ -29,6 +29,7 @@ create table realms (
     -- This check is disabled for the root realm as it has an empty path
     -- segment.
     constraint valid_alphanum_path check (id = 0 or path_segment ~* '^[[:alnum:]][[:alnum:]\-]+$'),
+    constraint root_no_path check (id <> 0 or (parent is null and path_segment = '' and full_path = '')),
     constraint has_parent check (id = 0 or parent is not null)
 );
 
