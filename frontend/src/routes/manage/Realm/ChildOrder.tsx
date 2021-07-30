@@ -105,15 +105,17 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
     };
 
     const SortOrderOption: React.FC<SortOrderOptionProps> = ({ label, order }) => (
-        <label css={{ display: "block", margin: 6 }}>
-            <input
-                type="radio"
-                checked={order === sortOrder}
-                onChange={() => setSortOrder(order)}
-                css={{ marginRight: 16 }}
-            />
-            {label}
-        </label>
+        <div css={{ margin: 6 }}>
+            <label>
+                <input
+                    type="radio"
+                    checked={order === sortOrder}
+                    onChange={() => setSortOrder(order)}
+                    css={{ marginRight: 16 }}
+                />
+                {label}
+            </label>
+        </div>
     );
 
     const sortedChildren = match(sortOrder, {
