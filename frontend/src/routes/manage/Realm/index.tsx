@@ -13,6 +13,7 @@ import { Link, Route } from "../../../router";
 import { navData } from "..";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
+import { DangerZone } from "./DangerZone";
 
 
 // Route definition
@@ -40,6 +41,7 @@ const query = graphql`
             numberOfDescendants
             ... GeneralRealmData
             ... ChildOrderEditData
+            ... DangerZoneRealmData
         }
     }
 `;
@@ -113,6 +115,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
             <General fragRef={realm} />
             <ChildOrder fragRef={realm} />
+            <DangerZone fragRef={realm} />
         </div>
     );
 };

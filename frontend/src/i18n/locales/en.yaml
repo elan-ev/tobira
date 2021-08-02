@@ -86,3 +86,16 @@ manage:
       sort-alphabetically-asc: Sort alphabetically ascending
       sort-alphabetically-desc: Sort alphabetically descending
       order-manually: Manually order
+
+    danger-zone:
+      heading: Danger zone
+      root-note: The homepage cannot be deleted or moved, nor can its path be changed.
+      change-path:
+        heading: Change path
+        button: Change path segment
+        must-not-be-empty: Path segment must not be empty
+        warning: >
+          Important: Changing the path of this page invalidates the paths to
+          this page, to all direct or indirect sub-pages, and to all videos
+          linked on any of those pages. Old links, e.g. in private browser-bookmarks
+          or already published won't work anymore.

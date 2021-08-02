@@ -88,3 +88,19 @@ manage:
       sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
       sort-alphabetically-desc: Alphabetisch absteigend sortieren
       order-manually: Manuell ordnen
+
+    danger-zone:
+      heading: Gefahrenbereich
+      root-note: >
+        Die Startseite kann nicht gelöscht oder verschoben werden. Auch der Pfad
+        kann nicht geändert werden.
+      change-path:
+        heading: Pfad ändern
+        button: Pfadsegment ändern
+        must-not-be-empty: Pfadsegment darf nicht leer sein
+        warning: >
+          Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
+          Links zu dieser Seite, allen direkten und indirekten Unterseiten, und
+          allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
+          dann nicht mehr. Das betrifft private Browser-Lesezeichen, als auch
+          bereits veröffentlichte Links.
