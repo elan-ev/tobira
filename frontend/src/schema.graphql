@@ -141,6 +141,11 @@ type Realm {
   children: [Realm!]!
   "Returns the (content) blocks of this realm."
   blocks: [Block!]!
+  """
+    Returns the number of realms that are descendants of this one
+    (excluding this one). Returns a number ≥ 0.
+  """
+  numberOfDescendants: Int!
 }
 
 enum VideoListLayout {

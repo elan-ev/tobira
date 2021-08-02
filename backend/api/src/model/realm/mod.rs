@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use futures::stream::TryStreamExt;
 use juniper::{FieldResult, graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
@@ -222,5 +224,19 @@ impl Realm {
         // will only show one realm at a time, so the query will also only
         // request the blocks of one realm.
         BlockValue::load_for_realm(self.key, context).await
+    }
+
+    /// Returns the number of realms that are descendants of this one
+    /// (excluding this one). Returns a number ≥ 0.
+    async fn number_of_descendants(&self, context: &Context) -> FieldResult<i32> {
+        let count = context.db
+            .query_one(
+                "select count(*) from realms where full_path like $1 || '/%'",
+                &[&self.full_path],
+            )
+            .await?
+            .get::<_, i64>(0);
+
+        Ok(count.try_into().expect("number of descendants overflows i32"))
     }
 }
