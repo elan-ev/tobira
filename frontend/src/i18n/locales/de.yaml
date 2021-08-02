@@ -71,6 +71,8 @@ manage:
     nav-label: Seiteneinstellungen
     heading: Einstellungen zur Seite „{{realm}}“
     heading-root: Einstellungen zur Startseite
+    descendants-count: Diese Seite besitzt {{count}} direkt und indirekte Unterseiten.
+    view-page: Zur Seite
 
     landing-page:
       body: >

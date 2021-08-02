@@ -49,7 +49,7 @@ export const General: React.FC<Props> = ({ fragRef }) => {
     });
 
     return (
-        <form onSubmit={onSubmit} css={{ marginTop: 32, marginBottom: 64 }}>
+        <form onSubmit={onSubmit} css={{ margin: "32px 0" }}>
             <input defaultValue={realm.name} {...register("name", { required: true })} />
             <button type="submit" disabled={watch("name", realm.name) === realm.name}>
                 {t("rename")}

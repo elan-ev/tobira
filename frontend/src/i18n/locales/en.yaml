@@ -70,6 +70,8 @@ manage:
     nav-label: Page settings
     heading: Settings of page „{{realm}}“
     heading-root: Homepage settings
+    descendants-count: This page has {{count}} many direct and indirect sub-pages.
+    view-page: Go to page
 
     landing-page:
       body: >

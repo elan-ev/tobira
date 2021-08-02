@@ -9,7 +9,7 @@ import type {
     RealmManageQueryResponse,
 } from "../../../query-types/RealmManageQuery.graphql";
 import { loadQuery } from "../../../relay";
-import type { Route } from "../../../router";
+import { Link, Route } from "../../../router";
 import { navData } from "..";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
@@ -36,6 +36,8 @@ const query = graphql`
         realm: realmByPath(path: $path) {
             name
             isRoot
+            path
+            numberOfDescendants
             ... GeneralRealmData
             ... ChildOrderEditData
         }
@@ -102,9 +104,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
         ? t("manage.realm.heading-root")
         : t("manage.realm.heading", { realm: realm.name });
 
-    return <>
-        <h1>{heading}</h1>
-        <General fragRef={realm} />
-        <ChildOrder fragRef={realm} />
-    </>;
+    return (
+        <div css={{
+            "& > h2": { marginTop: 64 },
+        }}>
+            <h1>{heading}</h1>
+            <p><Link to={realm.path}>{t("manage.realm.view-page")}</Link></p>
+            <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
+            <General fragRef={realm} />
+            <ChildOrder fragRef={realm} />
+        </div>
+    );
 };
