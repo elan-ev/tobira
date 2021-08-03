@@ -81,6 +81,7 @@ manage:
         Rand.
 
     general:
+      rename-label: Seitenname
       name-must-not-be-empty: Name darf nicht leer sein.
       generic-network-error: Änderung des Namen fehlgeschlagen.
 

@@ -67,8 +67,13 @@ export const General: React.FC<Props> = ({ fragRef }) => {
 
     return (
         <form onSubmit={onSubmit} css={{ margin: "32px 0" }}>
+            <label
+                htmlFor="id-field"
+                css={{ fontWeight: "bold", display: "block", marginBottom: 8 }}
+            >{t("manage.realm.general.rename-label")}</label>
             <div css={{ marginBottom: 16, display: "flex", alignItems: "center" }}>
                 <Input
+                    id="rename-field"
                     defaultValue={realm.name}
                     css={{ marginRight: 16 }}
                     error={!!errors.name}
