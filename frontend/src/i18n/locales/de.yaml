@@ -88,6 +88,7 @@ manage:
       sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
       sort-alphabetically-desc: Alphabetisch absteigend sortieren
       order-manually: Manuell ordnen
+      generic-network-error: Änderung fehlgeschlagen.
 
     danger-zone:
       heading: Gefahrenbereich

@@ -86,6 +86,7 @@ manage:
       sort-alphabetically-asc: Sort alphabetically ascending
       sort-alphabetically-desc: Sort alphabetically descending
       order-manually: Manually order
+      generic-network-error: Changing the order failed.
 
     danger-zone:
       heading: Danger zone

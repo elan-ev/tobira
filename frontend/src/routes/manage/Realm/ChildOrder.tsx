@@ -11,6 +11,8 @@ import {
     ChildOrderEditData$key,
 } from "../../../query-types/ChildOrderEditData.graphql";
 import { Button } from "../../../ui/Button";
+import { Card } from "../../../ui/Card";
+import { Spinner } from "../../../ui/Spinner";
 
 
 
@@ -80,9 +82,11 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
     const anyChange = intialSortOrder !== sortOrder
         || children.some((c, i) => c.id !== realm.children[i].id);
 
+    const [error, setError] = useState<string | null>(null);
+
 
     // TODO: show spinner while in flight.
-    const [commit, _isInFlight] = useMutation(mutation);
+    const [commit, isInFlight] = useMutation(mutation);
     const save = async () => {
         commit({
             variables: {
@@ -96,6 +100,7 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
                     ? children.map((c, i) => ({ id: c.id, index: i }))
                     : null,
             },
+            onError: _error => setError(t("manage.realm.children.generic-network-error")),
         });
     };
 
@@ -147,7 +152,11 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
                 {sortedChildren}
             </ChildList>
 
-            <Button onClick={save} disabled={!anyChange}>{t("save")}</Button>
+            <div css={{ display: "flex", alignItems: "center" }}>
+                <Button onClick={save} disabled={!anyChange}>{t("save")}</Button>
+                {isInFlight && <Spinner size={20} css={{ marginLeft: 16 }} />}
+            </div>
+            {error && <Card kind="error" css={{ marginTop: 16 }}>{error}</Card>}
         </div>
     </>;
 };
