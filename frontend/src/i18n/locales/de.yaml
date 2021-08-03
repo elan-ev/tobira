@@ -81,7 +81,8 @@ manage:
         Rand.
 
     general:
-      name-must-not-be-empty: Name darf nicht leer sein
+      name-must-not-be-empty: Name darf nicht leer sein.
+      generic-network-error: Änderung des Namen fehlgeschlagen.
 
     children:
       heading: Reihenfolge Unterseiten

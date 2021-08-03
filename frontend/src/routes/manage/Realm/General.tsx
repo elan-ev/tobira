@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Card } from "../../../ui/Card";
 import { Button } from "../../../ui/Button";
+import { Spinner } from "../../../ui/Spinner";
 
 
 const fragment = graphql`
@@ -37,10 +38,10 @@ export const General: React.FC<Props> = ({ fragRef }) => {
 
     const { t } = useTranslation();
     const realm = useFragment(fragment, fragRef);
-    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+    const { register, handleSubmit, watch, setError, formState: { errors } } = useForm<FormData>({
         mode: "onChange",
     });
-    const [commit, _isInFlight] = useMutation(renameMutation);
+    const [commit, isInFlight] = useMutation(renameMutation);
 
     const onSubmit = handleSubmit(data => {
         commit({
@@ -50,26 +51,36 @@ export const General: React.FC<Props> = ({ fragRef }) => {
                     name: data.name,
                 },
             },
+            onError: error => {
+                console.error(error);
+                setError("name", {
+                    type: "manual",
+                    message: t("manage.realm.general.generic-network-error"),
+                });
+            },
         });
     });
 
+    const validation = {
+        required: t("manage.realm.general.name-must-not-be-empty"),
+    };
+
     return (
         <form onSubmit={onSubmit} css={{ margin: "32px 0" }}>
-            <div css={{ marginBottom: 16 }}>
+            <div css={{ marginBottom: 16, display: "flex", alignItems: "center" }}>
                 <Input
                     defaultValue={realm.name}
                     css={{ marginRight: 16 }}
                     error={!!errors.name}
-                    {...register("name", { required: true })}
+                    {...register("name", validation)}
                 />
                 <Button
                     type="submit"
-                    disabled={!!errors.name || watch("name", realm.name) === realm.name}
+                    disabled={isInFlight || watch("name", realm.name) === realm.name}
                 >{t("rename")}</Button>
+                {isInFlight && <Spinner size={20} css={{ marginLeft: 16 }} />}
             </div>
-            {errors.name && <Card kind="error">
-                {t("manage.realm.general.name-must-not-be-empty")}
-            </Card>}
+            {errors.name && <Card kind="error">{errors.name.message}</Card>}
         </form>
     );
 };

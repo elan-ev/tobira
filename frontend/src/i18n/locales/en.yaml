@@ -79,7 +79,8 @@ manage:
         and then click the button “Page settings” on the left half of the website.
 
     general:
-      name-must-not-be-empty: Name must not be empty
+      name-must-not-be-empty: Name must not be empty.
+      generic-network-error: Failed to change the name.
 
     children:
       heading: Order of subpages
