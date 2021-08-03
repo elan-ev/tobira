@@ -11,6 +11,8 @@ export const GlobalStyle: React.FC = () => <>
     <Global styles={themeVars()} />
 </>;
 
+export const SMALLER_FONT_BREAKPOINT = 450;
+
 /**
  * The following is a minimal set of CSS reset rules in order to get rid of
  * browser dependent, inconsistent or unexpected behavior. Parts of this
@@ -77,10 +79,24 @@ const GLOBAL_STYLE = css({
         },
     },
     h1: {
-        fontSize: 32,
+        fontSize: 30,
+        lineHeight: 1.3,
+        marginBottom: 16,
+        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+            fontSize: 26,
+        },
     },
     h2: {
-        fontSize: 24,
+        fontSize: 23,
+        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+            fontSize: 20,
+        },
+    },
+    h3: {
+        fontSize: 19,
+        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+            fontSize: 18,
+        },
     },
     a: {
         color: "var(--nav-color)",
