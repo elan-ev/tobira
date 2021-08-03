@@ -109,7 +109,8 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
                 const newUrl = `/~manage/realm?path=${newPath}`;
                 window.history.pushState(null, "", newUrl);
             },
-            onError: _error => {
+            onError: error => {
+                console.error(error);
                 setError("pathSegment", {
                     type: "manual",
                     message: t("manage.realm.danger-zone.change-path.generic-network-error"),
