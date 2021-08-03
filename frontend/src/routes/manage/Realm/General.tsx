@@ -62,9 +62,10 @@ export const General: React.FC<Props> = ({ fragRef }) => {
                     error={!!errors.name}
                     {...register("name", { required: true })}
                 />
-                <Button type="submit" disabled={watch("name", realm.name) === realm.name}>
-                    {t("rename")}
-                </Button>
+                <Button
+                    type="submit"
+                    disabled={!!errors.name || watch("name", realm.name) === realm.name}
+                >{t("rename")}</Button>
             </div>
             {errors.name && <Card kind="error">
                 {t("manage.realm.general.name-must-not-be-empty")}
