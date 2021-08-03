@@ -140,13 +140,16 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
             <div css={{ marginBottom: 16 }}>
                 <div css={{
                     display: "inline-flex",
+                    flexWrap: "wrap",
                     position: "relative",
                     alignItems: "center",
+                    justifyContent: "center",
                     border: "1px solid var(--grey92)",
                     borderRadius: 4,
+                    gap: 8,
                     backgroundColor: "var(--grey97)",
                 }}>
-                    <span css={{ padding: "0 8px" }}>
+                    <span css={{ paddingLeft: 8 }}>
                         {realm.path.replace(pathSegmentRegex, "")}
                     </span>
                     <Input
