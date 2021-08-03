@@ -6,6 +6,7 @@ import { Input } from "../../../ui/Input";
 import { Card } from "../../../ui/Card";
 import { Button } from "../../../ui/Button";
 import { Spinner } from "../../../ui/Spinner";
+import { Form } from "../../../ui/Form";
 
 
 const fragment = graphql`
@@ -66,11 +67,8 @@ export const General: React.FC<Props> = ({ fragRef }) => {
     };
 
     return (
-        <form onSubmit={onSubmit} css={{ margin: "32px 0" }}>
-            <label
-                htmlFor="id-field"
-                css={{ fontWeight: "bold", display: "block", marginBottom: 8 }}
-            >{t("manage.realm.general.rename-label")}</label>
+        <Form onSubmit={onSubmit} css={{ margin: "32px 0" }}>
+            <label htmlFor="id-field">{t("manage.realm.general.rename-label")}</label>
             <div css={{
                 display: "flex",
                 marginBottom: 16,
@@ -91,6 +89,6 @@ export const General: React.FC<Props> = ({ fragRef }) => {
                 {isInFlight && <Spinner size={20} css={{ marginLeft: 16 }} />}
             </div>
             {errors.name && <Card kind="error">{errors.name.message}</Card>}
-        </form>
+        </Form>
     );
 };
