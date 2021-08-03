@@ -6,6 +6,8 @@ import type {
 } from "../../../query-types/DangerZoneRealmData.graphql";
 import { useForm } from "react-hook-form";
 import { bug } from "../../../util/err";
+import { Button } from "../../../ui/Button";
+import { Input } from "../../../ui/Input";
 
 
 const fragment = graphql`
@@ -28,13 +30,33 @@ export const DangerZone: React.FC<Props> = ({ fragRef }) => {
     const { t } = useTranslation();
     const realm = useFragment(fragment, fragRef);
 
+    const Section: React.FC = ({ children }) => (
+        <div css={{
+            padding: "16px 16px",
+            "&:not(:last-child)": {
+                borderBottom: "1px solid var(--danger-color)",
+            },
+            "& > h3": {
+                marginBottom: 16,
+            },
+        }}>{children}</div>
+    );
+
     return <>
         <h2>{t("manage.realm.danger-zone.heading")}</h2>
         {realm.isRoot
             ? <p>{t("manage.realm.danger-zone.root-note")}</p>
-            : <>
-                <ChangePath realm={realm} />
-            </>
+            : (
+                <div css={{
+                    border: "2px solid var(--danger-color)",
+                    borderRadius: 4,
+                    margin: 8,
+                    marginBottom: 96,
+                    marginTop: 16,
+                }}>
+                    <Section><ChangePath realm={realm} /></Section>
+                </div>
+            )
         }
     </>;
 };
@@ -85,28 +107,38 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
     });
 
 
-    return (
-        <div>
-            <h3>{t("manage.realm.danger-zone.change-path.heading")}</h3>
-            <p>{t("manage.realm.danger-zone.change-path.warning")}</p>
-            <form onSubmit={onSubmit} css={{ marginTop: 32, marginBottom: 64 }}>
-                {realm.path.replace(pathSegmentRegex, "")}
-                <input
-                    defaultValue={currentPathSegment}
-                    {...register("pathSegment", { required: true })}
-                />
-                <br />
-                <button
-                    type="submit"
-                    disabled={typedPathSegment === currentPathSegment}
-                >
-                    {t("manage.realm.danger-zone.change-path.button")}
-                </button>
-                {errors.pathSegment && <span>
-                    {t("manage.realm.danger-zone.change-path.must-not-be-empty")}
-                </span>}
-            </form>
-        </div>
-    );
+    return <>
+        <h3>{t("manage.realm.danger-zone.change-path.heading")}</h3>
+        <p css={{ fontSize: 14 }}>{t("manage.realm.danger-zone.change-path.warning")}</p>
+        <form onSubmit={onSubmit} css={{ marginTop: 32, textAlign: "center" }}>
+            <div css={{ marginBottom: 8 }}>
+                <div css={{
+                    display: "inline-block",
+                    border: "1px solid var(--grey92)",
+                    borderRadius: 4,
+                    backgroundColor: "var(--grey97)",
+                }}>
+                    <span css={{ padding: "0 8px" }}>
+                        {realm.path.replace(pathSegmentRegex, "")}
+                    </span>
+                    <Input
+                        defaultValue={currentPathSegment}
+                        css={{ margin: -1 }}
+                        {...register("pathSegment", { required: true })}
+                    />
+                </div>
+            </div>
+            <Button
+                danger
+                type="submit"
+                disabled={typedPathSegment === currentPathSegment}
+            >
+                {t("manage.realm.danger-zone.change-path.button")}
+            </Button>
+            {errors.pathSegment && <span>
+                {t("manage.realm.danger-zone.change-path.must-not-be-empty")}
+            </span>}
+        </form>
+    </>;
 };
 

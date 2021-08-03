@@ -2,6 +2,9 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import type { GeneralRealmData$key } from "../../../query-types/GeneralRealmData.graphql";
 import { useForm } from "react-hook-form";
+import { Input } from "../../../ui/Input";
+import { Card } from "../../../ui/Card";
+import { Button } from "../../../ui/Button";
 
 
 const fragment = graphql`
@@ -34,7 +37,9 @@ export const General: React.FC<Props> = ({ fragRef }) => {
 
     const { t } = useTranslation();
     const realm = useFragment(fragment, fragRef);
-    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
+    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+        mode: "onChange",
+    });
     const [commit, _isInFlight] = useMutation(renameMutation);
 
     const onSubmit = handleSubmit(data => {
@@ -50,11 +55,20 @@ export const General: React.FC<Props> = ({ fragRef }) => {
 
     return (
         <form onSubmit={onSubmit} css={{ margin: "32px 0" }}>
-            <input defaultValue={realm.name} {...register("name", { required: true })} />
-            <button type="submit" disabled={watch("name", realm.name) === realm.name}>
-                {t("rename")}
-            </button>
-            {errors.name && <span>{t("manage.realm.general.name-must-not-be-empty")}</span>}
+            <div css={{ marginBottom: 16 }}>
+                <Input
+                    defaultValue={realm.name}
+                    css={{ marginRight: 16 }}
+                    error={!!errors.name}
+                    {...register("name", { required: true })}
+                />
+                <Button type="submit" disabled={watch("name", realm.name) === realm.name}>
+                    {t("rename")}
+                </Button>
+            </div>
+            {errors.name && <Card kind="error">
+                {t("manage.realm.general.name-must-not-be-empty")}
+            </Card>}
         </form>
     );
 };

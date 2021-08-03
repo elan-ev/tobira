@@ -10,6 +10,7 @@ import {
     ChildOrderEditData,
     ChildOrderEditData$key,
 } from "../../../query-types/ChildOrderEditData.graphql";
+import { Button } from "../../../ui/Button";
 
 
 
@@ -146,7 +147,7 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
                 {sortedChildren}
             </ChildList>
 
-            <button onClick={save} disabled={!anyChange}>{t("save")}</button>
+            <Button onClick={save} disabled={!anyChange}>{t("save")}</Button>
         </div>
     </>;
 };

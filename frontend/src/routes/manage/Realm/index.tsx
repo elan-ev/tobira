@@ -108,14 +108,18 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
 
     return (
         <div css={{
-            "& > h2": { marginTop: 64 },
+            maxWidth: 900,
+            "& > section": {
+                marginBottom: 64,
+                "& > h2": { marginBottom: 16 },
+            },
         }}>
             <h1>{heading}</h1>
             <p><Link to={realm.path}>{t("manage.realm.view-page")}</Link></p>
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
-            <General fragRef={realm} />
-            <ChildOrder fragRef={realm} />
-            <DangerZone fragRef={realm} />
+            <section><General fragRef={realm} /></section>
+            <section><ChildOrder fragRef={realm} /></section>
+            <section><DangerZone fragRef={realm} /></section>
         </div>
     );
 };
