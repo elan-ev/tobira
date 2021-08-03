@@ -9,11 +9,13 @@ import type {
     RealmManageQueryResponse,
 } from "../../../query-types/RealmManageQuery.graphql";
 import { loadQuery } from "../../../relay";
-import { Link, Route } from "../../../router";
+import { Route } from "../../../router";
 import { navData } from "..";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
 import { DangerZone } from "./DangerZone";
+import { LinkButton } from "../../../ui/Button";
+import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 
 
 // Route definition
@@ -115,8 +117,22 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
             },
         }}>
             <h1>{heading}</h1>
-            <p><Link to={realm.path}>{t("manage.realm.view-page")}</Link></p>
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
+            <div css={{
+                margin: "32px 0",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 16,
+            }}>
+                <LinkButton to={realm.path}>
+                    <FiArrowRightCircle />
+                    {t("manage.realm.view-page")}
+                </LinkButton>
+                <LinkButton to={`/~manage/realm/add-child?parent=${realm.path}`}>
+                    <FiPlus />
+                    {t("realm.add-sub-page")}
+                </LinkButton>
+            </div>
             <section><General fragRef={realm} /></section>
             <section><ChildOrder fragRef={realm} /></section>
             <section><DangerZone fragRef={realm} /></section>
