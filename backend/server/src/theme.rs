@@ -59,4 +59,9 @@ pub(crate) struct ColorConfig {
     /// e.g. slightly warm.
     #[config(default = "#808080")]
     pub(crate) grey50: String,
+
+    /// A usually red color used to indicate errors, potentially destructive
+    /// actions, and the like.
+    #[config(default = "#b64235")]
+    pub(crate) danger: String,
 }

@@ -167,6 +167,7 @@ fn build_theme(theme: &ThemeConfig) -> String {
             "navigation": theme.color.navigation,
             "accent": theme.color.accent,
             "grey50": theme.color.grey50,
+            "danger": theme.color.danger,
         },
     }).to_string()
 }

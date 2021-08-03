@@ -97,10 +97,12 @@ const themeVars = () => {
 
     const nav = hexCodeToRgb(theme.color.navigation);
     const accent = hexCodeToRgb(theme.color.accent);
+    const danger = hexCodeToRgb(theme.color.danger);
     const grey = hexCodeToRgb(theme.color.grey50);
 
     const [navHue, navSat, navLight] = rgbToHsl(nav);
     const [accentHue, accentSat, accentLight] = rgbToHsl(accent);
+    const [dangerHue, dangerSat, dangerLight] = rgbToHsl(danger);
     const [greyHue, greySat, _] = rgbToHsl(grey);
 
     const hsl = (base: string, lightness: number): string =>
@@ -119,6 +121,11 @@ const themeVars = () => {
             "--accent-hue": 360 * accentHue,
             "--accent-sat": `${100 * accentSat}%`,
             "--accent-color": hsl("accent", 100 * accentLight),
+
+            "--danger-hue": 360 * dangerHue,
+            "--danger-sat": `${100 * dangerSat}%`,
+            "--danger-color": hsl("danger", 100 * dangerLight),
+            "--danger-color-darker": hsl("danger", 100 * lighten(dangerLight, -40)),
 
             "--grey-hue": 360 * greyHue,
             "--grey-sat": `${100 * greySat}%`,

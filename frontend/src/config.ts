@@ -43,6 +43,7 @@ type ThemeConfig = {
         navigation: string;
         accent: string;
         grey50: string;
+        danger: string;
     };
 };
 
