@@ -195,12 +195,9 @@ const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
             <div css={{
                 padding: 16,
                 paddingLeft: 12 + 22 + 12,
-                fontSize: 18,
                 fontWeight: "bold",
-                backgroundColor: "var(--accent-color)",
-                ...prefersBlackText(CONFIG.theme.color.accent)
-                    ? { color: "black", textShadow: "1px 1px 0 white" }
-                    : { color: "white", textShadow: "1px 1px 0 black" },
+                backgroundColor: "var(--nav-color)",
+                color: prefersBlackText(CONFIG.theme.color.navigation) ? "black" : "white",
             }}>{nav.currentName}</div>
         </>}
         <LinkList
