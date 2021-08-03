@@ -97,6 +97,7 @@ manage:
         at-least-2-long: Path segment must be at least two characters long.
         must-be-alphanum-dash: >
           Path segment must consist of digits, lowercase letters and hyphens (-) only.
+        generic-network-error: Changing the path failed.
         warning: >
           Important: Changing the path of this page invalidates the paths to
           this page, to all direct or indirect sub-pages, and to all videos

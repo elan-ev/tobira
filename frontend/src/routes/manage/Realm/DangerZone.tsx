@@ -10,6 +10,7 @@ import { bug } from "../../../util/err";
 import { Button } from "../../../ui/Button";
 import { Input } from "../../../ui/Input";
 import { Card } from "../../../ui/Card";
+import { Spinner } from "../../../ui/Spinner";
 
 
 const fragment = graphql`
@@ -81,7 +82,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
     };
 
     const { t } = useTranslation();
-    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+    const { register, handleSubmit, watch, setError, formState: { errors } } = useForm<FormData>({
         mode: "onChange",
     });
 
@@ -90,7 +91,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         ?? bug("no path segment in path");
     const typedPathSegment = watch("pathSegment", currentPathSegment);
 
-    const [commit, _isInFlight] = useMutation(changePathMutation);
+    const [commit, isInFlight] = useMutation(changePathMutation);
 
     const onSubmit = handleSubmit(data => {
         // TODO: confirmation dialog!
@@ -102,12 +103,19 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
                     pathSegment: data.pathSegment,
                 },
             },
+            onCompleted: () => {
+                // We have to change the current URL path, otherwise the URL is invalid.
+                const newPath = realm.path.replace(pathSegmentRegex, data.pathSegment);
+                const newUrl = `/~manage/realm?path=${newPath}`;
+                window.history.pushState(null, "", newUrl);
+            },
+            onError: _error => {
+                setError("pathSegment", {
+                    type: "manual",
+                    message: t("manage.realm.danger-zone.change-path.generic-network-error"),
+                });
+            },
         });
-
-        // We have to change the current URL path, otherwise the URL is invalid.
-        const newPath = realm.path.replace(pathSegmentRegex, data.pathSegment);
-        const newUrl = `/~manage/realm?path=${newPath}`;
-        window.history.pushState(null, "", newUrl);
     });
 
     const validation = {
@@ -130,7 +138,9 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         <form onSubmit={onSubmit} css={{ marginTop: 32, textAlign: "center" }}>
             <div css={{ marginBottom: 16 }}>
                 <div css={{
-                    display: "inline-block",
+                    display: "inline-flex",
+                    position: "relative",
+                    alignItems: "center",
                     border: "1px solid var(--grey92)",
                     borderRadius: 4,
                     backgroundColor: "var(--grey97)",
@@ -144,6 +154,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
                         css={{ margin: -1 }}
                         {...register("pathSegment", validation)}
                     />
+                    {isInFlight && <Spinner size={20} css={{ position: "absolute", right: 6 }}/>}
                 </div>
             </div>
             {errors.pathSegment && <>
@@ -155,7 +166,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
             <Button
                 danger
                 type="submit"
-                disabled={typedPathSegment === currentPathSegment}
+                disabled={typedPathSegment === currentPathSegment || isInFlight}
             >
                 {t("manage.realm.danger-zone.change-path.button")}
             </Button>

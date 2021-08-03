@@ -101,6 +101,7 @@ manage:
         at-least-2-long: Pfadsegment muss mindestens zwei Zeichen lang sein.
         must-be-alphanum-dash: >
           Das Pfadsegment darf nur aus Ziffern, Kleinbuchstaben und Bindestrichen (-) bestehen.
+        generic-network-error: Änderung des Pfades fehlgeschlagen.
         warning: >
           Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
           Links zu dieser Seite, allen direkten und indirekten Unterseiten, und
