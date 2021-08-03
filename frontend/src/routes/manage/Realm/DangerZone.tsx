@@ -1,13 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
+import { useForm } from "react-hook-form";
+
 import type {
     DangerZoneRealmData,
     DangerZoneRealmData$key,
 } from "../../../query-types/DangerZoneRealmData.graphql";
-import { useForm } from "react-hook-form";
 import { bug } from "../../../util/err";
 import { Button } from "../../../ui/Button";
 import { Input } from "../../../ui/Input";
+import { Card } from "../../../ui/Card";
 
 
 const fragment = graphql`
@@ -79,7 +81,9 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
     };
 
     const { t } = useTranslation();
-    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
+    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+        mode: "onChange",
+    });
 
     const pathSegmentRegex = /[^/]+$/;
     const currentPathSegment = realm.path.match(pathSegmentRegex)?.[0]
@@ -106,12 +110,25 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         window.history.pushState(null, "", newUrl);
     });
 
+    const validation = {
+        required: t("manage.realm.danger-zone.change-path.must-not-be-empty"),
+        minLength: {
+            value: 2,
+            message: t("manage.realm.danger-zone.change-path.at-least-2-long"),
+        },
+        pattern: {
+            // Lowercase letter, decimal number or dash.
+            value: /^(\p{Ll}|\p{Nd}|-)*$/u,
+            message: t("manage.realm.danger-zone.change-path.must-be-alphanum-dash"),
+        },
+        // TODO: check if path already exists
+    };
 
     return <>
         <h3>{t("manage.realm.danger-zone.change-path.heading")}</h3>
         <p css={{ fontSize: 14 }}>{t("manage.realm.danger-zone.change-path.warning")}</p>
         <form onSubmit={onSubmit} css={{ marginTop: 32, textAlign: "center" }}>
-            <div css={{ marginBottom: 8 }}>
+            <div css={{ marginBottom: 16 }}>
                 <div css={{
                     display: "inline-block",
                     border: "1px solid var(--grey92)",
@@ -122,12 +139,19 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
                         {realm.path.replace(pathSegmentRegex, "")}
                     </span>
                     <Input
+                        error={!!errors.pathSegment}
                         defaultValue={currentPathSegment}
                         css={{ margin: -1 }}
-                        {...register("pathSegment", { required: true })}
+                        {...register("pathSegment", validation)}
                     />
                 </div>
             </div>
+            {errors.pathSegment && <>
+                <Card kind="error" css={{ marginBottom: 16 }}>
+                    {errors.pathSegment.message}
+                </Card>
+                <br />
+            </>}
             <Button
                 danger
                 type="submit"
@@ -135,9 +159,6 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
             >
                 {t("manage.realm.danger-zone.change-path.button")}
             </Button>
-            {errors.pathSegment && <span>
-                {t("manage.realm.danger-zone.change-path.must-not-be-empty")}
-            </span>}
         </form>
     </>;
 };

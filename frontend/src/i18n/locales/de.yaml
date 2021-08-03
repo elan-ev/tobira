@@ -97,7 +97,10 @@ manage:
       change-path:
         heading: Pfad ändern
         button: Pfadsegment ändern
-        must-not-be-empty: Pfadsegment darf nicht leer sein
+        must-not-be-empty: Pfadsegment darf nicht leer sein.
+        at-least-2-long: Pfadsegment muss mindestens zwei Zeichen lang sein.
+        must-be-alphanum-dash: >
+          Das Pfadsegment darf nur aus Ziffern, Kleinbuchstaben und Bindestrichen (-) bestehen.
         warning: >
           Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
           Links zu dieser Seite, allen direkten und indirekten Unterseiten, und
