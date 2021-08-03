@@ -1,6 +1,6 @@
 import React from "react";
 
-type Props = JSX.IntrinsicElements["input"] & {
+export type Props = JSX.IntrinsicElements["input"] & {
     error?: boolean;
 };
 

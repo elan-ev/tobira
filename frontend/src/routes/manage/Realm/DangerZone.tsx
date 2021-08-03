@@ -8,9 +8,8 @@ import type {
 } from "../../../query-types/DangerZoneRealmData.graphql";
 import { bug } from "../../../util/err";
 import { Button } from "../../../ui/Button";
-import { Input } from "../../../ui/Input";
 import { Card } from "../../../ui/Card";
-import { Spinner } from "../../../ui/Spinner";
+import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 
 
 const fragment = graphql`
@@ -138,28 +137,13 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         <p css={{ fontSize: 14 }}>{t("manage.realm.danger-zone.change-path.warning")}</p>
         <form onSubmit={onSubmit} css={{ marginTop: 32, textAlign: "center" }}>
             <div css={{ marginBottom: 16 }}>
-                <div css={{
-                    display: "inline-flex",
-                    flexWrap: "wrap",
-                    position: "relative",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "1px solid var(--grey92)",
-                    borderRadius: 4,
-                    gap: 8,
-                    backgroundColor: "var(--grey97)",
-                }}>
-                    <span css={{ paddingLeft: 8 }}>
-                        {realm.path.replace(pathSegmentRegex, "")}
-                    </span>
-                    <Input
-                        error={!!errors.pathSegment}
-                        defaultValue={currentPathSegment}
-                        css={{ margin: -1 }}
-                        {...register("pathSegment", validation)}
-                    />
-                    {isInFlight && <Spinner size={20} css={{ position: "absolute", right: 6 }}/>}
-                </div>
+                <PathSegmentInput
+                    base={realm.path.replace(pathSegmentRegex, "")}
+                    spinner={isInFlight}
+                    error={!!errors.pathSegment}
+                    defaultValue={currentPathSegment}
+                    {...register("pathSegment", validation)}
+                />
             </div>
             {errors.pathSegment && <>
                 <Card kind="error" css={{ marginBottom: 16 }}>
