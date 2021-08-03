@@ -10,6 +10,7 @@ import { bug } from "../../../util/err";
 import { Button } from "../../../ui/Button";
 import { Card } from "../../../ui/Card";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
+import { realmValidations } from ".";
 
 
 const fragment = graphql`
@@ -118,20 +119,6 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         });
     });
 
-    const validation = {
-        required: t("manage.realm.danger-zone.change-path.must-not-be-empty"),
-        minLength: {
-            value: 2,
-            message: t("manage.realm.danger-zone.change-path.at-least-2-long"),
-        },
-        pattern: {
-            // Lowercase letter, decimal number or dash.
-            value: /^(\p{Ll}|\p{Nd}|-)*$/u,
-            message: t("manage.realm.danger-zone.change-path.must-be-alphanum-dash"),
-        },
-        // TODO: check if path already exists
-    };
-
     return <>
         <h3>{t("manage.realm.danger-zone.change-path.heading")}</h3>
         <p css={{ fontSize: 14 }}>{t("manage.realm.danger-zone.change-path.warning")}</p>
@@ -142,7 +129,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
                     spinner={isInFlight}
                     error={!!errors.pathSegment}
                     defaultValue={currentPathSegment}
-                    {...register("pathSegment", validation)}
+                    {...register("pathSegment", realmValidations(t).path)}
                 />
             </div>
             {errors.pathSegment && <>

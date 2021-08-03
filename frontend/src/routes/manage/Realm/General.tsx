@@ -63,7 +63,7 @@ export const General: React.FC<Props> = ({ fragRef }) => {
     });
 
     const validation = {
-        required: t("manage.realm.general.name-must-not-be-empty"),
+        required: t("manage.realm.name-must-not-be-empty"),
     };
 
     return (

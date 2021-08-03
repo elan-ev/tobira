@@ -73,6 +73,12 @@ manage:
     descendants-count: This page has {{count}} many direct and indirect sub-pages.
     view-page: Go to page
 
+    name-must-not-be-empty: Name must not be empty.
+    path-must-not-be-empty: Path segment must not be empty.
+    path-too-short: Path segment must be at least two characters long.
+    path-must-be-alphanum-dash: >
+      Path segment must consist of digits, lowercase letters and hyphens (-) only.
+
     landing-page:
       body: >
         In order to edit the structure of a page, please visit said page as usual
@@ -80,7 +86,6 @@ manage:
 
     general:
       rename-label: Page name
-      name-must-not-be-empty: Name must not be empty.
       generic-network-error: Failed to change the name.
 
     children:
@@ -96,10 +101,6 @@ manage:
       change-path:
         heading: Change path
         button: Change path segment
-        must-not-be-empty: Path segment must not be empty.
-        at-least-2-long: Path segment must be at least two characters long.
-        must-be-alphanum-dash: >
-          Path segment must consist of digits, lowercase letters and hyphens (-) only.
         generic-network-error: Changing the path failed.
         warning: >
           Important: Changing the path of this page invalidates the paths to
