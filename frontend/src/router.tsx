@@ -87,7 +87,7 @@ export type MatchedRoute<Prepared> = {
  */
 const matchRoute = (href: string): MatchedRoute<any> => {
     const url = new URL(href);
-    const currentPath = url.pathname;
+    const currentPath = decodeURI(url.pathname);
 
     const match = ROUTES
         .map((route, index) => {
