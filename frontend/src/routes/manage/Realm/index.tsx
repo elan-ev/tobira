@@ -18,6 +18,7 @@ import { LinkButton } from "../../../ui/Button";
 import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 import { TFunction } from "i18next";
 import { RegisterOptions } from "react-hook-form";
+import { Card } from "../../../ui/Card";
 
 
 // Route definition
@@ -164,3 +165,11 @@ export const realmValidations = (t: TFunction): RealmValidations => ({
         // TODO: check if path already exists
     },
 });
+
+export const ErrorBox: React.FC = ({ children }) => (
+    children == null
+        ? null
+        : <div css={{ marginTop: 8 }}>
+            <Card kind="error">{children}</Card>
+        </div>
+);

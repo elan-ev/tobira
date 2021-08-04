@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useForm } from "react-hook-form";
 
@@ -10,7 +10,13 @@ import { bug } from "../../../util/err";
 import { Button } from "../../../ui/Button";
 import { Card } from "../../../ui/Card";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { realmValidations } from ".";
+import { ErrorBox, realmValidations } from ".";
+import { Spinner } from "../../../ui/Spinner";
+import {
+    DangerZoneRemoveRealmMutationResponse,
+} from "../../../query-types/DangerZoneRemoveRealmMutation.graphql";
+import { useRouter } from "../../../router";
+import { FormEvent, useState } from "react";
 
 
 const fragment = graphql`
@@ -19,6 +25,7 @@ const fragment = graphql`
         name
         isRoot
         path
+        numberOfDescendants
     }
 `;
 
@@ -58,6 +65,7 @@ export const DangerZone: React.FC<Props> = ({ fragRef }) => {
                     marginTop: 16,
                 }}>
                     <Section><ChangePath realm={realm} /></Section>
+                    <Section><RemoveRealm realm={realm} /></Section>
                 </div>
             )
         }
@@ -149,3 +157,58 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
     </>;
 };
 
+const removeRealmMutation = graphql`
+    mutation DangerZoneRemoveRealmMutation($id: ID!) {
+        removeRealm(id: $id) {
+            parent { path }
+        }
+    }
+`;
+
+const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
+    const { t } = useTranslation();
+    const [commit, isInFlight] = useMutation(removeRealmMutation);
+    const router = useRouter();
+    const [error, setError] = useState(null);
+
+    const remove = (e: FormEvent) => {
+        setError(null);
+        commit({
+            variables: {
+                id: realm.id,
+            },
+            onCompleted: response => {
+                console.log(response);
+                const typedResponse = response as DangerZoneRemoveRealmMutationResponse;
+                router.goto(typedResponse.removeRealm.parent.path);
+            },
+            onError: error => {
+                console.error(error);
+                setError(t("manage.realm.danger-zone.delete.generic-network-error"));
+            },
+        });
+        e.preventDefault();
+    };
+
+    return <>
+        <h3>{t("manage.realm.danger-zone.delete.heading")}</h3>
+        <p css={{ fontSize: 14 }}>
+            {t("manage.realm.danger-zone.delete.warning")}
+        </p>
+        <form onSubmit={remove} css={{ marginTop: 32, textAlign: "center" }}>
+            <Button danger>
+                <span>
+                    {realm.numberOfDescendants === 0
+                        ? t("manage.realm.danger-zone.delete.button-single")
+                        : <Trans
+                            i18nKey="manage.realm.danger-zone.delete.button"
+                            values={{ numSubPages: realm.numberOfDescendants }}
+                        >Foo<strong>count</strong>Bar</Trans>
+                    }
+                </span>
+            </Button>
+            {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
+            <ErrorBox>{error}</ErrorBox>
+        </form>
+    </>;
+};

@@ -15,8 +15,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { realmValidations } from ".";
-import { Card } from "../../../ui/Card";
+import { ErrorBox, realmValidations } from ".";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
@@ -146,14 +145,6 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
 
     const validations = realmValidations(t);
 
-    const Error: React.FC = ({ children }) => (
-        children == null
-            ? null
-            : <div css={{ marginTop: 8 }}>
-                <Card kind="error">{children}</Card>
-            </div>
-    );
-
     return (
         <div css={{
             maxWidth: 900,
@@ -189,7 +180,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         error={!!errors.name}
                         {...register("name", validations.name)}
                     />
-                    <Error>{errors.name?.message}</Error>
+                    <ErrorBox>{errors.name?.message}</ErrorBox>
                 </div>
 
                 <div>
@@ -201,7 +192,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         error={!!errors.pathSegment}
                         {...register("pathSegment", validations.path)}
                     />
-                    <Error>{errors.pathSegment?.message}</Error>
+                    <ErrorBox>{errors.pathSegment?.message}</ErrorBox>
                 </div>
 
                 <div>
@@ -212,7 +203,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         {isInFlight && <Spinner size={20} />}
                     </div>
 
-                    <Error>{error}</Error>
+                    <ErrorBox>{error}</ErrorBox>
                 </div>
             </Form>
         </div>

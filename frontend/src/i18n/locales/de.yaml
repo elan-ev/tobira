@@ -112,6 +112,15 @@ manage:
           allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
           dann nicht mehr. Das betrifft private Browser-Lesezeichen, als auch
           bereits veröffentlichte Links.
+      delete:
+        heading: Seite löschen
+        button: Diese Seite und <1>{{numSubPages}}</1> Unterseiten löschen
+        button-single: Seite löschen
+        generic-network-error: Löschung fehlgeschlagen.
+        warning: >
+          Wenn Sie diese Seite löschen, werden automatisch alle direkten und
+          indirekten Unterseiten sowie alle Seiteninhalte all dieser Seiten
+          mitgelöscht. Die Löschung kann nicht wieder rückgängig gemacht werden!
 
   add-child:
     heading: Seite hinzufügen
