@@ -29,6 +29,7 @@ type Mutation {
   setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
   "Updates a realm's data."
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
+  removeRealm(id: ID!): RemovedRealm!
 }
 
 enum VideoListOrder {
@@ -75,6 +76,10 @@ enum RealmOrder {
 input ChildIndex {
   id: ID!
   index: Int!
+}
+
+type RemovedRealm {
+  parent: ID!
 }
 
 "A block just showing the list of videos in an Opencast series"

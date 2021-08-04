@@ -1,6 +1,9 @@
 use juniper::{FieldResult, graphql_object};
 
-use crate::{id::Id, model::realm::{Realm, RealmOrder, ChildIndex, NewRealm, UpdateRealm}};
+use crate::{
+    id::Id,
+    model::realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
+};
 use super::Context;
 
 
@@ -35,5 +38,9 @@ impl Mutation {
     /// Updates a realm's data.
     async fn update_realm(id: Id, set: UpdateRealm, context: &Context) -> FieldResult<Realm> {
         Realm::update(id, set, context).await
+    }
+
+    async fn remove_realm(id: Id, context: &Context) -> FieldResult<RemovedRealm> {
+        Realm::remove(id, context).await
     }
 }

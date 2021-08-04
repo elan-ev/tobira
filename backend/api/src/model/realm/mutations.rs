@@ -154,12 +154,36 @@ impl Realm {
 
         if affected_rows != 1 {
             return Err(FieldError::new(
-                "id does not refer to an existing realm",
+                "`id` does not refer to an existing realm",
                 juniper::Value::Null,
             ));
         }
 
         Self::load_by_key(key, context).await.map(Option::unwrap)
+    }
+
+    pub(crate) async fn remove(id: Id, context: &Context) -> FieldResult<RemovedRealm> {
+        let key = id_to_key(id, "`id`")?;
+        if key.0 == 0 {
+            return Err(FieldError::new(
+                "Cannot remove the root realm",
+                juniper::Value::Null,
+            ));
+        }
+
+        let realm = Self::load_by_key(key, context).await?.ok_or_else(|| FieldError::new(
+            "`id` does not refer to an existing realm",
+            juniper::Value::Null,
+        ))?;
+
+        context.db
+            .execute("delete from realms where id = $1", &[&key])
+            .await?;
+
+        Ok(RemovedRealm {
+            // We checked above that `realm` is not the root realm, so we can unwrap.
+            parent: Id::realm(realm.parent_key.expect("missing parent")),
+        })
     }
 }
 
@@ -189,4 +213,9 @@ pub(crate) struct NewRealm {
     parent: Id,
     name: String,
     path_segment: String,
+}
+
+#[derive(juniper::GraphQLObject)]
+pub(crate) struct RemovedRealm {
+    parent: Id,
 }

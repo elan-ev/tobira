@@ -7,7 +7,7 @@ select prepare_randomized_ids('realm');
 
 create table realms (
     id bigint primary key default randomized_id('realm'),
-    parent bigint references realms on delete restrict,
+    parent bigint references realms on delete cascade,
     name text not null,
     path_segment text not null,
 
