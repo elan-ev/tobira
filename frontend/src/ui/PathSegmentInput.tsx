@@ -23,7 +23,7 @@ export const PathSegmentInput = React.forwardRef<HTMLInputElement, Props>(
         }}>
             <span css={{ paddingLeft: 8 }}>{base}</span>
             <Input
-                css={{ margin: -1 }}
+                css={{ margin: -1, width: 160 }}
                 // TODO: I have no idea why, but this cast is necessary.
                 // Otherwise TS complaints about type mismatch. By `ref` is
                 // exactly the same type as what the `ref` attributes of
