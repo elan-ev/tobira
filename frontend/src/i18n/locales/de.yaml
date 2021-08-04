@@ -112,3 +112,17 @@ manage:
           allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
           dann nicht mehr. Das betrifft private Browser-Lesezeichen, als auch
           bereits veröffentlichte Links.
+
+  add-child:
+    heading: Seite hinzufügen
+    path-segment: Pfadsegment
+    below-this-parent: Die neue Seite wird unter <1>„{{parent}}“</1> hinzugefügt.
+    below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
+    button-create-page: Seite erstellen
+    generic-network-error: Seite konnte nicht erstellt werden.
+    landing-page:
+      body: >
+        Um eine neue Seite hinzuzufügen, besuchen Sie die gewünschte Oberseite
+        auf gewohnte Weise und klicken Sie auf den Button „Unterseite hinzufügen“
+        am linken Rand.
+

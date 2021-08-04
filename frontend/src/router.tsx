@@ -7,6 +7,7 @@ import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
 import { ManageRoute } from "./routes/manage";
 import { ManageRealmRoute } from "./routes/manage/Realm";
+import { AddChildRoute } from "./routes/manage/Realm/AddChild";
 import { match } from "./util";
 import { bug } from "./util/err";
 
@@ -22,6 +23,7 @@ const ROUTES = [
 
     ManageRoute,
     ManageRealmRoute,
+    AddChildRoute,
 
     NotFoundRoute,
 ] as const;
@@ -223,6 +225,30 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
     };
 
     return <a href={to} onClick={handleClick} {...props}>{children}</a>;
+};
+
+
+export class RouterControl {
+    private context: Context;
+
+    public constructor(context: Context) {
+        this.context = context;
+    }
+
+    public goto(uri: string): void {
+        const href = new URL(uri, document.baseURI).href;
+        this.context.setActiveRoute(matchRoute(href));
+        history.pushState(null, "", href);
+    }
+}
+
+export const useRouter = (): RouterControl => {
+    const context = React.useContext(RoutingContext);
+    if (context === null) {
+        throw new Error("`useRouter` used without a parent <Router>! That's not allowed.");
+    }
+
+    return new RouterControl(context);
 };
 
 /**

@@ -62,7 +62,7 @@ video:
 realm:
   page-settings: Page settings
   edit-page-content: Edit page content
-  add-sub-page: Add sub page
+  add-sub-page: Add sub-page
 
 manage:
   overview: Overview
@@ -107,3 +107,16 @@ manage:
           this page, to all direct or indirect sub-pages, and to all videos
           linked on any of those pages. Old links, e.g. in private browser-bookmarks
           or already published won't work anymore.
+
+  add-child:
+    heading: Add page
+    path-segment: Path segment
+    below-this-parent: The new page will be added below <1>“{{parent}}”</1>.
+    below-root: The new page will be added directly below the homepage.
+    button-create-page: Create page
+    generic-network-error: Failed to create page.
+    landing-page:
+      body: >
+        To add a new page, please visit the parent page as usual and then click
+        the button “Add sub-page” on the left half of the website.
+

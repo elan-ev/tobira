@@ -216,7 +216,8 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // ----- Special, internal routes, starting with `/~` ----------------------------------
         "/~tobira"
         | "/~manage"
-        | "/~manage/realm" => ctx.assets.serve_index().await,
+        | "/~manage/realm"
+        | "/~manage/realm/add-child" => ctx.assets.serve_index().await,
 
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
