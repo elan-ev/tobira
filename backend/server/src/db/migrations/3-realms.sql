@@ -47,6 +47,25 @@ select setval(
 insert into realms (name, parent, path_segment, full_path) values ('', null, '', '');
 
 
+-- Make sure the root realm is never deleted and its ID is never changed.
+create function illegal_root_modification() returns trigger as $$
+begin
+    raise exception 'Deleting the root or changing its ID realm is not allowed';
+end;
+$$ language plpgsql;
+
+create trigger prevent_root_deletion
+    before delete on realms
+    for each row
+    when (old.id = 0)
+    execute procedure illegal_root_modification();
+
+create trigger prevent_root_id_change
+    before update on realms
+    for each row
+    when (old.id = 0 and new.id <> 0)
+    execute procedure illegal_root_modification();
+
 
 -- Triggers to update `full_path` ---------------------------------------------------------
 --
