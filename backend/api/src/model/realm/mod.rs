@@ -12,7 +12,7 @@ use crate::{
 
 mod mutations;
 
-pub(crate) use mutations::{ChildIndex, UpdateRealm};
+pub(crate) use mutations::{ChildIndex, NewRealm, UpdateRealm};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]

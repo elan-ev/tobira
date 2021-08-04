@@ -2,12 +2,31 @@ use std::collections::{HashMap, HashSet};
 
 use futures::TryStreamExt;
 use juniper::{FieldError, FieldResult};
-use crate::{id::Id, model::realm::{Realm, RealmOrder}};
 
+use crate::{id::{Id, Key}, model::realm::{Realm, RealmOrder}};
 use super::Context;
 use tobira_util::prelude::*;
 
 impl Realm {
+    pub(crate) async fn add(realm: NewRealm, context: &Context) -> FieldResult<Realm> {
+        let parent_key = realm.parent.key_for(Id::REALM_KIND).ok_or_else(|| FieldError::new(
+            "`parent` does not refer to a realm",
+            juniper::Value::Null,
+        ))?;
+
+        let key: Key = context.db
+            .query_one(
+                "insert into realms (parent, name, path_segment)
+                    values ($1, $2, $3)
+                    returning id",
+                &[&parent_key, &realm.name, &realm.path_segment],
+            )
+            .await?
+            .get(0);
+
+        Self::load_by_key(key, context).await.map(Option::unwrap)
+    }
+
     pub(crate) async fn set_child_order(
         parent: Id,
         child_order: RealmOrder,
@@ -171,4 +190,11 @@ pub(crate) struct UpdateRealm {
     parent: Option<Id>,
     name: Option<String>,
     path_segment: Option<String>,
+}
+
+#[derive(juniper::GraphQLInputObject)]
+pub(crate) struct NewRealm {
+    parent: Id,
+    name: String,
+    path_segment: String,
 }

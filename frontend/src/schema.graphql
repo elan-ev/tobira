@@ -18,6 +18,8 @@ type Event {
 }
 
 type Mutation {
+  "Adds a new realm."
+  addRealm(realm: NewRealm!): Realm!
   """
     Sets the order of all children of a specific realm.
 
@@ -107,6 +109,12 @@ type Track {
   flavor: String!
   mimetype: String
   resolution: [Int!]
+}
+
+input NewRealm {
+  parent: ID!
+  name: String!
+  pathSegment: String!
 }
 
 type Realm {

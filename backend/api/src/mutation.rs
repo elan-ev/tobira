@@ -1,6 +1,6 @@
 use juniper::{FieldResult, graphql_object};
 
-use crate::{id::Id, model::realm::{Realm, RealmOrder, ChildIndex, UpdateRealm}};
+use crate::{id::Id, model::realm::{Realm, RealmOrder, ChildIndex, NewRealm, UpdateRealm}};
 use super::Context;
 
 
@@ -9,6 +9,11 @@ pub struct Mutation;
 
 #[graphql_object(Context = Context)]
 impl Mutation {
+    /// Adds a new realm.
+    async fn add_realm(realm: NewRealm, context: &Context) -> FieldResult<Realm> {
+        Realm::add(realm, context).await
+    }
+
     /// Sets the order of all children of a specific realm.
     ///
     /// `childIndices` must contain at least one element, i.e. do not call this
