@@ -171,10 +171,12 @@ impl Realm {
             .execute("delete from realms where id = $1", &[&key])
             .await?;
 
-        Ok(RemovedRealm {
-            // We checked above that `realm` is not the root realm, so we can unwrap.
-            parent: Id::realm(realm.parent_key.expect("missing parent")),
-        })
+        // We checked above that `realm` is not the root realm, so we can unwrap.
+        let parent = Self::load_by_key(realm.parent_key.expect("missing parent"), context)
+            .await?
+            .expect("realm has no parent");
+
+        Ok(RemovedRealm { parent })
     }
 }
 
@@ -204,7 +206,13 @@ pub(crate) struct NewRealm {
     path_segment: String,
 }
 
-#[derive(juniper::GraphQLObject)]
 pub(crate) struct RemovedRealm {
-    parent: Id,
+    parent: Realm,
+}
+
+#[juniper::graphql_object(Context = Context)]
+impl RemovedRealm {
+    fn parent(&self) -> &Realm {
+        &self.parent
+    }
 }

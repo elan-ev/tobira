@@ -79,7 +79,7 @@ input ChildIndex {
 }
 
 type RemovedRealm {
-  parent: ID!
+  parent: Realm!
 }
 
 "A block just showing the list of videos in an Opencast series"
