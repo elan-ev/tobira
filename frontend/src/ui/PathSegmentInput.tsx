@@ -5,11 +5,11 @@ import { Spinner } from "./Spinner";
 
 type Props = InputProps & {
     base: string;
-    spinner: boolean;
+    spinner?: boolean;
 };
 
 export const PathSegmentInput = React.forwardRef<HTMLInputElement, Props>(
-    ({ base, spinner, ...rest }, ref) => (
+    ({ base, spinner = false, ...rest }, ref) => (
         <div css={{
             display: "inline-flex",
             flexWrap: "wrap",

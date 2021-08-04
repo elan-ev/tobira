@@ -19,6 +19,7 @@ import { realmValidations } from ".";
 import { Card } from "../../../ui/Card";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
+import { Spinner } from "../../../ui/Spinner";
 
 
 // Route definition
@@ -197,7 +198,6 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                     <PathSegmentInput
                         id="path-field"
                         base={parent.path + "/"}
-                        spinner={isInFlight}
                         error={!!errors.pathSegment}
                         {...register("pathSegment", validations.path)}
                     />
@@ -205,9 +205,13 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                 </div>
 
                 <div>
-                    <Button type="submit" disabled={isInFlight}>
-                        {t("manage.add-child.button-create-page")}
-                    </Button>
+                    <div css={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <Button type="submit" disabled={isInFlight}>
+                            {t("manage.add-child.button-create-page")}
+                        </Button>
+                        {isInFlight && <Spinner size={20} />}
+                    </div>
+
                     <Error>{error}</Error>
                 </div>
             </Form>
