@@ -9,11 +9,7 @@ use tobira_util::prelude::*;
 
 impl Realm {
     pub(crate) async fn add(realm: NewRealm, context: &Context) -> FieldResult<Realm> {
-        let parent_key = realm.parent.key_for(Id::REALM_KIND).ok_or_else(|| FieldError::new(
-            "`parent` does not refer to a realm",
-            juniper::Value::Null,
-        ))?;
-
+        let parent_key = id_to_key(realm.parent, "`parent`")?;
         let key: Key = context.db
             .query_one(
                 "insert into realms (parent, name, path_segment)
@@ -36,9 +32,7 @@ impl Realm {
         context: &Context,
     ) -> FieldResult<Realm> {
         // Verify and convert arguments.
-        let parent_key = parent.key_for(Id::REALM_KIND).ok_or_else(|| {
-            FieldError::new("given parent ID is not a realm", juniper::Value::Null)
-        })?;
+        let parent_key = id_to_key(parent, "`parent`")?;
 
         if let Some(child_indices) = child_indices {
             if child_order != RealmOrder::ByIndex {
@@ -68,9 +62,7 @@ impl Realm {
 
             let child_indices: HashMap<_, _> = child_indices.into_iter()
                 .map(|child| {
-                    let key = child.id.key_for(Id::REALM_KIND).ok_or_else(|| {
-                        FieldError::new("ID of child is not a realm", juniper::Value::Null)
-                    })?;
+                    let key = id_to_key(child.id, "ID of child")?;
                     Ok((key, child.index))
                 })
                 .collect::<FieldResult<_, _>>()?;
@@ -146,16 +138,8 @@ impl Realm {
     }
 
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> FieldResult<Realm> {
-        let key = id.key_for(Id::REALM_KIND).ok_or_else(|| FieldError::new(
-            "`id` does not refer to a realm",
-            juniper::Value::Null,
-        ))?;
-        let parent_key = set.parent.map(|parent| {
-            parent.key_for(Id::REALM_KIND).ok_or_else(|| FieldError::new(
-                "`parent` does not refer to a realm",
-                juniper::Value::Null,
-            ))
-        }).transpose()?;
+        let key = id_to_key(id, "`id`")?;
+        let parent_key = set.parent.map(|parent| id_to_key(parent, "`parent`")).transpose()?;
 
         let affected_rows = context.db
             .execute(
@@ -177,6 +161,14 @@ impl Realm {
 
         Self::load_by_key(key, context).await.map(Option::unwrap)
     }
+}
+
+/// Makes sure the ID refers to a realm and returns its key.
+fn id_to_key(id: Id, name: &str) -> FieldResult<Key> {
+    id.key_for(Id::REALM_KIND).ok_or_else(|| FieldError::new(
+        format!("{} does not refer to a realm", name),
+        juniper::Value::Null,
+    ))
 }
 
 #[derive(juniper::GraphQLInputObject)]
