@@ -3,9 +3,14 @@ language: Language
 search: Search
 loading: Loading...
 close: Close
+save: Save
 back: Back
 home: Home
+direction-up: Up
+direction-down: Down
 navigation: Navigation
+rename: Rename
+
 not-found:
   page-not-found: Page not found
   video-not-found: Video not found
@@ -53,3 +58,74 @@ video:
   created: Created
   updated: Last update
   part-of-series: Part of
+
+realm:
+  page-settings: Page settings
+  edit-page-content: Edit page content
+  add-sub-page: Add sub-page
+
+manage:
+  overview: Overview
+  realm:
+    nav-label: Page settings
+    heading: Settings of page „{{realm}}“
+    heading-root: Homepage settings
+    descendants-count: This page has {{count}} many direct and indirect sub-pages.
+    view-page: Go to page
+
+    name-must-not-be-empty: Name must not be empty.
+    path-must-not-be-empty: Path segment must not be empty.
+    path-too-short: Path segment must be at least two characters long.
+    path-must-be-alphanum-dash: >
+      Path segment must consist of digits, lowercase letters and hyphens (-) only.
+
+    landing-page:
+      body: >
+        In order to edit the structure of a page, please visit said page as usual
+        and then click the button “Page settings” on the left half of the website.
+
+    general:
+      rename-label: Page name
+      generic-network-error: Failed to change the name.
+
+    children:
+      heading: Order of subpages
+      sort-alphabetically-asc: Sort alphabetically ascending
+      sort-alphabetically-desc: Sort alphabetically descending
+      order-manually: Manually order
+      generic-network-error: Changing the order failed.
+
+    danger-zone:
+      heading: Danger zone
+      root-note: The homepage cannot be deleted or moved, nor can its path be changed.
+      change-path:
+        heading: Change path
+        button: Change path segment
+        generic-network-error: Changing the path failed.
+        warning: >
+          Important: Changing the path of this page invalidates the paths to
+          this page, to all direct or indirect sub-pages, and to all videos
+          linked on any of those pages. Old links, e.g. in private browser-bookmarks
+          or already published won't work anymore.
+      delete:
+        heading: Delete page
+        button: Delete this page and <1>{{numSubPages}}</1> sub-pages
+        button-single: Delete page
+        generic-network-error: Deleting the page failed.
+        warning: >
+          Deleting this page will also automatically delete all direct and
+          indirect sub-pages, as well as all page content of these pages. This
+          cannot be undone!
+
+  add-child:
+    heading: Add page
+    path-segment: Path segment
+    below-this-parent: The new page will be added below <1>“{{parent}}”</1>.
+    below-root: The new page will be added directly below the homepage.
+    button-create-page: Create page
+    generic-network-error: Failed to create page.
+    landing-page:
+      body: >
+        To add a new page, please visit the parent page as usual and then click
+        the button “Add sub-page” on the left half of the website.
+

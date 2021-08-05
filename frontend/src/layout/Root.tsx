@@ -1,12 +1,14 @@
 import React from "react";
 import { keyframes } from "@emotion/react";
+import { useTranslation } from "react-i18next";
 
 import { Header } from "./Header";
 import { DesktopNav, MobileNav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import type { NavSource } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
-import { useTranslation } from "react-i18next";
+import { BurgerMenu } from "./Burger";
+import { SideBox } from "../ui";
 
 
 export const MAIN_PADDING = 16;
@@ -18,17 +20,23 @@ export const OUTER_CONTAINER_MARGIN = "0 calc(max(0px, 100% - 1100px) * 0.1)";
 
 type Props = {
     navSource: NavSource;
+    belowNav?: JSX.Element;
 };
 
-export const Root: React.FC<Props> = ({ navSource, children }) => {
+export const Root: React.FC<Props> = ({ navSource, belowNav = null, children }) => {
     const menu = useMenu();
 
     return (
         <Outer disableScrolling={menu.state === "burger"}>
             <Header />
-            {menu.state === "burger" && <MobileNav source={navSource} hide={() => menu.close()} />}
+            {menu.state === "burger" && (
+                <BurgerMenu hide={() => menu.close()}>
+                    <MobileNav source={navSource} />
+                    {belowNav}
+                </BurgerMenu>
+            )}
             <Main>
-                <DesktopNav source={navSource} layoutCss={{
+                <div css={{
                     flex: "1 0 12.5%",
                     minWidth: 240,
                     maxWidth: 360,
@@ -36,8 +44,12 @@ export const Root: React.FC<Props> = ({ navSource, children }) => {
                     [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                         display: "none",
                     },
-                }} />
+                }}>
+                    <SideBox><DesktopNav source={navSource} /></SideBox>
+                    {belowNav && <SideBox>{belowNav}</SideBox>}
+                </div>
                 <div css={{
+                    width: "100%",
                     flex: "12 0 0",
                     "& > h1": { margin: "12px 0" },
                     "& > h1:first-child": { marginTop: 0 },
@@ -100,4 +112,3 @@ export const InitialLoading: React.FC = () => {
         </Outer>
     );
 };
-

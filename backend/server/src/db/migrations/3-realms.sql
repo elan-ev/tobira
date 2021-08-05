@@ -1,13 +1,24 @@
 -- Creates the realms table, inserts the always-present root realm and adds
 -- useful realm-related functions.
 
+create type realm_order as enum ('by_index', 'alphabetic:asc', 'alphabetic:desc');
+
 select prepare_randomized_ids('realm');
 
 create table realms (
     id bigint primary key default randomized_id('realm'),
-    parent bigint references realms on delete restrict,
+    parent bigint references realms on delete cascade,
     name text not null,
     path_segment text not null,
+
+    -- Index to define an order of this realm and all its siblings. It defaults
+    -- to max int such that newly added realms appear after manually ordered
+    -- ones.
+    index int not null default 2147483647,
+
+    -- Ordering of the children. If this is not 'by_index', the 'index' field of
+    -- the children is ignored. We sort again in the frontend then.
+    child_order realm_order not null default 'alphabetic:asc',
 
     -- This is calculated by DB triggers: operations never have to set this value.
     full_path text not null,
@@ -18,6 +29,7 @@ create table realms (
     -- This check is disabled for the root realm as it has an empty path
     -- segment.
     constraint valid_alphanum_path check (id = 0 or path_segment ~* '^[[:alnum:]][[:alnum:]\-]+$'),
+    constraint root_no_path check (id <> 0 or (parent is null and path_segment = '' and full_path = '')),
     constraint has_parent check (id = 0 or parent is not null)
 );
 
@@ -34,6 +46,25 @@ select setval(
 );
 insert into realms (name, parent, path_segment, full_path) values ('', null, '', '');
 
+
+-- Make sure the root realm is never deleted and its ID is never changed.
+create function illegal_root_modification() returns trigger as $$
+begin
+    raise exception 'Deleting the root or changing its ID realm is not allowed';
+end;
+$$ language plpgsql;
+
+create trigger prevent_root_deletion
+    before delete on realms
+    for each row
+    when (old.id = 0)
+    execute procedure illegal_root_modification();
+
+create trigger prevent_root_id_change
+    before update on realms
+    for each row
+    when (old.id = 0 and new.id <> 0)
+    execute procedure illegal_root_modification();
 
 
 -- Triggers to update `full_path` ---------------------------------------------------------
@@ -75,9 +106,9 @@ create function update_full_realm_path() returns trigger as $$
 begin
     -- If only the name changed, we don't need to update anything.
     if
-        NEW.path_segment = OLD.path_segment and
-        NEW.parent = OLD.parent and
-        NEW.full_path = OLD.full_path
+        NEW.path_segment is not distinct from OLD.path_segment and
+        NEW.parent is not distinct from OLD.parent and
+        NEW.full_path is not distinct from OLD.full_path
     then
         return NEW;
     end if;
@@ -129,16 +160,18 @@ create function ancestors_of_realm(realm_id bigint)
         parent bigint,
         name text,
         path_segment text,
+        index int,
+        child_order realm_order,
         full_path text,
         height int
     )
     language 'sql'
 as $$
-with recursive ancestors(id, parent, name, path_segment, full_path) as (
+with recursive ancestors(id, parent, name, path_segment, index, child_order, full_path) as (
     select *, 0 as height from realms
     where id = realm_id
   union
-    select r.id, r.parent, r.name, r.path_segment, r.full_path, a.height + 1 as height
+    select r.id, r.parent, r.name, r.path_segment, r.index, r.child_order, r.full_path, a.height + 1 as height
     from ancestors a
     join realms r on a.parent = r.id
     where a.id <> 0

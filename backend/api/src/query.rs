@@ -13,8 +13,8 @@ impl Query {
     }
 
     /// Returns the root realm.
-    fn root_realm() -> Realm {
-        Realm::root()
+    async fn root_realm(context: &Context) -> FieldResult<Realm> {
+        Realm::root(context).await
     }
 
     /// Returns the realm with the specific ID or `None` if the ID does not

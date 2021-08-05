@@ -11,6 +11,8 @@ export const GlobalStyle: React.FC = () => <>
     <Global styles={themeVars()} />
 </>;
 
+export const SMALLER_FONT_BREAKPOINT = 450;
+
 /**
  * The following is a minimal set of CSS reset rules in order to get rid of
  * browser dependent, inconsistent or unexpected behavior. Parts of this
@@ -77,10 +79,24 @@ const GLOBAL_STYLE = css({
         },
     },
     h1: {
-        fontSize: 32,
+        fontSize: 30,
+        lineHeight: 1.3,
+        marginBottom: 16,
+        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+            fontSize: 26,
+        },
     },
     h2: {
-        fontSize: 24,
+        fontSize: 23,
+        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+            fontSize: 20,
+        },
+    },
+    h3: {
+        fontSize: 19,
+        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+            fontSize: 18,
+        },
     },
     a: {
         color: "var(--nav-color)",
@@ -97,10 +113,12 @@ const themeVars = () => {
 
     const nav = hexCodeToRgb(theme.color.navigation);
     const accent = hexCodeToRgb(theme.color.accent);
+    const danger = hexCodeToRgb(theme.color.danger);
     const grey = hexCodeToRgb(theme.color.grey50);
 
     const [navHue, navSat, navLight] = rgbToHsl(nav);
     const [accentHue, accentSat, accentLight] = rgbToHsl(accent);
+    const [dangerHue, dangerSat, dangerLight] = rgbToHsl(danger);
     const [greyHue, greySat, _] = rgbToHsl(grey);
 
     const hsl = (base: string, lightness: number): string =>
@@ -119,6 +137,11 @@ const themeVars = () => {
             "--accent-hue": 360 * accentHue,
             "--accent-sat": `${100 * accentSat}%`,
             "--accent-color": hsl("accent", 100 * accentLight),
+
+            "--danger-hue": 360 * dangerHue,
+            "--danger-sat": `${100 * dangerSat}%`,
+            "--danger-color": hsl("danger", 100 * dangerLight),
+            "--danger-color-darker": hsl("danger", 100 * lighten(dangerLight, -40)),
 
             "--grey-hue": 360 * greyHue,
             "--grey-sat": `${100 * greySat}%`,

@@ -14,7 +14,7 @@ create type video_list_order as enum ('new_to_old', 'old_to_new');
 create table blocks (
     -- Shared properties
     id bigint primary key default randomized_id('block'),
-    realm_id bigint not null references realms on delete restrict,
+    realm_id bigint not null references realms on delete cascade,
     type block_type not null,
     index smallint not null,
     title text,

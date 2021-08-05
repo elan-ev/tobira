@@ -1,13 +1,13 @@
 import React from "react";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
-import type { Interpolation, Theme } from "@emotion/react";
 
-import { Link } from "../router";
 import type { NavigationData$key } from "../query-types/NavigationData.graphql";
 import CONFIG from "../config";
 import { prefersBlackText } from "../util/color";
 import { useTranslation } from "react-i18next";
+import { LinkList, LinkWithIcon } from "../ui";
+import { match } from "../util";
 
 
 /**
@@ -101,17 +101,19 @@ type ViaQueryProps<InnerProps> = ForwardProps<InnerProps> & {
  * component with said data.
  */
 function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<InnerProps>) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const realm = useFragment(
         graphql`
             fragment NavigationData on Realm {
                 id
                 name
+                childOrder
                 children { id name path }
                 parent {
                     isRoot
                     name
                     path
+                    childOrder
                     children { id name path }
                 }
             }
@@ -119,19 +121,37 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
         fragRef,
     );
 
-    const items = realm.children.length > 0
-        ? realm.children.map(({ id, path, name }) => ({
-            id,
-            label: name,
-            link: `${path}`,
-            active: false,
-        }))
-        : (realm.parent?.children ?? []).map(({ id, name, path }) => ({
-            id,
-            label: name,
-            link: `${path}`,
-            active: id === realm.id,
-        }));
+    const [childOrder, items] = realm.children.length > 0
+        ? [
+            realm.childOrder,
+            realm.children.map(({ id, path, name }) => ({
+                id,
+                label: name,
+                link: `${path}`,
+                active: false,
+            })),
+        ]
+        : [
+            // The case where `realm.parent` is `null` only happens when there
+            // is only the root realm. So we can use dummy values as long as
+            // nothing crashes.
+            realm.parent?.childOrder ?? "ALPHABETIC_ASC",
+            (realm.parent?.children ?? []).map(({ id, name, path }) => ({
+                id,
+                label: name,
+                link: `${path}`,
+                active: id === realm.id,
+            })),
+        ];
+
+    match(childOrder, {
+        "ALPHABETIC_ASC": () => {
+            items.sort((a, b) => a.label.localeCompare(b.label, i18n.language));
+        },
+        "ALPHABETIC_DESC": () => {
+            items.sort((a, b) => b.label.localeCompare(a.label, i18n.language));
+        },
+    }, () => {});
 
     const nav = {
         items,
@@ -149,161 +169,71 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
 
 // ===== Desktop Navigation ======================================================================
 
-type DesktopProps = {
-    layoutCss: Interpolation<Theme>;
-};
-
-export const DesktopNav: React.FC<NavSourceProp & DesktopProps> = ({ source, ...innerProps }) => (
+export const DesktopNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
     <Dispatch source={source} Component={DesktopNavImpl} innerProps={innerProps} />
 );
 
-const DesktopNavImpl: React.FC<NavDataProp & DesktopProps> = ({ nav, layoutCss }) => (
-    <ul css={{
-        backgroundColor: "var(--grey97)",
-        border: "1px solid var(--grey80)",
-        borderRadius: 4,
-        listStyle: "none",
-        margin: 0,
-        padding: 0,
-        "& > li:last-of-type": {
-            borderBottom: "none",
-        },
-        ...(layoutCss as Record<string, unknown>),
-    }}>
-        {nav.items.map(item => <Item key={item.id} item={item} />)}
-    </ul>
+const DesktopNavImpl: React.FC<NavDataProp> = ({ nav }) => (
+    <LinkList items={nav.items.map(item => <Item key={item.id} item={item} />)} />
 );
 
 
 
 // ===== Mobile Navigation =======================================================================
 
-type MobileProps = {
-    /** Function that hides the burger menu. */
-    hide: () => void;
-};
-
-export const MobileNav: React.FC<NavSourceProp & MobileProps> = ({ source, ...innerProps }) => (
+export const MobileNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
     <Dispatch source={source} Component={MobileNavImpl} innerProps={innerProps} />
 );
 
-const MobileNavImpl: React.FC<NavDataProp & MobileProps> = ({ nav, hide }) => (
-    <div
-        onClick={hide}
-        css={{
-            position: "absolute",
-            top: "var(--header-height)",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            backgroundColor: "#000000a0",
-        }}
-    >
-        <div
-            onClick={e => e.stopPropagation()}
+const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
+    <div>
+        {nav.parent !== null && <>
+            <LinkWithIcon to={nav.parent.link} iconPos="left" css={{ padding: "6px 12px" }}>
+                <FiChevronLeft css={{ marginRight: 6 }}/>
+                {nav.parent.name}
+            </LinkWithIcon>
+            <div css={{
+                padding: 16,
+                paddingLeft: 12 + 22 + 12,
+                fontWeight: "bold",
+                backgroundColor: "var(--nav-color)",
+                color: prefersBlackText(CONFIG.theme.color.navigation) ? "black" : "white",
+            }}>{nav.currentName}</div>
+        </>}
+        <LinkList
+            items={nav.items.map(item => <Item key={item.id} item={item} />)}
             css={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                backgroundColor: "var(--grey97)",
-                height: "100%",
-                width: "clamp(260px, 75%, 450px)",
-                overflowY: "auto",
-            }}
-        >
-            {nav.parent !== null && <>
-                <Link
-                    to={nav.parent.link}
-                    css={{
-                        padding: "6px 12px",
+                borderBottom: "1px solid var(--grey80)",
+                ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
+                "& > li": {
+                    borderBottom: "1px solid var(--grey80)",
+                    "& > a, & > b": {
                         display: "flex",
                         alignItems: "center",
-                        ...ITEM_LINK_BASE_STYLE,
-                    }}
-                >
-                    <FiChevronLeft css={{ marginRight: 6 }}/>
-                    {nav.parent.name}
-                </Link>
-                <div css={{
-                    padding: 16,
-                    paddingLeft: 12 + 22 + 6,
-                    fontSize: 18,
-                    fontWeight: "bold",
-                    backgroundColor: "var(--accent-color)",
-                    ...prefersBlackText(CONFIG.theme.color.accent)
-                        ? { color: "black", textShadow: "1px 1px 0 white" }
-                        : { color: "white", textShadow: "1px 1px 0 black" },
-                }}>{nav.currentName}</div>
-            </>}
-            <ul css={{
-                listStyle: "none",
-                margin: 0,
-                padding: 0,
-                ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
-                "& > li > a, & > li > b": {
-                    paddingLeft: 12 + 22 + 6,
+                        padding: "6px 12px",
+                        paddingLeft: 12 + 22 + 12,
+                    },
                 },
-            }}>
-                {nav.items.map(item => <Item key={item.id} item={item} />)}
-            </ul>
-        </div>
+            }}
+        />
     </div>
 );
 
-
-
-// ===== Other stuff ??????=======================================================================
-
-const TRANSITION_DURATION = "0.1s";
-const ITEM_LINK_BASE_STYLE = {
-    textDecoration: "none",
-    transition: `background-color ${TRANSITION_DURATION}`,
-
-    "& > svg": {
-        fontSize: 22,
-        color: "var(--grey65)",
-        transition: `color ${TRANSITION_DURATION}`,
-    },
-
-    "&:hover": {
-        transitionDuration: "0.05s",
-        backgroundColor: "var(--grey92)",
-        "& > svg": {
-            transitionDuration: "0.05s",
-            color: "var(--grey40)",
-        },
-    },
-};
-
 const Item: React.FC<{ item: NavItem }> = ({ item }) => {
-    const baseStyle = {
-        padding: "6px 12px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-    };
-
-    const inner = item.active
-        ? <b css={{ ...baseStyle, backgroundColor: "var(--grey80)" }}>
-            {item.label}
-        </b>
-        : <Link
-            to={item.link}
-            css={{
-                ...baseStyle,
-                ...ITEM_LINK_BASE_STYLE,
-            }}
-        >
-            <div>{item.label}</div>
-            <FiChevronRight />
-        </Link>;
-
-    return (
-        <li css={{ borderBottom: "1px solid var(--grey80)" }}>
-            {inner}
-        </li>
-    );
+    if (item.active) {
+        return (
+            <b css={{ backgroundColor: "var(--grey92)", borderLeft: "4px solid var(--grey80)" }}>
+                {item.label}
+            </b>
+        );
+    } else {
+        return (
+            <LinkWithIcon to={item.link} iconPos="right">
+                <div>{item.label}</div>
+                <FiChevronRight />
+            </LinkWithIcon>
+        );
+    }
 };
 
 /**

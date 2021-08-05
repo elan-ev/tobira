@@ -3,9 +3,14 @@ language: Sprache
 search: Suche
 loading: Lade...
 close: Schließen
+save: Speichern
 back: Zurück
 home: Startseite
+direction-up: Hoch
+direction-down: Runter
 navigation: Navigation
+rename: Umbenennen
+
 not-found:
   page-not-found: Seite nicht gefunden
   video-not-found: Video nicht gefunden
@@ -54,3 +59,79 @@ video:
   created: Erstellt
   updated: Zuletzt angepasst
   part-of-series: Teil von
+
+realm:
+  page-settings: Seiteneinstellungen
+  edit-page-content: Seiteninhalt bearbeiten
+  add-sub-page: Unterseite hinzufügen
+
+manage:
+  overview: Übersicht
+  realm:
+    nav-label: Seiteneinstellungen
+    heading: Einstellungen zur Seite „{{realm}}“
+    heading-root: Einstellungen zur Startseite
+    descendants-count: Diese Seite besitzt {{count}} direkt und indirekte Unterseiten.
+    view-page: Zur Seite
+
+    name-must-not-be-empty: Name darf nicht leer sein.
+    path-must-not-be-empty: Pfadsegment darf nicht leer sein.
+    path-too-short: Pfadsegment muss mindestens zwei Zeichen lang sein.
+    path-must-be-alphanum-dash: >
+      Das Pfadsegment darf nur aus Ziffern, Kleinbuchstaben und Bindestrichen (-) bestehen.
+
+    landing-page:
+      body: >
+        Um Einstellungen einer Seite zu bearbeiten, besuchen Sie diese auf gewohnte
+        Weise und klicken Sie auf den Button „Seiteneinstellungen“ am linken
+        Rand.
+
+    general:
+      rename-label: Seitenname
+      generic-network-error: Änderung des Namen fehlgeschlagen.
+
+    children:
+      heading: Reihenfolge Unterseiten
+      sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
+      sort-alphabetically-desc: Alphabetisch absteigend sortieren
+      order-manually: Manuell ordnen
+      generic-network-error: Änderung fehlgeschlagen.
+
+    danger-zone:
+      heading: Gefahrenbereich
+      root-note: >
+        Die Startseite kann nicht gelöscht oder verschoben werden. Auch der Pfad
+        kann nicht geändert werden.
+      change-path:
+        heading: Pfad ändern
+        button: Pfadsegment ändern
+        generic-network-error: Änderung des Pfades fehlgeschlagen.
+        warning: >
+          Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
+          Links zu dieser Seite, allen direkten und indirekten Unterseiten, und
+          allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
+          dann nicht mehr. Das betrifft private Browser-Lesezeichen, als auch
+          bereits veröffentlichte Links.
+      delete:
+        heading: Seite löschen
+        button: Diese Seite und <1>{{numSubPages}}</1> Unterseiten löschen
+        button-single: Seite löschen
+        generic-network-error: Löschung fehlgeschlagen.
+        warning: >
+          Wenn Sie diese Seite löschen, werden automatisch alle direkten und
+          indirekten Unterseiten sowie alle Seiteninhalte all dieser Seiten
+          mitgelöscht. Die Löschung kann nicht wieder rückgängig gemacht werden!
+
+  add-child:
+    heading: Seite hinzufügen
+    path-segment: Pfadsegment
+    below-this-parent: Die neue Seite wird unter <1>„{{parent}}“</1> hinzugefügt.
+    below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
+    button-create-page: Seite erstellen
+    generic-network-error: Seite konnte nicht erstellt werden.
+    landing-page:
+      body: >
+        Um eine neue Seite hinzuzufügen, besuchen Sie die gewünschte Oberseite
+        auf gewohnte Weise und klicken Sie auf den Button „Unterseite hinzufügen“
+        am linken Rand.
+

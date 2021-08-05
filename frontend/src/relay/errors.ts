@@ -52,8 +52,18 @@ export class APIError extends Error {
 
     public constructor(response: GraphQLResponseWithoutData) {
         super();
-        this.name = "APIError";
+        this.name = "API Error";
         this.response = response;
+        this.message = (() => {
+            let out = "";
+            for (const err of this.response.errors) {
+                out += `\n- ${err.message}`;
+                if ((err as any).path) {
+                    out += `(at ${(err as any).path})`;
+                }
+            }
+            return out;
+        })();
     }
 }
 

@@ -42,6 +42,7 @@
     "raw-loader": "^4.0.2",
     "react": "^18.0.0-alpha-cae635054-20210626",
     "react-dom": "^18.0.0-alpha-cae635054-20210626",
+    "react-hook-form": "^7.12.1",
     "react-i18next": "^11.8.15",
     "react-icons": "^4.2.0",
     "react-markdown": "^6.0.2",

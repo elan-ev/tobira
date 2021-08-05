@@ -3,7 +3,7 @@ use futures::stream::TryStreamExt;
 use tokio_postgres::Row;
 use juniper::{GraphQLObject, graphql_object, FieldResult};
 
-use crate::{Context, Id, db::EventTrack, id::Key, model::series::Series, util::RowExt};
+use crate::{Context, Id, db::EventTrack, id::Key, model::series::Series};
 
 
 pub(crate) struct Event {
@@ -75,7 +75,7 @@ impl Event {
             context.db
                 .query_opt(
                     &*format!("select {} from events where id = $1", Self::COL_NAMES),
-                    &[&(key as i64)],
+                    &[&key],
                 )
                 .await?
                 .map(Self::from_row)
@@ -90,7 +90,7 @@ impl Event {
         let result = context.db
             .query_raw(
                 &*format!("select {} from events where series = $1", Self::COL_NAMES),
-                &[series_key as i64],
+                &[series_key],
             )
             .await?
             .map_ok(Self::from_row)
@@ -105,8 +105,8 @@ impl Event {
 
     fn from_row(row: Row) -> Self {
         Self {
-            key: row.get_key(0),
-            series: row.get::<_, Option<i64>>(1).map(|series| series as u64),
+            key: row.get(0),
+            series: row.get(1),
             title: row.get(2),
             description: row.get(3),
             duration: row.get(4),

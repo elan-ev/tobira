@@ -184,7 +184,7 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     );
 
     let method = req.method().clone();
-    let path = req.uri().path();
+    let path = req.uri().path().trim_end_matches('/');
 
     const ASSET_PREFIX: &str = "/~assets/";
 
@@ -214,7 +214,10 @@ async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
-        "/~tobira" => ctx.assets.serve_index().await,
+        "/~tobira"
+        | "/~manage"
+        | "/~manage/realm"
+        | "/~manage/realm/add-child" => ctx.assets.serve_index().await,
 
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any

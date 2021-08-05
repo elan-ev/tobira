@@ -10,6 +10,7 @@ import { useMenu } from "./MenuState";
 import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import { match } from "../util";
 import { OUTER_CONTAINER_MARGIN } from "./Root";
+import { SMALLER_FONT_BREAKPOINT } from "../GlobalStyle";
 
 
 export const HEIGHT = 60;
@@ -206,7 +207,7 @@ const ActionIcon: React.FC<ActionIconProps> = ({
                 "&:hover": {
                     opacity: "1",
                 },
-                "@media (max-width: 450px)": {
+                [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
                     fontSize: 24,
                 },
             }}

@@ -5,6 +5,9 @@ import { AboutRoute } from "./routes/About";
 import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
+import { ManageRoute } from "./routes/manage";
+import { ManageRealmRoute } from "./routes/manage/Realm";
+import { AddChildRoute } from "./routes/manage/Realm/AddChild";
 import { match } from "./util";
 import { bug } from "./util/err";
 
@@ -17,6 +20,10 @@ const ROUTES = [
     AboutRoute,
     RealmRoute,
     VideoRoute,
+
+    ManageRoute,
+    ManageRealmRoute,
+    AddChildRoute,
 
     NotFoundRoute,
 ] as const;
@@ -56,7 +63,7 @@ export type Route<Prepared> = {
      * path regex. This is the array returned by `RegExp.exec` but with the
      * first element (the whole match) removed.
      */
-    prepare: (routeParams: string[]) => Prepared;
+    prepare: (routeParams: string[], getParams: URLSearchParams) => Prepared;
 
     /**
      * The function for rendering this route. The value that `prepare` returned
@@ -79,7 +86,8 @@ export type MatchedRoute<Prepared> = {
  * matched route or throwing an error if no route matches.
  */
 const matchRoute = (href: string): MatchedRoute<any> => {
-    const currentPath = new URL(href).pathname;
+    const url = new URL(href);
+    const currentPath = decodeURI(url.pathname);
 
     const match = ROUTES
         .map((route, index) => {
@@ -106,7 +114,7 @@ const matchRoute = (href: string): MatchedRoute<any> => {
     const route = ROUTES[index];
 
     return {
-        prepared: route.prepare(params),
+        prepared: route.prepare(params, url.searchParams),
         render: route.render,
     };
 };
@@ -217,6 +225,30 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
     };
 
     return <a href={to} onClick={handleClick} {...props}>{children}</a>;
+};
+
+
+export class RouterControl {
+    private context: Context;
+
+    public constructor(context: Context) {
+        this.context = context;
+    }
+
+    public goto(uri: string): void {
+        const href = new URL(uri, document.baseURI).href;
+        this.context.setActiveRoute(matchRoute(href));
+        history.pushState(null, "", href);
+    }
+}
+
+export const useRouter = (): RouterControl => {
+    const context = React.useContext(RoutingContext);
+    if (context === null) {
+        throw new Error("`useRouter` used without a parent <Router>! That's not allowed.");
+    }
+
+    return new RouterControl(context);
 };
 
 /**

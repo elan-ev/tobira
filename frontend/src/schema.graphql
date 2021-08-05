@@ -17,11 +17,19 @@ type Event {
   series: Series
 }
 
-"A `Block`: a UI element that belongs to a realm."
-interface Block {
-  id: ID!
-  index: Int!
-  title: String
+type Mutation {
+  "Adds a new realm."
+  addRealm(realm: NewRealm!): Realm!
+  """
+    Sets the order of all children of a specific realm.
+
+    `childIndices` must contain at least one element, i.e. do not call this
+    for realms without children.
+  """
+  setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
+  "Updates a realm's data."
+  updateRealm(id: ID!, set: UpdateRealm!): Realm!
+  removeRealm(id: ID!): RemovedRealm!
 }
 
 enum VideoListOrder {
@@ -59,11 +67,19 @@ type Query {
   event(id: ID!): Event
 }
 
-type Track {
-  uri: String!
-  flavor: String!
-  mimetype: String
-  resolution: [Int!]
+enum RealmOrder {
+  BY_INDEX
+  ALPHABETIC_ASC
+  ALPHABETIC_DESC
+}
+
+input ChildIndex {
+  id: ID!
+  index: Int!
+}
+
+type RemovedRealm {
+  parent: Realm!
 }
 
 "A block just showing the list of videos in an Opencast series"
@@ -73,10 +89,49 @@ type SeriesBlock implements Block {
   order: VideoListOrder!
 }
 
+type Series {
+  id: ID!
+  title: String!
+  description: String
+  events: [Event!]!
+}
+
+"A `Block`: a UI element that belongs to a realm."
+interface Block {
+  id: ID!
+  index: Int!
+  title: String
+}
+
+input UpdateRealm {
+  parent: ID
+  name: String
+  pathSegment: String
+}
+
+type Track {
+  uri: String!
+  flavor: String!
+  mimetype: String
+  resolution: [Int!]
+}
+
+input NewRealm {
+  parent: ID!
+  name: String!
+  pathSegment: String!
+}
+
 type Realm {
   id: ID!
   name: String!
   isRoot: Boolean!
+  index: Int!
+  """
+    Specifies how the children of this realm should be ordered (e.g. in the
+    navigation list). That's the responsibility of the frontend.
+  """
+  childOrder: RealmOrder!
   """
     Returns the full path of this realm. `""` for the root realm. For
     non-root realms, the path always starts with `/` and never has a
@@ -90,17 +145,20 @@ type Realm {
     (excluding both, the root realm and this realm).
   """
   ancestors: [Realm!]!
-  "Returns all immediate children of this realm."
+  """
+    Returns all immediate children of this realm. The children are always
+    ordered by the internal index. If `childOrder` returns an ordering
+    different from `BY_INDEX`, the frontend is supposed to sort the
+    children.
+  """
   children: [Realm!]!
   "Returns the (content) blocks of this realm."
   blocks: [Block!]!
-}
-
-type Series {
-  id: ID!
-  title: String!
-  description: String
-  events: [Event!]!
+  """
+    Returns the number of realms that are descendants of this one
+    (excluding this one). Returns a number ≥ 0.
+  """
+  numberOfDescendants: Int!
 }
 
 enum VideoListLayout {
@@ -111,4 +169,5 @@ enum VideoListLayout {
 
 schema {
   query: Query
+  mutation: Mutation
 }
