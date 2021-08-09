@@ -70,6 +70,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({ to, iconPos, childre
 
                 "& > svg": {
                     fontSize: 22,
+                    minWidth: 22,
                     color: "var(--grey65)",
                     transition: `color ${TRANSITION_DURATION}`,
                     ...match(iconPos, {
