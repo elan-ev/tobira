@@ -82,6 +82,8 @@ jobs:
 
     - name: deploy tobira branch
       working-directory: .deployment
+      env:
+        OPENCAST_ADMIN_PASSWORD: ${{ secrets.TOBIRA_OPENCAST_ADMIN_PASSWORD }}
       run: >
         ansible-playbook
         --private-key=~/.ssh/id_ed25519
