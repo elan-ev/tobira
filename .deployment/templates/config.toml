@@ -11,9 +11,9 @@ unix_socket_permissions = 0o777
 file = "/var/log/tobira/{{ id }}.log"
 
 [sync]
-host = "develop.opencast.org"
+host = "tobira.ethz.ch"
 user = "admin"
-password = "opencast"
+password = "{{ opencast_admin_password }}"
 
 [theme]
 logo.large = "/opt/tobira/{{ id }}/logo-large.svg"

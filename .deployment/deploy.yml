@@ -5,6 +5,7 @@
   vars:
     # will usually be overwritten by --extra-vars='deployid=<id>'
     id: "{{ deployid }}"
+    opencast_admin_password: '{{ lookup("env", "OPENCAST_ADMIN_PASSWORD") }}'
 
   tasks:
 
@@ -166,6 +167,15 @@
         group: root
         mode: '0644'
 
+    - name: copy realm demo data
+      become: true
+      copy:
+        src: realms.yaml
+        dest: /opt/tobira/{{ id }}/
+        owner: root
+        group: root
+        mode: '0644'
+
     - name: run database migration
       become: true
       become_user: tobira
@@ -173,11 +183,18 @@
         cmd: /opt/tobira/{{ id }}/tobira db migrate
         chdir: /opt/tobira/{{ id }}/
 
-    - name: insert demo data
+    - name: sync with Opencast once
       become: true
       become_user: tobira
       command:
-        cmd: /opt/tobira/{{ id }}/tobira db script fixtures.sql
+        cmd: /opt/tobira/{{ id }}/tobira sync
+        chdir: /opt/tobira/{{ id }}/
+
+    - name: insert demo realms
+      become: true
+      become_user: tobira
+      command:
+        cmd: /opt/tobira/{{ id }}/tobira create-tree realms.yaml
         chdir: /opt/tobira/{{ id }}/
 
     - name: install tobira service files
