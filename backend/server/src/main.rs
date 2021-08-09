@@ -55,9 +55,9 @@ async fn main() -> Result<()> {
             let config = load_config_and_init_logger(&args)?;
             sync::run(&config).await?;
         }
-        Command::CreateTree { input_file } => {
+        Command::CreateTree { input_file, dummy_blocks } => {
             let config = load_config_and_init_logger(&args)?;
-            create_tree::run(&input_file, &config).await?;
+            create_tree::run(&input_file, *dummy_blocks, &config).await?;
         }
     }
 

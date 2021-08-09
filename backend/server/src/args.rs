@@ -45,6 +45,10 @@ pub(crate) enum Command {
     CreateTree {
         /// YAML file specifying the realm tree
         input_file: PathBuf,
+
+        /// Add dummy blocks to realms without any blocks.
+        #[structopt(long)]
+        dummy_blocks: bool,
     },
 }
 
