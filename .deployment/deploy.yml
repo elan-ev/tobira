@@ -57,9 +57,12 @@
     - name: stop and disable tobira
       become: true
       systemd:
-        name: tobira-{{ id }}
+        name: '{{ item }}-{{ id }}'
         state: stopped
       ignore_errors: true
+      with_items:
+        - tobira
+        - tobira-sync
 
     - name: drop database
       become: true
@@ -200,20 +203,26 @@
     - name: install tobira service files
       become: true
       template:
-        src: tobira.service
-        dest: /etc/systemd/system/tobira-{{ id }}.service
+        src: '{{ item }}.service'
+        dest: /etc/systemd/system/{{ item }}-{{ id }}.service
         mode: '0644'
         owner: root
         group: root
+      with_items:
+        - tobira
+        - tobira-sync
       notify: restart tobira
 
     - name: start and enable tobira
       become: true
       systemd:
         daemon_reload: true
-        name: tobira-{{ id }}
+        name: '{{ item }}-{{ id }}'
         state: started
         enabled: true
+      with_items:
+        - tobira
+        - tobira-sync
 
     # NGINX
 
@@ -286,8 +295,11 @@
     - name: restart tobira
       become: true
       service:
-        name: tobira-{{ id }}
+        name: '{{ item }}-{{ id }}'
         state: restarted
+      with_items:
+        - tobira
+        - tobira-sync
 
     - name: reload nginx
       become: true

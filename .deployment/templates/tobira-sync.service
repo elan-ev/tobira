@@ -1,0 +1,15 @@
+[Unit]
+Description=Tobira Sync {{ id }}
+Documentation=https://github.com/elan-ev/tobira
+
+After=local-fs.target
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/tobira/{{ id }}/
+ExecStart=/opt/tobira/{{ id }}/tobira sync --daemon
+Restart=always
+User=tobira
+
+[Install]
+WantedBy=multi-user.target
