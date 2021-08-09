@@ -229,7 +229,13 @@ const Item: React.FC<{ item: NavItem }> = ({ item }) => {
     } else {
         return (
             <LinkWithIcon to={item.link} iconPos="right">
-                <div>{item.label}</div>
+                <div css={{
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    WebkitLineClamp: 3,
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                }}>{item.label}</div>
                 <FiChevronRight />
             </LinkWithIcon>
         );
