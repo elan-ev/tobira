@@ -18,6 +18,7 @@ use std::{
     panic::AssertUnwindSafe,
     path::PathBuf,
     sync::Arc,
+    time::{Duration, Instant},
 };
 
 use tobira_util::prelude::*;
@@ -265,6 +266,8 @@ pub(crate) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> R
 }
 
 async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
+    let before = Instant::now();
+
     // Get a connection for this request.
     let mut connection = match ctx.db_pool.get().await {
         Ok(c) => c,
@@ -273,6 +276,11 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
             return service_unavailable();
         }
     };
+
+    let acquire_conn_time = before.elapsed();
+    if acquire_conn_time > Duration::from_millis(5) {
+        warn!("Acquiring DB connection from pool took {:.2?}", acquire_conn_time);
+    }
 
     let tx = match connection.transaction().await {
         Ok(tx) => tx,
@@ -315,7 +323,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
     let out = juniper_hyper::graphql(ctx.api_root.clone(), Arc::new(api_context), req).await;
 
     // Check whether we own the last remaining handle of this Arc.
-    match Arc::try_unwrap(tx) {
+    let out = match Arc::try_unwrap(tx) {
         Err(_) => {
             // There are still other handles, meaning that the API handler
             // incorrect stored the transaction in some static variable. This
@@ -342,7 +350,11 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
                 }
             }
         }
-    }
+    };
+
+    trace!("Finished /graphql query in {:.2?}", before.elapsed());
+
+    out
 }
 
 fn service_unavailable() -> Response {
