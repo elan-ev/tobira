@@ -51,9 +51,9 @@ async fn main() -> Result<()> {
             let config = load_config_and_init_logger(&args)?;
             db::cmd::run(cmd, &config.db).await?;
         }
-        Command::Sync => {
+        Command::Sync { daemon } => {
             let config = load_config_and_init_logger(&args)?;
-            sync::run(&config).await?;
+            sync::run(*daemon, &config).await?;
         }
         Command::CreateTree { input_file, dummy_blocks } => {
             let config = load_config_and_init_logger(&args)?;

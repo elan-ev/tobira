@@ -12,8 +12,8 @@ mod status;
 mod tests;
 
 
-pub(crate) async fn run(config: &Config) -> Result<()> {
-    info!("Starting Tobira <-> Opencast synchronization daemon ...");
+pub(crate) async fn run(daemon: bool, config: &Config) -> Result<()> {
+    info!("Starting Tobira <-> Opencast synchronization ...");
     trace!("Configuration: {:#?}", config);
 
     // Open DB connection, check consistency and migrate if necessary.
@@ -24,7 +24,7 @@ pub(crate) async fn run(config: &Config) -> Result<()> {
 
     // Harvest continiously.
     let db_connection = db.get().await?;
-    harvest::run(&config.sync, &**db_connection).await?;
+    harvest::run(daemon, &config.sync, &**db_connection).await?;
 
     Ok(())
 }

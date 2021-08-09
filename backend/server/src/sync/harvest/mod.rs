@@ -27,7 +27,7 @@ const POLL_PERIOD: Duration = Duration::from_secs(30);
 
 /// Continuiously fetches from the harvesting API and writes new data into our
 /// database.
-pub(crate) async fn run(config: &SyncConfig, db: &impl GenericClient) -> Result<()> {
+pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClient) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
     let mut backoff = INITIAL_BACKOFF;
@@ -88,12 +88,17 @@ pub(crate) async fn run(config: &SyncConfig, db: &impl GenericClient) -> Result<
         store_in_db(harvest_data.items, &sync_status, db).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, db).await?;
         if !harvest_data.has_more {
-            debug!(
-                "Harvested all available data: waiting {:?} before starting next harvest",
-                POLL_PERIOD,
-            );
+            if daemon {
+                debug!(
+                    "Harvested all available data: waiting {:?} before starting next harvest",
+                    POLL_PERIOD,
+                );
 
-            tokio::time::sleep(POLL_PERIOD).await;
+                tokio::time::sleep(POLL_PERIOD).await;
+            } else {
+                info!("Harvested all available data: exiting now.");
+                return Ok(());
+            }
         }
     }
 }

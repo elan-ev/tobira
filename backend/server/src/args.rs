@@ -39,7 +39,11 @@ pub(crate) enum Command {
 
     /// Starts a process continuiously fetching data from and generally keeping
     /// Tobira in sync with the configured Opencast instance.
-    Sync,
+    Sync {
+        /// If specified, the command will run forever listening for new data.
+        #[structopt(long)]
+        daemon: bool,
+    },
 
     /// Create a realm tree from a YAML description
     CreateTree {
