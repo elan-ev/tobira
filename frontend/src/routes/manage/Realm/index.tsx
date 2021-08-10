@@ -127,7 +127,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
                 flexWrap: "wrap",
                 gap: 16,
             }}>
-                <LinkButton to={realm.path}>
+                <LinkButton to={realm.isRoot ? "/" : realm.path}>
                     <FiArrowRightCircle />
                     {t("manage.realm.view-page")}
                 </LinkButton>
