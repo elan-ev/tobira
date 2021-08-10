@@ -15,6 +15,7 @@ import { NotFound } from "./NotFound";
 import { navFromQuery } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
+import { useTitle } from "../util";
 
 /** A valid realm path segment */
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
@@ -65,6 +66,7 @@ const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
     const isRoot = realm.parent === null;
     const editLinks = <RealmEditLinks path={path} />;
     const title = isRoot ? CONFIG.siteTitle : realm.name;
+    useTitle(title, isRoot);
 
     return (
         <Root navSource={navFromQuery(realm)} belowNav={editLinks}>
