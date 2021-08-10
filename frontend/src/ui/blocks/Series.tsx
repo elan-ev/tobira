@@ -139,9 +139,17 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
                 <div css={{
                     color: "var(--grey40)",
                     fontSize: 14,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    "& > span": {
+                        display: "inline-block",
+                        whiteSpace: "nowrap",
+                    },
                 }}>
                     {/* `new Date` is well defined for our ISO Date strings */}
                     {event.creator != null && <span css={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                         "&:after": {
                             content: "'•'",
                             padding: "0 8px",
@@ -198,8 +206,5 @@ const CreationDate: React.FC<CreationDateProps> = ({ date }) => {
 
     const preciseDate = date.toLocaleString(i18n.language);
 
-    return <span
-        css={{ display: "inline-block" }}
-        title={preciseDate}
-    >{prettyDate}</span>;
+    return <span title={preciseDate}>{prettyDate}</span>;
 };
