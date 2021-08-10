@@ -89,6 +89,9 @@ manage:
     general:
       rename-label: Seitenname
       generic-network-error: Änderung des Namen fehlgeschlagen.
+      no-rename-root: >
+        Der Name der Startseite kann nicht geändert werden. Die Überschrift wird
+        von der globalen Seiten-Title Einstellung kontrolliert.
 
     children:
       heading: Reihenfolge Unterseiten

@@ -30,7 +30,10 @@ create table realms (
     -- segment.
     constraint valid_alphanum_path check (id = 0 or path_segment ~* '^[[:alnum:]][[:alnum:]\-]+$'),
     constraint root_no_path check (id <> 0 or (parent is null and path_segment = '' and full_path = '')),
-    constraint has_parent check (id = 0 or parent is not null)
+    constraint has_parent check (id = 0 or parent is not null),
+    constraint names_non_empty_except_root check (
+        (id = 0 and name = '') or (id <> 0 and name <> '')
+    )
 );
 
 -- Full path to realm lookups happen on nearly every page view. We specify

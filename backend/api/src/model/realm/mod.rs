@@ -38,16 +38,16 @@ pub(crate) struct Realm {
 impl Realm {
     pub(crate) async fn root(context: &Context) -> FieldResult<Self> {
         let row = context.db
-            .query_one("select name, child_order from realms where id = 0", &[])
+            .query_one("select child_order from realms where id = 0", &[])
             .await?;
 
         Ok(Self {
             key: Key(0),
             parent_key: None,
-            name: row.get(0),
+            name: String::new(),
             full_path: String::new(),
             index: 0,
-            child_order: row.get(1),
+            child_order: row.get(0),
         })
     }
 

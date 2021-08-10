@@ -87,6 +87,9 @@ manage:
     general:
       rename-label: Page name
       generic-network-error: Failed to change the name.
+      no-rename-root: >
+        The homepage cannot be renamed. The heading is controlled by the global
+        site title setting.
 
     children:
       heading: Order of subpages
