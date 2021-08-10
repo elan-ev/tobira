@@ -97,7 +97,10 @@ const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) =
 
 
 // TODO: improve
-const PathInvalid: React.FC = () => <p>Error: Path invalid</p>;
+const PathInvalid: React.FC = () => {
+    const { t } = useTranslation();
+    return <Card kind="error">{t("manage.realm.invalid-path")}</Card>;
+};
 
 
 type SettingsPageProps = {
