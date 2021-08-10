@@ -46,7 +46,7 @@ type Props = SharedProps & {
 
 export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
     <Block>
-        <Title title={title} />
+        <Title title={title ?? series.title} />
         <div css={{
             display: "flex",
             flexWrap: "wrap",
