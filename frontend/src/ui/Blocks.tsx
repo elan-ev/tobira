@@ -6,8 +6,7 @@ import type {
 } from "../query-types/Blocks_blocks.graphql";
 
 import { match } from "../util";
-import { unreachable } from "../util/err";
-import { TextBlock } from "./blocks/Text";
+import { TextBlockByQuery } from "./blocks/Text";
 import { SeriesBlockByQuery } from "./blocks/Series";
 
 
@@ -25,10 +24,8 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                     id
                     title
                     __typename
-                    ... on SeriesBlock {
-                        ... SeriesBlockData
-                    }
-                    ... on TextBlock { content }
+                    ... on SeriesBlock { ... SeriesBlockData }
+                    ... on TextBlock { ... TextBlockData }
                 }
             }
         `,
@@ -37,10 +34,10 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
 
     return <>{
         blocks.map(block => match(block.__typename, {
-            "TextBlock": () => <TextBlock
+            "TextBlock": () => <TextBlockByQuery
                 key={block.id}
                 title={block.title ?? undefined}
-                content={unwrap(block, "content")}
+                fragRef={block}
             />,
             "SeriesBlock": () => <SeriesBlockByQuery
                 key={block.id}
@@ -64,23 +61,3 @@ export const Block: React.FC = ({ children }) => (
         },
     }}>{children}</div>
 );
-
-/** A helper function to getting block-type dependent fields as non-null values. */
-function unwrap<K extends keyof BlockData>(block: BlockData, field: K): NonNullable<BlockData[K]> {
-    /**
-     * This is a function because for some reason, inlining this check below
-     * confused the TS compiler. In that case it wouldn't understand that
-     * `return v` in the end is actually a non-null value.
-     */
-    function isNotNullish<T>(value: T): value is NonNullable<T> {
-        return value !== undefined && value !== null;
-    }
-
-    const v = block[field];
-    if (!isNotNullish(v)) {
-        return unreachable(`field '${field}' of block is null, but that should `
-            + `never happen for the type '${block.__typename}'`);
-    }
-
-    return v;
-}

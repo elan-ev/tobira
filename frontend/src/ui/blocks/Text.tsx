@@ -1,9 +1,27 @@
 import React from "react";
+import { graphql, useFragment } from "react-relay";
 import ReactMarkdown from "react-markdown";
 import type { TransformOptions } from "react-markdown";
 
 import { Block, Title } from "../Blocks";
+import { TextBlockData$key } from "../../query-types/TextBlockData.graphql";
 
+
+const fragment = graphql`
+    fragment TextBlockData on TextBlock {
+        content
+    }
+`;
+
+type ByQueryProps = {
+    title?: string;
+    fragRef: TextBlockData$key;
+};
+
+export const TextBlockByQuery: React.FC<ByQueryProps> = ({ title, fragRef }) => {
+    const { content } = useFragment(fragment, fragRef);
+    return <TextBlock {...{ content, title }} />;
+};
 
 type Props = {
     title?: string;
