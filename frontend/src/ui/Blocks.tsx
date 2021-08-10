@@ -8,7 +8,7 @@ import type {
 import { match } from "../util";
 import { unreachable } from "../util/err";
 import { TextBlock } from "./blocks/Text";
-import { SeriesBlock } from "./blocks/Series";
+import { SeriesBlockByQuery } from "./blocks/Series";
 
 
 type Props = {
@@ -25,20 +25,10 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                     id
                     title
                     __typename
-                    ... on TextBlock { content }
                     ... on SeriesBlock {
-                        series {
-                            title
-                            events {
-                                id
-                                title
-                                thumbnail
-                                duration
-                                created
-                                tracks { resolution }
-                            }
-                        }
+                        ... SeriesBlockData
                     }
+                    ... on TextBlock { content }
                 }
             }
         `,
@@ -52,11 +42,11 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                 title={block.title ?? undefined}
                 content={unwrap(block, "content")}
             />,
-            "SeriesBlock": () => <SeriesBlock
+            "SeriesBlock": () => <SeriesBlockByQuery
                 key={block.id}
                 title={block.title ?? undefined}
                 realmPath={path}
-                series={unwrap(block, "series")}
+                fragRef={block}
             />,
         }))
     }</>;

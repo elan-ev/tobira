@@ -2,16 +2,46 @@ import React from "react";
 
 import { keyOfId } from "../../util";
 import { Block, Title } from "../Blocks";
-import type { BlockData } from "../Blocks";
 import { Link } from "../../router";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 import { FiFilm, FiVolume2 } from "react-icons/fi";
 
+import { SeriesBlockData, SeriesBlockData$key } from "../../query-types/SeriesBlockData.graphql";
 
-type Props = {
+
+type SharedProps = {
     title?: string;
-    series: NonNullable<BlockData["series"]>;
     realmPath: string;
+};
+
+const fragment = graphql`
+    fragment SeriesBlockData on SeriesBlock {
+        series {
+            title
+            events {
+                id
+                title
+                thumbnail
+                duration
+                created
+                tracks { resolution }
+            }
+        }
+    }
+`;
+
+type ByQueryProps = SharedProps & {
+    fragRef: SeriesBlockData$key;
+};
+
+export const SeriesBlockByQuery: React.FC<ByQueryProps> = ({ fragRef, ...rest }) => {
+    const { series } = useFragment(fragment, fragRef);
+    return <SeriesBlock {...{ series, ...rest }} />;
+};
+
+type Props = SharedProps & {
+    series: NonNullable<SeriesBlockData["series"]>;
 };
 
 export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
@@ -28,7 +58,7 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
 
 type GridTypeProps = {
     realmPath: string;
-    event: NonNullable<BlockData["series"]>["events"][0];
+    event: NonNullable<SeriesBlockData["series"]>["events"][0];
 };
 
 const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
