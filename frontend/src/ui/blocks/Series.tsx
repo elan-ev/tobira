@@ -25,6 +25,7 @@ const fragment = graphql`
                 thumbnail
                 duration
                 created
+                creator
                 tracks { resolution }
             }
         }
@@ -137,8 +138,15 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
                 }}>{event.title}</h3>
                 <div css={{
                     color: "var(--grey40)",
+                    fontSize: 14,
                 }}>
                     {/* `new Date` is well defined for our ISO Date strings */}
+                    {event.creator != null && <span css={{
+                        "&:after": {
+                            content: "'•'",
+                            padding: "0 8px",
+                        },
+                    }}>{event.creator}</span>}
                     <CreationDate date={new Date(event.created)} />
                 </div>
             </div>
@@ -190,5 +198,8 @@ const CreationDate: React.FC<CreationDateProps> = ({ date }) => {
 
     const preciseDate = date.toLocaleString(i18n.language);
 
-    return <span title={preciseDate}>{prettyDate}</span>;
+    return <span
+        css={{ display: "inline-block" }}
+        title={preciseDate}
+    >{prettyDate}</span>;
 };
