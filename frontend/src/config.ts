@@ -21,6 +21,7 @@ const parseConfig: () => Config = () => {
 };
 
 type Config = {
+    siteTitle: string;
     logo: LogoConfig;
     plyr: PlyrConfig;
     theme: ThemeConfig;

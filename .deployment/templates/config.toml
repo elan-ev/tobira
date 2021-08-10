@@ -1,3 +1,6 @@
+[general]
+site_title = "Tobira Test Deployment"
+
 [db]
 database = "tobira-{{ id }}"
 user = "tobira-{{ id }}"

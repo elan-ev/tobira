@@ -79,6 +79,7 @@ impl Assets {
 
         let mut variables = HashMap::new();
         variables.insert("theme-json".to_string(), build_theme(&config.theme));
+        variables.insert("site-title".to_string(), config.general.site_title.clone());
 
         let reinda_config = reinda::Config {
             base_path: if cfg!(debug_assertions) {

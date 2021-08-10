@@ -14,6 +14,7 @@ import { Root } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { navFromQuery } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
+import CONFIG from "../config";
 
 /** A valid realm path segment */
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
@@ -63,13 +64,12 @@ const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
 
     const isRoot = realm.parent === null;
     const editLinks = <RealmEditLinks path={path} />;
+    const title = isRoot ? CONFIG.siteTitle : realm.name;
 
     return (
         <Root navSource={navFromQuery(realm)} belowNav={editLinks}>
-            {!isRoot && <>
-                <div><Breadcrumbs path={breadcrumbs} /></div>
-                <h1>{realm.name}</h1>
-            </>}
+            {!isRoot && <Breadcrumbs path={breadcrumbs} />}
+            {title && <h1>{title}</h1>}
             <Blocks realm={realm} />
         </Root>
     );

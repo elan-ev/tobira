@@ -20,6 +20,9 @@ const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
 #[derive(Debug, confique::Config)]
 pub(crate) struct Config {
     #[config(nested)]
+    pub(crate) general: GeneralConfig,
+
+    #[config(nested)]
     pub(crate) db: crate::db::DbConfig,
 
     #[config(nested)]
@@ -33,6 +36,15 @@ pub(crate) struct Config {
 
     #[config(nested)]
     pub(crate) theme: crate::theme::ThemeConfig,
+}
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct GeneralConfig {
+    /// The main title of the video portal. Used in the HTML `<title>`, as main
+    /// heading on the home page, and potentially more.
+    ///
+    /// TODO: Make it possible to specify this for different languages.
+    pub(crate) site_title: String,
 }
 
 

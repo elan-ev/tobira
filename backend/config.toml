@@ -1,6 +1,9 @@
 # Configuration for development environments: unless you are a Tobira
 # developer, you are not interested in this file.
 
+[general]
+site_title = "Tobira Videoportal"
+
 [db]
 password = "tobira"
 
