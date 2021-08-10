@@ -157,10 +157,15 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
     </>;
 };
 
+// We fetch all `NavigationData` to update our local cache and show the correct
+// new children, without the removed realm.
 const removeRealmMutation = graphql`
     mutation DangerZoneRemoveRealmMutation($id: ID!) {
         removeRealm(id: $id) {
-            parent { path }
+            parent {
+                path
+                ... NavigationData
+            }
         }
     }
 `;
