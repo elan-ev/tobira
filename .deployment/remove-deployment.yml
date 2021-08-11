@@ -11,10 +11,13 @@
     - name: stop and disable tobira
       become: true
       systemd:
-        name: tobira-{{ id }}
+        name: '{{ item }}-{{ id }}'
         state: stopped
         enabled: false
       ignore_errors: true
+      with_items:
+        - tobira
+        - tobirasync
 
     - name: remove deployed files and folders
       become: true
@@ -24,6 +27,7 @@
       loop:
         - /opt/tobira/{{ id }}
         - /etc/systemd/system/tobira-{{ id }}.service
+        - /etc/systemd/system/tobirasync-{{ id }}.service
         - /etc/nginx/conf.d/tobira-{{ id }}.conf
       notify: reload nginx
 
