@@ -71,7 +71,7 @@ const GLOBAL_STYLE = css({
         // From a set of popular phones, the iPhone 5 has the smallest viewport
         // width: 320px. It does make sense to set a minimum width early on in
         // order to know where we can stop caring.
-        minWidth: 320,
+        minWidth: "var(--min-page-width)",
 
         "& > div": {
             height: "100%",
@@ -126,8 +126,10 @@ const themeVars = () => {
 
     return css({
         ":root": {
-            "--header-height": `${theme.headerHeight}px`,
-            "--header-padding": `${theme.headerPadding}px`,
+            "--inner-header-height": `${theme.headerHeight}px`,
+            "--outer-header-height":
+                "calc(var(--inner-header-height) * (1 + 2 * var(--logo-margin)))",
+            "--logo-margin": `${CONFIG.logo.margin}`,
 
             "--nav-hue": 360 * navHue,
             "--nav-sat": `${100 * navSat}%`,
@@ -150,6 +152,8 @@ const themeVars = () => {
             "--grey80": hsl("grey", 80),
             "--grey65": hsl("grey", 65),
             "--grey40": hsl("grey", 40),
+
+            "--min-page-width": "320px",
         },
     });
 };

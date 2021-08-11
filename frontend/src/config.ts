@@ -28,6 +28,7 @@ type Config = {
 };
 
 type LogoConfig = {
+    margin: number;
     large: SingleLogoConfig;
     small: SingleLogoConfig;
 };

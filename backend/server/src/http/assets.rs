@@ -80,6 +80,7 @@ impl Assets {
         let mut variables = <HashMap<String, String>>::new();
         variables.insert("theme-json".into(), build_theme(&config.theme));
         variables.insert("site-title".into(), config.general.site_title.clone());
+        variables.insert("logo-margin".into(), config.theme.logo.margin.to_string());
         variables.insert(
             "large-logo-resolution".into(),
             format!("{:?}", config.theme.logo.large.resolution),
@@ -170,8 +171,8 @@ impl Assets {
 // TODO: this function doesn't quite fit into this module, move it somewhere else.
 fn build_theme(theme: &ThemeConfig) -> String {
     serde_json::json!({
+        "logoMargin": theme.logo.margin,
         "headerHeight": theme.header_height,
-        "headerPadding": theme.header_padding,
         "color": {
             "navigation": theme.color.navigation,
             "accent": theme.color.accent,

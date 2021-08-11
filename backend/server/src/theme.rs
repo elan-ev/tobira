@@ -3,11 +3,8 @@ use std::path::PathBuf;
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ThemeConfig {
-    #[config(default = 70)]
+    #[config(default = 50)]
     pub(crate) header_height: u32,
-
-    #[config(default = 10)]
-    pub(crate) header_padding: u32,
 
     /// Path to CSS file that includes all used font files and sets the variable
     /// `--main-font` in the `:root` selector. For example:
@@ -34,6 +31,12 @@ pub(crate) struct ThemeConfig {
 /// Logo used in the top left corner of the page. Using SVG logos is recommended.
 #[derive(Debug, confique::Config)]
 pub(crate) struct LogoConfig {
+    /// The margin around the logo in terms of logo height. A value of 0.5 means
+    /// that there will be a margin around the logo of half the height of the
+    /// logo.
+    #[config(default = 0.4)]
+    pub(crate) margin: f32,
+
     /// The normal, usually wide logo that is shown on desktop screens.
     #[config(nested)]
     pub(crate) large: SingleLogoConfig,

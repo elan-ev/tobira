@@ -91,8 +91,7 @@ export const Player: React.FC<PlayerProps> = ({ tracks }) => {
             // I'm not 100% sure all of this is necessary or good. So we might
             // still rip it out.
             "& > div": {
-                // TODO: replace with real aspect ratio
-                maxWidth: `calc((90vh - var(--header-height) - 80px) * ${aspectRatioNum})`,
+                maxWidth: `calc((90vh - var(--outer-header-height) - 80px) * ${aspectRatioNum})`,
                 minWidth: "320px",
                 margin: "auto",
             },

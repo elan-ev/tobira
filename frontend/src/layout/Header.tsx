@@ -13,7 +13,8 @@ import { OUTER_CONTAINER_MARGIN } from "./Root";
 import { SMALLER_FONT_BREAKPOINT } from "../GlobalStyle";
 
 
-export const HEIGHT = 60;
+const BUTTONS_WIDTH = 138;
+const BASE_LOGO_MARGIN = "calc(var(--logo-margin) * var(--inner-header-height))";
 
 
 type Props = {
@@ -32,10 +33,12 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
     return (
         <header css={{
             margin: OUTER_CONTAINER_MARGIN,
-            height: "var(--header-height)",
-            display: "flex",
-            padding: "var(--header-padding) min(5vw, var(--header-padding))",
             marginBottom: "16px",
+            height: "var(--outer-header-height)",
+            display: "flex",
+            paddingTop: BASE_LOGO_MARGIN,
+            paddingBottom: BASE_LOGO_MARGIN,
+            paddingRight: 8,
             alignItems: "center",
             justifyContent: "space-between",
             backgroundColor: "white",
@@ -142,18 +145,42 @@ const Logo: React.FC = () => {
     const large = CONFIG.logo.large;
     const smallAr = small.resolution[0] / small.resolution[1];
     const largeAr = large.resolution[0] / large.resolution[1];
-    const innerHeaderHeight = "(var(--header-height) - 2 * var(--header-padding))";
+
+    // The margin calculation is a bit involved, unfortunately. Many CIs will
+    // define margins around a logo that have to stay blank. Doing that would
+    // be easy, but it quickly becomes suboptimal on small screens. There, at
+    // least for wide logos, the logo has to shrink in order for the full
+    // header to still fit on the screen. But applying margin the naive way
+    // (which would be just `BASE_LOGO_MARGIN`) will result in way too much
+    // margin in those situations as the margin assumes the full size of the
+    // logo, not the shrunk size.
+    //
+    // So we manually do the size calculation and shrink the margin if it's
+    // lower than `BASE_LOGO_MARGIN`:
+    //
+    // - `max(100vw, var(--min-page-width))`: this is the full header width. The
+    //   header might have margin on large screens, but this issue is only
+    //   about small screens.
+    // - `- ${BUTTONS_WIDTH}px`: we subtract the fixed width of the
+    //   buttons/icons to get the remaining available width.
+    // - `(2 + ${ar})`: we share the remaining width between 2 times margins
+    //   (left & right) and the logo itself. This is in units of logo height.
+    const actualMargin = (ar: number) => `min(
+        ${BASE_LOGO_MARGIN},
+        calc((max(100vw, var(--min-page-width)) - ${BUTTONS_WIDTH}px) / (2 + ${ar}))
+    )`;
 
     return (
         <Link
             to="/"
             css={{
                 height: "100%",
-                flex: `0 1 calc(${innerHeaderHeight} * ${largeAr})`,
+                flex: `0 1 calc(var(--inner-header-height) * ${largeAr})`,
+                margin: `0 ${actualMargin(largeAr)}`,
                 [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
-                    flex: `0 1 calc(${innerHeaderHeight} * ${smallAr})`,
+                    flex: `0 1 calc(var(--inner-header-height) * ${smallAr})`,
+                    margin: `0 ${actualMargin(smallAr)}`,
                 },
-                marginRight: 24,
                 "& > img": {
                     height: "100%",
                     width: "auto",
