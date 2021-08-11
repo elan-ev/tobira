@@ -13,6 +13,7 @@ import { VideoBlock } from "../ui/blocks/Video";
 import { TextBlock } from "../ui/blocks/Text";
 import type { Track } from "../ui/Player";
 import { useTranslation } from "react-i18next";
+import { useTitle } from "../util";
 
 
 export const VideoRoute: Route<PreloadedQuery<VideoQuery>> = {
@@ -64,6 +65,7 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
         : null;
 
     const { title, tracks, description } = event;
+    useTitle(title);
     return (
         <Root navSource={navFromQuery(realm)}>
             <h1>{title}</h1>

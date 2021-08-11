@@ -29,3 +29,6 @@ create table blocks (
     videolist_layout video_list_layout,
     videolist_order video_list_order
 );
+
+-- Blocks are almost always looked up by realm ID.
+create index idx_block_realm_id on blocks (realm_id);

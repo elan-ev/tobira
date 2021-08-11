@@ -41,3 +41,6 @@ create table events (
     thumbnail text, -- URL to an image
     tracks event_track[] not null
 );
+
+-- To get all events of a series (which happens often), we can use this index.
+create index idx_events_series on events (series);

@@ -1,3 +1,6 @@
+[general]
+site_title = "Tobira Test Deployment"
+
 [db]
 database = "tobira-{{ id }}"
 user = "tobira-{{ id }}"
@@ -16,5 +19,7 @@ user = "admin"
 password = "{{ opencast_admin_password }}"
 
 [theme]
-logo.large = "/opt/tobira/{{ id }}/logo-large.svg"
-logo.small = "/opt/tobira/{{ id }}/logo-small.svg"
+logo.large.path = "/opt/tobira/{{ id }}/logo-large.svg"
+logo.large.resolution = [643, 217]
+logo.small.path = "/opt/tobira/{{ id }}/logo-small.svg"
+logo.small.resolution = [102, 115]

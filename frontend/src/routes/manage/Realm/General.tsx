@@ -13,6 +13,7 @@ const fragment = graphql`
     fragment GeneralRealmData on Realm {
         id
         name
+        isRoot
     }
 `;
 
@@ -65,6 +66,11 @@ export const General: React.FC<Props> = ({ fragRef }) => {
     const validation = {
         required: t("manage.realm.name-must-not-be-empty"),
     };
+
+    // We do not allow changing the name of the root realm.
+    if (realm.isRoot) {
+        return <p>{t("manage.realm.general.no-rename-root")}</p>;
+    }
 
     return (
         <Form onSubmit={onSubmit} css={{ margin: "32px 0" }}>

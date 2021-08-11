@@ -69,6 +69,8 @@ manage:
   overview: Übersicht
   realm:
     nav-label: Seiteneinstellungen
+    invalid-path: >
+      Fehler: ungültiger Pfad zur Seite. Wurde die Seite gelöscht oder ihr Pfad geändert?
     heading: Einstellungen zur Seite „{{realm}}“
     heading-root: Einstellungen zur Startseite
     descendants-count: Diese Seite besitzt {{count}} direkt und indirekte Unterseiten.
@@ -89,6 +91,9 @@ manage:
     general:
       rename-label: Seitenname
       generic-network-error: Änderung des Namen fehlgeschlagen.
+      no-rename-root: >
+        Der Name der Startseite kann nicht geändert werden. Die Überschrift wird
+        von der globalen Seiten-Title Einstellung kontrolliert.
 
     children:
       heading: Reihenfolge Unterseiten

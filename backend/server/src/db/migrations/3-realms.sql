@@ -30,11 +30,24 @@ create table realms (
     -- segment.
     constraint valid_alphanum_path check (id = 0 or path_segment ~* '^[[:alnum:]][[:alnum:]\-]+$'),
     constraint root_no_path check (id <> 0 or (parent is null and path_segment = '' and full_path = '')),
-    constraint has_parent check (id = 0 or parent is not null)
+    constraint has_parent check (id = 0 or parent is not null),
+    constraint names_non_empty_except_root check (
+        (id = 0 and name = '') or (id <> 0 and name <> '')
+    )
 );
 
--- Full path to realm lookups happen on nearly every page view
-create unique index idx_realm_path on realms (full_path);
+-- Full path to realm lookups happen on nearly every page view. We specify
+-- the 'opclass' as 'text_pattern_ops' here to allow for `LIKE` searches.
+-- Without this, operators respect the locale of the DB and make it impossible
+-- to do a prefix search with this index. Some docs:
+--
+-- - https://www.postgresql.org/docs/10/indexes-opclass.html
+-- - https://dba.stackexchange.com/a/169140
+create unique index idx_realm_path on realms (full_path text_pattern_ops);
+
+-- To fetch all children of a realm, we filter by the `parent` column, so this
+-- index speeds up those queries.
+create index idx_realm_parent on realms (parent);
 
 -- Insert the root realm. Since that realm has to have the ID=0, we have to
 -- set the sequence to a specific value. We can just apply inverse xtea to 0

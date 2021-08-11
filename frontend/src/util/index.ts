@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import CONFIG from "../config";
 
 /**
  * A switch-like expression with exhaustiveness check (or fallback value). A bit
@@ -48,3 +50,18 @@ export function match<T extends string | number, Out>(
 export function keyOfId(id: string): string {
     return id.substring(2);
 }
+
+/**
+ * Sets the HTML title to the given string (plus base title) on mount, resets
+ * it on unmount.
+ */
+export const useTitle = (title: string, noSuffix = false): void => {
+    useEffect(() => {
+        document.title = noSuffix ? title : `${title} • ${CONFIG.siteTitle}`;
+
+        // On unmount, we set the title to the base title.
+        return () => {
+            document.title = CONFIG.siteTitle;
+        };
+    });
+};

@@ -21,14 +21,21 @@ const parseConfig: () => Config = () => {
 };
 
 type Config = {
+    siteTitle: string;
     logo: LogoConfig;
     plyr: PlyrConfig;
     theme: ThemeConfig;
 };
 
 type LogoConfig = {
-    large: string;
-    small: string;
+    margin: number;
+    large: SingleLogoConfig;
+    small: SingleLogoConfig;
+};
+
+type SingleLogoConfig = {
+    path: string;
+    resolution: number[];
 };
 
 type PlyrConfig = {

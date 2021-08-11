@@ -68,6 +68,8 @@ manage:
   overview: Overview
   realm:
     nav-label: Page settings
+    invalid-path: >
+      Error: invalid path to page. Was the page deleted or its path changed?
     heading: Settings of page „{{realm}}“
     heading-root: Homepage settings
     descendants-count: This page has {{count}} many direct and indirect sub-pages.
@@ -87,6 +89,9 @@ manage:
     general:
       rename-label: Page name
       generic-network-error: Failed to change the name.
+      no-rename-root: >
+        The homepage cannot be renamed. The heading is controlled by the global
+        site title setting.
 
     children:
       heading: Order of subpages

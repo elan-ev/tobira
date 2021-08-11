@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Tobira</title>
+    <title>{{: var:site-title :}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>{{: include:fonts.css :}}</style>
     <script id="tobira-frontend-config" type="application/json">
       {
+        "siteTitle": "{{: var:site-title :}}",
         "logo": {
-          "large": "/~assets/{{: path:logo-large.svg :}}",
-          "small": "/~assets/{{: path:logo-small.svg :}}"
+          "margin": {{: var:logo-margin :}},
+          "large": {
+            "path": "/~assets/{{: path:logo-large.svg :}}",
+            "resolution": {{: var:large-logo-resolution :}}
+          },
+          "small": {
+            "path": "/~assets/{{: path:logo-small.svg :}}",
+            "resolution": {{: var:small-logo-resolution :}}
+          }
         },
         "plyr": {
           "blankVideo": "/~assets/{{: path:blank.mp4 :}}",

@@ -71,14 +71,24 @@ pub(crate) struct Assets {
 impl Assets {
     pub(crate) async fn init(config: &Config) -> Result<Self> {
         let mut path_overrides = HashMap::new();
-        path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.clone());
-        path_overrides.insert("logo-small.svg".into(), config.theme.logo.small.clone());
+        path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.path.clone());
+        path_overrides.insert("logo-small.svg".into(), config.theme.logo.small.path.clone());
         if let Some(fonts_css) = &config.theme.fonts {
             path_overrides.insert("fonts.css".into(), fonts_css.into());
         }
 
-        let mut variables = HashMap::new();
-        variables.insert("theme-json".to_string(), build_theme(&config.theme));
+        let mut variables = <HashMap<String, String>>::new();
+        variables.insert("theme-json".into(), build_theme(&config.theme));
+        variables.insert("site-title".into(), config.general.site_title.clone());
+        variables.insert("logo-margin".into(), config.theme.logo.margin.to_string());
+        variables.insert(
+            "large-logo-resolution".into(),
+            format!("{:?}", config.theme.logo.large.resolution),
+        );
+        variables.insert(
+            "small-logo-resolution".into(),
+            format!("{:?}", config.theme.logo.small.resolution),
+        );
 
         let reinda_config = reinda::Config {
             base_path: if cfg!(debug_assertions) {
@@ -161,8 +171,8 @@ impl Assets {
 // TODO: this function doesn't quite fit into this module, move it somewhere else.
 fn build_theme(theme: &ThemeConfig) -> String {
     serde_json::json!({
+        "logoMargin": theme.logo.margin,
         "headerHeight": theme.header_height,
-        "headerPadding": theme.header_padding,
         "color": {
             "navigation": theme.color.navigation,
             "accent": theme.color.accent,

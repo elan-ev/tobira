@@ -19,6 +19,7 @@ export const Card: React.FC<Props> = ({ kind, children, ...rest }) => (
             alignItems: "center",
             "& > svg": {
                 fontSize: 24,
+                minWidth: 24,
             },
             ...match(kind, {
                 "error": () => ({

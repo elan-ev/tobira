@@ -3,11 +3,8 @@ use std::path::PathBuf;
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ThemeConfig {
-    #[config(default = 70)]
+    #[config(default = 50)]
     pub(crate) header_height: u32,
-
-    #[config(default = 10)]
-    pub(crate) header_padding: u32,
 
     /// Path to CSS file that includes all used font files and sets the variable
     /// `--main-font` in the `:root` selector. For example:
@@ -34,12 +31,31 @@ pub(crate) struct ThemeConfig {
 /// Logo used in the top left corner of the page. Using SVG logos is recommended.
 #[derive(Debug, confique::Config)]
 pub(crate) struct LogoConfig {
-    /// Path to the "normal", wide logo that is shown on desktop screens.
-    pub(crate) large: PathBuf,
+    /// The margin around the logo in terms of logo height. A value of 0.5 means
+    /// that there will be a margin around the logo of half the height of the
+    /// logo.
+    #[config(default = 0.4)]
+    pub(crate) margin: f32,
 
-    /// Path to the small, close to square logo used for small screens, mostly
+    /// The normal, usually wide logo that is shown on desktop screens.
+    #[config(nested)]
+    pub(crate) large: SingleLogoConfig,
+
+    /// A smaller logo (usually close to square) used for small screens, mostly
     /// on mobile phones.
-    pub(crate) small: PathBuf,
+    #[config(nested)]
+    pub(crate) small: SingleLogoConfig,
+}
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct SingleLogoConfig {
+    /// Path to the image file.
+    pub(crate) path: PathBuf,
+
+    /// Resolution of the image. This is used to avoid layout shifts and to
+    /// calculate the correct logo margins. The exact numbers don't matter,
+    /// only the ratio between them does.
+    pub(crate) resolution: [u32; 2],
 }
 
 #[derive(Debug, confique::Config)]
