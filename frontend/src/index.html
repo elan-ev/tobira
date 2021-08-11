@@ -8,8 +8,14 @@
       {
         "siteTitle": "{{: var:site-title :}}",
         "logo": {
-          "large": "/~assets/{{: path:logo-large.svg :}}",
-          "small": "/~assets/{{: path:logo-small.svg :}}"
+          "large": {
+            "path": "/~assets/{{: path:logo-large.svg :}}",
+            "resolution": {{: var:large-logo-resolution :}}
+          },
+          "small": {
+            "path": "/~assets/{{: path:logo-small.svg :}}",
+            "resolution": {{: var:small-logo-resolution :}}
+          }
         },
         "plyr": {
           "blankVideo": "/~assets/{{: path:blank.mp4 :}}",

@@ -111,8 +111,8 @@ impl Config {
             fix_path(&base, p);
         }
 
-        fix_path(&base, &mut self.theme.logo.large);
-        fix_path(&base, &mut self.theme.logo.small);
+        fix_path(&base, &mut self.theme.logo.large.path);
+        fix_path(&base, &mut self.theme.logo.small.path);
 
         Ok(())
     }

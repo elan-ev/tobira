@@ -119,17 +119,72 @@ const ButtonContainer: React.FC = ({ children }) => (
     </div>
 );
 
-const Logo: React.FC = () => (
-    <Link to="/" css={{ height: "100%", flex: "0 1 auto" }}>
-        <picture css={{ height: "100%" }}>
-            <source media="(min-width: 450px)" srcSet={CONFIG.logo.large} />
+const Logo: React.FC = () => {
+    // This is a bit tricky: we want to specify the `width` and `height`
+    // attributes on the `img` elements in order to avoid layout shift. That
+    // already rules out the `<picture>` element since that assumes all sources
+    // have the same aspect ratio.
+    //
+    // The resolutions of the logos is specified in the config. However, to
+    // faithfully represent the aspect ratio of the images with an integer
+    // resolution, large numbers might be required. But setting the `width` to
+    // a large number means the `<img>` will take that space in pixels. But
+    // that's often too large. Easy fix: `width: auto` since we already have
+    // `height: 100%`. However, we also need `max-width: 100%` so that the logo
+    // shrinks on very small screens. But using that makes the logo not take up
+    // the correct width when still being loaded: the parent `<a>` shrinks as
+    // much as possible, making the `max-width: 100%` also shrink the image.
+    //
+    // The solution is to calculate the correct `flex-basis` for the `<a>`
+    // element manually.
+
+    const small = CONFIG.logo.small;
+    const large = CONFIG.logo.large;
+    const smallAr = small.resolution[0] / small.resolution[1];
+    const largeAr = large.resolution[0] / large.resolution[1];
+    const innerHeaderHeight = "(var(--header-height) - 2 * var(--header-padding))";
+
+    return (
+        <Link
+            to="/"
+            css={{
+                height: "100%",
+                flex: `0 1 calc(${innerHeaderHeight} * ${largeAr})`,
+                [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+                    flex: `0 1 calc(${innerHeaderHeight} * ${smallAr})`,
+                },
+                marginRight: 24,
+                "& > img": {
+                    height: "100%",
+                    width: "auto",
+                    maxWidth: "100%",
+                },
+            }}
+        >
             <img
-                css={{ height: "100%", maxWidth: "100%" }}
-                src={CONFIG.logo.small}
+                width={large.resolution[0]}
+                height={large.resolution[1]}
+                src={large.path}
+                css={{
+                    [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+                        display: "none",
+                    },
+                }}
             />
-        </picture>
-    </Link>
-);
+            <img
+                width={small.resolution[0]}
+                height={small.resolution[1]}
+                src={small.path}
+                css={{
+                    [`@media not all and (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+                        display: "none",
+                    },
+                }}
+            />
+
+        </Link>
+    );
+};
 
 
 type SearchFieldProps = {

@@ -34,12 +34,25 @@ pub(crate) struct ThemeConfig {
 /// Logo used in the top left corner of the page. Using SVG logos is recommended.
 #[derive(Debug, confique::Config)]
 pub(crate) struct LogoConfig {
-    /// Path to the "normal", wide logo that is shown on desktop screens.
-    pub(crate) large: PathBuf,
+    /// The normal, usually wide logo that is shown on desktop screens.
+    #[config(nested)]
+    pub(crate) large: SingleLogoConfig,
 
-    /// Path to the small, close to square logo used for small screens, mostly
+    /// A smaller logo (usually close to square) used for small screens, mostly
     /// on mobile phones.
-    pub(crate) small: PathBuf,
+    #[config(nested)]
+    pub(crate) small: SingleLogoConfig,
+}
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct SingleLogoConfig {
+    /// Path to the image file.
+    pub(crate) path: PathBuf,
+
+    /// Resolution of the image. This is used to avoid layout shifts and to
+    /// calculate the correct logo margins. The exact numbers don't matter,
+    /// only the ratio between them does.
+    pub(crate) resolution: [u32; 2],
 }
 
 #[derive(Debug, confique::Config)]

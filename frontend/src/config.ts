@@ -28,8 +28,13 @@ type Config = {
 };
 
 type LogoConfig = {
-    large: string;
-    small: string;
+    large: SingleLogoConfig;
+    small: SingleLogoConfig;
+};
+
+type SingleLogoConfig = {
+    path: string;
+    resolution: number[];
 };
 
 type PlyrConfig = {
