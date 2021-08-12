@@ -65,7 +65,6 @@ module.exports = (_env, argv) => ({
                 { from: path.join(APP_PATH, "index.html"), to: path.join(OUT_PATH) },
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
                 { from: STATIC_PATH, to: OUT_PATH },
-                { from: path.join(plyrDistPath, "blank.mp4"), to: OUT_PATH },
                 { from: path.join(plyrDistPath, "plyr.svg"), to: OUT_PATH },
             ],
         }),
