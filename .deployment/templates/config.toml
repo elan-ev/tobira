@@ -14,7 +14,7 @@ unix_socket_permissions = 0o777
 file = "/var/log/tobira/{{ id }}.log"
 
 [sync]
-host = "tobira.ethz.ch"
+host = "oc.tobira.ethz.ch"
 user = "admin"
 password = "{{ opencast_admin_password }}"
 
