@@ -51,6 +51,10 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
         <div css={{
             display: "flex",
             flexWrap: "wrap",
+            marginTop: 8,
+            padding: 12,
+            backgroundColor: "var(--grey97)",
+            borderRadius: 4,
         }}>
             {series.events.map(event => <GridTile key={event.id} {...{ realmPath, event }} />)}
         </div>
@@ -98,13 +102,20 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
             to={`${realmPath}/v/${keyOfId(event.id)}`}
             css={{
                 display: "block",
-                margin: "12px 8px",
+                margin: 8,
                 marginBottom: 32,
                 width: THUMB_WIDTH,
                 "& a": { color: "black", textDecoration: "none" },
+                "&:hover > div:first-child": {
+                    boxShadow: "0 0 10px var(--grey80)",
+                },
             }}
         >
-            <div css={{ position: "relative" }}>
+            <div css={{
+                position: "relative",
+                boxShadow: "0 0 4px var(--grey92)",
+                transition: "0.2s box-shadow",
+            }}>
                 {thumbnail}
                 {event.duration != null && (
                     <div css={{
