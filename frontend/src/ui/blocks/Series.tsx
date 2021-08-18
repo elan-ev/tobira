@@ -127,6 +127,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
                         borderRadius: 4,
                         padding: "0 4px",
                         color: "white",
+                        fontSize: 14,
                     }}>
                         {formatLength(event.duration)}
                     </div>
