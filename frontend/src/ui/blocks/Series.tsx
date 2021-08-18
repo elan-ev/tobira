@@ -45,6 +45,8 @@ type Props = SharedProps & {
     series: NonNullable<SeriesBlockData["series"]>;
 };
 
+const VIDEO_GRID_BREAKPOINT = 600;
+
 export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
     <Block>
         <Title title={title ?? series.title} />
@@ -55,6 +57,9 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
             padding: 12,
             backgroundColor: "var(--grey97)",
             borderRadius: 4,
+            [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                justifyContent: "center",
+            },
         }}>
             {series.events.map(event => <GridTile key={event.id} {...{ realmPath, event }} />)}
         </div>
@@ -68,6 +73,14 @@ type GridTypeProps = {
 
 const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
     const [THUMB_WIDTH, THUMB_HEIGHT] = [16, 9].map(x => x * 15);
+
+    const sharedThumbnailStyle = {
+        width: "100%",
+        height: "auto",
+        borderRadius: 4,
+        // TODO: Not supported by Safari 14.1. Maybe used padding trick instead!
+        aspectRatio: "16 / 9",
+    };
     let thumbnail;
     if (event.thumbnail != null) {
         // We have a proper thumbnail.
@@ -75,7 +88,10 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
             src={event.thumbnail}
             width={THUMB_WIDTH}
             height={THUMB_HEIGHT}
-            css={{ display: "block", borderRadius: 4 }}
+            css={{
+                display: "block",
+                ...sharedThumbnailStyle,
+            }}
         />;
     } else {
         // We have no thumbnail. If the resolution is `null` as well, we are
@@ -86,13 +102,11 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
         thumbnail = (
             <div css={{
                 display: "flex",
-                width: THUMB_WIDTH,
-                height: THUMB_HEIGHT,
-                borderRadius: 4,
                 backgroundColor: "var(--grey92)",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 40,
+                ...sharedThumbnailStyle,
             }}>{icon}</div>
         );
     }
@@ -108,6 +122,10 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
                 "& a": { color: "black", textDecoration: "none" },
                 "&:hover > div:first-child": {
                     boxShadow: "0 0 10px var(--grey80)",
+                },
+                [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                    width: "100%",
+                    maxWidth: 360,
                 },
             }}
         >
