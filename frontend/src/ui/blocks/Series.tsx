@@ -119,6 +119,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
                 margin: 8,
                 marginBottom: 32,
                 width: THUMB_WIDTH,
+                borderRadius: 4,
                 "& a": { color: "black", textDecoration: "none" },
                 "&:hover > div:first-child": {
                     boxShadow: "0 0 10px var(--grey80)",
@@ -126,6 +127,10 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
                 [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
                     width: "100%",
                     maxWidth: 360,
+                },
+                "&:focus-visible": {
+                    outline: "none",
+                    boxShadow: "0 0 0 2px var(--accent-color)",
                 },
             }}
         >

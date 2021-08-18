@@ -27,6 +27,10 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             listStyle: "none",
             margin: 0,
             padding: 0,
+            "& a:focus-visible": {
+                outline: "none",
+                boxShadow: "inset 0 0 0 2px var(--accent-color)",
+            },
             "& > li": {
                 borderBottom: "1px solid var(--grey80)",
                 "&:last-of-type": {
