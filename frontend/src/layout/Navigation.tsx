@@ -113,38 +113,20 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
                     isRoot
                     name
                     path
-                    childOrder
-                    children { id name path }
                 }
             }
         `,
         fragRef,
     );
 
-    const [childOrder, items] = realm.children.length > 0
-        ? [
-            realm.childOrder,
-            realm.children.map(({ id, path, name }) => ({
-                id,
-                label: name,
-                link: `${path}`,
-                active: false,
-            })),
-        ]
-        : [
-            // The case where `realm.parent` is `null` only happens when there
-            // is only the root realm. So we can use dummy values as long as
-            // nothing crashes.
-            realm.parent?.childOrder ?? "ALPHABETIC_ASC",
-            (realm.parent?.children ?? []).map(({ id, name, path }) => ({
-                id,
-                label: name,
-                link: `${path}`,
-                active: id === realm.id,
-            })),
-        ];
+    const items = realm.children.map(({ id, path, name }) => ({
+        id,
+        label: name,
+        link: `${path}`,
+        active: false,
+    }));
 
-    match(childOrder, {
+    match(realm.childOrder, {
         "ALPHABETIC_ASC": () => {
             items.sort((a, b) => a.label.localeCompare(b.label, i18n.language));
         },
@@ -174,7 +156,36 @@ export const DesktopNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) =
 );
 
 const DesktopNavImpl: React.FC<NavDataProp> = ({ nav }) => (
-    <LinkList items={nav.items.map(item => <Item key={item.id} item={item} />)} />
+    <>
+        {nav.parent !== null && <>
+            <LinkWithIcon to={nav.parent.link} iconPos="left" css={{ padding: "6px 12px" }}>
+                <FiChevronLeft css={{ marginRight: 6 }}/>
+                {nav.parent.name}
+            </LinkWithIcon>
+            <div css={{
+                padding: 16,
+                paddingLeft: 12 + 22 + 12,
+                fontWeight: "bold",
+                backgroundColor: "var(--nav-color)",
+                color: prefersBlackText(CONFIG.theme.color.navigation) ? "black" : "white",
+            }}>{nav.currentName}</div>
+        </>}
+        <LinkList
+            items={nav.items.map(item => <Item key={item.id} item={item} />)}
+            css={{
+                "& > li": {
+                    borderBottom: "1px solid var(--grey80)",
+                    "& > a, & > b": {
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "6px 12px",
+                        paddingLeft: 12 + 22 + 12,
+                    },
+                },
+            }}
+        />
+    </>
+
 );
 
 
