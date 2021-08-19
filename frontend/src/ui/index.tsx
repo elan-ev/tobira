@@ -96,3 +96,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({ to, iconPos, childre
         >{children}</Link>
     );
 };
+
+export const CenteredContent: React.FC = ({ children }) => (
+    <div css={{ margin: "0 auto", maxWidth: 600 }}>{children}</div>
+);

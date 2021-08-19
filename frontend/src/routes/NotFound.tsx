@@ -1,11 +1,11 @@
 import { Trans, useTranslation } from "react-i18next";
 import { FiFrown } from "react-icons/fi";
 
-import { MAIN_PADDING, OUTER_CONTAINER_MARGIN, Root } from "../layout/Root";
-import { Header } from "../layout/Header";
+import { Root } from "../layout/Root";
 import { Link } from "../router";
 import type { Route } from "../router";
 import { match } from "../util";
+import { CenteredContent } from "../ui";
 
 
 export const NotFoundRoute: Route<void> = {
@@ -24,13 +24,13 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
     return (
         <Root nav={[]}>
             <FiFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
-            <h1 css={{ textAlign: "center", margin: "30px 0" }}>
+            <h1 css={{ textAlign: "center", margin: "32px 0 48px 0 !important" }}>
                 {match(kind, {
                     "page": () => t("not-found.page-not-found"),
                     "video": () => t("not-found.video-not-found"),
                 })}
             </h1>
-            <div css={{ maxWidth: 500, margin: "48px auto" }}>
+            <CenteredContent>
                 <p css={{ margin: "16px 0" }}>
                     {match(kind, {
                         "page": () => t("not-found.page-explanation"),
@@ -41,7 +41,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
                 <Trans i18nKey="not-found.actions">
                     foo<Link to="/">bar</Link>
                 </Trans>
-            </div>
+            </CenteredContent>
         </Root>
     );
 };
