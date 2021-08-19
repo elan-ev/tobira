@@ -29,8 +29,10 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => {
                 alignItems: "center",
                 padding: 0,
                 margin: 0,
+                fontSize: 14,
+                whiteSpace: "nowrap",
                 "& svg": {
-                    fontSize: 18,
+                    fontSize: 16,
                 },
             }}>
                 <li css={LI_STYLE}>
@@ -55,7 +57,7 @@ type SegmentProps = {
 
 const Segment: React.FC<SegmentProps> = ({ target, active, children }) => (
     <li css={LI_STYLE} {...active && { "aria-current": "location" }}>
-        <FiChevronRight css={{ margin: "0 8px", color: "var(--grey65)" }}/>
+        <FiChevronRight css={{ margin: "0 5px", color: "var(--grey65)" }}/>
         {active ? children : <Link to={target}>{children}</Link>}
     </li>
 );
