@@ -85,6 +85,7 @@ const addChildMutation = graphql`
     mutation AddChildMutation($realm: NewRealm!) {
         addRealm(realm: $realm) {
             path
+            parent { ...NavigationData }
         }
     }
 `;
