@@ -18,7 +18,7 @@ import { ErrorBox, NoPath, PathInvalid, realmValidations } from ".";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
-import { Nav, navFromQuery } from "../../../layout/Navigation";
+import { Nav } from "../../../layout/Navigation";
 
 
 // Route definition
@@ -77,7 +77,7 @@ const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) =
     const { parent } = usePreloadedQuery(query, queryRef);
     return !parent
         ? <Root nav={[]}><PathInvalid /></Root>
-        : <Root nav={<Nav source={navFromQuery(parent)} />}><AddChild parent={parent} /></Root>;
+        : <Root nav={<Nav fragRef={parent} />}><AddChild parent={parent} /></Root>;
 };
 
 

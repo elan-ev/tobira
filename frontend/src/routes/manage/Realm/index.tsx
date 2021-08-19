@@ -18,7 +18,7 @@ import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 import { TFunction } from "i18next";
 import { RegisterOptions } from "react-hook-form";
 import { Card } from "../../../ui/Card";
-import { Nav, navFromQuery } from "../../../layout/Navigation";
+import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
 
 
@@ -93,7 +93,7 @@ const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) =
     const { realm } = usePreloadedQuery(query, queryRef);
     return !realm
         ? <Root nav={[]}><PathInvalid /></Root>
-        : <Root nav={<Nav source={navFromQuery(realm)} />}><SettingsPage realm={realm} /></Root>;
+        : <Root nav={<Nav fragRef={realm} />}><SettingsPage realm={realm} /></Root>;
 };
 
 
