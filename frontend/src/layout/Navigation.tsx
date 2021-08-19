@@ -148,55 +148,11 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
 }
 
 
-
-// ===== Desktop Navigation ======================================================================
-
-export const DesktopNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
-    <Dispatch source={source} Component={DesktopNavImpl} innerProps={innerProps} />
+export const Nav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
+    <Dispatch source={source} Component={NavImpl} innerProps={innerProps} />
 );
 
-const DesktopNavImpl: React.FC<NavDataProp> = ({ nav }) => (
-    <>
-        {nav.parent !== null && <>
-            <LinkWithIcon to={nav.parent.link} iconPos="left" css={{ padding: "6px 12px" }}>
-                <FiChevronLeft css={{ marginRight: 6 }}/>
-                {nav.parent.name}
-            </LinkWithIcon>
-            <div css={{
-                padding: 16,
-                paddingLeft: 12 + 22 + 12,
-                fontWeight: "bold",
-                backgroundColor: "var(--nav-color)",
-                color: prefersBlackText(CONFIG.theme.color.navigation) ? "black" : "white",
-            }}>{nav.currentName}</div>
-        </>}
-        <LinkList
-            items={nav.items.map(item => <Item key={item.id} item={item} />)}
-            css={{
-                "& > li": {
-                    borderBottom: "1px solid var(--grey80)",
-                    "& > a, & > b": {
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "6px 12px",
-                        paddingLeft: 12 + 22 + 12,
-                    },
-                },
-            }}
-        />
-    </>
-
-);
-
-
-
-// ===== Mobile Navigation =======================================================================
-
-export const MobileNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
-    <Dispatch source={source} Component={MobileNavImpl} innerProps={innerProps} />
-);
-
-const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
+const NavImpl: React.FC<NavDataProp> = ({ nav }) => (
     <div>
         {nav.parent !== null && <>
             <LinkWithIcon to={nav.parent.link} iconPos="left" css={{ padding: "6px 12px" }}>
@@ -214,8 +170,6 @@ const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
         <LinkList
             items={nav.items.map(item => <Item key={item.id} item={item} />)}
             css={{
-                borderBottom: "1px solid var(--grey80)",
-                ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
                 "& > li": {
                     borderBottom: "1px solid var(--grey80)",
                     "& > a, & > b": {

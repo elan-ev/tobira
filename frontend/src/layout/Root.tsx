@@ -3,7 +3,7 @@ import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
 import { Header } from "./Header";
-import { DesktopNav, MobileNav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
+import { Nav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import type { NavSource } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
@@ -31,7 +31,7 @@ export const Root: React.FC<Props> = ({ navSource, belowNav = null, children }) 
             <Header />
             {menu.state === "burger" && (
                 <BurgerMenu hide={() => menu.close()}>
-                    <MobileNav source={navSource} />
+                    <Nav source={navSource} />
                     {belowNav}
                 </BurgerMenu>
             )}
@@ -45,7 +45,7 @@ export const Root: React.FC<Props> = ({ navSource, belowNav = null, children }) 
                         display: "none",
                     },
                 }}>
-                    <SideBox><DesktopNav source={navSource} /></SideBox>
+                    <SideBox><Nav source={navSource} /></SideBox>
                     {belowNav && <SideBox>{belowNav}</SideBox>}
                 </div>
                 <div css={{
