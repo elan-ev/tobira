@@ -24,16 +24,17 @@ type Props = {
 export const Root: React.FC<Props> = ({ nav, children }) => {
     const menu = useMenu();
     const navElements = Array.isArray(nav) ? nav : [nav];
+    const navExists = navElements.length > 0;
 
     return (
         <Outer disableScrolling={menu.state === "burger"}>
-            <Header />
-            {menu.state === "burger" && (
+            <Header hideNavIcon={!navExists} />
+            {menu.state === "burger" && navExists && (
                 <BurgerMenu hide={() => menu.close()}>{navElements}</BurgerMenu>
             )}
             <Main>
                 {/* Sidebar */}
-                <div css={{
+                {navExists && <div css={{
                     flex: "1 0 12.5%",
                     minWidth: 240,
                     maxWidth: 360,
@@ -43,7 +44,7 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
                     },
                 }}>
                     {navElements.map((elem, i) => <SideBox key={i}>{elem}</SideBox>)}
-                </div>
+                </div>}
 
                 {/* Main part */}
                 <div css={{
