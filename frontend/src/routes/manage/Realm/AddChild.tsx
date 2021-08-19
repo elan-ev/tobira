@@ -10,15 +10,15 @@ import type {
 } from "../../../query-types/AddChildQuery.graphql";
 import { loadQuery } from "../../../relay";
 import { Route, useRouter } from "../../../router";
-import { ManageNav } from "..";
 import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { ErrorBox, realmValidations } from ".";
+import { ErrorBox, NoPath, PathInvalid, realmValidations } from ".";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
+import { Nav, navFromQuery } from "../../../layout/Navigation";
 
 
 // Route definition
@@ -45,6 +45,7 @@ const query = graphql`
             isRoot
             path
             children { path }
+            ... NavigationData
         }
     }
 `;
@@ -58,22 +59,11 @@ type Props = {
  * Entry point: checks if a path is given. If so forwards to `DispatchRealmExists`,
  * otherwise shows a landing page.
  */
-const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => {
-    const inner = queryRef == null ? <LandingPage /> : <DispatchRealmExists queryRef={queryRef} />;
-    return <Root nav={<ManageNav currentPath={PATH} />}>{inner}</Root>;
-};
-
-
-/** If no realm path is given, we just tell the user how to get going */
-const LandingPage: React.FC = () => {
-    const { t } = useTranslation();
-
-    return <>
-        <h1>{t("manage.add-child.heading")}</h1>
-        <p css={{ maxWidth: 600 }}>{t("manage.add-child.landing-page.body")}</p>
-    </>;
-};
-
+const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => (
+    queryRef == null
+        ? <NoPath />
+        : <DispatchRealmExists queryRef={queryRef} />
+);
 
 type DispatchRealmExistsProps = {
     queryRef: PreloadedQuery<AddChildQuery>;
@@ -86,13 +76,9 @@ type DispatchRealmExistsProps = {
 const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) => {
     const { parent } = usePreloadedQuery(query, queryRef);
     return !parent
-        ? <PathInvalid />
-        : <AddChild parent={parent} />;
+        ? <Root nav={[]}><PathInvalid /></Root>
+        : <Root nav={<Nav source={navFromQuery(parent)} />}><AddChild parent={parent} /></Root>;
 };
-
-
-// TODO: improve
-const PathInvalid: React.FC = () => <p>Error: Path invalid</p>;
 
 
 const addChildMutation = graphql`

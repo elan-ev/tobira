@@ -81,10 +81,7 @@ manage:
     path-must-be-alphanum-dash: >
       Path segment must consist of digits, lowercase letters and hyphens (-) only.
 
-    landing-page:
-      body: >
-        In order to edit the structure of a page, please visit said page as usual
-        and then click the button “Page settings” on the left half of the website.
+    no-path: Missing path! You opened an invalid link.
 
     general:
       rename-label: Page name
@@ -129,8 +126,3 @@ manage:
     below-root: The new page will be added directly below the homepage.
     button-create-page: Create page
     generic-network-error: Failed to create page.
-    landing-page:
-      body: >
-        To add a new page, please visit the parent page as usual and then click
-        the button “Add sub-page” on the left half of the website.
-

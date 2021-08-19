@@ -82,11 +82,7 @@ manage:
     path-must-be-alphanum-dash: >
       Das Pfadsegment darf nur aus Ziffern, Kleinbuchstaben und Bindestrichen (-) bestehen.
 
-    landing-page:
-      body: >
-        Um Einstellungen einer Seite zu bearbeiten, besuchen Sie diese auf gewohnte
-        Weise und klicken Sie auf den Button „Seiteneinstellungen“ am linken
-        Rand.
+    no-path: Pfad fehlt! Den Link, den Sie aufgerufen haben, ist ungültig.
 
     general:
       rename-label: Seitenname
@@ -134,9 +130,3 @@ manage:
     below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
     button-create-page: Seite erstellen
     generic-network-error: Seite konnte nicht erstellt werden.
-    landing-page:
-      body: >
-        Um eine neue Seite hinzuzufügen, besuchen Sie die gewünschte Oberseite
-        auf gewohnte Weise und klicken Sie auf den Button „Unterseite hinzufügen“
-        am linken Rand.
-
