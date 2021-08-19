@@ -30,6 +30,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => {
                 padding: 0,
                 margin: 0,
                 fontSize: 14,
+                flexWrap: "wrap",
                 whiteSpace: "nowrap",
                 "& svg": {
                     fontSize: 16,
@@ -55,9 +56,16 @@ type SegmentProps = {
     active: boolean;
 };
 
+const TEXT_STYLE = {
+    textOverflow: "ellipsis" as const,
+    overflow: "hidden" as const,
+};
+
 const Segment: React.FC<SegmentProps> = ({ target, active, children }) => (
-    <li css={LI_STYLE} {...active && { "aria-current": "location" }}>
-        <FiChevronRight css={{ margin: "0 5px", color: "var(--grey65)" }}/>
-        {active ? children : <Link to={target}>{children}</Link>}
+    <li css={{ maxWidth: "100%", ...LI_STYLE }} {...active && { "aria-current": "location" }}>
+        <FiChevronRight css={{ margin: "0 5px", flexShrink: 0, color: "var(--grey65)" }}/>
+        {active
+            ? <div css={TEXT_STYLE}>{children}</div>
+            : <Link css={TEXT_STYLE} to={target}>{children}</Link>}
     </li>
 );
