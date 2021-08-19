@@ -23,7 +23,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => {
     const { t } = useTranslation();
 
     return (
-        <nav aria-label="breadcrumbs" css={{ overflowX: "auto" }}>
+        <nav aria-label="breadcrumbs" css={{ overflowX: "auto", marginBottom: 24 }}>
             <ol css={{
                 display: "flex",
                 alignItems: "center",

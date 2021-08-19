@@ -40,7 +40,7 @@ export const Root: React.FC<Props> = ({ navSource, belowNav = null, children }) 
                     flex: "1 0 12.5%",
                     minWidth: 240,
                     maxWidth: 360,
-                    marginRight: 32,
+                    marginRight: 48,
                     [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                         display: "none",
                     },

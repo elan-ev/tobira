@@ -55,7 +55,7 @@ type NavItem = {
 };
 
 /** The breakpoint, in pixels, where mobile/desktop navigations are swapped. */
-export const BREAKPOINT = 850;
+export const BREAKPOINT = 880;
 
 
 
