@@ -1,6 +1,5 @@
-import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { NavSource } from "../../layout/Navigation";
+import { Nav } from "../../layout/Navigation";
 
 import { Root } from "../../layout/Root";
 import { Route } from "../../router";
@@ -19,14 +18,18 @@ const Manage: React.FC = () => {
 
     // TODO:
     return (
-        <Root navSource={navData(t, PATH)}>
+        <Root nav={<ManageNav currentPath={PATH} />}>
             <h1>{t("manage.overview")}</h1>
         </Root>
     );
 };
 
-/** Returns static nav data for "manage" routes */
-export const navData = (t: TFunction, currentPath: string): NavSource => {
+type ManageNavProps = {
+    currentPath: string;
+};
+
+export const ManageNav: React.FC<ManageNavProps> = ({ currentPath }) => {
+    const { t } = useTranslation();
     const item = (path: string, translationKey: string) => ({
         id: path,
         label: t(translationKey),
@@ -34,8 +37,8 @@ export const navData = (t: TFunction, currentPath: string): NavSource => {
         active: path === currentPath,
     });
 
-    return {
-        kind: "static" as const,
+    return <Nav source={{
+        kind: "static",
         data: {
             items: [
                 item(PATH, "manage.overview"),
@@ -44,5 +47,5 @@ export const navData = (t: TFunction, currentPath: string): NavSource => {
             currentName: null,
             parent: null,
         },
-    };
+    }} />;
 };

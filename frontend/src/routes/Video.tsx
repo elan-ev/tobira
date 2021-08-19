@@ -8,7 +8,7 @@ import type { Route } from "../router";
 import { Root } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
 import { NotFound } from "./NotFound";
-import { navFromQuery } from "../layout/Navigation";
+import { Nav, navFromQuery } from "../layout/Navigation";
 import { VideoBlock } from "../ui/blocks/Video";
 import { TextBlock } from "../ui/blocks/Text";
 import type { Track } from "../ui/Player";
@@ -67,7 +67,7 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
     const { title, tracks, description } = event;
     useTitle(title);
     return (
-        <Root navSource={navFromQuery(realm)}>
+        <Root nav={<Nav source={navFromQuery(realm)} />}>
             <h1>{title}</h1>
             <VideoBlock tracks={tracks as Track[]} />
             {description !== null && <TextBlock content={description} />}

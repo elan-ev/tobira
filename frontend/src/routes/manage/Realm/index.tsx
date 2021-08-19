@@ -10,7 +10,7 @@ import type {
 } from "../../../query-types/RealmManageQuery.graphql";
 import { loadQuery } from "../../../relay";
 import { Route } from "../../../router";
-import { navData } from "..";
+import { ManageNav } from "..";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
 import { DangerZone } from "./DangerZone";
@@ -61,10 +61,8 @@ type Props = {
  * otherwise shows a landing page.
  */
 const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => {
-    const { t } = useTranslation();
-
     const inner = queryRef == null ? <LandingPage /> : <DispatchRealmExists queryRef={queryRef} />;
-    return <Root navSource={navData(t, PATH)}>{inner}</Root>;
+    return <Root nav={<ManageNav currentPath={PATH} />}>{inner}</Root>;
 };
 
 

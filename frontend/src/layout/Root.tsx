@@ -3,8 +3,7 @@ import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
 import { Header } from "./Header";
-import { Nav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
-import type { NavSource } from "./Navigation";
+import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
 import { BurgerMenu } from "./Burger";
@@ -19,23 +18,21 @@ export const MAIN_PADDING = 16;
 export const OUTER_CONTAINER_MARGIN = "0 calc(max(0px, 100% - 1100px) * 0.1)";
 
 type Props = {
-    navSource: NavSource;
-    belowNav?: JSX.Element;
+    nav: JSX.Element | JSX.Element[];
 };
 
-export const Root: React.FC<Props> = ({ navSource, belowNav = null, children }) => {
+export const Root: React.FC<Props> = ({ nav, children }) => {
     const menu = useMenu();
+    const navElements = Array.isArray(nav) ? nav : [nav];
 
     return (
         <Outer disableScrolling={menu.state === "burger"}>
             <Header />
             {menu.state === "burger" && (
-                <BurgerMenu hide={() => menu.close()}>
-                    <Nav source={navSource} />
-                    {belowNav}
-                </BurgerMenu>
+                <BurgerMenu hide={() => menu.close()}>{navElements}</BurgerMenu>
             )}
             <Main>
+                {/* Sidebar */}
                 <div css={{
                     flex: "1 0 12.5%",
                     minWidth: 240,
@@ -45,9 +42,10 @@ export const Root: React.FC<Props> = ({ navSource, belowNav = null, children }) 
                         display: "none",
                     },
                 }}>
-                    <SideBox><Nav source={navSource} /></SideBox>
-                    {belowNav && <SideBox>{belowNav}</SideBox>}
+                    {navElements.map((elem, i) => <SideBox key={i}>{elem}</SideBox>)}
                 </div>
+
+                {/* Main part */}
                 <div css={{
                     width: "100%",
                     flex: "12 0 0",

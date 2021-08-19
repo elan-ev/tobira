@@ -10,7 +10,7 @@ import type {
 } from "../../../query-types/AddChildQuery.graphql";
 import { loadQuery } from "../../../relay";
 import { Route, useRouter } from "../../../router";
-import { navData } from "..";
+import { ManageNav } from "..";
 import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
@@ -59,10 +59,8 @@ type Props = {
  * otherwise shows a landing page.
  */
 const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => {
-    const { t } = useTranslation();
-
     const inner = queryRef == null ? <LandingPage /> : <DispatchRealmExists queryRef={queryRef} />;
-    return <Root navSource={navData(t, PATH)}>{inner}</Root>;
+    return <Root nav={<ManageNav currentPath={PATH} />}>{inner}</Root>;
 };
 
 
