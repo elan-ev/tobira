@@ -53,21 +53,20 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
         },
     }, () => {});
 
-
     return (
         <div>
             {realm.parent !== null && <>
                 <LinkWithIcon
                     to={realm.parent.path === "" ? "/" : realm.parent.path}
                     iconPos="left"
-                    css={{ padding: "6px 12px" }}
+                    css={{ padding: "6px 4px" }}
                 >
-                    <FiChevronLeft css={{ marginRight: 6 }}/>
+                    <FiChevronLeft css={{ marginRight: "8px !important" }}/>
                     {realm.parent.isRoot ? t("home") : realm.parent.name}
                 </LinkWithIcon>
                 <div css={{
                     padding: 16,
-                    paddingLeft: 12 + 22 + 12,
+                    paddingLeft: 4 + 22 + 8,
                     fontWeight: "bold",
                     backgroundColor: "var(--nav-color)",
                     color: prefersBlackText(CONFIG.theme.color.navigation) ? "black" : "white",
@@ -75,16 +74,18 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
             </>}
             <LinkList
                 items={children.map(child => (
-                    <Item key={child.id} label={child.name} link={child.path} />
+                    <Item
+                        key={child.id}
+                        label={child.name}
+                        link={child.path}
+                    />
                 ))}
                 css={{
                     "& > li": {
                         borderBottom: "1px solid var(--grey80)",
-                        "& > a, & > b": {
-                            display: "flex",
-                            alignItems: "center",
-                            padding: "6px 12px",
-                            paddingLeft: 12 + 22 + 12,
+                        "& > a": {
+                            paddingRight: 6,
+                            paddingLeft: realm.parent != null ? 4 + 22 + 8 : 16,
                         },
                     },
                 }}

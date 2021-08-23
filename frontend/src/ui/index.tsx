@@ -37,7 +37,7 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
                     borderBottom: "none",
                 },
                 "& > *": {
-                    padding: "6px 12px",
+                    padding: "6px 10px",
                     display: "flex",
                 },
             },
