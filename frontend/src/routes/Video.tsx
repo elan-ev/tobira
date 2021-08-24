@@ -11,7 +11,7 @@ import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { VideoBlock } from "../ui/blocks/Video";
 import { TextBlock } from "../ui/blocks/Text";
-import type { Track } from "../ui/Player";
+import type { Track } from "../ui/player";
 import { useTranslation } from "react-i18next";
 import { useTitle } from "../util";
 

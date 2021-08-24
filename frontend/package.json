@@ -38,6 +38,7 @@
     "graphql": "^15.5.1",
     "i18next": "^20.4.0",
     "i18next-browser-languagedetector": "^6.1.2",
+    "paella-core": "^1.0.0-alpha.1",
     "plyr-react": "^3.0.8",
     "raw-loader": "^4.0.2",
     "react": "^18.0.0-alpha-88d121899-20210811",

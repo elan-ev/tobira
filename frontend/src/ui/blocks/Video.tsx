@@ -1,6 +1,6 @@
 import { Block } from "../Blocks";
-import { Player } from "../Player";
-import type { Track } from "../Player";
+import { Player } from "../player";
+import type { Track } from "../player";
 
 
 type Props = {
