@@ -53,9 +53,7 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async (): Promise<Manifest> => manifest,
             });
-            paella.current.loadManifest()
-                .then(() => console.log("Done"))
-                .catch(e => console.error(e));
+            paella.current.loadManifest();
         }
     }, []);
 
@@ -63,6 +61,8 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
         <div
             ref={ref}
             css={{
+                // TODO: a fixed 16:9 aspect ratio is not optimal here. But it's
+                // unclear what dimensions the container should have.
                 width: `min(100%, (90vh - var(--outer-header-height) - 80px) * ${16 / 9})`,
                 height: "auto",
                 minWidth: "320px",
@@ -131,6 +131,16 @@ const PAELLA_CONFIG = {
                     title: "Presenter and presentation",
                 },
             ],
+        },
+        // This is a workaround for a bug in Paella. We don't want to use triple videos.
+        // https://github.com/polimediaupv/paella-core/issues/6
+        "es.upv.paella.tripleVideo": {
+            enabled: false,
+            validContent: [],
+        },
+        "es.upv.paella.videoCanvas": {
+            enabled: true,
+            order: 1,
         },
         "es.upv.paella.mp4VideoFormat": {
             enabled: true,
