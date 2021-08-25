@@ -7,10 +7,10 @@ import CONFIG from "../../config";
 import { PlayerProps } from ".";
 
 
-export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks }) => {
+export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
     const source = {
         type: "video" as const,
-        title: "TODO",
+        title,
         sources: tracks.map(track => ({
             src: track.uri,
             type: track.mimetype ?? undefined,

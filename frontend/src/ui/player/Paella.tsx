@@ -5,7 +5,7 @@ import { PlayerProps, Track } from ".";
 import { bug } from "../../util/err";
 
 
-export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks }) => {
+export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration }) => {
     const ref = useRef<HTMLDivElement>(null);
     const paella = useRef<Paella>();
 
@@ -14,10 +14,7 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks }) => {
 
     // Video/event specific information we have to give to Paella.
     const manifest = {
-        metadata: {
-            duration: 909.13, // TODO
-            title: "TODO",
-        },
+        metadata: { title, duration },
         streams: [
             {
                 content: "presentation",

@@ -32,6 +32,7 @@ const query = graphql`
             creator
             created
             updated
+            duration
             series { title }
             tracks { uri flavor mimetype resolution }
         }
@@ -65,11 +66,12 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
         : null;
 
     const { title, tracks, description } = event;
+    const duration = event.duration ?? 0; // <-- TODO
     useTitle(title);
     return (
         <Root nav={<Nav fragRef={realm} />}>
             <h1>{title}</h1>
-            <VideoBlock tracks={tracks as Track[]} />
+            <VideoBlock tracks={tracks as Track[]} title={title} duration={duration} />
             {description !== null && <TextBlock content={description} />}
             <table css={{
                 marginBottom: 100,

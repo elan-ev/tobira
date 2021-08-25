@@ -5,6 +5,8 @@ import { PlyrPlayer } from "./Plyr";
 
 
 export type PlayerProps = {
+    title: string;
+    duration: number;
     tracks: Track[];
 };
 
@@ -15,9 +17,9 @@ export type Track = {
     resolution: number[] | null;
 };
 
-export const Player: React.FC<PlayerProps> = ({ tracks }) => {
-    const flavors = new Set(tracks.map(t => t.flavor));
+export const Player: React.FC<PlayerProps> = props => {
+    const flavors = new Set(props.tracks.map(t => t.flavor));
     return flavors.size === 1
-        ? <PlyrPlayer tracks={tracks} />
-        : <PaellaPlayer tracks={tracks} />;
+        ? <PlyrPlayer {...props} />
+        : <PaellaPlayer {...props} />;
 };
