@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 
 import { RelayEnvironmentProvider } from "react-relay/hooks";
-import { environment, ServerError, APIError } from "./relay";
+import { environment } from "./relay";
 
 import { GlobalStyle } from "./GlobalStyle";
 import { ActiveRoute, Router } from "./router";
@@ -10,6 +10,7 @@ import { MenuProvider } from "./layout/MenuState";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
 import { InitialLoading } from "./layout/Root";
+import { GraphQLErrorBoundary } from "./relay/boundary";
 
 
 type Props = {
@@ -48,39 +49,9 @@ const SilenceEmotionWarnings: React.FC = ({ children }) => {
 };
 
 const APIWrapper: React.FC = ({ children }) => (
-    <APIErrorBoundary>
+    <GraphQLErrorBoundary>
         <Suspense fallback={<InitialLoading />}>
             {children}
         </Suspense>
-    </APIErrorBoundary>
+    </GraphQLErrorBoundary>
 );
-
-// TODO This is of course rather bare bones;
-// it mainly serves to demonstrate what we have to do to **get to** the
-// errors we might get from Relay, not necessarily how to handle them.
-class APIErrorBoundary extends React.Component<unknown, boolean> {
-    public constructor(props: unknown) {
-        super(props);
-        this.state = false;
-    }
-
-    public static getDerivedStateFromError(error: unknown) {
-        if (error instanceof ServerError) {
-            // >= 400 response from the API
-            return true;
-        } else if (error instanceof APIError) {
-            // OK response, but it contained GraphQL errors.
-            // It might be a good idea to handle these in more specific error boundaries.
-            // For now, though, we just lump it in with the rest.
-            return true;
-        }
-        // Not our problem
-        return false;
-    }
-
-    public render() {
-        return this.state
-            ? "An error occured (TODO)"
-            : this.props.children;
-    }
-}

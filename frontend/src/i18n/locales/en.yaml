@@ -11,6 +11,13 @@ direction-down: Down
 navigation: Navigation
 rename: Rename
 
+graphql:
+  network-error: >
+    Server could not be reached due to a network error. Are you connected to the Internet?
+  server-error: 'Error: unexpected response from server.'
+  api-error: Unexpected server error.
+  detailed-error-info: 'Detailed error information for developers:'
+
 not-found:
   page-not-found: Page not found
   video-not-found: Video not found
