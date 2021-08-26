@@ -3,27 +3,14 @@ import Plyr from "plyr-react";
 import plyrCss from "plyr/dist/plyr.css";
 import { Global } from "@emotion/react";
 
-import CONFIG from "../config";
+import CONFIG from "../../config";
+import { PlayerProps } from ".";
 
 
-type PlayerProps = {
-    tracks: Track[];
-};
-
-export type Track = {
-    uri: string;
-    flavor: string;
-    mimetype: string | null;
-    resolution: number[] | null;
-};
-
-export const Player: React.FC<PlayerProps> = ({ tracks }) => {
-    // TODO: check whether there are two kinds of track flavors. In that case,
-    // Paella player should be used and some logic below has to change.
-
+export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
     const source = {
         type: "video" as const,
-        title: "test",
+        title,
         sources: tracks.map(track => ({
             src: track.uri,
             type: track.mimetype ?? undefined,
