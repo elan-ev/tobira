@@ -13,8 +13,8 @@ rename: Umbenennen
 
 graphql:
   network-error: >
-    Konnte Server aufgrund eines Netzwerkfehlers nicht erreichen. Sind Sie mit
-    dem Internet verbunden?
+    Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
+    mit dem Internet verbunden?
   server-error: 'Fehler: Unerwartete Antwort vom Server.'
   api-error: Unerwarteter Fehler vom Server.
   detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'

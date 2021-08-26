@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 import { Transition } from "react-transition-group";
 
 import { AboutRoute } from "./routes/About";
@@ -124,12 +124,14 @@ const matchRoute = (href: string): MatchedRoute<any> => {
  * The routing context is just used internally by this module to allow setting
  * a new route from `<Link>` components anywhere in the tree.
  */
-const RoutingContext = React.createContext<Context | null>(null);
-type Context = {
+export const RoutingContext = React.createContext<RouterControl | null>(null);
+type ContextData = {
     activeRoute: MatchedRoute<any>;
     setActiveRoute: (newRoute: MatchedRoute<any>) => void;
+    onRouteChangeListeners: OnRouteChangeListener[];
 };
 
+type OnRouteChangeListener = () => void;
 
 type RouterProps = {
     initialRoute: MatchedRoute<any>;
@@ -137,11 +139,19 @@ type RouterProps = {
 
 /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
 export const Router: React.FC<RouterProps> = ({ initialRoute, children }) => {
+    const onRouteChangeListeners = useRef<OnRouteChangeListener[]>([]);
     const [activeRoute, setActiveRouteRaw] = useState(initialRoute);
     const [isPending, startTransition] = useTransition();
 
+    console.log("num listeners: ", onRouteChangeListeners.current.length);
+
     const setActiveRoute = (newRoute: MatchedRoute<any>) => {
-        startTransition(() => setActiveRouteRaw(newRoute));
+        startTransition(() => {
+            setActiveRouteRaw(newRoute);
+            for (const listener of onRouteChangeListeners.current) {
+                listener();
+            }
+        });
     };
 
     // We need to listen to `popstate` events.
@@ -166,8 +176,14 @@ export const Router: React.FC<RouterProps> = ({ initialRoute, children }) => {
         /* eslint-enable */
     });
 
+    const contextData = {
+        setActiveRoute,
+        activeRoute,
+        onRouteChangeListeners: onRouteChangeListeners.current,
+    };
+
     return (
-        <RoutingContext.Provider value={{ setActiveRoute, activeRoute }}>
+        <RoutingContext.Provider value={new RouterControl(contextData)}>
             <LoadingIndicator isPending={isPending} />
             {children}
         </RoutingContext.Provider>
@@ -184,7 +200,7 @@ export const ActiveRoute: React.FC = () => {
         throw new Error("<ActiveRoute> used without a parent <Router>! That's not allowed.");
     }
 
-    return context.activeRoute.render(context.activeRoute.prepared);
+    return context.data.activeRoute.render(context.data.activeRoute.prepared);
 };
 
 
@@ -214,7 +230,7 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
 
         e.preventDefault();
         const href = (e.currentTarget as HTMLAnchorElement).href;
-        context.setActiveRoute(matchRoute(href));
+        context.data.setActiveRoute(matchRoute(href));
 
         history.pushState(null, "", href);
 
@@ -229,26 +245,32 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
 
 
 export class RouterControl {
-    private context: Context;
+    /** Should not be used outside of this module */
+    public data: ContextData;
 
-    public constructor(context: Context) {
-        this.context = context;
+    /** Should not be used outside of this module */
+    public constructor(data: ContextData) {
+        this.data = data;
     }
 
     public goto(uri: string): void {
         const href = new URL(uri, document.baseURI).href;
-        this.context.setActiveRoute(matchRoute(href));
+        this.data.setActiveRoute(matchRoute(href));
         history.pushState(null, "", href);
+    }
+
+    public listen(listener: () => void): void {
+        this.data.onRouteChangeListeners.push(listener);
     }
 }
 
 export const useRouter = (): RouterControl => {
-    const context = React.useContext(RoutingContext);
-    if (context === null) {
+    const control = React.useContext(RoutingContext);
+    if (control === null) {
         throw new Error("`useRouter` used without a parent <Router>! That's not allowed.");
     }
 
-    return new RouterControl(context);
+    return control;
 };
 
 /**
