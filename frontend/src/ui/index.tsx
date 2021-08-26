@@ -27,13 +27,17 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             listStyle: "none",
             margin: 0,
             padding: 0,
+            "& a:focus-visible": {
+                outline: "none",
+                boxShadow: "inset 0 0 0 2px var(--accent-color)",
+            },
             "& > li": {
                 borderBottom: "1px solid var(--grey80)",
                 "&:last-of-type": {
                     borderBottom: "none",
                 },
                 "& > *": {
-                    padding: "6px 12px",
+                    padding: "6px 10px",
                     display: "flex",
                 },
             },
@@ -92,3 +96,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({ to, iconPos, childre
         >{children}</Link>
     );
 };
+
+export const CenteredContent: React.FC = ({ children }) => (
+    <div css={{ margin: "0 auto", maxWidth: 600 }}>{children}</div>
+);

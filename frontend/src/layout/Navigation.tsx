@@ -10,97 +10,21 @@ import { LinkList, LinkWithIcon } from "../ui";
 import { match } from "../util";
 
 
-/**
- * Source of navigation data: either it's stored directly or will be retrieved
- * via query.
- */
-export type NavSource = {
-    kind: "static";
-    data: Navigation;
-} | {
-    kind: "query";
-    fragRef: NavigationData$key;
-};
-
-export const navFromQuery = (fragRef: NavigationData$key): NavSource => (
-    { kind: "query", fragRef }
-);
-
-
-/**
- * Defines everything about the navigation that's either shown as box
- * (desktop) or as burger menu (mobile).
- */
-export type Navigation = {
-    items: NavItem[];
-    currentName: string | null;
-    parent: null | {
-        name: string;
-        link: string;
-    };
-};
-
-type NavItem = {
-    /** Some unique ID. */
-    id: string;
-
-    /** What's shown to the user. */
-    label: string;
-
-    /** Absolute path, without domain. */
-    link: string;
-
-    /** Whether this item is currently the active route. */
-    active: boolean;
-};
-
 /** The breakpoint, in pixels, where mobile/desktop navigations are swapped. */
-export const BREAKPOINT = 850;
+export const BREAKPOINT = 880;
 
 
-
-// ===== Helper machinery to be able to work with both kinds of navigation sources ===============
-
-/** Prop type directly containing navigation data */
-type NavDataProp = {
-    nav: Navigation;
-};
-
-/** Prop type containing a source for navigation data */
-type NavSourceProp = {
-    source: NavSource;
-};
-
-/** Props defining a nested component and its props */
-type ForwardProps<InnerProps> = {
-    Component: React.ComponentType<InnerProps & NavDataProp>;
-    innerProps: InnerProps;
-};
-
-/**
- * Component taking a navigation data source and an inner component. Renders the
- * inner component with the resolved navigation data (either directly or by
- * extracting from the given query).
- */
-function Dispatch<InnerProps>(
-    { source, Component, innerProps }: ForwardProps<InnerProps> & NavSourceProp,
-) {
-    if (source.kind === "static") {
-        return React.createElement(Component, { nav: source.data, ...innerProps });
-    } else {
-        return <ViaQuery fragRef={source.fragRef} Component={Component} innerProps={innerProps} />;
-    }
-}
-
-type ViaQueryProps<InnerProps> = ForwardProps<InnerProps> & {
+type Props = {
     fragRef: NavigationData$key;
 };
 
 /**
- * Takes a fragRef, extracts navigation data from it and renders inner
- * component with said data.
+ * Navigation for realm pages. Shows all children of the current realm, as well
+ * as the current realm name and a button to the parent. The `fragRef` is a
+ * reference to a realm that has the data of the `NavigationData` fragment in
+ * it.
  */
-function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<InnerProps>) {
+export const Nav: React.FC<Props> = ({ fragRef }) => {
     const { t, i18n } = useTranslation();
     const realm = useFragment(
         graphql`
@@ -113,134 +37,80 @@ function ViaQuery<InnerProps>({ fragRef, Component, innerProps }: ViaQueryProps<
                     isRoot
                     name
                     path
-                    childOrder
-                    children { id name path }
                 }
             }
         `,
         fragRef,
     );
 
-    const [childOrder, items] = realm.children.length > 0
-        ? [
-            realm.childOrder,
-            realm.children.map(({ id, path, name }) => ({
-                id,
-                label: name,
-                link: `${path}`,
-                active: false,
-            })),
-        ]
-        : [
-            // The case where `realm.parent` is `null` only happens when there
-            // is only the root realm. So we can use dummy values as long as
-            // nothing crashes.
-            realm.parent?.childOrder ?? "ALPHABETIC_ASC",
-            (realm.parent?.children ?? []).map(({ id, name, path }) => ({
-                id,
-                label: name,
-                link: `${path}`,
-                active: id === realm.id,
-            })),
-        ];
-
-    match(childOrder, {
+    const children = [...realm.children];
+    match(realm.childOrder, {
         "ALPHABETIC_ASC": () => {
-            items.sort((a, b) => a.label.localeCompare(b.label, i18n.language));
+            children.sort((a, b) => a.name.localeCompare(b.name, i18n.language));
         },
         "ALPHABETIC_DESC": () => {
-            items.sort((a, b) => b.label.localeCompare(a.label, i18n.language));
+            children.sort((a, b) => b.name.localeCompare(a.name, i18n.language));
         },
     }, () => {});
 
-    const nav = {
-        items,
-        currentName: realm.name,
-        parent: realm.parent && {
-            name: realm.parent.isRoot ? t("home") : realm.parent.name,
-            link: realm.parent.path === "" ? "/" : `${realm.parent.path}`,
-        },
-    };
-
-    return React.createElement(Component, { nav, ...innerProps });
-}
-
-
-
-// ===== Desktop Navigation ======================================================================
-
-export const DesktopNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
-    <Dispatch source={source} Component={DesktopNavImpl} innerProps={innerProps} />
-);
-
-const DesktopNavImpl: React.FC<NavDataProp> = ({ nav }) => (
-    <LinkList items={nav.items.map(item => <Item key={item.id} item={item} />)} />
-);
-
-
-
-// ===== Mobile Navigation =======================================================================
-
-export const MobileNav: React.FC<NavSourceProp> = ({ source, ...innerProps }) => (
-    <Dispatch source={source} Component={MobileNavImpl} innerProps={innerProps} />
-);
-
-const MobileNavImpl: React.FC<NavDataProp> = ({ nav }) => (
-    <div>
-        {nav.parent !== null && <>
-            <LinkWithIcon to={nav.parent.link} iconPos="left" css={{ padding: "6px 12px" }}>
-                <FiChevronLeft css={{ marginRight: 6 }}/>
-                {nav.parent.name}
-            </LinkWithIcon>
-            <div css={{
-                padding: 16,
-                paddingLeft: 12 + 22 + 12,
-                fontWeight: "bold",
-                backgroundColor: "var(--nav-color)",
-                color: prefersBlackText(CONFIG.theme.color.navigation) ? "black" : "white",
-            }}>{nav.currentName}</div>
-        </>}
-        <LinkList
-            items={nav.items.map(item => <Item key={item.id} item={item} />)}
-            css={{
-                borderBottom: "1px solid var(--grey80)",
-                ...nav.parent === null && { borderTop: "1px solid var(--grey80)" },
-                "& > li": {
-                    borderBottom: "1px solid var(--grey80)",
-                    "& > a, & > b": {
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "6px 12px",
-                        paddingLeft: 12 + 22 + 12,
-                    },
-                },
-            }}
-        />
-    </div>
-);
-
-const Item: React.FC<{ item: NavItem }> = ({ item }) => {
-    if (item.active) {
-        return (
-            <b css={{ backgroundColor: "var(--grey92)", borderLeft: "4px solid var(--grey80)" }}>
-                {item.label}
-            </b>
-        );
-    } else {
-        return (
-            <LinkWithIcon to={item.link} iconPos="right">
+    return (
+        <div>
+            {realm.parent !== null && <>
+                <LinkWithIcon
+                    to={realm.parent.path === "" ? "/" : realm.parent.path}
+                    iconPos="left"
+                    css={{ padding: "6px 4px" }}
+                >
+                    <FiChevronLeft css={{ marginRight: "8px !important" }}/>
+                    {realm.parent.isRoot ? t("home") : realm.parent.name}
+                </LinkWithIcon>
                 <div css={{
-                    display: "-webkit-box",
-                    WebkitBoxOrient: "vertical",
-                    WebkitLineClamp: 3,
-                    textOverflow: "ellipsis",
-                    overflow: "hidden",
-                }}>{item.label}</div>
-                <FiChevronRight />
-            </LinkWithIcon>
-        );
-    }
+                    padding: 16,
+                    paddingLeft: 4 + 22 + 8,
+                    fontWeight: "bold",
+                    backgroundColor: "var(--nav-color)",
+                    color: prefersBlackText(CONFIG.theme.color.navigation) ? "black" : "white",
+                }}>{realm.name}</div>
+            </>}
+            <LinkList
+                items={children.map(child => (
+                    <Item
+                        key={child.id}
+                        label={child.name}
+                        link={child.path}
+                    />
+                ))}
+                css={{
+                    "& > li": {
+                        borderBottom: "1px solid var(--grey80)",
+                        "& > a": {
+                            paddingRight: 6,
+                            paddingLeft: realm.parent != null ? 4 + 22 + 8 : 16,
+                        },
+                    },
+                }}
+            />
+        </div>
+    );
 };
+
+type ItemProps = {
+    label: string;
+    link: string;
+};
+
+const Item: React.FC<ItemProps> = ({ label, link }) => (
+    <LinkWithIcon to={link} iconPos="right">
+        <div css={{
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: 3,
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+        }}>{label}</div>
+        <FiChevronRight />
+    </LinkWithIcon>
+);
 
 /**
  * Some routes don't need to fetch data themselves, but only for navigation.

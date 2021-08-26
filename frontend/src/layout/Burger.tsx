@@ -30,6 +30,10 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, children }) => (
             height: "100%",
             width: "clamp(260px, 75%, 450px)",
             overflowY: "auto",
+            borderTop: "1px solid var(--grey80)",
+            "& > *:first-child": {
+                borderBottom: "1px solid var(--grey80)",
+            },
         }}>
             {children}
         </div>

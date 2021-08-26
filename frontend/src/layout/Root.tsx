@@ -3,8 +3,7 @@ import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
 import { Header } from "./Header";
-import { DesktopNav, MobileNav, BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
-import type { NavSource } from "./Navigation";
+import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
 import { BurgerMenu } from "./Burger";
@@ -19,37 +18,39 @@ export const MAIN_PADDING = 16;
 export const OUTER_CONTAINER_MARGIN = "0 calc(max(0px, 100% - 1100px) * 0.1)";
 
 type Props = {
-    navSource: NavSource;
-    belowNav?: JSX.Element;
+    nav: JSX.Element | JSX.Element[];
 };
 
-export const Root: React.FC<Props> = ({ navSource, belowNav = null, children }) => {
+export const Root: React.FC<Props> = ({ nav, children }) => {
     const menu = useMenu();
+    const navElements = Array.isArray(nav) ? nav : [nav];
+    const navExists = navElements.length > 0;
 
     return (
         <Outer disableScrolling={menu.state === "burger"}>
-            <Header />
-            {menu.state === "burger" && (
-                <BurgerMenu hide={() => menu.close()}>
-                    <MobileNav source={navSource} />
-                    {belowNav}
-                </BurgerMenu>
+            <Header hideNavIcon={!navExists} />
+            {menu.state === "burger" && navExists && (
+                <BurgerMenu hide={() => menu.close()}>{navElements}</BurgerMenu>
             )}
             <Main>
-                <div css={{
+                {/* Sidebar */}
+                {navExists && <div css={{
                     flex: "1 0 12.5%",
                     minWidth: 240,
                     maxWidth: 360,
-                    marginRight: 32,
+                    marginRight: 48,
                     [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                         display: "none",
                     },
                 }}>
-                    <SideBox><DesktopNav source={navSource} /></SideBox>
-                    {belowNav && <SideBox>{belowNav}</SideBox>}
-                </div>
+                    {navElements.map((elem, i) => <SideBox key={i}>{elem}</SideBox>)}
+                </div>}
+
+                {/* Main part */}
                 <div css={{
                     width: "100%",
+                    // To prevent a child growing this div larger than 100% in width
+                    overflow: "hidden",
                     flex: "12 0 0",
                     "& > h1": { margin: "12px 0" },
                     "& > h1:first-child": { marginTop: 0 },

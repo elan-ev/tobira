@@ -12,7 +12,7 @@ import { Blocks } from "../ui/Blocks";
 import type { Route } from "../router";
 import { Root } from "../layout/Root";
 import { NotFound } from "./NotFound";
-import { navFromQuery } from "../layout/Navigation";
+import { Nav } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
 import { useTitle } from "../util";
@@ -64,12 +64,15 @@ const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
         }));
 
     const isRoot = realm.parent === null;
-    const editLinks = <RealmEditLinks path={path} />;
     const title = isRoot ? CONFIG.siteTitle : realm.name;
+    const nav = [
+        <Nav key="nav" fragRef={realm} />,
+        <RealmEditLinks key="edit-buttons" path={path} />,
+    ];
     useTitle(title, isRoot);
 
     return (
-        <Root navSource={navFromQuery(realm)} belowNav={editLinks}>
+        <Root nav={nav}>
             {!isRoot && <Breadcrumbs path={breadcrumbs} />}
             {title && <h1>{title}</h1>}
             <Blocks realm={realm} />

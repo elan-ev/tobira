@@ -17,6 +17,7 @@ import {
 } from "../../../query-types/DangerZoneRemoveRealmMutation.graphql";
 import { useRouter } from "../../../router";
 import { FormEvent, useState } from "react";
+import { Modal } from "../../../ui/Modal";
 
 
 const fragment = graphql`
@@ -175,6 +176,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
     const [commit, isInFlight] = useMutation(removeRealmMutation);
     const router = useRouter();
     const [error, setError] = useState(null);
+    const [modalActive, setModalActive] = useState(false);
 
     const remove = (e: FormEvent) => {
         setError(null);
@@ -195,25 +197,38 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
         e.preventDefault();
     };
 
+    const buttonContent = realm.numberOfDescendants === 0
+        ? t("manage.realm.danger-zone.delete.button-single")
+        : <Trans
+            i18nKey="manage.realm.danger-zone.delete.button"
+            values={{ numSubPages: realm.numberOfDescendants }}
+        >Foo<strong>count</strong>Bar</Trans>;
+
     return <>
         <h3>{t("manage.realm.danger-zone.delete.heading")}</h3>
         <p css={{ fontSize: 14 }}>
             {t("manage.realm.danger-zone.delete.warning")}
         </p>
-        <form onSubmit={remove} css={{ marginTop: 32, textAlign: "center" }}>
-            <Button danger>
-                <span>
-                    {realm.numberOfDescendants === 0
-                        ? t("manage.realm.danger-zone.delete.button-single")
-                        : <Trans
-                            i18nKey="manage.realm.danger-zone.delete.button"
-                            values={{ numSubPages: realm.numberOfDescendants }}
-                        >Foo<strong>count</strong>Bar</Trans>
-                    }
-                </span>
+        <div css={{ marginTop: 32, textAlign: "center" }}>
+            <Button danger onClick={() => setModalActive(true)}>
+                <span>{buttonContent}</span>
             </Button>
-            {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
-            <ErrorBox>{error}</ErrorBox>
-        </form>
+        </div>
+        {modalActive && (
+            <Modal title={t("manage.are-you-sure")} close={() => setModalActive(false)}>
+                <p>
+                    <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone">
+                        foo<strong>bar</strong>baz
+                    </Trans>
+                </p>
+                <form onSubmit={remove} css={{ marginTop: 32, textAlign: "center" }}>
+                    <Button danger>
+                        <span>{buttonContent}</span>
+                    </Button>
+                    {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
+                    <ErrorBox>{error}</ErrorBox>
+                </form>
+            </Modal>
+        )}
     </>;
 };

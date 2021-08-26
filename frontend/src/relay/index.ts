@@ -8,7 +8,7 @@ import type {
     VariablesOf,
 } from "relay-runtime";
 
-import { hasErrors, APIError, ServerError } from "./errors";
+import { hasErrors, APIError, ServerError, NetworkError, NotJson } from "./errors";
 
 
 export const environment = new Environment({
@@ -19,16 +19,31 @@ export const environment = new Environment({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query, variables }),
+            }).catch(e => {
+                throw new NetworkError(e);
             });
+
             if (!response.ok) {
                 throw new ServerError(response);
             }
-            // TODO I'm not actually sure we really always get a singular response ...
-            const json = await response.json() as GraphQLSingularResponse;
-            if (hasErrors(json)) {
-                throw new APIError(json);
+
+            // Download full response and parse as JSON.
+            const text = await response.text().catch(e => {
+                throw new NetworkError(e);
+            });
+            let json;
+            try {
+                json = JSON.parse(text);
+            } catch (e) {
+                throw new NotJson(e);
             }
-            return json;
+
+            // TODO I'm not actually sure we really always get a singular response ...
+            const gqlResponse = json as GraphQLSingularResponse;
+            if (hasErrors(gqlResponse)) {
+                throw new APIError(gqlResponse);
+            }
+            return gqlResponse;
         },
     ),
 });

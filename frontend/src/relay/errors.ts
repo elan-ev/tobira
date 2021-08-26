@@ -11,19 +11,41 @@ import type {
 // or even (partly) try to recover from then.
 // With our current usage of Relay, these will be most useful in error boundaries.
 
+/** A network error while fetching the response. */
+export class NetworkError extends Error {
+    public inner: Error;
+
+    public constructor(inner: Error) {
+        super();
+        this.name = "Network Error";
+        this.inner = inner;
+        this.message = `network error while contacting GraphQL API: ${inner}`;
+    }
+}
+
+/** When the API returns invalid JSON */
+export class NotJson extends Error {
+    public inner: Error;
+
+    public constructor(inner: Error) {
+        super();
+        this.name = "Non-JSON GraphQL Response";
+        this.inner = inner;
+        this.message = `GraphQL API returned invalid JSON: ${inner}`;
+    }
+}
 
 /**
  * This error gets thrown if there was an error "below" the layer of GraphQL,
- * i.e. when we didn't even get a response from the API. This can happen
- * because there was a network level error, but specifically also happens
- * whenever we get a `4xx` or `5xx` response from the backend.
+ * i.e. when we didn't even get a response from the API. This can happen if the
+ * status code is `4xx` or `5xx`.
  */
 export class ServerError extends Error {
     public response: Response;
 
     public constructor(response: Response) {
         super(response.statusText);
-        this.name = "ServerEror";
+        this.name = "Server Error";
         this.response = response;
     }
 }

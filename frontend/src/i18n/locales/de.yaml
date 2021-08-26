@@ -11,6 +11,14 @@ direction-down: Runter
 navigation: Navigation
 rename: Umbenennen
 
+graphql:
+  network-error: >
+    Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
+    mit dem Internet verbunden?
+  server-error: 'Fehler: Unerwartete Antwort vom Server.'
+  api-error: Unerwarteter Fehler vom Server.
+  detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
+
 not-found:
   page-not-found: Seite nicht gefunden
   video-not-found: Video nicht gefunden
@@ -67,6 +75,9 @@ realm:
 
 manage:
   overview: Übersicht
+
+  are-you-sure: Sind Sie sich sicher?
+
   realm:
     nav-label: Seiteneinstellungen
     invalid-path: >
@@ -82,11 +93,7 @@ manage:
     path-must-be-alphanum-dash: >
       Das Pfadsegment darf nur aus Ziffern, Kleinbuchstaben und Bindestrichen (-) bestehen.
 
-    landing-page:
-      body: >
-        Um Einstellungen einer Seite zu bearbeiten, besuchen Sie diese auf gewohnte
-        Weise und klicken Sie auf den Button „Seiteneinstellungen“ am linken
-        Rand.
+    no-path: Pfad fehlt! Den Link, den Sie aufgerufen haben, ist ungültig.
 
     general:
       rename-label: Seitenname
@@ -121,6 +128,7 @@ manage:
         heading: Seite löschen
         button: Diese Seite und <1>{{numSubPages}}</1> Unterseiten löschen
         button-single: Seite löschen
+        cannot-be-undone: Diese Aktion kann <1>nicht</1> rückgängig gemacht werden!
         generic-network-error: Löschung fehlgeschlagen.
         warning: >
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
@@ -134,9 +142,3 @@ manage:
     below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
     button-create-page: Seite erstellen
     generic-network-error: Seite konnte nicht erstellt werden.
-    landing-page:
-      body: >
-        Um eine neue Seite hinzuzufügen, besuchen Sie die gewünschte Oberseite
-        auf gewohnte Weise und klicken Sie auf den Button „Unterseite hinzufügen“
-        am linken Rand.
-

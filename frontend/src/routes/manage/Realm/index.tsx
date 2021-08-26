@@ -10,7 +10,6 @@ import type {
 } from "../../../query-types/RealmManageQuery.graphql";
 import { loadQuery } from "../../../relay";
 import { Route } from "../../../router";
-import { navData } from "..";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
 import { DangerZone } from "./DangerZone";
@@ -19,6 +18,8 @@ import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 import { TFunction } from "i18next";
 import { RegisterOptions } from "react-hook-form";
 import { Card } from "../../../ui/Card";
+import { Nav } from "../../../layout/Navigation";
+import { CenteredContent } from "../../../ui";
 
 
 // Route definition
@@ -47,6 +48,7 @@ const query = graphql`
             ... GeneralRealmData
             ... ChildOrderEditData
             ... DangerZoneRealmData
+            ... NavigationData
         }
     }
 `;
@@ -60,23 +62,22 @@ type Props = {
  * Entry point: checks if a path is given. If so forwards to `DispatchRealmExists`,
  * otherwise shows a landing page.
  */
-const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => {
+const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => (
+    queryRef == null
+        ? <NoPath />
+        : <DispatchRealmExists queryRef={queryRef} />
+);
+
+
+/** Error for when no realm path is given */
+export const NoPath: React.FC = () => {
     const { t } = useTranslation();
 
-    const inner = queryRef == null ? <LandingPage /> : <DispatchRealmExists queryRef={queryRef} />;
-    return <Root navSource={navData(t, PATH)}>{inner}</Root>;
-};
-
-
-/** If no realm path is given, we just tell the user how to get going */
-const LandingPage: React.FC = () => {
-    const { t } = useTranslation();
-
-    return <>
-        <h1>{t("manage.realm.nav-label")}</h1>
-
-        <p css={{ maxWidth: 600 }}>{t("manage.realm.landing-page.body")}</p>
-    </>;
+    return <Root nav={[]}>
+        <CenteredContent>
+            <Card kind="error">{t("manage.realm.no-path")}</Card>
+        </CenteredContent>
+    </Root>;
 };
 
 
@@ -91,15 +92,16 @@ type DispatchRealmExistsProps = {
 const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) => {
     const { realm } = usePreloadedQuery(query, queryRef);
     return !realm
-        ? <PathInvalid />
-        : <SettingsPage realm={realm} />;
+        ? <Root nav={[]}><PathInvalid /></Root>
+        : <Root nav={<Nav fragRef={realm} />}><SettingsPage realm={realm} /></Root>;
 };
 
 
-// TODO: improve
-const PathInvalid: React.FC = () => {
+export const PathInvalid: React.FC = () => {
     const { t } = useTranslation();
-    return <Card kind="error">{t("manage.realm.invalid-path")}</Card>;
+    return <CenteredContent>
+        <Card kind="error">{t("manage.realm.invalid-path")}</Card>
+    </CenteredContent>;
 };
 
 

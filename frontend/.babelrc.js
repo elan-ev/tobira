@@ -17,7 +17,12 @@ module.exports = {
             debug: false,
             targets: manifest.browserslist,
         }],
-        "@babel/preset-typescript",
+        [
+            "@babel/preset-typescript",
+            {
+                "allowDeclareFields": true,
+            },
+        ],
         [
             "@babel/preset-react",
             {
