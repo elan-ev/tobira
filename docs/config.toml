@@ -1,0 +1,202 @@
+# Configuration for Tobira.
+#
+# All relative paths are relative to the location of this configuration file.
+
+[general]
+# The main title of the video portal. Used in the HTML `<title>`, as main
+# heading on the home page, and potentially more.
+#
+# TODO: Make it possible to specify this for different languages.
+#
+# Required! This value must be specified.
+#site_title =
+
+[db]
+# The username of the database user.
+#
+# Default value: "tobira"
+#user = "tobira"
+
+# The password of the database user.
+#
+# Required! This value must be specified.
+#password =
+
+# The host the database server is running on.
+#
+# Default value: "127.0.0.1"
+#host = "127.0.0.1"
+
+# The port the database server is listening on. (Just useful if your
+# database server is not running on the default PostgreSQL port).
+#
+# Default value: 5432
+#port = 5432
+
+# The name of the database to use.
+#
+# Default value: "tobira"
+#database = "tobira"
+
+[http]
+# The TCP port the HTTP server should listen on.
+#
+# Default value: 3080
+#port = 3080
+
+# The bind address to listen on.
+#
+# Default value: "127.0.0.1"
+#address = "127.0.0.1"
+
+# Unix domain socket to listen on. Specifying this will overwrite
+# the TCP configuration. Example: "/tmp/tobira.socket".
+#unix_socket =
+
+# Unix domain socket file permissions.
+#
+# Default value: 493
+#unix_socket_permissions = 493
+
+[log]
+# Determines how many messages are logged. Log messages below
+# this level are not emitted. Possible values: "trace", "debug",
+# "info", "warn", "error" and "off".
+#
+# Default value: "debug"
+#level = "debug"
+
+# If this is set, log messages are also written to this file.
+# Example: "/var/log/tobira.log".
+#file =
+
+# If this is set to `false`, log messages are not written to stdout.
+#
+# Default value: true
+#stdout = true
+
+[sync]
+# Host of the connected Opencast instance. This host has to be reachable
+# via HTTPS (or HTTP, see `use_insecure_connection`). If no port is
+# specified here, the default HTTPS port 443 (or HTTP port 80) is used.
+# Example: "localhost:8080".
+#
+# Required! This value must be specified.
+#host =
+
+# If set to `true`, Tobira will communicate with Opencast via HTTP instead of
+# HTTPS. This is strongly recommended against! The HTTP requests contain the
+# unencrypted `sync_password`! Setting this to `true` is only allowed if
+# the `host` resolves to a loopback address.
+#
+# Default value: false
+#use_insecure_connection = false
+
+# Username of the user used to communicate with Opencast. This user has to have
+# access to all events and series. Currently, that user has to be admin.
+#
+# Required! This value must be specified.
+#user =
+
+# Password of the user used to communicate with Opencast.
+#
+# Required! This value must be specified.
+#password =
+
+# A rough estimate of how many items (events & series) are transferred in
+# each HTTP request while harvesting (syncing) with the Opencast
+# instance.
+#
+# A very large number might cause problems due to the Opencast or Tobira
+# node having to hold that many items in memory, or due to network
+# request size restrictions. Too small of a number means that the HTTP
+# overhead will become more significant, thus slowing down the syncing
+# process.
+#
+# Also, due to `TIME_BUFFER_SIZE` on the Opencast side (see its docs for
+# more information), if the number of items that change within one
+# `TIME_BUFFER_SIZE` is larger than this preferred harvest size, lots of
+# events could be transferred repeatedly via the harvest API.
+#
+# Default value: 500
+#preferred_harvest_size = 500
+
+[theme]
+# Default value: 50
+#header_height = 50
+
+# Path to CSS file that includes all used font files and sets the variable
+# `--main-font` in the `:root` selector. For example:
+#
+# ```
+# :root {
+#     --main-font: 'Open Sans';
+# }
+#
+# @font-face { font-family: 'Open Sans'; src: ...; }
+# ```
+#
+# If not set, the default font will be used.
+#fonts =
+
+[theme.logo]
+# The margin around the logo in terms of logo height. A value of 0.5 means
+# that there will be a margin around the logo of half the height of the
+# logo.
+#
+# Default value: 0.4
+#margin = 0.4
+
+# The normal, usually wide logo that is shown on desktop screens.
+
+[theme.logo.large]
+# Path to the image file.
+#
+# Required! This value must be specified.
+#path =
+
+# Resolution of the image. This is used to avoid layout shifts and to
+# calculate the correct logo margins. The exact numbers don't matter,
+# only the ratio between them does.
+#
+# Required! This value must be specified.
+#resolution =
+
+# A smaller logo (usually close to square) used for small screens, mostly
+# on mobile phones.
+
+[theme.logo.small]
+# Path to the image file.
+#
+# Required! This value must be specified.
+#path =
+
+# Resolution of the image. This is used to avoid layout shifts and to
+# calculate the correct logo margins. The exact numbers don't matter,
+# only the ratio between them does.
+#
+# Required! This value must be specified.
+#resolution =
+
+[theme.color]
+# Default value: "#357C58"
+#navigation = "#357C58"
+
+# Accent color with large contrast to navigation color.
+#
+# Default value: "#007A96"
+#accent = "#007A96"
+
+# Grey tone with 50% lightness/brightness. Several brighter and
+# darker variants of this are created automatically. This is
+# configurable in case you want to have a slightly colored grey,
+# e.g. slightly warm.
+#
+# Default value: "#808080"
+#grey50 = "#808080"
+
+# A usually red color used to indicate errors, potentially destructive
+# actions, and the like.
+#
+# Default value: "#b64235"
+#danger = "#b64235"
