@@ -92,3 +92,9 @@ To locally modify the workflow:
 
 - Copy the configuration: `cp floof.yaml floofy.yaml`
 - Tell git to ignore your copy: `echo /floofy.yaml >> .git/info/exclude`
+
+
+## Name
+
+__Tobira__ is the name of the Japanese kanji 扉 for "door" or "hinged door".
+
