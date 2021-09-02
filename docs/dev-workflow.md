@@ -49,6 +49,14 @@ The `db` subcommdand of Tobira offers a few useful commands.
 See `cargo run -- db --help` for more information.
 
 
+## IDE/editor/dev environment
+
+We recommend using TypeScript and Rust language servers to ease development a lot.
+For Rust, use [`rust-analyzer`](https://rust-analyzer.github.io/) as it provides the best dev experience currently.
+Language servers can be used in a large number of editors.
+If you cannot decide, try Visual Studio Code, which provides a particularly high quality integration of language servers.
+For Rust, [the IntelliJ plugin](https://intellij-rust.github.io/) is apparently also pretty good.
+
 
 ## Building manually
 
