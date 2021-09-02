@@ -2,7 +2,7 @@
 
 This document describes how you can build Tobira in order to use it.
 This is also how official releases will be created.
-This primarily targetted at users of Tobira.
+This is primarily targeted at users of Tobira.
 If you are a developer, [the development workflow document](./dev-workflow.md) is likely more important to you.
 
 

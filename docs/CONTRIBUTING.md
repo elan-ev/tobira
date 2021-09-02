@@ -7,7 +7,7 @@ Examples of contributions include:
 - Documentation improvements
 - Bug reports and patch reviews
 
-If you plan on writing a larger patch or implemeting a larger feature, please get in touch with us first!
+If you plan on writing a larger patch or implementing a larger feature, please get in touch with us first!
 That way, we can coordinate and avoid us rejecting a pull request you put significant time into.
 
 
@@ -28,7 +28,7 @@ Additionally:
 
 - Try to keep your commits as atomic as possible and provide a [good message for each commit](https://chris.beams.io/posts/git-commit/).
 - If your PR relates to an existing issue, please link that issue.
-- Our CI, which performs a lot of automated tests, **must** suceed for your PR.
+- Our CI, which performs a lot of automated tests, **must** succeed for your PR.
   Otherwise it cannot be merged.
   If the CI fails and you think it is not caused by your change, please ping us.
 

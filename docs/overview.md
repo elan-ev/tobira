@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Tobira runs seperately from Opencast and does not directly use Opencast's APIs to obtain information about events and series.
+Tobira runs separately from Opencast and does not directly use Opencast's APIs to obtain information about events and series.
 It maintains a copy of all relevant Opencast data, except attachments and media, in its own database.
 This has some advantages:
 

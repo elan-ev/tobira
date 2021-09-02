@@ -23,7 +23,7 @@ The `ROUTES` constant in `router.tsx` defines all routes in the application (whi
 The routes themselves are defined inside `routes/`.
 Most of these use the `Root` component (`layout/Root.tsx`) to render.
 This component provides the main layout of the whole page (i.e. header, footer, burger menu, ...) and renders other components defined in `layout/`.
-Addtionally:
+Additionally:
 
 - `i18n/`: sets up and defines all translation strings. We use `i18next`.
 - `relay/`: Relay/GraphQL related setup and error handling.
@@ -66,7 +66,7 @@ The Tobira executable expects CLI arguments and in particular: a subcommand.
 `tobira serve` starts the HTTP server, `tobira sync` synchronizes with Opencast, `tobira db` provides DB utilities, and so on.
 Here, `tobira` stands for the executable which is created at `backend/target/<mode>/tobira` where `<mode>` can be `release` or `debug`.
 You would usually run this executable with `cargo run`.
-To pass CLI args to Tobira (instead of cargo), list Tobira args after a double dash `--` that is surrouned by spaces, e.g. `cargo run -- serve`.
+To pass CLI args to Tobira (instead of cargo), list Tobira args after a double dash `--` that is surrounded by spaces, e.g. `cargo run -- serve`.
 
 The main entry point is `main.rs` where CLI args are parsed and the correct function, according to the subcommand, is called.
 The CLI args itself are defined in `args.rs` as multiple types with the `derive(StructOpt)` attribute.

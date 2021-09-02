@@ -45,7 +45,7 @@ Import those with `cargo run -- create-tree dummy-realms.yaml`.
 Whenever you change existing DB migrations, you usually want to purge the DB and rerun all migrations.
 You can do that with `cargo run -- db reset`.
 
-The `db` subcommdand of Tobira offers a few useful commands.
+The `db` subcommand of Tobira offers a few useful commands.
 See `cargo run -- db --help` for more information.
 
 
@@ -101,7 +101,7 @@ Finally, and whenever you change frontend code, you need to:
 - Lint with ESLint: `npm run lint`
 - Build a new bundle with Webpack: `npm run build:dev`
 
-However, due to our Webpack configuration, ESLint and TypeScript are already used during a normal webpack invocation, so the last of these three commands is sufficient.
+However, due to our Webpack configuration, ESLint and TypeScript are already used during a normal Webpack invocation, so the last of these three commands is sufficient.
 
 
 #### Watching
