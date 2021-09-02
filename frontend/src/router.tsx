@@ -143,8 +143,6 @@ export const Router: React.FC<RouterProps> = ({ initialRoute, children }) => {
     const [activeRoute, setActiveRouteRaw] = useState(initialRoute);
     const [isPending, startTransition] = useTransition();
 
-    console.log("num listeners: ", onRouteChangeListeners.current.length);
-
     const setActiveRoute = (newRoute: MatchedRoute<any>) => {
         startTransition(() => {
             setActiveRouteRaw(newRoute);

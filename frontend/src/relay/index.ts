@@ -35,7 +35,8 @@ export const environment = new Environment({
             try {
                 json = JSON.parse(text);
             } catch (e) {
-                throw new NotJson(e);
+                // According to MDN, `JSON.parse` always throws a `SyntaxError`.
+                throw new NotJson(e as SyntaxError);
             }
 
             // TODO I'm not actually sure we really always get a singular response ...
