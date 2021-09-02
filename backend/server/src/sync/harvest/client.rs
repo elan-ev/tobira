@@ -10,7 +10,7 @@ use hyper::{
         uri::{Authority, Scheme, Uri},
     }
 };
-use hyper_tls::HttpsConnector;
+use hyper_rustls::HttpsConnector;
 use secrecy::{ExposeSecret, Secret};
 
 use tobira_util::prelude::*;
@@ -31,7 +31,7 @@ impl HarvestClient {
 
     pub(super) fn new(config: &SyncConfig) -> Self {
         // Prepare HTTP client
-        let http_client = Client::builder().build(HttpsConnector::new());
+        let http_client = Client::builder().build(HttpsConnector::with_native_roots());
 
         // Prepare URL
         let scheme = if config.use_insecure_connection {
