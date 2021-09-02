@@ -1,5 +1,4 @@
-Contributing to Tobira
-======================
+# Contributing to Tobira
 
 As an open source project, Tobira welcomes contributions of many forms.
 Examples of contributions include:
@@ -8,71 +7,45 @@ Examples of contributions include:
 - Documentation improvements
 - Bug reports and patch reviews
 
-
-Being Pragmatic
----------------
-
-For every rule, there is an exception.
-If you find that there is a good reason one of the following rules does not apply to you,
-please bring it up and explain why.
-We like to be pragmatic if necessary instead of just blindly following rules.
+If you plan on writing a larger patch or implementing a larger feature, please get in touch with us first!
+That way, we can coordinate and avoid us rejecting a pull request you put significant time into.
 
 
-Provide Necessary Information
------------------------------
+## Getting started with the code base
 
-If you provide a patch, please also provide an explanation of the reasoning behind this patch.
-It is much easier to understand and review code if you know its intention upfront.
-If a pull request relates to an existing issue, please also link that issue.
-
-If you want to make us happy, please also provide this reasoning as part of your git commit messages.
+Be sure to check out [the development workflow](./dev-workflow.md) and [the project overview for developers](./dev-overview.md) as both of these documents contain valuable information.
+Reading about [the general architecture of Tobira](./overview.md) also helps.
+This should get you started.
+If you have any more questions, feel free to ask and ping us devs [in the Opencast chat](https://opencast.org/communication/).
 
 
-Tests
------
+## Creating Pull Requests
 
-Tobira comes with a set of tests.
-Passing these tests is a requirement for all contributions.
-These tests are also run automatically on our CI system.
+When creating a PR, please describe **what** the PR changes and **why** you think this change is useful.
+This makes it a lot easier for us to understand and review PRs.
 
-If the CI tests on your pull request fail and you are sure it is not caused by your patch, please complain.
-Errors happen and we can easily trigger a new build.
-Your patch cannot be merged without these tests passing.
+Additionally:
 
+- Try to keep your commits as atomic as possible and provide a [good message for each commit](https://chris.beams.io/posts/git-commit/).
+- If your PR relates to an existing issue, please link that issue.
+- Our CI, which performs a lot of automated tests, **must** succeed for your PR.
+  Otherwise it cannot be merged.
+  If the CI fails and you think it is not caused by your change, please ping us.
 
-Documentation
--------------
+We will review your pull request and comment with any issues we found or any points that require discussion.
+For larger PRs, there are usually multiple rounds of review + you pushing the requested changes until the PR is ready to be merged.
 
-If necessary, please also provide the documentation for your change as part of your pull request.
-Once a pull request is merged, the documentation should match that code.
+### License
 
-
-Reviews
--------
-
-A reviewer will be assigned to your pull request to ensure that there are no issues.
-Once everything is fine, the reviewer will merge the pull request.
-Communicate with the reviewer to address any issues.
-
-Please remember that reviewers are only human as well.
-
-
-License
--------
-
-Licensed under [LICENSE](Apache License, Version 2.0).
+Tobira is licensed under [Apache 2.0](../LICENSE).
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in this project by you, as defined in the Apache-2.0 license,
 shall be licensed as above, without any additional terms or conditions.
 
 
-Checklist
----------
+## Being Pragmatic
 
-- Pull request [closes an accompanying issue](https://help.github.com/en/articles/closing-issues-using-keywords) if one exists
-- Pull request has a proper title and description
-- Appropriate documentation is included
-- Code passes automatic tests
-- The pull request has a clean commit history
-- Commits have a [proper commit message](https://chris.beams.io/posts/git-commit/)
+For every rule, there is an exception.
+If you find that there is a good reason one of the rules does not apply to you, please bring it up and explain why.
+We like to be pragmatic if necessary instead of just blindly following rules.
