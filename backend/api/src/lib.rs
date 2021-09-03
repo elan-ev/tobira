@@ -30,7 +30,7 @@ pub type RootNode = juniper::RootNode<'static, Query, Mutation, Subscription>;
 
 /// The context that is accessible to every resolver in our API.
 pub struct Context {
-    db: tx::Transaction,
+    pub db: tx::Transaction,
 }
 
 impl Context {
