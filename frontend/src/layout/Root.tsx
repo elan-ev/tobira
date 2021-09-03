@@ -52,8 +52,7 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
                     // To prevent a child growing this div larger than 100% in width
                     overflow: "hidden",
                     flex: "12 0 0",
-                    "& > h1": { margin: "12px 0" },
-                    "& > h1:first-child": { marginTop: 0 },
+                    "& > h1:first-child": { marginBottom: 12 },
                 }}>
                     {children}
                 </div>
