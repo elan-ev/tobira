@@ -85,11 +85,7 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
 };
 
 const PAELLA_CONFIG = {
-    repositoryUrl: "manifest",
-    manifestFileName: "data.json",
     logLevel: "WARN",
-
-    defaultLayout: "presenter-presentation",
 
     plugins: {
         "es.upv.paella.singleVideo": {
