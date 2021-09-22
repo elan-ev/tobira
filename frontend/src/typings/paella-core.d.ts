@@ -1,7 +1,17 @@
 declare module "paella-core" {
     export class Paella {
+        /**
+         * Creates a new `Paella` instance.
+         *
+         * `node` is either an `HTMLElement` of the container that Paella should
+         * live in, or the string ID of said container.
+         */
         public constructor(node: string | HTMLElement, initParams: InitParams);
 
+        /**
+         * Loads the configuration and manifest according to `initParams` passed
+         * to the constructor.
+         */
         public loadManifest(): Promise<void>;
     }
 
