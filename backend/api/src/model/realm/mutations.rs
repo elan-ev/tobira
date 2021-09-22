@@ -20,8 +20,8 @@ impl Realm {
         let parent_key = id_to_key(realm.parent, "`parent`")?;
         let key: Key = context.db
             .query_one(
-                "insert into realms (parent, name, path_segment)
-                    values ($1, $2, $3)
+                "insert into realms (parent, name, path_segment) \
+                    values ($1, $2, $3) \
                     returning id",
                 &[&parent_key, &realm.name, &realm.path_segment],
             )
@@ -142,10 +142,10 @@ impl Realm {
 
         let affected_rows = context.db
             .execute(
-                "update realms set
-                    parent = coalesce($2, parent),
-                    name = coalesce($3, name),
-                    path_segment = coalesce($4, path_segment)
+                "update realms set \
+                    parent = coalesce($2, parent), \
+                    name = coalesce($3, name), \
+                    path_segment = coalesce($4, path_segment) \
                     where id = $1",
                 &[&key, &parent_key, &set.name, &set.path_segment],
             )

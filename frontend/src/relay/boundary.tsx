@@ -68,15 +68,18 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
         return (
             <Root nav={[]}>
                 <Translation>{t => (
-                    <div css={{ margin: "0 auto", maxWidth: 600, textAlign: "center" }}>
+                    <div css={{ margin: "0 auto", maxWidth: 600 }}>
                         <Card kind="error">
                             {t(message)}
                         </Card>
-                        <p css={{ margin: "32px 0" }}>{t("graphql.detailed-error-info")}</p>
+                        <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
+                            {t("graphql.detailed-error-info")}
+                        </p>
                         <div css={{
                             backgroundColor: "var(--grey97)",
                             borderRadius: 4,
                             padding: 16,
+                            fontSize: 14,
                         }}>
                             <code>{error.toString()}</code>
                         </div>

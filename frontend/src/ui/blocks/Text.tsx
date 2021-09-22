@@ -88,7 +88,6 @@ export const TextBlock: React.FC<Props> = ({ title, content }) => (
         <Title title={title} />
         <div css={{
             maxWidth: 1200,
-            padding: "6px 10px",
             "& > *:first-of-type": { marginTop: 0 },
             "& > *:last-of-type": { marginBottom: 0 },
         }}>

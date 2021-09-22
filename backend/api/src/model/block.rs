@@ -118,10 +118,10 @@ impl BlockValue {
     pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> FieldResult<Vec<Self>> {
         context.db
             .query_raw(
-                "select id, type, index, title, text_content, series_id,
-                    videolist_layout, videolist_order
-                    from blocks
-                    where realm_id = $1
+                "select id, type, index, title, text_content, series_id, \
+                    videolist_layout, videolist_order \
+                    from blocks \
+                    where realm_id = $1 \
                     order by index asc",
                 &[realm_key],
             )

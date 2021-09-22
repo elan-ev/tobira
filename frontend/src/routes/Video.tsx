@@ -9,9 +9,8 @@ import { Root } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
-import { VideoBlock } from "../ui/blocks/Video";
 import { TextBlock } from "../ui/blocks/Text";
-import type { Track } from "../ui/player";
+import { Player, Track } from "../ui/player";
 import { useTranslation } from "react-i18next";
 import { useTitle } from "../util";
 
@@ -70,8 +69,8 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
     useTitle(title);
     return (
         <Root nav={<Nav fragRef={realm} />}>
-            <h1>{title}</h1>
-            <VideoBlock tracks={tracks as Track[]} title={title} duration={duration} />
+            <Player tracks={tracks as Track[]} title={title} duration={duration} />
+            <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
             {description !== null && <TextBlock content={description} />}
             <table css={{
                 marginBottom: 100,

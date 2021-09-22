@@ -319,14 +319,16 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
         Arc::new(static_tx)
     };
 
-    let api_context = api::Context::new(Transaction::new(tx.clone()));
-    let out = juniper_hyper::graphql(ctx.api_root.clone(), Arc::new(api_context), req).await;
+    let api_context = Arc::new(api::Context::new(Transaction::new(tx.clone())));
+    let out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
+    let num_queries = api_context.db.num_queries();
+    drop(api_context);
 
     // Check whether we own the last remaining handle of this Arc.
     let out = match Arc::try_unwrap(tx) {
         Err(_) => {
             // There are still other handles, meaning that the API handler
-            // incorrect stored the transaction in some static variable. This
+            // incorrectly stored the transaction in some static variable. This
             // is our fault and should NEVER happen. If it does happen, we
             // would have UB after this function exits. We can't have that. And
             // since panicking only brings down the current thread, we have to
@@ -352,7 +354,11 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
         }
     };
 
-    trace!("Finished /graphql query in {:.2?}", before.elapsed());
+    debug!(
+        "Finished /graphql query in {:.2?} (with {} SQL queries)",
+        before.elapsed(),
+        num_queries,
+    );
 
     out
 }

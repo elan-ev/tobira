@@ -66,8 +66,8 @@ impl Realm {
 
         let result = context.db
             .query_opt(
-                "select parent, name, full_path, index, child_order
-                    from realms
+                "select parent, name, full_path, index, child_order \
+                    from realms \
                     where id = $1",
                 &[&key],
             )
@@ -102,8 +102,8 @@ impl Realm {
 
         let result = context.db
             .query_opt(
-                "select id, parent, name, index, child_order
-                    from realms
+                "select id, parent, name, index, child_order \
+                    from realms \
                     where full_path = $1",
                 &[&path],
             )
@@ -165,8 +165,8 @@ impl Realm {
     async fn ancestors(&self, context: &Context) -> FieldResult<Vec<Realm>> {
         let result = context.db
             .query_raw(
-                "select id, parent, name, full_path, index, child_order
-                    from ancestors_of_realm($1)
+                "select id, parent, name, full_path, index, child_order \
+                    from ancestors_of_realm($1) \
                     where height <> 0 and id <> 0",
                 &[&self.key],
             )
@@ -194,9 +194,9 @@ impl Realm {
     async fn children(&self, context: &Context) -> FieldResult<Vec<Self>> {
         let result = context.db
             .query_raw(
-                "select id, name, full_path, index, child_order
-                    from realms
-                    where parent = $1
+                "select id, name, full_path, index, child_order \
+                    from realms \
+                    where parent = $1 \
                     order by index",
                 &[&self.key],
             )
