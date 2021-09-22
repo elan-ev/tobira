@@ -132,12 +132,6 @@ const PAELLA_CONFIG = {
                 },
             ],
         },
-        // This is a workaround for a bug in Paella. We don't want to use triple videos.
-        // https://github.com/polimediaupv/paella-core/issues/6
-        "es.upv.paella.tripleVideo": {
-            enabled: false,
-            validContent: [],
-        },
         "es.upv.paella.videoCanvas": {
             enabled: true,
             order: 1,
