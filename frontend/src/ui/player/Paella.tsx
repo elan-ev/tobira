@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Config, Manifest, Mp4Source, Paella } from "paella-core";
+import getBasicPluginsContext from "paella-basic-plugins";
 
 import { PlayerProps, Track } from ".";
 import { bug } from "../../util/err";
@@ -52,6 +53,9 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async (): Promise<Manifest> => manifest,
+                customPluginContext: [
+                    getBasicPluginsContext(),
+                ],
             });
             paella.current.loadManifest();
         }
@@ -140,14 +144,34 @@ const PAELLA_CONFIG = {
             enabled: true,
             order: 1,
         },
+
+        // Buttons on the left side
         "es.upv.paella.playPauseButton": {
             enabled: true,
-            order: 1,
+            side: "left",
+        },
+        "es.upv.paella.volumeButtonPlugin": {
+            enabled: true,
+            side: "left",
+        },
+
+        // Buttons on the right side
+        "es.upv.paella.captionsSelectorPlugin": {
+            enabled: true,
+            side: "right",
+        },
+        "es.upv.paella.playbackRateButton": {
+            enabled: true,
+            side: "right",
+            rates: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2, 2.5],
+        },
+        "es.upv.paella.qualitySelector": {
+            enabled: true,
+            side: "right",
         },
         "es.upv.paella.fullscreenButton": {
             enabled: true,
             side: "right",
-            order: 2,
         },
     },
 };

@@ -17,10 +17,12 @@ declare module "paella-core" {
         getManifestFileUrl?: (manifestUrl: string, manifestFileName: string) => Promise<string>;
         loadVideoManifest?: (manifestUrl: string) => Promise<Manifest>;
 
-        customPluginContext?: unknown[];
+        customPluginContext?: PluginContext[];
     }
 
     export type Config = Record<string, unknown>;
+
+    export type PluginContext = __WebpackModuleApi.RequireContext;
 
     // Definition: https://github.com/polimediaupv/paella-core/blob/main/doc/video_manifest.md
     export interface Manifest {
