@@ -20,7 +20,23 @@ declare module "paella-core" {
         customPluginContext?: PluginContext[];
     }
 
-    export type Config = Record<string, unknown>;
+    export interface Config {
+        /** Is passed to `InitParams.getManifestUrl`. Default: empty string. */
+        repositoryUrl?: string;
+
+        /** Is passed to `InitParams.getManifestFileUrl`. Default: empty string. */
+        manifestFileName?: string;
+
+        // TODO: what exactly does this do?
+        defaultLayout?: string;
+
+        logLevel?: "DISABLED" | "ERROR" | "WARN" | "INFO" | "DEBUG" | "VERBOSE";
+        plugins: Record<string, PluginConfig>;
+    }
+
+    export type PluginConfig = Record<string, unknown> & {
+        enabled: boolean;
+    };
 
     export type PluginContext = __WebpackModuleApi.RequireContext;
 
