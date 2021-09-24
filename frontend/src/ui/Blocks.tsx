@@ -7,7 +7,7 @@ import type {
 
 import { match } from "../util";
 import { TextBlockByQuery } from "./blocks/Text";
-import { SeriesBlockByQuery } from "./blocks/Series";
+import { SeriesBlockFromBlock } from "./blocks/Series";
 
 
 type Props = {
@@ -39,7 +39,7 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                 title={block.title ?? undefined}
                 fragRef={block}
             />,
-            "SeriesBlock": () => <SeriesBlockByQuery
+            "SeriesBlock": () => <SeriesBlockFromBlock
                 key={block.id}
                 title={block.title ?? undefined}
                 realmPath={path}

@@ -7,7 +7,11 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { FiFilm, FiVolume2 } from "react-icons/fi";
 
-import { SeriesBlockData, SeriesBlockData$key } from "../../query-types/SeriesBlockData.graphql";
+import { SeriesBlockData$key } from "../../query-types/SeriesBlockData.graphql";
+import {
+    SeriesBlockSeriesData,
+    SeriesBlockSeriesData$key,
+} from "../../query-types/SeriesBlockSeriesData.graphql";
 
 
 type SharedProps = {
@@ -15,34 +19,47 @@ type SharedProps = {
     realmPath: string;
 };
 
-const fragment = graphql`
+const blockFragment = graphql`
     fragment SeriesBlockData on SeriesBlock {
-        series {
+        series { ...SeriesBlockSeriesData }
+    }
+`;
+
+const seriesFragment = graphql`
+    fragment SeriesBlockSeriesData on Series {
+        title
+        events {
+            id
             title
-            events {
-                id
-                title
-                thumbnail
-                duration
-                created
-                creator
-                tracks { resolution }
-            }
+            thumbnail
+            duration
+            created
+            creator
+            tracks { resolution }
         }
     }
 `;
 
-type ByQueryProps = SharedProps & {
+type FromBlockProps = SharedProps & {
     fragRef: SeriesBlockData$key;
 };
 
-export const SeriesBlockByQuery: React.FC<ByQueryProps> = ({ fragRef, ...rest }) => {
-    const { series } = useFragment(fragment, fragRef);
+export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
+    const { series } = useFragment(blockFragment, fragRef);
+    return <SeriesBlockFromSeries fragRef={series} {...rest} />;
+};
+
+type FromSeriesProps = SharedProps & {
+    fragRef: SeriesBlockSeriesData$key;
+};
+
+export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = ({ fragRef, ...rest }) => {
+    const series = useFragment(seriesFragment, fragRef);
     return <SeriesBlock {...{ series, ...rest }} />;
 };
 
 type Props = SharedProps & {
-    series: NonNullable<SeriesBlockData["series"]>;
+    series: NonNullable<SeriesBlockSeriesData>;
 };
 
 const VIDEO_GRID_BREAKPOINT = 600;
@@ -68,7 +85,7 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
 
 type GridTypeProps = {
     realmPath: string;
-    event: NonNullable<SeriesBlockData["series"]>["events"][0];
+    event: NonNullable<SeriesBlockSeriesData>["events"][0];
 };
 
 const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
