@@ -1,7 +1,7 @@
 import React from "react";
 
 import { keyOfId } from "../../util";
-import { Block, Title } from "../Blocks";
+import { Block, Title } from ".";
 import { Link } from "../../router";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";

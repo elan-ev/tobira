@@ -3,7 +3,7 @@ import { graphql, useFragment } from "react-relay";
 import ReactMarkdown from "react-markdown";
 import type { TransformOptions } from "react-markdown";
 
-import { Block, Title } from "../Blocks";
+import { Block, Title } from ".";
 import { TextBlockData$key } from "../../query-types/TextBlockData.graphql";
 
 
