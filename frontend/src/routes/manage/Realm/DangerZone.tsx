@@ -10,7 +10,7 @@ import { bug } from "../../../util/err";
 import { Button } from "../../../ui/Button";
 import { Card } from "../../../ui/Card";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { ErrorBox, realmValidations } from ".";
+import { ErrorBox, realmValidations } from "./util";
 import { Spinner } from "../../../ui/Spinner";
 import {
     DangerZoneRemoveRealmMutationResponse,
