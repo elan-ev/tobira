@@ -5,18 +5,20 @@ import { Block, Title } from ".";
 import { Link } from "../../router";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { FiFilm, FiVolume2 } from "react-icons/fi";
+import { FiFilm, FiPlay, FiVolume2 } from "react-icons/fi";
 
 import { SeriesBlockData$key } from "../../query-types/SeriesBlockData.graphql";
 import {
     SeriesBlockSeriesData,
     SeriesBlockSeriesData$key,
 } from "../../query-types/SeriesBlockSeriesData.graphql";
+import { keyframes } from "@emotion/react";
 
 
 type SharedProps = {
     title?: string;
     realmPath: string;
+    activeEventId?: string;
 };
 
 const blockFragment = graphql`
@@ -64,7 +66,7 @@ type Props = SharedProps & {
 
 const VIDEO_GRID_BREAKPOINT = 600;
 
-export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
+export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath, activeEventId }) => (
     <Block>
         <Title title={title ?? series.title} />
         <div css={{
@@ -78,7 +80,11 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
                 justifyContent: "center",
             },
         }}>
-            {series.events.map(event => <GridTile key={event.id} {...{ realmPath, event }} />)}
+            {series.events.map(event => <GridTile
+                key={event.id}
+                active={event.id === activeEventId}
+                {...{ realmPath, event }}
+            />)}
         </div>
     </Block>
 );
@@ -86,9 +92,10 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath }) => (
 type GridTypeProps = {
     realmPath: string;
     event: NonNullable<SeriesBlockSeriesData>["events"][0];
+    active: boolean;
 };
 
-const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
+const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
     const [THUMB_WIDTH, THUMB_HEIGHT] = [16, 9].map(x => x * 15);
 
     const sharedThumbnailStyle = {
@@ -128,90 +135,96 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath }) => {
         );
     }
 
-    return (
-        <Link
-            to={`${realmPath}/v/${keyOfId(event.id)}`}
-            css={{
-                display: "block",
-                margin: 8,
-                marginBottom: 32,
-                width: THUMB_WIDTH,
-                borderRadius: 4,
-                "& a": { color: "black", textDecoration: "none" },
-                "&:hover > div:first-child": {
-                    boxShadow: "0 0 10px var(--grey80)",
-                },
-                [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-                    width: "100%",
-                    maxWidth: 360,
-                },
-                "&:focus-visible": {
-                    outline: "none",
-                    boxShadow: "0 0 0 2px var(--accent-color)",
-                },
-            }}
-        >
-            <div css={{
-                position: "relative",
-                boxShadow: "0 0 4px var(--grey92)",
-                transition: "0.2s box-shadow",
-            }}>
-                {thumbnail}
-                {event.duration != null && (
-                    <div css={{
-                        position: "absolute",
-                        right: 6,
-                        bottom: 6,
-                        backgroundColor: "hsla(0, 0%, 0%, 0.75)",
-                        border: "1px solid black",
-                        borderRadius: 4,
-                        padding: "0 4px",
-                        color: "white",
-                        fontSize: 14,
-                    }}>
-                        {formatLength(event.duration)}
-                    </div>
-                )}
-            </div>
-            <div css={{
-                margin: "0px 4px",
-                marginTop: 12,
-                color: "black",
-            }}>
-                <h3 css={{
-                    fontSize: "inherit",
-                    display: "-webkit-box",
-                    WebkitBoxOrient: "vertical",
-                    textOverflow: "ellipsis",
-                    WebkitLineClamp: 2,
-                    overflow: "hidden",
-                    lineHeight: 1.3,
-                    marginBottom: 4,
-                }}>{event.title}</h3>
+
+
+    const inner = <>
+        <div css={{
+            position: "relative",
+            boxShadow: "0 0 4px var(--grey92)",
+            transition: "0.2s box-shadow",
+        }}>
+            {thumbnail}
+            {active && <ActiveIndicator />}
+            {event.duration != null && (
                 <div css={{
-                    color: "var(--grey40)",
+                    position: "absolute",
+                    right: 6,
+                    bottom: 6,
+                    backgroundColor: "hsla(0, 0%, 0%, 0.75)",
+                    border: "1px solid black",
+                    borderRadius: 4,
+                    padding: "0 4px",
+                    color: "white",
                     fontSize: 14,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    "& > span": {
-                        display: "inline-block",
-                        whiteSpace: "nowrap",
-                    },
                 }}>
-                    {/* `new Date` is well defined for our ISO Date strings */}
-                    {event.creator != null && <span css={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        "&:after": {
-                            content: "'•'",
-                            padding: "0 8px",
-                        },
-                    }}>{event.creator}</span>}
-                    <CreationDate date={new Date(event.created)} />
+                    {formatLength(event.duration)}
                 </div>
+            )}
+        </div>
+        <div css={{
+            margin: "0px 4px",
+            marginTop: 12,
+            color: "black",
+        }}>
+            <h3 css={{
+                fontSize: "inherit",
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                textOverflow: "ellipsis",
+                WebkitLineClamp: 2,
+                overflow: "hidden",
+                lineHeight: 1.3,
+                marginBottom: 4,
+            }}>{event.title}</h3>
+            <div css={{
+                color: "var(--grey40)",
+                fontSize: 14,
+                display: "flex",
+                flexWrap: "wrap",
+                "& > span": {
+                    display: "inline-block",
+                    whiteSpace: "nowrap",
+                },
+            }}>
+                {event.creator != null && <span css={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    "&:after": {
+                        content: "'•'",
+                        padding: "0 8px",
+                    },
+                }}>{event.creator}</span>}
+                {/* `new Date` is well defined for our ISO Date strings */}
+                <CreationDate date={new Date(event.created)} />
             </div>
-        </Link>
-    );
+        </div>
+    </>;
+
+    const containerStyle = {
+        display: "block",
+        margin: 8,
+        marginBottom: 32,
+        width: THUMB_WIDTH,
+        borderRadius: 4,
+        "& a": { color: "black", textDecoration: "none" },
+        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+            width: "100%",
+            maxWidth: 360,
+        },
+        ...!active && {
+            "&:hover > div:first-child": {
+                boxShadow: "0 0 10px var(--grey80)",
+            },
+            "&:focus-visible": {
+                outline: "none",
+                boxShadow: "0 0 0 2px var(--accent-color)",
+            },
+        },
+    };
+
+    return active
+        ? <div css={{ ...containerStyle, display: "inline-block" }}>{inner}</div>
+        : <Link to={`${realmPath}/v/${keyOfId(event.id)}`} css={containerStyle}>{inner}</Link>;
 };
 
 const formatLength = (totalMs: number) => {
@@ -259,4 +272,32 @@ const CreationDate: React.FC<CreationDateProps> = ({ date }) => {
     const preciseDate = date.toLocaleString(i18n.language);
 
     return <span title={preciseDate}>{prettyDate}</span>;
+};
+
+const ActiveIndicator = () => {
+    const animation = keyframes({
+        "0%": { color: "black" },
+        "50%": { color: "var(--accent-color-darker)" },
+        "100%": { color: "black" },
+    });
+
+    return (
+        <div css={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(255, 255, 255, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 64,
+            "& > svg": {
+                animation: `${animation} 3s infinite`,
+            },
+        }}>
+            <FiPlay />
+        </div>
+    );
 };

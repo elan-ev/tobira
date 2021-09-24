@@ -139,6 +139,7 @@ const themeVars = () => {
             "--accent-hue": 360 * accentHue,
             "--accent-sat": `${100 * accentSat}%`,
             "--accent-color": hsl("accent", 100 * accentLight),
+            "--accent-color-darker": hsl("accent", 100 * lighten(accentLight, -40)),
 
             "--danger-hue": 360 * dangerHue,
             "--danger-sat": `${100 * dangerSat}%`,

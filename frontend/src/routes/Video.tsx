@@ -20,8 +20,9 @@ export const VideoRoute: Route<Props> = {
     path: `((?:/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
     // TODO: check if video belongs to realm
     prepare: ([realmPath, videoId]) => {
-        const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id: `ev${videoId}`, realmPath });
-        return { queryRef, realmPath };
+        const id = `ev${videoId}`;
+        const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
+        return { queryRef, realmPath, id };
     },
     render: props => <VideoPage {...props} />,
 };
@@ -47,9 +48,10 @@ const query = graphql`
 type Props = {
     queryRef: PreloadedQuery<VideoQuery>;
     realmPath: string;
+    id: string;
 };
 
-const VideoPage: React.FC<Props> = ({ queryRef, realmPath }) => {
+const VideoPage: React.FC<Props> = ({ queryRef, realmPath, id }) => {
     const { t, i18n } = useTranslation();
     const { event, realm } = usePreloadedQuery(query, queryRef);
 
@@ -95,6 +97,7 @@ const VideoPage: React.FC<Props> = ({ queryRef, realmPath }) => {
             {event.series && <SeriesBlockFromSeries
                 realmPath={realmPath} fragRef={event.series}
                 title={t("video.more-from-series", { series: event.series.title })}
+                activeEventId={id}
             />}
         </Root>
     );
