@@ -1,16 +1,17 @@
 import React, { Suspense } from "react";
-
 import { RelayEnvironmentProvider } from "react-relay/hooks";
-import { environment } from "./relay";
+import { CacheProvider } from "@emotion/react";
+import createEmotionCache from "@emotion/cache";
 
+import { environment } from "./relay";
 import { GlobalStyle } from "./GlobalStyle";
 import { ActiveRoute, Router } from "./router";
 import type { MatchedRoute } from "./router";
 import { MenuProvider } from "./layout/MenuState";
-import { CacheProvider } from "@emotion/react";
-import createEmotionCache from "@emotion/cache";
 import { InitialLoading } from "./layout/Root";
 import { GraphQLErrorBoundary } from "./relay/boundary";
+import { ROUTES } from "./routes";
+
 
 
 type Props = {
@@ -21,7 +22,7 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
     <RelayEnvironmentProvider {...{ environment }}>
         <GlobalStyle />
         <SilenceEmotionWarnings>
-            <Router initialRoute={initialRoute}>
+            <Router routes={ROUTES} initialRoute={initialRoute}>
                 <APIWrapper>
                     <MenuProvider>
                         <ActiveRoute />
