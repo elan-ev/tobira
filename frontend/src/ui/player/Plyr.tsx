@@ -5,6 +5,7 @@ import { Global } from "@emotion/react";
 
 import CONFIG from "../../config";
 import { PlayerProps } from ".";
+import { SPEEDS } from "./consts";
 
 
 export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
@@ -51,6 +52,10 @@ export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
         quality: {
             default: defaultQuality,
             options: qualities,
+        },
+        speed: {
+            selected: 1,
+            options: SPEEDS,
         },
         invertTime: false,
         blankVideo: CONFIG.plyr.blankVideo,

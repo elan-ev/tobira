@@ -3,6 +3,7 @@ import { Config, Manifest, Mp4Source, Paella } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 
 import { PlayerProps, Track } from ".";
+import { SPEEDS } from "./consts";
 import { bug } from "../../util/err";
 
 
@@ -163,7 +164,7 @@ const PAELLA_CONFIG = {
         "es.upv.paella.playbackRateButton": {
             enabled: true,
             side: "right",
-            rates: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2, 2.5],
+            rates: SPEEDS,
         },
         "es.upv.paella.qualitySelector": {
             enabled: true,
