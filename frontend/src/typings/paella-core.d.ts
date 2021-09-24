@@ -1,7 +1,17 @@
 declare module "paella-core" {
     export class Paella {
+        /**
+         * Creates a new `Paella` instance.
+         *
+         * `node` is either an `HTMLElement` of the container that Paella should
+         * live in, or the string ID of said container.
+         */
         public constructor(node: string | HTMLElement, initParams: InitParams);
 
+        /**
+         * Loads the configuration and manifest according to `initParams` passed
+         * to the constructor.
+         */
         public loadManifest(): Promise<void>;
     }
 
@@ -17,10 +27,28 @@ declare module "paella-core" {
         getManifestFileUrl?: (manifestUrl: string, manifestFileName: string) => Promise<string>;
         loadVideoManifest?: (manifestUrl: string) => Promise<Manifest>;
 
-        customPluginContext?: unknown[];
+        customPluginContext?: PluginContext[];
     }
 
-    export type Config = Record<string, unknown>;
+    export interface Config {
+        /** Is passed to `InitParams.getManifestUrl`. Default: empty string. */
+        repositoryUrl?: string;
+
+        /** Is passed to `InitParams.getManifestFileUrl`. Default: empty string. */
+        manifestFileName?: string;
+
+        // TODO: what exactly does this do?
+        defaultLayout?: string;
+
+        logLevel?: "DISABLED" | "ERROR" | "WARN" | "INFO" | "DEBUG" | "VERBOSE";
+        plugins: Record<string, PluginConfig>;
+    }
+
+    export type PluginConfig = Record<string, unknown> & {
+        enabled: boolean;
+    };
+
+    export type PluginContext = __WebpackModuleApi.RequireContext;
 
     // Definition: https://github.com/polimediaupv/paella-core/blob/main/doc/video_manifest.md
     export interface Manifest {

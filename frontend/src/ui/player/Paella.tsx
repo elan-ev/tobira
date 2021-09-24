@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Config, Manifest, Mp4Source, Paella } from "paella-core";
+import getBasicPluginsContext from "paella-basic-plugins";
 
 import { PlayerProps, Track } from ".";
+import { SPEEDS } from "./consts";
 import { bug } from "../../util/err";
 
 
@@ -52,6 +54,9 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async (): Promise<Manifest> => manifest,
+                customPluginContext: [
+                    getBasicPluginsContext(),
+                ],
             });
             paella.current.loadManifest();
         }
@@ -80,10 +85,7 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
 };
 
 const PAELLA_CONFIG = {
-    repositoryUrl: "manifest",
-    manifestFileName: "data.json",
-
-    defaultLayout: "presenter-presentation",
+    logLevel: "WARN",
 
     plugins: {
         "es.upv.paella.singleVideo": {
@@ -132,12 +134,6 @@ const PAELLA_CONFIG = {
                 },
             ],
         },
-        // This is a workaround for a bug in Paella. We don't want to use triple videos.
-        // https://github.com/polimediaupv/paella-core/issues/6
-        "es.upv.paella.tripleVideo": {
-            enabled: false,
-            validContent: [],
-        },
         "es.upv.paella.videoCanvas": {
             enabled: true,
             order: 1,
@@ -146,14 +142,34 @@ const PAELLA_CONFIG = {
             enabled: true,
             order: 1,
         },
+
+        // Buttons on the left side
         "es.upv.paella.playPauseButton": {
             enabled: true,
-            order: 1,
+            side: "left",
+        },
+        "es.upv.paella.volumeButtonPlugin": {
+            enabled: true,
+            side: "left",
+        },
+
+        // Buttons on the right side
+        "es.upv.paella.captionsSelectorPlugin": {
+            enabled: true,
+            side: "right",
+        },
+        "es.upv.paella.playbackRateButton": {
+            enabled: true,
+            side: "right",
+            rates: SPEEDS,
+        },
+        "es.upv.paella.qualitySelector": {
+            enabled: true,
+            side: "right",
         },
         "es.upv.paella.fullscreenButton": {
             enabled: true,
             side: "right",
-            order: 2,
         },
     },
 };
