@@ -65,6 +65,7 @@ video:
   created: Created
   updated: Last update
   part-of-series: Part of
+  more-from-series: More from “{{series}}”
 
 realm:
   page-settings: Page settings

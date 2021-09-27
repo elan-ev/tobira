@@ -9,7 +9,7 @@ import { Link } from "../router";
 import { useMenu } from "./MenuState";
 import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import { match } from "../util";
-import { OUTER_CONTAINER_MARGIN } from "./Root";
+import { OUTER_CONTAINER_MARGIN } from ".";
 import { SMALLER_FONT_BREAKPOINT } from "../GlobalStyle";
 
 

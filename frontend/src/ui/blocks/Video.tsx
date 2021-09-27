@@ -1,4 +1,4 @@
-import { Block } from "../Blocks";
+import { Block } from ".";
 import { Player, PlayerProps } from "../player";
 
 

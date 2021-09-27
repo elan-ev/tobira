@@ -1,41 +1,8 @@
 import React, { useEffect, useRef, useState, useTransition } from "react";
 import { Transition } from "react-transition-group";
 
-import { AboutRoute } from "./routes/About";
-import { NotFoundRoute } from "./routes/NotFound";
-import { RealmRoute } from "./routes/Realm";
-import { VideoRoute } from "./routes/Video";
-import { ManageRoute } from "./routes/manage";
-import { ManageRealmRoute } from "./routes/manage/Realm";
-import { AddChildRoute } from "./routes/manage/Realm/AddChild";
 import { match } from "./util";
 import { bug } from "./util/err";
-
-
-/**
- * All routes of this application. The order of routes matters since the first
- * matching route is used.
- */
-const ROUTES = [
-    AboutRoute,
-    RealmRoute,
-    VideoRoute,
-
-    ManageRoute,
-    ManageRealmRoute,
-    AddChildRoute,
-
-    NotFoundRoute,
-] as const;
-
-// Typecheck `ROUTES` to make sure that the `prepare` return type and
-// `render` parameter type match for each individual route. If you get a
-// strange error here, check your types in the route defintion.
-type ArrT = typeof ROUTES;
-type VerifyRoutes<T> = T extends Route<infer U> ? Route<U> : never;
-type Indices = Exclude<keyof ArrT, keyof any[]>;
-type StrictRoutesTy = { [I in Indices]: VerifyRoutes<ArrT[I]> };
-const _VERIFIED: StrictRoutesTy = ROUTES;
 
 
 /**
@@ -85,11 +52,11 @@ export type MatchedRoute<Prepared> = {
  * Matches the given full href against our route array, returning the first
  * matched route or throwing an error if no route matches.
  */
-const matchRoute = (href: string): MatchedRoute<any> => {
+const matchRoute = (routes: Routes, href: string): MatchedRoute<any> => {
     const url = new URL(href);
     const currentPath = decodeURI(url.pathname);
 
-    const match = ROUTES
+    const match = routes
         .map((route, index) => {
             // Use the route's regex to check whether the current path matches.
             // We modify the regex to make sure the whole path matches and that
@@ -111,7 +78,7 @@ const matchRoute = (href: string): MatchedRoute<any> => {
     }
 
     const { params, index } = match;
-    const route = ROUTES[index];
+    const route = routes[index];
 
     return {
         prepared: route.prepare(params, url.searchParams),
@@ -129,16 +96,27 @@ type ContextData = {
     activeRoute: MatchedRoute<any>;
     setActiveRoute: (newRoute: MatchedRoute<any>) => void;
     onRouteChangeListeners: OnRouteChangeListener[];
+    routes: Routes;
 };
 
 type OnRouteChangeListener = () => void;
 
+/**
+ * An array of routes.
+ *
+ * TODO: this is not as type safe as we would like. Each individual route is not
+ * forced to have the same `Prepared` type in `prepare` and `render`. Enforcing
+ * this is rather tricky, though.
+ */
+export type Routes = readonly Route<any>[];
+
 type RouterProps = {
     initialRoute: MatchedRoute<any>;
+    routes: Routes;
 };
 
 /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
-export const Router: React.FC<RouterProps> = ({ initialRoute, children }) => {
+export const Router: React.FC<RouterProps> = ({ initialRoute, routes, children }) => {
     const onRouteChangeListeners = useRef<OnRouteChangeListener[]>([]);
     const [activeRoute, setActiveRouteRaw] = useState(initialRoute);
     const [isPending, startTransition] = useTransition();
@@ -155,7 +133,7 @@ export const Router: React.FC<RouterProps> = ({ initialRoute, children }) => {
     // We need to listen to `popstate` events.
     useEffect(() => {
         const onPopState = () => {
-            setActiveRoute(matchRoute(window.location.href));
+            setActiveRoute(matchRoute(routes, window.location.href));
         };
 
         window.addEventListener("popstate", onPopState);
@@ -178,6 +156,7 @@ export const Router: React.FC<RouterProps> = ({ initialRoute, children }) => {
         setActiveRoute,
         activeRoute,
         onRouteChangeListeners: onRouteChangeListeners.current,
+        routes,
     };
 
     return (
@@ -228,7 +207,7 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
 
         e.preventDefault();
         const href = (e.currentTarget as HTMLAnchorElement).href;
-        context.data.setActiveRoute(matchRoute(href));
+        context.data.setActiveRoute(matchRoute(context.data.routes, href));
 
         history.pushState(null, "", href);
 
@@ -253,7 +232,7 @@ export class RouterControl {
 
     public goto(uri: string): void {
         const href = new URL(uri, document.baseURI).href;
-        this.data.setActiveRoute(matchRoute(href));
+        this.data.setActiveRoute(matchRoute(this.data.routes, href));
         history.pushState(null, "", href);
     }
 
@@ -275,7 +254,8 @@ export const useRouter = (): RouterControl => {
  * Intended to be called before `React.render` to obtain the initial route for
  * the application.
  */
-export const matchInitialRoute: () => MatchedRoute<any> = () => matchRoute(window.location.href);
+export const matchInitialRoute = (routes: Routes): MatchedRoute<any> =>
+    matchRoute(routes, window.location.href);
 
 /** A thin colored line at the top of the page indicating a page load */
 const LoadingIndicator: React.FC<{ isPending: boolean }> = ({ isPending }) => {

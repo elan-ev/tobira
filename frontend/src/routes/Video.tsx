@@ -13,14 +13,18 @@ import { TextBlock } from "../ui/blocks/Text";
 import { Player, Track } from "../ui/player";
 import { useTranslation } from "react-i18next";
 import { useTitle } from "../util";
+import { SeriesBlockFromSeries } from "../ui/blocks/Series";
 
 
-export const VideoRoute: Route<PreloadedQuery<VideoQuery>> = {
+export const VideoRoute: Route<Props> = {
     path: `((?:/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
     // TODO: check if video belongs to realm
-    prepare: ([realmPath, videoId]) =>
-        loadQuery(relayEnv, query, { id: `ev${videoId}`, realmPath }),
-    render: queryRef => <VideoPage queryRef={queryRef} />,
+    prepare: ([realmPath, videoId]) => {
+        const id = `ev${videoId}`;
+        const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
+        return { queryRef, realmPath, id };
+    },
+    render: props => <VideoPage {...props} />,
 };
 
 const query = graphql`
@@ -32,7 +36,7 @@ const query = graphql`
             created
             updated
             duration
-            series { title }
+            series { title, ...SeriesBlockSeriesData }
             tracks { uri flavor mimetype resolution }
         }
         realm: realmByPath(path: $realmPath) {
@@ -43,9 +47,11 @@ const query = graphql`
 
 type Props = {
     queryRef: PreloadedQuery<VideoQuery>;
+    realmPath: string;
+    id: string;
 };
 
-const VideoPage: React.FC<Props> = ({ queryRef }) => {
+const VideoPage: React.FC<Props> = ({ queryRef, realmPath, id }) => {
     const { t, i18n } = useTranslation();
     const { event, realm } = usePreloadedQuery(query, queryRef);
 
@@ -88,6 +94,11 @@ const VideoPage: React.FC<Props> = ({ queryRef }) => {
                     <MetaDatum label={t("video.part-of-series")} value={event.series?.title} />
                 </tbody>
             </table>
+            {event.series && <SeriesBlockFromSeries
+                realmPath={realmPath} fragRef={event.series}
+                title={t("video.more-from-series", { series: event.series.title })}
+                activeEventId={id}
+            />}
         </Root>
     );
 };
