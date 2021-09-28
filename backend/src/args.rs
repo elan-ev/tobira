@@ -3,6 +3,8 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+use crate::cmd;
+
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -29,6 +31,12 @@ pub(crate) enum Command {
     WriteConfig {
         /// Target file. If not specified, the template is written to stdout.
         target: Option<PathBuf>,
+    },
+
+    /// Exports the API as GraphQL schema.
+    ExportApiSchema {
+        #[structopt(flatten)]
+        args: cmd::export_api_schema::Args,
     },
 
     /// Database operations.

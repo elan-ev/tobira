@@ -12,6 +12,7 @@ use crate::{
 mod api;
 mod args;
 mod config;
+mod cmd;
 mod create_tree;
 mod db;
 mod http;
@@ -48,6 +49,7 @@ async fn main() -> Result<()> {
             }
             config::write_template(target.as_ref())?
         }
+        Command::ExportApiSchema { args } => cmd::export_api_schema::run(args)?,
         Command::Db { cmd } => {
             let config = load_config_and_init_logger(&args)?;
             db::cmd::run(cmd, &config.db).await?;
