@@ -60,9 +60,8 @@ The backend is written in Rust and uses the following libraries:
 - `structopt` for CLI argument parsing
 - `reinda`: asset management and embedding
 
-The backend lives in three separate crates (`api`, `server` and `util`), but this might change in the future.
-The `server` crate is the main crate and compiles to an executable, while the `api` and `util` crates are libraries that define the GraphQL API and some utilities respectively.
-The Tobira executable expects CLI arguments and in particular: a subcommand.
+Tobira is a single executable crate.
+That executable expects CLI arguments and in particular: a subcommand.
 `tobira serve` starts the HTTP server, `tobira sync` synchronizes with Opencast, `tobira db` provides DB utilities, and so on.
 Here, `tobira` stands for the executable which is created at `backend/target/<mode>/tobira` where `<mode>` can be `release` or `debug`.
 You would usually run this executable with `cargo run`.

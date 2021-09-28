@@ -66,7 +66,7 @@ If you use `floof`, you do not really care about this section.
 
 ### Export GraphQL Schema
 
-The GraphQL API is defined in Rust code inside `backend/api`.
+The GraphQL API is defined in Rust code inside `backend/src`.
 The frontend requires a `schema.graphql` file to validate and compile all queries against.
 This file is `frontend/src/schema.graphql` and should always match the Rust code defining the API (don't worry, our CI will make sure they match).
 
