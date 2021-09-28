@@ -53,14 +53,10 @@ pub(crate) enum Command {
         daemon: bool,
     },
 
-    /// Create a realm tree from a YAML description
-    CreateTree {
-        /// YAML file specifying the realm tree
-        input_file: PathBuf,
-
-        /// Add dummy blocks to realms without any blocks.
-        #[structopt(long)]
-        dummy_blocks: bool,
+    /// Imports a realm tree from a YAML description (internal tool, no stability guaranteed!).
+    ImportRealmTree {
+        #[structopt(flatten)]
+        options: cmd::import_realm_tree::Args,
     },
 }
 

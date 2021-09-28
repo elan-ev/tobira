@@ -13,7 +13,6 @@ mod api;
 mod args;
 mod config;
 mod cmd;
-mod create_tree;
 mod db;
 mod http;
 mod logger;
@@ -58,9 +57,9 @@ async fn main() -> Result<()> {
             let config = load_config_and_init_logger(&args)?;
             sync::run(*daemon, &config).await?;
         }
-        Command::CreateTree { input_file, dummy_blocks } => {
+        Command::ImportRealmTree { options } => {
             let config = load_config_and_init_logger(&args)?;
-            create_tree::run(&input_file, *dummy_blocks, &config).await?;
+            cmd::import_realm_tree::run(options, &config).await?;
         }
     }
 

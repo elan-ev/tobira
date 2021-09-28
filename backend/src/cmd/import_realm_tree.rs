@@ -5,13 +5,25 @@ use anyhow::Result;
 use futures::TryStreamExt;
 use serde::Deserialize;
 use tokio_postgres::GenericClient;
-use std::{fs::File, future::Future, path::Path, pin::Pin};
+use std::{fs::File, future::Future, path::PathBuf, pin::Pin};
+use structopt::StructOpt;
 
 use crate::{
     config::Config,
     db::{self, util::NoParams},
     prelude::*,
 };
+
+
+#[derive(Debug, StructOpt)]
+pub(crate) struct Args {
+    /// YAML file specifying the realm tree.
+    input_file: PathBuf,
+
+    /// Add dummy blocks to realms without any blocks.
+    #[structopt(long)]
+    dummy_blocks: bool,
+}
 
 
 #[derive(Debug, Deserialize)]
@@ -42,8 +54,8 @@ enum Block {
 }
 
 
-pub(crate) async fn run(path: &Path, dummy_blocks: bool, config: &Config) -> Result<()> {
-    let file = File::open(path)?;
+pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
+    let file = File::open(&args.input_file)?;
     let root: Realm = serde_yaml::from_reader(file)?;
     info!("Read YAML file");
 
@@ -54,7 +66,7 @@ pub(crate) async fn run(path: &Path, dummy_blocks: bool, config: &Config) -> Res
         .context("failed to check/run DB migrations")?;
     let conn = &**db.get().await?;
 
-    let mut dummy_blocks = DummyBlocks::new(dummy_blocks, conn).await?;
+    let mut dummy_blocks = DummyBlocks::new(args.dummy_blocks, conn).await?;
 
     info!("Starting to insert realms into the DB...");
     insert_realm(conn, &root, 0, &mut dummy_blocks).await?;
