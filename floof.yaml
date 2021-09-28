@@ -7,22 +7,15 @@ default:
 
 backend:
   - set-workdir: backend
-  - concurrently:
-    - watch:
-        paths:
-          - api
-        run:
-          - cargo run --bin export-schema -- ../frontend/src/schema.graphql
-    - watch:
-        paths:
-          - Cargo.lock
-          - config.toml
-          - api/
-          - server/
-          - util/
-        run:
-          - reload:
-          - cargo run -- serve
+  - watch:
+      paths:
+        - Cargo.lock
+        - config.toml
+        - src
+      run:
+        - cargo run -- export-api-schema ../frontend/src/schema.graphql
+        - reload:
+        - cargo run -- serve
 
 frontend:
   - set-workdir: frontend
@@ -38,9 +31,6 @@ frontend:
 
 # Creating a production build
 build:
-  - command:
-      run: cargo run --release --bin export-schema -- ../frontend/src/schema.graphql
-      workdir: backend
   - command:
       run: npm ci
       workdir: frontend

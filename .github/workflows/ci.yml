@@ -81,14 +81,14 @@ jobs:
       run: cargo doc --no-deps
     - name: Make sure `schema.graphql` is up to date
       working-directory: backend
-      run: cargo run --bin export-schema | diff -u --color=always - ../frontend/src/schema.graphql
+      run: cargo run -- export-api-schema | diff -u --color=always - ../frontend/src/schema.graphql
     - name: Make sure `docs/config.toml` is up to date
       working-directory: backend
       run: cargo run -- write-config | diff -u --color=always - ../docs/config.toml
 
     # Prepare binary for deployment
     - name: Build server binary for test deployment
-      working-directory: backend/server
+      working-directory: backend
       run: cargo build ${{ steps.build_mode.outputs.cargo }}
 
     # Prepare the ID (used in the subdomain) for deployment. This has to be done

@@ -1,5 +1,5 @@
-//! CLI command `create-tree` to read a realm tree from a YAML file and store it
-//! in the DB.
+//! CLI command `import-realm-tree` to read a realm tree from a YAML file and
+//! store it in the DB.
 
 use anyhow::Result;
 use futures::TryStreamExt;

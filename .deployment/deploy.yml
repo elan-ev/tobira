@@ -197,7 +197,7 @@
       become: true
       become_user: tobira
       command:
-        cmd: /opt/tobira/{{ id }}/tobira create-tree realms.yaml --dummy-blocks
+        cmd: /opt/tobira/{{ id }}/tobira import-realm-tree realms.yaml --dummy-blocks
         chdir: /opt/tobira/{{ id }}/
 
     - name: install tobira service files
