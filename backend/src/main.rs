@@ -38,27 +38,22 @@ async fn main() -> Result<()> {
 
     // Dispatch subcommand.
     match &args.cmd {
-        Command::Serve => {
-            let config = load_config_and_init_logger(&args)?;
+        Command::Serve { shared } => {
+            let config = load_config_and_init_logger(shared)?;
             start_server(&config).await?;
         }
-        Command::WriteConfig { target } => {
-            if args.config.is_some() {
-                bail!("`-c/--config` parameter is not valid for this subcommand");
-            }
-            config::write_template(target.as_ref())?
-        }
-        Command::ExportApiSchema { args } => cmd::export_api_schema::run(args)?,
-        Command::Db { cmd } => {
-            let config = load_config_and_init_logger(&args)?;
-            db::cmd::run(cmd, &config.db).await?;
-        }
-        Command::Sync { daemon } => {
-            let config = load_config_and_init_logger(&args)?;
+        Command::Sync { daemon, shared } => {
+            let config = load_config_and_init_logger(shared)?;
             sync::run(*daemon, &config).await?;
         }
-        Command::ImportRealmTree { options } => {
-            let config = load_config_and_init_logger(&args)?;
+        Command::Db { cmd, shared } => {
+            let config = load_config_and_init_logger(shared)?;
+            db::cmd::run(cmd, &config.db).await?;
+        }
+        Command::WriteConfig { target } => config::write_template(target.as_ref())?,
+        Command::ExportApiSchema { args } => cmd::export_api_schema::run(args)?,
+        Command::ImportRealmTree { options, shared } => {
+            let config = load_config_and_init_logger(shared)?;
             cmd::import_realm_tree::run(options, &config).await?;
         }
     }
@@ -82,7 +77,7 @@ async fn start_server(config: &Config) -> Result<()> {
     Ok(())
 }
 
-fn load_config_and_init_logger(args: &Args) -> Result<Config> {
+fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
     // Load configuration.
     let config = match &args.config {
         Some(path) => Config::load_from(path)

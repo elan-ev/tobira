@@ -12,11 +12,6 @@ use crate::{cmd, db::cmd::DbCommand};
     setting(structopt::clap::AppSettings::VersionlessSubcommands),
 )]
 pub(crate) struct Args {
-    /// Path to the configuration file. If this is not specified, Tobira will
-    /// try opening `config.toml` or `/etc/tobira/config.toml`.
-    #[structopt(short, long)]
-    pub(crate) config: Option<PathBuf>,
-
     #[structopt(subcommand)]
     pub(crate) cmd: Command,
 }
@@ -24,7 +19,29 @@ pub(crate) struct Args {
 #[derive(Debug, StructOpt)]
 pub(crate) enum Command {
     /// Starts the backend HTTP server.
-    Serve,
+    Serve {
+        #[structopt(flatten)]
+        shared: Shared,
+    },
+
+    /// Synchronizes Tobira with the configured Opencast instance.
+    Sync {
+        /// If specified, the command will run forever listening for new data.
+        #[structopt(long)]
+        daemon: bool,
+
+        #[structopt(flatten)]
+        shared: Shared,
+    },
+
+    /// Database operations.
+    Db {
+        #[structopt(subcommand)]
+        cmd: DbCommand,
+
+        #[structopt(flatten)]
+        shared: Shared,
+    },
 
     /// Outputs a template for the configuration file (which includes
     /// descriptions or all options).
@@ -39,23 +56,20 @@ pub(crate) enum Command {
         args: cmd::export_api_schema::Args,
     },
 
-    /// Database operations.
-    Db {
-        #[structopt(subcommand)]
-        cmd: DbCommand,
-    },
-
-    /// Starts a process continuiously fetching data from and generally keeping
-    /// Tobira in sync with the configured Opencast instance.
-    Sync {
-        /// If specified, the command will run forever listening for new data.
-        #[structopt(long)]
-        daemon: bool,
-    },
-
     /// Imports a realm tree from a YAML description (internal tool, no stability guaranteed!).
     ImportRealmTree {
         #[structopt(flatten)]
         options: cmd::import_realm_tree::Args,
+
+        #[structopt(flatten)]
+        shared: Shared,
     },
+}
+
+#[derive(Debug, StructOpt)]
+pub(crate) struct Shared {
+    /// Path to the configuration file. If this is not specified, Tobira will
+    /// try opening `config.toml` or `/etc/tobira/config.toml`.
+    #[structopt(short, long)]
+    pub(crate) config: Option<PathBuf>,
 }
