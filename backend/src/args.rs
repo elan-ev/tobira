@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use crate::cmd;
+use crate::{cmd, db::cmd::DbCommand};
 
 
 #[derive(Debug, StructOpt)]
@@ -58,28 +58,4 @@ pub(crate) enum Command {
         #[structopt(flatten)]
         options: cmd::import_realm_tree::Args,
     },
-}
-
-#[derive(Debug, StructOpt)]
-pub(crate) enum DbCommand {
-    /// Removes all data and tables from the database.
-    Clear,
-
-    /// Runs an `.sql` script with the configured database connection.
-    Script {
-        /// Path to a file containing an SQL script.
-        script: PathBuf,
-    },
-
-    /// Runs the database migrations that also automatically run when starting
-    /// the server.
-    Migrate,
-
-    /// Connects to the database and gives you an SQL prompt.
-    /// This just starts the `psql` client, so make sure that is installed
-    /// and accessible in your `PATH`.
-    Console,
-
-    /// Equivalent to `db clear` followed by `db migrate`.
-    Reset,
 }

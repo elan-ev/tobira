@@ -1,17 +1,43 @@
 use std::{
     io,
     os::unix::process::CommandExt,
-    path::Path,
+    path::{Path, PathBuf},
     process::Command,
 };
+use structopt::StructOpt;
 use tokio_postgres::IsolationLevel;
 
 use secrecy::ExposeSecret;
 
-use crate::{args::DbCommand, prelude::*};
+use crate::prelude::*;
 use super::{Db, DbConfig, create_pool, query};
 
 
+#[derive(Debug, StructOpt)]
+pub(crate) enum DbCommand {
+    /// Removes all data and tables from the database.
+    Clear,
+
+    /// Runs an `.sql` script with the configured database connection.
+    Script {
+        /// Path to a file containing an SQL script.
+        script: PathBuf,
+    },
+
+    /// Runs the database migrations that also automatically run when starting
+    /// the server.
+    Migrate,
+
+    /// Connects to the database and gives you an SQL prompt.
+    /// This just starts the `psql` client, so make sure that is installed
+    /// and accessible in your `PATH`.
+    Console,
+
+    /// Equivalent to `db clear` followed by `db migrate`.
+    Reset,
+}
+
+/// Entry point for `db` commands.
 pub(crate) async fn run(cmd: &DbCommand, config: &DbConfig) -> Result<()> {
     if let DbCommand::Console = cmd {
         return console(config).map(|_| ());
