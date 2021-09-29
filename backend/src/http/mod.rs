@@ -28,6 +28,7 @@ use self::{
 
 
 mod assets;
+pub(crate) mod auth;
 mod handlers;
 
 

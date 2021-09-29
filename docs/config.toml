@@ -58,6 +58,30 @@
 # Default value: 493
 #unix_socket_permissions = 493
 
+[auth]
+# The header containing a unique and stable username of the current user.
+# TODO: describe properties, requirements and usages of username.
+#
+# Default value: "x-tobira-username"
+#username_header = "x-tobira-username"
+
+# The header containing the human-readable name of the current user
+# (e.g. "Peter Lustig").
+#
+# Default value: "x-tobira-user-display-name"
+#display_name_header = "x-tobira-user-display-name"
+
+# The header containing a comma-separated list of roles of the current user.
+#
+# Default value: "x-tobira-user-roles"
+#roles_header = "x-tobira-user-roles"
+
+[auth.proxy]
+# TODO
+#
+# Default value: false
+#enabled = false
+
 [log]
 # Determines how many messages are logged. Log messages below
 # this level are not emitted. Possible values: "trace", "debug",
