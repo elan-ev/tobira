@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-use crate::api::db::EventTrack;
+use crate::db::types::EventTrack;
 
 
 /// What the harvesting API returns.

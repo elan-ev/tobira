@@ -7,7 +7,6 @@ use self::{
     subscription::Subscription,
 };
 
-pub mod db;
 pub mod mutation;
 pub mod query;
 pub mod subscription;
@@ -15,7 +14,7 @@ pub mod subscription;
 mod model;
 mod id;
 
-pub(crate) use id::{Id, Key};
+use id::Id;
 
 
 /// Creates and returns the API root node.

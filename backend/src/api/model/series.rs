@@ -1,6 +1,9 @@
 use juniper::{graphql_object, FieldResult};
 
-use crate::api::{Context, id::Key, Id, model::event::Event};
+use crate::{
+    api::{Context, Id, model::event::Event},
+    db::types::Key,
+};
 
 
 pub(crate) struct Series {

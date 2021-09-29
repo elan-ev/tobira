@@ -13,6 +13,7 @@ use crate::prelude::*;
 pub(crate) mod cmd;
 mod query;
 pub(crate) mod util;
+pub(crate) mod types;
 mod tx;
 
 pub use tx::Transaction;

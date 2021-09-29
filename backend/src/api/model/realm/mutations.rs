@@ -5,12 +5,12 @@ use juniper::{FieldError, FieldResult};
 
 use crate::{
     api::{
-        Context,
-        id::{Id, Key},
-        model::realm::{Realm, RealmOrder},
+        Context, Id,
     },
+    db::types::Key,
     prelude::*,
 };
+use super::{Realm, RealmOrder};
 
 
 /// Creates a `FieldError`. Works like `format!`.

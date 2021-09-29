@@ -6,7 +6,7 @@ use std::{
 use hyper::http::status::StatusCode;
 use tokio_postgres::{GenericClient, types::ToSql};
 
-use crate::{api::db::EventTrack, prelude::*};
+use crate::{db::types::EventTrack, prelude::*};
 use super::{SyncConfig, status::SyncStatus};
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
 

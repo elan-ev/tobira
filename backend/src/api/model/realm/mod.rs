@@ -4,10 +4,11 @@ use futures::stream::TryStreamExt;
 use juniper::{FieldResult, graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
 
-use crate::api::{
-    Context, Id, Key,
-    model::block::BlockValue,
+use crate::{
+    api::{Context, Id},
+    db::types::Key,
 };
+use super::block::BlockValue;
 
 
 mod mutations;

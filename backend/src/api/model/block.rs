@@ -7,7 +7,8 @@ use postgres_types::FromSql;
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, Id, id::Key, model::series::Series},
+    api::{Context, Id, model::series::Series},
+    db::types::Key,
     prelude::*,
 };
 
