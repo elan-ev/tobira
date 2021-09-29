@@ -9,7 +9,7 @@ pub(crate) struct ThemeConfig {
     /// Path to CSS file that includes all used font files and sets the variable
     /// `--main-font` in the `:root` selector. For example:
     ///
-    /// ```
+    /// ```text
     /// :root {
     ///     --main-font: 'Open Sans';
     /// }
