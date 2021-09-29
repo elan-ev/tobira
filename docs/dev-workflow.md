@@ -35,9 +35,9 @@ To do this, create a copy of `backend/config.toml` and call it `backend/sync-con
 Change the sync section in that file to contain the correct credentials for your Opencast instance.
 Then run `cargo run -- -c sync-config.toml sync`.
 
-To just import realm data, you can use the `create-tree` subcommand and pass it a fitting YAML file.
+To just import realm data, you can use the `import-realm-tree` subcommand and pass it a fitting YAML file.
 This repository contains `.deployment/files/realms.yaml` (big) and `backend/dummy-realms.yaml` (small).
-Import those with `cargo run -- create-tree dummy-realms.yaml`.
+Import those with `cargo run -- import-realm-tree dummy-realms.yaml`.
 
 
 ## DB management, migrations and more
@@ -66,14 +66,14 @@ If you use `floof`, you do not really care about this section.
 
 ### Export GraphQL Schema
 
-The GraphQL API is defined in Rust code inside `backend/api`.
+The GraphQL API is defined in Rust code inside `backend/src`.
 The frontend requires a `schema.graphql` file to validate and compile all queries against.
 This file is `frontend/src/schema.graphql` and should always match the Rust code defining the API (don't worry, our CI will make sure they match).
 
 Whenever you change the API code in a way that alters the GraphQL schema, you have to update the schema file in the frontend with this command (in the `backend` folder):
 
 ```sh
-cargo run --bin export-schema -- ../frontend/src/schema.graphql
+cargo run -- export-api-schema ../frontend/src/schema.graphql
 ```
 
 You also need to run the Relay compiler again (see next step).

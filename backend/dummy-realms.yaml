@@ -1,5 +1,5 @@
 # A realm tree definition for development. Can be imported with
-# `cargo run -- create-tree dummy-realms.yaml`
+# `cargo run -- import-realm-tree dummy-realms.yaml`
 
 name: ""
 path: ""
