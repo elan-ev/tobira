@@ -1,7 +1,4 @@
-use api::Transaction;
-use hyper::{
-    Body, Method, StatusCode,
-};
+use hyper::{Body, Method, StatusCode};
 use std::{
     mem,
     sync::Arc,
@@ -10,6 +7,7 @@ use std::{
 
 use crate::{
     api,
+    db::Transaction,
     prelude::*,
 };
 use super::{Context, Request, Response, assets::Assets};

@@ -13,6 +13,9 @@ use crate::prelude::*;
 pub(crate) mod cmd;
 mod query;
 pub(crate) mod util;
+mod tx;
+
+pub use tx::Transaction;
 
 
 #[derive(Debug, confique::Config)]

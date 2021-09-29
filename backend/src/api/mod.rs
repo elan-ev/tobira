@@ -1,5 +1,6 @@
 //! Definition of the GraphQL API.
 
+use crate::db::Transaction;
 use self::{
     mutation::Mutation,
     query::Query,
@@ -13,10 +14,8 @@ pub mod subscription;
 
 mod model;
 mod id;
-mod tx;
 
 pub(crate) use id::{Id, Key};
-pub use tx::Transaction;
 
 
 /// Creates and returns the API root node.
@@ -30,7 +29,7 @@ pub type RootNode = juniper::RootNode<'static, Query, Mutation, Subscription>;
 
 /// The context that is accessible to every resolver in our API.
 pub struct Context {
-    pub db: tx::Transaction,
+    pub db: Transaction,
 }
 
 impl Context {
