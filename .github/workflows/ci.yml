@@ -12,24 +12,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    # Backend cache: this cache stores cargo caches and compiled dependencies to
-    # speed up compiling the backend. We use a key consisting of the lock file,
-    # the compiler version and the global compiler flags. If either of the
-    # latter two change, everything is recompiled anyway. The lockfile is used,
-    # too, to avoid caching dependencies that have been removed already. Also
-    # compare: https://github.com/actions/cache/blob/main/examples.md#rust---cargo
-    - name: Prepare backend cache key
-      run: |
-        cp backend/Cargo.lock cache-fingerprint
-        echo "$RUSTFLAGS $(rustc -V)" >> cache-fingerprint
     - name: Restore backend cache
-      uses: actions/cache@v2
+      uses: Swatinem/rust-cache@v1.3.0
       with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          backend/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('cache-fingerprint') }}
+        working-directory: backend
 
     # Frontend cache: only the NPM folder is cached, not the node_modules, as
     # recommended here: https://github.com/actions/cache/blob/main/examples.md#node---npm
