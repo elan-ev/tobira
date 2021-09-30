@@ -19,6 +19,7 @@ mod logger;
 mod prelude;
 mod sync;
 mod theme;
+mod user;
 
 
 #[tokio::main]
@@ -40,7 +41,7 @@ async fn main() -> Result<()> {
     match &args.cmd {
         Command::Serve { shared } => {
             let config = load_config_and_init_logger(shared)?;
-            start_server(&config).await?;
+            start_server(config).await?;
         }
         Command::Sync { daemon, shared } => {
             let config = load_config_and_init_logger(shared)?;
@@ -61,7 +62,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn start_server(config: &Config) -> Result<()> {
+async fn start_server(config: Config) -> Result<()> {
     info!("Starting Tobira backend ...");
     trace!("Configuration: {:#?}", config);
 
@@ -71,7 +72,7 @@ async fn start_server(config: &Config) -> Result<()> {
         .context("failed to check/run DB migrations")?;
 
     let root_node = api::root_node();
-    http::serve(&config, root_node, db).await
+    http::serve(config, root_node, db).await
         .context("failed to start HTTP server")?;
 
     Ok(())

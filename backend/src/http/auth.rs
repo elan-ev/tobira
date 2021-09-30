@@ -15,7 +15,7 @@ pub(crate) struct AuthConfig {
 
     /// The header containing a comma-separated list of roles of the current user.
     #[config(default = "x-tobira-user-roles")]
-    pub(crate) display_roles: String,
+    pub(crate) roles_header: String,
 
     #[config(nested)]
     pub(crate) proxy: AuthProxyConfig,

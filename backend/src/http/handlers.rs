@@ -9,6 +9,7 @@ use crate::{
     api,
     db::Transaction,
     prelude::*,
+    user::User,
 };
 use super::{Context, Request, Response, assets::Assets};
 
@@ -21,6 +22,9 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         req.uri().path(),
         req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
     );
+
+    let user = User::from_headers(req.headers(), &ctx.config.auth);
+    trace!("User: {:?}", user);
 
     let method = req.method().clone();
     let path = req.uri().path().trim_end_matches('/');
