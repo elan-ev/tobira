@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
-use futures::stream::TryStreamExt;
 use tokio_postgres::Row;
 use juniper::{GraphQLObject, graphql_object, FieldResult};
 
 use crate::{
     api::{Context, Id, model::series::Series},
     db::types::{EventTrack, Key},
+    prelude::*,
 };
 
 
@@ -29,6 +29,8 @@ struct Track {
     uri: String,
     flavor: String,
     mimetype: Option<String>,
+    // TODO: this should be `[i32; 2]` but the relevant patch is not released
+    // yet: https://github.com/graphql-rust/juniper/pull/966
     resolution: Option<Vec<i32>>,
 }
 
@@ -128,7 +130,7 @@ impl From<EventTrack> for Track {
             uri: src.uri,
             flavor: src.flavor,
             mimetype: src.mimetype,
-            resolution: src.resolution,
+            resolution: src.resolution.map(Into::into),
         }
     }
 }

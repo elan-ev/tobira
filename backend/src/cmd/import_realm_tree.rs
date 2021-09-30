@@ -1,8 +1,6 @@
 //! CLI command `import-realm-tree` to read a realm tree from a YAML file and
 //! store it in the DB.
 
-use anyhow::Result;
-use futures::TryStreamExt;
 use serde::Deserialize;
 use tokio_postgres::GenericClient;
 use std::{fs::File, future::Future, path::PathBuf, pin::Pin};
