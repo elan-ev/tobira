@@ -2,7 +2,7 @@ import React from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
-import { Header } from "./Header";
+import { Header } from "./header";
 import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
