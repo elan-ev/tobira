@@ -46,7 +46,6 @@ type TextBlock implements Block {
 }
 
 type Query {
-  apiVersion: String!
   "Returns the root realm."
   rootRealm: Realm!
   """

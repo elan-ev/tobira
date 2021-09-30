@@ -10,10 +10,6 @@ pub(crate) struct Query;
 
 #[graphql_object(Context = Context)]
 impl Query {
-    fn api_version() -> &str {
-        "0.0"
-    }
-
     /// Returns the root realm.
     async fn root_realm(context: &Context) -> FieldResult<Realm> {
         Realm::root(context).await
