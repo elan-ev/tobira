@@ -19,6 +19,11 @@ pub(crate) async fn handle(
     };
     *req.uri_mut() = uri.clone();
 
+    // Add additional headers to the request
+    for header in &args.headers {
+        req.headers_mut().insert(header.name.clone(), header.value.clone());
+    }
+
     let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::with_native_roots());
     let out = match client.request(req).await {
         Ok(response) => response,
