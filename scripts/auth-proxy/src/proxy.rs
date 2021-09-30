@@ -19,9 +19,14 @@ pub(crate) async fn handle(
     };
     *req.uri_mut() = uri.clone();
 
+    // Get headers from template user
+    let template_headers = args.template.map(|t| t.headers())
+        .into_iter()
+        .flatten();
+
     // Add additional headers to the request
-    for header in &args.headers {
-        req.headers_mut().insert(header.name.clone(), header.value.clone());
+    for header in template_headers.chain(args.headers.clone()) {
+        req.headers_mut().insert(header.name, header.value);
     }
 
     let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::with_native_roots());
