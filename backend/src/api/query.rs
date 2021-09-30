@@ -4,7 +4,7 @@ use super::{Context, Id, model::{realm::Realm, event::Event}};
 
 
 /// The root query object.
-pub struct Query;
+pub(crate) struct Query;
 
 #[graphql_object(Context = Context)]
 impl Query {
