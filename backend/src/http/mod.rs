@@ -4,7 +4,6 @@
 //! `hyper` server and catches errors. The main logic is in `handlers.rs`.
 
 use deadpool_postgres::Pool;
-use futures::FutureExt;
 use hyper::{
     Body, Server,
     service::{make_service_fn, service_fn},

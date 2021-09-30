@@ -2,7 +2,6 @@
 
 use chrono::{DateTime, Utc, offset::TimeZone};
 use deadpool_postgres::{Config as PoolConfig, Pool};
-use futures::TryStreamExt;
 use once_cell::sync::Lazy;
 use secrecy::{ExposeSecret, Secret};
 use std::{collections::BTreeMap, time::Duration};

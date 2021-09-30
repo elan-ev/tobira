@@ -1,12 +1,8 @@
+use juniper::{FieldError, FieldResult};
 use std::collections::{HashMap, HashSet};
 
-use futures::TryStreamExt;
-use juniper::{FieldError, FieldResult};
-
 use crate::{
-    api::{
-        Context, Id,
-    },
+    api::{Context, Id},
     db::types::Key,
     prelude::*,
 };
