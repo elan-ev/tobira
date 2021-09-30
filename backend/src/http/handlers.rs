@@ -34,7 +34,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     match path {
         // The GraphQL endpoint. This is the only path for which POST is
         // allowed.
-        "/graphql" if method == Method::POST => handle_api(req, &ctx).await,
+        "/graphql" if method == Method::POST => handle_api(req, user, &ctx).await,
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
@@ -108,7 +108,7 @@ pub(super) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> R
 }
 
 /// Handles a request to `/graphql`.
-async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
+async fn handle_api(req: Request<Body>, user: Option<User>, ctx: &Context) -> Response {
     let before = Instant::now();
 
     // Get a connection for this request.
@@ -162,7 +162,10 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
         Arc::new(static_tx)
     };
 
-    let api_context = Arc::new(api::Context::new(Transaction::new(tx.clone())));
+    let api_context = Arc::new(api::Context {
+        db: Transaction::new(tx.clone()),
+        user,
+    });
     let out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
     let num_queries = api_context.db.num_queries();
     drop(api_context);

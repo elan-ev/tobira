@@ -1,5 +1,7 @@
 use juniper::{graphql_object, FieldResult};
 
+use crate::user::User;
+
 use super::{Context, Id, model::{realm::Realm, event::Event}};
 
 
@@ -36,5 +38,10 @@ impl Query {
     /// Returns an event by its ID.
     async fn event(id: Id, context: &Context) -> FieldResult<Option<Event>> {
         Event::load_by_id(id, context).await
+    }
+
+    /// Returns the current user.
+    fn current_user(context: &Context) -> Option<&User> {
+        context.user.as_ref()
     }
 }

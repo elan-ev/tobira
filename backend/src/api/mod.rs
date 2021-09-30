@@ -1,6 +1,6 @@
 //! Definition of the GraphQL API.
 
-use crate::db::Transaction;
+use crate::{db::Transaction, user::User};
 use self::{
     mutation::Mutation,
     query::Query,
@@ -29,12 +29,7 @@ pub(crate) type RootNode = juniper::RootNode<'static, Query, Mutation, Subscript
 /// The context that is accessible to every resolver in our API.
 pub(crate) struct Context {
     pub(crate) db: Transaction,
-}
-
-impl Context {
-    pub(crate) fn new(db: Transaction) -> Self {
-        Self { db }
-    }
+    pub(crate) user: Option<User>,
 }
 
 impl juniper::Context for Context {}

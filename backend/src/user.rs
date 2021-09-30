@@ -1,10 +1,11 @@
 use hyper::{HeaderMap, header::HeaderValue};
+use juniper::GraphQLObject;
 
 use crate::http::auth::AuthConfig;
 
 
 /// Data about a logged-in user.
-#[derive(Debug)]
+#[derive(Debug, GraphQLObject)]
 pub(crate) struct User {
     pub(crate) username: String,
     pub(crate) display_name: String,
