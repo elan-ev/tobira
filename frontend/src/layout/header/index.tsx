@@ -1,6 +1,6 @@
 import React from "react";
 import { HiOutlineSearch } from "react-icons/hi";
-import { FiArrowLeft, FiMenu, FiX, FiUser } from "react-icons/fi";
+import { FiArrowLeft, FiMenu, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 
 import { useMenu } from "../MenuState";
@@ -10,6 +10,7 @@ import { OUTER_CONTAINER_MARGIN } from "..";
 import { ActionIcon, BASE_LOGO_MARGIN, ButtonContainer } from "./ui";
 import { SearchField } from "./Search";
 import { Logo } from "./Logo";
+import { UserBox } from "./UserBox";
 
 
 type Props = {
@@ -90,9 +91,7 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                 <HiOutlineSearch />
             </ActionIcon>
 
-            <ActionIcon title={t("user.settings")} onClick={() => {}}>
-                <FiUser />
-            </ActionIcon>
+            <UserBox />
 
             {!hideNavIcon && (
                 <ActionIcon

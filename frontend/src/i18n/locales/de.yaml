@@ -57,6 +57,7 @@ main-menu:
 
 user:
   settings: Nutzereinstellungen
+  logged-in-as: 'Angemeldet als:'
 
 login:
   button-label: Einloggen
