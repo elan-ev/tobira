@@ -56,6 +56,7 @@ main-menu:
   about: Info
 
 user:
+  login: Anmelden
   settings: Nutzereinstellungen
   logged-in-as: 'Angemeldet als:'
 

@@ -7,9 +7,9 @@ import { UserData$key } from "./query-types/UserData.graphql";
 
 export type UserQueryRef = UserData$key;
 
-type UserState = "unknown" | "none" | User;
+export type UserState = "unknown" | "none" | User;
 
-type User = {
+export type User = {
     username: string;
     displayName: string;
     roles: readonly string[];
