@@ -57,6 +57,7 @@ main-menu:
 
 user:
   login: Anmelden
+  logout: Abmelden
   settings: Nutzereinstellungen
   logged-in-as: 'Angemeldet als:'
 

@@ -4,7 +4,7 @@ import React from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    FiCheck, FiChevronDown, FiChevronLeft, FiMoon, FiMoreVertical, FiUser,
+    FiCheck, FiChevronDown, FiChevronLeft, FiLogIn, FiLogOut, FiMoon, FiMoreVertical, FiUser,
 } from "react-icons/fi";
 import { HiOutlineTranslate } from "react-icons/hi";
 
@@ -66,6 +66,9 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => (
             ...BOX_CSS,
             padding: "3px 8px",
             marginRight: 8,
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
             color: "var(--nav-color)",
             "&:hover": {
                 boxShadow: "1px 1px 5px var(--grey92)",
@@ -73,7 +76,10 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => (
             [`@media (max-width: ${BREAKPOINT}px)`]: {
                 display: "none",
             },
-        }}>{t("user.login")}</div>
+        }}>
+            <FiLogIn />
+            {t("user.login")}
+        </div>
         <UserSettingsIcon t={t} onClick={menu.toggle} />
         {menu.isOpen && <Menu close={menu.close} t={t} />}
     </div>
@@ -200,17 +206,35 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
     type State = "main" | "language";
     const [state, setState] = useState<State>("main");
 
+    const userState = useUser();
+    const user = userState === "none" || userState === "unknown" ? null : userState;
+
     // Close menu on clicks anywhere outside of it.
     const ref = useRef(null);
     useOnOutsideClick(ref, close);
 
     const items = match(state, {
         main: () => <>
+            {/* Login button if the user is NOT logged in */}
+            {!user && <MenuItem icon={<FiLogIn />} borderBottom extraCss={{
+                color: "var(--nav-color)",
+                [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
+                    display: "none",
+                },
+            }}>{t("user.login")}</MenuItem>}
+
             <MenuItem icon={<HiOutlineTranslate />} onClick={() => setState("language")}>
                 {t("language")}
             </MenuItem>
             {/* TODO: make this do something */}
             <MenuItem icon={<FiMoon />}>{t("main-menu.theme")}</MenuItem>
+
+            {/* Logout button if the user is logged in */}
+            {user && <MenuItem
+                icon={<FiLogOut />}
+                borderTop
+                extraCss={{ color: "var(--danger-color)" }}
+            >{t("user.logout")}</MenuItem>}
         </>,
         language: () => <>
             <MenuItem icon={<FiChevronLeft />} onClick={() => setState("main")} borderBottom>
@@ -258,11 +282,20 @@ const LanguageMenu: React.FC = () => {
 type MenuItemProps = {
     icon?: JSX.Element;
     onClick?: () => void;
+    extraCss?: Interpolation<Theme>;
     borderBottom?: boolean;
+    borderTop?: boolean;
 };
 
 /** A single item in the user menu. */
-const MenuItem: React.FC<MenuItemProps> = ({ icon, children, onClick, borderBottom = false }) => (
+const MenuItem: React.FC<MenuItemProps> = ({
+    icon,
+    children,
+    onClick,
+    extraCss = {},
+    borderBottom = false,
+    borderTop = false,
+}) => (
     <li
         onClick={onClick ?? (() => {})}
         css={{
@@ -277,6 +310,9 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, children, onClick, borderBott
             ...borderBottom && {
                 borderBottom: "1px solid var(--grey80)",
             },
+            ...borderTop && {
+                borderTop: "1px solid var(--grey80)",
+            },
             "& > svg": {
                 fontSize: 24,
                 width: 24,
@@ -284,6 +320,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, children, onClick, borderBott
             "&:hover": {
                 backgroundColor: "var(--grey97)",
             },
+            ...(extraCss as Record<string, unknown>),
         }}
     >
         {icon ?? <svg />}
