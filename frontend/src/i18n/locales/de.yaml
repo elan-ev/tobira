@@ -59,7 +59,8 @@ user:
   login: Anmelden
   logout: Abmelden
   settings: Nutzereinstellungen
-  logged-in-as: 'Angemeldet als:'
+  your-page: Persönliche Seite
+  manage-content: Inhalte verwalten
 
 login:
   button-label: Einloggen

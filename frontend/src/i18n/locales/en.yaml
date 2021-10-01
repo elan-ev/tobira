@@ -57,7 +57,8 @@ user:
   login: Login
   logout: Log out
   settings: User settings
-  logged-in-as: 'Logged in as:'
+  your-page: Your page
+  manage-content: Manage content
 
 login:
   button-label: Login

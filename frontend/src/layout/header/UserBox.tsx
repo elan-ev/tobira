@@ -4,12 +4,14 @@ import React from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    FiCheck, FiChevronDown, FiChevronLeft, FiLogIn, FiLogOut, FiMoon, FiMoreVertical, FiUser,
+    FiCheck, FiChevronDown, FiChevronLeft, FiFilm, FiLogIn, FiLogOut, FiMoon,
+    FiMoreVertical, FiUser,
 } from "react-icons/fi";
-import { HiOutlineTranslate } from "react-icons/hi";
+import { HiOutlineSparkles, HiOutlineTranslate } from "react-icons/hi";
 
 import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
 import { languages } from "../../i18n";
+import { Link } from "../../router";
 import { useOnOutsideClick } from "../../routes/manage/Realm/util";
 import { User, useUser } from "../../User";
 import { match } from "../../util";
@@ -223,6 +225,15 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
                 },
             }}>{t("user.login")}</MenuItem>}
 
+            {user && <>
+                <MenuItem icon={<HiOutlineSparkles />} linkTo={`/@${user.username}`}>
+                    {t("user.your-page")}
+                </MenuItem>
+                <MenuItem icon={<FiFilm />} linkTo="/~manage">
+                    {t("user.manage-content")}
+                </MenuItem>
+            </>}
+
             <MenuItem icon={<HiOutlineTranslate />} onClick={() => setState("language")}>
                 {t("language")}
             </MenuItem>
@@ -282,6 +293,7 @@ const LanguageMenu: React.FC = () => {
 type MenuItemProps = {
     icon?: JSX.Element;
     onClick?: () => void;
+    linkTo?: string;
     extraCss?: Interpolation<Theme>;
     borderBottom?: boolean;
     borderTop?: boolean;
@@ -292,38 +304,42 @@ const MenuItem: React.FC<MenuItemProps> = ({
     icon,
     children,
     onClick,
+    linkTo,
     extraCss = {},
     borderBottom = false,
     borderTop = false,
-}) => (
-    <li
-        onClick={onClick ?? (() => {})}
-        css={{
-            display: "flex",
-            gap: 16,
-            alignItems: "center",
-            height: 40,
-            paddingLeft: "12px",
-            paddingRight: "16px",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            ...borderBottom && {
-                borderBottom: "1px solid var(--grey80)",
-            },
-            ...borderTop && {
-                borderTop: "1px solid var(--grey80)",
-            },
-            "& > svg": {
-                fontSize: 24,
-                width: 24,
-            },
-            "&:hover": {
-                backgroundColor: "var(--grey97)",
-            },
-            ...(extraCss as Record<string, unknown>),
-        }}
-    >
+}) => {
+    const inner = <>
         {icon ?? <svg />}
         <div>{children}</div>
-    </li>
-);
+    </>;
+    const css = {
+        display: "flex",
+        gap: 16,
+        alignItems: "center",
+        height: 40,
+        paddingLeft: "12px",
+        paddingRight: "16px",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        color: "black",
+        ...borderBottom && {
+            borderBottom: "1px solid var(--grey80)",
+        },
+        ...borderTop && {
+            borderTop: "1px solid var(--grey80)",
+        },
+        "& > svg": {
+            fontSize: 24,
+            width: 24,
+        },
+        "&:hover": {
+            backgroundColor: "var(--grey97)",
+        },
+        ...(extraCss as Record<string, unknown>),
+    } as const;
+
+    return linkTo
+        ? <li><Link to={linkTo} onClick={onClick ?? (() => {})} css={css}>{inner}</Link></li>
+        : <li css={css} onClick={onClick ?? (() => {})}>{inner}</li>;
+};
