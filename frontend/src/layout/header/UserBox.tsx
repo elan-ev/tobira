@@ -167,7 +167,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => (
             // box above. So we have to override a few properties here.
             [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
                 right: 0,
-                left: 0,
+                minWidth: "max(100%, 200px)",
                 marginTop: 0,
                 borderRadius: "0 0 4px 4px",
                 clipPath: "inset(0px -15px -15px -15px)",
@@ -265,7 +265,7 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
             border: "1px solid var(--grey80)",
             boxShadow: "1px 1px 5px var(--grey92)",
             backgroundColor: "white",
-            minWidth: 220,
+            minWidth: 200,
             paddingLeft: 0,
             margin: 0,
             overflow: "hidden",
