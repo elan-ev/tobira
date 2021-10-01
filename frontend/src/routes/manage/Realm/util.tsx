@@ -1,4 +1,5 @@
 import { TFunction } from "i18next";
+import { MutableRefObject, useEffect } from "react";
 import { RegisterOptions } from "react-hook-form";
 
 import { Card } from "../../../ui/Card";
@@ -34,3 +35,20 @@ export const ErrorBox: React.FC = ({ children }) => (
             <Card kind="error">{children}</Card>
         </div>
 );
+
+export const useOnOutsideClick = (
+    ref: MutableRefObject<Node | null>,
+    callback: () => void,
+): void => {
+    useEffect(() => {
+        const handler = (event: MouseEvent) => {
+            const target = event.target;
+            if (ref.current && target instanceof Element && !ref.current.contains(target)) {
+                callback();
+            }
+        };
+
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    });
+};
