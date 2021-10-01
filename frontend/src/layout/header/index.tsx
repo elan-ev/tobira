@@ -78,6 +78,8 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
         <Logo />
         <SearchField variant="desktop" />
         <ButtonContainer>
+            <UserBox />
+
             <ActionIcon
                 title={t("search")}
                 onClick={() => menu.toggleMenu("search")}
@@ -90,8 +92,6 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
             >
                 <HiOutlineSearch />
             </ActionIcon>
-
-            <UserBox />
 
             {!hideNavIcon && (
                 <ActionIcon
