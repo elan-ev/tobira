@@ -20,6 +20,12 @@ pub(crate) struct AuthConfig {
     #[config(default = "x-tobira-user-roles")]
     pub(crate) roles_header: String,
 
+    /// If a user has this role, they are treated as a moderator in Tobira,
+    /// giving them the ability to modify the realm structure among other
+    /// things.
+    #[config(default = "ROLE_TOBIRA_MODERATOR")]
+    pub(crate) moderator_role: String,
+
     #[config(nested)]
     pub(crate) proxy: AuthProxyConfig,
 }
