@@ -1,7 +1,7 @@
-use juniper::{graphql_object, FieldResult};
+use juniper::graphql_object;
 
 use crate::{
-    api::{Context, Id, model::event::Event},
+    api::{Context, err::ApiResult, Id, model::event::Event},
     db::types::Key,
 };
 
@@ -26,13 +26,13 @@ impl Series {
         self.description.as_deref()
     }
 
-    async fn events(&self, context: &Context) -> FieldResult<Vec<Event>> {
+    async fn events(&self, context: &Context) -> ApiResult<Vec<Event>> {
         Event::load_for_series(self.key, context).await
     }
 }
 
 impl Series {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
+    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
         if let Some(key) = id.key_for(Id::SERIES_KIND) {
             Self::load_by_key(key, context).await
         } else {
@@ -40,7 +40,7 @@ impl Series {
         }
     }
 
-    pub(crate) async fn load_by_key(key: Key, context: &Context) -> FieldResult<Option<Series>> {
+    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Series>> {
         let result = context.db
             .query_opt(
                 "select id, title, description \

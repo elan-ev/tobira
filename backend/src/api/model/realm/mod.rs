@@ -1,9 +1,9 @@
-use juniper::{FieldResult, graphql_object, GraphQLEnum};
+use juniper::{graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
 use std::convert::TryInto;
 
 use crate::{
-    api::{Context, Id},
+    api::{Context, Id, err::ApiResult},
     db::types::Key,
     prelude::*,
 };
@@ -36,7 +36,7 @@ pub(crate) struct Realm {
 }
 
 impl Realm {
-    pub(crate) async fn root(context: &Context) -> FieldResult<Self> {
+    pub(crate) async fn root(context: &Context) -> ApiResult<Self> {
         let row = context.db
             .query_one("select child_order from realms where id = 0", &[])
             .await?;
@@ -51,7 +51,7 @@ impl Realm {
         })
     }
 
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
+    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
         if let Some(key) = id.key_for(Id::REALM_KIND) {
             Self::load_by_key(key, context).await
         } else {
@@ -59,7 +59,7 @@ impl Realm {
         }
     }
 
-    pub(crate) async fn load_by_key(key: Key, context: &Context) -> FieldResult<Option<Self>> {
+    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
         if key.0 == 0 {
             return Ok(Some(Self::root(context).await?));
         }
@@ -84,7 +84,7 @@ impl Realm {
         Ok(result)
     }
 
-    pub(crate) async fn load_by_path(mut path: String, context: &Context) -> FieldResult<Option<Self>> {
+    pub(crate) async fn load_by_path(mut path: String, context: &Context) -> ApiResult<Option<Self>> {
         // Normalize path: strip optional trailing slash.
         if path.ends_with('/') {
             path.pop();
@@ -153,7 +153,7 @@ impl Realm {
     }
 
     /// Returns the immediate parent of this realm.
-    async fn parent(&self, context: &Context) -> FieldResult<Option<Realm>> {
+    async fn parent(&self, context: &Context) -> ApiResult<Option<Realm>> {
         match self.parent_key {
             Some(parent_key) => Realm::load_by_key(parent_key, context).await,
             None => Ok(None)
@@ -162,7 +162,7 @@ impl Realm {
 
     /// Returns all ancestors between the root realm to this realm
     /// (excluding both, the root realm and this realm).
-    async fn ancestors(&self, context: &Context) -> FieldResult<Vec<Realm>> {
+    async fn ancestors(&self, context: &Context) -> ApiResult<Vec<Realm>> {
         let result = context.db
             .query_raw(
                 "select id, parent, name, full_path, index, child_order \
@@ -191,7 +191,7 @@ impl Realm {
     /// ordered by the internal index. If `childOrder` returns an ordering
     /// different from `BY_INDEX`, the frontend is supposed to sort the
     /// children.
-    async fn children(&self, context: &Context) -> FieldResult<Vec<Self>> {
+    async fn children(&self, context: &Context) -> ApiResult<Vec<Self>> {
         let result = context.db
             .query_raw(
                 "select id, name, full_path, index, child_order \
@@ -218,7 +218,7 @@ impl Realm {
     }
 
     /// Returns the (content) blocks of this realm.
-    async fn blocks(&self, context: &Context) -> FieldResult<Vec<BlockValue>> {
+    async fn blocks(&self, context: &Context) -> ApiResult<Vec<BlockValue>> {
         // TODO: this method can very easily lead to an N+1 query problem.
         // However, it is unlikely that we ever have that problem: the frontend
         // will only show one realm at a time, so the query will also only
@@ -228,7 +228,7 @@ impl Realm {
 
     /// Returns the number of realms that are descendants of this one
     /// (excluding this one). Returns a number ≥ 0.
-    async fn number_of_descendants(&self, context: &Context) -> FieldResult<i32> {
+    async fn number_of_descendants(&self, context: &Context) -> ApiResult<i32> {
         let count = context.db
             .query_one(
                 "select count(*) from realms where full_path like $1 || '/%'",

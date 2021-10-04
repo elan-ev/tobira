@@ -12,6 +12,7 @@ pub(crate) mod query;
 pub(crate) mod subscription;
 
 mod model;
+mod err;
 mod id;
 
 use id::Id;

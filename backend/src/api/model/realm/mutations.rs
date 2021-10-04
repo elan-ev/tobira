@@ -1,23 +1,15 @@
-use juniper::{FieldError, FieldResult};
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    api::{Context, Id},
+    api::{Context, Id, err::{ApiResult, invalid_input}},
     db::types::Key,
     prelude::*,
 };
 use super::{Realm, RealmOrder};
 
 
-/// Creates a `FieldError`. Works like `format!`.
-macro_rules! ferr {
-    ($fmt:literal $(, $arg:expr)* $(,)?) => {
-        FieldError::new(format!($fmt $(, $arg)*), juniper::Value::Null)
-    };
-}
-
 impl Realm {
-    pub(crate) async fn add(realm: NewRealm, context: &Context) -> FieldResult<Realm> {
+    pub(crate) async fn add(realm: NewRealm, context: &Context) -> ApiResult<Realm> {
         let parent_key = id_to_key(realm.parent, "`parent`")?;
         let key: Key = context.db
             .query_one(
@@ -39,19 +31,19 @@ impl Realm {
         // index, but that's a lot harder with juniper, unfortunately.
         child_indices: Option<Vec<ChildIndex>>,
         context: &Context,
-    ) -> FieldResult<Realm> {
+    ) -> ApiResult<Realm> {
         // Verify and convert arguments.
         let parent_key = id_to_key(parent, "`parent`")?;
 
         if let Some(child_indices) = child_indices {
             if child_order != RealmOrder::ByIndex {
-                return Err(ferr!(
+                return Err(invalid_input!(
                     "`setChildOrder` was called with children but not with 'BY_INDEX' order",
                 ));
             }
 
             if child_indices.is_empty() {
-                return Err(ferr!("`setChildOrder` was called with zero children"));
+                return Err(invalid_input!("`setChildOrder` was called with zero children"));
             }
 
             let all_indices_unique = {
@@ -59,7 +51,7 @@ impl Realm {
                 index_set.len() == child_indices.len()
             };
             if !all_indices_unique {
-                return Err(ferr!(
+                return Err(invalid_input!(
                     "child indices given to `setChildOrder` are not unique, but they should be",
                 ));
             }
@@ -69,7 +61,7 @@ impl Realm {
                     let key = id_to_key(child.id, "ID of child")?;
                     Ok((key, child.index))
                 })
-                .collect::<FieldResult<_, _>>()?;
+                .collect::<ApiResult<_>>()?;
 
 
             // Retrieve the current children of the given realm
@@ -82,13 +74,13 @@ impl Realm {
 
             // Make sure the list of given children matches the current ones.
             if current_children.len() != child_indices.len() {
-                return Err(ferr!(
+                return Err(invalid_input!(
                     "number of children given to `setChildOrder` does not match DB",
                 ));
             }
             for (key, _) in &current_children {
                 if !child_indices.contains_key(key) {
-                    return Err(ferr!(
+                    return Err(invalid_input!(
                         "child {} of realm {} is missing in children given to `setChildOrder`",
                         Id::realm(*key),
                         parent,
@@ -104,7 +96,7 @@ impl Realm {
             }
         } else {
             if child_order == RealmOrder::ByIndex {
-                return Err(ferr!(
+                return Err(invalid_input!(
                     "`setChildOrder` as called without children but with 'BY_INDEX' order",
                 ));
             }
@@ -133,11 +125,11 @@ impl Realm {
         Realm::load_by_key(parent_key, &context)
             .await
             .and_then(|realm| realm.ok_or_else(|| {
-                ferr!("`parent` realm does not exist (for `setChildOrder`)")
+                invalid_input!("`parent` realm does not exist (for `setChildOrder`)")
             }))
     }
 
-    pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> FieldResult<Realm> {
+    pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
         let key = id_to_key(id, "`id`")?;
         let parent_key = set.parent.map(|parent| id_to_key(parent, "`parent`")).transpose()?;
 
@@ -153,20 +145,20 @@ impl Realm {
             .await?;
 
         if affected_rows != 1 {
-            return Err(ferr!("`id` does not refer to an existing realm"));
+            return Err(invalid_input!("`id` does not refer to an existing realm"));
         }
 
         Self::load_by_key(key, context).await.map(Option::unwrap)
     }
 
-    pub(crate) async fn remove(id: Id, context: &Context) -> FieldResult<RemovedRealm> {
+    pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedRealm> {
         let key = id_to_key(id, "`id`")?;
         if key.0 == 0 {
-            return Err(ferr!("Cannot remove the root realm"));
+            return Err(invalid_input!("Cannot remove the root realm"));
         }
 
         let realm = Self::load_by_key(key, context).await?
-            .ok_or_else(|| ferr!("`id` does not refer to an existing realm"))?;
+            .ok_or_else(|| invalid_input!("`id` does not refer to an existing realm"))?;
 
         context.db
             .execute("delete from realms where id = $1", &[&key])
@@ -182,9 +174,9 @@ impl Realm {
 }
 
 /// Makes sure the ID refers to a realm and returns its key.
-fn id_to_key(id: Id, name: &str) -> FieldResult<Key> {
+fn id_to_key(id: Id, name: &str) -> ApiResult<Key> {
     id.key_for(Id::REALM_KIND)
-        .ok_or_else(|| ferr!("{} does not refer to a realm", name))
+        .ok_or_else(|| invalid_input!("{} does not refer to a realm", name))
 }
 
 #[derive(juniper::GraphQLInputObject)]
