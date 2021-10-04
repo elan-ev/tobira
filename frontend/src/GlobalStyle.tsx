@@ -27,7 +27,7 @@ const CSS_RESETS = css({
     },
 
     // Remove default margins of the most important elements.
-    "body, h1, h2, h3, h4, p, li, figure, figcaption, blockquote, dl, dd": {
+    "body, h1, h2, h3, h4, p, li, figure, figcaption, blockquote, dl, dd, pre": {
         margin: 0,
     },
 

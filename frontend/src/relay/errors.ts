@@ -81,7 +81,7 @@ export class APIError extends Error {
             for (const err of this.response.errors) {
                 out += `\n- ${err.message}`;
                 if ((err as any).path) {
-                    out += `(at ${(err as any).path})`;
+                    out += ` (at \`${(err as any).path}\`)`;
                 }
             }
             return out;
