@@ -32,6 +32,7 @@ pub(crate) enum ApiErrorKind {
 
 impl ApiErrorKind {
     fn kind_str(&self) -> &str {
+        // This has to be kept in sync with the `ErrorKind` in `relay/errors.ts`!
         match self {
             Self::InvalidInput => "INVALID_INPUT",
             Self::NotAuthorized => "NOT_AUTHORIZED",

@@ -71,14 +71,21 @@ export class APIError extends Error {
     // Note: This is a kind of misleading name.
     // There could still be a `data` field on this.
     public response: GraphQLResponseWithoutData;
+    public errors: ApiError[];
 
     public constructor(response: GraphQLResponseWithoutData) {
         super();
         this.name = "API Error";
         this.response = response;
+        this.errors = this.response.errors.map(e => ({
+            message: e.message,
+            path: (e as any).path,
+            kind: (e as any).extensions.kind,
+            key: (e as any).extensions.key,
+        }));
         this.message = (() => {
             let out = "";
-            for (const err of this.response.errors) {
+            for (const err of this.errors) {
                 out += `\n- ${err.message}`;
                 if ((err as any).path) {
                     out += ` (at \`${(err as any).path}\`)`;
@@ -94,3 +101,17 @@ export const hasErrors = (
     response: GraphQLSingularResponse,
 ): response is GraphQLResponseWithoutData =>
     (response as GraphQLResponseWithData).errors !== undefined;
+
+export type ApiError = {
+    message: string;
+    path?: string;
+    kind?: ErrorKind;
+    key?: string;
+};
+
+/**
+ * Possible kinds of errors that the API can report.
+ *
+ * This has to be kept in sync with the `ApiErrorKind` in `api/err.rs`!
+ */
+export type ErrorKind = "INVALID_INPUT" | "NOT_AUTHORIZED" | "INTERNAL_SERVER_ERROR";

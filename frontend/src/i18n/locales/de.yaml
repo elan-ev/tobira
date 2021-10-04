@@ -15,8 +15,13 @@ graphql:
   network-error: >
     Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
     mit dem Internet verbunden?
-  server-error: 'Fehler: Unerwartete Antwort vom Server.'
-  api-error: Unerwarteter Fehler vom Server.
+  server-error: 'Interner Server Fehler: Es ist ein Problem mit dem Server aufgetreten.'
+  invalid-response: 'Interner Fehler: Unerwartete Antwort vom Server'
+  unexpected-server-error: Unerwarteter Fehler vom Server.
+  not-authorized: 'Fehler: Sie sind nicht authorisiert.'
+  not-your-fault: >
+    Dies ist höchstwahrscheinlich nicht Ihre Schuld. Das Problem wird
+    hoffentlich baldig gelöst werden.
   detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
 
 not-found:
