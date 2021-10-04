@@ -11,6 +11,7 @@ use crate::{
 
 mod api;
 mod args;
+mod auth;
 mod config;
 mod cmd;
 mod db;
@@ -19,7 +20,6 @@ mod logger;
 mod prelude;
 mod sync;
 mod theme;
-mod user;
 
 
 #[tokio::main]

@@ -1,6 +1,6 @@
 use juniper::{graphql_object, FieldResult};
 
-use crate::user::User;
+use crate::auth::User;
 
 use super::{Context, Id, model::{realm::Realm, event::Event}};
 

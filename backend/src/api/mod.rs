@@ -1,6 +1,6 @@
 //! Definition of the GraphQL API.
 
-use crate::{db::Transaction, user::User};
+use crate::{auth::User, db::Transaction};
 use self::{
     mutation::Mutation,
     query::Query,

@@ -7,9 +7,9 @@ use std::{
 
 use crate::{
     api,
+    auth::User,
     db::Transaction,
     prelude::*,
-    user::User,
 };
 use super::{Context, Request, Response, assets::Assets};
 
