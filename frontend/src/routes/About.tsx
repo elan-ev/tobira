@@ -1,31 +1,40 @@
 import React from "react";
 import { useTranslation, Trans } from "react-i18next";
-import { usePreloadedQuery } from "react-relay";
+import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
-import { Nav, ROOT_NAV_QUERY } from "../layout/Navigation";
+import { Nav } from "../layout/Navigation";
 import { Root } from "../layout/Root";
-import type { NavigationRootQuery } from "../query-types/NavigationRootQuery.graphql";
 import { loadQuery } from "../relay";
 import type { Route } from "../router";
+import { AboutQuery } from "../query-types/AboutQuery.graphql";
 
 
-export const AboutRoute: Route<PreloadedQuery<NavigationRootQuery>> = {
+export const AboutRoute: Route<PreloadedQuery<AboutQuery>> = {
     path: "/~tobira",
-    prepare: () => loadQuery(ROOT_NAV_QUERY, {}),
+    prepare: () => loadQuery(query, {}),
     render: queryRef => <About queryRef={queryRef} />,
 };
 
+const query = graphql`
+    query AboutQuery {
+        ... UserData
+        realm: rootRealm {
+            ... NavigationData
+        }
+    }
+`;
+
 type Props = {
-    queryRef: PreloadedQuery<NavigationRootQuery>;
+    queryRef: PreloadedQuery<AboutQuery>;
 };
 
 const About: React.FC<Props> = ({ queryRef }) => {
     const { t } = useTranslation();
-    const { realm } = usePreloadedQuery(ROOT_NAV_QUERY, queryRef);
+    const result = usePreloadedQuery(query, queryRef);
 
     return (
-        <Root nav={<Nav fragRef={realm} />}>
+        <Root nav={<Nav fragRef={result.realm} />} userQuery={result}>
             <div css={{ margin: "0 auto", maxWidth: 600 }}>
                 <h1>{t("about-tobira.title")}</h1>
                 <p css={{ margin: "16px 0" }}>

@@ -111,15 +111,3 @@ const Item: React.FC<ItemProps> = ({ label, link }) => (
         <FiChevronRight />
     </LinkWithIcon>
 );
-
-/**
- * Some routes don't need to fetch data themselves, but only for navigation.
- * This query can be used by those routes.
- */
-export const ROOT_NAV_QUERY = graphql`
-    query NavigationRootQuery {
-        realm: rootRealm {
-            ... NavigationData
-        }
-    }
-`;
