@@ -34,6 +34,8 @@ impl Realm {
         child_indices: Option<Vec<ChildIndex>>,
         context: &Context,
     ) -> ApiResult<Realm> {
+        let db = context.db(context.require_moderator()?);
+
         // Verify and convert arguments.
         let parent_key = id_to_key(parent, "`parent`")?;
 
@@ -67,7 +69,7 @@ impl Realm {
 
 
             // Retrieve the current children of the given realm
-            let current_children: Vec<(_, i32)> = context.db
+            let current_children: Vec<(_, i32)> = db
                 .query_raw("select id, index from realms where parent = $1", [parent_key])
                 .await?
                 .map_ok(|row| (row.get(0), row.get(1)))
@@ -92,9 +94,7 @@ impl Realm {
 
             // Write new indices to the DB.
             for (key, index) in child_indices {
-                context.db
-                    .execute("update realms set index = $1 where id = $2", &[&index, &key])
-                    .await?;
+                db.execute("update realms set index = $1 where id = $2", &[&index, &key]).await?;
             }
         } else {
             if child_order == RealmOrder::ByIndex {
@@ -103,7 +103,7 @@ impl Realm {
                 ));
             }
 
-            context.db
+            db
                 .execute(
                     "update realms set index = default where parent = $1",
                     &[&parent_key],
@@ -112,12 +112,10 @@ impl Realm {
         }
 
         // Write the order to DB
-        context.db
-            .execute(
-                "update realms set child_order = $1 where id = $2",
-                &[&child_order, &parent_key],
-            )
-            .await?;
+        db.execute(
+            "update realms set child_order = $1 where id = $2",
+            &[&child_order, &parent_key],
+        ).await?;
         debug!("Set 'child_order' of realm {} to {:?}", parent, child_order);
 
 
@@ -132,10 +130,12 @@ impl Realm {
     }
 
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
+        let db = context.db(context.require_moderator()?);
+
         let key = id_to_key(id, "`id`")?;
         let parent_key = set.parent.map(|parent| id_to_key(parent, "`parent`")).transpose()?;
 
-        let affected_rows = context.db
+        let affected_rows = db
             .execute(
                 "update realms set \
                     parent = coalesce($2, parent), \
@@ -154,6 +154,8 @@ impl Realm {
     }
 
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedRealm> {
+        let db = context.db(context.require_moderator()?);
+
         let key = id_to_key(id, "`id`")?;
         if key.0 == 0 {
             return Err(invalid_input!("Cannot remove the root realm"));
@@ -162,9 +164,7 @@ impl Realm {
         let realm = Self::load_by_key(key, context).await?
             .ok_or_else(|| invalid_input!("`id` does not refer to an existing realm"))?;
 
-        context.db
-            .execute("delete from realms where id = $1", &[&key])
-            .await?;
+        db.execute("delete from realms where id = $1", &[&key]).await?;
 
         // We checked above that `realm` is not the root realm, so we can unwrap.
         let parent = Self::load_by_key(realm.parent_key.expect("missing parent"), context)
