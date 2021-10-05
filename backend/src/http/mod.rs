@@ -62,7 +62,7 @@ struct Context {
     api_root: Arc<api::RootNode>,
     db_pool: Pool,
     assets: Assets,
-    config: Config,
+    config: Arc<Config>,
 }
 
 
@@ -79,7 +79,7 @@ pub(crate) async fn serve(
         api_root: Arc::new(api_root),
         db_pool: db,
         assets,
-        config,
+        config: Arc::new(config),
     });
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching

@@ -1,0 +1,42 @@
+use std::sync::Arc;
+
+use crate::{
+    api::err::{ApiError, ApiErrorKind, ApiResult},
+    auth::{AuthToken, User},
+    config::Config,
+    db::Transaction,
+};
+
+
+/// The context that is accessible to every resolver in our API.
+pub(crate) struct Context {
+    pub(crate) db: Transaction,
+    pub(crate) user: Option<User>,
+    pub(crate) config: Arc<Config>,
+}
+
+impl juniper::Context for Context {}
+
+impl Context {
+    /// Returns a connection to the DB. Requires an auth token to prove the
+    /// endpoint somehow handled authorization.
+    pub(crate) fn db(&self, _: AuthToken) -> &Transaction {
+        &self.db
+    }
+
+    pub(crate) fn require_moderator(&self) -> ApiResult<AuthToken> {
+        if let Some(user) = &self.user {
+            user.require_moderator(&self.config.auth).ok_or_else(|| ApiError {
+                msg: format!("moderator required, but '{}' is not a moderator", user.username),
+                kind: ApiErrorKind::NotAuthorized,
+                key: Some("mutation.not-a-moderator"),
+            })
+        } else {
+            Err(ApiError {
+                msg: "moderator required, but user is not logged in".into(),
+                kind: ApiErrorKind::NotAuthorized,
+                key: Some("mutation.not-logged-in"),
+            })
+        }
+    }
+}

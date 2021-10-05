@@ -165,6 +165,7 @@ async fn handle_api(req: Request<Body>, user: Option<User>, ctx: &Context) -> Re
     let api_context = Arc::new(api::Context {
         db: Transaction::new(tx.clone()),
         user,
+        config: ctx.config.clone(),
     });
     let out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
     let num_queries = api_context.db.num_queries();

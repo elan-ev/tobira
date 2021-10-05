@@ -70,4 +70,23 @@ impl User {
 
         Some(Self { username, display_name, roles })
     }
+
+    /// Returns an auth token IF this user is a Tobira moderator (as determined
+    /// by `config.moderator_role`).
+    pub(crate) fn require_moderator(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
+        if self.roles.contains(&auth_config.moderator_role) {
+            Some(AuthToken(()))
+        } else {
+            None
+        }
+    }
 }
+
+/// A marker type that serves to prove *some* user authorization has been done.
+///
+/// The goal of this is to prevent devs from forgetting to do authorization at
+/// all. Since the token does not contain any information about what was
+/// authorized, it cannot protect against anything else.
+///
+/// Has a private field so it cannot be created outside of this module.
+pub(crate) struct AuthToken(());

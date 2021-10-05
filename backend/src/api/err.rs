@@ -16,7 +16,7 @@ pub(crate) type ApiResult<T> = Result<T, ApiError>;
 pub(crate) struct ApiError {
     pub(crate) msg: String,
     pub(crate) kind: ApiErrorKind,
-    pub(crate) key: Option<String>,
+    pub(crate) key: Option<&'static str>,
 }
 
 pub(crate) enum ApiErrorKind {

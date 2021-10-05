@@ -10,8 +10,10 @@ use super::{Realm, RealmOrder};
 
 impl Realm {
     pub(crate) async fn add(realm: NewRealm, context: &Context) -> ApiResult<Realm> {
+        let db = context.db(context.require_moderator()?);
+
         let parent_key = id_to_key(realm.parent, "`parent`")?;
-        let key: Key = context.db
+        let key: Key = db
             .query_one(
                 "insert into realms (parent, name, path_segment) \
                     values ($1, $2, $3) \
