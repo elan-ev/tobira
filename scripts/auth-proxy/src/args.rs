@@ -92,7 +92,8 @@ impl UserTemplate {
                 Header::new("x-tobira-user-display-name", "Sabine Rudolfs"),
                 Header::new(
                     "x-tobira-user-roles",
-                    "ROLE_USER_SABINE, ROLE_ANONYMOUS, ROLE_USER, ROLE_INSTRUCTOR",
+                    "ROLE_USER_SABINE, ROLE_ANONYMOUS, ROLE_USER, ROLE_INSTRUCTOR, \
+                        ROLE_TOBIRA_MODERATOR",
                 ),
             ],
             UserTemplate::Student => [
