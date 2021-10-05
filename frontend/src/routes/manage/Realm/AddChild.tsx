@@ -8,7 +8,7 @@ import type {
     AddChildQuery,
     AddChildQueryResponse,
 } from "../../../query-types/AddChildQuery.graphql";
-import { loadQuery } from "../../../relay";
+import { APIError, loadQuery } from "../../../relay";
 import { Route, useRouter } from "../../../router";
 import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
@@ -20,6 +20,7 @@ import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
+import { match } from "../../../util";
 
 
 // Route definition
@@ -102,9 +103,9 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
         pathSegment: string;
     };
 
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
-    const [error, setError] = useState(null);
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
 
     const router = useRouter();
 
@@ -124,7 +125,36 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
             },
             onError: error => {
                 console.error(error);
-                setError(t("manage.add-child.generic-network-error"));
+
+                let errors = [t("unknown error")];
+                if (error instanceof APIError) {
+                    errors = error.errors.map(e => {
+                        // Use a message fitting to the exact error key, if it is present.
+                        const translationKey = e.key ? `api-remote-errors.${e.key}` : null;
+                        if (translationKey && i18n.exists(translationKey)) {
+                            return t(translationKey);
+                        }
+
+                        if (!e.kind) {
+                            return t("errors.unknown");
+                        }
+
+                        return match(e.kind, {
+                            "INTERNAL_SERVER_ERROR": () => t("errors.internal-server-error"),
+                            "NOT_AUTHORIZED": () => t("errors.not-authorized"),
+                            "INVALID_INPUT": () => t("errors.invalid-input"),
+                        });
+                    });
+                }
+
+                if (errors.length === 1) {
+                    setCommitError(<>{t("manage.add-child.failed-to-add") + " " + errors[0]}</>);
+                } else {
+                    setCommitError(<>
+                        {t("manage.add-child.failed-to-add")}
+                        <ul>{errors.map(e => <li key={e}>{e}</li>)}</ul>
+                    </>);
+                }
             },
         });
     });
@@ -189,7 +219,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         {isInFlight && <Spinner size={20} />}
                     </div>
 
-                    <ErrorBox>{error}</ErrorBox>
+                    {commitError && <ErrorBox>{commitError}</ErrorBox>}
                 </div>
             </Form>
         </div>

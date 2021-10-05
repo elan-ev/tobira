@@ -159,4 +159,12 @@ manage:
     below-this-parent: Die neue Seite wird unter <1>„{{parent}}“</1> hinzugefügt.
     below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
     button-create-page: Seite erstellen
-    generic-network-error: Seite konnte nicht erstellt werden.
+    failed-to-add: 'Seite konnte nicht erstellt werden:'
+
+
+# These errors map the `key` field of an API error response to a nice message.
+api-remote-errors:
+  mutation:
+    not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
+    not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
+

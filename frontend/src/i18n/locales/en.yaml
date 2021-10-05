@@ -154,4 +154,12 @@ manage:
     below-this-parent: The new page will be added below <1>“{{parent}}”</1>.
     below-root: The new page will be added directly below the homepage.
     button-create-page: Create page
-    generic-network-error: Failed to create page.
+    failed-to-add: 'Failed to create page:'
+
+
+# These errors map the `key` field of an API error response to a nice message.
+api-remote-errors:
+  mutation:
+    not-logged-in: you have to be logged in to perform this action.
+    not-a-moderator: you have to be a moderator to perform this action.
+
