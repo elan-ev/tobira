@@ -61,7 +61,7 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
                     <div css={{ margin: "0 auto", maxWidth: 600 }}>
                         <MainErrorMessage t={t} error={error} />
                         <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
-                            {t("graphql.detailed-error-info")}
+                            {t("api.errors.detailed-error-info")}
                         </p>
                         <div css={{
                             backgroundColor: "var(--grey97)",
@@ -87,13 +87,13 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
     let message: string | JSX.Element;
     let ourFault = false;
     if (error instanceof NetworkError) {
-        message = t("graphql.network-error");
+        message = t("api.errors.network-error");
     } else if (error instanceof ServerError) {
         // TODO: choose better error messages according to status code
-        message = t("graphql.server-error");
+        message = t("api.errors.internal-server-error");
         ourFault = true;
     } else if (error instanceof NotJson) {
-        message = t("graphql.invalid-response");
+        message = t("api.errors.invalid-response");
         ourFault = true;
     } else if (error instanceof APIError) {
         // OK response, but it contained GraphQL errors.
@@ -101,15 +101,15 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
         const kindToMessage = (kind: ErrorKind | undefined) => {
             if (!kind) {
                 ourFault = true;
-                return t("graphql.unexpected-server-error");
+                return t("api.errors.unexpected-server-error");
             } else {
                 return match(kind, {
                     INTERNAL_SERVER_ERROR: () => {
                         ourFault = true;
-                        return t("graphql.server-error");
+                        return t("api.errors.internal-server-error");
                     },
-                    INVALID_INPUT: () => t("graphql.invalid-input"),
-                    NOT_AUTHORIZED: () => t("graphql.not-authorized"),
+                    INVALID_INPUT: () => t("api.errors.invalid-input"),
+                    NOT_AUTHORIZED: () => t("api.errors.not-authorized"),
                 });
             }
         };
@@ -119,7 +119,7 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
         console.log(kinds);
         if (kinds.size === 0) {
             // This should never happen?
-            message = t("graphql.unexpected-server-error");
+            message = t("api.errors.unexpected-server-error");
             ourFault = true;
         } else if (kinds.size === 1) {
             message = kindToMessage(Array.from(kinds)[0]);
@@ -138,7 +138,7 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
             <Card kind="error">{message}</Card>
         </div>
         {ourFault && <p css={{ margin: "24px 0" }}>
-            {t("graphql.not-your-fault")}
+            {t("api.errors.not-your-fault")}
         </p>}
     </>;
 };

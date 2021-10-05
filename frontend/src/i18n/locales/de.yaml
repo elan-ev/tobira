@@ -11,18 +11,26 @@ direction-down: Runter
 navigation: Navigation
 rename: Umbenennen
 
-graphql:
-  network-error: >
-    Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
-    mit dem Internet verbunden?
-  server-error: 'Interner Server Fehler: Es ist ein Problem mit dem Server aufgetreten.'
-  invalid-response: 'Interner Fehler: Unerwartete Antwort vom Server'
-  unexpected-server-error: Unerwarteter Fehler vom Server.
-  not-authorized: 'Fehler: Sie sind nicht authorisiert.'
-  not-your-fault: >
-    Dies ist höchstwahrscheinlich nicht Ihre Schuld. Das Problem wird
-    hoffentlich baldig gelöst werden.
-  detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
+api:
+  errors:
+    network-error: >
+      Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
+      mit dem Internet verbunden?
+    internal-server-error: 'Interner Server Fehler: Es ist ein Problem mit dem Server aufgetreten.'
+    invalid-response: 'Interner Fehler: Unerwartete Antwort vom Server'
+    invalid-input: 'Interner Fehler: $(errors.invalid-input)'
+    unexpected-server-error: Unerwarteter Fehler vom Server.
+    not-authorized: 'Fehler: $(errors.not-authorized)'
+    not-your-fault: >
+      Dies ist höchstwahrscheinlich nicht Ihre Schuld. Das Problem wird
+      hoffentlich baldig gelöst werden.
+    detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
+
+errors:
+  not-authorized: Sie sind nicht authorisiert.
+  invalid-input: invalid input.
+  internal-server-error: Interner Server Fehler (es ist ein Problem mit dem Server aufgetreten).
+  unknown: Unbekannter Fehler.
 
 not-found:
   page-not-found: Seite nicht gefunden

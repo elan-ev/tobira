@@ -11,17 +11,25 @@ direction-down: Down
 navigation: Navigation
 rename: Rename
 
-graphql:
-  network-error: >
-    Server could not be reached due to a network error. Are you connected to the Internet?
-  server-error: 'Internal server error: something is wrong with the server.'
-  invalid-response: 'Internal application error: unexpected response from server.'
-  invalid-input: 'Internal application error: invalid inputs.'
-  unexpected-server-error: Unexpected server error.
-  not-authorized: 'Error: you are not authorized.'
-  not-your-fault: >
-    This is likely not your fault. Hopefully the problem resolves itself within a few minutes.
-  detailed-error-info: 'Detailed error information for developers:'
+api:
+  errors:
+    network-error: >
+      Server could not be reached due to a network error. Are you connected to the Internet?
+    internal-server-error: 'Internal server error: something is wrong with the server.'
+    invalid-response: 'Internal application error: unexpected response from server.'
+    invalid-input: 'Internal application error: $(errors.invalid-input)'
+    unexpected-server-error: Unexpected server error.
+    not-authorized: 'Error: $(errors.not-authorized)'
+    not-your-fault: >
+      This is likely not your fault. Hopefully the problem resolves itself within a few minutes.
+    detailed-error-info: 'Detailed error information for developers:'
+
+errors:
+  # All these start lowercase as they are expected to be preceeded by a sentence ending in a colon.
+  not-authorized: you are not authorized.
+  invalid-input: invalid input.
+  internal-server-error: internal server error (something is wrong with the server).
+  unknown: unknown error.
 
 not-found:
   page-not-found: Page not found
