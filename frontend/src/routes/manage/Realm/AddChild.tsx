@@ -8,19 +8,18 @@ import type {
     AddChildQuery,
     AddChildQueryResponse,
 } from "../../../query-types/AddChildQuery.graphql";
-import { APIError, loadQuery } from "../../../relay";
+import { loadQuery } from "../../../relay";
 import { Route, useRouter } from "../../../router";
 import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { NoPath, PathInvalid } from ".";
-import { boxError, RealmSettingsContainer, realmValidations } from "./util";
+import { boxError, displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
-import { match } from "../../../util";
 
 
 // Route definition
@@ -103,7 +102,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
         pathSegment: string;
     };
 
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
 
@@ -124,37 +123,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                 router.goto(typedResponse.addRealm.path);
             },
             onError: error => {
-                console.error(error);
-
-                let errors = [t("unknown error")];
-                if (error instanceof APIError) {
-                    errors = error.errors.map(e => {
-                        // Use a message fitting to the exact error key, if it is present.
-                        const translationKey = e.key ? `api-remote-errors.${e.key}` : null;
-                        if (translationKey && i18n.exists(translationKey)) {
-                            return t(translationKey);
-                        }
-
-                        if (!e.kind) {
-                            return t("errors.unknown");
-                        }
-
-                        return match(e.kind, {
-                            "INTERNAL_SERVER_ERROR": () => t("errors.internal-server-error"),
-                            "NOT_AUTHORIZED": () => t("errors.not-authorized"),
-                            "INVALID_INPUT": () => t("errors.invalid-input"),
-                        });
-                    });
-                }
-
-                if (errors.length === 1) {
-                    setCommitError(<>{t("manage.add-child.failed-to-add") + " " + errors[0]}</>);
-                } else {
-                    setCommitError(<>
-                        {t("manage.add-child.failed-to-add")}
-                        <ul>{errors.map(e => <li key={e}>{e}</li>)}</ul>
-                    </>);
-                }
+                setCommitError(displayCommitError(error, t("manage.add-child.failed-to-add")));
             },
         });
     });

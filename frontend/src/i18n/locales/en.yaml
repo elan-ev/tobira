@@ -142,7 +142,7 @@ manage:
         button: Delete this page and <1>{{numSubPages}}</1> sub-pages
         button-single: Delete page
         cannot-be-undone: This action <1>cannot</1> be undone!
-        generic-network-error: Deleting the page failed.
+        failed: 'Deleting the page failed:'
         warning: >
           Deleting this page will also automatically delete all direct and
           indirect sub-pages, as well as all page content of these pages. This

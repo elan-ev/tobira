@@ -147,7 +147,7 @@ manage:
         button: Diese Seite und <1>{{numSubPages}}</1> Unterseiten löschen
         button-single: Seite löschen
         cannot-be-undone: Diese Aktion kann <1>nicht</1> rückgängig gemacht werden!
-        generic-network-error: Löschung fehlgeschlagen.
+        failed: 'Löschung fehlgeschlagen:'
         warning: >
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
           indirekten Unterseiten sowie alle Seiteninhalte all dieser Seiten
