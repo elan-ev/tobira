@@ -91,7 +91,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
     };
 
     const { t } = useTranslation();
-    const { register, handleSubmit, watch, setError, formState: { errors } } = useForm<FormData>({
+    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
         mode: "onChange",
     });
 
@@ -100,6 +100,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         ?? bug("no path segment in path");
     const typedPathSegment = watch("pathSegment", currentPathSegment);
 
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [commit, isInFlight] = useMutation(changePathMutation);
 
     const onSubmit = handleSubmit(data => {
@@ -119,11 +120,8 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
                 window.history.pushState(null, "", newUrl);
             },
             onError: error => {
-                console.error(error);
-                setError("pathSegment", {
-                    type: "manual",
-                    message: t("manage.realm.danger-zone.change-path.generic-network-error"),
-                });
+                const failure = t("manage.realm.danger-zone.change-path.failed");
+                setCommitError(displayCommitError(error, failure));
             },
         });
     });
@@ -154,6 +152,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
             >
                 {t("manage.realm.danger-zone.change-path.button")}
             </Button>
+            {boxError(commitError)}
         </form>
     </>;
 };
