@@ -24,6 +24,7 @@ errors:
   network-error: >
     Server could not be reached due to a network error. Are you connected to the Internet?
   not-authorized: You are not authorized.
+  not-authorized-to-view-page: You are not authorized to view this page.
   invalid-input: Invalid input.
   internal-server-error: Internal server error (something is wrong with the server).
   unknown: Unknown error.

@@ -18,7 +18,7 @@ import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
-import { RealmSettingsContainer } from "./util";
+import { ErrorBox, RealmSettingsContainer } from "./util";
 
 
 // Route definition
@@ -43,6 +43,7 @@ const query = graphql`
             name
             isRoot
             path
+            canCurrentUserEdit
             numberOfDescendants
             ... GeneralRealmData
             ... ChildOrderEditData
@@ -111,6 +112,13 @@ type SettingsPageProps = {
 /** The actual settings page */
 const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
     const { t } = useTranslation();
+    if (!realm.canCurrentUserEdit) {
+        return <ErrorBox>
+            {t("errors.not-authorized-to-view-page")}
+            {}
+        </ErrorBox>;
+    }
+
     const heading = realm.isRoot
         ? t("manage.realm.heading-root")
         : t("manage.realm.heading", { realm: realm.name });

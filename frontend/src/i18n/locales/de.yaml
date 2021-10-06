@@ -26,6 +26,7 @@ errors:
     Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
     mit dem Internet verbunden?
   not-authorized: Sie sind nicht authorisiert.
+  not-authorized-to-view-page: Sie sind nicht dazu authorisiert, diese Seite aufzurufen.
   invalid-input: Ungültige Eingabe.
   internal-server-error: Interner Server Fehler (es ist ein Problem mit dem Server aufgetreten).
   unknown: Unbekannter Fehler.

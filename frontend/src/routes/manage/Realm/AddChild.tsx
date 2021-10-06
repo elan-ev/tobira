@@ -15,7 +15,13 @@ import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { NoPath, PathInvalid } from ".";
-import { boxError, displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
+import {
+    boxError,
+    displayCommitError,
+    ErrorBox,
+    RealmSettingsContainer,
+    realmValidations,
+} from "./util";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
@@ -45,6 +51,7 @@ const query = graphql`
             name
             isRoot
             path
+            canCurrentUserEdit
             children { path }
             ... NavigationData
         }
@@ -97,12 +104,19 @@ type AddChildProps = {
 
 /** The actual settings page */
 const AddChild: React.FC<AddChildProps> = ({ parent }) => {
+    const { t } = useTranslation();
+    if (!parent.canCurrentUserEdit) {
+        return <ErrorBox>
+            {t("errors.not-authorized-to-view-page")}
+            {}
+        </ErrorBox>;
+    }
+
     type FormData = {
         name: string;
         pathSegment: string;
     };
 
-    const { t } = useTranslation();
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
 
