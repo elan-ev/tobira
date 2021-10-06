@@ -33,6 +33,7 @@ export const RealmRoute: Route<Props> = {
 const query = graphql`
     query RealmQuery($path: String!) {
         ... UserData
+        currentUser { isModerator }
         realm: realmByPath(path: $path) {
             id
             name
@@ -52,7 +53,7 @@ type Props = {
 
 const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
     const queryResult = usePreloadedQuery(query, queryRef);
-    const { realm } = queryResult;
+    const { realm, currentUser } = queryResult;
 
     if (!realm) {
         return <NotFound kind="page" />;
@@ -67,10 +68,10 @@ const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
 
     const isRoot = realm.parent === null;
     const title = isRoot ? CONFIG.siteTitle : realm.name;
-    const nav = [
-        <Nav key="nav" fragRef={realm} />,
-        <RealmEditLinks key="edit-buttons" path={path} />,
-    ];
+    const mainNav = <Nav key="nav" fragRef={realm} />;
+    const nav = currentUser?.isModerator ?? false
+        ? [mainNav, <RealmEditLinks key="edit-buttons" path={path} />]
+        : [mainNav];
     useTitle(title, isRoot);
 
     return (
