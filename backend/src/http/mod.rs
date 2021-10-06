@@ -28,11 +28,12 @@ use self::{
 
 
 mod assets;
+pub(crate) mod auth;
 mod handlers;
 
 
 /// HTTP server configuration.
-#[derive(Debug, confique::Config)]
+#[derive(Debug, Clone, confique::Config)]
 pub(crate) struct HttpConfig {
     /// The TCP port the HTTP server should listen on.
     #[config(default = 3080)]
@@ -62,28 +63,25 @@ struct Context {
     api_root: Arc<api::RootNode>,
     db_pool: Pool,
     assets: Assets,
-}
-
-impl Context {
-    fn new(api_root: api::RootNode, db_pool: Pool, assets: Assets) -> Self {
-        Self {
-            api_root: Arc::new(api_root),
-            db_pool,
-            assets,
-        }
-    }
+    config: Config,
 }
 
 
 /// Starts the HTTP server. The future returned by this function must be awaited
 /// to actually run it.
 pub(crate) async fn serve(
-    config: &Config,
+    config: Config,
     api_root: api::RootNode,
     db: Pool,
 ) -> Result<()> {
-    let assets = Assets::init(config).await.context("failed to initialize assets")?;
-    let ctx = Arc::new(Context::new(api_root, db, assets));
+    let assets = Assets::init(&config).await.context("failed to initialize assets")?;
+    let http_config = config.http.clone();
+    let ctx = Arc::new(Context {
+        api_root: Arc::new(api_root),
+        db_pool: db,
+        assets,
+        config,
+    });
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
     // this code likely results in strange lifetime errors.
@@ -119,19 +117,19 @@ pub(crate) async fn serve(
 
 
     // Start the server with our service.
-    if let Some(unix_socket) = &config.http.unix_socket {
+    if let Some(unix_socket) = &http_config.unix_socket {
         // Bind to Unix domain socket.
         if unix_socket.exists() {
             fs::remove_file(unix_socket)?;
         }
         let server = Server::bind_unix(&unix_socket)?.serve(factory!());
         info!("Listening on unix://{}", unix_socket.display());
-        let permissions = fs::Permissions::from_mode(config.http.unix_socket_permissions);
+        let permissions = fs::Permissions::from_mode(http_config.unix_socket_permissions);
         fs::set_permissions(unix_socket, permissions)?;
         server.await?;
     } else {
         // Bind to TCP socket.
-        let addr = SocketAddr::new(config.http.address, config.http.port);
+        let addr = SocketAddr::new(http_config.address, http_config.port);
         let server = Server::bind(&addr).serve(factory!());
         info!("Listening on http://{}", server.local_addr());
         server.await?;

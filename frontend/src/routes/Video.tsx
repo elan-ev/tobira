@@ -29,6 +29,7 @@ export const VideoRoute: Route<Props> = {
 
 const query = graphql`
     query VideoQuery($id: ID!, $realmPath: String!) {
+        ... UserData
         event(id: $id) {
             title
             description
@@ -53,7 +54,8 @@ type Props = {
 
 const VideoPage: React.FC<Props> = ({ queryRef, realmPath, id }) => {
     const { t, i18n } = useTranslation();
-    const { event, realm } = usePreloadedQuery(query, queryRef);
+    const queryResult = usePreloadedQuery(query, queryRef);
+    const { event, realm } = queryResult;
 
     // TODO: this realm check is useless once we check a video belongs to a realm.
     if (!event || !realm) {
@@ -74,7 +76,7 @@ const VideoPage: React.FC<Props> = ({ queryRef, realmPath, id }) => {
     const duration = event.duration ?? 0; // <-- TODO
     useTitle(title);
     return (
-        <Root nav={<Nav fragRef={realm} />}>
+        <Root nav={<Nav fragRef={realm} />} userQuery={queryResult}>
             <Player tracks={tracks as Track[]} title={title} duration={duration} />
             <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
             {description !== null && <TextBlock content={description} />}

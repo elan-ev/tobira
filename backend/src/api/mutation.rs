@@ -8,7 +8,7 @@ use super::{
 
 
 /// The root mutation object.
-pub struct Mutation;
+pub(crate) struct Mutation;
 
 #[graphql_object(Context = Context)]
 impl Mutation {

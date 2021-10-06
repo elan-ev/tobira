@@ -54,7 +54,11 @@ main-menu:
   about: About
 
 user:
+  login: Login
+  logout: Log out
   settings: User settings
+  your-page: Your page
+  manage-content: Manage content
 
 login:
   button-label: Login

@@ -56,7 +56,11 @@ main-menu:
   about: Info
 
 user:
+  login: Anmelden
+  logout: Abmelden
   settings: Nutzereinstellungen
+  your-page: Persönliche Seite
+  manage-content: Inhalte verwalten
 
 login:
   button-label: Einloggen

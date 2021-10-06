@@ -32,6 +32,7 @@ export const RealmRoute: Route<Props> = {
 // TODO Build this query from fragments!
 const query = graphql`
     query RealmQuery($path: String!) {
+        ... UserData
         realm: realmByPath(path: $path) {
             id
             name
@@ -50,7 +51,8 @@ type Props = {
 };
 
 const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
-    const { realm } = usePreloadedQuery(query, queryRef);
+    const queryResult = usePreloadedQuery(query, queryRef);
+    const { realm } = queryResult;
 
     if (!realm) {
         return <NotFound kind="page" />;
@@ -72,7 +74,7 @@ const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
     useTitle(title, isRoot);
 
     return (
-        <Root nav={nav}>
+        <Root nav={nav} userQuery={queryResult}>
             {!isRoot && <Breadcrumbs path={breadcrumbs} />}
             {title && <h1>{title}</h1>}
             <Blocks realm={realm} />

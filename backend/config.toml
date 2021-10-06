@@ -10,6 +10,9 @@ password = "tobira"
 [log]
 level = "trace"
 
+[auth]
+proxy.enabled = true
+
 [sync]
 host = "localhost:8080"
 use_insecure_connection = true

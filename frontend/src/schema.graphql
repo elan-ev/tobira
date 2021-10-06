@@ -46,7 +46,6 @@ type TextBlock implements Block {
 }
 
 type Query {
-  apiVersion: String!
   "Returns the root realm."
   rootRealm: Realm!
   """
@@ -65,6 +64,8 @@ type Query {
   realmByPath(path: String!): Realm
   "Returns an event by its ID."
   event(id: ID!): Event
+  "Returns the current user."
+  currentUser: User
 }
 
 enum RealmOrder {
@@ -107,6 +108,13 @@ input UpdateRealm {
   parent: ID
   name: String
   pathSegment: String
+}
+
+"Data about a logged-in user."
+type User {
+  username: String!
+  displayName: String!
+  roles: [String!]!
 }
 
 type Track {

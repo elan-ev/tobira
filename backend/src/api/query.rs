@@ -1,17 +1,15 @@
 use juniper::{graphql_object, FieldResult};
 
+use crate::user::User;
+
 use super::{Context, Id, model::{realm::Realm, event::Event}};
 
 
 /// The root query object.
-pub struct Query;
+pub(crate) struct Query;
 
 #[graphql_object(Context = Context)]
 impl Query {
-    fn api_version() -> &str {
-        "0.0"
-    }
-
     /// Returns the root realm.
     async fn root_realm(context: &Context) -> FieldResult<Realm> {
         Realm::root(context).await
@@ -36,5 +34,10 @@ impl Query {
     /// Returns an event by its ID.
     async fn event(id: Id, context: &Context) -> FieldResult<Option<Event>> {
         Event::load_by_id(id, context).await
+    }
+
+    /// Returns the current user.
+    fn current_user(context: &Context) -> Option<&User> {
+        context.user.as_ref()
     }
 }
