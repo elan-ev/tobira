@@ -61,7 +61,7 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
                     <div css={{ margin: "0 auto", maxWidth: 600 }}>
                         <MainErrorMessage t={t} error={error} />
                         <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
-                            {t("api.errors.detailed-error-info")}
+                            {t("api.error-boundary.detailed-error-info")}
                         </p>
                         <div css={{
                             backgroundColor: "var(--grey97)",
@@ -90,7 +90,7 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
         message = t("errors.network-error");
     } else if (error instanceof ServerError) {
         // TODO: choose better error messages according to status code
-        message = t("errors.internal-server-error");
+        message = t("api.error-boundary.unexpected-server-error");
         ourFault = true;
     } else if (error instanceof NotJson) {
         message = t("errors.unexpected-response");
@@ -138,7 +138,7 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
             <Card kind="error">{message}</Card>
         </div>
         {ourFault && <p css={{ margin: "24px 0" }}>
-            {t("api.errors.not-your-fault")}
+            {t("api.error-boundary.not-your-fault")}
         </p>}
     </>;
 };

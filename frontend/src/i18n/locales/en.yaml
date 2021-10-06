@@ -14,7 +14,7 @@ rename: Rename
 api:
   error-boundary:
     invalid-input: Internal application error ($t(errors.invalid-input)).
-    unexpected-server-error: Unexpected server error.
+    unexpected-server-error: 'Application error: unexpected server error.'
     not-your-fault: >
       This is likely not your fault. Hopefully the problem resolves itself within a few minutes.
     detailed-error-info: 'Detailed error information for developers:'

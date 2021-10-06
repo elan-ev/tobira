@@ -14,7 +14,7 @@ rename: Umbenennen
 api:
   error-boundary:
     invalid-input: Interner Fehler ($t(errors.invalid-input)).
-    unexpected-server-error: Unerwarteter Fehler vom Server.
+    unexpected-server-error: 'Anwendungsfehler: Unerwarteter Fehler vom Server.'
     not-your-fault: >
       Dies ist höchstwahrscheinlich nicht Ihre Schuld. Das Problem wird
       hoffentlich baldig gelöst werden.
