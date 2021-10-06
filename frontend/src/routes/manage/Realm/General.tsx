@@ -74,7 +74,7 @@ export const General: React.FC<Props> = ({ fragRef }) => {
 
     return (
         <Form onSubmit={onSubmit} css={{ margin: "32px 0" }}>
-            <label htmlFor="id-field">{t("manage.realm.general.rename-label")}</label>
+            <label htmlFor="rename-field">{t("manage.realm.general.rename-label")}</label>
             <div css={{
                 display: "flex",
                 marginBottom: 16,
