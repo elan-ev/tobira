@@ -12,6 +12,8 @@ impl Realm {
     pub(crate) async fn add(realm: NewRealm, context: &Context) -> ApiResult<Realm> {
         let db = context.db(context.require_moderator()?);
 
+        // TODO: validate input
+
         let parent_key = id_to_key(realm.parent, "`parent`")?;
         let key: Key = db
             .query_one(
@@ -34,6 +36,10 @@ impl Realm {
         child_indices: Option<Vec<ChildIndex>>,
         context: &Context,
     ) -> ApiResult<Realm> {
+        // No input validation error can be the users fault. Either it's an
+        // frontend error or the DB has changed since the user opened the
+        // page. TODO: The latter case we should communicate to the user somehow.
+
         let db = context.db(context.require_moderator()?);
 
         // Verify and convert arguments.
@@ -125,11 +131,14 @@ impl Realm {
         Realm::load_by_key(parent_key, &context)
             .await
             .and_then(|realm| realm.ok_or_else(|| {
+                // TODO: tell user the realm was removed
                 invalid_input!("`parent` realm does not exist (for `setChildOrder`)")
             }))
     }
 
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
+        // TODO: validate input
+
         let db = context.db(context.require_moderator()?);
 
         let key = id_to_key(id, "`id`")?;
