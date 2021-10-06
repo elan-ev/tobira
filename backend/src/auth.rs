@@ -2,6 +2,10 @@ use hyper::{HeaderMap, header::HeaderValue};
 use juniper::GraphQLObject;
 
 
+/// Users with this role can do anything as they are the global Opencast
+/// administrator.
+const ADMIN_ROLE: &str = "ROLE_ADMIN";
+
 
 /// Authentification and authorization
 #[derive(Debug, confique::Config)]
@@ -74,11 +78,17 @@ impl User {
     /// Returns an auth token IF this user is a Tobira moderator (as determined
     /// by `config.moderator_role`).
     pub(crate) fn require_moderator(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        if self.roles.contains(&auth_config.moderator_role) {
+        if self.is_admin() || self.roles.contains(&auth_config.moderator_role) {
             Some(AuthToken(()))
         } else {
             None
         }
+    }
+
+    /// Returns `true` if the user is a global Opencast administrator and can do
+    /// anything.
+    pub(crate) fn is_admin(&self) -> bool {
+        self.roles.iter().any(|role| role == ADMIN_ROLE)
     }
 }
 
