@@ -12,24 +12,21 @@ navigation: Navigation
 rename: Rename
 
 api:
-  errors:
-    network-error: >
-      Server could not be reached due to a network error. Are you connected to the Internet?
-    internal-server-error: 'Internal server error: something is wrong with the server.'
-    invalid-response: 'Internal application error: unexpected response from server.'
-    invalid-input: 'Internal application error: $(errors.invalid-input)'
+  error-boundary:
+    invalid-input: Internal application error ($t(errors.invalid-input)).
     unexpected-server-error: Unexpected server error.
-    not-authorized: 'Error: $(errors.not-authorized)'
     not-your-fault: >
       This is likely not your fault. Hopefully the problem resolves itself within a few minutes.
     detailed-error-info: 'Detailed error information for developers:'
 
 errors:
-  # All these start lowercase as they are expected to be preceeded by a sentence ending in a colon.
-  not-authorized: you are not authorized.
-  invalid-input: invalid input.
-  internal-server-error: internal server error (something is wrong with the server).
-  unknown: unknown error.
+  unexpected-response: 'Internal application error: unexpected response from server.'
+  network-error: >
+    Server could not be reached due to a network error. Are you connected to the Internet?
+  not-authorized: You are not authorized.
+  invalid-input: Invalid input.
+  internal-server-error: Internal server error (something is wrong with the server).
+  unknown: Unknown error.
 
 not-found:
   page-not-found: Page not found
@@ -142,7 +139,7 @@ manage:
         button: Delete this page and <1>{{numSubPages}}</1> sub-pages
         button-single: Delete page
         cannot-be-undone: This action <1>cannot</1> be undone!
-        failed: 'Deleting the page failed:'
+        failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
           indirect sub-pages, as well as all page content of these pages. This
@@ -154,12 +151,12 @@ manage:
     below-this-parent: The new page will be added below <1>“{{parent}}”</1>.
     below-root: The new page will be added directly below the homepage.
     button-create-page: Create page
-    failed-to-add: 'Failed to create page:'
+    failed-to-add: Failed to create page.
 
 
 # These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
   mutation:
-    not-logged-in: you have to be logged in to perform this action.
-    not-a-moderator: you have to be a moderator to perform this action.
+    not-logged-in: You have to be logged in to perform this action.
+    not-a-moderator: You have to be a moderator to perform this action.
 

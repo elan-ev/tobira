@@ -87,13 +87,13 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
     let message: string | JSX.Element;
     let ourFault = false;
     if (error instanceof NetworkError) {
-        message = t("api.errors.network-error");
+        message = t("errors.network-error");
     } else if (error instanceof ServerError) {
         // TODO: choose better error messages according to status code
-        message = t("api.errors.internal-server-error");
+        message = t("errors.internal-server-error");
         ourFault = true;
     } else if (error instanceof NotJson) {
-        message = t("api.errors.invalid-response");
+        message = t("errors.unexpected-response");
         ourFault = true;
     } else if (error instanceof APIError) {
         // OK response, but it contained GraphQL errors.
@@ -101,15 +101,15 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
         const kindToMessage = (kind: ErrorKind | undefined) => {
             if (!kind) {
                 ourFault = true;
-                return t("api.errors.unexpected-server-error");
+                return t("api.error-boundary.unexpected-server-error");
             } else {
                 return match(kind, {
                     INTERNAL_SERVER_ERROR: () => {
                         ourFault = true;
-                        return t("api.errors.internal-server-error");
+                        return t("errors.internal-server-error");
                     },
-                    INVALID_INPUT: () => t("api.errors.invalid-input"),
-                    NOT_AUTHORIZED: () => t("api.errors.not-authorized"),
+                    INVALID_INPUT: () => t("api.error-boundary.invalid-input"),
+                    NOT_AUTHORIZED: () => t("errors.not-authorized"),
                 });
             }
         };
@@ -119,7 +119,7 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
         console.log(kinds);
         if (kinds.size === 0) {
             // This should never happen?
-            message = t("api.errors.unexpected-server-error");
+            message = t("api.error-boundary.unexpected-server-error");
             ourFault = true;
         } else if (kinds.size === 1) {
             message = kindToMessage(Array.from(kinds)[0]);

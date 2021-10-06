@@ -12,23 +12,21 @@ navigation: Navigation
 rename: Umbenennen
 
 api:
-  errors:
-    network-error: >
-      Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
-      mit dem Internet verbunden?
-    internal-server-error: 'Interner Server Fehler: Es ist ein Problem mit dem Server aufgetreten.'
-    invalid-response: 'Interner Fehler: Unerwartete Antwort vom Server'
-    invalid-input: 'Interner Fehler: $(errors.invalid-input)'
+  error-boundary:
+    invalid-input: Interner Fehler ($t(errors.invalid-input)).
     unexpected-server-error: Unerwarteter Fehler vom Server.
-    not-authorized: 'Fehler: $(errors.not-authorized)'
     not-your-fault: >
       Dies ist höchstwahrscheinlich nicht Ihre Schuld. Das Problem wird
       hoffentlich baldig gelöst werden.
     detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
 
 errors:
+  unexpected-response: 'Interner Fehler: Unerwartete Antwort vom Server'
+  network-error: >
+    Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
+    mit dem Internet verbunden?
   not-authorized: Sie sind nicht authorisiert.
-  invalid-input: invalid input.
+  invalid-input: Ungültige Eingabe.
   internal-server-error: Interner Server Fehler (es ist ein Problem mit dem Server aufgetreten).
   unknown: Unbekannter Fehler.
 
@@ -147,7 +145,7 @@ manage:
         button: Diese Seite und <1>{{numSubPages}}</1> Unterseiten löschen
         button-single: Seite löschen
         cannot-be-undone: Diese Aktion kann <1>nicht</1> rückgängig gemacht werden!
-        failed: 'Löschung fehlgeschlagen:'
+        failed: Löschung fehlgeschlagen.
         warning: >
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
           indirekten Unterseiten sowie alle Seiteninhalte all dieser Seiten
@@ -159,7 +157,7 @@ manage:
     below-this-parent: Die neue Seite wird unter <1>„{{parent}}“</1> hinzugefügt.
     below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
     button-create-page: Seite erstellen
-    failed-to-add: 'Seite konnte nicht erstellt werden:'
+    failed-to-add: Seite konnte nicht erstellt werden.
 
 
 # These errors map the `key` field of an API error response to a nice message.
