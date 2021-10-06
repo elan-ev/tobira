@@ -52,3 +52,16 @@ export const useOnOutsideClick = (
         return () => document.removeEventListener("mousedown", handler);
     });
 };
+
+export const RealmSettingsContainer: React.FC = ({ children }) => (
+    <div css={{
+        maxWidth: 900,
+        // Without this, some "on focus" box shadows are clipped as the parent
+        // element has "overflow: hidden".
+        marginLeft: 2,
+        "& > section": {
+            marginBottom: 64,
+            "& > h2": { marginBottom: 16 },
+        },
+    }}>{children}</div>
+);

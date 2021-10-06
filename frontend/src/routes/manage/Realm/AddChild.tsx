@@ -15,7 +15,7 @@ import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { NoPath, PathInvalid } from ".";
-import { ErrorBox, realmValidations } from "./util";
+import { ErrorBox, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
@@ -162,13 +162,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
     const validations = realmValidations(t);
 
     return (
-        <div css={{
-            maxWidth: 900,
-            "& > section": {
-                marginBottom: 64,
-                "& > h2": { marginBottom: 16 },
-            },
-        }}>
+        <RealmSettingsContainer>
             <h1>{t("manage.add-child.heading")}</h1>
             <p>
                 {
@@ -222,6 +216,6 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                     {commitError && <ErrorBox>{commitError}</ErrorBox>}
                 </div>
             </Form>
-        </div>
+        </RealmSettingsContainer>
     );
 };

@@ -18,6 +18,7 @@ import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
+import { RealmSettingsContainer } from "./util";
 
 
 // Route definition
@@ -115,13 +116,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
         : t("manage.realm.heading", { realm: realm.name });
 
     return (
-        <div css={{
-            maxWidth: 900,
-            "& > section": {
-                marginBottom: 64,
-                "& > h2": { marginBottom: 16 },
-            },
-        }}>
+        <RealmSettingsContainer>
             <h1>{heading}</h1>
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
             <div css={{
@@ -142,6 +137,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
             <section><General fragRef={realm} /></section>
             <section><ChildOrder fragRef={realm} /></section>
             <section><DangerZone fragRef={realm} /></section>
-        </div>
+        </RealmSettingsContainer>
     );
 };
