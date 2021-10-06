@@ -110,11 +110,17 @@ input UpdateRealm {
   pathSegment: String
 }
 
-"Data about a logged-in user."
 type User {
+  "Returns the username, a unique string identifying the user."
   username: String!
+  "Returns the name of the user intended to be read by humans."
   displayName: String!
+  "Returns all roles of this user."
   roles: [String!]!
+  "Returns whether this user is a moderator."
+  isModerator: Boolean!
+  "Returns whether this user is an admin."
+  isAdmin: Boolean!
 }
 
 type Track {

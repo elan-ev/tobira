@@ -1,5 +1,4 @@
 use hyper::{HeaderMap, header::HeaderValue};
-use juniper::GraphQLObject;
 
 
 /// Users with this role can do anything as they are the global Opencast
@@ -44,7 +43,7 @@ pub(crate) struct AuthProxyConfig {
 
 
 /// Data about a logged-in user.
-#[derive(Debug, GraphQLObject)]
+#[derive(Debug)]
 pub(crate) struct User {
     pub(crate) username: String,
     pub(crate) display_name: String,
@@ -78,11 +77,11 @@ impl User {
     /// Returns an auth token IF this user is a Tobira moderator (as determined
     /// by `config.moderator_role`).
     pub(crate) fn require_moderator(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        if self.is_admin() || self.roles.contains(&auth_config.moderator_role) {
-            Some(AuthToken(()))
-        } else {
-            None
-        }
+        AuthToken::some_if(self.is_moderator(auth_config))
+    }
+
+    pub(crate) fn is_moderator(&self, auth_config: &AuthConfig) -> bool {
+        self.is_admin() || self.roles.contains(&auth_config.moderator_role)
     }
 
     /// Returns `true` if the user is a global Opencast administrator and can do
@@ -100,3 +99,9 @@ impl User {
 ///
 /// Has a private field so it cannot be created outside of this module.
 pub(crate) struct AuthToken(());
+
+impl AuthToken {
+    fn some_if(v: bool) -> Option<Self> {
+        if v { Some(Self(())) } else { None }
+    }
+}
