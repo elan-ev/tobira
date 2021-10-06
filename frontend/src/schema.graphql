@@ -173,6 +173,7 @@ type Realm {
     (excluding this one). Returns a number ≥ 0.
   """
   numberOfDescendants: Int!
+  canCurrentUserEdit: Boolean!
 }
 
 enum VideoListLayout {
