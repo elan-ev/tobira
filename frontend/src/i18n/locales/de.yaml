@@ -113,7 +113,7 @@ manage:
 
     general:
       rename-label: Seitenname
-      generic-network-error: Änderung des Namen fehlgeschlagen.
+      rename-failed: Änderung des Namen fehlgeschlagen.
       no-rename-root: >
         Der Name der Startseite kann nicht geändert werden. Die Überschrift wird
         von der globalen Seiten-Title Einstellung kontrolliert.
@@ -123,7 +123,7 @@ manage:
       sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
       sort-alphabetically-desc: Alphabetisch absteigend sortieren
       order-manually: Manuell ordnen
-      generic-network-error: Änderung fehlgeschlagen.
+      failed: Änderung fehlgeschlagen.
 
     danger-zone:
       heading: Gefahrenbereich

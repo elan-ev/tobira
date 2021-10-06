@@ -110,7 +110,7 @@ manage:
 
     general:
       rename-label: Page name
-      generic-network-error: Failed to change the name.
+      rename-failed: Failed to change the name.
       no-rename-root: >
         The homepage cannot be renamed. The heading is controlled by the global
         site title setting.
@@ -120,7 +120,7 @@ manage:
       sort-alphabetically-asc: Sort alphabetically ascending
       sort-alphabetically-desc: Sort alphabetically descending
       order-manually: Manually order
-      generic-network-error: Changing the order failed.
+      failed: Changing the order failed.
 
     danger-zone:
       heading: Danger zone

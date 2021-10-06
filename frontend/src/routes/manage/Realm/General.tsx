@@ -7,6 +7,8 @@ import { Card } from "../../../ui/Card";
 import { Button } from "../../../ui/Button";
 import { Spinner } from "../../../ui/Spinner";
 import { Form } from "../../../ui/Form";
+import { boxError, displayCommitError } from "./util";
+import { useState } from "react";
 
 
 const fragment = graphql`
@@ -40,9 +42,11 @@ export const General: React.FC<Props> = ({ fragRef }) => {
 
     const { t } = useTranslation();
     const realm = useFragment(fragment, fragRef);
-    const { register, handleSubmit, watch, setError, formState: { errors } } = useForm<FormData>({
+    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
         mode: "onChange",
     });
+
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [commit, isInFlight] = useMutation(renameMutation);
 
     const onSubmit = handleSubmit(data => {
@@ -53,12 +57,8 @@ export const General: React.FC<Props> = ({ fragRef }) => {
                     name: data.name,
                 },
             },
-            onError: error => {
-                console.error(error);
-                setError("name", {
-                    type: "manual",
-                    message: t("manage.realm.general.generic-network-error"),
-                });
+            onError: e => {
+                setCommitError(displayCommitError(e, t("manage.realm.general.rename-failed")));
             },
         });
     });
@@ -95,6 +95,7 @@ export const General: React.FC<Props> = ({ fragRef }) => {
                 {isInFlight && <Spinner size={20} css={{ marginLeft: 16 }} />}
             </div>
             {errors.name && <Card kind="error">{errors.name.message}</Card>}
+            {boxError(commitError)}
         </Form>
     );
 };
