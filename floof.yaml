@@ -13,7 +13,9 @@ backend:
         - config.toml
         - src
       run:
+        - cargo build
         - cargo run -- export-api-schema ../frontend/src/schema.graphql
+        - cargo run -- write-config ../docs/config.toml
         - reload:
         - cargo run -- serve
 
