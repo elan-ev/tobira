@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { RegisterOptions } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-import { APIError } from "../../../relay/errors";
+import { APIError, NetworkError, NotJson, ServerError } from "../../../relay/errors";
 import { Card } from "../../../ui/Card";
 import { match } from "../../../util";
 
@@ -64,7 +64,7 @@ export const displayCommitError = (error: Error, failedAction: string): JSX.Elem
     const Inner: React.FC<{ error: Error }> = ({ error }) => {
         const { t, i18n } = useTranslation();
 
-        let errors = [t("unknown error")];
+        let errors = [t("errors.unknown")];
 
         // We always expect it to be an API error.
         if (error instanceof APIError) {
@@ -89,6 +89,12 @@ export const displayCommitError = (error: Error, failedAction: string): JSX.Elem
                     "INVALID_INPUT": () => t("errors.invalid-input"),
                 });
             });
+        } else if (error instanceof NetworkError) {
+            errors = [t("errors.network-error")];
+        } else if (error instanceof ServerError) {
+            errors = [t("errors.internal-server-error")];
+        } else if (error instanceof NotJson) {
+            errors = [t("errors.unexpected-response")];
         }
 
         return errors.length === 1
