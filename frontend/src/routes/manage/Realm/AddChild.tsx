@@ -15,7 +15,7 @@ import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { NoPath, PathInvalid } from ".";
-import { ErrorBox, RealmSettingsContainer, realmValidations } from "./util";
+import { boxError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
@@ -190,7 +190,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         error={!!errors.name}
                         {...register("name", validations.name)}
                     />
-                    <ErrorBox>{errors.name?.message}</ErrorBox>
+                    {boxError(errors.name?.message)}
                 </div>
 
                 <div>
@@ -202,7 +202,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         error={!!errors.pathSegment}
                         {...register("pathSegment", validations.path)}
                     />
-                    <ErrorBox>{errors.pathSegment?.message}</ErrorBox>
+                    {boxError(errors.pathSegment?.message)}
                 </div>
 
                 <div>
@@ -212,8 +212,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         </Button>
                         {isInFlight && <Spinner size={20} />}
                     </div>
-
-                    {commitError && <ErrorBox>{commitError}</ErrorBox>}
+                    {boxError(commitError)}
                 </div>
             </Form>
         </RealmSettingsContainer>

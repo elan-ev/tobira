@@ -10,7 +10,7 @@ import { bug } from "../../../util/err";
 import { Button } from "../../../ui/Button";
 import { Card } from "../../../ui/Card";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { ErrorBox, realmValidations } from "./util";
+import { boxError, realmValidations } from "./util";
 import { Spinner } from "../../../ui/Spinner";
 import {
     DangerZoneRemoveRealmMutationResponse,
@@ -225,7 +225,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
                         <span>{buttonContent}</span>
                     </Button>
                     {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
-                    <ErrorBox>{error}</ErrorBox>
+                    {boxError(error)}
                 </form>
             </Modal>
         )}
