@@ -133,12 +133,12 @@ manage:
       change-path:
         heading: Pfad ändern
         button: Pfadsegment ändern
-        generic-network-error: Änderung des Pfades fehlgeschlagen.
+        failed: Änderung des Pfades fehlgeschlagen.
         warning: >
           Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
-          Links zu dieser Seite, allen direkten und indirekten Unterseiten, und
-          allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
-          dann nicht mehr. Das betrifft private Browser-Lesezeichen, als auch
+          Links zu dieser Seite, zu allen direkten und indirekten Unterseiten, und
+          zu allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
+          dann nicht mehr. Das betrifft persönliche Browser-Lesezeichen, als auch
           bereits veröffentlichte Links.
       delete:
         heading: Seite löschen
