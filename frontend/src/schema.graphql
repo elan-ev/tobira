@@ -115,12 +115,6 @@ type User {
   username: String!
   "Returns the name of the user intended to be read by humans."
   displayName: String!
-  "Returns all roles of this user."
-  roles: [String!]!
-  "Returns whether this user is a moderator."
-  isModerator: Boolean!
-  "Returns whether this user is an admin."
-  isAdmin: Boolean!
 }
 
 type Track {
