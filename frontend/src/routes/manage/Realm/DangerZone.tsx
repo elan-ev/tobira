@@ -225,8 +225,8 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
                         <span>{buttonContent}</span>
                     </Button>
                     {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
-                    {boxError(commitError)}
                 </form>
+                {boxError(commitError)}
             </Modal>
         )}
     </>;
