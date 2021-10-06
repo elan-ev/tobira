@@ -12,7 +12,7 @@ import { HiOutlineSparkles, HiOutlineTranslate } from "react-icons/hi";
 import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
-import { useOnOutsideClick } from "../../routes/manage/Realm/util";
+import { useOnOutsideClick } from "../../util";
 import { User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon } from "./ui";
