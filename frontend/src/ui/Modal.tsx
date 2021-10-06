@@ -39,10 +39,10 @@ export const Modal: React.FC<Props> = ({ title, close, children }) => (
                 alignItems: "center",
             }}>
                 <h2 css={{ flex: "1" }}>{title}</h2>
-                <FiX
+                <div
                     onClick={close}
-                    css={{ fontSize: 32, cursor: "pointer" }}
-                />
+                    css={{ fontSize: 32, cursor: "pointer", display: "inline-flex" }}
+                ><FiX /></div>
             </div>
             <div css={{ padding: 16 }}>{children}</div>
         </div>
