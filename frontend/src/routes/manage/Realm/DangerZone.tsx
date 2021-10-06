@@ -185,7 +185,6 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
                 id: realm.id,
             },
             onCompleted: response => {
-                console.log(response);
                 const typedResponse = response as DangerZoneRemoveRealmMutationResponse;
                 router.goto(typedResponse.removeRealm.parent.path);
             },

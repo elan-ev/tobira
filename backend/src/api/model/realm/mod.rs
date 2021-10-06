@@ -145,11 +145,11 @@ impl Realm {
         self.child_order
     }
 
-    /// Returns the full path of this realm. `""` for the root realm. For
+    /// Returns the full path of this realm. `"/"` for the root realm. For
     /// non-root realms, the path always starts with `/` and never has a
     /// trailing `/`.
     fn path(&self) -> &str {
-        &self.full_path
+        if self.key.0 == 0 { "/" } else { &self.full_path }
     }
 
     /// Returns the immediate parent of this realm.

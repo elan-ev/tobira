@@ -141,7 +141,7 @@ type Realm {
   """
   childOrder: RealmOrder!
   """
-    Returns the full path of this realm. `""` for the root realm. For
+    Returns the full path of this realm. `"/"` for the root realm. For
     non-root realms, the path always starts with `/` and never has a
     trailing `/`.
   """

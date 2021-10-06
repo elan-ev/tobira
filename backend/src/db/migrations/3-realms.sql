@@ -20,7 +20,9 @@ create table realms (
     -- the children is ignored. We sort again in the frontend then.
     child_order realm_order not null default 'alphabetic:asc',
 
-    -- This is calculated by DB triggers: operations never have to set this value.
+    -- This is calculated by DB triggers: operations never have to set this
+    -- value. This is the empty string for the root realm. For non-root realms
+    -- it starts with '/' and never ends with '/'.
     full_path text not null,
 
     -- This makes sure that a realm path segment consists of an alphanumeric

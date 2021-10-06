@@ -204,7 +204,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                     <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>
                     <PathSegmentInput
                         id="path-field"
-                        base={parent.path + "/"}
+                        base={parent.path}
                         error={!!errors.pathSegment}
                         {...register("pathSegment", validations.path)}
                     />
