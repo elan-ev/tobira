@@ -132,6 +132,7 @@ async fn store_in_db(
                 creator,
                 duration,
                 thumbnail,
+                acl,
                 updated,
             } => {
                 let series = match &part_of {
@@ -155,6 +156,8 @@ async fn store_in_db(
                     ("updated", &updated),
                     ("creator", &creator),
                     ("thumbnail", &thumbnail),
+                    ("read_roles", &acl.read),
+                    ("write_roles", &acl.write),
                     ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),
                 ]).await?;
 

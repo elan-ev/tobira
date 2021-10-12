@@ -29,6 +29,10 @@ create table events (
     series bigint references series on delete set null,
     part_of text,
 
+    -- Permissions: roles that are allowed to read/write
+    read_roles text[] not null,
+    write_roles text[] not null,
+
     -- Meta data
     title text not null,
     description text,
