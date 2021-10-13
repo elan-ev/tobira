@@ -1,7 +1,8 @@
-use juniper::{FieldResult, graphql_object};
+use juniper::graphql_object;
 
 use super::{
     Context,
+    err::ApiResult,
     id::Id,
     model::realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
 };
@@ -13,7 +14,7 @@ pub(crate) struct Mutation;
 #[graphql_object(Context = Context)]
 impl Mutation {
     /// Adds a new realm.
-    async fn add_realm(realm: NewRealm, context: &Context) -> FieldResult<Realm> {
+    async fn add_realm(realm: NewRealm, context: &Context) -> ApiResult<Realm> {
         Realm::add(realm, context).await
     }
 
@@ -31,16 +32,16 @@ impl Mutation {
         child_order: RealmOrder,
         child_indices: Option<Vec<ChildIndex>>,
         context: &Context,
-    ) -> FieldResult<Realm> {
+    ) -> ApiResult<Realm> {
         Realm::set_child_order(parent, child_order, child_indices, context).await
     }
 
     /// Updates a realm's data.
-    async fn update_realm(id: Id, set: UpdateRealm, context: &Context) -> FieldResult<Realm> {
+    async fn update_realm(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
         Realm::update(id, set, context).await
     }
 
-    async fn remove_realm(id: Id, context: &Context) -> FieldResult<RemovedRealm> {
+    async fn remove_realm(id: Id, context: &Context) -> ApiResult<RemovedRealm> {
         Realm::remove(id, context).await
     }
 }

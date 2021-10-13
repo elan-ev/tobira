@@ -1,11 +1,11 @@
 //! Blocks that make up the content of realm pages.
 
-use juniper::{graphql_interface, graphql_object, FieldResult, GraphQLEnum, GraphQLObject};
+use juniper::{graphql_interface, graphql_object, GraphQLEnum, GraphQLObject};
 use postgres_types::FromSql;
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, Id, model::series::Series},
+    api::{Context, err::{ApiError, ApiResult, internal_server_err}, Id, model::series::Series},
     db::types::Key,
     prelude::*,
 };
@@ -100,7 +100,7 @@ impl Block for SeriesBlock {
 /// A block just showing the list of videos in an Opencast series
 #[graphql_object(Context = Context, impl = BlockValue)]
 impl SeriesBlock {
-    async fn series(&self, context: &Context) -> FieldResult<Series> {
+    async fn series(&self, context: &Context) -> ApiResult<Series> {
         // `unwrap` is okay here because of our foreign key constraint
         Ok(Series::load_by_id(self.series, context).await?.unwrap())
     }
@@ -116,7 +116,7 @@ impl SeriesBlock {
 
 impl BlockValue {
     /// Fetches all blocks for the given realm from the database.
-    pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> FieldResult<Vec<Self>> {
+    pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
         context.db
             .query_raw(
                 "select id, type, index, title, text_content, series_id, \
@@ -127,14 +127,14 @@ impl BlockValue {
                 &[realm_key],
             )
             .await?
-            .err_into::<anyhow::Error>()
+            .err_into::<ApiError>()
             .and_then(|row| async move { Self::from_row(row) })
             .try_collect()
             .await
             .map_err(Into::into)
     }
 
-    fn from_row(row: Row) -> Result<BlockValue> {
+    fn from_row(row: Row) -> ApiResult<BlockValue> {
         let ty: BlockType = row.get(1);
         let shared = SharedData {
             id: Id::block(row.get(0)),
@@ -173,7 +173,10 @@ fn get_type_dependent<'a, T: FromSql<'a>>(
     idx: usize,
     type_name: &str,
     field_name: &str,
-) -> Result<T> {
-    row.get::<_, Option<_>>(idx)
-        .ok_or(anyhow!("DB broken: block with type='{}' has null `{}`", type_name, field_name))
+) -> ApiResult<T> {
+    row.get::<_, Option<_>>(idx).ok_or_else(|| internal_server_err!(
+        "DB broken: block with type='{}' has null `{}`",
+        type_name,
+        field_name,
+    ))
 }

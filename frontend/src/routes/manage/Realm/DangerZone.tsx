@@ -10,7 +10,7 @@ import { bug } from "../../../util/err";
 import { Button } from "../../../ui/Button";
 import { Card } from "../../../ui/Card";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { ErrorBox, realmValidations } from "./util";
+import { boxError, displayCommitError, realmValidations } from "./util";
 import { Spinner } from "../../../ui/Spinner";
 import {
     DangerZoneRemoveRealmMutationResponse,
@@ -91,7 +91,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
     };
 
     const { t } = useTranslation();
-    const { register, handleSubmit, watch, setError, formState: { errors } } = useForm<FormData>({
+    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
         mode: "onChange",
     });
 
@@ -100,6 +100,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         ?? bug("no path segment in path");
     const typedPathSegment = watch("pathSegment", currentPathSegment);
 
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [commit, isInFlight] = useMutation(changePathMutation);
 
     const onSubmit = handleSubmit(data => {
@@ -119,11 +120,8 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
                 window.history.pushState(null, "", newUrl);
             },
             onError: error => {
-                console.error(error);
-                setError("pathSegment", {
-                    type: "manual",
-                    message: t("manage.realm.danger-zone.change-path.generic-network-error"),
-                });
+                const failure = t("manage.realm.danger-zone.change-path.failed");
+                setCommitError(displayCommitError(error, failure));
             },
         });
     });
@@ -154,6 +152,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
             >
                 {t("manage.realm.danger-zone.change-path.button")}
             </Button>
+            {boxError(commitError)}
         </form>
     </>;
 };
@@ -175,23 +174,22 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
     const { t } = useTranslation();
     const [commit, isInFlight] = useMutation(removeRealmMutation);
     const router = useRouter();
-    const [error, setError] = useState(null);
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [modalActive, setModalActive] = useState(false);
 
     const remove = (e: FormEvent) => {
-        setError(null);
+        setCommitError(null);
         commit({
             variables: {
                 id: realm.id,
             },
             onCompleted: response => {
-                console.log(response);
                 const typedResponse = response as DangerZoneRemoveRealmMutationResponse;
                 router.goto(typedResponse.removeRealm.parent.path);
             },
             onError: error => {
-                console.error(error);
-                setError(t("manage.realm.danger-zone.delete.generic-network-error"));
+                const failedAction = t("manage.realm.danger-zone.delete.failed");
+                setCommitError(displayCommitError(error, failedAction));
             },
         });
         e.preventDefault();
@@ -226,8 +224,8 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
                         <span>{buttonContent}</span>
                     </Button>
                     {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
-                    <ErrorBox>{error}</ErrorBox>
                 </form>
+                {boxError(commitError)}
             </Modal>
         )}
     </>;

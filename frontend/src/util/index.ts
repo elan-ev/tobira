@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { MutableRefObject, useEffect } from "react";
 import CONFIG from "../config";
 
 /**
@@ -63,5 +63,22 @@ export const useTitle = (title: string, noSuffix = false): void => {
         return () => {
             document.title = CONFIG.siteTitle;
         };
+    });
+};
+
+export const useOnOutsideClick = (
+    ref: MutableRefObject<Node | null>,
+    callback: () => void,
+): void => {
+    useEffect(() => {
+        const handler = (event: MouseEvent) => {
+            const target = event.target;
+            if (ref.current && target instanceof Element && !ref.current.contains(target)) {
+                callback();
+            }
+        };
+
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
     });
 };

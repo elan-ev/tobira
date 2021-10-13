@@ -1,8 +1,8 @@
-use juniper::{graphql_object, FieldResult};
+use juniper::graphql_object;
 
-use crate::user::User;
+use crate::auth::User;
 
-use super::{Context, Id, model::{realm::Realm, event::Event}};
+use super::{Context, Id, err::ApiResult, model::{realm::Realm, event::Event}};
 
 
 /// The root query object.
@@ -11,13 +11,13 @@ pub(crate) struct Query;
 #[graphql_object(Context = Context)]
 impl Query {
     /// Returns the root realm.
-    async fn root_realm(context: &Context) -> FieldResult<Realm> {
+    async fn root_realm(context: &Context) -> ApiResult<Realm> {
         Realm::root(context).await
     }
 
     /// Returns the realm with the specific ID or `None` if the ID does not
     /// refer to a realm.
-    async fn realm_by_id(id: Id, context: &Context) -> FieldResult<Option<Realm>> {
+    async fn realm_by_id(id: Id, context: &Context) -> ApiResult<Option<Realm>> {
         Realm::load_by_id(id, context).await
     }
 
@@ -27,12 +27,12 @@ impl Query {
     /// Paths with and without trailing slash are accepted and treated equally.
     /// The paths `""` and `"/"` refer to the root realm. All other paths have
     /// to start with `"/"`.
-    async fn realm_by_path(path: String, context: &Context) -> FieldResult<Option<Realm>> {
+    async fn realm_by_path(path: String, context: &Context) -> ApiResult<Option<Realm>> {
         Realm::load_by_path(path, context).await
     }
 
     /// Returns an event by its ID.
-    async fn event(id: Id, context: &Context) -> FieldResult<Option<Event>> {
+    async fn event(id: Id, context: &Context) -> ApiResult<Option<Event>> {
         Event::load_by_id(id, context).await
     }
 

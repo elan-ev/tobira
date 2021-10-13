@@ -11,12 +11,22 @@ direction-down: Down
 navigation: Navigation
 rename: Rename
 
-graphql:
+api:
+  error-boundary:
+    invalid-input: Internal application error ($t(errors.invalid-input)).
+    unexpected-server-error: 'Application error: unexpected server error.'
+    not-your-fault: This is likely not your fault. You can try again later.
+    detailed-error-info: 'Detailed error information for developers:'
+
+errors:
+  unexpected-response: 'Internal application error: unexpected response from server.'
   network-error: >
-    Server could not be reached due to a network error. Are you connected to the Internet?
-  server-error: 'Error: unexpected response from server.'
-  api-error: Unexpected server error.
-  detailed-error-info: 'Detailed error information for developers:'
+    Server could not be reached due to a network error. Are you connected to the internet?
+  not-authorized: You are not authorized.
+  not-authorized-to-view-page: You are not authorized to view this page.
+  invalid-input: Invalid input.
+  internal-server-error: Internal server error (something is wrong with the server).
+  unknown: Unknown error.
 
 not-found:
   page-not-found: Page not found
@@ -100,7 +110,7 @@ manage:
 
     general:
       rename-label: Page name
-      generic-network-error: Failed to change the name.
+      rename-failed: Failed to change the name.
       no-rename-root: >
         The homepage cannot be renamed. The heading is controlled by the global
         site title setting.
@@ -110,7 +120,7 @@ manage:
       sort-alphabetically-asc: Sort alphabetically ascending
       sort-alphabetically-desc: Sort alphabetically descending
       order-manually: Manually order
-      generic-network-error: Changing the order failed.
+      failed: Changing the order failed.
 
     danger-zone:
       heading: Danger zone
@@ -118,18 +128,18 @@ manage:
       change-path:
         heading: Change path
         button: Change path segment
-        generic-network-error: Changing the path failed.
+        failed: Changing the path failed.
         warning: >
           Important: Changing the path of this page invalidates the paths to
           this page, to all direct or indirect sub-pages, and to all videos
-          linked on any of those pages. Old links, e.g. in private browser-bookmarks
-          or already published won't work anymore.
+          linked on any of those pages. Old links, e.g. in personal
+          browser-bookmarks or published somewhere, won't work anymore.
       delete:
         heading: Delete page
         button: Delete this page and <1>{{numSubPages}}</1> sub-pages
         button-single: Delete page
         cannot-be-undone: This action <1>cannot</1> be undone!
-        generic-network-error: Deleting the page failed.
+        failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
           indirect sub-pages, as well as all page content of these pages. This
@@ -141,4 +151,12 @@ manage:
     below-this-parent: The new page will be added below <1>“{{parent}}”</1>.
     below-root: The new page will be added directly below the homepage.
     button-create-page: Create page
-    generic-network-error: Failed to create page.
+    failed-to-add: Failed to create page.
+
+
+# These errors map the `key` field of an API error response to a nice message.
+api-remote-errors:
+  mutation:
+    not-logged-in: You have to be logged in to perform this action.
+    not-a-moderator: You have to be a moderator to perform this action.
+

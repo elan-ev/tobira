@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
 use tokio_postgres::Row;
-use juniper::{GraphQLObject, graphql_object, FieldResult};
+use juniper::{GraphQLObject, graphql_object};
 
 use crate::{
-    api::{Context, Id, model::series::Series},
+    api::{Context, err::ApiResult, Id, model::series::Series},
     db::types::{EventTrack, Key},
     prelude::*,
 };
@@ -65,7 +65,7 @@ impl Event {
         &self.creator
     }
 
-    async fn series(&self, context: &Context) -> FieldResult<Option<Series>> {
+    async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
         if let Some(series) = self.series {
             Series::load_by_id(Id::series(series), context).await
         } else {
@@ -75,7 +75,7 @@ impl Event {
 }
 
 impl Event {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> FieldResult<Option<Self>> {
+    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
         let result = if let Some(key) = id.key_for(Id::EVENT_KIND) {
             context.db
                 .query_opt(
@@ -91,7 +91,7 @@ impl Event {
         Ok(result)
     }
 
-    pub(crate) async fn load_for_series(series_key: Key, context: &Context) -> FieldResult<Vec<Self>> {
+    pub(crate) async fn load_for_series(series_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
         let result = context.db
             .query_raw(
                 &*format!("select {} from events where series = $1", Self::COL_NAMES),

@@ -37,6 +37,7 @@ const query = graphql`
             id
             name
             path
+            canCurrentUserEdit
             ancestors { name path }
             parent { id }
             ... Blocks_blocks
@@ -67,10 +68,10 @@ const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
 
     const isRoot = realm.parent === null;
     const title = isRoot ? CONFIG.siteTitle : realm.name;
-    const nav = [
-        <Nav key="nav" fragRef={realm} />,
-        <RealmEditLinks key="edit-buttons" path={path} />,
-    ];
+    const mainNav = <Nav key="nav" fragRef={realm} />;
+    const nav = realm.canCurrentUserEdit
+        ? [mainNav, <RealmEditLinks key="edit-buttons" path={path} />]
+        : [mainNav];
     useTitle(title, isRoot);
 
     return (

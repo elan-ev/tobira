@@ -76,6 +76,13 @@
 # Default value: "x-tobira-user-roles"
 #roles_header = "x-tobira-user-roles"
 
+# If a user has this role, they are treated as a moderator in Tobira,
+# giving them the ability to modify the realm structure among other
+# things.
+#
+# Default value: "ROLE_TOBIRA_MODERATOR"
+#moderator_role = "ROLE_TOBIRA_MODERATOR"
+
 [auth.proxy]
 # TODO
 #

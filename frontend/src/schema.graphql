@@ -110,11 +110,11 @@ input UpdateRealm {
   pathSegment: String
 }
 
-"Data about a logged-in user."
 type User {
+  "Returns the username, a unique string identifying the user."
   username: String!
+  "Returns the name of the user intended to be read by humans."
   displayName: String!
-  roles: [String!]!
 }
 
 type Track {
@@ -141,7 +141,7 @@ type Realm {
   """
   childOrder: RealmOrder!
   """
-    Returns the full path of this realm. `""` for the root realm. For
+    Returns the full path of this realm. `"/"` for the root realm. For
     non-root realms, the path always starts with `/` and never has a
     trailing `/`.
   """
@@ -167,6 +167,7 @@ type Realm {
     (excluding this one). Returns a number ≥ 0.
   """
   numberOfDescendants: Int!
+  canCurrentUserEdit: Boolean!
 }
 
 enum VideoListLayout {

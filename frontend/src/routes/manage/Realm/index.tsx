@@ -18,6 +18,7 @@ import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
+import { ErrorBox, RealmSettingsContainer } from "./util";
 
 
 // Route definition
@@ -42,6 +43,7 @@ const query = graphql`
             name
             isRoot
             path
+            canCurrentUserEdit
             numberOfDescendants
             ... GeneralRealmData
             ... ChildOrderEditData
@@ -110,18 +112,19 @@ type SettingsPageProps = {
 /** The actual settings page */
 const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
     const { t } = useTranslation();
+    if (!realm.canCurrentUserEdit) {
+        return <ErrorBox>
+            {t("errors.not-authorized-to-view-page")}
+            {}
+        </ErrorBox>;
+    }
+
     const heading = realm.isRoot
         ? t("manage.realm.heading-root")
         : t("manage.realm.heading", { realm: realm.name });
 
     return (
-        <div css={{
-            maxWidth: 900,
-            "& > section": {
-                marginBottom: 64,
-                "& > h2": { marginBottom: 16 },
-            },
-        }}>
+        <RealmSettingsContainer>
             <h1>{heading}</h1>
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
             <div css={{
@@ -130,7 +133,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
                 flexWrap: "wrap",
                 gap: 16,
             }}>
-                <LinkButton to={realm.isRoot ? "/" : realm.path}>
+                <LinkButton to={realm.path}>
                     <FiArrowRightCircle />
                     {t("manage.realm.view-page")}
                 </LinkButton>
@@ -142,6 +145,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
             <section><General fragRef={realm} /></section>
             <section><ChildOrder fragRef={realm} /></section>
             <section><DangerZone fragRef={realm} /></section>
-        </div>
+        </RealmSettingsContainer>
     );
 };

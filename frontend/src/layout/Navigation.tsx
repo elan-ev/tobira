@@ -56,11 +56,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
     return (
         <div>
             {realm.parent !== null && <>
-                <LinkWithIcon
-                    to={realm.parent.path === "" ? "/" : realm.parent.path}
-                    iconPos="left"
-                    css={{ padding: "6px 4px" }}
-                >
+                <LinkWithIcon to={realm.parent.path} iconPos="left" css={{ padding: "6px 4px" }}>
                     <FiChevronLeft css={{ marginRight: "8px !important" }}/>
                     {realm.parent.isRoot ? t("home") : realm.parent.name}
                 </LinkWithIcon>
@@ -111,15 +107,3 @@ const Item: React.FC<ItemProps> = ({ label, link }) => (
         <FiChevronRight />
     </LinkWithIcon>
 );
-
-/**
- * Some routes don't need to fetch data themselves, but only for navigation.
- * This query can be used by those routes.
- */
-export const ROOT_NAV_QUERY = graphql`
-    query NavigationRootQuery {
-        realm: rootRealm {
-            ... NavigationData
-        }
-    }
-`;

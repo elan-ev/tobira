@@ -21,7 +21,7 @@ export const PathSegmentInput = React.forwardRef<HTMLInputElement, Props>(
             gap: 8,
             backgroundColor: "var(--grey97)",
         }}>
-            <span css={{ paddingLeft: 8 }}>{base}</span>
+            <span css={{ paddingLeft: 8 }}>{base + (base.endsWith("/") ? "" : "/")}</span>
             <Input
                 css={{ margin: -1, width: 160 }}
                 // TODO: I have no idea why, but this cast is necessary.

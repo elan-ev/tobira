@@ -11,13 +11,24 @@ direction-down: Runter
 navigation: Navigation
 rename: Umbenennen
 
-graphql:
+api:
+  error-boundary:
+    invalid-input: Interner Fehler ($t(errors.invalid-input)).
+    unexpected-server-error: 'Anwendungsfehler: Unerwarteter Fehler vom Server.'
+    not-your-fault: >
+      Dies ist höchstwahrscheinlich nicht Ihre Schuld. Sie können es später nochmal versuchen.
+    detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
+
+errors:
+  unexpected-response: 'Interner Fehler: Unerwartete Antwort vom Server.'
   network-error: >
     Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
     mit dem Internet verbunden?
-  server-error: 'Fehler: Unerwartete Antwort vom Server.'
-  api-error: Unerwarteter Fehler vom Server.
-  detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
+  not-authorized: Sie sind nicht autorisiert.
+  not-authorized-to-view-page: Sie sind nicht dazu autorisiert, diese Seite aufzurufen.
+  invalid-input: Ungültige Eingabe.
+  internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
+  unknown: Unbekannter Fehler.
 
 not-found:
   page-not-found: Seite nicht gefunden
@@ -102,7 +113,7 @@ manage:
 
     general:
       rename-label: Seitenname
-      generic-network-error: Änderung des Namen fehlgeschlagen.
+      rename-failed: Änderung des Namen fehlgeschlagen.
       no-rename-root: >
         Der Name der Startseite kann nicht geändert werden. Die Überschrift wird
         von der globalen Seiten-Title Einstellung kontrolliert.
@@ -112,7 +123,7 @@ manage:
       sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
       sort-alphabetically-desc: Alphabetisch absteigend sortieren
       order-manually: Manuell ordnen
-      generic-network-error: Änderung fehlgeschlagen.
+      failed: Änderung fehlgeschlagen.
 
     danger-zone:
       heading: Gefahrenbereich
@@ -122,19 +133,19 @@ manage:
       change-path:
         heading: Pfad ändern
         button: Pfadsegment ändern
-        generic-network-error: Änderung des Pfades fehlgeschlagen.
+        failed: Änderung des Pfades fehlgeschlagen.
         warning: >
           Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
-          Links zu dieser Seite, allen direkten und indirekten Unterseiten, und
-          allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
-          dann nicht mehr. Das betrifft private Browser-Lesezeichen, als auch
+          Links zu dieser Seite, zu allen direkten und indirekten Unterseiten, und
+          zu allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
+          dann nicht mehr. Das betrifft persönliche Browser-Lesezeichen, als auch
           bereits veröffentlichte Links.
       delete:
         heading: Seite löschen
         button: Diese Seite und <1>{{numSubPages}}</1> Unterseiten löschen
         button-single: Seite löschen
         cannot-be-undone: Diese Aktion kann <1>nicht</1> rückgängig gemacht werden!
-        generic-network-error: Löschung fehlgeschlagen.
+        failed: Löschung fehlgeschlagen.
         warning: >
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
           indirekten Unterseiten sowie alle Seiteninhalte all dieser Seiten
@@ -146,4 +157,12 @@ manage:
     below-this-parent: Die neue Seite wird unter <1>„{{parent}}“</1> hinzugefügt.
     below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
     button-create-page: Seite erstellen
-    generic-network-error: Seite konnte nicht erstellt werden.
+    failed-to-add: Seite konnte nicht erstellt werden.
+
+
+# These errors map the `key` field of an API error response to a nice message.
+api-remote-errors:
+  mutation:
+    not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
+    not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
+

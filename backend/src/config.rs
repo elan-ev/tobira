@@ -29,7 +29,7 @@ pub(crate) struct Config {
     pub(crate) http: crate::http::HttpConfig,
 
     #[config(nested)]
-    pub(crate) auth: crate::http::auth::AuthConfig,
+    pub(crate) auth: crate::auth::AuthConfig,
 
     #[config(nested)]
     pub(crate) log: crate::logger::LogConfig,

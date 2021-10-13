@@ -12,7 +12,6 @@ export type UserState = "unknown" | "none" | User;
 export type User = {
     username: string;
     displayName: string;
-    roles: readonly string[];
 };
 
 const UserContext = React.createContext<UserState>("unknown");
@@ -62,7 +61,6 @@ const fragment = graphql`
         currentUser {
             username
             displayName
-            roles
         }
     }
 `;

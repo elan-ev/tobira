@@ -15,7 +15,13 @@ import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { NoPath, PathInvalid } from ".";
-import { ErrorBox, realmValidations } from "./util";
+import {
+    boxError,
+    displayCommitError,
+    ErrorBox,
+    RealmSettingsContainer,
+    realmValidations,
+} from "./util";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
@@ -45,6 +51,7 @@ const query = graphql`
             name
             isRoot
             path
+            canCurrentUserEdit
             children { path }
             ... NavigationData
         }
@@ -97,14 +104,21 @@ type AddChildProps = {
 
 /** The actual settings page */
 const AddChild: React.FC<AddChildProps> = ({ parent }) => {
+    const { t } = useTranslation();
+    if (!parent.canCurrentUserEdit) {
+        return <ErrorBox>
+            {t("errors.not-authorized-to-view-page")}
+            {}
+        </ErrorBox>;
+    }
+
     type FormData = {
         name: string;
         pathSegment: string;
     };
 
-    const { t } = useTranslation();
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
-    const [error, setError] = useState(null);
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
 
     const router = useRouter();
 
@@ -123,8 +137,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                 router.goto(typedResponse.addRealm.path);
             },
             onError: error => {
-                console.error(error);
-                setError(t("manage.add-child.generic-network-error"));
+                setCommitError(displayCommitError(error, t("manage.add-child.failed-to-add")));
             },
         });
     });
@@ -132,13 +145,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
     const validations = realmValidations(t);
 
     return (
-        <div css={{
-            maxWidth: 900,
-            "& > section": {
-                marginBottom: 64,
-                "& > h2": { marginBottom: 16 },
-            },
-        }}>
+        <RealmSettingsContainer>
             <h1>{t("manage.add-child.heading")}</h1>
             <p>
                 {
@@ -166,7 +173,7 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         error={!!errors.name}
                         {...register("name", validations.name)}
                     />
-                    <ErrorBox>{errors.name?.message}</ErrorBox>
+                    {boxError(errors.name?.message)}
                 </div>
 
                 <div>
@@ -174,11 +181,11 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                     <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>
                     <PathSegmentInput
                         id="path-field"
-                        base={parent.path + "/"}
+                        base={parent.path}
                         error={!!errors.pathSegment}
                         {...register("pathSegment", validations.path)}
                     />
-                    <ErrorBox>{errors.pathSegment?.message}</ErrorBox>
+                    {boxError(errors.pathSegment?.message)}
                 </div>
 
                 <div>
@@ -188,10 +195,9 @@ const AddChild: React.FC<AddChildProps> = ({ parent }) => {
                         </Button>
                         {isInFlight && <Spinner size={20} />}
                     </div>
-
-                    <ErrorBox>{error}</ErrorBox>
+                    {boxError(commitError)}
                 </div>
             </Form>
-        </div>
+        </RealmSettingsContainer>
     );
 };
