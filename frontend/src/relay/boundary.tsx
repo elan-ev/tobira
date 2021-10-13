@@ -1,13 +1,12 @@
-import { Translation } from "react-i18next";
+import { Translation, useTranslation } from "react-i18next";
 import React, { ReactNode } from "react";
 
-import { APIError, ErrorKind, NetworkError, NotJson, ServerError } from ".";
+import { APIError, NetworkError, NotJson, ServerError } from ".";
 import { Root } from "../layout/Root";
 import { RoutingContext } from "../router";
 import { Card } from "../ui/Card";
 import { assertNever, bug } from "../util/err";
 import { match } from "../util";
-import { TFunction } from "i18next";
 
 
 type Props = {
@@ -59,7 +58,7 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
             <Root nav={[]}>
                 <Translation>{t => (
                     <div css={{ margin: "0 auto", maxWidth: 600 }}>
-                        <MainErrorMessage t={t} error={error} />
+                        <MainErrorMessage error={error} />
                         <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
                             {t("api.error-boundary.detailed-error-info")}
                         </p>
@@ -84,10 +83,11 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
 
 type MainErrorMessageProps = {
     error: HandledError;
-    t: TFunction;
 };
 
-const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
+const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error }) => {
+    const { t, i18n } = useTranslation();
+
     let message: string | JSX.Element;
     let ourFault = false;
     if (error instanceof NetworkError) {
@@ -101,34 +101,50 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
         ourFault = true;
     } else if (error instanceof APIError) {
         // OK response, but it contained GraphQL errors.
-
-        const kindToMessage = (kind?: ErrorKind) => {
-            if (!kind) {
-                ourFault = true;
-                return t("api.error-boundary.unexpected-server-error");
+        const kinds = new Set();
+        const messages: string[] = [];
+        for (const err of error.errors) {
+            const translationKey = err.key ? `api-remote-errors.${err.key}` : null;
+            let msg;
+            if (translationKey && i18n.exists(translationKey)) {
+                msg = t(translationKey);
             } else {
-                return match(kind, {
-                    INTERNAL_SERVER_ERROR: () => {
-                        ourFault = true;
-                        return t("errors.internal-server-error");
-                    },
-                    INVALID_INPUT: () => t("api.error-boundary.invalid-input"),
-                    NOT_AUTHORIZED: () => t("errors.not-authorized"),
-                });
-            }
-        };
+                if (kinds.has(err.kind)) {
+                    continue;
+                }
 
-        const kinds = new Set(error.errors.map(e => e.kind));
-        if (kinds.size === 0) {
+                kinds.add(err.kind);
+
+                if (!err.kind) {
+                    ourFault = true;
+                    msg = t("api.error-boundary.unexpected-server-error");
+                } else {
+                    msg = match(err.kind, {
+                        INTERNAL_SERVER_ERROR: () => {
+                            ourFault = true;
+                            return t("errors.internal-server-error");
+                        },
+                        INVALID_INPUT: () => t("api.error-boundary.invalid-input"),
+                        NOT_AUTHORIZED: () => t("errors.not-authorized"),
+                    });
+                }
+            }
+
+            messages.push(msg);
+        }
+
+
+        if (messages.length === 0) {
             // This should never happen?
             message = t("api.error-boundary.unexpected-server-error");
             ourFault = true;
-        } else if (kinds.size === 1) {
-            message = kindToMessage(Array.from(kinds)[0]);
+        } else if (messages.length === 1) {
+            message = messages[0];
         } else {
-            message = <ul>
-                {Array.from(kinds).map(kind => <li key={kind}>{kindToMessage(kind)}</li>)}
-            </ul>;
+            // It's not optimal to just show a list of errors, but this case is
+            // likely very rare and I prefer an ugly error message over one
+            // that omits useful information.
+            message = <ul>{messages.map(msg => <li key={msg}>{msg}</li>)}</ul>;
         }
     } else {
         // Typescript unfortunately requires this `else` branch for some reason.
