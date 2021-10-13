@@ -1,18 +1,21 @@
-use crate::{
-    api::Context,
-    auth::User,
-};
+use crate::auth::UserSession;
 
 
-#[juniper::graphql_object(Context = Context)]
-impl User {
-    /// Returns the username, a unique string identifying the user.
-    fn username(&self) -> &str {
-        &self.username
-    }
+#[derive(juniper::GraphQLObject)]
+pub(crate) struct User<'a> {
+    /// The username, a unique string identifying the user.
+    username: &'a str,
 
-    /// Returns the name of the user intended to be read by humans.
-    fn display_name(&self) -> &str {
-        &self.display_name
+    /// The name of the user intended to be read by humans.
+    display_name: &'a str,
+}
+
+impl<'a> User<'a> {
+    pub(crate) fn from_session(session: &'a UserSession) -> Option<Self> {
+        match session {
+            UserSession::None => None,
+            UserSession::User { username, display_name, .. }
+                => Some(Self { username, display_name }),
+        }
     }
 }

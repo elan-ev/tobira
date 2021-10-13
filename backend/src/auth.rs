@@ -1,9 +1,12 @@
-use hyper::{HeaderMap, header::HeaderValue};
+use hyper::HeaderMap;
+use once_cell::sync::Lazy;
 
 
 /// Users with this role can do anything as they are the global Opencast
 /// administrator.
-const ADMIN_ROLE: &str = "ROLE_ADMIN";
+const ROLE_ADMIN: &str = "ROLE_ADMIN";
+
+const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
 
 
 /// Authentification and authorization
@@ -42,36 +45,60 @@ pub(crate) struct AuthProxyConfig {
 }
 
 
-/// Data about a logged-in user.
+/// An optional user.
 #[derive(Debug)]
-pub(crate) struct User {
-    pub(crate) username: String,
-    pub(crate) display_name: String,
-    pub(crate) roles: Vec<String>,
+pub(crate) enum UserSession {
+    None,
+    User {
+        username: String,
+        display_name: String,
+        roles: Vec<String>,
+    },
 }
 
-impl User {
-    pub(crate) fn from_headers(headers: &HeaderMap, auth_config: &AuthConfig) -> Option<Self> {
+impl UserSession {
+    pub(crate) fn from_headers(headers: &HeaderMap, auth_config: &AuthConfig) -> Self {
         // We only read these header values if the auth proxy is enabled.
         if !auth_config.proxy.enabled {
-            return None;
+            return Self::None;
         }
 
-        let as_utf8 = |v: &HeaderValue| String::from_utf8_lossy(v.as_bytes()).trim().to_owned();
-        let username = as_utf8(headers.get(&auth_config.username_header)?);
-        let display_name = as_utf8(headers.get(&auth_config.display_name_header)?);
+        // Get username and display name. Both are required: if any is not set,
+        // we treat it as if there is no user session.
+        let header_to_string = |name: &str| {
+            headers.get(name).map(|v| String::from_utf8_lossy(v.as_bytes()).trim().to_owned())
+        };
 
-        let roles = match headers.get(&auth_config.roles_header) {
-            None => vec![],
-            Some(roles_raw) => {
+        let username = match header_to_string(&auth_config.username_header) {
+            None => return Self::None,
+            Some(s) => s,
+        };
+        let display_name = match header_to_string(&auth_config.display_name_header) {
+            None => return Self::None,
+            Some(s) => s,
+        };
+
+        // Get roles from the user. If the header is not set, the user simply has no extra roles.
+        let mut roles = vec![ROLE_ANONYMOUS.to_string()];
+        if let Some(roles_raw) = headers.get(&auth_config.roles_header) {
+            roles.extend(
                 String::from_utf8_lossy(roles_raw.as_bytes())
                     .split(',')
                     .map(|role| role.trim().to_owned())
-                    .collect()
-            },
+            );
         };
 
-        Some(Self { username, display_name, roles })
+        Self::User { username, display_name, roles }
+    }
+
+    /// Returns the roles of the user if logged in, and `ROLE_ANONYMOUS` otherwise.
+    pub(crate) fn roles(&self) -> &[String] {
+        static LOGGED_OUT_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ANONYMOUS.into()]);
+
+        match self {
+            Self::None => &*LOGGED_OUT_ROLES,
+            Self::User { roles, .. } => roles,
+        }
     }
 
     /// Returns an auth token IF this user is a Tobira moderator (as determined
@@ -81,13 +108,13 @@ impl User {
     }
 
     pub(crate) fn is_moderator(&self, auth_config: &AuthConfig) -> bool {
-        self.is_admin() || self.roles.contains(&auth_config.moderator_role)
+        self.is_admin() || self.roles().contains(&auth_config.moderator_role)
     }
 
     /// Returns `true` if the user is a global Opencast administrator and can do
     /// anything.
     pub(crate) fn is_admin(&self) -> bool {
-        self.roles.iter().any(|role| role == ADMIN_ROLE)
+        self.roles().iter().any(|role| role == ROLE_ADMIN)
     }
 }
 
