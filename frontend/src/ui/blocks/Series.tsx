@@ -224,7 +224,10 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
 
     return active
         ? <div css={{ ...containerStyle, display: "inline-block" }}>{inner}</div>
-        : <Link to={`${realmPath}/v/${keyOfId(event.id)}`} css={containerStyle}>{inner}</Link>;
+        : <Link
+            to={`${realmPath}${realmPath.endsWith("/") ? "" : "/"}v/${keyOfId(event.id)}`}
+            css={containerStyle}
+        >{inner}</Link>;
 };
 
 const formatLength = (totalMs: number) => {
