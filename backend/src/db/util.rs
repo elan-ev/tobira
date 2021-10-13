@@ -1,16 +1,14 @@
-/// Helper to pass to `query_raw` as parameters argument when you don't want to
-/// pass any parameters. It's shorter and more descriptive than
-/// `std::iter::empty()` and it has no problems with type inference.
-pub struct NoParams;
-
-impl Iterator for NoParams {
-    type Item = bool;
-    fn next(&mut self) -> Option<Self::Item> {
-        None
-    }
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, Some(0))
-    }
+/// Helper macro to pass arguments to `query_raw` and similar calls.
+///
+/// Helps you with casting to `&dyn ToSql` and type inference. Note: use `[]` for
+/// the macro invocation, e.g. `dbargs![]`.
+macro_rules! dbargs {
+    () => {
+        [] as [&(dyn postgres_types::ToSql + Sync); 0]
+    };
+    ($($arg:expr),+ $(,)?) => {
+        [$($arg as &(dyn postgres_types::ToSql + Sync)),+]
+    };
 }
 
-impl ExactSizeIterator for NoParams {}
+pub(crate) use dbargs;

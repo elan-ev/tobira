@@ -1,14 +1,13 @@
 use tokio_postgres::GenericClient;
 
 use crate::prelude::*;
-use super::util::NoParams;
 
 
 /// Returns meta information about all tables in the `public` schema.
 pub(super) async fn all_table_names(db: &impl GenericClient) -> Result<Vec<String>> {
     let rows = db.query_raw(
             "select table_name from information_schema.tables where table_schema='public'",
-            NoParams,
+            dbargs![],
         )
         .await?
         .map_ok(|row| row.get::<_, String>(0));

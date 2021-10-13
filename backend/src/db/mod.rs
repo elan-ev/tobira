@@ -137,7 +137,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
 
         // Retrieve all active migrations from the DB.
         let active_migrations = tx
-            .query_raw("select id, name, applied_on, script from __db_migrations", util::NoParams)
+            .query_raw("select id, name, applied_on, script from __db_migrations", dbargs![])
             .await?
             .map_ok(|row| (
                 row.get::<_, i64>(0) as u64,
