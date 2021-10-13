@@ -69,7 +69,11 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
                             padding: 16,
                             fontSize: 14,
                         }}>
-                            <pre><code>{error.toString()}</code></pre>
+                            <pre>
+                                <code css={{ whiteSpace: "pre-wrap" }}>
+                                    {error.toString()}
+                                </code>
+                            </pre>
                         </div>
                     </div>
                 )}</Translation>
