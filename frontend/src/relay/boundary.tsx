@@ -17,7 +17,7 @@ type Props = {
 type HandledError = NetworkError | ServerError | APIError | NotJson;
 
 type State = {
-    error: null | HandledError;
+    error?: HandledError;
 };
 
 export class GraphQLErrorBoundary extends React.Component<Props, State> {
@@ -27,7 +27,7 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
     public constructor(props: Props, context: React.ContextType<typeof RoutingContext>) {
         super(props, context);
 
-        const initialState = { error: null };
+        const initialState = { error: undefined };
         this.state = initialState;
 
         // Reset this state whenever the route changes.
@@ -46,12 +46,12 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
         }
 
         // Not our problem
-        return { error: null };
+        return { error: undefined };
     }
 
     public render(): ReactNode {
         const error = this.state.error;
-        if (error === null) {
+        if (!error) {
             return this.props.children;
         }
 
@@ -98,7 +98,7 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
     } else if (error instanceof APIError) {
         // OK response, but it contained GraphQL errors.
 
-        const kindToMessage = (kind: ErrorKind | undefined) => {
+        const kindToMessage = (kind?: ErrorKind) => {
             if (!kind) {
                 ourFault = true;
                 return t("api.error-boundary.unexpected-server-error");

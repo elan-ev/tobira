@@ -4,8 +4,8 @@
 //! created from other common errors that occur (e.g. DB errors). This module
 //! also offers a couple macros to easily create an error.
 //!
-//! The error contains a few information that helps the frontend show a good
-//! error message. We have a very coarse "error kind", but also an optional
+//! The error contains information that helps the frontend show a good error
+//! message. We have a very coarse "error kind", but also an optional
 //! "key". The latter is directly used for error messages in the frontend.
 
 use juniper::{FieldError, IntoFieldError, ScalarValue, graphql_value};

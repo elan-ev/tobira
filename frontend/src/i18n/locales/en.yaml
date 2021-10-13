@@ -15,14 +15,13 @@ api:
   error-boundary:
     invalid-input: Internal application error ($t(errors.invalid-input)).
     unexpected-server-error: 'Application error: unexpected server error.'
-    not-your-fault: >
-      This is likely not your fault. Hopefully the problem resolves itself within a few minutes.
+    not-your-fault: This is likely not your fault. You can try again later.
     detailed-error-info: 'Detailed error information for developers:'
 
 errors:
   unexpected-response: 'Internal application error: unexpected response from server.'
   network-error: >
-    Server could not be reached due to a network error. Are you connected to the Internet?
+    Server could not be reached due to a network error. Are you connected to the internet?
   not-authorized: You are not authorized.
   not-authorized-to-view-page: You are not authorized to view this page.
   invalid-input: Invalid input.
