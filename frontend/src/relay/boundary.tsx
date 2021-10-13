@@ -115,8 +115,6 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error, t }) => {
         };
 
         const kinds = new Set(error.errors.map(e => e.kind));
-        console.log(error.errors);
-        console.log(kinds);
         if (kinds.size === 0) {
             // This should never happen?
             message = t("api.error-boundary.unexpected-server-error");
