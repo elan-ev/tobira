@@ -4,5 +4,6 @@
 pub(crate) use anyhow::{anyhow, bail, Context as _, Result};
 pub(crate) use log::{error, warn, info, debug, trace};
 pub(crate) use futures::{FutureExt as _, TryStreamExt as _};
+pub(crate) use tap::Pipe;
 
 pub(crate) use crate::db::util::dbargs;
