@@ -30,6 +30,7 @@ pub(super) enum HarvestItem {
         duration: Option<i32>,
         tracks: Vec<Track>,
         thumbnail: Option<String>,
+        acl: Acl,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
@@ -87,4 +88,10 @@ impl Into<EventTrack> for Track {
             resolution: self.resolution.map(Into::into),
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub(super) struct Acl {
+    pub(super) read: Vec<String>,
+    pub(super) write: Vec<String>,
 }

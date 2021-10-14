@@ -1,8 +1,7 @@
 use juniper::graphql_object;
 
-use crate::auth::User;
 
-use super::{Context, Id, err::ApiResult, model::{realm::Realm, event::Event}};
+use super::{Context, Id, err::ApiResult, model::{realm::Realm, event::Event, user::User}};
 
 
 /// The root query object.
@@ -37,7 +36,7 @@ impl Query {
     }
 
     /// Returns the current user.
-    fn current_user(context: &Context) -> Option<&User> {
-        context.user.as_ref()
+    fn current_user(context: &Context) -> Option<User> {
+        User::from_session(&context.user)
     }
 }

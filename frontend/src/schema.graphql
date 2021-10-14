@@ -111,9 +111,9 @@ input UpdateRealm {
 }
 
 type User {
-  "Returns the username, a unique string identifying the user."
+  "The username, a unique string identifying the user."
   username: String!
-  "Returns the name of the user intended to be read by humans."
+  "The name of the user intended to be read by humans."
   displayName: String!
 }
 

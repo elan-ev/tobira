@@ -242,6 +242,6 @@ impl Realm {
 
     fn can_current_user_edit(&self, context: &Context) -> bool {
         // TODO: at some point, we want ACLs per realm
-        context.user.as_ref().map_or(false, |user| user.is_moderator(&context.config.auth))
+        context.user.is_moderator(&context.config.auth)
     }
 }

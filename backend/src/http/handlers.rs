@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     api,
-    auth::User,
+    auth::UserSession,
     db::Transaction,
     prelude::*,
 };
@@ -23,7 +23,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
     );
 
-    let user = User::from_headers(req.headers(), &ctx.config.auth);
+    let user = UserSession::from_headers(req.headers(), &ctx.config.auth);
     trace!("User: {:?}", user);
 
     let method = req.method().clone();
@@ -108,7 +108,7 @@ pub(super) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> R
 }
 
 /// Handles a request to `/graphql`.
-async fn handle_api(req: Request<Body>, user: Option<User>, ctx: &Context) -> Response {
+async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Response {
     let before = Instant::now();
 
     // Get a connection for this request.

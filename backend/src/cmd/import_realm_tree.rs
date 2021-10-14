@@ -8,7 +8,7 @@ use structopt::StructOpt;
 
 use crate::{
     config::Config,
-    db::{self, util::NoParams},
+    db,
     prelude::*,
 };
 
@@ -119,7 +119,7 @@ enum DummyBlocks {
 impl DummyBlocks {
     async fn new(enable: bool, db: &impl GenericClient) -> Result<Self> {
         if enable {
-            let series = db.query_raw("select opencast_id from series", NoParams)
+            let series = db.query_raw("select opencast_id from series", dbargs![])
                 .await?
                 .map_ok(|row| row.get::<_, String>(0))
                 .try_collect()

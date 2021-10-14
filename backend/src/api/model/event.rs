@@ -3,7 +3,7 @@ use tokio_postgres::Row;
 use juniper::{GraphQLObject, graphql_object};
 
 use crate::{
-    api::{Context, err::ApiResult, Id, model::series::Series},
+    api::{Context, err::{self, ApiResult}, Id, model::series::Series},
     db::types::{EventTrack, Key},
     prelude::*,
 };
@@ -76,33 +76,43 @@ impl Event {
 
 impl Event {
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
-        let result = if let Some(key) = id.key_for(Id::EVENT_KIND) {
-            context.db
-                .query_opt(
-                    &*format!("select {} from events where id = $1", Self::COL_NAMES),
-                    &[&key],
-                )
-                .await?
-                .map(Self::from_row)
-        } else {
-            None
+        let key = match id.key_for(Id::EVENT_KIND) {
+            None => return Ok(None),
+            Some(key) => key,
         };
 
-        Ok(result)
+        let query = format!(
+            "select {}, $2 && read_roles as can_read from events where id = $1",
+            Self::COL_NAMES,
+        );
+        context.db
+            .query_opt(&query, &[&key, &context.user.roles()])
+            .await?
+            .map(|row| {
+                if row.get::<_, bool>("can_read") {
+                    Ok(Self::from_row(row))
+                } else {
+                    Err(err::not_authorized!(
+                        key = "view.event",
+                        "you cannot view this event",
+                    ))
+                }
+            })
+            .transpose()
     }
 
     pub(crate) async fn load_for_series(series_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
-        let result = context.db
-            .query_raw(
-                &*format!("select {} from events where series = $1", Self::COL_NAMES),
-                &[series_key],
-            )
+        let query = format!(
+            "select {} from events where series = $1 and read_roles && $2",
+            Self::COL_NAMES,
+        );
+        context.db
+            .query_raw(&query, dbargs![&series_key, &context.user.roles()])
             .await?
             .map_ok(Self::from_row)
-            .try_collect()
-            .await?;
-
-        Ok(result)
+            .try_collect::<Vec<_>>()
+            .await?
+            .pipe(Ok)
     }
 
     const COL_NAMES: &'static str

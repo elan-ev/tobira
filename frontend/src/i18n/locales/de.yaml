@@ -162,6 +162,8 @@ manage:
 
 # These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
+  view:
+    event: Sie sind nicht autorisiert dieses Video zu sehen.
   mutation:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
     not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
