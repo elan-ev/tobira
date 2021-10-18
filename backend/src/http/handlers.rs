@@ -16,15 +16,15 @@ use super::{Context, Request, Response, assets::Assets};
 
 /// This is the main HTTP entry point, called for each incoming request.
 pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
+    let user = UserSession::from_headers(req.headers(), &ctx.config.auth);
+
     trace!(
-        "Incoming HTTP {:?} request to '{}{}'",
+        "Incoming HTTP {:?} request to '{}' (user: {})",
         req.method(),
-        req.uri().path(),
-        req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
+        req.uri().path_and_query().map_or("", |pq| pq.as_str()),
+        user.debug_log_username(),
     );
 
-    let user = UserSession::from_headers(req.headers(), &ctx.config.auth);
-    trace!("User: {:?}", user);
 
     let method = req.method().clone();
     let path = req.uri().path().trim_end_matches('/');
@@ -168,7 +168,10 @@ async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Res
         config: ctx.config.clone(),
     });
     let out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
+
+    // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();
+    let username = api_context.user.debug_log_username();
     drop(api_context);
 
     // Check whether we own the last remaining handle of this Arc.
@@ -202,9 +205,10 @@ async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Res
     };
 
     debug!(
-        "Finished /graphql query in {:.2?} (with {} SQL queries)",
-        before.elapsed(),
+        "Finished /graphql query with {} SQL queries in {:.2?} (user: {})",
         num_queries,
+        before.elapsed(),
+        username,
     );
 
     out

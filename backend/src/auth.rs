@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use hyper::HeaderMap;
 use once_cell::sync::Lazy;
 
@@ -89,6 +91,14 @@ impl UserSession {
         };
 
         Self::User { username, display_name, roles }
+    }
+
+    /// Returns a representation of the optional username useful for logging.
+    pub(crate) fn debug_log_username(&self) -> Cow<'static, str> {
+        match self {
+            Self::None => "none".into(),
+            Self::User { username, .. } => format!("'{}'", username).into(),
+        }
     }
 
     /// Returns the roles of the user if logged in, and `ROLE_ANONYMOUS` otherwise.
