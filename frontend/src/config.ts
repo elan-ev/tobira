@@ -56,6 +56,7 @@ type ThemeConfig = {
         accent: string;
         grey50: string;
         danger: string;
+        happy: string;
     };
 };
 

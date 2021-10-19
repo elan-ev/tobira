@@ -179,6 +179,7 @@ fn build_theme(theme: &ThemeConfig) -> String {
             "accent": theme.color.accent,
             "grey50": theme.color.grey50,
             "danger": theme.color.danger,
+            "happy": theme.color.happy,
         },
     }).to_string()
 }

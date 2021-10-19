@@ -236,3 +236,9 @@
 #
 # Default value: "#b64235"
 #danger = "#b64235"
+
+# A color for positive things or some "call to action" buttons, like the
+# login button. Typically green.
+#
+# Default value: "#27ae60"
+#happy = "#27ae60"
