@@ -16,6 +16,11 @@ const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
 /// Authentification and authorization
 #[derive(Debug, confique::Config)]
 pub(crate) struct AuthConfig {
+    /// Link of the login button. If not set, the login button internally
+    /// (not via `<a>`, but through JavaScript) links to Tobira's own login
+    /// page.
+    pub(crate) login_link: Option<String>,
+
     /// The header containing a unique and stable username of the current user.
     /// TODO: describe properties, requirements and usages of username.
     #[config(default = "x-tobira-username")]

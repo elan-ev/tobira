@@ -59,6 +59,11 @@
 #unix_socket_permissions = 493
 
 [auth]
+# Link of the login button. If not set, the login button internally
+# (not via `<a>`, but through JavaScript) links to Tobira's own login
+# page.
+#login_link =
+
 # The header containing a unique and stable username of the current user.
 # TODO: describe properties, requirements and usages of username.
 #

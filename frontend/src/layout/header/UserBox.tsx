@@ -16,6 +16,7 @@ import { useOnOutsideClick } from "../../util";
 import { User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon } from "./ui";
+import CONFIG from "../../config";
 
 
 /** Viewport width in pixels where the user UI switches between narrow and wide */
@@ -64,24 +65,25 @@ type LoggedOutProps = {
 /** User-related UI in header when the user is NOT logged in. */
 const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => (
     <div css={{ display: "flex" }}>
-        <div css={{
-            ...BOX_CSS,
-            padding: "3px 8px",
-            marginRight: 8,
-            display: "flex",
-            gap: 8,
-            alignItems: "center",
-            color: "var(--nav-color)",
-            "&:hover": {
-                boxShadow: "1px 1px 5px var(--grey92)",
-            },
-            [`@media (max-width: ${BREAKPOINT}px)`]: {
-                display: "none",
-            },
-        }}>
-            <FiLogIn />
-            {t("user.login")}
-        </div>
+        <Link
+            to={CONFIG.auth.loginLink ?? "/~login"}
+            htmlLink={!!CONFIG.auth.loginLink}
+            css={{
+                ...BOX_CSS,
+                padding: "3px 8px",
+                marginRight: 8,
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                color: "var(--nav-color)",
+                "&:hover": {
+                    boxShadow: "1px 1px 5px var(--grey92)",
+                },
+                [`@media (max-width: ${BREAKPOINT}px)`]: {
+                    display: "none",
+                },
+            }}
+        ><FiLogIn />{t("user.login")}</Link>
         <UserSettingsIcon t={t} onClick={menu.toggle} />
         {menu.isOpen && <Menu close={menu.close} t={t} />}
     </div>
@@ -218,12 +220,20 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
     const items = match(state, {
         main: () => <>
             {/* Login button if the user is NOT logged in */}
-            {!user && <MenuItem icon={<FiLogIn />} borderBottom extraCss={{
-                color: "var(--nav-color)",
-                [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
-                    display: "none",
-                },
-            }}>{t("user.login")}</MenuItem>}
+            {!user && (
+                <MenuItem
+                    icon={<FiLogIn />}
+                    borderBottom
+                    linkTo={CONFIG.auth.loginLink ?? "/~login"}
+                    htmlLink={!!CONFIG.auth.loginLink}
+                    extraCss={{
+                        color: "var(--nav-color)",
+                        [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
+                            display: "none",
+                        },
+                    }}
+                >{t("user.login")}</MenuItem>
+            )}
 
             {user && <>
                 <MenuItem icon={<HiOutlineSparkles />} linkTo={`/@${user.username}`}>
@@ -294,6 +304,7 @@ type MenuItemProps = {
     icon?: JSX.Element;
     onClick?: () => void;
     linkTo?: string;
+    htmlLink?: boolean;
     extraCss?: Interpolation<Theme>;
     borderBottom?: boolean;
     borderTop?: boolean;
@@ -303,8 +314,9 @@ type MenuItemProps = {
 const MenuItem: React.FC<MenuItemProps> = ({
     icon,
     children,
-    onClick,
+    onClick = () => {},
     linkTo,
+    htmlLink = false,
     extraCss = {},
     borderBottom = false,
     borderTop = false,
@@ -340,6 +352,6 @@ const MenuItem: React.FC<MenuItemProps> = ({
     } as const;
 
     return linkTo
-        ? <li><Link to={linkTo} onClick={onClick ?? (() => {})} css={css}>{inner}</Link></li>
-        : <li css={css} onClick={onClick ?? (() => {})}>{inner}</li>;
+        ? <li><Link to={linkTo} {...{ htmlLink, onClick, css }}>{inner}</Link></li>
+        : <li {...{ onClick, css }}>{inner}</li>;
 };

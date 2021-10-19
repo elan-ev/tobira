@@ -183,6 +183,14 @@ export const ActiveRoute: React.FC = () => {
 
 type LinkProps = {
     to: string;
+
+    /**
+     * If `true`, a standard `<a>` link without special onClick handler is used.
+     * If you set this to `true` unconditionally, rather use `<a>` directly.
+     * This is just convenient if you need to switch between router-link and
+     * html-link based on a boolean. Default: `false`.
+     */
+    htmlLink?: boolean;
 } & Omit<React.ComponentPropsWithoutRef<"a">, "href">;
 
 /**
@@ -193,7 +201,13 @@ type LinkProps = {
  * browser navigating to that link). Instead, our router is notified of the new
  * route and renders appropriately.
  */
-export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) => {
+export const Link: React.FC<LinkProps> = ({
+    to,
+    children,
+    onClick,
+    htmlLink = false,
+    ...props
+}) => {
     const context = React.useContext(RoutingContext);
     if (context === null) {
         throw new Error("<Link> used without a parent <Router>! That's not allowed.");
@@ -217,7 +231,7 @@ export const Link: React.FC<LinkProps> = ({ to, children, onClick, ...props }) =
         }
     };
 
-    return <a href={to} onClick={handleClick} {...props}>{children}</a>;
+    return <a href={to} onClick={htmlLink ? onClick : handleClick} {...props}>{children}</a>;
 };
 
 
