@@ -10,6 +10,7 @@ direction-up: Up
 direction-down: Down
 navigation: Navigation
 rename: Rename
+this-field-is-required: This field is required.
 
 api:
   error-boundary:
@@ -70,9 +71,11 @@ user:
   your-page: Your page
   manage-content: Manage content
 
-login:
-  button-label: Login
-  not-logged-in: Not logged in
+login-page:
+  user-id: User ID
+  password: Password
+  already-logged-in: You are already logged in as “{{ name }}”.
+  go-to-homepage: Go to homepage.
 
 video:
   creator: By
