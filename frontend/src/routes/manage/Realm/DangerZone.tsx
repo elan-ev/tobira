@@ -146,7 +146,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
                 <br />
             </>}
             <Button
-                danger
+                kind="danger"
                 type="submit"
                 disabled={typedPathSegment === currentPathSegment || isInFlight}
             >
@@ -208,7 +208,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             {t("manage.realm.danger-zone.delete.warning")}
         </p>
         <div css={{ marginTop: 32, textAlign: "center" }}>
-            <Button danger onClick={() => setModalActive(true)}>
+            <Button kind="danger" onClick={() => setModalActive(true)}>
                 <span>{buttonContent}</span>
             </Button>
         </div>
@@ -220,7 +220,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
                     </Trans>
                 </p>
                 <form onSubmit={remove} css={{ marginTop: 32, textAlign: "center" }}>
-                    <Button danger>
+                    <Button kind="danger">
                         <span>{buttonContent}</span>
                     </Button>
                     {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
