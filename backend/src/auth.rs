@@ -3,6 +3,8 @@ use std::borrow::Cow;
 use hyper::HeaderMap;
 use once_cell::sync::Lazy;
 
+use crate::prelude::*;
+
 
 /// Users with this role can do anything as they are the global Opencast
 /// administrator.
@@ -60,34 +62,40 @@ pub(crate) enum UserSession {
 
 impl UserSession {
     pub(crate) fn from_headers(headers: &HeaderMap, auth_config: &AuthConfig) -> Self {
+        // Helper function to read and base64 decode a header value.
+        let get_header = |header_name: &str| -> Option<String> {
+            let value = headers.get(header_name)?;
+            let decoded = base64::decode_config(value.as_bytes(), base64::URL_SAFE)
+                .map_err(|e| warn!("header '{}' is set but not valid base64: {}", header_name, e))
+                .ok()?;
+
+            String::from_utf8(decoded)
+                .map_err(|e| warn!("header '{}' is set but decoded base64 is not UTF8: {}", header_name, e))
+                .ok()
+        };
+
+
         // We only read these header values if the auth proxy is enabled.
         if !auth_config.proxy.enabled {
             return Self::None;
         }
 
-        // Get username and display name. Both are required: if any is not set,
-        // we treat it as if there is no user session.
-        let header_to_string = |name: &str| {
-            headers.get(name).map(|v| String::from_utf8_lossy(v.as_bytes()).trim().to_owned())
+        // Get required headers. If these are not set and valid, we treat it as
+        // if there is no user session.
+        let username = match get_header(&auth_config.username_header) {
+            Some(v) => v,
+            None => return Self::None,
+        };
+        let display_name = match get_header(&auth_config.display_name_header) {
+            Some(v) => v,
+            None => return Self::None,
         };
 
-        let username = match header_to_string(&auth_config.username_header) {
-            None => return Self::None,
-            Some(s) => s,
-        };
-        let display_name = match header_to_string(&auth_config.display_name_header) {
-            None => return Self::None,
-            Some(s) => s,
-        };
 
         // Get roles from the user. If the header is not set, the user simply has no extra roles.
         let mut roles = vec![ROLE_ANONYMOUS.to_string()];
-        if let Some(roles_raw) = headers.get(&auth_config.roles_header) {
-            roles.extend(
-                String::from_utf8_lossy(roles_raw.as_bytes())
-                    .split(',')
-                    .map(|role| role.trim().to_owned())
-            );
+        if let Some(roles_raw) = get_header(&auth_config.roles_header) {
+            roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
         };
 
         Self::User { username, display_name, roles }

@@ -6,6 +6,7 @@ publish = false
 description = "Dummy auth proxy to test Tobira"
 
 [dependencies]
+base64 = "0.13"
 hyper = { version = "0.14", features = ["client", "http1", "http2", "server", "stream", "tcp"] }
 hyper-rustls = "0.22"
 structopt = "0.3"

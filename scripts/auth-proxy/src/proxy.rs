@@ -1,4 +1,4 @@
-use hyper::{Body, Client, Request, Response, StatusCode, Uri, http::uri};
+use hyper::{Body, Client, header::HeaderValue, Request, Response, StatusCode, Uri, http::uri};
 use hyper_rustls::HttpsConnector;
 use std::{convert::Infallible, fmt, net::IpAddr, str::FromStr, sync::Arc};
 
@@ -26,7 +26,9 @@ pub(crate) async fn handle(
 
     // Add additional headers to the request
     for header in template_headers.chain(args.headers.clone()) {
-        req.headers_mut().insert(header.name, header.value);
+        let value = base64::encode_config(&header.value, base64::URL_SAFE);
+        let value = HeaderValue::from_str(&value).expect("base64 should return ASCII!");
+        req.headers_mut().insert(header.name, value);
     }
 
     let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::with_native_roots());
