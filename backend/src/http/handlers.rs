@@ -16,15 +16,11 @@ use super::{Context, Request, Response, assets::Assets};
 
 /// This is the main HTTP entry point, called for each incoming request.
 pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
-    let user = UserSession::from_headers(req.headers(), &ctx.config.auth);
-
     trace!(
-        "Incoming HTTP {:?} request to '{}' (user: {})",
+        "Incoming HTTP {:?} request to '{}'",
         req.method(),
         req.uri().path_and_query().map_or("", |pq| pq.as_str()),
-        user.debug_log_username(),
     );
-
 
     let method = req.method().clone();
     let path = req.uri().path().trim_end_matches('/');
@@ -34,7 +30,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     match path {
         // The GraphQL endpoint. This is the only path for which POST is
         // allowed.
-        "/graphql" if method == Method::POST => handle_api(req, user, &ctx).await,
+        "/graphql" if method == Method::POST => handle_api(req, &ctx).await,
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
@@ -108,7 +104,7 @@ pub(super) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> R
 }
 
 /// Handles a request to `/graphql`.
-async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Response {
+async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
     let before = Instant::now();
 
     // Get a connection for this request.
@@ -124,6 +120,15 @@ async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Res
     if acquire_conn_time > Duration::from_millis(5) {
         warn!("Acquiring DB connection from pool took {:.2?}", acquire_conn_time);
     }
+
+    // Get user session
+    let user = match UserSession::new(req.headers(), &ctx.config.auth, &connection).await {
+        Ok(user) => user,
+        Err(e) => {
+            error!("DB error when checking user session: {}", e);
+            return internal_server_error();
+        },
+    };
 
     let tx = match connection.transaction().await {
         Ok(tx) => tx,

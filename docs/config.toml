@@ -59,6 +59,11 @@
 #unix_socket_permissions = 493
 
 [auth]
+# Whether Tobira should do session handling itself.
+#
+# Default value: false
+#manage_sessions = false
+
 # Link of the login button. If not set, the login button internally
 # (not via `<a>`, but through JavaScript) links to Tobira's own login
 # page.

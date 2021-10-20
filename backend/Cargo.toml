@@ -19,6 +19,7 @@ embed-in-debug = ["reinda/debug-is-prod"]
 [dependencies]
 anyhow = "1"
 base64 = "0.13"
+bstr = "0.2.17"
 bunt = "0.2.4"
 bytes = "1"
 chrono = { version = "0.4", default-features = false, features = ["serde"] }

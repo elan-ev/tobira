@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 
-use hyper::HeaderMap;
+use bstr::ByteSlice;
+use deadpool_postgres::Client;
+use hyper::{HeaderMap, header};
 use once_cell::sync::Lazy;
+use tokio_postgres::Error as PgError;
 
 use crate::prelude::*;
 
@@ -23,6 +26,10 @@ const SESSION_COOKIE: &str = "tobira-session";
 /// Authentification and authorization
 #[derive(Debug, confique::Config)]
 pub(crate) struct AuthConfig {
+    /// Whether Tobira should do session handling itself.
+    #[config(default = false)]
+    pub(crate) manage_sessions: bool,
+
     /// Link of the login button. If not set, the login button internally
     /// (not via `<a>`, but through JavaScript) links to Tobira's own login
     /// page.
@@ -77,44 +84,27 @@ pub(crate) struct UserData {
 }
 
 impl UserSession {
-    pub(crate) fn from_headers(headers: &HeaderMap, auth_config: &AuthConfig) -> Self {
-        // Helper function to read and base64 decode a header value.
-        let get_header = |header_name: &str| -> Option<String> {
-            let value = headers.get(header_name)?;
-            let decoded = base64::decode_config(value.as_bytes(), base64::URL_SAFE)
-                .map_err(|e| warn!("header '{}' is set but not valid base64: {}", header_name, e))
-                .ok()?;
-
-            String::from_utf8(decoded)
-                .map_err(|e| warn!("header '{}' is set but decoded base64 is not UTF8: {}", header_name, e))
-                .ok()
-        };
-
-
-        // We only read these header values if the auth proxy is enabled.
-        if !auth_config.proxy.enabled {
-            return Self::None;
+    /// Tries to create a user session from the given request headers. This is
+    /// done either via auth headers and/or a session cookie, depending on the
+    /// configuration.
+    pub(crate) async fn new(
+        headers: &HeaderMap,
+        auth_config: &AuthConfig,
+        db: &Client,
+    ) -> Result<Self, PgError> {
+        if auth_config.proxy.enabled {
+            if let Some(user) = UserData::from_auth_headers(headers, auth_config) {
+                return Ok(Self::Some(user));
+            }
         }
 
-        // Get required headers. If these are not set and valid, we treat it as
-        // if there is no user session.
-        let username = match get_header(&auth_config.username_header) {
-            Some(v) => v,
-            None => return Self::None,
-        };
-        let display_name = match get_header(&auth_config.display_name_header) {
-            Some(v) => v,
-            None => return Self::None,
-        };
+        if !auth_config.manage_sessions {
+            if let Some(user) = UserData::from_session(headers, db).await? {
+                return Ok(Self::Some(user));
+            }
+        }
 
-
-        // Get roles from the user. If the header is not set, the user simply has no extra roles.
-        let mut roles = vec![ROLE_ANONYMOUS.to_string()];
-        if let Some(roles_raw) = get_header(&auth_config.roles_header) {
-            roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
-        };
-
-        Self::Some(UserData { username, display_name, roles })
+        Ok(Self::None)
     }
 
     /// Returns a representation of the optional username useful for logging.
@@ -160,6 +150,94 @@ impl From<Option<UserData>> for UserSession {
         }
     }
 }
+
+impl UserData {
+    /// Tries to read user data auth headers (`x-tobira-username`, ...). If the
+    /// username or display name are not defined, returns `None`.
+    pub(crate) fn from_auth_headers(headers: &HeaderMap, auth_config: &AuthConfig) -> Option<Self> {
+        // Helper function to read and base64 decode a header value.
+        let get_header = |header_name: &str| -> Option<String> {
+            let value = headers.get(header_name)?;
+            let decoded = base64decode(value.as_bytes())
+                .map_err(|e| warn!("header '{}' is set but not valid base64: {}", header_name, e))
+                .ok()?;
+
+            String::from_utf8(decoded)
+                .map_err(|e| warn!("header '{}' is set but decoded base64 is not UTF8: {}", header_name, e))
+                .ok()
+        };
+
+        // Get required headers. If these are not set and valid, we treat it as
+        // if there is no user session.
+        let username = get_header(&auth_config.username_header)?;
+        let display_name = get_header(&auth_config.display_name_header)?;
+
+        // Get roles from the user. If the header is not set, the user simply has no extra roles.
+        let mut roles = vec![ROLE_ANONYMOUS.to_string()];
+        if let Some(roles_raw) = get_header(&auth_config.roles_header) {
+            roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
+        };
+
+        Some(Self { username, display_name, roles })
+    }
+
+    /// Tries to load user data from a DB session referred to in a session cookie.
+    async fn from_session(headers: &HeaderMap, db: &Client) -> Result<Option<Self>, PgError> {
+        // Try to get a session ID from the cookie.
+        let session_id = headers.get(header::COOKIE).into_iter()
+            // Split into list of cookies
+            .flat_map(|value| value.as_bytes().split(|&b| b == b';').map(|s| s.trim()))
+
+            // Get the first one with fitting name
+            .find(|s| s.starts_with(SESSION_COOKIE.as_bytes()))
+
+            // Get the cookies' value
+            .and_then(|s| s.get(SESSION_COOKIE.len() + 1..))
+
+            // Base64 decode value
+            .and_then(|v| base64decode(v).ok());
+
+        let session_id = match session_id {
+            None => return Ok(None),
+            Some(id) => id,
+        };
+
+        // Check if such a session exists in the DB.
+        let sql = "update user_sessions \
+            set last_used = now() \
+            where id = $1\
+            returning username, display_name, roles";
+        let row = match db.query_opt(sql, &[&session_id]).await? {
+            None => return Ok(None),
+            Some(row) => row,
+        };
+
+        Ok(Some(Self {
+            username: row.get(0),
+            display_name: row.get(1),
+            roles: row.get(2),
+        }))
+    }
+
+    /// Creates a new session for this user and persists it in the database.
+    pub(crate) async fn persist_new_session(&self, db: &Client) -> Result<SessionId, PgError> {
+        let session_id = SessionId::new();
+
+        // A collision is so unfathomably unlikely that we don't check for it
+        // here. We just pass the error up and respond with 500. Note that
+        // Postgres will always error in case of collision, so security is
+        // never compromised.
+        db.execute_raw(
+            "insert into \
+                user_sessions (id, username, display_name, roles) \
+                values ($1, $2, $3, $4)",
+            dbargs![&session_id, &self.username, &self.display_name, &self.roles],
+        ).await?;
+
+        Ok(session_id)
+    }
+}
+
 
 /// A marker type that serves to prove *some* user authorization has been done.
 ///
