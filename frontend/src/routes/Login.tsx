@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
-import { Link, Route } from "../router";
+import { Link, Route, useRouter } from "../router";
 import { LoginQuery } from "../query-types/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { Logo } from "../layout/header/Logo";
@@ -13,7 +13,10 @@ import { BASE_LOGO_MARGIN } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/Button";
 import { boxError } from "../ui/error";
-import { useTitle } from "../util";
+import { match, useTitle } from "../util";
+import { Spinner } from "../ui/Spinner";
+import { FiCheck } from "react-icons/fi";
+import { Card } from "../ui/Card";
 
 
 export const LoginRoute: Route<PreloadedQuery<LoginQuery>> = {
@@ -78,13 +81,39 @@ const LoginBox: React.FC = () => {
 
     const validation = { required: t<string>("this-field-is-required") };
 
-    const onSubmit = (data: FormData) => {
-        console.log("data", data);
+    type State = "idle" | "pending" | "success";
+    const [state, setState] = useState<State>("idle");
+    const [loginError, setLoginError] = useState<string | null>(null);
+
+    const router = useRouter();
+    const onSubmit = async (data: FormData) => {
+        setState("pending");
+        const response = await fetch("/~login", {
+            method: "POST",
+            body: new URLSearchParams(data),
+        });
+
+        if (response.status === 204) {
+            // 204 No content is expected on successful login. We assume that
+            // the response also set some headers (or some other sticky
+            // information) that is used to authorize the user in future
+            // requests.
+            setState("success");
+            router.goto("/");
+        } else if (response.status === 401) {
+            // 401 Unauthorized means the login data was incorrect
+            setState("idle");
+            setLoginError(t("login-page.bad-credentials"));
+        } else {
+            // Everything else is unexpected and should not happen.
+            setState("idle");
+            setLoginError(t("login-page.unexpected-response"));
+        }
     };
 
     return (
         <div css={{
-            width: 350,
+            width: 400,
             maxWidth: "100%",
             padding: 24,
             border: "1px solid var(--grey80)",
@@ -94,7 +123,7 @@ const LoginBox: React.FC = () => {
                 onSubmit={handleSubmit(onSubmit)}
                 noValidate
                 css={{
-                    "& > div:not(:last-child)": { marginBottom: 32 },
+                    "& > *:not(:last-child)": { marginBottom: 32 },
                     textAlign: "center",
                 }}
             >
@@ -124,9 +153,21 @@ const LoginBox: React.FC = () => {
                     {boxError(errors.password?.message)}
                 </div>
 
-                <Button kind="happy" type="submit" extraCss={{ padding: "6px 16px" }}>
+                <Button
+                    kind="happy"
+                    type="submit"
+                    disabled={state === "pending"}
+                    extraCss={{ padding: "6px 16px" }}
+                >
                     {t("user.login")}
+                    {match(state, {
+                        "idle": () => null,
+                        "pending": () => <Spinner size={20} />,
+                        "success": () => <FiCheck />,
+                    })}
                 </Button>
+
+                {loginError && <Card kind="error" iconPos="top">{loginError}</Card>}
             </form>
         </div>
     );
