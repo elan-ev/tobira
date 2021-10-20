@@ -5,12 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{
-    api,
-    auth::UserSession,
-    db::Transaction,
-    prelude::*,
-};
+use crate::{api, auth::{UserData, UserSession}, db::Transaction, prelude::*};
 use super::{Context, Request, Response, assets::Assets};
 
 
@@ -28,9 +23,9 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     const ASSET_PREFIX: &str = "/~assets/";
 
     match path {
-        // The GraphQL endpoint. This is the only path for which POST is
-        // allowed.
+        // Paths for which POST requests are allowed
         "/graphql" if method == Method::POST => handle_api(req, &ctx).await.unwrap_or_else(|r| r),
+        "/~login" if method == Method::POST => handle_login(req, &ctx).await.unwrap_or_else(|r| r),
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
@@ -208,10 +203,66 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     out
 }
 
+/// Handles POSTs to `/~login`.
+async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
+    let (parts, body) = req.into_parts();
+
+    // TODO: add size limit to avoid reading arbitrarily large bodies.
+    // TODO: maybe have better responses for failing to read the body.
+    let body = hyper::body::to_bytes(body).await.expect("failed to read POST /~login body");
+
+    let user_from_headers = UserData::from_auth_headers(&parts.headers, &ctx.config.auth);
+    match (body.is_empty(), user_from_headers) {
+        // Some auth proxy sent the request, did the authorization and put all
+        // user information into our auth headers. We need to create a DB
+        // session now.
+        (true, Some(user)) => {
+            let db = get_db_connection(ctx).await?;
+            let session_id = user.persist_new_session(&db).await.map_err(|e| {
+                error!("DB query failed when adding new user session: {}", e);
+                internal_server_error()
+            })?;
+
+            Response::builder()
+                .status(StatusCode::NO_CONTENT)
+                .header("set-cookie", session_id.set_cookie().to_string())
+                .body(Body::empty())
+                .unwrap()
+                .pipe(Ok)
+        }
+
+        // We got some POST login data and no auth headers. We still need to
+        // check the login data via the configured login server.
+        (false, None) => {
+            todo!()
+        }
+
+        // We have POST login data but also auth headers. This should not happen!
+        (false, Some(_)) => {
+            warn!("Got POST /~login request with login data and auth headers");
+            Err(bad_request())
+        }
+
+        // We have neither POST login data nor auth headers. This should also never happen!
+        (true, None) => {
+            warn!("Got POST /~login request with neither login data nor auth headers");
+            Err(bad_request())
+        }
+    }
+}
+
+
 fn service_unavailable() -> Response {
     Response::builder()
         .status(StatusCode::SERVICE_UNAVAILABLE)
         .body("Server error: service unavailable. Potentially try again later.".into())
+        .unwrap()
+}
+
+fn bad_request() -> Response {
+    Response::builder()
+        .status(StatusCode::BAD_REQUEST)
+        .body("Bad request".into())
         .unwrap()
 }
 
