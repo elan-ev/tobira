@@ -16,11 +16,11 @@ api:
   error-boundary:
     invalid-input: Interner Fehler ($t(errors.invalid-input)).
     unexpected-server-error: 'Anwendungsfehler: Unerwarteter Fehler vom Server.'
-    not-your-fault: >
-      Dies ist höchstwahrscheinlich nicht Ihre Schuld. Sie können es später nochmal versuchen.
     detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
 
 errors:
+  not-your-fault: >
+    Dies ist höchstwahrscheinlich nicht Ihre Schuld. Sie können es später nochmal versuchen.
   unexpected-response: 'Interner Fehler: Unerwartete Antwort vom Server.'
   network-error: >
     Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie

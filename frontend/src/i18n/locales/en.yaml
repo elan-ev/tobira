@@ -16,10 +16,10 @@ api:
   error-boundary:
     invalid-input: Internal application error ($t(errors.invalid-input)).
     unexpected-server-error: 'Application error: unexpected server error.'
-    not-your-fault: This is likely not your fault. You can try again later.
     detailed-error-info: 'Detailed error information for developers:'
 
 errors:
+  not-your-fault: This is likely not your fault. You can try again later.
   unexpected-response: 'Internal application error: unexpected response from server.'
   network-error: >
     Server could not be reached due to a network error. Are you connected to the internet?
