@@ -6,11 +6,18 @@ use once_cell::sync::Lazy;
 use crate::prelude::*;
 
 
+mod session_id;
+
+pub(crate) use session_id::SessionId;
+
+
 /// Users with this role can do anything as they are the global Opencast
 /// administrator.
 const ROLE_ADMIN: &str = "ROLE_ADMIN";
 
 const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
+
+const SESSION_COOKIE: &str = "tobira-session";
 
 
 /// Authentification and authorization
@@ -167,4 +174,13 @@ impl AuthToken {
     fn some_if(v: bool) -> Option<Self> {
         if v { Some(Self(())) } else { None }
     }
+}
+
+// Our base64 decoding with the URL safe character set.
+fn base64decode(input: impl AsRef<[u8]>) -> Result<Vec<u8>, base64::DecodeError> {
+    base64::decode_config(input, base64::URL_SAFE)
+}
+
+fn base64encode(input: impl AsRef<[u8]>) -> String {
+    base64::encode_config(input, base64::URL_SAFE)
 }
