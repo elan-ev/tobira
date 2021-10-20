@@ -12,7 +12,7 @@ import { Logo } from "../layout/header/Logo";
 import { BASE_LOGO_MARGIN } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/Button";
-import { boxError } from "./manage/Realm/util";
+import { boxError } from "../ui/error";
 import { useTitle } from "../util";
 
 

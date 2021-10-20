@@ -7,7 +7,8 @@ import { Card } from "../../../ui/Card";
 import { Button } from "../../../ui/Button";
 import { Spinner } from "../../../ui/Spinner";
 import { Form } from "../../../ui/Form";
-import { boxError, displayCommitError } from "./util";
+import { boxError } from "../../../ui/error";
+import { displayCommitError } from "./util";
 import { useState } from "react";
 
 

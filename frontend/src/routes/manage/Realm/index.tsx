@@ -18,7 +18,8 @@ import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
-import { ErrorBox, RealmSettingsContainer } from "./util";
+import { ErrorBox } from "../../../ui/error";
+import { RealmSettingsContainer } from "./util";
 
 
 // Route definition
