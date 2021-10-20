@@ -30,7 +30,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     match path {
         // The GraphQL endpoint. This is the only path for which POST is
         // allowed.
-        "/graphql" if method == Method::POST => handle_api(req, &ctx).await,
+        "/graphql" if method == Method::POST => handle_api(req, &ctx).await.unwrap_or_else(|r| r),
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
@@ -104,29 +104,18 @@ pub(super) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> R
 }
 
 /// Handles a request to `/graphql`.
-async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
+async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
     let before = Instant::now();
 
     // Get a connection for this request.
-    let mut connection = match ctx.db_pool.get().await {
-        Ok(c) => c,
-        Err(e) => {
-            error!("Failed to obtain DB connection for API request: {}", e);
-            return service_unavailable();
-        }
-    };
-
-    let acquire_conn_time = before.elapsed();
-    if acquire_conn_time > Duration::from_millis(5) {
-        warn!("Acquiring DB connection from pool took {:.2?}", acquire_conn_time);
-    }
+    let mut connection = get_db_connection(ctx).await?;
 
     // Get user session
     let user = match UserSession::new(req.headers(), &ctx.config.auth, &connection).await {
         Ok(user) => user,
         Err(e) => {
             error!("DB error when checking user session: {}", e);
-            return internal_server_error();
+            return Err(internal_server_error());
         },
     };
 
@@ -134,7 +123,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
         Ok(tx) => tx,
         Err(e) => {
             error!("Failed to start transaction for API request: {}", e);
-            return internal_server_error();
+            return Err(internal_server_error());
         }
     };
 
@@ -194,7 +183,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
         Ok(tx) => {
             match tx.commit().await {
                 // If the transaction succeeded we can return the generated response.
-                Ok(_) => out,
+                Ok(_) => Ok(out),
 
                 // Otherwise, we would like to retry a couple times, but for now
                 // we just immediately reply 5xx.
@@ -203,7 +192,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Response {
                 // all of this code in a loop and retry a couple times.
                 Err(e) => {
                     error!("Failed to commit transaction for API request: {}", e);
-                    service_unavailable()
+                    Err(service_unavailable())
                 }
             }
         }
@@ -231,4 +220,21 @@ pub(super) fn internal_server_error() -> Response {
         .status(StatusCode::INTERNAL_SERVER_ERROR)
         .body("Internal server error".into())
         .unwrap()
+}
+
+type DbConnection = deadpool::managed::Object<deadpool_postgres::Manager>;
+
+async fn get_db_connection(ctx: &Context) -> Result<DbConnection, Response> {
+    let before = Instant::now();
+    let connection = ctx.db_pool.get().await.map_err(|e| {
+        error!("Failed to obtain DB connection for API request: {}", e);
+        service_unavailable()
+    })?;
+
+    let acquire_conn_time = before.elapsed();
+    if acquire_conn_time > Duration::from_millis(5) {
+        warn!("Acquiring DB connection from pool took {:.2?}", acquire_conn_time);
+    }
+
+    Ok(connection)
 }

@@ -1709,6 +1709,7 @@ dependencies = [
  "chrono",
  "confique",
  "cookie",
+ "deadpool",
  "deadpool-postgres",
  "futures",
  "hostname",
