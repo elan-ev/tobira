@@ -54,15 +54,19 @@ pub(crate) struct AuthProxyConfig {
 }
 
 
-/// An optional user.
+/// An optional user session.
 #[derive(Debug)]
 pub(crate) enum UserSession {
     None,
-    User {
-        username: String,
-        display_name: String,
-        roles: Vec<String>,
-    },
+    Some(UserData),
+}
+
+/// Data about a user.
+#[derive(Debug)]
+pub(crate) struct UserData {
+    pub(crate) username: String,
+    pub(crate) display_name: String,
+    pub(crate) roles: Vec<String>,
 }
 
 impl UserSession {
@@ -103,14 +107,14 @@ impl UserSession {
             roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
         };
 
-        Self::User { username, display_name, roles }
+        Self::Some(UserData { username, display_name, roles })
     }
 
     /// Returns a representation of the optional username useful for logging.
     pub(crate) fn debug_log_username(&self) -> Cow<'static, str> {
         match self {
             Self::None => "none".into(),
-            Self::User { username, .. } => format!("'{}'", username).into(),
+            Self::Some(user) => format!("'{}'", user.username).into(),
         }
     }
 
@@ -120,7 +124,7 @@ impl UserSession {
 
         match self {
             Self::None => &*LOGGED_OUT_ROLES,
-            Self::User { roles, .. } => roles,
+            Self::Some(user) => &user.roles,
         }
     }
 
@@ -138,6 +142,15 @@ impl UserSession {
     /// anything.
     pub(crate) fn is_admin(&self) -> bool {
         self.roles().iter().any(|role| role == ROLE_ADMIN)
+    }
+}
+
+impl From<Option<UserData>> for UserSession {
+    fn from(src: Option<UserData>) -> Self {
+        match src {
+            Some(data) => Self::Some(data),
+            None => Self::None,
+        }
     }
 }
 

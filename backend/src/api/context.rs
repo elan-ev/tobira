@@ -26,9 +26,9 @@ impl Context {
 
     pub(crate) fn require_moderator(&self) -> ApiResult<AuthToken> {
         self.user.require_moderator(&self.config.auth).ok_or_else(|| {
-            if let UserSession::User { username, .. } = &self.user {
+            if let UserSession::Some(user) = &self.user {
                 ApiError {
-                    msg: format!("moderator required, but '{}' is not a moderator", username),
+                    msg: format!("moderator required, but '{}' is not a moderator", user.username),
                     kind: ApiErrorKind::NotAuthorized,
                     key: Some("mutation.not-a-moderator"),
                 }

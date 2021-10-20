@@ -1,4 +1,4 @@
-use crate::auth::UserSession;
+use crate::auth::{UserData, UserSession};
 
 
 #[derive(juniper::GraphQLObject)]
@@ -14,7 +14,7 @@ impl<'a> User<'a> {
     pub(crate) fn from_session(session: &'a UserSession) -> Option<Self> {
         match session {
             UserSession::None => None,
-            UserSession::User { username, display_name, .. }
+            UserSession::Some(UserData { username, display_name, .. })
                 => Some(Self { username, display_name }),
         }
     }
