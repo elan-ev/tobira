@@ -5,7 +5,7 @@ import type { PreloadedQuery } from "react-relay";
 
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
-import { Link, Route, useRouter } from "../router";
+import { Link, Route } from "../router";
 import { LoginQuery } from "../query-types/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { Logo } from "../layout/header/Logo";
@@ -85,7 +85,6 @@ const LoginBox: React.FC = () => {
     const [state, setState] = useState<State>("idle");
     const [loginError, setLoginError] = useState<string | null>(null);
 
-    const router = useRouter();
     const onSubmit = async (data: FormData) => {
         setState("pending");
         const response = await fetch("/~login", {
@@ -99,7 +98,12 @@ const LoginBox: React.FC = () => {
             // information) that is used to authorize the user in future
             // requests.
             setState("success");
-            router.goto("/");
+
+            // We hard forward to the roto page. We do that to invalidate every
+            // data that we might have cached. It's probably be possible to
+            // wipe the relay cache manually, but I cannot figure it out right
+            // now. And well, this way we are sure everything is reloaded.
+            window.location.href = "/";
         } else if (response.status === 401) {
             // 401 Unauthorized means the login data was incorrect
             setState("idle");
