@@ -167,7 +167,7 @@ const LoginBox: React.FC = () => {
                     })}
                 </Button>
 
-                {loginError && <Card kind="error" iconPos="top">{loginError}</Card>}
+                {loginError && <div><Card kind="error" iconPos="top">{loginError}</Card></div>}
             </form>
         </div>
     );
