@@ -1,7 +1,7 @@
 //! Database related things.
 
 use chrono::{DateTime, Utc, offset::TimeZone};
-use deadpool_postgres::{Config as PoolConfig, Pool};
+use deadpool_postgres::{Config as PoolConfig, Pool, Runtime};
 use once_cell::sync::Lazy;
 use secrecy::{ExposeSecret, Secret};
 use std::{collections::BTreeMap, time::Duration};
@@ -67,7 +67,7 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
         config.database,
     );
 
-    let pool = pool_config.create_pool(NoTls)?;
+    let pool = pool_config.create_pool(Some(Runtime::Tokio1), NoTls)?;
     info!("Created database pool");
 
     // Test the connection by executing a simple query.
