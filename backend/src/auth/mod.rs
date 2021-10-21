@@ -73,7 +73,7 @@ pub(crate) struct AuthProxyConfig {
 
 /// An optional user session.
 #[derive(Debug)]
-pub(crate) enum UserSession {
+pub(crate) enum User {
     None,
     Some(UserData),
 }
@@ -86,7 +86,7 @@ pub(crate) struct UserData {
     pub(crate) roles: Vec<String>,
 }
 
-impl UserSession {
+impl User {
     /// Tries to create a user session from the given request headers. This is
     /// done either via auth headers and/or a session cookie, depending on the
     /// configuration.
@@ -145,7 +145,7 @@ impl UserSession {
     }
 }
 
-impl From<Option<UserData>> for UserSession {
+impl From<Option<UserData>> for User {
     fn from(src: Option<UserData>) -> Self {
         match src {
             Some(data) => Self::Some(data),

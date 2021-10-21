@@ -5,7 +5,7 @@ use std::{
     time::Instant,
 };
 
-use crate::{api, auth::{self, UserSession}, db::{self, Transaction}, prelude::*};
+use crate::{api, auth::{self, User}, db::{self, Transaction}, prelude::*};
 use super::{Context, Request, Response, assets::Assets, response};
 
 
@@ -110,7 +110,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get user session
-    let user = match UserSession::new(req.headers(), &ctx.config.auth, &connection).await {
+    let user = match User::new(req.headers(), &ctx.config.auth, &connection).await {
         Ok(user) => user,
         Err(e) => {
             error!("DB error when checking user session: {}", e);

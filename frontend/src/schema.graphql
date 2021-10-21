@@ -45,6 +45,13 @@ type TextBlock implements Block {
   content: String!
 }
 
+type UserApi {
+  "The username, a unique string identifying the user."
+  username: String!
+  "The name of the user intended to be read by humans."
+  displayName: String!
+}
+
 type Query {
   "Returns the root realm."
   rootRealm: Realm!
@@ -65,7 +72,7 @@ type Query {
   "Returns an event by its ID."
   event(id: ID!): Event
   "Returns the current user."
-  currentUser: User
+  currentUser: UserApi
 }
 
 enum RealmOrder {
@@ -108,13 +115,6 @@ input UpdateRealm {
   parent: ID
   name: String
   pathSegment: String
-}
-
-type User {
-  "The username, a unique string identifying the user."
-  username: String!
-  "The name of the user intended to be read by humans."
-  displayName: String!
 }
 
 type Track {
