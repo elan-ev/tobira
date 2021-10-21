@@ -104,8 +104,8 @@ const LoginBox: React.FC = () => {
             // wipe the relay cache manually, but I cannot figure it out right
             // now. And well, this way we are sure everything is reloaded.
             window.location.href = "/";
-        } else if (response.status === 401) {
-            // 401 Unauthorized means the login data was incorrect
+        } else if (response.status === 403) {
+            // 403 Forbidden means the login data was incorrect
             setState("idle");
             setLoginError(t("login-page.bad-credentials"));
         } else {
