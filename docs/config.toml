@@ -59,14 +59,21 @@
 #unix_socket_permissions = 493
 
 [auth]
-# Whether Tobira should do session handling itself.
+# The mode of authentication. Compare the authentication docs! Possible values:
 #
-# Default value: false
-#manage_sessions = false
+# - 'full-auth-proxy': Tobira does no session handling and expects an auth
+#   proxy in front of every route, passing user info via auth headers.
+# - 'login-proxy': Tobira does its own session handling and expects the
+#    auth system to send `POST /~login` with auth headers to create a session.
+#
+# **Important**: in either case, you HAVE to make sure to remove all auth
+# headers from incoming user requests before passing them on to Tobira!
+#
+# Required! This value must be specified.
+#mode =
 
 # Link of the login button. If not set, the login button internally
-# (not via `<a>`, but through JavaScript) links to Tobira's own login
-# page.
+# (not via `<a>`, but through JavaScript) links to Tobira's own login page.
 #login_link =
 
 # The header containing a unique and stable username of the current user.
@@ -92,12 +99,6 @@
 #
 # Default value: "ROLE_TOBIRA_MODERATOR"
 #moderator_role = "ROLE_TOBIRA_MODERATOR"
-
-[auth.proxy]
-# TODO
-#
-# Default value: false
-#enabled = false
 
 [log]
 # Determines how many messages are logged. Log messages below

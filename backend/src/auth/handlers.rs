@@ -1,11 +1,22 @@
 use hyper::{Body, StatusCode};
 
 use crate::{db, http::{self, Context, Request, Response}, prelude::*};
-use super::{SessionId, UserData};
+use super::{AuthMode, SessionId, UserData};
 
 
 /// Handles POST requests to `/~login`.
 pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
+    if ctx.config.auth.mode != AuthMode::LoginProxy {
+        warn!("Got POST /~login request, but due to the authentication mode, this endpoint \
+            is disabled");
+
+        return Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::empty())
+            .unwrap()
+            .pipe(Ok);
+    }
+
     match UserData::from_auth_headers(&req.headers(), &ctx.config.auth) {
         Some(user) => {
             // Some auth proxy received the request, did the authorization, put all
@@ -55,6 +66,16 @@ pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Re
 ///
 /// TODO: maybe notify the user about these failures?
 pub(crate) async fn handle_logout(req: Request<Body>, ctx: &Context) -> Response {
+    if ctx.config.auth.mode != AuthMode::LoginProxy {
+        warn!("Got POST /~logout request, but due to the authentication mode, this endpoint \
+            is disabled");
+
+        return Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::empty())
+            .unwrap();
+    }
+
     let response = Response::builder()
         .status(StatusCode::NO_CONTENT)
         .header("set-cookie", SessionId::unset_cookie().to_string())

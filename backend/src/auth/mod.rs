@@ -29,13 +29,19 @@ const SESSION_COOKIE: &str = "tobira-session";
 /// Authentification and authorization
 #[derive(Debug, confique::Config)]
 pub(crate) struct AuthConfig {
-    /// Whether Tobira should do session handling itself.
-    #[config(default = false)]
-    pub(crate) manage_sessions: bool,
+    /// The mode of authentication. Compare the authentication docs! Possible values:
+    ///
+    /// - 'full-auth-proxy': Tobira does no session handling and expects an auth
+    ///   proxy in front of every route, passing user info via auth headers.
+    /// - 'login-proxy': Tobira does its own session handling and expects the
+    ///    auth system to send `POST /~login` with auth headers to create a session.
+    ///
+    /// **Important**: in either case, you HAVE to make sure to remove all auth
+    /// headers from incoming user requests before passing them on to Tobira!
+    mode: AuthMode,
 
     /// Link of the login button. If not set, the login button internally
-    /// (not via `<a>`, but through JavaScript) links to Tobira's own login
-    /// page.
+    /// (not via `<a>`, but through JavaScript) links to Tobira's own login page.
     pub(crate) login_link: Option<String>,
 
     /// The header containing a unique and stable username of the current user.
@@ -57,19 +63,14 @@ pub(crate) struct AuthConfig {
     /// things.
     #[config(default = "ROLE_TOBIRA_MODERATOR")]
     pub(crate) moderator_role: String,
-
-    #[config(nested)]
-    pub(crate) proxy: AuthProxyConfig,
 }
 
-/// Authentication proxy configuration.
-#[derive(Debug, confique::Config)]
-pub(crate) struct AuthProxyConfig {
-    /// TODO
-    #[config(default = false)]
-    pub(crate) enabled: bool,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum AuthMode {
+    FullAuthProxy,
+    LoginProxy,
 }
-
 
 /// An optional user session.
 #[derive(Debug)]
@@ -87,27 +88,18 @@ pub(crate) struct UserData {
 }
 
 impl User {
-    /// Tries to create a user session from the given request headers. This is
-    /// done either via auth headers and/or a session cookie, depending on the
+    /// Obtains the current user from the given request headers. This is done
+    /// either via auth headers and/or a session cookie, depending on the
     /// configuration.
     pub(crate) async fn new(
         headers: &HeaderMap,
         auth_config: &AuthConfig,
         db: &Client,
     ) -> Result<Self, PgError> {
-        if auth_config.proxy.enabled {
-            if let Some(user) = UserData::from_auth_headers(headers, auth_config) {
-                return Ok(Self::Some(user));
-            }
+        match auth_config.mode {
+            AuthMode::FullAuthProxy => Ok(UserData::from_auth_headers(headers, auth_config).into()),
+            AuthMode::LoginProxy => UserData::from_session(headers, db).await.map(Into::into),
         }
-
-        if !auth_config.manage_sessions {
-            if let Some(user) = UserData::from_session(headers, db).await? {
-                return Ok(Self::Some(user));
-            }
-        }
-
-        Ok(Self::None)
     }
 
     /// Returns a representation of the optional username useful for logging.
@@ -184,7 +176,8 @@ impl UserData {
         Some(Self { username, display_name, roles })
     }
 
-    /// Tries to load user data from a DB session referred to in a session cookie.
+    /// Tries to load user data from a DB session referred to in a session
+    /// cookie. Should only be called if the auth mode is `LoginProxy`.
     async fn from_session(headers: &HeaderMap, db: &Client) -> Result<Option<Self>, PgError> {
         // Try to get a session ID from the cookie.
         let session_id = match SessionId::from_headers(headers) {
@@ -210,6 +203,7 @@ impl UserData {
     }
 
     /// Creates a new session for this user and persists it in the database.
+    /// Should only be called if the auth mode is `LoginProxy`.
     pub(crate) async fn persist_new_session(&self, db: &Client) -> Result<SessionId, PgError> {
         let session_id = SessionId::new();
 

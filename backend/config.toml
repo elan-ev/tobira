@@ -11,7 +11,7 @@ password = "tobira"
 level = "trace"
 
 [auth]
-proxy.enabled = true
+mode = "login-proxy"
 
 [sync]
 host = "localhost:8080"
