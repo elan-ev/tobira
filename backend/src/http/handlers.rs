@@ -5,7 +5,7 @@ use std::{
     time::Instant,
 };
 
-use crate::{api, auth::{UserSession, handle_login}, db::{self, Transaction}, prelude::*};
+use crate::{api, auth::{self, UserSession}, db::{self, Transaction}, prelude::*};
 use super::{Context, Request, Response, assets::Assets, response};
 
 
@@ -24,8 +24,12 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
     match path {
         // Paths for which POST requests are allowed
-        "/graphql" if method == Method::POST => handle_api(req, &ctx).await.unwrap_or_else(|r| r),
-        "/~login" if method == Method::POST => handle_login(req, &ctx).await.unwrap_or_else(|r| r),
+        "/graphql" if method == Method::POST
+            => handle_api(req, &ctx).await.unwrap_or_else(|r| r),
+        "/~login" if method == Method::POST
+            => auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r),
+        "/~logout" if method == Method::POST
+            => auth::handle_logout(req, &ctx).await,
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.

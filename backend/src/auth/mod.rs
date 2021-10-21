@@ -13,7 +13,7 @@ mod session_id;
 
 pub(crate) use self::{
     session_id::SessionId,
-    handlers::handle_login,
+    handlers::{handle_login, handle_logout},
 };
 
 

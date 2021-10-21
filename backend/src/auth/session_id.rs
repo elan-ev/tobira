@@ -6,7 +6,9 @@ use hyper::{HeaderMap, header};
 use postgres_types::ToSql;
 use rand::{CryptoRng, RngCore};
 use secrecy::{ExposeSecret, Secret};
+use tokio_postgres::Error as PgError;
 
+use crate::{db::Db, prelude::*};
 use super::{SESSION_COOKIE, base64encode};
 
 
@@ -65,12 +67,33 @@ impl SessionId {
             })
     }
 
+    /// Returns a cookie for a `set-cookie` header in order to store the session
+    /// ID in the client's cookie jar.
     pub(crate) fn set_cookie(&self) -> Cookie {
         // TODO: expiration and other cookie stuff!
         Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
             .secure(true)
             .http_only(true)
             .finish()
+    }
+
+    /// Returns a cookie for a `set-cookie` header that removes the session ID
+    /// from the client's cookie jar.
+    pub(crate) fn unset_cookie() -> Cookie<'static> {
+        Cookie::build(SESSION_COOKIE, "")
+            .expires(time::OffsetDateTime::unix_epoch())
+            .secure(true)
+            .http_only(true)
+            .finish()
+    }
+
+    /// Tries to remove this session from the DB. Returns `Some(username)` if
+    /// the session existed and `None` if it did not exist.
+    pub(crate) async fn remove_from_db(&self, db: &Db) -> Result<Option<String>, PgError> {
+        db.query_opt("delete from user_sessions where id = $1 returning username", &[self])
+            .await?
+            .map(|row| row.get(0))
+            .pipe(Ok)
     }
 }
 

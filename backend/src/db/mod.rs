@@ -47,7 +47,7 @@ pub(crate) struct DbConfig {
 
 /// Convenience type alias. Every function that needs to operate on the database
 /// can just accept a `db: &Db` parameter.
-type Db = deadpool_postgres::ClientWrapper;
+pub(crate) type Db = deadpool_postgres::ClientWrapper;
 
 /// Type alias for an owned DB connection.
 type DbConnection = deadpool::managed::Object<deadpool_postgres::Manager>;

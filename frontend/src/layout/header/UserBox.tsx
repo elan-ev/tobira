@@ -4,6 +4,7 @@ import React from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+    FiAlertTriangle,
     FiCheck, FiChevronDown, FiChevronLeft, FiFilm, FiLogIn, FiLogOut, FiMoon,
     FiMoreVertical, FiUser,
 } from "react-icons/fi";
@@ -18,6 +19,7 @@ import { match } from "../../util";
 import { ActionIcon } from "./ui";
 import CONFIG from "../../config";
 import { LoginRoute } from "../../routes/Login";
+import { Spinner } from "../../ui/Spinner";
 
 
 /** Viewport width in pixels where the user UI switches between narrow and wide */
@@ -252,11 +254,7 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
             <MenuItem icon={<FiMoon />}>{t("main-menu.theme")}</MenuItem>
 
             {/* Logout button if the user is logged in */}
-            {user && <MenuItem
-                icon={<FiLogOut />}
-                borderTop
-                extraCss={{ color: "var(--danger-color)" }}
-            >{t("user.logout")}</MenuItem>}
+            {user && <Logout />}
         </>,
         language: () => <>
             <MenuItem icon={<FiChevronLeft />} onClick={() => setState("main")} borderBottom>
@@ -355,4 +353,47 @@ const MenuItem: React.FC<MenuItemProps> = ({
     return linkTo
         ? <li><Link to={linkTo} {...{ htmlLink, onClick, css }}>{inner}</Link></li>
         : <li {...{ onClick, css }}>{inner}</li>;
+};
+
+
+const Logout: React.FC = () => {
+    const { t } = useTranslation();
+
+    type State = "idle" | "pending" | "error";
+    const [state, setState] = useState<State>("idle");
+
+    return (
+        <MenuItem
+            icon={match(state, {
+                "idle": () => <FiLogOut />,
+                "pending": () => <Spinner />,
+                "error": () => <FiAlertTriangle />,
+            })}
+            borderTop
+            onClick={() => {
+                // We don't do anything if a request is already pending.
+                if (state === "pending") {
+                    return;
+                }
+
+                setState("pending");
+                fetch("/~logout", { method: "POST" })
+                    .then(() => {
+                        // We deliberately ignore the `status`. See `handle_logout`
+                        // for more information.
+                        //
+                        // We hard forward to the home page to get rid of any stale state.
+                        window.location.href = "/";
+                    })
+                    .catch(error => {
+                        // TODO: this is not great. It should happen only
+                        // extremely rarely, but still, just showing a triangle
+                        // is not very great for the uesr.
+                        console.error("Error during logout: ", error);
+                        setState("error");
+                    });
+            }}
+            extraCss={{ color: "var(--danger-color)" }}
+        >{t("user.logout")}</MenuItem>
+    );
 };

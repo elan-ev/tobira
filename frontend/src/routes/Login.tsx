@@ -99,7 +99,7 @@ const LoginBox: React.FC = () => {
             // requests.
             setState("success");
 
-            // We hard forward to the roto page. We do that to invalidate every
+            // We hard forward to the home page. We do that to invalidate every
             // data that we might have cached. It's probably be possible to
             // wipe the relay cache manually, but I cannot figure it out right
             // now. And well, this way we are sure everything is reloaded.
