@@ -9,9 +9,13 @@ use tokio_postgres::Error as PgError;
 use crate::prelude::*;
 
 
+mod handlers;
 mod session_id;
 
-pub(crate) use session_id::SessionId;
+pub(crate) use self::{
+    session_id::SessionId,
+    handlers::handle_login,
+};
 
 
 /// Users with this role can do anything as they are the global Opencast

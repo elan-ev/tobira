@@ -2,11 +2,11 @@ use hyper::{Body, Method, StatusCode};
 use std::{
     mem,
     sync::Arc,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
-use crate::{api, auth::{UserData, UserSession}, db::Transaction, prelude::*};
-use super::{Context, Request, Response, assets::Assets};
+use crate::{api, auth::{UserSession, handle_login}, db::{self, Transaction}, prelude::*};
+use super::{Context, Request, Response, assets::Assets, response};
 
 
 /// This is the main HTTP entry point, called for each incoming request.
@@ -103,14 +103,14 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     let before = Instant::now();
 
     // Get a connection for this request.
-    let mut connection = get_db_connection(ctx).await?;
+    let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get user session
     let user = match UserSession::new(req.headers(), &ctx.config.auth, &connection).await {
         Ok(user) => user,
         Err(e) => {
             error!("DB error when checking user session: {}", e);
-            return Err(internal_server_error());
+            return Err(response::internal_server_error());
         },
     };
 
@@ -118,7 +118,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         Ok(tx) => tx,
         Err(e) => {
             error!("Failed to start transaction for API request: {}", e);
-            return Err(internal_server_error());
+            return Err(response::internal_server_error());
         }
     };
 
@@ -187,7 +187,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
                 // all of this code in a loop and retry a couple times.
                 Err(e) => {
                     error!("Failed to commit transaction for API request: {}", e);
-                    Err(service_unavailable())
+                    Err(response::service_unavailable())
                 }
             }
         }
@@ -203,89 +203,3 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     out
 }
 
-/// Handles POSTs to `/~login`.
-async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
-    let (parts, body) = req.into_parts();
-
-    // TODO: add size limit to avoid reading arbitrarily large bodies.
-    // TODO: maybe have better responses for failing to read the body.
-    let body = hyper::body::to_bytes(body).await.expect("failed to read POST /~login body");
-
-    let user_from_headers = UserData::from_auth_headers(&parts.headers, &ctx.config.auth);
-    match (body.is_empty(), user_from_headers) {
-        // Some auth proxy sent the request, did the authorization and put all
-        // user information into our auth headers. We need to create a DB
-        // session now.
-        (true, Some(user)) => {
-            let db = get_db_connection(ctx).await?;
-            let session_id = user.persist_new_session(&db).await.map_err(|e| {
-                error!("DB query failed when adding new user session: {}", e);
-                internal_server_error()
-            })?;
-
-            Response::builder()
-                .status(StatusCode::NO_CONTENT)
-                .header("set-cookie", session_id.set_cookie().to_string())
-                .body(Body::empty())
-                .unwrap()
-                .pipe(Ok)
-        }
-
-        // We got some POST login data and no auth headers. We still need to
-        // check the login data via the configured login server.
-        (false, None) => {
-            todo!()
-        }
-
-        // We have POST login data but also auth headers. This should not happen!
-        (false, Some(_)) => {
-            warn!("Got POST /~login request with login data and auth headers");
-            Err(bad_request())
-        }
-
-        // We have neither POST login data nor auth headers. This should also never happen!
-        (true, None) => {
-            warn!("Got POST /~login request with neither login data nor auth headers");
-            Err(bad_request())
-        }
-    }
-}
-
-
-fn service_unavailable() -> Response {
-    Response::builder()
-        .status(StatusCode::SERVICE_UNAVAILABLE)
-        .body("Server error: service unavailable. Potentially try again later.".into())
-        .unwrap()
-}
-
-fn bad_request() -> Response {
-    Response::builder()
-        .status(StatusCode::BAD_REQUEST)
-        .body("Bad request".into())
-        .unwrap()
-}
-
-pub(super) fn internal_server_error() -> Response {
-    Response::builder()
-        .status(StatusCode::INTERNAL_SERVER_ERROR)
-        .body("Internal server error".into())
-        .unwrap()
-}
-
-type DbConnection = deadpool::managed::Object<deadpool_postgres::Manager>;
-
-async fn get_db_connection(ctx: &Context) -> Result<DbConnection, Response> {
-    let before = Instant::now();
-    let connection = ctx.db_pool.get().await.map_err(|e| {
-        error!("Failed to obtain DB connection for API request: {}", e);
-        service_unavailable()
-    })?;
-
-    let acquire_conn_time = before.elapsed();
-    if acquire_conn_time > Duration::from_millis(5) {
-        warn!("Acquiring DB connection from pool took {:.2?}", acquire_conn_time);
-    }
-
-    Ok(connection)
-}

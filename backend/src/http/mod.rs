@@ -23,12 +23,13 @@ use std::{
 use crate::{api, config::Config, prelude::*};
 use self::{
     assets::Assets,
-    handlers::{handle, internal_server_error},
+    handlers::handle,
 };
 
 
 mod assets;
 mod handlers;
+pub(crate) mod response;
 
 
 /// HTTP server configuration.
@@ -53,16 +54,16 @@ pub(crate) struct HttpConfig {
 
 
 // Our requests and responses always use the hyper provided body type.
-type Response<T = Body> = hyper::Response<T>;
-type Request<T = Body> = hyper::Request<T>;
+pub(crate) type Response<T = Body> = hyper::Response<T>;
+pub(crate) type Request<T = Body> = hyper::Request<T>;
 
 
 /// Context that the request handler has access to.
-struct Context {
-    api_root: Arc<api::RootNode>,
-    db_pool: Pool,
-    assets: Assets,
-    config: Arc<Config>,
+pub(crate) struct Context {
+    pub(crate) api_root: Arc<api::RootNode>,
+    pub(crate) db_pool: Pool,
+    pub(crate) assets: Assets,
+    pub(crate) config: Arc<Config>,
 }
 
 
@@ -172,7 +173,7 @@ async fn handle_internal_errors(
                 None => error!("INTERNAL SERVER ERROR: HTTP handler panicked"),
             }
 
-            Ok(internal_server_error())
+            Ok(response::internal_server_error())
         }
     }
 }
