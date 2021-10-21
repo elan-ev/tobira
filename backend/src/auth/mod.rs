@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 
-use bstr::ByteSlice;
 use deadpool_postgres::Client;
-use hyper::{HeaderMap, header};
+use hyper::HeaderMap;
 use once_cell::sync::Lazy;
 use tokio_postgres::Error as PgError;
 
@@ -188,20 +187,7 @@ impl UserData {
     /// Tries to load user data from a DB session referred to in a session cookie.
     async fn from_session(headers: &HeaderMap, db: &Client) -> Result<Option<Self>, PgError> {
         // Try to get a session ID from the cookie.
-        let session_id = headers.get(header::COOKIE).into_iter()
-            // Split into list of cookies
-            .flat_map(|value| value.as_bytes().split(|&b| b == b';').map(|s| s.trim()))
-
-            // Get the first one with fitting name
-            .find(|s| s.starts_with(SESSION_COOKIE.as_bytes()))
-
-            // Get the cookies' value
-            .and_then(|s| s.get(SESSION_COOKIE.len() + 1..))
-
-            // Base64 decode value
-            .and_then(|v| base64decode(v).ok());
-
-        let session_id = match session_id {
+        let session_id = match SessionId::from_headers(headers) {
             None => return Ok(None),
             Some(id) => id,
         };
