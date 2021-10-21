@@ -33,8 +33,8 @@ pub(crate) struct AuthConfig {
     ///
     /// - 'full-auth-proxy': Tobira does no session handling and expects an auth
     ///   proxy in front of every route, passing user info via auth headers.
-    /// - 'login-proxy': Tobira does its own session handling and expects the
-    ///    auth system to send `POST /~login` with auth headers to create a session.
+    /// - 'login-proxy': Tobira does its own session handling and expects the auth
+    ///    system to send `POST /~session` with auth headers to create a session.
     ///
     /// **Important**: in either case, you HAVE to make sure to remove all auth
     /// headers from incoming user requests before passing them on to Tobira!

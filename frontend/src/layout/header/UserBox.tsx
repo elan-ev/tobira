@@ -377,7 +377,7 @@ const Logout: React.FC = () => {
                 }
 
                 setState("pending");
-                fetch("/~logout", { method: "POST" })
+                fetch("/~session", { method: "DELETE" })
                     .then(() => {
                         // We deliberately ignore the `status`. See `handle_logout`
                         // for more information.
