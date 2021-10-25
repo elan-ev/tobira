@@ -54,7 +54,7 @@ We assume basic understanding of how to set up a reverse proxy in front of a bac
 The following subsection describe the general approach when using/not using Tobira's login page/session management.
 For a more concrete look at how a setup might look like, check out these specific cases:
 
-- TODO
+- [Tobira's login page and session management](./all-tobira.md)
 
 
 ### Using Tobira's session management
