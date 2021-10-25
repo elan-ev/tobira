@@ -3,8 +3,10 @@
 import base64
 import cgi
 import http.server
+import os
 import socket
 import socketserver
+import sys
 import urllib
 from http import HTTPStatus
 
@@ -96,7 +98,31 @@ class DevTCPServer(socketserver.TCPServer):
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(self.server_address)
 
+# This is only for our test deployment where we want this script to listen on a Unix socket.
+class UnixSocketHttpServer(socketserver.UnixStreamServer):
+    def get_request(self):
+        request, client_address = super(UnixSocketHttpServer, self).get_request()
+        # This client address is faked, but that's fine for us
+        return (request, ["fake", 0])
+
+
 if __name__ == "__main__":
-    httpd = DevTCPServer(("", 3091), Handler)
-    print("Dummy login handler started...")
-    httpd.serve_forever()
+    if len(sys.argv) == 2:
+        socket = sys.argv[1]
+
+        # Remove socket if it already exists. Yes, that disconnects existing
+        # connections, but its fine for test deployment.
+        try:
+            os.remove(socket)
+        except OSError:
+            pass
+
+        httpd = UnixSocketHttpServer(socket, Handler)
+        os.chmod(socket, 0o777)
+        print(f"Dummy login handler listening on socket {socket}...")
+        httpd.serve_forever()
+    else:
+        port = 3091
+        httpd = DevTCPServer(("", port), Handler)
+        print(f"Dummy login handler listening on port {port}...")
+        httpd.serve_forever()
