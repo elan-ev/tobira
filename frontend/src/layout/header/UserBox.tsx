@@ -18,8 +18,8 @@ import { User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon } from "./ui";
 import CONFIG from "../../config";
-import { LoginRoute } from "../../routes/Login";
 import { Spinner } from "../../ui/Spinner";
+import { LOGIN_PATH } from "../../routes/paths";
 
 
 /** Viewport width in pixels where the user UI switches between narrow and wide */
@@ -69,7 +69,7 @@ type LoggedOutProps = {
 const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => (
     <div css={{ display: "flex" }}>
         <Link
-            to={CONFIG.auth.loginLink ?? LoginRoute.path}
+            to={CONFIG.auth.loginLink ?? LOGIN_PATH}
             htmlLink={!!CONFIG.auth.loginLink}
             css={{
                 ...BOX_CSS,
@@ -227,7 +227,7 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
                 <MenuItem
                     icon={<FiLogIn />}
                     borderBottom
-                    linkTo={CONFIG.auth.loginLink ?? LoginRoute.path}
+                    linkTo={CONFIG.auth.loginLink ?? LOGIN_PATH}
                     htmlLink={!!CONFIG.auth.loginLink}
                     extraCss={{
                         color: "var(--nav-color)",

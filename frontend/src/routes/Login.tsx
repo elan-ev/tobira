@@ -18,10 +18,11 @@ import { Spinner } from "../ui/Spinner";
 import { FiCheck } from "react-icons/fi";
 import { Card } from "../ui/Card";
 import CONFIG from "../config";
+import { LOGIN_PATH } from "./paths";
 
 
 export const LoginRoute: Route<PreloadedQuery<LoginQuery>> = {
-    path: "/~login",
+    path: LOGIN_PATH,
     prepare: () => loadQuery(query, {}),
     render: queryRef => <Login queryRef={queryRef} />,
 };
