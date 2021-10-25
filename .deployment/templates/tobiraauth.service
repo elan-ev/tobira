@@ -1,0 +1,15 @@
+[Unit]
+Description=Tobira Auth Dummy {{ id }}
+Documentation=https://github.com/elan-ev/tobira
+
+After=local-fs.target
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/tobira/{{ id }}/
+ExecStart=/opt/tobira/{{ id }}/login-handler.py /opt/tobira/{{ id }}/socket/auth.sock
+Restart=always
+User=tobira
+
+[Install]
+WantedBy=multi-user.target

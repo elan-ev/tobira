@@ -10,6 +10,10 @@ password = "tobira-{{ id }}"
 unix_socket = "/opt/tobira/{{ id }}/socket/tobira.sock"
 unix_socket_permissions = 0o777
 
+[auth]
+mode = "login-proxy"
+login_page.note = 'Dummy users: "augustus", "sabine" and "admin". Password for all: "tobira".'
+
 [log]
 file = "/var/log/tobira/{{ id }}.log"
 
