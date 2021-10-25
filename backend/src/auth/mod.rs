@@ -63,6 +63,24 @@ pub(crate) struct AuthConfig {
     /// things.
     #[config(default = "ROLE_TOBIRA_MODERATOR")]
     pub(crate) moderator_role: String,
+
+    /// Configuration related to the built-in login page.
+    #[config(nested)]
+    pub(crate) login_page: LoginPageConfig,
+}
+
+/// Authentification and authorization
+#[derive(Debug, confique::Config)]
+pub(crate) struct LoginPageConfig {
+    /// Label for the user-ID field. If not set, "User ID" is used.
+    pub(crate) user_id_label: Option<String>,
+
+    /// Label for the password field. If not set, "Password" is used.
+    pub(crate) password_label: Option<String>,
+
+    /// An additional note that is displayed on the login page. If not set, no
+    /// additional note is shown.
+    pub(crate) note: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]

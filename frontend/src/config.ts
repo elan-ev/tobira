@@ -30,6 +30,9 @@ type Config = {
 
 type AuthConfig = {
     loginLink: string | null;
+    userIdLabel: string | null;
+    passwordLabel: string | null;
+    loginPageNote: string | null;
 };
 
 type LogoConfig = {

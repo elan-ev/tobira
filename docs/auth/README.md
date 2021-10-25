@@ -113,7 +113,8 @@ Tobira's login page expects the following outcomes from the `POST /~login`:
 - 403 Forbidden: this signals Tobira that the login attempt was unsuccessful.
   Tobira's frontend will signal this failure and stay on the login page.
 
-Some text on the login page can be configured. (TODO)
+The labels for the userid and password field can be configured via `auth.login_page.user_id_label` and `auth.login_page.password_label`.
+You can also add a short note to the login page via `auth.login_page.note`.
 
 
 ### Using your own login page

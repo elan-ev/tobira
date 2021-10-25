@@ -79,7 +79,12 @@ impl Assets {
 
         let mut variables = <HashMap<String, String>>::new();
         variables.insert("theme-json".into(), build_theme(&config.theme));
-        variables.insert("login-link".into(), json!(config.auth.login_link).to_string());
+        variables.insert("auth".into(), json!({
+            "loginLink": config.auth.login_link,
+            "userIdLabel": config.auth.login_page.user_id_label,
+            "passwordLabel": config.auth.login_page.password_label,
+            "loginPageNote": config.auth.login_page.note,
+        }).to_string());
         variables.insert("site-title".into(), config.general.site_title.clone());
         variables.insert("logo-margin".into(), config.theme.logo.margin.to_string());
         variables.insert(

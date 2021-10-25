@@ -17,6 +17,7 @@ import { match, useTitle } from "../util";
 import { Spinner } from "../ui/Spinner";
 import { FiCheck } from "react-icons/fi";
 import { Card } from "../ui/Card";
+import CONFIG from "../config";
 
 
 export const LoginRoute: Route<PreloadedQuery<LoginQuery>> = {
@@ -123,6 +124,15 @@ const LoginBox: React.FC = () => {
             border: "1px solid var(--grey80)",
             borderRadius: 4,
         }}>
+            {CONFIG.auth.loginPageNote && (
+                <div css={{
+                    backgroundColor: "var(--grey97)",
+                    marginBottom: 32,
+                    borderRadius: 4,
+                    padding: "8px 16px",
+                }}>{CONFIG.auth.loginPageNote}</div>
+            )}
+
             <form
                 onSubmit={handleSubmit(onSubmit)}
                 noValidate
@@ -133,7 +143,9 @@ const LoginBox: React.FC = () => {
             >
                 <div>
                     <Field isEmpty={userid === ""}>
-                        <label htmlFor="userid">{t("login-page.user-id")}</label>
+                        <label htmlFor="userid">
+                            {CONFIG.auth.userIdLabel ?? t("login-page.user-id")}
+                        </label>
                         <input
                             id="userid"
                             autoComplete="username email"
@@ -145,7 +157,9 @@ const LoginBox: React.FC = () => {
                 </div>
                 <div>
                     <Field isEmpty={password === ""}>
-                        <label htmlFor="password">{t("login-page.password")}</label>
+                        <label htmlFor="password">
+                            {CONFIG.auth.passwordLabel ?? t("login-page.password")}
+                        </label>
                         <input
                             id="password"
                             type="password"

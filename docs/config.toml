@@ -100,6 +100,19 @@
 # Default value: "ROLE_TOBIRA_MODERATOR"
 #moderator_role = "ROLE_TOBIRA_MODERATOR"
 
+# Configuration related to the built-in login page.
+
+[auth.login_page]
+# Label for the user-ID field. If not set, "User ID" is used.
+#user_id_label =
+
+# Label for the password field. If not set, "Password" is used.
+#password_label =
+
+# An additional note that is displayed on the login page. If not set, no
+# additional note is shown.
+#note =
+
 [log]
 # Determines how many messages are logged. Log messages below
 # this level are not emitted. Possible values: "trace", "debug",
