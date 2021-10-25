@@ -72,8 +72,20 @@ impl SessionId {
     pub(crate) fn set_cookie(&self) -> Cookie {
         // TODO: expiration and other cookie stuff!
         Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
+
+            // Only send via HTTPS as it contains sensitive information.
             .secure(true)
+
+            // Don't allow JS to read the cookie.
             .http_only(true)
+
+            // Don't send the cookie on third party requests (e.g. if something
+            // from Tobira is embedded on another page). However, this is "lax"
+            // not "strict" because (a) users following a link to Tobira should
+            // be immediately logged in and (b) GET requests never modify
+            // anything, so something like "link to `/realm/delete`" is not a
+            // thing for Tobira.
+            .same_site(cookie::SameSite::Lax)
             .finish()
     }
 
