@@ -1,6 +1,6 @@
 use paste::paste;
 use static_assertions::const_assert;
-use std::{convert::TryInto, fmt};
+use std::fmt;
 
 use crate::db::types::Key;
 
