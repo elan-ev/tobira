@@ -31,14 +31,17 @@ const SESSION_COOKIE: &str = "tobira-session";
 pub(crate) struct AuthConfig {
     /// The mode of authentication. Compare the authentication docs! Possible values:
     ///
-    /// - 'full-auth-proxy': Tobira does no session handling and expects an auth
+    /// - "none": Tobira never reads auth headers and thus, users cannot login
+    ///    at all. Only useful for development and as safe default.
+    /// - "full-auth-proxy": Tobira does no session handling and expects an auth
     ///   proxy in front of every route, passing user info via auth headers.
-    /// - 'login-proxy': Tobira does its own session handling and expects the auth
+    /// - "login-proxy": Tobira does its own session handling and expects the auth
     ///    system to send `POST /~session` with auth headers to create a session.
     ///
     /// **Important**: in either case, you HAVE to make sure to remove all auth
     /// headers from incoming user requests before passing them on to Tobira!
-    mode: AuthMode,
+    #[config(default = "none")]
+    pub(crate) mode: AuthMode,
 
     /// Link of the login button. If not set, the login button internally
     /// (not via `<a>`, but through JavaScript) links to Tobira's own login page.
@@ -86,6 +89,7 @@ pub(crate) struct LoginPageConfig {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum AuthMode {
+    None,
     FullAuthProxy,
     LoginProxy,
 }
@@ -115,6 +119,7 @@ impl User {
         db: &Client,
     ) -> Result<Self, PgError> {
         match auth_config.mode {
+            AuthMode::None => Ok(Self::None),
             AuthMode::FullAuthProxy => Ok(UserData::from_auth_headers(headers, auth_config).into()),
             AuthMode::LoginProxy => UserData::from_session(headers, db).await.map(Into::into),
         }
