@@ -85,7 +85,7 @@ impl Assets {
             "passwordLabel": config.auth.login_page.password_label,
             "loginPageNote": config.auth.login_page.note,
         }).to_string());
-        variables.insert("site-title".into(), config.general.site_title.clone());
+        variables.insert("site-title".into(), config.general.site_title.to_json());
         variables.insert("logo-margin".into(), config.theme.logo.margin.to_string());
         variables.insert(
             "large-logo-resolution".into(),

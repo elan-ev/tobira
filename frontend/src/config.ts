@@ -22,7 +22,7 @@ const parseConfig: () => Config = () => {
 
 type Config = {
     auth: AuthConfig;
-    siteTitle: string;
+    siteTitle: TranslatedString;
     logo: LogoConfig;
     plyr: PlyrConfig;
     theme: ThemeConfig;
@@ -62,6 +62,8 @@ type ThemeConfig = {
         happy: string;
     };
 };
+
+export type TranslatedString = { en: string } & Record<"de", string | undefined>;
 
 const CONFIG: Config = parseConfig();
 export default CONFIG;

@@ -1,5 +1,6 @@
 import { MutableRefObject, useEffect } from "react";
-import CONFIG from "../config";
+import { useTranslation } from "react-i18next";
+import CONFIG, { TranslatedString } from "../config";
 
 /**
  * A switch-like expression with exhaustiveness check (or fallback value). A bit
@@ -56,14 +57,23 @@ export function keyOfId(id: string): string {
  * it on unmount.
  */
 export const useTitle = (title: string, noSuffix = false): void => {
+    const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
     useEffect(() => {
-        document.title = noSuffix ? title : `${title} • ${CONFIG.siteTitle}`;
+        document.title = noSuffix ? title : `${title} • ${siteTitle}`;
 
         // On unmount, we set the title to the base title.
         return () => {
-            document.title = CONFIG.siteTitle;
+            document.title = siteTitle;
         };
     });
+};
+
+/** Extracts the string corresponding to the current language from a translated config string. */
+export const useTranslatedConfig = (s: TranslatedString): string => {
+    const { i18n } = useTranslation();
+    const lang = i18n.resolvedLanguage;
+
+    return (lang in s ? s[lang as keyof TranslatedString] : undefined) ?? s.en;
 };
 
 export const useOnOutsideClick = (

@@ -1,5 +1,5 @@
 [general]
-site_title = "Tobira Test Deployment"
+site_title.en = "Tobira Test Deployment"
 
 [db]
 database = "tobira-{{ id }}"

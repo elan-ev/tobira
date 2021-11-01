@@ -8,6 +8,11 @@ use confique::Config as _;
 use crate::prelude::*;
 
 
+mod translated_string;
+
+pub(crate) use translated_string::TranslatedString;
+
+
 /// The locations where Tobira will look for a configuration file. The first
 /// existing file in this list is used.
 // TODO: does the absolute path break on Windows? I hope it just results in
@@ -45,9 +50,8 @@ pub(crate) struct Config {
 pub(crate) struct GeneralConfig {
     /// The main title of the video portal. Used in the HTML `<title>`, as main
     /// heading on the home page, and potentially more.
-    ///
-    /// TODO: Make it possible to specify this for different languages.
-    pub(crate) site_title: String,
+    // TODO: fix automatically generated `site_title =` template output.
+    pub(crate) site_title: TranslatedString,
 }
 
 
