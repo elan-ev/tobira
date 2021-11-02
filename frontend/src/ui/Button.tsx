@@ -54,7 +54,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
 
         "happy": () => ({
             border: "1px solid var(--happy-color-dark)",
-            color: "white",
+            color: "var(--happy-color-bw-contrast)",
             backgroundColor: "var(--happy-color)",
             "&:hover": {
                 border: "1px solid var(--danger-color-darker)",
