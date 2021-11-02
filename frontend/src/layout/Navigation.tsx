@@ -3,8 +3,6 @@ import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "../query-types/NavigationData.graphql";
-import CONFIG from "../config";
-import { prefersBlackText } from "../util/color";
 import { useTranslation } from "react-i18next";
 import { LinkList, LinkWithIcon } from "../ui";
 import { match } from "../util";
@@ -65,7 +63,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                     paddingLeft: 4 + 22 + 8,
                     fontWeight: "bold",
                     backgroundColor: "var(--nav-color)",
-                    color: prefersBlackText(CONFIG.theme.color.navigation) ? "black" : "white",
+                    color: "var(--nav-color-bw-contrast)",
                 }}>{realm.name}</div>
             </>}
             <LinkList

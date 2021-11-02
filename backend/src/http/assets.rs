@@ -4,7 +4,7 @@ use hyper::Body;
 use reinda::{assets, Setup};
 use serde_json::json;
 
-use crate::{config::{Config, ThemeConfig}, prelude::*};
+use crate::{config::Config, prelude::*};
 use super::Response;
 
 
@@ -78,15 +78,15 @@ impl Assets {
         }
 
         let mut variables = <HashMap<String, String>>::new();
-        variables.insert("theme-json".into(), build_theme(&config.theme));
+        variables.insert("global-style".into(), config.theme.to_css());
         variables.insert("auth".into(), json!({
             "loginLink": config.auth.login_link,
             "userIdLabel": config.auth.login_page.user_id_label,
             "passwordLabel": config.auth.login_page.password_label,
             "loginPageNote": config.auth.login_page.note,
         }).to_string());
+        variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());
-        variables.insert("logo-margin".into(), config.theme.logo.margin.to_string());
         variables.insert(
             "large-logo-resolution".into(),
             format!("{:?}", config.theme.logo.large.resolution),
@@ -172,19 +172,4 @@ impl Assets {
 
         builder.body(html).expect("bug: invalid response")
     }
-}
-
-// TODO: this function doesn't quite fit into this module, move it somewhere else.
-fn build_theme(theme: &ThemeConfig) -> String {
-    json!({
-        "logoMargin": theme.logo.margin,
-        "headerHeight": theme.header_height,
-        "color": {
-            "navigation": theme.color.navigation,
-            "accent": theme.color.accent,
-            "grey50": theme.color.grey50,
-            "danger": theme.color.danger,
-            "happy": theme.color.happy,
-        },
-    }).to_string()
 }

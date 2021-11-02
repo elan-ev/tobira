@@ -5,9 +5,27 @@ use std::fmt;
 #[derive(Clone, Copy, serde::Deserialize, serde::Serialize)]
 #[serde(try_from = "String", into = "String")]
 pub(crate) struct Color {
-    r: u8,
-    g: u8,
-    b: u8,
+    pub(crate) r: u8,
+    pub(crate) g: u8,
+    pub(crate) b: u8,
+}
+
+impl Color {
+    /// Returns either "black" or "white", depending on which of those has a
+    /// higher contrast to `self`.
+    pub(crate) fn bw_contrast(self) -> &'static str {
+        let luminance = (self.r as f32 / 255.0) * 0.299
+            + (self.g as f32 / 255.0) * 0.587
+            + (self.b as f32 / 255.0) * 0.114;
+
+        // The threshold of 0.6 is fairly arbitrary, but works well in practice.
+        // You will find various thresholds in the internet.
+        if luminance > 0.6 {
+            "black"
+        } else {
+            "white"
+        }
+    }
 }
 
 impl fmt::Debug for Color {
@@ -48,5 +66,60 @@ impl TryFrom<String> for Color {
         let b = 16 * digit(s[5])? + digit(s[6])?;
 
         Ok(Self { r, g, b })
+    }
+}
+
+/// A color represented as HSL triple.
+#[derive(Clone, Copy)]
+pub(crate) struct Hsl {
+    /// Hue in range 0..=360.
+    pub(crate) h: f32,
+
+    /// Saturation in range 0..=1.
+    pub(crate) s: f32,
+
+    /// Lightness in range 0..=1.
+    pub(crate) l: f32,
+}
+
+impl Hsl {
+    /// Returns a darkened version of `self` where the lightness has been
+    /// reduces by `amount * 100%`.
+    pub(crate) fn darken(self, amount: f32) -> Self {
+        let l = self.l * (1.0 - amount);
+        Self { l, ..self }
+    }
+}
+
+impl From<Color> for Hsl {
+    fn from(Color { r, g, b }: Color) -> Self {
+        let [r, g, b] = [r, g, b].map(|x| x as f32 / 255.0);
+
+        let max = r.max(g).max(b);
+        let min = r.min(g).min(b);
+        let range = (max - min) as f32;
+
+        let l = (max + min) as f32 / 2.0;
+        let s = if range == 0.0 {
+            0.0
+        } else {
+            range / (1.0 - (2.0 * l - 1.0).abs())
+        };
+
+        let h = if r == g && g == b {
+            0.0
+        } else if r > g && r > b {
+            (g - b) as f32 / range + (if g < b { 6.0 } else { 0.0 })
+        } else if g > b {
+            (b - r) as f32 / range + 2.0
+        } else {
+            (r - g) as f32 / range + 4.0
+        };
+
+        Self {
+            h: h / 6.0 * 360.0,
+            s,
+            l,
+        }
     }
 }

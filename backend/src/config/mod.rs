@@ -13,7 +13,7 @@ mod theme;
 mod translated_string;
 
 pub(crate) use self::{
-    color::Color,
+    color::{Color, Hsl},
     translated_string::TranslatedString,
     theme::ThemeConfig,
 };

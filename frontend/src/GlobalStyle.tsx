@@ -1,14 +1,10 @@
 import { css, Global } from "@emotion/react";
 import React from "react";
 
-import CONFIG from "./config";
-import { hexCodeToRgb, rgbToHsl, lighten } from "./util/color";
-
 
 export const GlobalStyle: React.FC = () => <>
     <Global styles={CSS_RESETS} />
     <Global styles={GLOBAL_STYLE} />
-    <Global styles={themeVars()} />
 </>;
 
 export const SMALLER_FONT_BREAKPOINT = 450;
@@ -61,6 +57,9 @@ const CSS_RESETS = css({
 
 /** This is just styling for Tobira that we want to apply globally. */
 const GLOBAL_STYLE = css({
+    ":root": {
+        "--min-page-width": "320px",
+    },
     body: {
         fontFamily: "var(--main-font), sans-serif",
         fontWeight: 400,
@@ -106,63 +105,3 @@ const GLOBAL_STYLE = css({
         },
     },
 });
-
-/** Setting values from the theme (and ones derived from it) as CSS variables */
-const themeVars = () => {
-    const theme = CONFIG.theme;
-
-    const nav = hexCodeToRgb(theme.color.navigation);
-    const accent = hexCodeToRgb(theme.color.accent);
-    const danger = hexCodeToRgb(theme.color.danger);
-    const happy = hexCodeToRgb(theme.color.happy);
-    const grey = hexCodeToRgb(theme.color.grey50);
-
-    const [navHue, navSat, navLight] = rgbToHsl(nav);
-    const [accentHue, accentSat, accentLight] = rgbToHsl(accent);
-    const [dangerHue, dangerSat, dangerLight] = rgbToHsl(danger);
-    const [happyHue, happySat, happyLight] = rgbToHsl(happy);
-    const [greyHue, greySat, _] = rgbToHsl(grey);
-
-    const hsl = (base: string, lightness: number): string =>
-        `hsl(var(--${base}-hue), var(--${base}-sat), ${lightness}%)`;
-
-    return css({
-        ":root": {
-            "--inner-header-height": `${theme.headerHeight}px`,
-            "--outer-header-height":
-                "calc(var(--inner-header-height) * (1 + 2 * var(--logo-margin)))",
-            "--logo-margin": `${CONFIG.logo.margin}`,
-
-            "--nav-hue": 360 * navHue,
-            "--nav-sat": `${100 * navSat}%`,
-            "--nav-color": hsl("nav", 100 * navLight),
-            "--nav-color-darker": hsl("nav", 100 * lighten(navLight, -40)),
-
-            "--accent-hue": 360 * accentHue,
-            "--accent-sat": `${100 * accentSat}%`,
-            "--accent-color": hsl("accent", 100 * accentLight),
-            "--accent-color-darker": hsl("accent", 100 * lighten(accentLight, -40)),
-
-            "--danger-hue": 360 * dangerHue,
-            "--danger-sat": `${100 * dangerSat}%`,
-            "--danger-color": hsl("danger", 100 * dangerLight),
-            "--danger-color-darker": hsl("danger", 100 * lighten(dangerLight, -40)),
-
-            "--happy-hue": 360 * happyHue,
-            "--happy-sat": `${100 * happySat}%`,
-            "--happy-color": hsl("happy", 100 * happyLight),
-            "--happy-color-darker": hsl("happy", 100 * lighten(happyLight, -10)),
-            "--happy-color-dark": hsl("happy", 100 * lighten(happyLight, -30)),
-
-            "--grey-hue": 360 * greyHue,
-            "--grey-sat": `${100 * greySat}%`,
-            "--grey97": hsl("grey", 97),
-            "--grey92": hsl("grey", 92),
-            "--grey80": hsl("grey", 80),
-            "--grey65": hsl("grey", 65),
-            "--grey40": hsl("grey", 40),
-
-            "--min-page-width": "320px",
-        },
-    });
-};

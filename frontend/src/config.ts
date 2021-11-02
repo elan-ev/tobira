@@ -25,7 +25,6 @@ type Config = {
     siteTitle: TranslatedString;
     logo: LogoConfig;
     plyr: PlyrConfig;
-    theme: ThemeConfig;
 };
 
 type AuthConfig = {
@@ -36,7 +35,6 @@ type AuthConfig = {
 };
 
 type LogoConfig = {
-    margin: number;
     large: SingleLogoConfig;
     small: SingleLogoConfig;
 };
@@ -49,18 +47,6 @@ type SingleLogoConfig = {
 type PlyrConfig = {
     blankVideo: string;
     svg: string;
-};
-
-type ThemeConfig = {
-    headerHeight: number;
-    headerPadding: number;
-    color: {
-        navigation: string;
-        accent: string;
-        grey50: string;
-        danger: string;
-        happy: string;
-    };
 };
 
 export type TranslatedString = { en: string } & Record<"de", string | undefined>;

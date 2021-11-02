@@ -13,6 +13,10 @@ impl TranslatedString {
         serde_json::to_string(&self.0)
             .expect("serialization of translated string failed")
     }
+
+    pub(crate) fn en(&self) -> &str {
+        &self.0["en"]
+    }
 }
 
 impl<'de> Deserialize<'de> for TranslatedString {
