@@ -8,9 +8,13 @@ use confique::Config as _;
 use crate::prelude::*;
 
 
+mod theme;
 mod translated_string;
 
-pub(crate) use translated_string::TranslatedString;
+pub(crate) use self::{
+    translated_string::TranslatedString,
+    theme::ThemeConfig,
+};
 
 
 /// The locations where Tobira will look for a configuration file. The first
@@ -43,7 +47,7 @@ pub(crate) struct Config {
     pub(crate) sync: crate::sync::SyncConfig,
 
     #[config(nested)]
-    pub(crate) theme: crate::theme::ThemeConfig,
+    pub(crate) theme: ThemeConfig,
 }
 
 #[derive(Debug, confique::Config)]

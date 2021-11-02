@@ -4,7 +4,7 @@ use hyper::Body;
 use reinda::{assets, Setup};
 use serde_json::json;
 
-use crate::{config::Config, prelude::*, theme::ThemeConfig};
+use crate::{config::{Config, ThemeConfig}, prelude::*};
 use super::Response;
 
 
