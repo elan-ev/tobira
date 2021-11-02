@@ -21,10 +21,18 @@ const parseConfig: () => Config = () => {
 };
 
 type Config = {
+    auth: AuthConfig;
     siteTitle: string;
     logo: LogoConfig;
     plyr: PlyrConfig;
     theme: ThemeConfig;
+};
+
+type AuthConfig = {
+    loginLink: string | null;
+    userIdLabel: string | null;
+    passwordLabel: string | null;
+    loginPageNote: string | null;
 };
 
 type LogoConfig = {
@@ -51,6 +59,7 @@ type ThemeConfig = {
         accent: string;
         grey50: string;
         danger: string;
+        happy: string;
     };
 };
 

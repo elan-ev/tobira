@@ -32,13 +32,7 @@ impl ToSql for Key {
         <i64 as ToSql>::accepts(ty)
     }
 
-    fn to_sql_checked(
-        &self,
-        ty: &postgres_types::Type,
-        out: &mut postgres_types::private::BytesMut,
-    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
-        (self.0 as i64).to_sql_checked(ty, out)
-    }
+    postgres_types::to_sql_checked!();
 }
 
 impl<'a> FromSql<'a> for Key {

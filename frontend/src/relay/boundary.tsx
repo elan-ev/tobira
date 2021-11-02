@@ -156,7 +156,7 @@ const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error }) => {
             <Card kind="error">{message}</Card>
         </div>
         {ourFault && <p css={{ margin: "24px 0" }}>
-            {t("api.error-boundary.not-your-fault")}
+            {t("errors.not-your-fault")}
         </p>}
     </>;
 };

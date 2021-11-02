@@ -4,6 +4,7 @@ import React from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+    FiAlertTriangle,
     FiCheck, FiChevronDown, FiChevronLeft, FiFilm, FiLogIn, FiLogOut, FiMoon,
     FiMoreVertical, FiUser,
 } from "react-icons/fi";
@@ -16,6 +17,9 @@ import { useOnOutsideClick } from "../../util";
 import { User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon } from "./ui";
+import CONFIG from "../../config";
+import { Spinner } from "../../ui/Spinner";
+import { LOGIN_PATH } from "../../routes/paths";
 
 
 /** Viewport width in pixels where the user UI switches between narrow and wide */
@@ -64,24 +68,25 @@ type LoggedOutProps = {
 /** User-related UI in header when the user is NOT logged in. */
 const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => (
     <div css={{ display: "flex" }}>
-        <div css={{
-            ...BOX_CSS,
-            padding: "3px 8px",
-            marginRight: 8,
-            display: "flex",
-            gap: 8,
-            alignItems: "center",
-            color: "var(--nav-color)",
-            "&:hover": {
-                boxShadow: "1px 1px 5px var(--grey92)",
-            },
-            [`@media (max-width: ${BREAKPOINT}px)`]: {
-                display: "none",
-            },
-        }}>
-            <FiLogIn />
-            {t("user.login")}
-        </div>
+        <Link
+            to={CONFIG.auth.loginLink ?? LOGIN_PATH}
+            htmlLink={!!CONFIG.auth.loginLink}
+            css={{
+                ...BOX_CSS,
+                padding: "3px 8px",
+                marginRight: 8,
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                color: "var(--nav-color)",
+                "&:hover": {
+                    boxShadow: "1px 1px 5px var(--grey92)",
+                },
+                [`@media (max-width: ${BREAKPOINT}px)`]: {
+                    display: "none",
+                },
+            }}
+        ><FiLogIn />{t("user.login")}</Link>
         <UserSettingsIcon t={t} onClick={menu.toggle} />
         {menu.isOpen && <Menu close={menu.close} t={t} />}
     </div>
@@ -218,12 +223,20 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
     const items = match(state, {
         main: () => <>
             {/* Login button if the user is NOT logged in */}
-            {!user && <MenuItem icon={<FiLogIn />} borderBottom extraCss={{
-                color: "var(--nav-color)",
-                [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
-                    display: "none",
-                },
-            }}>{t("user.login")}</MenuItem>}
+            {!user && (
+                <MenuItem
+                    icon={<FiLogIn />}
+                    borderBottom
+                    linkTo={CONFIG.auth.loginLink ?? LOGIN_PATH}
+                    htmlLink={!!CONFIG.auth.loginLink}
+                    extraCss={{
+                        color: "var(--nav-color)",
+                        [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
+                            display: "none",
+                        },
+                    }}
+                >{t("user.login")}</MenuItem>
+            )}
 
             {user && <>
                 <MenuItem icon={<HiOutlineSparkles />} linkTo={`/@${user.username}`}>
@@ -241,11 +254,7 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
             <MenuItem icon={<FiMoon />}>{t("main-menu.theme")}</MenuItem>
 
             {/* Logout button if the user is logged in */}
-            {user && <MenuItem
-                icon={<FiLogOut />}
-                borderTop
-                extraCss={{ color: "var(--danger-color)" }}
-            >{t("user.logout")}</MenuItem>}
+            {user && <Logout />}
         </>,
         language: () => <>
             <MenuItem icon={<FiChevronLeft />} onClick={() => setState("main")} borderBottom>
@@ -294,6 +303,7 @@ type MenuItemProps = {
     icon?: JSX.Element;
     onClick?: () => void;
     linkTo?: string;
+    htmlLink?: boolean;
     extraCss?: Interpolation<Theme>;
     borderBottom?: boolean;
     borderTop?: boolean;
@@ -303,8 +313,9 @@ type MenuItemProps = {
 const MenuItem: React.FC<MenuItemProps> = ({
     icon,
     children,
-    onClick,
+    onClick = () => {},
     linkTo,
+    htmlLink = false,
     extraCss = {},
     borderBottom = false,
     borderTop = false,
@@ -340,6 +351,49 @@ const MenuItem: React.FC<MenuItemProps> = ({
     } as const;
 
     return linkTo
-        ? <li><Link to={linkTo} onClick={onClick ?? (() => {})} css={css}>{inner}</Link></li>
-        : <li css={css} onClick={onClick ?? (() => {})}>{inner}</li>;
+        ? <li><Link to={linkTo} {...{ htmlLink, onClick, css }}>{inner}</Link></li>
+        : <li {...{ onClick, css }}>{inner}</li>;
+};
+
+
+const Logout: React.FC = () => {
+    const { t } = useTranslation();
+
+    type State = "idle" | "pending" | "error";
+    const [state, setState] = useState<State>("idle");
+
+    return (
+        <MenuItem
+            icon={match(state, {
+                "idle": () => <FiLogOut />,
+                "pending": () => <Spinner />,
+                "error": () => <FiAlertTriangle />,
+            })}
+            borderTop
+            onClick={() => {
+                // We don't do anything if a request is already pending.
+                if (state === "pending") {
+                    return;
+                }
+
+                setState("pending");
+                fetch("/~session", { method: "DELETE" })
+                    .then(() => {
+                        // We deliberately ignore the `status`. See `handle_logout`
+                        // for more information.
+                        //
+                        // We hard forward to the home page to get rid of any stale state.
+                        window.location.href = "/";
+                    })
+                    .catch(error => {
+                        // TODO: this is not great. It should happen only
+                        // extremely rarely, but still, just showing a triangle
+                        // is not very great for the uesr.
+                        console.error("Error during logout: ", error);
+                        setState("error");
+                    });
+            }}
+            extraCss={{ color: "var(--danger-color)" }}
+        >{t("user.logout")}</MenuItem>
+    );
 };

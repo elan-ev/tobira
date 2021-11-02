@@ -26,6 +26,7 @@ dependencies = [
 name = "auth-proxy"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "hyper",
  "hyper-rustls",
  "structopt",

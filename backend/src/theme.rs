@@ -80,4 +80,9 @@ pub(crate) struct ColorConfig {
     /// actions, and the like.
     #[config(default = "#b64235")]
     pub(crate) danger: String,
+
+    /// A color for positive things or some "call to action" buttons, like the
+    /// login button. Typically green.
+    #[config(default = "#27ae60")]
+    pub(crate) happy: String,
 }

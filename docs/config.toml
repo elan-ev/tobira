@@ -59,6 +59,25 @@
 #unix_socket_permissions = 493
 
 [auth]
+# The mode of authentication. Compare the authentication docs! Possible values:
+#
+# - "none": Tobira never reads auth headers and thus, users cannot login
+#    at all. Only useful for development and as safe default.
+# - "full-auth-proxy": Tobira does no session handling and expects an auth
+#   proxy in front of every route, passing user info via auth headers.
+# - "login-proxy": Tobira does its own session handling and expects the auth
+#    system to send `POST /~session` with auth headers to create a session.
+#
+# **Important**: in either case, you HAVE to make sure to remove all auth
+# headers from incoming user requests before passing them on to Tobira!
+#
+# Default value: "none"
+#mode = "none"
+
+# Link of the login button. If not set, the login button internally
+# (not via `<a>`, but through JavaScript) links to Tobira's own login page.
+#login_link =
+
 # The header containing a unique and stable username of the current user.
 # TODO: describe properties, requirements and usages of username.
 #
@@ -83,11 +102,18 @@
 # Default value: "ROLE_TOBIRA_MODERATOR"
 #moderator_role = "ROLE_TOBIRA_MODERATOR"
 
-[auth.proxy]
-# TODO
-#
-# Default value: false
-#enabled = false
+# Configuration related to the built-in login page.
+
+[auth.login_page]
+# Label for the user-ID field. If not set, "User ID" is used.
+#user_id_label =
+
+# Label for the password field. If not set, "Password" is used.
+#password_label =
+
+# An additional note that is displayed on the login page. If not set, no
+# additional note is shown.
+#note =
 
 [log]
 # Determines how many messages are logged. Log messages below
@@ -231,3 +257,9 @@
 #
 # Default value: "#b64235"
 #danger = "#b64235"
+
+# A color for positive things or some "call to action" buttons, like the
+# login button. Typically green.
+#
+# Default value: "#27ae60"
+#happy = "#27ae60"

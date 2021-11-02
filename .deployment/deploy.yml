@@ -16,6 +16,7 @@
         name:
           - postgresql-server
           - postgresql-contrib
+          - python3
           - python3-psycopg2
           - nginx
 
@@ -128,14 +129,17 @@
         setype: httpd_sys_rw_content_t
         mode: '0755'
 
-    - name: deploy tobira executable
+    - name: deploy tobira executable & scripts
       become: true
       copy:
-        src: tobira
+        src: "{{ item }}"
         dest: /opt/tobira/{{ id }}/
         owner: root
         group: root
         mode: '0755'
+      with_items:
+        - tobira
+        - login-handler.py
       notify: restart tobira
 
     - name: deploy demo assets
@@ -211,6 +215,7 @@
       with_items:
         - tobira
         - tobirasync
+        - tobiraauth
       notify: restart tobira
 
     - name: start and enable tobira
@@ -223,6 +228,7 @@
       with_items:
         - tobira
         - tobirasync
+        - tobiraauth
 
     # NGINX
 
@@ -300,6 +306,7 @@
       with_items:
         - tobira
         - tobirasync
+        - tobiraauth
 
     - name: reload nginx
       become: true

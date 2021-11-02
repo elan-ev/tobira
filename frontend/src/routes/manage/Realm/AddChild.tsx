@@ -15,13 +15,8 @@ import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { NoPath, PathInvalid } from ".";
-import {
-    boxError,
-    displayCommitError,
-    ErrorBox,
-    RealmSettingsContainer,
-    realmValidations,
-} from "./util";
+import { boxError, ErrorBox } from "../../../ui/error";
+import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";

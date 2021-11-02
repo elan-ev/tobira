@@ -18,6 +18,7 @@
       with_items:
         - tobira
         - tobirasync
+        - tobiraauth
 
     - name: remove deployed files and folders
       become: true
@@ -28,6 +29,7 @@
         - /opt/tobira/{{ id }}
         - /etc/systemd/system/tobira-{{ id }}.service
         - /etc/systemd/system/tobirasync-{{ id }}.service
+        - /etc/systemd/system/tobiraauth-{{ id }}.service
         - /etc/nginx/conf.d/tobira-{{ id }}.conf
       notify: reload nginx
 

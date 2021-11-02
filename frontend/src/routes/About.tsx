@@ -8,10 +8,11 @@ import { Root } from "../layout/Root";
 import { loadQuery } from "../relay";
 import type { Route } from "../router";
 import { AboutQuery } from "../query-types/AboutQuery.graphql";
+import { ABOUT_PATH } from "./paths";
 
 
 export const AboutRoute: Route<PreloadedQuery<AboutQuery>> = {
-    path: "/~tobira",
+    path: ABOUT_PATH,
     prepare: () => loadQuery(query, {}),
     render: queryRef => <About queryRef={queryRef} />,
 };

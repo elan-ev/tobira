@@ -1,4 +1,4 @@
-use hyper::header::{HeaderName, HeaderValue};
+use hyper::header::HeaderName;
 use std::str::FromStr;
 use structopt::StructOpt;
 
@@ -18,7 +18,7 @@ pub(crate) struct Args {
 
     /// Header(s) to set when forwarding the request to the proxy target
     /// (e.g. `-H 'x-tobira-username: peter'`). Override headers set by the
-    /// user template.
+    /// user template. Note that the header values will be base64 encoded!
     #[structopt(short = "-H")]
     pub(crate) headers: Vec<Header>,
 
@@ -29,7 +29,7 @@ pub(crate) struct Args {
 #[derive(Debug, Clone)]
 pub(crate) struct Header {
     pub(crate) name: HeaderName,
-    pub(crate) value: HeaderValue,
+    pub(crate) value: String,
 }
 
 impl Header {
@@ -38,7 +38,7 @@ impl Header {
         Self {
             name: HeaderName::from_lowercase(name.to_lowercase().as_bytes())
                 .expect("invalid header name"),
-            value: HeaderValue::from_bytes(value.as_bytes()).expect("invalid header value"),
+            value: value.into(),
         }
     }
 }
@@ -50,10 +50,8 @@ impl FromStr for Header {
             .ok_or_else(|| "invalid header value: missing colon".to_string())?;
         let name = HeaderName::from_lowercase(l.trim().to_lowercase().as_bytes())
             .map_err(|e| format!("invalid header name: {}", e))?;
-        let value = HeaderValue::from_bytes(r.trim().as_bytes())
-            .map_err(|e| format!("invalid header value: {}", e))?;
 
-        Ok(Self { name, value })
+        Ok(Self { name, value: r.trim().into() })
     }
 }
 

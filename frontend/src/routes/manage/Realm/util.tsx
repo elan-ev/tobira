@@ -1,10 +1,8 @@
 import { TFunction } from "i18next";
-import { ReactNode } from "react";
 import { RegisterOptions } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 import { APIError, NetworkError, NotJson, ServerError } from "../../../relay/errors";
-import { Card } from "../../../ui/Card";
 import { match } from "../../../util";
 
 
@@ -31,20 +29,6 @@ export const realmValidations = (t: TFunction): RealmValidations => ({
         // TODO: check if path already exists
     },
 });
-
-export const ErrorBox: React.FC = ({ children }) => (
-    <div css={{ marginTop: 8 }}>
-        <Card kind="error">{children}</Card>
-    </div>
-);
-
-/**
- * If the given error is not `null` nor `undefined`, returns an `<ErrorBox>`
- * with it as content. Returns `null` otherwise.
- */
-export const boxError = (err: ReactNode): JSX.Element | null => (
-    err == null ? null : <ErrorBox>{err}</ErrorBox>
-);
 
 export const RealmSettingsContainer: React.FC = ({ children }) => (
     <div css={{

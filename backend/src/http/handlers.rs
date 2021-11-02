@@ -2,29 +2,20 @@ use hyper::{Body, Method, StatusCode};
 use std::{
     mem,
     sync::Arc,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
-use crate::{
-    api,
-    auth::UserSession,
-    db::Transaction,
-    prelude::*,
-};
-use super::{Context, Request, Response, assets::Assets};
+use crate::{api, auth::{self, User}, db::{self, Transaction}, prelude::*};
+use super::{Context, Request, Response, assets::Assets, response};
 
 
 /// This is the main HTTP entry point, called for each incoming request.
 pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     trace!(
-        "Incoming HTTP {:?} request to '{}{}'",
+        "Incoming HTTP {:?} request to '{}'",
         req.method(),
-        req.uri().path(),
-        req.uri().query().map(|q| format!("?{}", q)).unwrap_or_default(),
+        req.uri().path_and_query().map_or("", |pq| pq.as_str()),
     );
-
-    let user = UserSession::from_headers(req.headers(), &ctx.config.auth);
-    trace!("User: {:?}", user);
 
     let method = req.method().clone();
     let path = req.uri().path().trim_end_matches('/');
@@ -32,9 +23,13 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
     const ASSET_PREFIX: &str = "/~assets/";
 
     match path {
-        // The GraphQL endpoint. This is the only path for which POST is
-        // allowed.
-        "/graphql" if method == Method::POST => handle_api(req, user, &ctx).await,
+        // Paths for which POST requests are allowed
+        "/graphql" if method == Method::POST
+            => handle_api(req, &ctx).await.unwrap_or_else(|r| r),
+        "/~session" if method == Method::POST
+            => auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r),
+        "/~session" if method == Method::DELETE
+            => auth::handle_logout(req, &ctx).await,
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
@@ -108,28 +103,26 @@ pub(super) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> R
 }
 
 /// Handles a request to `/graphql`.
-async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Response {
+async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
     let before = Instant::now();
 
     // Get a connection for this request.
-    let mut connection = match ctx.db_pool.get().await {
-        Ok(c) => c,
-        Err(e) => {
-            error!("Failed to obtain DB connection for API request: {}", e);
-            return service_unavailable();
-        }
-    };
+    let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
-    let acquire_conn_time = before.elapsed();
-    if acquire_conn_time > Duration::from_millis(5) {
-        warn!("Acquiring DB connection from pool took {:.2?}", acquire_conn_time);
-    }
+    // Get user session
+    let user = match User::new(req.headers(), &ctx.config.auth, &connection).await {
+        Ok(user) => user,
+        Err(e) => {
+            error!("DB error when checking user session: {}", e);
+            return Err(response::internal_server_error());
+        },
+    };
 
     let tx = match connection.transaction().await {
         Ok(tx) => tx,
         Err(e) => {
             error!("Failed to start transaction for API request: {}", e);
-            return internal_server_error();
+            return Err(response::internal_server_error());
         }
     };
 
@@ -168,7 +161,10 @@ async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Res
         config: ctx.config.clone(),
     });
     let out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
+
+    // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();
+    let username = api_context.user.debug_log_username();
     drop(api_context);
 
     // Check whether we own the last remaining handle of this Arc.
@@ -186,7 +182,7 @@ async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Res
         Ok(tx) => {
             match tx.commit().await {
                 // If the transaction succeeded we can return the generated response.
-                Ok(_) => out,
+                Ok(_) => Ok(out),
 
                 // Otherwise, we would like to retry a couple times, but for now
                 // we just immediately reply 5xx.
@@ -195,31 +191,19 @@ async fn handle_api(req: Request<Body>, user: UserSession, ctx: &Context) -> Res
                 // all of this code in a loop and retry a couple times.
                 Err(e) => {
                     error!("Failed to commit transaction for API request: {}", e);
-                    service_unavailable()
+                    Err(response::service_unavailable())
                 }
             }
         }
     };
 
     debug!(
-        "Finished /graphql query in {:.2?} (with {} SQL queries)",
-        before.elapsed(),
+        "Finished /graphql query with {} SQL queries in {:.2?} (user: {})",
         num_queries,
+        before.elapsed(),
+        username,
     );
 
     out
 }
 
-fn service_unavailable() -> Response {
-    Response::builder()
-        .status(StatusCode::SERVICE_UNAVAILABLE)
-        .body("Server error: service unavailable. Potentially try again later.".into())
-        .unwrap()
-}
-
-pub(super) fn internal_server_error() -> Response {
-    Response::builder()
-        .status(StatusCode::INTERNAL_SERVER_ERROR)
-        .body("Internal server error".into())
-        .unwrap()
-}

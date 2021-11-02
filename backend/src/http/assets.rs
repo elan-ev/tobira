@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use hyper::Body;
 use reinda::{assets, Setup};
+use serde_json::json;
 
 use crate::{config::Config, prelude::*, theme::ThemeConfig};
 use super::Response;
@@ -78,6 +79,12 @@ impl Assets {
 
         let mut variables = <HashMap<String, String>>::new();
         variables.insert("theme-json".into(), build_theme(&config.theme));
+        variables.insert("auth".into(), json!({
+            "loginLink": config.auth.login_link,
+            "userIdLabel": config.auth.login_page.user_id_label,
+            "passwordLabel": config.auth.login_page.password_label,
+            "loginPageNote": config.auth.login_page.note,
+        }).to_string());
         variables.insert("site-title".into(), config.general.site_title.clone());
         variables.insert("logo-margin".into(), config.theme.logo.margin.to_string());
         variables.insert(
@@ -169,7 +176,7 @@ impl Assets {
 
 // TODO: this function doesn't quite fit into this module, move it somewhere else.
 fn build_theme(theme: &ThemeConfig) -> String {
-    serde_json::json!({
+    json!({
         "logoMargin": theme.logo.margin,
         "headerHeight": theme.header_height,
         "color": {
@@ -177,6 +184,7 @@ fn build_theme(theme: &ThemeConfig) -> String {
             "accent": theme.color.accent,
             "grey50": theme.color.grey50,
             "danger": theme.color.danger,
+            "happy": theme.color.happy,
         },
     }).to_string()
 }

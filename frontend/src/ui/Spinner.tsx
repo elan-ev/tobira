@@ -3,10 +3,10 @@ import { IntrinsicElements } from "react-markdown/src/ast-to-react";
 
 
 type Props = IntrinsicElements["svg"] & {
-    size: number;
+    size?: number | "1em";
 };
 
-export const Spinner: React.FC<Props> = ({ size, ...rest }) => (
+export const Spinner: React.FC<Props> = ({ size = "1em", ...rest }) => (
     <svg
         viewBox="0 0 50 50"
         css={{

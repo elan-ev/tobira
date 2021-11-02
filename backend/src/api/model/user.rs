@@ -1,8 +1,8 @@
-use crate::auth::UserSession;
+use crate::auth::{UserData, User};
 
 
 #[derive(juniper::GraphQLObject)]
-pub(crate) struct User<'a> {
+pub(crate) struct UserApi<'a> {
     /// The username, a unique string identifying the user.
     username: &'a str,
 
@@ -10,11 +10,11 @@ pub(crate) struct User<'a> {
     display_name: &'a str,
 }
 
-impl<'a> User<'a> {
-    pub(crate) fn from_session(session: &'a UserSession) -> Option<Self> {
+impl<'a> UserApi<'a> {
+    pub(crate) fn from(session: &'a User) -> Option<Self> {
         match session {
-            UserSession::None => None,
-            UserSession::User { username, display_name, .. }
+            User::None => None,
+            User::Some(UserData { username, display_name, .. })
                 => Some(Self { username, display_name }),
         }
     }

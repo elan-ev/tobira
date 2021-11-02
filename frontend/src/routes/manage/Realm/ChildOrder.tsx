@@ -12,7 +12,8 @@ import {
 } from "../../../query-types/ChildOrderEditData.graphql";
 import { Button } from "../../../ui/Button";
 import { Spinner } from "../../../ui/Spinner";
-import { boxError, displayCommitError } from "./util";
+import { boxError } from "../../../ui/error";
+import { displayCommitError } from "./util";
 
 
 

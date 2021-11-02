@@ -66,7 +66,7 @@ type OuterProps = {
     disableScrolling?: boolean;
 };
 
-const Outer: React.FC<OuterProps> = ({ children, disableScrolling = false }) => (
+export const Outer: React.FC<OuterProps> = ({ children, disableScrolling = false }) => (
     <div css={{
         minHeight: "100%",
         display: "flex",

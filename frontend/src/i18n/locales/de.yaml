@@ -10,16 +10,17 @@ direction-up: Hoch
 direction-down: Runter
 navigation: Navigation
 rename: Umbenennen
+this-field-is-required: Dieses Feld ist erforderlich.
 
 api:
   error-boundary:
     invalid-input: Interner Fehler ($t(errors.invalid-input)).
     unexpected-server-error: 'Anwendungsfehler: Unerwarteter Fehler vom Server.'
-    not-your-fault: >
-      Dies ist höchstwahrscheinlich nicht Ihre Schuld. Sie können es später nochmal versuchen.
     detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
 
 errors:
+  not-your-fault: >
+    Dies ist höchstwahrscheinlich nicht Ihre Schuld. Sie können es später nochmal versuchen.
   unexpected-response: 'Interner Fehler: Unerwartete Antwort vom Server.'
   network-error: >
     Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden. Sind Sie
@@ -73,9 +74,13 @@ user:
   your-page: Persönliche Seite
   manage-content: Inhalte verwalten
 
-login:
-  button-label: Einloggen
-  not-logged-in: Nicht eingeloggt
+login-page:
+  user-id: Nutzerkennung
+  password: Passwort
+  already-logged-in: Sie sind bereits als „{{ name }}“ angemeldet.
+  go-to-homepage: Zur Startseite.
+  bad-credentials: 'Anmeldung fehlgeschlagen: Falsche Anmeldedaten.'
+  unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
 
 video:
   creator: Von
