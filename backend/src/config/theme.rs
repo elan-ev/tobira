@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use super::Color;
+
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ThemeConfig {
@@ -63,26 +65,26 @@ pub(crate) struct ColorConfig {
     // TODO: make sure color format is valid
 
     #[config(default = "#357C58")]
-    pub(crate) navigation: String,
+    pub(crate) navigation: Color,
 
     /// Accent color with large contrast to navigation color.
     #[config(default = "#007A96")]
-    pub(crate) accent: String,
+    pub(crate) accent: Color,
 
     /// Grey tone with 50% lightness/brightness. Several brighter and
     /// darker variants of this are created automatically. This is
     /// configurable in case you want to have a slightly colored grey,
     /// e.g. slightly warm.
     #[config(default = "#808080")]
-    pub(crate) grey50: String,
+    pub(crate) grey50: Color,
 
     /// A usually red color used to indicate errors, potentially destructive
     /// actions, and the like.
     #[config(default = "#b64235")]
-    pub(crate) danger: String,
+    pub(crate) danger: Color,
 
     /// A color for positive things or some "call to action" buttons, like the
     /// login button. Typically green.
     #[config(default = "#27ae60")]
-    pub(crate) happy: String,
+    pub(crate) happy: Color,
 }

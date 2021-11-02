@@ -8,10 +8,12 @@ use confique::Config as _;
 use crate::prelude::*;
 
 
+mod color;
 mod theme;
 mod translated_string;
 
 pub(crate) use self::{
+    color::Color,
     translated_string::TranslatedString,
     theme::ThemeConfig,
 };
