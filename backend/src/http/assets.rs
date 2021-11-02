@@ -81,9 +81,9 @@ impl Assets {
         variables.insert("global-style".into(), config.theme.to_css());
         variables.insert("auth".into(), json!({
             "loginLink": config.auth.login_link,
-            "userIdLabel": config.auth.login_page.user_id_label,
-            "passwordLabel": config.auth.login_page.password_label,
-            "loginPageNote": config.auth.login_page.note,
+            "userIdLabel": config.auth.login_page.user_id_label.as_ref().map(|ts| ts.map()),
+            "passwordLabel": config.auth.login_page.password_label.as_ref().map(|ts| ts.map()),
+            "loginPageNote": config.auth.login_page.note.as_ref().map(|ts| ts.map()),
         }).to_string());
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());

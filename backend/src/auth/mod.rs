@@ -5,7 +5,7 @@ use hyper::HeaderMap;
 use once_cell::sync::Lazy;
 use tokio_postgres::Error as PgError;
 
-use crate::prelude::*;
+use crate::{config::TranslatedString, prelude::*};
 
 
 mod handlers;
@@ -76,14 +76,14 @@ pub(crate) struct AuthConfig {
 #[derive(Debug, confique::Config)]
 pub(crate) struct LoginPageConfig {
     /// Label for the user-ID field. If not set, "User ID" is used.
-    pub(crate) user_id_label: Option<String>,
+    pub(crate) user_id_label: Option<TranslatedString>,
 
     /// Label for the password field. If not set, "Password" is used.
-    pub(crate) password_label: Option<String>,
+    pub(crate) password_label: Option<TranslatedString>,
 
     /// An additional note that is displayed on the login page. If not set, no
     /// additional note is shown.
-    pub(crate) note: Option<String>,
+    pub(crate) note: Option<TranslatedString>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]

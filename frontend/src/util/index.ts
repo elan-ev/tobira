@@ -1,3 +1,4 @@
+import { i18n } from "i18next";
 import { MutableRefObject, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import CONFIG, { TranslatedString } from "../config";
@@ -71,8 +72,12 @@ export const useTitle = (title: string, noSuffix = false): void => {
 /** Extracts the string corresponding to the current language from a translated config string. */
 export const useTranslatedConfig = (s: TranslatedString): string => {
     const { i18n } = useTranslation();
-    const lang = i18n.resolvedLanguage;
+    return translatedConfig(s, i18n);
+};
 
+/** Extracts the string corresponding to `i18n.resolvedLanguage` from a translated config string. */
+export const translatedConfig = (s: TranslatedString, i18n: i18n): string => {
+    const lang = i18n.resolvedLanguage;
     return (lang in s ? s[lang as keyof TranslatedString] : undefined) ?? s.en;
 };
 

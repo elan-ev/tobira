@@ -13,7 +13,7 @@ import { BASE_LOGO_MARGIN } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/Button";
 import { boxError } from "../ui/error";
-import { match, useTitle } from "../util";
+import { match, translatedConfig, useTitle } from "../util";
 import { Spinner } from "../ui/Spinner";
 import { FiCheck } from "react-icons/fi";
 import { Card } from "../ui/Card";
@@ -76,7 +76,7 @@ type FormData = {
 };
 
 const LoginBox: React.FC = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
     const userid = watch("userid", "");
     const password = watch("password", "");
@@ -131,7 +131,7 @@ const LoginBox: React.FC = () => {
                     marginBottom: 32,
                     borderRadius: 4,
                     padding: "8px 16px",
-                }}>{CONFIG.auth.loginPageNote}</div>
+                }}>{translatedConfig(CONFIG.auth.loginPageNote, i18n)}</div>
             )}
 
             <form
@@ -145,7 +145,9 @@ const LoginBox: React.FC = () => {
                 <div>
                     <Field isEmpty={userid === ""}>
                         <label htmlFor="userid">
-                            {CONFIG.auth.userIdLabel ?? t("login-page.user-id")}
+                            {CONFIG.auth.userIdLabel
+                                ? translatedConfig(CONFIG.auth.userIdLabel, i18n)
+                                : t("login-page.user-id")}
                         </label>
                         <input
                             id="userid"
@@ -159,7 +161,9 @@ const LoginBox: React.FC = () => {
                 <div>
                     <Field isEmpty={password === ""}>
                         <label htmlFor="password">
-                            {CONFIG.auth.passwordLabel ?? t("login-page.password")}
+                            {CONFIG.auth.passwordLabel
+                                ? translatedConfig(CONFIG.auth.passwordLabel, i18n)
+                                : t("login-page.password")}
                         </label>
                         <input
                             id="password"
