@@ -347,12 +347,15 @@ const MenuItem: React.FC<MenuItemProps> = ({
         "&:hover": {
             backgroundColor: "var(--grey97)",
         },
-        ...(extraCss as Record<string, unknown>),
     } as const;
 
     return linkTo
-        ? <li><Link to={linkTo} {...{ htmlLink, onClick, css }}>{inner}</Link></li>
-        : <li {...{ onClick, css }}>{inner}</li>;
+        ? <li css={extraCss}>
+            <Link to={linkTo} {...{ htmlLink, onClick, css }}>{inner}</Link>
+        </li>
+        : <li css={{ ...css, ...extraCss as Record<string, unknown> }} {...{ onClick }}>
+            {inner}
+        </li>;
 };
 
 
