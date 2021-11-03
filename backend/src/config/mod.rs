@@ -29,6 +29,17 @@ const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
 /// Configuration for Tobira.
 ///
 /// All relative paths are relative to the location of this configuration file.
+/// Duration values are specified as string with a unit, e.g. "27s". Valid
+/// units: 'ms', 's', 'min', 'h' and 'd'.
+///
+/// All user-facing texts you can configure here have to be specified per
+/// language, with two letter language key. Only English ('en') is required.
+/// Take `general.site_title` for example:
+///
+///     [general]
+///     site_title.en = "My university"
+///     site_title.de = "Meine Universität"
+///
 #[derive(Debug, confique::Config)]
 pub(crate) struct Config {
     #[config(nested)]
