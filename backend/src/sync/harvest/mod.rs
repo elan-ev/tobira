@@ -79,6 +79,14 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
         // Communication with Opencast succeeded: reset backoff time.
         backoff = INITIAL_BACKOFF;
 
+        if harvest_data.includes_items_until == sync_status.harvested_until {
+            bail!("Opencast's harvest response has 'includesItemsUntil' == 'since'. This means \
+                harvesting would not make any progress! This problem occurs when the number of \
+                events or series with exactly the same modification date is larger than the \
+                configured 'preferredHarvestSize'. Increasing 'preferredHarvestSize' might fix \
+                this problem. However, be aware of the potential problems with a large harvest \
+                size.");
+        }
 
         // Write received data into the database, updating the sync status if
         // everything worked out alright.
