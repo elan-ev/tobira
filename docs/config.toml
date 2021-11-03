@@ -176,6 +176,12 @@
 # Default value: 500
 #preferred_harvest_size = 500
 
+# The duration to wait after a "no new data" reply from Opencast. Only
+# relevant in `--daemon` mode.
+#
+# Default value: "30s"
+#poll_period = "30s"
+
 [theme]
 # Default value: 50
 #header_height = 50

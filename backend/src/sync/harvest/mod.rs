@@ -21,8 +21,6 @@ mod response;
 const INITIAL_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
 
-const POLL_PERIOD: Duration = Duration::from_secs(30);
-
 
 /// Continuiously fetches from the harvesting API and writes new data into our
 /// database.
@@ -90,10 +88,10 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
             if daemon {
                 debug!(
                     "Harvested all available data: waiting {:?} before starting next harvest",
-                    POLL_PERIOD,
+                    config.poll_period,
                 );
 
-                tokio::time::sleep(POLL_PERIOD).await;
+                tokio::time::sleep(config.poll_period).await;
             } else {
                 info!("Harvested all available data: exiting now.");
                 return Ok(());

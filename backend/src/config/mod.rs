@@ -2,6 +2,7 @@ use std::{
     fs,
     io::{self, Write},
     path::{Path, PathBuf},
+    time::Duration,
 };
 use confique::Config as _;
 
@@ -150,3 +151,27 @@ pub(crate) fn write_template(path: Option<&PathBuf>) -> Result<()> {
     Ok(())
 }
 
+/// Our custom format for durations. We allow a couple useful units and required
+/// a unit to increase readability of config files.
+pub(crate) fn deserialize_duration<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+    where D: serde::Deserializer<'de>,
+{
+    use serde::{Deserialize, de::Error};
+
+    let s = String::deserialize(deserializer)?;
+    let start_unit = s.find(|c: char| !c.is_digit(10))
+        .ok_or_else(|| D::Error::custom("no time unit for duration"))?;
+    let (num, unit) = s.split_at(start_unit);
+    let num: u32 = num.parse()
+        .map_err(|e| D::Error::custom(format!("invalid integer for duration: {}", e)))?;
+    let num: u64 = num.into();
+
+    match unit {
+        "ms" => Ok(Duration::from_millis(num)),
+        "s" => Ok(Duration::from_secs(num)),
+        "min" => Ok(Duration::from_secs(num * 60)),
+        "h" => Ok(Duration::from_secs(num * 60 * 60)),
+        "d" => Ok(Duration::from_secs(num * 60 * 60 * 24)),
+        _ => Err(D::Error::custom("invalid unit of time for duration")),
+    }
+}
