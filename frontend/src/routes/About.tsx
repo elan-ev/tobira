@@ -6,16 +6,16 @@ import type { PreloadedQuery } from "react-relay";
 import { Nav } from "../layout/Navigation";
 import { Root } from "../layout/Root";
 import { loadQuery } from "../relay";
-import type { Route } from "../router";
 import { AboutQuery } from "../query-types/AboutQuery.graphql";
 import { ABOUT_PATH } from "./paths";
+import { makeRoute } from "../rauta";
 
 
-export const AboutRoute: Route<PreloadedQuery<AboutQuery>> = {
+export const AboutRoute = makeRoute<PreloadedQuery<AboutQuery>>({
     path: ABOUT_PATH,
     prepare: () => loadQuery(query, {}),
     render: queryRef => <About queryRef={queryRef} />,
-};
+});
 
 const query = graphql`
     query AboutQuery {

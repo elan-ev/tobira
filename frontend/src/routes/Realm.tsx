@@ -9,25 +9,25 @@ import { FiLayout, FiPlus, FiTool } from "react-icons/fi";
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
-import type { Route } from "../router";
 import { Root } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
 import { useTitle, useTranslatedConfig } from "../util";
+import { makeRoute } from "../rauta";
 
 /** A valid realm path segment */
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
 
-export const RealmRoute: Route<Props> = {
+export const RealmRoute = makeRoute<Props>({
     path: `((?:/${PATH_SEGMENT_REGEX})*)`,
     prepare: ([path]) => ({
         queryRef: loadQuery(relayEnv, query, { path }),
         path,
     }),
     render: props => <RealmPage {...props} />,
-};
+});
 
 // TODO Build this query from fragments!
 const query = graphql`

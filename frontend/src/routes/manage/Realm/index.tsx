@@ -9,7 +9,6 @@ import type {
     RealmManageQueryResponse,
 } from "../../../query-types/RealmManageQuery.graphql";
 import { loadQuery } from "../../../relay";
-import { Route } from "../../../router";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
 import { DangerZone } from "./DangerZone";
@@ -20,13 +19,14 @@ import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
 import { ErrorBox } from "../../../ui/error";
 import { RealmSettingsContainer } from "./util";
+import { makeRoute } from "../../../rauta";
 
 
 // Route definition
 
 export const PATH = "/~manage/realm";
 
-export const ManageRealmRoute: Route<Props> = {
+export const ManageRealmRoute = makeRoute<Props>({
     path: PATH,
     prepare: (_, getParams) => {
         const path = getParams.get("path");
@@ -35,7 +35,7 @@ export const ManageRealmRoute: Route<Props> = {
         };
     },
     render: props => <DispatchPathSpecified {...props} />,
-};
+});
 
 
 const query = graphql`

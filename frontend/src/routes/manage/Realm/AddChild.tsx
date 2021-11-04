@@ -9,7 +9,7 @@ import type {
     AddChildQueryResponse,
 } from "../../../query-types/AddChildQuery.graphql";
 import { loadQuery } from "../../../relay";
-import { Route, useRouter } from "../../../router";
+import { useRouter } from "../../../router";
 import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
@@ -21,13 +21,14 @@ import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
+import { makeRoute } from "../../../rauta";
 
 
 // Route definition
 
 export const PATH = "/~manage/realm/add-child";
 
-export const AddChildRoute: Route<Props> = {
+export const AddChildRoute = makeRoute<Props>({
     path: PATH,
     prepare: (_, getParams) => {
         const parent = getParams.get("parent");
@@ -36,7 +37,7 @@ export const AddChildRoute: Route<Props> = {
         };
     },
     render: props => <DispatchPathSpecified {...props} />,
-};
+});
 
 
 const query = graphql`

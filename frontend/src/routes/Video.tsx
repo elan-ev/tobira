@@ -4,7 +4,6 @@ import type { PreloadedQuery } from "react-relay/hooks";
 
 import type { VideoQuery } from "../query-types/VideoQuery.graphql";
 import { environment as relayEnv } from "../relay";
-import type { Route } from "../router";
 import { Root } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
 import { NotFound } from "./NotFound";
@@ -14,9 +13,10 @@ import { Player, Track } from "../ui/player";
 import { useTranslation } from "react-i18next";
 import { useTitle } from "../util";
 import { SeriesBlockFromSeries } from "../ui/blocks/Series";
+import { makeRoute } from "../rauta";
 
 
-export const VideoRoute: Route<Props> = {
+export const VideoRoute = makeRoute<Props>({
     path: `((?:/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
     // TODO: check if video belongs to realm
     prepare: ([realmPath, videoId]) => {
@@ -25,7 +25,7 @@ export const VideoRoute: Route<Props> = {
         return { queryRef, realmPath, id };
     },
     render: props => <VideoPage {...props} />,
-};
+});
 
 const query = graphql`
     query VideoQuery($id: ID!, $realmPath: String!) {

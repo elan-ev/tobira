@@ -3,10 +3,11 @@ import React, { ReactNode } from "react";
 
 import { APIError, NetworkError, NotJson, ServerError } from ".";
 import { Root } from "../layout/Root";
-import { useRouter, RouterControl } from "../router";
+import { useRouter } from "../router";
 import { Card } from "../ui/Card";
 import { assertNever, bug } from "../util/err";
 import { match } from "../util";
+import { RouterControl } from "../rauta";
 
 
 type Props = {
