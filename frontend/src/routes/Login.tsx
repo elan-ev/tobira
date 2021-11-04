@@ -15,7 +15,7 @@ import { Button } from "../ui/Button";
 import { boxError } from "../ui/error";
 import { match, translatedConfig, useTitle } from "../util";
 import { Spinner } from "../ui/Spinner";
-import { FiCheck } from "react-icons/fi";
+import { FiCheck, FiChevronLeft } from "react-icons/fi";
 import { Card } from "../ui/Card";
 import CONFIG from "../config";
 import { LOGIN_PATH } from "./paths";
@@ -62,12 +62,30 @@ const Login: React.FC<Props> = ({ queryRef }) => {
                 : <>
                     <h1>{t("user.login")}</h1>
                     <LoginBox />
+                    <div css={{ marginTop: 12, fontSize: 14, lineHeight: 1 }}>
+                        <BackButton />
+                    </div>
                 </>
             }
         </main>
 
         <Footer />
     </Outer>;
+};
+
+const BackButton: React.FC = () => {
+    const { t } = useTranslation();
+    const inner = <><FiChevronLeft />{t("back")}</>;
+    const css = {
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+    };
+
+    return history.length === 1
+        ? <Link css={css} to="/">{inner}</Link>
+        : <a css={css} onClick={() => history.back()}>{inner}</a>;
 };
 
 type FormData = {
