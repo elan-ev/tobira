@@ -145,11 +145,28 @@ export interface RouterControl {
 }
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
-    const Link = ({ to, children, onClick, htmlLink = false, ...props }: LinkProps) => {
+    const useRouterImpl = (caller: string): RouterControl => {
         const context = React.useContext(Context);
         if (context === null) {
-            throw new Error("<Link> used without a parent <Router>! That's not allowed.");
+            throw new Error(`${caller} used without a parent <Router>! That's not allowed.`);
         }
+
+        return {
+            goto: (uri: string): void => {
+                const href = new URL(uri, document.baseURI).href;
+                const newRoute = matchRoute(href);
+                context.setActiveRoute(newRoute);
+                history.pushState(null, "", href);
+            },
+
+            listen: (listener: () => void): void => {
+                context.onRouteChangeListeners.push(listener);
+            },
+        };
+    };
+
+    const Link = ({ to, children, onClick, htmlLink = false, ...props }: LinkProps) => {
+        const router = useRouterImpl("<Link>");
 
         const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
             // We only want to react to simple mouse clicks.
@@ -158,10 +175,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             }
 
             e.preventDefault();
-            const href = (e.currentTarget as HTMLAnchorElement).href;
-            context.setActiveRoute(matchRoute(href));
-
-            history.pushState(null, "", href);
+            router.goto(to);
 
             // If the caller specified a handler, we will call it as well.
             if (onClick) {
@@ -216,24 +230,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
     const Context = React.createContext<ContextData | null>(null);
 
-    const useRouter = (): RouterControl => {
-        const context = React.useContext(Context);
-        if (context === null) {
-            throw new Error("`useRouter` used without a parent <Router>! That's not allowed.");
-        }
-
-        return {
-            goto: (uri: string): void => {
-                const href = new URL(uri, document.baseURI).href;
-                context.setActiveRoute(matchRoute(href));
-                history.pushState(null, "", href);
-            },
-
-            listen: (listener: () => void): void => {
-                context.onRouteChangeListeners.push(listener);
-            },
-        };
-    };
+    const useRouter = (): RouterControl => useRouterImpl("`useRouter`");
 
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
     const Router = ({ initialRoute, children }: RouterProps) => {
