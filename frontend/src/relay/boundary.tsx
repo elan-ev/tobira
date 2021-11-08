@@ -5,7 +5,7 @@ import { APIError, NetworkError, NotJson, ServerError } from ".";
 import { Root } from "../layout/Root";
 import { useRouter } from "../router";
 import { Card } from "../ui/Card";
-import { assertNever, bug } from "../util/err";
+import { assertNever } from "../util/err";
 import { match } from "../util";
 import { RouterControl } from "../rauta";
 
@@ -22,17 +22,19 @@ type State = {
 };
 
 class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
+    private unlisten?: () => void;
+
     public constructor(props: Props) {
         super(props);
+        this.state = { error: undefined };
+    }
 
-        const initialState = { error: undefined };
-        this.state = initialState;
+    public componentDidMount() {
+        this.unlisten = this.props.router.addListener(() => this.setState({ error: undefined }));
+    }
 
-        // Reset this state whenever the route changes.
-        if (this.context === null) {
-            return bug("API error boundary not child of router!");
-        }
-        props.router.listen(() => this.setState(initialState));
+    public componentWillUnmount() {
+        this.unlisten?.();
     }
 
     public static getDerivedStateFromError(error: unknown): State {

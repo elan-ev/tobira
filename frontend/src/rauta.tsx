@@ -70,7 +70,7 @@ export function makeFallbackRoute<P>(route: FallbackRoute<P>): FallbackRouteEras
 }
 
 
-type OnRouteChangeListener = () => void;
+type Listener = () => void;
 
 /** Routing definition */
 interface Config {
@@ -143,8 +143,16 @@ export interface RouterControl {
     /** Navigates to a new URI, just like creating a `<Link to={uri}>` and clicking it. */
     goto(uri: string): void;
 
-    // TODO
-    listen(listener: OnRouteChangeListener): void;
+    /**
+     * Adds a listener function that is called whenever a route transition is
+     * initiated. Neither the location nor the matched route has to change: the
+     * listener is also called when a navigation to the current location is
+     * initiated.
+     *
+     * Returns a function that removes the listener. Call the function at an
+     * appropriate time to prevent memory leaks.
+     */
+    addListener(listener: Listener): () => void;
 }
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
@@ -170,8 +178,12 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 newRoute(r => debugLog(`Setting active route for '${href}' to: `, r));
             },
 
-            listen: (listener: () => void): void => {
-                context.onRouteChangeListeners.push(listener);
+            addListener: (listener: () => void): () => void => {
+                const obj = { listener };
+                context.listeners.push(obj);
+                return () => {
+                    context.listeners = context.listeners.filter(l => l !== obj);
+                };
             },
         };
     };
@@ -236,7 +248,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     type ContextData = {
         activeRoute: MatchedRouteErased;
         setActiveRoute: (newRoute: MatchedRouteErased) => void;
-        onRouteChangeListeners: OnRouteChangeListener[];
+        listeners: { listener: Listener }[];
     };
 
     const Context = React.createContext<ContextData | null>(null);
@@ -245,14 +257,14 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
     const Router = ({ initialRoute, children }: RouterProps) => {
-        const onRouteChangeListeners = useRef<OnRouteChangeListener[]>([]);
+        const listeners = useRef<{ listener: Listener }[]>([]);
         const [activeRoute, setActiveRouteRaw] = useState<MatchedRouteErased>(() => initialRoute);
         const [isPending, startTransition] = useTransition();
 
         const setActiveRoute = (newRoute: MatchedRouteErased) => {
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
-                for (const listener of onRouteChangeListeners.current) {
+                for (const { listener } of listeners.current) {
                     listener();
                 }
             });
@@ -287,7 +299,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         const contextData = {
             setActiveRoute,
             activeRoute,
-            onRouteChangeListeners: onRouteChangeListeners.current,
+            listeners: listeners.current,
         };
 
         return (
