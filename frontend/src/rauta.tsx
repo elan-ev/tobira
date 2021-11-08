@@ -4,8 +4,16 @@ import { Transition } from "react-transition-group";
 import { match } from "./util";
 
 
+export type RouteBase<Prepared> = {
+    /**
+     * The function for rendering this route. The value that `prepare` returned
+     * is passed as argument.
+     */
+    render: (prepared: Prepared) => JSX.Element;
+};
+
 /** The definition of a single route. */
-export type Route<Prepared> = {
+export type Route<Prepared> = RouteBase<Prepared> & {
     /**
      * A regex describing the route's path. If the regex matches the path, the
      * route is taken. Regex may contain capture groups. All captures are
@@ -22,30 +30,20 @@ export type Route<Prepared> = {
      * first element (the whole match) removed.
      */
     prepare: (routeParams: string[], getParams: URLSearchParams) => Prepared;
-
-    /**
-     * The function for rendering this route. The value that `prepare` returned
-     * is passed as argument.
-     */
-    render: (prepared: Prepared) => JSX.Element;
 };
 
 /** A route used as fallback (if no other route matches) */
-export type FallbackRoute<Prepared> = {
+export type FallbackRoute<Prepared> = RouteBase<Prepared> & {
     /** Like `Route.prepare`, but without information about the URL. */
     prepare: () => Prepared;
-
-    /** Like `Route.render´ */
-    render: (prepared: Prepared) => JSX.Element;
 };
 
 /**
  * A route which has been matched and whose `prepare` function was already
  * called.
  */
-export type MatchedRoute<Prepared> = {
+export type MatchedRoute<Prepared> = RouteBase<Prepared> & {
     prepared: Prepared;
-    render: (prepared: Prepared) => JSX.Element;
 };
 
 /** A type-erased version of `Route`. Use `makeRoute` to obtain this. */
