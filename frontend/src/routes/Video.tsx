@@ -25,6 +25,7 @@ export const VideoRoute = makeRoute<Props>({
         return { queryRef, realmPath, id };
     },
     render: props => <VideoPage {...props} />,
+    dispose: prepared => prepared.queryRef.dispose(),
 });
 
 const query = graphql`

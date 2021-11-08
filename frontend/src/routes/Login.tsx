@@ -26,6 +26,7 @@ export const LoginRoute = makeRoute<PreloadedQuery<LoginQuery>>({
     path: LOGIN_PATH,
     prepare: () => loadQuery(query, {}),
     render: queryRef => <Login queryRef={queryRef} />,
+    dispose: prepared => prepared.dispose(),
 });
 
 const query = graphql`

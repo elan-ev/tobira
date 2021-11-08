@@ -35,6 +35,7 @@ export const ManageRealmRoute = makeRoute<Props>({
         };
     },
     render: props => <DispatchPathSpecified {...props} />,
+    dispose: prepared => prepared.queryRef?.dispose(),
 });
 
 

@@ -10,6 +10,12 @@ export type RouteBase<Prepared> = {
      * is passed as argument.
      */
     render: (prepared: Prepared) => JSX.Element;
+
+    /**
+     * A function that is called when the route becomes inactive. Mainly useful
+     * to do cleanup work.
+     */
+    dispose?: (prepared: Prepared) => void;
 };
 
 /** The definition of a single route. */
@@ -219,12 +225,12 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
             return forRoute(route => {
                 const prepared = route.prepare(params, url.searchParams);
-                return f => f({ prepared, render: route.render });
+                return f => f({ prepared, render: route.render, dispose: route.dispose });
             });
         } else {
-            return config.fallback(fallbackRoute => {
-                const prepared = fallbackRoute.prepare();
-                return f => f({ prepared, render: fallbackRoute.render });
+            return config.fallback(route => {
+                const prepared = route.prepare();
+                return f => f({ prepared, render: route.render, dispose: route.dispose });
             });
         }
     };
@@ -272,18 +278,15 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             return () => window.removeEventListener("popstate", onPopState);
         }, []);
 
-        // TODO
-        // // We sometimes need to dispose of a prepared value when switching to
-        // // another route. We do that here. If this method does not exist, we just
-        // // do nothing.
-        // useEffect(() => () => {
-        //     /* eslint-disable */
-        //     const prepared = activeRoute.prepared;
-        //     if (typeof prepared?.dispose === "function") {
-        //         prepared?.dispose();
-        //     }
-        //     /* eslint-enable */
-        // });
+        // Dispose of routes when they are no longer needed.
+        useEffect(() => () => {
+            activeRoute(r => {
+                if (r.dispose) {
+                    debugLog("Disposing of route: ", r);
+                    r.dispose(r.prepared);
+                }
+            });
+        }, [activeRoute(r => r.prepared)]);
 
         const contextData = {
             setActiveRoute,

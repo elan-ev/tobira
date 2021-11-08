@@ -27,6 +27,7 @@ export const RealmRoute = makeRoute<Props>({
         path,
     }),
     render: props => <RealmPage {...props} />,
+    dispose: props => props.queryRef.dispose(),
 });
 
 // TODO Build this query from fragments!

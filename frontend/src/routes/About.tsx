@@ -15,6 +15,7 @@ export const AboutRoute = makeRoute<PreloadedQuery<AboutQuery>>({
     path: ABOUT_PATH,
     prepare: () => loadQuery(query, {}),
     render: queryRef => <About queryRef={queryRef} />,
+    dispose: prepared => prepared.dispose(),
 });
 
 const query = graphql`
