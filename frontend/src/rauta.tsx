@@ -78,6 +78,9 @@ interface Config {
 
     /** All routes. They are matched in order, with the first matching one "winning". */
     routes: RouteErased[];
+
+    /** If set to `true`, debug messages are logged via `console.debug`. Default: `false`. */
+    debug?: boolean;
 }
 
 /** Props of the `<Link>` component. */
@@ -145,6 +148,13 @@ export interface RouterControl {
 }
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
+    // Helper to log debug messages if `config.debug` is true.
+    const debugLog = (...args: any[]) => {
+        if (config.debug) {
+            console.debug("[rauta] ", ...args);
+        }
+    };
+
     const useRouterImpl = (caller: string): RouterControl => {
         const context = React.useContext(Context);
         if (context === null) {
@@ -157,6 +167,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 const newRoute = matchRoute(href);
                 context.setActiveRoute(newRoute);
                 history.pushState(null, "", href);
+                newRoute(r => debugLog(`Setting active route for '${href}' to: `, r));
             },
 
             listen: (listener: () => void): void => {
@@ -250,7 +261,13 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         // We need to listen to `popstate` events.
         useEffect(() => {
             const onPopState = () => {
-                setActiveRoute(matchRoute(window.location.href));
+                const newRoute = matchRoute(window.location.href);
+                setActiveRoute(newRoute);
+                newRoute(r => debugLog(
+                    "Reacting to 'popstate' event: setting active route for"
+                        + `'${window.location.href}' to: `,
+                    r,
+                ));
             };
 
             window.addEventListener("popstate", onPopState);
