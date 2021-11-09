@@ -49,7 +49,28 @@ export type MatchedRoute<Prepared> = RouteBase<Prepared> & {
     prepared: Prepared;
 };
 
-/** A type-erased version of `Route`. Use `makeRoute` to obtain this. */
+/**
+ * A type-erased version of `Route`. Use `makeRoute` to obtain this.
+ *
+ * This looks a bit funny, but is essentially an encoding of existential types.
+ * So what we need is an array of routes. But `Route` has a type parameter. We
+ * could of course set the type to `Route<any>[]` and it would work, but with
+ * two disadvantages: (a) in our code, we would have to deal with `any`s and
+ * would lose type checking ability, and (b) user code could also lose type
+ * checking ability. So the type we "need" is: `(∃ T: Route<T>)[]`.
+ *
+ * However, TS does not have existential types built-in. Luckily, there are
+ * workarounds. We use "continuations" here. It's just two indirections through
+ * callables. It makes our code below slightly less readable, but it's still
+ * fine and at least we get proper type checking! For more information, see:
+ *
+ * - https://www.jalo.website/existential-types-in-typescript-through-continuations
+ * - https://rubenpieters.github.io/
+ *      programming/typescript/2018/07/13/existential-types-typescript.html
+ * - https://stackoverflow.com/q/51815782/
+ * - https://stackoverflow.com/a/46186356/
+ * - https://unsafe-perform.io/posts/2020-02-21-existential-quantification-in-typescript
+ */
 export type RouteErased = <R, >(cont: <P, >(r: Route<P>) => R) => R;
 
 /** A type-erased version of `FallbackRoute`. Use `makeFallbackRoute` to obtain this. */
