@@ -175,14 +175,15 @@
 #
 # A very large number might cause problems due to the Opencast or Tobira
 # node having to hold that many items in memory, or due to network
-# request size restrictions. Too small of a number means that the HTTP
-# overhead will become more significant, thus slowing down the syncing
-# process.
-#
-# Also, due to `TIME_BUFFER_SIZE` on the Opencast side (see its docs for
-# more information), if the number of items that change within one
-# `TIME_BUFFER_SIZE` is larger than this preferred harvest size, lots of
-# events could be transferred repeatedly via the harvest API.
+# request size restrictions. Too small of a number not means that the
+# overhead of each request will become more significant, slowing down
+# harvesting. But more importantly: if your Opencast instance has more
+# items with exactly the same `updated` timestamp than the configured
+# `preferred_harvest_size`, Tobira is unable to harvest. The `updated`
+# timestamp is has millisecond precision, so this situation is highly
+# unlikely to occur naturally. However, this can easily occur with
+# artificial timestamps, like when you migrate old Opencast data
+# (without an `updated` timestamp). Be aware of that.
 #
 # Default value: 500
 #preferred_harvest_size = 500
