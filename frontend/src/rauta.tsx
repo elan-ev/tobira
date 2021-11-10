@@ -94,14 +94,6 @@ interface Config {
 /** Props of the `<Link>` component. */
 type LinkProps = {
     to: string;
-
-    /**
-     * If `true`, a standard `<a>` link without special onClick handler is used.
-     * If you set this to `true` unconditionally, rather use `<a>` directly.
-     * This is just convenient if you need to switch between router-link and
-     * html-link based on a boolean. Default: `false`.
-     */
-    htmlLink?: boolean;
 } & Omit<React.ComponentPropsWithoutRef<"a">, "href">;
 
 /** Props of the `<Router>` component. */
@@ -184,7 +176,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         };
     };
 
-    const Link = ({ to, children, onClick, htmlLink = false, ...props }: LinkProps) => {
+    const Link = ({ to, children, onClick, ...props }: LinkProps) => {
         const router = useRouterImpl("<Link>");
 
         const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -202,7 +194,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             }
         };
 
-        return <a href={to} onClick={htmlLink ? onClick : handleClick} {...props}>{children}</a>;
+        return <a href={to} onClick={handleClick} {...props}>{children}</a>;
     };
 
     const matchRoute = (href: string): MatchedRouteErased => {

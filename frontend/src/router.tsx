@@ -51,7 +51,14 @@ const LoadingIndicator = ({ isPending }: { isPending: boolean }): JSX.Element =>
 };
 
 
-const { ActiveRoute, Link, matchInitialRoute, matchRoute, Router, useRouter } = makeRouter({
+const {
+    ActiveRoute,
+    Link: RautaLink,
+    matchInitialRoute,
+    matchRoute,
+    Router,
+    useRouter,
+} = makeRouter({
     LoadingIndicator,
     fallback: NotFoundRoute,
     routes: [
@@ -66,3 +73,21 @@ const { ActiveRoute, Link, matchInitialRoute, matchRoute, Router, useRouter } = 
 });
 
 export { ActiveRoute, Link, matchInitialRoute, matchRoute, Router, useRouter };
+
+type LinkProps = {
+    to: string;
+
+    /**
+     * If `true`, a standard `<a>` link without special onClick handler is used.
+     * If you set this to `true` unconditionally, rather use `<a>` directly.
+     * This is just convenient if you need to switch between router-link and
+     * html-link based on a boolean. Default: `false`.
+     */
+    htmlLink?: boolean;
+} & Omit<React.ComponentPropsWithoutRef<"a">, "href">;
+
+const Link = ({ to, children, htmlLink = false, ...props }: LinkProps): JSX.Element => (
+    htmlLink
+        ? <a href={to} {...props}>{children}</a>
+        : <RautaLink to={to} {...props}>{children}</RautaLink>
+);
