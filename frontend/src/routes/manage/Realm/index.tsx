@@ -39,6 +39,7 @@ export const ManageRealmRoute = makeRoute<Props, ["path"]>({
 
 const query = graphql`
     query RealmManageQuery($path: String!) {
+        ... UserData
         realm: realmByPath(path: $path) {
             name
             isRoot
@@ -63,10 +64,15 @@ type Props = {
  * `PathInvalid` otherwise.
  */
 const DispatchRealmExists: React.FC<Props> = ({ queryRef }) => {
-    const { realm } = usePreloadedQuery(query, queryRef);
-    return !realm
-        ? <Root nav={[]}><PathInvalid /></Root>
-        : <Root nav={<Nav fragRef={realm} />}><SettingsPage realm={realm} /></Root>;
+    const queryResult = usePreloadedQuery(query, queryRef);
+    const { realm } = queryResult;
+    const nav = !realm ? [] : <Nav fragRef={realm} />;
+
+    return (
+        <Root nav={nav} userQuery={queryResult}>
+            {!realm ? <PathInvalid /> : <SettingsPage realm={realm} />}
+        </Root>
+    );
 };
 
 

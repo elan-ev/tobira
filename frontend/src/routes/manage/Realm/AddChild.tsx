@@ -41,6 +41,7 @@ export const AddChildRoute = makeRoute<Props, ["parent"]>({
 
 const query = graphql`
     query AddChildQuery($parent: String!) {
+        ... UserData
         parent: realmByPath(path: $parent) {
             id
             name
@@ -62,10 +63,15 @@ type Props = {
  * `PathInvalid` otherwise.
  */
 const DispatchRealmExists: React.FC<Props> = ({ queryRef }) => {
-    const { parent } = usePreloadedQuery(query, queryRef);
-    return !parent
-        ? <Root nav={[]}><PathInvalid /></Root>
-        : <Root nav={<Nav fragRef={parent} />}><AddChild parent={parent} /></Root>;
+    const queryResult = usePreloadedQuery(query, queryRef);
+    const { parent } = queryResult;
+    const nav = !parent ? [] : <Nav fragRef={parent} />;
+
+    return (
+        <Root nav={nav} userQuery={queryResult}>
+            {!parent ? <PathInvalid /> : <AddChild parent={parent} />}
+        </Root>
+    );
 };
 
 
