@@ -70,7 +70,7 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
                 ref.current.textContent = "";
             }
         };
-    });
+    }, [tracks, title, duration]);
 
     return (
         <div
