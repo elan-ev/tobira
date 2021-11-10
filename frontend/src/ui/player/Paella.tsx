@@ -11,28 +11,6 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
     const ref = useRef<HTMLDivElement>(null);
     const paella = useRef<Paella>();
 
-    const presentationTracks = tracks.filter(t => t.flavor.startsWith("presentation"));
-    const presenterTracks = tracks.filter(t => t.flavor.startsWith("presenter"));
-
-    // Video/event specific information we have to give to Paella.
-    const manifest = {
-        metadata: { title, duration },
-        streams: [
-            {
-                content: "presentation",
-                sources: {
-                    mp4: presentationTracks.map(trackToPaellaSource),
-                },
-            },
-            {
-                content: "presenter",
-                sources: {
-                    "mp4": presenterTracks.map(trackToPaellaSource),
-                },
-            },
-        ],
-    };
-
     useEffect(() => {
         // If the ref is not set yet (which should not usually happen), we do
         // nothing.
@@ -43,6 +21,27 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
         // Otherwise we check weather Paella is already initialized. If not, we
         // do that now and set the initialized instance to `ref.current.paella`.
         if (!paella.current) {
+            // Video/event specific information we have to give to Paella.
+            const presentationTracks = tracks.filter(t => t.flavor.startsWith("presentation"));
+            const presenterTracks = tracks.filter(t => t.flavor.startsWith("presenter"));
+            const manifest = {
+                metadata: { title, duration },
+                streams: [
+                    {
+                        content: "presentation",
+                        sources: {
+                            mp4: presentationTracks.map(trackToPaellaSource),
+                        },
+                    },
+                    {
+                        content: "presenter",
+                        sources: {
+                            "mp4": presenterTracks.map(trackToPaellaSource),
+                        },
+                    },
+                ],
+            };
+
             paella.current = new Paella(ref.current, {
                 // Paella has a weird API unfortunately. It by default loads two
                 // files via `fetch`. But we can provide that data immediately
@@ -61,13 +60,14 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
             paella.current.loadManifest();
         }
 
+        const container = ref.current;
         return () => {
             // It would be nicer to tell Paella to unload, but there is
             // currently not such method, I think.
             // https://github.com/polimediaupv/paella-core/issues/9
             paella.current = undefined;
-            if (ref.current) {
-                ref.current.textContent = "";
+            if (container) {
+                container.textContent = "";
             }
         };
     }, [tracks, title, duration]);

@@ -15,6 +15,7 @@ module.exports = {
     },
     extends: [
         "eslint:recommended",
+        "plugin:react-hooks/recommended",
     ],
     rules: {
         // `== null` is actually a useful check for `null` and `undefined` at the same time

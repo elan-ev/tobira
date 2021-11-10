@@ -35,11 +35,16 @@ export const AddChildRoute = makeRoute<PreloadedQuery<AddChildQuery>, ["parent"]
         const { parent } = result;
         const nav = !parent ? [] : <Nav fragRef={parent} />;
 
-        return (
-            <Root nav={nav} userQuery={result}>
-                {!parent ? <PathInvalid /> : <AddChild parent={parent} />}
-            </Root>
-        );
+        let inner;
+        if (!parent) {
+            inner = <PathInvalid />;
+        } else if (!parent.canCurrentUserEdit) {
+            inner = <NotAuthorized />;
+        } else {
+            inner = <AddChild parent={parent} />;
+        }
+
+        return <Root nav={nav} userQuery={result}>{inner}</Root>;
     }} />,
     dispose: queryRef => queryRef.dispose(),
 });
@@ -75,9 +80,6 @@ type Props = {
 
 const AddChild: React.FC<Props> = ({ parent }) => {
     const { t } = useTranslation();
-    if (!parent.canCurrentUserEdit) {
-        return <NotAuthorized />;
-    }
 
     type FormData = {
         name: string;

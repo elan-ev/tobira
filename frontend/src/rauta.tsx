@@ -343,7 +343,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                     r.dispose(r.prepared);
                 }
             });
-        }, [activeRoute(r => r.prepared)]);
+        }, [activeRoute]);
 
         const contextData = {
             setActiveRoute,

@@ -1,8 +1,8 @@
 import React from "react";
-import { graphql, loadQuery, usePreloadedQuery } from "react-relay/hooks";
+import { graphql, loadQuery } from "react-relay/hooks";
 import type { PreloadedQuery } from "react-relay/hooks";
 
-import type { VideoQuery } from "../query-types/VideoQuery.graphql";
+import type { VideoQuery, VideoQueryResponse } from "../query-types/VideoQuery.graphql";
 import { environment as relayEnv } from "../relay";
 import { Root } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
@@ -14,9 +14,17 @@ import { useTranslation } from "react-i18next";
 import { useTitle } from "../util";
 import { SeriesBlockFromSeries } from "../ui/blocks/Series";
 import { makeRoute } from "../rauta";
+import { QueryLoader } from "../util/QueryLoader";
+import { UserData$key } from "../query-types/UserData.graphql";
 
 
-export const VideoRoute = makeRoute<Props>({
+type Prep = {
+    queryRef: PreloadedQuery<VideoQuery>;
+    realmPath: string;
+    id: string;
+};
+
+export const VideoRoute = makeRoute<Prep>({
     path: `((?:/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
     queryParams: [],
     // TODO: check if video belongs to realm
@@ -25,8 +33,18 @@ export const VideoRoute = makeRoute<Props>({
         const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
         return { queryRef, realmPath, id };
     },
-    render: props => <VideoPage {...props} />,
-    dispose: prepared => prepared.queryRef.dispose(),
+    render: ({ queryRef, realmPath, id }) => <QueryLoader
+        {... { query, queryRef }}
+        render={result => {
+            const { event, realm } = result;
+
+            // TODO: this realm check is useless once we check a video belongs to a realm.
+            return !event || !realm
+                ? <NotFound kind="video" />
+                : <VideoPage {...{ event, realm, userQuery: result, realmPath, id }} />;
+        }}
+    />,
+    dispose: prep => prep.queryRef.dispose(),
 });
 
 const query = graphql`
@@ -49,20 +67,15 @@ const query = graphql`
 `;
 
 type Props = {
-    queryRef: PreloadedQuery<VideoQuery>;
+    event: NonNullable<VideoQueryResponse["event"]>;
+    realm: NonNullable<VideoQueryResponse["realm"]>;
+    userQuery: UserData$key;
     realmPath: string;
     id: string;
 };
 
-const VideoPage: React.FC<Props> = ({ queryRef, realmPath, id }) => {
+const VideoPage: React.FC<Props> = ({ event, realm, userQuery, realmPath, id }) => {
     const { t, i18n } = useTranslation();
-    const queryResult = usePreloadedQuery(query, queryRef);
-    const { event, realm } = queryResult;
-
-    // TODO: this realm check is useless once we check a video belongs to a realm.
-    if (!event || !realm) {
-        return <NotFound kind="video" />;
-    }
 
     const createdDate = new Date(event.created);
     const created = createdDate.toLocaleString(i18n.language);
@@ -78,7 +91,7 @@ const VideoPage: React.FC<Props> = ({ queryRef, realmPath, id }) => {
     const duration = event.duration ?? 0; // <-- TODO
     useTitle(title);
     return (
-        <Root nav={<Nav fragRef={realm} />} userQuery={queryResult}>
+        <Root nav={<Nav fragRef={realm} />} userQuery={userQuery}>
             <Player tracks={tracks as Track[]} title={title} duration={duration} />
             <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
             {description !== null && <TextBlock content={description} />}
