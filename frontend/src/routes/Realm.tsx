@@ -1,8 +1,8 @@
 import React from "react";
 
-import { graphql, loadQuery, usePreloadedQuery } from "react-relay/hooks";
+import { graphql, loadQuery } from "react-relay/hooks";
 import type { PreloadedQuery } from "react-relay/hooks";
-import type { RealmQuery } from "../query-types/RealmQuery.graphql";
+import type { RealmQuery, RealmQueryResponse } from "../query-types/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
 import { FiLayout, FiPlus, FiTool } from "react-icons/fi";
 
@@ -16,22 +16,25 @@ import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
 import { useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
+import { UserData$key } from "../query-types/UserData.graphql";
+import { QueryLoader } from "../util/QueryLoader";
 
 /** A valid realm path segment */
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
 
-export const RealmRoute = makeRoute<Props>({
+export const RealmRoute = makeRoute<[PreloadedQuery<RealmQuery>, string]>({
     path: `((?:/${PATH_SEGMENT_REGEX})*)`,
     queryParams: [],
     prepare: ({ pathParams: [realmPath] }) => {
         const path = realmPath === "" ? "/" : realmPath;
-        return {
-            queryRef: loadQuery(relayEnv, query, { path }),
-            path,
-        };
+        return [loadQuery(relayEnv, query, { path }), path];
     },
-    render: props => <RealmPage {...props} />,
-    dispose: props => props.queryRef.dispose(),
+    render: ([queryRef, path]) => <QueryLoader {...{ query, queryRef }} render={result => (
+        !result.realm
+            ? <NotFound kind="page" />
+            : <RealmPage {...{ userQuery: result, path, realm: result.realm }} />
+    )} />,
+    dispose: ([queryRef, _path]) => queryRef.dispose(),
 });
 
 // TODO Build this query from fragments!
@@ -52,19 +55,13 @@ const query = graphql`
 `;
 
 type Props = {
-    queryRef: PreloadedQuery<RealmQuery>;
+    userQuery: UserData$key;
+    realm: NonNullable<RealmQueryResponse["realm"]>;
     path: string;
 };
 
-const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
+const RealmPage: React.FC<Props> = ({ userQuery, realm, path }) => {
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
-    const queryResult = usePreloadedQuery(query, queryRef);
-    const { realm } = queryResult;
-
-    if (!realm) {
-        return <NotFound kind="page" />;
-    }
-
     const breadcrumbs = realm.ancestors
         .concat(realm)
         .map(({ name, path }) => ({
@@ -81,7 +78,7 @@ const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
     useTitle(title, isRoot);
 
     return (
-        <Root nav={nav} userQuery={queryResult}>
+        <Root nav={nav} userQuery={userQuery}>
             {!isRoot && <Breadcrumbs path={breadcrumbs} />}
             {title && <h1>{title}</h1>}
             <Blocks realm={realm} />

@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, usePreloadedQuery } from "react-relay";
+import { graphql } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
 import { Root } from "../../../layout/Root";
@@ -20,20 +20,28 @@ import { CenteredContent } from "../../../ui";
 import { ErrorBox } from "../../../ui/error";
 import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
+import { QueryLoader } from "../../../util/QueryLoader";
 
 
 // Route definition
 
 export const PATH = "/~manage/realm";
 
-export const ManageRealmRoute = makeRoute<Props, ["path"]>({
+export const ManageRealmRoute = makeRoute<PreloadedQuery<RealmManageQuery>, ["path"]>({
     path: PATH,
     queryParams: ["path"],
-    prepare: ({ queryParams: { path } }) => ({
-        queryRef: loadQuery(query, { path }),
-    }),
-    render: props => <DispatchRealmExists {...props} />,
-    dispose: prepared => prepared.queryRef?.dispose(),
+    prepare: ({ queryParams: { path } }) => loadQuery(query, { path }),
+    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => {
+        const { realm } = result;
+        const nav = !realm ? [] : <Nav fragRef={realm} />;
+
+        return (
+            <Root nav={nav} userQuery={result}>
+                {!realm ? <PathInvalid /> : <SettingsPage realm={realm} />}
+            </Root>
+        );
+    }} />,
+    dispose: queryRef => queryRef.dispose(),
 });
 
 
@@ -54,42 +62,12 @@ const query = graphql`
     }
 `;
 
-
 type Props = {
-    queryRef: PreloadedQuery<RealmManageQuery>;
-};
-
-/**
- * Just checks if the realm path points to a realm. If so, forwards to `SettingsPage`;
- * `PathInvalid` otherwise.
- */
-const DispatchRealmExists: React.FC<Props> = ({ queryRef }) => {
-    const queryResult = usePreloadedQuery(query, queryRef);
-    const { realm } = queryResult;
-    const nav = !realm ? [] : <Nav fragRef={realm} />;
-
-    return (
-        <Root nav={nav} userQuery={queryResult}>
-            {!realm ? <PathInvalid /> : <SettingsPage realm={realm} />}
-        </Root>
-    );
-};
-
-
-export const PathInvalid: React.FC = () => {
-    const { t } = useTranslation();
-    return <CenteredContent>
-        <Card kind="error">{t("manage.realm.invalid-path")}</Card>
-    </CenteredContent>;
-};
-
-
-type SettingsPageProps = {
     realm: Exclude<RealmManageQueryResponse["realm"], null>;
 };
 
 /** The actual settings page */
-const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
+const SettingsPage: React.FC<Props> = ({ realm }) => {
     const { t } = useTranslation();
     if (!realm.canCurrentUserEdit) {
         return <ErrorBox>
@@ -126,4 +104,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ realm }) => {
             <section><DangerZone fragRef={realm} /></section>
         </RealmSettingsContainer>
     );
+};
+
+export const PathInvalid: React.FC = () => {
+    const { t } = useTranslation();
+    return <CenteredContent>
+        <Card kind="error">{t("manage.realm.invalid-path")}</Card>
+    </CenteredContent>;
 };

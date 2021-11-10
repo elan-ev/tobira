@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { graphql, useMutation, usePreloadedQuery } from "react-relay";
+import { graphql, useMutation } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
 import { Root } from "../../../layout/Root";
@@ -22,20 +22,26 @@ import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
+import { QueryLoader } from "../../../util/QueryLoader";
 
-
-// Route definition
 
 export const PATH = "/~manage/realm/add-child";
 
-export const AddChildRoute = makeRoute<Props, ["parent"]>({
+export const AddChildRoute = makeRoute<PreloadedQuery<AddChildQuery>, ["parent"]>({
     path: PATH,
     queryParams: ["parent"],
-    prepare: ({ queryParams: { parent } }) => ({
-        queryRef: loadQuery(query, { parent }),
-    }),
-    render: props => <DispatchRealmExists {...props} />,
-    dispose: prepared => prepared.queryRef?.dispose(),
+    prepare: ({ queryParams: { parent } }) => loadQuery(query, { parent }),
+    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => {
+        const { parent } = result;
+        const nav = !parent ? [] : <Nav fragRef={parent} />;
+
+        return (
+            <Root nav={nav} userQuery={result}>
+                {!parent ? <PathInvalid /> : <AddChild parent={parent} />}
+            </Root>
+        );
+    }} />,
+    dispose: queryRef => queryRef.dispose(),
 });
 
 
@@ -54,27 +60,6 @@ const query = graphql`
     }
 `;
 
-type Props = {
-    queryRef: PreloadedQuery<AddChildQuery>;
-};
-
-/**
- * Just checks if the realm path points to a realm. If so, forwards to `AddChild`;
- * `PathInvalid` otherwise.
- */
-const DispatchRealmExists: React.FC<Props> = ({ queryRef }) => {
-    const queryResult = usePreloadedQuery(query, queryRef);
-    const { parent } = queryResult;
-    const nav = !parent ? [] : <Nav fragRef={parent} />;
-
-    return (
-        <Root nav={nav} userQuery={queryResult}>
-            {!parent ? <PathInvalid /> : <AddChild parent={parent} />}
-        </Root>
-    );
-};
-
-
 const addChildMutation = graphql`
     mutation AddChildMutation($realm: NewRealm!) {
         addRealm(realm: $realm) {
@@ -84,12 +69,11 @@ const addChildMutation = graphql`
     }
 `;
 
-type AddChildProps = {
-    parent: Exclude<AddChildQueryResponse["parent"], null>;
+type Props = {
+    parent: NonNullable<AddChildQueryResponse["parent"]>;
 };
 
-/** The actual settings page */
-const AddChild: React.FC<AddChildProps> = ({ parent }) => {
+const AddChild: React.FC<Props> = ({ parent }) => {
     const { t } = useTranslation();
     if (!parent.canCurrentUserEdit) {
         return <ErrorBox>
