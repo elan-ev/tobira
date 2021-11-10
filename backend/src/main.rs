@@ -19,7 +19,6 @@ mod http;
 mod logger;
 mod prelude;
 mod sync;
-mod theme;
 
 
 #[tokio::main]

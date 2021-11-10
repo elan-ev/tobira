@@ -60,7 +60,17 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
             });
             paella.current.loadManifest();
         }
-    }, []);
+
+        return () => {
+            // It would be nicer to tell Paella to unload, but there is
+            // currently not such method, I think.
+            // https://github.com/polimediaupv/paella-core/issues/9
+            paella.current = undefined;
+            if (ref.current) {
+                ref.current.textContent = "";
+            }
+        };
+    });
 
     return (
         <div

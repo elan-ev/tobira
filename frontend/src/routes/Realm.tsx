@@ -15,7 +15,7 @@ import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
-import { useTitle } from "../util";
+import { useTitle, useTranslatedConfig } from "../util";
 
 /** A valid realm path segment */
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
@@ -52,6 +52,7 @@ type Props = {
 };
 
 const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
+    const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
     const queryResult = usePreloadedQuery(query, queryRef);
     const { realm } = queryResult;
 
@@ -67,7 +68,7 @@ const RealmPage: React.FC<Props> = ({ queryRef, path }) => {
         }));
 
     const isRoot = realm.parent === null;
-    const title = isRoot ? CONFIG.siteTitle : realm.name;
+    const title = isRoot ? siteTitle : realm.name;
     const mainNav = <Nav key="nav" fragRef={realm} />;
     const nav = realm.canCurrentUserEdit
         ? [mainNav, <RealmEditLinks key="edit-buttons" path={path} />]

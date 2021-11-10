@@ -78,10 +78,19 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
     // Test the connection by executing a simple query.
     let client = pool.get().await
         .context("failed to get DB connection")?;
-    client.execute("SELECT 1", &[]).await
+    client.execute("select 1", &[]).await
         .context("failed to execute DB test query")?;
-
     debug!("Successfully tested database connection with test query");
+
+    // Make sure the database uses UTF8 encoding. There is no good reason to use
+    // anything else.
+    let encoding = client.query_one("show server_encoding;", &[]).await
+        .context("failed to check server encoding")?
+        .get::<_, String>(0);
+
+    if encoding != "UTF8" {
+        bail!("Database encoding is not UTF8, but Tobira requires UTF8!");
+    }
 
     Ok(pool)
 }

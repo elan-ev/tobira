@@ -141,7 +141,7 @@ impl DummyBlocks {
                 let uuid = series[*idx].clone();
                 *idx = (*idx + 1) % series.len();
 
-                Box::new(IntoIterator::into_iter([
+                Box::new([
                     Block::Text {
                         title: None,
                         body: DUMMY_TEXT.into(),
@@ -151,7 +151,7 @@ impl DummyBlocks {
                         series_title: None,
                         series_uuid: Some(uuid)
                     },
-                ]))
+                ].into_iter())
             }
         }
     }

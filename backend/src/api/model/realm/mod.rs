@@ -1,6 +1,5 @@
 use juniper::{graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
-use std::convert::TryInto;
 
 use crate::{
     api::{Context, Id, err::ApiResult},

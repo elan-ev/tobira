@@ -1,3 +1,4 @@
+use std::time::Duration;
 use secrecy::Secret;
 
 use super::SyncConfig;
@@ -11,6 +12,7 @@ fn config_validate() {
         user: "tobira".into(),
         password: Secret::new("password".into()),
         preferred_harvest_size: 500,
+        poll_period: Duration::from_secs(30),
     };
 
     let loopback_hosts = [

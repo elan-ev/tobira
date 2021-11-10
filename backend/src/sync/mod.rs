@@ -1,5 +1,5 @@
 use secrecy::Secret;
-use std::net::{IpAddr, ToSocketAddrs};
+use std::{net::{IpAddr, ToSocketAddrs}, time::Duration};
 
 use crate::{config::Config, db, prelude::*};
 
@@ -66,6 +66,11 @@ pub(crate) struct SyncConfig {
     /// events could be transferred repeatedly via the harvest API.
     #[config(default = 500)]
     preferred_harvest_size: u32,
+
+    /// The duration to wait after a "no new data" reply from Opencast. Only
+    /// relevant in `--daemon` mode.
+    #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
+    poll_period: Duration,
 }
 
 impl SyncConfig {

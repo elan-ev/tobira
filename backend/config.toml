@@ -2,7 +2,7 @@
 # developer, you are not interested in this file.
 
 [general]
-site_title = "Tobira Videoportal"
+site_title.en = "Tobira Videoportal"
 
 [db]
 password = "tobira"

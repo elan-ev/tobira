@@ -2,10 +2,22 @@ use std::{
     fs,
     io::{self, Write},
     path::{Path, PathBuf},
+    time::Duration,
 };
 use confique::Config as _;
 
 use crate::prelude::*;
+
+
+mod color;
+mod theme;
+mod translated_string;
+
+pub(crate) use self::{
+    color::{Color, Hsl},
+    translated_string::TranslatedString,
+    theme::ThemeConfig,
+};
 
 
 /// The locations where Tobira will look for a configuration file. The first
@@ -17,6 +29,17 @@ const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
 /// Configuration for Tobira.
 ///
 /// All relative paths are relative to the location of this configuration file.
+/// Duration values are specified as string with a unit, e.g. "27s". Valid
+/// units: 'ms', 's', 'min', 'h' and 'd'.
+///
+/// All user-facing texts you can configure here have to be specified per
+/// language, with two letter language key. Only English ('en') is required.
+/// Take `general.site_title` for example:
+///
+///     [general]
+///     site_title.en = "My university"
+///     site_title.de = "Meine Universität"
+///
 #[derive(Debug, confique::Config)]
 pub(crate) struct Config {
     #[config(nested)]
@@ -38,16 +61,15 @@ pub(crate) struct Config {
     pub(crate) sync: crate::sync::SyncConfig,
 
     #[config(nested)]
-    pub(crate) theme: crate::theme::ThemeConfig,
+    pub(crate) theme: ThemeConfig,
 }
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct GeneralConfig {
     /// The main title of the video portal. Used in the HTML `<title>`, as main
     /// heading on the home page, and potentially more.
-    ///
-    /// TODO: Make it possible to specify this for different languages.
-    pub(crate) site_title: String,
+    // TODO: fix automatically generated `site_title =` template output.
+    pub(crate) site_title: TranslatedString,
 }
 
 
@@ -140,3 +162,27 @@ pub(crate) fn write_template(path: Option<&PathBuf>) -> Result<()> {
     Ok(())
 }
 
+/// Our custom format for durations. We allow a couple useful units and required
+/// a unit to increase readability of config files.
+pub(crate) fn deserialize_duration<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+    where D: serde::Deserializer<'de>,
+{
+    use serde::{Deserialize, de::Error};
+
+    let s = String::deserialize(deserializer)?;
+    let start_unit = s.find(|c: char| !c.is_digit(10))
+        .ok_or_else(|| D::Error::custom("no time unit for duration"))?;
+    let (num, unit) = s.split_at(start_unit);
+    let num: u32 = num.parse()
+        .map_err(|e| D::Error::custom(format!("invalid integer for duration: {}", e)))?;
+    let num: u64 = num.into();
+
+    match unit {
+        "ms" => Ok(Duration::from_millis(num)),
+        "s" => Ok(Duration::from_secs(num)),
+        "min" => Ok(Duration::from_secs(num * 60)),
+        "h" => Ok(Duration::from_secs(num * 60 * 60)),
+        "d" => Ok(Duration::from_secs(num * 60 * 60 * 24)),
+        _ => Err(D::Error::custom("invalid unit of time for duration")),
+    }
+}

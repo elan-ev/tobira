@@ -1,5 +1,5 @@
 [general]
-site_title = "Tobira Test Deployment"
+site_title.en = "Tobira Test Deployment"
 
 [db]
 database = "tobira-{{ id }}"
@@ -12,7 +12,8 @@ unix_socket_permissions = 0o777
 
 [auth]
 mode = "login-proxy"
-login_page.note = 'Dummy users: "augustus", "sabine" and "admin". Password for all: "tobira".'
+login_page.note.en = 'Dummy users: "augustus", "sabine" and "admin". Password for all: "tobira".'
+login_page.note.de = 'Testnutzer: "augustus", "sabine" und "admin". Passwort für alle: "tobira".'
 
 [log]
 file = "/var/log/tobira/{{ id }}.log"
@@ -21,6 +22,7 @@ file = "/var/log/tobira/{{ id }}.log"
 host = "oc.tobira.ethz.ch"
 user = "admin"
 password = "{{ opencast_admin_password }}"
+poll_period = "1min"
 
 [theme]
 logo.large.path = "/opt/tobira/{{ id }}/logo-large.svg"

@@ -22,21 +22,19 @@ const parseConfig: () => Config = () => {
 
 type Config = {
     auth: AuthConfig;
-    siteTitle: string;
+    siteTitle: TranslatedString;
     logo: LogoConfig;
     plyr: PlyrConfig;
-    theme: ThemeConfig;
 };
 
 type AuthConfig = {
     loginLink: string | null;
-    userIdLabel: string | null;
-    passwordLabel: string | null;
-    loginPageNote: string | null;
+    userIdLabel: TranslatedString | null;
+    passwordLabel: TranslatedString | null;
+    loginPageNote: TranslatedString | null;
 };
 
 type LogoConfig = {
-    margin: number;
     large: SingleLogoConfig;
     small: SingleLogoConfig;
 };
@@ -51,17 +49,7 @@ type PlyrConfig = {
     svg: string;
 };
 
-type ThemeConfig = {
-    headerHeight: number;
-    headerPadding: number;
-    color: {
-        navigation: string;
-        accent: string;
-        grey50: string;
-        danger: string;
-        happy: string;
-    };
-};
+export type TranslatedString = { en: string } & Record<"de", string | undefined>;
 
 const CONFIG: Config = parseConfig();
 export default CONFIG;

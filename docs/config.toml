@@ -1,12 +1,21 @@
 # Configuration for Tobira.
 #
 # All relative paths are relative to the location of this configuration file.
+# Duration values are specified as string with a unit, e.g. "27s". Valid
+# units: 'ms', 's', 'min', 'h' and 'd'.
+#
+# All user-facing texts you can configure here have to be specified per
+# language, with two letter language key. Only English ('en') is required.
+# Take `general.site_title` for example:
+#
+#     [general]
+#     site_title.en = "My university"
+#     site_title.de = "Meine Universität"
+#
 
 [general]
 # The main title of the video portal. Used in the HTML `<title>`, as main
 # heading on the home page, and potentially more.
-#
-# TODO: Make it possible to specify this for different languages.
 #
 # Required! This value must be specified.
 #site_title =
@@ -177,6 +186,12 @@
 #
 # Default value: 500
 #preferred_harvest_size = 500
+
+# The duration to wait after a "no new data" reply from Opencast. Only
+# relevant in `--daemon` mode.
+#
+# Default value: "30s"
+#poll_period = "30s"
 
 [theme]
 # Default value: 50
