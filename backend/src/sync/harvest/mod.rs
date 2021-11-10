@@ -88,11 +88,34 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
                 size.");
         }
 
+
         // Write received data into the database, updating the sync status if
         // everything worked out alright.
+        let last_updated = harvest_data.items.last().map(|item| item.updated());
         store_in_db(harvest_data.items, &sync_status, db).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, db).await?;
-        if !harvest_data.has_more {
+
+
+        // Decide how to proceed (immediately continue, sleep or exit).
+        if harvest_data.has_more {
+            let last_updated = last_updated
+                .ok_or(anyhow!("Unexpected Opencast response: no items, but `hasMore = true`"))?;
+
+            // This only happens if the Opencast side applies the `TIME_BUFFER_SIZE`
+            // (see its docs for more information). This being the case just means that
+            // we weren't able to harvest all items that changed in the last
+            // `TIME_BUFFER_SIZE` in one go. Immediately requesting the API again would
+            // not make sense as we would just run into the same buffer, only making
+            // progress as actual time progresses. So we sleep for poll period.
+            if last_updated > harvest_data.includes_items_until {
+                debug!(
+                    "Detected `includesItemsUntil` being capped at `now() - buffer`: waiting {:?} \
+                        before starting next harvest.",
+                    config.poll_period,
+                );
+                tokio::time::sleep(config.poll_period).await;
+            }
+        } else {
             if daemon {
                 debug!(
                     "Harvested all available data: waiting {:?} before starting next harvest",
