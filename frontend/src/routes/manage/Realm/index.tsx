@@ -70,10 +70,7 @@ type Props = {
 const SettingsPage: React.FC<Props> = ({ realm }) => {
     const { t } = useTranslation();
     if (!realm.canCurrentUserEdit) {
-        return <ErrorBox>
-            {t("errors.not-authorized-to-view-page")}
-            {}
-        </ErrorBox>;
+        return <NotAuthorized />;
     }
 
     const heading = realm.isRoot
@@ -111,4 +108,9 @@ export const PathInvalid: React.FC = () => {
     return <CenteredContent>
         <Card kind="error">{t("manage.realm.invalid-path")}</Card>
     </CenteredContent>;
+};
+
+export const NotAuthorized: React.FC = () => {
+    const { t } = useTranslation();
+    return <ErrorBox>{t("errors.not-authorized-to-view-page")}</ErrorBox>;
 };

@@ -14,8 +14,8 @@ import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { PathInvalid } from ".";
-import { boxError, ErrorBox } from "../../../ui/error";
+import { NotAuthorized, PathInvalid } from ".";
+import { boxError } from "../../../ui/error";
 import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
@@ -76,10 +76,7 @@ type Props = {
 const AddChild: React.FC<Props> = ({ parent }) => {
     const { t } = useTranslation();
     if (!parent.canCurrentUserEdit) {
-        return <ErrorBox>
-            {t("errors.not-authorized-to-view-page")}
-            {}
-        </ErrorBox>;
+        return <NotAuthorized />;
     }
 
     type FormData = {
