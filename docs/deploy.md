@@ -12,11 +12,11 @@ As described in [the prerequisite docs](./prerequisites.md), Tobira needs a Post
 How to setup such a DB is out of scope for these docs.
 
 
-## 3. Setup reverse proxy (optional but recommended)
+## 3. Setup reverse proxy
 
 You likely want to put a reverse proxy in front of Tobira (e.g. `nginx`).
 That reverse proxy will handle things like compression and authentication for you.
-Setting this up is also out of scope for these docs.
+See the [authentication docs](./auth) for more information on part of the reverse proxy setup.
 
 
 ## 4. Configure Tobira & provide additional files
