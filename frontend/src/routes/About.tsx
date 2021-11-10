@@ -13,6 +13,7 @@ import { makeRoute } from "../rauta";
 
 export const AboutRoute = makeRoute<PreloadedQuery<AboutQuery>>({
     path: ABOUT_PATH,
+    queryParams: [],
     prepare: () => loadQuery(query, {}),
     render: queryRef => <About queryRef={queryRef} />,
     dispose: prepared => prepared.dispose(),

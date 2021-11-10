@@ -24,6 +24,7 @@ import { makeRoute } from "../rauta";
 
 export const LoginRoute = makeRoute<PreloadedQuery<LoginQuery>>({
     path: LOGIN_PATH,
+    queryParams: [],
     prepare: () => loadQuery(query, {}),
     render: queryRef => <Login queryRef={queryRef} />,
     dispose: prepared => prepared.dispose(),

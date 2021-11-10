@@ -16,13 +16,24 @@ export type RouteBase<Prepared> = {
 };
 
 /** The definition of a single route. */
-export type Route<Prepared> = RouteBase<Prepared> & {
+export type Route<Prepared, QueryParams extends string[] = []> = RouteBase<Prepared> & {
     /**
      * A regex describing the route's path. If the regex matches the path, the
      * route is taken. Regex may contain capture groups. All captures are
      * passed to `prepare`.
      */
     path: string;
+
+    /**
+     * List of required query parameters. If these parameters are not present or
+     * have an empty value, this route is not taken.
+     *
+     * Unfortunately, this field cannot be optional. And if the field is not
+     * `[]`, you have to specify the type parameter of `Route` or `makeRoute`
+     * explicitly to get an actual tuple type and thus a useful `queryParams`
+     * type in `prepare`.
+     */
+    queryParams: QueryParams;
 
     /**
      * A function that is called as soon as the route becomes active. In
@@ -32,7 +43,10 @@ export type Route<Prepared> = RouteBase<Prepared> & {
      * path regex. This is the array returned by `RegExp.exec` but with the
      * first element (the whole match) removed.
      */
-    prepare: (routeParams: string[], getParams: URLSearchParams) => Prepared;
+    prepare: (info: {
+        pathParams: string[];
+        queryParams: Record<QueryParams[number], string>;
+    }) => Prepared;
 };
 
 /** A route used as fallback (if no other route matches) */
@@ -71,7 +85,7 @@ export type MatchedRoute<Prepared> = RouteBase<Prepared> & {
  * - https://stackoverflow.com/a/46186356/
  * - https://unsafe-perform.io/posts/2020-02-21-existential-quantification-in-typescript
  */
-export type RouteErased = <R, >(cont: <P, >(r: Route<P>) => R) => R;
+export type RouteErased = <R, >(cont: <P, Q extends string[]>(r: Route<P, Q>) => R) => R;
 
 /** A type-erased version of `FallbackRoute`. Use `makeFallbackRoute` to obtain this. */
 export type FallbackRouteErased = <R, >(cont: <P, >(r: FallbackRoute<P>) => R) => R;
@@ -81,7 +95,7 @@ export type MatchedRouteErased = <R, >(cont: <P, >(r: MatchedRoute<P>) => R) => 
 
 
 /** Creates the internal representation of the given route. */
-export function makeRoute<P>(route: Route<P>): RouteErased {
+export function makeRoute<P, Q extends string[] = []>(route: Route<P, Q>): RouteErased {
     return e => e(route);
 }
 
@@ -231,37 +245,51 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     };
 
     const matchRoute = (href: string): MatchedRouteErased => {
+        const tryMatchSingleRoute = <P, Q extends string[]>(
+            route: Route<P, Q>,
+        ): MatchedRoute<P> | null => {
+            // Use the route's regex to check whether the current path matches.
+            // We modify the regex to make sure the whole path matches and that
+            // a trailing slash is always optional.
+            const regex = new RegExp(`^${route.path}/?$`, "u");
+            const params = regex.exec(currentPath);
+            if (params === null) {
+                return null;
+            }
+
+            // For each required query parameter, retrieve it from the URL and
+            // return `null` if it's not present.
+            const queryParams: Record<string, string> = {};
+            for (const key of route.queryParams) {
+                const v = url.searchParams.get(key);
+                if (v === null || v.trim() === "") {
+                    return null;
+                } else {
+                    queryParams[key] = v;
+                }
+            }
+
+            const prepared = route.prepare({ pathParams: params.slice(1), queryParams });
+            return { render: route.render, dispose: route.dispose, prepared };
+        };
+
         const url = new URL(href);
         const currentPath = decodeURI(url.pathname);
-
-        const match = config.routes
-            .map(forRoute => forRoute(route => {
-                // Use the route's regex to check whether the current path matches.
-                // We modify the regex to make sure the whole path matches and that
-                // a trailing slash is always optional.
-                const regex = new RegExp(`^${route.path}/?$`, "u");
-                const params = regex.exec(currentPath);
-                if (params === null) {
-                    return null;
-                }
-
-                return { params: params.slice(1), forRoute };
-            }))
-            .find(x => x != null);
-
-        if (match != null) {
-            const { params, forRoute } = match;
-
-            return forRoute(route => {
-                const prepared = route.prepare(params, url.searchParams);
-                return f => f({ prepared, render: route.render, dispose: route.dispose });
+        for (const route of config.routes) {
+            const matched: MatchedRouteErased | null = route(r => {
+                const matched = tryMatchSingleRoute(r);
+                return matched === null ? null : f => f(matched);
             });
-        } else {
-            return config.fallback(route => {
-                const prepared = route.prepare();
-                return f => f({ prepared, render: route.render, dispose: route.dispose });
-            });
+
+            if (matched !== null) {
+                return matched;
+            }
         }
+
+        return config.fallback(route => {
+            const prepared = route.prepare();
+            return f => f({ prepared, render: route.render, dispose: route.dispose });
+        });
     };
 
     const matchInitialRoute = (): MatchedRouteErased => matchRoute(window.location.href);

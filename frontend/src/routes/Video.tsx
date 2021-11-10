@@ -18,8 +18,9 @@ import { makeRoute } from "../rauta";
 
 export const VideoRoute = makeRoute<Props>({
     path: `((?:/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
+    queryParams: [],
     // TODO: check if video belongs to realm
-    prepare: ([realmPath, videoId]) => {
+    prepare: ({ pathParams: [realmPath, videoId] }) => {
         const id = `ev${videoId}`;
         const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
         return { queryRef, realmPath, id };

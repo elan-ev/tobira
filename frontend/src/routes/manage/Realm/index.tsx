@@ -26,15 +26,13 @@ import { makeRoute } from "../../../rauta";
 
 export const PATH = "/~manage/realm";
 
-export const ManageRealmRoute = makeRoute<Props>({
+export const ManageRealmRoute = makeRoute<Props, ["path"]>({
     path: PATH,
-    prepare: (_, getParams) => {
-        const path = getParams.get("path");
-        return {
-            queryRef: path == null ? null : loadQuery(query, { path }),
-        };
-    },
-    render: props => <DispatchPathSpecified {...props} />,
+    queryParams: ["path"],
+    prepare: ({ queryParams: { path } }) => ({
+        queryRef: loadQuery(query, { path }),
+    }),
+    render: props => <DispatchRealmExists {...props} />,
     dispose: prepared => prepared.queryRef?.dispose(),
 });
 
@@ -57,33 +55,6 @@ const query = graphql`
 
 
 type Props = {
-    queryRef: null | PreloadedQuery<RealmManageQuery>;
-};
-
-/**
- * Entry point: checks if a path is given. If so forwards to `DispatchRealmExists`,
- * otherwise shows a landing page.
- */
-const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => (
-    queryRef == null
-        ? <NoPath />
-        : <DispatchRealmExists queryRef={queryRef} />
-);
-
-
-/** Error for when no realm path is given */
-export const NoPath: React.FC = () => {
-    const { t } = useTranslation();
-
-    return <Root nav={[]}>
-        <CenteredContent>
-            <Card kind="error">{t("manage.realm.no-path")}</Card>
-        </CenteredContent>
-    </Root>;
-};
-
-
-type DispatchRealmExistsProps = {
     queryRef: PreloadedQuery<RealmManageQuery>;
 };
 
@@ -91,7 +62,7 @@ type DispatchRealmExistsProps = {
  * Just checks if the realm path points to a realm. If so, forwards to `SettingsPage`;
  * `PathInvalid` otherwise.
  */
-const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) => {
+const DispatchRealmExists: React.FC<Props> = ({ queryRef }) => {
     const { realm } = usePreloadedQuery(query, queryRef);
     return !realm
         ? <Root nav={[]}><PathInvalid /></Root>

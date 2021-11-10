@@ -7,6 +7,7 @@ const PATH = "/~manage";
 
 export const ManageRoute = makeRoute<void>({
     path: PATH,
+    queryParams: [],
     prepare: () => {},
     render: () => <Manage />,
 });

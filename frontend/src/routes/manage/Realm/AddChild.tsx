@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { NoPath, PathInvalid } from ".";
+import { PathInvalid } from ".";
 import { boxError, ErrorBox } from "../../../ui/error";
 import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
@@ -28,15 +28,13 @@ import { makeRoute } from "../../../rauta";
 
 export const PATH = "/~manage/realm/add-child";
 
-export const AddChildRoute = makeRoute<Props>({
+export const AddChildRoute = makeRoute<Props, ["parent"]>({
     path: PATH,
-    prepare: (_, getParams) => {
-        const parent = getParams.get("parent");
-        return {
-            queryRef: parent == null ? null : loadQuery(query, { parent }),
-        };
-    },
-    render: props => <DispatchPathSpecified {...props} />,
+    queryParams: ["parent"],
+    prepare: ({ queryParams: { parent } }) => ({
+        queryRef: loadQuery(query, { parent }),
+    }),
+    render: props => <DispatchRealmExists {...props} />,
     dispose: prepared => prepared.queryRef?.dispose(),
 });
 
@@ -55,22 +53,7 @@ const query = graphql`
     }
 `;
 
-
 type Props = {
-    queryRef: null | PreloadedQuery<AddChildQuery>;
-};
-
-/**
- * Entry point: checks if a path is given. If so forwards to `DispatchRealmExists`,
- * otherwise shows a landing page.
- */
-const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => (
-    queryRef == null
-        ? <NoPath />
-        : <DispatchRealmExists queryRef={queryRef} />
-);
-
-type DispatchRealmExistsProps = {
     queryRef: PreloadedQuery<AddChildQuery>;
 };
 
@@ -78,7 +61,7 @@ type DispatchRealmExistsProps = {
  * Just checks if the realm path points to a realm. If so, forwards to `AddChild`;
  * `PathInvalid` otherwise.
  */
-const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) => {
+const DispatchRealmExists: React.FC<Props> = ({ queryRef }) => {
     const { parent } = usePreloadedQuery(query, queryRef);
     return !parent
         ? <Root nav={[]}><PathInvalid /></Root>

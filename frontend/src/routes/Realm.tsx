@@ -22,9 +22,10 @@ export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+"
 
 export const RealmRoute = makeRoute<Props>({
     path: `((?:/${PATH_SEGMENT_REGEX})*)`,
-    prepare: ([path]) => ({
-        queryRef: loadQuery(relayEnv, query, { path }),
-        path,
+    queryParams: [],
+    prepare: ({ pathParams: [realmPath] }) => ({
+        queryRef: loadQuery(relayEnv, query, { path: realmPath }),
+        path: realmPath,
     }),
     render: props => <RealmPage {...props} />,
     dispose: props => props.queryRef.dispose(),
