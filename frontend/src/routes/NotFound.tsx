@@ -3,16 +3,15 @@ import { FiFrown } from "react-icons/fi";
 
 import { Root } from "../layout/Root";
 import { Link } from "../router";
-import type { Route } from "../router";
 import { match } from "../util";
 import { CenteredContent } from "../ui";
+import { makeFallbackRoute } from "../rauta";
 
 
-export const NotFoundRoute: Route<void> = {
-    path: ".*",
+export const NotFoundRoute = makeFallbackRoute({
     prepare: () => {},
     render: () => <NotFound kind="page" />,
-};
+});
 
 type Props = {
     kind: "page" | "video";

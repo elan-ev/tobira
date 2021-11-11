@@ -6,23 +6,22 @@ import createEmotionCache from "@emotion/cache";
 import { environment } from "./relay";
 import { GlobalStyle } from "./GlobalStyle";
 import { ActiveRoute, Router } from "./router";
-import type { MatchedRoute } from "./router";
+import { MatchedRouteErased } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { InitialLoading } from "./layout/Root";
 import { GraphQLErrorBoundary } from "./relay/boundary";
-import { ROUTES } from "./routes";
 
 
 
 type Props = {
-    initialRoute: MatchedRoute<any>;
+    initialRoute: MatchedRouteErased;
 };
 
 export const App: React.FC<Props> = ({ initialRoute }) => (
     <RelayEnvironmentProvider {...{ environment }}>
         <GlobalStyle />
         <SilenceEmotionWarnings>
-            <Router routes={ROUTES} initialRoute={initialRoute}>
+            <Router initialRoute={initialRoute}>
                 <APIWrapper>
                     <MenuProvider>
                         <ActiveRoute />

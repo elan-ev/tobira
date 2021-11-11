@@ -3,13 +3,15 @@ import React, { ReactNode } from "react";
 
 import { APIError, NetworkError, NotJson, ServerError } from ".";
 import { Root } from "../layout/Root";
-import { RoutingContext } from "../router";
+import { useRouter } from "../router";
 import { Card } from "../ui/Card";
-import { assertNever, bug } from "../util/err";
+import { assertNever } from "../util/err";
 import { match } from "../util";
+import { RouterControl } from "../rauta";
 
 
 type Props = {
+    router: RouterControl;
     children: ReactNode;
 };
 
@@ -19,21 +21,20 @@ type State = {
     error?: HandledError;
 };
 
-export class GraphQLErrorBoundary extends React.Component<Props, State> {
-    public declare context: React.ContextType<typeof RoutingContext>;
-    public static contextType = RoutingContext;
+class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
+    private unlisten?: () => void;
 
-    public constructor(props: Props, context: React.ContextType<typeof RoutingContext>) {
-        super(props, context);
+    public constructor(props: Props) {
+        super(props);
+        this.state = { error: undefined };
+    }
 
-        const initialState = { error: undefined };
-        this.state = initialState;
+    public componentDidMount() {
+        this.unlisten = this.props.router.addListener(() => this.setState({ error: undefined }));
+    }
 
-        // Reset this state whenever the route changes.
-        if (this.context === null) {
-            return bug("API error boundary not child of router!");
-        }
-        this.context.listen(() => this.setState(initialState));
+    public componentWillUnmount() {
+        this.unlisten?.();
     }
 
     public static getDerivedStateFromError(error: unknown): State {
@@ -80,6 +81,13 @@ export class GraphQLErrorBoundary extends React.Component<Props, State> {
         );
     }
 }
+
+// The actual error boundary is a class component, but we want to use the router
+// control (which is only available via hook). So we have this wrapper.
+export const GraphQLErrorBoundary: React.FC = ({ children }) => {
+    const router = useRouter();
+    return <GraphQLErrorBoundaryImpl router={router}>{children}</GraphQLErrorBoundaryImpl>;
+};
 
 type MainErrorMessageProps = {
     error: HandledError;

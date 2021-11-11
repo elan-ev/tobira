@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { graphql, useMutation, usePreloadedQuery } from "react-relay";
+import { graphql, useMutation } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
 import { Root } from "../../../layout/Root";
@@ -9,38 +9,50 @@ import type {
     AddChildQueryResponse,
 } from "../../../query-types/AddChildQuery.graphql";
 import { loadQuery } from "../../../relay";
-import { Route, useRouter } from "../../../router";
+import { useRouter } from "../../../router";
 import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Form } from "../../../ui/Form";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { NoPath, PathInvalid } from ".";
-import { boxError, ErrorBox } from "../../../ui/error";
+import { NotAuthorized, PathInvalid } from ".";
+import { boxError } from "../../../ui/error";
 import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
 import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
+import { makeRoute } from "../../../rauta";
+import { QueryLoader } from "../../../util/QueryLoader";
 
-
-// Route definition
 
 export const PATH = "/~manage/realm/add-child";
 
-export const AddChildRoute: Route<Props> = {
+export const AddChildRoute = makeRoute<PreloadedQuery<AddChildQuery>, ["parent"]>({
     path: PATH,
-    prepare: (_, getParams) => {
-        const parent = getParams.get("parent");
-        return {
-            queryRef: parent == null ? null : loadQuery(query, { parent }),
-        };
-    },
-    render: props => <DispatchPathSpecified {...props} />,
-};
+    queryParams: ["parent"],
+    prepare: ({ queryParams: { parent } }) => loadQuery(query, { parent }),
+    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => {
+        const { parent } = result;
+        const nav = !parent ? [] : <Nav fragRef={parent} />;
+
+        let inner;
+        if (!parent) {
+            inner = <PathInvalid />;
+        } else if (!parent.canCurrentUserEdit) {
+            inner = <NotAuthorized />;
+        } else {
+            inner = <AddChild parent={parent} />;
+        }
+
+        return <Root nav={nav} userQuery={result}>{inner}</Root>;
+    }} />,
+    dispose: queryRef => queryRef.dispose(),
+});
 
 
 const query = graphql`
     query AddChildQuery($parent: String!) {
+        ... UserData
         parent: realmByPath(path: $parent) {
             id
             name
@@ -53,37 +65,6 @@ const query = graphql`
     }
 `;
 
-
-type Props = {
-    queryRef: null | PreloadedQuery<AddChildQuery>;
-};
-
-/**
- * Entry point: checks if a path is given. If so forwards to `DispatchRealmExists`,
- * otherwise shows a landing page.
- */
-const DispatchPathSpecified: React.FC<Props> = ({ queryRef }) => (
-    queryRef == null
-        ? <NoPath />
-        : <DispatchRealmExists queryRef={queryRef} />
-);
-
-type DispatchRealmExistsProps = {
-    queryRef: PreloadedQuery<AddChildQuery>;
-};
-
-/**
- * Just checks if the realm path points to a realm. If so, forwards to `AddChild`;
- * `PathInvalid` otherwise.
- */
-const DispatchRealmExists: React.FC<DispatchRealmExistsProps> = ({ queryRef }) => {
-    const { parent } = usePreloadedQuery(query, queryRef);
-    return !parent
-        ? <Root nav={[]}><PathInvalid /></Root>
-        : <Root nav={<Nav fragRef={parent} />}><AddChild parent={parent} /></Root>;
-};
-
-
 const addChildMutation = graphql`
     mutation AddChildMutation($realm: NewRealm!) {
         addRealm(realm: $realm) {
@@ -93,19 +74,12 @@ const addChildMutation = graphql`
     }
 `;
 
-type AddChildProps = {
-    parent: Exclude<AddChildQueryResponse["parent"], null>;
+type Props = {
+    parent: NonNullable<AddChildQueryResponse["parent"]>;
 };
 
-/** The actual settings page */
-const AddChild: React.FC<AddChildProps> = ({ parent }) => {
+const AddChild: React.FC<Props> = ({ parent }) => {
     const { t } = useTranslation();
-    if (!parent.canCurrentUserEdit) {
-        return <ErrorBox>
-            {t("errors.not-authorized-to-view-page")}
-            {}
-        </ErrorBox>;
-    }
 
     type FormData = {
         name: string;

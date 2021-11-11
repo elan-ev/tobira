@@ -5,7 +5,7 @@ import type { PreloadedQuery } from "react-relay";
 
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
-import { Link, Route } from "../router";
+import { Link } from "../router";
 import { LoginQuery } from "../query-types/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { Logo } from "../layout/header/Logo";
@@ -19,13 +19,16 @@ import { FiCheck, FiChevronLeft } from "react-icons/fi";
 import { Card } from "../ui/Card";
 import CONFIG from "../config";
 import { LOGIN_PATH } from "./paths";
+import { makeRoute } from "../rauta";
 
 
-export const LoginRoute: Route<PreloadedQuery<LoginQuery>> = {
+export const LoginRoute = makeRoute<PreloadedQuery<LoginQuery>>({
     path: LOGIN_PATH,
+    queryParams: [],
     prepare: () => loadQuery(query, {}),
     render: queryRef => <Login queryRef={queryRef} />,
-};
+    dispose: prepared => prepared.dispose(),
+});
 
 const query = graphql`
     query LoginQuery {

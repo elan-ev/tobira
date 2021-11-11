@@ -3,7 +3,6 @@
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
-const CircularDependencyPlugin = require("circular-dependency-plugin");
 const path = require("path");
 const { APP_PATH, OUT_PATH, STATIC_PATH } = require("./constants");
 const plyrDistPath = path.join(__dirname, "node_modules", "plyr", "dist");
@@ -68,13 +67,6 @@ module.exports = (_env, argv) => ({
                 { from: STATIC_PATH, to: OUT_PATH },
                 { from: path.join(plyrDistPath, "plyr.svg"), to: OUT_PATH },
             ],
-        }),
-        new CircularDependencyPlugin({
-            exclude: /node_modules/,
-            include: /src/,
-            failOnError: true,
-            allowAsyncCycles: false,
-            cwd: process.cwd(),
         }),
     ],
 
