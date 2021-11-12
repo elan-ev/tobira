@@ -41,7 +41,7 @@ begin
 
 
     -- Add a bunch of events/videos
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
         values (
             'bbb',
             'Big Buck Bunny',
@@ -58,9 +58,11 @@ begin
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             'Blender Foundation',
             now(),
-            now()
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
         values (
             'cosmos-laundromat',
             'Cosmos Laundromat',
@@ -77,9 +79,11 @@ begin
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             'Blender Foundation',
             now(),
-            now()
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
         values (
             'spring',
             'Spring',
@@ -96,10 +100,12 @@ begin
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             'Blender Foundation',
             now(),
-            now()
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}'
         );
 
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
         values (
             'bee',
             'Guest Lecture: Group Intelligence of Bumblebees',
@@ -116,10 +122,12 @@ begin
             'f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d',
             'Prof. Dr. Joachim Biene',
             now(),
-            now()
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}'
         );
 
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
         values (
             'pir-introduction',
             'Programmieren in Rust: Einführung',
@@ -136,9 +144,11 @@ begin
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             'Lukas Kalbertodt',
             now(),
-            now()
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
         values (
             'pir-modules',
             'Programmieren in Rust: Module',
@@ -155,9 +165,11 @@ begin
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             'Lukas Kalbertodt',
             now(),
-            now()
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
         values (
             'pir-stack-heap',
             'Programmieren in Rust: Stack & Heap',
@@ -174,9 +186,11 @@ begin
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             'Lukas Kalbertodt',
             now(),
-            now()
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
         values (
             'pir-performance',
             'Programmieren in Rust: Performance & Effizienz',
@@ -193,7 +207,9 @@ begin
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             'Lukas Kalbertodt',
             now(),
-            now()
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}'
         );
 end; $$;
 
