@@ -6,6 +6,7 @@ use hyper::{HeaderMap, header};
 use postgres_types::ToSql;
 use rand::{CryptoRng, RngCore};
 use secrecy::{ExposeSecret, Secret};
+use time::Duration;
 use tokio_postgres::Error as PgError;
 
 use crate::{db::Db, prelude::*};
@@ -69,9 +70,9 @@ impl SessionId {
 
     /// Returns a cookie for a `set-cookie` header in order to store the session
     /// ID in the client's cookie jar.
-    pub(crate) fn set_cookie(&self) -> Cookie {
-        // TODO: expiration and other cookie stuff!
-        Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
+    pub(crate) fn set_cookie(&self, max_age: Option<Duration>) -> Cookie {
+        // TODO: other cookie stuff!
+        let mut cookie = Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
 
             // Only send via HTTPS as it contains sensitive information.
             .secure(true)
@@ -86,7 +87,12 @@ impl SessionId {
             // anything, so something like "link to `/realm/delete`" is not a
             // thing for Tobira.
             .same_site(cookie::SameSite::Lax)
-            .finish()
+            .finish();
+
+        // Expire the cookie at the appropriate time
+        cookie.set_max_age(max_age);
+
+        cookie
     }
 
     /// Returns a cookie for a `set-cookie` header that removes the session ID
