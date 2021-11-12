@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, time::Duration};
 
 use deadpool_postgres::Client;
 use hyper::HeaderMap;
@@ -67,9 +67,43 @@ pub(crate) struct AuthConfig {
     #[config(default = "ROLE_TOBIRA_MODERATOR")]
     pub(crate) moderator_role: String,
 
+    /// Duration of a Tobira-managed login session.
+    /// You can specify durations in different units of time
+    /// or the string `"browser-session"` in which case the session
+    /// is only lasts until the user closes their client.
+    /// (Although note that most browsers can restore a previously closed session,
+    /// so in reality they might last longer than that.)
+    ///
+    /// Note: This is only relevant if `auth.mode` is `login-proxy`.
+    /// Example: 30d
+    #[config(default = "browser-session")]
+    pub(crate) session_duration: SessionDuration,
+
     /// Configuration related to the built-in login page.
     #[config(nested)]
     pub(crate) login_page: LoginPageConfig,
+}
+
+/// Duration of a Tobira-managed user session
+#[derive(Debug, serde::Deserialize)]
+#[serde(untagged)]
+pub(crate) enum SessionDuration {
+    #[serde(deserialize_with = "deserialize_browser_session_duration")]
+    BrowserSession,
+    #[serde(deserialize_with = "crate::config::deserialize_duration")]
+    Duration(Duration),
+}
+
+fn deserialize_browser_session_duration<'de, D>(deserializer: D) -> Result<(), D::Error>
+where D: serde::Deserializer<'de> {
+    use serde::{Deserialize, de::Error};
+
+    let s = String::deserialize(deserializer)?;
+    if s == "browser-session" {
+        Ok(())
+    } else {
+        Err(D::Error::invalid_value(serde::de::Unexpected::Str(&s), &"browser-session"))
+    }
 }
 
 /// Authentification and authorization
