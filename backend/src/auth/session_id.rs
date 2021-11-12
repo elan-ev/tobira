@@ -70,7 +70,7 @@ impl SessionId {
 
     /// Returns a cookie for a `set-cookie` header in order to store the session
     /// ID in the client's cookie jar.
-    pub(crate) fn set_cookie(&self, max_age: Option<Duration>) -> Cookie {
+    pub(crate) fn set_cookie(&self, max_age: Duration) -> Cookie {
         // TODO: other cookie stuff!
         let mut cookie = Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
 

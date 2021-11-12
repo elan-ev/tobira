@@ -33,12 +33,6 @@ pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Re
             })?;
             debug!("Persisted new session for '{}'", user.username);
 
-            use super::SessionDuration::*;
-            let session_duration = match ctx.config.auth.session_duration {
-                BrowserSession => None,
-                Duration(duration) => Some(duration),
-            };
-
             Response::builder()
                 .status(StatusCode::NO_CONTENT)
                 .header("set-cookie", session_id.set_cookie(
@@ -48,11 +42,11 @@ pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Re
                     // Thus, conversions from `std::time::Duration` can fail.
                     // This should not happen with the way we parse
                     // the `session_duration` config value, though.
-                    session_duration.map(|duration| duration.try_into().unwrap_or_else(
+                    ctx.config.auth.session_duration.try_into().unwrap_or_else(
                         |error| match error {
                             time::error::ConversionRange => panic!("session duration too large"),
                         }
-                    ))
+                    )
                 ).to_string())
                 .body(Body::empty())
                 .unwrap()

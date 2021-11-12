@@ -112,17 +112,10 @@
 #moderator_role = "ROLE_TOBIRA_MODERATOR"
 
 # Duration of a Tobira-managed login session.
-# You can specify durations in different units of time
-# or the string `"browser-session"` in which case the session
-# is only lasts until the user closes their client.
-# (Although note that most browsers can restore a previously closed session,
-# so in reality they might last longer than that.)
-#
 # Note: This is only relevant if `auth.mode` is `login-proxy`.
-# Example: 30d
 #
-# Default value: "browser-session"
-#session_duration = "browser-session"
+# Default value: "30d"
+#session_duration = "30d"
 
 # Configuration related to the built-in login page.
 
