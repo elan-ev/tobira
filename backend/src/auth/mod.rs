@@ -216,7 +216,7 @@ impl UserData {
         // Check if such a session exists in the DB.
         let sql = "update user_sessions \
             set last_used = now() \
-            where id = $1\
+            where id = $1 \
             returning username, display_name, roles";
         let row = match db.query_opt(sql, &[&session_id]).await? {
             None => return Ok(None),
