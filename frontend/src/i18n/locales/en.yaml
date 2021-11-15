@@ -185,6 +185,20 @@ manage:
           indirect sub-pages, as well as all page content of these pages. This
           cannot be undone!
 
+    content:
+      heading: Edit content of page “{{realm}}”
+      heading-root: Edit homepage content
+
+      add: Insert a new block here
+      add-text: Insert a new text block here
+      add-series: Insert a new series block here
+      add-video: Insert a new video block here
+
+      move-down: Move block down
+      move-up: Move block up
+      edit: Edit block
+      remove: Remove block
+
   add-child:
     heading: Add page
     path-segment: Path segment

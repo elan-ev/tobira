@@ -56,7 +56,8 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         | "/~upload"
         | "/~manage"
         | "/~manage/realm"
-        | "/~manage/realm/add-child" => ctx.assets.serve_index().await,
+        | "/~manage/realm/add-child"
+        | "/~manage/realm/content" => ctx.assets.serve_index().await,
 
         "/.well-known/jwks.json" => {
             Response::builder()

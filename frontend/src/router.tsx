@@ -3,6 +3,7 @@ import { LoginRoute } from "./routes/Login";
 import { ManageRoute } from "./routes/manage";
 import { ManageRealmRoute } from "./routes/manage/Realm";
 import { AddChildRoute } from "./routes/manage/Realm/AddChild";
+import { ManageRealmContentRoute } from "./routes/manage/Realm/Content";
 import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
@@ -71,6 +72,7 @@ const {
         ManageRealmRoute,
         UploadRoute,
         AddChildRoute,
+        ManageRealmContentRoute,
     ],
 });
 

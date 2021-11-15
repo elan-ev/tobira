@@ -193,6 +193,20 @@ manage:
           indirekten Unterseiten sowie alle Seiteninhalte all dieser Seiten
           mitgelöscht. Die Löschung kann nicht wieder rückgängig gemacht werden!
 
+    content:
+      heading: Inhalte der Seite „{{realm}}“ bearbeiten
+      heading-root: Inhalte der Startseite bearbeiten
+
+      add: Hier einen neuen Block einfügen
+      add-text: Hier einen neuen Text-Block einfügen
+      add-series: Hier einen neuen Serien-Block einfügen
+      add-video: Hier einen neuen Video-Block einfügen
+
+      move-down: Block nach unten verschieben
+      move-up: Block nach oben verschieben
+      edit: Block bearbeiten
+      remove: Block entfernen
+
   add-child:
     heading: Seite hinzufügen
     path-segment: Pfadsegment
