@@ -70,7 +70,7 @@ user:
 login-page:
   user-id: User ID
   password: Password
-  already-logged-in: You are already logged in as “{{ name }}”.
+  already-logged-in: You are already logged in as “{{name}}”.
   go-to-homepage: Go to homepage.
   bad-credentials: 'Login failed: invalid credentials.'
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
@@ -133,10 +133,9 @@ manage:
   are-you-sure: Are you sure?
 
   realm:
-    nav-label: Page settings
     invalid-path: >
       Error: invalid path to page. Was the page deleted or its path changed?
-    heading: Settings of page „{{realm}}“
+    heading: Settings of page “{{realm}}”
     heading-root: Homepage settings
     descendants-count: This page has {{count}} many direct and indirect sub-pages.
     view-page: Go to page

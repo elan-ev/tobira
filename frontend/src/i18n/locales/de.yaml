@@ -72,7 +72,7 @@ user:
 login-page:
   user-id: Nutzerkennung
   password: Passwort
-  already-logged-in: Sie sind bereits als „{{ name }}“ angemeldet.
+  already-logged-in: Sie sind bereits als „{{name}}“ angemeldet.
   go-to-homepage: Zur Startseite.
   bad-credentials: 'Anmeldung fehlgeschlagen: Falsche Anmeldedaten.'
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
@@ -138,7 +138,6 @@ manage:
   are-you-sure: Sind Sie sich sicher?
 
   realm:
-    nav-label: Seiteneinstellungen
     invalid-path: >
       Fehler: ungültiger Pfad zur Seite. Wurde die Seite gelöscht oder ihr Pfad geändert?
     heading: Einstellungen zur Seite „{{realm}}“

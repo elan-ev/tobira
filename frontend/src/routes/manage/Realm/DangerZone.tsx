@@ -105,8 +105,6 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
     const [commit, isInFlight] = useMutation(changePathMutation);
 
     const onSubmit = handleSubmit(data => {
-        // TODO: confirmation dialog!
-
         commit({
             variables: {
                 id: realm.id,

@@ -1,9 +1,6 @@
 import React from "react";
 import { graphql, useFragment } from "react-relay/hooks";
-import type {
-    Blocks_blocks as QueryResult,
-    Blocks_blocks$key,
-} from "../query-types/Blocks_blocks.graphql";
+import type { Blocks_blocks$key } from "../query-types/Blocks_blocks.graphql";
 
 import { match } from "../util";
 import { TextBlockByQuery } from "./blocks/Text";
@@ -13,7 +10,6 @@ import { SeriesBlockFromBlock } from "./blocks/Series";
 type Props = {
     realm: Blocks_blocks$key;
 };
-export type BlockData = QueryResult["blocks"][0];
 
 export const Blocks: React.FC<Props> = ({ realm }) => {
     const { path, blocks } = useFragment(

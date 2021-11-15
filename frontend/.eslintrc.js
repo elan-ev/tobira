@@ -59,6 +59,7 @@ module.exports = {
         "multiline-comment-style": ["warn", "separate-lines"],
         "multiline-ternary": ["warn", "always-multiline"],
         "no-extra-semi": "warn",
+        "no-mixed-spaces-and-tabs": "warn",
         "no-multi-spaces": "warn",
         "no-multiple-empty-lines": ["warn", { max: 5 }],
         "no-tabs": "warn",
