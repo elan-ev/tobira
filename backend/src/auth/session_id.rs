@@ -72,7 +72,7 @@ impl SessionId {
     /// ID in the client's cookie jar.
     pub(crate) fn set_cookie(&self, max_age: Duration) -> Cookie {
         // TODO: other cookie stuff!
-        let mut cookie = Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
+        Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
 
             // Only send via HTTPS as it contains sensitive information.
             .secure(true)
@@ -87,12 +87,10 @@ impl SessionId {
             // anything, so something like "link to `/realm/delete`" is not a
             // thing for Tobira.
             .same_site(cookie::SameSite::Lax)
-            .finish();
 
-        // Expire the cookie at the appropriate time
-        cookie.set_max_age(max_age);
-
-        cookie
+            // Expire the cookie at the appropriate time
+            .max_age(max_age)
+            .finish()
     }
 
     /// Returns a cookie for a `set-cookie` header that removes the session ID
