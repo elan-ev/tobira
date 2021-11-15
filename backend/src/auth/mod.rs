@@ -126,7 +126,8 @@ impl User {
         match auth_config.mode {
             AuthMode::None => Ok(Self::None),
             AuthMode::FullAuthProxy => Ok(UserData::from_auth_headers(headers, auth_config).into()),
-            AuthMode::LoginProxy => UserData::from_session(headers, db, auth_config.session_duration).await
+            AuthMode::LoginProxy => UserData::from_session(headers, db, auth_config.session_duration)
+                .await
                 .map(Into::into),
         }
     }
