@@ -220,11 +220,9 @@ impl UserData {
         };
 
         // Check if such a session exists in the DB.
-        let sql = "update user_sessions \
-            set last_used = now() \
+        let sql = "select username, display_name, roles from user_sessions \
             where id = $1 \
-            and extract(epoch from now() - created) < $2
-            returning username, display_name, roles";
+            and extract(epoch from now() - created) < $2";
         let row = match db.query_opt(sql, &[&session_id, &session_duration.as_secs_f64()]).await? {
             None => return Ok(None),
             Some(row) => row,
