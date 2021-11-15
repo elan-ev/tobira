@@ -36,17 +36,7 @@ pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Re
             Response::builder()
                 .status(StatusCode::NO_CONTENT)
                 .header("set-cookie", session_id.set_cookie(
-                    // The `cookie` crate unfortunately uses `time::Duration`
-                    // which can represent negative durations for the price
-                    // of being able to represent very long durations.
-                    // Thus, conversions from `std::time::Duration` can fail.
-                    // This should not happen with the way we parse
-                    // the `session_duration` config value, though.
-                    ctx.config.auth.session_duration.try_into().unwrap_or_else(
-                        |error| match error {
-                            time::error::ConversionRange => panic!("session duration too large"),
-                        }
-                    )
+                    ctx.config.auth.session_duration
                 ).to_string())
                 .body(Body::empty())
                 .unwrap()

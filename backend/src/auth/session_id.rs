@@ -6,7 +6,7 @@ use hyper::{HeaderMap, header};
 use postgres_types::ToSql;
 use rand::{CryptoRng, RngCore};
 use secrecy::{ExposeSecret, Secret};
-use time::Duration;
+use std::time::Duration;
 use tokio_postgres::Error as PgError;
 
 use crate::{db::Db, prelude::*};
@@ -70,7 +70,7 @@ impl SessionId {
 
     /// Returns a cookie for a `set-cookie` header in order to store the session
     /// ID in the client's cookie jar.
-    pub(crate) fn set_cookie(&self, max_age: Duration) -> Cookie {
+    pub(crate) fn set_cookie(&self, session_duration: Duration) -> Cookie {
         Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
 
             // Only send via HTTPS as it contains sensitive information.
@@ -88,7 +88,14 @@ impl SessionId {
             .same_site(cookie::SameSite::Lax)
 
             // Expire the cookie at the appropriate time
-            .max_age(max_age)
+            .max_age(
+                // The `cookie` crate unfortunately uses `time::Duration`
+                // which uses an `i64` instead of a `u64` to represent
+                // the seconds part of the duration.
+                // This conversion should never fail, though,
+                // because we parse the duration as `u32` anyway.
+                session_duration.try_into().expect("session duration too large"),
+            )
             .finish()
     }
 
