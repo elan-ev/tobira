@@ -106,6 +106,7 @@ impl SessionId {
             .max_age(time::Duration::zero())
             .secure(true)
             .http_only(true)
+            .same_site(cookie::SameSite::Lax)
             .finish()
     }
 
