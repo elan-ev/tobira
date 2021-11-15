@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle,
     FiCheck, FiChevronDown, FiChevronLeft, FiFilm, FiLogIn, FiLogOut, FiMoon,
-    FiMoreVertical, FiUser,
+    FiMoreVertical, FiUpload, FiUser,
 } from "react-icons/fi";
 import { HiOutlineSparkles, HiOutlineTranslate } from "react-icons/hi";
 
@@ -239,6 +239,9 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
             )}
 
             {user && <>
+                <MenuItem icon={<FiUpload />} linkTo={"/~upload"}>
+                    {t("upload.title")}
+                </MenuItem>
                 <MenuItem icon={<HiOutlineSparkles />} linkTo={`/@${user.username}`}>
                     {t("user.your-page")}
                 </MenuItem>

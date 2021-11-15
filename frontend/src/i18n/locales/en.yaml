@@ -91,6 +91,9 @@ realm:
   edit-page-content: Edit page content
   add-sub-page: Add sub-page
 
+upload:
+  title: Upload video
+
 manage:
   overview: Overview
 

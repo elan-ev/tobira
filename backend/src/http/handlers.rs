@@ -53,6 +53,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
         "/~tobira"
+        | "/~upload"
         | "/~manage"
         | "/~manage/realm"
         | "/~manage/realm/add-child" => ctx.assets.serve_index().await,

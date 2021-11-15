@@ -94,6 +94,9 @@ realm:
   edit-page-content: Seiteninhalt bearbeiten
   add-sub-page: Unterseite hinzufügen
 
+upload:
+  title: Video hochladen
+
 manage:
   overview: Übersicht
 
