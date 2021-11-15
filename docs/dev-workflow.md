@@ -17,6 +17,10 @@ Whenever a source file changes, floof will automatically rebuild what's necessar
 Frontend rebuilds are fairly quick, backend ones can take up to 15s.
 Once the relevant component has been rebuilt, all browser sessions of Tobira are automatically reloaded.
 
+Note that the `floof` build uses `relay-compiler --watch` which relies on [`watchman`](https://github.com/facebook/watchman).
+This needs to be installed on your system somehow or this part of the script will not work,
+and `relay-compiler` will only run once.
+
 ## Test data
 
 A freshly started Tobira instance has no data in it.
