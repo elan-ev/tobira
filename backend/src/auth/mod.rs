@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, time::Duration};
 
 use deadpool_postgres::Client;
 use hyper::HeaderMap;
@@ -67,6 +67,11 @@ pub(crate) struct AuthConfig {
     #[config(default = "ROLE_TOBIRA_MODERATOR")]
     pub(crate) moderator_role: String,
 
+    /// Duration of a Tobira-managed login session.
+    /// Note: This is only relevant if `auth.mode` is `login-proxy`.
+    #[config(default = "30d", deserialize_with = crate::config::deserialize_duration)]
+    pub(crate) session_duration: Duration,
+
     /// Configuration related to the built-in login page.
     #[config(nested)]
     pub(crate) login_page: LoginPageConfig,
@@ -121,7 +126,9 @@ impl User {
         match auth_config.mode {
             AuthMode::None => Ok(Self::None),
             AuthMode::FullAuthProxy => Ok(UserData::from_auth_headers(headers, auth_config).into()),
-            AuthMode::LoginProxy => UserData::from_session(headers, db).await.map(Into::into),
+            AuthMode::LoginProxy => UserData::from_session(headers, db, auth_config.session_duration)
+                .await
+                .map(Into::into),
         }
     }
 
@@ -201,7 +208,11 @@ impl UserData {
 
     /// Tries to load user data from a DB session referred to in a session
     /// cookie. Should only be called if the auth mode is `LoginProxy`.
-    async fn from_session(headers: &HeaderMap, db: &Client) -> Result<Option<Self>, PgError> {
+    async fn from_session(
+        headers: &HeaderMap,
+        db: &Client,
+        session_duration: Duration,
+    ) -> Result<Option<Self>, PgError> {
         // Try to get a session ID from the cookie.
         let session_id = match SessionId::from_headers(headers) {
             None => return Ok(None),
@@ -209,11 +220,10 @@ impl UserData {
         };
 
         // Check if such a session exists in the DB.
-        let sql = "update user_sessions \
-            set last_used = now() \
-            where id = $1\
-            returning username, display_name, roles";
-        let row = match db.query_opt(sql, &[&session_id]).await? {
+        let sql = "select username, display_name, roles from user_sessions \
+            where id = $1 \
+            and extract(epoch from now() - created) < $2";
+        let row = match db.query_opt(sql, &[&session_id, &session_duration.as_secs_f64()]).await? {
             None => return Ok(None),
             Some(row) => row,
         };

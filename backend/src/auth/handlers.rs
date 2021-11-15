@@ -35,7 +35,9 @@ pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Re
 
             Response::builder()
                 .status(StatusCode::NO_CONTENT)
-                .header("set-cookie", session_id.set_cookie().to_string())
+                .header("set-cookie", session_id.set_cookie(
+                    ctx.config.auth.session_duration
+                ).to_string())
                 .body(Body::empty())
                 .unwrap()
                 .pipe(Ok)

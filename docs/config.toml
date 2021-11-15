@@ -111,6 +111,12 @@
 # Default value: "ROLE_TOBIRA_MODERATOR"
 #moderator_role = "ROLE_TOBIRA_MODERATOR"
 
+# Duration of a Tobira-managed login session.
+# Note: This is only relevant if `auth.mode` is `login-proxy`.
+#
+# Default value: "30d"
+#session_duration = "30d"
+
 # Configuration related to the built-in login page.
 
 [auth.login_page]
