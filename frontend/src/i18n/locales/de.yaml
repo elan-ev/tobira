@@ -105,7 +105,7 @@ manage:
       Fehler: ungültiger Pfad zur Seite. Wurde die Seite gelöscht oder ihr Pfad geändert?
     heading: Einstellungen zur Seite „{{realm}}“
     heading-root: Einstellungen zur Startseite
-    descendants-count: Diese Seite besitzt {{count}} direkt und indirekte Unterseiten.
+    descendants-count: Diese Seite besitzt {{count}} direkte und indirekte Unterseiten.
     view-page: Zur Seite
 
     name-must-not-be-empty: Name darf nicht leer sein.
@@ -121,7 +121,7 @@ manage:
       rename-failed: Änderung des Namen fehlgeschlagen.
       no-rename-root: >
         Der Name der Startseite kann nicht geändert werden. Die Überschrift wird
-        von der globalen Seiten-Title Einstellung kontrolliert.
+        von der globalen Seitentitel-Einstellung kontrolliert.
 
     children:
       heading: Reihenfolge Unterseiten
