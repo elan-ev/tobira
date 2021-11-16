@@ -8,4 +8,4 @@ services:
     ports:
       - "3090:3090"
     volumes:
-      - ${PWD}/login-proxy-nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./login-proxy-nginx.conf:/etc/nginx/conf.d/default.conf
