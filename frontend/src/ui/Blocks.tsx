@@ -28,8 +28,12 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
         realm,
     );
 
-    return <>{
-        blocks.map(block => match(block.__typename, {
+    return <div css={{
+        display: "flex",
+        flexDirection: "column",
+        rowGap: 32,
+    }}>
+        {blocks.map(block => match(block.__typename, {
             "TextBlock": () => <TextBlockByQuery
                 key={block.id}
                 title={block.title ?? undefined}
@@ -41,6 +45,6 @@ export const Blocks: React.FC<Props> = ({ realm }) => {
                 realmPath={path}
                 fragRef={block}
             />,
-        }))
-    }</>;
+        }))}
+    </div>;
 };

@@ -4,10 +4,5 @@ export const Title: React.FC<{ title?: string }> = ({ title }) => (
 );
 
 export const Block: React.FC = ({ children }) => (
-    <div css={{
-        margin: "32px 0",
-        ":first-of-type": {
-            marginTop: 0,
-        },
-    }}>{children}</div>
+    <div>{children}</div>
 );
