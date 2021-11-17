@@ -199,6 +199,8 @@ manage:
       edit: Edit block
       remove: Remove block
 
+      removing-failed: Removing the block failed.
+
   add-child:
     heading: Add page
     path-segment: Path segment

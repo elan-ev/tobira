@@ -207,6 +207,8 @@ manage:
       edit: Block bearbeiten
       remove: Block entfernen
 
+      removing-failed: Entfernen des Blocks ist fehlgeschlagen.
+
   add-child:
     heading: Seite hinzufügen
     path-segment: Pfadsegment

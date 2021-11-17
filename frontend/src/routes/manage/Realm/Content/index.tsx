@@ -97,7 +97,7 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
             rowGap: 16,
             padding: 0,
         }}>
-            {blocks.map((block, index) => (
+            {blocks.filter(block => block != null).map((block, index) => (
                 <React.Fragment key={block.id}>
                     <AddButtons index={index} />
 

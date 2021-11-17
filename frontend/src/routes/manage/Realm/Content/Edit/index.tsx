@@ -1,17 +1,13 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import {
-    FiArrowDown,
-    FiArrowUp,
-    FiEdit,
-    FiTrash,
-} from "react-icons/fi";
+import { FiArrowDown, FiArrowUp, FiEdit } from "react-icons/fi";
 
 import type {
     EditButtonsRealmData$key,
 } from "../../../../../query-types/EditButtonsRealmData.graphql";
 import { Button, ButtonGroup } from "../util";
+import { RemoveButton } from "./RemoveButton";
 
 
 type Props = {
@@ -24,9 +20,9 @@ export const EditButtons: React.FC<Props> = ({ realm, index }) => {
 
     const { blocks } = useFragment(graphql`
         fragment EditButtonsRealmData on Realm {
-            # We need only the length of this list,
-            # but we have to query *something* from it.
-            blocks { id }
+            blocks {
+                ... RemoveButtonData
+            }
         }
     `, realm);
 
@@ -49,14 +45,6 @@ export const EditButtons: React.FC<Props> = ({ realm, index }) => {
         <Button title={t("manage.realm.content.edit")}>
             <FiEdit />
         </Button>
-        <Button title={t("manage.realm.content.remove")} css={{
-            color: "var(--danger-color)",
-            "&&:hover": {
-                backgroundColor: "var(--danger-color)",
-                color: "white",
-            },
-        }}>
-            <FiTrash />
-        </Button>
+        <RemoveButton block={blocks[index]} />
     </ButtonGroup>;
 };
