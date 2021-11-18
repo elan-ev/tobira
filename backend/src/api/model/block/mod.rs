@@ -11,6 +11,9 @@ use crate::{
 };
 
 
+mod mutations;
+
+
 /// A `Block`: a UI element that belongs to a realm.
 #[graphql_interface(Context = Context, for = [TextBlock, SeriesBlock])]
 pub(crate) trait Block {
