@@ -29,7 +29,10 @@ type Mutation {
   setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
   "Updates a realm's data."
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
+  "Remove a realm from the tree."
   removeRealm(id: ID!): RemovedRealm!
+  "Remove a block from a realm."
+  removeBlock(id: ID!): RemovedBlock!
 }
 
 enum VideoListOrder {
@@ -55,6 +58,11 @@ type UserApi {
   displayName: String!
   "`True` if the user has the permission to upload videos."
   canUpload: Boolean!
+}
+
+type RemovedBlock {
+  id: ID!
+  realm: Realm!
 }
 
 type Query {

@@ -4,7 +4,10 @@ use super::{
     Context,
     err::ApiResult,
     id::Id,
-    model::realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
+    model::{
+        realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
+        block::{BlockValue, RemovedBlock},
+    }
 };
 
 
@@ -41,7 +44,13 @@ impl Mutation {
         Realm::update(id, set, context).await
     }
 
+    /// Remove a realm from the tree.
     async fn remove_realm(id: Id, context: &Context) -> ApiResult<RemovedRealm> {
         Realm::remove(id, context).await
+    }
+
+    /// Remove a block from a realm.
+    async fn remove_block(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
+        BlockValue::remove(id, context).await
     }
 }

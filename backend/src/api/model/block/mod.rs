@@ -13,6 +13,8 @@ use crate::{
 
 mod mutations;
 
+pub(crate) use mutations::RemovedBlock;
+
 
 /// A `Block`: a UI element that belongs to a realm.
 #[graphql_interface(Context = Context, for = [TextBlock, SeriesBlock])]
@@ -165,7 +167,7 @@ impl BlockValue {
             .map_err(Into::into)
     }
 
-    fn from_row(row: Row) -> ApiResult<BlockValue> {
+    fn from_row(row: Row) -> ApiResult<Self> {
         let ty: BlockType = row.get(1);
         let shared = SharedData {
             id: Id::block(row.get(0)),
