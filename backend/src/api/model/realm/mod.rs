@@ -83,6 +83,23 @@ impl Realm {
         Ok(result)
     }
 
+    pub(crate) fn col_names(from: &str) -> String {
+        ["id", "parent", "name", "full_path", "index", "child_order"]
+            .map(|column| format!("{}.{}", from, column))
+            .join(",")
+    }
+
+    pub(crate) fn from_row(row: tokio_postgres::Row) -> Self {
+        Self {
+            key: row.get(0),
+            parent_key: row.get(1),
+            name: row.get(2),
+            full_path: row.get(3),
+            index: row.get(4),
+            child_order: row.get(5),
+        }
+    }
+
     pub(crate) async fn load_by_path(mut path: String, context: &Context) -> ApiResult<Option<Self>> {
         // Normalize path: strip optional trailing slash.
         if path.ends_with('/') {
