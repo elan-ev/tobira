@@ -192,6 +192,9 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             },
         });
         e.preventDefault();
+        // Don't let the event escape the modal portal,
+        //   which might be sitting inside of other `form` elements.
+        e.stopPropagation();
     };
 
     const buttonContent = realm.numberOfDescendants === 0

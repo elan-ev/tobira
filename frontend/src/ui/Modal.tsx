@@ -1,3 +1,4 @@
+import ReactDOM from "react-dom";
 import { FiX } from "react-icons/fi";
 
 type Props = {
@@ -6,7 +7,7 @@ type Props = {
 };
 
 
-export const Modal: React.FC<Props> = ({ title, close, children }) => (
+export const Modal: React.FC<Props> = ({ title, close, children }) => ReactDOM.createPortal(
     <div
         onClick={e => {
             if (e.target === e.currentTarget) {
@@ -46,5 +47,6 @@ export const Modal: React.FC<Props> = ({ title, close, children }) => (
             </div>
             <div css={{ padding: 16 }}>{children}</div>
         </div>
-    </div>
+    </div>,
+    document.body,
 );
