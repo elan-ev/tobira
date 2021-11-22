@@ -31,6 +31,13 @@ type Mutation {
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
   "Remove a realm from the tree."
   removeRealm(id: ID!): RemovedRealm!
+  """
+    Swap two blocks.
+
+    This is a less flexible but potentially cheaper alternative
+    to `orderBlocks`.
+  """
+  swapBlocksById(id1: ID!, id2: ID!): Realm!
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
 }
