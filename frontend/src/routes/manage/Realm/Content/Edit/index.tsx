@@ -1,13 +1,14 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { FiArrowDown, FiArrowUp, FiEdit } from "react-icons/fi";
+import { FiEdit } from "react-icons/fi";
 
 import type {
     EditButtonsRealmData$key,
 } from "../../../../../query-types/EditButtonsRealmData.graphql";
 import { Button, ButtonGroup } from "../util";
 import { RemoveButton } from "./RemoveButton";
+import { MoveButtons } from "./MoveButtons";
 
 
 type Props = {
@@ -15,16 +16,18 @@ type Props = {
     index: number;
 };
 
-export const EditButtons: React.FC<Props> = ({ realm, index }) => {
+export const EditButtons: React.FC<Props> = ({ realm: realmRef, index }) => {
     const { t } = useTranslation();
 
-    const { blocks } = useFragment(graphql`
+    const realm = useFragment(graphql`
         fragment EditButtonsRealmData on Realm {
+            ... MoveButtonsData
             blocks {
                 ... RemoveButtonData
             }
         }
-    `, realm);
+    `, realmRef);
+    const { blocks } = realm;
 
     return <ButtonGroup css={{
         float: "right",
@@ -36,12 +39,7 @@ export const EditButtons: React.FC<Props> = ({ realm, index }) => {
         marginRight: -8,
         marginTop: -8,
     }}>
-        <Button title={t("manage.realm.content.move-down")} disabled={index === blocks.length - 1}>
-            <FiArrowDown />
-        </Button>
-        <Button title={t("manage.realm.content.move-up")} disabled={index === 0}>
-            <FiArrowUp />
-        </Button>
+        <MoveButtons {...{ realm, index }} />
         <Button title={t("manage.realm.content.edit")}>
             <FiEdit />
         </Button>
