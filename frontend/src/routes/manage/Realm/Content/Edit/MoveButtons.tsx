@@ -10,9 +10,18 @@ import { Button } from "../util";
 type Props = {
     realm: MoveButtonsData$key;
     index: number;
+    onCommit?: () => void;
+    onCompleted?: () => void;
+    onError?: (error: Error) => void;
 };
 
-export const MoveButtons: React.FC<Props> = ({ realm, index }) => {
+export const MoveButtons: React.FC<Props> = ({
+    realm,
+    index,
+    onCommit,
+    onCompleted,
+    onError,
+}) => {
     const { t } = useTranslation();
 
 
@@ -41,7 +50,10 @@ export const MoveButtons: React.FC<Props> = ({ realm, index }) => {
                 index1: index,
                 index2: index + direction,
             },
+            onCompleted,
+            onError,
         });
+        onCommit?.();
     };
 
 

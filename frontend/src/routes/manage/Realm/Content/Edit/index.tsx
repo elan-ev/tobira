@@ -14,9 +14,18 @@ import { MoveButtons } from "./MoveButtons";
 type Props = {
     realm: EditButtonsRealmData$key;
     index: number;
+    onCommit?: () => void;
+    onCompleted?: () => void;
+    onError?: (error: Error) => void;
 };
 
-export const EditButtons: React.FC<Props> = ({ realm: realmRef, index }) => {
+export const EditButtons: React.FC<Props> = ({
+    realm: realmRef,
+    index,
+    onCommit,
+    onCompleted,
+    onError,
+}) => {
     const { t } = useTranslation();
 
     const realm = useFragment(graphql`
@@ -39,7 +48,7 @@ export const EditButtons: React.FC<Props> = ({ realm: realmRef, index }) => {
         marginRight: -8,
         marginTop: -8,
     }}>
-        <MoveButtons {...{ realm, index }} />
+        <MoveButtons {...{ realm, index, onCommit, onCompleted, onError }} />
         <Button title={t("manage.realm.content.edit")}>
             <FiEdit />
         </Button>

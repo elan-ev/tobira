@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, PreloadedQuery } from "react-relay";
 
@@ -14,6 +14,7 @@ import { QueryLoader } from "../../../../util/QueryLoader";
 import { match } from "../../../../util";
 import { TextBlockByQuery } from "../../../../ui/blocks/Text";
 import { SeriesBlockFromBlock } from "../../../../ui/blocks/Series";
+import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
 import { EditButtons } from "./Edit";
 
@@ -84,6 +85,22 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
     );
     const { name, path, isRoot: realmIsRoot, blocks } = realm;
 
+
+    const [inFlight, setInFlight] = useState(false);
+
+    const onCommit = () => {
+        setInFlight(true);
+    };
+
+    const onCompleted = () => {
+        setInFlight(false);
+    };
+
+    const onError = () => {
+        setInFlight(false);
+    };
+
+
     return <RealmSettingsContainer>
         <h1>
             {realmIsRoot
@@ -96,6 +113,8 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
             flexDirection: "column",
             rowGap: 16,
             padding: 0,
+            // To position the loading overlay
+            position: "relative",
         }}>
             {blocks.filter(block => block != null).map((block, index) => (
                 <React.Fragment key={block.id}>
@@ -108,7 +127,7 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
                         padding: 8,
                         overflow: "hidden",
                     }}>
-                        <EditButtons {...{ realm, index }} />
+                        <EditButtons {...{ realm, index, onCommit, onCompleted, onError }} />
 
                         {match(block.__typename, {
                             "TextBlock": () => <TextBlockByQuery
@@ -125,6 +144,18 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
                 </React.Fragment>
             ))}
             <AddButtons index={blocks.length} />
+
+            {inFlight && <div css={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(255, 255, 255, 0.5)",
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+            }}>
+                <Spinner size={20} />
+            </div>}
         </div>
     </RealmSettingsContainer>;
 };
