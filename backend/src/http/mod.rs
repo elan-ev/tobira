@@ -20,7 +20,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{api, config::Config, prelude::*};
+use crate::{api, auth::JwtContext, config::Config, prelude::*};
 use self::{
     assets::Assets,
     handlers::handle,
@@ -64,6 +64,7 @@ pub(crate) struct Context {
     pub(crate) db_pool: Pool,
     pub(crate) assets: Assets,
     pub(crate) config: Arc<Config>,
+    pub(crate) jwt: Arc<JwtContext>,
 }
 
 
@@ -80,6 +81,7 @@ pub(crate) async fn serve(
         api_root: Arc::new(api_root),
         db_pool: db,
         assets,
+        jwt: Arc::new(JwtContext::new(&config.auth.jwt)?),
         config: Arc::new(config),
     });
 

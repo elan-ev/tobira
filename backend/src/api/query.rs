@@ -39,4 +39,9 @@ impl Query {
     fn current_user(context: &Context) -> Option<UserApi> {
         UserApi::from(&context.user)
     }
+
+    /// Returns a new JWT that can be used to authenticate against Opencast.
+    fn jwt(context: &Context) -> String {
+        context.jwt.new_token()
+    }
 }

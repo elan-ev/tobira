@@ -10,9 +10,11 @@ use crate::{config::TranslatedString, prelude::*};
 
 mod handlers;
 mod session_id;
+mod jwt;
 
 pub(crate) use self::{
     session_id::SessionId,
+    jwt::{JwtConfig, JwtContext},
     handlers::{handle_login, handle_logout},
 };
 
@@ -75,6 +77,12 @@ pub(crate) struct AuthConfig {
     /// Configuration related to the built-in login page.
     #[config(nested)]
     pub(crate) login_page: LoginPageConfig,
+
+    /// JWT configuration. JWTs are only used to automatically authenticate
+    /// users against Opencast with short-lived tokens. They are not used for
+    /// user sessions.
+    #[config(nested)]
+    pub(crate) jwt: JwtConfig,
 }
 
 /// Authentification and authorization

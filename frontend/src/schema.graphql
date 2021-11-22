@@ -73,6 +73,8 @@ type Query {
   event(id: ID!): Event
   "Returns the current user."
   currentUser: UserApi
+  "Returns a new JWT that can be used to authenticate against Opencast."
+  jwt: String!
 }
 
 enum RealmOrder {

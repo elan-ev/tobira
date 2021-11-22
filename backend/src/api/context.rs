@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     api::err::{ApiError, ApiErrorKind, ApiResult},
-    auth::{AuthToken, User},
+    auth::{AuthToken, JwtContext, User},
     config::Config,
     db::Transaction,
 };
@@ -13,6 +13,7 @@ pub(crate) struct Context {
     pub(crate) db: Transaction,
     pub(crate) user: User,
     pub(crate) config: Arc<Config>,
+    pub(crate) jwt: Arc<JwtContext>,
 }
 
 impl juniper::Context for Context {}
