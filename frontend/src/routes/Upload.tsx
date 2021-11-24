@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { TFunction, useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
@@ -14,7 +14,7 @@ import { bug } from "../util/err";
 import CONFIG from "../config";
 import { FiUpload } from "react-icons/fi";
 import { Button } from "../ui/Button";
-import { boxError } from "../ui/error";
+import { boxError, ErrorBox } from "../ui/error";
 
 
 export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
@@ -36,14 +36,31 @@ type Props = {
 };
 
 const Upload: React.FC<Props> = ({ queryRef }) => {
+    const [files, setFiles] = useState<FileList | null>(null);
+    const [metadataSaved, setMetadataSaved] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [mediaPackage, setMediaPackage] = useState<string | null>(null);
+    const [ingestError, setIngestError] = useState<string | null>(null);
+
     const { t } = useTranslation();
     const result = usePreloadedQuery(query, queryRef);
     const relayEnv = useRelayEnvironment();
 
-    const start = async () => {
-        // TODO: error handling
-        const res = await ocRequest(relayEnv, "/info/me.json");
-        console.log(await res.json());
+    /** Called when the files are selected. Starts uploading those files. */
+    const onFileSelect = async (files: FileList) => {
+        setFiles(files);
+        try {
+            let mediaPackage = await ocRequest(relayEnv, "/ingest/createMediaPackage")
+                .then(response => response.text());
+            const tracks = Array.from(files)
+                .map(file => ({ file, flavor: "presentation/source" as const }));
+            mediaPackage = await uploadTracks(relayEnv, mediaPackage, tracks, progress => {
+                setUploadProgress(progress);
+            });
+            setMediaPackage(mediaPackage);
+        } catch (e) {
+            setIngestError(ingestErrorToMessage(t, e));
+        }
     };
 
     return (
@@ -55,12 +72,41 @@ const Upload: React.FC<Props> = ({ queryRef }) => {
                 flexDirection: "column",
             }}>
                 <h1>{t("upload.title")}</h1>
-                <FileSelect onSelect={files => {
-                    console.log(files);
-                }} />
+                {(() => {
+                    if (files === null) {
+                        return <FileSelect onSelect={onFileSelect} />;
+                    }
+
+                    return (
+                        <div css={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "stretch",
+                            gap: 32,
+                            width: "100%",
+                            maxWidth: 800,
+                            margin: "0 auto",
+                        }}>
+                            {ingestError == null
+                                ? <UploadProgress progress={uploadProgress} />
+                                : <ErrorBox>{ingestError}</ErrorBox>
+                            }
+                            <div css={{ overflowY: "auto" }}>
+                                {metadataSaved ? null : <MetaDataEdit />}
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
         </Root>
     );
+};
+
+const ingestErrorToMessage = (t: TFunction, error: unknown): string => {
+    console.log("ingest error: ", error);
+
+    // TODO: make this better, obviously
+    return t("upload.error.unknown");
 };
 
 type FileSelectProps = {
@@ -160,6 +206,50 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
 };
 
 
+type UploadProgressProps = {
+    progress: number;
+};
+
+const UploadProgress: React.FC<UploadProgressProps> = ({ progress }) => {
+    const { i18n } = useTranslation();
+
+    progress = Math.min(1, progress);
+    const roundedPercent = (progress * 100).toLocaleString(i18n.language, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+    });
+
+    return (
+        <div>
+            <div css={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <span>{roundedPercent}%</span>
+                <span>TODO</span>
+            </div>
+            <div css={{
+                width: "100%",
+                height: 12,
+                borderRadius: 6,
+                overflow: "hidden",
+                backgroundColor: "var(--grey92)",
+            }}>
+                <div css={{
+                    height: "100%",
+                    transition: "width 200ms",
+                    width: `${progress * 100}%`,
+                    backgroundColor: "var(--happy-color)",
+                }} />
+            </div>
+        </div>
+    );
+};
+
+// TODO, obviously
+const MetaDataEdit: React.FC = () => <span>edit metadata</span>;
+
+
+/** Returns the full Opencast URL for the given path */
+const ocUrl = (path: string): string => `${CONFIG.ocUrl}${path}`;
+
 /** Performs a request against Opencast, authenticated via JWT */
 const ocRequest = async (
     relayEnv: Environment,
@@ -168,14 +258,20 @@ const ocRequest = async (
 ): Promise<Response> => {
     const jwt = await getJwt(relayEnv);
 
-    const url = `${CONFIG.ocUrl}${path}`;
-    return await fetch(url, {
+    const url = ocUrl(path);
+    const response = await fetch(url, {
         ...options,
         headers: {
             ...options.headers,
             "Authorization": `Bearer ${jwt}`,
         },
     });
+
+    if (!response.ok) {
+        throw new Error(`OC returned non-2xx status ${response.status} ${response.statusText}`);
+    }
+
+    return response;
 };
 
 /** Fetches a new JWT for uploading to Opencast */
@@ -208,3 +304,65 @@ const getJwt = (relayEnv: Environment): Promise<string> => new Promise((resolve,
         },
     });
 });
+
+type Track = {
+    flavor: "presentation/source" | "presenter/source";
+    file: File;
+};
+
+/**
+ * Uploads the given tracks via the ingest API. Calls `onProgress` regularly
+ * with a number between 0 and 1, indicating how much of the data was already
+ * uploaded. Returns the resulting media package returned by the last request.
+ */
+const uploadTracks = async (
+    relayEnv: Environment,
+    mediaPackage: string,
+    tracks: Track[],
+    onProgress: (progress: number) => void,
+): Promise<string> => {
+    const totalBytes = tracks.map(t => t.file.size).reduce((a, b) => a + b, 0);
+    let sizeFinishedTracks = 0;
+
+    for (const { flavor, file } of tracks) {
+        // Assemble multipart body
+        const body = new FormData();
+        body.append("mediaPackage", mediaPackage);
+        body.append("flavor", flavor);
+        body.append("tags", "");
+        body.append("BODY", file, file.name);
+
+        const url = ocUrl("/ingest/addTrack");
+        const jwt = await getJwt(relayEnv);
+        mediaPackage = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", url);
+            xhr.setRequestHeader("Authorization", `Bearer ${jwt}`);
+
+            xhr.onload = () => {
+                if (xhr.status !== 200) {
+                    // TODO
+                    reject(new Error("invalid Opencast status code returned"));
+                } else {
+                    resolve(xhr.responseText);
+                }
+            };
+            // TODO: distinguish between different errors
+            xhr.onerror = () => reject(xhr.status),
+            xhr.upload.onprogress = e => {
+                const uploadedBytes = e.loaded + sizeFinishedTracks;
+                onProgress(uploadedBytes / totalBytes);
+            };
+
+            try {
+                xhr.send(body);
+            } catch (e) {
+                reject(e);
+            }
+        });
+
+        sizeFinishedTracks += file.size;
+    }
+
+    return mediaPackage;
+};

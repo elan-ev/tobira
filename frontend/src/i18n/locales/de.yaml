@@ -101,6 +101,8 @@ upload:
   too-many-files: >
     Sie haben zu viele Dateien ausgewählt. Zurzeit werden nur einzelne Dateien unterstützt.
   not-a-file: Sie haben etwas in diesen Bereich gezogen, das keine Datei ist.
+  error:
+    unknown: Ein unbekannter Fehler ist während des Dateiuploads aufgetreten.
 
 manage:
   overview: Übersicht

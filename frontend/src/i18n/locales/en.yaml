@@ -97,6 +97,8 @@ upload:
   select-files: Select files
   too-many-files: You selected too many files. Currently, only a single file is supported.
   not-a-file: You dropped something that's not a file.
+  error:
+    unknown: Unknown error occured during video upload.
 
 manage:
   overview: Overview
