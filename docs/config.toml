@@ -111,6 +111,12 @@
 # Default value: "ROLE_TOBIRA_MODERATOR"
 #moderator_role = "ROLE_TOBIRA_MODERATOR"
 
+# If a user has this role, they are allowed to use the Tobira video
+# uploader to ingest videos to Opencast.
+#
+# Default value: "ROLE_TOBIRA_UPLOAD"
+#upload_role = "ROLE_TOBIRA_UPLOAD"
+
 # Duration of a Tobira-managed login session.
 # Note: This is only relevant if `auth.mode` is `login-proxy`.
 #
@@ -158,6 +164,13 @@
 #
 # Required! This value must be specified.
 #secret_key =
+
+# The duration for which a JWT is valid. JWTs are just used as temporary
+# ways to authenticate against Opencast, so they just have to be valid
+# until the frontend received the JWT and used it with Opencast.
+#
+# Default value: "30s"
+#expiration_time = "30s"
 
 [log]
 # Determines how many messages are logged. Log messages below

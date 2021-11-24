@@ -172,6 +172,9 @@ manage:
 api-remote-errors:
   view:
     event: Sie sind nicht autorisiert dieses Video zu sehen.
+  upload:
+    not-logged-in: Sie müssen eingeloggt sein, um Videos hochzuladen.
+    not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   mutation:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
     not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.

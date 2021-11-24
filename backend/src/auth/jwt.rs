@@ -1,13 +1,15 @@
 use ring::{rand::{SecureRandom, SystemRandom}, signature::EcdsaKeyPair};
 use serde::Serialize;
 use serde_json::json;
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 
 use crate::prelude::*;
 
+use super::UserData;
 
 
-#[derive(Debug, confique::Config)]
+
+#[derive(Debug, Clone, confique::Config)]
 pub(crate) struct JwtConfig {
     /// Signing algorithm for JWTs. Prefer `ES` style algorithms over others.
     /// The algorithm choice has to be configured in Opencast as well.
@@ -28,6 +30,13 @@ pub(crate) struct JwtConfig {
     /// Here, the `sec1.pem` is encoded as SEC1 instead of PKCS#8. The second
     /// command converts the key.
     secret_key: PathBuf,
+
+
+    /// The duration for which a JWT is valid. JWTs are just used as temporary
+    /// ways to authenticate against Opencast, so they just have to be valid
+    /// until the frontend received the JWT and used it with Opencast.
+    #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
+    pub(crate) expiration_time: Duration,
 }
 
 /// A supported JWT signing algorithm.
@@ -48,7 +57,7 @@ impl Algorithm {
 pub(crate) struct JwtContext {
     rng: SystemRandom,
     auth: JwtAuth,
-    signing_algo: Algorithm,
+    config: JwtConfig,
 }
 
 impl JwtContext {
@@ -58,7 +67,7 @@ impl JwtContext {
         Ok(Self {
             rng: SystemRandom::new(),
             auth,
-            signing_algo: config.signing_algorithm,
+            config: config.clone(),
         })
     }
 
@@ -68,12 +77,15 @@ impl JwtContext {
     }
 
     /// Creates a new JWT.
-    pub(crate) fn new_token(&self) -> String {
-        // TODO: obviously
+    pub(crate) fn new_upload_token(&self, user: &UserData) -> String {
+        let exp = chrono::offset::Utc::now()
+            + chrono::Duration::from_std(self.config.expiration_time)
+                .expect("failed to convert from std Duration to chrono::Duration");
+
         let payload = json!({
-              "name": "John Doe2",
-              "username": "jonny",
-              "email": "jon@jonny.com",
+              "name": user.display_name,
+              "username": user.username,
+              "exp": exp.timestamp(),
         });
 
         self.encode(&payload)
@@ -83,7 +95,7 @@ impl JwtContext {
     fn encode(&self, payload: &impl Serialize) -> String {
         let header = json!({
             "typ": "JWT",
-            "alg": self.signing_algo.to_str(),
+            "alg": self.config.signing_algorithm.to_str(),
         });
 
         let mut jwt = String::new();
