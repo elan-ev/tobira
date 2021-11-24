@@ -1,6 +1,6 @@
 //! Blocks that make up the content of realm pages.
 
-use juniper::{graphql_interface, graphql_object, GraphQLEnum, GraphQLObject};
+use juniper::{graphql_interface, graphql_object, GraphQLEnum};
 use postgres_types::FromSql;
 use tokio_postgres::Row;
 
@@ -67,11 +67,7 @@ pub(crate) struct SharedData {
     pub(crate) title: Option<String>,
 }
 
-/// A block just showing some text.
-#[derive(GraphQLObject)]
-#[graphql(Context = Context, impl = BlockValue)]
 pub(crate) struct TextBlock {
-    #[graphql(skip)]
     pub(crate) shared: SharedData,
     pub(crate) content: String,
 }
@@ -80,6 +76,26 @@ pub(crate) struct TextBlock {
 impl Block for TextBlock {
     fn shared(&self) -> &SharedData {
         &self.shared
+    }
+}
+
+/// A block just showing some text.
+#[graphql_object(Context = Context, impl = BlockValue)]
+impl TextBlock {
+    fn content(&self) -> &str {
+        &self.content
+    }
+
+    fn id(&self) -> Id {
+        self.shared().id
+    }
+
+    fn index(&self) -> i32 {
+        self.shared().index
+    }
+
+    fn title(&self) -> Option<&str> {
+        self.shared().title.as_deref()
     }
 }
 
@@ -111,6 +127,18 @@ impl SeriesBlock {
 
     fn order(&self) -> VideoListOrder {
         self.order
+    }
+
+    fn id(&self) -> Id {
+        self.shared().id
+    }
+
+    fn index(&self) -> i32 {
+        self.shared().index
+    }
+
+    fn title(&self) -> Option<&str> {
+        self.shared().title.as_deref()
     }
 }
 

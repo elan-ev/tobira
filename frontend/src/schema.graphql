@@ -43,6 +43,9 @@ scalar DateTimeUtc
 "A block just showing some text."
 type TextBlock implements Block {
   content: String!
+  id: ID!
+  index: Int!
+  title: String
 }
 
 type UserApi {
@@ -99,6 +102,9 @@ type SeriesBlock implements Block {
   series: Series!
   layout: VideoListLayout!
   order: VideoListOrder!
+  id: ID!
+  index: Int!
+  title: String
 }
 
 type Series {
