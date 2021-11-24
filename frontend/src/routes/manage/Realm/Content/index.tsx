@@ -11,12 +11,9 @@ import { RealmSettingsContainer } from "../util";
 import { Nav } from "../../../../layout/Navigation";
 import { makeRoute } from "../../../../rauta";
 import { QueryLoader } from "../../../../util/QueryLoader";
-import { match } from "../../../../util";
-import { TextBlockByQuery } from "../../../../ui/blocks/Text";
-import { SeriesBlockFromBlock } from "../../../../ui/blocks/Series";
 import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
-import { EditButtons } from "./Edit";
+import { Block } from "./Block";
 
 
 export const PATH = "/~manage/realm/content";
@@ -71,19 +68,15 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
                 name
                 path
                 isRoot
-                ... EditButtonsRealmData
+                ... BlockRealmData
                 blocks {
                     id
-                    title
-                    __typename
-                    ... on SeriesBlock { ... SeriesBlockData }
-                    ... on TextBlock { ... TextBlockData }
                 }
             }
         `,
         fragRef,
     );
-    const { name, path, isRoot: realmIsRoot, blocks } = realm;
+    const { name, isRoot: realmIsRoot, blocks } = realm;
 
 
     const [inFlight, setInFlight] = useState(false);
@@ -120,27 +113,7 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
                 <React.Fragment key={block.id}>
                     <AddButtons index={index} />
 
-                    <div css={{
-                        alignSelf: "stretch",
-                        border: "1px solid var(--grey80)",
-                        borderRadius: 4,
-                        padding: 8,
-                        overflow: "hidden",
-                    }}>
-                        <EditButtons {...{ realm, index, onCommit, onCompleted, onError }} />
-
-                        {match(block.__typename, {
-                            "TextBlock": () => <TextBlockByQuery
-                                title={block.title ?? undefined}
-                                fragRef={block}
-                            />,
-                            "SeriesBlock": () => <SeriesBlockFromBlock
-                                title={block.title ?? undefined}
-                                realmPath={path}
-                                fragRef={block}
-                            />,
-                        })}
-                    </div>
+                    <Block {...{ realm, index, onCommit, onCompleted, onError }} />
                 </React.Fragment>
             ))}
             <AddButtons index={blocks.length} />

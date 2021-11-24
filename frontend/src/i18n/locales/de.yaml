@@ -208,6 +208,7 @@ manage:
       remove: Block entfernen
 
       removing-failed: Entfernen des Blocks ist fehlgeschlagen.
+      moving-failed: Verschieben des Blocks ist fehlgeschlagen.
 
   add-child:
     heading: Seite hinzufügen

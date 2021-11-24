@@ -200,6 +200,7 @@ manage:
       remove: Remove block
 
       removing-failed: Removing the block failed.
+      moving-failed: Moving the block failed.
 
   add-child:
     heading: Add page

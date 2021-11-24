@@ -11,9 +11,10 @@ import { Button } from "../util";
 
 type Props = {
     block: RemoveButtonData$key;
+    onConfirm?: () => void;
 };
 
-export const RemoveButton: React.FC<Props> = ({ block: blockRef }) => {
+export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) => {
     const { t } = useTranslation();
 
 
@@ -64,6 +65,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef }) => {
             }}
             onClick={() => {
                 modalRef.current?.open();
+                onConfirm?.();
             }}
         >
             <FiTrash />

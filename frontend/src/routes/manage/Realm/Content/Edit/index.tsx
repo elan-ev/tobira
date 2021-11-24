@@ -16,7 +16,7 @@ type Props = {
     index: number;
     onCommit?: () => void;
     onCompleted?: () => void;
-    onError?: (error: Error) => void;
+    onError?: (error: Error, action: string) => void;
 };
 
 export const EditButtons: React.FC<Props> = ({
@@ -38,6 +38,10 @@ export const EditButtons: React.FC<Props> = ({
     `, realmRef);
     const { blocks } = realm;
 
+    const onMoveError = (error: Error) => {
+        onError?.(error, "manage.realm.content.moving-failed");
+    };
+
     return <ButtonGroup css={{
         float: "right",
         borderTop: "none",
@@ -48,10 +52,10 @@ export const EditButtons: React.FC<Props> = ({
         marginRight: -8,
         marginTop: -8,
     }}>
-        <MoveButtons {...{ realm, index, onCommit, onCompleted, onError }} />
+        <MoveButtons {...{ realm, index, onCommit, onCompleted }} onError={onMoveError} />
         <Button title={t("manage.realm.content.edit")}>
             <FiEdit />
         </Button>
-        <RemoveButton block={blocks[index]} />
+        <RemoveButton block={blocks[index]} onConfirm={onCompleted} />
     </ButtonGroup>;
 };
