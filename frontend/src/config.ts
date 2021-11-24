@@ -23,6 +23,7 @@ const parseConfig: () => Config = () => {
 type Config = {
     auth: AuthConfig;
     siteTitle: TranslatedString;
+    ocUrl: string;
     logo: LogoConfig;
     plyr: PlyrConfig;
 };
