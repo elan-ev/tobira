@@ -71,19 +71,20 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
     const { t } = useTranslation();
     const fileInput = useRef<HTMLInputElement>(null);
 
-    const [isDragging, setIsDragging] = useState(false);
+    const [dragCounter, setDragCounter] = useState(0);
+    const isDragging = dragCounter > 0;
 
     return (
         <div
             onDragEnter={e => {
-                setIsDragging(true);
+                setDragCounter(old => old + 1);
                 e.preventDefault();
             }}
             onDragOver={e => e.preventDefault()}
-            onDragLeave={() => setIsDragging(false)}
+            onDragLeave={() => setDragCounter(old => old - 1)}
             onDrop={e => {
                 onSelect(e.dataTransfer.files);
-                setIsDragging(false);
+                setDragCounter(0);
                 e.preventDefault();
             }}
             css={{
@@ -103,19 +104,29 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                     + "border-color var(--transition-length)",
             }}
         >
-            <FiUpload css={{
+            {/* Big icon */}
+            <div css={{
+                position: "relative",
+                lineHeight: 1,
                 fontSize: 64,
                 color: "var(--grey40)",
-                // This depends on the SVG elements used in the icon. Technically, the icon pack
-                // does not guarantee that and could change it at any time. But we decided it's
-                // fine in this case. It is unlikely to change and if it breaks, nothing bad could
-                // happen. Only the animation is broken.
-                "& > polyline, & > line": {
-                    transform: isDragging ? "translateY(2.5px)" : "none",
-                    transition: "transform var(--transition-length)",
-                },
-            }} />
+            }}>
+                {/* This depends on the SVG elements used in the icon. Technically, the icon pack
+                    does not guarantee that and could change it at any time. But we decided it's
+                    fine in this case. It is unlikely to change and if it breaks, nothing bad could
+                    happen. Only the animation is broken. */}
+                <FiUpload css={{
+                    position: "absolute",
+                    top: isDragging ? 8 : 0,
+                    transition: "top var(--transition-length)",
+                    "& > path": { display: "none" },
+                }} />
+                <FiUpload css={{ "& > polyline, & > line": { display: "none" } }} />
+            </div>
+
             {t("upload.drop-to-upload")}
+
+            {/* "Select files" button */}
             <div css={{ marginTop: 16 }}>
                 <Button
                     kind="happy"
