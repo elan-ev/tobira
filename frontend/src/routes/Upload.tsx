@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
@@ -12,6 +12,8 @@ import { Environment, fetchQuery } from "relay-runtime";
 import { UploadJwtQuery } from "../query-types/UploadJwtQuery.graphql";
 import { bug } from "../util/err";
 import CONFIG from "../config";
+import { FiUpload } from "react-icons/fi";
+import { Button } from "../ui/Button";
 
 
 export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
@@ -45,13 +47,97 @@ const Upload: React.FC<Props> = ({ queryRef }) => {
 
     return (
         <Root nav={[]} userQuery={result}>
-            <div css={{ margin: "0 auto", maxWidth: 600 }}>
+            <div css={{
+                margin: "0 auto",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+            }}>
                 <h1>{t("upload.title")}</h1>
-                <button onClick={start}>Start</button>
+                <FileSelect onSelect={files => {
+                    console.log(files);
+                }} />
             </div>
         </Root>
     );
 };
+
+type FileSelectProps = {
+    onSelect: (files: FileList) => void;
+};
+
+/** First state of the uploader: asking the user to select video files */
+const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
+    const { t } = useTranslation();
+    const fileInput = useRef<HTMLInputElement>(null);
+
+    const [isDragging, setIsDragging] = useState(false);
+
+    return (
+        <div
+            onDragEnter={e => {
+                setIsDragging(true);
+                e.preventDefault();
+            }}
+            onDragOver={e => e.preventDefault()}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={e => {
+                onSelect(e.dataTransfer.files);
+                setIsDragging(false);
+                e.preventDefault();
+            }}
+            css={{
+                width: "100%",
+                height: "100%",
+                border: "3px dashed",
+                borderRadius: 10,
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: isDragging ? "var(--grey97)" : "none",
+                borderColor: isDragging ? "var(--accent-color)" : "var(--grey80)",
+                "--transition-length": "80ms",
+                transition: "background-color var(--transition-length), "
+                    + "border-color var(--transition-length)",
+            }}
+        >
+            <FiUpload css={{
+                fontSize: 64,
+                color: "var(--grey40)",
+                // This depends on the SVG elements used in the icon. Technically, the icon pack
+                // does not guarantee that and could change it at any time. But we decided it's
+                // fine in this case. It is unlikely to change and if it breaks, nothing bad could
+                // happen. Only the animation is broken.
+                "& > polyline, & > line": {
+                    transform: isDragging ? "translateY(2.5px)" : "none",
+                    transition: "transform var(--transition-length)",
+                },
+            }} />
+            {t("upload.drop-to-upload")}
+            <div css={{ marginTop: 16 }}>
+                <Button
+                    kind="happy"
+                    onClick={() => fileInput.current?.click()}
+                >{t("upload.select-files")}</Button>
+                <input
+                    ref={fileInput}
+                    onChange={e => {
+                        if (e.target.files) {
+                            onSelect(e.target.files);
+                        }
+                    }}
+                    type="file"
+                    multiple
+                    aria-hidden="true"
+                    css={{ display: "none" }}
+                />
+            </div>
+        </div>
+    );
+};
+
 
 /** Performs a request against Opencast, authenticated via JWT */
 const ocRequest = async (

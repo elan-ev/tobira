@@ -96,6 +96,8 @@ realm:
 
 upload:
   title: Video hochladen
+  drop-to-upload: Videodateien zum Hochladen per drag-and-drop hinzufügen
+  select-files: Dateien auswählen
 
 manage:
   overview: Übersicht

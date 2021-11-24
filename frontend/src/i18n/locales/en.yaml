@@ -93,6 +93,8 @@ realm:
 
 upload:
   title: Upload video
+  drop-to-upload: Drag and drop video files to upload
+  select-files: Select files
 
 manage:
   overview: Overview
