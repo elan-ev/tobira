@@ -14,6 +14,7 @@ import { bug } from "../util/err";
 import CONFIG from "../config";
 import { FiUpload } from "react-icons/fi";
 import { Button } from "../ui/Button";
+import { boxError } from "../ui/error";
 
 
 export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
@@ -71,6 +72,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
     const { t } = useTranslation();
     const fileInput = useRef<HTMLInputElement>(null);
 
+    const [error, setError] = useState(null);
     const [dragCounter, setDragCounter] = useState(0);
     const isDragging = dragCounter > 0;
 
@@ -83,7 +85,14 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
             onDragOver={e => e.preventDefault()}
             onDragLeave={() => setDragCounter(old => old - 1)}
             onDrop={e => {
-                onSelect(e.dataTransfer.files);
+                const files = e.dataTransfer.files;
+                if (files.length === 0) {
+                    setError(t("upload.not-a-file"));
+                } else if (files.length > 1) {
+                    setError(t("upload.too-many-files"));
+                } else {
+                    onSelect(e.dataTransfer.files);
+                }
                 setDragCounter(0);
                 e.preventDefault();
             }}
@@ -140,11 +149,12 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                         }
                     }}
                     type="file"
-                    multiple
                     aria-hidden="true"
                     css={{ display: "none" }}
                 />
             </div>
+
+            {boxError(error)}
         </div>
     );
 };

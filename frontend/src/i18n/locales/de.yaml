@@ -98,6 +98,9 @@ upload:
   title: Video hochladen
   drop-to-upload: Videodateien zum Hochladen per drag-and-drop hinzufügen
   select-files: Dateien auswählen
+  too-many-files: >
+    Sie haben zu viele Dateien ausgewählt. Zurzeit werden nur einzelne Dateien unterstützt.
+  not-a-file: Sie haben etwas in diesen Bereich gezogen, das keine Datei ist.
 
 manage:
   overview: Übersicht
