@@ -38,6 +38,13 @@ type Mutation {
     to `orderBlocks`.
   """
   swapBlocksById(id1: ID!, id2: ID!): Realm!
+  """
+    Swap two blocks.
+
+    This is a less flexible but potentially cheaper alternative
+    to `orderBlocks`.
+  """
+  swapBlocksByIndex(realm: ID!, index1: Int!, index2: Int!): Realm!
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
 }
