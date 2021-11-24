@@ -207,8 +207,34 @@ manage:
       edit: Block bearbeiten
       remove: Block entfernen
 
+      title: Blocktitel
+
+      text:
+        content: Hier können Sie ihren Text einfügen. Sie können sogar Markdown verwenden.
+
+      series:
+        order:
+          heading: Reihenfolge
+          new-to-old: Neuste zuerst
+          old-to-new: Älteste zuerst
+        layout:
+          heading: Anordnung
+          grid: Raster
+          horizontal: Horizontal
+          vertical: Vertikal
+        series:
+          heading: Serie
+          dummy: Serie auswählen
+          invalid: Bitte eine Serie auswählen
+
+      save: Änderungen speichern
+      cancel: Änderungen verwerfen
+
+      cancel-warning: Ihre Änderungen wurden noch nicht gespeichert!
+
       removing-failed: Entfernen des Blocks ist fehlgeschlagen.
       moving-failed: Verschieben des Blocks ist fehlgeschlagen.
+      saving-failed: Speichern Ihrer Änderungen des Blocks ist fehlgeschlagen.
 
   add-child:
     heading: Seite hinzufügen

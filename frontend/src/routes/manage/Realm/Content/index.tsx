@@ -3,8 +3,11 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, PreloadedQuery } from "react-relay";
 
 import { Root } from "../../../../layout/Root";
-import type { ContentManageQuery } from "../../../../query-types/ContentManageQuery.graphql";
-import type { ContentManageData$key } from "../../../../query-types/ContentManageData.graphql";
+import type {
+    ContentManageQuery,
+    ContentManageQueryResponse,
+} from "../../../../query-types/ContentManageQuery.graphql";
+import { ContentManageRealmData$key } from "../../../../query-types/ContentManageRealmData.graphql";
 import { loadQuery } from "../../../../relay";
 import { NotAuthorized, PathInvalid } from "..";
 import { RealmSettingsContainer } from "../util";
@@ -32,7 +35,7 @@ export const ManageRealmContentRoute = makeRoute<PreloadedQuery<ContentManageQue
         } else if (!realm.canCurrentUserEdit) {
             children = <NotAuthorized />;
         } else {
-            children = <ManageContent fragRef={realm} />;
+            children = <ManageContent data={result} />;
         }
 
         return <Root nav={nav} userQuery={result}>
@@ -49,32 +52,36 @@ const query = graphql`
         realm: realmByPath(path: $path) {
             canCurrentUserEdit
             ... NavigationData
-            ... ContentManageData
+            ... ContentManageRealmData
         }
+        ... SeriesEditModeSeriesData
     }
 `;
 
+export const ContentManageQueryContext
+    = React.createContext<ContentManageQueryResponse | null>(null);
 
 type Props = {
-    fragRef: ContentManageData$key;
+    data: ContentManageQueryResponse;
 };
 
-const ManageContent: React.FC<Props> = ({ fragRef }) => {
+const ManageContent: React.FC<Props> = ({ data }) => {
     const { t } = useTranslation();
 
     const realm = useFragment(
         graphql`
-            fragment ContentManageData on Realm {
+            fragment ContentManageRealmData on Realm {
                 name
                 path
                 isRoot
                 ... BlockRealmData
+                ... AddButtonsRealmData
                 blocks {
                     id
                 }
             }
         `,
-        fragRef,
+        data.realm as ContentManageRealmData$key,
     );
     const { name, isRoot: realmIsRoot, blocks } = realm;
 
@@ -94,41 +101,43 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
     };
 
 
-    return <RealmSettingsContainer>
-        <h1>
-            {realmIsRoot
-                ? t("manage.realm.content.heading-root")
-                : t("manage.realm.content.heading", { realm: name })}
-        </h1>
+    return <ContentManageQueryContext.Provider value={data}>
+        <RealmSettingsContainer>
+            <h1>
+                {realmIsRoot
+                    ? t("manage.realm.content.heading-root")
+                    : t("manage.realm.content.heading", { realm: name })}
+            </h1>
 
-        <div css={{
-            display: "flex",
-            flexDirection: "column",
-            rowGap: 16,
-            padding: 0,
-            // To position the loading overlay
-            position: "relative",
-        }}>
-            {blocks.filter(block => block != null).map((block, index) => (
-                <React.Fragment key={block.id}>
-                    <AddButtons index={index} />
-
-                    <EditBlock {...{ realm, index, onCommit, onCompleted, onError }} />
-                </React.Fragment>
-            ))}
-            <AddButtons index={blocks.length} />
-
-            {inFlight && <div css={{
+            <div css={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "rgba(255, 255, 255, 0.5)",
-                position: "absolute",
-                width: "100%",
-                height: "100%",
+                flexDirection: "column",
+                rowGap: 16,
+                padding: 0,
+                // To position the loading overlay
+                position: "relative",
             }}>
-                <Spinner size={20} />
-            </div>}
-        </div>
-    </RealmSettingsContainer>;
+                {blocks.filter(block => block != null).map((block, index) => (
+                    <React.Fragment key={block.id}>
+                        <AddButtons index={index} realm={realm} />
+
+                        <EditBlock {...{ realm, index, onCommit, onCompleted, onError }} />
+                    </React.Fragment>
+                ))}
+                <AddButtons index={blocks.length} realm={realm} />
+
+                {inFlight && <div css={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(255, 255, 255, 0.5)",
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                }}>
+                    <Spinner size={20} />
+                </div>}
+            </div>
+        </RealmSettingsContainer>
+    </ContentManageQueryContext.Provider>;
 };

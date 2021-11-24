@@ -6,7 +6,7 @@ import { FiEdit } from "react-icons/fi";
 import type {
     EditButtonsRealmData$key,
 } from "../../../../../query-types/EditButtonsRealmData.graphql";
-import { Button, ButtonGroup } from "../util";
+import { Button, ButtonGroup as BaseButtonGroup } from "../util";
 import { RemoveButton } from "./RemoveButton";
 import { MoveButtons } from "./MoveButtons";
 
@@ -17,6 +17,7 @@ type Props = {
     onCommit?: () => void;
     onCompleted?: () => void;
     onError?: (error: Error, action: string) => void;
+    onEdit?: () => void;
 };
 
 export const EditButtons: React.FC<Props> = ({
@@ -25,6 +26,7 @@ export const EditButtons: React.FC<Props> = ({
     onCommit,
     onCompleted,
     onError,
+    onEdit,
 }) => {
     const { t } = useTranslation();
 
@@ -42,7 +44,22 @@ export const EditButtons: React.FC<Props> = ({
         onError?.(error, "manage.realm.content.moving-failed");
     };
 
-    return <ButtonGroup css={{
+    return <ButtonGroup css={{ marginTop: -8 }}>
+        <MoveButtons {...{ realm, index, onCommit, onCompleted }} onError={onMoveError} />
+        <Button
+            title={t("manage.realm.content.edit")}
+            onClick={onEdit}
+        >
+            <FiEdit />
+        </Button>
+        <RemoveButton block={blocks[index]} onConfirm={onCompleted} />
+    </ButtonGroup>;
+};
+
+type ButtonGroupProps = React.ComponentProps<typeof BaseButtonGroup>;
+
+export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
+    <BaseButtonGroup css={{
         float: "right",
         borderTop: "none",
         borderRight: "none",
@@ -50,12 +67,5 @@ export const EditButtons: React.FC<Props> = ({
         borderTopRightRadius: 0,
         borderBottomRightRadius: 0,
         marginRight: -8,
-        marginTop: -8,
-    }}>
-        <MoveButtons {...{ realm, index, onCommit, onCompleted }} onError={onMoveError} />
-        <Button title={t("manage.realm.content.edit")}>
-            <FiEdit />
-        </Button>
-        <RemoveButton block={blocks[index]} onConfirm={onCompleted} />
-    </ButtonGroup>;
-};
+    }} {...props} />
+);

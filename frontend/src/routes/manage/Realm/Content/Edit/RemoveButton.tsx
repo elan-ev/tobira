@@ -30,7 +30,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
             removeBlock(id: $id) {
                 id @deleteRecord
                 realm {
-                    ... ContentManageData
+                    ... ContentManageRealmData
                 }
             }
         }

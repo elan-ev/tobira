@@ -199,8 +199,34 @@ manage:
       edit: Edit block
       remove: Remove block
 
+      title: Block title
+
+      text:
+        content: You can put your text content here. You can even use Markdown.
+
+      series:
+        order:
+          heading: Order
+          new-to-old: Newest first
+          old-to-new: Oldest first
+        layout:
+          heading: Layout
+          grid: Grid
+          horizontal: Horizontal
+          vertical: Vertical
+        series:
+          heading: Series
+          dummy: Select a series
+          invalid: Please select a series
+
+      save: Save changes
+      cancel: Discard changes
+
+      cancel-warning: Your changes have not yet been saved!
+
       removing-failed: Removing the block failed.
       moving-failed: Moving the block failed.
+      saving-failed: Saving your changes to the block failed.
 
   add-child:
     heading: Add page
