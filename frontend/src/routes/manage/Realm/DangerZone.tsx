@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useForm } from "react-hook-form";
@@ -12,13 +13,12 @@ import { Card } from "../../../ui/Card";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { boxError } from "../../../ui/error";
 import { displayCommitError, realmValidations } from "./util";
-import { Spinner } from "../../../ui/Spinner";
 import {
     DangerZoneRemoveRealmMutationResponse,
 } from "../../../query-types/DangerZoneRemoveRealmMutation.graphql";
 import { useRouter } from "../../../router";
-import { FormEvent, useState } from "react";
-import { Modal } from "../../../ui/Modal";
+import { useState } from "react";
+import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 
 
 const fragment = graphql`
@@ -171,13 +171,11 @@ const removeRealmMutation = graphql`
 
 const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
     const { t } = useTranslation();
-    const [commit, isInFlight] = useMutation(removeRealmMutation);
+    const [commit] = useMutation(removeRealmMutation);
     const router = useRouter();
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
-    const [modalActive, setModalActive] = useState(false);
+    const modalRef = useRef<ConfirmationModalHandle>(null);
 
-    const remove = (e: FormEvent) => {
-        setCommitError(null);
+    const remove = () => {
         commit({
             variables: {
                 id: realm.id,
@@ -188,13 +186,9 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             },
             onError: error => {
                 const failedAction = t("manage.realm.danger-zone.delete.failed");
-                setCommitError(displayCommitError(error, failedAction));
+                modalRef.current?.reportError(displayCommitError(error, failedAction));
             },
         });
-        e.preventDefault();
-        // Don't let the event escape the modal portal,
-        //   which might be sitting inside of other `form` elements.
-        e.stopPropagation();
     };
 
     const buttonContent = realm.numberOfDescendants === 0
@@ -210,25 +204,21 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             {t("manage.realm.danger-zone.delete.warning")}
         </p>
         <div css={{ marginTop: 32, textAlign: "center" }}>
-            <Button kind="danger" onClick={() => setModalActive(true)}>
+            <Button kind="danger" onClick={() => modalRef.current?.open()}>
                 <span>{buttonContent}</span>
             </Button>
         </div>
-        {modalActive && (
-            <Modal title={t("manage.are-you-sure")} close={() => setModalActive(false)}>
-                <p>
-                    <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone">
-                        foo<strong>bar</strong>baz
-                    </Trans>
-                </p>
-                <form onSubmit={remove} css={{ marginTop: 32, textAlign: "center" }}>
-                    <Button kind="danger">
-                        <span>{buttonContent}</span>
-                    </Button>
-                    {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
-                </form>
-                {boxError(commitError)}
-            </Modal>
-        )}
+        <ConfirmationModal
+            title={t("manage.are-you-sure")}
+            {...{ buttonContent }}
+            onSubmit={remove}
+            ref={modalRef}
+        >
+            <p>
+                <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone">
+                    foo<strong>bar</strong>baz
+                </Trans>
+            </p>
+        </ConfirmationModal>
     </>;
 };
