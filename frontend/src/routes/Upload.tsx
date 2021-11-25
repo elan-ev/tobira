@@ -15,6 +15,9 @@ import CONFIG from "../config";
 import { FiUpload } from "react-icons/fi";
 import { Button } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
+import { Form } from "../ui/Form";
+import { Input, TextArea } from "../ui/Input";
+import { useForm } from "react-hook-form";
 
 
 export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
@@ -31,13 +34,19 @@ const query = graphql`
     }
 `;
 
+
+type Metadata = {
+    title: string;
+    description: string;
+};
+
 type Props = {
     queryRef: PreloadedQuery<UploadQuery>;
 };
 
 const Upload: React.FC<Props> = ({ queryRef }) => {
     const [files, setFiles] = useState<FileList | null>(null);
-    const [metadataSaved, setMetadataSaved] = useState(false);
+    const [metadata, setMetadata] = useState<Metadata | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [mediaPackage, setMediaPackage] = useState<string | null>(null);
     const [ingestError, setIngestError] = useState<string | null>(null);
@@ -92,7 +101,9 @@ const Upload: React.FC<Props> = ({ queryRef }) => {
                                 : <ErrorBox>{ingestError}</ErrorBox>
                             }
                             <div css={{ overflowY: "auto" }}>
-                                {metadataSaved ? null : <MetaDataEdit />}
+                                {!metadata
+                                    ? <MetaDataEdit onSave={metadata => setMetadata(metadata)} />
+                                    : <p>{t("upload.still-uploading")}</p>}
                             </div>
                         </div>
                     );
@@ -108,6 +119,11 @@ const ingestErrorToMessage = (t: TFunction, error: unknown): string => {
     // TODO: make this better, obviously
     return t("upload.error.unknown");
 };
+
+
+// ==============================================================================================
+// ===== Sub-components
+// ==============================================================================================
 
 type FileSelectProps = {
     onSelect: (files: FileList) => void;
@@ -243,9 +259,64 @@ const UploadProgress: React.FC<UploadProgressProps> = ({ progress }) => {
     );
 };
 
-// TODO, obviously
-const MetaDataEdit: React.FC = () => <span>edit metadata</span>;
+type MetaDataEditProps = {
+    onSave: (metadata: Metadata) => void;
+};
 
+/** Form that lets the user set metadata about the video */
+const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave }) => {
+    const { t } = useTranslation();
+
+    const { register, handleSubmit, formState: { errors } } = useForm<Metadata>({
+        mode: "onChange",
+    });
+
+    const onSubmit = handleSubmit(data => onSave(data));
+
+    // TODO: it might be too easy to accidentally submit the form with enter
+    return (
+        <Form noValidate onSubmit={onSubmit} css={{ margin: "32px 2px" }}>
+            {/* Title */}
+            <InputContainer>
+                <label htmlFor="title-field">
+                    {t("upload.metadata.title")}
+                    <span css={{ fontWeight: "normal" }}>
+                        {" ("}
+                        <em>{t("upload.metadata.required")}</em>
+                        {")"}
+                    </span>
+                </label>
+                <Input
+                    id="title-field"
+                    required
+                    error={!!errors.title}
+                    css={{ width: 400, maxWidth: "100%" }}
+                    {...register("title", { required: t("upload.error.field-required") as string })}
+                />
+                {boxError(errors.title?.message)}
+            </InputContainer>
+
+            {/* Description */}
+            <InputContainer>
+                <label htmlFor="description-field">{t("upload.metadata.description")}</label>
+                <TextArea id="description-field" {...register("description")} />
+            </InputContainer>
+
+            {/* Submit button */}
+            <Button kind="happy">{t("upload.metadata.save")}</Button>
+        </Form>
+    );
+};
+
+/** Separates different inputs in the metadata form */
+const InputContainer: React.FC = ({ children }) => (
+    <div css={{ margin: "16px 0 " }}>{children}</div>
+);
+
+
+// ==============================================================================================
+// ===== Helper functions to send JWT-authenticated requests to OC
+// ==============================================================================================
 
 /** Returns the full Opencast URL for the given path */
 const ocUrl = (path: string): string => `${CONFIG.ocUrl}${path}`;
@@ -304,6 +375,11 @@ const getJwt = (relayEnv: Environment): Promise<string> => new Promise((resolve,
         },
     });
 });
+
+
+// ==============================================================================================
+// ===== Functions to perform actions against the ingest API
+// ==============================================================================================
 
 type Track = {
     flavor: "presentation/source" | "presenter/source";

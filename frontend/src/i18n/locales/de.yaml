@@ -101,8 +101,17 @@ upload:
   too-many-files: >
     Sie haben zu viele Dateien ausgewählt. Zurzeit werden nur einzelne Dateien unterstützt.
   not-a-file: Sie haben etwas in diesen Bereich gezogen, das keine Datei ist.
+  still-uploading: >
+    Das Video lädt immer noch hoch. Nicht diese Seite schließen, bevor der Upload
+    fertiggestellt wurde!
+  metadata:
+    title: Videotitel
+    description: Beschreibung
+    required: notwendig
+    save: Speichern und fertigstellen
   error:
     unknown: Ein unbekannter Fehler ist während des Dateiuploads aufgetreten.
+    field-required: Dieses Feld darf nicht leer sein
 
 manage:
   overview: Übersicht

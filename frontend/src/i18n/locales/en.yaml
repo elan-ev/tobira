@@ -97,8 +97,15 @@ upload:
   select-files: Select files
   too-many-files: You selected too many files. Currently, only a single file is supported.
   not-a-file: You dropped something that's not a file.
+  still-uploading: The upload is still in progress. Do not close this page until it is done!
+  metadata:
+    title: Video title
+    description: Description
+    required: required
+    save: Save and finish
   error:
     unknown: Unknown error occured during video upload.
+    field-required: This field is required (cannot be empty)
 
 manage:
   overview: Overview
