@@ -46,6 +46,16 @@ type Props = {
 };
 
 const Upload: React.FC<Props> = ({ queryRef }) => {
+    const result = usePreloadedQuery(query, queryRef);
+
+    return (
+        <Root nav={[]} userQuery={result}>
+            <UploadMain />
+        </Root>
+    );
+};
+
+const UploadMain: React.FC = () => {
     const [files, setFiles] = useState<FileList | null>(null);
     const [metadata, setMetadata] = useState<Metadata | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -53,7 +63,6 @@ const Upload: React.FC<Props> = ({ queryRef }) => {
     const [ingestError, setIngestError] = useState<string | null>(null);
 
     const { t } = useTranslation();
-    const result = usePreloadedQuery(query, queryRef);
     const relayEnv = useRelayEnvironment();
 
     /** Called when the files are selected. Starts uploading those files. */
@@ -74,43 +83,41 @@ const Upload: React.FC<Props> = ({ queryRef }) => {
     };
 
     return (
-        <Root nav={[]} userQuery={result}>
-            <div css={{
-                margin: "0 auto",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-            }}>
-                <h1>{t("upload.title")}</h1>
-                {(() => {
-                    if (files === null) {
-                        return <FileSelect onSelect={onFileSelect} />;
-                    }
+        <div css={{
+            margin: "0 auto",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+        }}>
+            <h1>{t("upload.title")}</h1>
+            {(() => {
+                if (files === null) {
+                    return <FileSelect onSelect={onFileSelect} />;
+                }
 
-                    return (
-                        <div css={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "stretch",
-                            gap: 32,
-                            width: "100%",
-                            maxWidth: 800,
-                            margin: "0 auto",
-                        }}>
-                            {ingestError == null
-                                ? <UploadProgress progress={uploadProgress} />
-                                : <ErrorBox>{ingestError}</ErrorBox>
-                            }
-                            <div css={{ overflowY: "auto" }}>
-                                {!metadata
-                                    ? <MetaDataEdit onSave={metadata => setMetadata(metadata)} />
-                                    : <p>{t("upload.still-uploading")}</p>}
-                            </div>
+                return (
+                    <div css={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "stretch",
+                        gap: 32,
+                        width: "100%",
+                        maxWidth: 800,
+                        margin: "0 auto",
+                    }}>
+                        {ingestError == null
+                            ? <UploadProgress progress={uploadProgress} />
+                            : <ErrorBox>{ingestError}</ErrorBox>
+                        }
+                        <div css={{ overflowY: "auto" }}>
+                            {!metadata
+                                ? <MetaDataEdit onSave={metadata => setMetadata(metadata)} />
+                                : <p>{t("upload.still-uploading")}</p>}
                         </div>
-                    );
-                })()}
-            </div>
-        </Root>
+                    </div>
+                );
+            })()}
+        </div>
     );
 };
 
