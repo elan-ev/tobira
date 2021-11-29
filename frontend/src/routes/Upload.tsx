@@ -18,6 +18,7 @@ import { boxError, ErrorBox } from "../ui/error";
 import { Form } from "../ui/Form";
 import { Input, TextArea } from "../ui/Input";
 import { useForm } from "react-hook-form";
+import { User } from "../User";
 
 
 export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
@@ -442,3 +443,122 @@ const uploadTracks = async (
 
     return mediaPackage;
 };
+
+
+/** Ingest the given metadata and finishes the ingest process */
+const finishUpload = async (
+    relayEnv: Environment,
+    mediaPackage: string,
+    metadata: Metadata,
+    user: User,
+) => {
+    // Add metadata in DC-Catalog
+    {
+        const dcc = constructDcc(metadata, user);
+        const body = new FormData();
+        body.append("mediaPackage", mediaPackage);
+        body.append("dublinCore", dcc);
+        body.append("flavor", "dublincore/episode");
+
+        mediaPackage = await ocRequest(relayEnv, "/ingest/addDCCatalog", { method: "post", body })
+            .then(response => response.text());
+    }
+
+    // Add ACL
+    {
+        const acl = constructAcl();
+        const body = new FormData();
+        body.append("flavor", "security/xacml+episode");
+        body.append("mediaPackage", mediaPackage);
+        body.append("BODY", new Blob([acl]), "acl.xml");
+
+        mediaPackage = await ocRequest(relayEnv, "/ingest/addAttachment", { method: "post", body })
+            .then(response => response.text());
+    }
+
+    // Finish ingest
+    {
+        const body = new FormData();
+        body.append("mediaPackage", mediaPackage);
+        await ocRequest(relayEnv, "/ingest/ingest", { method: "post", body: body });
+    }
+};
+
+/**
+ * Encodes a value for inclusion in XML sent to Opencast.
+ *
+ * For one, we need to escape some characters for XML inclusion. But Opencast
+ * also tries to URI-decode the value, meaning that `%` in the original value
+ * will be interpreted as encoded characters, which usually fails. So if the
+ * original value contains `%`, we URI-encode it.
+ */
+const encodeValue = (value: string): string => {
+    const escapedXml = new XMLSerializer().serializeToString(new Text(value));
+    return escapedXml.includes("%") ? encodeURIComponent(escapedXml) : escapedXml;
+};
+
+/** Creates a Dublin Core Catalog in XML format that describes the given metadata. */
+const constructDcc = (metadata: Metadata, user: User): string => {
+    const tag = (tag: string, value: string): string =>
+        value ? `<${tag}>${encodeValue(value)}</${tag}>` : "";
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+        <dublincore xmlns="http://www.opencastproject.org/xsd/1.0/dublincore/"
+                    xmlns:dcterms="http://purl.org/dc/terms/"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <dcterms:created xsi:type="dcterms:W3CDTF">
+                ${new Date().toISOString()}
+            </dcterms:created>
+            ${tag("dcterms:title", metadata.title)}
+            ${tag("dcterms:description", metadata.description)}
+            ${tag("dcterms:creator", user.displayName)}
+            ${tag("dcterms:spatial", "Tobira Upload")}
+        </dublincore>
+    `;
+};
+
+// TODO!
+const constructAcl = (): string => `
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <Policy PolicyId="mediapackage-1"
+      RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:permit-overrides"
+      Version="2.0"
+      xmlns="urn:oasis:names:tc:xacml:2.0:policy:schema:os">
+      <Rule RuleId="user_read_Permit" Effect="Permit">
+        <Target>
+          <Actions>
+            <Action>
+              <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                <AttributeValue
+                  DataType="http://www.w3.org/2001/XMLSchema#string">read</AttributeValue>
+              </ActionMatch>
+            </Action>
+          </Actions>
+        </Target>
+        <Condition>
+          <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-is-in">
+            <AttributeValue
+              DataType="http://www.w3.org/2001/XMLSchema#string">ROLE_ANONYMOUS</AttributeValue>
+          </Apply>
+        </Condition>
+      </Rule>
+      <Rule RuleId="user_write_Permit" Effect="Permit">
+        <Target>
+          <Actions>
+            <Action>
+              <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                <AttributeValue
+                  DataType="http://www.w3.org/2001/XMLSchema#string">write</AttributeValue>
+              </ActionMatch>
+            </Action>
+          </Actions>
+        </Target>
+        <Condition>
+          <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-is-in">
+            <AttributeValue
+              DataType="http://www.w3.org/2001/XMLSchema#string">ROLE_ANONYMOUS</AttributeValue>
+          </Apply>
+        </Condition>
+      </Rule>
+    </Policy>
+`.trim();
