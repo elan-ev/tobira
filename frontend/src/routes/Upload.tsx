@@ -339,6 +339,7 @@ const ocRequest = async (
 
     const url = ocUrl(path);
     const response = await fetch(url, {
+        redirect: "error",
         ...options,
         headers: {
             ...options.headers,
@@ -427,6 +428,9 @@ const uploadTracks = async (
                 if (xhr.status !== 200) {
                     // TODO
                     reject(new Error("invalid Opencast status code returned"));
+                } else if (xhr.responseURL !== url) {
+                    // TODO
+                    reject(new Error("unexpected redirect"));
                 } else {
                     resolve(xhr.responseText);
                 }
