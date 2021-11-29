@@ -94,10 +94,16 @@ realm:
 upload:
   title: Upload video
   drop-to-upload: Drag and drop video files to upload
+  not-authorized: You do not have the permission to upload videos.
   select-files: Select files
   too-many-files: You selected too many files. Currently, only a single file is supported.
   not-a-file: You dropped something that's not a file.
-  still-uploading: The upload is still in progress. Do not close this page until it is done!
+  starting: Starting...
+  finishing: Finishing up...
+  waiting-for-metadata: Please save video information to finish the upload
+  finished: >
+    Your video was uploaded successfully and is now being processed! It can be
+    watched as soon as processing is done. You may close this page now.
   metadata:
     title: Video title
     description: Description
@@ -181,7 +187,7 @@ api-remote-errors:
     event: You are not authorized to view this video.
   upload:
     not-logged-in: You have to be logged in to upload videos.
-    not-authorized: You do not have the permission to upload videos.
+    not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: You have to be logged in to perform this action.
     not-a-moderator: You have to be a moderator to perform this action.

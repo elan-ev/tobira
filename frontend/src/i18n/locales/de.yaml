@@ -97,13 +97,18 @@ realm:
 upload:
   title: Video hochladen
   drop-to-upload: Videodateien zum Hochladen per drag-and-drop hinzufügen
+  not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   select-files: Dateien auswählen
   too-many-files: >
     Sie haben zu viele Dateien ausgewählt. Zurzeit werden nur einzelne Dateien unterstützt.
   not-a-file: Sie haben etwas in diesen Bereich gezogen, das keine Datei ist.
-  still-uploading: >
-    Das Video lädt immer noch hoch. Nicht diese Seite schließen, bevor der Upload
-    fertiggestellt wurde!
+  starting: Starte Upload...
+  finishing: Schließe Upload ab...
+  waiting-for-metadata: Zum Fertigstellen bitte Videoinformationen speichern
+  finished: >
+    Ihr Video wurde erfolgreich hochgeladen und wird nun verarbeitet. Es kann wie gewohnt
+    angeschaut werden, sobald die Verarbeitung abgeschlossen ist. Sie können diese
+    Seite jetzt schließen.
   metadata:
     title: Videotitel
     description: Beschreibung
@@ -190,7 +195,7 @@ api-remote-errors:
     event: Sie sind nicht autorisiert dieses Video zu sehen.
   upload:
     not-logged-in: Sie müssen eingeloggt sein, um Videos hochzuladen.
-    not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
+    not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
     not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.

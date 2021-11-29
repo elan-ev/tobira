@@ -147,6 +147,7 @@ impl ThemeConfig {
         add!("--happy-hue" => format_args!("{:.2}", happy.h));
         add!("--happy-sat" => format_args!("{:.2}%", happy.s * 100.0));
         add!("--happy-color" => hsl!("happy", happy.l));
+        add!("--happy-color-lighter" => hsl!("happy", happy.darken(-0.15).l));
         add!("--happy-color-darker" => hsl!("happy", happy.darken(0.1).l));
         add!("--happy-color-dark" => hsl!("happy", happy.darken(0.3).l));
         add!("--happy-color-bw-contrast" => self.color.happy.bw_contrast());

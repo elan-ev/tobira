@@ -10,15 +10,17 @@ import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { Environment, fetchQuery } from "relay-runtime";
 import { UploadJwtQuery } from "../query-types/UploadJwtQuery.graphql";
-import { bug } from "../util/err";
+import { assertNever, bug, unreachable } from "../util/err";
 import CONFIG from "../config";
-import { FiUpload } from "react-icons/fi";
+import { FiCheckCircle, FiUpload } from "react-icons/fi";
 import { Button } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
 import { Form } from "../ui/Form";
 import { Input, TextArea } from "../ui/Input";
 import { useForm } from "react-hook-form";
-import { User } from "../User";
+import { User, useUser } from "../User";
+import { useRefState } from "../util";
+import { keyframes } from "@emotion/react";
 
 
 export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
@@ -46,83 +48,116 @@ type Props = {
 };
 
 const Upload: React.FC<Props> = ({ queryRef }) => {
+    const { t } = useTranslation();
     const result = usePreloadedQuery(query, queryRef);
+
 
     return (
         <Root nav={[]} userQuery={result}>
-            <UploadMain />
+            <div css={{
+                margin: "0 auto",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+            }}>
+                <h1>{t("upload.title")}</h1>
+                <UploadMain />
+            </div>
         </Root>
     );
 };
 
 const UploadMain: React.FC = () => {
-    const [files, setFiles] = useState<FileList | null>(null);
-    const [metadata, setMetadata] = useState<Metadata | null>(null);
-    const [uploadProgress, setUploadProgress] = useState(0);
-    const [mediaPackage, setMediaPackage] = useState<string | null>(null);
-    const [ingestError, setIngestError] = useState<string | null>(null);
+    // TODO: on first mount, send an `ocRequest` to `info/me.json` and make sure
+    // that connection works. That way we can show an error very early, before
+    // the user selected a file.
 
     const { t } = useTranslation();
     const relayEnv = useRelayEnvironment();
 
+    const [files, setFiles] = useState<FileList | null>(null);
+    const [uploadState, setUploadState] = useRefState<UploadState | null>(null);
+    const [metadata, setMetadata] = useRefState<Metadata | null>(null);
+
+    // Get user info
+    const user = useUser();
+    if (user === "none" || user === "unknown") {
+        return <div css={{ textAlign: "center" }}>
+            <ErrorBox>{t("upload.not-authorized")}</ErrorBox>
+        </div>;
+    }
+
     /** Called when the files are selected. Starts uploading those files. */
     const onFileSelect = async (files: FileList) => {
         setFiles(files);
-        try {
-            let mediaPackage = await ocRequest(relayEnv, "/ingest/createMediaPackage")
-                .then(response => response.text());
-            const tracks = Array.from(files)
-                .map(file => ({ file, flavor: "presentation/source" as const }));
-            mediaPackage = await uploadTracks(relayEnv, mediaPackage, tracks, progress => {
-                setUploadProgress(progress);
-            });
-            setMediaPackage(mediaPackage);
-        } catch (e) {
-            setIngestError(ingestErrorToMessage(t, e));
-        }
+        startUpload(relayEnv, files, setUploadState, mediaPackage => {
+            if (metadata.current === null) {
+                setUploadState({ state: "waiting-for-metadata", mediaPackage });
+            } else {
+                finishUpload(relayEnv, mediaPackage, metadata.current, user, setUploadState);
+            }
+        });
     };
 
-    return (
-        <div css={{
-            margin: "0 auto",
-            height: "100%",
+    if (files === null) {
+        return <FileSelect onSelect={onFileSelect} />;
+    } else if (uploadState.current === null) {
+        // This never happens as, when files are selected, the upload is
+        // instantly started and the state is set to `starting`. Check the only
+        // use of `setFiles` above and notice how the upload state is set
+        // immediately afterwards.
+        return unreachable("upload state is null, but there are files");
+    } else if (uploadState.current.state === "done") {
+        return <div css={{
             display: "flex",
             flexDirection: "column",
+            alignItems: "center",
+            marginTop: "max(16px, 10vh - 50px)",
+            gap: 32,
         }}>
-            <h1>{t("upload.title")}</h1>
-            {(() => {
-                if (files === null) {
-                    return <FileSelect onSelect={onFileSelect} />;
-                }
+            <FiCheckCircle css={{ fontSize: 64, color: "var(--happy-color-lighter)" }} />
+            {t("upload.finished")}
+        </div>;
+    } else {
+        const onMetadataSave = (metadata: Metadata): void => {
+            if (uploadState.current === null) {
+                return bug("uploadState === null on metadata save");
+            }
 
-                return (
-                    <div css={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "stretch",
-                        gap: 32,
-                        width: "100%",
-                        maxWidth: 800,
-                        margin: "0 auto",
-                    }}>
-                        {ingestError == null
-                            ? <UploadProgress progress={uploadProgress} />
-                            : <ErrorBox>{ingestError}</ErrorBox>
-                        }
-                        <div css={{ overflowY: "auto" }}>
-                            {!metadata
-                                ? <MetaDataEdit onSave={metadata => setMetadata(metadata)} />
-                                : <p>{t("upload.still-uploading")}</p>}
-                        </div>
-                    </div>
-                );
-            })()}
-        </div>
-    );
+            setMetadata(metadata);
+            if (uploadState.current.state === "waiting-for-metadata") {
+                // The tracks have already been uploaded, so we can finish the upload now.
+                const mediaPackage = uploadState.current.mediaPackage;
+                finishUpload(relayEnv, mediaPackage, metadata, user, setUploadState);
+            }
+        };
+
+        return (
+            <div css={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "stretch",
+                gap: 32,
+                width: "100%",
+                maxWidth: 800,
+                margin: "0 auto",
+            }}>
+                <UploadState state={uploadState.current} />
+                <div css={{ overflowY: "auto" }}>
+                    {/* TODO: Show something after saving metadata.
+                        - Just saying "saved" is kind of misleading because the data is only local.
+                        - Maybe just show the form, but disable all inputs?
+                        - ...
+                    */}
+                    {!metadata.current && <MetaDataEdit onSave={onMetadataSave} />}
+                </div>
+            </div>
+        );
+    }
 };
 
 const ingestErrorToMessage = (t: TFunction, error: unknown): string => {
-    console.log("ingest error: ", error);
+    console.error("ingest error: ", error);
 
     // TODO: make this better, obviously
     return t("upload.error.unknown");
@@ -229,43 +264,147 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
     );
 };
 
+/** Number between 0 and 1 */
+type Progress = number;
 
-type UploadProgressProps = {
-    progress: number;
+/** State of a started upload */
+type UploadState =
+    // Starting the upload: creating a new media package.
+    { state: "starting" }
+    // Uploading the actual tracks, usually takes by far the longest.
+    | { state: "uploading-tracks"; progress: Progress }
+    // Tracks have been uploaded, but the user still has to save the metadata to finish the upload.
+    | { state: "waiting-for-metadata"; mediaPackage: string }
+    // After the tracks have been uploaded, just adding metadata, ACL and then ingesting.
+    | { state: "finishing" }
+    // The upload is completely done
+    | { state: "done" }
+    // An error occured during the upload
+    | { state: "error"; error: unknown };
+
+/** State of an upload that is not yet finished */
+type NonFinishedUploadState = Exclude<UploadState, { state: "done" }>;
+
+/** Shows the current state of the upload */
+const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => {
+    const { t, i18n } = useTranslation();
+
+    if (state.state === "starting") {
+        return <BarWithText state="progressing">
+            <span>{t("upload.starting")}</span>
+        </BarWithText>;
+    } else if (state.state === "uploading-tracks") {
+        const progress = Math.min(1, state.progress);
+        const roundedPercent = (progress * 100).toLocaleString(i18n.language, {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+        });
+
+        // TODO: time estimation
+        return <BarWithText state={progress}>
+            <span>{roundedPercent}%</span>
+            <span>TODO</span>
+        </BarWithText>;
+    } else if (state.state === "waiting-for-metadata") {
+        return <BarWithText state="waiting">
+            <span>{t("upload.waiting-for-metadata")}</span>
+        </BarWithText>;
+    } else if (state.state === "finishing") {
+        return <BarWithText state="progressing">
+            <span>{t("upload.finishing")}</span>
+        </BarWithText>;
+    } else if (state.state === "error") {
+        return <p>{ingestErrorToMessage(t, state.error)}</p>;
+    } else {
+        return assertNever(state);
+    }
 };
 
-const UploadProgress: React.FC<UploadProgressProps> = ({ progress }) => {
-    const { i18n } = useTranslation();
+/** Helper component for `UploadState` */
+const BarWithText: React.FC<ProgressBarProps> = ({ state, children }) => <>
+    <div>
+        <div css={{
+            display: "flex",
+            justifyContent: "space-between",
+            padding: "0 4px",
+            marginBottom: 8,
+            "& > *:only-child": { margin: "0 auto" },
+        }}>{children}</div>
+        <ProgressBar state={state} />
+    </div>
+</>;
 
-    progress = Math.min(1, progress);
-    const roundedPercent = (progress * 100).toLocaleString(i18n.language, {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-    });
+type ProgressBarProps = {
+    /** Either a known progress, or an unknown progress or waiting for something */
+    state: Progress | "progressing" | "waiting";
+};
 
-    return (
-        <div>
-            <div css={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <span>{roundedPercent}%</span>
-                <span>TODO</span>
-            </div>
+/** A progress bar that can show different states */
+const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
+    // Helper function to create a moving stripe background.
+    const animatedStripes = (
+        angle: number,
+        color0: string,
+        color1: string,
+        duration: number,
+    ) => {
+        const size = 30;
+        const amountColor0 = 0.4;
+
+        // The input size is the horizontal period basically. But the CSS
+        // gradient expect the period in direction of the pattern, so we have
+        // to do a little math.
+        const realSize = size * Math.sin(Math.abs(angle) / 180 * Math.PI);
+
+        return {
+            background: "repeating-linear-gradient("
+                + `${angle}deg,`
+                + `var(${color0}),`
+                + `var(${color0}) ${realSize * amountColor0}px,`
+                + `var(${color1}) ${realSize * amountColor0}px,`
+                + `var(${color1}) ${realSize}px)`,
+            backgroundSize: `calc(100% + ${size}px) 100%`,
+            animation: `${duration}s linear infinite none ${keyframes({
+                "0%": { backgroundPositionX: -30 },
+                "100%": { backgroundPositionX: 0 },
+            })}`,
+        };
+    };
+
+    const shared = {
+        width: "100%",
+        height: 12,
+        borderRadius: 6,
+        overflow: "hidden",
+    };
+
+    if (state === "progressing") {
+        return <div css={{
+            ...shared,
+            ...animatedStripes(-45, "--happy-color", "--happy-color-lighter", 1.5),
+        }} />;
+    } else if (state === "waiting") {
+        return <div css={{
+            ...shared,
+            ...animatedStripes(45, "--accent-color-darker", "--accent-color", 4),
+        }} />;
+    } else {
+        return (
             <div css={{
-                width: "100%",
-                height: 12,
-                borderRadius: 6,
-                overflow: "hidden",
+                ...shared,
                 backgroundColor: "var(--grey92)",
             }}>
                 <div css={{
                     height: "100%",
                     transition: "width 200ms",
-                    width: `${progress * 100}%`,
-                    backgroundColor: "var(--happy-color)",
+                    width: `${state * 100}%`,
+                    backgroundColor: "var(--happy-color-lighter)",
                 }} />
             </div>
-        </div>
-    );
+        );
+    }
 };
+
 
 type MetaDataEditProps = {
     onSave: (metadata: Metadata) => void;
@@ -390,6 +529,31 @@ const getJwt = (relayEnv: Environment): Promise<string> => new Promise((resolve,
 // ===== Functions to perform actions against the ingest API
 // ==============================================================================================
 
+const startUpload = async (
+    relayEnv: Environment,
+    files: FileList,
+    setUploadState: (state: UploadState) => void,
+    onDone: (mediaPackage: string) => void,
+) => {
+    try {
+        setUploadState({ state: "starting" });
+
+        // Create a new media package to start the upload
+        let mediaPackage = await ocRequest(relayEnv, "/ingest/createMediaPackage")
+            .then(response => response.text());
+
+        const tracks = Array.from(files)
+            .map(file => ({ file, flavor: "presentation/source" as const }));
+        mediaPackage = await uploadTracks(relayEnv, mediaPackage, tracks, progress => {
+            setUploadState({ state: "uploading-tracks", progress });
+        });
+        onDone(mediaPackage);
+    } catch (error) {
+        setUploadState({ state: "error", error });
+    }
+};
+
+
 type Track = {
     flavor: "presentation/source" | "presenter/source";
     file: File;
@@ -462,36 +626,51 @@ const finishUpload = async (
     mediaPackage: string,
     metadata: Metadata,
     user: User,
+    setUploadState: (state: UploadState) => void,
 ) => {
-    // Add metadata in DC-Catalog
-    {
-        const dcc = constructDcc(metadata, user);
-        const body = new FormData();
-        body.append("mediaPackage", mediaPackage);
-        body.append("dublinCore", dcc);
-        body.append("flavor", "dublincore/episode");
+    try {
+        setUploadState({ state: "finishing" });
 
-        mediaPackage = await ocRequest(relayEnv, "/ingest/addDCCatalog", { method: "post", body })
-            .then(response => response.text());
-    }
+        // Add metadata in DC-Catalog
+        {
+            const dcc = constructDcc(metadata, user);
+            const body = new FormData();
+            body.append("mediaPackage", mediaPackage);
+            body.append("dublinCore", dcc);
+            body.append("flavor", "dublincore/episode");
 
-    // Add ACL
-    {
-        const acl = constructAcl();
-        const body = new FormData();
-        body.append("flavor", "security/xacml+episode");
-        body.append("mediaPackage", mediaPackage);
-        body.append("BODY", new Blob([acl]), "acl.xml");
+            mediaPackage = await ocRequest(
+                relayEnv,
+                "/ingest/addDCCatalog",
+                { method: "post", body },
+            ).then(response => response.text());
+        }
 
-        mediaPackage = await ocRequest(relayEnv, "/ingest/addAttachment", { method: "post", body })
-            .then(response => response.text());
-    }
+        // Add ACL
+        {
+            const acl = constructAcl();
+            const body = new FormData();
+            body.append("flavor", "security/xacml+episode");
+            body.append("mediaPackage", mediaPackage);
+            body.append("BODY", new Blob([acl]), "acl.xml");
 
-    // Finish ingest
-    {
-        const body = new FormData();
-        body.append("mediaPackage", mediaPackage);
-        await ocRequest(relayEnv, "/ingest/ingest", { method: "post", body: body });
+            mediaPackage = await ocRequest(
+                relayEnv,
+                "/ingest/addAttachment",
+                { method: "post", body },
+            ).then(response => response.text());
+        }
+
+        // Finish ingest
+        {
+            const body = new FormData();
+            body.append("mediaPackage", mediaPackage);
+            await ocRequest(relayEnv, "/ingest/ingest", { method: "post", body: body });
+        }
+
+        setUploadState({ state: "done" });
+    } catch (error) {
+        setUploadState({ state: "error", error });
     }
 };
 
