@@ -101,6 +101,14 @@ upload:
   starting: Starting...
   finishing: Finishing up...
   waiting-for-metadata: Please save video information to finish the upload
+  time-estimate:
+    a-few-seconds: a few seconds
+    a-minute: a minute
+    an-hour: an hour
+    seconds: seconds
+    minutes: minutes
+    hours: hours
+    time-left: '{{time}} left'
   finished: >
     Your video was uploaded successfully and is now being processed! It can be
     watched as soon as processing is done. You may close this page now.

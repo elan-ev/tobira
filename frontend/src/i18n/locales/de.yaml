@@ -105,6 +105,14 @@ upload:
   starting: Starte Upload...
   finishing: Schließe Upload ab...
   waiting-for-metadata: Zum Fertigstellen bitte Videoinformationen speichern
+  time-estimate:
+    a-few-seconds: wenige Sekunden
+    a-minute: eine Minute
+    an-hour: eine Stunde
+    seconds: Sekunden
+    minutes: Minuten
+    hours: Stunden
+    time-left: '{{time}} verbleibend'
   finished: >
     Ihr Video wurde erfolgreich hochgeladen und wird nun verarbeitet. Es kann wie gewohnt
     angeschaut werden, sobald die Verarbeitung abgeschlossen ist. Sie können diese

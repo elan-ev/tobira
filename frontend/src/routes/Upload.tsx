@@ -79,6 +79,8 @@ const UploadMain: React.FC = () => {
     const [uploadState, setUploadState] = useRefState<UploadState | null>(null);
     const [metadata, setMetadata] = useRefState<Metadata | null>(null);
 
+    const progressHistory = useRef<ProgressHistory>([]);
+
     // Get user info
     const user = useUser();
     if (user === "none" || user === "unknown") {
@@ -90,13 +92,21 @@ const UploadMain: React.FC = () => {
     /** Called when the files are selected. Starts uploading those files. */
     const onFileSelect = async (files: FileList) => {
         setFiles(files);
-        startUpload(relayEnv, files, setUploadState, mediaPackage => {
+
+        const onProgressCallback = (progress: Progress): void => {
+            if (uploadState.current === null) {
+                return unreachable("no upload state after calling `startUpload`");
+            }
+            onProgress(progress, progressHistory.current, uploadState.current, setUploadState);
+        };
+        const onDone = (mediaPackage: string) => {
             if (metadata.current === null) {
                 setUploadState({ state: "waiting-for-metadata", mediaPackage });
             } else {
                 finishUpload(relayEnv, mediaPackage, metadata.current, user, setUploadState);
             }
-        });
+        };
+        startUpload(relayEnv, files, setUploadState, onProgressCallback, onDone);
     };
 
     if (files === null) {
@@ -153,6 +163,65 @@ const UploadMain: React.FC = () => {
                 </div>
             </div>
         );
+    }
+};
+
+type ProgressHistory = {
+    timestamp: number;
+    progress: Progress;
+}[];
+
+/**
+ * Called regularly with the current progress and calculates the time estimate.
+ * This is done with a simple sliding average over the last few data points,
+ * that is assumed to be the speed for the rest of the upload.
+ */
+const onProgress = (
+    progress: Progress,
+    history: ProgressHistory,
+    uploadState: UploadState,
+    setUploadState: (state: UploadState) => void,
+) => {
+    const now = Date.now();
+
+    // Add progress data point to history.
+    history.push({ timestamp: now, progress });
+
+    // The size of the sliding window in milliseconds.
+    const WINDOW_SIZE_MS = 5000;
+    // The size of the sliding window in number of data points.
+    const WINDOW_SIZE_DATA_POINTS = 6;
+    // The number of datapoints below which we won't show a time estimate.
+    const MINIMUM_DATA_POINT_COUNT = 4;
+
+    // Find the first element within the window. We use the larger window of the
+    // two windows created by the two constraints (time and number of
+    // datapoints).
+    const windowStart = Math.min(
+        history.findIndex(p => (now - p.timestamp) < WINDOW_SIZE_MS),
+        Math.max(0, history.length - WINDOW_SIZE_DATA_POINTS),
+    );
+
+    // Remove all elements outside the window.
+    history.splice(0, windowStart);
+
+    let secondsLeft = null;
+    if (history.length >= MINIMUM_DATA_POINT_COUNT) {
+        // Calculate the remaining time based on the average speed within the window.
+        const windowLength = now - history[0].timestamp;
+        const progressInWindow = progress - history[0].progress;
+        const progressPerSecond = (progressInWindow / windowLength) * 1000;
+        const progressLeft = 1 - progress;
+        secondsLeft = Math.max(0, Math.round(progressLeft / progressPerSecond));
+    }
+
+    // Update state if anything changed. We actually check for equality here to
+    // avoid useless redraws.
+    const someChange = uploadState.state !== "uploading-tracks"
+        || uploadState.secondsLeft !== secondsLeft
+        || uploadState.progress !== progress;
+    if (someChange) {
+        setUploadState({ state: "uploading-tracks", progress, secondsLeft });
     }
 };
 
@@ -272,7 +341,7 @@ type UploadState =
     // Starting the upload: creating a new media package.
     { state: "starting" }
     // Uploading the actual tracks, usually takes by far the longest.
-    | { state: "uploading-tracks"; progress: Progress }
+    | { state: "uploading-tracks"; progress: Progress; secondsLeft: number | null }
     // Tracks have been uploaded, but the user still has to save the metadata to finish the upload.
     | { state: "waiting-for-metadata"; mediaPackage: string }
     // After the tracks have been uploaded, just adding metadata, ACL and then ingesting.
@@ -300,10 +369,33 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
             maximumFractionDigits: 1,
         });
 
-        // TODO: time estimation
+        // Nicely format the remaining time.
+        const secondsLeft = state.secondsLeft;
+        let prettyTime;
+        if (secondsLeft === null) {
+            prettyTime = null;
+        } else if (secondsLeft < 4) {
+            prettyTime = t("upload.time-estimate.a-few-seconds");
+        } else if (secondsLeft < 45) {
+            prettyTime = `${secondsLeft} ${t("upload.time-estimate.seconds")}`;
+        } else if (secondsLeft < 90) {
+            prettyTime = t("upload.time-estimate.a-minute");
+        } else if (secondsLeft < 45 * 60) {
+            prettyTime = `${Math.round(secondsLeft / 60)} ${t("upload.time-estimate.minutes")}`;
+        } else if (secondsLeft < 90 * 60) {
+            prettyTime = t("upload.time-estimate.an-hour");
+        } else if (secondsLeft < 24 * 60 * 60) {
+            const hours = Math.round(secondsLeft / (60 * 60));
+            prettyTime = `${hours} ${t("upload.time-estimate.hours")}`;
+        } else {
+            prettyTime = null;
+        }
+
         return <BarWithText state={progress}>
             <span>{roundedPercent}%</span>
-            <span>TODO</span>
+            <span>
+                {prettyTime && t("upload.time-estimate.time-left", { time: prettyTime })}
+            </span>
         </BarWithText>;
     } else if (state.state === "waiting-for-metadata") {
         return <BarWithText state="waiting">
@@ -533,6 +625,7 @@ const startUpload = async (
     relayEnv: Environment,
     files: FileList,
     setUploadState: (state: UploadState) => void,
+    onProgress: (progress: Progress) => void,
     onDone: (mediaPackage: string) => void,
 ) => {
     try {
@@ -544,9 +637,7 @@ const startUpload = async (
 
         const tracks = Array.from(files)
             .map(file => ({ file, flavor: "presentation/source" as const }));
-        mediaPackage = await uploadTracks(relayEnv, mediaPackage, tracks, progress => {
-            setUploadState({ state: "uploading-tracks", progress });
-        });
+        mediaPackage = await uploadTracks(relayEnv, mediaPackage, tracks, onProgress);
         onDone(mediaPackage);
     } catch (error) {
         setUploadState({ state: "error", error });
