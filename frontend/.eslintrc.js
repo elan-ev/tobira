@@ -57,7 +57,6 @@ module.exports = {
         "max-statements-per-line": "warn",
         "multiline-comment-style": ["warn", "separate-lines"],
         "multiline-ternary": ["warn", "always-multiline"],
-        "no-extra-parens": ["warn", "all", { enforceForArrowConditionals: false }],
         "no-extra-semi": "warn",
         "no-multi-spaces": "warn",
         "no-multiple-empty-lines": ["warn", { max: 5 }],
@@ -112,7 +111,6 @@ module.exports = {
             // Turn off base rules overridden by `@typescript-eslint` rules
             "indent": "off",
             "lines-between-class-members": "off",
-            "no-extra-parens": "off",
             "no-unused-vars": "off",
             "semi": "off",
 
@@ -134,11 +132,6 @@ module.exports = {
                 types: ["function"],
                 format: ["PascalCase", "camelCase"],
             }],
-            "@typescript-eslint/no-extra-parens": [
-                "warn",
-                "all",
-                { enforceForArrowConditionals: false, ignoreJSX: "all" },
-            ],
             "@typescript-eslint/object-curly-spacing": ["warn", "always"],
             "@typescript-eslint/quotes": "warn",
             "@typescript-eslint/semi": "warn",
