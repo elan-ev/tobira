@@ -1,7 +1,8 @@
 //! Blocks that make up the content of realm pages.
 
+use std::{fmt, error::Error};
 use juniper::{graphql_interface, graphql_object, GraphQLEnum};
-use postgres_types::FromSql;
+use postgres_types::{FromSql, ToSql};
 use tokio_postgres::Row;
 
 use crate::{
@@ -13,7 +14,7 @@ use crate::{
 
 mod mutations;
 
-pub(crate) use mutations::RemovedBlock;
+pub(crate) use mutations::{UpdateBlock, UpdateTextBlock, UpdateSeriesBlock, RemovedBlock};
 
 
 /// A `Block`: a UI element that belongs to a realm.
@@ -45,7 +46,7 @@ pub(crate) enum BlockType {
     Series,
 }
 
-#[derive(Debug, Clone, Copy, FromSql, GraphQLEnum)]
+#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
 #[postgres(name = "video_list_layout")]
 pub(crate) enum VideoListLayout {
     #[postgres(name = "horizontal")]
@@ -56,7 +57,7 @@ pub(crate) enum VideoListLayout {
     Grid,
 }
 
-#[derive(Debug, Clone, Copy, FromSql, GraphQLEnum)]
+#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
 #[postgres(name = "video_list_order")]
 pub(crate) enum VideoListOrder {
     #[postgres(name = "new_to_old")]
@@ -152,11 +153,13 @@ impl BlockValue {
     pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
         context.db
             .query_raw(
-                "select id, type, index, title, text_content, series_id, \
-                    videolist_layout, videolist_order \
-                    from blocks \
-                    where realm_id = $1 \
-                    order by index asc",
+                &format!(
+                    "select {} \
+                        from blocks \
+                        where realm_id = $1 \
+                        order by index asc",
+                    Self::COL_NAMES,
+                ),
                 &[realm_key],
             )
             .await?
@@ -166,6 +169,9 @@ impl BlockValue {
             .await
             .map_err(Into::into)
     }
+
+    const COL_NAMES: &'static str
+        = "id, type, index, title, text_content, series_id, videolist_layout, videolist_order";
 
     fn from_row(row: Row) -> ApiResult<Self> {
         let ty: BlockType = row.get(1);
@@ -212,4 +218,35 @@ fn get_type_dependent<'a, T: FromSql<'a>>(
         type_name,
         field_name,
     ))
+}
+
+#[derive(Debug)]
+pub(crate) struct BlockTypeError;
+
+impl fmt::Display for BlockTypeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "wrong block type")
+    }
+}
+
+impl Error for BlockTypeError {}
+
+impl TryFrom<BlockValue> for TextBlock {
+    type Error = BlockTypeError;
+    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
+        match block {
+            BlockValue::TextBlock(b) => Ok(b),
+            _ => Err(BlockTypeError),
+        }
+    }
+}
+
+impl TryFrom<BlockValue> for SeriesBlock {
+    type Error = BlockTypeError;
+    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
+        match block {
+            BlockValue::SeriesBlock(b) => Ok(b),
+            _ => Err(BlockTypeError),
+        }
+    }
 }

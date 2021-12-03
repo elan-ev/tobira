@@ -1,10 +1,10 @@
 use futures::StreamExt;
 use pin_utils::pin_mut;
-use juniper::GraphQLObject;
+use juniper::{GraphQLInputObject, GraphQLObject, Nullable};
 
 use crate::{api::{Context, Id, err::{ApiResult, invalid_input}}, dbargs};
 use crate::db::types::Key;
-use super::{BlockValue, super::realm::Realm};
+use super::{BlockValue, TextBlock, SeriesBlock, VideoListLayout, VideoListOrder, super::realm::Realm};
 
 
 impl BlockValue {
@@ -105,6 +105,85 @@ impl BlockValue {
         Ok(realm)
     }
 
+    pub(crate) async fn update(id: Id, set: UpdateBlock, context: &Context) -> ApiResult<BlockValue> {
+        let updated_block = context.db(context.require_moderator()?)
+            .query_one(
+                &format!(
+                    "update blocks set
+                        title = case $2::boolean when true then $3 else title end
+                        where id = $1
+                        returning {}",
+                    Self::COL_NAMES,
+                ),
+                &[
+                    &id.key_for(Id::BLOCK_KIND)
+                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
+                    &!set.title.is_implicit_null(),
+                    &set.title.some(),
+                ],
+            )
+            .await?;
+
+        Ok(Self::from_row(updated_block)?)
+    }
+
+    pub(crate) async fn update_text(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<TextBlock> {
+        let updated_block = context.db(context.require_moderator()?)
+            .query_one(
+                &format!(
+                    "update blocks set
+                        title = case $2::boolean when true then $3 else title end,
+                        text_content = coalesce($4, title)
+                        where id = $1
+                        and type = 'text'
+                        returning {}",
+                    Self::COL_NAMES,
+                ),
+                &[
+                    &id.key_for(Id::BLOCK_KIND)
+                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
+                    &!set.title.is_implicit_null(),
+                    &set.title.some(),
+                    &set.content,
+                ],
+            )
+            .await?;
+
+        Ok(Self::from_row(updated_block)?.try_into().unwrap())
+    }
+
+    pub(crate) async fn update_series(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<SeriesBlock> {
+        let updated_block = context.db(context.require_moderator()?)
+            .query_one(
+                &format!(
+                    "update blocks set
+                        title = case $2::boolean when true then $3 else title end,
+                        series_id = coalesce($4, series_id),
+                        videolist_layout = coalesce($5, videolist_layout),
+                        videolist_order = coalesce($6, videolist_order)
+                        where id = $1
+                        and type = 'series'
+                        returning {}",
+                    Self::COL_NAMES,
+                ),
+                &[
+                    &id.key_for(Id::BLOCK_KIND)
+                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
+                    &!set.title.is_implicit_null(),
+                    &set.title.some(),
+                    &set.series.map(
+                        |series| series.key_for(Id::SERIES_KIND)
+                            .ok_or_else(|| invalid_input!("`set.series` does not refer to a series"))
+                    ).transpose()?,
+                    &set.layout,
+                    &set.order,
+                ],
+            )
+            .await?;
+
+        Ok(Self::from_row(updated_block)?.try_into().unwrap())
+    }
+
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
         let db = context.db(context.require_moderator()?);
 
@@ -139,6 +218,26 @@ impl BlockValue {
 
         Ok(RemovedBlock { id, realm })
     }
+}
+
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct UpdateBlock {
+    title: Nullable<String>,
+}
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct UpdateTextBlock {
+    title: Nullable<String>,
+    content: Option<String>,
+}
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct UpdateSeriesBlock {
+    title: Nullable<String>,
+    series: Option<Id>,
+    layout: Option<VideoListLayout>,
+    order: Option<VideoListOrder>,
 }
 
 

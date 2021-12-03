@@ -45,6 +45,12 @@ type Mutation {
     to `orderBlocks`.
   """
   swapBlocksByIndex(realm: ID!, index1: Int!, index2: Int!): Realm!
+  "Update a block's data"
+  updateBlock(id: ID!, set: UpdateBlock!): Block!
+  "Update a text block's data"
+  updateTextBlock(id: ID!, set: UpdateTextBlock!): TextBlock!
+  "Update a series block's data"
+  updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): SeriesBlock!
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
 }
@@ -129,6 +135,13 @@ type SeriesBlock implements Block {
   title: String
 }
 
+input UpdateSeriesBlock {
+  title: String
+  series: ID
+  layout: VideoListLayout
+  order: VideoListOrder
+}
+
 type Series {
   id: ID!
   title: String!
@@ -149,6 +162,10 @@ input UpdateRealm {
   pathSegment: String
 }
 
+input UpdateBlock {
+  title: String
+}
+
 type Track {
   uri: String!
   flavor: String!
@@ -160,6 +177,11 @@ input NewRealm {
   parent: ID!
   name: String!
   pathSegment: String!
+}
+
+input UpdateTextBlock {
+  title: String
+  content: String
 }
 
 type Realm {

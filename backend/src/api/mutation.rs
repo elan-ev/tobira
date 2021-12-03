@@ -6,7 +6,15 @@ use super::{
     id::Id,
     model::{
         realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
-        block::{BlockValue, RemovedBlock},
+        block::{
+            BlockValue,
+            TextBlock,
+            SeriesBlock,
+            UpdateBlock,
+            UpdateTextBlock,
+            UpdateSeriesBlock,
+            RemovedBlock,
+        },
     }
 };
 
@@ -68,6 +76,21 @@ impl Mutation {
         context: &Context
     ) -> ApiResult<Realm> {
         BlockValue::swap_by_index(realm, index_1, index_2, context).await
+    }
+
+    /// Update a block's data
+    async fn update_block(id: Id, set: UpdateBlock, context: &Context) -> ApiResult<BlockValue> {
+        BlockValue::update(id, set, context).await
+    }
+
+    /// Update a text block's data
+    async fn update_text_block(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<TextBlock> {
+        BlockValue::update_text(id, set, context).await
+    }
+
+    /// Update a series block's data
+    async fn update_series_block(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<SeriesBlock> {
+        BlockValue::update_series(id, set, context).await
     }
 
     /// Remove a block from a realm.
