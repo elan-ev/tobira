@@ -3,7 +3,17 @@ use juniper::graphql_object;
 
 use crate::auth::User;
 
-use super::{Context, Id, err::ApiResult, model::{realm::Realm, event::Event, user::UserApi}};
+use super::{
+    Context,
+    Id,
+    err::ApiResult,
+    model::{
+        realm::Realm,
+        event::Event,
+        series::Series,
+        user::UserApi
+    }
+};
 
 
 /// The root query object.
@@ -35,6 +45,11 @@ impl Query {
     /// Returns an event by its ID.
     async fn event(id: Id, context: &Context) -> ApiResult<Option<Event>> {
         Event::load_by_id(id, context).await
+    }
+
+    /// Returns a (potentially paginated) list of all series the current user has access to
+    async fn series(context: &Context) -> ApiResult<Vec<Series>> {
+        Series::load(context).await
     }
 
     /// Returns the current user.

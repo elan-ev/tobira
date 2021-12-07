@@ -104,6 +104,8 @@ type Query {
   realmByPath(path: String!): Realm
   "Returns an event by its ID."
   event(id: ID!): Event
+  "Returns a (potentially paginated) list of all series the current user has access to"
+  series: [Series!]!
   "Returns the current user."
   currentUser: UserApi
   "Returns a new JWT that can be used to authenticate against Opencast for uploading videos."
