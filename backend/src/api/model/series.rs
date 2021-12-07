@@ -1,4 +1,5 @@
 use juniper::graphql_object;
+use tokio_postgres::Row;
 
 use crate::{
     api::{Context, err::ApiResult, Id, model::event::Event},
@@ -43,18 +44,27 @@ impl Series {
     pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Series>> {
         let result = context.db
             .query_opt(
-                "select id, title, description \
-                    from series \
-                    where id = $1",
+                &format!(
+                    "select {}
+                        from series
+                        where id = $1",
+                    Self::COL_NAMES,
+                ),
                 &[&key],
             )
             .await?
-            .map(|row| Self {
-                key: row.get(0),
-                title: row.get(1),
-                description: row.get(2),
-            });
+            .map(Self::from_row);
 
         Ok(result)
+    }
+
+    const COL_NAMES: &'static str = "id, title, description";
+
+    fn from_row(row: Row) -> Self {
+        Self {
+            key: row.get(0),
+            title: row.get(1),
+            description: row.get(2),
+        }
     }
 }
