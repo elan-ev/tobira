@@ -117,9 +117,16 @@ upload:
     description: Beschreibung
     required: notwendig
     save: Speichern und fertigstellen
-  error:
+  errors:
+    failed-to-upload: Hochladen fehlgeschlagen.
     unknown: Ein unbekannter Fehler ist während des Dateiuploads aufgetreten.
     field-required: Dieses Feld darf nicht leer sein
+    opencast-server-error: Opencast Server Fehler (unerwartete Antwort).
+    opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
+    jwt-expired: >
+      Interner Fremdauthentifizierungsfehler: Aufgrund Ihres Internets wurde das Video zu langsam
+      hochgeladen. Zurzeit kann diese Anwendung damit nicht umgehen. Wir arbeiten bereits daran,
+      dieses Problem zu lösen. Bitte entschuldigen Sie diese Unannehmlichkeit.
 
 manage:
   overview: Übersicht

@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-import { TFunction, useTranslation } from "react-i18next";
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 
@@ -10,7 +10,7 @@ import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { Environment, fetchQuery } from "relay-runtime";
 import { UploadJwtQuery } from "../query-types/UploadJwtQuery.graphql";
-import { assertNever, bug, unreachable } from "../util/err";
+import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
 import CONFIG from "../config";
 import { FiCheckCircle, FiUpload } from "react-icons/fi";
 import { Button } from "../ui/Button";
@@ -21,6 +21,7 @@ import { useForm } from "react-hook-form";
 import { User, useUser } from "../User";
 import { useRefState } from "../util";
 import { keyframes } from "@emotion/react";
+import { Card } from "../ui/Card";
 
 
 export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
@@ -84,6 +85,7 @@ const UploadMain: React.FC = () => {
     // Get user info
     const user = useUser();
     if (user === "none" || user === "unknown") {
+        // TODO: if not logged in, suggest doing so
         return <div css={{ textAlign: "center" }}>
             <ErrorBox>{t("upload.not-authorized")}</ErrorBox>
         </div>;
@@ -225,12 +227,50 @@ const onProgress = (
     }
 };
 
-const ingestErrorToMessage = (t: TFunction, error: unknown): string => {
-    console.error("ingest error: ", error);
+const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
+    // Log error once.
+    useEffect(() => console.error("Error uploading: ", error), [error]);
 
-    // TODO: make this better, obviously
-    return t("upload.error.unknown");
+    const { t, i18n } = useTranslation();
+    let info;
+    if (error instanceof OcNetworkError) {
+        // This is kind of tricky. Internet is likely not the problem, as we
+        // completed a succesful request to Tobira just before this error
+        // occured. But it's not impossible that internet is the problem!
+        // Otherwise, Opencast is down.
+        info = {
+            causes: [t("upload.errors.opencast-unreachable")],
+            probablyOurFault: true,
+            potentiallyInternetProblem: true,
+        };
+    } else if (error instanceof OcServerError) {
+        info = {
+            causes: [t("upload.errors.opencast-server-error")],
+            probablyOurFault: true,
+            potentiallyInternetProblem: false,
+        };
+    } else if (error instanceof JwtInvalid) {
+        // TODO: make it so that this error should not occur. And once that is
+        // done, change `probablyOurFault` to `true`.
+        info = {
+            causes: [t("upload.errors.jwt-expired")],
+            probablyOurFault: false, // Well...
+            potentiallyInternetProblem: false,
+        };
+    } else {
+        info = errorDisplayInfo(error, i18n);
+    }
+
+
+    return (
+        <div css={{ margin: "0 auto" }}>
+            <Card kind="error">
+                <ErrorDisplay info={info} failedAction={t("upload.errors.failed-to-upload")} />
+            </Card>
+        </div>
+    );
 };
+
 
 
 // ==============================================================================================
@@ -406,7 +446,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
             <span>{t("upload.finishing")}</span>
         </BarWithText>;
     } else if (state.state === "error") {
-        return <p>{ingestErrorToMessage(t, state.error)}</p>;
+        return <UploadErrorBox error={state.error} />;
     } else {
         return assertNever(state);
     }
@@ -530,7 +570,9 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave }) => {
                     required
                     error={!!errors.title}
                     css={{ width: 400, maxWidth: "100%" }}
-                    {...register("title", { required: t("upload.error.field-required") as string })}
+                    {...register("title", {
+                        required: t("upload.errors.field-required") as string,
+                    })}
                 />
                 {boxError(errors.title?.message)}
             </InputContainer>
@@ -560,29 +602,70 @@ const InputContainer: React.FC = ({ children }) => (
 /** Returns the full Opencast URL for the given path */
 const ocUrl = (path: string): string => `${CONFIG.ocUrl}${path}`;
 
+/** Opencast returned a non-OK status code */
+export class OcServerError extends Error {
+    public status: number;
+    public statusText: string;
+
+    public constructor(status: number, statusText: string) {
+        super();
+        this.name = "Opencast server error";
+        this.status = status;
+        this.statusText = statusText;
+        this.message = `OC returned non-2xx status ${status} ${statusText}`;
+    }
+}
+
+/** Opencast could not be reached */
+export class OcNetworkError extends Error {
+    public inner?: Error;
+
+    public constructor(inner?: Error) {
+        super();
+        this.name = "Opencast Network Error";
+        this.inner = inner;
+        this.message = `network error while contacting Opencast API: ${inner}`;
+    }
+}
+
+/** The JWT sent to Opencast was rejected. Likely because it expired */
+export class JwtInvalid extends Error {
+    public constructor() {
+        super();
+        this.name = "Opencast JWT Auth Error";
+        this.message = "JWT was rejected by Opencast";
+    }
+}
+
 /** Performs a request against Opencast, authenticated via JWT */
 const ocRequest = async (
     relayEnv: Environment,
     path: string,
     options: RequestInit = {},
-): Promise<Response> => {
+): Promise<string> => {
     const jwt = await getJwt(relayEnv);
 
     const url = ocUrl(path);
     const response = await fetch(url, {
-        redirect: "error",
+        redirect: "manual",
         ...options,
         headers: {
             ...options.headers,
             "Authorization": `Bearer ${jwt}`,
         },
-    });
+    }).catch(e => { throw new OcNetworkError(e); });
 
-    if (!response.ok) {
-        throw new Error(`OC returned non-2xx status ${response.status} ${response.statusText}`);
+    if (response.redirected) {
+        throw new JwtInvalid();
     }
 
-    return response;
+    if (!response.ok) {
+        throw new OcServerError(response.status, response.statusText);
+    }
+
+
+    return response.text()
+        .catch(e => { throw new OcNetworkError(e); });
 };
 
 /** Fetches a new JWT for uploading to Opencast */
@@ -632,8 +715,7 @@ const startUpload = async (
         setUploadState({ state: "starting" });
 
         // Create a new media package to start the upload
-        let mediaPackage = await ocRequest(relayEnv, "/ingest/createMediaPackage")
-            .then(response => response.text());
+        let mediaPackage = await ocRequest(relayEnv, "/ingest/createMediaPackage");
 
         const tracks = Array.from(files)
             .map(file => ({ file, flavor: "presentation/source" as const }));
@@ -680,18 +762,15 @@ const uploadTracks = async (
             xhr.setRequestHeader("Authorization", `Bearer ${jwt}`);
 
             xhr.onload = () => {
-                if (xhr.status !== 200) {
-                    // TODO
-                    reject(new Error("invalid Opencast status code returned"));
-                } else if (xhr.responseURL !== url) {
-                    // TODO
-                    reject(new Error("unexpected redirect"));
+                if (xhr.responseURL !== url) {
+                    reject(new JwtInvalid());
+                } else if (xhr.status !== 200) {
+                    reject(new OcServerError(xhr.status, xhr.statusText));
                 } else {
                     resolve(xhr.responseText);
                 }
             };
-            // TODO: distinguish between different errors
-            xhr.onerror = () => reject(xhr.status),
+            xhr.onerror = () => reject(new OcNetworkError()),
             xhr.upload.onprogress = e => {
                 const uploadedBytes = e.loaded + sizeFinishedTracks;
                 onProgress(uploadedBytes / totalBytes);
@@ -734,7 +813,7 @@ const finishUpload = async (
                 relayEnv,
                 "/ingest/addDCCatalog",
                 { method: "post", body },
-            ).then(response => response.text());
+            );
         }
 
         // Add ACL
@@ -749,7 +828,7 @@ const finishUpload = async (
                 relayEnv,
                 "/ingest/addAttachment",
                 { method: "post", body },
-            ).then(response => response.text());
+            );
         }
 
         // Finish ingest
