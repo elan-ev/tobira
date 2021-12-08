@@ -7,6 +7,7 @@ const noUnusedVarsOptions = {
     caughtErrorsIgnorePattern: "^_",
     ignoreRestSiblings: true,
 };
+const braceStyle = ["warn", "1tbs", { allowSingleLine: true }];
 
 // eslint quote-props: "warn", "consistent-as-needed"
 module.exports = {
@@ -29,7 +30,7 @@ module.exports = {
         "arrow-body-style": "warn",
         "arrow-parens": ["warn", "as-needed"],
         "block-spacing": "warn",
-        "brace-style": "warn",
+        "brace-style": braceStyle,
         "camelcase": ["warn", {
             allow: ["\\$key$"],
             ignoreImports: true,
@@ -122,7 +123,7 @@ module.exports = {
 
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],
-            "@typescript-eslint/brace-style": "warn",
+            "@typescript-eslint/brace-style": braceStyle,
             "@typescript-eslint/comma-spacing": "warn",
             "@typescript-eslint/explicit-member-accessibility": "warn",
             "@typescript-eslint/indent": "warn",

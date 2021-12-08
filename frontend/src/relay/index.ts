@@ -20,18 +20,15 @@ export const environment = new Environment({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query, variables }),
-            }).catch(e => {
-                throw new NetworkError(e);
-            });
+            }).catch(e => { throw new NetworkError(e); });
 
             if (!response.ok) {
                 throw new ServerError(response);
             }
 
             // Download full response and parse as JSON.
-            const text = await response.text().catch(e => {
-                throw new NetworkError(e);
-            });
+            const text = await response.text()
+                .catch(e => { throw new NetworkError(e); });
             let json;
             try {
                 json = JSON.parse(text);
