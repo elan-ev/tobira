@@ -161,7 +161,14 @@ const UploadMain: React.FC = () => {
                         - Maybe just show the form, but disable all inputs?
                         - ...
                     */}
-                    {!metadata.current && <MetaDataEdit onSave={onMetadataSave} />}
+                    {!metadata.current
+                        ? <MetaDataEdit onSave={onMetadataSave} />
+                        : uploadState.current.state !== "error" && (
+                            <div css={{ margin: "0 auto", maxWidth: 500 }}>
+                                <Card kind="info">{t("upload.still-uploading")}</Card>
+                            </div>
+                        )
+                    }
                 </div>
             </div>
         );

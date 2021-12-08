@@ -100,6 +100,8 @@ upload:
   starting: Starte Upload...
   finishing: Schließe Upload ab...
   waiting-for-metadata: Zum Fertigstellen bitte Videoinformationen speichern
+  still-uploading: >
+    Video lädt hoch. Bitte schließen Sie diese Seite nicht, bevor der Upload beendet ist.
   time-estimate:
     a-few-seconds: wenige Sekunden
     a-minute: eine Minute

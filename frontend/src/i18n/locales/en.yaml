@@ -97,6 +97,8 @@ upload:
   starting: Starting...
   finishing: Finishing up...
   waiting-for-metadata: Please save video information to finish the upload
+  still-uploading: >
+    Video is still uploading. Please do not close this page before the upload is finished.
   time-estimate:
     a-few-seconds: a few seconds
     a-minute: a minute
