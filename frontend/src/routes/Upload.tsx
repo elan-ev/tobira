@@ -241,13 +241,10 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
     const { t, i18n } = useTranslation();
     let info;
     if (error instanceof OcNetworkError) {
-        // This is kind of tricky. Internet is likely not the problem, as we
-        // completed a succesful request to Tobira just before this error
-        // occured. But it's not impossible that internet is the problem!
-        // Otherwise, Opencast is down.
         info = {
             causes: [t("upload.errors.opencast-unreachable")],
-            probablyOurFault: true,
+            // Opencast could be down, but it's confusing setting this to true
+            probablyOurFault: false,
             potentiallyInternetProblem: true,
         };
     } else if (error instanceof OcServerError) {
