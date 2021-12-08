@@ -714,6 +714,13 @@ const startUpload = async (
     try {
         setUploadState({ state: "starting" });
 
+        // Log Opencast user information. This is also a good test whether the
+        // communication with OC works at all, without potentially creating an
+        // empty new media package.
+        const userInfo = JSON.parse(await ocRequest(relayEnv, "/info/me.json"));
+        delete userInfo.org;
+        console.debug("JWT user: ", userInfo);
+
         // Create a new media package to start the upload
         let mediaPackage = await ocRequest(relayEnv, "/ingest/createMediaPackage");
 
