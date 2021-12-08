@@ -143,6 +143,7 @@ const UploadMain: React.FC = () => {
                 finishUpload(relayEnv, mediaPackage, metadata, user, setUploadState);
             }
         };
+        const hasUploadError = uploadState.current.state === "error";
 
         return (
             <div css={{
@@ -162,8 +163,8 @@ const UploadMain: React.FC = () => {
                         - ...
                     */}
                     {!metadata.current
-                        ? <MetaDataEdit onSave={onMetadataSave} />
-                        : uploadState.current.state !== "error" && (
+                        ? <MetaDataEdit onSave={onMetadataSave} disabled={hasUploadError} />
+                        : !hasUploadError && (
                             <div css={{ margin: "0 auto", maxWidth: 500 }}>
                                 <Card kind="info">{t("upload.still-uploading")}</Card>
                             </div>
@@ -544,10 +545,11 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
 
 type MetaDataEditProps = {
     onSave: (metadata: Metadata) => void;
+    disabled: boolean;
 };
 
 /** Form that lets the user set metadata about the video */
-const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave }) => {
+const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { t } = useTranslation();
 
     const { register, handleSubmit, formState: { errors } } = useForm<Metadata>({
@@ -588,7 +590,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave }) => {
             </InputContainer>
 
             {/* Submit button */}
-            <Button kind="happy">{t("upload.metadata.save")}</Button>
+            <Button kind="happy" disabled={disabled}>{t("upload.metadata.save")}</Button>
         </Form>
     );
 };
