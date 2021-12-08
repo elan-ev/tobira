@@ -39,7 +39,7 @@ impl Query {
 
     /// Returns the current user.
     fn current_user(context: &Context) -> Option<UserApi> {
-        UserApi::from(&context.user)
+        UserApi::from(&context.user, &context.config.auth)
     }
 
     /// Returns a new JWT that can be used to authenticate against Opencast for uploading videos.
