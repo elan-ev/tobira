@@ -2,25 +2,26 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
+import { keyframes } from "@emotion/react";
+import { useForm } from "react-hook-form";
+import { Environment, fetchQuery } from "relay-runtime";
+import { FiCheckCircle, FiUpload } from "react-icons/fi";
+import { useBeforeunload } from "react-beforeunload";
 
 import { Root } from "../layout/Root";
 import { loadQuery } from "../relay";
 import { UploadQuery } from "../query-types/UploadQuery.graphql";
 import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
-import { Environment, fetchQuery } from "relay-runtime";
 import { UploadJwtQuery } from "../query-types/UploadJwtQuery.graphql";
 import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
 import CONFIG from "../config";
-import { FiCheckCircle, FiUpload } from "react-icons/fi";
 import { Button } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
 import { Form } from "../ui/Form";
 import { Input, TextArea } from "../ui/Input";
-import { useForm } from "react-hook-form";
 import { User, useUser } from "../User";
 import { useRefState } from "../util";
-import { keyframes } from "@emotion/react";
 import { Card } from "../ui/Card";
 
 
@@ -81,6 +82,12 @@ const UploadMain: React.FC = () => {
     const [metadata, setMetadata] = useRefState<Metadata | null>(null);
 
     const progressHistory = useRef<ProgressHistory>([]);
+
+    useBeforeunload(event => {
+        if (uploadState.current && uploadState.current.state !== "done") {
+            event.preventDefault();
+        }
+    });
 
     // Get user info
     const user = useUser();
