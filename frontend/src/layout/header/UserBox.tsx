@@ -239,9 +239,9 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
             )}
 
             {user && <>
-                <MenuItem icon={<FiUpload />} linkTo={"/~upload"}>
+                {user.canUpload && <MenuItem icon={<FiUpload />} linkTo={"/~upload"}>
                     {t("upload.title")}
-                </MenuItem>
+                </MenuItem>}
                 <MenuItem icon={<HiOutlineSparkles />} linkTo={`/@${user.username}`}>
                     {t("user.your-page")}
                 </MenuItem>
