@@ -655,7 +655,10 @@ const ocRequest = async (
         },
     }).catch(e => { throw new OcNetworkError(e); });
 
-    if (response.redirected) {
+    // There should be no reason for a redirect except non-authenticated. The
+    // underlying problem can hopefully be resolved soon, so that we can remove
+    // this code.
+    if (response.type === "opaqueredirect") {
         throw new JwtInvalid();
     }
 
