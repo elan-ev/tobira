@@ -34,6 +34,6 @@ export const Card: React.FC<Props> = ({ kind, iconPos = "left", children, ...res
         {match(kind, {
             "error": () => <FiAlertTriangle />,
         })}
-        {children}
+        <div>{children}</div>
     </div>
 );
