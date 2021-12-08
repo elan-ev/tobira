@@ -8,7 +8,8 @@ import type {
     VariablesOf,
 } from "relay-runtime";
 
-import { hasErrors, APIError, ServerError, NetworkError, NotJson } from "./errors";
+import { hasErrors, APIError, ServerError, NotJson } from "./errors";
+import { NetworkError } from "../util/err";
 
 
 export const environment = new Environment({

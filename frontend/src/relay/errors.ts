@@ -11,17 +11,6 @@ import type {
 // or even (partly) try to recover from then.
 // With our current usage of Relay, these will be most useful in error boundaries.
 
-/** A network error while fetching the response. */
-export class NetworkError extends Error {
-    public inner: Error;
-
-    public constructor(inner: Error) {
-        super();
-        this.name = "Network Error";
-        this.inner = inner;
-        this.message = `network error while contacting GraphQL API: ${inner}`;
-    }
-}
 
 /** When the API returns invalid JSON */
 export class NotJson extends Error {
