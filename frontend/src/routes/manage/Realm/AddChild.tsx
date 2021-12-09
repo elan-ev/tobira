@@ -159,7 +159,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
 
                 <div>
                     <div css={{ display: "flex", alignItems: "center", gap: 16 }}>
-                        <Button type="submit" disabled={isInFlight}>
+                        <Button type="submit" kind="happy" disabled={isInFlight}>
                             {t("manage.add-child.button-create-page")}
                         </Button>
                         {isInFlight && <Spinner size={20} />}
