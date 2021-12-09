@@ -170,7 +170,7 @@ manage:
         button: Change path segment
         failed: Changing the path failed.
         warning: >
-          Important: Changing the path of this page invalidates the paths to
+          Important: Changing the path of this page invalidates all links to
           this page, to all direct or indirect sub-pages, and to all videos
           linked on any of those pages. Old links, e.g. in personal
           browser-bookmarks or published somewhere, won't work anymore.
