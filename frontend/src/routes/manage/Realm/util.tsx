@@ -28,17 +28,24 @@ export const realmValidations = (t: TFunction): RealmValidations => ({
     },
 });
 
-export const RealmSettingsContainer: React.FC = ({ children }) => (
-    <div css={{
-        maxWidth: 900,
-        // Without this, some "on focus" box shadows are clipped as the parent
-        // element has "overflow: hidden".
-        marginLeft: 2,
-        "& > section": {
-            marginBottom: 64,
-            "& > h2": { marginBottom: 16 },
-        },
-    }}>{children}</div>
+type RealmSettingsContainerProps = JSX.IntrinsicElements["div"];
+
+export const RealmSettingsContainer: React.FC<RealmSettingsContainerProps> = ({
+    children,
+    ...rest
+}) => (
+    <div
+        css={{
+            // Without this, some "on focus" box shadows are clipped as the parent
+            // element has "overflow: hidden".
+            marginLeft: 2,
+            "& > section": {
+                marginBottom: 64,
+                "& > h2": { marginBottom: 16 },
+            },
+        }}
+        {...rest}
+    >{children}</div>
 );
 
 /** Returns an element that displays the given mutation error as best as possible. */

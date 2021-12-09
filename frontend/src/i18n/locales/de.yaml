@@ -199,6 +199,13 @@ manage:
     below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
     button-create-page: Seite erstellen
     failed-to-add: Seite konnte nicht erstellt werden.
+    page-name-info: >
+      Der Seitename wird im Navigationsmenü und als Überschrift auf der Seite selber angezeigt.
+      Seitennamen können jederzeit geändert werden.
+    path-segment-info: >
+      Pfadsegmente dürfen nur aus Ziffern, Kleinbuchstaben und Bindestrichen (-) bestehen.
+      Sie sollten außerdem möglichst kurz sein und keine Information aus vorangehenden
+      Pfadsegmenten wiederholen. Eine spätere Änderung des Pfadsegments sollte vermieden werden.
 
 
 # These errors map the `key` field of an API error response to a nice message.

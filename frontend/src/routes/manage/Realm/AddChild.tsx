@@ -23,6 +23,7 @@ import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
 import { QueryLoader } from "../../../util/QueryLoader";
+import { Card } from "../../../ui/Card";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -133,7 +134,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                     "& > div": { marginBottom: 32 },
                 }}
             >
-                <div>
+                <InputWithInfo info={t("manage.add-child.page-name-info")}>
                     <label htmlFor="name-field">{t("manage.realm.general.rename-label")}</label>
                     <Input
                         id="name-field"
@@ -143,9 +144,9 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                         {...register("name", validations.name)}
                     />
                     {boxError(errors.name?.message)}
-                </div>
+                </InputWithInfo>
 
-                <div>
+                <InputWithInfo info={t("manage.add-child.path-segment-info")}>
                     {/* TODO: Add explanation on how to chose a good path segment */}
                     <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>
                     <PathSegmentInput
@@ -155,7 +156,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                         {...register("pathSegment", validations.path)}
                     />
                     {boxError(errors.pathSegment?.message)}
-                </div>
+                </InputWithInfo>
 
                 <div>
                     <div css={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -170,3 +171,21 @@ const AddChild: React.FC<Props> = ({ parent }) => {
         </RealmSettingsContainer>
     );
 };
+
+type InputWithInfoProps = {
+    info: string;
+};
+
+const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
+    <div css={{
+        display: "flex",
+        columnGap: 32,
+        rowGap: 16,
+        "@media (max-width: 1300px)": {
+            flexDirection: "column",
+        },
+    }}>
+        <div css={{ minWidth: "min(100%, 450px)" }}>{children}</div>
+        <Card kind="info" css={{ maxWidth: 600, minSize: 100, fontSize: 14 }}>{info}</Card>
+    </div>
+);
