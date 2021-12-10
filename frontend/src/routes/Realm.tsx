@@ -48,7 +48,7 @@ const query = graphql`
             canCurrentUserEdit
             ancestors { name path }
             parent { id }
-            ... Blocks_blocks
+            ... BlocksData
             ... NavigationData
         }
     }

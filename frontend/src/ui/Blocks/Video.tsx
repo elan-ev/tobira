@@ -1,9 +1,9 @@
-import { Block } from ".";
+import { BlockContainer } from ".";
 import { Player, PlayerProps } from "../player";
 
 
 export const VideoBlock: React.FC<PlayerProps> = props => (
-    <Block>
+    <BlockContainer>
         <Player {...props} />
-    </Block>
+    </BlockContainer>
 );

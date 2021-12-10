@@ -1,7 +1,7 @@
 import React from "react";
 
 import { keyOfId } from "../../util";
-import { Block, Title } from ".";
+import { BlockContainer, Title } from ".";
 import { Link } from "../../router";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -67,7 +67,7 @@ type Props = SharedProps & {
 const VIDEO_GRID_BREAKPOINT = 600;
 
 export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath, activeEventId }) => (
-    <Block>
+    <BlockContainer>
         <Title title={title ?? series.title} />
         <div css={{
             display: "flex",
@@ -86,7 +86,7 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath, activeE
                 {...{ realmPath, event }}
             />)}
         </div>
-    </Block>
+    </BlockContainer>
 );
 
 type GridTypeProps = {

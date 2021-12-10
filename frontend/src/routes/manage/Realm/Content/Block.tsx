@@ -3,11 +3,9 @@ import { useTranslation } from "react-i18next";
 import { useFragment, graphql } from "react-relay";
 
 import type { BlockRealmData$key } from "../../../../query-types/BlockRealmData.graphql";
-import { match } from "../../../../util";
 import { boxError } from "../../../../ui/error";
 import { displayCommitError } from "../util";
-import { TextBlockByQuery } from "../../../../ui/blocks/Text";
-import { SeriesBlockFromBlock } from "../../../../ui/blocks/Series";
+import { Block } from "../../../../ui/Blocks";
 import { EditButtons } from "./Edit";
 
 
@@ -19,7 +17,7 @@ type Props = {
     onError?: (error: Error, action: string, index: number) => void;
 };
 
-export const Block: React.FC<Props> = ({
+export const EditBlock: React.FC<Props> = ({
     realm: realmRef,
     index,
     onCommit,
@@ -30,19 +28,14 @@ export const Block: React.FC<Props> = ({
 
     const realm = useFragment(graphql`
         fragment BlockRealmData on Realm {
-            path
+            ... BlocksRealmData
             ... EditButtonsRealmData
             blocks {
-                id
-                title
-                __typename
-                ... on SeriesBlock { ... SeriesBlockData }
-                ... on TextBlock { ... TextBlockData }
+                ... BlocksBlockData
             }
         }
     `, realmRef);
-    const { path, blocks } = realm;
-    const block = blocks[index];
+    const block = realm.blocks[index];
 
 
     const [error, setError] = useState<JSX.Element | null>(null);
@@ -80,17 +73,7 @@ export const Block: React.FC<Props> = ({
                 onError={onBlockError}
             />
 
-            {match(block.__typename, {
-                "TextBlock": () => <TextBlockByQuery
-                    title={block.title ?? undefined}
-                    fragRef={block}
-                />,
-                "SeriesBlock": () => <SeriesBlockFromBlock
-                    title={block.title ?? undefined}
-                    realmPath={path}
-                    fragRef={block}
-                />,
-            })}
+            <Block {...{ block, realm }} />
         </div>
     </>;
 };

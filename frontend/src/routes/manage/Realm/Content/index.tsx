@@ -13,7 +13,7 @@ import { makeRoute } from "../../../../rauta";
 import { QueryLoader } from "../../../../util/QueryLoader";
 import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
-import { Block } from "./Block";
+import { EditBlock } from "./Block";
 
 
 export const PATH = "/~manage/realm/content";
@@ -113,7 +113,7 @@ const ManageContent: React.FC<Props> = ({ fragRef }) => {
                 <React.Fragment key={block.id}>
                     <AddButtons index={index} />
 
-                    <Block {...{ realm, index, onCommit, onCompleted, onError }} />
+                    <EditBlock {...{ realm, index, onCommit, onCompleted, onError }} />
                 </React.Fragment>
             ))}
             <AddButtons index={blocks.length} />
