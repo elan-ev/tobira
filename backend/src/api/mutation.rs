@@ -8,8 +8,6 @@ use super::{
         realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
         block::{
             BlockValue,
-            TextBlock,
-            SeriesBlock,
             UpdateBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
@@ -84,12 +82,12 @@ impl Mutation {
     }
 
     /// Update a text block's data
-    async fn update_text_block(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<TextBlock> {
+    async fn update_text_block(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<BlockValue> {
         BlockValue::update_text(id, set, context).await
     }
 
     /// Update a series block's data
-    async fn update_series_block(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<SeriesBlock> {
+    async fn update_series_block(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<BlockValue> {
         BlockValue::update_series(id, set, context).await
     }
 

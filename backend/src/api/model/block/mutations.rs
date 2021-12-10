@@ -4,7 +4,7 @@ use juniper::{GraphQLInputObject, GraphQLObject, Nullable};
 
 use crate::{api::{Context, Id, err::{ApiResult, invalid_input}}, dbargs};
 use crate::db::types::Key;
-use super::{BlockValue, TextBlock, SeriesBlock, VideoListLayout, VideoListOrder, super::realm::Realm};
+use super::{BlockValue, VideoListLayout, VideoListOrder, super::realm::Realm};
 
 
 impl BlockValue {
@@ -127,7 +127,7 @@ impl BlockValue {
         Ok(Self::from_row(updated_block)?)
     }
 
-    pub(crate) async fn update_text(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<TextBlock> {
+    pub(crate) async fn update_text(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
@@ -149,10 +149,10 @@ impl BlockValue {
             )
             .await?;
 
-        Ok(Self::from_row(updated_block)?.try_into().unwrap())
+        Ok(Self::from_row(updated_block)?)
     }
 
-    pub(crate) async fn update_series(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<SeriesBlock> {
+    pub(crate) async fn update_series(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
@@ -181,7 +181,7 @@ impl BlockValue {
             )
             .await?;
 
-        Ok(Self::from_row(updated_block)?.try_into().unwrap())
+        Ok(Self::from_row(updated_block)?)
     }
 
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedBlock> {

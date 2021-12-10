@@ -48,9 +48,9 @@ type Mutation {
   "Update a block's data"
   updateBlock(id: ID!, set: UpdateBlock!): Block!
   "Update a text block's data"
-  updateTextBlock(id: ID!, set: UpdateTextBlock!): TextBlock!
+  updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
   "Update a series block's data"
-  updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): SeriesBlock!
+  updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): Block!
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
 }
