@@ -128,7 +128,15 @@ upload:
       working on it! We are sorry for causing any inconvenience.
 
 manage:
-  overview: Overview
+  nav:
+    dashboard: Dashboard
+    my-videos: My videos
+
+  dashboard:
+    title: Management Dashboard
+
+  my-videos:
+    title: My videos
 
   are-you-sure: Are you sure?
 

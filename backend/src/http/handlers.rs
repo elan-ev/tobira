@@ -55,6 +55,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         "/~tobira"
         | "/~upload"
         | "/~manage"
+        | "/~manage/videos"
         | "/~manage/realm"
         | "/~manage/realm/add-child"
         | "/~manage/realm/content" => ctx.assets.serve_index().await,

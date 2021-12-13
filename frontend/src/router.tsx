@@ -7,11 +7,13 @@ import { ManageRealmContentRoute } from "./routes/manage/Realm/Content";
 import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
+import { ManageVideosRoute } from "./routes/manage/video";
+import { UploadRoute } from "./routes/Upload";
 
 import { makeRouter } from "./rauta";
 import { Transition } from "react-transition-group";
 import { match } from "./util";
-import { UploadRoute } from "./routes/Upload";
+
 
 
 /** A thin colored line at the top of the page indicating a page load */
@@ -69,6 +71,7 @@ const {
         RealmRoute,
         VideoRoute,
         ManageRoute,
+        ManageVideosRoute,
         ManageRealmRoute,
         UploadRoute,
         AddChildRoute,

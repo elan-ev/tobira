@@ -133,7 +133,15 @@ upload:
       dieses Problem zu lösen. Bitte entschuldigen Sie diese Unannehmlichkeit.
 
 manage:
-  overview: Übersicht
+  nav:
+    dashboard: Übersicht
+    my-videos: Meine Videos
+
+  dashboard:
+    title: Verwaltungsübersicht
+
+  my-videos:
+    title: Meine Videos
 
   are-you-sure: Sind Sie sich sicher?
 
