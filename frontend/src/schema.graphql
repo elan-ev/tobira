@@ -84,15 +84,6 @@ type TextBlock implements Block {
   title: String
 }
 
-type UserApi {
-  "The username, a unique string identifying the user."
-  username: String!
-  "The name of the user intended to be read by humans."
-  displayName: String!
-  "`True` if the user has the permission to upload videos."
-  canUpload: Boolean!
-}
-
 type RemovedBlock {
   id: ID!
   realm: Realm!
@@ -120,7 +111,7 @@ type Query {
   "Returns a list of all series"
   series: [Series!]!
   "Returns the current user."
-  currentUser: UserApi
+  currentUser: User
   "Returns a new JWT that can be used to authenticate against Opencast for uploading videos."
   uploadJwt: String!
 }
@@ -188,6 +179,20 @@ input UpdateBlock {
   title: String
 }
 
+type User {
+  "The username, a unique string identifying the user."
+  username: String!
+  "The name of the user intended to be read by humans."
+  displayName: String!
+  "`True` if the user has the permission to upload videos."
+  canUpload: Boolean!
+}
+
+input UpdateTextBlock {
+  title: String
+  content: String
+}
+
 type Track {
   uri: String!
   flavor: String!
@@ -199,11 +204,6 @@ input NewRealm {
   parent: ID!
   name: String!
   pathSegment: String!
-}
-
-input UpdateTextBlock {
-  title: String
-  content: String
 }
 
 type Realm {

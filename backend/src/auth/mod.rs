@@ -152,40 +152,6 @@ impl User {
             Self::Some(user) => format!("'{}'", user.username).into(),
         }
     }
-
-    /// Returns the roles of the user if logged in, and `ROLE_ANONYMOUS` otherwise.
-    pub(crate) fn roles(&self) -> &[String] {
-        static LOGGED_OUT_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ANONYMOUS.into()]);
-
-        match self {
-            Self::None => &*LOGGED_OUT_ROLES,
-            Self::Some(user) => &user.roles,
-        }
-    }
-
-    /// Returns an auth token IF this user is a Tobira moderator (as determined
-    /// by `config.moderator_role`).
-    pub(crate) fn require_moderator(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        AuthToken::some_if(self.is_moderator(auth_config))
-    }
-
-    pub(crate) fn required_upload_permission(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        AuthToken::some_if(self.can_upload(auth_config))
-    }
-
-    pub(crate) fn is_moderator(&self, auth_config: &AuthConfig) -> bool {
-        self.is_admin() || self.roles().contains(&auth_config.moderator_role)
-    }
-
-    pub(crate) fn can_upload(&self, auth_config: &AuthConfig) -> bool {
-        self.is_moderator(auth_config) || self.roles().contains(&auth_config.upload_role)
-    }
-
-    /// Returns `true` if the user is a global Opencast administrator and can do
-    /// anything.
-    pub(crate) fn is_admin(&self) -> bool {
-        self.roles().iter().any(|role| role == ROLE_ADMIN)
-    }
 }
 
 impl From<Option<UserData>> for User {
@@ -299,4 +265,51 @@ fn base64decode(input: impl AsRef<[u8]>) -> Result<Vec<u8>, base64::DecodeError>
 
 fn base64encode(input: impl AsRef<[u8]>) -> String {
     base64::encode_config(input, base64::URL_SAFE)
+}
+
+pub(crate) trait HasRoles {
+    /// Returns the role of the user.
+    fn roles(&self) -> &[String];
+
+    /// Returns an auth token IF this user is a Tobira moderator (as determined
+    /// by `config.moderator_role`).
+    fn require_moderator(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
+        AuthToken::some_if(self.is_moderator(auth_config))
+    }
+
+    fn required_upload_permission(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
+        AuthToken::some_if(self.can_upload(auth_config))
+    }
+
+    fn is_moderator(&self, auth_config: &AuthConfig) -> bool {
+        self.is_admin() || self.roles().contains(&auth_config.moderator_role)
+    }
+
+    fn can_upload(&self, auth_config: &AuthConfig) -> bool {
+        self.is_moderator(auth_config) || self.roles().contains(&auth_config.upload_role)
+    }
+
+    /// Returns `true` if the user is a global Opencast administrator and can do
+    /// anything.
+    fn is_admin(&self) -> bool {
+        self.roles().iter().any(|role| role == ROLE_ADMIN)
+    }
+}
+
+impl HasRoles for User {
+    /// Returns the roles of the user if logged in, and `ROLE_ANONYMOUS` otherwise.
+    fn roles(&self) -> &[String] {
+        static LOGGED_OUT_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ANONYMOUS.into()]);
+
+        match self {
+            Self::None => &*LOGGED_OUT_ROLES,
+            Self::Some(user) => &user.roles,
+        }
+    }
+}
+
+impl HasRoles for UserData {
+    fn roles(&self) -> &[String] {
+        &self.roles
+    }
 }

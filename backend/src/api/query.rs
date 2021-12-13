@@ -11,7 +11,6 @@ use super::{
         realm::Realm,
         event::Event,
         series::Series,
-        user::UserApi
     },
 };
 
@@ -53,8 +52,8 @@ impl Query {
     }
 
     /// Returns the current user.
-    fn current_user(context: &Context) -> Option<UserApi> {
-        UserApi::from(&context.user, &context.config.auth)
+    fn current_user(context: &Context) -> &User {
+        &context.user
     }
 
     /// Returns a new JWT that can be used to authenticate against Opencast for uploading videos.
