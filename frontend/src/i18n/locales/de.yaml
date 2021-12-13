@@ -139,6 +139,17 @@ manage:
 
   dashboard:
     title: Verwaltungsübersicht
+    upload-tile: Videos von ihrem Computer können Sie auf <1>dieser Seite</1> hochladen.
+    studio-tile-title: Video aufnehmen
+    studio-tile-body: >
+      Sie können sehr einfach ein neues Video erstellen, indem Sie Ihre Mikrofon, Bildschirm und/oder
+      Webcam auf <1>dieser Seite</1> aufzeichnen. (Funktioniert noch nicht!)
+    my-videos-tile: "Sie können Ihre Videos auf <1>der Seite „Meine\u00a0Videos“</1> sehen und bearbeiten."
+    manage-pages-tile-title: Seiten verwalten?
+    manage-pages-tile-body: >
+      Um Seiten zu bearbeiten, umzubenennen und zu löschen, navigieren Sie zu der gewünschten
+      Seite. Solange Sie angemeldet sind und die benötigten Rechte haben, gibt es dort entsprechende
+      Seitenverwaltungs-Buttons in der Seitenleiste bzw. im Menu.
 
   my-videos:
     title: Meine Videos
