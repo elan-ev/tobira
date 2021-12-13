@@ -14,7 +14,14 @@ use crate::{
 
 mod mutations;
 
-pub(crate) use mutations::{UpdateBlock, UpdateTextBlock, UpdateSeriesBlock, RemovedBlock};
+pub(crate) use mutations::{
+    NewTextBlock,
+    NewSeriesBlock,
+    UpdateBlock,
+    UpdateTextBlock,
+    UpdateSeriesBlock,
+    RemovedBlock
+};
 
 
 /// A `Block`: a UI element that belongs to a realm.

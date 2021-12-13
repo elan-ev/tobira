@@ -8,6 +8,8 @@ use super::{
         realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
         block::{
             BlockValue,
+            NewTextBlock,
+            NewSeriesBlock,
             UpdateBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
@@ -53,6 +55,16 @@ impl Mutation {
     /// Remove a realm from the tree.
     async fn remove_realm(id: Id, context: &Context) -> ApiResult<RemovedRealm> {
         Realm::remove(id, context).await
+    }
+
+    /// Adds a text block to a realm
+    async fn add_text_block(realm: Id, index: i32, block: NewTextBlock, context: &Context) -> ApiResult<Realm> {
+        BlockValue::add_text(realm, index, block, context).await
+    }
+
+    /// Adds a series block to a realm
+    async fn add_series_block(realm: Id, index: i32, block: NewSeriesBlock, context: &Context) -> ApiResult<Realm> {
+        BlockValue::add_series(realm, index, block, context).await
     }
 
     /// Swap two blocks.

@@ -31,6 +31,10 @@ type Mutation {
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
   "Remove a realm from the tree."
   removeRealm(id: ID!): RemovedRealm!
+  "Adds a text block to a realm"
+  addTextBlock(realm: ID!, index: Int!, block: NewTextBlock!): Realm!
+  "Adds a series block to a realm"
+  addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
   """
     Swap two blocks.
 
@@ -53,6 +57,11 @@ type Mutation {
   updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): Block!
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
+}
+
+input NewTextBlock {
+  title: String
+  content: String!
 }
 
 enum VideoListOrder {
@@ -162,6 +171,13 @@ input UpdateRealm {
   parent: ID
   name: String
   pathSegment: String
+}
+
+input NewSeriesBlock {
+  title: String
+  series: ID!
+  layout: VideoListLayout!
+  order: VideoListOrder!
 }
 
 input UpdateBlock {

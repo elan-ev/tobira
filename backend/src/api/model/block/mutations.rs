@@ -8,6 +8,97 @@ use super::{BlockValue, VideoListLayout, VideoListOrder, super::realm::Realm};
 
 
 impl BlockValue {
+    pub(crate) async fn add_text(
+        realm: Id,
+        index: i32,
+        block: NewTextBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        context.require_moderator()?;
+
+        let index = index as i16;
+
+        let realm = realm.key_for(Id::REALM_KIND)
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
+
+        Self::make_room_for_block(realm, index, context).await?;
+
+        context.db
+            .execute(
+                "insert into blocks (realm_id, index, type, title, text_content)
+                    values ($1, $2, 'text', $3, $4)",
+                &[&realm, &index, &block.title, &block.content],
+            )
+            .await?;
+
+        Realm::load_by_key(realm, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+    }
+
+    pub(crate) async fn add_series(
+        realm: Id,
+        index: i32,
+        block: NewSeriesBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        context.require_moderator()?;
+
+        let index = index as i16;
+
+        let realm = realm.key_for(Id::REALM_KIND)
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
+
+        Self::make_room_for_block(realm, index, context).await?;
+
+        context.db
+            .execute(
+                "insert into blocks
+                    (realm_id, index, type, title, series_id, videolist_order, videolist_layout)
+                    values ($1, $2, 'series', $3, $4, $5, $6)",
+                &[
+                    &realm,
+                    &index,
+                    &block.title,
+                    &block.series.key_for(Id::SERIES_KIND)
+                        .ok_or_else(|| invalid_input!("`block.series` does not refer to a series"))?,
+                    &block.order,
+                    &block.layout,
+                ],
+            )
+            .await?;
+
+        Realm::load_by_key(realm, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+    }
+
+    async fn make_room_for_block(realm: Key, index: i16, context: &Context) -> ApiResult<()> {
+        let blocks: i64 = context.db
+            .query_one(
+                "select count(*) from blocks where realm_id = $1",
+                &[&realm],
+            )
+            .await?
+            .get(0);
+
+        if index < 0 || index as i64 > blocks {
+            return Err(invalid_input!("`index` out of range"));
+        }
+
+        context.db
+            .execute(
+                "update blocks
+                    set index = index + 1
+                    where realm_id = $1
+                    and index >= $2",
+                &[&realm, &index],
+            )
+            .await?;
+
+        Ok(())
+    }
+
     pub(crate) async fn swap_by_id(id_1: Id, id_2: Id, context: &Context) -> ApiResult<Realm> {
         let realm_stream = context.db(context.require_moderator()?)
             .query_raw(
@@ -218,6 +309,21 @@ impl BlockValue {
 
         Ok(RemovedBlock { id, realm })
     }
+}
+
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct NewTextBlock {
+    title: Option<String>,
+    content: String,
+}
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct NewSeriesBlock {
+    title: Option<String>,
+    series: Id,
+    layout: VideoListLayout,
+    order: VideoListOrder,
 }
 
 
