@@ -270,6 +270,7 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
     return (
         <ul ref={ref} css={{
             position: "absolute",
+            zIndex: 1000,
             top: "100%",
             right: 8,
             marginTop: 8,
