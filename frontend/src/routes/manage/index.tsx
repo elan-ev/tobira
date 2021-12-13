@@ -119,6 +119,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
             key={path}
             to={path}
             iconPos="left"
+            active={path === active}
             css={path === active ? activeStyle : {}}
         >
             {icon}
