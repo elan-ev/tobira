@@ -1,18 +1,16 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
 import { keyOfId } from "../../util";
 import { BlockContainer, Title } from ".";
 import { Link } from "../../router";
-import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
-import { FiFilm, FiPlay, FiVolume2 } from "react-icons/fi";
-
 import { SeriesBlockData$key } from "../../query-types/SeriesBlockData.graphql";
 import {
     SeriesBlockSeriesData,
     SeriesBlockSeriesData$key,
 } from "../../query-types/SeriesBlockSeriesData.graphql";
-import { keyframes } from "@emotion/react";
+import { Thumbnail } from "../Video";
 
 
 type SharedProps = {
@@ -98,71 +96,16 @@ type GridTypeProps = {
 };
 
 const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
-    const [THUMB_WIDTH, THUMB_HEIGHT] = [16, 9].map(x => x * 15);
-
-    const sharedThumbnailStyle = {
-        width: "100%",
-        height: "auto",
-        borderRadius: 4,
-        // TODO: Not supported by Safari 14.1. Maybe used padding trick instead!
-        aspectRatio: "16 / 9",
-    };
-    let thumbnail;
-    if (event.thumbnail != null) {
-        // We have a proper thumbnail.
-        thumbnail = <img
-            src={event.thumbnail}
-            width={THUMB_WIDTH}
-            height={THUMB_HEIGHT}
-            css={{
-                display: "block",
-                ...sharedThumbnailStyle,
-            }}
-        />;
-    } else {
-        // We have no thumbnail. If the resolution is `null` as well, we are
-        // dealing with an audio-only event and show an appropriate icon.
-        // Otherwise we use a generic icon.
-        const icon = event.tracks.every(t => t.resolution == null) ? <FiVolume2 /> : <FiFilm />;
-
-        thumbnail = (
-            <div css={{
-                display: "flex",
-                backgroundColor: "var(--grey92)",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 40,
-                ...sharedThumbnailStyle,
-            }}>{icon}</div>
-        );
-    }
-
-
+    const width = 16 * 15;
 
     const inner = <>
-        <div css={{
-            position: "relative",
-            boxShadow: "0 0 4px var(--grey92)",
-            transition: "0.2s box-shadow",
-        }}>
-            {thumbnail}
-            {active && <ActiveIndicator />}
-            {event.duration != null && (
-                <div css={{
-                    position: "absolute",
-                    right: 6,
-                    bottom: 6,
-                    backgroundColor: "hsla(0, 0%, 0%, 0.75)",
-                    border: "1px solid black",
-                    borderRadius: 4,
-                    padding: "0 4px",
-                    color: "white",
-                    fontSize: 14,
-                }}>
-                    {formatLength(event.duration)}
-                </div>
-            )}
-        </div>
+        <Thumbnail
+            url={event.thumbnail}
+            audioOnly={event.tracks.every(t => t.resolution == null)}
+            width={width}
+            duration={event.duration}
+            active={active}
+        />
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
@@ -206,7 +149,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
         display: "block",
         margin: 8,
         marginBottom: 32,
-        width: THUMB_WIDTH,
+        width: width,
         borderRadius: 4,
         "& a": { color: "black", textDecoration: "none" },
         [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
@@ -230,21 +173,6 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
             to={`${realmPath}${realmPath.endsWith("/") ? "" : "/"}v/${keyOfId(event.id)}`}
             css={containerStyle}
         >{inner}</Link>;
-};
-
-const formatLength = (totalMs: number) => {
-    const totalSeconds = Math.round(totalMs / 1000);
-    const seconds = totalSeconds % 60;
-    const minutes = Math.floor(totalSeconds / 60) % 60;
-    const hours = Math.floor(totalSeconds / (60 * 60));
-
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-
-    if (hours > 0) {
-        return `${hours}:${pad(minutes)}:${pad(seconds)}`;
-    } else {
-        return `${minutes}:${pad(seconds)}`;
-    }
 };
 
 type CreationDateProps = {
@@ -279,30 +207,3 @@ const CreationDate: React.FC<CreationDateProps> = ({ date }) => {
     return <span title={preciseDate}>{prettyDate}</span>;
 };
 
-const ActiveIndicator = () => {
-    const animation = keyframes({
-        "0%": { color: "black" },
-        "50%": { color: "var(--accent-color-darker)" },
-        "100%": { color: "black" },
-    });
-
-    return (
-        <div css={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(255, 255, 255, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 64,
-            "& > svg": {
-                animation: `${animation} 3s infinite`,
-            },
-        }}>
-            <FiPlay />
-        </div>
-    );
-};
