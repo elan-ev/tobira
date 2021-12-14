@@ -107,12 +107,22 @@ impl Event {
             Self::COL_NAMES,
         );
         context.db
-            .query_raw(&query, dbargs![&series_key, &context.user.roles()])
-            .await?
-            .map_ok(Self::from_row)
-            .try_collect::<Vec<_>>()
+            .query_mapped(&query, dbargs![&series_key, &context.user.roles()], Self::from_row)
             .await?
             .pipe(Ok)
+    }
+
+    pub(crate) async fn load_writable_for_user(context: &Context) -> ApiResult<Vec<Self>> {
+        // TODO: this currently does a sequential scan. With 7000 events, it
+        // only takes 10ms or so, but yeah, O(n) aint great.
+        let query = format!(
+            "select {} from events where write_roles && $1 and read_roles && $1",
+            Self::COL_NAMES,
+        );
+        context.db
+            .query_mapped(&query, dbargs![&context.user.roles()], Self::from_row)
+            .await
+            .map_err(Into::into)
     }
 
     const COL_NAMES: &'static str

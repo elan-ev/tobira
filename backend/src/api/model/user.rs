@@ -4,10 +4,12 @@ use juniper::{
 };
 
 use crate::{
-    api::Context,
+    api::{Context, err::ApiResult},
     auth::{User, UserData},
     prelude::*,
 };
+
+use super::event::Event;
 
 
 #[juniper::graphql_object(name = "User", context = Context)]
@@ -25,6 +27,11 @@ impl UserData {
     /// `True` if the user has the permission to upload videos.
     fn can_upload(&self, context: &Context) -> bool {
         self.can_upload(&context.config.auth)
+    }
+
+    /// Returns all events that the user has write access to.
+    async fn writable_events(&self, context: &Context) -> ApiResult<Vec<Event>> {
+        Event::load_writable_for_user(context).await
     }
 }
 

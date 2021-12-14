@@ -186,6 +186,8 @@ type User {
   displayName: String!
   "`True` if the user has the permission to upload videos."
   canUpload: Boolean!
+  "Returns all events that the user has write access to."
+  writableEvents: [Event!]!
 }
 
 input UpdateTextBlock {

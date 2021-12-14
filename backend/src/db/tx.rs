@@ -71,6 +71,28 @@ impl Transaction {
         self.inner.query_raw(&statement, params).await
     }
 
+    /// Convenience method to query many rows and convert each row to a specific
+    /// type with `from_row`.
+    pub async fn query_mapped<P, I, F, T>(
+        &self,
+        query: &str,
+        params: I,
+        from_row: F,
+    ) -> Result<Vec<T>, Error>
+    where
+        P: BorrowToSql,
+        I: IntoIterator<Item = P> + std::fmt::Debug,
+        I::IntoIter: ExactSizeIterator,
+        F: FnMut(Row) -> T,
+    {
+        self.query_raw(query, params)
+            .await?
+            .map_ok(from_row)
+            .try_collect::<Vec<_>>()
+            .await?
+            .pipe(Ok)
+    }
+
     pub async fn execute(
         &self,
         query: &str,
