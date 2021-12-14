@@ -99,13 +99,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
     const width = 16 * 15;
 
     const inner = <>
-        <Thumbnail
-            url={event.thumbnail}
-            audioOnly={event.tracks.every(t => t.resolution == null)}
-            width={width}
-            duration={event.duration}
-            active={active}
-        />
+        <Thumbnail event={event} width={width} active={active} />
         <div css={{
             margin: "0px 4px",
             marginTop: 12,

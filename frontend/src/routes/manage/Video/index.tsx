@@ -138,12 +138,7 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
     return (
         <tr>
             <td>
-                <Thumbnail
-                    url={event.thumbnail}
-                    audioOnly={event.tracks.every(t => t.resolution == null)}
-                    width={THUMBNAIL_WIDTH}
-                    duration={event.duration}
-                />
+                <Thumbnail event={event} width={THUMBNAIL_WIDTH} />
             </td>
             <td>
                 <div css={{

@@ -3,32 +3,33 @@ import { FiFilm, FiPlay, FiVolume2 } from "react-icons/fi";
 
 
 type ThumbnailProps = {
-    /** URL to thumbnail image */
-    url: string | null;
-    /** Only used to chose an appropriate fallback icon in case there is no thumbnail image */
-    audioOnly: boolean;
+    /** The event of which a thumbnail should be shown */
+    event: {
+        thumbnail: string | null;
+        duration: number | null;
+        tracks: readonly { resolution: readonly number[] | null }[];
+    };
+
     /** Width of the thumbnail. Height is always automatic to maintain 16:9 aspect ratio */
     width: number;
-    /** Duration of the event which is pretty printed in front of the thumbnail */
-    duration: number | null;
+
     /** If `true`, an indicator overlay is shown */
     active?: boolean;
 };
 
 export const Thumbnail: React.FC<ThumbnailProps> = ({
-    url,
+    event,
     width,
-    audioOnly,
-    duration,
     active = false,
 }) => {
     const height = width * (9 / 16);
+    const audioOnly = event.tracks.every(t => t.resolution == null);
 
     let inner;
-    if (url != null) {
+    if (event.thumbnail != null) {
         // We have a proper thumbnail.
         inner = <img
-            src={url}
+            src={event.thumbnail}
             width={width}
             height={height}
             css={{ display: "block", width: "100%", height: "auto" }}
@@ -65,7 +66,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         }}>
             {inner}
             {active && <ActiveIndicator />}
-            {duration != null && (
+            {event.duration != null && (
                 <div css={{
                     position: "absolute",
                     right: 6,
@@ -77,7 +78,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
                     color: "white",
                     fontSize: 14,
                 }}>
-                    {formatDuration(duration)}
+                    {formatDuration(event.duration)}
                 </div>
             )}
         </div>
