@@ -12,6 +12,7 @@ use crate::{
 pub(crate) struct Event {
     key: Key,
     series: Option<Key>,
+    opencast_id: String,
 
     title: String,
     description: Option<String>,
@@ -38,6 +39,9 @@ struct Track {
 impl Event {
     fn id(&self) -> Id {
         Id::event(self.key)
+    }
+    fn opencast_id(&self) -> &str {
+        &self.opencast_id
     }
     fn title(&self) -> &str {
         &self.title
@@ -125,21 +129,22 @@ impl Event {
             .map_err(Into::into)
     }
 
-    const COL_NAMES: &'static str
-        = "id, series, title, description, duration, created, updated, creator, thumbnail, tracks";
+    const COL_NAMES: &'static str = "id, series, opencast_id, title, description, \
+        duration, created, updated, creator, thumbnail, tracks";
 
     fn from_row(row: Row) -> Self {
         Self {
             key: row.get(0),
             series: row.get(1),
-            title: row.get(2),
-            description: row.get(3),
-            duration: row.get(4),
-            created: row.get(5),
-            updated: row.get(6),
-            creator: row.get(7),
-            thumbnail: row.get(8),
-            tracks: row.get::<_, Vec<EventTrack>>(9).into_iter().map(Track::from).collect(),
+            opencast_id: row.get(2),
+            title: row.get(3),
+            description: row.get(4),
+            duration: row.get(5),
+            created: row.get(6),
+            updated: row.get(7),
+            creator: row.get(8),
+            thumbnail: row.get(9),
+            tracks: row.get::<_, Vec<EventTrack>>(10).into_iter().map(Track::from).collect(),
         }
     }
 }
