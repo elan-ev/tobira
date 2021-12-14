@@ -7,7 +7,7 @@ import { ManageRealmContentRoute } from "./routes/manage/Realm/Content";
 import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
-import { ManageVideosRoute } from "./routes/manage/video";
+import { ManageVideosRoute } from "./routes/manage/Video";
 import { UploadRoute } from "./routes/Upload";
 
 import { makeRouter } from "./rauta";

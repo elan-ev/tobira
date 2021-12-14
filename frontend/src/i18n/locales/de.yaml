@@ -153,6 +153,10 @@ manage:
 
   my-videos:
     title: Meine Videos
+    columns:
+      title: Titel
+      created: Erstellt
+    no-description: Keine Beschreibung
 
   are-you-sure: Sind Sie sich sicher?
 

@@ -147,6 +147,10 @@ manage:
 
   my-videos:
     title: My videos
+    columns:
+      title: Title
+      created: Created
+    no-description: No description
 
   are-you-sure: Are you sure?
 
