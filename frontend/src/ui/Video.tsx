@@ -24,14 +24,6 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
 }) => {
     const height = width * (9 / 16);
 
-    const sharedThumbnailStyle = {
-        width,
-        height: "auto",
-        borderRadius: 4,
-        // TODO: Not supported by Safari 14.1. Maybe used padding trick instead!
-        aspectRatio: "16 / 9",
-    };
-
     let inner;
     if (url != null) {
         // We have a proper thumbnail.
@@ -39,10 +31,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             src={url}
             width={width}
             height={height}
-            css={{
-                display: "block",
-                ...sharedThumbnailStyle,
-            }}
+            css={{ display: "block", width: "100%", height: "auto" }}
         />;
     } else {
         // We have no thumbnail. If the resolution is `null` as well, we are
@@ -53,11 +42,11 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         inner = (
             <div css={{
                 display: "flex",
+                height: "100%",
                 backgroundColor: "var(--grey92)",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 40,
-                ...sharedThumbnailStyle,
             }}>{icon}</div>
         );
     }
@@ -67,6 +56,12 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             position: "relative",
             boxShadow: "0 0 4px var(--grey92)",
             transition: "0.2s box-shadow",
+            overflow: "hidden",
+            width,
+            height: "fit-content",
+            borderRadius: 4,
+            // TODO: Not supported by Safari 14.1. Maybe used padding trick instead!
+            aspectRatio: "16 / 9",
         }}>
             {inner}
             {active && <ActiveIndicator />}
