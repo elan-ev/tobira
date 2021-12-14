@@ -8,6 +8,7 @@ import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
 import { VideoRoute } from "./routes/Video";
 import { ManageVideosRoute } from "./routes/manage/Video";
+import { ManageSingleVideoRoute } from "./routes/manage/Video/Single";
 import { UploadRoute } from "./routes/Upload";
 
 import { makeRouter } from "./rauta";
@@ -72,6 +73,7 @@ const {
         VideoRoute,
         ManageRoute,
         ManageVideosRoute,
+        ManageSingleVideoRoute,
         ManageRealmRoute,
         UploadRoute,
         AddChildRoute,

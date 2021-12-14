@@ -97,14 +97,14 @@ const Manage: React.FC = () => {
 };
 
 type ManageNavProps = {
-    active: "/~manage" | "/~manage/videos";
+    active?: "/~manage" | "/~manage/videos";
 };
 
 export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     const { t } = useTranslation();
 
     /* eslint-disable react/jsx-key */
-    const entries: [ManageNavProps["active"], string, ReactElement][] = [
+    const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
         ["/~manage", t("manage.nav.dashboard"), <HiTemplate />],
         ["/~manage/videos", t("manage.nav.my-videos"), <FiFilm />],
     ];

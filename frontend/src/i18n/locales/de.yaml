@@ -157,6 +157,10 @@ manage:
       title: Titel
       created: Erstellt
     no-description: Keine Beschreibung
+    video-details: Videodetails
+    technical-details: Technische Details
+    opencast-id: Opencast ID
+    available-resolutions: Verfügbare Auflösungen
 
   are-you-sure: Sind Sie sich sicher?
 

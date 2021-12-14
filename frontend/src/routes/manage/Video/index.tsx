@@ -9,8 +9,10 @@ import {
 } from "../../../query-types/VideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
+import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Thumbnail } from "../../../ui/Video";
+import { keyOfId } from "../../../util";
 import { QueryLoader } from "../../../util/QueryLoader";
 
 
@@ -133,19 +135,22 @@ const EventTable: React.FC<{ events: Events }> = ({ events }) => {
 
 const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
     const created = new Date(event.created);
+    const link = `${PATH}/${keyOfId(event.id)}`;
     const { i18n } = useTranslation();
 
     return (
         <tr>
             <td>
-                <Thumbnail event={event} width={THUMBNAIL_WIDTH} />
+                <Link to={link}>
+                    <Thumbnail event={event} width={THUMBNAIL_WIDTH} />
+                </Link>
             </td>
             <td>
                 <div css={{
                     whiteSpace: "nowrap",
                     textOverflow: "ellipsis",
                     overflow: "hidden",
-                }}>{event.title}</div>
+                }}><Link to={link}>{event.title}</Link></div>
                 <Description text={event.description} />
             </td>
             <td css={{ fontSize: 14 }}>
