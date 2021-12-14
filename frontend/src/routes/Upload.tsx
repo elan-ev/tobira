@@ -24,6 +24,7 @@ import { Input, TextArea } from "../ui/Input";
 import { User, useUser } from "../User";
 import { useRefState } from "../util";
 import { Card } from "../ui/Card";
+import { InputContainer, TitleLabel } from "../ui/metadata";
 
 
 export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
@@ -572,14 +573,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
         <Form noValidate onSubmit={onSubmit} css={{ margin: "32px 2px" }}>
             {/* Title */}
             <InputContainer>
-                <label htmlFor="title-field">
-                    {t("upload.metadata.title")}
-                    <span css={{ fontWeight: "normal" }}>
-                        {" ("}
-                        <em>{t("upload.metadata.required")}</em>
-                        {")"}
-                    </span>
-                </label>
+                <TitleLabel htmlFor="title-field" />
                 <Input
                     id="title-field"
                     required
@@ -603,11 +597,6 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
         </Form>
     );
 };
-
-/** Separates different inputs in the metadata form */
-const InputContainer: React.FC = ({ children }) => (
-    <div css={{ margin: "16px 0 " }}>{children}</div>
-);
 
 
 // ==============================================================================================
