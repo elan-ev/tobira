@@ -155,7 +155,13 @@ type Series {
   id: ID!
   title: String!
   description: String
-  events: [Event!]!
+  events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
+}
+
+"Defines the sort order for events."
+input EventSortOrder {
+  column: EventSortColumn!
+  direction: SortDirection!
 }
 
 "A `Block`: a UI element that belongs to a realm."
@@ -169,6 +175,13 @@ input UpdateRealm {
   parent: ID
   name: String
   pathSegment: String
+}
+
+enum EventSortColumn {
+  TITLE
+  DURATION
+  CREATED
+  UPDATED
 }
 
 input NewSeriesBlock {
@@ -190,12 +203,7 @@ type User {
   "`True` if the user has the permission to upload videos."
   canUpload: Boolean!
   "Returns all events that the user has write access to."
-  writableEvents: [Event!]!
-}
-
-input UpdateTextBlock {
-  title: String
-  content: String
+  writableEvents(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
 }
 
 type Track {
@@ -209,6 +217,16 @@ input NewRealm {
   parent: ID!
   name: String!
   pathSegment: String!
+}
+
+enum SortDirection {
+  ASCENDING
+  DESCENDING
+}
+
+input UpdateTextBlock {
+  title: String
+  content: String
 }
 
 type Realm {

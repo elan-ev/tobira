@@ -1,3 +1,5 @@
+use std::fmt;
+
 use chrono::{DateTime, Utc};
 use tokio_postgres::Row;
 use juniper::{GraphQLObject, graphql_object};
@@ -6,6 +8,7 @@ use crate::{
     api::{Context, err::{self, ApiResult}, Id, model::series::Series},
     db::types::{EventTrack, Key},
     prelude::*,
+    util::lazy_format,
 };
 
 
@@ -111,10 +114,15 @@ impl Event {
             .transpose()
     }
 
-    pub(crate) async fn load_for_series(series_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
+    pub(crate) async fn load_for_series(
+        series_key: Key,
+        order: EventSortOrder,
+        context: &Context,
+    ) -> ApiResult<Vec<Self>> {
         let query = format!(
-            "select {} from events where series = $2 and read_roles && $1",
+            "select {} from events where series = $2 and read_roles && $1 {}",
             Self::COL_NAMES,
+            order.to_sql(),
         );
         context.db
             .query_mapped(&query, dbargs![&context.user.roles(), &series_key], Self::from_row)
@@ -122,12 +130,16 @@ impl Event {
             .pipe(Ok)
     }
 
-    pub(crate) async fn load_writable_for_user(context: &Context) -> ApiResult<Vec<Self>> {
+    pub(crate) async fn load_writable_for_user(
+        context: &Context,
+        order: EventSortOrder,
+    ) -> ApiResult<Vec<Self>> {
         // TODO: this currently does a sequential scan. With 7000 events, it
         // only takes 10ms or so, but yeah, O(n) aint great.
         let query = format!(
-            "select {} from events where write_roles && $1 and read_roles && $1",
+            "select {} from events where write_roles && $1 and read_roles && $1 {}",
             Self::COL_NAMES,
+            order.to_sql(),
         );
         context.db
             .query_mapped(&query, dbargs![&context.user.roles()], Self::from_row)
@@ -164,5 +176,53 @@ impl From<EventTrack> for Track {
             mimetype: src.mimetype,
             resolution: src.resolution.map(Into::into),
         }
+    }
+}
+
+/// Defines the sort order for events.
+#[derive(Debug, Clone, Copy, juniper::GraphQLInputObject)]
+pub(crate) struct EventSortOrder {
+    column: EventSortColumn,
+    direction: SortDirection,
+}
+
+#[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
+enum EventSortColumn {
+    Title,
+    Duration,
+    Created,
+    Updated,
+}
+
+#[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
+enum SortDirection {
+    Ascending,
+    Descending,
+}
+
+impl Default for EventSortOrder {
+    fn default() -> Self {
+        Self {
+            column: EventSortColumn::Created,
+            direction: SortDirection::Descending,
+        }
+    }
+}
+
+impl EventSortOrder {
+    /// Returns an SQL query fragment like `order by foo asc`.
+    fn to_sql(&self) -> impl fmt::Display {
+        let col = match self.column {
+            EventSortColumn::Title => "title",
+            EventSortColumn::Duration => "duration",
+            EventSortColumn::Created => "created",
+            EventSortColumn::Updated => "updated",
+        };
+        let direction = match self.direction {
+            SortDirection::Ascending => "asc",
+            SortDirection::Descending => "desc",
+        };
+
+        lazy_format!("order by {} {}", col, direction)
     }
 }

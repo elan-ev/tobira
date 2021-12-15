@@ -3,7 +3,7 @@ use juniper::graphql_object;
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, err::ApiResult, Id, model::event::Event},
+    api::{Context, err::ApiResult, Id, model::event::{Event, EventSortOrder}},
     db::{types::Key, util::dbargs},
 };
 
@@ -28,8 +28,9 @@ impl Series {
         self.description.as_deref()
     }
 
-    async fn events(&self, context: &Context) -> ApiResult<Vec<Event>> {
-        Event::load_for_series(self.key, context).await
+    #[graphql(arguments(order(default = Default::default())))]
+    async fn events(&self, order: EventSortOrder, context: &Context) -> ApiResult<Vec<Event>> {
+        Event::load_for_series(self.key, order, context).await
     }
 }
 

@@ -9,7 +9,7 @@ use crate::{
     prelude::*,
 };
 
-use super::event::Event;
+use super::event::{Event, EventSortOrder};
 
 
 #[juniper::graphql_object(name = "User", context = Context)]
@@ -30,8 +30,13 @@ impl UserData {
     }
 
     /// Returns all events that the user has write access to.
-    async fn writable_events(&self, context: &Context) -> ApiResult<Vec<Event>> {
-        Event::load_writable_for_user(context).await
+    #[graphql(arguments(order(default = Default::default())))]
+    async fn writable_events(
+        &self,
+        order: EventSortOrder,
+        context: &Context,
+    ) -> ApiResult<Vec<Event>> {
+        Event::load_writable_for_user(context, order).await
     }
 }
 
