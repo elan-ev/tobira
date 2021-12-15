@@ -19,6 +19,7 @@ errors:
   network-error: Server could not be reached due to a network error.
   not-authorized: You are not authorized.
   not-authorized-to-view-page: You are not authorized to view this page.
+  might-need-to-login: You might need to login.
   invalid-input: Invalid input.
   internal-server-error: Internal server error (something is wrong with the server).
   are-you-connected-to-internet: Are you connected to the internet?

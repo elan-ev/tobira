@@ -20,6 +20,7 @@ errors:
   network-error: Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden.
   not-authorized: Sie sind nicht autorisiert.
   not-authorized-to-view-page: Sie sind nicht dazu autorisiert, diese Seite aufzurufen.
+  might-need-to-login: Möglicherweise müssen Sie sich einloggen?
   invalid-input: Ungültige Eingabe.
   internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
