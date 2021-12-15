@@ -23,6 +23,7 @@ pub(crate) struct Event {
 
     thumbnail: Option<String>,
     tracks: Vec<Track>,
+    can_write: bool,
 }
 
 #[derive(GraphQLObject)]
@@ -69,6 +70,11 @@ impl Event {
         &self.creator
     }
 
+    /// Whether the current user has write access to this event.
+    fn can_write(&self) -> bool {
+        self.can_write
+    }
+
     async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
         if let Some(series) = self.series {
             Series::load_by_id(Id::series(series), context).await
@@ -86,11 +92,11 @@ impl Event {
         };
 
         let query = format!(
-            "select {}, $2 && read_roles as can_read from events where id = $1",
+            "select {}, $1 && read_roles as can_read from events where id = $2",
             Self::COL_NAMES,
         );
         context.db
-            .query_opt(&query, &[&key, &context.user.roles()])
+            .query_opt(&query, &[&context.user.roles(), &key])
             .await?
             .map(|row| {
                 if row.get::<_, bool>("can_read") {
@@ -107,11 +113,11 @@ impl Event {
 
     pub(crate) async fn load_for_series(series_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
         let query = format!(
-            "select {} from events where series = $1 and read_roles && $2",
+            "select {} from events where series = $2 and read_roles && $1",
             Self::COL_NAMES,
         );
         context.db
-            .query_mapped(&query, dbargs![&series_key, &context.user.roles()], Self::from_row)
+            .query_mapped(&query, dbargs![&context.user.roles(), &series_key], Self::from_row)
             .await?
             .pipe(Ok)
     }
@@ -130,7 +136,7 @@ impl Event {
     }
 
     const COL_NAMES: &'static str = "id, series, opencast_id, title, description, \
-        duration, created, updated, creator, thumbnail, tracks";
+        duration, created, updated, creator, thumbnail, tracks, write_roles && $1 as can_write";
 
     fn from_row(row: Row) -> Self {
         Self {
@@ -145,6 +151,7 @@ impl Event {
             creator: row.get(8),
             thumbnail: row.get(9),
             tracks: row.get::<_, Vec<EventTrack>>(10).into_iter().map(Track::from).collect(),
+            can_write: row.get(11),
         }
     }
 }

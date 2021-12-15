@@ -15,6 +15,8 @@ type Event {
   created: DateTimeUtc!
   updated: DateTimeUtc!
   creator: String
+  "Whether the current user has write access to this event."
+  canWrite: Boolean!
   series: Series
 }
 
