@@ -1,8 +1,9 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { FiArrowLeft } from "react-icons/fi";
 import { graphql, PreloadedQuery } from "react-relay";
+import { ManageVideosRoute } from ".";
 
-import { ManageNav } from "..";
 import { Root } from "../../../layout/Root";
 import {
     SingleVideoManageQuery,
@@ -10,6 +11,7 @@ import {
 } from "../../../query-types/SingleVideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
+import { LinkList, LinkWithIcon } from "../../../ui";
 import { Form } from "../../../ui/Form";
 import { Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
@@ -27,12 +29,25 @@ export const ManageSingleVideoRoute = makeRoute<PreloadedQuery<SingleVideoManage
         result.event === null
             ? <NotFound kind="video" />
             : (
-                <Root nav={<ManageNav key={1} />} userQuery={result}>
+                <Root nav={<BackLink />} userQuery={result}>
                     <ManageSingleVideo event={result.event}/>
                 </Root>
             )
     )} />,
 });
+
+const BackLink: React.FC = () => {
+    const { t } = useTranslation();
+
+    const items = [
+        <LinkWithIcon key={ManageVideosRoute.path} to={ManageVideosRoute.path} iconPos="left">
+            <FiArrowLeft />
+            {t("manage.nav.my-videos")}
+        </LinkWithIcon>,
+    ];
+
+    return <LinkList items={items} />;
+};
 
 const query = graphql`
     query SingleVideoManageQuery($id: ID!) {
