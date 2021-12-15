@@ -12,6 +12,7 @@ import {
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { LinkList, LinkWithIcon } from "../../../ui";
+import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
 import { Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
@@ -25,12 +26,14 @@ export const ManageSingleVideoRoute = makeRoute<PreloadedQuery<SingleVideoManage
     queryParams: [],
     prepare: ({ pathParams: [videoId] }) => loadQuery(query, { id: `ev${videoId}` }),
     render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => (
-        // TODO: authorized check
         result.event === null
             ? <NotFound kind="video" />
             : (
                 <Root nav={<BackLink />} userQuery={result}>
-                    <ManageSingleVideo event={result.event}/>
+                    {result.event.canWrite
+                        ? <ManageSingleVideo event={result.event}/>
+                        : <NotAuthorized />
+                    }
                 </Root>
             )
     )} />,
@@ -60,6 +63,7 @@ const query = graphql`
             created
             updated
             duration
+            canWrite
             series { title, ...SeriesBlockSeriesData }
             tracks { flavor resolution }
         }
