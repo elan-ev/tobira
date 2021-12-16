@@ -1,39 +1,54 @@
+import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, PreloadedQuery } from "react-relay";
+import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { graphql, PreloadedQuery, useQueryLoader } from "react-relay";
 
 import { ManageNav } from "..";
 import { Root } from "../../../layout/Root";
 import {
+    EventSortColumn,
+    EventSortOrder,
+    SortDirection,
     VideoManageQuery,
     VideoManageQueryResponse,
+    VideoManageQueryVariables,
 } from "../../../query-types/VideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
+import { Spinner } from "../../../ui/Spinner";
 import { Thumbnail } from "../../../ui/Video";
-import { keyOfId } from "../../../util";
 import { QueryLoader } from "../../../util/QueryLoader";
+import { keyOfId, match } from "../../../util";
+import { unreachable } from "../../../util/err";
 
 
 const PATH = "/~manage/videos";
 
-export const ManageVideosRoute = makeRoute<PreloadedQuery<VideoManageQuery>>({
+type Prepared = {
+    queryRef: PreloadedQuery<VideoManageQuery>;
+    sortOrder: EventSortOrder;
+};
+
+export const ManageVideosRoute = makeRoute<Prepared>({
     path: PATH,
     queryParams: [],
-    prepare: () => loadQuery(query, {}),
-    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => (
-        <Root nav={<ManageNav key={1} active={PATH} />} userQuery={result}>
-            <ManageVideos events={result.currentUser?.writableEvents}/>
-        </Root>
-    )} />,
+    prepare: ({ url }) => {
+        const sortOrder = queryParamsToOrder(url.searchParams);
+        return {
+            queryRef: loadQuery(query, { order: sortOrder }),
+            sortOrder,
+        };
+    },
+    render: prepared => <Page {...prepared} />,
 });
 
 const query = graphql`
-    query VideoManageQuery {
+    query VideoManageQuery($order: EventSortOrder) {
         ...UserData
         currentUser {
-            writableEvents {
+            writableEvents(order: $order) {
                 id title duration thumbnail created updated description
                 tracks { resolution }
             }
@@ -41,13 +56,35 @@ const query = graphql`
     }
 `;
 
+/** Main component, mainly loading relay data */
+const Page: React.FC<Prepared> = ({ queryRef: initialQueryRef, sortOrder }) => {
+    const [queryRef, loadQuery] = useQueryLoader(query, initialQueryRef);
+    if (!queryRef) {
+        return unreachable();
+    }
+
+    return <QueryLoader {...{ query, queryRef }} render={result => (
+        <Root nav={<ManageNav key={1} active={PATH} />} userQuery={result}>
+            <ManageVideos
+                sortOrder={sortOrder}
+                reloadQuery={vars => loadQuery(vars, { fetchPolicy: "network-only" })}
+                events={result.currentUser?.writableEvents}
+            />
+        </Root>
+    )} />;
+};
+
+
 type Events = NonNullable<VideoManageQueryResponse["currentUser"]>["writableEvents"];
 
 type Props = {
     events?: Events;
+    sortOrder: EventSortOrder;
+    reloadQuery: (vars: VideoManageQueryVariables) => void;
 };
 
-const ManageVideos: React.FC<Props> = ({ events }) => {
+/** Main part of this page */
+const ManageVideos: React.FC<Props> = ({ sortOrder, events, reloadQuery }) => {
     const { t } = useTranslation();
 
     if (!events) {
@@ -67,7 +104,7 @@ const ManageVideos: React.FC<Props> = ({ events }) => {
                 minHeight: 0,
                 flex: "1 0 0",
             }}>
-                <EventTable events={events} />
+                <EventTable events={events} urlSortOrder={sortOrder} reloadQuery={reloadQuery} />
             </div>
         </div>
     );
@@ -75,8 +112,32 @@ const ManageVideos: React.FC<Props> = ({ events }) => {
 
 const THUMBNAIL_WIDTH = 16 * 8;
 
-const EventTable: React.FC<{ events: Events }> = ({ events }) => {
+type EventTableProps = {
+    events: Events;
+    urlSortOrder: EventSortOrder;
+    reloadQuery: (vars: VideoManageQueryVariables) => void;
+};
+
+const EventTable: React.FC<EventTableProps> = ({ events, urlSortOrder, reloadQuery }) => {
     const { t } = useTranslation();
+    const [sortOrder, setSortOrder] = useState(urlSortOrder);
+    const [isPending, startTransition] = useTransition();
+
+
+    const onColHeaderClick = (sortKey: EventSortColumn) => {
+        const newOrder: EventSortOrder = {
+            column: sortKey,
+            direction: sortOrder.column === sortKey
+                ? (sortOrder.direction === "ASCENDING" ? "DESCENDING" : "ASCENDING")
+                : "ASCENDING",
+        };
+
+        setSortQueryParams(newOrder);
+        startTransition(() => {
+            reloadQuery({ order: newOrder });
+            setSortOrder(newOrder);
+        });
+    };
 
     return (
         <table css={{
@@ -85,12 +146,17 @@ const EventTable: React.FC<{ events: Events }> = ({ events }) => {
             borderSpacing: 0,
             tableLayout: "fixed",
 
-            "& > thead > tr": {
+            ...isPending && {
+                pointerEvents: "none",
+                "& > thead > tr, & > tbody": { opacity: 0.3 },
+            },
+
+            "& > thead": {
                 position: "sticky",
                 top: 0,
                 zIndex: 10,
                 backgroundColor: "white",
-                "& > th": {
+                "&  > tr > th": {
                     borderBottom: "1px solid var(--grey80)",
                     textAlign: "left",
                     padding: "8px 12px",
@@ -113,17 +179,39 @@ const EventTable: React.FC<{ events: Events }> = ({ events }) => {
                 },
             },
         }}>
+
             <colgroup>
                 <col span={1} css={{ width: THUMBNAIL_WIDTH + 2 * 6 }} />
                 <col span={1} />
-                <col span={1} css={{ width: 110 }} />
+                <col span={1} css={{ width: 135 }} />
             </colgroup>
 
-            <thead>
+            <thead css={{ position: "relative" }}>
+                {isPending && (
+                    <div css={{
+                        position: "absolute",
+                        zIndex: 100,
+                        fontSize: 48,
+                        left: 0,
+                        right: 0,
+                        top: 64,
+                        textAlign: "center",
+                    }}><Spinner/></div>
+                )}
                 <tr>
                     <th></th>
-                    <th>{t("manage.my-videos.columns.title")}</th>
-                    <th>{t("manage.my-videos.columns.created")}</th>
+                    <ColumnHeader
+                        label={t("manage.my-videos.columns.title")}
+                        sortKey="TITLE"
+                        onClick={onColHeaderClick}
+                        {...{ sortOrder }}
+                    />
+                    <ColumnHeader
+                        label={t("manage.my-videos.columns.created")}
+                        sortKey="CREATED"
+                        onClick={onColHeaderClick}
+                        {...{ sortOrder }}
+                    />
                 </tr>
             </thead>
             <tbody>
@@ -132,6 +220,40 @@ const EventTable: React.FC<{ events: Events }> = ({ events }) => {
         </table>
     );
 };
+
+type ColumnHeaderProps = {
+    label: string;
+    sortKey: EventSortColumn;
+    sortOrder: EventSortOrder;
+    onClick: (sortKey: EventSortColumn) => void;
+};
+
+const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, sortOrder, onClick }) => (
+    <th>
+        <div
+            onClick={() => onClick(sortKey)}
+            css={{
+                display: "inline-flex",
+                alignItems: "center",
+                cursor: "pointer",
+                transition: "color 70ms",
+                "& > svg": {
+                    marginLeft: 6,
+                    fontSize: 22,
+                },
+                "&:hover": {
+                    color: "var(--accent-color)",
+                },
+            }}
+        >
+            {label}
+            {sortOrder.column === sortKey && match(sortOrder.direction, {
+                "ASCENDING": () => <FiChevronUp />,
+                "DESCENDING": () => <FiChevronDown />,
+            }, () => null)}
+        </div>
+    </th>
+);
 
 const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
     const created = new Date(event.created);
@@ -189,4 +311,34 @@ const Description: React.FC<{ text: string | null }> = ({ text }) => {
             overflow: "hidden",
         }}>{text}</div>;
     }
+};
+
+const queryParamsToOrder = (queryParams: URLSearchParams): EventSortOrder => {
+    const sortBy = queryParams.get("sortBy");
+    const column = sortBy !== null && match<string, EventSortColumn>(sortBy, {
+        "title": () => "TITLE",
+        "duration": () => "DURATION",
+        "created": () => "CREATED",
+        "updated": () => "UPDATED",
+    });
+
+    const sortOrder = queryParams.get("sortOrder");
+    const direction = sortOrder !== null && match<string, SortDirection>(sortOrder, {
+        "desc": () => "DESCENDING",
+        "asc": () => "ASCENDING",
+    });
+
+    return column === false || direction === false
+        ? { column: "CREATED", direction: "DESCENDING" }
+        : { column, direction };
+};
+
+const setSortQueryParams = (order: EventSortOrder) => {
+    const url = new URL(document.location.href);
+    url.searchParams.set("sortBy", order.column.toLowerCase());
+    url.searchParams.set("sortOrder", match(order.direction, {
+        "ASCENDING": () => "asc",
+        "DESCENDING": () => "desc",
+    }, () => ""));
+    history.pushState(null, "", url);
 };
