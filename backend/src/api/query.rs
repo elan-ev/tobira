@@ -6,6 +6,7 @@ use crate::auth::User;
 use super::{
     Context,
     Id,
+    NodeValue,
     err::ApiResult,
     model::{
         realm::Realm,
@@ -62,6 +63,16 @@ impl Query {
         match &context.user {
             User::None => unreachable!("user not logged in, but has upload permissions"),
             User::Some(data) => Ok(context.jwt.new_upload_token(data)),
+        }
+    }
+
+    /// Retrieve a node by globally unique ID. Mostly useful for relay.
+    async fn node(id: Id, context: &Context) -> ApiResult<Option<NodeValue>> {
+        match id.kind() {
+            Id::REALM_KIND => Ok(Realm::load_by_id(id, context).await?.map(NodeValue::from)),
+            Id::SERIES_KIND => Ok(Series::load_by_id(id, context).await?.map(NodeValue::from)),
+            Id::EVENT_KIND => Ok(Event::load_by_id(id, context).await?.map(NodeValue::from)),
+            _ => Ok(None),
         }
     }
 }

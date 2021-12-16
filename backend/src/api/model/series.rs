@@ -3,7 +3,7 @@ use juniper::graphql_object;
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, err::ApiResult, Id, model::event::{Event, EventSortOrder}},
+    api::{Context, err::ApiResult, Id, model::event::{Event, EventSortOrder}, Node, NodeValue},
     db::{types::Key, util::dbargs},
 };
 
@@ -14,10 +14,17 @@ pub(crate) struct Series {
     description: Option<String>,
 }
 
-#[graphql_object(Context = Context)]
-impl Series {
+#[juniper::graphql_interface]
+impl Node for Series {
     fn id(&self) -> Id {
         Id::series(self.key)
+    }
+}
+
+#[graphql_object(Context = Context, impl = NodeValue)]
+impl Series {
+    fn id(&self) -> Id {
+        Node::id(self)
     }
 
     fn title(&self) -> &str {

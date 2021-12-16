@@ -5,7 +5,7 @@ use tokio_postgres::Row;
 use juniper::{GraphQLObject, graphql_object};
 
 use crate::{
-    api::{Context, err::{self, ApiResult}, Id, model::series::Series},
+    api::{Context, err::{self, ApiResult}, Id, model::series::Series, Node, NodeValue},
     db::types::{EventTrack, Key},
     prelude::*,
     util::lazy_format,
@@ -39,10 +39,17 @@ struct Track {
     resolution: Option<Vec<i32>>,
 }
 
-#[graphql_object(Context = Context)]
-impl Event {
+#[juniper::graphql_interface]
+impl Node for Event {
     fn id(&self) -> Id {
         Id::event(self.key)
+    }
+}
+
+#[graphql_object(Context = Context, impl = NodeValue)]
+impl Event {
+    fn id(&self) -> Id {
+        Node::id(self)
     }
     fn opencast_id(&self) -> &str {
         &self.opencast_id

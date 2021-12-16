@@ -111,6 +111,10 @@ impl Id {
             None
         }
     }
+
+    pub(crate) fn kind(&self) -> [u8; 2] {
+        self.kind
+    }
 }
 
 /// The URL-safe base64 alphabet.
