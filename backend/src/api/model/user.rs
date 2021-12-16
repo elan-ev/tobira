@@ -29,9 +29,10 @@ impl UserData {
         self.can_upload(&context.config.auth)
     }
 
-    /// Returns all events that the user has write access to.
+    /// Returns all events that somehow "belong" to the user, i.e. that appear
+    /// on the "my videos" page.
     #[graphql(arguments(order(default = Default::default())))]
-    async fn writable_events(
+    async fn my_videos(
         &self,
         order: EventSortOrder,
         context: &Context,

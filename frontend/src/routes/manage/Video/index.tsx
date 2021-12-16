@@ -48,7 +48,7 @@ const query = graphql`
     query VideoManageQuery($order: EventSortOrder) {
         ...UserData
         currentUser {
-            writableEvents(order: $order) {
+            myVideos(order: $order) {
                 id title duration thumbnail created updated description
                 tracks { resolution }
             }
@@ -68,14 +68,14 @@ const Page: React.FC<Prepared> = ({ queryRef: initialQueryRef, sortOrder }) => {
             <ManageVideos
                 sortOrder={sortOrder}
                 reloadQuery={vars => loadQuery(vars, { fetchPolicy: "network-only" })}
-                events={result.currentUser?.writableEvents}
+                events={result.currentUser?.myVideos}
             />
         </Root>
     )} />;
 };
 
 
-type Events = NonNullable<VideoManageQueryResponse["currentUser"]>["writableEvents"];
+type Events = NonNullable<VideoManageQueryResponse["currentUser"]>["myVideos"];
 
 type Props = {
     events?: Events;

@@ -205,8 +205,11 @@ type User {
   displayName: String!
   "`True` if the user has the permission to upload videos."
   canUpload: Boolean!
-  "Returns all events that the user has write access to."
-  writableEvents(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
+  """
+    Returns all events that somehow "belong" to the user, i.e. that appear
+    on the "my videos" page.
+  """
+  myVideos(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
 }
 
 input UpdateBlock {
