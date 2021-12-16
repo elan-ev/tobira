@@ -48,6 +48,7 @@ export type Route<Prepared, QueryParams extends string[] = []> = RouteBase<Prepa
     prepare: (info: {
         pathParams: string[];
         queryParams: Record<QueryParams[number], string>;
+        url: URL;
     }) => Prepared;
 };
 
@@ -278,7 +279,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 }
             }
 
-            const prepared = route.prepare({ pathParams: params.slice(1), queryParams });
+            const prepared = route.prepare({ pathParams: params.slice(1), queryParams, url });
             return { render: route.render, dispose: route.dispose, prepared };
         };
 
