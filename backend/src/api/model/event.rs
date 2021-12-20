@@ -141,8 +141,6 @@ impl Event {
         context: &Context,
         order: EventSortOrder,
     ) -> ApiResult<Vec<Self>> {
-        // TODO: this currently does a sequential scan. With 7000 events, it
-        // only takes 10ms or so, but yeah, O(n) aint great.
         let query = format!(
             "select {} from events where write_roles && $1 and read_roles && $1 {}",
             Self::COL_NAMES,
