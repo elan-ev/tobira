@@ -1,5 +1,6 @@
-use postgres_types::{FromSql, ToSql};
 use bytes::BytesMut;
+use postgres_types::{FromSql, ToSql};
+use serde::{Deserialize, Serialize};
 
 
 /// Represents the `event_track` type defined in `5-events.sql`.
@@ -16,7 +17,7 @@ pub struct EventTrack {
 /// Our primary database ID type, which we call "key". In the database, it's a
 /// `bigint` (`i64`), but we have a separate Rust type for it for several
 /// reasons. Implements `ToSql` and `FromSql` by casting to/from `i64`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct Key(pub(crate) u64);
 
 impl ToSql for Key {

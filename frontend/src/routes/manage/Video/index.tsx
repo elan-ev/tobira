@@ -48,9 +48,17 @@ const query = graphql`
     query VideoManageQuery($order: EventSortOrder) {
         ...UserData
         currentUser {
-            myVideos(order: $order) {
-                id title duration thumbnail created updated description
-                tracks { resolution }
+            myVideos(order: $order, first: 15) {
+                totalCount
+                pageInfo {
+                    hasNextPage
+                }
+                edges {
+                    node {
+                        id title duration thumbnail created updated description
+                        tracks { resolution }
+                    }
+                }
             }
         }
     }
@@ -68,28 +76,31 @@ const Page: React.FC<Prepared> = ({ queryRef: initialQueryRef, sortOrder }) => {
             <ManageVideos
                 sortOrder={sortOrder}
                 reloadQuery={vars => loadQuery(vars, { fetchPolicy: "network-only" })}
-                events={result.currentUser?.myVideos}
+                connection={result.currentUser?.myVideos}
             />
         </Root>
     )} />;
 };
 
 
-type Events = NonNullable<VideoManageQueryResponse["currentUser"]>["myVideos"];
+type EventConnection = NonNullable<VideoManageQueryResponse["currentUser"]>["myVideos"];
+type Events = EventConnection["edges"][number]["node"][];
 
 type Props = {
-    events?: Events;
+    connection?: EventConnection;
     sortOrder: EventSortOrder;
     reloadQuery: (vars: VideoManageQueryVariables) => void;
 };
 
 /** Main part of this page */
-const ManageVideos: React.FC<Props> = ({ sortOrder, events, reloadQuery }) => {
+const ManageVideos: React.FC<Props> = ({ sortOrder, connection, reloadQuery }) => {
     const { t } = useTranslation();
 
-    if (!events) {
+    if (!connection) {
         return <NotAuthorized />;
     }
+
+    const events = connection.edges.slice(0, 50).map(e => e.node);
 
     return (
         <div css={{
@@ -98,7 +109,7 @@ const ManageVideos: React.FC<Props> = ({ sortOrder, events, reloadQuery }) => {
             height: "100%",
             gap: 16,
         }}>
-            <h1>{t("manage.my-videos.title")}</h1>
+            <h1>{t("manage.my-videos.title")} ({connection.totalCount})</h1>
             <div css={{
                 overflowY: "auto",
                 minHeight: 0,

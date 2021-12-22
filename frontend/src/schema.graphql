@@ -87,13 +87,12 @@ type TextBlock implements Block {
   title: String
 }
 
+"An opaque cursor used for pagination"
+scalar Cursor
+
 type RemovedBlock {
   id: ID!
   realm: Realm!
-}
-
-type RemovedRealm {
-  parent: Realm!
 }
 
 type Query {
@@ -136,6 +135,16 @@ input ChildIndex {
   index: Int!
 }
 
+type RemovedRealm {
+  parent: Realm!
+}
+
+type EventConnection {
+  pageInfo: PageInfo!
+  edges: [EventEdge!]!
+  totalCount: Int!
+}
+
 "A block just showing the list of videos in an Opencast series"
 type SeriesBlock implements Block {
   series: Series!
@@ -158,6 +167,11 @@ type Series implements Node {
   title: String!
   description: String
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
+}
+
+type EventEdge {
+  node: Event!
+  cursor: Cursor!
 }
 
 "Defines the sort order for events."
@@ -208,12 +222,20 @@ type User {
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page.
+
+    Exactly one of `first` and `last` must be set!
   """
-  myVideos(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
+  myVideos(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}, first: Int, after: Cursor, last: Int, before: Cursor): EventConnection!
 }
 
 input UpdateBlock {
   title: String
+}
+
+input NewRealm {
+  parent: ID!
+  name: String!
+  pathSegment: String!
 }
 
 type Track {
@@ -223,20 +245,16 @@ type Track {
   resolution: [Int!]
 }
 
-input NewRealm {
-  parent: ID!
-  name: String!
-  pathSegment: String!
-}
-
 enum SortDirection {
   ASCENDING
   DESCENDING
 }
 
-input UpdateTextBlock {
-  title: String
-  content: String
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: Cursor
+  endCursor: Cursor
 }
 
 type Realm implements Node {
@@ -277,6 +295,11 @@ type Realm implements Node {
   """
   numberOfDescendants: Int!
   canCurrentUserEdit: Boolean!
+}
+
+input UpdateTextBlock {
+  title: String
+  content: String
 }
 
 enum VideoListLayout {

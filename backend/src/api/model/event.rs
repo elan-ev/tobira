@@ -1,17 +1,24 @@
 use std::fmt;
 
 use chrono::{DateTime, Utc};
+use postgres_types::ToSql;
+use serde::{Serialize, Deserialize};
 use tokio_postgres::Row;
 use juniper::{GraphQLObject, graphql_object};
 
 use crate::{
-    api::{Context, err::{self, ApiResult}, Id, model::series::Series, Node, NodeValue},
+    api::{
+        Context, Cursor, Id, Node, NodeValue, PageInfo,
+        err::{self, ApiResult, invalid_input},
+        model::series::Series,
+    },
     db::types::{EventTrack, Key},
     prelude::*,
     util::lazy_format,
 };
 
 
+#[derive(Debug)]
 pub(crate) struct Event {
     key: Key,
     series: Option<Key>,
@@ -29,7 +36,7 @@ pub(crate) struct Event {
     can_write: bool,
 }
 
-#[derive(GraphQLObject)]
+#[derive(Debug, GraphQLObject)]
 struct Track {
     uri: String,
     flavor: String,
@@ -140,16 +147,170 @@ impl Event {
     pub(crate) async fn load_writable_for_user(
         context: &Context,
         order: EventSortOrder,
-    ) -> ApiResult<Vec<Self>> {
+        first: Option<i32>,
+        after: Option<Cursor>,
+        last: Option<i32>,
+        before: Option<Cursor>,
+    ) -> ApiResult<EventConnection> {
+        const MAX_COUNT: i32 = 100;
+
+        // Argument validation
+        let after = after.map(|c| c.deserialize::<EventCursor>()).transpose()?;
+        let before = before.map(|c| c.deserialize::<EventCursor>()).transpose()?;
+        if first.map_or(false, |first| first <= 0) {
+            return Err(invalid_input!("argument 'first' has to be > 0, but is {:?}", first));
+        }
+        if last.map_or(false, |last| last <= 0) {
+            return Err(invalid_input!("argument 'last' has to be > 0, but is {:?}", last));
+        }
+
+        // Make sure only one of `first` and `last` is set and figure out the
+        // limit and SQL sort order. If `last` is set, we reverse the order in
+        // the SQL query in order to use `limit` effectively. We reverse it
+        // again in Rust further below.
+        let (limit, sql_sort_order) = match (first, last) {
+            (Some(first), None) => (first, order.direction),
+            (None, Some(last)) => (last, order.direction.reversed()),
+            _ => return Err(invalid_input!("exactly one of 'first' and 'last' must be given")),
+        };
+        let limit = std::cmp::min(limit, MAX_COUNT);
+
+
+        // Assembly argument list and the "where" part of the query. This
+        // depends on `after` and `before`.
+        let arg_user_roles = &context.user.roles() as &(dyn ToSql + Sync);
+        let mut args = vec![arg_user_roles];
+
+        let col = order.column.to_sql();
+        let op_after = if order.direction.is_ascending() { '>' } else { '<' };
+        let op_before = if order.direction.is_ascending() { '<' } else { '>' };
+        let filter = match (&after, &before) {
+            (None, None) => String::new(),
+            (Some(after), None) => {
+                args.extend_from_slice(&[after.to_sql_arg(&order)?, &after.key]);
+                format!("where ({}, id) {} ($2, $3)", col, op_after)
+            }
+            (None, Some(before)) => {
+                args.extend_from_slice(&[before.to_sql_arg(&order)?, &before.key]);
+                format!("where ({}, id) {} ($2, $3)", col, op_before)
+            }
+            (Some(after), Some(before)) => {
+                args.extend_from_slice(&[
+                    after.to_sql_arg(&order)?,
+                    &after.key,
+                    before.to_sql_arg(&order)?,
+                    &before.key,
+                ]);
+                format!(
+                    "where ({}, id) {} ($2, $3) and ({}, id) {} ($4, $5)",
+                    col, op_after, col, op_before,
+                )
+            },
+        };
+
+        // Assemble full query. This query is a bit involved but allows us to
+        // retrieve the total count, the absolute offsets of our window and all
+        // the event data in one go. The "over(...)" things are window
+        // functions.
         let query = format!(
-            "select {} from events where write_roles && $1 and read_roles && $1 {}",
-            Self::COL_NAMES,
-            order.to_sql(),
+            "select {cols}, row_num, total_count \
+                from (\
+                    select {cols}, \
+                        write_roles, \
+                        row_number() over(order by ({sort_col}, id) {sort_order}) as row_num, \
+                        count(*) over() as total_count \
+                    from events \
+                    where write_roles && $1 and read_roles && $1 \
+                    order by ({sort_col}, id) {sort_order} \
+                ) as tmp \
+                {filter} \
+                limit {limit}",
+            cols = Self::COL_NAMES,
+            sort_col = order.column.to_sql(),
+            sort_order = sql_sort_order.to_sql(),
+            limit = limit,
+            filter = filter,
         );
-        context.db
-            .query_mapped(&query, dbargs![&context.user.roles()], Self::from_row)
-            .await
-            .map_err(Into::into)
+
+        // `first_num` and `last_num` are 1-based!
+        let mut total_count = None;
+        let mut first_num = None;
+        let mut last_num = None;
+
+        // Execute query
+        let mut edges = context.db.query_mapped(&query, args, |row: Row| {
+            // Retrieve total count once
+            if total_count.is_none() {
+                total_count = Some(row.get::<_, i64>("total_count"));
+            }
+
+            // Handle row numbers
+            let row_num = row.get::<_, i64>("row_num");
+            last_num = Some(row_num);
+            if first_num.is_none() {
+                first_num = Some(row_num);
+            }
+
+            // Retrieve actual event data
+            let event = Self::from_row(row);
+            EventEdge {
+                cursor: Cursor::new(EventCursor::new(&event, &order)),
+                node: event,
+            }
+        }).await?;
+
+        // If `last` was given, we had to query in reverse order to make `limit`
+        // work. So now we need to reverse the result here.
+        if sql_sort_order != order.direction {
+            edges.reverse();
+        }
+
+        // If total count is `None`, there are no edges. We really do want to
+        // know the total count, so we do another query.
+        let total_count = match total_count {
+            Some(c) => c,
+            None => {
+                let query = "select count(*) \
+                    from events \
+                    where write_roles && $1 and read_roles && $1";
+                context.db
+                    .query_one(query, &[&context.user.roles()])
+                    .await?
+                    .get::<_, i64>(0)
+            }
+        };
+
+        // Figure out whether there is a next and/or previous page.
+        let (has_next_page, has_previous_page) = match Option::zip(first_num, last_num) {
+            Some((first, last)) => (last < total_count, first > 1),
+            None => {
+                // The DB returned 0 events. That means there are either actually 0 writable
+                // events for that user, or all of them were filtered by `after` or `before`.
+                if total_count == 0 {
+                    (false, false)
+                } else if after.is_some() {
+                    (false, true)
+                } else {
+                    (true, false)
+                }
+            }
+        };
+
+        // TODO: include `last_num` and `first_num` in response. Semantically it
+        // would fit into `page_info`, but that is a global type and we can't
+        // just willy nilly add new fields because our event connection uses
+        // them. I would like to have a different `PageInfo` struct for
+        // different connections.
+        Ok(EventConnection {
+            total_count: total_count.try_into().expect("more then 2^31 events"),
+            page_info: PageInfo {
+                has_next_page,
+                has_previous_page,
+                start_cursor: edges.first().map(|e| e.cursor.clone()),
+                end_cursor: edges.last().map(|e| e.cursor.clone()),
+            },
+            edges,
+        })
     }
 
     const COL_NAMES: &'static str = "id, series, opencast_id, title, description, \
@@ -199,7 +360,7 @@ enum EventSortColumn {
     Updated,
 }
 
-#[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, juniper::GraphQLEnum)]
 enum SortDirection {
     Ascending,
     Descending,
@@ -217,17 +378,108 @@ impl Default for EventSortOrder {
 impl EventSortOrder {
     /// Returns an SQL query fragment like `order by foo asc`.
     fn to_sql(&self) -> impl fmt::Display {
-        let col = match self.column {
+        let Self { column, direction } = *self;
+        lazy_format!("order by {} {}", column.to_sql(), direction.to_sql())
+    }
+}
+
+impl EventSortColumn {
+    fn to_sql(self) -> &'static str {
+        match self {
             EventSortColumn::Title => "title",
             EventSortColumn::Duration => "duration",
             EventSortColumn::Created => "created",
             EventSortColumn::Updated => "updated",
-        };
-        let direction = match self.direction {
+        }
+    }
+}
+
+impl SortDirection {
+    fn to_sql(self) -> &'static str {
+        match self {
             SortDirection::Ascending => "asc",
             SortDirection::Descending => "desc",
+        }
+    }
+
+    fn is_ascending(&self) -> bool {
+        matches!(self, Self::Ascending)
+    }
+
+    fn reversed(self) -> Self {
+        match self {
+            SortDirection::Ascending => SortDirection::Descending,
+            SortDirection::Descending => SortDirection::Ascending,
+        }
+    }
+}
+
+
+#[derive(Debug, juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct EventConnection {
+    page_info: PageInfo,
+    edges: Vec<EventEdge>,
+    total_count: i32,
+}
+
+#[derive(Debug, juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+struct EventEdge {
+    node: Event,
+
+    // TODO: do we just want to remove this? As far as I can tell, no frontend
+    // pagination code will use this, but always use `start_cursor` and
+    // `end_cursor` of `PageInfo`. Sure, if the frontend doesn't request it,
+    // there is no network overhead: good. But the backend still has to create
+    // it, which is some amount of totally wasted time. Only reason to include
+    // this is to be spec compliant and thus potentially better relay
+    // integration? But that spec is not great anyway...
+    cursor: Cursor,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct EventCursor {
+    key: Key,
+    sort_filter: CursorSortFilter,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+enum CursorSortFilter {
+    Title(String),
+    Duration(i32),
+    Created(DateTime<Utc>),
+    Updated(DateTime<Utc>),
+}
+
+impl EventCursor {
+    fn new(event: &Event, order: &EventSortOrder) -> Self {
+        let sort_filter = match order.column {
+            EventSortColumn::Title => CursorSortFilter::Title(event.title.clone()),
+            EventSortColumn::Duration => CursorSortFilter::Duration(
+                // TODO: figure out nullable durations
+                event.duration.expect("null duration")
+            ),
+            EventSortColumn::Created => CursorSortFilter::Created(event.created),
+            EventSortColumn::Updated => CursorSortFilter::Updated(event.updated),
         };
 
-        lazy_format!("order by {} {}", col, direction)
+        Self {
+            sort_filter,
+            key: event.key,
+        }
+    }
+
+    /// Returns the actual filter value as trait object if `self.sort_filter`
+    /// matches `order.column` (both about the same column). Returns an error
+    /// otherwise.
+    fn to_sql_arg(&self, order: &EventSortOrder) -> ApiResult<&(dyn ToSql + Sync + '_)> {
+        match (&self.sort_filter, order.column) {
+            (CursorSortFilter::Title(title), EventSortColumn::Title) => Ok(title),
+            (CursorSortFilter::Duration(duration), EventSortColumn::Duration) => Ok(duration),
+            (CursorSortFilter::Created(created), EventSortColumn::Created) => Ok(created),
+            (CursorSortFilter::Updated(updated), EventSortColumn::Updated) => Ok(updated),
+            _ => Err(invalid_input!("sort order does not match 'before'/'after' argument")),
+        }
     }
 }

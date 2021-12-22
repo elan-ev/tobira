@@ -20,8 +20,8 @@ where
 }
 
 macro_rules! lazy_format {
-    ($fmt:literal $(, $arg:expr)* $(,)?) => {
-        crate::util::LazyFormat(move |f| write!(f, $fmt $(, $arg)*))
+    ($fmt:literal $($t:tt)*) => {
+        crate::util::LazyFormat(move |f| write!(f, $fmt $($t)*))
     };
 }
 

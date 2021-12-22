@@ -4,12 +4,15 @@ use juniper::{
 };
 
 use crate::{
-    api::{Context, err::ApiResult},
+    api::{
+        Context,
+        common::Cursor,
+        err::ApiResult,
+        model::event::{Event, EventConnection, EventSortOrder},
+    },
     auth::{User, UserData},
     prelude::*,
 };
-
-use super::event::{Event, EventSortOrder};
 
 
 #[juniper::graphql_object(name = "User", context = Context)]
@@ -31,13 +34,19 @@ impl UserData {
 
     /// Returns all events that somehow "belong" to the user, i.e. that appear
     /// on the "my videos" page.
+    ///
+    /// Exactly one of `first` and `last` must be set!
     #[graphql(arguments(order(default = Default::default())))]
     async fn my_videos(
         &self,
         order: EventSortOrder,
+        first: Option<i32>,
+        after: Option<Cursor>,
+        last: Option<i32>,
+        before: Option<Cursor>,
         context: &Context,
-    ) -> ApiResult<Vec<Event>> {
-        Event::load_writable_for_user(context, order).await
+    ) -> ApiResult<EventConnection> {
+        Event::load_writable_for_user(context, order, first, after, last, before).await
     }
 }
 
