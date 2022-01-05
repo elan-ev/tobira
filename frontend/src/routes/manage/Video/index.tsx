@@ -1,4 +1,4 @@
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { graphql, PreloadedQuery, useQueryLoader } from "react-relay";
@@ -106,11 +106,7 @@ const ManageVideos: React.FC<Props> = ({ sortOrder, connection, reloadQuery }) =
             gap: 16,
         }}>
             <h1>{t("manage.my-videos.title")} ({connection.totalCount})</h1>
-            <div css={{
-                overflowY: "auto",
-                minHeight: 0,
-                flex: "1 0 0",
-            }}>
+            <div css={{ flex: "1 0 0" }}>
                 <EventTable
                     events={connection.items}
                     urlSortOrder={sortOrder}
@@ -134,6 +130,24 @@ const EventTable: React.FC<EventTableProps> = ({ events, urlSortOrder, reloadQue
     const [sortOrder, setSortOrder] = useState(urlSortOrder);
     const [isPending, startTransition] = useTransition();
 
+    // We need to know whether the table header is in its "sticky" position to apply a box
+    // shadow to indicate that the user can still scroll up. This solution uses intersection
+    // observer. Compare: https://stackoverflow.com/a/57991537/2408867
+    const [headerSticks, setHeaderSticks] = useState(false);
+    const tableHeaderRef = useRef<HTMLTableSectionElement>(null);
+    useEffect(() => {
+        const tableHeader = tableHeaderRef.current;
+        if (tableHeader) {
+            const observer = new IntersectionObserver(
+                ([e]) => setHeaderSticks(!e.isIntersecting),
+                { threshold: [1], rootMargin: "-1px 0px 0px 0px" },
+            );
+
+            observer.observe(tableHeader);
+            return () => observer.unobserve(tableHeader);
+        }
+        return () => {};
+    });
 
     const onColHeaderClick = (sortKey: EventSortColumn) => {
         const newOrder: EventSortOrder = {
@@ -153,7 +167,6 @@ const EventTable: React.FC<EventTableProps> = ({ events, urlSortOrder, reloadQue
     return (
         <table css={{
             width: "100%",
-            overflowY: "auto",
             borderSpacing: 0,
             tableLayout: "fixed",
 
@@ -172,9 +185,12 @@ const EventTable: React.FC<EventTableProps> = ({ events, urlSortOrder, reloadQue
                     textAlign: "left",
                     padding: "8px 12px",
                 },
+                ...headerSticks && {
+                    boxShadow: "0 0 20px rgba(0, 0, 0, 0.3)",
+                    clipPath: "inset(0px 0px -20px 0px)",
+                },
             },
             "& > tbody": {
-                overflowY: "auto",
                 "& > tr:hover": {
                     backgroundColor: "var(--grey92)",
                 },
@@ -197,7 +213,7 @@ const EventTable: React.FC<EventTableProps> = ({ events, urlSortOrder, reloadQue
                 <col span={1} css={{ width: 135 }} />
             </colgroup>
 
-            <thead css={{ position: "relative" }}>
+            <thead ref={tableHeaderRef} css={{ position: "relative" }}>
                 {isPending && (
                     <div css={{
                         position: "absolute",
