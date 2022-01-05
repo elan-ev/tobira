@@ -19,7 +19,7 @@ mod common;
 pub(crate) use self::{
     id::Id,
     context::Context,
-    common::{Cursor, Node, NodeValue, PageInfo},
+    common::{Cursor, Node, NodeValue},
 };
 
 

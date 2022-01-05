@@ -8,7 +8,7 @@ use juniper::{GraphQLObject, graphql_object};
 
 use crate::{
     api::{
-        Context, Cursor, Id, Node, NodeValue, PageInfo,
+        Context, Cursor, Id, Node, NodeValue,
         err::{self, ApiResult, invalid_input},
         model::series::Series,
     },
@@ -292,18 +292,16 @@ impl Event {
             }
         };
 
-        // TODO: include `last_num` and `first_num` in response. Semantically it
-        // would fit into `page_info`, but that is a global type and we can't
-        // just willy nilly add new fields because our event connection uses
-        // them. I would like to have a different `PageInfo` struct for
-        // different connections.
+        let cast_i32 = |x: i64| x.try_into().expect("more then 2^31 events");
         Ok(EventConnection {
-            total_count: total_count.try_into().expect("more then 2^31 events"),
-            page_info: PageInfo {
+            total_count: cast_i32(total_count),
+            page_info: EventPageInfo {
                 has_next_page,
                 has_previous_page,
                 start_cursor: events.first().map(|e| Cursor::new(EventCursor::new(e, &order))),
                 end_cursor: events.last().map(|e| Cursor::new(EventCursor::new(e, &order))),
+                start_index: first_num.map(cast_i32),
+                end_index: last_num.map(cast_i32),
             },
             items: events,
         })
@@ -414,7 +412,7 @@ impl SortDirection {
 #[derive(Debug, juniper::GraphQLObject)]
 #[graphql(Context = Context)]
 pub(crate) struct EventConnection {
-    page_info: PageInfo,
+    page_info: EventPageInfo,
     items: Vec<Event>,
     total_count: i32,
 }
@@ -463,4 +461,22 @@ impl EventCursor {
             _ => Err(invalid_input!("sort order does not match 'before'/'after' argument")),
         }
     }
+}
+
+// TODO: when we add more `PageInfo` structs it might make sense to extract the
+// common fields somehow.
+#[derive(Debug, Clone, juniper::GraphQLObject)]
+pub(crate) struct EventPageInfo {
+    pub(crate) has_next_page: bool,
+    pub(crate) has_previous_page: bool,
+
+    // TODO: the spec says these shouldn't be optional, but that makes no sense.
+    // See: https://stackoverflow.com/q/70448483/2408867
+    pub(crate) start_cursor: Option<Cursor>,
+    pub(crate) end_cursor: Option<Cursor>,
+
+    /// The index of the first returned event.
+    pub(crate) start_index: Option<i32>,
+    /// The index of the last returned event.
+    pub(crate) end_index: Option<i32>,
 }

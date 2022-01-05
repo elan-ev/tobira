@@ -20,6 +20,17 @@ type Event implements Node {
   series: Series
 }
 
+type EventPageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: Cursor
+  endCursor: Cursor
+  "The index of the first returned event."
+  startIndex: Int
+  "The index of the last returned event."
+  endIndex: Int
+}
+
 type Mutation {
   "Adds a new realm."
   addRealm(realm: NewRealm!): Realm!
@@ -140,7 +151,7 @@ type RemovedRealm {
 }
 
 type EventConnection {
-  pageInfo: PageInfo!
+  pageInfo: EventPageInfo!
   items: [Event!]!
   totalCount: Int!
 }
@@ -227,12 +238,6 @@ input UpdateBlock {
   title: String
 }
 
-input NewRealm {
-  parent: ID!
-  name: String!
-  pathSegment: String!
-}
-
 type Track {
   uri: String!
   flavor: String!
@@ -240,16 +245,20 @@ type Track {
   resolution: [Int!]
 }
 
+input NewRealm {
+  parent: ID!
+  name: String!
+  pathSegment: String!
+}
+
 enum SortDirection {
   ASCENDING
   DESCENDING
 }
 
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: Cursor
-  endCursor: Cursor
+input UpdateTextBlock {
+  title: String
+  content: String
 }
 
 type Realm implements Node {
@@ -290,11 +299,6 @@ type Realm implements Node {
   """
   numberOfDescendants: Int!
   canCurrentUserEdit: Boolean!
-}
-
-input UpdateTextBlock {
-  title: String
-  content: String
 }
 
 enum VideoListLayout {

@@ -16,25 +16,13 @@ pub(crate) trait Node {
     fn id(&self) -> Id;
 }
 
-#[derive(Debug, Clone, juniper::GraphQLObject)]
-pub(crate) struct PageInfo {
-    pub(crate) has_next_page: bool,
-    pub(crate) has_previous_page: bool,
-
-    // TODO: the spec says these shouldn't be optional, but that makes no sense.
-    // Figure this out for good!
-    //
-    // I asked here: https://stackoverflow.com/q/70448483/2408867
-    pub(crate) start_cursor: Option<Cursor>,
-    pub(crate) end_cursor: Option<Cursor>,
-}
 
 /// Opaque cursor for pagination. Serializes as string.
 ///
-/// Since `PageInfo` and thus `Cursor` needs to be a global type (tho I want to
-/// change that), the idea is that you create a cursor just by passing
-/// something serializable to `new`. When you want to read the cursor's data,
-/// use `deserialize`.
+/// Ideally, this would be generic over something `Serialize + Deserialize`.
+/// However, junipers `graphql_scalar` macro doesn't work with generics
+/// (sigh). So it's easier to just eagerly create the base64 string in `new`
+/// and `deserialize`.
 ///
 /// The actual cursor is a base64 encoded string. The encoded bytes are the
 /// serialization format from `bincode`, a compact binary serializer. Of course
