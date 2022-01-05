@@ -95,6 +95,11 @@ type RemovedBlock {
   realm: Realm!
 }
 
+input ChildIndex {
+  id: ID!
+  index: Int!
+}
+
 type Query {
   "Returns the root realm."
   rootRealm: Realm!
@@ -130,18 +135,13 @@ enum RealmOrder {
   ALPHABETIC_DESC
 }
 
-input ChildIndex {
-  id: ID!
-  index: Int!
-}
-
 type RemovedRealm {
   parent: Realm!
 }
 
 type EventConnection {
   pageInfo: PageInfo!
-  edges: [EventEdge!]!
+  items: [Event!]!
   totalCount: Int!
 }
 
@@ -167,11 +167,6 @@ type Series implements Node {
   title: String!
   description: String
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
-}
-
-type EventEdge {
-  node: Event!
-  cursor: Cursor!
 }
 
 "Defines the sort order for events."

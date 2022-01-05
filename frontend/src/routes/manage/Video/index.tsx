@@ -53,11 +53,9 @@ const query = graphql`
                 pageInfo {
                     hasNextPage
                 }
-                edges {
-                    node {
-                        id title duration thumbnail created updated description
-                        tracks { resolution }
-                    }
+                items {
+                    id title duration thumbnail created updated description
+                    tracks { resolution }
                 }
             }
         }
@@ -84,7 +82,7 @@ const Page: React.FC<Prepared> = ({ queryRef: initialQueryRef, sortOrder }) => {
 
 
 type EventConnection = NonNullable<VideoManageQueryResponse["currentUser"]>["myVideos"];
-type Events = EventConnection["edges"][number]["node"][];
+type Events = EventConnection["items"];
 
 type Props = {
     connection?: EventConnection;
@@ -100,8 +98,6 @@ const ManageVideos: React.FC<Props> = ({ sortOrder, connection, reloadQuery }) =
         return <NotAuthorized />;
     }
 
-    const events = connection.edges.slice(0, 50).map(e => e.node);
-
     return (
         <div css={{
             display: "flex",
@@ -115,7 +111,11 @@ const ManageVideos: React.FC<Props> = ({ sortOrder, connection, reloadQuery }) =
                 minHeight: 0,
                 flex: "1 0 0",
             }}>
-                <EventTable events={events} urlSortOrder={sortOrder} reloadQuery={reloadQuery} />
+                <EventTable
+                    events={connection.items}
+                    urlSortOrder={sortOrder}
+                    reloadQuery={reloadQuery}
+                />
             </div>
         </div>
     );

@@ -238,7 +238,7 @@ impl Event {
         let mut last_num = None;
 
         // Execute query
-        let mut edges = context.db.query_mapped(&query, args, |row: Row| {
+        let mut events = context.db.query_mapped(&query, args, |row: Row| {
             // Retrieve total count once
             if total_count.is_none() {
                 total_count = Some(row.get::<_, i64>("total_count"));
@@ -252,20 +252,16 @@ impl Event {
             }
 
             // Retrieve actual event data
-            let event = Self::from_row(row);
-            EventEdge {
-                cursor: Cursor::new(EventCursor::new(&event, &order)),
-                node: event,
-            }
+            Self::from_row(row)
         }).await?;
 
         // If `last` was given, we had to query in reverse order to make `limit`
         // work. So now we need to reverse the result here.
         if sql_sort_order != order.direction {
-            edges.reverse();
+            events.reverse();
         }
 
-        // If total count is `None`, there are no edges. We really do want to
+        // If total count is `None`, there are no events. We really do want to
         // know the total count, so we do another query.
         let total_count = match total_count {
             Some(c) => c,
@@ -306,10 +302,10 @@ impl Event {
             page_info: PageInfo {
                 has_next_page,
                 has_previous_page,
-                start_cursor: edges.first().map(|e| e.cursor.clone()),
-                end_cursor: edges.last().map(|e| e.cursor.clone()),
+                start_cursor: events.first().map(|e| Cursor::new(EventCursor::new(e, &order))),
+                end_cursor: events.last().map(|e| Cursor::new(EventCursor::new(e, &order))),
             },
-            edges,
+            items: events,
         })
     }
 
@@ -419,23 +415,8 @@ impl SortDirection {
 #[graphql(Context = Context)]
 pub(crate) struct EventConnection {
     page_info: PageInfo,
-    edges: Vec<EventEdge>,
+    items: Vec<Event>,
     total_count: i32,
-}
-
-#[derive(Debug, juniper::GraphQLObject)]
-#[graphql(Context = Context)]
-struct EventEdge {
-    node: Event,
-
-    // TODO: do we just want to remove this? As far as I can tell, no frontend
-    // pagination code will use this, but always use `start_cursor` and
-    // `end_cursor` of `PageInfo`. Sure, if the frontend doesn't request it,
-    // there is no network overhead: good. But the backend still has to create
-    // it, which is some amount of totally wasted time. Only reason to include
-    // this is to be spec compliant and thus potentially better relay
-    // integration? But that spec is not great anyway...
-    cursor: Cursor,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
