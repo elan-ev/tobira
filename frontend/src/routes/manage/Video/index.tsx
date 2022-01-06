@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp } from "react-icons/fi";
 import { graphql, PreloadedQuery, useQueryLoader } from "react-relay";
 
 import { ManageNav } from "..";
@@ -22,6 +22,8 @@ import { Thumbnail } from "../../../ui/Video";
 import { QueryLoader } from "../../../util/QueryLoader";
 import { keyOfId, match } from "../../../util";
 import { unreachable } from "../../../util/err";
+import FirstPage from "../../../icons/first-page.svg";
+import LastPage from "../../../icons/last-page.svg";
 
 
 const PATH = "/~manage/videos";
@@ -37,7 +39,7 @@ export const ManageVideosRoute = makeRoute<Prepared>({
     prepare: ({ url }) => {
         const sortOrder = queryParamsToOrder(url.searchParams);
         return {
-            queryRef: loadQuery(query, { order: sortOrder }),
+            queryRef: loadQuery(query, { order: sortOrder, first: LIMIT }),
             sortOrder,
         };
     },
@@ -45,13 +47,21 @@ export const ManageVideosRoute = makeRoute<Prepared>({
 });
 
 const query = graphql`
-    query VideoManageQuery($order: EventSortOrder) {
+    query VideoManageQuery(
+        $order: EventSortOrder!,
+        $after: Cursor,
+        $before: Cursor,
+        $first: Int,
+        $last: Int,
+    ) {
         ...UserData
         currentUser {
-            myVideos(order: $order, first: 15) {
+            myVideos(order: $order, after: $after, before: $before, first: $first, last: $last) {
                 totalCount
                 pageInfo {
-                    hasNextPage
+                    hasNextPage hasPreviousPage
+                    startCursor endCursor
+                    startIndex endIndex
                 }
                 items {
                     id title duration thumbnail created updated description
@@ -66,16 +76,21 @@ const query = graphql`
 const Page: React.FC<Prepared> = ({ queryRef: initialQueryRef, sortOrder }) => {
     const [queryRef, loadQuery] = useQueryLoader(query, initialQueryRef);
     if (!queryRef) {
+        // `useQueryLoader` is incorrectly typed, I believe. If
+        // `initialQueryRef` is given, it never returns null.
         return unreachable();
     }
 
     return <QueryLoader {...{ query, queryRef }} render={result => (
         <Root nav={<ManageNav key={1} active={PATH} />} userQuery={result}>
-            <ManageVideos
-                sortOrder={sortOrder}
-                reloadQuery={vars => loadQuery(vars, { fetchPolicy: "network-only" })}
-                connection={result.currentUser?.myVideos}
-            />
+            {!result.currentUser
+                ? <NotAuthorized />
+                : <ManageVideos
+                    urlSortOrder={sortOrder}
+                    reloadQuery={vars => loadQuery(vars, { fetchPolicy: "network-only" })}
+                    connection={result.currentUser.myVideos}
+                />
+            }
         </Root>
     )} />;
 };
@@ -85,18 +100,32 @@ type EventConnection = NonNullable<VideoManageQueryResponse["currentUser"]>["myV
 type Events = EventConnection["items"];
 
 type Props = {
-    connection?: EventConnection;
-    sortOrder: EventSortOrder;
+    connection: EventConnection;
+    urlSortOrder: EventSortOrder;
     reloadQuery: (vars: VideoManageQueryVariables) => void;
 };
 
+const LIMIT = 15;
+
 /** Main part of this page */
-const ManageVideos: React.FC<Props> = ({ sortOrder, connection, reloadQuery }) => {
+const ManageVideos: React.FC<Props> = ({ urlSortOrder, connection, reloadQuery }) => {
     const { t } = useTranslation();
 
-    if (!connection) {
-        return <NotAuthorized />;
-    }
+    const [sortOrder, setSortOrder] = useState(urlSortOrder);
+    const [isPending, startTransition] = useTransition();
+    const loadFirst = (after: string | null) => {
+        startTransition(() => reloadQuery({ order: sortOrder, after, first: LIMIT }));
+    };
+    const loadLast = (before: string | null) => {
+        startTransition(() => reloadQuery({ order: sortOrder, before, last: LIMIT }));
+    };
+    const reloadWithOrder = (order: EventSortOrder) => {
+        startTransition(() => {
+            // We go to page one again when changing sort order.
+            reloadQuery({ order, first: LIMIT });
+            setSortOrder(order);
+        });
+    };
 
     return (
         <div css={{
@@ -105,14 +134,15 @@ const ManageVideos: React.FC<Props> = ({ sortOrder, connection, reloadQuery }) =
             height: "100%",
             gap: 16,
         }}>
-            <h1>{t("manage.my-videos.title")} ({connection.totalCount})</h1>
+            <h1>{t("manage.my-videos.title")}</h1>
+            <PageNavigation {...{ loadFirst, loadLast, connection }} />
             <div css={{ flex: "1 0 0" }}>
                 <EventTable
                     events={connection.items}
-                    urlSortOrder={sortOrder}
-                    reloadQuery={reloadQuery}
+                    {...{ reloadWithOrder, isPending, sortOrder }}
                 />
             </div>
+            <PageNavigation {...{ loadFirst, loadLast, connection }} />
         </div>
     );
 };
@@ -121,14 +151,18 @@ const THUMBNAIL_WIDTH = 16 * 8;
 
 type EventTableProps = {
     events: Events;
-    urlSortOrder: EventSortOrder;
-    reloadQuery: (vars: VideoManageQueryVariables) => void;
+    reloadWithOrder: (order: EventSortOrder) => void;
+    isPending: boolean;
+    sortOrder: EventSortOrder;
 };
 
-const EventTable: React.FC<EventTableProps> = ({ events, urlSortOrder, reloadQuery }) => {
+const EventTable: React.FC<EventTableProps> = ({
+    events,
+    reloadWithOrder,
+    isPending,
+    sortOrder,
+}) => {
     const { t } = useTranslation();
-    const [sortOrder, setSortOrder] = useState(urlSortOrder);
-    const [isPending, startTransition] = useTransition();
 
     // We need to know whether the table header is in its "sticky" position to apply a box
     // shadow to indicate that the user can still scroll up. This solution uses intersection
@@ -158,10 +192,7 @@ const EventTable: React.FC<EventTableProps> = ({ events, urlSortOrder, reloadQue
         };
 
         setSortQueryParams(newOrder);
-        startTransition(() => {
-            reloadQuery({ order: newOrder });
-            setSortOrder(newOrder);
-        });
+        reloadWithOrder(newOrder);
     };
 
     return (
@@ -339,6 +370,83 @@ const Description: React.FC<{ text: string | null }> = ({ text }) => {
         }}>{text}</div>;
     }
 };
+
+type PageNavigationProps = {
+    connection: EventConnection;
+    loadFirst: (after: string | null) => void;
+    loadLast: (before: string | null) => void;
+};
+
+const PageNavigation: React.FC<PageNavigationProps> = ({ connection, loadFirst, loadLast }) => {
+    const { t } = useTranslation();
+    const pageInfo = connection.pageInfo;
+
+    return (
+        <div css={{
+            display: "flex",
+            justifyContent: "end",
+            alignItems: "center",
+            gap: 48,
+        }}>
+            <div>
+                {t("manage.my-videos.page-showing-video-ids", {
+                    start: connection.pageInfo.startIndex,
+                    end: connection.pageInfo.endIndex,
+                    total: connection.totalCount,
+                })}
+            </div>
+            <div>
+                <PageButton
+                    onClick={() => loadFirst(null)}
+                    disabled={!pageInfo.hasPreviousPage}
+                ><FirstPage /></PageButton>
+                <PageButton
+                    onClick={() => loadLast(pageInfo.startCursor)}
+                    disabled={!pageInfo.hasPreviousPage}
+                ><FiChevronLeft /></PageButton>
+                <PageButton
+                    onClick={() => loadFirst(pageInfo.endCursor)}
+                    disabled={!pageInfo.hasNextPage}
+                ><FiChevronRight /></PageButton>
+                <PageButton
+                    onClick={() => loadLast(null)}
+                    disabled={!pageInfo.hasNextPage}
+                ><LastPage /></PageButton>
+            </div>
+        </div>
+    );
+};
+
+type PageButtonProps = {
+    onClick: () => void;
+    disabled: boolean;
+};
+
+const PageButton: React.FC<PageButtonProps> = ({ children, onClick, disabled }) => (
+    <button
+        onClick={disabled ? () => {} : onClick}
+        disabled={disabled}
+        css={{
+            background: "none",
+            border: "none",
+            fontSize: 24,
+            padding: "4px 4px",
+            margin: "0 4px",
+            lineHeight: 0,
+            ...disabled
+                ? {
+                    color: "var(--grey80)",
+                }
+                : {
+                    color: "var(--grey40)",
+                    cursor: "pointer",
+                    ":hover": {
+                        color: "black",
+                    },
+                },
+        }}
+    >{children}</button>
+);
 
 const queryParamsToOrder = (queryParams: URLSearchParams): EventSortOrder => {
     const sortBy = queryParams.get("sortBy");

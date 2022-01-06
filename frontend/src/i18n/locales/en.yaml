@@ -156,6 +156,7 @@ manage:
     technical-details: Technical details
     opencast-id: Opencast ID
     available-resolutions: Available resolutions
+    page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
 
   are-you-sure: Are you sure?
 

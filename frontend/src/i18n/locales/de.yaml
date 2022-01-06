@@ -162,6 +162,7 @@ manage:
     technical-details: Technische Details
     opencast-id: Opencast ID
     available-resolutions: Verfügbare Auflösungen
+    page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
 
   are-you-sure: Sind Sie sich sicher?
 
