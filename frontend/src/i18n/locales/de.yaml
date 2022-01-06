@@ -91,7 +91,7 @@ realm:
 
 upload:
   title: Video hochladen
-  drop-to-upload: Videodateien zum Hochladen per drag-and-drop hinzufügen
+  drop-to-upload: Videodateien zum Hochladen per Drag-and-drop hinzufügen
   not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   select-files: Dateien auswählen
   too-many-files: >
@@ -117,16 +117,16 @@ upload:
   metadata:
     title: Videotitel
     description: Beschreibung
-    required: notwendig
+    required: Pflichtfeld
     save: Speichern und fertigstellen
   errors:
     failed-to-upload: Hochladen fehlgeschlagen.
-    unknown: Ein unbekannter Fehler ist während des Dateiuploads aufgetreten.
+    unknown: Während des Dateiuploads ist ein unbekannter Fehler aufgetreten.
     field-required: Dieses Feld darf nicht leer sein
-    opencast-server-error: Opencast Server Fehler (unerwartete Antwort).
+    opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-expired: >
-      Interner Fremdauthentifizierungsfehler: Aufgrund Ihres Internets wurde das Video zu langsam
+      Interner Fremdauthentifizierungsfehler: Aufgrund Ihrer Internetverbindung wurde das Video zu langsam
       hochgeladen. Zurzeit kann diese Anwendung damit nicht umgehen. Wir arbeiten bereits daran,
       dieses Problem zu lösen. Bitte entschuldigen Sie diese Unannehmlichkeit.
 
@@ -206,7 +206,7 @@ api-remote-errors:
   view:
     event: Sie sind nicht autorisiert dieses Video zu sehen.
   upload:
-    not-logged-in: Sie müssen eingeloggt sein, um Videos hochzuladen.
+    not-logged-in: Sie müssen angemeldet sein, um Videos hochzuladen.
     not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.

@@ -122,7 +122,7 @@ upload:
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-expired: >
-      Internal cross-authentication error: due to your internet, the video was uploaded too slowly.
+      Internal cross-authentication error: due to your internet connection, the video was uploaded too slowly.
       Currently, this application cannot deal with those cases. We are aware of this problem and
       working on it! We are sorry for causing any inconvenience.
 
