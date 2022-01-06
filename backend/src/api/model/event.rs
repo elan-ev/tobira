@@ -255,12 +255,6 @@ impl Event {
             Self::from_row(row)
         }).await?;
 
-        // If `last` was given, we had to query in reverse order to make `limit`
-        // work. So now we need to reverse the result here.
-        if sql_sort_order != order.direction {
-            events.reverse();
-        }
-
         // If total count is `None`, there are no events. We really do want to
         // know the total count, so we do another query.
         let total_count = match total_count {
@@ -275,6 +269,16 @@ impl Event {
                     .get::<_, i64>(0)
             }
         };
+
+        // If `last` was given, we had to query in reverse order to make `limit`
+        // work. So now we need to reverse the result here. We also need to
+        // adjust the last and first "num".
+        if sql_sort_order != order.direction {
+            events.reverse();
+            let tmp = first_num;
+            first_num = last_num.map(|n| total_count - n + 1);
+            last_num = tmp.map(|n| total_count - n + 1);
+        }
 
         // Figure out whether there is a next and/or previous page.
         let (has_next_page, has_previous_page) = match Option::zip(first_num, last_num) {
