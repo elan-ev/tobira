@@ -14,12 +14,12 @@ There are some requirements.
   This means that non-public assets cannot be retrieved, meaning that non-public events will look broken in Tobira.
   So either you disable static file authorization in Opencast or you can only use Tobira for public videos.
 
-  (We aware that this limitation is annoying and are investigating possible solutions.)
+  (We are aware that this limitation is annoying and are investigating possible solutions.)
 
 - Opencast needs to accept JWTs created by Tobira.
   See [this document](./auth/jwt.md) for more information.
 
 - Opencast needs to allow cross origin requests from Tobira.
-  Otherwise, things like the video uploader doesn't work.
+  Otherwise, things like the video uploader don't work.
 
 - ... (list in progress)
