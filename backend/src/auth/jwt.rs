@@ -83,9 +83,9 @@ impl JwtContext {
                 .expect("failed to convert from std Duration to chrono::Duration");
 
         let payload = json!({
-              "name": user.display_name,
-              "username": user.username,
-              "exp": exp.timestamp(),
+            "name": user.display_name,
+            "username": user.username,
+            "exp": exp.timestamp(),
         });
 
         self.encode(&payload)
@@ -205,25 +205,3 @@ impl Signer for EcdsaKeyPair {
         signature.extend_from_slice(sig.as_ref())
     }
 }
-
-
-// /// Now unused algorithm to convert ring key into valid PEM file. Only here to keep in
-// /// git history.
-// fn public_key(&self) -> String {
-//     let public_key = self.key.public_key();
-//     let alg_oid = "1.2.840.10045.2.1".parse::<spki::ObjectIdentifier>().unwrap();
-//     let params_oid = "1.2.840.10045.3.1.7".parse::<spki::ObjectIdentifier>().unwrap();
-//     let contents = spki::SubjectPublicKeyInfo {
-//         algorithm: spki::AlgorithmIdentifier {
-//             oid: alg_oid,
-//             parameters: Some(spki::der::Any::from(&params_oid))
-//         },
-//         subject_public_key: public_key.as_ref(),
-//     };
-//     let pem = pem::Pem {
-//         tag: "PUBLIC KEY".into(),
-//         contents: spki::der::Encodable::to_vec(&contents)
-//             .expect("failed to encode public key"),
-//     };
-//     pem::encode(&pem)
-// }
