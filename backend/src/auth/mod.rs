@@ -10,9 +10,11 @@ use crate::{config::TranslatedString, prelude::*};
 
 mod handlers;
 mod session_id;
+mod jwt;
 
 pub(crate) use self::{
     session_id::SessionId,
+    jwt::{JwtConfig, JwtContext},
     handlers::{handle_login, handle_logout},
 };
 
@@ -67,6 +69,11 @@ pub(crate) struct AuthConfig {
     #[config(default = "ROLE_TOBIRA_MODERATOR")]
     pub(crate) moderator_role: String,
 
+    /// If a user has this role, they are allowed to use the Tobira video
+    /// uploader to ingest videos to Opencast.
+    #[config(default = "ROLE_TOBIRA_UPLOAD")]
+    pub(crate) upload_role: String,
+
     /// Duration of a Tobira-managed login session.
     /// Note: This is only relevant if `auth.mode` is `login-proxy`.
     #[config(default = "30d", deserialize_with = crate::config::deserialize_duration)]
@@ -75,6 +82,12 @@ pub(crate) struct AuthConfig {
     /// Configuration related to the built-in login page.
     #[config(nested)]
     pub(crate) login_page: LoginPageConfig,
+
+    /// JWT configuration. JWTs are only used to automatically authenticate
+    /// users against Opencast with short-lived tokens. They are not used for
+    /// user sessions.
+    #[config(nested)]
+    pub(crate) jwt: JwtConfig,
 }
 
 /// Authentification and authorization
@@ -156,8 +169,16 @@ impl User {
         AuthToken::some_if(self.is_moderator(auth_config))
     }
 
+    pub(crate) fn required_upload_permission(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
+        AuthToken::some_if(self.can_upload(auth_config))
+    }
+
     pub(crate) fn is_moderator(&self, auth_config: &AuthConfig) -> bool {
         self.is_admin() || self.roles().contains(&auth_config.moderator_role)
+    }
+
+    pub(crate) fn can_upload(&self, auth_config: &AuthConfig) -> bool {
+        self.is_moderator(auth_config) || self.roles().contains(&auth_config.upload_role)
     }
 
     /// Returns `true` if the user is a global Opencast administrator and can do

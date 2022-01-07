@@ -16,10 +16,14 @@ How to setup such a DB is out of scope for these docs.
 
 You likely want to put a reverse proxy in front of Tobira (e.g. `nginx`).
 That reverse proxy will handle things like compression and authentication for you.
-See the [authentication docs](./auth) for more information on part of the reverse proxy setup.
 
 
-## 4. Configure Tobira & provide additional files
+## 4. Setup authentication
+
+See the [authentication docs](./auth) for more information on this part.
+
+
+## 5. Configure Tobira & provide additional files
 
 Tobira will check for `config.toml` (in the working directory) and `/etc/tobira/config.toml` and use the first one it finds.
 If none of these is found, Tobira will exit with an error.
@@ -30,7 +34,7 @@ You usually have some additional files that Tobira needs access to (e.g. the log
 All file paths you use in the configuration file are relative to the configuration file itself.
 
 
-## 5. Run server and sync daemon
+## 6. Run server and sync daemon
 
 There are two main long running processes you want to run on your server:
 

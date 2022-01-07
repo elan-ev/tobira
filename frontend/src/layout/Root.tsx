@@ -84,7 +84,7 @@ const Main: React.FC = ({ children }) => (
         padding: MAIN_PADDING,
         flexGrow: 1,
         display: "flex",
-        alignItems: "flex-start",
+        alignItems: "stretch",
     }}>{children}</main>
 );
 

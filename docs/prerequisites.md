@@ -19,3 +19,6 @@ Additionally, if you are a developer (planning to work on Tobira), you might wan
 The only thing Tobira requires is a PostgreSQL (≥10) database.
 
 If you are a developer and just need a PostgeSQL database for development, you can use the `docker-compose` script in [the `scripts` folder](../scripts). For that, you have to install docker-compose (or an equivalent tool like Podman) and then run `docker-compose up -d` in the `scripts` folder. As a (production) user of Tobira, you should setup your own PostgreSQL DB and not use our script.
+
+Tobira also requires certain things from your Opencast installation.
+See [this document](./opencast-requirements.md).

@@ -1,9 +1,9 @@
-import { FiAlertTriangle } from "react-icons/fi";
+import { FiAlertTriangle, FiInfo } from "react-icons/fi";
 import { match } from "../util";
 
 
 type Props = JSX.IntrinsicElements["div"] & {
-    kind: "error";
+    kind: "error" | "info";
     iconPos?: "left" | "top";
 };
 
@@ -15,8 +15,6 @@ export const Card: React.FC<Props> = ({ kind, iconPos = "left", children, ...res
             flexDirection: iconPos === "left" ? "row" : "column",
             borderRadius: 4,
             padding: "8px 16px",
-            background: "var(--danger-color)",
-            color: "white",
             gap: 16,
             alignItems: "center",
             "& > svg": {
@@ -25,7 +23,12 @@ export const Card: React.FC<Props> = ({ kind, iconPos = "left", children, ...res
             },
             ...match(kind, {
                 "error": () => ({
+                    backgroundColor: "var(--danger-color)",
                     border: "1.5px solid var(--danger-color)",
+                    color: "white",
+                }) as Record<string, string>,
+                "info": () => ({
+                    backgroundColor: "var(--grey97)",
                 }),
             }),
         }}
@@ -33,7 +36,8 @@ export const Card: React.FC<Props> = ({ kind, iconPos = "left", children, ...res
     >
         {match(kind, {
             "error": () => <FiAlertTriangle />,
+            "info": () => <FiInfo css={{ color: "var(--grey40)" }} />,
         })}
-        {children}
+        <div>{children}</div>
     </div>
 );

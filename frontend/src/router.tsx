@@ -10,6 +10,7 @@ import { VideoRoute } from "./routes/Video";
 import { makeRouter } from "./rauta";
 import { Transition } from "react-transition-group";
 import { match } from "./util";
+import { UploadRoute } from "./routes/Upload";
 
 
 /** A thin colored line at the top of the page indicating a page load */
@@ -68,6 +69,7 @@ const {
         VideoRoute,
         ManageRoute,
         ManageRealmRoute,
+        UploadRoute,
         AddChildRoute,
     ],
 });

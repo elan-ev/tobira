@@ -1,5 +1,5 @@
 import { i18n } from "i18next";
-import { MutableRefObject, useEffect } from "react";
+import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import CONFIG, { TranslatedString } from "../config";
 
@@ -96,4 +96,28 @@ export const useOnOutsideClick = (
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
     });
+};
+
+/** Helper hook returning a function that, when called, forces a rerender of the component. */
+export const useForceRerender = (): () => void => {
+    const [_, setCounter] = useState(0);
+    return () => setCounter(old => old + 1);
+};
+
+/**
+ * Like `useState`, but also returns a ref object containing that state. This is
+ * useful if the current state needs to be accessed from callbacks that were
+ * created when the state had a different value.
+ */
+export const useRefState = <T, >(
+    initialValue: T,
+): [MutableRefObject<T>, (newValue: T) => void] => {
+    const forceRerender = useForceRerender();
+    const ref = useRef<T>(initialValue);
+    const update = (newValue: T) => {
+        ref.current = newValue;
+        forceRerender();
+    };
+
+    return [ref, update];
 };

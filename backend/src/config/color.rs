@@ -84,9 +84,16 @@ pub(crate) struct Hsl {
 
 impl Hsl {
     /// Returns a darkened version of `self` where the lightness has been
-    /// reduces by `amount * 100%`.
+    /// reduces by `amount * 100%` towards 0.
     pub(crate) fn darken(self, amount: f32) -> Self {
         let l = self.l * (1.0 - amount);
+        Self { l, ..self }
+    }
+
+    /// Returns a lightened version of `self` where the lightness has been
+    /// increased by `amount * 100%` towards 1.
+    pub(crate) fn lighten(self, amount: f32) -> Self {
+        let l = self.l + (1.0 - self.l) * amount;
         Self { l, ..self }
     }
 }

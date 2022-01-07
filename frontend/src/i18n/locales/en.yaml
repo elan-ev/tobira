@@ -12,22 +12,18 @@ navigation: Navigation
 rename: Rename
 this-field-is-required: This field is required.
 
-api:
-  error-boundary:
-    invalid-input: Internal application error ($t(errors.invalid-input)).
-    unexpected-server-error: 'Application error: unexpected server error.'
-    detailed-error-info: 'Detailed error information for developers:'
-
 errors:
   not-your-fault: This is likely not your fault. You can try again later.
   unexpected-response: 'Internal application error: unexpected response from server.'
-  network-error: >
-    Server could not be reached due to a network error. Are you connected to the internet?
+  unexpected-server-error: 'Internal application error: unexpected server error.'
+  network-error: Server could not be reached due to a network error.
   not-authorized: You are not authorized.
   not-authorized-to-view-page: You are not authorized to view this page.
   invalid-input: Invalid input.
   internal-server-error: Internal server error (something is wrong with the server).
+  are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
+  detailed-error-info: 'Detailed error information for developers:'
 
 not-found:
   page-not-found: Page not found
@@ -90,6 +86,45 @@ realm:
   page-settings: Page settings
   edit-page-content: Edit page content
   add-sub-page: Add sub-page
+
+upload:
+  title: Upload video
+  drop-to-upload: Drag and drop video files to upload
+  not-authorized: You do not have the permission to upload videos.
+  select-files: Select files
+  too-many-files: You selected too many files. Currently, only a single file is supported.
+  not-a-file: You dropped something that's not a file.
+  starting: Starting...
+  finishing: Finishing up...
+  waiting-for-metadata: Please save video information to finish the upload
+  still-uploading: >
+    Video is still uploading. Please do not close this page before the upload is finished.
+  time-estimate:
+    a-few-seconds: a few seconds
+    a-minute: a minute
+    an-hour: an hour
+    seconds: seconds
+    minutes: minutes
+    hours: hours
+    time-left: '{{time}} left'
+  finished: >
+    Your video was uploaded successfully and is now being processed! It can be
+    watched as soon as processing is done. You may close this page now.
+  metadata:
+    title: Video title
+    description: Description
+    required: required
+    save: Save and finish
+  errors:
+    failed-to-upload: Failed to upload video.
+    unknown: Unknown error occured during video upload.
+    field-required: This field is required (cannot be empty)
+    opencast-server-error: Opencast server error (unexpected response).
+    opencast-unreachable: 'Network error: Opencast cannot be reached.'
+    jwt-expired: >
+      Internal cross-authentication error: due to your internet connection, the video was uploaded too slowly.
+      Currently, this application cannot deal with those cases. We are aware of this problem and
+      working on it! We are sorry for causing any inconvenience.
 
 manage:
   overview: Overview
@@ -163,6 +198,9 @@ manage:
 api-remote-errors:
   view:
     event: You are not authorized to view this video.
+  upload:
+    not-logged-in: You have to be logged in to upload videos.
+    not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: You have to be logged in to perform this action.
     not-a-moderator: You have to be a moderator to perform this action.

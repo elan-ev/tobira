@@ -53,9 +53,17 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
         "/~tobira"
+        | "/~upload"
         | "/~manage"
         | "/~manage/realm"
         | "/~manage/realm/add-child" => ctx.assets.serve_index().await,
+
+        "/.well-known/jwks.json" => {
+            Response::builder()
+                .header("Content-Type", "application/json")
+                .body(Body::from(ctx.jwt.jwks().to_owned()))
+                .unwrap()
+        }
 
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
@@ -159,6 +167,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         db: Transaction::new(tx.clone()),
         user,
         config: ctx.config.clone(),
+        jwt: ctx.jwt.clone(),
     });
     let out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
 

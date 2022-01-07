@@ -85,6 +85,7 @@ impl Assets {
             "passwordLabel": config.auth.login_page.password_label.as_ref().map(|ts| ts.map()),
             "loginPageNote": config.auth.login_page.note.as_ref().map(|ts| ts.map()),
         }).to_string());
+        variables.insert("oc-url".into(), config.sync.oc_url());
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());
         variables.insert(

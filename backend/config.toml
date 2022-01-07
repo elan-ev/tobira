@@ -13,8 +13,12 @@ level = "trace"
 [auth]
 mode = "login-proxy"
 
+[auth.jwt]
+signing_algorithm = "ES256"
+secret_key = "jwt-key.pem"
+
 [sync]
-host = "localhost:8080"
+host = "localhost:8081"
 use_insecure_connection = true
 user = "admin"
 password = "opencast"

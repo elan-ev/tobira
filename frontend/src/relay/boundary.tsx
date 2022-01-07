@@ -1,12 +1,11 @@
-import { Translation, useTranslation } from "react-i18next";
+import { Translation } from "react-i18next";
 import React, { ReactNode } from "react";
 
-import { APIError, NetworkError, NotJson, ServerError } from ".";
+import { APIError, NotJson, ServerError } from ".";
 import { Root } from "../layout/Root";
 import { useRouter } from "../router";
 import { Card } from "../ui/Card";
-import { assertNever } from "../util/err";
-import { match } from "../util";
+import { ErrorDisplay, NetworkError } from "../util/err";
 import { RouterControl } from "../rauta";
 
 
@@ -59,9 +58,11 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
             <Root nav={[]}>
                 <Translation>{t => (
                     <div css={{ margin: "0 auto", maxWidth: 600 }}>
-                        <MainErrorMessage error={error} />
+                        <div>
+                            <Card kind="error"><ErrorDisplay error={error} /></Card>
+                        </div>
                         <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
-                            {t("api.error-boundary.detailed-error-info")}
+                            {t("errors.detailed-error-info")}
                         </p>
                         <div css={{
                             backgroundColor: "var(--grey97)",
@@ -87,84 +88,4 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
 export const GraphQLErrorBoundary: React.FC = ({ children }) => {
     const router = useRouter();
     return <GraphQLErrorBoundaryImpl router={router}>{children}</GraphQLErrorBoundaryImpl>;
-};
-
-type MainErrorMessageProps = {
-    error: HandledError;
-};
-
-const MainErrorMessage: React.FC<MainErrorMessageProps> = ({ error }) => {
-    const { t, i18n } = useTranslation();
-
-    let message: string | JSX.Element;
-    let ourFault = false;
-    if (error instanceof NetworkError) {
-        message = t("errors.network-error");
-    } else if (error instanceof ServerError) {
-        // TODO: choose better error messages according to status code
-        message = t("api.error-boundary.unexpected-server-error");
-        ourFault = true;
-    } else if (error instanceof NotJson) {
-        message = t("errors.unexpected-response");
-        ourFault = true;
-    } else if (error instanceof APIError) {
-        // OK response, but it contained GraphQL errors.
-        const kinds = new Set();
-        const messages: string[] = [];
-        for (const err of error.errors) {
-            const translationKey = err.key ? `api-remote-errors.${err.key}` : null;
-            let msg;
-            if (translationKey && i18n.exists(translationKey)) {
-                msg = t(translationKey);
-            } else {
-                if (kinds.has(err.kind)) {
-                    continue;
-                }
-
-                kinds.add(err.kind);
-
-                if (!err.kind) {
-                    ourFault = true;
-                    msg = t("api.error-boundary.unexpected-server-error");
-                } else {
-                    msg = match(err.kind, {
-                        INTERNAL_SERVER_ERROR: () => {
-                            ourFault = true;
-                            return t("errors.internal-server-error");
-                        },
-                        INVALID_INPUT: () => t("api.error-boundary.invalid-input"),
-                        NOT_AUTHORIZED: () => t("errors.not-authorized"),
-                    });
-                }
-            }
-
-            messages.push(msg);
-        }
-
-
-        if (messages.length === 0) {
-            // This should never happen?
-            message = t("api.error-boundary.unexpected-server-error");
-            ourFault = true;
-        } else if (messages.length === 1) {
-            message = messages[0];
-        } else {
-            // It's not optimal to just show a list of errors, but this case is
-            // likely very rare and I prefer an ugly error message over one
-            // that omits useful information.
-            message = <ul>{messages.map(msg => <li key={msg}>{msg}</li>)}</ul>;
-        }
-    } else {
-        // Typescript unfortunately requires this `else` branch for some reason.
-        message = assertNever(error);
-    }
-
-    return <>
-        <div css={{ textAlign: "center" }}>
-            <Card kind="error">{message}</Card>
-        </div>
-        {ourFault && <p css={{ margin: "24px 0" }}>
-            {t("errors.not-your-fault")}
-        </p>}
-    </>;
 };

@@ -50,6 +50,8 @@ type UserApi {
   username: String!
   "The name of the user intended to be read by humans."
   displayName: String!
+  "`True` if the user has the permission to upload videos."
+  canUpload: Boolean!
 }
 
 type Query {
@@ -73,6 +75,8 @@ type Query {
   event(id: ID!): Event
   "Returns the current user."
   currentUser: UserApi
+  "Returns a new JWT that can be used to authenticate against Opencast for uploading videos."
+  uploadJwt: String!
 }
 
 enum RealmOrder {

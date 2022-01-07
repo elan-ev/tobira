@@ -75,6 +75,14 @@ pub(crate) struct SyncConfig {
 }
 
 impl SyncConfig {
+    pub(crate) fn oc_url(&self) -> String {
+        format!(
+            "{}://{}",
+            if self.use_insecure_connection { "http" } else { "https" },
+            self.host,
+        )
+    }
+
     pub(crate) fn validate(&self) -> Result<()> {
         let host_as_ip = self.host.parse::<IpAddr>();
 

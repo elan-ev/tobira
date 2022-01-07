@@ -7,6 +7,7 @@ const noUnusedVarsOptions = {
     caughtErrorsIgnorePattern: "^_",
     ignoreRestSiblings: true,
 };
+const braceStyle = ["warn", "1tbs", { allowSingleLine: true }];
 
 // eslint quote-props: "warn", "consistent-as-needed"
 module.exports = {
@@ -29,7 +30,7 @@ module.exports = {
         "arrow-body-style": "warn",
         "arrow-parens": ["warn", "as-needed"],
         "block-spacing": "warn",
-        "brace-style": "warn",
+        "brace-style": braceStyle,
         "camelcase": ["warn", {
             allow: ["\\$key$"],
             ignoreImports: true,
@@ -57,7 +58,6 @@ module.exports = {
         "max-statements-per-line": "warn",
         "multiline-comment-style": ["warn", "separate-lines"],
         "multiline-ternary": ["warn", "always-multiline"],
-        "no-extra-parens": ["warn", "all", { enforceForArrowConditionals: false }],
         "no-extra-semi": "warn",
         "no-multi-spaces": "warn",
         "no-multiple-empty-lines": ["warn", { max: 5 }],
@@ -112,7 +112,6 @@ module.exports = {
             // Turn off base rules overridden by `@typescript-eslint` rules
             "indent": "off",
             "lines-between-class-members": "off",
-            "no-extra-parens": "off",
             "no-unused-vars": "off",
             "semi": "off",
 
@@ -124,7 +123,7 @@ module.exports = {
 
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],
-            "@typescript-eslint/brace-style": "warn",
+            "@typescript-eslint/brace-style": braceStyle,
             "@typescript-eslint/comma-spacing": "warn",
             "@typescript-eslint/explicit-member-accessibility": "warn",
             "@typescript-eslint/indent": "warn",
@@ -134,11 +133,6 @@ module.exports = {
                 types: ["function"],
                 format: ["PascalCase", "camelCase"],
             }],
-            "@typescript-eslint/no-extra-parens": [
-                "warn",
-                "all",
-                { enforceForArrowConditionals: false, ignoreJSX: "all" },
-            ],
             "@typescript-eslint/object-curly-spacing": ["warn", "always"],
             "@typescript-eslint/quotes": "warn",
             "@typescript-eslint/semi": "warn",
