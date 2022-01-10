@@ -78,7 +78,7 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
         : t("manage.realm.heading", { realm: realm.name });
 
     return (
-        <RealmSettingsContainer>
+        <RealmSettingsContainer css={{ maxWidth: 900 }}>
             <h1>{heading}</h1>
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
             <div css={{

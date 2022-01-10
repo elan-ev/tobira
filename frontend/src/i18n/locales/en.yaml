@@ -170,7 +170,7 @@ manage:
         button: Change path segment
         failed: Changing the path failed.
         warning: >
-          Important: Changing the path of this page invalidates the paths to
+          Important: Changing the path of this page invalidates all links to
           this page, to all direct or indirect sub-pages, and to all videos
           linked on any of those pages. Old links, e.g. in personal
           browser-bookmarks or published somewhere, won't work anymore.
@@ -192,6 +192,14 @@ manage:
     below-root: The new page will be added directly below the homepage.
     button-create-page: Create page
     failed-to-add: Failed to create page.
+    page-name-info: >
+      The page name is shown in the navigation menu and as heading on the page itself.
+      You can change the page name at any time.
+    path-segment-info: >
+      Path segments may only consist of lowercase letters, numbers and hyphens (-).
+      Try keeping the segment rather short and don't repeat information already
+      contained in preceeding path segments. Changing the path segment later should
+      be avoided.
 
 
 # These errors map the `key` field of an API error response to a nice message.
