@@ -195,7 +195,18 @@ const EventTable: React.FC<EventTableProps> = ({
         reloadWithOrder(newOrder);
     };
 
-    return (
+    return <div css={{ position: "relative" }}>
+        {isPending && (
+            <div css={{
+                position: "absolute",
+                zIndex: 100,
+                fontSize: 48,
+                left: 0,
+                right: 0,
+                top: 64,
+                textAlign: "center",
+            }}><Spinner/></div>
+        )}
         <table css={{
             width: "100%",
             borderSpacing: 0,
@@ -237,25 +248,13 @@ const EventTable: React.FC<EventTableProps> = ({
                 },
             },
         }}>
-
             <colgroup>
                 <col span={1} css={{ width: THUMBNAIL_WIDTH + 2 * 6 }} />
                 <col span={1} />
                 <col span={1} css={{ width: 135 }} />
             </colgroup>
 
-            <thead ref={tableHeaderRef} css={{ position: "relative" }}>
-                {isPending && (
-                    <div css={{
-                        position: "absolute",
-                        zIndex: 100,
-                        fontSize: 48,
-                        left: 0,
-                        right: 0,
-                        top: 64,
-                        textAlign: "center",
-                    }}><Spinner/></div>
-                )}
+            <thead ref={tableHeaderRef}>
                 <tr>
                     <th></th>
                     <ColumnHeader
@@ -276,7 +275,7 @@ const EventTable: React.FC<EventTableProps> = ({
                 {events.map(event => <Row key={event.id} event={event} />)}
             </tbody>
         </table>
-    );
+    </div>;
 };
 
 type ColumnHeaderProps = {
