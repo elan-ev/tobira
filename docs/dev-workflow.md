@@ -21,6 +21,21 @@ Note that the `floof` build uses `relay-compiler --watch` which relies on [`watc
 This needs to be installed on your system somehow or this part of the script will not work,
 and `relay-compiler` will only run once.
 
+## Using `mold` as linker to improve incremental build times
+
+You can use [the `mold` linker](https://github.com/rui314/mold) to substantially reduce backend build times for incremental builds (i.e. when you compiled the backend once already).
+Install mold, then create the file `backend/.cargo/config` and fill it with this:
+
+```toml
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=/path/to/mold"]
+```
+
+Where `/path/to/mold` is likely `/usr/local/bin/mold` (check `which mold`!).
+Unfortunately, currently Cargo doesn't allow to specify this per profile (e.g. debug), so this enables mold for release builds as well.
+Just be aware of that before creating release artifacts, for example.
+
 ## Test data
 
 A freshly started Tobira instance has no data in it.
