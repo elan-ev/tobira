@@ -92,7 +92,6 @@ jobs:
         name: test-deployment-files
         path: |
           tobira
-          scripts/fixtures.sql
           backend/logo-large.svg
           backend/logo-small.svg
           deploy-id
