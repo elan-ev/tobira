@@ -74,7 +74,6 @@ const GLOBAL_STYLE = css({
 
         "& > div": {
             height: "100%",
-            overflow: "auto",
         },
     },
     h1: {

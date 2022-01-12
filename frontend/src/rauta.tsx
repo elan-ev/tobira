@@ -210,6 +210,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 const newRoute = matchRoute(href);
                 context.setActiveRoute(newRoute);
                 history.pushState(null, "", href);
+                window.scrollTo(0, 0);
                 newRoute(r => debugLog(`Setting active route for '${href}' to: `, r));
             },
 
@@ -330,6 +331,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                     r,
                 ));
             };
+
+            // This is "auto" by default, but setting it here makes it clear
+            // that we are in fact using the automatic behavior.
+            history.scrollRestoration = "auto";
 
             window.addEventListener("popstate", onPopState);
             return () => window.removeEventListener("popstate", onPopState);
