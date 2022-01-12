@@ -5,6 +5,14 @@ default:
     - run-task: frontend
     - run-task: backend
 
+# Proxies to auth proxy so that one can login. Requires the scripts below.
+with-login:
+  - concurrently:
+    - http:
+        proxy: 127.0.0.1:3090
+    - run-task: frontend
+    - run-task: backend
+
 # Starts all services from `scripts`
 start-scripts:
   - set-workdir: scripts
