@@ -208,9 +208,12 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             goto: (uri: string): void => {
                 const href = new URL(uri, document.baseURI).href;
                 const newRoute = matchRoute(href);
-                context.setActiveRoute(newRoute);
-                history.pushState(null, "", href);
-                window.scrollTo(0, 0);
+
+                // When navigating to new routes, the scroll position always
+                // starts as 0 (i.e. the very top).
+                context.setActiveRoute({ route: newRoute, initialScroll: 0 });
+                history.pushState({ scrollY: 0 }, "", href);
+
                 newRoute(r => debugLog(`Setting active route for '${href}' to: `, r));
             },
 
@@ -295,9 +298,16 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
     const matchInitialRoute = (): MatchedRouteErased => matchRoute(window.location.href);
 
+    type ActiveRoute = {
+        route: MatchedRouteErased;
+
+        /** A scroll position that should be restored when the route is first rendered */
+        initialScroll: number | null;
+    };
+
     type ContextData = {
-        activeRoute: MatchedRouteErased;
-        setActiveRoute: (newRoute: MatchedRouteErased) => void;
+        activeRoute: ActiveRoute;
+        setActiveRoute: (newRoute: ActiveRoute) => void;
         listeners: { listener: Listener }[];
     };
 
@@ -308,10 +318,13 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
     const Router = ({ initialRoute, children }: RouterProps) => {
         const listeners = useRef<{ listener: Listener }[]>([]);
-        const [activeRoute, setActiveRouteRaw] = useState<MatchedRouteErased>(() => initialRoute);
+        const [activeRoute, setActiveRouteRaw] = useState<ActiveRoute>({
+            route: initialRoute,
+            initialScroll: null, // We do not want to restore any scroll position
+        });
         const [isPending, startTransition] = useTransition();
 
-        const setActiveRoute = (newRoute: MatchedRouteErased) => {
+        const setActiveRoute = (newRoute: ActiveRoute) => {
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
                 for (const { listener } of listeners.current) {
@@ -320,11 +333,14 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             });
         };
 
-        // We need to listen to `popstate` events.
+        // Register some event listeners and set global values.
         useEffect(() => {
-            const onPopState = () => {
+            // Whenever the user navigates forwards or backwards in the browser,
+            // we have to render the corresponding route. We also restore the
+            // scroll position which we store within the history state.
+            const onPopState = (e: PopStateEvent) => {
                 const newRoute = matchRoute(window.location.href);
-                setActiveRoute(newRoute);
+                setActiveRoute({ route: newRoute, initialScroll: e.state?.scrollY });
                 newRoute(r => debugLog(
                     "Reacting to 'popstate' event: setting active route for"
                         + `'${window.location.href}' to: `,
@@ -332,17 +348,29 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 ));
             };
 
-            // This is "auto" by default, but setting it here makes it clear
-            // that we are in fact using the automatic behavior.
-            history.scrollRestoration = "auto";
+            // To actually get the correct scroll position into the history state, we
+            // unfortunately need to listen for scroll events. They can fire at a high
+            // rate, but `replaceState` is really fast to call. On jsbench.me the line
+            // could be executed 1 million times per second. And scroll events are usually
+            // not fired faster than `requestAnimationFrame`. So this should be fine!
+            const onScroll = () => {
+                history.replaceState({ scrollY: window.scrollY }, "");
+            };
+
+            // To prevent the browser restoring any scroll position.
+            history.scrollRestoration = "manual";
 
             window.addEventListener("popstate", onPopState);
-            return () => window.removeEventListener("popstate", onPopState);
+            window.addEventListener("scroll", onScroll);
+            return () => {
+                window.removeEventListener("popstate", onPopState);
+                window.removeEventListener("scroll", onScroll);
+            };
         }, []);
 
         // Dispose of routes when they are no longer needed.
         useEffect(() => () => {
-            activeRoute(r => {
+            activeRoute.route(r => {
                 if (r.dispose) {
                     debugLog("Disposing of route: ", r);
                     r.dispose(r.prepared);
@@ -370,7 +398,15 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             throw new Error("<ActiveRoute> used without a parent <Router>! That's not allowed.");
         }
 
-        return context.activeRoute(r => r.render(r.prepared));
+        useEffect(() => {
+            const scroll = context.activeRoute.initialScroll;
+            if (scroll != null) {
+                debugLog("Restoring scroll position to: ", scroll);
+                window.scrollTo(0, scroll);
+            }
+        }, [context.activeRoute]);
+
+        return context.activeRoute.route(r => r.render(r.prepared));
     };
 
     return {
