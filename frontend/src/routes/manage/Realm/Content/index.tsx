@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, PreloadedQuery } from "react-relay";
+import { useBeforeunload } from "react-beforeunload";
 
 import { Root } from "../../../../layout/Root";
 import type {
@@ -78,6 +79,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                 ... AddButtonsRealmData
                 blocks {
                     id
+                    editMode
                 }
             }
         `,
@@ -99,6 +101,15 @@ const ManageContent: React.FC<Props> = ({ data }) => {
     const onError = () => {
         setInFlight(false);
     };
+
+
+    const hasUnsavedChanges = blocks.some(block => block.editMode);
+
+    useBeforeunload(event => {
+        if (hasUnsavedChanges) {
+            event.preventDefault();
+        }
+    });
 
 
     return <ContentManageQueryContext.Provider value={data}>
