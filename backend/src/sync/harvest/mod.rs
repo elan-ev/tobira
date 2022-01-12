@@ -190,7 +190,7 @@ async fn store_in_db(
                     ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),
                 ]).await?;
 
-                debug!("Inserted or update event {} ({})", opencast_id, title);
+                debug!("Inserted or updated event {} ({})", opencast_id, title);
                 upserted_events += 1;
             }
 
