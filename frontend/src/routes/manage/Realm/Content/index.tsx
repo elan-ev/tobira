@@ -132,12 +132,14 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                     <React.Fragment key={block.id}>
                         <AddButtons index={index} realm={realm} />
 
-                        <EditBlock {...{ realm, index, onCommit, onCompleted, onError }} />
+                        <div css={block.editMode && !inFlight ? { zIndex: 2 } : {}}>
+                            <EditBlock {...{ realm, index, onCommit, onCompleted, onError }} />
+                        </div>
                     </React.Fragment>
                 ))}
                 <AddButtons index={blocks.length} realm={realm} />
 
-                {inFlight && <div css={{
+                <div css={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -145,9 +147,10 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                     position: "absolute",
                     width: "100%",
                     height: "100%",
+                    ...(hasUnsavedChanges ? {} : { zIndex: -1 }),
                 }}>
-                    <Spinner size={20} />
-                </div>}
+                    {inFlight && <Spinner size={20} />}
+                </div>
             </div>
         </RealmSettingsContainer>
     </ContentManageQueryContext.Provider>;
