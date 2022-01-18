@@ -4,6 +4,7 @@ import { useFragment, graphql, useMutation } from "react-relay";
 import { FiArrowDown, FiArrowUp } from "react-icons/fi";
 
 import type { MoveButtonsData$key } from "../../../../../query-types/MoveButtonsData.graphql";
+import type { MoveButtonsMutation } from "../../../../../query-types/MoveButtonsMutation.graphql";
 import { Button } from "../util";
 
 
@@ -35,7 +36,7 @@ export const MoveButtons: React.FC<Props> = ({
     `, realm);
 
 
-    const [commitMove] = useMutation(graphql`
+    const [commitMove] = useMutation<MoveButtonsMutation>(graphql`
         mutation MoveButtonsMutation($realmId: ID!, $index1: Int!, $index2: Int!) {
             swapBlocksByIndex(realm: $realmId, index1: $index1, index2: $index2) {
                 ... ContentManageRealmData

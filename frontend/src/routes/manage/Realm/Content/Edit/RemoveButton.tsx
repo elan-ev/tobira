@@ -4,6 +4,7 @@ import { useFragment, graphql, useMutation } from "react-relay";
 import { FiTrash } from "react-icons/fi";
 
 import type { RemoveButtonData$key } from "../../../../../query-types/RemoveButtonData.graphql";
+import type { RemoveButtonMutation } from "../../../../../query-types/RemoveButtonMutation.graphql";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../ui/Modal";
 import { displayCommitError } from "../../util";
 import { Button } from "../util";
@@ -25,7 +26,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
     `, blockRef);
 
 
-    const [commit] = useMutation(graphql`
+    const [commit] = useMutation<RemoveButtonMutation>(graphql`
         mutation RemoveButtonMutation($id: ID!) {
             removeBlock(id: $id) {
                 id @deleteRecord
