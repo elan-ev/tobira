@@ -94,11 +94,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
         setInFlight(true);
     };
 
-    const onCompleted = () => {
-        setInFlight(false);
-    };
-
-    const onError = () => {
+    const onCommitted = () => {
         setInFlight(false);
     };
 
@@ -133,7 +129,12 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                         <AddButtons index={index} realm={realm} />
 
                         <div css={block.editMode && !inFlight ? { zIndex: 2 } : {}}>
-                            <EditBlock {...{ realm, index, onCommit, onCompleted, onError }} />
+                            <EditBlock
+                                {...{ realm, index }}
+                                onCommit={onCommit}
+                                onCompleted={onCommitted}
+                                onError={onCommitted}
+                            />
                         </div>
                     </React.Fragment>
                 ))}
