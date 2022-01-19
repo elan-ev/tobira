@@ -2,7 +2,6 @@ version: '2'
 
 services:
   nginx:
-    container_name: opencast-cors-proxy
     image: nginx
     network_mode: "host"
     ports:
