@@ -91,6 +91,8 @@ realm:
 
 upload:
   title: Video hochladen
+  public-note: >
+    Hinweis: Hier hochgeladene Videos sind öffentlich, d.h. sie können von allen angeschaut werden.
   drop-to-upload: Videodateien zum Hochladen per Drag-and-drop hinzufügen
   not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   select-files: Dateien auswählen

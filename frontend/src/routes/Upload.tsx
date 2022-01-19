@@ -63,6 +63,7 @@ const Upload: React.FC<Props> = ({ queryRef }) => {
                 flexDirection: "column",
             }}>
                 <h1>{t("upload.title")}</h1>
+                <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
                 <UploadMain />
             </div>
         </Root>
