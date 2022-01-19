@@ -125,4 +125,4 @@ Then, your main reverse proxy can perform the second request to Tobira.
 └──────┘                └─────────┘                               └────────┘
 ```
 
-Nginx sample configuration: see `/scripts/auth/login-proxy-nginx.conf`.
+Nginx sample configuration: see `/scripts/auth-proxy/nginx.conf`.
