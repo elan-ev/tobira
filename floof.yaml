@@ -5,6 +5,45 @@ default:
     - run-task: frontend
     - run-task: backend
 
+# Proxies to auth proxy so that one can login. Requires the scripts below.
+with-login:
+  - concurrently:
+    - http:
+        proxy: 127.0.0.1:3090
+    - run-task: frontend
+    - run-task: backend
+
+# Starts all services from `scripts`
+start-scripts:
+  - set-workdir: scripts
+  - concurrently:
+    - docker-compose -f auth-proxy/docker-compose.yml up -d
+    - docker-compose -f dev-db/docker-compose.yml up -d
+    - docker-compose -f login-handler/docker-compose.yml up -d
+    - docker-compose -f opencast-cors/docker-compose.yml up -d
+
+# Stop all those servives again
+stop-scripts:
+  - set-workdir: scripts
+  - concurrently:
+    - docker-compose -f auth-proxy/docker-compose.yml stop
+    - docker-compose -f dev-db/docker-compose.yml stop
+    - docker-compose -f login-handler/docker-compose.yml stop
+    - docker-compose -f opencast-cors/docker-compose.yml stop
+
+
+# Runs all services from `scripts`
+run-scripts:
+  - set-workdir: scripts
+  - concurrently:
+    - docker-compose -f auth-proxy/docker-compose.yml up
+    - docker-compose -f dev-db/docker-compose.yml up
+    - docker-compose -f login-handler/docker-compose.yml up
+    - docker-compose -f opencast-cors/docker-compose.yml up
+
+
+# --- Private/helper tasks ---------------------------------------------------
+
 backend:
   - set-workdir: backend
   - watch:

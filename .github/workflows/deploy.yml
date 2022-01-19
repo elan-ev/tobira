@@ -56,19 +56,17 @@ jobs:
     - name: extract artifacts
       run: |
         rm .deployment/templates/config.toml || true
-        rm scripts/fixtures.sql || true
         rm backend/logo-large.svg || true
         rm backend/logo-small.svg || true
-        rm scripts/auth/login-handler.py || true
+        rm scripts/login-handler/login-handler.py || true
         unzip artifacts.zip
 
     - name: Prepare files for deployment
       run: |
         cp -v tobira .deployment/files/
-        cp -v scripts/fixtures.sql .deployment/files/
         cp -v backend/logo-large.svg .deployment/files/
         cp -v backend/logo-small.svg .deployment/files/
-        cp -v scripts/auth/login-handler.py .deployment/files/
+        cp -v scripts/login-handler/login-handler.py .deployment/files/
 
     - name: prepare deploy key
       env:

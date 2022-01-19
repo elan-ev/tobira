@@ -165,15 +165,6 @@
         mode: '0644'
       notify: restart tobira
 
-    - name: deploy demo data
-      become: true
-      copy:
-        src: fixtures.sql
-        dest: /opt/tobira/{{ id }}/
-        owner: root
-        group: root
-        mode: '0644'
-
     - name: copy realm demo data
       become: true
       copy:

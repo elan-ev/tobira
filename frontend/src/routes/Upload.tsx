@@ -63,6 +63,7 @@ const Upload: React.FC<Props> = ({ queryRef }) => {
                 flexDirection: "column",
             }}>
                 <h1>{t("upload.title")}</h1>
+                <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
                 <UploadMain />
             </div>
         </Root>
@@ -841,7 +842,15 @@ const finishUpload = async (
 
         // Add ACL
         {
-            const acl = constructAcl();
+            // Retrieve primary user role for user.
+            // TODO: we could save this information from a previous request to info/me.
+            const userInfo = JSON.parse(await ocRequest(relayEnv, "/info/me.json"));
+            const userRole = userInfo.userRole;
+            if (typeof userRole !== "string" || !userRole) {
+                throw `Field \`userRole\` from 'info/me.json' is not valid: ${userRole}`;
+            }
+
+            const acl = constructAcl(["ROLE_ANONYMOUS"], [userRole]);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
             body.append("mediaPackage", mediaPackage);
@@ -900,48 +909,43 @@ const constructDcc = (metadata: Metadata, user: User): string => {
     `;
 };
 
-// TODO!
-const constructAcl = (): string => `
-    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-    <Policy PolicyId="mediapackage-1"
-      RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:permit-overrides"
-      Version="2.0"
-      xmlns="urn:oasis:names:tc:xacml:2.0:policy:schema:os">
-      <Rule RuleId="user_read_Permit" Effect="Permit">
-        <Target>
-          <Actions>
-            <Action>
-              <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                <AttributeValue
-                  DataType="http://www.w3.org/2001/XMLSchema#string">read</AttributeValue>
-              </ActionMatch>
-            </Action>
-          </Actions>
-        </Target>
-        <Condition>
-          <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-is-in">
-            <AttributeValue
-              DataType="http://www.w3.org/2001/XMLSchema#string">ROLE_ANONYMOUS</AttributeValue>
-          </Apply>
-        </Condition>
-      </Rule>
-      <Rule RuleId="user_write_Permit" Effect="Permit">
-        <Target>
-          <Actions>
-            <Action>
-              <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                <AttributeValue
-                  DataType="http://www.w3.org/2001/XMLSchema#string">write</AttributeValue>
-              </ActionMatch>
-            </Action>
-          </Actions>
-        </Target>
-        <Condition>
-          <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-is-in">
-            <AttributeValue
-              DataType="http://www.w3.org/2001/XMLSchema#string">ROLE_ANONYMOUS</AttributeValue>
-          </Apply>
-        </Condition>
-      </Rule>
-    </Policy>
-`.trim();
+/** Constructs an ACL XML description from the given roles that are allowd to read/write */
+const constructAcl = (readRoles: string[], writeRoles: string[]): string => {
+    // TODO: maybe we should escape the role somehow?
+    const makeRule = (action: string, role: string): string => `
+        <Rule RuleId="${action}_permit_for_${role}" Effect="Permit">
+          <Target>
+            <Actions>
+              <Action>
+                <ActionMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                  <AttributeValue
+                    DataType="http://www.w3.org/2001/XMLSchema#string">${action}</AttributeValue>
+                </ActionMatch>
+              </Action>
+            </Actions>
+          </Target>
+          <Condition>
+            <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-is-in">
+              <AttributeValue
+                DataType="http://www.w3.org/2001/XMLSchema#string">${role}</AttributeValue>
+            </Apply>
+          </Condition>
+        </Rule>
+    `;
+
+
+    const readRules = readRoles.map(role => makeRule("read", role));
+    const writeRules = writeRoles.map(role => makeRule("write", role));
+
+    return `
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <Policy PolicyId="mediapackage-1"
+          RuleCombiningAlgId=
+            "urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:permit-overrides"
+          Version="2.0"
+          xmlns="urn:oasis:names:tc:xacml:2.0:policy:schema:os">
+            ${readRules.join("\n")}
+            ${writeRules.join("\n")}
+        </Policy>
+    `.trim();
+};

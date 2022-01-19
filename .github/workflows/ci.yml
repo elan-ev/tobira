@@ -92,9 +92,8 @@ jobs:
         name: test-deployment-files
         path: |
           tobira
-          scripts/fixtures.sql
           backend/logo-large.svg
           backend/logo-small.svg
           deploy-id
           .deployment/templates/config.toml
-          scripts/auth/login-handler.py
+          scripts/login-handler/login-handler.py

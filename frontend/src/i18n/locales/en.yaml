@@ -89,6 +89,7 @@ realm:
 
 upload:
   title: Upload video
+  public-note: 'Note: videos uploaded here will be public, i.e. everyone will be able to watch it.'
   drop-to-upload: Drag and drop video files to upload
   not-authorized: You do not have the permission to upload videos.
   select-files: Select files
