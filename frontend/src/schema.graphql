@@ -31,9 +31,25 @@ type Mutation {
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
   "Remove a realm from the tree."
   removeRealm(id: ID!): RemovedRealm!
-  "Adds a text block to a realm"
+  """
+    Adds a text block to a realm
+
+    The new block will be inserted at the given index,
+    i.e. it will be at that position after the insert.
+    Or, if you prefer to think about it this way:
+    It will be inserted before the block that currently sits
+    at that index.
+  """
   addTextBlock(realm: ID!, index: Int!, block: NewTextBlock!): Realm!
-  "Adds a series block to a realm"
+  """
+    Adds a series block to a realm
+
+    The new block will be inserted at the given index,
+    i.e. it will be at that position after the insert.
+    Or, if you prefer to think about it this way:
+    It will be inserted before the block that currently sits
+    at that index.
+  """
   addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
   "Swap two blocks."
   swapBlocksById(idA: ID!, idB: ID!): Realm!

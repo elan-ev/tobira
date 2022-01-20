@@ -58,11 +58,23 @@ impl Mutation {
     }
 
     /// Adds a text block to a realm
+    ///
+    /// The new block will be inserted at the given index,
+    /// i.e. it will be at that position after the insert.
+    /// Or, if you prefer to think about it this way:
+    /// It will be inserted before the block that currently sits
+    /// at that index.
     async fn add_text_block(realm: Id, index: i32, block: NewTextBlock, context: &Context) -> ApiResult<Realm> {
         BlockValue::add_text(realm, index, block, context).await
     }
 
     /// Adds a series block to a realm
+    ///
+    /// The new block will be inserted at the given index,
+    /// i.e. it will be at that position after the insert.
+    /// Or, if you prefer to think about it this way:
+    /// It will be inserted before the block that currently sits
+    /// at that index.
     async fn add_series_block(realm: Id, index: i32, block: NewSeriesBlock, context: &Context) -> ApiResult<Realm> {
         BlockValue::add_series(realm, index, block, context).await
     }

@@ -73,6 +73,10 @@ impl BlockValue {
             .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
     }
 
+    /// For all blocks in `realm` with an index `>= index`,
+    /// increase their index by `1`.
+    /// This basically moves all the blocks after the `index`-th one aside,
+    /// so a new block can be inserted at position `index`.
     async fn make_room_for_block(realm: Key, index: i16, context: &Context) -> ApiResult<()> {
         let num_blocks: i64 = context.db
             .query_one(
