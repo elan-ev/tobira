@@ -40,10 +40,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
 
         const { series: allSeries } = useFragment(graphql`
             fragment SeriesEditModeSeriesData on Query {
-                series {
-                    id
-                    title
-                }
+                series { id title }
             }
         `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
 
@@ -51,9 +48,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
             fragment SeriesEditModeBlockData on SeriesBlock {
                 order
                 layout
-                series {
-                    id
-                }
+                series { id }
             }
         `, blockRef);
 

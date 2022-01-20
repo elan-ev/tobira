@@ -63,10 +63,7 @@ export const EditTextBlock = React.forwardRef<EditModeRef, EditTextBlockProps>(
                     : bug("not a text block");
 
                 save({
-                    variables: {
-                        id,
-                        set,
-                    },
+                    variables: { id, set },
                     onCompleted,
                     onError,
                 });
@@ -77,11 +74,7 @@ export const EditTextBlock = React.forwardRef<EditModeRef, EditTextBlockProps>(
                     : bug("not a text block");
 
                 create({
-                    variables: {
-                        realm,
-                        index,
-                        block,
-                    },
+                    variables: { realm, index, block },
                     onCompleted,
                     onError,
                 });

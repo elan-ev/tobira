@@ -25,15 +25,17 @@ export const Blocks: React.FC<BlocksProps> = ({ realm: realmRef }) => {
     `, realmRef);
     const { blocks } = realm;
 
-    return <div css={{
-        display: "flex",
-        flexDirection: "column",
-        rowGap: 32,
-    }}>
-        {blocks.map(
-            block => <Block key={block.id} realm={realm} block={block} />,
-        )}
-    </div>;
+    return (
+        <div css={{
+            display: "flex",
+            flexDirection: "column",
+            rowGap: 32,
+        }}>
+            {blocks.map(
+                block => <Block key={block.id} realm={realm} block={block} />,
+            )}
+        </div>
+    );
 };
 
 type BlockProps = {

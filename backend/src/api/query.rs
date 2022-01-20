@@ -12,7 +12,7 @@ use super::{
         event::Event,
         series::Series,
         user::UserApi
-    }
+    },
 };
 
 

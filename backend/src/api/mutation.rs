@@ -15,7 +15,7 @@ use super::{
             UpdateSeriesBlock,
             RemovedBlock,
         },
-    }
+    },
 };
 
 

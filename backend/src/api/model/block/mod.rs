@@ -20,7 +20,7 @@ pub(crate) use mutations::{
     UpdateBlock,
     UpdateTextBlock,
     UpdateSeriesBlock,
-    RemovedBlock
+    RemovedBlock,
 };
 
 

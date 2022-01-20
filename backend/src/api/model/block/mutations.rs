@@ -74,7 +74,7 @@ impl BlockValue {
     }
 
     async fn make_room_for_block(realm: Key, index: i16, context: &Context) -> ApiResult<()> {
-        let blocks: i64 = context.db
+        let num_blocks: i64 = context.db
             .query_one(
                 "select count(*) from blocks where realm_id = $1",
                 &[&realm],
@@ -82,7 +82,7 @@ impl BlockValue {
             .await?
             .get(0);
 
-        if index < 0 || index as i64 > blocks {
+        if index < 0 || index as i64 > num_blocks {
             return Err(invalid_input!("`index` out of range"));
         }
 
@@ -103,14 +103,14 @@ impl BlockValue {
         let realm_stream = context.db(context.require_moderator()?)
             .query_raw(
                 &format!(
-                    "update blocks as blocks1
-                        set index = blocks2.index
-                        from realms, blocks as blocks2
-                        where blocks1.realm_id = realms.id and blocks2.realm_id = realms.id
-                        and (
-                            blocks1.id = $1 and blocks2.id = $2
-                            or blocks1.id = $2 and blocks2.id = $1
-                        )
+                    "update blocks as blocks1 \
+                        set index = blocks2.index \
+                        from realms, blocks as blocks2 \
+                        where blocks1.realm_id = realms.id and blocks2.realm_id = realms.id \
+                        and ( \
+                            blocks1.id = $1 and blocks2.id = $2 \
+                            or blocks1.id = $2 and blocks2.id = $1 \
+                        ) \
                         returning {}",
                     Realm::col_names("realms")
                 ),
@@ -152,20 +152,20 @@ impl BlockValue {
         let realm_stream = context.db(context.require_moderator()?)
             .query_raw(
                 &format!(
-                    "update blocks
-                        set index = updates.new_index
-                        from realms, (values
-                            ($1::smallint, $2::smallint),
-                            ($2::smallint, $1::smallint)
-                        ) as updates(old_index, new_index), (
-                            select count(*) as count from blocks
-                            where realm_id = $3
-                        ) as count
-                        where realm_id = realms.id
-                        and realm_id = $3
-                        and blocks.index = updates.old_index
-                        and updates.new_index < count
-                        and updates.new_index >= 0
+                    "update blocks \
+                        set index = updates.new_index \
+                        from realms, (values \
+                            ($1::smallint, $2::smallint), \
+                            ($2::smallint, $1::smallint) \
+                        ) as updates(old_index, new_index), ( \
+                            select count(*) as count from blocks \
+                            where realm_id = $3 \
+                        ) as count \
+                        where realm_id = realms.id \
+                        and realm_id = $3 \
+                        and blocks.index = updates.old_index \
+                        and updates.new_index < count \
+                        and updates.new_index >= 0 \
                         returning {}",
                     Realm::col_names("realms"),
                 ),
@@ -200,9 +200,9 @@ impl BlockValue {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
-                    "update blocks set
-                        title = case $2::boolean when true then $3 else title end
-                        where id = $1
+                    "update blocks set \
+                        title = case $2::boolean when true then $3 else title end \
+                        where id = $1 \
                         returning {}",
                     Self::COL_NAMES,
                 ),
@@ -222,11 +222,11 @@ impl BlockValue {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
-                    "update blocks set
-                        title = case $2::boolean when true then $3 else title end,
-                        text_content = coalesce($4, title)
-                        where id = $1
-                        and type = 'text'
+                    "update blocks set \
+                        title = case $2::boolean when true then $3 else title end, \
+                        text_content = coalesce($4, title) \
+                        where id = $1 \
+                        and type = 'text' \
                         returning {}",
                     Self::COL_NAMES,
                 ),
@@ -247,13 +247,13 @@ impl BlockValue {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
-                    "update blocks set
-                        title = case $2::boolean when true then $3 else title end,
-                        series_id = coalesce($4, series_id),
-                        videolist_layout = coalesce($5, videolist_layout),
-                        videolist_order = coalesce($6, videolist_order)
-                        where id = $1
-                        and type = 'series'
+                    "update blocks set \
+                        title = case $2::boolean when true then $3 else title end, \
+                        series_id = coalesce($4, series_id), \
+                        videolist_layout = coalesce($5, videolist_layout), \
+                        videolist_order = coalesce($6, videolist_order) \
+                        where id = $1 \
+                        and type = 'series' \
                         returning {}",
                     Self::COL_NAMES,
                 ),
@@ -280,11 +280,14 @@ impl BlockValue {
 
         let result = db
             .query_one(
-                &format!("delete from blocks
-                    using realms
-                    where blocks.realm_id = realms.id
-                    and blocks.id = $1
-                    returning {}, blocks.index", Realm::col_names("realms")),
+                &format!(
+                    "delete from blocks \
+                        using realms \
+                        where blocks.realm_id = realms.id \
+                        and blocks.id = $1 \
+                        returning {}, blocks.index",
+                    Realm::col_names("realms")
+                ),
                 &[
                     &id.key_for(Id::BLOCK_KIND)
                         .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?

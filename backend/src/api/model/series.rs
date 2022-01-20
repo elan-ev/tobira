@@ -38,8 +38,8 @@ impl Series {
         let series = context.db(context.require_moderator()?)
             .query_raw(
                 &format!(
-                    "select {} from series
-                    order by title",
+                    "select {} from series \
+                        order by title",
                     Self::COL_NAMES,
                 ),
                 dbargs![],
@@ -64,8 +64,8 @@ impl Series {
         let result = context.db
             .query_opt(
                 &format!(
-                    "select {}
-                        from series
+                    "select {} \
+                        from series \
                         where id = $1",
                     Self::COL_NAMES,
                 ),

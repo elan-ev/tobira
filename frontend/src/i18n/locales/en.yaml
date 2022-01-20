@@ -224,9 +224,9 @@ manage:
 
       cancel-warning: Your changes have not yet been saved!
 
-      removing-failed: Removing the block failed.
-      moving-failed: Moving the block failed.
-      saving-failed: Saving your changes to the block failed.
+      removing-failed: Removing failed.
+      moving-failed: Moving failed.
+      saving-failed: Saving your changes failed.
 
   add-child:
     heading: Add page

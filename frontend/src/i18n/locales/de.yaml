@@ -232,9 +232,9 @@ manage:
 
       cancel-warning: Ihre Änderungen wurden noch nicht gespeichert!
 
-      removing-failed: Entfernen des Blocks ist fehlgeschlagen.
-      moving-failed: Verschieben des Blocks ist fehlgeschlagen.
-      saving-failed: Speichern Ihrer Änderungen des Blocks ist fehlgeschlagen.
+      removing-failed: Entfernen ist fehlgeschlagen.
+      moving-failed: Verschieben ist fehlgeschlagen.
+      saving-failed: Speichern Ihrer Änderungen ist fehlgeschlagen.
 
   add-child:
     heading: Seite hinzufügen
