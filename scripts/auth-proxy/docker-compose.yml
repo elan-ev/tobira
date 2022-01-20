@@ -2,7 +2,6 @@ version: '2'
 
 services:
   nginx:
-    container_name: tobira-login-proxy-dummy
     image: nginx
     network_mode: "host"
     ports:
