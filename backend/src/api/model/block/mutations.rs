@@ -99,7 +99,7 @@ impl BlockValue {
         Ok(())
     }
 
-    pub(crate) async fn swap_by_id(id_1: Id, id_2: Id, context: &Context) -> ApiResult<Realm> {
+    pub(crate) async fn swap_by_id(id_a: Id, id_b: Id, context: &Context) -> ApiResult<Realm> {
         let realm_stream = context.db(context.require_moderator()?)
             .query_raw(
                 &format!(
@@ -115,9 +115,9 @@ impl BlockValue {
                     Realm::col_names("realms")
                 ),
                 &[
-                    &id_1.key_for(Id::BLOCK_KIND)
+                    &id_a.key_for(Id::BLOCK_KIND)
                         .ok_or_else(|| invalid_input!("`id1` does not refer to a block"))?,
-                    &id_2.key_for(Id::BLOCK_KIND)
+                    &id_b.key_for(Id::BLOCK_KIND)
                         .ok_or_else(|| invalid_input!("`id2` does not refer to a block"))?
                 ],
             )
@@ -138,12 +138,12 @@ impl BlockValue {
 
     pub(crate) async fn swap_by_index(
         realm: Id,
-        index_1: i32,
-        index_2: i32,
+        index_a: i32,
+        index_b: i32,
         context: &Context
     ) -> ApiResult<Realm> {
 
-        if index_1 == index_2 {
+        if index_a == index_b {
             return Realm::load_by_id(realm, context)
                 .await?
                 .ok_or_else(|| invalid_input!("`realm` is not a valid realm"));
@@ -170,8 +170,8 @@ impl BlockValue {
                     Realm::col_names("realms"),
                 ),
                 dbargs![
-                    &(index_1 as i16),
-                    &(index_2 as i16),
+                    &(index_a as i16),
+                    &(index_b as i16),
                     &realm.key_for(Id::REALM_KIND)
                         .ok_or_else(|| invalid_input!("`realm` is not a valid realm id"))?,
                 ],

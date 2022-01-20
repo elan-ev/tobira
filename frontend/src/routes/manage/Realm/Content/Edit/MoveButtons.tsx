@@ -37,8 +37,8 @@ export const MoveButtons: React.FC<Props> = ({
 
 
     const [commitMove] = useMutation<MoveButtonsMutation>(graphql`
-        mutation MoveButtonsMutation($realmId: ID!, $index1: Int!, $index2: Int!) {
-            swapBlocksByIndex(realm: $realmId, index1: $index1, index2: $index2) {
+        mutation MoveButtonsMutation($realmId: ID!, $indexA: Int!, $indexB: Int!) {
+            swapBlocksByIndex(realm: $realmId, indexA: $indexA, indexB: $indexB) {
                 ... ContentManageRealmData
             }
         }
@@ -48,8 +48,8 @@ export const MoveButtons: React.FC<Props> = ({
         commitMove({
             variables: {
                 realmId,
-                index1: index,
-                index2: index + direction,
+                indexA: index,
+                indexB: index + direction,
             },
             onCompleted,
             onError,

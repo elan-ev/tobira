@@ -68,18 +68,18 @@ impl Mutation {
     }
 
     /// Swap two blocks.
-    async fn swap_blocks_by_id(id_1: Id, id_2: Id, context: &Context) -> ApiResult<Realm> {
-        BlockValue::swap_by_id(id_1, id_2, context).await
+    async fn swap_blocks_by_id(id_a: Id, id_b: Id, context: &Context) -> ApiResult<Realm> {
+        BlockValue::swap_by_id(id_a, id_b, context).await
     }
 
     /// Swap two blocks.
     async fn swap_blocks_by_index(
         realm: Id,
-        index_1: i32,
-        index_2: i32,
+        index_a: i32,
+        index_b: i32,
         context: &Context
     ) -> ApiResult<Realm> {
-        BlockValue::swap_by_index(realm, index_1, index_2, context).await
+        BlockValue::swap_by_index(realm, index_a, index_b, context).await
     }
 
     /// Update a block's data
