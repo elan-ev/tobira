@@ -55,12 +55,6 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                     setOpen(false);
                 }
             } })}
-            onKeyUp={event => {
-                if (event.key === "Escape" && closable) {
-                    console.log("foo");
-                    setOpen(false);
-                }
-            }}
             css={{
                 position: "fixed",
                 top: 0,
