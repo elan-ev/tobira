@@ -35,19 +35,9 @@ type Mutation {
   addTextBlock(realm: ID!, index: Int!, block: NewTextBlock!): Realm!
   "Adds a series block to a realm"
   addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
-  """
-    Swap two blocks.
-
-    This is a less flexible but potentially cheaper alternative
-    to `orderBlocks`.
-  """
+  "Swap two blocks."
   swapBlocksById(id1: ID!, id2: ID!): Realm!
-  """
-    Swap two blocks.
-
-    This is a less flexible but potentially cheaper alternative
-    to `orderBlocks`.
-  """
+  "Swap two blocks."
   swapBlocksByIndex(realm: ID!, index1: Int!, index2: Int!): Realm!
   "Update a block's data"
   updateBlock(id: ID!, set: UpdateBlock!): Block!
@@ -113,7 +103,7 @@ type Query {
   realmByPath(path: String!): Realm
   "Returns an event by its ID."
   event(id: ID!): Event
-  "Returns a (potentially paginated) list of all series the current user has access to"
+  "Returns a list of all series"
   series: [Series!]!
   "Returns the current user."
   currentUser: UserApi

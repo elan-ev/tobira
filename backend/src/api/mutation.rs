@@ -68,17 +68,11 @@ impl Mutation {
     }
 
     /// Swap two blocks.
-    ///
-    /// This is a less flexible but potentially cheaper alternative
-    /// to `orderBlocks`.
     async fn swap_blocks_by_id(id_1: Id, id_2: Id, context: &Context) -> ApiResult<Realm> {
         BlockValue::swap_by_id(id_1, id_2, context).await
     }
 
     /// Swap two blocks.
-    ///
-    /// This is a less flexible but potentially cheaper alternative
-    /// to `orderBlocks`.
     async fn swap_blocks_by_index(
         realm: Id,
         index_1: i32,

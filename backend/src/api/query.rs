@@ -47,7 +47,7 @@ impl Query {
         Event::load_by_id(id, context).await
     }
 
-    /// Returns a (potentially paginated) list of all series the current user has access to
+    /// Returns a list of all series
     async fn series(context: &Context) -> ApiResult<Vec<Series>> {
         Series::load(context).await
     }
