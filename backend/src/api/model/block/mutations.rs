@@ -240,7 +240,7 @@ impl BlockValue {
                 &format!(
                     "update blocks set \
                         title = case $2::boolean when true then $3 else title end, \
-                        text_content = coalesce($4, title) \
+                        text_content = coalesce($4, text_content) \
                         where id = $1 \
                         and type = 'text' \
                         returning {}",
