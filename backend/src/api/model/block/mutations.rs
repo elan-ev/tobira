@@ -16,7 +16,12 @@ impl BlockValue {
     ) -> ApiResult<Realm> {
         context.require_moderator()?;
 
-        let index = index as i16;
+        if index < 0 {
+            return Err(invalid_input!("`index` must be nonnegative"));
+        }
+
+        let index = i16::try_from(index)
+            .map_err(|_| invalid_input!("`index` is too large"))?;
 
         let realm = realm.key_for(Id::REALM_KIND)
             .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
@@ -44,7 +49,12 @@ impl BlockValue {
     ) -> ApiResult<Realm> {
         context.require_moderator()?;
 
-        let index = index as i16;
+        if index < 0 {
+            return Err(invalid_input!("`index` must be nonnegative"));
+        }
+
+        let index = i16::try_from(index)
+            .map_err(|_| invalid_input!("`index` is too large"))?;
 
         let realm = realm.key_for(Id::REALM_KIND)
             .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
@@ -174,8 +184,10 @@ impl BlockValue {
                     Realm::col_names("realms"),
                 ),
                 dbargs![
-                    &(index_a as i16),
-                    &(index_b as i16),
+                    &(i16::try_from(index_a)
+                        .map_err(|_| invalid_input!("`index_a` is not a valid block index"))?),
+                    &(i16::try_from(index_b)
+                        .map_err(|_| invalid_input!("`index_b` is not a valid block index"))?),
                     &realm.key_for(Id::REALM_KIND)
                         .ok_or_else(|| invalid_input!("`realm` is not a valid realm id"))?,
                 ],
