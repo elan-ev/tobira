@@ -148,7 +148,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                     position: "absolute",
                     width: "100%",
                     height: "100%",
-                    ...(hasUnsavedChanges ? {} : { zIndex: -1 }),
+                    ...(hasUnsavedChanges || inFlight ? {} : { zIndex: -1 }),
                 }}>
                     {inFlight && <Spinner size={20} />}
                 </div>
