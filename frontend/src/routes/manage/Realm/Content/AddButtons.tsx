@@ -75,8 +75,11 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                 // We don't. We get away with it by creating a dummy series,
                 // which the edit mode of the series blocks knows about.
                 const seriesId = "clNOSERIES";
-                const dummySeries = store.create(seriesId, "Series");
-                dummySeries.setValue(seriesId, "id");
+                let dummySeries = store.get(seriesId);
+                if (!dummySeries) {
+                    dummySeries = store.create(seriesId, "Series");
+                    dummySeries.setValue(seriesId, "id");
+                }
                 block.setLinkedRecord(dummySeries, "series");
                 block.setValue("NEW_TO_OLD", "order");
                 block.setValue("GRID", "layout");
