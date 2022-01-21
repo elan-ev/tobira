@@ -104,7 +104,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
             },
             onCompleted: response => {
                 const typedResponse = response as AddChildMutationResponse;
-                router.goto(typedResponse.addRealm.path);
+                router.goto(`/~manage/realm/content?path=${typedResponse.addRealm.path}`);
             },
             onError: error => {
                 setCommitError(displayCommitError(error, t("manage.add-child.failed-to-add")));
