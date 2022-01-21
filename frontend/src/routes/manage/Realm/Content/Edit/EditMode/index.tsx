@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { FiX, FiCheck } from "react-icons/fi";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, useFormContext, FormProvider } from "react-hook-form";
 
 import type {
     EditModeRealmData$key,
@@ -149,10 +149,18 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
 
     const modalRef = useRef<ConfirmationModalHandle>(null);
 
+    const { formState: { isDirty } } = useFormContext();
+
     return <ButtonGroup css={{ marginTop: -24 }}>
         <Button
             title={t("manage.realm.content.cancel")}
-            onClick={() => modalRef.current?.open()}
+            onClick={() => {
+                if (isDirty) {
+                    modalRef.current?.open();
+                } else {
+                    onCancel?.();
+                }
+            }}
         >
             <FiX />
         </Button>
