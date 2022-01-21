@@ -19,6 +19,7 @@ import {
 } from "../../../../../../query-types/SeriesEditCreateMutation.graphql";
 import { bug } from "../../../../../../util/err";
 import { Card } from "../../../../../../ui/Card";
+import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
 import type { EditModeRef, EditModeFormData } from ".";
 
@@ -161,11 +162,11 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
             </label>
 
             <h3>{t("manage.realm.content.series.series.heading")}</h3>
-            {"series" in errors && <>
-                <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card><br />
-            </>}
-            <select
-                css={{ margin: "8px 0" }}
+            {"series" in errors && <div css={{ margin: "8px 0" }}>
+                <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
+            </div>}
+            <Select
+                error={"series" in errors}
                 defaultValue={series}
                 {...form.register("series", { pattern: /^sr/ })}
             >
@@ -188,7 +189,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
                 {allSeries.map(({ id, title }) => (
                     <option key={id} value={id}>{title}</option>
                 ))}
-            </select>
+            </Select>
         </div>;
     },
 );

@@ -46,3 +46,20 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
         />
     ),
 );
+
+export type SelectProps = React.ComponentPropsWithoutRef<"select"> & {
+    error?: boolean;
+};
+
+export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
+    ({ error = false, ...rest }, ref) => (
+        <select
+            ref={ref}
+            css={{
+                padding: "8px 10px",
+                ...style(error),
+            }}
+            {...rest}
+        />
+    ),
+);
