@@ -4,7 +4,7 @@ import { useFragment, graphql, useRelayEnvironment, commitLocalUpdate } from "re
 
 import type { BlockRealmData$key } from "../../../../query-types/BlockRealmData.graphql";
 import { bug } from "../../../../util/err";
-import { boxError } from "../../../../ui/error";
+import { Card } from "../../../../ui/Card";
 import { displayCommitError } from "../util";
 import { Block } from "../../../../ui/Blocks";
 import { EditButtons } from "./Edit";
@@ -74,7 +74,9 @@ export const EditBlock: React.FC<Props> = ({
 
 
     return <>
-        {boxError(error)}
+        {error && <div css={{ marginBottom: 8 }}>
+            <Card kind="error">{error}</Card>
+        </div>}
 
         <div css={{
             alignSelf: "stretch",
