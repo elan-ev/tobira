@@ -194,8 +194,8 @@ manage:
           mitgelöscht. Die Löschung kann nicht wieder rückgängig gemacht werden!
 
     content:
-      heading: Inhalte der Seite „{{realm}}“ bearbeiten
-      heading-root: Inhalte der Startseite bearbeiten
+      heading: Inhalte der Seite „<1>{{realm}}</1>“ bearbeiten
+      heading-root: Inhalte der <1>Startseite</1> bearbeiten
 
       add: Hier einen neuen Block einfügen
       add-text: Hier einen neuen Text-Block einfügen

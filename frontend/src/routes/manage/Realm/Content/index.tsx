@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans } from "react-i18next";
 import { graphql, useFragment, PreloadedQuery } from "react-relay";
 import { useBeforeunload } from "react-beforeunload";
 
@@ -14,6 +14,7 @@ import { NotAuthorized, PathInvalid } from "..";
 import { RealmSettingsContainer } from "../util";
 import { Nav } from "../../../../layout/Navigation";
 import { makeRoute } from "../../../../rauta";
+import { Link } from "../../../../router";
 import { QueryLoader } from "../../../../util/QueryLoader";
 import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
@@ -67,8 +68,6 @@ type Props = {
 };
 
 const ManageContent: React.FC<Props> = ({ data }) => {
-    const { t } = useTranslation();
-
     const realm = useFragment(
         graphql`
             fragment ContentManageRealmData on Realm {
@@ -85,7 +84,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
         `,
         data.realm as ContentManageRealmData$key,
     );
-    const { name, isRoot: realmIsRoot, blocks } = realm;
+    const { name, path, isRoot: realmIsRoot, blocks } = realm;
 
 
     const [inFlight, setInFlight] = useState(false);
@@ -112,8 +111,12 @@ const ManageContent: React.FC<Props> = ({ data }) => {
         <RealmSettingsContainer>
             <h1>
                 {realmIsRoot
-                    ? t("manage.realm.content.heading-root")
-                    : t("manage.realm.content.heading", { realm: name })}
+                    ? <Trans i18nKey="manage.realm.content.heading-root">
+                        Editing the <Link to="/">root realm</Link>
+                    </Trans>
+                    : <Trans i18nKey="manage.realm.content.heading" values={{ realm: name }}>
+                        Editing realm <Link to={path}>root realm</Link>
+                    </Trans>}
             </h1>
 
             <div css={{
