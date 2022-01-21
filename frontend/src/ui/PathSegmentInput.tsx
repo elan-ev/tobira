@@ -1,5 +1,5 @@
 import React from "react";
-import { Input, Props as InputProps } from "./Input";
+import { Input, InputProps } from "./Input";
 import { Spinner } from "./Spinner";
 
 
