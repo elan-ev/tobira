@@ -48,6 +48,7 @@ export const Root: React.FC<Props> = ({ nav, userQuery, children }) => {
                     {/* Main part */}
                     <div css={{
                         width: "100%",
+                        minWidth: 0,
                         flex: "12 0 0",
                         "& > h1:first-child": { marginBottom: 12 },
                     }}>
