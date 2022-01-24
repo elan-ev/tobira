@@ -24,6 +24,7 @@ import { keyOfId, match } from "../../../util";
 import { unreachable } from "../../../util/err";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
+import { Card } from "../../../ui/Card";
 
 
 const PATH = "/~manage/videos";
@@ -127,14 +128,11 @@ const ManageVideos: React.FC<Props> = ({ urlSortOrder, connection, reloadQuery }
         });
     };
 
-    return (
-        <div css={{
-            display: "flex",
-            flexDirection: "column",
-            height: "100%",
-            gap: 16,
-        }}>
-            <h1>{t("manage.my-videos.title")}</h1>
+    let inner;
+    if (connection.items.length === 0 && connection.totalCount === 0) {
+        inner = <Card kind="info">{t("manage.my-videos.no-videos-found")}</Card>;
+    } else {
+        inner = <>
             <PageNavigation {...{ loadFirst, loadLast, connection }} />
             <div css={{ flex: "1 0 0" }}>
                 <EventTable
@@ -143,6 +141,18 @@ const ManageVideos: React.FC<Props> = ({ urlSortOrder, connection, reloadQuery }
                 />
             </div>
             <PageNavigation {...{ loadFirst, loadLast, connection }} />
+        </>;
+    }
+
+    return (
+        <div css={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            gap: 16,
+        }}>
+            <h1>{t("manage.my-videos.title")}</h1>
+            {inner}
         </div>
     );
 };
@@ -389,8 +399,8 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, loadFirst, 
         }}>
             <div>
                 {t("manage.my-videos.page-showing-video-ids", {
-                    start: connection.pageInfo.startIndex,
-                    end: connection.pageInfo.endIndex,
+                    start: connection.pageInfo.startIndex ?? "?",
+                    end: connection.pageInfo.endIndex ?? "?",
                     total: connection.totalCount,
                 })}
             </div>

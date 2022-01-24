@@ -163,6 +163,7 @@ manage:
     opencast-id: Opencast-ID
     available-resolutions: Verfügbare Auflösungen
     page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
+    no-videos-found: Keine Videos gefunden.
 
   are-you-sure: Sind Sie sich sicher?
 
