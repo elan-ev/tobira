@@ -176,7 +176,7 @@ impl Event {
         let limit = std::cmp::min(limit, MAX_COUNT);
 
 
-        // Assembly argument list and the "where" part of the query. This
+        // Assemble argument list and the "where" part of the query. This
         // depends on `after` and `before`.
         let arg_user_roles = &context.user.roles() as &(dyn ToSql + Sync);
         let mut args = vec![arg_user_roles];

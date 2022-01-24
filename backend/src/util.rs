@@ -3,7 +3,7 @@ use std::fmt;
 /// A lazy `fmt` formatter, specified by a callable. Usually created via
 /// `lazy_format!`.
 ///
-/// This is particularly useful in situation, where you want a method to return
+/// This is particularly useful in situations where you want a method to return
 /// a formatted value, but don't want to return an allocated `String`. For
 /// example, if the returned value is formatted into yet another value anyway,
 /// allocating a string is useless. Instead of returning `String`, you then

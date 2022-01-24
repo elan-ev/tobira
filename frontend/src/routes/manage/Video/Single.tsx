@@ -64,7 +64,7 @@ const query = graphql`
             updated
             duration
             canWrite
-            series { title, ...SeriesBlockSeriesData }
+            series { title ...SeriesBlockSeriesData }
             tracks { flavor resolution }
         }
     }
@@ -92,9 +92,6 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
                 display: "flex",
                 flexDirection: "row-reverse",
                 gap: 48,
-                "& > *:first-child": {
-
-                },
             },
         }}>
             <ThumbnailDateInfo event={event} />
@@ -143,7 +140,7 @@ const MetadataSection: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
     return (
-        <Form noValidate onSubmit={() => {}} css={{ margin: "0px 2px", flex: "1 0 auto" }}>
+        <Form noValidate css={{ margin: "0px 2px", flex: "1 0 auto" }}>
             <InputContainer>
                 <TitleLabel htmlFor="title-field" />
                 <Input
