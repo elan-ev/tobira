@@ -143,8 +143,8 @@ manage:
     my-videos-tile: "View and edit your videos on <1>the “My\u00a0Videos” page</1>."
     manage-pages-tile-title: Manage pages?
     manage-pages-tile-body: >
-      To rename, modify and delete pages, navigate to the page in question. If you
-      are logged-in and have the necessary permissions, page management buttons will appear.
+      To rename, modify, and delete pages, navigate to the page in question. If you
+      are logged in and have the necessary permissions, page management buttons will appear.
 
   my-videos:
     title: My videos
