@@ -58,7 +58,6 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             boxShadow: "0 0 4px var(--grey92)",
             transition: "0.2s box-shadow",
             overflow: "hidden",
-            width,
             height: "fit-content",
             borderRadius: 4,
             // TODO: Not supported by Safari 14.1. Maybe used padding trick instead!
