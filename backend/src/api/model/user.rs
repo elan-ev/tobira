@@ -1,8 +1,3 @@
-use juniper::{
-    BoxFuture, ExecutionResult, Executor, GraphQLType, GraphQLValue, GraphQLValueAsync,
-    Registry, ScalarValue, Selection, Value, marker::IsOutputType, meta::MetaType,
-};
-
 use crate::{
     api::{
         Context,
@@ -10,7 +5,7 @@ use crate::{
         err::ApiResult,
         model::event::{Event, EventConnection, EventSortOrder},
     },
-    auth::{User, UserData},
+    auth::UserData,
     prelude::*,
 };
 
@@ -47,68 +42,5 @@ impl UserData {
         context: &Context,
     ) -> ApiResult<EventConnection> {
         Event::load_writable_for_user(context, order, first, after, last, before).await
-    }
-}
-
-
-// Manually implement juniper traits for `User`, semantically equivalent to `Option<UserData>`.
-// It's terribly verbose, and 90% just copied from the corresponding `Option<T>` impls, but
-// I guess this is the best we can do.
-
-impl<S: ScalarValue> GraphQLValue<S> for User {
-    type Context = <UserData as GraphQLValue>::Context;
-    type TypeInfo = <UserData as GraphQLValue>::TypeInfo;
-
-    fn type_name(&self, _: &Self::TypeInfo) -> Option<&'static str> {
-        None
-    }
-
-    fn resolve(
-        &self,
-        info: &Self::TypeInfo,
-        _: Option<&[Selection<S>]>,
-        executor: &Executor<Self::Context, S>,
-    ) -> ExecutionResult<S> {
-        match self {
-            Self::Some(user_data) => executor.resolve(info, user_data),
-            Self::None => Ok(Value::null()),
-        }
-    }
-}
-
-impl<S: ScalarValue + Send + Sync> GraphQLValueAsync<S> for User {
-    fn resolve_async<'a>(
-        &'a self,
-        info: &'a Self::TypeInfo,
-        _: Option<&'a [Selection<S>]>,
-        executor: &'a Executor<Self::Context, S>,
-    ) -> BoxFuture<'a, ExecutionResult<S>> {
-        let f = async move {
-            let value = match self {
-                Self::Some(obj) => executor.resolve_into_value_async(info, obj).await,
-                Self::None => Value::null(),
-            };
-            Ok(value)
-        };
-        Box::pin(f)
-    }
-}
-
-impl<S: ScalarValue> GraphQLType<S> for User {
-    fn name(_: &Self::TypeInfo) -> Option<&'static str> {
-        None
-    }
-
-    fn meta<'r>(info: &Self::TypeInfo, registry: &mut Registry<'r, S>) -> MetaType<'r, S>
-    where
-        S: 'r,
-    {
-        registry.build_nullable_type::<UserData>(info).into_meta()
-    }
-}
-
-impl<S: ScalarValue> IsOutputType<S> for User {
-    fn mark() {
-        <UserData as IsOutputType<S>>::mark()
     }
 }

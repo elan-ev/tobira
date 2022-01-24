@@ -1,7 +1,7 @@
 use juniper::graphql_object;
 
 
-use crate::auth::User;
+use crate::auth::{User, UserData};
 
 use super::{
     Context,
@@ -53,8 +53,11 @@ impl Query {
     }
 
     /// Returns the current user.
-    fn current_user(context: &Context) -> &User {
-        &context.user
+    fn current_user(context: &Context) -> Option<&UserData> {
+        match &context.user {
+            User::Some(u) => Some(u),
+            User::None => None,
+        }
     }
 
     /// Returns a new JWT that can be used to authenticate against Opencast for uploading videos.
