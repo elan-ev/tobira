@@ -5,13 +5,13 @@ use crate::{
         err::ApiResult,
         model::event::{Event, EventConnection, EventSortOrder},
     },
-    auth::UserData,
+    auth::User,
     prelude::*,
 };
 
 
-#[juniper::graphql_object(name = "User", context = Context)]
-impl UserData {
+#[juniper::graphql_object(context = Context)]
+impl User {
     /// The username, a unique string identifying the user.
     fn username(&self) -> &str {
         &self.username

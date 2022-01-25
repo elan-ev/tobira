@@ -1,7 +1,7 @@
 use hyper::{Body, StatusCode};
 
 use crate::{db, http::{self, Context, Request, Response}, prelude::*};
-use super::{AuthMode, SessionId, UserData};
+use super::{AuthMode, SessionId, User};
 
 
 /// Handles POST requests to `/~session`.
@@ -17,7 +17,7 @@ pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Re
             .pipe(Ok);
     }
 
-    match UserData::from_auth_headers(&req.headers(), &ctx.config.auth) {
+    match User::from_auth_headers(&req.headers(), &ctx.config.auth) {
         Some(user) => {
             // Some auth proxy received the request, did the authorization, put all
             // user information into our auth headers and forwarded it to us. We

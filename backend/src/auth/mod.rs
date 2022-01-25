@@ -112,19 +112,20 @@ pub(crate) enum AuthMode {
     LoginProxy,
 }
 
-/// An optional user session.
-#[derive(Debug)]
-pub(crate) enum User {
-    None,
-    Some(UserData),
-}
-
 /// Data about a user.
 #[derive(Debug)]
-pub(crate) struct UserData {
+pub(crate) struct User {
     pub(crate) username: String,
     pub(crate) display_name: String,
     pub(crate) roles: Vec<String>,
+}
+
+/// Returns a representation of the optional username useful for logging.
+pub(crate) fn debug_log_username(session: &Option<User>) -> Cow<'static, str> {
+    match session {
+        None => "none".into(),
+        Some(user) => format!("'{}'", user.username).into(),
+    }
 }
 
 impl User {
@@ -135,35 +136,16 @@ impl User {
         headers: &HeaderMap,
         auth_config: &AuthConfig,
         db: &Client,
-    ) -> Result<Self, PgError> {
+    ) -> Result<Option<Self>, PgError> {
         match auth_config.mode {
-            AuthMode::None => Ok(Self::None),
-            AuthMode::FullAuthProxy => Ok(UserData::from_auth_headers(headers, auth_config).into()),
-            AuthMode::LoginProxy => UserData::from_session(headers, db, auth_config.session_duration)
+            AuthMode::None => Ok(None),
+            AuthMode::FullAuthProxy => Ok(Self::from_auth_headers(headers, auth_config).into()),
+            AuthMode::LoginProxy => Self::from_session(headers, db, auth_config.session_duration)
                 .await
                 .map(Into::into),
         }
     }
 
-    /// Returns a representation of the optional username useful for logging.
-    pub(crate) fn debug_log_username(&self) -> Cow<'static, str> {
-        match self {
-            Self::None => "none".into(),
-            Self::Some(user) => format!("'{}'", user.username).into(),
-        }
-    }
-}
-
-impl From<Option<UserData>> for User {
-    fn from(src: Option<UserData>) -> Self {
-        match src {
-            Some(data) => Self::Some(data),
-            None => Self::None,
-        }
-    }
-}
-
-impl UserData {
     /// Tries to read user data auth headers (`x-tobira-username`, ...). If the
     /// username or display name are not defined, returns `None`.
     pub(crate) fn from_auth_headers(headers: &HeaderMap, auth_config: &AuthConfig) -> Option<Self> {
@@ -296,7 +278,7 @@ pub(crate) trait HasRoles {
     }
 }
 
-impl HasRoles for User {
+impl HasRoles for Option<User> {
     /// Returns the roles of the user if logged in, and `ROLE_ANONYMOUS` otherwise.
     fn roles(&self) -> &[String] {
         static LOGGED_OUT_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ANONYMOUS.into()]);
@@ -308,7 +290,7 @@ impl HasRoles for User {
     }
 }
 
-impl HasRoles for UserData {
+impl HasRoles for User {
     fn roles(&self) -> &[String] {
         &self.roles
     }

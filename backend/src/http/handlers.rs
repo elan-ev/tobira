@@ -170,7 +170,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
 
     // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();
-    let username = api_context.user.debug_log_username();
+    let username = auth::debug_log_username(&api_context.user);
     drop(api_context);
 
     // Check whether we own the last remaining handle of this Arc.
