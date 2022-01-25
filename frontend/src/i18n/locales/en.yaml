@@ -153,7 +153,7 @@ manage:
       title: Title
       created: Created
     no-description: No description
-    video-details: Video Details
+    video-details: 'Video Details: “{{title}}”'
     technical-details: Technical details
     opencast-id: Opencast ID
     available-resolutions: Available resolutions

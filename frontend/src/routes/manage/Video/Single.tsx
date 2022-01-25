@@ -17,6 +17,7 @@ import { Form } from "../../../ui/Form";
 import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { Thumbnail } from "../../../ui/Video";
+import { useTitle } from "../../../util";
 import { QueryLoader } from "../../../util/QueryLoader";
 import { NotFound } from "../../NotFound";
 
@@ -81,9 +82,15 @@ const BREAKPOINT = 1100;
 
 const ManageSingleVideo: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
+    const title = t("manage.my-videos.video-details", { title: event.title });
+    useTitle(title);
 
     return <>
-        <h1>{t("manage.my-videos.video-details")}</h1>
+        <h1 css={{
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+        }}>{title}</h1>
         <section css={{
             width: 1100,
             maxWidth: "100%",
