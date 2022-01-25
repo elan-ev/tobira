@@ -24,16 +24,32 @@ type Prep = {
     id: string;
 };
 
+const b64regex = "[a-zA-Z0-9\\-_]";
+
 export const VideoRoute = makeRoute<Prep>({
-    path: `((?:/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
+    path: `((?:/${PATH_SEGMENT_REGEX})*)/v/(${b64regex}+)`,
     queryParams: [],
     // TODO: check if video belongs to realm
-    prepare: ({ pathParams: [realmPath, videoId] }) => {
-        const id = `ev${videoId}`;
-        const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
-        return { queryRef, realmPath, id };
-    },
-    render: ({ queryRef, realmPath, id }) => <QueryLoader
+    prepare: ({ pathParams: [realmPath, videoId] }) => loadVideoQuery(`ev${videoId}`, realmPath),
+    render: prep => render(prep),
+    dispose: prep => prep.queryRef.dispose(),
+});
+
+export const DirectVideoRoute = makeRoute<Prep>({
+    path: `/!(${b64regex}+)`,
+    queryParams: [],
+    prepare: ({ pathParams: [videoId] }) => loadVideoQuery(`ev${videoId}`, "/"),
+    render: prep => render(prep),
+    dispose: prep => prep.queryRef.dispose(),
+});
+
+const loadVideoQuery = (id: string, realmPath: string): Prep => {
+    const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
+    return { queryRef, realmPath, id };
+};
+
+const render = ({ queryRef, realmPath, id }: Prep): JSX.Element => (
+    <QueryLoader
         {... { query, queryRef }}
         render={result => {
             const { event, realm } = result;
@@ -43,9 +59,9 @@ export const VideoRoute = makeRoute<Prep>({
                 ? <NotFound kind="video" />
                 : <VideoPage {...{ event, realm, userQuery: result, realmPath, id }} />;
         }}
-    />,
-    dispose: prep => prep.queryRef.dispose(),
-});
+    />
+);
+
 
 const query = graphql`
     query VideoQuery($id: ID!, $realmPath: String!) {
