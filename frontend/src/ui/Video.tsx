@@ -2,7 +2,7 @@ import { keyframes } from "@emotion/react";
 import { FiFilm, FiPlay, FiVolume2 } from "react-icons/fi";
 
 
-type ThumbnailProps = {
+type ThumbnailProps = JSX.IntrinsicElements["div"] & {
     /** The event of which a thumbnail should be shown */
     event: {
         thumbnail: string | null;
@@ -10,19 +10,15 @@ type ThumbnailProps = {
         tracks: readonly { resolution: readonly number[] | null }[];
     };
 
-    /** Width of the thumbnail. Height is always automatic to maintain 16:9 aspect ratio */
-    width: number;
-
     /** If `true`, an indicator overlay is shown */
     active?: boolean;
 };
 
 export const Thumbnail: React.FC<ThumbnailProps> = ({
     event,
-    width,
     active = false,
+    ...rest
 }) => {
-    const height = width * (9 / 16);
     const audioOnly = event.tracks.every(t => t.resolution == null);
 
     let inner;
@@ -30,8 +26,8 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         // We have a proper thumbnail.
         inner = <img
             src={event.thumbnail}
-            width={width}
-            height={height}
+            width={16}
+            height={9}
             css={{ display: "block", width: "100%", height: "auto" }}
         />;
     } else {
@@ -62,7 +58,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             borderRadius: 4,
             // TODO: Not supported by Safari 14.1. Maybe used padding trick instead!
             aspectRatio: "16 / 9",
-        }}>
+        }} {...rest}>
             {inner}
             {active && <ActiveIndicator />}
             {event.duration != null && (

@@ -96,10 +96,8 @@ type GridTypeProps = {
 };
 
 const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
-    const width = 16 * 15;
-
     const inner = <>
-        <Thumbnail event={event} width={width} active={active} />
+        <Thumbnail event={event} active={active} />
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
@@ -143,7 +141,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
         display: "block",
         margin: 8,
         marginBottom: 32,
-        width: width,
+        width: 16 * 15,
         borderRadius: 4,
         "& a": { color: "black", textDecoration: "none" },
         [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {

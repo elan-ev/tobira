@@ -126,7 +126,7 @@ const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
                 borderLeft: "1px dashed var(--grey80)",
             },
         }}>
-            <Thumbnail event={event} width={16 * 12} />
+            <Thumbnail event={event}css={{ width: 16 * 12 }} />
             <div css={{ fontSize: 14, margin: 4 }}>
                 {/* TODO: move those translation strings somewhere more appropriate */}
                 <DateValue label={t("video.created")} value={created} />

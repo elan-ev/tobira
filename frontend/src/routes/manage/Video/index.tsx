@@ -331,7 +331,7 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
         <tr>
             <td>
                 <Link to={link}>
-                    <Thumbnail event={event} width={THUMBNAIL_WIDTH} />
+                    <Thumbnail event={event} />
                 </Link>
             </td>
             <td>
