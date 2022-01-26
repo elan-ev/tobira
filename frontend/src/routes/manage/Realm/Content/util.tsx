@@ -25,9 +25,7 @@ export const Button: React.FC<ButtonProps> = props => (
             },
         }}
         {...props}
-    >
-        {props.children}
-    </button>
+    />
 );
 
 type ButtonGroupProps = React.ComponentProps<"div">;
@@ -51,7 +49,5 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
                 },
             },
         }}
-    >
-        {props.children}
-    </div>
+    />
 );
