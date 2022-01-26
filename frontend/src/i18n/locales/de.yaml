@@ -11,6 +11,7 @@ direction-down: Runter
 navigation: Navigation
 rename: Umbenennen
 this-field-is-required: Dieses Feld ist erforderlich.
+copy-to-clipboard: In Zwischenablage kopieren
 
 errors:
   not-your-fault: >
@@ -164,6 +165,7 @@ manage:
     available-resolutions: Verfügbare Auflösungen
     page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
     no-videos-found: Keine Videos gefunden.
+    share-direct-link: Via Direktlink teilen
 
   are-you-sure: Sind Sie sich sicher?
 
