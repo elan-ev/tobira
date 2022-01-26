@@ -146,7 +146,7 @@ export const ConfirmationModal
             return <Modal title={title} closable={!inFlight} ref={modalRef}>
                 {children}
                 <form onSubmit={onSubmitWrapper} css={{ marginTop: 32, textAlign: "center" }}>
-                    <Button autoFocus={true} disabled={inFlight} type="submit" kind="danger">
+                    <Button disabled={inFlight} type="submit" kind="danger">
                         {buttonContent}
                     </Button>
                     {inFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
