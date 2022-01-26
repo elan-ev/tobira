@@ -103,7 +103,7 @@ impl SessionId {
     /// from the client's cookie jar.
     pub(crate) fn unset_cookie() -> Cookie<'static> {
         Cookie::build(SESSION_COOKIE, "")
-            .max_age(time::Duration::zero())
+            .max_age(time::Duration::ZERO)
             .secure(true)
             .http_only(true)
             .same_site(cookie::SameSite::Lax)
