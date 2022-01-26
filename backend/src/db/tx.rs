@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::{Arc, atomic::{AtomicU32, Ordering}}};
+use std::sync::{Arc, atomic::{AtomicU32, Ordering}};
 use postgres_types::{BorrowToSql, ToSql};
 use tokio_postgres::{Error, Row, RowStream};
 
@@ -80,12 +80,5 @@ impl Transaction {
         let statement = self.inner.prepare_cached(query).await?;
         self.increase_num_queries();
         self.inner.execute(&statement, params).await
-    }
-}
-
-impl Deref for Transaction {
-    type Target = deadpool_postgres::Transaction<'static>;
-    fn deref(&self) -> &Self::Target {
-        &self.inner
     }
 }
