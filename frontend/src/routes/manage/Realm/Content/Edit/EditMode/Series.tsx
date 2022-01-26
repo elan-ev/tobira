@@ -166,6 +166,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
                 <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
             </div>}
             <Select
+                css={{ maxWidth: "100%" }}
                 error={"series" in errors}
                 defaultValue={series}
                 {...form.register("series", { pattern: /^sr/ })}
