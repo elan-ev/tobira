@@ -32,7 +32,7 @@ elliptic-curve = { version = "0.11.1", features = ["jwk", "sec1"] }
 futures = { version = "0.3.1", default-features = false, features = ["std"] }
 hostname = "0.3"
 hyper = { version = "0.14", features = ["client", "http1", "http2"] }
-hyper-rustls = "0.22"
+hyper-rustls = { version = "0.23", features = ["http2"] }
 hyperlocal = { version = "0.8", default-features = false, features = ["server"] }
 juniper = { version = "0.15.7", default-features = false, features = ["chrono", "schema-language"] }
 juniper_hyper = "0.8.0"
