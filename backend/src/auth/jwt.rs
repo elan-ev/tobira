@@ -5,7 +5,7 @@ use std::{path::PathBuf, time::Duration};
 
 use crate::prelude::*;
 
-use super::UserData;
+use super::User;
 
 
 
@@ -77,7 +77,7 @@ impl JwtContext {
     }
 
     /// Creates a new JWT.
-    pub(crate) fn new_upload_token(&self, user: &UserData) -> String {
+    pub(crate) fn new_upload_token(&self, user: &User) -> String {
         let exp = chrono::offset::Utc::now()
             + chrono::Duration::from_std(self.config.expiration_time)
                 .expect("failed to convert from std Duration to chrono::Duration");

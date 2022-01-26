@@ -14,10 +14,12 @@ mod context;
 mod err;
 mod id;
 mod model;
+mod common;
 
 pub(crate) use self::{
     id::Id,
     context::Context,
+    common::{Cursor, Node, NodeValue},
 };
 
 

@@ -20,6 +20,7 @@ errors:
   network-error: Server konnte aufgrund eines Netzwerkfehlers nicht erreicht werden.
   not-authorized: Sie sind nicht autorisiert.
   not-authorized-to-view-page: Sie sind nicht dazu autorisiert, diese Seite aufzurufen.
+  might-need-to-login: Sie müssen sich möglicherweise einloggen.
   invalid-input: Ungültige Eingabe.
   internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
@@ -133,7 +134,36 @@ upload:
       dieses Problem zu lösen. Bitte entschuldigen Sie diese Unannehmlichkeit.
 
 manage:
-  overview: Übersicht
+  nav:
+    dashboard: Übersicht
+    my-videos: Meine Videos
+
+  dashboard:
+    title: Dashboard
+    upload-tile: Videos von Ihrem Computer können Sie auf <1>dieser Seite</1> hochladen.
+    studio-tile-title: Video aufnehmen
+    studio-tile-body: >
+      Sie können sehr einfach ein neues Video erstellen, indem Sie Ihr Mikrofon, Ihren Bildschirm
+      und/oder Ihre Webcam auf <1>dieser Seite</1> aufzeichnen. (Funktioniert noch nicht!)
+    my-videos-tile: "Sie können Ihre Videos auf <1>der Seite „Meine\u00a0Videos“</1> sehen und bearbeiten."
+    manage-pages-tile-title: Seiten verwalten?
+    manage-pages-tile-body: >
+      Um Seiten zu bearbeiten, umzubenennen und zu löschen, navigieren Sie zu der gewünschten
+      Seite. Solange Sie angemeldet sind und die benötigten Rechte haben, gibt es dort entsprechende
+      Seitenverwaltungs-Buttons in der Seitenleiste bzw. im Menu.
+
+  my-videos:
+    title: Meine Videos
+    columns:
+      title: Titel
+      created: Erstellt
+    no-description: Keine Beschreibung
+    video-details: Videodetails
+    technical-details: Technische Details
+    opencast-id: Opencast-ID
+    available-resolutions: Verfügbare Auflösungen
+    page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
+    no-videos-found: Keine Videos gefunden.
 
   are-you-sure: Sind Sie sich sicher?
 

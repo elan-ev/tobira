@@ -48,6 +48,7 @@ export type Route<Prepared, QueryParams extends string[] = []> = RouteBase<Prepa
     prepare: (info: {
         pathParams: string[];
         queryParams: Record<QueryParams[number], string>;
+        url: URL;
     }) => Prepared;
 };
 
@@ -87,7 +88,10 @@ export type MatchedRoute<Prepared> = RouteBase<Prepared> & {
  * - https://stackoverflow.com/a/46186356/
  * - https://unsafe-perform.io/posts/2020-02-21-existential-quantification-in-typescript
  */
-export type RouteErased = <R, >(cont: <P, Q extends string[]>(r: Route<P, Q>) => R) => R;
+export type RouteErased = {
+    path: string;
+    f: <R, >(cont: <P, Q extends string[]>(r: Route<P, Q>) => R) => R;
+};
 
 /** A type-erased version of `FallbackRoute`. Use `makeFallbackRoute` to obtain this. */
 export type FallbackRouteErased = <R, >(cont: <P, >(r: FallbackRoute<P>) => R) => R;
@@ -98,7 +102,7 @@ export type MatchedRouteErased = <R, >(cont: <P, >(r: MatchedRoute<P>) => R) => 
 
 /** Creates the internal representation of the given route. */
 export function makeRoute<P, Q extends string[] = []>(route: Route<P, Q>): RouteErased {
-    return e => e(route);
+    return { path: route.path, f: e => e(route) };
 }
 
 /** Creates the internal representation of the given fallback route. */
@@ -275,14 +279,14 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 }
             }
 
-            const prepared = route.prepare({ pathParams: params.slice(1), queryParams });
+            const prepared = route.prepare({ pathParams: params.slice(1), queryParams, url });
             return { render: route.render, dispose: route.dispose, prepared };
         };
 
         const url = new URL(href);
         const currentPath = decodeURI(url.pathname);
         for (const route of config.routes) {
-            const matched: MatchedRouteErased | null = route(r => {
+            const matched: MatchedRouteErased | null = route.f(r => {
                 const matched = tryMatchSingleRoute(r);
                 return matched === null ? null : f => f(matched);
             });

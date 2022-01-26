@@ -9,6 +9,7 @@ module.exports = {
     language: "typescript",
     customScalars: {
         "DateTimeUtc": "string",
+        "Cursor": "string",
     },
     artifactDirectory: path.join(APP_PATH, "query-types"),
 };

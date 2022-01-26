@@ -2,7 +2,7 @@ use juniper::{graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
 
 use crate::{
-    api::{Context, Id, err::ApiResult},
+    api::{Context, Id, err::ApiResult, Node, NodeValue},
     db::types::Key,
     prelude::*,
 };
@@ -137,10 +137,17 @@ impl Realm {
     }
 }
 
-#[graphql_object(Context = Context)]
-impl Realm {
+#[juniper::graphql_interface]
+impl Node for Realm {
     fn id(&self) -> Id {
         Id::realm(self.key)
+    }
+}
+
+#[graphql_object(Context = Context, impl = NodeValue)]
+impl Realm {
+    fn id(&self) -> Id {
+        Node::id(self)
     }
 
     fn name(&self) -> &str {

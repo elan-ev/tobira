@@ -1,4 +1,5 @@
 use paste::paste;
+use serde::{Deserialize, Serialize};
 use static_assertions::const_assert;
 use std::fmt;
 
@@ -13,7 +14,7 @@ use crate::db::types::Key;
 /// sure we can easily convert the ID to a database primary key.
 ///
 /// Each key is encoded as 12 byte ASCII string.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct Id {
     /// The kind of node. Each different "thing" in our API has a different
     /// static prefix. For example, realms have the prefix `b"re"`. All IDs
@@ -110,6 +111,10 @@ impl Id {
         } else {
             None
         }
+    }
+
+    pub(crate) fn kind(&self) -> [u8; 2] {
+        self.kind
     }
 }
 

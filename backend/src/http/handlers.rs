@@ -52,13 +52,6 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
-        "/~tobira"
-        | "/~upload"
-        | "/~manage"
-        | "/~manage/realm"
-        | "/~manage/realm/add-child"
-        | "/~manage/realm/content" => ctx.assets.serve_index().await,
-
         "/.well-known/jwks.json" => {
             Response::builder()
                 .header("Content-Type", "application/json")
@@ -71,7 +64,10 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // information that isn't already exposed by the API itself.
         "/~graphiql" => juniper_hyper::graphiql("/graphql", None).await,
 
-        path if path.starts_with("/~") => reply_404(&ctx.assets, &method, path).await,
+        // Listing all potential routes here is duplication of routing logic and not really
+        // all that useful. So for now at least, we just assume all non-asset requests
+        // to `/~*` are fine.
+        path if path.starts_with("/~") => ctx.assets.serve_index().await,
 
 
         // Currently we just reply with our `index.html` to everything else.
@@ -174,7 +170,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
 
     // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();
-    let username = api_context.user.debug_log_username();
+    let username = auth::debug_log_username(&api_context.user);
     drop(api_context);
 
     // Check whether we own the last remaining handle of this Arc.

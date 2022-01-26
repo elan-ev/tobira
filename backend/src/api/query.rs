@@ -6,12 +6,12 @@ use crate::auth::User;
 use super::{
     Context,
     Id,
+    NodeValue,
     err::ApiResult,
     model::{
         realm::Realm,
         event::Event,
         series::Series,
-        user::UserApi
     },
 };
 
@@ -53,16 +53,26 @@ impl Query {
     }
 
     /// Returns the current user.
-    fn current_user(context: &Context) -> Option<UserApi> {
-        UserApi::from(&context.user, &context.config.auth)
+    fn current_user(context: &Context) -> Option<&User> {
+        context.user.as_ref()
     }
 
     /// Returns a new JWT that can be used to authenticate against Opencast for uploading videos.
     fn upload_jwt(context: &Context) -> ApiResult<String> {
         context.require_upload_permission()?;
         match &context.user {
-            User::None => unreachable!("user not logged in, but has upload permissions"),
-            User::Some(data) => Ok(context.jwt.new_upload_token(data)),
+            None => unreachable!("user not logged in, but has upload permissions"),
+            Some(data) => Ok(context.jwt.new_upload_token(data)),
+        }
+    }
+
+    /// Retrieve a node by globally unique ID. Mostly useful for relay.
+    async fn node(id: Id, context: &Context) -> ApiResult<Option<NodeValue>> {
+        match id.kind() {
+            Id::REALM_KIND => Ok(Realm::load_by_id(id, context).await?.map(NodeValue::from)),
+            Id::SERIES_KIND => Ok(Series::load_by_id(id, context).await?.map(NodeValue::from)),
+            Id::EVENT_KIND => Ok(Event::load_by_id(id, context).await?.map(NodeValue::from)),
+            _ => Ok(None),
         }
     }
 }

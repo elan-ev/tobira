@@ -1,29 +1,46 @@
-use crate::auth::{AuthConfig, User, UserData};
+use crate::{
+    api::{
+        Context,
+        common::Cursor,
+        err::ApiResult,
+        model::event::{Event, EventConnection, EventSortOrder},
+    },
+    auth::User,
+    prelude::*,
+};
 
 
-#[derive(juniper::GraphQLObject)]
-pub(crate) struct UserApi<'a> {
+#[juniper::graphql_object(context = Context)]
+impl User {
     /// The username, a unique string identifying the user.
-    username: &'a str,
+    fn username(&self) -> &str {
+        &self.username
+    }
 
     /// The name of the user intended to be read by humans.
-    display_name: &'a str,
+    fn display_name(&self) -> &str {
+        &self.display_name
+    }
 
     /// `True` if the user has the permission to upload videos.
-    can_upload: bool,
-}
+    fn can_upload(&self, context: &Context) -> bool {
+        self.can_upload(&context.config.auth)
+    }
 
-impl<'a> UserApi<'a> {
-    pub(crate) fn from(session: &'a User, auth_config: &AuthConfig) -> Option<Self> {
-        match session {
-            User::None => None,
-            User::Some(UserData { username, display_name, .. }) => {
-                Some(Self {
-                    username,
-                    display_name,
-                    can_upload: session.can_upload(auth_config),
-                })
-            }
-        }
+    /// Returns all events that somehow "belong" to the user, i.e. that appear
+    /// on the "my videos" page.
+    ///
+    /// Exactly one of `first` and `last` must be set!
+    #[graphql(arguments(order(default = Default::default())))]
+    async fn my_videos(
+        &self,
+        order: EventSortOrder,
+        first: Option<i32>,
+        after: Option<Cursor>,
+        last: Option<i32>,
+        before: Option<Cursor>,
+        context: &Context,
+    ) -> ApiResult<EventConnection> {
+        Event::load_writable_for_user(context, order, first, after, last, before).await
     }
 }

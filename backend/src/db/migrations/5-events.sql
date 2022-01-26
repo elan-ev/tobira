@@ -48,3 +48,7 @@ create table events (
 
 -- To get all events of a series (which happens often), we can use this index.
 create index idx_events_series on events (series);
+
+-- To perform queries like `write_roles && $1` on the whole table. Probably just
+-- to list all events that a user has write access to.
+create index idx_events_write_roles on events using gin (write_roles);

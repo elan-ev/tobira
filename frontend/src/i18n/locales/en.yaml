@@ -19,6 +19,7 @@ errors:
   network-error: Server could not be reached due to a network error.
   not-authorized: You are not authorized.
   not-authorized-to-view-page: You are not authorized to view this page.
+  might-need-to-login: You might need to login.
   invalid-input: Invalid input.
   internal-server-error: Internal server error (something is wrong with the server).
   are-you-connected-to-internet: Are you connected to the internet?
@@ -128,7 +129,35 @@ upload:
       working on it! We are sorry for causing any inconvenience.
 
 manage:
-  overview: Overview
+  nav:
+    dashboard: Dashboard
+    my-videos: My videos
+
+  dashboard:
+    title: Management Dashboard
+    upload-tile: You can upload a new video on <1>this page</1>.
+    studio-tile-title: Record video
+    studio-tile-body: >
+      You can create a new video by recording your microphone, screen and/or
+      webcam easily by using <1>this tool</1>. (does not work yet!)
+    my-videos-tile: "View and edit your videos on <1>the “My\u00a0Videos” page</1>."
+    manage-pages-tile-title: Manage pages?
+    manage-pages-tile-body: >
+      To rename, modify, and delete pages, navigate to the page in question. If you
+      are logged in and have the necessary permissions, page management buttons will appear.
+
+  my-videos:
+    title: My videos
+    columns:
+      title: Title
+      created: Created
+    no-description: No description
+    video-details: Video Details
+    technical-details: Technical details
+    opencast-id: Opencast ID
+    available-resolutions: Available resolutions
+    page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
+    no-videos-found: No videos found.
 
   are-you-sure: Are you sure?
 

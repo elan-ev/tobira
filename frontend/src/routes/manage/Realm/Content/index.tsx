@@ -10,7 +10,8 @@ import type {
 } from "../../../../query-types/ContentManageQuery.graphql";
 import { ContentManageRealmData$key } from "../../../../query-types/ContentManageRealmData.graphql";
 import { loadQuery } from "../../../../relay";
-import { NotAuthorized, PathInvalid } from "..";
+import { PathInvalid } from "..";
+import { NotAuthorized } from "../../../../ui/error";
 import { RealmSettingsContainer } from "../util";
 import { Nav } from "../../../../layout/Navigation";
 import { makeRoute } from "../../../../rauta";

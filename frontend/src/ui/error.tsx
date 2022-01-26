@@ -1,4 +1,7 @@
 import { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { useUser } from "../User";
+
 import { Card } from "./Card";
 
 
@@ -15,3 +18,13 @@ export const ErrorBox: React.FC = ({ children }) => (
 export const boxError = (err: ReactNode): JSX.Element | null => (
     err == null ? null : <ErrorBox>{err}</ErrorBox>
 );
+
+export const NotAuthorized: React.FC = () => {
+    const { t } = useTranslation();
+    const user = useUser();
+
+    return <ErrorBox>
+        {t("errors.not-authorized-to-view-page")}
+        {user === "none" && " " + t("errors.might-need-to-login")}
+    </ErrorBox>;
+};
