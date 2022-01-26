@@ -1,7 +1,7 @@
 import React from "react";
 import { graphql, useFragment } from "react-relay";
 import ReactMarkdown from "react-markdown";
-import type { TransformOptions } from "react-markdown";
+import type { Options } from "react-markdown";
 
 import { BlockContainer, Title } from ".";
 import { TextBlockData$key } from "../../query-types/TextBlockData.graphql";
@@ -40,7 +40,7 @@ const ALLOWED_MARKDOWN_TAGS = [
 const CODE_BACKGROUND_COLOR = "var(--grey97)";
 
 // We override some components emitted by the Markdown parser to add CSS.
-const MARKDOWN_COMPONENTS: TransformOptions["components"] = {
+const MARKDOWN_COMPONENTS: Options["components"] = {
     p: ({ node, ...props }) => <p
         css={{
             margin: "16px 0",
