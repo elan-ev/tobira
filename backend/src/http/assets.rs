@@ -90,11 +90,11 @@ impl Assets {
         variables.insert("site-title".into(), config.general.site_title.to_json());
         variables.insert(
             "large-logo-resolution".into(),
-            format!("{:?}", config.theme.logo.large.resolution),
+            format!("{:?}", config.theme.logo.large.resolution.0),
         );
         variables.insert(
             "small-logo-resolution".into(),
-            format!("{:?}", config.theme.logo.small.resolution),
+            format!("{:?}", config.theme.logo.small.resolution.0),
         );
 
         let reinda_config = reinda::Config {

@@ -1,4 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { FiCheck, FiCopy } from "react-icons/fi";
+import { Button } from "./Button";
 
 
 const style = (error: boolean) => ({
@@ -63,3 +66,45 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         />
     ),
 );
+
+type CopyableInputProps = JSX.IntrinsicElements["div"] & {
+    value: string;
+};
+
+export const CopyableInput: React.FC<CopyableInputProps> = ({ value, ...rest }) => {
+    const { t } = useTranslation();
+
+    const [wasCopied, setWasCopied] = useState(false);
+    const copy = async () => {
+        await navigator.clipboard.writeText(value);
+        setWasCopied(true);
+    };
+
+    return (
+        <div css={{ display: "flex" }} {...rest}>
+            <input disabled value={value} css={{
+                ...style(false),
+                padding: "4px 10px",
+                borderTopRightRadius: 0,
+                borderBottomRightRadius: 0,
+                verticalAlign: "bottom",
+                borderRight: "none",
+                flex: "1",
+            }} />
+            {/* TODO: use BaseButton or sth once merged */}
+            <Button
+                type="button"
+                kind="happy"
+                onClick={copy}
+                title={t("copy-to-clipboard")}
+                css={{
+                    borderTopLeftRadius: 0,
+                    borderBottomLeftRadius: 0,
+                    height: 34,
+                }}
+            >
+                {wasCopied ? <FiCheck /> : <FiCopy />}
+            </Button>
+        </div>
+    );
+};

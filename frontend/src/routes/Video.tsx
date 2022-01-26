@@ -16,6 +16,8 @@ import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute } from "../rauta";
 import { QueryLoader } from "../util/QueryLoader";
 import { UserData$key } from "../query-types/UserData.graphql";
+import { Link } from "../router";
+import { FiChevronRight } from "react-icons/fi";
 
 
 type Prep = {
@@ -24,16 +26,32 @@ type Prep = {
     id: string;
 };
 
+const b64regex = "[a-zA-Z0-9\\-_]";
+
 export const VideoRoute = makeRoute<Prep>({
-    path: `((?:/${PATH_SEGMENT_REGEX})*)/v/([a-zA-Z0-9\\-_]+)`,
+    path: `((?:/${PATH_SEGMENT_REGEX})*)/v/(${b64regex}+)`,
     queryParams: [],
     // TODO: check if video belongs to realm
-    prepare: ({ pathParams: [realmPath, videoId] }) => {
-        const id = `ev${videoId}`;
-        const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
-        return { queryRef, realmPath, id };
-    },
-    render: ({ queryRef, realmPath, id }) => <QueryLoader
+    prepare: ({ pathParams: [realmPath, videoId] }) => loadVideoQuery(`ev${videoId}`, realmPath),
+    render: prep => render(prep),
+    dispose: prep => prep.queryRef.dispose(),
+});
+
+export const DirectVideoRoute = makeRoute<Prep>({
+    path: `/!(${b64regex}+)`,
+    queryParams: [],
+    prepare: ({ pathParams: [videoId] }) => loadVideoQuery(`ev${videoId}`, "/"),
+    render: prep => render(prep),
+    dispose: prep => prep.queryRef.dispose(),
+});
+
+const loadVideoQuery = (id: string, realmPath: string): Prep => {
+    const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
+    return { queryRef, realmPath, id };
+};
+
+const render = ({ queryRef, realmPath, id }: Prep): JSX.Element => (
+    <QueryLoader
         {... { query, queryRef }}
         render={result => {
             const { event, realm } = result;
@@ -43,9 +61,9 @@ export const VideoRoute = makeRoute<Prep>({
                 ? <NotFound kind="video" />
                 : <VideoPage {...{ event, realm, userQuery: result, realmPath, id }} />;
         }}
-    />,
-    dispose: prep => prep.queryRef.dispose(),
-});
+    />
+);
+
 
 const query = graphql`
     query VideoQuery($id: ID!, $realmPath: String!) {
@@ -57,6 +75,7 @@ const query = graphql`
             created
             updated
             duration
+            canWrite
             series { title, ...SeriesBlockSeriesData }
             tracks { uri flavor mimetype resolution }
         }
@@ -96,7 +115,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, userQuery, realmPath, id }) 
             <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
             {description !== null && <TextBlock content={description} />}
             <table css={{
-                marginBottom: 100,
+                marginBottom: 16,
                 "& tr": {
                     "& > td:first-child": {
                         color: "var(--grey40)",
@@ -111,6 +130,19 @@ const VideoPage: React.FC<Props> = ({ event, realm, userQuery, realmPath, id }) 
                     <MetaDatum label={t("video.part-of-series")} value={event.series?.title} />
                 </tbody>
             </table>
+
+            {event.canWrite && (
+                <Link
+                    to={`/~manage/videos/${id.slice(2)}`}
+                    css={{ display: "inline-flex", alignItems: "center" }}
+                >
+                    {t("manage.my-videos.manage-video")}
+                    <FiChevronRight css={{ fontSize: 22 }} />
+                </Link>
+            )}
+
+            <div css={{ height: 80 }} />
+
             {event.series && <SeriesBlockFromSeries
                 realmPath={realmPath} fragRef={event.series}
                 title={t("video.more-from-series", { series: event.series.title })}

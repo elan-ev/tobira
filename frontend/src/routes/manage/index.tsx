@@ -12,6 +12,8 @@ import { makeRoute } from "../../rauta";
 import { loadQuery } from "../../relay";
 import { Link } from "../../router";
 import { LinkList, LinkWithIcon } from "../../ui";
+import { NotAuthorized } from "../../ui/error";
+import { useUser } from "../../User";
 import { QueryLoader } from "../../util/QueryLoader";
 
 
@@ -31,13 +33,17 @@ export const ManageRoute = makeRoute<PreloadedQuery<ManageDashboardQuery>>({
 const query = graphql`
     query manageDashboardQuery {
         ...UserData
+        currentUser { canUpload }
     }
 `;
 
 const Manage: React.FC = () => {
     const { t } = useTranslation();
+    const user = useUser();
+    if (user === "none" || user === "unknown") {
+        return <NotAuthorized />;
+    }
 
-    // TODO
     return <>
         <h1>{t("manage.dashboard.title")}</h1>
         <div css={{
@@ -67,13 +73,14 @@ const Manage: React.FC = () => {
                 },
             },
         }}>
-            <div>
+            {user.canUpload && <div>
                 <FiUpload />
                 <h2>{t("upload.title")}</h2>
                 <Trans i18nKey="manage.dashboard.upload-tile">
                     Foo <Link to="/~upload">the uploader</Link>
                 </Trans>
-            </div>
+            </div>}
+            {/* TODO: Studio integration */}
             <div>
                 <FiVideo />
                 <h2>{t("manage.dashboard.studio-tile-title")}</h2>

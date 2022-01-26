@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, fmt};
 
 use super::{Color, Hsl};
 
@@ -57,13 +57,14 @@ pub(crate) struct SingleLogoConfig {
     /// Resolution of the image. This is used to avoid layout shifts and to
     /// calculate the correct logo margins. The exact numbers don't matter,
     /// only the ratio between them does.
-    pub(crate) resolution: [u32; 2],
+    pub(crate) resolution: LogoResolution,
 }
+
+#[derive(serde::Deserialize)]
+pub(crate) struct LogoResolution(pub(crate) [u32; 2]);
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ColorConfig {
-    // TODO: make sure color format is valid
-
     #[config(default = "#357C58")]
     pub(crate) navigation: Color,
 
@@ -87,6 +88,13 @@ pub(crate) struct ColorConfig {
     /// login button. Typically green.
     #[config(default = "#27ae60")]
     pub(crate) happy: Color,
+}
+
+impl fmt::Debug for LogoResolution {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let [w, h] = self.0;
+        write!(f, "{}x{}", w, h)
+    }
 }
 
 impl ThemeConfig {

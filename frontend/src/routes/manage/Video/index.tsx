@@ -20,7 +20,7 @@ import { NotAuthorized } from "../../../ui/error";
 import { Spinner } from "../../../ui/Spinner";
 import { Thumbnail } from "../../../ui/Video";
 import { QueryLoader } from "../../../util/QueryLoader";
-import { keyOfId, match } from "../../../util";
+import { keyOfId, match, useTitle } from "../../../util";
 import { unreachable } from "../../../util/err";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
@@ -144,6 +144,9 @@ const ManageVideos: React.FC<Props> = ({ urlSortOrder, connection, reloadQuery }
         </>;
     }
 
+    const title = t("manage.my-videos.title");
+    useTitle(title);
+
     return (
         <div css={{
             display: "flex",
@@ -151,7 +154,7 @@ const ManageVideos: React.FC<Props> = ({ urlSortOrder, connection, reloadQuery }
             height: "100%",
             gap: 16,
         }}>
-            <h1>{t("manage.my-videos.title")}</h1>
+            <h1>{title}</h1>
             {inner}
         </div>
     );

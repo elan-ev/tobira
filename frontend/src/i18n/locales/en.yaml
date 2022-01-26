@@ -11,6 +11,7 @@ direction-down: Down
 navigation: Navigation
 rename: Rename
 this-field-is-required: This field is required.
+copy-to-clipboard: Copy to clipboard
 
 errors:
   not-your-fault: This is likely not your fault. You can try again later.
@@ -152,12 +153,14 @@ manage:
       title: Title
       created: Created
     no-description: No description
-    video-details: Video Details
+    video-details: 'Video Details: “{{title}}”'
     technical-details: Technical details
     opencast-id: Opencast ID
     available-resolutions: Available resolutions
     page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
     no-videos-found: No videos found.
+    share-direct-link: Share via direct link
+    manage-video: Manage video
 
   are-you-sure: Are you sure?
 

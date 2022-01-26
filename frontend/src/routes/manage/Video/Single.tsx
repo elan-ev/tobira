@@ -10,12 +10,14 @@ import {
 } from "../../../query-types/SingleVideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
+import { Link } from "../../../router";
 import { LinkList, LinkWithIcon } from "../../../ui";
 import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
-import { Input, TextArea } from "../../../ui/Input";
+import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { Thumbnail } from "../../../ui/Video";
+import { useTitle } from "../../../util";
 import { QueryLoader } from "../../../util/QueryLoader";
 import { NotFound } from "../../NotFound";
 
@@ -55,6 +57,7 @@ const query = graphql`
     query SingleVideoManageQuery($id: ID!) {
         ...UserData
         event(id: $id) {
+            id
             title
             description
             opencastId
@@ -79,9 +82,15 @@ const BREAKPOINT = 1100;
 
 const ManageSingleVideo: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
+    const title = t("manage.my-videos.video-details", { title: event.title });
+    useTitle(title);
 
     return <>
-        <h1>{t("manage.my-videos.video-details")}</h1>
+        <h1 css={{
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+        }}>{title}</h1>
         <section css={{
             width: 1100,
             maxWidth: "100%",
@@ -94,12 +103,32 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
             },
         }}>
             <ThumbnailDateInfo event={event} />
-            <MetadataSection event={event} />
+            <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
+                <DirectLink event={event} />
+                <MetadataSection event={event} />
+            </div>
         </section>
         <section>
             <TechnicalDetails event={event} />
         </section>
     </>;
+};
+
+const DirectLink: React.FC<Props> = ({ event }) => {
+    const { t } = useTranslation();
+    const url = new URL(`/!${event.id.slice(2)}`, document.baseURI);
+
+    return (
+        <div css={{ marginBottom: 40 }}>
+            <div css={{ marginBottom: 4 }}>
+                {t("manage.my-videos.share-direct-link") + ":"}
+            </div>
+            <CopyableInput
+                value={url.href}
+                css={{ width: "100%", fontFamily: "monospace", fontSize: 14 }}
+            />
+        </div>
+    );
 };
 
 const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
@@ -110,6 +139,7 @@ const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
     return (
         <div css={{
             flex: "0 0 auto",
+            marginBottom: 16,
             display: "flex",
             gap: 16,
             [`@media(min-width: ${BREAKPOINT}px)`]: {
@@ -118,7 +148,9 @@ const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
                 borderLeft: "1px dashed var(--grey80)",
             },
         }}>
-            <Thumbnail event={event}css={{ width: 16 * 12 }} />
+            <Link to={`/!${event.id.slice(2)}`}>
+                <Thumbnail event={event} css={{ width: 16 * 12 }} />
+            </Link>
             <div css={{ fontSize: 14, margin: 4 }}>
                 {/* TODO: move those translation strings somewhere more appropriate */}
                 <DateValue label={t("video.created")} value={created} />
@@ -144,7 +176,7 @@ const MetadataSection: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
     return (
-        <Form noValidate css={{ margin: "0px 2px", flex: "1 0 auto" }}>
+        <Form noValidate>
             <InputContainer>
                 <TitleLabel htmlFor="title-field" />
                 <Input
