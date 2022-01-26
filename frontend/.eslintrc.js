@@ -2,6 +2,7 @@
 
 const noUnusedVarsOptions = {
     args: "all",
+    varsIgnorePattern: "^_",
     argsIgnorePattern: "^_",
     caughtErrors: "all",
     caughtErrorsIgnorePattern: "^_",
@@ -116,11 +117,7 @@ module.exports = {
             "no-unused-vars": "off",
             "semi": "off",
 
-            // This checks some more things than `no-unused-vars`, but is less
-            // configurable. Note that this is basically like setting
-            // `noUnusedLocals` and `noUnusedParameters` in `tsconfig.json`.
-            "@typescript-eslint/no-unused-vars": "off",
-            "@typescript-eslint/no-unused-vars-experimental": "warn",
+            "@typescript-eslint/no-unused-vars": ["warn", noUnusedVarsOptions],
 
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],
