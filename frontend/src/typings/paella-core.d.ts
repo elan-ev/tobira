@@ -13,6 +13,8 @@ declare module "paella-core" {
          * to the constructor.
          */
         public loadManifest(): Promise<void>;
+
+        public unload(): Promise<void>;
     }
 
     export interface InitParams {
