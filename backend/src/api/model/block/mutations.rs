@@ -129,6 +129,19 @@ impl BlockValue {
         let realm_stream = context.db(context.require_moderator()?)
             .query_raw(
                 &format!(
+                    // This query is a bit involved, but this allows us to do the full swap in one
+                    // go, including "bound checking".
+                    //
+                    // The query basically joins the tables `blocks`, `realms` and two temporary
+                    // tables. The first temporary contains two rows with the
+                    // `(old_index, new_index)` and `(new_index, old_index)` pairs. The second only
+                    // contains the number of blocks for that realm. The join conditions are
+                    // `realm_id = realms.id` and `blocks.index = updates.old_index`, meaning that
+                    // the resulting joined table should contain exactly two rows if both indices
+                    // are valid. For these two rows, the `update` is performed.
+                    //
+                    // `updates.new_index < count` and `updates.new_index >= 0` are only to make
+                    // sure the new index is in bounds.
                     "update blocks \
                         set index = updates.new_index \
                         from realms, (values \
