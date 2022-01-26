@@ -198,9 +198,9 @@ manage:
       heading-root: Inhalte der <1>Startseite</1> bearbeiten
 
       add: Hier einen neuen Block einfügen
-      add-text: Hier einen neuen Text-Block einfügen
-      add-series: Hier einen neuen Serien-Block einfügen
-      add-video: Hier einen neuen Video-Block einfügen
+      add-text: Hier einen neuen Textblock einfügen
+      add-series: Hier einen neuen Serienblock einfügen
+      add-video: Hier einen neuen Videoblock einfügen
 
       move-down: Block nach unten verschieben
       move-up: Block nach oben verschieben
