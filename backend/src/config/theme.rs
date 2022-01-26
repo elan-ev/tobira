@@ -65,8 +65,6 @@ pub(crate) struct LogoResolution(pub(crate) [u32; 2]);
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ColorConfig {
-    // TODO: make sure color format is valid
-
     #[config(default = "#357C58")]
     pub(crate) navigation: Color,
 
