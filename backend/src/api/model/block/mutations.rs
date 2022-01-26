@@ -113,43 +113,6 @@ impl BlockValue {
         Ok(())
     }
 
-    pub(crate) async fn swap_by_id(id_a: Id, id_b: Id, context: &Context) -> ApiResult<Realm> {
-        let realm_stream = context.db(context.require_moderator()?)
-            .query_raw(
-                &format!(
-                    "update blocks as blocks1 \
-                        set index = blocks2.index \
-                        from realms, blocks as blocks2 \
-                        where blocks1.realm_id = realms.id and blocks2.realm_id = realms.id \
-                        and ( \
-                            blocks1.id = $1 and blocks2.id = $2 \
-                            or blocks1.id = $2 and blocks2.id = $1 \
-                        ) \
-                        returning {}",
-                    Realm::col_names("realms")
-                ),
-                &[
-                    &id_a.key_for(Id::BLOCK_KIND)
-                        .ok_or_else(|| invalid_input!("`id1` does not refer to a block"))?,
-                    &id_b.key_for(Id::BLOCK_KIND)
-                        .ok_or_else(|| invalid_input!("`id2` does not refer to a block"))?
-                ],
-            )
-            .await?;
-
-        pin_mut!(realm_stream);
-
-        let realm = realm_stream
-            .next()
-            .await
-            .ok_or_else(|| invalid_input!(
-                "`id1` and/or `id2` are either not valid blocks, or they are from different realms."
-            ))?
-            .map(Realm::from_row)?;
-
-        Ok(realm)
-    }
-
     pub(crate) async fn swap_by_index(
         realm: Id,
         index_a: i32,

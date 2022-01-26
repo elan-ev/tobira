@@ -80,11 +80,6 @@ impl Mutation {
     }
 
     /// Swap two blocks.
-    async fn swap_blocks_by_id(id_a: Id, id_b: Id, context: &Context) -> ApiResult<Realm> {
-        BlockValue::swap_by_id(id_a, id_b, context).await
-    }
-
-    /// Swap two blocks.
     async fn swap_blocks_by_index(
         realm: Id,
         index_a: i32,

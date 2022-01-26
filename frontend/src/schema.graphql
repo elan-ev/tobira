@@ -52,8 +52,6 @@ type Mutation {
   """
   addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
   "Swap two blocks."
-  swapBlocksById(idA: ID!, idB: ID!): Realm!
-  "Swap two blocks."
   swapBlocksByIndex(realm: ID!, indexA: Int!, indexB: Int!): Realm!
   "Update a block's data"
   updateBlock(id: ID!, set: UpdateBlock!): Block!
