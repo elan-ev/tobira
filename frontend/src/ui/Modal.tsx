@@ -10,10 +10,12 @@ import {
 } from "react";
 import ReactDOM from "react-dom";
 import { FiX } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "./Button";
 import { Spinner } from "./Spinner";
 import { boxError } from "./error";
+import { bug } from "../util/err";
 
 
 type ModalProps = {
@@ -95,7 +97,8 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
 });
 
 
-type ConfirmationModalProps = Omit<ModalProps, "closable"> & {
+type ConfirmationModalProps = Omit<ModalProps, "closable" | "title"> & {
+    title?: string;
     buttonContent: ReactNode;
     onSubmit?: () => void;
 };
@@ -108,11 +111,14 @@ export type ConfirmationModalHandle = ModalHandle & {
 export const ConfirmationModal
     = forwardRef<ConfirmationModalHandle, PropsWithChildren<ConfirmationModalProps>>(
         ({
-            title,
+            title: titleOverride,
             buttonContent,
             onSubmit,
             children,
         }, ref) => {
+            const { t } = useTranslation();
+            const title = titleOverride ?? t("manage.are-you-sure") ?? bug("missing translation");
+
             const [inFlight, setInFlight] = useState(false);
             const [error, setError] = useState<JSX.Element | undefined>();
 

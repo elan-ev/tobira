@@ -171,7 +171,6 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
             <FiCheck />
         </Button>
         <ConfirmationModal
-            title={t("manage.are-you-sure")}
             buttonContent={t("manage.realm.content.cancel")}
             onSubmit={onCancel}
             ref={modalRef}

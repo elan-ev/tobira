@@ -72,7 +72,6 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
             <FiTrash />
         </Button>
         <ConfirmationModal
-            title={t("manage.are-you-sure")}
             buttonContent={t("manage.realm.content.remove")}
             onSubmit={remove}
             ref={modalRef}

@@ -209,7 +209,6 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             </Button>
         </div>
         <ConfirmationModal
-            title={t("manage.are-you-sure")}
             {...{ buttonContent }}
             onSubmit={remove}
             ref={modalRef}
