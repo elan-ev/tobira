@@ -26,7 +26,7 @@ pub(crate) enum RealmOrder {
 }
 
 pub(crate) struct Realm {
-    key: Key,
+    pub(crate) key: Key,
     parent_key: Option<Key>,
     name: String,
     full_path: String,

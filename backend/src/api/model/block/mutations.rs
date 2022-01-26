@@ -274,7 +274,6 @@ impl BlockValue {
             )
             .await?;
 
-        let realm_key: Key = result.get(0);
         let index: i16 = result.get(result.len() - 1);
         let realm = Realm::from_row(result);
 
@@ -285,7 +284,7 @@ impl BlockValue {
                     set index = index - 1
                     where realm_id = $1
                     and index > $2",
-                &[&realm_key, &index],
+                &[&realm.key, &index],
             )
             .await?;
 
