@@ -160,6 +160,7 @@ manage:
     page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
     no-videos-found: No videos found.
     share-direct-link: Share via direct link
+    manage-video: Manage video
 
   are-you-sure: Are you sure?
 

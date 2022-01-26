@@ -16,6 +16,8 @@ import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute } from "../rauta";
 import { QueryLoader } from "../util/QueryLoader";
 import { UserData$key } from "../query-types/UserData.graphql";
+import { Link } from "../router";
+import { FiChevronRight } from "react-icons/fi";
 
 
 type Prep = {
@@ -73,6 +75,7 @@ const query = graphql`
             created
             updated
             duration
+            canWrite
             series { title, ...SeriesBlockSeriesData }
             tracks { uri flavor mimetype resolution }
         }
@@ -112,7 +115,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, userQuery, realmPath, id }) 
             <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
             {description !== null && <TextBlock content={description} />}
             <table css={{
-                marginBottom: 100,
+                marginBottom: 16,
                 "& tr": {
                     "& > td:first-child": {
                         color: "var(--grey40)",
@@ -127,6 +130,19 @@ const VideoPage: React.FC<Props> = ({ event, realm, userQuery, realmPath, id }) 
                     <MetaDatum label={t("video.part-of-series")} value={event.series?.title} />
                 </tbody>
             </table>
+
+            {event.canWrite && (
+                <Link
+                    to={`/~manage/videos/${id.slice(2)}`}
+                    css={{ display: "inline-flex", alignItems: "center" }}
+                >
+                    {t("manage.my-videos.manage-video")}
+                    <FiChevronRight css={{ fontSize: 22 }} />
+                </Link>
+            )}
+
+            <div css={{ height: 80 }} />
+
             {event.series && <SeriesBlockFromSeries
                 realmPath={realmPath} fragRef={event.series}
                 title={t("video.more-from-series", { series: event.series.title })}
