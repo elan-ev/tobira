@@ -210,13 +210,8 @@ pub(crate) struct NewRealm {
     path_segment: String,
 }
 
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
 pub(crate) struct RemovedRealm {
     parent: Realm,
-}
-
-#[juniper::graphql_object(Context = Context)]
-impl RemovedRealm {
-    fn parent(&self) -> &Realm {
-        &self.parent
-    }
 }

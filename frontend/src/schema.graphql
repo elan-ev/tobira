@@ -29,7 +29,43 @@ type Mutation {
   setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
   "Updates a realm's data."
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
+  "Remove a realm from the tree."
   removeRealm(id: ID!): RemovedRealm!
+  """
+    Adds a text block to a realm
+
+    The new block will be inserted at the given index,
+    i.e. it will be at that position after the insert.
+    Or, if you prefer to think about it this way:
+    It will be inserted before the block that currently sits
+    at that index.
+  """
+  addTextBlock(realm: ID!, index: Int!, block: NewTextBlock!): Realm!
+  """
+    Adds a series block to a realm
+
+    The new block will be inserted at the given index,
+    i.e. it will be at that position after the insert.
+    Or, if you prefer to think about it this way:
+    It will be inserted before the block that currently sits
+    at that index.
+  """
+  addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
+  "Swap two blocks."
+  swapBlocksByIndex(realm: ID!, indexA: Int!, indexB: Int!): Realm!
+  "Update a block's data"
+  updateBlock(id: ID!, set: UpdateBlock!): Block!
+  "Update a text block's data"
+  updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
+  "Update a series block's data"
+  updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): Block!
+  "Remove a block from a realm."
+  removeBlock(id: ID!): RemovedBlock!
+}
+
+input NewTextBlock {
+  title: String
+  content: String!
 }
 
 enum VideoListOrder {
@@ -43,6 +79,9 @@ scalar DateTimeUtc
 "A block just showing some text."
 type TextBlock implements Block {
   content: String!
+  id: ID!
+  index: Int!
+  title: String
 }
 
 type UserApi {
@@ -52,6 +91,11 @@ type UserApi {
   displayName: String!
   "`True` if the user has the permission to upload videos."
   canUpload: Boolean!
+}
+
+type RemovedBlock {
+  id: ID!
+  realm: Realm!
 }
 
 type Query {
@@ -73,6 +117,8 @@ type Query {
   realmByPath(path: String!): Realm
   "Returns an event by its ID."
   event(id: ID!): Event
+  "Returns a list of all series"
+  series: [Series!]!
   "Returns the current user."
   currentUser: UserApi
   "Returns a new JWT that can be used to authenticate against Opencast for uploading videos."
@@ -99,6 +145,16 @@ type SeriesBlock implements Block {
   series: Series!
   layout: VideoListLayout!
   order: VideoListOrder!
+  id: ID!
+  index: Int!
+  title: String
+}
+
+input UpdateSeriesBlock {
+  title: String
+  series: ID
+  layout: VideoListLayout
+  order: VideoListOrder
 }
 
 type Series {
@@ -121,6 +177,17 @@ input UpdateRealm {
   pathSegment: String
 }
 
+input NewSeriesBlock {
+  title: String
+  series: ID!
+  layout: VideoListLayout!
+  order: VideoListOrder!
+}
+
+input UpdateBlock {
+  title: String
+}
+
 type Track {
   uri: String!
   flavor: String!
@@ -132,6 +199,11 @@ input NewRealm {
   parent: ID!
   name: String!
   pathSegment: String!
+}
+
+input UpdateTextBlock {
+  title: String
+  content: String
 }
 
 type Realm {

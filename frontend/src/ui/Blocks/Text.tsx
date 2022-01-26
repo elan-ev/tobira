@@ -3,7 +3,7 @@ import { graphql, useFragment } from "react-relay";
 import ReactMarkdown from "react-markdown";
 import type { TransformOptions } from "react-markdown";
 
-import { Block, Title } from ".";
+import { BlockContainer, Title } from ".";
 import { TextBlockData$key } from "../../query-types/TextBlockData.graphql";
 
 
@@ -84,7 +84,7 @@ const MARKDOWN_COMPONENTS: TransformOptions["components"] = {
 };
 
 export const TextBlock: React.FC<Props> = ({ title, content }) => (
-    <Block>
+    <BlockContainer>
         <Title title={title} />
         <div css={{
             maxWidth: 1200,
@@ -95,5 +95,5 @@ export const TextBlock: React.FC<Props> = ({ title, content }) => (
                 {content}
             </ReactMarkdown>
         </div>
-    </Block>
+    </BlockContainer>
 );

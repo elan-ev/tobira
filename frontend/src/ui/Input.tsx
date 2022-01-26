@@ -11,12 +11,12 @@ const style = (error: boolean) => ({
     },
 });
 
-export type Props = JSX.IntrinsicElements["input"] & {
+export type InputProps = React.ComponentPropsWithoutRef<"input"> & {
     error?: boolean;
 };
 
 /** A styled single-line text box */
-export const Input = React.forwardRef<HTMLInputElement, Props>(
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ error = false, ...rest }, ref) => (
         <input
             ref={ref}
@@ -26,7 +26,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>(
     ),
 );
 
-export type TextAreaProps = JSX.IntrinsicElements["textarea"] & {
+export type TextAreaProps = React.ComponentPropsWithoutRef<"textarea"> & {
     error?: boolean;
 };
 
@@ -39,6 +39,23 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
                 width: "100%",
                 height: 200,
                 resize: "none",
+                padding: "8px 10px",
+                ...style(error),
+            }}
+            {...rest}
+        />
+    ),
+);
+
+export type SelectProps = React.ComponentPropsWithoutRef<"select"> & {
+    error?: boolean;
+};
+
+export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
+    ({ error = false, ...rest }, ref) => (
+        <select
+            ref={ref}
+            css={{
                 padding: "8px 10px",
                 ...style(error),
             }}

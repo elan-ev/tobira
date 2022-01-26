@@ -72,7 +72,7 @@ user:
 login-page:
   user-id: Nutzerkennung
   password: Passwort
-  already-logged-in: Sie sind bereits als „{{ name }}“ angemeldet.
+  already-logged-in: Sie sind bereits als „{{name}}“ angemeldet.
   go-to-homepage: Zur Startseite.
   bad-credentials: 'Anmeldung fehlgeschlagen: Falsche Anmeldedaten.'
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
@@ -138,7 +138,6 @@ manage:
   are-you-sure: Sind Sie sich sicher?
 
   realm:
-    nav-label: Seiteneinstellungen
     invalid-path: >
       Fehler: ungültiger Pfad zur Seite. Wurde die Seite gelöscht oder ihr Pfad geändert?
     heading: Einstellungen zur Seite „{{realm}}“
@@ -193,6 +192,49 @@ manage:
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
           indirekten Unterseiten sowie alle Seiteninhalte all dieser Seiten
           mitgelöscht. Die Löschung kann nicht wieder rückgängig gemacht werden!
+
+    content:
+      heading: Inhalte der Seite „<1>{{realm}}</1>“ bearbeiten
+      heading-root: Inhalte der <1>Startseite</1> bearbeiten
+
+      add: Hier einen neuen Block einfügen
+      add-text: Hier einen neuen Textblock einfügen
+      add-series: Hier einen neuen Serienblock einfügen
+      add-video: Hier einen neuen Videoblock einfügen
+
+      move-down: Block nach unten verschieben
+      move-up: Block nach oben verschieben
+      edit: Block bearbeiten
+      remove: Block entfernen
+
+      title: Blocktitel
+
+      text:
+        content: Hier können Sie ihren Text einfügen. Sie können sogar Markdown verwenden.
+
+      series:
+        order:
+          heading: Reihenfolge
+          new-to-old: Neuste zuerst
+          old-to-new: Älteste zuerst
+        layout:
+          heading: Anordnung
+          grid: Raster
+          horizontal: Horizontal
+          vertical: Vertikal
+        series:
+          heading: Serie
+          dummy: Serie auswählen
+          invalid: Bitte eine Serie auswählen
+
+      save: Änderungen speichern
+      cancel: Änderungen verwerfen
+
+      cancel-warning: Ihre Änderungen wurden noch nicht gespeichert!
+
+      removing-failed: Entfernen ist fehlgeschlagen.
+      moving-failed: Verschieben ist fehlgeschlagen.
+      saving-failed: Speichern Ihrer Änderungen ist fehlgeschlagen.
 
   add-child:
     heading: Seite hinzufügen

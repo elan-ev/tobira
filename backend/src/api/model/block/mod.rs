@@ -1,13 +1,26 @@
 //! Blocks that make up the content of realm pages.
 
-use juniper::{graphql_interface, graphql_object, GraphQLEnum, GraphQLObject};
-use postgres_types::FromSql;
+use std::{fmt, error::Error};
+use juniper::{graphql_interface, graphql_object, GraphQLEnum};
+use postgres_types::{FromSql, ToSql};
 use tokio_postgres::Row;
 
 use crate::{
     api::{Context, err::{ApiError, ApiResult, internal_server_err}, Id, model::series::Series},
     db::types::Key,
     prelude::*,
+};
+
+
+mod mutations;
+
+pub(crate) use mutations::{
+    NewTextBlock,
+    NewSeriesBlock,
+    UpdateBlock,
+    UpdateTextBlock,
+    UpdateSeriesBlock,
+    RemovedBlock,
 };
 
 
@@ -40,7 +53,7 @@ pub(crate) enum BlockType {
     Series,
 }
 
-#[derive(Debug, Clone, Copy, FromSql, GraphQLEnum)]
+#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
 #[postgres(name = "video_list_layout")]
 pub(crate) enum VideoListLayout {
     #[postgres(name = "horizontal")]
@@ -51,7 +64,7 @@ pub(crate) enum VideoListLayout {
     Grid,
 }
 
-#[derive(Debug, Clone, Copy, FromSql, GraphQLEnum)]
+#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
 #[postgres(name = "video_list_order")]
 pub(crate) enum VideoListOrder {
     #[postgres(name = "new_to_old")]
@@ -67,11 +80,7 @@ pub(crate) struct SharedData {
     pub(crate) title: Option<String>,
 }
 
-/// A block just showing some text.
-#[derive(GraphQLObject)]
-#[graphql(Context = Context, impl = BlockValue)]
 pub(crate) struct TextBlock {
-    #[graphql(skip)]
     pub(crate) shared: SharedData,
     pub(crate) content: String,
 }
@@ -80,6 +89,26 @@ pub(crate) struct TextBlock {
 impl Block for TextBlock {
     fn shared(&self) -> &SharedData {
         &self.shared
+    }
+}
+
+/// A block just showing some text.
+#[graphql_object(Context = Context, impl = BlockValue)]
+impl TextBlock {
+    fn content(&self) -> &str {
+        &self.content
+    }
+
+    fn id(&self) -> Id {
+        self.shared().id
+    }
+
+    fn index(&self) -> i32 {
+        self.shared().index
+    }
+
+    fn title(&self) -> Option<&str> {
+        self.shared().title.as_deref()
     }
 }
 
@@ -112,6 +141,18 @@ impl SeriesBlock {
     fn order(&self) -> VideoListOrder {
         self.order
     }
+
+    fn id(&self) -> Id {
+        self.shared().id
+    }
+
+    fn index(&self) -> i32 {
+        self.shared().index
+    }
+
+    fn title(&self) -> Option<&str> {
+        self.shared().title.as_deref()
+    }
 }
 
 impl BlockValue {
@@ -119,11 +160,13 @@ impl BlockValue {
     pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
         context.db
             .query_raw(
-                "select id, type, index, title, text_content, series_id, \
-                    videolist_layout, videolist_order \
-                    from blocks \
-                    where realm_id = $1 \
-                    order by index asc",
+                &format!(
+                    "select {} \
+                        from blocks \
+                        where realm_id = $1 \
+                        order by index asc",
+                    Self::COL_NAMES,
+                ),
                 &[realm_key],
             )
             .await?
@@ -134,7 +177,10 @@ impl BlockValue {
             .map_err(Into::into)
     }
 
-    fn from_row(row: Row) -> ApiResult<BlockValue> {
+    const COL_NAMES: &'static str
+        = "id, type, index, title, text_content, series_id, videolist_layout, videolist_order";
+
+    fn from_row(row: Row) -> ApiResult<Self> {
         let ty: BlockType = row.get(1);
         let shared = SharedData {
             id: Id::block(row.get(0)),
@@ -179,4 +225,35 @@ fn get_type_dependent<'a, T: FromSql<'a>>(
         type_name,
         field_name,
     ))
+}
+
+#[derive(Debug)]
+pub(crate) struct BlockTypeError;
+
+impl fmt::Display for BlockTypeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "wrong block type")
+    }
+}
+
+impl Error for BlockTypeError {}
+
+impl TryFrom<BlockValue> for TextBlock {
+    type Error = BlockTypeError;
+    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
+        match block {
+            BlockValue::TextBlock(b) => Ok(b),
+            _ => Err(BlockTypeError),
+        }
+    }
+}
+
+impl TryFrom<BlockValue> for SeriesBlock {
+    type Error = BlockTypeError;
+    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
+        match block {
+            BlockValue::SeriesBlock(b) => Ok(b),
+            _ => Err(BlockTypeError),
+        }
+    }
 }

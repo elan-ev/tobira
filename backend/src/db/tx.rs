@@ -29,12 +29,12 @@ impl Transaction {
     // and automatically use the statement cache. This means every query
     // additionally incurs an `RwLock` read lock and a hashmap lookup, but
     // that's a lot cheaper than preparing the statement each time (which is
-    // what happens when executing unprepared statement).
+    // what happens when executing unprepared statements).
     //
     // We could avoid the `RwLock`/hashmap stuff by preparing all queries our
     // application will ever use whenever we check out a new DB connection.
     // However, this would mean a lot more code which contains logic
-    // duplications. This makes everything a lot less maintainable. This
+    // duplications. This makes everything a lot less maintainable. Thus
     // automatically using the statement cache is the best solution.
 
     pub async fn query_one(

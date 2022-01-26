@@ -1,5 +1,7 @@
 import React, { ReactNode, useEffect, useRef, useState, useTransition } from "react";
 
+import { bug } from "./util/err";
+
 
 export type RouteBase<Prepared> = {
     /**
@@ -201,7 +203,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     const useRouterImpl = (caller: string): RouterControl => {
         const context = React.useContext(Context);
         if (context === null) {
-            throw new Error(`${caller} used without a parent <Router>! That's not allowed.`);
+            return bug(`${caller} used without a parent <Router>! That's not allowed.`);
         }
 
         return {

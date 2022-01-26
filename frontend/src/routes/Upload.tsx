@@ -15,6 +15,7 @@ import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { UploadJwtQuery } from "../query-types/UploadJwtQuery.graphql";
 import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
+import { currentRef } from "../util";
 import CONFIG from "../config";
 import { Button } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
@@ -366,7 +367,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
             <div css={{ marginTop: 16 }}>
                 <Button
                     kind="happy"
-                    onClick={() => fileInput.current?.click()}
+                    onClick={() => currentRef(fileInput).click()}
                 >{t("upload.select-files")}</Button>
                 <input
                     ref={fileInput}

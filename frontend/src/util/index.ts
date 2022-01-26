@@ -2,6 +2,7 @@ import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import CONFIG, { TranslatedString } from "../config";
+import { bug } from "./err";
 
 /**
  * A switch-like expression with exhaustiveness check (or fallback value). A bit
@@ -121,3 +122,13 @@ export const useRefState = <T, >(
 
     return [ref, update];
 };
+
+/**
+ * Accesses the current value of a ref, signaling an error when it is unbound.
+ * Note: **Don't** use this if you expect the ref to be unbound temporarily.
+ * This is mainly for accessing refs in event handlers for elements
+ * that are guaranteed to be alive as long as the ref itself.
+ */
+export const currentRef = <T>(ref: React.RefObject<T>): T => (
+    ref.current ?? bug("ref unexpectedly unbound")
+);
