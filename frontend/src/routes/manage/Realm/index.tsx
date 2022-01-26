@@ -17,7 +17,7 @@ import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
-import { ErrorBox } from "../../../ui/error";
+import { NotAuthorized } from "../../../ui/error";
 import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
 import { QueryLoader } from "../../../util/QueryLoader";
@@ -108,9 +108,4 @@ export const PathInvalid: React.FC = () => {
     return <CenteredContent>
         <Card kind="error">{t("manage.realm.invalid-path")}</Card>
     </CenteredContent>;
-};
-
-export const NotAuthorized: React.FC = () => {
-    const { t } = useTranslation();
-    return <ErrorBox>{t("errors.not-authorized-to-view-page")}</ErrorBox>;
 };
