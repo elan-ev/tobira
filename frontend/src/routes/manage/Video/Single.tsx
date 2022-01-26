@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { FiArrowLeft } from "react-icons/fi";
 import { graphql, PreloadedQuery } from "react-relay";
@@ -108,13 +107,6 @@ const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
     const created = new Date(event.created).toLocaleString(i18n.language);
     const updated = new Date(event.updated).toLocaleString(i18n.language);
 
-    const DateValue = useCallback(({ label, value }) => (
-        <div css={{ "&:not(:last-child)": { marginBottom: 12 } }}>
-            <div css={{ color: "var(--grey40)", lineHeight: 1 }}>{label + ":"}</div>
-            <div css={{ marginLeft: 6, marginTop: 4 }}>{value}</div>
-        </div>
-    ), []);
-
     return (
         <div css={{
             flex: "0 0 auto",
@@ -135,6 +127,18 @@ const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
         </div>
     );
 };
+
+type DateValueProps = {
+    label: string;
+    value: string;
+};
+
+const DateValue: React.FC<DateValueProps> = ({ label, value }) => (
+    <div css={{ "&:not(:last-child)": { marginBottom: 12 } }}>
+        <div css={{ color: "var(--grey40)", lineHeight: 1 }}>{label + ":"}</div>
+        <div css={{ marginLeft: 6, marginTop: 4 }}>{value}</div>
+    </div>
+);
 
 const MetadataSection: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
