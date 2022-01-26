@@ -8,6 +8,7 @@ import type {
     DangerZoneRealmData$key,
 } from "../../../query-types/DangerZoneRealmData.graphql";
 import { bug } from "../../../util/err";
+import { currentRef } from "../../../util";
 import { Button } from "../../../ui/Button";
 import { Card } from "../../../ui/Card";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
@@ -186,7 +187,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             },
             onError: error => {
                 const failedAction = t("manage.realm.danger-zone.delete.failed");
-                modalRef.current?.reportError(displayCommitError(error, failedAction));
+                currentRef(modalRef).reportError(displayCommitError(error, failedAction));
             },
         });
     };
@@ -204,7 +205,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             {t("manage.realm.danger-zone.delete.warning")}
         </p>
         <div css={{ marginTop: 32, textAlign: "center" }}>
-            <Button kind="danger" onClick={() => modalRef.current?.open()}>
+            <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
                 <span>{buttonContent}</span>
             </Button>
         </div>

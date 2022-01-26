@@ -16,6 +16,7 @@ import { Button } from "./Button";
 import { Spinner } from "./Spinner";
 import { boxError } from "./error";
 import { bug } from "../util/err";
+import { currentRef } from "../util";
 
 
 type ModalProps = {
@@ -128,10 +129,10 @@ export const ConfirmationModal
                 open: () => {
                     setInFlight(false);
                     setError(undefined);
-                    modalRef.current?.open();
+                    currentRef(modalRef).open();
                 },
                 done: () => {
-                    modalRef.current?.close?.();
+                    currentRef(modalRef).close?.();
                 },
                 reportError: (error: JSX.Element) => {
                     setInFlight(false);

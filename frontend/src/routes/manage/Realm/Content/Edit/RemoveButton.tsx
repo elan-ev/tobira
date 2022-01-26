@@ -8,6 +8,7 @@ import type { RemoveButtonMutation } from "../../../../../query-types/RemoveButt
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../ui/Modal";
 import { displayCommitError } from "../../util";
 import { Button } from "../util";
+import { currentRef } from "../../../../../util";
 
 
 type Props = {
@@ -41,10 +42,10 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
         commit({
             variables: block,
             onCompleted: () => {
-                modalRef.current?.done();
+                currentRef(modalRef).done();
             },
             onError: error => {
-                modalRef.current?.reportError(
+                currentRef(modalRef).reportError(
                     displayCommitError(error, t("manage.realm.content.removing-failed")),
                 );
             },
@@ -65,7 +66,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
                 },
             }}
             onClick={() => {
-                modalRef.current?.open();
+                currentRef(modalRef).open();
                 onConfirm?.();
             }}
         >

@@ -7,8 +7,7 @@ import { useForm, useFormContext, FormProvider } from "react-hook-form";
 import type {
     EditModeRealmData$key,
 } from "../../../../../../query-types/EditModeRealmData.graphql";
-import { match } from "../../../../../../util";
-import { bug } from "../../../../../../util/err";
+import { currentRef, match } from "../../../../../../util";
 import { Input } from "../../../../../../ui/Input";
 import { Button } from "../../util";
 import { ButtonGroup } from "..";
@@ -97,12 +96,10 @@ export const EditMode: React.FC<EditModeProps> = ({
         // (like "all whitespace").
         const processData = { ...data, title: data.title || null };
 
-        const currentEditModeRef = editModeRef.current ?? bug("`editModeRef` not bound");
-
         onSave?.();
 
         if (id.startsWith("cl")) {
-            currentEditModeRef.create(
+            currentRef(editModeRef).create(
                 realmId,
                 index,
                 processData,
@@ -110,7 +107,7 @@ export const EditMode: React.FC<EditModeProps> = ({
                 onError,
             );
         } else {
-            currentEditModeRef.save(
+            currentRef(editModeRef).save(
                 id,
                 processData,
                 onCompleted,
@@ -156,7 +153,7 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
             title={t("manage.realm.content.cancel")}
             onClick={() => {
                 if (isDirty) {
-                    modalRef.current?.open();
+                    currentRef(modalRef).open();
                 } else {
                     onCancel?.();
                 }
