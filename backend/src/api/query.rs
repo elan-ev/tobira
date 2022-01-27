@@ -11,6 +11,7 @@ use super::{
     model::{
         realm::Realm,
         event::Event,
+        search::{self, SearchResults},
         series::Series,
     },
 };
@@ -79,5 +80,10 @@ impl Query {
             Id::EVENT_KIND => Ok(Event::load_by_id(id, context).await?.map(NodeValue::from)),
             _ => Ok(None),
         }
+    }
+
+    /// Returns `null` if the query is too short.
+    async fn search(query: String, context: &Context) -> ApiResult<Option<SearchResults>> {
+        search::perform(&query, context).await
     }
 }

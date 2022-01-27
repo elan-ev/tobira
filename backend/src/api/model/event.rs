@@ -37,7 +37,7 @@ pub(crate) struct Event {
 }
 
 #[derive(Debug, GraphQLObject)]
-struct Track {
+pub(crate) struct Track {
     uri: String,
     flavor: String,
     mimetype: Option<String>,
@@ -327,10 +327,10 @@ impl Event {
         })
     }
 
-    const COL_NAMES: &'static str = "id, series, opencast_id, title, description, \
+    pub(crate) const COL_NAMES: &'static str = "id, series, opencast_id, title, description, \
         duration, created, updated, creator, thumbnail, tracks, write_roles && $1 as can_write";
 
-    fn from_row(row: Row) -> Self {
+    pub(crate) fn from_row(row: Row) -> Self {
         Self {
             key: row.get(0),
             series: row.get(1),

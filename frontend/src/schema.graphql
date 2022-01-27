@@ -147,6 +147,8 @@ type Query {
   uploadJwt: String!
   "Retrieve a node by globally unique ID. Mostly useful for relay."
   node(id: ID!): Node
+  "Returns `null` if the query is too short."
+  search(query: String!): SearchResults
 }
 
 enum RealmOrder {
@@ -155,19 +157,27 @@ enum RealmOrder {
   ALPHABETIC_DESC
 }
 
+type SearchEvent implements Node {
+  title: String!
+  description: String
+  thumbnail: String
+  duration: Int
+  tracks: [Track!]!
+}
+
 input ChildIndex {
   id: ID!
   index: Int!
-}
-
-type RemovedRealm {
-  parent: Realm!
 }
 
 type EventConnection {
   pageInfo: EventPageInfo!
   items: [Event!]!
   totalCount: Int!
+}
+
+type RemovedRealm {
+  parent: Realm!
 }
 
 "A block just showing the list of videos in an Opencast series"
@@ -197,6 +207,11 @@ type Series implements Node {
   title: String!
   description: String
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
+}
+
+type SearchRealm implements Node {
+  name: String!
+  fullPath: String!
 }
 
 "Defines the sort order for events."
@@ -277,10 +292,8 @@ type Track {
   resolution: [Int!]
 }
 
-input NewRealm {
-  parent: ID!
-  name: String!
-  pathSegment: String!
+type SearchResults {
+  items: [Node!]!
 }
 
 enum SortDirection {
@@ -288,9 +301,10 @@ enum SortDirection {
   DESCENDING
 }
 
-input UpdateTextBlock {
-  title: String
-  content: String
+input NewRealm {
+  parent: ID!
+  name: String!
+  pathSegment: String!
 }
 
 type Realm implements Node {
@@ -331,6 +345,11 @@ type Realm implements Node {
   """
   numberOfDescendants: Int!
   canCurrentUserEdit: Boolean!
+}
+
+input UpdateTextBlock {
+  title: String
+  content: String
 }
 
 enum VideoListLayout {
