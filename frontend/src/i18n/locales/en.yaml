@@ -1,6 +1,5 @@
 language-name: English
 language: Language
-search: Search
 loading: Loading...
 close: Close
 save: Save
@@ -88,6 +87,10 @@ realm:
   page-settings: Page settings
   edit-page-content: Edit page content
   add-sub-page: Add sub-page
+
+search:
+  input-label: Search
+  title: Search results for “{{query}}”
 
 upload:
   title: Upload video

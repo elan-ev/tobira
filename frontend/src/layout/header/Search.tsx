@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "../../router";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 
@@ -9,6 +10,7 @@ type SearchFieldProps = {
 
 export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
+    const router = useRouter();
 
     const extraCss = variant === "desktop"
         ? {
@@ -24,7 +26,10 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     return (
         <input
             type="text"
-            placeholder={t("search")}
+            placeholder={t("search.input-label")}
+            onChange={e => {
+                router.goto(`/~search?q=${encodeURIComponent(e.target.value)}`);
+            }}
             css={{
                 flex: "1 1 0px",
                 margin: "0 8px",

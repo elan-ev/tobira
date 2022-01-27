@@ -14,6 +14,7 @@ import { UploadRoute } from "./routes/Upload";
 import { makeRouter } from "./rauta";
 import { Transition } from "react-transition-group";
 import { match } from "./util";
+import { SearchRoute } from "./routes/Search";
 
 
 
@@ -70,6 +71,7 @@ const {
         AboutRoute,
         LoginRoute,
         RealmRoute,
+        SearchRoute,
         VideoRoute,
         DirectVideoRoute,
         ManageRoute,
