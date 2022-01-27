@@ -1,8 +1,7 @@
 import { keyframes } from "@emotion/react";
-import { IntrinsicElements } from "react-markdown/src/ast-to-react";
 
 
-type Props = IntrinsicElements["svg"] & {
+type Props = JSX.IntrinsicElements["svg"] & {
     size?: number | "1em";
 };
 

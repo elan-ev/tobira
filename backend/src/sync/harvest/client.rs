@@ -10,7 +10,7 @@ use hyper::{
         uri::{Authority, Scheme, Uri},
     }
 };
-use hyper_rustls::HttpsConnector;
+use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use secrecy::{ExposeSecret, Secret};
 
 use crate::{prelude::*, sync::SyncConfig};
@@ -29,7 +29,13 @@ impl HarvestClient {
 
     pub(super) fn new(config: &SyncConfig) -> Self {
         // Prepare HTTP client
-        let http_client = Client::builder().build(HttpsConnector::with_native_roots());
+        let https = HttpsConnectorBuilder::new()
+            .with_native_roots()
+            .https_only()
+            .enable_http1()
+            .enable_http2()
+            .build();
+        let http_client = Client::builder().build(https);
 
         // Prepare URL
         let scheme = if config.use_insecure_connection {
