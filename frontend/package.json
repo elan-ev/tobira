@@ -16,7 +16,8 @@
     "build:release": "webpack --progress --mode=production",
     "typecheck": "tsc --skipLibCheck",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "clean:relay": "find src -name '__generated__' -exec rm -rf {} \\;"
   },
   "browserslist": [
     "defaults",
