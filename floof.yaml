@@ -63,7 +63,7 @@ frontend:
   - npm i --no-save
   - concurrently:
     - npx webpack watch --mode=development --no-stats
-    - npx relay-compiler --watch
+    - npx relay-compiler --output quiet-with-errors --watch
     - watch:
         paths: ["build"]
         debounce: 50
