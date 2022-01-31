@@ -175,8 +175,9 @@ manage:
     name-must-not-be-empty: Name must not be empty.
     path-must-not-be-empty: Path segment must not be empty.
     path-too-short: Path segment must be at least two characters long.
-    path-must-be-alphanum-dash: >
-      Path segment must consist of digits, lowercase letters and hyphens (-) only.
+    no-control-in-path: Path segments may not include control characters.
+    no-space-in-path: Path segments may not include whitespace characters.
+    reserved-char-in-path: This path segment starts with a reserved character.
 
     no-path: Missing path! You opened an invalid link.
 
@@ -271,7 +272,7 @@ manage:
       The page name is shown in the navigation menu and as heading on the page itself.
       You can change the page name at any time.
     path-segment-info: >
-      Path segments may only consist of lowercase letters, numbers and hyphens (-).
+      Path segments may not contain any control or white space characters.
       Try keeping the segment rather short and don't repeat information already
       contained in preceeding path segments. Changing the path segment later should
       be avoided.

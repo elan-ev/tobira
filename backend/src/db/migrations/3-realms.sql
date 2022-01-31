@@ -25,12 +25,31 @@ create table realms (
     -- it starts with '/' and never ends with '/'.
     full_path text not null,
 
-    -- This makes sure that a realm path segment consists of an alphanumeric
-    -- character followed by one or more alphanumeric characters or hyphens. In
-    -- particular, this implies path segments are at least two characters long.
-    -- This check is disabled for the root realm as it has an empty path
+    -- We allow almost any Unicode character in path segments to keep
+    -- the implementation simple and to accomodate the maximum number
+    -- of cultural conventions about how to encode text.
+    -- We only exclude control characters and some whitespace.
+    --
+    -- Note that we explicitly list all the codepoints we exclude
+    -- to not rely on implementation details of Postgres and/or browsers,
+    -- which might differ among each other and among different versions/environments/...
+    --
+    -- We make some exceptions to avoid conflicts with special routes:
+    -- - We reserve some special characters in prefix position for constructions like `/~manage`,
+    -- - and we ensure the path segment is at least two characters long because of things like `/v`
+    --
+    -- These checks are disabled for the root realm as it has an empty path
     -- segment.
-    constraint valid_alphanum_path check (id = 0 or path_segment ~* '^[[:alnum:]][[:alnum:]\-]+$'),
+    constraint valid_path check (id = 0 or (
+        -- exclude control characters
+        path_segment !~ '[\u0000-\u001F\u007F-\u009F]'
+        -- exclude some whitespace characters
+        and path_segment !~ '[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]'
+        -- exclude reserved characters in leading position
+        and path_segment !~ '^[-+~@_!$&;:.,=*'']'
+        -- ensure at least two characters
+        and char_length(path_segment) >= 2
+    )),
     constraint root_no_path check (id <> 0 or (parent is null and path_segment = '' and full_path = '')),
     constraint has_parent check (id = 0 or parent is not null),
     constraint names_non_empty_except_root check (

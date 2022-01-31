@@ -15,14 +15,23 @@ export const realmValidations = (t: TFunction): RealmValidations => ({
     },
     path: {
         required: t<string>("manage.realm.path-must-not-be-empty"),
+        // See the comment about path segments in the realm migration
+        // for an explanation of these validations.
+        // Note that these two places should be kept in sync!
         minLength: {
             value: 2,
             message: t("manage.realm.path-too-short"),
         },
-        pattern: {
-            // Lowercase letter, decimal number or dash.
-            value: /^(\p{Ll}|\p{Nd}|-)*$/u,
-            message: t("manage.realm.path-must-be-alphanum-dash"),
+        validate: {
+            noControl: pathSegment => !pathSegment.match(
+                /[\u0000-\u001F\u007F-\u009F]/u, /* eslint-disable-line no-control-regex */
+            ) || t<string>("manage.realm.no-control-in-path"),
+            noSpace: pathSegment => !pathSegment.match(
+                /[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u,
+            ) || t<string>("manage.realm.no-space-in-path"),
+            reservedChars: pathSegment => !pathSegment.match(
+                /^[-+~@_!$&;:.,=*']/u,
+            ) || t<string>("manage.realm.reserved-char-in-path"),
         },
         // TODO: check if path already exists
     },
