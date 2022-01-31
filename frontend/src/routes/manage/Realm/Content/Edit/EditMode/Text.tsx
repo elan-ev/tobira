@@ -5,13 +5,13 @@ import { useFormContext } from "react-hook-form";
 
 import type {
     TextEditModeBlockData$key,
-} from "../../../../../../query-types/TextEditModeBlockData.graphql";
+} from "./__generated__/TextEditModeBlockData.graphql";
 import type {
     TextEditCreateMutation,
-} from "../../../../../../query-types/TextEditCreateMutation.graphql";
+} from "./__generated__/TextEditCreateMutation.graphql";
 import type {
     TextEditSaveMutation,
-} from "../../../../../../query-types/TextEditSaveMutation.graphql";
+} from "./__generated__/TextEditSaveMutation.graphql";
 import { bug } from "../../../../../../util/err";
 import type { EditModeRef, EditModeFormData } from ".";
 import { TextArea } from "../../../../../../ui/Input";

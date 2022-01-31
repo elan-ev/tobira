@@ -6,7 +6,7 @@ import { useForm, useFormContext, FormProvider } from "react-hook-form";
 
 import type {
     EditModeRealmData$key,
-} from "../../../../../../query-types/EditModeRealmData.graphql";
+} from "./__generated__/EditModeRealmData.graphql";
 import { currentRef, match } from "../../../../../../util";
 import { Input } from "../../../../../../ui/Input";
 import { Button } from "../../util";

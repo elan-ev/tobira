@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, graphql, useRelayEnvironment, commitLocalUpdate } from "react-relay";
 
-import type { BlockRealmData$key } from "../../../../query-types/BlockRealmData.graphql";
+import type { BlockRealmData$key } from "./__generated__/BlockRealmData.graphql";
 import { bug } from "../../../../util/err";
 import { Card } from "../../../../ui/Card";
 import { displayCommitError } from "../util";

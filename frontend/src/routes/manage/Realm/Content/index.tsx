@@ -7,8 +7,8 @@ import { Root } from "../../../../layout/Root";
 import type {
     ContentManageQuery,
     ContentManageQueryResponse,
-} from "../../../../query-types/ContentManageQuery.graphql";
-import { ContentManageRealmData$key } from "../../../../query-types/ContentManageRealmData.graphql";
+} from "./__generated__/ContentManageQuery.graphql";
+import { ContentManageRealmData$key } from "./__generated__/ContentManageRealmData.graphql";
 import { loadQuery } from "../../../../relay";
 import { PathInvalid } from "..";
 import { NotAuthorized } from "../../../../ui/error";

@@ -7,16 +7,16 @@ import type {
     VideoListOrder,
     VideoListLayout,
     SeriesEditModeBlockData$key,
-} from "../../../../../../query-types/SeriesEditModeBlockData.graphql";
+} from "./__generated__/SeriesEditModeBlockData.graphql";
 import {
     SeriesEditModeSeriesData$key,
-} from "../../../../../../query-types/SeriesEditModeSeriesData.graphql";
+} from "./__generated__/SeriesEditModeSeriesData.graphql";
 import {
     SeriesEditSaveMutation,
-} from "../../../../../../query-types/SeriesEditSaveMutation.graphql";
+} from "./__generated__/SeriesEditSaveMutation.graphql";
 import {
     SeriesEditCreateMutation,
-} from "../../../../../../query-types/SeriesEditCreateMutation.graphql";
+} from "./__generated__/SeriesEditCreateMutation.graphql";
 import { bug } from "../../../../../../util/err";
 import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";

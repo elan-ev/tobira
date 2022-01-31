@@ -1,9 +1,9 @@
 import React from "react";
 import { graphql, useFragment } from "react-relay/hooks";
 
-import { BlocksData$key } from "../../query-types/BlocksData.graphql";
-import { BlocksRealmData$key } from "../../query-types/BlocksRealmData.graphql";
-import { BlocksBlockData$key } from "../../query-types/BlocksBlockData.graphql";
+import { BlocksData$key } from "./__generated__/BlocksData.graphql";
+import { BlocksRealmData$key } from "./__generated__/BlocksRealmData.graphql";
+import { BlocksBlockData$key } from "./__generated__/BlocksBlockData.graphql";
 import { match } from "../../util";
 import { TextBlockByQuery } from "./Text";
 import { SeriesBlockFromBlock } from "./Series";

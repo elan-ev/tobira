@@ -7,7 +7,7 @@ import { Root } from "../../../layout/Root";
 import type {
     RealmManageQuery,
     RealmManageQueryResponse,
-} from "../../../query-types/RealmManageQuery.graphql";
+} from "./__generated__/RealmManageQuery.graphql";
 import { loadQuery } from "../../../relay";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";

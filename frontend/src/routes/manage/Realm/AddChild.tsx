@@ -7,7 +7,7 @@ import { Root } from "../../../layout/Root";
 import type {
     AddChildQuery,
     AddChildQueryResponse,
-} from "../../../query-types/AddChildQuery.graphql";
+} from "./__generated__/AddChildQuery.graphql";
 import { loadQuery } from "../../../relay";
 import { useRouter } from "../../../router";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,7 @@ import { PathInvalid } from ".";
 import { boxError, NotAuthorized } from "../../../ui/error";
 import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
-import { AddChildMutationResponse } from "../../../query-types/AddChildMutation.graphql";
+import { AddChildMutationResponse } from "./__generated__/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";

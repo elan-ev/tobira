@@ -7,7 +7,7 @@ import { Root } from "../../../layout/Root";
 import {
     SingleVideoManageQuery,
     SingleVideoManageQueryResponse,
-} from "../../../query-types/SingleVideoManageQuery.graphql";
+} from "./__generated__/SingleVideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { Link } from "../../../router";

@@ -4,11 +4,11 @@ import { graphql, useFragment } from "react-relay";
 import { keyOfId } from "../../util";
 import { BlockContainer, Title } from ".";
 import { Link } from "../../router";
-import { SeriesBlockData$key } from "../../query-types/SeriesBlockData.graphql";
+import { SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
 import {
     SeriesBlockSeriesData,
     SeriesBlockSeriesData$key,
-} from "../../query-types/SeriesBlockSeriesData.graphql";
+} from "./__generated__/SeriesBlockSeriesData.graphql";
 import { Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 

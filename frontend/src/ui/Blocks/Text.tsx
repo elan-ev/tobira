@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import type { Options } from "react-markdown";
 
 import { BlockContainer, Title } from ".";
-import { TextBlockData$key } from "../../query-types/TextBlockData.graphql";
+import { TextBlockData$key } from "./__generated__/TextBlockData.graphql";
 
 
 const fragment = graphql`

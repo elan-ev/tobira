@@ -10,10 +10,10 @@ import { useBeforeunload } from "react-beforeunload";
 
 import { Root } from "../layout/Root";
 import { loadQuery } from "../relay";
-import { UploadQuery } from "../query-types/UploadQuery.graphql";
+import { UploadQuery } from "./__generated__/UploadQuery.graphql";
 import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
-import { UploadJwtQuery } from "../query-types/UploadJwtQuery.graphql";
+import { UploadJwtQuery } from "./__generated__/UploadJwtQuery.graphql";
 import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
 import { currentRef } from "../util";
 import CONFIG from "../config";

@@ -6,7 +6,7 @@ import type { PreloadedQuery } from "react-relay";
 import { Nav } from "../layout/Navigation";
 import { Root } from "../layout/Root";
 import { loadQuery } from "../relay";
-import { AboutQuery } from "../query-types/AboutQuery.graphql";
+import { AboutQuery } from "./__generated__/AboutQuery.graphql";
 import { ABOUT_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 

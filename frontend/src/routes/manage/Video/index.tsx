@@ -12,7 +12,7 @@ import {
     VideoManageQuery,
     VideoManageQueryResponse,
     VideoManageQueryVariables,
-} from "../../../query-types/VideoManageQuery.graphql";
+} from "./__generated__/VideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { Link } from "../../../router";

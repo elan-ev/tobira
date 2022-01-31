@@ -149,7 +149,7 @@ module.exports = {
     ignorePatterns: [
         "node_modules",
         "/build",
-        "/src/query-types",
+        "/src/**/__generated__",
         "!.*",
     ],
 };

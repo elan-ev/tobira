@@ -9,7 +9,7 @@ import {
     FiFilm,
 } from "react-icons/fi";
 
-import { AddButtonsRealmData$key } from "../../../../query-types/AddButtonsRealmData.graphql";
+import { AddButtonsRealmData$key } from "./__generated__/AddButtonsRealmData.graphql";
 import { bug } from "../../../../util/err";
 import { Button, ButtonGroup } from "./util";
 
