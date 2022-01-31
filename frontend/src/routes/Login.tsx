@@ -6,7 +6,7 @@ import type { PreloadedQuery } from "react-relay";
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
 import { Link } from "../router";
-import { LoginQuery } from "../query-types/LoginQuery.graphql";
+import { LoginQuery } from "./__generated__/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { Logo } from "../layout/header/Logo";
 import { BASE_LOGO_MARGIN } from "../layout/header/ui";

@@ -5,11 +5,11 @@ import { graphql, useFragment, useMutation } from "react-relay";
 import { FiArrowDown, FiArrowUp } from "react-icons/fi";
 import { match } from "../../../util";
 import { bug } from "../../../util/err";
-import { RealmOrder } from "../../../query-types/NavigationData.graphql";
+import { RealmOrder } from "../../../layout/__generated__/NavigationData.graphql";
 import {
     ChildOrderEditData,
     ChildOrderEditData$key,
-} from "../../../query-types/ChildOrderEditData.graphql";
+} from "./__generated__/ChildOrderEditData.graphql";
 import { Button } from "../../../ui/Button";
 import { Spinner } from "../../../ui/Spinner";
 import { boxError } from "../../../ui/error";

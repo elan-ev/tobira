@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
-import type { GeneralRealmData$key } from "../../../query-types/GeneralRealmData.graphql";
+import type { GeneralRealmData$key } from "./__generated__/GeneralRealmData.graphql";
 import { useForm } from "react-hook-form";
 import { Input } from "../../../ui/Input";
 import { Card } from "../../../ui/Card";

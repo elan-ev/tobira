@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { useContext } from "react";
 import { graphql, useFragment } from "react-relay/hooks";
 
-import { UserData$key } from "./query-types/UserData.graphql";
+import { UserData$key } from "./__generated__/UserData.graphql";
 
 
 export type UserQueryRef = UserData$key;

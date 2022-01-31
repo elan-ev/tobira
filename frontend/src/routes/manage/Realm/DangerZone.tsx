@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import type {
     DangerZoneRealmData,
     DangerZoneRealmData$key,
-} from "../../../query-types/DangerZoneRealmData.graphql";
+} from "./__generated__/DangerZoneRealmData.graphql";
 import { bug } from "../../../util/err";
 import { currentRef } from "../../../util";
 import { Button } from "../../../ui/Button";
@@ -16,7 +16,7 @@ import { boxError } from "../../../ui/error";
 import { displayCommitError, realmValidations } from "./util";
 import {
     DangerZoneRemoveRealmMutationResponse,
-} from "../../../query-types/DangerZoneRemoveRealmMutation.graphql";
+} from "./__generated__/DangerZoneRemoveRealmMutation.graphql";
 import { useRouter } from "../../../router";
 import { useState } from "react";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";

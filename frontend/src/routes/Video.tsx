@@ -2,7 +2,7 @@ import React from "react";
 import { graphql, loadQuery } from "react-relay/hooks";
 import type { PreloadedQuery } from "react-relay/hooks";
 
-import type { VideoQuery, VideoQueryResponse } from "../query-types/VideoQuery.graphql";
+import type { VideoQuery, VideoQueryResponse } from "./__generated__/VideoQuery.graphql";
 import { environment as relayEnv } from "../relay";
 import { Root } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
@@ -15,7 +15,7 @@ import { useTitle } from "../util";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute } from "../rauta";
 import { QueryLoader } from "../util/QueryLoader";
-import { UserData$key } from "../query-types/UserData.graphql";
+import { UserData$key } from "../__generated__/UserData.graphql";
 import { Link } from "../router";
 import { FiChevronRight } from "react-icons/fi";
 

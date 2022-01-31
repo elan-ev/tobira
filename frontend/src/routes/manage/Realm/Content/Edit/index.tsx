@@ -5,7 +5,7 @@ import { FiEdit } from "react-icons/fi";
 
 import type {
     EditButtonsRealmData$key,
-} from "../../../../../query-types/EditButtonsRealmData.graphql";
+} from "./__generated__/EditButtonsRealmData.graphql";
 import { Button, ButtonGroup as BaseButtonGroup } from "../util";
 import { RemoveButton } from "./RemoveButton";
 import { MoveButtons } from "./MoveButtons";

@@ -2,7 +2,7 @@ import React from "react";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
 
-import type { NavigationData$key } from "../query-types/NavigationData.graphql";
+import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
 import { useTranslation } from "react-i18next";
 import { LinkList, LinkWithIcon } from "../ui";
 import { match } from "../util";

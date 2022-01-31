@@ -63,7 +63,7 @@ frontend:
   - npm i --no-save
   - concurrently:
     - npx webpack watch --mode=development --no-stats
-    - npx relay-compiler --watch
+    - npx relay-compiler --output quiet-with-errors --watch
     - watch:
         paths: ["build"]
         debounce: 50
@@ -99,5 +99,7 @@ clean:
   # TODO: use OS independent operations
   - rm -rf frontend/node_modules
   - rm -rf frontend/build
-  - rm -rf frontend/src/query-types
   - rm frontend/tsconfig.tsbuildinfo
+  - command:
+      run: npm run clean:relay
+      workdir: frontend

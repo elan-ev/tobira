@@ -7,7 +7,7 @@ import { graphql, PreloadedQuery } from "react-relay";
 import { Root } from "../../layout/Root";
 import {
     manageDashboardQuery as ManageDashboardQuery,
-} from "../../query-types/manageDashboardQuery.graphql";
+} from "./__generated__/manageDashboardQuery.graphql";
 import { makeRoute } from "../../rauta";
 import { loadQuery } from "../../relay";
 import { Link } from "../../router";

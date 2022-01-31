@@ -3,8 +3,8 @@ import { useTranslation, Trans } from "react-i18next";
 import { useFragment, graphql, useMutation } from "react-relay";
 import { FiTrash } from "react-icons/fi";
 
-import type { RemoveButtonData$key } from "../../../../../query-types/RemoveButtonData.graphql";
-import type { RemoveButtonMutation } from "../../../../../query-types/RemoveButtonMutation.graphql";
+import type { RemoveButtonData$key } from "./__generated__/RemoveButtonData.graphql";
+import type { RemoveButtonMutation } from "./__generated__/RemoveButtonMutation.graphql";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../ui/Modal";
 import { displayCommitError } from "../../util";
 import { Button } from "../util";

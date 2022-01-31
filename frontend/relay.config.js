@@ -12,5 +12,4 @@ module.exports = {
         "Cursor": "string",
     },
     schemaExtensions: [APP_PATH],
-    artifactDirectory: path.join(APP_PATH, "query-types"),
 };
