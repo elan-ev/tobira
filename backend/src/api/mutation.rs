@@ -64,7 +64,12 @@ impl Mutation {
     /// Or, if you prefer to think about it this way:
     /// It will be inserted before the block that currently sits
     /// at that index.
-    async fn add_text_block(realm: Id, index: i32, block: NewTextBlock, context: &Context) -> ApiResult<Realm> {
+    async fn add_text_block(
+        realm: Id,
+        index: i32,
+        block: NewTextBlock,
+        context: &Context
+    ) -> ApiResult<Realm> {
         BlockValue::add_text(realm, index, block, context).await
     }
 
@@ -75,7 +80,12 @@ impl Mutation {
     /// Or, if you prefer to think about it this way:
     /// It will be inserted before the block that currently sits
     /// at that index.
-    async fn add_series_block(realm: Id, index: i32, block: NewSeriesBlock, context: &Context) -> ApiResult<Realm> {
+    async fn add_series_block(
+        realm: Id,
+        index: i32,
+        block: NewSeriesBlock,
+        context: &Context
+    ) -> ApiResult<Realm> {
         BlockValue::add_series(realm, index, block, context).await
     }
 
@@ -95,12 +105,20 @@ impl Mutation {
     }
 
     /// Update a text block's data
-    async fn update_text_block(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<BlockValue> {
+    async fn update_text_block(
+        id: Id,
+        set: UpdateTextBlock,
+        context: &Context
+    ) -> ApiResult<BlockValue> {
         BlockValue::update_text(id, set, context).await
     }
 
     /// Update a series block's data
-    async fn update_series_block(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<BlockValue> {
+    async fn update_series_block(
+        id: Id,
+        set: UpdateSeriesBlock,
+        context: &Context
+    ) -> ApiResult<BlockValue> {
         BlockValue::update_series(id, set, context).await
     }
 

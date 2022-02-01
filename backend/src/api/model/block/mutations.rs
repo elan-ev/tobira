@@ -188,7 +188,11 @@ impl BlockValue {
         Ok(realm)
     }
 
-    pub(crate) async fn update(id: Id, set: UpdateBlock, context: &Context) -> ApiResult<BlockValue> {
+    pub(crate) async fn update(
+        id: Id,
+        set: UpdateBlock,
+        context: &Context
+    ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
@@ -210,7 +214,11 @@ impl BlockValue {
         Ok(Self::from_row(updated_block)?)
     }
 
-    pub(crate) async fn update_text(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<BlockValue> {
+    pub(crate) async fn update_text(
+        id: Id,
+        set: UpdateTextBlock,
+        context: &Context
+    ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
@@ -235,7 +243,11 @@ impl BlockValue {
         Ok(Self::from_row(updated_block)?)
     }
 
-    pub(crate) async fn update_series(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<BlockValue> {
+    pub(crate) async fn update_series(
+        id: Id,
+        set: UpdateSeriesBlock,
+        context: &Context
+    ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(

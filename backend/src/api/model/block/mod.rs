@@ -189,22 +189,19 @@ impl BlockValue {
         };
 
         let block = match ty {
-            BlockType::Text => {
-                TextBlock {
-                    shared,
-                    content: get_type_dependent(&row, 4, "text", "text_content")?,
-                }.into()
-            }
-            BlockType::Series => {
-                SeriesBlock {
-                    shared,
-                    series: Id::series(
-                        get_type_dependent(&row, 5, "videolist", "series_id")?
-                    ),
-                    layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
-                    order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
-                }.into()
-            }
+            BlockType::Text => TextBlock {
+                shared,
+                content: get_type_dependent(&row, 4, "text", "text_content")?,
+            }.into(),
+
+            BlockType::Series => SeriesBlock {
+                shared,
+                series: Id::series(
+                    get_type_dependent(&row, 5, "videolist", "series_id")?
+                ),
+                layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
+                order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
+            }.into(),
         };
 
         Ok(block)
