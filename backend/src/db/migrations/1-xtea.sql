@@ -1,7 +1,7 @@
 -- Create a "pseudo-encryption" function to generate random-looking IDs
 -- from standard sequential ones. This is done using a simple Feistel cipher.
 -- Being a block cipher, this constitutes a permutation of its input
--- (here `bigint`, i.e. $[-2^63, 2^63) \cap \mathbb{N}$).
+-- (here `bigint`, i.e. $[-2^63, 2^63) \cap \mathbb{Z}$).
 -- If we feed it sequential numbers, we get random looking numbers back,
 -- but we are still guaranteed to never get the same number twice.
 
