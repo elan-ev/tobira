@@ -17,6 +17,7 @@ mod mutations;
 pub(crate) use mutations::{
     NewTextBlock,
     NewSeriesBlock,
+    NewVideoBlock,
     UpdateBlock,
     UpdateTextBlock,
     UpdateSeriesBlock,

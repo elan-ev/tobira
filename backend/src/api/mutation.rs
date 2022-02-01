@@ -10,6 +10,7 @@ use super::{
             BlockValue,
             NewTextBlock,
             NewSeriesBlock,
+            NewVideoBlock,
             UpdateBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
@@ -87,6 +88,17 @@ impl Mutation {
         context: &Context
     ) -> ApiResult<Realm> {
         BlockValue::add_series(realm, index, block, context).await
+    }
+
+    /// Adds a video block to a realm
+    ///
+    /// The new block will be inserted at the given index,
+    /// i.e. it will be at that position after the insert.
+    /// Or, if you prefer to think about it this way:
+    /// It will be inserted before the block that currently sits
+    /// at that index.
+    async fn add_video_block(realm: Id, index: i32, block: NewVideoBlock, context: &Context) -> ApiResult<Realm> {
+        BlockValue::add_video(realm, index, block, context).await
     }
 
     /// Swap two blocks.

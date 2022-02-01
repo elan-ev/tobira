@@ -63,6 +63,35 @@ impl BlockValue {
             .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
     }
 
+    pub(crate) async fn add_video(
+        realm: Id,
+        index: i32,
+        block: NewVideoBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        context.require_moderator()?;
+
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
+
+        context.db
+            .execute(
+                "insert into blocks (realm_id, index, type, title, video_id) \
+                    values ($1, $2, 'video', $3, $4)",
+                &[
+                    &realm,
+                    &index,
+                    &block.title,
+                    &block.event.key_for(Id::EVENT_KIND)
+                        .ok_or_else(|| invalid_input!("`block.event` does not refer to an event"))?,
+                ],
+            )
+            .await?;
+
+        Realm::load_by_key(realm, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+    }
+
     /// For all blocks in `realm` with an index `>= index`,
     /// increase their index by `1`.
     /// This basically moves all the blocks after the `index`-th one aside,
@@ -322,6 +351,12 @@ pub(crate) struct NewSeriesBlock {
     series: Id,
     layout: VideoListLayout,
     order: VideoListOrder,
+}
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct NewVideoBlock {
+    title: Option<String>,
+    event: Id,
 }
 
 

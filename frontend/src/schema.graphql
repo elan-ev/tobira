@@ -65,6 +65,16 @@ type Mutation {
     at that index.
   """
   addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
+  """
+    Adds a video block to a realm
+
+    The new block will be inserted at the given index,
+    i.e. it will be at that position after the insert.
+    Or, if you prefer to think about it this way:
+    It will be inserted before the block that currently sits
+    at that index.
+  """
+  addVideoBlock(realm: ID!, index: Int!, block: NewVideoBlock!): Realm!
   "Swap two blocks."
   swapBlocksByIndex(realm: ID!, indexA: Int!, indexB: Int!): Realm!
   "Update a block's data"
@@ -164,6 +174,11 @@ type SeriesBlock implements Block {
   id: ID!
   index: Int!
   title: String
+}
+
+input NewVideoBlock {
+  title: String
+  event: ID!
 }
 
 input UpdateSeriesBlock {
