@@ -7,7 +7,7 @@
 
 select prepare_randomized_ids('block');
 
-create type block_type as enum ('text', 'series');
+create type block_type as enum ('text', 'series', 'video');
 create type video_list_layout as enum ('horizontal', 'vertical', 'grid');
 create type video_list_order as enum ('new_to_old', 'old_to_new');
 
@@ -27,7 +27,9 @@ create table blocks (
 
     -- All videolist-like blocks
     videolist_layout video_list_layout,
-    videolist_order video_list_order
+    videolist_order video_list_order,
+
+    video_id bigint references events on delete restrict
 );
 
 -- Blocks are almost always looked up by realm ID.

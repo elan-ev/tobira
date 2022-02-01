@@ -51,6 +51,8 @@ pub(crate) enum BlockType {
     Text,
     #[postgres(name = "series")]
     Series,
+    #[postgres(name = "video")]
+    Video,
 }
 
 #[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
@@ -202,6 +204,8 @@ impl BlockValue {
                 layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
                 order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
             }.into(),
+
+            BlockType::Video => unimplemented!(),
         };
 
         Ok(block)
