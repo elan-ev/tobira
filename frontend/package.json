@@ -17,7 +17,7 @@
     "typecheck": "tsc --skipLibCheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "clean:relay": "find src -name '__generated__' -prune -exec rm -rf {} \\;"
+    "clean:relay": "find src -name '__generated__' -prune -exec rm -rf {} +"
   },
   "browserslist": [
     "defaults",
