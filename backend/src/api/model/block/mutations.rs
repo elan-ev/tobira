@@ -16,17 +16,7 @@ impl BlockValue {
     ) -> ApiResult<Realm> {
         context.require_moderator()?;
 
-        if index < 0 {
-            return Err(invalid_input!("`index` must be nonnegative"));
-        }
-
-        let index = i16::try_from(index)
-            .map_err(|_| invalid_input!("`index` is too large"))?;
-
-        let realm = realm.key_for(Id::REALM_KIND)
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
-
-        Self::make_room_for_block(realm, index, context).await?;
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
 
         context.db
             .execute(
@@ -49,17 +39,7 @@ impl BlockValue {
     ) -> ApiResult<Realm> {
         context.require_moderator()?;
 
-        if index < 0 {
-            return Err(invalid_input!("`index` must be nonnegative"));
-        }
-
-        let index = i16::try_from(index)
-            .map_err(|_| invalid_input!("`index` is too large"))?;
-
-        let realm = realm.key_for(Id::REALM_KIND)
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
-
-        Self::make_room_for_block(realm, index, context).await?;
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
 
         context.db
             .execute(
@@ -87,7 +67,16 @@ impl BlockValue {
     /// increase their index by `1`.
     /// This basically moves all the blocks after the `index`-th one aside,
     /// so a new block can be inserted at position `index`.
-    async fn make_room_for_block(realm: Key, index: i16, context: &Context) -> ApiResult<()> {
+    /// It also checks the validity of the given index within the given realm,
+    /// and the validity of the realm ID, and returns the validated values
+    async fn prepare_realm_for_block(
+        realm: Id,
+        index: i32,
+        context: &Context
+    ) -> ApiResult<(Key, i16)> {
+        let realm = realm.key_for(Id::REALM_KIND)
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
+
         let num_blocks: i64 = context.db
             .query_one(
                 "select count(*) from blocks where realm_id = $1",
@@ -96,8 +85,11 @@ impl BlockValue {
             .await?
             .get(0);
 
+        let index = i16::try_from(index)
+            .map_err(|_| invalid_input!("`index` is too large"))?;
+
         if index < 0 || index as i64 > num_blocks {
-            return Err(invalid_input!("`index` out of range"));
+            return Err(invalid_input!("`index` out of bounds"));
         }
 
         context.db
@@ -110,7 +102,7 @@ impl BlockValue {
             )
             .await?;
 
-        Ok(())
+        Ok((realm, index))
     }
 
     pub(crate) async fn swap_by_index(
