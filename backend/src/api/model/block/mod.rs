@@ -88,7 +88,6 @@ pub(crate) struct TextBlock {
     pub(crate) content: String,
 }
 
-#[graphql_interface]
 impl Block for TextBlock {
     fn shared(&self) -> &SharedData {
         &self.shared
@@ -122,7 +121,6 @@ pub(crate) struct SeriesBlock {
     pub(crate) order: VideoListOrder,
 }
 
-#[graphql_interface]
 impl Block for SeriesBlock {
     fn shared(&self) -> &SharedData {
         &self.shared
