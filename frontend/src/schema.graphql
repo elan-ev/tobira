@@ -83,6 +83,8 @@ type Mutation {
   updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
   "Update a series block's data"
   updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): Block!
+  "Update a video block's data"
+  updateVideoBlock(id: ID!, set: UpdateVideoBlock!): Block!
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
 }
@@ -214,6 +216,11 @@ input UpdateRealm {
   parent: ID
   name: String
   pathSegment: String
+}
+
+input UpdateVideoBlock {
+  title: String
+  event: ID
 }
 
 enum EventSortColumn {

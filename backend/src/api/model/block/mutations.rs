@@ -300,6 +300,38 @@ impl BlockValue {
         Ok(Self::from_row(updated_block)?)
     }
 
+    pub(crate) async fn update_video(
+        id: Id,
+        set: UpdateVideoBlock,
+        context: &Context
+    ) -> ApiResult<BlockValue> {
+        let updated_block = context.db(context.require_moderator()?)
+            .query_one(
+                &format!(
+                    "update blocks set \
+                        title = case $2::boolean when true then $3 else title end, \
+                        video_id = coalesce($4, video_id) \
+                        where id = $1 \
+                        and type = 'video' \
+                        returning {}",
+                    Self::COL_NAMES,
+                ),
+                &[
+                    &id.key_for(Id::BLOCK_KIND)
+                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
+                    &!set.title.is_implicit_null(),
+                    &set.title.some(),
+                    &set.event.map(
+                        |series| series.key_for(Id::EVENT_KIND)
+                            .ok_or_else(|| invalid_input!("`set.event` does not refer to a event"))
+                    ).transpose()?,
+                ],
+            )
+            .await?;
+
+        Ok(Self::from_row(updated_block)?)
+    }
+
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
         let db = context.db(context.require_moderator()?);
 
@@ -377,6 +409,12 @@ pub(crate) struct UpdateSeriesBlock {
     series: Option<Id>,
     layout: Option<VideoListLayout>,
     order: Option<VideoListOrder>,
+}
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct UpdateVideoBlock {
+    title: Nullable<String>,
+    event: Option<Id>,
 }
 
 

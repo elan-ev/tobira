@@ -14,6 +14,7 @@ use super::{
             UpdateBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
+            UpdateVideoBlock,
             RemovedBlock,
         },
     },
@@ -132,6 +133,15 @@ impl Mutation {
         context: &Context
     ) -> ApiResult<BlockValue> {
         BlockValue::update_series(id, set, context).await
+    }
+
+    /// Update a video block's data
+    async fn update_video_block(
+        id: Id,
+        set: UpdateVideoBlock,
+        context: &Context
+    ) -> ApiResult<BlockValue> {
+        BlockValue::update_video(id, set, context).await
     }
 
     /// Remove a block from a realm.
