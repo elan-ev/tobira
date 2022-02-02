@@ -102,6 +102,22 @@ impl Event {
 }
 
 impl Event {
+    pub(crate) async fn load(context: &Context) -> ApiResult<Vec<Self>> {
+        context.db(context.require_moderator()?)
+            .query_mapped(
+                &format!(
+                    "select {} from events \
+                        where read_roles && $1 \
+                        order by title",
+                    Self::COL_NAMES,
+                ),
+                dbargs![&context.user.roles()],
+                Self::from_row,
+            )
+            .await?
+            .pipe(Ok)
+    }
+
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
         let key = match id.key_for(Id::EVENT_KIND) {
             None => return Ok(None),
