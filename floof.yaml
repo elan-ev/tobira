@@ -99,7 +99,7 @@ clean:
   # TODO: use OS independent operations
   - rm -rf frontend/node_modules
   - rm -rf frontend/build
-  - rm frontend/tsconfig.tsbuildinfo
+  - rm -f frontend/tsconfig.tsbuildinfo
   - command:
       run: npm run clean:relay
       workdir: frontend
