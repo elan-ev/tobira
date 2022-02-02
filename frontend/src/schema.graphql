@@ -116,11 +116,6 @@ type RemovedBlock {
   realm: Realm!
 }
 
-input ChildIndex {
-  id: ID!
-  index: Int!
-}
-
 type Query {
   "Returns the root realm."
   rootRealm: Realm!
@@ -156,6 +151,11 @@ enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
   ALPHABETIC_DESC
+}
+
+input ChildIndex {
+  id: ID!
+  index: Int!
 }
 
 type RemovedRealm {
@@ -221,6 +221,14 @@ enum EventSortColumn {
   DURATION
   CREATED
   UPDATED
+}
+
+"A block for presenting a single Opencast event"
+type VideoBlock implements Block {
+  event: Event!
+  id: ID!
+  index: Int!
+  title: String
 }
 
 input NewSeriesBlock {

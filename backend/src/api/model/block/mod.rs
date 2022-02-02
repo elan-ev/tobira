@@ -6,7 +6,7 @@ use postgres_types::{FromSql, ToSql};
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, err::{ApiError, ApiResult, internal_server_err}, Id, model::series::Series},
+    api::{Context, err::{ApiError, ApiResult, internal_server_err}, Id, model::{series::Series, event::Event}},
     db::types::Key,
     prelude::*,
 };
@@ -26,7 +26,7 @@ pub(crate) use mutations::{
 
 
 /// A `Block`: a UI element that belongs to a realm.
-#[graphql_interface(Context = Context, for = [TextBlock, SeriesBlock])]
+#[graphql_interface(Context = Context, for = [TextBlock, SeriesBlock, VideoBlock])]
 pub(crate) trait Block {
     // To avoid code duplication, all the shared data is stored in `SharedData`
     // and only a `shared` method is mandatory. All other method (in particular,
@@ -156,6 +156,38 @@ impl SeriesBlock {
     }
 }
 
+pub(crate) struct VideoBlock {
+    pub(crate) shared: SharedData,
+    pub(crate) event: Id,
+}
+
+impl Block for VideoBlock {
+    fn shared(&self) -> &SharedData {
+        &self.shared
+    }
+}
+
+/// A block for presenting a single Opencast event
+#[graphql_object(Context = Context, impl = BlockValue)]
+impl VideoBlock {
+    async fn event(&self, context: &Context) -> ApiResult<Event> {
+        // `unwrap` is okay here because of our foreign key constraint
+        Ok(Event::load_by_id(self.event, context).await?.unwrap())
+    }
+
+    fn id(&self) -> Id {
+        self.shared().id
+    }
+
+    fn index(&self) -> i32 {
+        self.shared().index
+    }
+
+    fn title(&self) -> Option<&str> {
+        self.shared().title.as_deref()
+    }
+}
+
 impl BlockValue {
     /// Fetches all blocks for the given realm from the database.
     pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
@@ -179,7 +211,7 @@ impl BlockValue {
     }
 
     const COL_NAMES: &'static str
-        = "id, type, index, title, text_content, series_id, videolist_layout, videolist_order";
+        = "id, type, index, title, text_content, series_id, videolist_layout, videolist_order, video_id";
 
     fn from_row(row: Row) -> ApiResult<Self> {
         let ty: BlockType = row.get(1);
@@ -204,7 +236,12 @@ impl BlockValue {
                 order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
             }.into(),
 
-            BlockType::Video => unimplemented!(),
+            BlockType::Video => VideoBlock {
+                shared,
+                event: Id::event(
+                    get_type_dependent(&row, 8, "video", "video_id")?,
+                ),
+            }.into(),
         };
 
         Ok(block)
