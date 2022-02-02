@@ -20,7 +20,7 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks (realm_id, index, type, title, text_content)
+                "insert into blocks (realm_id, index, type, title, text_content) \
                     values ($1, $2, 'text', $3, $4)",
                 &[&realm, &index, &block.title, &block.content],
             )
@@ -43,8 +43,8 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks
-                    (realm_id, index, type, title, series_id, videolist_order, videolist_layout)
+                "insert into blocks \
+                    (realm_id, index, type, title, series_id, videolist_order, videolist_layout) \
                     values ($1, $2, 'series', $3, $4, $5, $6)",
                 &[
                     &realm,
@@ -123,9 +123,9 @@ impl BlockValue {
 
         context.db
             .execute(
-                "update blocks
-                    set index = index + 1
-                    where realm_id = $1
+                "update blocks \
+                    set index = index + 1 \
+                    where realm_id = $1 \
                     and index >= $2",
                 &[&realm, &index],
             )
@@ -326,9 +326,9 @@ impl BlockValue {
         // Fix indices after removed block
         db
             .execute(
-                "update blocks
-                    set index = index - 1
-                    where realm_id = $1
+                "update blocks \
+                    set index = index - 1 \
+                    where realm_id = $1 \
                     and index > $2",
                 &[&realm.key, &index],
             )
