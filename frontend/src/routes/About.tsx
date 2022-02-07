@@ -11,12 +11,16 @@ import { ABOUT_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 
 
-export const AboutRoute = makeRoute<PreloadedQuery<AboutQuery>>({
-    path: ABOUT_PATH,
-    queryParams: [],
-    prepare: () => loadQuery(query, {}),
-    render: queryRef => <About queryRef={queryRef} />,
-    dispose: prepared => prepared.dispose(),
+export const AboutRoute = makeRoute(url => {
+    if (url.pathname !== ABOUT_PATH) {
+        return null;
+    }
+
+    const queryRef = loadQuery<AboutQuery>(query, {});
+    return {
+        render: () => <About queryRef={queryRef} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 const query = graphql`

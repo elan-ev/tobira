@@ -5,13 +5,13 @@ import { Root } from "../layout/Root";
 import { Link } from "../router";
 import { match } from "../util";
 import { CenteredContent } from "../ui";
-import { makeFallbackRoute } from "../rauta";
 
 
-export const NotFoundRoute = makeFallbackRoute({
-    prepare: () => {},
-    render: () => <NotFound kind="page" />,
-});
+export const NotFoundRoute = {
+    prepare: () => ({
+        render: () => <NotFound kind="page" />,
+    }),
+};
 
 type Props = {
     kind: "page" | "video";

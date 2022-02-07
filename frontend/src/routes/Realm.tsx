@@ -1,7 +1,6 @@
 import React from "react";
 
 import { graphql, loadQuery } from "react-relay/hooks";
-import type { PreloadedQuery } from "react-relay/hooks";
 import type { RealmQuery, RealmQueryResponse } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
 import { FiLayout, FiPlus, FiTool } from "react-icons/fi";
@@ -22,19 +21,26 @@ import { QueryLoader } from "../util/QueryLoader";
 /** A valid realm path segment */
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
 
-export const RealmRoute = makeRoute<[PreloadedQuery<RealmQuery>, string]>({
-    path: `((?:/${PATH_SEGMENT_REGEX})*)`,
-    queryParams: [],
-    prepare: ({ pathParams: [realmPath] }) => {
-        const path = realmPath === "" ? "/" : realmPath;
-        return [loadQuery(relayEnv, query, { path }), path];
-    },
-    render: ([queryRef, path]) => <QueryLoader {...{ query, queryRef }} render={result => (
-        !result.realm
-            ? <NotFound kind="page" />
-            : <RealmPage {...{ userQuery: result, path, realm: result.realm }} />
-    )} />,
-    dispose: ([queryRef, _path]) => queryRef.dispose(),
+export const RealmRoute = makeRoute(url => {
+    const regex = new RegExp(`^((?:/${PATH_SEGMENT_REGEX})*)/?$`, "u");
+    const params = regex.exec(decodeURI(url.pathname));
+    if (params === null) {
+        return null;
+    }
+
+    const realmPath = params[1];
+
+    const path = realmPath === "" ? "/" : realmPath;
+    const queryRef = loadQuery<RealmQuery>(relayEnv, query, { path });
+
+    return {
+        render: () => <QueryLoader {...{ query, queryRef }} render={result => (
+            !result.realm
+                ? <NotFound kind="page" />
+                : <RealmPage {...{ userQuery: result, path, realm: result.realm }} />
+        )} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 // TODO Build this query from fragments!

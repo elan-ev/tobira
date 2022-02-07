@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Trans } from "react-i18next";
-import { graphql, useFragment, PreloadedQuery } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { useBeforeunload } from "react-beforeunload";
 
 import { Root } from "../../../../layout/Root";
@@ -24,30 +24,39 @@ import { EditBlock } from "./Block";
 
 export const PATH = "/~manage/realm/content";
 
-export const ManageRealmContentRoute = makeRoute<PreloadedQuery<ContentManageQuery>, ["path"]>({
-    path: PATH,
-    queryParams: ["path"],
-    prepare: ({ queryParams: { path } }) => loadQuery(query, { path }),
-    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => {
-        const { realm } = result;
-        const nav = realm ? <Nav fragRef={realm} /> : [];
+export const ManageRealmContentRoute = makeRoute(url => {
+    if (url.pathname !== PATH) {
+        return null;
+    }
 
-        let children = null;
-        if (!realm) {
-            children = <PathInvalid />;
-        } else if (!realm.canCurrentUserEdit) {
-            children = <NotAuthorized />;
-        } else {
-            children = <ManageContent data={result} />;
-        }
+    const path = url.searchParams.get("path");
+    if (path === null) {
+        return null;
+    }
 
-        return <Root nav={nav} userQuery={result}>
-            {children}
-        </Root>;
-    }} />,
-    dispose: queryRef => queryRef.dispose(),
+    const queryRef = loadQuery<ContentManageQuery>(query, { path });
+
+    return {
+        render: () => <QueryLoader {...{ query, queryRef }} render={result => {
+            const { realm } = result;
+            const nav = realm ? <Nav fragRef={realm} /> : [];
+
+            let children = null;
+            if (!realm) {
+                children = <PathInvalid />;
+            } else if (!realm.canCurrentUserEdit) {
+                children = <NotAuthorized />;
+            } else {
+                children = <ManageContent data={result} />;
+            }
+
+            return <Root nav={nav} userQuery={result}>
+                {children}
+            </Root>;
+        }} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
-
 
 const query = graphql`
     query ContentManageQuery($path: String!) {

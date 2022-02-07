@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
-import type { PreloadedQuery } from "react-relay";
 
 import { Root } from "../../../layout/Root";
 import type {
@@ -28,26 +27,36 @@ import { Card } from "../../../ui/Card";
 
 export const PATH = "/~manage/realm/add-child";
 
-export const AddChildRoute = makeRoute<PreloadedQuery<AddChildQuery>, ["parent"]>({
-    path: PATH,
-    queryParams: ["parent"],
-    prepare: ({ queryParams: { parent } }) => loadQuery(query, { parent }),
-    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => {
-        const { parent } = result;
-        const nav = !parent ? [] : <Nav fragRef={parent} />;
+export const AddChildRoute = makeRoute(url => {
+    if (url.pathname !== PATH) {
+        return null;
+    }
 
-        let inner;
-        if (!parent) {
-            inner = <PathInvalid />;
-        } else if (!parent.canCurrentUserEdit) {
-            inner = <NotAuthorized />;
-        } else {
-            inner = <AddChild parent={parent} />;
-        }
+    const parent = url.searchParams.get("parent");
+    if (parent === null) {
+        return null;
+    }
 
-        return <Root nav={nav} userQuery={result}>{inner}</Root>;
-    }} />,
-    dispose: queryRef => queryRef.dispose(),
+    const queryRef = loadQuery<AddChildQuery>(query, { parent });
+
+    return {
+        render: () => <QueryLoader {...{ query, queryRef }} render={result => {
+            const { parent } = result;
+            const nav = !parent ? [] : <Nav fragRef={parent} />;
+
+            let inner;
+            if (!parent) {
+                inner = <PathInvalid />;
+            } else if (!parent.canCurrentUserEdit) {
+                inner = <NotAuthorized />;
+            } else {
+                inner = <AddChild parent={parent} />;
+            }
+
+            return <Root nav={nav} userQuery={result}>{inner}</Root>;
+        }} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 

@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import type { PreloadedQuery } from "react-relay";
 
 import { Root } from "../../../layout/Root";
 import type {
@@ -27,21 +26,31 @@ import { QueryLoader } from "../../../util/QueryLoader";
 
 export const PATH = "/~manage/realm";
 
-export const ManageRealmRoute = makeRoute<PreloadedQuery<RealmManageQuery>, ["path"]>({
-    path: PATH,
-    queryParams: ["path"],
-    prepare: ({ queryParams: { path } }) => loadQuery(query, { path }),
-    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => {
-        const { realm } = result;
-        const nav = !realm ? [] : <Nav fragRef={realm} />;
+export const ManageRealmRoute = makeRoute(url => {
+    if (url.pathname !== PATH) {
+        return null;
+    }
 
-        return (
-            <Root nav={nav} userQuery={result}>
-                {!realm ? <PathInvalid /> : <SettingsPage realm={realm} />}
-            </Root>
-        );
-    }} />,
-    dispose: queryRef => queryRef.dispose(),
+    const path = url.searchParams.get("path");
+    if (path === null) {
+        return null;
+    }
+
+    const queryRef = loadQuery<RealmManageQuery>(query, { path });
+
+    return {
+        render: () => <QueryLoader {...{ query, queryRef }} render={result => {
+            const { realm } = result;
+            const nav = !realm ? [] : <Nav fragRef={realm} />;
+
+            return (
+                <Root nav={nav} userQuery={result}>
+                    {!realm ? <PathInvalid /> : <SettingsPage realm={realm} />}
+                </Root>
+            );
+        }} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 

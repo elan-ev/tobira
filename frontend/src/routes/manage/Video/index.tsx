@@ -27,24 +27,20 @@ import LastPage from "../../../icons/last-page.svg";
 import { Card } from "../../../ui/Card";
 
 
-const PATH = "/~manage/videos";
+export const PATH = "/~manage/videos";
 
-type Prepared = {
-    queryRef: PreloadedQuery<VideoManageQuery>;
-    sortOrder: EventSortOrder;
-};
+export const ManageVideosRoute = makeRoute(url => {
+    if (url.pathname !== PATH) {
+        return null;
+    }
 
-export const ManageVideosRoute = makeRoute<Prepared>({
-    path: PATH,
-    queryParams: [],
-    prepare: ({ url }) => {
-        const sortOrder = queryParamsToOrder(url.searchParams);
-        return {
-            queryRef: loadQuery(query, { order: sortOrder, first: LIMIT }),
-            sortOrder,
-        };
-    },
-    render: prepared => <Page {...prepared} />,
+    const sortOrder = queryParamsToOrder(url.searchParams);
+    const queryRef = loadQuery<VideoManageQuery>(query, { order: sortOrder, first: LIMIT });
+
+    return {
+        render: () => <Page {...{ sortOrder, queryRef }} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 const query = graphql`
@@ -73,8 +69,13 @@ const query = graphql`
     }
 `;
 
+type PageProps = {
+    queryRef: PreloadedQuery<VideoManageQuery>;
+    sortOrder: EventSortOrder;
+};
+
 /** Main component, mainly loading relay data */
-const Page: React.FC<Prepared> = ({ queryRef: initialQueryRef, sortOrder }) => {
+const Page: React.FC<PageProps> = ({ queryRef: initialQueryRef, sortOrder }) => {
     const [queryRef, loadQuery] = useQueryLoader(query, initialQueryRef);
     if (!queryRef) {
         // `useQueryLoader` is incorrectly typed, I believe. If

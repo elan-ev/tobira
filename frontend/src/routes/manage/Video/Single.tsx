@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { FiArrowLeft } from "react-icons/fi";
-import { graphql, PreloadedQuery } from "react-relay";
-import { ManageVideosRoute } from ".";
+import { graphql } from "react-relay";
 
 import { Root } from "../../../layout/Root";
 import {
@@ -20,31 +19,42 @@ import { Thumbnail } from "../../../ui/Video";
 import { useTitle } from "../../../util";
 import { QueryLoader } from "../../../util/QueryLoader";
 import { NotFound } from "../../NotFound";
+import { b64regex } from "../../Video";
+import { PATH as MANAGE_VIDEOS_PATH } from ".";
 
 
-export const ManageSingleVideoRoute = makeRoute<PreloadedQuery<SingleVideoManageQuery>>({
-    path: "/~manage/videos/([a-zA-Z0-9\\-_]+)",
-    queryParams: [],
-    prepare: ({ pathParams: [videoId] }) => loadQuery(query, { id: `ev${videoId}` }),
-    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => (
-        result.event === null
-            ? <NotFound kind="video" />
-            : (
-                <Root nav={<BackLink />} userQuery={result}>
-                    {result.event.canWrite
-                        ? <ManageSingleVideo event={result.event}/>
-                        : <NotAuthorized />
-                    }
-                </Root>
-            )
-    )} />,
+export const ManageSingleVideoRoute = makeRoute(url => {
+    const regex = new RegExp(`^/~manage/videos/(${b64regex}+)/?$`, "u");
+    const params = regex.exec(decodeURI(url.pathname));
+    if (params === null) {
+        return null;
+    }
+
+    const videoId = params[1];
+    const queryRef = loadQuery<SingleVideoManageQuery>(query, { id: `ev${videoId}` });
+
+    return {
+        render: () => <QueryLoader {...{ query, queryRef }} render={result => (
+            result.event === null
+                ? <NotFound kind="video" />
+                : (
+                    <Root nav={<BackLink />} userQuery={result}>
+                        {result.event.canWrite
+                            ? <ManageSingleVideo event={result.event}/>
+                            : <NotAuthorized />
+                        }
+                    </Root>
+                )
+        )} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 const BackLink: React.FC = () => {
     const { t } = useTranslation();
 
     const items = [
-        <LinkWithIcon key={ManageVideosRoute.path} to={ManageVideosRoute.path} iconPos="left">
+        <LinkWithIcon key={MANAGE_VIDEOS_PATH} to={MANAGE_VIDEOS_PATH} iconPos="left">
             <FiArrowLeft />
             {t("manage.nav.my-videos")}
         </LinkWithIcon>,

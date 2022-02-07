@@ -27,12 +27,16 @@ import { Card } from "../ui/Card";
 import { InputContainer, TitleLabel } from "../ui/metadata";
 
 
-export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
-    path: UPLOAD_PATH,
-    queryParams: [],
-    prepare: () => loadQuery(query, {}),
-    render: queryRef => <Upload queryRef={queryRef} />,
-    dispose: prepared => prepared.dispose(),
+export const UploadRoute = makeRoute(url => {
+    if (url.pathname !== UPLOAD_PATH) {
+        return null;
+    }
+
+    const queryRef = loadQuery<UploadQuery>(query, {});
+    return {
+        render: () => <Upload queryRef={queryRef} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 const query = graphql`

@@ -22,12 +22,16 @@ import { LOGIN_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 
 
-export const LoginRoute = makeRoute<PreloadedQuery<LoginQuery>>({
-    path: LOGIN_PATH,
-    queryParams: [],
-    prepare: () => loadQuery(query, {}),
-    render: queryRef => <Login queryRef={queryRef} />,
-    dispose: prepared => prepared.dispose(),
+export const LoginRoute = makeRoute(url => {
+    if (url.pathname !== LOGIN_PATH) {
+        return null;
+    }
+
+    const queryRef = loadQuery<LoginQuery>(query, {});
+    return {
+        render: () => <Login queryRef={queryRef} />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 const query = graphql`

@@ -1,9 +1,8 @@
 import React from "react";
-import { graphql, loadQuery } from "react-relay/hooks";
-import type { PreloadedQuery } from "react-relay/hooks";
+import { graphql } from "react-relay/hooks";
 
 import type { VideoQuery, VideoQueryResponse } from "./__generated__/VideoQuery.graphql";
-import { environment as relayEnv } from "../relay";
+import { loadQuery } from "../relay";
 import { Root } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
 import { NotFound } from "./NotFound";
@@ -13,56 +12,53 @@ import { Player, Track } from "../ui/player";
 import { useTranslation } from "react-i18next";
 import { useTitle } from "../util";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
-import { makeRoute } from "../rauta";
+import { makeRoute, MatchedRoute } from "../rauta";
 import { QueryLoader } from "../util/QueryLoader";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { Link } from "../router";
 import { FiChevronRight } from "react-icons/fi";
 
 
-type Prep = {
-    queryRef: PreloadedQuery<VideoQuery>;
-    realmPath: string;
-    id: string;
-};
+export const b64regex = "[a-zA-Z0-9\\-_]";
 
-const b64regex = "[a-zA-Z0-9\\-_]";
+export const VideoRoute = makeRoute(url => {
+    const regex = new RegExp(`^((?:/${PATH_SEGMENT_REGEX})*)/v/(${b64regex}+)/?$`, "u");
+    const params = regex.exec(decodeURI(url.pathname));
+    if (params === null) {
+        return null;
+    }
 
-export const VideoRoute = makeRoute<Prep>({
-    path: `((?:/${PATH_SEGMENT_REGEX})*)/v/(${b64regex}+)`,
-    queryParams: [],
-    // TODO: check if video belongs to realm
-    prepare: ({ pathParams: [realmPath, videoId] }) => loadVideoQuery(`ev${videoId}`, realmPath),
-    render: prep => render(prep),
-    dispose: prep => prep.queryRef.dispose(),
+    const realmPath = params[1];
+    const videoId = params[2];
+    return prepare(`ev${videoId}`, realmPath);
 });
 
-export const DirectVideoRoute = makeRoute<Prep>({
-    path: `/!(${b64regex}+)`,
-    queryParams: [],
-    prepare: ({ pathParams: [videoId] }) => loadVideoQuery(`ev${videoId}`, "/"),
-    render: prep => render(prep),
-    dispose: prep => prep.queryRef.dispose(),
+export const DirectVideoRoute = makeRoute(url => {
+    const regex = new RegExp(`^/!(${b64regex}+)/?$`, "u");
+    const params = regex.exec(decodeURI(url.pathname));
+    if (params === null) {
+        return null;
+    }
+
+    const videoId = params[1];
+    return prepare(`ev${videoId}`, "/");
 });
 
-const loadVideoQuery = (id: string, realmPath: string): Prep => {
-    const queryRef = loadQuery<VideoQuery>(relayEnv, query, { id, realmPath });
-    return { queryRef, realmPath, id };
-};
+const prepare = (id: string, realmPath: string): MatchedRoute => {
+    const queryRef = loadQuery<VideoQuery>(query, { id, realmPath });
 
-const render = ({ queryRef, realmPath, id }: Prep): JSX.Element => (
-    <QueryLoader
-        {... { query, queryRef }}
-        render={result => {
+    return {
+        render: () => <QueryLoader {... { query, queryRef }} render={result => {
             const { event, realm } = result;
 
             // TODO: this realm check is useless once we check a video belongs to a realm.
             return !event || !realm
                 ? <NotFound kind="video" />
                 : <VideoPage {...{ event, realm, userQuery: result, realmPath, id }} />;
-        }}
-    />
-);
+        }} />,
+        dispose: () => queryRef.dispose(),
+    };
+};
 
 
 const query = graphql`

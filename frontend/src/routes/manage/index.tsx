@@ -2,7 +2,7 @@ import { ReactElement } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { FiFilm, FiUpload, FiVideo } from "react-icons/fi";
 import { HiTemplate } from "react-icons/hi";
-import { graphql, PreloadedQuery } from "react-relay";
+import { graphql } from "react-relay";
 
 import { Root } from "../../layout/Root";
 import {
@@ -19,16 +19,24 @@ import { QueryLoader } from "../../util/QueryLoader";
 
 const PATH = "/~manage";
 
-export const ManageRoute = makeRoute<PreloadedQuery<ManageDashboardQuery>>({
-    path: PATH,
-    queryParams: [],
-    prepare: () => loadQuery(query, {}),
-    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => (
-        <Root nav={<ManageNav key={1} active={PATH} />} userQuery={result}>
-            <Manage />
-        </Root>
-    )} />,
+export const ManageRoute = makeRoute(url => {
+    if (url.pathname !== PATH) {
+        return null;
+    }
+
+    const queryRef = loadQuery<ManageDashboardQuery>(query, {});
+    return {
+        render: () => (
+            <QueryLoader {...{ query, queryRef }} render={result => (
+                <Root nav={<ManageNav key={1} active={PATH} />} userQuery={result}>
+                    <Manage />
+                </Root>
+            )} />
+        ),
+        dispose: () => queryRef.dispose(),
+    };
 });
+
 
 const query = graphql`
     query manageDashboardQuery {
