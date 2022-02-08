@@ -3,7 +3,7 @@ import { graphql } from "react-relay/hooks";
 
 import type { VideoQuery, VideoQueryResponse } from "./__generated__/VideoQuery.graphql";
 import { loadQuery } from "../relay";
-import { Root } from "../layout/Root";
+import { RootLoader } from "../layout/Root";
 import { PATH_SEGMENT_REGEX } from "./Realm";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
@@ -13,8 +13,6 @@ import { useTranslation } from "react-i18next";
 import { useTitle } from "../util";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
-import { QueryLoader } from "../util/QueryLoader";
-import { UserData$key } from "../__generated__/UserData.graphql";
 import { Link } from "../router";
 import { FiChevronRight } from "react-icons/fi";
 
@@ -48,14 +46,18 @@ const prepare = (id: string, realmPath: string): MatchedRoute => {
     const queryRef = loadQuery<VideoQuery>(query, { id, realmPath });
 
     return {
-        render: () => <QueryLoader {... { query, queryRef }} render={result => {
-            const { event, realm } = result;
+        render: () => <RootLoader
+            {... { query, queryRef }}
+            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            render={result => {
+                const { event, realm } = result;
 
-            // TODO: this realm check is useless once we check a video belongs to a realm.
-            return !event || !realm
-                ? <NotFound kind="video" />
-                : <VideoPage {...{ event, realm, userQuery: result, realmPath, id }} />;
-        }} />,
+                // TODO: this realm check is useless once we check a video belongs to a realm.
+                return !event || !realm
+                    ? <NotFound kind="video" />
+                    : <VideoPage {...{ event, realmPath, id }} />;
+            }}
+        />,
         dispose: () => queryRef.dispose(),
     };
 };
@@ -83,13 +85,11 @@ const query = graphql`
 
 type Props = {
     event: NonNullable<VideoQueryResponse["event"]>;
-    realm: NonNullable<VideoQueryResponse["realm"]>;
-    userQuery: UserData$key;
     realmPath: string;
     id: string;
 };
 
-const VideoPage: React.FC<Props> = ({ event, realm, userQuery, realmPath, id }) => {
+const VideoPage: React.FC<Props> = ({ event, realmPath, id }) => {
     const { t, i18n } = useTranslation();
 
     const createdDate = new Date(event.created);
@@ -105,47 +105,45 @@ const VideoPage: React.FC<Props> = ({ event, realm, userQuery, realmPath, id }) 
     const { title, tracks, description } = event;
     const duration = event.duration ?? 0; // <-- TODO
     useTitle(title);
-    return (
-        <Root nav={<Nav fragRef={realm} />} userQuery={userQuery}>
-            <Player tracks={tracks as Track[]} title={title} duration={duration} />
-            <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
-            {description !== null && <TextBlock content={description} />}
-            <table css={{
-                marginBottom: 16,
-                "& tr": {
-                    "& > td:first-child": {
-                        color: "var(--grey40)",
-                        paddingRight: 32,
-                    },
+    return <>
+        <Player tracks={tracks as Track[]} title={title} duration={duration} />
+        <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
+        {description !== null && <TextBlock content={description} />}
+        <table css={{
+            marginBottom: 16,
+            "& tr": {
+                "& > td:first-child": {
+                    color: "var(--grey40)",
+                    paddingRight: 32,
                 },
-            }}>
-                <tbody>
-                    <MetaDatum label={t("video.creator")} value={event.creator} />
-                    <MetaDatum label={t("video.created")} value={created} />
-                    <MetaDatum label={t("video.updated")} value={updated} />
-                    <MetaDatum label={t("video.part-of-series")} value={event.series?.title} />
-                </tbody>
-            </table>
+            },
+        }}>
+            <tbody>
+                <MetaDatum label={t("video.creator")} value={event.creator} />
+                <MetaDatum label={t("video.created")} value={created} />
+                <MetaDatum label={t("video.updated")} value={updated} />
+                <MetaDatum label={t("video.part-of-series")} value={event.series?.title} />
+            </tbody>
+        </table>
 
-            {event.canWrite && (
-                <Link
-                    to={`/~manage/videos/${id.slice(2)}`}
-                    css={{ display: "inline-flex", alignItems: "center" }}
-                >
-                    {t("manage.my-videos.manage-video")}
-                    <FiChevronRight css={{ fontSize: 22 }} />
-                </Link>
-            )}
+        {event.canWrite && (
+            <Link
+                to={`/~manage/videos/${id.slice(2)}`}
+                css={{ display: "inline-flex", alignItems: "center" }}
+            >
+                {t("manage.my-videos.manage-video")}
+                <FiChevronRight css={{ fontSize: 22 }} />
+            </Link>
+        )}
 
-            <div css={{ height: 80 }} />
+        <div css={{ height: 80 }} />
 
-            {event.series && <SeriesBlockFromSeries
-                realmPath={realmPath} fragRef={event.series}
-                title={t("video.more-from-series", { series: event.series.title })}
-                activeEventId={id}
-            />}
-        </Root>
-    );
+        {event.series && <SeriesBlockFromSeries
+            realmPath={realmPath} fragRef={event.series}
+            title={t("video.more-from-series", { series: event.series.title })}
+            activeEventId={id}
+        />}
+    </>;
 };
 
 type MetaDatumProps = {

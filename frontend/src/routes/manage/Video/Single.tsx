@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { FiArrowLeft } from "react-icons/fi";
 import { graphql } from "react-relay";
 
-import { Root } from "../../../layout/Root";
+import { RootLoader } from "../../../layout/Root";
 import {
     SingleVideoManageQuery,
     SingleVideoManageQueryResponse,
@@ -17,7 +17,6 @@ import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { Thumbnail } from "../../../ui/Video";
 import { useTitle } from "../../../util";
-import { QueryLoader } from "../../../util/QueryLoader";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../Video";
 import { PATH as MANAGE_VIDEOS_PATH } from ".";
@@ -34,18 +33,16 @@ export const ManageSingleVideoRoute = makeRoute(url => {
     const queryRef = loadQuery<SingleVideoManageQuery>(query, { id: `ev${videoId}` });
 
     return {
-        render: () => <QueryLoader {...{ query, queryRef }} render={result => (
-            result.event === null
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={() => <BackLink />}
+            render={data => data.event === null
                 ? <NotFound kind="video" />
-                : (
-                    <Root nav={<BackLink />} userQuery={result}>
-                        {result.event.canWrite
-                            ? <ManageSingleVideo event={result.event}/>
-                            : <NotAuthorized />
-                        }
-                    </Root>
-                )
-        )} />,
+                : data.event.canWrite
+                    ? <ManageSingleVideo event={data.event}/>
+                    : <NotAuthorized />
+            }
+        />,
         dispose: () => queryRef.dispose(),
     };
 });
@@ -53,6 +50,9 @@ export const ManageSingleVideoRoute = makeRoute(url => {
 const BackLink: React.FC = () => {
     const { t } = useTranslation();
 
+    // TODO: if `history.length > 0`, go back in the history instead of having a
+    // link. Going back should preserve the pagination and stuff on the
+    // previous page.
     const items = [
         <LinkWithIcon key={MANAGE_VIDEOS_PATH} to={MANAGE_VIDEOS_PATH} iconPos="left">
             <FiArrowLeft />

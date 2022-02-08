@@ -8,15 +8,13 @@ import { FiLayout, FiPlus, FiTool } from "react-icons/fi";
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
-import { Root } from "../layout/Root";
+import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
-import { Nav, NavItems } from "../layout/Navigation";
+import { Nav } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
 import { useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
-import { UserData$key } from "../__generated__/UserData.graphql";
-import { QueryLoader } from "../util/QueryLoader";
 
 /** A valid realm path segment */
 export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
@@ -34,16 +32,28 @@ export const RealmRoute = makeRoute(url => {
     const queryRef = loadQuery<RealmQuery>(relayEnv, query, { path });
 
     return {
-        render: () => <QueryLoader {...{ query, queryRef }} render={result => (
-            !result.realm
-                ? <NotFound kind="page" />
-                : <RealmPage {...{ userQuery: result, path, realm: result.realm }} />
-        )} />,
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={data => {
+                if (!data.realm) {
+                    return [];
+                }
+
+                const mainNav = <Nav key="nav" fragRef={data.realm} />;
+                return data.realm.canCurrentUserEdit
+                    ? [mainNav, <RealmEditLinks key="edit-buttons" path={path} />]
+                    : mainNav;
+            }}
+            render={data => (
+                data.realm
+                    ? <RealmPage {...{ path, realm: data.realm }} />
+                    : <NotFound kind="page" />
+            )}
+        />,
         dispose: () => queryRef.dispose(),
     };
 });
 
-// TODO Build this query from fragments!
 const query = graphql`
     query RealmQuery($path: String!) {
         ... UserData
@@ -61,12 +71,10 @@ const query = graphql`
 `;
 
 type Props = {
-    userQuery: UserData$key;
     realm: NonNullable<RealmQueryResponse["realm"]>;
-    path: string;
 };
 
-const RealmPage: React.FC<Props> = ({ userQuery, realm, path }) => {
+const RealmPage: React.FC<Props> = ({ realm }) => {
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
     const breadcrumbs = realm.ancestors
         .concat(realm)
@@ -77,19 +85,13 @@ const RealmPage: React.FC<Props> = ({ userQuery, realm, path }) => {
 
     const isRoot = realm.parent === null;
     const title = isRoot ? siteTitle : realm.name;
-    const mainNav = <Nav key="nav" fragRef={realm} />;
-    const nav: NavItems = realm.canCurrentUserEdit
-        ? [mainNav, <RealmEditLinks key="edit-buttons" path={path} />]
-        : mainNav;
     useTitle(title, isRoot);
 
-    return (
-        <Root nav={nav} userQuery={userQuery}>
-            {!isRoot && <Breadcrumbs path={breadcrumbs} />}
-            {title && <h1>{title}</h1>}
-            <Blocks realm={realm} />
-        </Root>
-    );
+    return <>
+        {!isRoot && <Breadcrumbs path={breadcrumbs} />}
+        {title && <h1>{title}</h1>}
+        <Blocks realm={realm} />
+    </>;
 };
 
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
