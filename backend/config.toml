@@ -4,6 +4,9 @@
 [general]
 site_title.en = "Tobira Videoportal"
 
+[http]
+address = "0.0.0.0"
+
 [db]
 password = "tobira"
 

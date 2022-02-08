@@ -3,7 +3,6 @@ version: '2'
 services:
   login-handler:
     image: python:3
-    network_mode: "host"
     ports:
       - "3091:3091"
     volumes:

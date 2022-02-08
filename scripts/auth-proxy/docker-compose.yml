@@ -3,8 +3,9 @@ version: '2'
 services:
   nginx:
     image: nginx
-    network_mode: "host"
     ports:
       - "3090:3090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
