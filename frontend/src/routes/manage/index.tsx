@@ -4,7 +4,7 @@ import { FiFilm, FiUpload, FiVideo } from "react-icons/fi";
 import { HiTemplate } from "react-icons/hi";
 import { graphql } from "react-relay";
 
-import { Root } from "../../layout/Root";
+import { RootLoader } from "../../layout/Root";
 import {
     manageDashboardQuery as ManageDashboardQuery,
 } from "./__generated__/manageDashboardQuery.graphql";
@@ -14,7 +14,6 @@ import { Link } from "../../router";
 import { LinkList, LinkWithIcon } from "../../ui";
 import { NotAuthorized } from "../../ui/error";
 import { useUser } from "../../User";
-import { QueryLoader } from "../../util/QueryLoader";
 
 
 const PATH = "/~manage";
@@ -26,13 +25,12 @@ export const ManageRoute = makeRoute(url => {
 
     const queryRef = loadQuery<ManageDashboardQuery>(query, {});
     return {
-        render: () => (
-            <QueryLoader {...{ query, queryRef }} render={result => (
-                <Root nav={<ManageNav key={1} active={PATH} />} userQuery={result}>
-                    <Manage />
-                </Root>
-            )} />
-        ),
+
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={() => <ManageNav key={1} active={PATH} />}
+            render={() => <Manage />}
+        />,
         dispose: () => queryRef.dispose(),
     };
 });

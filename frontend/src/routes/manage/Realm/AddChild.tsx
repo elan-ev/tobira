@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
-import { Root } from "../../../layout/Root";
+import { RootLoader } from "../../../layout/Root";
 import type {
     AddChildQuery,
     AddChildQueryResponse,
@@ -21,7 +21,6 @@ import { AddChildMutationResponse } from "./__generated__/AddChildMutation.graph
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
-import { QueryLoader } from "../../../util/QueryLoader";
 import { Card } from "../../../ui/Card";
 
 
@@ -40,21 +39,20 @@ export const AddChildRoute = makeRoute(url => {
     const queryRef = loadQuery<AddChildQuery>(query, { parent });
 
     return {
-        render: () => <QueryLoader {...{ query, queryRef }} render={result => {
-            const { parent } = result;
-            const nav = !parent ? [] : <Nav fragRef={parent} />;
-
-            let inner;
-            if (!parent) {
-                inner = <PathInvalid />;
-            } else if (!parent.canCurrentUserEdit) {
-                inner = <NotAuthorized />;
-            } else {
-                inner = <AddChild parent={parent} />;
-            }
-
-            return <Root nav={nav} userQuery={result}>{inner}</Root>;
-        }} />,
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={data => data.parent ? <Nav fragRef={data.parent} /> : []}
+            render={data => {
+                const parent = data.parent;
+                if (!parent) {
+                    return <PathInvalid />;
+                } else if (!parent.canCurrentUserEdit) {
+                    return <NotAuthorized />;
+                } else {
+                    return <AddChild parent={parent} />;
+                }
+            }}
+        />,
         dispose: () => queryRef.dispose(),
     };
 });

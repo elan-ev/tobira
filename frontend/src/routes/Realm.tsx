@@ -10,7 +10,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
 import { Root } from "../layout/Root";
 import { NotFound } from "./NotFound";
-import { Nav } from "../layout/Navigation";
+import { Nav, NavItems } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
 import { useTitle, useTranslatedConfig } from "../util";
@@ -78,9 +78,9 @@ const RealmPage: React.FC<Props> = ({ userQuery, realm, path }) => {
     const isRoot = realm.parent === null;
     const title = isRoot ? siteTitle : realm.name;
     const mainNav = <Nav key="nav" fragRef={realm} />;
-    const nav = realm.canCurrentUserEdit
+    const nav: NavItems = realm.canCurrentUserEdit
         ? [mainNav, <RealmEditLinks key="edit-buttons" path={path} />]
-        : [mainNav];
+        : mainNav;
     useTitle(title, isRoot);
 
     return (

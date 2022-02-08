@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
-import { Root } from "../../../layout/Root";
+import { RootLoader } from "../../../layout/Root";
 import type {
     RealmManageQuery,
     RealmManageQueryResponse,
@@ -19,7 +19,6 @@ import { CenteredContent } from "../../../ui";
 import { NotAuthorized } from "../../../ui/error";
 import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
-import { QueryLoader } from "../../../util/QueryLoader";
 
 
 // Route definition
@@ -39,16 +38,11 @@ export const ManageRealmRoute = makeRoute(url => {
     const queryRef = loadQuery<RealmManageQuery>(query, { path });
 
     return {
-        render: () => <QueryLoader {...{ query, queryRef }} render={result => {
-            const { realm } = result;
-            const nav = !realm ? [] : <Nav fragRef={realm} />;
-
-            return (
-                <Root nav={nav} userQuery={result}>
-                    {!realm ? <PathInvalid /> : <SettingsPage realm={realm} />}
-                </Root>
-            );
-        }} />,
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            render={data => data.realm ? <SettingsPage realm={data.realm} /> : <PathInvalid />}
+        />,
         dispose: () => queryRef.dispose(),
     };
 });

@@ -4,7 +4,7 @@ import { FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp } from "react
 import { graphql, VariablesOf } from "react-relay";
 
 import { ManageNav } from "..";
-import { Root } from "../../../layout/Root";
+import { RootLoader } from "../../../layout/Root";
 import {
     EventSortColumn,
     SortDirection,
@@ -16,7 +16,6 @@ import { loadQuery } from "../../../relay";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Thumbnail } from "../../../ui/Video";
-import { QueryLoader } from "../../../util/QueryLoader";
 import { keyOfId, match, useTitle } from "../../../util";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
@@ -34,17 +33,14 @@ export const ManageVideosRoute = makeRoute(url => {
     const queryRef = loadQuery<VideoManageQuery>(query, vars);
 
     return {
-        render: () => <QueryLoader {...{ query, queryRef }} render={result => (
-            <Root nav={<ManageNav key={1} active={PATH} />} userQuery={result}>
-                {!result.currentUser
-                    ? <NotAuthorized />
-                    : <ManageVideos
-                        vars={vars}
-                        connection={result.currentUser.myVideos}
-                    />
-                }
-            </Root>
-        )} />,
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={() => <ManageNav key={1} active={PATH} />}
+            render={data => !data.currentUser
+                ? <NotAuthorized />
+                : <ManageVideos vars={vars} connection={data.currentUser.myVideos} />
+            }
+        />,
         dispose: () => queryRef.dispose(),
     };
 });

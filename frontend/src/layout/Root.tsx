@@ -3,19 +3,22 @@ import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
 import { Header } from "./header";
-import { BREAKPOINT as NAV_BREAKPOINT } from "./Navigation";
+import { BREAKPOINT as NAV_BREAKPOINT, NavItems } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
 import { BurgerMenu } from "./Burger";
 import { SideBox } from "../ui";
 import { OUTER_CONTAINER_MARGIN } from ".";
 import { UserProvider, UserQueryRef } from "../User";
+import { GraphQLTaggedNode, PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { OperationType } from "relay-runtime";
+import { UserData$key } from "../__generated__/UserData.graphql";
 
 
 export const MAIN_PADDING = 16;
 
 type Props = {
-    nav: JSX.Element | JSX.Element[];
+    nav: NavItems;
     userQuery?: UserQueryRef;
 };
 
@@ -110,4 +113,27 @@ export const InitialLoading: React.FC = () => {
             <Footer />
         </Outer>
     );
+};
+
+/** A query that contains user data needed for the header */
+interface QueryWithUserData extends OperationType {
+    response: UserData$key;
+}
+
+type RootLoaderProps<Q extends QueryWithUserData> = {
+    query: GraphQLTaggedNode;
+    queryRef: PreloadedQuery<Q>;
+    nav: (data: Q["response"]) => NavItems;
+    render: (data: Q["response"]) => JSX.Element;
+};
+
+/** Entry point for almost all routes: loads the GraphQL query and renders the main page layout */
+export const RootLoader = <Q extends QueryWithUserData>({
+    query,
+    queryRef,
+    nav,
+    render,
+}: RootLoaderProps<Q>) => {
+    const data = usePreloadedQuery(query, queryRef);
+    return <Root nav={nav(data)} userQuery={data}>{render(data)}</Root>;
 };

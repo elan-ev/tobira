@@ -3,7 +3,7 @@ import { Trans } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useBeforeunload } from "react-beforeunload";
 
-import { Root } from "../../../../layout/Root";
+import { RootLoader } from "../../../../layout/Root";
 import type {
     ContentManageQuery,
     ContentManageQueryResponse,
@@ -16,7 +16,6 @@ import { RealmSettingsContainer } from "../util";
 import { Nav } from "../../../../layout/Navigation";
 import { makeRoute } from "../../../../rauta";
 import { Link } from "../../../../router";
-import { QueryLoader } from "../../../../util/QueryLoader";
 import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
 import { EditBlock } from "./Block";
@@ -37,23 +36,19 @@ export const ManageRealmContentRoute = makeRoute(url => {
     const queryRef = loadQuery<ContentManageQuery>(query, { path });
 
     return {
-        render: () => <QueryLoader {...{ query, queryRef }} render={result => {
-            const { realm } = result;
-            const nav = realm ? <Nav fragRef={realm} /> : [];
-
-            let children = null;
-            if (!realm) {
-                children = <PathInvalid />;
-            } else if (!realm.canCurrentUserEdit) {
-                children = <NotAuthorized />;
-            } else {
-                children = <ManageContent data={result} />;
-            }
-
-            return <Root nav={nav} userQuery={result}>
-                {children}
-            </Root>;
-        }} />,
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            render={data => {
+                if (!data.realm) {
+                    return <PathInvalid />;
+                } else if (!data.realm.canCurrentUserEdit) {
+                    return <NotAuthorized />;
+                } else {
+                    return <ManageContent data={data} />;
+                }
+            }}
+        />,
         dispose: () => queryRef.dispose(),
     };
 });
