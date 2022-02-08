@@ -169,7 +169,7 @@ manage:
       Error: invalid path to page. Was the page deleted or its path changed?
     heading: Settings of page “{{realm}}”
     heading-root: Homepage settings
-    descendants-count: This page has {{count}} many direct and indirect sub-pages.
+    descendants-count: This page has {{count}} direct and indirect sub-pages.
     view-page: Go to page
 
     name-must-not-be-empty: Name must not be empty.
