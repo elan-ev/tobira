@@ -20,6 +20,7 @@ import { keyOfId, match, useTitle } from "../../../util";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { Card } from "../../../ui/Card";
+import { Description } from "../../../ui/metadata";
 
 
 export const PATH = "/~manage/videos";
@@ -276,33 +277,6 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
             </td>
         </tr>
     );
-};
-
-const Description: React.FC<{ text: string | null }> = ({ text }) => {
-    const { t } = useTranslation();
-    const sharedStyle = {
-        fontSize: 13,
-        marginTop: 4,
-    };
-
-    if (text === null) {
-        return <div css={{
-            ...sharedStyle,
-            color: "var(--grey65)",
-            fontStyle: "italic",
-        }}>{t("manage.my-videos.no-description")}</div>;
-    } else {
-        return <div css={{
-            ...sharedStyle,
-            color: "var(--grey40)",
-            maxWidth: 800,
-            display: "-webkit-box",
-            WebkitBoxOrient: "vertical",
-            textOverflow: "ellipsis",
-            WebkitLineClamp: 2,
-            overflow: "hidden",
-        }}>{text}</div>;
-    }
 };
 
 type PageNavigationProps = {
