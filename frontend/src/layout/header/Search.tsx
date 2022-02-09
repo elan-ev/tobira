@@ -48,13 +48,20 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const spinnerSize = 22;
     const paddingSpinner = (height - spinnerSize) / 2;
 
+    const lastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     return <div css={{ position: "relative", margin: "0 8px" }}>
         <input
             ref={ref}
             type="text"
             placeholder={t("search.input-label")}
             onChange={e => {
-                router.goto(`/~search?q=${encodeURIComponent(e.target.value)}`);
+                if (lastTimeout.current !== null) {
+                    clearTimeout(lastTimeout.current);
+                }
+                lastTimeout.current = setTimeout(() => {
+                    router.goto(`/~search?q=${encodeURIComponent(e.target.value)}`);
+                }, 200);
             }}
             css={{
                 flex: "1 1 0px",
