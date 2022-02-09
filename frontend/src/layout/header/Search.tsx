@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "../../router";
 
@@ -11,6 +11,25 @@ type SearchFieldProps = {
 export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const ref = useRef<HTMLInputElement>(null);
+
+    // Register global shortcut to focus search bar
+    useEffect(() => {
+        const handleShortcut = (ev: KeyboardEvent) => {
+            if (ev.ctrlKey || ev.altKey || ev.metaKey) {
+                return;
+            }
+            if (document.activeElement?.tagName === "INPUT") {
+                return;
+            }
+            if (ev.key === "s" || ev.key === "S") {
+                ref.current?.focus();
+            }
+        };
+
+        document.addEventListener("keyup", handleShortcut);
+        return () => document.removeEventListener("keyup", handleShortcut);
+    }, []);
 
     const extraCss = variant === "desktop"
         ? {
@@ -25,6 +44,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
 
     return (
         <input
+            ref={ref}
             type="text"
             placeholder={t("search.input-label")}
             onChange={e => {
