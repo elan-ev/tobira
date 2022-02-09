@@ -37,8 +37,9 @@ pub(crate) async fn perform(query: &str, context: &Context) -> ApiResult<Option<
         let sql = "select id, title, description, thumbnail, duration, tracks \
             from events \
             where title ilike '%' || $1 || '%' \
+            and read_roles && $2 \
             limit 10";
-        context.db.query_mapped(sql, dbargs![&escaped_query], |row| {
+        context.db.query_mapped(sql, dbargs![&escaped_query, &context.user.roles()], |row| {
             NodeValue::from(SearchEvent {
                 key: row.get(0),
                 title: row.get(1),
