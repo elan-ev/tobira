@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "../../router";
+import { isSearchActive } from "../../routes/Search";
+import { Spinner } from "../../ui/Spinner";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 
@@ -42,7 +44,11 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             width: "100%",
         };
 
-    return (
+    const height = 35;
+    const spinnerSize = 22;
+    const paddingSpinner = (height - spinnerSize) / 2;
+
+    return <div css={{ position: "relative", margin: "0 8px" }}>
         <input
             ref={ref}
             type="text"
@@ -52,9 +58,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             }}
             css={{
                 flex: "1 1 0px",
-                margin: "0 8px",
                 minWidth: 50,
-                height: 35,
+                height,
                 borderRadius: 4,
                 border: "1.5px solid var(--grey80)",
                 padding: "0 12px",
@@ -66,5 +71,9 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 ...extraCss,
             }}
         />
-    );
+        {router.isTransitioning && isSearchActive() && <Spinner
+            size={spinnerSize}
+            css={{ position: "absolute", right: paddingSpinner, top: paddingSpinner }}
+        />}
+    </div>;
 };

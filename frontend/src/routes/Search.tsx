@@ -11,6 +11,7 @@ import { useTitle } from "../util";
 import { bug } from "../util/err";
 
 
+export const isSearchActive = (): boolean => document.location.pathname === "/~search";
 
 export const SearchRoute = makeRoute(url => {
     if (url.pathname !== "/~search") {

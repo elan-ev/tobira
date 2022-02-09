@@ -1,11 +1,17 @@
 import { Transition } from "react-transition-group";
 import { useRouter } from "../router";
+import { isSearchActive } from "../routes/Search";
 import { match } from "../util";
 
 
 /** A thin colored line at the top of the page indicating a page load */
 export const LoadingIndicator: React.FC = () => {
     const router = useRouter();
+
+    // If search is active, there is a loading indicator next to the search input.
+    if (isSearchActive()) {
+        return null;
+    }
 
     const START_DURATION = 1200;
     const EXIT_DURATION = 150;
