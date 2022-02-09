@@ -46,7 +46,7 @@ type Mutation {
   "Remove a realm from the tree."
   removeRealm(id: ID!): RemovedRealm!
   """
-    Adds a text block to a realm
+    Adds a text block to a realm.
 
     The new block will be inserted at the given index,
     i.e. it will be at that position after the insert.
@@ -56,7 +56,7 @@ type Mutation {
   """
   addTextBlock(realm: ID!, index: Int!, block: NewTextBlock!): Realm!
   """
-    Adds a series block to a realm
+    Adds a series block to a realm.
 
     The new block will be inserted at the given index,
     i.e. it will be at that position after the insert.
@@ -65,14 +65,26 @@ type Mutation {
     at that index.
   """
   addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
+  """
+    Adds a video block to a realm.
+
+    The new block will be inserted at the given index,
+    i.e. it will be at that position after the insert.
+    Or, if you prefer to think about it this way:
+    It will be inserted before the block that currently sits
+    at that index.
+  """
+  addVideoBlock(realm: ID!, index: Int!, block: NewVideoBlock!): Realm!
   "Swap two blocks."
   swapBlocksByIndex(realm: ID!, indexA: Int!, indexB: Int!): Realm!
-  "Update a block's data"
+  "Update a block's data."
   updateBlock(id: ID!, set: UpdateBlock!): Block!
-  "Update a text block's data"
+  "Update a text block's data."
   updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
-  "Update a series block's data"
+  "Update a series block's data."
   updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): Block!
+  "Update a video block's data."
+  updateVideoBlock(id: ID!, set: UpdateVideoBlock!): Block!
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
 }
@@ -106,11 +118,6 @@ type RemovedBlock {
   realm: Realm!
 }
 
-input ChildIndex {
-  id: ID!
-  index: Int!
-}
-
 type Query {
   "Returns the root realm."
   rootRealm: Realm!
@@ -130,6 +137,8 @@ type Query {
   realmByPath(path: String!): Realm
   "Returns an event by its ID."
   event(id: ID!): Event
+  "Returns a list of all events the current user has read access to"
+  events: [Event!]!
   "Returns a list of all series"
   series: [Series!]!
   "Returns the current user."
@@ -144,6 +153,11 @@ enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
   ALPHABETIC_DESC
+}
+
+input ChildIndex {
+  id: ID!
+  index: Int!
 }
 
 type RemovedRealm {
@@ -164,6 +178,11 @@ type SeriesBlock implements Block {
   id: ID!
   index: Int!
   title: String
+}
+
+input NewVideoBlock {
+  title: String
+  event: ID!
 }
 
 input UpdateSeriesBlock {
@@ -199,11 +218,24 @@ input UpdateRealm {
   pathSegment: String
 }
 
+input UpdateVideoBlock {
+  title: String
+  event: ID
+}
+
 enum EventSortColumn {
   TITLE
   DURATION
   CREATED
   UPDATED
+}
+
+"A block for presenting a single Opencast event"
+type VideoBlock implements Block {
+  event: Event!
+  id: ID!
+  index: Int!
+  title: String
 }
 
 input NewSeriesBlock {

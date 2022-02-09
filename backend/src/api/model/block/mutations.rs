@@ -16,21 +16,11 @@ impl BlockValue {
     ) -> ApiResult<Realm> {
         context.require_moderator()?;
 
-        if index < 0 {
-            return Err(invalid_input!("`index` must be nonnegative"));
-        }
-
-        let index = i16::try_from(index)
-            .map_err(|_| invalid_input!("`index` is too large"))?;
-
-        let realm = realm.key_for(Id::REALM_KIND)
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
-
-        Self::make_room_for_block(realm, index, context).await?;
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
 
         context.db
             .execute(
-                "insert into blocks (realm_id, index, type, title, text_content)
+                "insert into blocks (realm_id, index, type, title, text_content) \
                     values ($1, $2, 'text', $3, $4)",
                 &[&realm, &index, &block.title, &block.content],
             )
@@ -49,32 +39,43 @@ impl BlockValue {
     ) -> ApiResult<Realm> {
         context.require_moderator()?;
 
-        if index < 0 {
-            return Err(invalid_input!("`index` must be nonnegative"));
-        }
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
 
-        let index = i16::try_from(index)
-            .map_err(|_| invalid_input!("`index` is too large"))?;
-
-        let realm = realm.key_for(Id::REALM_KIND)
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
-
-        Self::make_room_for_block(realm, index, context).await?;
+        let series = block.series.key_for(Id::SERIES_KIND)
+            .ok_or_else(|| invalid_input!("`block.series` does not refer to a series"))?;
 
         context.db
             .execute(
-                "insert into blocks
-                    (realm_id, index, type, title, series_id, videolist_order, videolist_layout)
+                "insert into blocks \
+                    (realm_id, index, type, title, series_id, videolist_order, videolist_layout) \
                     values ($1, $2, 'series', $3, $4, $5, $6)",
-                &[
-                    &realm,
-                    &index,
-                    &block.title,
-                    &block.series.key_for(Id::SERIES_KIND)
-                        .ok_or_else(|| invalid_input!("`block.series` does not refer to a series"))?,
-                    &block.order,
-                    &block.layout,
-                ],
+                &[&realm, &index, &block.title, &series, &block.order, &block.layout],
+            )
+            .await?;
+
+        Realm::load_by_key(realm, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+    }
+
+    pub(crate) async fn add_video(
+        realm: Id,
+        index: i32,
+        block: NewVideoBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        context.require_moderator()?;
+
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
+
+        let event = block.event.key_for(Id::EVENT_KIND)
+            .ok_or_else(|| invalid_input!("`block.event` does not refer to an event"))?;
+
+        context.db
+            .execute(
+                "insert into blocks (realm_id, index, type, title, video_id) \
+                    values ($1, $2, 'video', $3, $4)",
+                &[&realm, &index, &block.title, &event],
             )
             .await?;
 
@@ -87,7 +88,16 @@ impl BlockValue {
     /// increase their index by `1`.
     /// This basically moves all the blocks after the `index`-th one aside,
     /// so a new block can be inserted at position `index`.
-    async fn make_room_for_block(realm: Key, index: i16, context: &Context) -> ApiResult<()> {
+    /// It also checks the validity of the given index within the given realm,
+    /// and the validity of the realm ID, and returns the validated values
+    async fn prepare_realm_for_block(
+        realm: Id,
+        index: i32,
+        context: &Context,
+    ) -> ApiResult<(Key, i16)> {
+        let realm = realm.key_for(Id::REALM_KIND)
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
+
         let num_blocks: i64 = context.db
             .query_one(
                 "select count(*) from blocks where realm_id = $1",
@@ -96,28 +106,31 @@ impl BlockValue {
             .await?
             .get(0);
 
+        let index = i16::try_from(index)
+            .map_err(|_| invalid_input!("`index` is too large"))?;
+
         if index < 0 || index as i64 > num_blocks {
-            return Err(invalid_input!("`index` out of range"));
+            return Err(invalid_input!("`index` out of bounds"));
         }
 
         context.db
             .execute(
-                "update blocks
-                    set index = index + 1
-                    where realm_id = $1
+                "update blocks \
+                    set index = index + 1 \
+                    where realm_id = $1 \
                     and index >= $2",
                 &[&realm, &index],
             )
             .await?;
 
-        Ok(())
+        Ok((realm, index))
     }
 
     pub(crate) async fn swap_by_index(
         realm: Id,
         index_a: i32,
         index_b: i32,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<Realm> {
 
         if index_a == index_b {
@@ -188,7 +201,11 @@ impl BlockValue {
         Ok(realm)
     }
 
-    pub(crate) async fn update(id: Id, set: UpdateBlock, context: &Context) -> ApiResult<BlockValue> {
+    pub(crate) async fn update(
+        id: Id,
+        set: UpdateBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
@@ -210,7 +227,11 @@ impl BlockValue {
         Ok(Self::from_row(updated_block)?)
     }
 
-    pub(crate) async fn update_text(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<BlockValue> {
+    pub(crate) async fn update_text(
+        id: Id,
+        set: UpdateTextBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
@@ -235,7 +256,11 @@ impl BlockValue {
         Ok(Self::from_row(updated_block)?)
     }
 
-    pub(crate) async fn update_series(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<BlockValue> {
+    pub(crate) async fn update_series(
+        id: Id,
+        set: UpdateSeriesBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
@@ -260,6 +285,38 @@ impl BlockValue {
                     ).transpose()?,
                     &set.layout,
                     &set.order,
+                ],
+            )
+            .await?;
+
+        Ok(Self::from_row(updated_block)?)
+    }
+
+    pub(crate) async fn update_video(
+        id: Id,
+        set: UpdateVideoBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
+        let updated_block = context.db(context.require_moderator()?)
+            .query_one(
+                &format!(
+                    "update blocks set \
+                        title = case $2::boolean when true then $3 else title end, \
+                        video_id = coalesce($4, video_id) \
+                        where id = $1 \
+                        and type = 'video' \
+                        returning {}",
+                    Self::COL_NAMES,
+                ),
+                &[
+                    &id.key_for(Id::BLOCK_KIND)
+                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
+                    &!set.title.is_implicit_null(),
+                    &set.title.some(),
+                    &set.event.map(
+                        |series| series.key_for(Id::EVENT_KIND)
+                            .ok_or_else(|| invalid_input!("`set.event` does not refer to a event"))
+                    ).transpose()?,
                 ],
             )
             .await?;
@@ -293,9 +350,9 @@ impl BlockValue {
         // Fix indices after removed block
         db
             .execute(
-                "update blocks
-                    set index = index - 1
-                    where realm_id = $1
+                "update blocks \
+                    set index = index - 1 \
+                    where realm_id = $1 \
                     and index > $2",
                 &[&realm.key, &index],
             )
@@ -320,6 +377,12 @@ pub(crate) struct NewSeriesBlock {
     order: VideoListOrder,
 }
 
+#[derive(GraphQLInputObject)]
+pub(crate) struct NewVideoBlock {
+    title: Option<String>,
+    event: Id,
+}
+
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateBlock {
@@ -338,6 +401,12 @@ pub(crate) struct UpdateSeriesBlock {
     series: Option<Id>,
     layout: Option<VideoListLayout>,
     order: Option<VideoListOrder>,
+}
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct UpdateVideoBlock {
+    title: Nullable<String>,
+    event: Option<Id>,
 }
 
 

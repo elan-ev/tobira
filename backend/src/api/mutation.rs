@@ -10,9 +10,11 @@ use super::{
             BlockValue,
             NewTextBlock,
             NewSeriesBlock,
+            NewVideoBlock,
             UpdateBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
+            UpdateVideoBlock,
             RemovedBlock,
         },
     },
@@ -57,26 +59,52 @@ impl Mutation {
         Realm::remove(id, context).await
     }
 
-    /// Adds a text block to a realm
+    /// Adds a text block to a realm.
     ///
     /// The new block will be inserted at the given index,
     /// i.e. it will be at that position after the insert.
     /// Or, if you prefer to think about it this way:
     /// It will be inserted before the block that currently sits
     /// at that index.
-    async fn add_text_block(realm: Id, index: i32, block: NewTextBlock, context: &Context) -> ApiResult<Realm> {
+    async fn add_text_block(
+        realm: Id,
+        index: i32,
+        block: NewTextBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
         BlockValue::add_text(realm, index, block, context).await
     }
 
-    /// Adds a series block to a realm
+    /// Adds a series block to a realm.
     ///
     /// The new block will be inserted at the given index,
     /// i.e. it will be at that position after the insert.
     /// Or, if you prefer to think about it this way:
     /// It will be inserted before the block that currently sits
     /// at that index.
-    async fn add_series_block(realm: Id, index: i32, block: NewSeriesBlock, context: &Context) -> ApiResult<Realm> {
+    async fn add_series_block(
+        realm: Id,
+        index: i32,
+        block: NewSeriesBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
         BlockValue::add_series(realm, index, block, context).await
+    }
+
+    /// Adds a video block to a realm.
+    ///
+    /// The new block will be inserted at the given index,
+    /// i.e. it will be at that position after the insert.
+    /// Or, if you prefer to think about it this way:
+    /// It will be inserted before the block that currently sits
+    /// at that index.
+    async fn add_video_block(
+        realm: Id,
+        index: i32,
+        block: NewVideoBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        BlockValue::add_video(realm, index, block, context).await
     }
 
     /// Swap two blocks.
@@ -84,24 +112,41 @@ impl Mutation {
         realm: Id,
         index_a: i32,
         index_b: i32,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<Realm> {
         BlockValue::swap_by_index(realm, index_a, index_b, context).await
     }
 
-    /// Update a block's data
+    /// Update a block's data.
     async fn update_block(id: Id, set: UpdateBlock, context: &Context) -> ApiResult<BlockValue> {
         BlockValue::update(id, set, context).await
     }
 
-    /// Update a text block's data
-    async fn update_text_block(id: Id, set: UpdateTextBlock, context: &Context) -> ApiResult<BlockValue> {
+    /// Update a text block's data.
+    async fn update_text_block(
+        id: Id,
+        set: UpdateTextBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
         BlockValue::update_text(id, set, context).await
     }
 
-    /// Update a series block's data
-    async fn update_series_block(id: Id, set: UpdateSeriesBlock, context: &Context) -> ApiResult<BlockValue> {
+    /// Update a series block's data.
+    async fn update_series_block(
+        id: Id,
+        set: UpdateSeriesBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
         BlockValue::update_series(id, set, context).await
+    }
+
+    /// Update a video block's data.
+    async fn update_video_block(
+        id: Id,
+        set: UpdateVideoBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
+        BlockValue::update_video(id, set, context).await
     }
 
     /// Remove a block from a realm.

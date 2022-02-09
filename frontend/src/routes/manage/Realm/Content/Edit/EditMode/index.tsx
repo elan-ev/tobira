@@ -14,6 +14,7 @@ import { ButtonGroup } from "..";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
 import { EditTextBlock, TextFormData } from "./Text";
 import { EditSeriesBlock, SeriesFormData } from "./Series";
+import { EditVideoBlock, VideoFormData } from "./Video";
 
 
 type EditModeProps = {
@@ -29,6 +30,8 @@ type BlockFormData = (
     { type: "TextBlock" } & TextFormData
 ) | (
     { type: "SeriesBlock" } & SeriesFormData
+) | (
+    { type: "VideoBlock" } & VideoFormData
 );
 
 export type EditModeFormData = {
@@ -74,6 +77,7 @@ export const EditMode: React.FC<EditModeProps> = ({
                 __typename
                 ... on TextBlock { ... TextEditModeBlockData }
                 ... on SeriesBlock { ... SeriesEditModeBlockData }
+                ... on VideoBlock { ... VideoEditModeBlockData }
             }
         }
     `, realmRef);
@@ -83,7 +87,7 @@ export const EditMode: React.FC<EditModeProps> = ({
 
     const form = useForm<EditModeFormData>({
         defaultValues: {
-            type: type as "TextBlock" | "SeriesBlock",
+            type: type as "TextBlock" | "SeriesBlock" | "VideoBlock",
         },
     });
     const editModeRef = useRef<EditModeRef>(null);
@@ -131,6 +135,7 @@ export const EditMode: React.FC<EditModeProps> = ({
             {match(block.__typename, {
                 "TextBlock": () => <EditTextBlock ref={editModeRef} block={block} />,
                 "SeriesBlock": () => <EditSeriesBlock ref={editModeRef} block={block} />,
+                "VideoBlock": () => <EditVideoBlock ref={editModeRef} block={block} />,
             })}
         </form>
     </FormProvider>;

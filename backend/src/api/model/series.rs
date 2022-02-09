@@ -1,10 +1,10 @@
-use futures::TryStreamExt;
 use juniper::graphql_object;
 use tokio_postgres::Row;
 
 use crate::{
     api::{Context, err::ApiResult, Id, model::event::{Event, EventSortOrder}, Node, NodeValue},
-    db::{types::Key, util::dbargs},
+    db::{types::Key},
+    prelude::*,
 };
 
 
@@ -42,22 +42,19 @@ impl Series {
 }
 
 impl Series {
-    pub(crate) async fn load(context: &Context) -> ApiResult<Vec<Self>> {
-        let series = context.db(context.require_moderator()?)
-            .query_raw(
+    pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
+        context.db(context.require_moderator()?)
+            .query_mapped(
                 &format!(
                     "select {} from series \
                         order by title",
                     Self::COL_NAMES,
                 ),
                 dbargs![],
+                Self::from_row,
             )
             .await?
-            .map_ok(Self::from_row)
-            .try_collect()
-            .await?;
-
-        Ok(series)
+            .pipe(Ok)
     }
 
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {

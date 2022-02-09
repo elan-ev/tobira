@@ -7,6 +7,7 @@ import { BlocksBlockData$key } from "./__generated__/BlocksBlockData.graphql";
 import { match } from "../../util";
 import { TextBlockByQuery } from "./Text";
 import { SeriesBlockFromBlock } from "./Series";
+import { VideoBlock } from "./Video";
 
 
 type BlocksProps = {
@@ -56,6 +57,7 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
             __typename
             ... on TextBlock { ... TextBlockData }
             ... on SeriesBlock { ... SeriesBlockData }
+            ... on VideoBlock { ... VideoBlockData }
         }
     `, blockRef);
     const { title, __typename } = block;
@@ -69,6 +71,10 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
             "SeriesBlock": () => <SeriesBlockFromBlock
                 title={title ?? undefined}
                 realmPath={path}
+                fragRef={block}
+            />,
+            "VideoBlock": () => <VideoBlock
+                title={title ?? ""}
                 fragRef={block}
             />,
         })}
