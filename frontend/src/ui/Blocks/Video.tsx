@@ -16,12 +16,7 @@ export const VideoBlock: React.FC<Props> = ({ title, fragRef }) => {
             event {
                 title
                 duration
-                tracks {
-                    uri
-                    flavor
-                    mimetype
-                    resolution
-                }
+                tracks { uri flavor mimetype resolution }
             }
         }
     `, fragRef);

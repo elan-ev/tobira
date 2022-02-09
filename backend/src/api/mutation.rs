@@ -59,7 +59,7 @@ impl Mutation {
         Realm::remove(id, context).await
     }
 
-    /// Adds a text block to a realm
+    /// Adds a text block to a realm.
     ///
     /// The new block will be inserted at the given index,
     /// i.e. it will be at that position after the insert.
@@ -75,7 +75,7 @@ impl Mutation {
         BlockValue::add_text(realm, index, block, context).await
     }
 
-    /// Adds a series block to a realm
+    /// Adds a series block to a realm.
     ///
     /// The new block will be inserted at the given index,
     /// i.e. it will be at that position after the insert.
@@ -91,7 +91,7 @@ impl Mutation {
         BlockValue::add_series(realm, index, block, context).await
     }
 
-    /// Adds a video block to a realm
+    /// Adds a video block to a realm.
     ///
     /// The new block will be inserted at the given index,
     /// i.e. it will be at that position after the insert.
@@ -117,12 +117,12 @@ impl Mutation {
         BlockValue::swap_by_index(realm, index_a, index_b, context).await
     }
 
-    /// Update a block's data
+    /// Update a block's data.
     async fn update_block(id: Id, set: UpdateBlock, context: &Context) -> ApiResult<BlockValue> {
         BlockValue::update(id, set, context).await
     }
 
-    /// Update a text block's data
+    /// Update a text block's data.
     async fn update_text_block(
         id: Id,
         set: UpdateTextBlock,
@@ -131,7 +131,7 @@ impl Mutation {
         BlockValue::update_text(id, set, context).await
     }
 
-    /// Update a series block's data
+    /// Update a series block's data.
     async fn update_series_block(
         id: Id,
         set: UpdateSeriesBlock,
@@ -140,7 +140,7 @@ impl Mutation {
         BlockValue::update_series(id, set, context).await
     }
 
-    /// Update a video block's data
+    /// Update a video block's data.
     async fn update_video_block(
         id: Id,
         set: UpdateVideoBlock,

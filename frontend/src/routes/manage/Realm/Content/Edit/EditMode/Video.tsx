@@ -62,10 +62,7 @@ export const EditVideoBlock = React.forwardRef<EditModeRef, EditVideoBlockProps>
                     : bug("not a video block");
 
                 save({
-                    variables: {
-                        id,
-                        set,
-                    },
+                    variables: { id, set },
                     onCompleted,
                     onError,
                 });
@@ -76,11 +73,7 @@ export const EditVideoBlock = React.forwardRef<EditModeRef, EditVideoBlockProps>
                     : bug("not a video block");
 
                 create({
-                    variables: {
-                        realm,
-                        index,
-                        block,
-                    },
+                    variables: { realm, index, block },
                     onCompleted,
                     onError,
                 });

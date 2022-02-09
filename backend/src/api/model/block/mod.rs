@@ -230,18 +230,14 @@ impl BlockValue {
 
             BlockType::Series => SeriesBlock {
                 shared,
-                series: Id::series(
-                    get_type_dependent(&row, 5, "videolist", "series_id")?
-                ),
+                series: Id::series(get_type_dependent(&row, 5, "videolist", "series_id")?),
                 layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
                 order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
             }.into(),
 
             BlockType::Video => VideoBlock {
                 shared,
-                event: Id::event(
-                    get_type_dependent(&row, 8, "video", "video_id")?,
-                ),
+                event: Id::event(get_type_dependent(&row, 8, "video", "video_id")?),
             }.into(),
         };
 

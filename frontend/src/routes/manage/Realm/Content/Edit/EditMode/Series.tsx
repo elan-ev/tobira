@@ -76,10 +76,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
                     : bug("not a series block");
 
                 save({
-                    variables: {
-                        id,
-                        set,
-                    },
+                    variables: { id, set },
                     onCompleted,
                     onError,
                 });
@@ -90,11 +87,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
                     : bug("not a series block");
 
                 create({
-                    variables: {
-                        realm,
-                        index,
-                        block,
-                    },
+                    variables: { realm, index, block },
                     onCompleted,
                     onError,
                 });
