@@ -29,6 +29,7 @@ create table blocks (
     videolist_layout video_list_layout,
     videolist_order video_list_order,
 
+    -- Video blocks
     video_id bigint references events on delete restrict
 );
 
