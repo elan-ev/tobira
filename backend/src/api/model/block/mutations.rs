@@ -101,7 +101,7 @@ impl BlockValue {
     async fn prepare_realm_for_block(
         realm: Id,
         index: i32,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<(Key, i16)> {
         let realm = realm.key_for(Id::REALM_KIND)
             .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
@@ -138,7 +138,7 @@ impl BlockValue {
         realm: Id,
         index_a: i32,
         index_b: i32,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<Realm> {
 
         if index_a == index_b {
@@ -212,7 +212,7 @@ impl BlockValue {
     pub(crate) async fn update(
         id: Id,
         set: UpdateBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
@@ -238,7 +238,7 @@ impl BlockValue {
     pub(crate) async fn update_text(
         id: Id,
         set: UpdateTextBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
@@ -267,7 +267,7 @@ impl BlockValue {
     pub(crate) async fn update_series(
         id: Id,
         set: UpdateSeriesBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
@@ -303,7 +303,7 @@ impl BlockValue {
     pub(crate) async fn update_video(
         id: Id,
         set: UpdateVideoBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(

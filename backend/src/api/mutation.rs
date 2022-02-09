@@ -70,7 +70,7 @@ impl Mutation {
         realm: Id,
         index: i32,
         block: NewTextBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<Realm> {
         BlockValue::add_text(realm, index, block, context).await
     }
@@ -86,7 +86,7 @@ impl Mutation {
         realm: Id,
         index: i32,
         block: NewSeriesBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<Realm> {
         BlockValue::add_series(realm, index, block, context).await
     }
@@ -98,7 +98,12 @@ impl Mutation {
     /// Or, if you prefer to think about it this way:
     /// It will be inserted before the block that currently sits
     /// at that index.
-    async fn add_video_block(realm: Id, index: i32, block: NewVideoBlock, context: &Context) -> ApiResult<Realm> {
+    async fn add_video_block(
+        realm: Id,
+        index: i32,
+        block: NewVideoBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
         BlockValue::add_video(realm, index, block, context).await
     }
 
@@ -107,7 +112,7 @@ impl Mutation {
         realm: Id,
         index_a: i32,
         index_b: i32,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<Realm> {
         BlockValue::swap_by_index(realm, index_a, index_b, context).await
     }
@@ -121,7 +126,7 @@ impl Mutation {
     async fn update_text_block(
         id: Id,
         set: UpdateTextBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<BlockValue> {
         BlockValue::update_text(id, set, context).await
     }
@@ -130,7 +135,7 @@ impl Mutation {
     async fn update_series_block(
         id: Id,
         set: UpdateSeriesBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<BlockValue> {
         BlockValue::update_series(id, set, context).await
     }
@@ -139,7 +144,7 @@ impl Mutation {
     async fn update_video_block(
         id: Id,
         set: UpdateVideoBlock,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<BlockValue> {
         BlockValue::update_video(id, set, context).await
     }
