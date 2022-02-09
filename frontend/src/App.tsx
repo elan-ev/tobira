@@ -10,6 +10,7 @@ import { MatchedRoute } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { InitialLoading } from "./layout/Root";
 import { GraphQLErrorBoundary } from "./relay/boundary";
+import { LoadingIndicator } from "./ui/LoadingIndicator";
 
 
 
@@ -24,6 +25,7 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
             <Router initialRoute={initialRoute}>
                 <APIWrapper>
                     <MenuProvider>
+                        <LoadingIndicator />
                         <ActiveRoute />
                     </MenuProvider>
                 </APIWrapper>
