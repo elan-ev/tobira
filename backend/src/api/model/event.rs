@@ -102,7 +102,7 @@ impl Event {
 }
 
 impl Event {
-    pub(crate) async fn load(context: &Context) -> ApiResult<Vec<Self>> {
+    pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
         context.db(context.require_moderator()?)
             .query_mapped(
                 &format!(

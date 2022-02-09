@@ -49,12 +49,12 @@ impl Query {
 
     /// Returns a list of all events the current user has read access to
     async fn events(context: &Context) -> ApiResult<Vec<Event>> {
-        Event::load(context).await
+        Event::load_all(context).await
     }
 
     /// Returns a list of all series
     async fn series(context: &Context) -> ApiResult<Vec<Series>> {
-        Series::load(context).await
+        Series::load_all(context).await
     }
 
     /// Returns the current user.

@@ -41,20 +41,15 @@ impl BlockValue {
 
         let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
 
+        let series = block.series.key_for(Id::SERIES_KIND)
+            .ok_or_else(|| invalid_input!("`block.series` does not refer to a series"))?;
+
         context.db
             .execute(
                 "insert into blocks \
                     (realm_id, index, type, title, series_id, videolist_order, videolist_layout) \
                     values ($1, $2, 'series', $3, $4, $5, $6)",
-                &[
-                    &realm,
-                    &index,
-                    &block.title,
-                    &block.series.key_for(Id::SERIES_KIND)
-                        .ok_or_else(|| invalid_input!("`block.series` does not refer to a series"))?,
-                    &block.order,
-                    &block.layout,
-                ],
+                &[&realm, &index, &block.title, &series, &block.order, &block.layout],
             )
             .await?;
 
@@ -73,17 +68,14 @@ impl BlockValue {
 
         let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
 
+        let event = block.event.key_for(Id::EVENT_KIND)
+            .ok_or_else(|| invalid_input!("`block.event` does not refer to an event"))?;
+
         context.db
             .execute(
                 "insert into blocks (realm_id, index, type, title, video_id) \
                     values ($1, $2, 'video', $3, $4)",
-                &[
-                    &realm,
-                    &index,
-                    &block.title,
-                    &block.event.key_for(Id::EVENT_KIND)
-                        .ok_or_else(|| invalid_input!("`block.event` does not refer to an event"))?,
-                ],
+                &[&realm, &index, &block.title, &event],
             )
             .await?;
 
