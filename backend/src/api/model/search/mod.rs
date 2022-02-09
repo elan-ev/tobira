@@ -1,3 +1,5 @@
+use rand::{SeedableRng, prelude::SliceRandom};
+
 use crate::{
     api::{
         Context,
@@ -55,7 +57,7 @@ pub(crate) async fn perform(query: &str, context: &Context) -> ApiResult<Option<
         let sql = "select id, name, full_path \
             from realms \
             where name ilike '%' || $1 || '%' \
-            limit 10";
+            limit 7";
         context.db.query_mapped(sql, dbargs![&escaped_query], |row| {
             NodeValue::from(SearchRealm {
                 key: row.get(0),
@@ -65,9 +67,11 @@ pub(crate) async fn perform(query: &str, context: &Context) -> ApiResult<Option<
         }).await?
     };
 
-    Ok(Some(SearchResults {
-        items: realms.into_iter().chain(events).collect(),
-    }))
+    let mut items: Vec<_> = realms.into_iter().chain(events).collect();
+    let mut rng = rand::rngs::StdRng::seed_from_u64(123);
+    items.shuffle(&mut rng);
+
+    Ok(Some(SearchResults { items }))
 }
 
 
