@@ -36,8 +36,6 @@ type EditSeriesBlockProps = {
 
 export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProps>(
     ({ block: blockRef }, ref) => {
-        const { t } = useTranslation();
-
 
         const { series: allSeries } = useFragment(graphql`
             fragment SeriesEditModeSeriesData on Query {
@@ -52,10 +50,6 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
                 series { id }
             }
         `, blockRef);
-
-
-        const form = useFormContext<EditModeFormData>();
-        const { formState: { errors } } = form;
 
 
         const [save] = useMutation<SeriesEditSaveMutation>(graphql`
@@ -107,6 +101,11 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
             },
         }));
 
+
+        const { t } = useTranslation();
+
+        const form = useFormContext<EditModeFormData>();
+        const { formState: { errors } } = form;
 
         return <div css={{ "& > h3": {
             marginTop: 8,

@@ -87,7 +87,19 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
         >
             <FiGrid />
         </Button>
-        <Button title={t("manage.realm.content.add-video")}>
+        <Button
+            title={t("manage.realm.content.add-video")}
+            onClick={() => addBlock("Video", (store, block) => {
+                // See above for an explanation
+                const eventId = "clNOEVENT";
+                let dummyEvent = store.get(eventId);
+                if (!dummyEvent) {
+                    dummyEvent = store.create(eventId, "Event");
+                    dummyEvent.setValue(eventId, "id");
+                }
+                block.setLinkedRecord(dummyEvent, "event");
+            })}
+        >
             <FiFilm />
         </Button>
     </ButtonGroup>;

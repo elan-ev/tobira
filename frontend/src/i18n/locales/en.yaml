@@ -252,6 +252,12 @@ manage:
           dummy: Select a series
           invalid: Please select a series
 
+      event:
+        event:
+          heading: Event
+          dummy: Select an event
+          invalid: Please select an event
+
       save: Save changes
       cancel: Discard changes
 

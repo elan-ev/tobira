@@ -261,6 +261,12 @@ manage:
           dummy: Serie auswählen
           invalid: Bitte eine Serie auswählen
 
+      event:
+        event:
+          heading: Video
+          dummy: Video auswählen
+          invalid: Bitte ein Video auswählen
+
       save: Änderungen speichern
       cancel: Änderungen verwerfen
 
