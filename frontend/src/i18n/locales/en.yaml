@@ -91,6 +91,8 @@ realm:
 search:
   input-label: Search
   title: Search results for “{{query}}”
+  no-results: No results
+  too-few-characters: Please type more characters to start the search.
 
 upload:
   title: Upload video

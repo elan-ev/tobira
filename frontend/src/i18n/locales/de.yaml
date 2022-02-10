@@ -93,6 +93,8 @@ realm:
 search:
   input-label: Suche
   title: Suchergebnisse für „{{query}}“
+  no-results: Keine Ergebnisse
+  too-few-characters: Tippen Sie weitere Zeichen, um die Suche zu starten.
 
 upload:
   title: Video hochladen

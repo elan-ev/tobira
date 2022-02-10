@@ -11,6 +11,7 @@ import { useTitle } from "../util";
 import { bug } from "../util/err";
 import { Description } from "../ui/metadata";
 import { FiFolder } from "react-icons/fi";
+import { Card } from "../ui/Card";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -55,58 +56,75 @@ type Props = {
 
 const SearchPage: React.FC<Props> = ({ q, results }) => {
     const { t } = useTranslation();
-    useTitle(t("search.title", { query: q }));
+    const title = t("search.title", { query: q });
+    useTitle(title);
 
-    if (results === null) {
-        return <p>Please type more characters!!</p>; // TODO
-    }
-
-    return <>
-        <ul css={{ listStyle: "none", maxWidth: 950, margin: "0 auto", padding: 0 }}>
-            {results.items.map(item => {
-                if (item.__typename === "SearchEvent") {
-                    return (
-                        <Item key={item.id} link={`/!${item.id.slice(2)}`}>
-                            <Thumbnail
-                                event={{
-                                    thumbnail: item.thumbnail ?? null,
-                                    duration: item.duration ?? null,
-                                    tracks: item.tracks ?? bug(""),
-                                }}
-                                css={{ width: "100%" }}
-                            />
-                            <div>
-                                <h3 css={{
-                                    marginBottom: 6,
-                                    display: "-webkit-box",
-                                    WebkitBoxOrient: "vertical",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    WebkitLineClamp: 2,
-                                }}>{item.title}</h3>
-                                <Description text={item.description ?? null} lines={3} />
-                            </div>
-                        </Item>
-                    );
-                } else if (item.__typename === "SearchRealm") {
-                    const fullPath = item.fullPath ?? bug("fullPath is null for realm");
-                    // TODO: show breadcrumbs
-                    return (
-                        <Item key={item.id} link={fullPath}>
-                            <div css={{ textAlign: "center" }}>
-                                <FiFolder css={{ margin: 8, fontSize: 26 }}/>
-                            </div>
-                            <h3>{item.name}</h3>
-                        </Item>
-                    );
-                } else {
-                    console.warn("Unknown search item type: ", item.__typename);
-                    return null;
-                }
-            })}
-        </ul>
-    </>;
+    return <div css={{ maxWidth: 950, margin: "0 auto" }}>
+        <h1>{title}</h1>
+        {results === null
+            ? <CenteredNote>{t("search.too-few-characters")}</CenteredNote>
+            : results.items.length === 0
+                ? <CenteredNote>{t("search.no-results")}</CenteredNote>
+                : <SearchResults items={results.items} />
+        }
+    </div>;
 };
+
+const CenteredNote: React.FC = ({ children }) => (
+    <div css={{ textAlign: "center" }}>
+        <Card kind="info">{children}</Card>
+    </div>
+);
+
+type SearchResultsProps = {
+    items: NonNullable<SearchQueryResponse["search"]>["items"];
+};
+
+const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
+    <ul css={{ listStyle: "none", padding: 0 }}>
+        {items.map(item => {
+            if (item.__typename === "SearchEvent") {
+                return (
+                    <Item key={item.id} link={`/!${item.id.slice(2)}`}>
+                        <Thumbnail
+                            event={{
+                                thumbnail: item.thumbnail ?? null,
+                                duration: item.duration ?? null,
+                                tracks: item.tracks ?? bug(""),
+                            }}
+                            css={{ width: "100%" }}
+                        />
+                        <div>
+                            <h3 css={{
+                                marginBottom: 6,
+                                display: "-webkit-box",
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                WebkitLineClamp: 2,
+                            }}>{item.title}</h3>
+                            <Description text={item.description ?? null} lines={3} />
+                        </div>
+                    </Item>
+                );
+            } else if (item.__typename === "SearchRealm") {
+                const fullPath = item.fullPath ?? bug("fullPath is null for realm");
+                // TODO: show breadcrumbs
+                return (
+                    <Item key={item.id} link={fullPath}>
+                        <div css={{ textAlign: "center" }}>
+                            <FiFolder css={{ margin: 8, fontSize: 26 }}/>
+                        </div>
+                        <h3>{item.name}</h3>
+                    </Item>
+                );
+            } else {
+                console.warn("Unknown search item type: ", item.__typename);
+                return null;
+            }
+        })}
+    </ul>
+);
 
 type ItemProps = {
     link: string;
