@@ -1,14 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, usePreloadedQuery, useRelayEnvironment } from "react-relay";
-import type { PreloadedQuery } from "react-relay";
+import { graphql, useRelayEnvironment } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { useForm } from "react-hook-form";
 import { Environment, fetchQuery } from "relay-runtime";
 import { FiCheckCircle, FiUpload } from "react-icons/fi";
 import { useBeforeunload } from "react-beforeunload";
 
-import { Root } from "../layout/Root";
+import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
 import { UploadQuery } from "./__generated__/UploadQuery.graphql";
 import { UPLOAD_PATH } from "./paths";
@@ -27,12 +26,20 @@ import { Card } from "../ui/Card";
 import { InputContainer, TitleLabel } from "../ui/metadata";
 
 
-export const UploadRoute = makeRoute<PreloadedQuery<UploadQuery>>({
-    path: UPLOAD_PATH,
-    queryParams: [],
-    prepare: () => loadQuery(query, {}),
-    render: queryRef => <Upload queryRef={queryRef} />,
-    dispose: prepared => prepared.dispose(),
+export const UploadRoute = makeRoute(url => {
+    if (url.pathname !== UPLOAD_PATH) {
+        return null;
+    }
+
+    const queryRef = loadQuery<UploadQuery>(query, {});
+    return {
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={() => []}
+            render={() => <Upload />}
+        />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 const query = graphql`
@@ -47,28 +54,20 @@ type Metadata = {
     description: string;
 };
 
-type Props = {
-    queryRef: PreloadedQuery<UploadQuery>;
-};
-
-const Upload: React.FC<Props> = ({ queryRef }) => {
+const Upload: React.FC = () => {
     const { t } = useTranslation();
-    const result = usePreloadedQuery(query, queryRef);
-
 
     return (
-        <Root nav={[]} userQuery={result}>
-            <div css={{
-                margin: "0 auto",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-            }}>
-                <h1>{t("upload.title")}</h1>
-                <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
-                <UploadMain />
-            </div>
-        </Root>
+        <div css={{
+            margin: "0 auto",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+        }}>
+            <h1>{t("upload.title")}</h1>
+            <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
+            <UploadMain />
+        </div>
     );
 };
 

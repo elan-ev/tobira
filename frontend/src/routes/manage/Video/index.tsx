@@ -1,50 +1,48 @@
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp } from "react-icons/fi";
-import { graphql, PreloadedQuery, useQueryLoader } from "react-relay";
+import { graphql, VariablesOf } from "react-relay";
 
 import { ManageNav } from "..";
-import { Root } from "../../../layout/Root";
+import { RootLoader } from "../../../layout/Root";
 import {
     EventSortColumn,
-    EventSortOrder,
     SortDirection,
     VideoManageQuery,
     VideoManageQueryResponse,
-    VideoManageQueryVariables,
 } from "./__generated__/VideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
-import { Spinner } from "../../../ui/Spinner";
 import { Thumbnail } from "../../../ui/Video";
-import { QueryLoader } from "../../../util/QueryLoader";
 import { keyOfId, match, useTitle } from "../../../util";
-import { unreachable } from "../../../util/err";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { Card } from "../../../ui/Card";
 
 
-const PATH = "/~manage/videos";
+export const PATH = "/~manage/videos";
 
-type Prepared = {
-    queryRef: PreloadedQuery<VideoManageQuery>;
-    sortOrder: EventSortOrder;
-};
+export const ManageVideosRoute = makeRoute(url => {
+    if (url.pathname !== PATH) {
+        return null;
+    }
 
-export const ManageVideosRoute = makeRoute<Prepared>({
-    path: PATH,
-    queryParams: [],
-    prepare: ({ url }) => {
-        const sortOrder = queryParamsToOrder(url.searchParams);
-        return {
-            queryRef: loadQuery(query, { order: sortOrder, first: LIMIT }),
-            sortOrder,
-        };
-    },
-    render: prepared => <Page {...prepared} />,
+    const vars = queryParamsToVars(url.searchParams);
+    const queryRef = loadQuery<VideoManageQuery>(query, vars);
+
+    return {
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={() => <ManageNav key={1} active={PATH} />}
+            render={data => !data.currentUser
+                ? <NotAuthorized />
+                : <ManageVideos vars={vars} connection={data.currentUser.myVideos} />
+            }
+        />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 const query = graphql`
@@ -73,74 +71,30 @@ const query = graphql`
     }
 `;
 
-/** Main component, mainly loading relay data */
-const Page: React.FC<Prepared> = ({ queryRef: initialQueryRef, sortOrder }) => {
-    const [queryRef, loadQuery] = useQueryLoader(query, initialQueryRef);
-    if (!queryRef) {
-        // `useQueryLoader` is incorrectly typed, I believe. If
-        // `initialQueryRef` is given, it never returns null.
-        return unreachable();
-    }
-
-    return <QueryLoader {...{ query, queryRef }} render={result => (
-        <Root nav={<ManageNav key={1} active={PATH} />} userQuery={result}>
-            {!result.currentUser
-                ? <NotAuthorized />
-                : <ManageVideos
-                    urlSortOrder={sortOrder}
-                    reloadQuery={vars => loadQuery(vars, { fetchPolicy: "network-only" })}
-                    connection={result.currentUser.myVideos}
-                />
-            }
-        </Root>
-    )} />;
-};
-
-
 type EventConnection = NonNullable<VideoManageQueryResponse["currentUser"]>["myVideos"];
 type Events = EventConnection["items"];
 
 type Props = {
     connection: EventConnection;
-    urlSortOrder: EventSortOrder;
-    reloadQuery: (vars: VideoManageQueryVariables) => void;
+    vars: VariablesOf<VideoManageQuery>;
 };
 
 const LIMIT = 15;
 
 /** Main part of this page */
-const ManageVideos: React.FC<Props> = ({ urlSortOrder, connection, reloadQuery }) => {
+const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
     const { t } = useTranslation();
-
-    const [sortOrder, setSortOrder] = useState(urlSortOrder);
-    const [isPending, startTransition] = useTransition();
-    const loadFirst = (after: string | null) => {
-        startTransition(() => reloadQuery({ order: sortOrder, after, first: LIMIT }));
-    };
-    const loadLast = (before: string | null) => {
-        startTransition(() => reloadQuery({ order: sortOrder, before, last: LIMIT }));
-    };
-    const reloadWithOrder = (order: EventSortOrder) => {
-        startTransition(() => {
-            // We go to page one again when changing sort order.
-            reloadQuery({ order, first: LIMIT });
-            setSortOrder(order);
-        });
-    };
 
     let inner;
     if (connection.items.length === 0 && connection.totalCount === 0) {
         inner = <Card kind="info">{t("manage.my-videos.no-videos-found")}</Card>;
     } else {
         inner = <>
-            <PageNavigation {...{ loadFirst, loadLast, connection }} />
+            <PageNavigation {...{ vars, connection }} />
             <div css={{ flex: "1 0 0" }}>
-                <EventTable
-                    events={connection.items}
-                    {...{ reloadWithOrder, isPending, sortOrder }}
-                />
+                <EventTable events={connection.items} vars={vars} />
             </div>
-            <PageNavigation {...{ loadFirst, loadLast, connection }} />
+            <PageNavigation {...{ vars, connection }} />
         </>;
     }
 
@@ -164,17 +118,10 @@ const THUMBNAIL_WIDTH = 16 * 8;
 
 type EventTableProps = {
     events: Events;
-    reloadWithOrder: (order: EventSortOrder) => void;
-    isPending: boolean;
-    sortOrder: EventSortOrder;
+    vars: VariablesOf<VideoManageQuery>;
 };
 
-const EventTable: React.FC<EventTableProps> = ({
-    events,
-    reloadWithOrder,
-    isPending,
-    sortOrder,
-}) => {
+const EventTable: React.FC<EventTableProps> = ({ events, vars }) => {
     const { t } = useTranslation();
 
     // We need to know whether the table header is in its "sticky" position to apply a box
@@ -196,40 +143,11 @@ const EventTable: React.FC<EventTableProps> = ({
         return () => {};
     });
 
-    const onColHeaderClick = (sortKey: EventSortColumn) => {
-        const newOrder: EventSortOrder = {
-            column: sortKey,
-            direction: sortOrder.column === sortKey
-                ? (sortOrder.direction === "ASCENDING" ? "DESCENDING" : "ASCENDING")
-                : "ASCENDING",
-        };
-
-        setSortQueryParams(newOrder);
-        reloadWithOrder(newOrder);
-    };
-
     return <div css={{ position: "relative" }}>
-        {isPending && (
-            <div css={{
-                position: "absolute",
-                zIndex: 100,
-                fontSize: 48,
-                left: 0,
-                right: 0,
-                top: 64,
-                textAlign: "center",
-            }}><Spinner/></div>
-        )}
         <table css={{
             width: "100%",
             borderSpacing: 0,
             tableLayout: "fixed",
-
-            ...isPending && {
-                pointerEvents: "none",
-                "& > thead > tr, & > tbody": { opacity: 0.3 },
-            },
-
             "& > thead": {
                 position: "sticky",
                 top: 0,
@@ -273,14 +191,12 @@ const EventTable: React.FC<EventTableProps> = ({
                     <ColumnHeader
                         label={t("manage.my-videos.columns.title")}
                         sortKey="TITLE"
-                        onClick={onColHeaderClick}
-                        {...{ sortOrder }}
+                        {...{ vars }}
                     />
                     <ColumnHeader
                         label={t("manage.my-videos.columns.created")}
                         sortKey="CREATED"
-                        onClick={onColHeaderClick}
-                        {...{ sortOrder }}
+                        {...{ vars }}
                     />
                 </tr>
             </thead>
@@ -294,14 +210,20 @@ const EventTable: React.FC<EventTableProps> = ({
 type ColumnHeaderProps = {
     label: string;
     sortKey: EventSortColumn;
-    sortOrder: EventSortOrder;
-    onClick: (sortKey: EventSortColumn) => void;
+    vars: VariablesOf<VideoManageQuery>;
 };
 
-const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, sortOrder, onClick }) => (
+const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => (
     <th>
-        <div
-            onClick={() => onClick(sortKey)}
+        <Link
+            to={varsToLink({
+                order: {
+                    column: sortKey,
+                    direction: vars.order.column === sortKey && vars.order.direction === "ASCENDING"
+                        ? "DESCENDING"
+                        : "ASCENDING",
+                },
+            })}
             css={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -317,11 +239,11 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, sortOrder, 
             }}
         >
             {label}
-            {sortOrder.column === sortKey && match(sortOrder.direction, {
+            {vars.order.column === sortKey && match(vars.order.direction, {
                 "ASCENDING": () => <FiChevronUp />,
                 "DESCENDING": () => <FiChevronDown />,
             }, () => null)}
-        </div>
+        </Link>
     </th>
 );
 
@@ -385,11 +307,10 @@ const Description: React.FC<{ text: string | null }> = ({ text }) => {
 
 type PageNavigationProps = {
     connection: EventConnection;
-    loadFirst: (after: string | null) => void;
-    loadLast: (before: string | null) => void;
+    vars: VariablesOf<VideoManageQuery>;
 };
 
-const PageNavigation: React.FC<PageNavigationProps> = ({ connection, loadFirst, loadLast }) => {
+const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => {
     const { t } = useTranslation();
     const pageInfo = connection.pageInfo;
 
@@ -408,36 +329,35 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, loadFirst, 
                 })}
             </div>
             <div>
-                <PageButton
-                    onClick={() => loadFirst(null)}
+                <PageLink
+                    vars={{ order: vars.order, first: LIMIT }}
+                    disabled={!pageInfo.hasPreviousPage && connection.items.length === LIMIT}
+                ><FirstPage /></PageLink>
+                <PageLink
+                    vars={{ order: vars.order, before: pageInfo.startCursor, last: LIMIT }}
                     disabled={!pageInfo.hasPreviousPage}
-                ><FirstPage /></PageButton>
-                <PageButton
-                    onClick={() => loadLast(pageInfo.startCursor)}
-                    disabled={!pageInfo.hasPreviousPage}
-                ><FiChevronLeft /></PageButton>
-                <PageButton
-                    onClick={() => loadFirst(pageInfo.endCursor)}
+                ><FiChevronLeft /></PageLink>
+                <PageLink
+                    vars={{ order: vars.order, after: pageInfo.endCursor, first: LIMIT }}
                     disabled={!pageInfo.hasNextPage}
-                ><FiChevronRight /></PageButton>
-                <PageButton
-                    onClick={() => loadLast(null)}
+                ><FiChevronRight /></PageLink>
+                <PageLink
+                    vars={{ order: vars.order, last: LIMIT }}
                     disabled={!pageInfo.hasNextPage}
-                ><LastPage /></PageButton>
+                ><LastPage /></PageLink>
             </div>
         </div>
     );
 };
 
-type PageButtonProps = {
-    onClick: () => void;
+type PageLinkProps = {
+    vars: VariablesOf<VideoManageQuery>;
     disabled: boolean;
 };
 
-const PageButton: React.FC<PageButtonProps> = ({ children, onClick, disabled }) => (
-    <button
-        onClick={disabled ? () => {} : onClick}
-        disabled={disabled}
+const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (
+    <Link
+        to={varsToLink(vars)}
         css={{
             background: "none",
             border: "none",
@@ -448,6 +368,7 @@ const PageButton: React.FC<PageButtonProps> = ({ children, onClick, disabled }) 
             ...disabled
                 ? {
                     color: "var(--grey80)",
+                    pointerEvents: "none",
                 }
                 : {
                     color: "var(--grey40)",
@@ -457,10 +378,15 @@ const PageButton: React.FC<PageButtonProps> = ({ children, onClick, disabled }) 
                     },
                 },
         }}
-    >{children}</button>
+    >{children}</Link>
 );
 
-const queryParamsToOrder = (queryParams: URLSearchParams): EventSortOrder => {
+const DEFAULT_SORT_COLUMN: EventSortColumn = "CREATED";
+const DEFAULT_SORT_DIRECTION: SortDirection = "DESCENDING";
+
+/** Reads URL query parameters and converts them into query variables */
+const queryParamsToVars = (queryParams: URLSearchParams): VariablesOf<VideoManageQuery> => {
+    // Sort order
     const sortBy = queryParams.get("sortBy");
     const column = sortBy !== null && match<string, EventSortColumn>(sortBy, {
         "title": () => "TITLE",
@@ -475,17 +401,55 @@ const queryParamsToOrder = (queryParams: URLSearchParams): EventSortOrder => {
         "asc": () => "ASCENDING",
     });
 
-    return column === false || direction === false
-        ? { column: "CREATED", direction: "DESCENDING" }
+    const order = !column || !direction
+        ? { column: DEFAULT_SORT_COLUMN, direction: DEFAULT_SORT_DIRECTION }
         : { column, direction };
+
+    // Pagination
+    if (queryParams.has("lastPage")) {
+        return { order, last: LIMIT };
+    }
+    if (queryParams.has("before")) {
+        return { order, before: queryParams.get("before"), last: LIMIT };
+    }
+    if (queryParams.has("after")) {
+        return { order, after: queryParams.get("after"), first: LIMIT };
+    }
+
+    return { order, first: LIMIT };
 };
 
-const setSortQueryParams = (order: EventSortOrder) => {
+/** Converts query variables to URL query parameters */
+const varsToQueryParams = (vars: VariablesOf<VideoManageQuery>): URLSearchParams => {
+    const searchParams = new URLSearchParams();
+
+    // Sort order
+    const isDefaultOrder = vars.order.column === DEFAULT_SORT_COLUMN
+        && vars.order.direction === DEFAULT_SORT_DIRECTION;
+    if (!isDefaultOrder) {
+        searchParams.set("sortBy", vars.order.column.toLowerCase());
+        searchParams.set("sortOrder", match(vars.order.direction, {
+            "ASCENDING": () => "asc",
+            "DESCENDING": () => "desc",
+        }, () => ""));
+    }
+
+    // Pagination
+    if (vars.last !== undefined) {
+        if (!vars.before) {
+            searchParams.set("lastPage", "");
+        } else {
+            searchParams.set("before", vars.before);
+        }
+    } else if (vars.after) {
+        searchParams.set("after", vars.after);
+    }
+
+    return searchParams;
+};
+
+const varsToLink = (vars: VariablesOf<VideoManageQuery>): string => {
     const url = new URL(document.location.href);
-    url.searchParams.set("sortBy", order.column.toLowerCase());
-    url.searchParams.set("sortOrder", match(order.direction, {
-        "ASCENDING": () => "asc",
-        "DESCENDING": () => "desc",
-    }, () => ""));
-    history.pushState(null, "", url);
+    url.search = varsToQueryParams(vars).toString();
+    return url.href;
 };

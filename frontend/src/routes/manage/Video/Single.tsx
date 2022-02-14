@@ -1,9 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { FiArrowLeft } from "react-icons/fi";
-import { graphql, PreloadedQuery } from "react-relay";
-import { ManageVideosRoute } from ".";
+import { graphql } from "react-relay";
 
-import { Root } from "../../../layout/Root";
+import { RootLoader } from "../../../layout/Root";
 import {
     SingleVideoManageQuery,
     SingleVideoManageQueryResponse,
@@ -18,33 +17,44 @@ import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { Thumbnail } from "../../../ui/Video";
 import { useTitle } from "../../../util";
-import { QueryLoader } from "../../../util/QueryLoader";
 import { NotFound } from "../../NotFound";
+import { b64regex } from "../../Video";
+import { PATH as MANAGE_VIDEOS_PATH } from ".";
 
 
-export const ManageSingleVideoRoute = makeRoute<PreloadedQuery<SingleVideoManageQuery>>({
-    path: "/~manage/videos/([a-zA-Z0-9\\-_]+)",
-    queryParams: [],
-    prepare: ({ pathParams: [videoId] }) => loadQuery(query, { id: `ev${videoId}` }),
-    render: queryRef => <QueryLoader {...{ query, queryRef }} render={result => (
-        result.event === null
-            ? <NotFound kind="video" />
-            : (
-                <Root nav={<BackLink />} userQuery={result}>
-                    {result.event.canWrite
-                        ? <ManageSingleVideo event={result.event}/>
-                        : <NotAuthorized />
-                    }
-                </Root>
-            )
-    )} />,
+export const ManageSingleVideoRoute = makeRoute(url => {
+    const regex = new RegExp(`^/~manage/videos/(${b64regex}+)/?$`, "u");
+    const params = regex.exec(decodeURI(url.pathname));
+    if (params === null) {
+        return null;
+    }
+
+    const videoId = params[1];
+    const queryRef = loadQuery<SingleVideoManageQuery>(query, { id: `ev${videoId}` });
+
+    return {
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={() => <BackLink />}
+            render={data => data.event === null
+                ? <NotFound kind="video" />
+                : data.event.canWrite
+                    ? <ManageSingleVideo event={data.event}/>
+                    : <NotAuthorized />
+            }
+        />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
 const BackLink: React.FC = () => {
     const { t } = useTranslation();
 
+    // TODO: if `history.length > 0`, go back in the history instead of having a
+    // link. Going back should preserve the pagination and stuff on the
+    // previous page.
     const items = [
-        <LinkWithIcon key={ManageVideosRoute.path} to={ManageVideosRoute.path} iconPos="left">
+        <LinkWithIcon key={MANAGE_VIDEOS_PATH} to={MANAGE_VIDEOS_PATH} iconPos="left">
             <FiArrowLeft />
             {t("manage.nav.my-videos")}
         </LinkWithIcon>,

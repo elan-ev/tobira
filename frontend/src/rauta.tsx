@@ -1,114 +1,38 @@
-import React, { ReactNode, useEffect, useRef, useState, useTransition } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 
 import { bug } from "./util/err";
 
 
-export type RouteBase<Prepared> = {
+/** A single route. You probably want to use `makeRoute` to create this. */
+export type Route = {
     /**
-     * The function for rendering this route. The value that `prepare` returned
-     * is passed as argument.
+     * Checks if this route matches with the given URL. If it does, this
+     * function may prepare the route and then has to return a `MatchedRoute`.
+     * If the URL doesn't match this route, `null` should be returned.
      */
-    render: (prepared: Prepared) => JSX.Element;
-
-    /**
-     * A function that is called when the route becomes inactive. Mainly useful
-     * to do cleanup work.
-     */
-    dispose?: (prepared: Prepared) => void;
-};
-
-/** The definition of a single route. */
-export type Route<Prepared, QueryParams extends string[] = []> = RouteBase<Prepared> & {
-    /**
-     * A regex describing the route's path. If the regex matches the path, the
-     * route is taken. Regex may contain capture groups. All captures are
-     * passed to `prepare`.
-     */
-    path: string;
-
-    /**
-     * List of required query parameters. If these parameters are not present or
-     * have an empty value, this route is not taken.
-     *
-     * Unfortunately, this field cannot be optional. And if the field is not
-     * `[]`, you have to specify the type parameter of `Route` or `makeRoute`
-     * explicitly to get an actual tuple type and thus a useful `queryParams`
-     * type in `prepare`.
-     */
-    queryParams: QueryParams;
-
-    /**
-     * A function that is called as soon as the route becomes active. In
-     * particular, called outside of a React rendering context.
-     *
-     * It is passed the route parameters which are simply the captures from the
-     * path regex. This is the array returned by `RegExp.exec` but with the
-     * first element (the whole match) removed.
-     */
-    prepare: (info: {
-        pathParams: string[];
-        queryParams: Record<QueryParams[number], string>;
-        url: URL;
-    }) => Prepared;
+    match: (url: URL) => MatchedRoute | null;
 };
 
 /** A route used as fallback (if no other route matches) */
-export type FallbackRoute<Prepared> = RouteBase<Prepared> & {
-    /** Like `Route.prepare`, but without information about the URL. */
-    prepare: () => Prepared;
+export type FallbackRoute = {
+    /** Similar to `Route.match`, but without the option to return null. */
+    prepare: (url: URL) => MatchedRoute;
 };
 
 /**
- * A route which has been matched and whose `prepare` function was already
- * called.
+ * A route that has been successfully matched against an URL and has been
+ * prepared. It can now be rendered.
  */
-export type MatchedRoute<Prepared> = RouteBase<Prepared> & {
-    prepared: Prepared;
+export type MatchedRoute = {
+    /** Called during React rendering phase. */
+    render: () => JSX.Element;
+
+    /** Called once the route is no longer active. Can be used for cleanup. */
+    dispose?: () => void;
 };
-
-/**
- * A type-erased version of `Route`. Use `makeRoute` to obtain this.
- *
- * This looks a bit funny, but is essentially an encoding of existential types.
- * So what we need is an array of routes. But `Route` has a type parameter. We
- * could of course set the type to `Route<any>[]` and it would work, but with
- * two disadvantages: (a) in our code, we would have to deal with `any`s and
- * would lose type checking ability, and (b) user code could also lose type
- * checking ability. So the type we "need" is: `(∃ T: Route<T>)[]`.
- *
- * However, TS does not have existential types built-in. Luckily, there are
- * workarounds. We use "continuations" here. It's just two indirections through
- * callables. It makes our code below slightly less readable, but it's still
- * fine and at least we get proper type checking! For more information, see:
- *
- * - https://www.jalo.website/existential-types-in-typescript-through-continuations
- * - https://rubenpieters.github.io/
- *      programming/typescript/2018/07/13/existential-types-typescript.html
- * - https://stackoverflow.com/q/51815782/
- * - https://stackoverflow.com/a/46186356/
- * - https://unsafe-perform.io/posts/2020-02-21-existential-quantification-in-typescript
- */
-export type RouteErased = {
-    path: string;
-    f: <R, >(cont: <P, Q extends string[]>(r: Route<P, Q>) => R) => R;
-};
-
-/** A type-erased version of `FallbackRoute`. Use `makeFallbackRoute` to obtain this. */
-export type FallbackRouteErased = <R, >(cont: <P, >(r: FallbackRoute<P>) => R) => R;
-
-/** A type-erased version of `MatchedRoute`. */
-export type MatchedRouteErased = <R, >(cont: <P, >(r: MatchedRoute<P>) => R) => R;
-
 
 /** Creates the internal representation of the given route. */
-export function makeRoute<P, Q extends string[] = []>(route: Route<P, Q>): RouteErased {
-    return { path: route.path, f: e => e(route) };
-}
-
-/** Creates the internal representation of the given fallback route. */
-export function makeFallbackRoute<P>(route: FallbackRoute<P>): FallbackRouteErased {
-    return e => e(route);
-}
+export const makeRoute = (match: (url: URL) => MatchedRoute | null): Route => ({ match });
 
 
 type Listener = () => void;
@@ -116,10 +40,10 @@ type Listener = () => void;
 /** Routing definition */
 interface Config {
     /** The fallback route. Used when no routes in `routes` match. */
-    fallback: FallbackRouteErased;
+    fallback: FallbackRoute;
 
     /** All routes. They are matched in order, with the first matching one "winning". */
-    routes: RouteErased[];
+    routes: Route[];
 
     /**
      * A component that is rendered as child of `<Router>` to indicate the
@@ -139,8 +63,8 @@ type LinkProps = {
 
 /** Props of the `<Router>` component. */
 type RouterProps = {
-    initialRoute: MatchedRouteErased;
-    children: ReactNode;
+    initialRoute: MatchedRoute;
+    children: JSX.Element;
 };
 
 export type RouterLib = {
@@ -148,13 +72,13 @@ export type RouterLib = {
      * Matches the given full href against all routes, returning the first
      * matched route or throwing an error if no route matches.
      */
-    matchRoute: (href: string) => MatchedRouteErased;
+    matchRoute: (href: string) => MatchedRoute;
 
     /**
      * Like `matchRoute(window.location.href)`. Intended to be called before
      * `React.render` to obtain the initial route for the application.
      */
-    matchInitialRoute: () => MatchedRouteErased;
+    matchInitialRoute: () => MatchedRoute;
 
     /** Hook to obtain a reference to the router. */
     useRouter: () => RouterControl;
@@ -220,7 +144,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 context.setActiveRoute({ route: newRoute, initialScroll: 0 });
                 history.pushState({ scrollY: 0 }, "", href);
 
-                newRoute(r => debugLog(`Setting active route for '${href}' to: `, r));
+                debugLog(`Setting active route for '${href}' to: `, newRoute);
             },
 
             addListener: (listener: () => void): () => void => {
@@ -254,58 +178,23 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         return <a href={to} onClick={handleClick} {...props}>{children}</a>;
     };
 
-    const matchRoute = (href: string): MatchedRouteErased => {
-        const tryMatchSingleRoute = <P, Q extends string[]>(
-            route: Route<P, Q>,
-        ): MatchedRoute<P> | null => {
-            // Use the route's regex to check whether the current path matches.
-            // We modify the regex to make sure the whole path matches and that
-            // a trailing slash is always optional.
-            const regex = new RegExp(`^${route.path}/?$`, "u");
-            const params = regex.exec(currentPath);
-            if (params === null) {
-                return null;
-            }
-
-            // For each required query parameter, retrieve it from the URL and
-            // return `null` if it's not present.
-            const queryParams: Record<string, string> = {};
-            for (const key of route.queryParams) {
-                const v = url.searchParams.get(key);
-                if (v === null || v.trim() === "") {
-                    return null;
-                } else {
-                    queryParams[key] = v;
-                }
-            }
-
-            const prepared = route.prepare({ pathParams: params.slice(1), queryParams, url });
-            return { render: route.render, dispose: route.dispose, prepared };
-        };
-
+    const matchRoute = (href: string): MatchedRoute => {
         const url = new URL(href);
-        const currentPath = decodeURI(url.pathname);
         for (const route of config.routes) {
-            const matched: MatchedRouteErased | null = route.f(r => {
-                const matched = tryMatchSingleRoute(r);
-                return matched === null ? null : f => f(matched);
-            });
+            const matched: MatchedRoute | null = route.match(url);
 
             if (matched !== null) {
                 return matched;
             }
         }
 
-        return config.fallback(route => {
-            const prepared = route.prepare();
-            return f => f({ prepared, render: route.render, dispose: route.dispose });
-        });
+        return config.fallback.prepare(url);
     };
 
-    const matchInitialRoute = (): MatchedRouteErased => matchRoute(window.location.href);
+    const matchInitialRoute = (): MatchedRoute => matchRoute(window.location.href);
 
     type ActiveRoute = {
-        route: MatchedRouteErased;
+        route: MatchedRoute;
 
         /** A scroll position that should be restored when the route is first rendered */
         initialScroll: number | null;
@@ -347,11 +236,11 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             const onPopState = (e: PopStateEvent) => {
                 const newRoute = matchRoute(window.location.href);
                 setActiveRoute({ route: newRoute, initialScroll: e.state?.scrollY });
-                newRoute(r => debugLog(
+                debugLog(
                     "Reacting to 'popstate' event: setting active route for"
                         + `'${window.location.href}' to: `,
-                    r,
-                ));
+                    newRoute,
+                );
             };
 
             // To actually get the correct scroll position into the history state, we
@@ -376,12 +265,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
         // Dispose of routes when they are no longer needed.
         useEffect(() => () => {
-            activeRoute.route(r => {
-                if (r.dispose) {
-                    debugLog("Disposing of route: ", r);
-                    r.dispose(r.prepared);
-                }
-            });
+            if (activeRoute.route.dispose) {
+                debugLog("Disposing of route: ", activeRoute);
+                activeRoute.route.dispose();
+            }
         }, [activeRoute]);
 
         const contextData = {
@@ -412,7 +299,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             }
         }, [context.activeRoute]);
 
-        return context.activeRoute.route(r => r.render(r.prepared));
+        return context.activeRoute.route.render();
     };
 
     return {

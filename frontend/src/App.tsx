@@ -6,7 +6,7 @@ import createEmotionCache from "@emotion/cache";
 import { environment } from "./relay";
 import { GlobalStyle } from "./GlobalStyle";
 import { ActiveRoute, Router } from "./router";
-import { MatchedRouteErased } from "./rauta";
+import { MatchedRoute } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { InitialLoading } from "./layout/Root";
 import { GraphQLErrorBoundary } from "./relay/boundary";
@@ -14,7 +14,7 @@ import { GraphQLErrorBoundary } from "./relay/boundary";
 
 
 type Props = {
-    initialRoute: MatchedRouteErased;
+    initialRoute: MatchedRoute;
 };
 
 export const App: React.FC<Props> = ({ initialRoute }) => (
