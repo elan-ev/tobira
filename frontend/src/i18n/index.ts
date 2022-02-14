@@ -24,6 +24,9 @@ void i18n
         detection: {
             order: ["localStorage", "navigator"],
         },
+        react: {
+            transKeepBasicHtmlNodesFor: ["br", "strong", "i", "p", "code"],
+        },
     });
 
 export default i18n;

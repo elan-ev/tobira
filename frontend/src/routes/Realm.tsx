@@ -17,6 +17,9 @@ import { useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 
 
+export const ILLEGAL_CHARS = "<>\"[\\]^`{|}#%/?";
+export const RESERVED_CHARS = "-+~@_!$&;:.,=*'()";
+
 export type PathSegmentValidity = "valid"
 | "too-short"
 | "control-char"
@@ -35,10 +38,10 @@ export const checkPathSegment = (segment: string): PathSegmentValidity => {
     if (segment.match(/[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u)) {
         return "whitespace";
     }
-    if (segment.match(/["<>[\]^`{|}#%/?]/u)) {
+    if (segment.match(new RegExp(`[${ILLEGAL_CHARS}]`, "u"))) {
         return "illegal-chars";
     }
-    if (segment.match(/^[-+~@_!$&;:.,=*'()]/u)) {
+    if (segment.match(new RegExp(`^[${RESERVED_CHARS}]`, "u"))) {
         return "reserved-chars-at-beginning";
     }
 

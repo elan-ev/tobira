@@ -3,7 +3,7 @@ import { RegisterOptions } from "react-hook-form";
 import { match } from "../../../util";
 
 import { ErrorDisplay } from "../../../util/err";
-import { checkPathSegment } from "../../Realm";
+import { checkPathSegment, ILLEGAL_CHARS, RESERVED_CHARS } from "../../Realm";
 
 
 type RealmValidations = {
@@ -25,8 +25,10 @@ export const realmValidations = (t: TFunction): RealmValidations => ({
             "too-short": () => t<string>("manage.realm.path-too-short"),
             "control-char": () => t<string>("manage.realm.no-control-in-path"),
             "whitespace": () => t<string>("manage.realm.no-space-in-path"),
-            "illegal-chars": () => t<string>("manage.realm.illegal-chars-in-path"),
-            "reserved-chars-at-beginning": () => t<string>("manage.realm.reserved-char-in-path"),
+            "illegal-chars": () => t<string>("manage.realm.illegal-chars-in-path",
+                { illegalChars: ILLEGAL_CHARS }),
+            "reserved-chars-at-beginning": () => t<string>("manage.realm.reserved-char-in-path",
+                { reservedChars: RESERVED_CHARS }),
         }),
         // TODO: check if path already exists
     },
