@@ -182,7 +182,10 @@ manage:
     path-too-short: Path segment must be at least two characters long.
     no-control-in-path: Path segments may not include control characters.
     no-space-in-path: Path segments may not include whitespace characters.
-    reserved-char-in-path: This path segment starts with a reserved character.
+    illegal-chars-in-path: >
+      Path segment may not include the following characters: <>"[\\]^`{|}#%/?
+    reserved-char-in-path: >
+      Path segment may not start with the following characters: -+~@_!$&;:.,=*'()
 
     no-path: Missing path! You opened an invalid link.
 

@@ -188,7 +188,10 @@ manage:
     path-too-short: Pfadsegment muss mindestens zwei Zeichen lang sein.
     no-control-in-path: Pfadsegment darf keine Kontrollzeichen enthalten.
     no-space-in-path: Pfadsegment darf keine Leerzeichen enthalten.
-    reserved-char-in-path: Dieses Pfadsegment beginnt mit einem reservierten Zeichen.
+    illegal-chars-in-path: >
+      Pfadsegment darf nicht folgende Zeichen enthalten: <>"[\\]^`{|}#%/?
+    reserved-char-in-path: >
+      Pfadsegment darf nicht mit den folgenden Zeichen beginnen: -+~@_!$&;:.,=*'()
 
     no-path: Pfad fehlt! Den Link, den Sie aufgerufen haben, ist ungültig.
 

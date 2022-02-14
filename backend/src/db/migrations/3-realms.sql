@@ -45,8 +45,11 @@ create table realms (
         path_segment !~ '[\u0000-\u001F\u007F-\u009F]'
         -- exclude some whitespace characters
         and path_segment !~ '[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]'
+        -- exclude characters that are disallowed in URL paths or that have a
+        -- semantic meaning there
+        and path_segment !~ '["<>[\\]^`{|}#%/?]'
         -- exclude reserved characters in leading position
-        and path_segment !~ '^[-+~@_!$&;:.,=*'']'
+        and path_segment !~ '^[-+~@_!$&;:.,=*''()]'
         -- ensure at least two characters
         and char_length(path_segment) >= 2
     )),

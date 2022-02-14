@@ -23,14 +23,21 @@ export const realmValidations = (t: TFunction): RealmValidations => ({
             message: t("manage.realm.path-too-short"),
         },
         validate: {
+            // Some of these could use unicode escapes in regex, e.g. `\p{Cc}`,
+            // but some of those classes might change, which would lead
+            // to differences in front and backend. Therefore we just have very
+            // explicit regexes.
             noControl: pathSegment => !pathSegment.match(
                 /[\u0000-\u001F\u007F-\u009F]/u, /* eslint-disable-line no-control-regex */
             ) || t<string>("manage.realm.no-control-in-path"),
             noSpace: pathSegment => !pathSegment.match(
                 /[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u,
             ) || t<string>("manage.realm.no-space-in-path"),
+            illegalChars: pathSegment => !pathSegment.match(
+                /["<>[\]^`{|}#%/?]/u,
+            ) || t<string>("manage.realm.illegal-chars-in-path"),
             reservedChars: pathSegment => !pathSegment.match(
-                /^[-+~@_!$&;:.,=*']/u,
+                /^[-+~@_!$&;:.,=*'()]/u,
             ) || t<string>("manage.realm.reserved-char-in-path"),
         },
         // TODO: check if path already exists
