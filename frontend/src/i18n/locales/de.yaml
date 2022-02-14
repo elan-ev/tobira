@@ -287,8 +287,8 @@ manage:
       Der Seitename wird im Navigationsmenü und als Überschrift auf der Seite selber angezeigt.
       Seitennamen können jederzeit geändert werden.
     path-segment-info: >
-      Pfadsegmente dürfen keine Kontroll- oder Leerzeichen enthalten.
-      Sie sollten außerdem möglichst kurz sein und keine Information aus vorangehenden
+      Pfadsegmente dürfen keine Leerzeichen enthalten und nicht mit <1>-+~@_!$&;:.,=*'</1>
+      beginnen. Sie sollten außerdem möglichst kurz sein und keine Information aus vorangehenden
       Pfadsegmenten wiederholen. Eine spätere Änderung des Pfadsegments sollte vermieden werden.
 
 

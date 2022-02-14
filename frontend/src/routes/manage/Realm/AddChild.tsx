@@ -146,8 +146,18 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                     {boxError(errors.name?.message)}
                 </InputWithInfo>
 
-                <InputWithInfo info={t("manage.add-child.path-segment-info")}>
-                    {/* TODO: Add explanation on how to chose a good path segment */}
+                <InputWithInfo
+                    info={(
+                        <Trans i18nKey="manage.add-child.path-segment-info">
+                            foo
+                            <code css={{
+                                whiteSpace: "nowrap",
+                                borderRadius: 4,
+                                backgroundColor: "var(--grey80)",
+                            }}>chars</code>
+                        </Trans>
+                    )}
+                >
                     <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>
                     <PathSegmentInput
                         id="path-field"
@@ -173,7 +183,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
 };
 
 type InputWithInfoProps = {
-    info: string;
+    info: JSX.Element;
 };
 
 const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
