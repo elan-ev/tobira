@@ -120,8 +120,8 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                     ? <Trans i18nKey="manage.realm.content.heading-root">
                         Editing the <Link to="/">root realm</Link>
                     </Trans>
-                    : <Trans i18nKey="manage.realm.content.heading" values={{ realm: name }}>
-                        Editing realm <Link to={path}>root realm</Link>
+                    : <Trans i18nKey="manage.realm.content.heading">
+                        Editing realm <Link to={path}>{{ realm: name }}</Link>
                     </Trans>}
             </h1>
 
