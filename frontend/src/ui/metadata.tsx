@@ -19,3 +19,35 @@ export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
 export const InputContainer: React.FC = ({ children }) => (
     <div css={{ margin: "16px 0 " }}>{children}</div>
 );
+
+type DescriptionProps = {
+    text: string | null;
+    lines?: number;
+};
+
+export const Description: React.FC<DescriptionProps> = ({ text, lines = 2 }) => {
+    const { t } = useTranslation();
+    const sharedStyle = {
+        fontSize: 13,
+        marginTop: 4,
+    };
+
+    if (text === null) {
+        return <div css={{
+            ...sharedStyle,
+            color: "var(--grey65)",
+            fontStyle: "italic",
+        }}>{t("manage.my-videos.no-description")}</div>;
+    } else {
+        return <div css={{
+            ...sharedStyle,
+            color: "var(--grey40)",
+            maxWidth: 800,
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            textOverflow: "ellipsis",
+            WebkitLineClamp: lines,
+            overflow: "hidden",
+        }}>{text}</div>;
+    }
+};

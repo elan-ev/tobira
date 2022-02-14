@@ -1,3 +1,4 @@
+import { makeRouter } from "./rauta";
 import { AboutRoute } from "./routes/About";
 import { LoginRoute } from "./routes/Login";
 import { ManageRoute } from "./routes/manage";
@@ -10,50 +11,8 @@ import { DirectVideoRoute, VideoRoute } from "./routes/Video";
 import { ManageVideosRoute } from "./routes/manage/Video";
 import { ManageSingleVideoRoute } from "./routes/manage/Video/Single";
 import { UploadRoute } from "./routes/Upload";
+import { SearchRoute } from "./routes/Search";
 
-import { makeRouter } from "./rauta";
-import { Transition } from "react-transition-group";
-import { match } from "./util";
-
-
-
-/** A thin colored line at the top of the page indicating a page load */
-const LoadingIndicator = ({ isPending }: { isPending: boolean }): JSX.Element => {
-    const START_DURATION = 1200;
-    const EXIT_DURATION = 150;
-
-    // TODO: maybe disable this for `prefers-reduced-motion: reduce`
-    return <Transition in={isPending} timeout={EXIT_DURATION}>{state => (
-        <div css={{
-            position: "fixed",
-            left: 0,
-            top: 0,
-            height: 4,
-            backgroundColor: "var(--accent-color)",
-            ...match(state, {
-                "entering": () => ({
-                    width: "70%",
-                    transition: `width ${START_DURATION}ms`,
-                }),
-                "entered": () => ({
-                    width: "70%",
-                    transition: `width ${START_DURATION}ms`,
-                }),
-                "exiting": () => ({
-                    width: "100%",
-                    opacity: 0,
-                    transition: `width ${EXIT_DURATION}ms, `
-                        + `opacity ${0.2 * EXIT_DURATION}ms ease ${0.8 * EXIT_DURATION}ms`,
-                }),
-                "exited": () => ({
-                    width: "0%",
-                    transition: "none",
-                }),
-                "unmounted": () => ({}),
-            }),
-        }} />
-    )}</Transition>;
-};
 
 
 const {
@@ -64,12 +23,12 @@ const {
     Router,
     useRouter,
 } = makeRouter({
-    LoadingIndicator,
     fallback: NotFoundRoute,
     routes: [
         AboutRoute,
         LoginRoute,
         RealmRoute,
+        SearchRoute,
         VideoRoute,
         DirectVideoRoute,
         ManageRoute,

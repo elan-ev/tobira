@@ -45,13 +45,6 @@ interface Config {
     /** All routes. They are matched in order, with the first matching one "winning". */
     routes: Route[];
 
-    /**
-     * A component that is rendered as child of `<Router>` to indicate the
-     * transition from one route to another. The `isPending` props is `true` if
-     * the app is currently transitioning from one route to another.
-     */
-    LoadingIndicator?: (props: { isPending: boolean }) => JSX.Element;
-
     /** If set to `true`, debug messages are logged via `console.debug`. Default: `false`. */
     debug?: boolean;
 }
@@ -118,6 +111,8 @@ export interface RouterControl {
      * appropriate time to prevent memory leaks.
      */
     addListener(listener: Listener): () => void;
+
+    isTransitioning: boolean;
 }
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
@@ -154,6 +149,8 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                     context.listeners = context.listeners.filter(l => l !== obj);
                 };
             },
+
+            isTransitioning: context.isTransitioning,
         };
     };
 
@@ -204,6 +201,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         activeRoute: ActiveRoute;
         setActiveRoute: (newRoute: ActiveRoute) => void;
         listeners: { listener: Listener }[];
+        isTransitioning: boolean;
     };
 
     const Context = React.createContext<ContextData | null>(null);
@@ -275,14 +273,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             setActiveRoute,
             activeRoute,
             listeners: listeners.current,
+            isTransitioning: isPending,
         };
 
-        return (
-            <Context.Provider value={contextData}>
-                {config.LoadingIndicator && <config.LoadingIndicator isPending={isPending} />}
-                {children}
-            </Context.Provider>
-        );
+        return <Context.Provider value={contextData}>{children}</Context.Provider>;
     };
 
     const ActiveRoute = () => {

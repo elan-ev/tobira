@@ -1,6 +1,5 @@
 language-name: Deutsch
 language: Sprache
-search: Suche
 loading: Lade...
 close: Schließen
 save: Speichern
@@ -90,6 +89,12 @@ realm:
   page-settings: Seiteneinstellungen
   edit-page-content: Seiteninhalt bearbeiten
   add-sub-page: Unterseite hinzufügen
+
+search:
+  input-label: Suche
+  title: Suchergebnisse für „{{query}}“
+  no-results: Keine Ergebnisse
+  too-few-characters: Tippen Sie weitere Zeichen, um die Suche zu starten.
 
 upload:
   title: Video hochladen

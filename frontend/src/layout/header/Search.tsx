@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "../../router";
+import { isSearchActive } from "../../routes/Search";
+import { Spinner } from "../../ui/Spinner";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 
@@ -9,6 +12,26 @@ type SearchFieldProps = {
 
 export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
+    const router = useRouter();
+    const ref = useRef<HTMLInputElement>(null);
+
+    // Register global shortcut to focus search bar
+    useEffect(() => {
+        const handleShortcut = (ev: KeyboardEvent) => {
+            if (ev.ctrlKey || ev.altKey || ev.metaKey) {
+                return;
+            }
+            if (document.activeElement?.tagName === "INPUT") {
+                return;
+            }
+            if (ev.key === "s" || ev.key === "S") {
+                ref.current?.focus();
+            }
+        };
+
+        document.addEventListener("keyup", handleShortcut);
+        return () => document.removeEventListener("keyup", handleShortcut);
+    }, []);
 
     const extraCss = variant === "desktop"
         ? {
@@ -21,15 +44,34 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             width: "100%",
         };
 
-    return (
+    const height = 35;
+    const spinnerSize = 22;
+    const paddingSpinner = (height - spinnerSize) / 2;
+
+    const lastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const defaultValue = isSearchActive()
+        ? new URL(document.location.href).searchParams.get("q") ?? undefined
+        : undefined;
+
+    return <div css={{ position: "relative", margin: "0 8px" }}>
         <input
+            ref={ref}
             type="text"
-            placeholder={t("search")}
+            placeholder={t("search.input-label")}
+            defaultValue={defaultValue}
+            onChange={e => {
+                if (lastTimeout.current !== null) {
+                    clearTimeout(lastTimeout.current);
+                }
+                lastTimeout.current = setTimeout(() => {
+                    router.goto(`/~search?q=${encodeURIComponent(e.target.value)}`);
+                }, 200);
+            }}
             css={{
                 flex: "1 1 0px",
-                margin: "0 8px",
                 minWidth: 50,
-                height: 35,
+                height,
                 borderRadius: 4,
                 border: "1.5px solid var(--grey80)",
                 padding: "0 12px",
@@ -41,5 +83,9 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 ...extraCss,
             }}
         />
-    );
+        {router.isTransitioning && isSearchActive() && <Spinner
+            size={spinnerSize}
+            css={{ position: "absolute", right: paddingSpinner, top: paddingSpinner }}
+        />}
+    </div>;
 };
