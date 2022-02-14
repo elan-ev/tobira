@@ -18,12 +18,16 @@ import { makeRoute } from "../rauta";
 
 
 export type PathSegmentValidity = "valid"
+| "too-short"
 | "control-char"
 | "whitespace"
 | "illegal-chars"
 | "reserved-chars-at-beginning";
 
 export const checkPathSegment = (segment: string): PathSegmentValidity => {
+    if ((new TextEncoder().encode(segment)).length <= 1) {
+        return "too-short";
+    }
     // eslint-disable-next-line no-control-regex
     if (segment.match(/[\u0000-\u001F\u007F-\u009F]/u)) {
         return "control-char";

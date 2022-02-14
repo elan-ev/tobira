@@ -20,12 +20,9 @@ export const realmValidations = (t: TFunction): RealmValidations => ({
         // See the comment about path segments in the realm migration
         // for an explanation of these validations.
         // Note that these two places should be kept in sync!
-        minLength: {
-            value: 2,
-            message: t("manage.realm.path-too-short"),
-        },
         validate: pathSegment => match(checkPathSegment(pathSegment), {
             "valid": () => true as true | string,
+            "too-short": () => t<string>("manage.realm.path-too-short"),
             "control-char": () => t<string>("manage.realm.no-control-in-path"),
             "whitespace": () => t<string>("manage.realm.no-space-in-path"),
             "illegal-chars": () => t<string>("manage.realm.illegal-chars-in-path"),

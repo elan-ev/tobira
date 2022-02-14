@@ -50,8 +50,9 @@ create table realms (
         and path_segment !~ '["<>[\\]^`{|}#%/?]'
         -- exclude reserved characters in leading position
         and path_segment !~ '^[-+~@_!$&;:.,=*''()]'
-        -- ensure at least two characters
-        and char_length(path_segment) >= 2
+        -- ensure at least two bytes (we want to reserve single ASCII char segments
+        -- for internal use)
+        and octet_length(path_segment) >= 2
     )),
     constraint root_no_path check (id <> 0 or (parent is null and path_segment = '' and full_path = '')),
     constraint has_parent check (id = 0 or parent is not null),
