@@ -232,9 +232,9 @@ manage:
       heading-root: Edit <1>homepage</1> content
 
       add: Insert a new block here
-      add-text: Insert a new text block here
-      add-series: Insert a new series block here
-      add-video: Insert a new video block here
+      add-text: Insert text here
+      add-series: Insert a series here
+      add-video: Insert a video here
 
       move-down: Move block down
       move-up: Move block up
