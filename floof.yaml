@@ -88,6 +88,7 @@ build:
   # TODO: use OS independent operations
   - mkdir -p deploy
   - cp backend/target/release/tobira deploy
+  - objcopy --compress-debug-sections deploy/tobira
   - cp backend/config.toml deploy
   - cp backend/logo-large.svg deploy
   - cp backend/logo-small.svg deploy
