@@ -4,7 +4,6 @@ import { graphql } from "react-relay/hooks";
 import type { VideoQuery, VideoQueryResponse } from "./__generated__/VideoQuery.graphql";
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
-import { PATH_SEGMENT_REGEX } from "./Realm";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { TextBlock } from "../ui/Blocks/Text";
@@ -15,19 +14,33 @@ import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { Link } from "../router";
 import { FiChevronRight } from "react-icons/fi";
+import { isValidPathSegment } from "./Realm";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
 
 export const VideoRoute = makeRoute(url => {
-    const regex = new RegExp(`^((?:/${PATH_SEGMENT_REGEX})*)/v/(${b64regex}+)/?$`, "u");
-    const params = regex.exec(decodeURI(url.pathname));
-    if (params === null) {
+    const urlPath = decodeURI(url.pathname).replace(/^\//, "").replace(/\/$/, "");
+    const parts = urlPath.split("/");
+    if (parts.length < 2) {
+        return null;
+    }
+    if (parts[parts.length - 2] !== "v") {
+        return null;
+    }
+    const videoId = parts[parts.length - 1];
+    if (!videoId.match(b64regex)) {
         return null;
     }
 
-    const realmPath = params[1];
-    const videoId = params[2];
+    const realmPathParts = parts.slice(0, parts.length - 2);
+    for (const segment of realmPathParts) {
+        if (!isValidPathSegment(segment)) {
+            return null;
+        }
+    }
+
+    const realmPath = "/" + realmPathParts.join("/");
     return prepare(`ev${videoId}`, realmPath);
 });
 

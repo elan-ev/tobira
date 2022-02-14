@@ -16,17 +16,45 @@ import CONFIG from "../config";
 import { useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 
-/** A valid realm path segment */
-export const PATH_SEGMENT_REGEX = "[\\p{Alphabetic}\\d][\\p{Alphabetic}\\d\\-]+";
 
-export const RealmRoute = makeRoute(url => {
-    const regex = new RegExp(`^((?:/${PATH_SEGMENT_REGEX})*)/?$`, "u");
-    const params = regex.exec(decodeURI(url.pathname));
-    if (params === null) {
-        return null;
+export type PathSegmentValidity = "valid"
+| "control-char"
+| "whitespace"
+| "illegal-chars"
+| "reserved-chars-at-beginning";
+
+export const checkPathSegment = (segment: string): PathSegmentValidity => {
+    // eslint-disable-next-line no-control-regex
+    if (segment.match(/[\u0000-\u001F\u007F-\u009F]/u)) {
+        return "control-char";
+    }
+    if (segment.match(/[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u)) {
+        return "whitespace";
+    }
+    if (segment.match(/["<>[\]^`{|}#%/?]/u)) {
+        return "illegal-chars";
+    }
+    if (segment.match(/^[-+~@_!$&;:.,=*'()]/u)) {
+        return "reserved-chars-at-beginning";
     }
 
-    const realmPath = params[1];
+    return "valid";
+};
+
+export const isValidPathSegment = (segment: string): boolean =>
+    checkPathSegment(segment) === "valid";
+
+export const RealmRoute = makeRoute(url => {
+    const urlPath = decodeURI(url.pathname).replace(/^\//, "").replace(/\/$/, "");
+    if (urlPath !== "") {
+        for (const segment of urlPath.split("/")) {
+            if (!isValidPathSegment(segment)) {
+                return null;
+            }
+        }
+    }
+
+    const realmPath = "/" + urlPath;
 
     const path = realmPath === "" ? "/" : realmPath;
     const queryRef = loadQuery<RealmQuery>(relayEnv, query, { path });
