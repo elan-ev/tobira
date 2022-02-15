@@ -32,6 +32,11 @@ impl User {
         self.can_use_studio(&context.config.auth)
     }
 
+    /// `True` if the user has the permission to use Opencast Studio.
+    fn can_use_editor(&self, context: &Context) -> bool {
+        self.can_use_editor(&context.config.auth)
+    }
+
     /// Returns all events that somehow "belong" to the user, i.e. that appear
     /// on the "my videos" page.
     ///

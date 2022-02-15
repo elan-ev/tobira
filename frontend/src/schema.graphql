@@ -274,6 +274,8 @@ type User {
   canUpload: Boolean!
   "`True` if the user has the permission to use Opencast Studio."
   canUseStudio: Boolean!
+  "`True` if the user has the permission to use Opencast Studio."
+  canUseEditor: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page.

@@ -79,6 +79,11 @@ pub(crate) struct AuthConfig {
     #[config(default = "ROLE_TOBIRA_STUDIO")]
     pub(crate) studio_role: String,
 
+    /// If a user has this role, they are allowed to use the Opencast editor to
+    /// edit videos they have write access to.
+    #[config(default = "ROLE_TOBIRA_EDITOR")]
+    pub(crate) editor_role: String,
+
     /// Duration of a Tobira-managed login session.
     /// Note: This is only relevant if `auth.mode` is `login-proxy`.
     #[config(default = "30d", deserialize_with = crate::config::deserialize_duration)]
@@ -272,6 +277,10 @@ pub(crate) trait HasRoles {
         AuthToken::some_if(self.can_use_studio(auth_config))
     }
 
+    fn required_editor_permission(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
+        AuthToken::some_if(self.can_use_editor(auth_config))
+    }
+
     fn is_moderator(&self, auth_config: &AuthConfig) -> bool {
         self.is_admin() || self.roles().contains(&auth_config.moderator_role)
     }
@@ -282,6 +291,10 @@ pub(crate) trait HasRoles {
 
     fn can_use_studio(&self, auth_config: &AuthConfig) -> bool {
         self.is_moderator(auth_config) || self.roles().contains(&auth_config.studio_role)
+    }
+
+    fn can_use_editor(&self, auth_config: &AuthConfig) -> bool {
+        self.is_moderator(auth_config) || self.roles().contains(&auth_config.editor_role)
     }
 
     /// Returns `true` if the user is a global Opencast administrator and can do

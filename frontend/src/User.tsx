@@ -14,6 +14,7 @@ export type User = {
     displayName: string;
     canUpload: boolean;
     canUseStudio: boolean;
+    canUseEditor: boolean;
 };
 
 const UserContext = React.createContext<UserState>("unknown");
@@ -65,6 +66,7 @@ const fragment = graphql`
             displayName
             canUpload
             canUseStudio
+            canUseEditor
         }
     }
 `;

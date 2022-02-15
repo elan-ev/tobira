@@ -123,6 +123,12 @@
 # Default value: "ROLE_TOBIRA_STUDIO"
 #studio_role = "ROLE_TOBIRA_STUDIO"
 
+# If a user has this role, they are allowed to use the Opencast editor to
+# edit videos they have write access to.
+#
+# Default value: "ROLE_TOBIRA_EDITOR"
+#editor_role = "ROLE_TOBIRA_EDITOR"
+
 # Duration of a Tobira-managed login session.
 # Note: This is only relevant if `auth.mode` is `login-proxy`.
 #
