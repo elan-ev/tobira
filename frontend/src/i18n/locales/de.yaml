@@ -146,12 +146,12 @@ manage:
 
   dashboard:
     title: Dashboard
-    upload-tile: Videos von Ihrem Computer können Sie auf <1>dieser Seite</1> hochladen.
+    upload-tile: Hier können Sie einfach Videos von Ihrem Computer hochladen.
     studio-tile-title: Video aufnehmen
     studio-tile-body: >
-      Sie können sehr einfach ein neues Video erstellen, indem Sie Ihr Mikrofon, Ihren Bildschirm
-      und/oder Ihre Webcam auf <1>dieser Seite</1> aufzeichnen. (Funktioniert noch nicht!)
-    my-videos-tile: "Sie können Ihre Videos auf <1>der Seite „Meine\u00a0Videos“</1> sehen und bearbeiten."
+      Hier können Sie sehr einfach ein neues Video erstellen, indem Sie Ihr Mikrofon, Ihren Bildschirm
+      und/oder Ihre Webcam aufzeichnen. (Funktioniert noch nicht!)
+    my-videos-tile: Hier finden Sie alle Ihre Videos und können diese z.B. bearbeiten.
     manage-pages-tile-title: Seiten verwalten?
     manage-pages-tile-body: >
       Um Seiten zu bearbeiten, umzubenennen und zu löschen, navigieren Sie zu der gewünschten
