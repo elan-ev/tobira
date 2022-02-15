@@ -118,7 +118,7 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
     useTitle(title, isRoot);
 
     return <>
-        {!isRoot && <Breadcrumbs path={breadcrumbs} tailLabel={realm.name} />}
+        {!isRoot && <Breadcrumbs path={breadcrumbs} tail={realm.name} />}
         {title && <h1>{title}</h1>}
         <Blocks realm={realm} />
     </>;

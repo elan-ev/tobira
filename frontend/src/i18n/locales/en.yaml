@@ -139,6 +139,7 @@ upload:
       working on it! We are sorry for causing any inconvenience.
 
 manage:
+  management: Management
   nav:
     dashboard: Dashboard
     my-videos: My videos

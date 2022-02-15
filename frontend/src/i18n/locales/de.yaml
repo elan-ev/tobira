@@ -144,6 +144,7 @@ upload:
       dieses Problem zu lösen. Bitte entschuldigen Sie diese Unannehmlichkeit.
 
 manage:
+  management: Verwaltung
   nav:
     dashboard: Übersicht
     my-videos: Meine Videos

@@ -10,7 +10,7 @@ type Props = {
         label: string;
         link: string;
     }[];
-    tailLabel: string;
+    tail: JSX.Element | string;
 };
 
 const LI_STYLE = {
@@ -18,7 +18,7 @@ const LI_STYLE = {
     alignItems: "center",
 };
 
-export const Breadcrumbs: React.FC<Props> = ({ path, tailLabel }) => {
+export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
     const { t } = useTranslation();
 
     return (
@@ -43,7 +43,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tailLabel }) => {
                 {path.map((segment, i) => (
                     <Segment key={i} target={segment.link}>{segment.label}</Segment>
                 ))}
-                <Segment>{tailLabel}</Segment>
+                <Segment>{tail}</Segment>
             </ol>
         </nav>
     );

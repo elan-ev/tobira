@@ -15,6 +15,7 @@ import { makeRoute, MatchedRoute } from "../rauta";
 import { Link } from "../router";
 import { FiChevronRight } from "react-icons/fi";
 import { isValidPathSegment } from "./Realm";
+import { Breadcrumbs } from "../ui/Breadcrumbs";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -68,7 +69,7 @@ const prepare = (id: string, realmPath: string): MatchedRoute => {
                 // TODO: this realm check is useless once we check a video belongs to a realm.
                 return !event || !realm
                     ? <NotFound kind="video" />
-                    : <VideoPage {...{ event, realmPath, id }} />;
+                    : <VideoPage {...{ event, realm, realmPath, id }} />;
             }}
         />,
         dispose: () => queryRef.dispose(),
@@ -91,6 +92,10 @@ const query = graphql`
             tracks { uri flavor mimetype resolution }
         }
         realm: realmByPath(path: $realmPath) {
+            name
+            path
+            isRoot
+            ancestors { name path }
             ... NavigationData
         }
     }
@@ -98,11 +103,12 @@ const query = graphql`
 
 type Props = {
     event: NonNullable<VideoQueryResponse["event"]>;
+    realm: NonNullable<VideoQueryResponse["realm"]>;
     realmPath: string;
     id: string;
 };
 
-const VideoPage: React.FC<Props> = ({ event, realmPath, id }) => {
+const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
     const { t, i18n } = useTranslation();
 
     const createdDate = new Date(event.created);
@@ -118,7 +124,12 @@ const VideoPage: React.FC<Props> = ({ event, realmPath, id }) => {
     const { title, tracks, description } = event;
     const duration = event.duration ?? 0; // <-- TODO
     useTitle(title);
+
+    const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
+        .map(({ name, path }) => ({ label: name, link: path }));
+
     return <>
+        <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <Player tracks={tracks as Track[]} title={title} duration={duration} />
         <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
         {description !== null && <TextBlock content={description} />}
