@@ -11,6 +11,8 @@ import {
 } from "./__generated__/SeriesBlockSeriesData.graphql";
 import { Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
+import { Card } from "../Card";
+import { useTranslation } from "react-i18next";
 
 
 type SharedProps = {
@@ -47,8 +49,11 @@ type FromBlockProps = SharedProps & {
 };
 
 export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
+    const { t } = useTranslation();
     const { series } = useFragment(blockFragment, fragRef);
-    return <SeriesBlockFromSeries fragRef={series} {...rest} />;
+    return series === null
+        ? <Card kind="error">{t("series.deleted-series-block")}</Card>
+        : <SeriesBlockFromSeries fragRef={series} {...rest} />;
 };
 
 type FromSeriesProps = SharedProps & {

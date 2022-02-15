@@ -85,6 +85,9 @@ video:
   part-of-series: Teil von
   more-from-series: Mehr von „{{series}}“
 
+series:
+  deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
+
 realm:
   page-settings: Seiteneinstellungen
   edit-page-content: Seiteninhalt bearbeiten

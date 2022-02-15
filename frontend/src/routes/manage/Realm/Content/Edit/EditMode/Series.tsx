@@ -43,7 +43,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
             }
         `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
 
-        const { order, layout, series: { id: series } } = useFragment(graphql`
+        const { order, layout, series } = useFragment(graphql`
             fragment SeriesEditModeBlockData on SeriesBlock {
                 order
                 layout
@@ -160,7 +160,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
             <Select
                 css={{ maxWidth: "100%" }}
                 error={"series" in errors}
-                defaultValue={series}
+                defaultValue={series?.id}
                 {...form.register("series", { pattern: /^sr/ })}
             >
                 {/*

@@ -182,7 +182,7 @@ type RemovedRealm {
 
 "A block just showing the list of videos in an Opencast series"
 type SeriesBlock implements Block {
-  series: Series!
+  series: Series
   layout: VideoListLayout!
   order: VideoListOrder!
   id: ID!

@@ -23,7 +23,7 @@ create table blocks (
     text_content text,
 
     -- Series blocks
-    series_id bigint references series on delete restrict,
+    series_id bigint references series on delete set null,
 
     -- All videolist-like blocks
     videolist_layout video_list_layout,

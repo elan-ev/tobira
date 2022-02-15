@@ -83,6 +83,9 @@ video:
   part-of-series: Part of
   more-from-series: More from “{{series}}”
 
+series:
+  deleted-series-block: The series referenced here was deleted.
+
 realm:
   page-settings: Page settings
   edit-page-content: Edit page content

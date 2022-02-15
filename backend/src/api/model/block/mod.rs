@@ -117,7 +117,7 @@ impl TextBlock {
 
 pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
-    pub(crate) series: Id,
+    pub(crate) series: Option<Id>,
     pub(crate) layout: VideoListLayout,
     pub(crate) order: VideoListOrder,
 }
@@ -131,9 +131,12 @@ impl Block for SeriesBlock {
 /// A block just showing the list of videos in an Opencast series
 #[graphql_object(Context = Context, impl = BlockValue)]
 impl SeriesBlock {
-    async fn series(&self, context: &Context) -> ApiResult<Series> {
-        // `unwrap` is okay here because of our foreign key constraint
-        Ok(Series::load_by_id(self.series, context).await?.unwrap())
+    async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
+        match self.series {
+            None => Ok(None),
+            // `unwrap` is okay here because of our foreign key constraint
+            Some(series_id) => Ok(Some(Series::load_by_id(series_id, context).await?.unwrap())),
+        }
     }
 
     fn layout(&self) -> VideoListLayout {
@@ -230,7 +233,7 @@ impl BlockValue {
 
             BlockType::Series => SeriesBlock {
                 shared,
-                series: Id::series(get_type_dependent(&row, 5, "videolist", "series_id")?),
+                series: row.get::<_, Option<Key>>(5).map(Id::series),
                 layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
                 order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
             }.into(),
