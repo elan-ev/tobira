@@ -1,4 +1,3 @@
-import { Interpolation, Theme } from "@emotion/react";
 import { TFunction } from "i18next";
 import React from "react";
 import { useRef, useState } from "react";
@@ -167,7 +166,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => (
         </ActionIcon>
 
         {/* Show menu if it is opened */}
-        {menu.isOpen && <Menu close={menu.close} t={t} extraCss={{
+        {menu.isOpen && <Menu close={menu.close} t={t} css={{
             // On large screens, we want the menu to snuggle against the user
             // box above. So we have to override a few properties here.
             [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
@@ -201,15 +200,15 @@ const UserSettingsIcon: React.FC<UserSettingsIconProps> = ({ t, onClick }) => (
 
 type MenuProps = {
     t: TFunction;
-    extraCss?: Interpolation<Theme>;
     close: () => void;
+    className?: string;
 };
 
 /**
  * A menu with some user-related settings/actions that floats on top of the page
  * and closes itself on click outside of it.
  */
-const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
+const Menu: React.FC<MenuProps> = ({ t, close, className }) => {
     type State = "main" | "language";
     const [state, setState] = useState<State>("main");
 
@@ -229,7 +228,7 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
                     borderBottom
                     linkTo={CONFIG.auth.loginLink ?? LOGIN_PATH}
                     htmlLink={!!CONFIG.auth.loginLink}
-                    extraCss={{
+                    css={{
                         color: "var(--nav-color)",
                         [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
                             display: "none",
@@ -268,7 +267,7 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
     });
 
     return (
-        <ul ref={ref} css={{
+        <ul ref={ref} {...{ className }} css={{
             position: "absolute",
             zIndex: 1000,
             top: "100%",
@@ -282,7 +281,6 @@ const Menu: React.FC<MenuProps> = ({ t, close, extraCss = {} }) => {
             paddingLeft: 0,
             margin: 0,
             overflow: "hidden",
-            ...(extraCss as Record<string, unknown>),
         }}>{items}</ul>
     );
 };
@@ -307,8 +305,8 @@ type MenuItemProps = {
     icon?: JSX.Element;
     onClick?: () => void;
     linkTo?: string;
+    className?: string;
     htmlLink?: boolean;
-    extraCss?: Interpolation<Theme>;
     borderBottom?: boolean;
     borderTop?: boolean;
 };
@@ -317,10 +315,10 @@ type MenuItemProps = {
 const MenuItem: React.FC<MenuItemProps> = ({
     icon,
     children,
-    onClick = () => {},
     linkTo,
+    onClick = () => {},
+    className,
     htmlLink = false,
-    extraCss = {},
     borderBottom = false,
     borderTop = false,
 }) => {
@@ -354,10 +352,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
     } as const;
 
     return linkTo
-        ? <li css={extraCss}>
-            <Link to={linkTo} {...{ htmlLink, onClick, css }}>{inner}</Link>
+        ? <li {... { className }}>
+            <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
         </li>
-        : <li css={{ ...css, ...extraCss as Record<string, unknown> }} {...{ onClick }}>
+        : <li css={css} {...{ onClick, className }}>
             {inner}
         </li>;
 };
@@ -400,7 +398,7 @@ const Logout: React.FC = () => {
                         setState("error");
                     });
             }}
-            extraCss={{ color: "var(--danger-color)" }}
+            css={{ color: "var(--danger-color)" }}
         >{t("user.logout")}</MenuItem>
     );
 };
