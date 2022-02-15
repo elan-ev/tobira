@@ -311,6 +311,11 @@
 # Required! This value must be specified.
 #resolution =
 
+# Path to an SVG file that is used as favicon.
+#
+# Required! This value must be specified.
+#favicon =
+
 [theme.color]
 # Default value: "#357C58"
 #navigation = "#357C58"

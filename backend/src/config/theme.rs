@@ -25,8 +25,11 @@ pub(crate) struct ThemeConfig {
     #[config(nested)]
     pub(crate) logo: LogoConfig,
 
+    /// Path to an SVG file that is used as favicon.
+    pub(crate) favicon: PathBuf,
+
     #[config(nested)]
-    pub(crate) color: ColorConfig
+    pub(crate) color: ColorConfig,
 }
 
 
