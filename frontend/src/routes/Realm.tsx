@@ -111,19 +111,14 @@ type Props = {
 
 const RealmPage: React.FC<Props> = ({ realm }) => {
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
-    const breadcrumbs = realm.ancestors
-        .concat(realm)
-        .map(({ name, path }) => ({
-            label: name,
-            link: `${path}`,
-        }));
+    const breadcrumbs = realm.ancestors.map(({ name, path }) => ({ label: name, link: path }));
 
     const isRoot = realm.parent === null;
     const title = isRoot ? siteTitle : realm.name;
     useTitle(title, isRoot);
 
     return <>
-        {!isRoot && <Breadcrumbs path={breadcrumbs} />}
+        {!isRoot && <Breadcrumbs path={breadcrumbs} tailLabel={realm.name} />}
         {title && <h1>{title}</h1>}
         <Blocks realm={realm} />
     </>;
