@@ -30,7 +30,7 @@ create table blocks (
     videolist_order video_list_order,
 
     -- Video blocks
-    video_id bigint references events on delete restrict
+    video_id bigint references events on delete set null
 );
 
 -- Blocks are almost always looked up by realm ID.

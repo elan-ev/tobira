@@ -247,7 +247,7 @@ enum EventSortColumn {
 
 "A block for presenting a single Opencast event"
 type VideoBlock implements Block {
-  event: Event!
+  event: Event
   id: ID!
   index: Int!
   title: String

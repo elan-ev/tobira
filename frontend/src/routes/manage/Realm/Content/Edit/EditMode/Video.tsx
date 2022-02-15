@@ -31,7 +31,7 @@ export const EditVideoBlock = React.forwardRef<EditModeRef, EditVideoBlockProps>
             }
         `, useContext(ContentManageQueryContext) as VideoEditModeEventData$key);
 
-        const { event: { id: event } } = useFragment(graphql`
+        const { event } = useFragment(graphql`
             fragment VideoEditModeBlockData on VideoBlock {
                 event { id }
             }
@@ -97,7 +97,7 @@ export const EditVideoBlock = React.forwardRef<EditModeRef, EditVideoBlockProps>
             <Select
                 css={{ maxWidth: "100%" }}
                 error={"event" in errors}
-                defaultValue={event}
+                defaultValue={event?.id}
                 {...form.register("event", { pattern: /^ev/ })}
             >
                 {/* See the series block code for an explanation of this option */}

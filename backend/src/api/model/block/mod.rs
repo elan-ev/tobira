@@ -162,7 +162,7 @@ impl SeriesBlock {
 
 pub(crate) struct VideoBlock {
     pub(crate) shared: SharedData,
-    pub(crate) event: Id,
+    pub(crate) event: Option<Id>,
 }
 
 impl Block for VideoBlock {
@@ -174,9 +174,12 @@ impl Block for VideoBlock {
 /// A block for presenting a single Opencast event
 #[graphql_object(Context = Context, impl = BlockValue)]
 impl VideoBlock {
-    async fn event(&self, context: &Context) -> ApiResult<Event> {
-        // `unwrap` is okay here because of our foreign key constraint
-        Ok(Event::load_by_id(self.event, context).await?.unwrap())
+    async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
+        match self.event {
+            None => Ok(None),
+            // `unwrap` is okay here because of our foreign key constraint
+            Some(event_id) => Ok(Some(Event::load_by_id(event_id, context).await?.unwrap())),
+        }
     }
 
     fn id(&self) -> Id {
@@ -240,7 +243,7 @@ impl BlockValue {
 
             BlockType::Video => VideoBlock {
                 shared,
-                event: Id::event(get_type_dependent(&row, 8, "video", "video_id")?),
+                event: row.get::<_, Option<Key>>(8).map(Id::event),
             }.into(),
         };
 

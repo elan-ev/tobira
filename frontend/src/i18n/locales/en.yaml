@@ -82,6 +82,7 @@ video:
   updated: Last update
   part-of-series: Part of
   more-from-series: More from “{{series}}”
+  deleted-video-block: The video referenced here was deleted.
 
 series:
   deleted-series-block: The series referenced here was deleted.

@@ -84,6 +84,7 @@ video:
   updated: Zuletzt angepasst
   part-of-series: Teil von
   more-from-series: Mehr von „{{series}}“
+  deleted-video-block: Das hier referenzierte Video wurde gelöscht.
 
 series:
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
