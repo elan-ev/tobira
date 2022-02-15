@@ -96,6 +96,7 @@ jobs:
           tobira
           backend/logo-large.svg
           backend/logo-small.svg
+          backend/favicon.svg
           deploy-id
           .deployment/templates/config.toml
           scripts/login-handler/login-handler.py
