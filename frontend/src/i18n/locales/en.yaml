@@ -82,6 +82,10 @@ video:
   updated: Last update
   part-of-series: Part of
   more-from-series: More from “{{series}}”
+  deleted-video-block: The video referenced here was deleted.
+
+series:
+  deleted-series-block: The series referenced here was deleted.
 
 realm:
   page-settings: Page settings
@@ -135,6 +139,7 @@ upload:
       working on it! We are sorry for causing any inconvenience.
 
 manage:
+  management: Management
   nav:
     dashboard: Dashboard
     my-videos: My videos
@@ -218,9 +223,9 @@ manage:
           browser-bookmarks or published somewhere, won't work anymore.
       delete:
         heading: Delete page
-        button: Delete this page and <1>{{numSubPages}}</1> sub-pages
+        button: Delete this page and <strong>{{numSubPages}}</strong> sub-pages
         button-single: Delete page
-        cannot-be-undone: This action <1>cannot</1> be undone!
+        cannot-be-undone: This action <strong>cannot</strong> be undone!
         failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
@@ -232,9 +237,9 @@ manage:
       heading-root: Edit <1>homepage</1> content
 
       add: Insert a new block here
-      add-text: Insert a new text block here
-      add-series: Insert a new series block here
-      add-video: Insert a new video block here
+      add-text: Insert text here
+      add-series: Insert a series here
+      add-video: Insert a video here
 
       move-down: Move block down
       move-up: Move block up
@@ -258,13 +263,13 @@ manage:
           vertical: Vertical
         series:
           heading: Series
-          dummy: Select a series
+          none: No series selected
           invalid: Please select a series
 
       event:
         event:
           heading: Event
-          dummy: Select an event
+          none: No event selected
           invalid: Please select an event
 
       save: Save changes
@@ -279,7 +284,7 @@ manage:
   add-child:
     heading: Add page
     path-segment: Path segment
-    below-this-parent: The new page will be added below <1>“{{parent}}”</1>.
+    below-this-parent: The new page will be added below <strong>“{{parent}}”</strong>.
     below-root: The new page will be added directly below the homepage.
     button-create-page: Create page
     failed-to-add: Failed to create page.

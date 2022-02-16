@@ -78,9 +78,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
             ref={modalRef}
         >
             <p>
-                <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone">
-                    action <strong>cannot</strong> be undone
-                </Trans>
+                <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone" />
             </p>
         </ConfirmationModal>
     </>;

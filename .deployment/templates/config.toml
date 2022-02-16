@@ -35,3 +35,4 @@ logo.large.path = "/opt/tobira/{{ id }}/logo-large.svg"
 logo.large.resolution = [643, 217]
 logo.small.path = "/opt/tobira/{{ id }}/logo-small.svg"
 logo.small.resolution = [102, 115]
+favicon = "/opt/tobira/{{ id }}/favicon.svg"

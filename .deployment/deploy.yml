@@ -153,6 +153,7 @@
       with_items:
         - logo-small.svg
         - logo-large.svg
+        - favicon.svg
       notify: restart tobira
 
     - name: deploy configuration

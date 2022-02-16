@@ -6,12 +6,11 @@ import { Link } from "../router";
 
 
 type Props = {
-    path: PathSegment[];
-};
-
-type PathSegment = {
-    label: string;
-    link: string;
+    path: {
+        label: string;
+        link: string;
+    }[];
+    tail: JSX.Element | string;
 };
 
 const LI_STYLE = {
@@ -19,7 +18,7 @@ const LI_STYLE = {
     alignItems: "center",
 };
 
-export const Breadcrumbs: React.FC<Props> = ({ path }) => {
+export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
     const { t } = useTranslation();
 
     return (
@@ -42,18 +41,17 @@ export const Breadcrumbs: React.FC<Props> = ({ path }) => {
                     </Link>
                 </li>
                 {path.map((segment, i) => (
-                    <Segment key={i} target={segment.link} active={i === path.length - 1}>
-                        {segment.label}
-                    </Segment>
+                    <Segment key={i} target={segment.link}>{segment.label}</Segment>
                 ))}
+                <Segment>{tail}</Segment>
             </ol>
         </nav>
     );
 };
 
 type SegmentProps = {
-    target: string;
-    active: boolean;
+    /** The link target or `undefined` if this item segment is active */
+    target?: string;
 };
 
 const TEXT_STYLE = {
@@ -61,10 +59,13 @@ const TEXT_STYLE = {
     overflow: "hidden" as const,
 };
 
-const Segment: React.FC<SegmentProps> = ({ target, active, children }) => (
-    <li css={{ maxWidth: "100%", ...LI_STYLE }} {...active && { "aria-current": "location" }}>
+const Segment: React.FC<SegmentProps> = ({ target, children }) => (
+    <li
+        css={{ maxWidth: "100%", ...LI_STYLE }}
+        {...target === undefined && { "aria-current": "location" }}
+    >
         <FiChevronRight css={{ margin: "0 5px", flexShrink: 0, color: "var(--grey65)" }}/>
-        {active
+        {target === undefined
             ? <div css={TEXT_STYLE}>{children}</div>
             : <Link css={TEXT_STYLE} to={target}>{children}</Link>}
     </li>

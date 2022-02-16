@@ -19,6 +19,7 @@ import { CenteredContent } from "../../../ui";
 import { NotAuthorized } from "../../../ui/error";
 import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
+import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 
 
 // Route definition
@@ -57,6 +58,7 @@ const query = graphql`
             path
             canCurrentUserEdit
             numberOfDescendants
+            ancestors { name path }
             ... GeneralRealmData
             ... ChildOrderEditData
             ... DangerZoneRealmData
@@ -80,8 +82,12 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
         ? t("manage.realm.heading-root")
         : t("manage.realm.heading", { realm: realm.name });
 
+    const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
+        .map(({ name, path }) => ({ label: name, link: path }));
+
     return (
         <RealmSettingsContainer css={{ maxWidth: 900 }}>
+            <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.page-settings")}</i>} />
             <h1>{heading}</h1>
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
             <div css={{

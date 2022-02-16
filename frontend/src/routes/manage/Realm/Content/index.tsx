@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useBeforeunload } from "react-beforeunload";
 
@@ -19,6 +19,7 @@ import { Link } from "../../../../router";
 import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
 import { EditBlock } from "./Block";
+import { Breadcrumbs } from "../../../../ui/Breadcrumbs";
 
 
 export const PATH = "/~manage/realm/content";
@@ -74,12 +75,14 @@ type Props = {
 };
 
 const ManageContent: React.FC<Props> = ({ data }) => {
+    const { t } = useTranslation();
     const realm = useFragment(
         graphql`
             fragment ContentManageRealmData on Realm {
                 name
                 path
                 isRoot
+                ancestors { name path }
                 ... BlockRealmData
                 ... AddButtonsRealmData
                 blocks {
@@ -112,16 +115,19 @@ const ManageContent: React.FC<Props> = ({ data }) => {
         }
     });
 
+    const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
+        .map(({ name, path }) => ({ label: name, link: path }));
 
     return <ContentManageQueryContext.Provider value={data}>
         <RealmSettingsContainer>
+            <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.edit-page-content")}</i>} />
             <h1>
                 {realmIsRoot
                     ? <Trans i18nKey="manage.realm.content.heading-root">
                         Editing the <Link to="/">root realm</Link>
                     </Trans>
-                    : <Trans i18nKey="manage.realm.content.heading" values={{ realm: name }}>
-                        Editing realm <Link to={path}>root realm</Link>
+                    : <Trans i18nKey="manage.realm.content.heading">
+                        Editing realm <Link to={path}>{{ realm: name }}</Link>
                     </Trans>}
             </h1>
 

@@ -182,7 +182,7 @@ type RemovedRealm {
 
 "A block just showing the list of videos in an Opencast series"
 type SeriesBlock implements Block {
-  series: Series!
+  series: Series
   layout: VideoListLayout!
   order: VideoListOrder!
   id: ID!
@@ -247,7 +247,7 @@ enum EventSortColumn {
 
 "A block for presenting a single Opencast event"
 type VideoBlock implements Block {
-  event: Event!
+  event: Event
   id: ID!
   index: Int!
   title: String

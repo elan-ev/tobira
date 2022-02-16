@@ -23,14 +23,14 @@ create table blocks (
     text_content text,
 
     -- Series blocks
-    series_id bigint references series on delete restrict,
+    series_id bigint references series on delete set null,
 
     -- All videolist-like blocks
     videolist_layout video_list_layout,
     videolist_order video_list_order,
 
     -- Video blocks
-    video_id bigint references events on delete restrict
+    video_id bigint references events on delete set null
 );
 
 -- Blocks are almost always looked up by realm ID.

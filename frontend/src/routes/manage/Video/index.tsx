@@ -21,6 +21,7 @@ import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { Card } from "../../../ui/Card";
 import { Description } from "../../../ui/metadata";
+import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 
 
 export const PATH = "/~manage/videos";
@@ -109,6 +110,10 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
             height: "100%",
             gap: 16,
         }}>
+            <Breadcrumbs
+                path={[{ label: t("manage.management"), link: "/~manage" }]}
+                tail={title}
+            />
             <h1>{title}</h1>
             {inner}
         </div>

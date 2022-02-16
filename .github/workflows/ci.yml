@@ -76,6 +76,10 @@ jobs:
     - name: Build server binary for test deployment
       working-directory: backend
       run: cargo build ${{ steps.build_mode.outputs.cargo }}
+    - name: Move deploy binary
+      run: mv backend/${{ steps.build_mode.outputs.targetdir }}/tobira tobira
+    - name: Compress server binary
+      run: objcopy --compress-debug-sections tobira
 
     # Prepare the ID (used in the subdomain) for deployment. This has to be done
     # here because in the `deploy` workflow, we don't have access to the correct
@@ -84,8 +88,6 @@ jobs:
       run: ./.deployment/deploy-id.sh "$GITHUB_REF" > deploy-id
 
     # Archive files to be used in the `deploy` workflow
-    - name: Move deploy binary
-      run: mv backend/${{ steps.build_mode.outputs.targetdir }}/tobira tobira
     - name: Archive deployment files as artifact
       uses: actions/upload-artifact@v2
       with:
@@ -94,6 +96,7 @@ jobs:
           tobira
           backend/logo-large.svg
           backend/logo-small.svg
+          backend/favicon.svg
           deploy-id
           .deployment/templates/config.toml
           scripts/login-handler/login-handler.py

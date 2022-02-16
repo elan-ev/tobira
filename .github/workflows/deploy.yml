@@ -58,6 +58,7 @@ jobs:
         rm .deployment/templates/config.toml || true
         rm backend/logo-large.svg || true
         rm backend/logo-small.svg || true
+        rm backend/favicon.svg || true
         rm scripts/login-handler/login-handler.py || true
         unzip artifacts.zip
 
@@ -66,6 +67,7 @@ jobs:
         cp -v tobira .deployment/files/
         cp -v backend/logo-large.svg .deployment/files/
         cp -v backend/logo-small.svg .deployment/files/
+        cp -v backend/favicon.svg .deployment/files/
         cp -v scripts/login-handler/login-handler.py .deployment/files/
 
     - name: prepare deploy key

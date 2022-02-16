@@ -117,7 +117,7 @@ impl TextBlock {
 
 pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
-    pub(crate) series: Id,
+    pub(crate) series: Option<Id>,
     pub(crate) layout: VideoListLayout,
     pub(crate) order: VideoListOrder,
 }
@@ -131,9 +131,12 @@ impl Block for SeriesBlock {
 /// A block just showing the list of videos in an Opencast series
 #[graphql_object(Context = Context, impl = BlockValue)]
 impl SeriesBlock {
-    async fn series(&self, context: &Context) -> ApiResult<Series> {
-        // `unwrap` is okay here because of our foreign key constraint
-        Ok(Series::load_by_id(self.series, context).await?.unwrap())
+    async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
+        match self.series {
+            None => Ok(None),
+            // `unwrap` is okay here because of our foreign key constraint
+            Some(series_id) => Ok(Some(Series::load_by_id(series_id, context).await?.unwrap())),
+        }
     }
 
     fn layout(&self) -> VideoListLayout {
@@ -159,7 +162,7 @@ impl SeriesBlock {
 
 pub(crate) struct VideoBlock {
     pub(crate) shared: SharedData,
-    pub(crate) event: Id,
+    pub(crate) event: Option<Id>,
 }
 
 impl Block for VideoBlock {
@@ -171,9 +174,12 @@ impl Block for VideoBlock {
 /// A block for presenting a single Opencast event
 #[graphql_object(Context = Context, impl = BlockValue)]
 impl VideoBlock {
-    async fn event(&self, context: &Context) -> ApiResult<Event> {
-        // `unwrap` is okay here because of our foreign key constraint
-        Ok(Event::load_by_id(self.event, context).await?.unwrap())
+    async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
+        match self.event {
+            None => Ok(None),
+            // `unwrap` is okay here because of our foreign key constraint
+            Some(event_id) => Ok(Some(Event::load_by_id(event_id, context).await?.unwrap())),
+        }
     }
 
     fn id(&self) -> Id {
@@ -230,14 +236,14 @@ impl BlockValue {
 
             BlockType::Series => SeriesBlock {
                 shared,
-                series: Id::series(get_type_dependent(&row, 5, "videolist", "series_id")?),
+                series: row.get::<_, Option<Key>>(5).map(Id::series),
                 layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
                 order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
             }.into(),
 
             BlockType::Video => VideoBlock {
                 shared,
-                event: Id::event(get_type_dependent(&row, 8, "video", "video_id")?),
+                event: row.get::<_, Option<Key>>(8).map(Id::event),
             }.into(),
         };
 

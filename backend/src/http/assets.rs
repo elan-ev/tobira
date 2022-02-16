@@ -25,6 +25,7 @@ const ASSETS: Setup = assets! {
 
     "logo-large.svg": { hash, dynamic },
     "logo-small.svg": { hash, dynamic },
+    "favicon.svg": { hash, dynamic },
 
     "fonts.css": {
         template,
@@ -73,6 +74,7 @@ impl Assets {
         let mut path_overrides = HashMap::new();
         path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.path.clone());
         path_overrides.insert("logo-small.svg".into(), config.theme.logo.small.path.clone());
+        path_overrides.insert("favicon.svg".into(), config.theme.favicon.clone());
         if let Some(fonts_css) = &config.theme.fonts {
             path_overrides.insert("fonts.css".into(), fonts_css.into());
         }

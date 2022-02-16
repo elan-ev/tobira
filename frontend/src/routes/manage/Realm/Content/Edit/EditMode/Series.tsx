@@ -43,7 +43,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
             }
         `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
 
-        const { order, layout, series: { id: series } } = useFragment(graphql`
+        const { order, layout, series } = useFragment(graphql`
             fragment SeriesEditModeBlockData on SeriesBlock {
                 order
                 layout
@@ -160,24 +160,11 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
             <Select
                 css={{ maxWidth: "100%" }}
                 error={"series" in errors}
-                defaultValue={series}
-                {...form.register("series", { pattern: /^sr/ })}
+                defaultValue={series?.id}
+                {...form.register("series", { required: true })}
             >
-                {/*
-                    This is a bit of a hack.
-                    This first option should only be visible for new series blocks.
-                    Contrary to the GraphQL schema which this component is based on,
-                    these blocks don't have a series assigned, yet.
-                    To not duplicate and/or confuse the functionality
-                    and usage of this component,
-                    we therefore just assign them a dummy series.
-                    Note that there is no direct validation
-                    for this dummy series to be selected;
-                    however, trying to save a new block with it will fail in the backend,
-                    and thus trigger the block-level error handling mechanism.
-                */}
-                <option value="clNOSERIES" hidden>
-                    {t("manage.realm.content.series.series.dummy")}
+                <option value="" hidden>
+                    {t("manage.realm.content.series.series.none")}
                 </option>
                 {allSeries.map(({ id, title }) => (
                     <option key={id} value={id}>{title}</option>

@@ -84,6 +84,10 @@ video:
   updated: Zuletzt angepasst
   part-of-series: Teil von
   more-from-series: Mehr von „{{series}}“
+  deleted-video-block: Das hier referenzierte Video wurde gelöscht.
+
+series:
+  deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
 
 realm:
   page-settings: Seiteneinstellungen
@@ -140,6 +144,7 @@ upload:
       dieses Problem zu lösen. Bitte entschuldigen Sie diese Unannehmlichkeit.
 
 manage:
+  management: Verwaltung
   nav:
     dashboard: Übersicht
     my-videos: Meine Videos
@@ -227,9 +232,9 @@ manage:
           bereits veröffentlichte Links.
       delete:
         heading: Seite löschen
-        button: Diese Seite und <1>{{numSubPages}}</1> Unterseiten löschen
+        button: Diese Seite und <strong>{{numSubPages}}</strong> Unterseiten löschen
         button-single: Seite löschen
-        cannot-be-undone: Diese Aktion kann <1>nicht</1> rückgängig gemacht werden!
+        cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
         failed: Löschung fehlgeschlagen.
         warning: >
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
@@ -241,9 +246,9 @@ manage:
       heading-root: Inhalte der <1>Startseite</1> bearbeiten
 
       add: Hier einen neuen Block einfügen
-      add-text: Hier einen neuen Textblock einfügen
-      add-series: Hier einen neuen Serienblock einfügen
-      add-video: Hier einen neuen Videoblock einfügen
+      add-text: Hier Text einfügen
+      add-series: Hier Serie einfügen
+      add-video: Hier Video einfügen
 
       move-down: Block nach unten verschieben
       move-up: Block nach oben verschieben
@@ -267,13 +272,13 @@ manage:
           vertical: Vertikal
         series:
           heading: Serie
-          dummy: Serie auswählen
+          none: Keine Serie ausgewählt
           invalid: Bitte eine Serie auswählen
 
       event:
         event:
           heading: Video
-          dummy: Video auswählen
+          none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
 
       save: Änderungen speichern
@@ -288,7 +293,7 @@ manage:
   add-child:
     heading: Seite hinzufügen
     path-segment: Pfadsegment
-    below-this-parent: Die neue Seite wird unter <1>„{{parent}}“</1> hinzugefügt.
+    below-this-parent: Die neue Seite wird unter <strong>„{{parent}}“</strong> hinzugefügt.
     below-root: Die neue Seite wird direkt unter der Startseite hinzugefügt.
     button-create-page: Seite erstellen
     failed-to-add: Seite konnte nicht erstellt werden.

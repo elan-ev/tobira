@@ -23,6 +23,7 @@ import { PATH as MANAGE_VIDEOS_PATH } from ".";
 import { useUser } from "../../../User";
 import { LinkButton } from "../../../ui/Button";
 import CONFIG from "../../../config";
+import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 
 
 export const ManageSingleVideoRoute = makeRoute(url => {
@@ -98,6 +99,11 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
     const title = t("manage.my-videos.video-details", { title: event.title });
     useTitle(title);
 
+    const breadcrumbs = [
+        { label: t("manage.management"), link: "/~manage" },
+        { label: t("manage.my-videos.title"), link: "/~manage/videos" },
+    ];
+    
     const user = useUser();
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
@@ -105,6 +111,7 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
     const editorUrl = `${CONFIG.ocUrl}/editor-ui/index.html?mediaPackageId=${event.opencastId}`;
 
     return <>
+        <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <h1 css={{
             whiteSpace: "nowrap",
             overflow: "hidden",

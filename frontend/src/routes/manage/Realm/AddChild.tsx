@@ -23,6 +23,7 @@ import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
 import { Card } from "../../../ui/Card";
 import { ILLEGAL_CHARS, RESERVED_CHARS } from "../../Realm";
+import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -68,6 +69,7 @@ const query = graphql`
             isRoot
             path
             canCurrentUserEdit
+            ancestors { name path }
             children { path }
             ... NavigationData
         }
@@ -121,18 +123,20 @@ const AddChild: React.FC<Props> = ({ parent }) => {
     });
 
     const validations = realmValidations(t);
+    const breadcrumbs = (parent.isRoot ? parent.ancestors : parent.ancestors.concat(parent))
+        .map(({ name, path }) => ({ label: name, link: path }));
 
     return (
         <RealmSettingsContainer>
+            <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.add-sub-page")}</i>} />
             <h1>{t("manage.add-child.heading")}</h1>
             <p>
                 {
                     parent.isRoot
                         ? t("manage.add-child.below-root")
-                        : <Trans
-                            i18nKey="manage.add-child.below-this-parent"
-                            values={{ parent: parent.name }}
-                        >Foo<strong>parent</strong>Bar</Trans>
+                        : <Trans i18nKey="manage.add-child.below-this-parent">
+                            {{ parent: parent.name }}
+                        </Trans>
                 }
             </p>
             <Form
