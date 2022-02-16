@@ -37,7 +37,8 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
                 {t("not-found.url-typo")}
             </p>
             <Trans i18nKey="not-found.actions">
-                foo<Link to="/">bar</Link>
+                You can try visiting <Link to="/">the homepage</Link> or using
+                the search bar to find the page you are looking for.
             </Trans>
         </CenteredContent>
     </>;

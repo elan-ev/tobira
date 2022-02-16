@@ -135,7 +135,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                     parent.isRoot
                         ? t("manage.add-child.below-root")
                         : <Trans i18nKey="manage.add-child.below-this-parent">
-                            Foo<strong>{{ parent: parent.name }}</strong>Bar
+                            {{ parent: parent.name }}
                         </Trans>
                 }
             </p>

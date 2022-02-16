@@ -194,9 +194,11 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
 
     const buttonContent = realm.numberOfDescendants === 0
         ? t("manage.realm.danger-zone.delete.button-single")
-        : <Trans i18nKey="manage.realm.danger-zone.delete.button">
-            Foo<strong>{{ numSubPages: realm.numberOfDescendants }}</strong>Bar
-        </Trans>;
+        : <span>
+            <Trans i18nKey="manage.realm.danger-zone.delete.button">
+                {{ numSubPages: realm.numberOfDescendants }}
+            </Trans>
+        </span>;
 
     return <>
         <h3>{t("manage.realm.danger-zone.delete.heading")}</h3>
@@ -214,9 +216,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             ref={modalRef}
         >
             <p>
-                <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone">
-                    foo<strong>bar</strong>baz
-                </Trans>
+                <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone" />
             </p>
         </ConfirmationModal>
     </>;

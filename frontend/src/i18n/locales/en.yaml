@@ -223,9 +223,9 @@ manage:
           browser-bookmarks or published somewhere, won't work anymore.
       delete:
         heading: Delete page
-        button: Delete this page and <1>{{numSubPages}}</1> sub-pages
+        button: Delete this page and <strong>{{numSubPages}}</strong> sub-pages
         button-single: Delete page
-        cannot-be-undone: This action <1>cannot</1> be undone!
+        cannot-be-undone: This action <strong>cannot</strong> be undone!
         failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
@@ -284,7 +284,7 @@ manage:
   add-child:
     heading: Add page
     path-segment: Path segment
-    below-this-parent: The new page will be added below <1>“{{parent}}”</1>.
+    below-this-parent: The new page will be added below <strong>“{{parent}}”</strong>.
     below-root: The new page will be added directly below the homepage.
     button-create-page: Create page
     failed-to-add: Failed to create page.
