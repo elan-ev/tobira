@@ -27,7 +27,7 @@ pub(super) enum HarvestItem {
         #[serde(with = "chrono::serde::ts_milliseconds")]
         created: DateTime<Utc>,
         creator: Option<String>,
-        duration: Option<i32>,
+        duration: i32,
         tracks: Vec<Track>,
         thumbnail: Option<String>,
         acl: Acl,

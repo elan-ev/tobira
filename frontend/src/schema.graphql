@@ -9,7 +9,7 @@ type Event implements Node {
   title: String!
   description: String
   "Duration in ms."
-  duration: Float
+  duration: Int!
   thumbnail: String
   tracks: [Track!]!
   created: DateTimeUtc!
@@ -161,7 +161,7 @@ type SearchEvent implements Node {
   title: String!
   description: String
   thumbnail: String
-  duration: Int
+  duration: Int!
   tracks: [Track!]!
 }
 

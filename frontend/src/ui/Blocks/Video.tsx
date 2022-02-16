@@ -33,8 +33,6 @@ export const VideoBlock: React.FC<Props> = ({ title, fragRef }) => {
         <Title title={title ?? event.title} />
         <Player
             {...event}
-            // TODO In the future, duration won't be nullable anymore
-            duration={event.duration ?? 0}
             // Relay returns `readonly` objects ...
             tracks={event.tracks as Track[]}
         />

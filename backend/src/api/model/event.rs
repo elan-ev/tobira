@@ -26,7 +26,7 @@ pub(crate) struct Event {
 
     title: String,
     description: Option<String>,
-    duration: Option<i32>,
+    duration: i32,
     created: DateTime<Utc>,
     updated: DateTime<Utc>,
     creator: Option<String>,
@@ -68,8 +68,8 @@ impl Event {
         self.description.as_deref()
     }
     /// Duration in ms.
-    fn duration(&self) -> Option<f64> {
-        self.duration.map(Into::into)
+    fn duration(&self) -> i32 {
+        self.duration
     }
     fn thumbnail(&self) -> Option<&str> {
         self.thumbnail.as_deref()
@@ -455,10 +455,7 @@ impl EventCursor {
     fn new(event: &Event, order: &EventSortOrder) -> Self {
         let sort_filter = match order.column {
             EventSortColumn::Title => CursorSortFilter::Title(event.title.clone()),
-            EventSortColumn::Duration => CursorSortFilter::Duration(
-                // TODO: figure out nullable durations
-                event.duration.expect("null duration")
-            ),
+            EventSortColumn::Duration => CursorSortFilter::Duration(event.duration),
             EventSortColumn::Created => CursorSortFilter::Created(event.created),
             EventSortColumn::Updated => CursorSortFilter::Updated(event.updated),
         };

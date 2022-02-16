@@ -10,7 +10,7 @@ pub(crate) struct SearchEvent {
     pub(crate) title: String,
     pub(crate) description: Option<String>,
     pub(crate) thumbnail: Option<String>,
-    pub(crate) duration: Option<i32>,
+    pub(crate) duration: i32,
     pub(crate) tracks: Vec<Track>,
 }
 
@@ -35,7 +35,7 @@ impl SearchEvent {
         self.thumbnail.as_deref()
     }
 
-    fn duration(&self) -> Option<i32> {
+    fn duration(&self) -> i32 {
         self.duration
     }
 

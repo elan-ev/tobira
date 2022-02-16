@@ -89,7 +89,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                         <Thumbnail
                             event={{
                                 thumbnail: item.thumbnail ?? null,
-                                duration: item.duration ?? null,
+                                duration: item.duration ?? bug("SearchEvent without duration"),
                                 tracks: item.tracks ?? bug(""),
                             }}
                             css={{ width: "100%" }}

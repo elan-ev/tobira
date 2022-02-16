@@ -122,7 +122,6 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
         : null;
 
     const { title, tracks, description } = event;
-    const duration = event.duration ?? 0; // <-- TODO
     useTitle(title);
 
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
@@ -130,7 +129,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
-        <Player tracks={tracks as Track[]} title={title} duration={duration} />
+        <Player tracks={tracks as Track[]} title={title} duration={event.duration} />
         <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
         {description !== null && <TextBlock content={description} />}
         <table css={{
