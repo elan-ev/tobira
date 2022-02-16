@@ -117,6 +117,12 @@
 # Default value: "ROLE_TOBIRA_UPLOAD"
 #upload_role = "ROLE_TOBIRA_UPLOAD"
 
+# If a user has this role, they are allowed to use Opencast Studio to
+# record and upload videos.
+#
+# Default value: "ROLE_TOBIRA_STUDIO"
+#studio_role = "ROLE_TOBIRA_STUDIO"
+
 # Duration of a Tobira-managed login session.
 # Note: This is only relevant if `auth.mode` is `login-proxy`.
 #

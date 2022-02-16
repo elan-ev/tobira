@@ -145,7 +145,7 @@ manage:
     studio-tile-title: Record video
     studio-tile-body: >
       Here you can easily create a new video by recording your microphone, screen and/or
-      webcam. (does not work yet!)
+      webcam.
     my-videos-tile: Here you can view and edit all your videos.
     manage-pages-tile-title: Manage pages?
     manage-pages-tile-body: >

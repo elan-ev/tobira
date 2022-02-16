@@ -14,6 +14,7 @@ import { Link } from "../../router";
 import { LinkList, LinkWithIcon } from "../../ui";
 import { NotAuthorized } from "../../ui/error";
 import { useUser } from "../../User";
+import CONFIG from "../../config";
 
 
 const PATH = "/~manage";
@@ -37,10 +38,7 @@ export const ManageRoute = makeRoute(url => {
 
 
 const query = graphql`
-    query manageDashboardQuery {
-        ...UserData
-        currentUser { canUpload }
-    }
+    query manageDashboardQuery { ...UserData }
 `;
 
 const Manage: React.FC = () => {
@@ -49,6 +47,8 @@ const Manage: React.FC = () => {
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
     }
+    const returnTarget = encodeURIComponent(document.location.href);
+    const studioUrl = `${CONFIG.ocUrl}/studio?return.target=${returnTarget}`;
 
     return <>
         <h1>{t("manage.dashboard.title")}</h1>
@@ -57,7 +57,7 @@ const Manage: React.FC = () => {
             width: 950,
             maxWidth: "100%",
             margin: "32px 0",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
             gap: 24,
         }}>
             {user.canUpload && <GridTile link="/~upload">
@@ -65,12 +65,11 @@ const Manage: React.FC = () => {
                 <h2>{t("upload.title")}</h2>
                 {t("manage.dashboard.upload-tile")}
             </GridTile>}
-            {/* TODO: Studio integration */}
-            <GridTile link="#">
+            {user.canUseStudio && <GridTile link={studioUrl}>
                 <FiVideo />
                 <h2>{t("manage.dashboard.studio-tile-title")}</h2>
                 {t("manage.dashboard.studio-tile-body")}
-            </GridTile>
+            </GridTile>}
             <GridTile link="/~manage/videos">
                 <FiFilm />
                 <h2>{t("manage.my-videos.title")}</h2>
