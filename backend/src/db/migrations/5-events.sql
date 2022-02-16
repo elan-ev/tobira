@@ -36,7 +36,7 @@ create table events (
     -- Meta data
     title text not null,
     description text,
-    duration int, -- in ms
+    duration int not null, -- in ms
     created timestamp with time zone not null,
     updated timestamp with time zone not null,
     creator text,

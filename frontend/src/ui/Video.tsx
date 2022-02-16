@@ -6,7 +6,7 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
     /** The event of which a thumbnail should be shown */
     event: {
         thumbnail: string | null;
-        duration: number | null;
+        duration: number;
         tracks: readonly { resolution: readonly number[] | null }[];
     };
 
@@ -61,21 +61,17 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         }} {...rest}>
             {inner}
             {active && <ActiveIndicator />}
-            {event.duration != null && (
-                <div css={{
-                    position: "absolute",
-                    right: 6,
-                    bottom: 6,
-                    backgroundColor: "hsla(0, 0%, 0%, 0.75)",
-                    border: "1px solid black",
-                    borderRadius: 4,
-                    padding: "0 4px",
-                    color: "white",
-                    fontSize: 14,
-                }}>
-                    {formatDuration(event.duration)}
-                </div>
-            )}
+            <div css={{
+                position: "absolute",
+                right: 6,
+                bottom: 6,
+                backgroundColor: "hsla(0, 0%, 0%, 0.75)",
+                border: "1px solid black",
+                borderRadius: 4,
+                padding: "0 4px",
+                color: "white",
+                fontSize: 14,
+            }}>{formatDuration(event.duration)}</div>
         </div>
     );
 };
