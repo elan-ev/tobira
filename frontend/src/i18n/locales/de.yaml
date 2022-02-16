@@ -188,7 +188,10 @@ manage:
     path-too-short: Pfadsegment muss mindestens zwei Zeichen lang sein.
     no-control-in-path: Pfadsegment darf keine Kontrollzeichen enthalten.
     no-space-in-path: Pfadsegment darf keine Leerzeichen enthalten.
-    reserved-char-in-path: Dieses Pfadsegment beginnt mit einem reservierten Zeichen.
+    illegal-chars-in-path: >
+      Pfadsegment darf nicht folgende Zeichen enthalten: {{illegalChars}}
+    reserved-char-in-path: >
+      Pfadsegment darf nicht mit den folgenden Zeichen beginnen: {{reservedChars}}
 
     no-path: Pfad fehlt! Den Link, den Sie aufgerufen haben, ist ungültig.
 
@@ -292,9 +295,11 @@ manage:
       Der Seitename wird im Navigationsmenü und als Überschrift auf der Seite selber angezeigt.
       Seitennamen können jederzeit geändert werden.
     path-segment-info: >
-      Pfadsegmente dürfen keine Leerzeichen enthalten und nicht mit <1>-+~@_!$&;:.,=*'</1>
-      beginnen. Sie sollten außerdem möglichst kurz sein und keine Information aus vorangehenden
+      Pfadsegmente sollten möglichst kurz sein und keine Information aus vorangehenden
       Pfadsegmenten wiederholen. Eine spätere Änderung des Pfadsegments sollte vermieden werden.
+      <br />
+      Pfadsegmente dürfen weder Leerzeichen noch <code>{{illegalChars}}</code> enthalten und nicht
+      mit <code>{{reservedChars}}</code> beginnen.
 
 
 # These errors map the `key` field of an API error response to a nice message.

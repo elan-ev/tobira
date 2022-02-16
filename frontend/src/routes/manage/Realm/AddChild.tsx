@@ -22,6 +22,7 @@ import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
 import { Card } from "../../../ui/Card";
+import { ILLEGAL_CHARS, RESERVED_CHARS } from "../../Realm";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -154,16 +155,9 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                 </InputWithInfo>
 
                 <InputWithInfo
-                    info={(
-                        <Trans i18nKey="manage.add-child.path-segment-info">
-                            foo
-                            <code css={{
-                                whiteSpace: "nowrap",
-                                borderRadius: 4,
-                                backgroundColor: "var(--grey80)",
-                            }}>chars</code>
-                        </Trans>
-                    )}
+                    info={<Trans i18nKey="manage.add-child.path-segment-info">
+                        {{ illegalChars: ILLEGAL_CHARS, reservedChars: RESERVED_CHARS }}
+                    </Trans>}
                 >
                     <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>
                     <PathSegmentInput
@@ -200,6 +194,12 @@ const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
         rowGap: 16,
         "@media (max-width: 1300px)": {
             flexDirection: "column",
+        },
+        "& code": {
+            whiteSpace: "nowrap",
+            borderRadius: 4,
+            backgroundColor: "var(--grey92)",
+            padding: "2px 4px",
         },
     }}>
         <div css={{ minWidth: "min(100%, 450px)" }}>{children}</div>
