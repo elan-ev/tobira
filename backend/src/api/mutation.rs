@@ -11,7 +11,6 @@ use super::{
             NewTextBlock,
             NewSeriesBlock,
             NewVideoBlock,
-            UpdateBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
             UpdateVideoBlock,
@@ -115,11 +114,6 @@ impl Mutation {
         context: &Context,
     ) -> ApiResult<Realm> {
         BlockValue::swap_by_index(realm, index_a, index_b, context).await
-    }
-
-    /// Update a block's data.
-    async fn update_block(id: Id, set: UpdateBlock, context: &Context) -> ApiResult<BlockValue> {
-        BlockValue::update(id, set, context).await
     }
 
     /// Update a text block's data.

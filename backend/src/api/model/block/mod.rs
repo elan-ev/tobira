@@ -18,7 +18,6 @@ pub(crate) use mutations::{
     NewTextBlock,
     NewSeriesBlock,
     NewVideoBlock,
-    UpdateBlock,
     UpdateTextBlock,
     UpdateSeriesBlock,
     UpdateVideoBlock,

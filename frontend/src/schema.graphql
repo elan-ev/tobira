@@ -77,8 +77,6 @@ type Mutation {
   addVideoBlock(realm: ID!, index: Int!, block: NewVideoBlock!): Realm!
   "Swap two blocks."
   swapBlocksByIndex(realm: ID!, indexA: Int!, indexB: Int!): Realm!
-  "Update a block's data."
-  updateBlock(id: ID!, set: UpdateBlock!): Block!
   "Update a text block's data."
   updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
   "Update a series block's data."
@@ -283,10 +281,6 @@ type User {
     Exactly one of `first` and `last` must be set!
   """
   myVideos(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}, first: Int, after: Cursor, last: Int, before: Cursor): EventConnection!
-}
-
-input UpdateBlock {
-  title: String
 }
 
 type Track {

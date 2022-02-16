@@ -201,32 +201,6 @@ impl BlockValue {
         Ok(realm)
     }
 
-    pub(crate) async fn update(
-        id: Id,
-        set: UpdateBlock,
-        context: &Context,
-    ) -> ApiResult<BlockValue> {
-        let updated_block = context.db(context.require_moderator()?)
-            .query_one(
-                &format!(
-                    "update blocks set \
-                        title = case $2::boolean when true then $3 else title end \
-                        where id = $1 \
-                        returning {}",
-                    Self::COL_NAMES,
-                ),
-                &[
-                    &id.key_for(Id::BLOCK_KIND)
-                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &!set.title.is_implicit_null(),
-                    &set.title.some(),
-                ],
-            )
-            .await?;
-
-        Ok(Self::from_row(updated_block)?)
-    }
-
     pub(crate) async fn update_text(
         id: Id,
         set: UpdateTextBlock,
@@ -383,11 +357,6 @@ pub(crate) struct NewVideoBlock {
     event: Id,
 }
 
-
-#[derive(GraphQLInputObject)]
-pub(crate) struct UpdateBlock {
-    title: Nullable<String>,
-}
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateTextBlock {
