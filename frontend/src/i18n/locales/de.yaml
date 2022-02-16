@@ -272,13 +272,13 @@ manage:
           vertical: Vertikal
         series:
           heading: Serie
-          dummy: Serie auswählen
+          none: Keine Serie ausgewählt
           invalid: Bitte eine Serie auswählen
 
       event:
         event:
           heading: Video
-          dummy: Video auswählen
+          none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
 
       save: Änderungen speichern

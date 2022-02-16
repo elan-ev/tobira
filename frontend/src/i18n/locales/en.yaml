@@ -263,13 +263,13 @@ manage:
           vertical: Vertical
         series:
           heading: Series
-          dummy: Select a series
+          none: No series selected
           invalid: Please select a series
 
       event:
         event:
           heading: Event
-          dummy: Select an event
+          none: No event selected
           invalid: Please select an event
 
       save: Save changes

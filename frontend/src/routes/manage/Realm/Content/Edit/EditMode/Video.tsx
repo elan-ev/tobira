@@ -98,11 +98,10 @@ export const EditVideoBlock = React.forwardRef<EditModeRef, EditVideoBlockProps>
                 css={{ maxWidth: "100%" }}
                 error={"event" in errors}
                 defaultValue={event?.id}
-                {...form.register("event", { pattern: /^ev/ })}
+                {...form.register("event", { required: true })}
             >
-                {/* See the series block code for an explanation of this option */}
-                <option value="clNOEVENT" hidden>
-                    {t("manage.realm.content.event.event.dummy")}
+                <option value="" hidden>
+                    {t("manage.realm.content.event.event.none")}
                 </option>
                 {events.map(({ id, title }) => (
                     <option key={id} value={id}>{title}</option>

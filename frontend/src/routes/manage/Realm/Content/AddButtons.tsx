@@ -68,19 +68,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
         </Button>
         <Button
             title={t("manage.realm.content.add-series")}
-            onClick={() => addBlock("Series", (store, block) => {
-                // This is a horrible hack.
-                // The GraphQL schema (and thus the TypeScript types)
-                // says that every `SeriesBlock` has a `series: Series!`.
-                // We don't. We get away with it by creating a dummy series,
-                // which the edit mode of the series blocks knows about.
-                const seriesId = "clNOSERIES";
-                let dummySeries = store.get(seriesId);
-                if (!dummySeries) {
-                    dummySeries = store.create(seriesId, "Series");
-                    dummySeries.setValue(seriesId, "id");
-                }
-                block.setLinkedRecord(dummySeries, "series");
+            onClick={() => addBlock("Series", (_store, block) => {
                 block.setValue("NEW_TO_OLD", "order");
                 block.setValue("GRID", "layout");
             })}
@@ -89,16 +77,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
         </Button>
         <Button
             title={t("manage.realm.content.add-video")}
-            onClick={() => addBlock("Video", (store, block) => {
-                // See above for an explanation
-                const eventId = "clNOEVENT";
-                let dummyEvent = store.get(eventId);
-                if (!dummyEvent) {
-                    dummyEvent = store.create(eventId, "Event");
-                    dummyEvent.setValue(eventId, "id");
-                }
-                block.setLinkedRecord(dummyEvent, "event");
-            })}
+            onClick={() => addBlock("Video")}
         >
             <FiFilm />
         </Button>
