@@ -141,12 +141,12 @@ manage:
 
   dashboard:
     title: Management Dashboard
-    upload-tile: You can upload a new video on <1>this page</1>.
+    upload-tile: Here you can upload a new video from your computer.
     studio-tile-title: Record video
     studio-tile-body: >
-      You can create a new video by recording your microphone, screen and/or
-      webcam easily by using <1>this tool</1>. (does not work yet!)
-    my-videos-tile: "View and edit your videos on <1>the “My\u00a0Videos” page</1>."
+      Here you can easily create a new video by recording your microphone, screen and/or
+      webcam.
+    my-videos-tile: Here you can view and edit all your videos.
     manage-pages-tile-title: Manage pages?
     manage-pages-tile-body: >
       To rename, modify, and delete pages, navigate to the page in question. If you
@@ -165,6 +165,7 @@ manage:
     page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
     no-videos-found: No videos found.
     share-direct-link: Share via direct link
+    open-in-editor: Open in video editor
     manage-video: Manage video
 
   are-you-sure: Are you sure?

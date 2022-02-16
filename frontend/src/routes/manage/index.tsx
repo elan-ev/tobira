@@ -1,5 +1,5 @@
 import { ReactElement } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { FiFilm, FiUpload, FiVideo } from "react-icons/fi";
 import { HiTemplate } from "react-icons/hi";
 import { graphql } from "react-relay";
@@ -14,6 +14,7 @@ import { Link } from "../../router";
 import { LinkList, LinkWithIcon } from "../../ui";
 import { NotAuthorized } from "../../ui/error";
 import { useUser } from "../../User";
+import CONFIG from "../../config";
 
 
 const PATH = "/~manage";
@@ -37,10 +38,7 @@ export const ManageRoute = makeRoute(url => {
 
 
 const query = graphql`
-    query manageDashboardQuery {
-        ...UserData
-        currentUser { canUpload }
-    }
+    query manageDashboardQuery { ...UserData }
 `;
 
 const Manage: React.FC = () => {
@@ -49,6 +47,8 @@ const Manage: React.FC = () => {
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
     }
+    const returnTarget = encodeURIComponent(document.location.href);
+    const studioUrl = `${CONFIG.ocUrl}/studio?return.target=${returnTarget}`;
 
     return <>
         <h1>{t("manage.dashboard.title")}</h1>
@@ -57,56 +57,68 @@ const Manage: React.FC = () => {
             width: 950,
             maxWidth: "100%",
             margin: "32px 0",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
             gap: 24,
-            "& > div": {
-                borderRadius: 4,
-                border: "1px solid var(--grey92)",
-                backgroundColor: "var(--grey97)",
-                padding: "8px 16px 16px 16px",
-                fontSize: 14,
-                position: "relative",
-                "& > svg:first-of-type": {
-                    position: "absolute",
-                    top: 8,
-                    right: 8,
-                    color: "var(--accent-color)",
-                    fontSize: 22,
-                },
-                "& > h2": {
-                    fontSize: 18,
-                    marginBottom: 16,
-                },
-            },
         }}>
-            {user.canUpload && <div>
+            {user.canUpload && <GridTile link="/~upload">
                 <FiUpload />
                 <h2>{t("upload.title")}</h2>
-                <Trans i18nKey="manage.dashboard.upload-tile">
-                    Foo <Link to="/~upload">the uploader</Link>
-                </Trans>
-            </div>}
-            {/* TODO: Studio integration */}
-            <div>
+                {t("manage.dashboard.upload-tile")}
+            </GridTile>}
+            {user.canUseStudio && <GridTile link={studioUrl}>
                 <FiVideo />
                 <h2>{t("manage.dashboard.studio-tile-title")}</h2>
-                <Trans i18nKey="manage.dashboard.studio-tile-body">
-                    Foo <Link to="/~studio">OC Studio</Link>
-                </Trans>
-            </div>
-            <div>
+                {t("manage.dashboard.studio-tile-body")}
+            </GridTile>}
+            <GridTile link="/~manage/videos">
                 <FiFilm />
                 <h2>{t("manage.my-videos.title")}</h2>
-                <Trans i18nKey="manage.dashboard.my-videos-tile">
-                    Foo <Link to="/~manage/videos">my videos</Link>
-                </Trans>
-            </div>
-            <div>
+                {t("manage.dashboard.my-videos-tile")}
+            </GridTile>
+            <GridTile>
                 <h2>{t("manage.dashboard.manage-pages-tile-title")}</h2>
                 {t("manage.dashboard.manage-pages-tile-body")}
-            </div>
+            </GridTile>
         </div>
     </>;
+};
+
+type GridTileProps = {
+    link?: string;
+};
+
+const GridTile: React.FC<GridTileProps> = ({ link, children }) => {
+    const style = {
+        borderRadius: 4,
+        border: "1px solid var(--grey92)",
+        backgroundColor: "var(--grey97)",
+        padding: "8px 16px 16px 16px",
+        fontSize: 14,
+        color: "black",
+        "&:hover": !link
+            ? {}
+            : {
+                color: "black",
+                borderColor: "var(--grey80)",
+                boxShadow: "1px 1px 5px var(--grey92)",
+            },
+        position: "relative",
+        "& > svg:first-of-type": {
+            position: "absolute",
+            top: 8,
+            right: 8,
+            color: "var(--accent-color)",
+            fontSize: 22,
+        },
+        "& > h2": {
+            fontSize: 18,
+            marginBottom: 16,
+        },
+    } as const;
+
+    return link
+        ? <Link to={link} css={style}>{children}</Link>
+        : <div css={style}>{children}</div>;
 };
 
 type ManageNavProps = {

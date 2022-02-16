@@ -56,7 +56,7 @@ type LinkProps = {
 } & Omit<React.ComponentPropsWithoutRef<"a">, "href">;
 
 const Link = ({ to, children, htmlLink = false, ...props }: LinkProps): JSX.Element => (
-    htmlLink
+    htmlLink || to.startsWith("http://") || to.startsWith("https://")
         ? <a href={to} {...props}>{children}</a>
         : <RautaLink to={to} {...props}>{children}</RautaLink>
 );

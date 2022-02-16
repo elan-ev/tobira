@@ -20,6 +20,9 @@ import { useTitle } from "../../../util";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../Video";
 import { PATH as MANAGE_VIDEOS_PATH } from ".";
+import { useUser } from "../../../User";
+import { LinkButton } from "../../../ui/Button";
+import CONFIG from "../../../config";
 
 
 export const ManageSingleVideoRoute = makeRoute(url => {
@@ -95,6 +98,12 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
     const title = t("manage.my-videos.video-details", { title: event.title });
     useTitle(title);
 
+    const user = useUser();
+    if (user === "none" || user === "unknown") {
+        return <NotAuthorized />;
+    }
+    const editorUrl = `${CONFIG.ocUrl}/editor-ui/index.html?mediaPackageId=${event.opencastId}`;
+
     return <>
         <h1 css={{
             whiteSpace: "nowrap",
@@ -114,6 +123,11 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
         }}>
             <ThumbnailDateInfo event={event} />
             <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
+                {user.canUseEditor && event.canWrite && (
+                    <LinkButton to={editorUrl} css={{ marginBottom: 16 }}>
+                        {t("manage.my-videos.open-in-editor")}
+                    </LinkButton>
+                )}
                 <DirectLink event={event} />
                 <MetadataSection event={event} />
             </div>
