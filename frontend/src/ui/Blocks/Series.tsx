@@ -2,7 +2,6 @@ import React from "react";
 import { graphql, useFragment } from "react-relay";
 
 import { keyOfId } from "../../util";
-import { BlockContainer } from ".";
 import { Link } from "../../router";
 import { SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
 import {
@@ -72,38 +71,36 @@ type Props = SharedProps & {
 const VIDEO_GRID_BREAKPOINT = 600;
 
 export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath, activeEventId }) => (
-    <BlockContainer>
-        <div css={{
-            position: "relative",
-            display: "flex",
-            flexWrap: "wrap",
-            marginTop: 18,
-            padding: 12,
-            paddingTop: 32,
-            backgroundColor: "var(--grey95)",
+    <div css={{
+        position: "relative",
+        display: "flex",
+        flexWrap: "wrap",
+        marginTop: 18,
+        padding: 12,
+        paddingTop: 32,
+        backgroundColor: "var(--grey95)",
+        borderRadius: 10,
+        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+            justifyContent: "center",
+        },
+    }}>
+        <h2 css={{
+            position: "absolute",
+            backgroundColor: "var(--accent-color)",
+            color: "white",
+            padding: "2px 12px",
             borderRadius: 10,
-            [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-                justifyContent: "center",
-            },
-        }}>
-            <h2 css={{
-                position: "absolute",
-                backgroundColor: "var(--accent-color)",
-                color: "white",
-                padding: "2px 12px",
-                borderRadius: 10,
-                transform: "translateY(-50%)",
-                top: 0,
-                fontSize: 19,
-                marginLeft: 8,
-            }}>{title ?? series.title}</h2>
-            {series.events.map(event => <GridTile
-                key={event.id}
-                active={event.id === activeEventId}
-                {...{ realmPath, event }}
-            />)}
-        </div>
-    </BlockContainer>
+            transform: "translateY(-50%)",
+            top: 0,
+            fontSize: 19,
+            marginLeft: 8,
+        }}>{title ?? series.title}</h2>
+        {series.events.map(event => <GridTile
+            key={event.id}
+            active={event.id === activeEventId}
+            {...{ realmPath, event }}
+        />)}
+    </div>
 );
 
 type GridTypeProps = {

@@ -3,7 +3,7 @@ import { graphql, useFragment } from "react-relay";
 import ReactMarkdown from "react-markdown";
 import type { Options } from "react-markdown";
 
-import { BlockContainer, Title } from ".";
+import { Title } from ".";
 import { TextBlockData$key } from "./__generated__/TextBlockData.graphql";
 
 
@@ -83,17 +83,15 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
     />,
 };
 
-export const TextBlock: React.FC<Props> = ({ title, content }) => (
-    <BlockContainer>
-        <Title title={title} />
-        <div css={{
-            maxWidth: 1200,
-            "& > *:first-of-type": { marginTop: 0 },
-            "& > *:last-of-type": { marginBottom: 0 },
-        }}>
-            <ReactMarkdown allowedElements={ALLOWED_MARKDOWN_TAGS} components={MARKDOWN_COMPONENTS}>
-                {content}
-            </ReactMarkdown>
-        </div>
-    </BlockContainer>
-);
+export const TextBlock: React.FC<Props> = ({ title, content }) => <>
+    <Title title={title} />
+    <div css={{
+        maxWidth: 1200,
+        "& > *:first-of-type": { marginTop: 0 },
+        "& > *:last-of-type": { marginBottom: 0 },
+    }}>
+        <ReactMarkdown allowedElements={ALLOWED_MARKDOWN_TAGS} components={MARKDOWN_COMPONENTS}>
+            {content}
+        </ReactMarkdown>
+    </div>
+</>;

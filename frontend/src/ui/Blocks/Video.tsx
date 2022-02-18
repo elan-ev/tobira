@@ -2,7 +2,7 @@ import { graphql, useFragment } from "react-relay";
 
 import { Track, Player } from "../player";
 import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
-import { Title, BlockContainer } from ".";
+import { Title } from ".";
 import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
 
@@ -28,7 +28,7 @@ export const VideoBlock: React.FC<Props> = ({ title, fragRef }) => {
         return <Card kind="error">{t("video.deleted-video-block")}</Card>;
     }
 
-    return <BlockContainer>
+    return <>
         {/* TODO The title display logic will change soon */}
         <Title title={title ?? event.title} />
         <Player
@@ -36,5 +36,5 @@ export const VideoBlock: React.FC<Props> = ({ title, fragRef }) => {
             // Relay returns `readonly` objects ...
             tracks={event.tracks as Track[]}
         />
-    </BlockContainer>;
+    </>;
 };

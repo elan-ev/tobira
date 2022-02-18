@@ -62,7 +62,7 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
     `, blockRef);
     const { title, __typename } = block;
 
-    return <>
+    return <div>
         {match(__typename, {
             "TextBlock": () => <TextBlockByQuery
                 title={title ?? undefined}
@@ -78,11 +78,9 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
                 fragRef={block}
             />,
         })}
-    </>;
+    </div>;
 };
 
 export const Title: React.FC<{ title?: string }> = ({ title }) => (
     title === undefined ? null : <h2 css={{ margin: "16px 0" }}>{title}</h2>
 );
-
-export const BlockContainer: React.FC = ({ children }) => <div>{children}</div>;
