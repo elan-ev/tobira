@@ -243,8 +243,8 @@ begin
         values ('Lectures', 0, 'lectures')
         returning id into root;
 
-    insert into blocks (realm_id, type, index, title, text_content)
-        values (root, 'text', '0', 'Description', 'Here you can see all lecture recordings.');
+    insert into blocks (realm_id, type, index, text_content)
+        values (root, 'text', '0', 'Here you can see all lecture recordings.');
 
     perform department(root, 'Mathematics');
     perform department(root, 'Computer Science');
@@ -267,8 +267,8 @@ begin
         values (name, lectures_root, replace(lower(name), ' ', '-'))
         returning id into root;
 
-    insert into blocks (realm_id, type, index, title, text_content)
-        values (root, 'text', '0', 'Description', format(
+    insert into blocks (realm_id, type, index, text_content)
+        values (root, 'text', '0', format(
             'Hello to the department of %s! We are very proud of what we have achieved in '
                 || 'this department and there is a lot of interesting stuff around here. '
                 || 'Take a look at our swell videos. And do not forget to like, subscribe '

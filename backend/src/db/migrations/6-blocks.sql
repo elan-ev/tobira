@@ -17,7 +17,6 @@ create table blocks (
     realm_id bigint not null references realms on delete cascade,
     type block_type not null,
     index smallint not null,
-    title text,
 
     -- Text blocks
     text_content text,
