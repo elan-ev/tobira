@@ -7,7 +7,7 @@ import { bug } from "../../../../../../util/err";
 import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
-import type { EditModeRef, EditModeFormData } from ".";
+import type { EditModeRef, FormData } from ".";
 import type { VideoEditModeBlockData$key } from "./__generated__/VideoEditModeBlockData.graphql";
 import type { VideoEditModeEventData$key } from "./__generated__/VideoEditModeEventData.graphql";
 import type { VideoEditSaveMutation } from "./__generated__/VideoEditSaveMutation.graphql";
@@ -83,7 +83,7 @@ export const EditVideoBlock = React.forwardRef<EditModeRef, EditVideoBlockProps>
 
         const { t } = useTranslation();
 
-        const form = useFormContext<EditModeFormData>();
+        const form = useFormContext<FormData>();
         const { formState: { errors } } = form;
 
         return <div css={{ "& > h3": {

@@ -13,7 +13,7 @@ import type {
     TextEditSaveMutation,
 } from "./__generated__/TextEditSaveMutation.graphql";
 import { bug } from "../../../../../../util/err";
-import type { EditModeRef, EditModeFormData } from ".";
+import type { EditModeRef, FormData } from ".";
 import { TextArea } from "../../../../../../ui/Input";
 
 
@@ -37,7 +37,7 @@ export const EditTextBlock = React.forwardRef<EditModeRef, EditTextBlockProps>(
         `, blockRef);
 
 
-        const form = useFormContext<EditModeFormData>();
+        const form = useFormContext<FormData>();
 
 
         const [save] = useMutation<TextEditSaveMutation>(graphql`

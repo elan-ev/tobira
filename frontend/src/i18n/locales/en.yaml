@@ -247,8 +247,6 @@ manage:
       edit: Edit block
       remove: Remove block
 
-      title: Block title
-
       text:
         content: You can put your text content here. You can even use Markdown.
 

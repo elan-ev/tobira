@@ -256,8 +256,6 @@ manage:
       edit: Block bearbeiten
       remove: Block entfernen
 
-      title: Blocktitel
-
       text:
         content: Hier können Sie ihren Text einfügen. Sie können sogar Markdown verwenden.
 

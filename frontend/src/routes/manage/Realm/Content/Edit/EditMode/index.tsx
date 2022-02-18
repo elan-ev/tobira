@@ -8,7 +8,6 @@ import type {
     EditModeRealmData$key,
 } from "./__generated__/EditModeRealmData.graphql";
 import { currentRef, match } from "../../../../../../util";
-import { Input } from "../../../../../../ui/Input";
 import { Button } from "../../util";
 import { ButtonGroup } from "..";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
@@ -26,7 +25,7 @@ type EditModeProps = {
     onError?: (error: Error) => void;
 };
 
-type BlockFormData = (
+export type FormData = (
     { type: "TextBlock" } & TextFormData
 ) | (
     { type: "SeriesBlock" } & SeriesFormData
@@ -34,25 +33,17 @@ type BlockFormData = (
     { type: "VideoBlock" } & VideoFormData
 );
 
-export type EditModeFormData = {
-    title: string;
-} & BlockFormData;
-
-type ProcessFormData = {
-    title: string | null;
-} & BlockFormData;
-
 export type EditModeRef = {
     save: (
         id: string,
-        data: ProcessFormData,
+        data: FormData,
         onCompleted?: () => void,
         onError?: (error: Error) => void,
     ) => void;
     create: (
         realm: string,
         index: number,
-        data: ProcessFormData,
+        data: FormData,
         onCompleted?: () => void,
         onError?: (error: Error) => void,
     ) => void;
@@ -66,14 +57,11 @@ export const EditMode: React.FC<EditModeProps> = ({
     onCompleted,
     onError,
 }) => {
-    const { t } = useTranslation();
-
     const { id: realmId, blocks } = useFragment(graphql`
         fragment EditModeRealmData on Realm {
             id
             blocks {
                 id
-                title
                 __typename
                 ... on TextBlock { ... TextEditModeBlockData }
                 ... on SeriesBlock { ... SeriesEditModeBlockData }
@@ -82,10 +70,10 @@ export const EditMode: React.FC<EditModeProps> = ({
         }
     `, realmRef);
     const block = blocks[index];
-    const { id, title, __typename: type } = block;
+    const { id, __typename: type } = block;
 
 
-    const form = useForm<EditModeFormData>({
+    const form = useForm<FormData>({
         defaultValues: {
             type: type as "TextBlock" | "SeriesBlock" | "VideoBlock",
         },
@@ -93,27 +81,20 @@ export const EditMode: React.FC<EditModeProps> = ({
     const editModeRef = useRef<EditModeRef>(null);
 
     const onSubmit = form.handleSubmit(data => {
-        // Empty titles should set the field to `null`
-        // This is to avoid empty headings when rendering the block.
-        // In the future we might want to check this at render site,
-        // and we also might want more sophisticated checks
-        // (like "all whitespace").
-        const processData = { ...data, title: data.title || null };
-
         onSave?.();
 
         if (id.startsWith("cl")) {
             currentRef(editModeRef).create(
                 realmId,
                 index,
-                processData,
+                data,
                 onCompleted,
                 onError,
             );
         } else {
             currentRef(editModeRef).save(
                 id,
-                processData,
+                data,
                 onCompleted,
                 onError,
             );
@@ -121,17 +102,9 @@ export const EditMode: React.FC<EditModeProps> = ({
     });
 
 
-    return <FormProvider<EditModeFormData> {...form}>
+    return <FormProvider<FormData> {...form}>
         <form onSubmit={onSubmit}>
             <EditModeButtons onCancel={onCancel} />
-            <h2 css={{ margin: "16px 0" }}>
-                <Input
-                    css={{ display: "block" }}
-                    placeholder={t("manage.realm.content.title")}
-                    defaultValue={title ?? ""}
-                    {...form.register("title")}
-                />
-            </h2>
             {match(block.__typename, {
                 "TextBlock": () => <EditTextBlock ref={editModeRef} block={block} />,
                 "SeriesBlock": () => <EditSeriesBlock ref={editModeRef} block={block} />,

@@ -21,7 +21,7 @@ import { bug } from "../../../../../../util/err";
 import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
-import type { EditModeRef, EditModeFormData } from ".";
+import type { EditModeRef, FormData } from ".";
 
 
 export type SeriesFormData = {
@@ -97,7 +97,7 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
 
         const { t } = useTranslation();
 
-        const form = useFormContext<EditModeFormData>();
+        const form = useFormContext<FormData>();
         const { formState: { errors } } = form;
 
         return <div css={{ "& > h3": {
