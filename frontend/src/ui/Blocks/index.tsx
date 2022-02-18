@@ -77,7 +77,3 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
         })}
     </div>;
 };
-
-export const Title: React.FC<{ title?: string }> = ({ title }) => (
-    title === undefined ? null : <h2 css={{ margin: "16px 0" }}>{title}</h2>
-);
