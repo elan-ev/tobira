@@ -53,28 +53,25 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
 
     const block = useFragment(graphql`
         fragment BlocksBlockData on Block {
-            title
+            id # TODO just querying for the type and fragments bugs out Relay's type generation
             __typename
             ... on TextBlock { ... TextBlockData }
             ... on SeriesBlock { ... SeriesBlockData }
             ... on VideoBlock { ... VideoBlockData }
         }
     `, blockRef);
-    const { title, __typename } = block;
+    const { __typename } = block;
 
     return <div>
         {match(__typename, {
             "TextBlock": () => <TextBlockByQuery
-                title={title ?? undefined}
                 fragRef={block}
             />,
             "SeriesBlock": () => <SeriesBlockFromBlock
-                title={title ?? undefined}
                 realmPath={path}
                 fragRef={block}
             />,
             "VideoBlock": () => <VideoBlock
-                title={title ?? ""}
                 fragRef={block}
             />,
         })}

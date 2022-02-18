@@ -8,11 +8,10 @@ import { useTranslation } from "react-i18next";
 
 
 type Props = {
-    title?: string;
     fragRef: VideoBlockData$key;
 };
 
-export const VideoBlock: React.FC<Props> = ({ title, fragRef }) => {
+export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     const { t } = useTranslation();
     const { event } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
@@ -29,8 +28,7 @@ export const VideoBlock: React.FC<Props> = ({ title, fragRef }) => {
     }
 
     return <>
-        {/* TODO The title display logic will change soon */}
-        <Title title={title ?? event.title} />
+        <Title title={event.title} />
         <Player
             {...event}
             // Relay returns `readonly` objects ...
