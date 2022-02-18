@@ -40,9 +40,6 @@ pub(crate) trait Block {
     fn index(&self) -> i32 {
         self.shared().index
     }
-    fn title(&self) -> Option<&str> {
-        self.shared().title.as_deref()
-    }
 }
 
 #[derive(Debug, Clone, Copy, FromSql)]
@@ -80,7 +77,6 @@ pub(crate) enum VideoListOrder {
 pub(crate) struct SharedData {
     pub(crate) id: Id,
     pub(crate) index: i32,
-    pub(crate) title: Option<String>,
 }
 
 pub(crate) struct TextBlock {
@@ -107,10 +103,6 @@ impl TextBlock {
 
     fn index(&self) -> i32 {
         self.shared().index
-    }
-
-    fn title(&self) -> Option<&str> {
-        self.shared().title.as_deref()
     }
 }
 
@@ -153,10 +145,6 @@ impl SeriesBlock {
     fn index(&self) -> i32 {
         self.shared().index
     }
-
-    fn title(&self) -> Option<&str> {
-        self.shared().title.as_deref()
-    }
 }
 
 pub(crate) struct VideoBlock {
@@ -188,10 +176,6 @@ impl VideoBlock {
     fn index(&self) -> i32 {
         self.shared().index
     }
-
-    fn title(&self) -> Option<&str> {
-        self.shared().title.as_deref()
-    }
 }
 
 impl BlockValue {
@@ -217,32 +201,31 @@ impl BlockValue {
     }
 
     const COL_NAMES: &'static str
-        = "id, type, index, title, text_content, series_id, videolist_layout, videolist_order, video_id";
+        = "id, type, index, text_content, series_id, videolist_layout, videolist_order, video_id";
 
     fn from_row(row: Row) -> ApiResult<Self> {
         let ty: BlockType = row.get(1);
         let shared = SharedData {
             id: Id::block(row.get(0)),
             index: row.get::<_, i16>(2).into(),
-            title: row.get(3),
         };
 
         let block = match ty {
             BlockType::Text => TextBlock {
                 shared,
-                content: get_type_dependent(&row, 4, "text", "text_content")?,
+                content: get_type_dependent(&row, 3, "text", "text_content")?,
             }.into(),
 
             BlockType::Series => SeriesBlock {
                 shared,
-                series: row.get::<_, Option<Key>>(5).map(Id::series),
-                layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
-                order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
+                series: row.get::<_, Option<Key>>(4).map(Id::series),
+                layout: get_type_dependent(&row, 5, "videolist", "videolist_layout")?,
+                order: get_type_dependent(&row, 6, "videolist", "videolist_order")?,
             }.into(),
 
             BlockType::Video => VideoBlock {
                 shared,
-                event: row.get::<_, Option<Key>>(8).map(Id::event),
+                event: row.get::<_, Option<Key>>(7).map(Id::event),
             }.into(),
         };
 

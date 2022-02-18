@@ -88,7 +88,6 @@ type Mutation {
 }
 
 input NewTextBlock {
-  title: String
   content: String!
 }
 
@@ -105,7 +104,6 @@ type TextBlock implements Block {
   content: String!
   id: ID!
   index: Int!
-  title: String
 }
 
 "An opaque cursor used for pagination"
@@ -185,16 +183,13 @@ type SeriesBlock implements Block {
   order: VideoListOrder!
   id: ID!
   index: Int!
-  title: String
 }
 
 input NewVideoBlock {
-  title: String
   event: ID!
 }
 
 input UpdateSeriesBlock {
-  title: String
   series: ID
   layout: VideoListLayout
   order: VideoListOrder
@@ -222,7 +217,6 @@ input EventSortOrder {
 interface Block {
   id: ID!
   index: Int!
-  title: String
 }
 
 input UpdateRealm {
@@ -232,7 +226,6 @@ input UpdateRealm {
 }
 
 input UpdateVideoBlock {
-  title: String
   event: ID
 }
 
@@ -248,11 +241,9 @@ type VideoBlock implements Block {
   event: Event
   id: ID!
   index: Int!
-  title: String
 }
 
 input NewSeriesBlock {
-  title: String
   series: ID!
   layout: VideoListLayout!
   order: VideoListOrder!
@@ -346,7 +337,6 @@ type Realm implements Node {
 }
 
 input UpdateTextBlock {
-  title: String
   content: String
 }
 
