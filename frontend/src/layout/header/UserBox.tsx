@@ -343,8 +343,12 @@ const MenuItem: React.FC<MenuItemProps> = ({
             borderTop: "1px solid var(--grey80)",
         },
         "& > svg": {
-            fontSize: 24,
+            fontSize: 22,
             width: 24,
+            strokeWidth: 1.5,
+            "& > path": {
+                strokeWidth: "inherit",
+            },
         },
         "&:hover": {
             backgroundColor: "var(--grey97)",
