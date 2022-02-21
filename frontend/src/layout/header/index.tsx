@@ -83,10 +83,9 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
             <ActionIcon
                 title={t("search.input-label")}
                 onClick={() => menu.toggleMenu("search")}
-                extraCss={{
-                    display: "none",
-                    [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
-                        display: "flex",
+                css={{
+                    [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+                        display: "none",
                     },
                 }}
             >
@@ -97,7 +96,7 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                 <ActionIcon
                     title={t("main-menu.label")}
                     onClick={() => menu.toggleMenu("burger")}
-                    extraCss={{
+                    css={{
                         [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
                             display: "none",
                         },
