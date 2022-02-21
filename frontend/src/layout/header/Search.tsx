@@ -54,7 +54,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         ? new URL(document.location.href).searchParams.get("q") ?? undefined
         : undefined;
 
-    return <div css={{ position: "relative", margin: "0 8px" }}>
+    return <div css={{ position: "relative", margin: "0 8px", ...extraCss }}>
         <input
             ref={ref}
             type="text"
