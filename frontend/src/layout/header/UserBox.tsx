@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle,
     FiCheck, FiChevronDown, FiChevronLeft, FiFilm, FiLogIn, FiLogOut, FiMoon,
-    FiMoreVertical, FiUpload, FiUser,
+    FiMoreVertical, FiUpload, FiUserCheck,
 } from "react-icons/fi";
 import { HiOutlineSparkles, HiOutlineTranslate } from "react-icons/hi";
 
@@ -102,7 +102,6 @@ type LoggedInProps = {
 const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => (
     <div css={{
         alignSelf: "center",
-        marginRight: 8,
 
         // For wide screens, we show the user display name and a box to click
         // on. In that case, the box should be what the menu will be relative
@@ -162,7 +161,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => (
                 },
             }}
         >
-            <FiUser />
+            <FiUserCheck css={{ "& > polyline": { stroke: "var(--happy-color-dark)" } }}/>
         </ActionIcon>
 
         {/* Show menu if it is opened */}
