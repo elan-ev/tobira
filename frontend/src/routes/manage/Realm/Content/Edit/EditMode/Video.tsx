@@ -1,20 +1,19 @@
-import React, { useContext, useImperativeHandle } from "react";
+import React, { useContext } from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useTranslation } from "react-i18next";
 import { useFormContext } from "react-hook-form";
 
-import { bug } from "../../../../../../util/err";
 import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
-import type { EditModeRef, FormData } from ".";
+import { EditModeForm } from ".";
 import type { VideoEditModeBlockData$key } from "./__generated__/VideoEditModeBlockData.graphql";
 import type { VideoEditModeEventData$key } from "./__generated__/VideoEditModeEventData.graphql";
 import type { VideoEditSaveMutation } from "./__generated__/VideoEditSaveMutation.graphql";
 import type { VideoEditCreateMutation } from "./__generated__/VideoEditCreateMutation.graphql";
 
 
-export type VideoFormData = {
+type VideoFormData = {
     event: string;
 };
 
@@ -22,71 +21,46 @@ type EditVideoBlockProps = {
     block: VideoEditModeBlockData$key;
 };
 
-export const EditVideoBlock = React.forwardRef<EditModeRef, EditVideoBlockProps>(
-    ({ block: blockRef }, ref) => {
+export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef }) => {
 
-        const { events } = useFragment(graphql`
-            fragment VideoEditModeEventData on Query {
-                events { id title }
+    const { events } = useFragment(graphql`
+        fragment VideoEditModeEventData on Query {
+            events { id title }
+        }
+    `, useContext(ContentManageQueryContext) as VideoEditModeEventData$key);
+
+    const { event } = useFragment(graphql`
+        fragment VideoEditModeBlockData on VideoBlock {
+            event { id }
+        }
+    `, blockRef);
+
+
+    const [save] = useMutation<VideoEditSaveMutation>(graphql`
+        mutation VideoEditSaveMutation($id: ID!, $set: UpdateVideoBlock!) {
+            updateVideoBlock(id: $id, set: $set) {
+                ... BlocksBlockData
+                ... VideoBlockData
             }
-        `, useContext(ContentManageQueryContext) as VideoEditModeEventData$key);
+        }
+    `);
 
-        const { event } = useFragment(graphql`
-            fragment VideoEditModeBlockData on VideoBlock {
-                event { id }
+    const [create] = useMutation<VideoEditCreateMutation>(graphql`
+        mutation VideoEditCreateMutation($realm: ID!, $index: Int!, $block: NewVideoBlock!) {
+            addVideoBlock(realm: $realm, index: $index, block: $block) {
+                ... ContentManageRealmData
             }
-        `, blockRef);
+        }
+    `);
 
 
-        const [save] = useMutation<VideoEditSaveMutation>(graphql`
-            mutation VideoEditSaveMutation($id: ID!, $set: UpdateVideoBlock!) {
-                updateVideoBlock(id: $id, set: $set) {
-                    ... BlocksBlockData
-                    ... VideoBlockData
-                }
-            }
-        `);
+    const { t } = useTranslation();
 
-        const [create] = useMutation<VideoEditCreateMutation>(graphql`
-            mutation VideoEditCreateMutation($realm: ID!, $index: Int!, $block: NewVideoBlock!) {
-                addVideoBlock(realm: $realm, index: $index, block: $block) {
-                    ... ContentManageRealmData
-                }
-            }
-        `);
+    const form = useFormContext<VideoFormData>();
+    const { formState: { errors } } = form;
 
-        useImperativeHandle(ref, () => ({
-            save: (id, data, onCompleted, onError) => {
-                const { type: _type, ...set } = data.type === "VideoBlock"
-                    ? data
-                    : bug("not a video block");
-
-                save({
-                    variables: { id, set },
-                    onCompleted,
-                    onError,
-                });
-            },
-            create: (realm, index, data, onCompleted, onError) => {
-                const { type: _type, ...block } = data.type === "VideoBlock"
-                    ? data
-                    : bug("not a video block");
-
-                create({
-                    variables: { realm, index, block },
-                    onCompleted,
-                    onError,
-                });
-            },
-        }));
-
-
-        const { t } = useTranslation();
-
-        const form = useFormContext<FormData>();
-        const { formState: { errors } } = form;
-
-        return <div css={{ "& > h3": {
+    return <EditModeForm create={create} save={save}>
+        <div css={{ "& > h3": {
             marginTop: 8,
             marginBottom: 4,
         } }}>
@@ -107,6 +81,6 @@ export const EditVideoBlock = React.forwardRef<EditModeRef, EditVideoBlockProps>
                     <option key={id} value={id}>{title}</option>
                 ))}
             </Select>
-        </div>;
-    },
-);
+        </div>
+    </EditModeForm>;
+};

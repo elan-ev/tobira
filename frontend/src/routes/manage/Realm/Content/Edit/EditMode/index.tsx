@@ -1,19 +1,19 @@
-import React, { useRef } from "react";
+import React, { useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { FiX, FiCheck } from "react-icons/fi";
-import { useForm, useFormContext, FormProvider } from "react-hook-form";
+import { useForm, useFormContext, FormProvider, UnpackNestedValue } from "react-hook-form";
 
-import type {
-    EditModeRealmData$key,
-} from "./__generated__/EditModeRealmData.graphql";
+import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
 import { currentRef, match } from "../../../../../../util";
+import { bug } from "../../../../../../util/err";
 import { Button } from "../../util";
 import { ButtonGroup } from "..";
-import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
-import { EditTextBlock, TextFormData } from "./Text";
-import { EditSeriesBlock, SeriesFormData } from "./Series";
-import { EditVideoBlock, VideoFormData } from "./Video";
+import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
+import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
+import { EditTextBlock } from "./Text";
+import { EditSeriesBlock } from "./Series";
+import { EditVideoBlock } from "./Video";
 
 
 type EditModeProps = {
@@ -25,91 +25,114 @@ type EditModeProps = {
     onError?: (error: Error) => void;
 };
 
-export type FormData = (
-    { type: "TextBlock" } & TextFormData
-) | (
-    { type: "SeriesBlock" } & SeriesFormData
-) | (
-    { type: "VideoBlock" } & VideoFormData
-);
+type EditModeFormContextContent =
+    Omit<EditModeProps, "realm"> & { realm: EditModeFormRealmData$key };
 
-export type EditModeRef = {
-    save: (
-        id: string,
-        data: FormData,
-        onCompleted?: () => void,
-        onError?: (error: Error) => void,
-    ) => void;
-    create: (
-        realm: string,
-        index: number,
-        data: FormData,
-        onCompleted?: () => void,
-        onError?: (error: Error) => void,
-    ) => void;
+const EditModeFormContext = React.createContext<EditModeFormContextContent | null>(null);
+
+export const EditMode: React.FC<EditModeProps> = props => {
+    const { realm: realmRef, index } = props;
+    const result = useFragment(graphql`
+        fragment EditModeRealmData on Realm {
+            blocks {
+                # Querying only the type and the fragments bugs out Relay type generation
+                id
+                __typename
+                ... on TextBlock { ...TextEditModeBlockData }
+                ... on SeriesBlock { ...SeriesEditModeBlockData }
+                ... on VideoBlock { ...VideoEditModeBlockData }
+            }
+            ...EditModeFormRealmData
+        }
+    `, realmRef);
+    const block = result.blocks[index];
+    const { __typename: type } = block;
+
+    const form = useForm();
+
+    return <EditModeFormContext.Provider value={{ ...props, realm: result }}>
+        <FormProvider {...form}>
+            {match(type, {
+                TextBlock: () => <EditTextBlock block={block} />,
+                SeriesBlock: () => <EditSeriesBlock block={block} />,
+                VideoBlock: () => <EditVideoBlock block={block} />,
+                "%other": () => bug("unknown block type"),
+            })}
+        </FormProvider>
+    </EditModeFormContext.Provider>;
 };
 
-export const EditMode: React.FC<EditModeProps> = ({
-    realm: realmRef,
-    index,
-    onSave,
-    onCancel,
-    onCompleted,
-    onError,
-}) => {
-    const { id: realmId, blocks } = useFragment(graphql`
-        fragment EditModeRealmData on Realm {
+
+type EditModeFormProps<T> = {
+    save: (config: {
+        variables: {
+            id: string;
+            set: UnpackNestedValue<T>;
+        };
+        onCompleted?: () => void;
+        onError?: (error: Error) => void;
+    }) => void;
+    create: (config: {
+        variables: {
+            realm: string;
+            index: number;
+            block: UnpackNestedValue<T>;
+        };
+        onCompleted?: () => void;
+        onError?: (error: Error) => void;
+    }) => void;
+};
+
+export const EditModeForm = <T extends object, >(
+    { save, create, children }: React.PropsWithChildren<EditModeFormProps<T>>,
+) => {
+    const { realm: realmRef, index, onSave, onCancel, onCompleted, onError }
+        = useContext(EditModeFormContext) ?? bug("missing context provider");
+
+
+    const { id: realm, blocks } = useFragment(graphql`
+        fragment EditModeFormRealmData on Realm {
             id
             blocks {
                 id
-                __typename
-                ... on TextBlock { ... TextEditModeBlockData }
-                ... on SeriesBlock { ... SeriesEditModeBlockData }
-                ... on VideoBlock { ... VideoEditModeBlockData }
             }
         }
     `, realmRef);
-    const block = blocks[index];
-    const { id, __typename: type } = block;
+    const { id } = blocks[index];
 
 
-    const form = useForm<FormData>({
-        defaultValues: {
-            type: type as "TextBlock" | "SeriesBlock" | "VideoBlock",
-        },
-    });
-    const editModeRef = useRef<EditModeRef>(null);
+    const form = useFormContext<T>();
 
     const onSubmit = form.handleSubmit(data => {
         onSave?.();
 
         if (id.startsWith("cl")) {
-            currentRef(editModeRef).create(
-                realmId,
-                index,
-                data,
+            create({
+                variables: {
+                    realm,
+                    index,
+                    block: data,
+                },
                 onCompleted,
                 onError,
-            );
+            });
         } else {
-            currentRef(editModeRef).save(
-                id,
-                data,
+            save({
+                variables: {
+                    id,
+                    set: data,
+                },
                 onCompleted,
                 onError,
-            );
+            });
         }
     });
 
 
-    return <FormProvider<FormData> {...form}>
+    return <FormProvider<T> {...form}>
         <form onSubmit={onSubmit}>
             <EditModeButtons onCancel={onCancel} />
-            {match(block.__typename, {
-                "TextBlock": () => <EditTextBlock ref={editModeRef} block={block} />,
-                "SeriesBlock": () => <EditSeriesBlock ref={editModeRef} block={block} />,
-                "VideoBlock": () => <EditVideoBlock ref={editModeRef} block={block} />,
-            })}
+            {children}
         </form>
     </FormProvider>;
 };

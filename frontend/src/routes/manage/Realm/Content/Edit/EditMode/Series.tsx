@@ -1,8 +1,12 @@
-import React, { useContext, useImperativeHandle } from "react";
+import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useFormContext } from "react-hook-form";
 
+import { Card } from "../../../../../../ui/Card";
+import { Select } from "../../../../../../ui/Input";
+import { ContentManageQueryContext } from "../..";
+import { EditModeForm } from ".";
 import type {
     VideoListOrder,
     VideoListLayout,
@@ -17,14 +21,9 @@ import {
 import {
     SeriesEditCreateMutation,
 } from "./__generated__/SeriesEditCreateMutation.graphql";
-import { bug } from "../../../../../../util/err";
-import { Card } from "../../../../../../ui/Card";
-import { Select } from "../../../../../../ui/Input";
-import { ContentManageQueryContext } from "../..";
-import type { EditModeRef, FormData } from ".";
 
 
-export type SeriesFormData = {
+type SeriesFormData = {
     series: string;
     order: VideoListOrder;
     layout: VideoListLayout;
@@ -34,73 +33,48 @@ type EditSeriesBlockProps = {
     block: SeriesEditModeBlockData$key;
 };
 
-export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProps>(
-    ({ block: blockRef }, ref) => {
+export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRef }) => {
 
-        const { series: allSeries } = useFragment(graphql`
-            fragment SeriesEditModeSeriesData on Query {
-                series { id title }
+    const { series: allSeries } = useFragment(graphql`
+        fragment SeriesEditModeSeriesData on Query {
+            series { id title }
+        }
+    `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
+
+    const { order, layout, series } = useFragment(graphql`
+        fragment SeriesEditModeBlockData on SeriesBlock {
+            order
+            layout
+            series { id }
+        }
+    `, blockRef);
+
+
+    const [save] = useMutation<SeriesEditSaveMutation>(graphql`
+        mutation SeriesEditSaveMutation($id: ID!, $set: UpdateSeriesBlock!) {
+            updateSeriesBlock(id: $id, set: $set) {
+                ... BlocksBlockData
+                ... SeriesBlockData
             }
-        `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
+        }
+    `);
 
-        const { order, layout, series } = useFragment(graphql`
-            fragment SeriesEditModeBlockData on SeriesBlock {
-                order
-                layout
-                series { id }
+    const [create] = useMutation<SeriesEditCreateMutation>(graphql`
+        mutation SeriesEditCreateMutation($realm: ID!, $index: Int!, $block: NewSeriesBlock!) {
+            addSeriesBlock(realm: $realm, index: $index, block: $block) {
+                ... ContentManageRealmData
             }
-        `, blockRef);
+        }
+    `);
 
 
-        const [save] = useMutation<SeriesEditSaveMutation>(graphql`
-            mutation SeriesEditSaveMutation($id: ID!, $set: UpdateSeriesBlock!) {
-                updateSeriesBlock(id: $id, set: $set) {
-                    ... BlocksBlockData
-                    ... SeriesBlockData
-                }
-            }
-        `);
+    const { t } = useTranslation();
 
-        const [create] = useMutation<SeriesEditCreateMutation>(graphql`
-            mutation SeriesEditCreateMutation($realm: ID!, $index: Int!, $block: NewSeriesBlock!) {
-                addSeriesBlock(realm: $realm, index: $index, block: $block) {
-                    ... ContentManageRealmData
-                }
-            }
-        `);
+    const form = useFormContext<SeriesFormData>();
+    const { formState: { errors } } = form;
 
-        useImperativeHandle(ref, () => ({
-            save: (id, data, onCompleted, onError) => {
-                const { type: _type, ...set } = data.type === "SeriesBlock"
-                    ? data
-                    : bug("not a series block");
-
-                save({
-                    variables: { id, set },
-                    onCompleted,
-                    onError,
-                });
-            },
-            create: (realm, index, data, onCompleted, onError) => {
-                const { type: _type, ...block } = data.type === "SeriesBlock"
-                    ? data
-                    : bug("not a series block");
-
-                create({
-                    variables: { realm, index, block },
-                    onCompleted,
-                    onError,
-                });
-            },
-        }));
-
-
-        const { t } = useTranslation();
-
-        const form = useFormContext<FormData>();
-        const { formState: { errors } } = form;
-
-        return <div css={{ "& > h3": {
+    return <EditModeForm create={create} save={save}>
+        <div css={{ "& > h3": {
             marginTop: 8,
             marginBottom: 4,
         } }}>
@@ -170,6 +144,6 @@ export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProp
                     <option key={id} value={id}>{title}</option>
                 ))}
             </Select>
-        </div>;
-    },
-);
+        </div>
+    </EditModeForm>;
+};
