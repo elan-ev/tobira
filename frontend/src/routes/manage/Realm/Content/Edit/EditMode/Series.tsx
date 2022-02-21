@@ -7,6 +7,7 @@ import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
 import { EditModeForm } from ".";
+import { Heading } from "./util";
 import type {
     VideoListOrder,
     VideoListLayout,
@@ -74,7 +75,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
     const { formState: { errors } } = form;
 
     return <EditModeForm create={create} save={save}>
-        <h3>{t("manage.realm.content.series.order.heading")}</h3>
+        <Heading>{t("manage.realm.content.series.order.heading")}</Heading>
         <label>
             <input
                 type="radio"
@@ -94,7 +95,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             {t("manage.realm.content.series.order.old-to-new")}
         </label>
 
-        <h3>{t("manage.realm.content.series.layout.heading")}</h3>
+        <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
         <label>
             <input
                 type="radio"
@@ -123,7 +124,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             {t("manage.realm.content.series.layout.vertical")}
         </label>
 
-        <h3>{t("manage.realm.content.series.series.heading")}</h3>
+        <Heading>{t("manage.realm.content.series.series.heading")}</Heading>
         {"series" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
         </div>}

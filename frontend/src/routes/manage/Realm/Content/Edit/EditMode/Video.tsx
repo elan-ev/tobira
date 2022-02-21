@@ -7,6 +7,7 @@ import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
 import { EditModeForm } from ".";
+import { Heading } from "./util";
 import type { VideoEditModeBlockData$key } from "./__generated__/VideoEditModeBlockData.graphql";
 import type { VideoEditModeEventData$key } from "./__generated__/VideoEditModeEventData.graphql";
 import type { VideoEditSaveMutation } from "./__generated__/VideoEditSaveMutation.graphql";
@@ -60,27 +61,22 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
     const { formState: { errors } } = form;
 
     return <EditModeForm create={create} save={save}>
-        <div css={{ "& > h3": {
-            marginTop: 8,
-            marginBottom: 4,
-        } }}>
-            <h3>{t("manage.realm.content.event.event.heading")}</h3>
-            {"event" in errors && <div css={{ margin: "8px 0" }}>
-                <Card kind="error">{t("manage.realm.content.event.event.invalid")}</Card>
-            </div>}
-            <Select
-                css={{ maxWidth: "100%" }}
-                error={"event" in errors}
-                defaultValue={event?.id}
-                {...form.register("event", { required: true })}
-            >
-                <option value="" hidden>
-                    {t("manage.realm.content.event.event.none")}
-                </option>
-                {events.map(({ id, title }) => (
-                    <option key={id} value={id}>{title}</option>
-                ))}
-            </Select>
-        </div>
+        <Heading>{t("manage.realm.content.event.event.heading")}</Heading>
+        {"event" in errors && <div css={{ margin: "8px 0" }}>
+            <Card kind="error">{t("manage.realm.content.event.event.invalid")}</Card>
+        </div>}
+        <Select
+            css={{ maxWidth: "100%" }}
+            error={"event" in errors}
+            defaultValue={event?.id}
+            {...form.register("event", { required: true })}
+        >
+            <option value="" hidden>
+                {t("manage.realm.content.event.event.none")}
+            </option>
+            {events.map(({ id, title }) => (
+                <option key={id} value={id}>{title}</option>
+            ))}
+        </Select>
     </EditModeForm>;
 };
