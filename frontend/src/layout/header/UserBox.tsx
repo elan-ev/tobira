@@ -37,7 +37,12 @@ export const UserBox: React.FC = () => {
     };
 
     if (user === "unknown") {
-        return null;
+        return <Spinner css={{
+            height: "100%",
+            margin: "0 9px",
+            fontSize: 22,
+            opacity: 0.4,
+        }} />;
     } else if (user === "none") {
         return <LoggedOut {...{ t, menu }} />;
     } else {
