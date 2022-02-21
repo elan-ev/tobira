@@ -20,6 +20,25 @@
 # Required! This value must be specified.
 #site_title =
 
+# Links that are shown in the footer. By default, two links are shown:
+#
+# ```
+# footer_links = ["about", "graphiql"]
+# ```
+#
+# By overwriting this value, you can remove the default links and add
+# custom ones. Note that these two default links are special and can be
+# specified with only the shown string. To add custom ones, you need to
+# define a label and a link. Example:
+#
+# ```
+# footer_links = [
+#     { label = { en = "Example" }, link = "https://example.com" },
+#     "about",
+# ]
+# ```
+#footer_links =
+
 [db]
 # The username of the database user.
 #

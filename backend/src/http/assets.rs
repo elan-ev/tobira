@@ -90,6 +90,7 @@ impl Assets {
         variables.insert("oc-url".into(), config.sync.oc_url());
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());
+        variables.insert("footer-links".into(), json!(config.general.footer_links()).to_string());
         variables.insert(
             "large-logo-resolution".into(),
             format!("{:?}", config.theme.logo.large.resolution.0),
