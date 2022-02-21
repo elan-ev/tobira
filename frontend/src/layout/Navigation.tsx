@@ -52,41 +52,39 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
         },
     }, () => {});
 
-    return (
-        <div>
-            {realm.parent !== null && <>
-                <LinkWithIcon to={realm.parent.path} iconPos="left" css={{ padding: "6px 4px" }}>
-                    <FiChevronLeft css={{ marginRight: "8px !important" }}/>
-                    {realm.parent.isRoot ? t("home") : realm.parent.name}
-                </LinkWithIcon>
-                <div css={{
-                    padding: 16,
-                    paddingLeft: 4 + 22 + 8,
-                    fontWeight: "bold",
-                    backgroundColor: "var(--nav-color)",
-                    color: "var(--nav-color-bw-contrast)",
-                }}>{realm.name}</div>
-            </>}
-            <LinkList
-                items={children.map(child => (
-                    <Item
-                        key={child.id}
-                        label={child.name}
-                        link={child.path}
-                    />
-                ))}
-                css={{
-                    "& > li": {
-                        borderBottom: "1px solid var(--grey80)",
-                        "& > a": {
-                            paddingRight: 6,
-                            paddingLeft: realm.parent != null ? 4 + 22 + 8 : 16,
-                        },
-                    },
-                }}
-            />
-        </div>
-    );
+    return <>
+        {realm.parent !== null && <>
+            <LinkWithIcon to={realm.parent.path} iconPos="left" css={{ padding: "6px 4px" }}>
+                <FiChevronLeft css={{ marginRight: "8px !important" }}/>
+                {realm.parent.isRoot ? t("home") : realm.parent.name}
+            </LinkWithIcon>
+            <div css={{
+                padding: 12,
+                paddingLeft: 4 + 22 + 8,
+                fontWeight: "bold",
+                backgroundColor: "var(--nav-color-dark)",
+                color: "var(--nav-color-bw-contrast)",
+                border: "2px solid white",
+                borderLeft: "none",
+                borderRight: "none",
+            }}>{realm.name}</div>
+        </>}
+        <LinkList
+            items={children.map(child => (
+                <Item
+                    key={child.id}
+                    label={child.name}
+                    link={child.path}
+                />
+            ))}
+            css={{
+                "& > li > ": {
+                    paddingRight: 6,
+                    paddingLeft: realm.parent != null ? 4 + 22 + 8 : 16,
+                },
+            }}
+        />
+    </>;
 };
 
 type ItemProps = {

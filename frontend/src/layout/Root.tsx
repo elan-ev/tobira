@@ -32,7 +32,9 @@ export const Root: React.FC<Props> = ({ nav, userQuery, children }) => {
             <Outer disableScrolling={menu.state === "burger"}>
                 <Header hideNavIcon={!navExists} />
                 {menu.state === "burger" && navExists && (
-                    <BurgerMenu hide={() => menu.close()}>{navElements}</BurgerMenu>
+                    <BurgerMenu hide={() => menu.close()}>
+                        {navElements.map((elem, i) => <div key={i}>{elem}</div>)}
+                    </BurgerMenu>
                 )}
                 <div css={{ margin: OUTER_CONTAINER_MARGIN }}>
                     <div css={{

@@ -5,9 +5,8 @@ import { match } from "../util";
 
 export const SideBox: React.FC = ({ children }) => (
     <div css={{
-        backgroundColor: "var(--grey97)",
-        border: "1px solid var(--grey80)",
-        borderRadius: 4,
+        backgroundColor: "var(--grey95)",
+        borderRadius: 10,
         overflow: "hidden",
         "&:not(:first-child)": {
             marginTop: 32,
@@ -32,7 +31,7 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
                 boxShadow: "inset 0 0 0 2px var(--accent-color)",
             },
             "& > li": {
-                borderBottom: "1px solid var(--grey80)",
+                borderBottom: "2px solid white",
                 "&:last-of-type": {
                     borderBottom: "none",
                 },
@@ -68,10 +67,10 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
     const TRANSITION_DURATION = "0.1s";
 
     const hoverActiveStyle = {
-        transitionDuration: "0.05s",
+        transitionDuration: "0s",
         backgroundColor: "var(--grey92)",
         "& > svg": {
-            transitionDuration: "0.05s",
+            transitionDuration: "0s",
             color: "var(--grey40)",
         },
     };
