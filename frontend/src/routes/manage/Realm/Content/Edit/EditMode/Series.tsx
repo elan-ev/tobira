@@ -74,76 +74,71 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
     const { formState: { errors } } = form;
 
     return <EditModeForm create={create} save={save}>
-        <div css={{ "& > h3": {
-            marginTop: 8,
-            marginBottom: 4,
-        } }}>
-            <h3>{t("manage.realm.content.series.order.heading")}</h3>
-            <label>
-                <input
-                    type="radio"
-                    value="NEW_TO_OLD"
-                    defaultChecked={order === "NEW_TO_OLD"}
-                    {...form.register("order")}
-                />
-                {t("manage.realm.content.series.order.new-to-old")}
-            </label><br />
-            <label>
-                <input
-                    type="radio"
-                    value="OLD_TO_NEW"
-                    defaultChecked={order === "OLD_TO_NEW"}
-                    {...form.register("order")}
-                />
-                {t("manage.realm.content.series.order.old-to-new")}
-            </label>
+        <h3>{t("manage.realm.content.series.order.heading")}</h3>
+        <label>
+            <input
+                type="radio"
+                value="NEW_TO_OLD"
+                defaultChecked={order === "NEW_TO_OLD"}
+                {...form.register("order")}
+            />
+            {t("manage.realm.content.series.order.new-to-old")}
+        </label><br />
+        <label>
+            <input
+                type="radio"
+                value="OLD_TO_NEW"
+                defaultChecked={order === "OLD_TO_NEW"}
+                {...form.register("order")}
+            />
+            {t("manage.realm.content.series.order.old-to-new")}
+        </label>
 
-            <h3>{t("manage.realm.content.series.layout.heading")}</h3>
-            <label>
-                <input
-                    type="radio"
-                    value="GRID"
-                    defaultChecked={layout === "GRID"}
-                    {...form.register("layout")}
-                />
-                {t("manage.realm.content.series.layout.grid")}
-            </label><br />
-            <label>
-                <input
-                    type="radio"
-                    value="HORIZONTAL"
-                    defaultChecked={layout === "HORIZONTAL"}
-                    {...form.register("layout")}
-                />
-                {t("manage.realm.content.series.layout.horizontal")}
-            </label><br />
-            <label>
-                <input
-                    type="radio"
-                    value="VERTICAL"
-                    defaultChecked={layout === "VERTICAL"}
-                    {...form.register("layout")}
-                />
-                {t("manage.realm.content.series.layout.vertical")}
-            </label>
+        <h3>{t("manage.realm.content.series.layout.heading")}</h3>
+        <label>
+            <input
+                type="radio"
+                value="GRID"
+                defaultChecked={layout === "GRID"}
+                {...form.register("layout")}
+            />
+            {t("manage.realm.content.series.layout.grid")}
+        </label><br />
+        <label>
+            <input
+                type="radio"
+                value="HORIZONTAL"
+                defaultChecked={layout === "HORIZONTAL"}
+                {...form.register("layout")}
+            />
+            {t("manage.realm.content.series.layout.horizontal")}
+        </label><br />
+        <label>
+            <input
+                type="radio"
+                value="VERTICAL"
+                defaultChecked={layout === "VERTICAL"}
+                {...form.register("layout")}
+            />
+            {t("manage.realm.content.series.layout.vertical")}
+        </label>
 
-            <h3>{t("manage.realm.content.series.series.heading")}</h3>
-            {"series" in errors && <div css={{ margin: "8px 0" }}>
-                <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
-            </div>}
-            <Select
-                css={{ maxWidth: "100%" }}
-                error={"series" in errors}
-                defaultValue={series?.id}
-                {...form.register("series", { required: true })}
-            >
-                <option value="" hidden>
-                    {t("manage.realm.content.series.series.none")}
-                </option>
-                {allSeries.map(({ id, title }) => (
-                    <option key={id} value={id}>{title}</option>
-                ))}
-            </Select>
-        </div>
+        <h3>{t("manage.realm.content.series.series.heading")}</h3>
+        {"series" in errors && <div css={{ margin: "8px 0" }}>
+            <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
+        </div>}
+        <Select
+            css={{ maxWidth: "100%" }}
+            error={"series" in errors}
+            defaultValue={series?.id}
+            {...form.register("series", { required: true })}
+        >
+            <option value="" hidden>
+                {t("manage.realm.content.series.series.none")}
+            </option>
+            {allSeries.map(({ id, title }) => (
+                <option key={id} value={id}>{title}</option>
+            ))}
+        </Select>
     </EditModeForm>;
 };

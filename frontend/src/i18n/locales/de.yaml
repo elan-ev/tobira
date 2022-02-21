@@ -280,8 +280,8 @@ manage:
           none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
 
-      save: Änderungen speichern
-      cancel: Änderungen verwerfen
+      save: Speichern
+      cancel: Verwerfen
 
       cancel-warning: Ihre Änderungen wurden noch nicht gespeichert!
 

@@ -1,14 +1,12 @@
 import React, { useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { FiX, FiCheck } from "react-icons/fi";
 import { useForm, useFormContext, FormProvider, UnpackNestedValue } from "react-hook-form";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
+import { Button } from "../../../../../../ui/Button";
 import { currentRef, match } from "../../../../../../util";
 import { bug } from "../../../../../../util/err";
-import { Button } from "../../util";
-import { ButtonGroup } from "..";
 import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
 import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
 import { EditTextBlock } from "./Text";
@@ -131,8 +129,8 @@ export const EditModeForm = <T extends object, >(
 
     return <FormProvider<T> {...form}>
         <form onSubmit={onSubmit}>
-            <EditModeButtons onCancel={onCancel} />
             {children}
+            <EditModeButtons onCancel={onCancel} />
         </form>
     </FormProvider>;
 };
@@ -149,9 +147,14 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
 
     const { formState: { isDirty } } = useFormContext();
 
-    return <ButtonGroup css={{ marginTop: -24 }}>
+    return <div css={{
+        marginTop: 8,
+        display: "flex",
+        justifyContent: "space-between",
+    }}>
         <Button
-            title={t("manage.realm.content.cancel")}
+            kind="danger"
+            type="button"
             onClick={() => {
                 if (isDirty) {
                     currentRef(modalRef).open();
@@ -160,13 +163,13 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
                 }
             }}
         >
-            <FiX />
+            {t("manage.realm.content.cancel")}
         </Button>
         <Button
+            kind="happy"
             type="submit"
-            title={t("manage.realm.content.save")}
         >
-            <FiCheck />
+            {t("manage.realm.content.save")}
         </Button>
         <ConfirmationModal
             buttonContent={t("manage.realm.content.cancel")}
@@ -175,5 +178,5 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
         >
             <p>{t("manage.realm.content.cancel-warning")}</p>
         </ConfirmationModal>
-    </ButtonGroup>;
+    </div>;
 };

@@ -271,8 +271,8 @@ manage:
           none: No event selected
           invalid: Please select an event
 
-      save: Save changes
-      cancel: Discard changes
+      save: Save
+      cancel: Discard
 
       cancel-warning: Your changes have not yet been saved!
 
