@@ -69,6 +69,7 @@ user:
   settings: Nutzereinstellungen
   your-page: Persönliche Seite
   manage-content: Inhalte verwalten
+  logged-in-as: Angemeldet als
 
 login-page:
   user-id: Nutzerkennung

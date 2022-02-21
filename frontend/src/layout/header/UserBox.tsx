@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle,
-    FiCheck, FiChevronDown, FiChevronLeft, FiFilm, FiLogIn, FiLogOut, FiMoon,
+    FiCheck, FiChevronLeft, FiFilm, FiLogIn, FiLogOut, FiMoon,
     FiMoreVertical, FiUpload, FiUserCheck,
 } from "react-icons/fi";
 import { HiOutlineSparkles, HiOutlineTranslate } from "react-icons/hi";
@@ -51,14 +51,6 @@ type Menu = {
     close: () => void;
 };
 
-const BOX_CSS = {
-    border: "1px solid var(--grey80)",
-    alignSelf: "center",
-    borderRadius: 4,
-    cursor: "pointer",
-} as const;
-
-
 type LoggedOutProps = {
     t: TFunction;
     menu: Menu;
@@ -71,7 +63,10 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => (
             to={CONFIG.auth.loginLink ?? LOGIN_PATH}
             htmlLink={!!CONFIG.auth.loginLink}
             css={{
-                ...BOX_CSS,
+                border: "1px solid var(--grey80)",
+                alignSelf: "center",
+                borderRadius: 4,
+                cursor: "pointer",
                 padding: "3px 8px",
                 marginRight: 8,
                 display: "flex",
@@ -100,82 +95,46 @@ type LoggedInProps = {
 
 /** User-related UI in header when the user IS logged in. */
 const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => (
-    <div css={{
-        alignSelf: "center",
-
-        // For wide screens, we show the user display name and a box to click
-        // on. In that case, the box should be what the menu will be relative
-        // to. Otherwise, the next "relative" thing is the icon box.
-        [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
-            position: "relative",
-        },
-    }}>
-        {/* Show name in box for large screens */}
-        <div
-            title={t("user.settings")}
-            onClick={menu.toggle}
-            css={{
-                ...BOX_CSS,
-                display: "flex",
-                position: "relative",
-                alignItems: "center",
-                gap: 8,
+    <div css={{ position: "relative" }}>
+        <div onClick={menu.toggle} css={{
+            height: "100%",
+            alignSelf: "center",
+            display: "flex",
+            cursor: "pointer",
+            "&:hover": {
+                "& div": { opacity: 1 },
+            },
+        }}>
+            {/* Show name of user on large screens */}
+            <div css={{
                 maxWidth: 240,
-                padding: "3px 3px 3px 10px",
-                ...menu.isOpen && {
-                    borderBottomLeftRadius: 0,
-                    borderBottomRightRadius: 0,
-                    boxShadow: "1px 1px 5px var(--grey92)",
-                },
-                "& > svg": {
-                    opacity: 0.75,
-                },
-                "&:hover": {
-                    boxShadow: "1px 1px 5px var(--grey92)",
-                    "& > svg": {
-                        opacity: 1,
-                    },
-                },
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                lineHeight: 1.3,
+                paddingRight: 16,
+                opacity: 0.75,
                 [`@media (max-width: ${BREAKPOINT}px)`]: {
                     display: "none",
                 },
-            }}
-        >
-            <div css={{
-                flex: "0 1 auto",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-            }}>{user.displayName}</div>
-            <FiChevronDown css={{ fontSize: 28, minWidth: 28 }} />
+            }}>
+                <div css={{ fontSize: 12, color: "var(--grey40)" }}>{t("user.logged-in-as")}</div>
+                <div css={{
+                    flex: "0 1 auto",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                }}>{user.displayName}</div>
+            </div>
+
+            {/* Show icon */}
+            <ActionIcon title={t("user.settings")}>
+                <FiUserCheck css={{ "& > polyline": { stroke: "var(--happy-color-dark)" } }}/>
+            </ActionIcon>
         </div>
 
-        {/* Only show icon for small screens */}
-        {/* TODO: find a way to signal the user is logged in */}
-        <ActionIcon
-            title={t("user.settings")}
-            onClick={menu.toggle}
-            extraCss={{
-                [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
-                    display: "none",
-                },
-            }}
-        >
-            <FiUserCheck css={{ "& > polyline": { stroke: "var(--happy-color-dark)" } }}/>
-        </ActionIcon>
-
         {/* Show menu if it is opened */}
-        {menu.isOpen && <Menu close={menu.close} t={t} css={{
-            // On large screens, we want the menu to snuggle against the user
-            // box above. So we have to override a few properties here.
-            [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
-                right: 0,
-                minWidth: "max(100%, 200px)",
-                marginTop: 0,
-                borderRadius: "0 0 4px 4px",
-                clipPath: "inset(0px -15px -15px -15px)",
-            },
-        }} />}
+        {menu.isOpen && <Menu close={menu.close} t={t} />}
     </div>
 );
 
@@ -200,14 +159,13 @@ const UserSettingsIcon: React.FC<UserSettingsIconProps> = ({ t, onClick }) => (
 type MenuProps = {
     t: TFunction;
     close: () => void;
-    className?: string;
 };
 
 /**
  * A menu with some user-related settings/actions that floats on top of the page
  * and closes itself on click outside of it.
  */
-const Menu: React.FC<MenuProps> = ({ t, close, className }) => {
+const Menu: React.FC<MenuProps> = ({ t, close }) => {
     type State = "main" | "language";
     const [state, setState] = useState<State>("main");
 
@@ -266,7 +224,7 @@ const Menu: React.FC<MenuProps> = ({ t, close, className }) => {
     });
 
     return (
-        <ul ref={ref} {...{ className }} css={{
+        <ul ref={ref} css={{
             position: "absolute",
             zIndex: 1000,
             top: "100%",

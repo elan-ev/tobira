@@ -14,7 +14,7 @@ export const ButtonContainer: React.FC = ({ children }) => (
 );
 
 type ActionIconProps = {
-    onClick: () => void;
+    onClick?: () => void;
     title: string;
     extraCss?: Interpolation<Theme>;
 };
