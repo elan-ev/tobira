@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { HiOutlineSearch } from "react-icons/hi";
 import { useRouter } from "../../router";
 import { isSearchActive } from "../../routes/Search";
 import { Spinner } from "../../ui/Spinner";
@@ -44,7 +45,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             width: "100%",
         };
 
-    const height = 35;
+    const height = 40;
     const spinnerSize = 22;
     const paddingSpinner = (height - spinnerSize) / 2;
 
@@ -55,6 +56,13 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         : undefined;
 
     return <div css={{ position: "relative", margin: "0 8px", ...extraCss }}>
+        <HiOutlineSearch css={{
+            position: "absolute",
+            height: "100%",
+            left: 8,
+            fontSize: 20,
+            color: "var(--grey80)",
+        }} />
         <input
             ref={ref}
             type="text"
@@ -72,13 +80,17 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 flex: "1 1 0px",
                 minWidth: 50,
                 height,
-                borderRadius: 4,
+                borderRadius: 12,
                 border: "1.5px solid var(--grey80)",
-                padding: "0 12px",
+                paddingLeft: 36,
+                paddingRight: 12,
                 "&:focus": {
                     outline: "none",
                     boxShadow: "0 0 0 1px var(--accent-color)",
                     borderColor: "var(--accent-color)",
+                },
+                "&::placeholder": {
+                    color: "var(--grey80)",
                 },
                 ...extraCss,
             }}
