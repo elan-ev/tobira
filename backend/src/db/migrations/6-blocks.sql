@@ -7,7 +7,7 @@
 
 select prepare_randomized_ids('block');
 
-create type block_type as enum ('text', 'series', 'video');
+create type block_type as enum ('title', 'text', 'series', 'video');
 create type video_list_layout as enum ('horizontal', 'vertical', 'grid');
 create type video_list_order as enum ('new_to_old', 'old_to_new');
 
@@ -18,7 +18,7 @@ create table blocks (
     type block_type not null,
     index smallint not null,
 
-    -- Text blocks
+    -- Title and text blocks
     text_content text,
 
     -- Series blocks

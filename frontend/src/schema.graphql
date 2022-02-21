@@ -249,6 +249,13 @@ input NewSeriesBlock {
   order: VideoListOrder!
 }
 
+"A block just showing some title."
+type TitleBlock implements Block {
+  content: String!
+  id: ID!
+  index: Int!
+}
+
 "A node with a globally unique ID. Mostly useful for relay."
 interface Node {
   id: ID!

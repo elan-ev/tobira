@@ -26,7 +26,7 @@ pub(crate) use mutations::{
 
 
 /// A `Block`: a UI element that belongs to a realm.
-#[graphql_interface(Context = Context, for = [TextBlock, SeriesBlock, VideoBlock])]
+#[graphql_interface(Context = Context, for = [TitleBlock, TextBlock, SeriesBlock, VideoBlock])]
 pub(crate) trait Block {
     // To avoid code duplication, all the shared data is stored in `SharedData`
     // and only a `shared` method is mandatory. All other method (in particular,
@@ -45,6 +45,8 @@ pub(crate) trait Block {
 #[derive(Debug, Clone, Copy, FromSql)]
 #[postgres(name = "block_type")]
 pub(crate) enum BlockType {
+    #[postgres(name = "title")]
+    Title,
     #[postgres(name = "text")]
     Text,
     #[postgres(name = "series")]
@@ -77,6 +79,33 @@ pub(crate) enum VideoListOrder {
 pub(crate) struct SharedData {
     pub(crate) id: Id,
     pub(crate) index: i32,
+}
+
+pub(crate) struct TitleBlock {
+    pub(crate) shared: SharedData,
+    pub(crate) content: String,
+}
+
+impl Block for TitleBlock {
+    fn shared(&self) -> &SharedData {
+        &self.shared
+    }
+}
+
+/// A block just showing some title.
+#[graphql_object(Context = Context, impl = BlockValue)]
+impl TitleBlock {
+    fn content(&self) -> &str {
+        &self.content
+    }
+
+    fn id(&self) -> Id {
+        self.shared().id
+    }
+
+    fn index(&self) -> i32 {
+        self.shared().index
+    }
 }
 
 pub(crate) struct TextBlock {
@@ -211,6 +240,11 @@ impl BlockValue {
         };
 
         let block = match ty {
+            BlockType::Title => TitleBlock {
+                shared,
+                content: get_type_dependent(&row, 3, "title", "text_content")?,
+            }.into(),
+
             BlockType::Text => TextBlock {
                 shared,
                 content: get_type_dependent(&row, 3, "text", "text_content")?,
@@ -259,6 +293,17 @@ impl fmt::Display for BlockTypeError {
 }
 
 impl Error for BlockTypeError {}
+
+// TODO? What about video?
+impl TryFrom<BlockValue> for TitleBlock {
+    type Error = BlockTypeError;
+    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
+        match block {
+            BlockValue::TitleBlock(b) => Ok(b),
+            _ => Err(BlockTypeError),
+        }
+    }
+}
 
 impl TryFrom<BlockValue> for TextBlock {
     type Error = BlockTypeError;
