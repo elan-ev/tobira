@@ -55,7 +55,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             transition: "0.2s box-shadow",
             overflow: "hidden",
             height: "fit-content",
-            borderRadius: 4,
+            borderRadius: 8,
             // TODO: Not supported by Safari 14.1. Maybe used padding trick instead!
             aspectRatio: "16 / 9",
         }} {...rest}>
