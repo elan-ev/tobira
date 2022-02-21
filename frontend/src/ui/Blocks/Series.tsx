@@ -113,8 +113,29 @@ type GridTypeProps = {
 };
 
 const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
+    const TRANSITION_DURATION = "0.3s";
+
     const inner = <>
-        <Thumbnail event={event} active={active} />
+        <div>
+            <Thumbnail event={event} active={active} />
+            <div css={{
+                position: "absolute",
+                top: 0,
+                height: "100%",
+                width: "100%",
+                overflow: "hidden",
+            }}>
+                <div css={{
+                    background: "white",
+                    height: 0,
+                    transition: `height ${TRANSITION_DURATION}`,
+                    opacity: 0.2,
+                    filter: "blur(2px)",
+                    transformOrigin: "bottom right",
+                    transform: "rotate(30deg)",
+                }} />
+            </div>
+        </div>
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
@@ -155,6 +176,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
     </>;
 
     const containerStyle = {
+        position: "relative",
         display: "block",
         margin: 8,
         marginBottom: 32,
@@ -166,15 +188,22 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
             maxWidth: 360,
         },
         ...!active && {
+            "& > div:first-child": {
+                transition: `transform ${TRANSITION_DURATION}`,
+            },
             "&:hover > div:first-child": {
                 boxShadow: "0 0 10px var(--grey80)",
+                transform: "perspective(500px) rotateX(6deg) scale(1.07)",
+                "& > div:nth-child(2) > div": {
+                    height: 90,
+                },
             },
             "&:focus-visible": {
                 outline: "none",
                 boxShadow: "0 0 0 2px var(--accent-color)",
             },
         },
-    };
+    } as const;
 
     return active
         ? <div css={{ ...containerStyle, display: "inline-block" }}>{inner}</div>
