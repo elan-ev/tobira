@@ -200,15 +200,21 @@ const Menu: React.FC<MenuProps> = ({ t, close }) => {
             )}
 
             {user && <>
-                {user.canUpload && <MenuItem icon={<FiUpload />} linkTo={"/~upload"}>
-                    {t("upload.title")}
-                </MenuItem>}
-                <MenuItem icon={<HiOutlineSparkles />} linkTo={`/@${user.username}`}>
-                    {t("user.your-page")}
-                </MenuItem>
-                <MenuItem icon={<FiFilm />} linkTo="/~manage">
-                    {t("user.manage-content")}
-                </MenuItem>
+                {user.canUpload && <MenuItem
+                    icon={<FiUpload />}
+                    linkTo={"/~upload"}
+                    onClick={() => close()}
+                >{t("upload.title")}</MenuItem>}
+                <MenuItem
+                    icon={<HiOutlineSparkles />}
+                    linkTo={`/@${user.username}`}
+                    onClick={() => close()}
+                >{t("user.your-page")}</MenuItem>
+                <MenuItem
+                    icon={<FiFilm />}
+                    linkTo="/~manage"
+                    onClick={() => close()}
+                >{t("user.manage-content")}</MenuItem>
             </>}
 
             <MenuItem icon={<HiOutlineTranslate />} onClick={() => setState("language")}>
