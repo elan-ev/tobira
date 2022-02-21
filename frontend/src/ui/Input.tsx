@@ -93,7 +93,6 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({ value, ...rest }) 
             }} />
             {/* TODO: use BaseButton or sth once merged */}
             <Button
-                type="button"
                 kind="happy"
                 onClick={copy}
                 title={t("copy-to-clipboard")}

@@ -154,7 +154,6 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
     }}>
         <Button
             kind="danger"
-            type="button"
             onClick={() => {
                 if (isDirty) {
                     currentRef(modalRef).open();

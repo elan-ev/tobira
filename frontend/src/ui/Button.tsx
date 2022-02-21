@@ -12,7 +12,7 @@ type ButtonProps = JSX.IntrinsicElements["button"] & {
 
 /** A styled button */
 export const Button: React.FC<ButtonProps> = ({ kind = "normal", extraCss, children, ...rest }) => (
-    <button css={css(kind, extraCss)} {...rest}>{children}</button>
+    <button type="button" css={css(kind, extraCss)} {...rest}>{children}</button>
 );
 
 type LinkButtonProps = JSX.IntrinsicElements["a"] & {
