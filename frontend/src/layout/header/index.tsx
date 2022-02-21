@@ -81,7 +81,7 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
             <UserBox />
 
             <ActionIcon
-                title={t("search")}
+                title={t("search.input-label")}
                 onClick={() => menu.toggleMenu("search")}
                 extraCss={{
                     display: "none",
