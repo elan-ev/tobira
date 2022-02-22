@@ -68,18 +68,19 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => (
             to={CONFIG.auth.loginLink ?? LOGIN_PATH}
             htmlLink={!!CONFIG.auth.loginLink}
             css={{
-                border: "1px solid var(--grey80)",
                 alignSelf: "center",
-                borderRadius: 4,
+                borderRadius: 10,
                 cursor: "pointer",
-                padding: "3px 8px",
+                padding: "5px 14px",
                 marginRight: 8,
                 display: "flex",
                 gap: 8,
                 alignItems: "center",
-                color: "var(--nav-color)",
+                backgroundColor: "var(--nav-color)",
+                color: "white",
                 "&:hover": {
-                    boxShadow: "1px 1px 5px var(--grey92)",
+                    backgroundColor: "var(--nav-color-dark)",
+                    color: "white",
                 },
                 [`@media (max-width: ${BREAKPOINT}px)`]: {
                     display: "none",
