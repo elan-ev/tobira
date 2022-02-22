@@ -83,13 +83,14 @@ impl Assets {
         variables.insert("global-style".into(), config.theme.to_css());
         variables.insert("auth".into(), json!({
             "loginLink": config.auth.login_link,
-            "userIdLabel": config.auth.login_page.user_id_label.as_ref().map(|ts| ts.map()),
-            "passwordLabel": config.auth.login_page.password_label.as_ref().map(|ts| ts.map()),
-            "loginPageNote": config.auth.login_page.note.as_ref().map(|ts| ts.map()),
+            "userIdLabel": config.auth.login_page.user_id_label,
+            "passwordLabel": config.auth.login_page.password_label,
+            "loginPageNote": config.auth.login_page.note,
         }).to_string());
         variables.insert("oc-url".into(), config.sync.oc_url());
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());
+        variables.insert("footer-links".into(), json!(config.general.footer_links()).to_string());
         variables.insert(
             "large-logo-resolution".into(),
             format!("{:?}", config.theme.logo.large.resolution.0),

@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
+import CONFIG from "../config";
 import { Link } from "../router";
 import { ABOUT_PATH } from "../routes/paths";
+import { translatedConfig } from "../util";
 
 
 export const Footer: React.FC = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     return (
         <footer css={{
@@ -26,10 +28,22 @@ export const Footer: React.FC = () => {
                     },
                 },
             }}>
-                <li><Link to="/~legal">{t("footer.legal-notice")}</Link></li>
-                <li><Link to={ABOUT_PATH}>{t("footer.about-tobira")}</Link></li>
-                {/* TODO: Remove this or restrict this to dev builds */}
-                <li><a href="/~graphiql">Graph<em>i</em>QL</a></li>
+                {CONFIG.footerLinks.map((entry, i) => {
+                    let link;
+                    let label;
+                    if (entry === "about") {
+                        link = ABOUT_PATH;
+                        label = t("footer.about-tobira");
+                    } else if (entry === "graphiql") {
+                        link = "/~graphiql";
+                        label = <>Graph<em>i</em>QL</>;
+                    } else {
+                        link = entry.link;
+                        label = translatedConfig(entry.label, i18n);
+                    }
+
+                    return <li key={i}><Link to={link}>{label}</Link></li>;
+                })}
             </ul>
         </footer>
     );

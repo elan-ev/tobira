@@ -24,8 +24,14 @@ type Config = {
     auth: AuthConfig;
     siteTitle: TranslatedString;
     ocUrl: string;
+    footerLinks: FooterLink[];
     logo: LogoConfig;
     plyr: PlyrConfig;
+};
+
+type FooterLink = "about" | "graphiql" | {
+    label: TranslatedString;
+    link: string;
 };
 
 type AuthConfig = {

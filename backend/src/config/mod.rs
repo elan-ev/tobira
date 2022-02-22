@@ -10,6 +10,7 @@ use crate::prelude::*;
 
 
 mod color;
+mod general;
 mod theme;
 mod translated_string;
 
@@ -43,7 +44,7 @@ const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
 #[derive(Debug, confique::Config)]
 pub(crate) struct Config {
     #[config(nested)]
-    pub(crate) general: GeneralConfig,
+    pub(crate) general: general::GeneralConfig,
 
     #[config(nested)]
     pub(crate) db: crate::db::DbConfig,
@@ -63,15 +64,6 @@ pub(crate) struct Config {
     #[config(nested)]
     pub(crate) theme: ThemeConfig,
 }
-
-#[derive(Debug, confique::Config)]
-pub(crate) struct GeneralConfig {
-    /// The main title of the video portal. Used in the HTML `<title>`, as main
-    /// heading on the home page, and potentially more.
-    // TODO: fix automatically generated `site_title =` template output.
-    pub(crate) site_title: TranslatedString,
-}
-
 
 impl Config {
     /// Tries to find a config file from a list of possible default config file
