@@ -59,7 +59,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         <HiOutlineSearch css={{
             position: "absolute",
             height: "100%",
-            left: 8,
+            left: 12,
             fontSize: 20,
             color: "var(--grey40)",
         }} />
@@ -81,16 +81,16 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 minWidth: 50,
                 height,
                 borderRadius: 12,
-                border: "2px solid var(--grey92)",
-                paddingLeft: 36,
+                paddingLeft: 40,
                 paddingRight: 12,
+                backgroundColor: "var(--grey92)",
+                border: "2px solid white",
                 "&:focus": {
                     outline: "none",
-                    boxShadow: "0 0 0 1px var(--accent-color)",
                     borderColor: "var(--accent-color)",
                 },
                 "&::placeholder": {
-                    color: "var(--grey65)",
+                    color: "var(--grey40)",
                 },
                 ...extraCss,
             }}
