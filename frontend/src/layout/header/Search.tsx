@@ -61,7 +61,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             height: "100%",
             left: 8,
             fontSize: 20,
-            color: "var(--grey80)",
+            color: "var(--grey40)",
         }} />
         <input
             ref={ref}
@@ -81,7 +81,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 minWidth: 50,
                 height,
                 borderRadius: 12,
-                border: "1.5px solid var(--grey80)",
+                border: "2px solid var(--grey92)",
                 paddingLeft: 36,
                 paddingRight: 12,
                 "&:focus": {
@@ -90,7 +90,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     borderColor: "var(--accent-color)",
                 },
                 "&::placeholder": {
-                    color: "var(--grey80)",
+                    color: "var(--grey65)",
                 },
                 ...extraCss,
             }}
