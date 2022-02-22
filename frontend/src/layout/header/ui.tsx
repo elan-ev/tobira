@@ -1,5 +1,4 @@
 import React from "react";
-import type { Interpolation, Theme } from "@emotion/react";
 
 import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
 
@@ -14,23 +13,17 @@ export const ButtonContainer: React.FC = ({ children }) => (
 );
 
 type ActionIconProps = {
-    onClick: () => void;
+    onClick?: () => void;
     title: string;
-    extraCss?: Interpolation<Theme>;
+    className?: string;
 };
 
 /** A single button with icon in the header. */
-export const ActionIcon: React.FC<ActionIconProps> = ({
-    title,
-    onClick,
-    extraCss = {},
-    children,
-}) => (
-    <div css={{
+export const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, children, className }) => (
+    <div {...{ className }} css={{
         height: "100%",
         display: "flex",
         alignItems: "center",
-        ...(extraCss as Record<string, unknown>),
     }}>
         <div
             title={title}

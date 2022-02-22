@@ -1,17 +1,32 @@
 import { Trans, useTranslation } from "react-i18next";
 import { FiFrown } from "react-icons/fi";
 
-import { Root } from "../layout/Root";
+import { RootLoader } from "../layout/Root";
 import { Link } from "../router";
 import { match } from "../util";
 import { CenteredContent } from "../ui";
+import { loadQuery } from "../relay";
+import { NotFoundQuery } from "./__generated__/NotFoundQuery.graphql";
+import { graphql } from "react-relay";
 
 
 export const NotFoundRoute = {
-    prepare: () => ({
-        render: () => <Root nav={[]}><NotFound kind="page" /></Root>,
-    }),
+    prepare: () => {
+        const queryRef = loadQuery<NotFoundQuery>(query, {});
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                nav={() => []}
+                render={() => <NotFound kind="page" />}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 };
+
+const query = graphql`
+    query NotFoundQuery {... UserData }
+`;
 
 type Props = {
     kind: "page" | "video";

@@ -67,6 +67,7 @@ user:
   settings: User settings
   your-page: Your page
   manage-content: Manage content
+  logged-in-as: Logged in as
 
 login-page:
   user-id: User ID
