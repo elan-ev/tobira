@@ -116,7 +116,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
     const TRANSITION_DURATION = "0.3s";
 
     const inner = <>
-        <div>
+        <div css={{ borderRadius: 8 }}>
             <Thumbnail event={event} active={active} />
             <div css={{
                 position: "absolute",
@@ -126,13 +126,13 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
                 overflow: "hidden",
             }}>
                 <div css={{
-                    background: "white",
-                    height: 0,
-                    transition: `height ${TRANSITION_DURATION}`,
-                    opacity: 0.2,
-                    filter: "blur(2px)",
+                    background: "linear-gradient(to top, white, rgba(255, 255, 255, 0.1))",
+                    height: 90,
+                    transition: `transform ${TRANSITION_DURATION}, opacity ${TRANSITION_DURATION}`,
+                    opacity: 0.1,
+                    filter: "blur(3px)",
                     transformOrigin: "bottom right",
-                    transform: "rotate(30deg)",
+                    transform: "translateY(-60px) rotate(30deg)",
                 }} />
             </div>
         </div>
@@ -189,13 +189,14 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
         },
         ...!active && {
             "& > div:first-child": {
-                transition: `transform ${TRANSITION_DURATION}`,
+                transition: `transform ${TRANSITION_DURATION}, box-shadow ${TRANSITION_DURATION}`,
             },
             "&:hover > div:first-child": {
-                boxShadow: "0 0 10px var(--grey80)",
-                transform: "perspective(500px) rotateX(6deg) scale(1.07)",
+                boxShadow: "0 6px 10px rgb(0 0 0 / 40%)",
+                transform: "perspective(500px) rotateX(7deg) scale(1.05)",
                 "& > div:nth-child(2) > div": {
-                    height: 90,
+                    opacity: 0.2,
+                    transform: "rotate(30deg)",
                 },
             },
             "&:focus-visible": {

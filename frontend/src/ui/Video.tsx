@@ -51,7 +51,6 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     return (
         <div css={{
             position: "relative",
-            boxShadow: "0 0 4px var(--grey92)",
             transition: "0.2s box-shadow",
             overflow: "hidden",
             height: "fit-content",
