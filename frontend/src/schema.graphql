@@ -20,6 +20,10 @@ type Event implements Node {
   series: Series
 }
 
+input NewTitleBlock {
+  content: String!
+}
+
 type EventPageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
@@ -45,6 +49,16 @@ type Mutation {
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
   "Remove a realm from the tree."
   removeRealm(id: ID!): RemovedRealm!
+  """
+    Adds a title block to a realm.
+
+    The new block will be inserted at the given index,
+    i.e. it will be at that position after the insert.
+    Or, if you prefer to think about it this way:
+    It will be inserted before the block that currently sits
+    at that index.
+  """
+  addTitleBlock(realm: ID!, index: Int!, block: NewTitleBlock!): Realm!
   """
     Adds a text block to a realm.
 
@@ -77,6 +91,8 @@ type Mutation {
   addVideoBlock(realm: ID!, index: Int!, block: NewVideoBlock!): Realm!
   "Swap two blocks."
   swapBlocksByIndex(realm: ID!, indexA: Int!, indexB: Int!): Realm!
+  "Update a title block's data."
+  updateTitleBlock(id: ID!, set: UpdateTitleBlock!): Block!
   "Update a text block's data."
   updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
   "Update a series block's data."
@@ -223,6 +239,10 @@ input UpdateRealm {
   parent: ID
   name: String
   pathSegment: String
+}
+
+input UpdateTitleBlock {
+  content: String
 }
 
 input UpdateVideoBlock {

@@ -15,9 +15,11 @@ use crate::{
 mod mutations;
 
 pub(crate) use mutations::{
+    NewTitleBlock,
     NewTextBlock,
     NewSeriesBlock,
     NewVideoBlock,
+    UpdateTitleBlock,
     UpdateTextBlock,
     UpdateSeriesBlock,
     UpdateVideoBlock,

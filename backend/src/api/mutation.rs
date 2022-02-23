@@ -8,9 +8,11 @@ use super::{
         realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
         block::{
             BlockValue,
+            NewTitleBlock,
             NewTextBlock,
             NewSeriesBlock,
             NewVideoBlock,
+            UpdateTitleBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
             UpdateVideoBlock,
@@ -56,6 +58,22 @@ impl Mutation {
     /// Remove a realm from the tree.
     async fn remove_realm(id: Id, context: &Context) -> ApiResult<RemovedRealm> {
         Realm::remove(id, context).await
+    }
+
+    /// Adds a title block to a realm.
+    ///
+    /// The new block will be inserted at the given index,
+    /// i.e. it will be at that position after the insert.
+    /// Or, if you prefer to think about it this way:
+    /// It will be inserted before the block that currently sits
+    /// at that index.
+    async fn add_title_block(
+        realm: Id,
+        index: i32,
+        block: NewTitleBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        BlockValue::add_title(realm, index, block, context).await
     }
 
     /// Adds a text block to a realm.
@@ -114,6 +132,15 @@ impl Mutation {
         context: &Context,
     ) -> ApiResult<Realm> {
         BlockValue::swap_by_index(realm, index_a, index_b, context).await
+    }
+
+    /// Update a title block's data.
+    async fn update_title_block(
+        id: Id,
+        set: UpdateTitleBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
+        BlockValue::update_title(id, set, context).await
     }
 
     /// Update a text block's data.

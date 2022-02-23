@@ -8,6 +8,29 @@ use super::{BlockValue, VideoListLayout, VideoListOrder, super::realm::Realm};
 
 
 impl BlockValue {
+    pub(crate) async fn add_title(
+        realm: Id,
+        index: i32,
+        block: NewTitleBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        context.require_moderator()?;
+
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
+
+        context.db
+            .execute(
+                "insert into blocks (realm_id, index, type, text_content) \
+                    values ($1, $2, 'title', $3)",
+                &[&realm, &index, &block.content],
+            )
+            .await?;
+
+        Realm::load_by_key(realm, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+    }
+
     pub(crate) async fn add_text(
         realm: Id,
         index: i32,
@@ -201,6 +224,32 @@ impl BlockValue {
         Ok(realm)
     }
 
+    pub(crate) async fn update_title(
+        id: Id,
+        set: UpdateTitleBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
+        let updated_block = context.db(context.require_moderator()?)
+            .query_one(
+                &format!(
+                    "update blocks set \
+                        text_content = coalesce($2, text_content) \
+                        where id = $1 \
+                        and type = 'title' \
+                        returning {}",
+                    Self::COL_NAMES,
+                ),
+                &[
+                    &id.key_for(Id::BLOCK_KIND)
+                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
+                    &set.content,
+                ],
+            )
+            .await?;
+
+        Ok(Self::from_row(updated_block)?)
+    }
+
     pub(crate) async fn update_text(
         id: Id,
         set: UpdateTextBlock,
@@ -329,6 +378,11 @@ impl BlockValue {
 
 
 #[derive(GraphQLInputObject)]
+pub(crate) struct NewTitleBlock {
+    content: String,
+}
+
+#[derive(GraphQLInputObject)]
 pub(crate) struct NewTextBlock {
     content: String,
 }
@@ -345,6 +399,11 @@ pub(crate) struct NewVideoBlock {
     event: Id,
 }
 
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct UpdateTitleBlock {
+    content: Option<String>,
+}
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateTextBlock {
