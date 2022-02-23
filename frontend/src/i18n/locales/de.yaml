@@ -258,10 +258,10 @@ manage:
       remove: Block entfernen
 
       title:
-        content: Hier können Sie ihren Titel einfügen.
+        content: Hier können Sie Ihren Titel einfügen.
 
       text:
-        content: Hier können Sie ihren Text einfügen. Sie können sogar Markdown verwenden.
+        content: Hier können Sie Ihren Text einfügen. Sie können sogar Markdown verwenden.
 
       series:
         order:
