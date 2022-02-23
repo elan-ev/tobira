@@ -111,6 +111,6 @@ export const CenteredContent: React.FC = ({ children }) => (
     <div css={{ margin: "0 auto", maxWidth: 600 }}>{children}</div>
 );
 
-export const Title: React.FC<{ title: string }> = ({ title }) => (
-    <h2 css={{ margin: "16px 0" }}>{title}</h2>
+export const Title: React.FC<{ title: string; className?: string }> = ({ title, className }) => (
+    <h2 className={className} css={{ margin: "16px 0" }}>{title}</h2>
 );

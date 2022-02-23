@@ -128,7 +128,10 @@ export const EditBlock: React.FC<Props> = ({
                         onEdit={() => setEditMode(true)}
                     />
 
-                    <Block {...{ block, realm }} />
+                    {/* TODO This counters the negative margin we employ to render title blocks. */}
+                    <div css={{ marginBottom: 16 }}>
+                        <Block {...{ block, realm }} />
+                    </div>
                 </>}
         </div>
     </>;

@@ -5,6 +5,7 @@ import { BlocksData$key } from "./__generated__/BlocksData.graphql";
 import { BlocksRealmData$key } from "./__generated__/BlocksRealmData.graphql";
 import { BlocksBlockData$key } from "./__generated__/BlocksBlockData.graphql";
 import { match } from "../../util";
+import { TitleBlock } from "./Title";
 import { TextBlockByQuery } from "./Text";
 import { SeriesBlockFromBlock } from "./Series";
 import { VideoBlock } from "./Video";
@@ -55,6 +56,7 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
         fragment BlocksBlockData on Block {
             id # TODO just querying for the type and fragments bugs out Relay's type generation
             __typename
+            ... on TitleBlock { ... TitleBlockData }
             ... on TextBlock { ... TextBlockData }
             ... on SeriesBlock { ... SeriesBlockData }
             ... on VideoBlock { ... VideoBlockData }
@@ -64,6 +66,9 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
 
     return <div>
         {match(__typename, {
+            "TitleBlock": () => <TitleBlock
+                fragRef={block}
+            />,
             "TextBlock": () => <TextBlockByQuery
                 fragRef={block}
             />,
