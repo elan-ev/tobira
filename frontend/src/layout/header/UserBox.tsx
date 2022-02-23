@@ -1,5 +1,5 @@
 import { TFunction } from "i18next";
-import React from "react";
+import React, { MutableRefObject } from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -62,35 +62,39 @@ type LoggedOutProps = {
 };
 
 /** User-related UI in header when the user is NOT logged in. */
-const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => (
-    <div css={{ display: "flex" }}>
-        <Link
-            to={CONFIG.auth.loginLink ?? LOGIN_PATH}
-            htmlLink={!!CONFIG.auth.loginLink}
-            css={{
-                alignSelf: "center",
-                borderRadius: 10,
-                cursor: "pointer",
-                padding: "5px 14px",
-                marginRight: 8,
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                backgroundColor: "var(--nav-color)",
-                color: "white",
-                "&:hover": {
-                    backgroundColor: "var(--nav-color-dark)",
+const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => {
+    const ref = useRef(null);
+
+    return (
+        <div ref={ref} css={{ display: "flex" }}>
+            <Link
+                to={CONFIG.auth.loginLink ?? LOGIN_PATH}
+                htmlLink={!!CONFIG.auth.loginLink}
+                css={{
+                    alignSelf: "center",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    padding: "5px 14px",
+                    marginRight: 8,
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    backgroundColor: "var(--nav-color)",
                     color: "white",
-                },
-                [`@media (max-width: ${BREAKPOINT}px)`]: {
-                    display: "none",
-                },
-            }}
-        ><FiLogIn />{t("user.login")}</Link>
-        <UserSettingsIcon t={t} onClick={menu.toggle} />
-        {menu.isOpen && <Menu close={menu.close} t={t} />}
-    </div>
-);
+                    "&:hover": {
+                        backgroundColor: "var(--nav-color-dark)",
+                        color: "white",
+                    },
+                    [`@media (max-width: ${BREAKPOINT}px)`]: {
+                        display: "none",
+                    },
+                }}
+            ><FiLogIn />{t("user.login")}</Link>
+            <UserSettingsIcon t={t} onClick={menu.toggle} />
+            {menu.isOpen && <Menu close={menu.close} t={t} container={ref} />}
+        </div>
+    );
+};
 
 
 type LoggedInProps = {
@@ -100,49 +104,55 @@ type LoggedInProps = {
 };
 
 /** User-related UI in header when the user IS logged in. */
-const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => (
-    <div css={{ position: "relative" }}>
-        <div onClick={menu.toggle} css={{
-            height: "100%",
-            alignSelf: "center",
-            display: "flex",
-            cursor: "pointer",
-            "&:hover": {
-                "& div": { opacity: 1 },
-            },
-        }}>
-            {/* Show name of user on large screens */}
-            <div css={{
-                maxWidth: 240,
+const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => {
+    const ref = useRef(null);
+
+    return (
+        <div ref={ref} css={{ position: "relative" }}>
+            <div onClick={menu.toggle} css={{
+                height: "100%",
+                alignSelf: "center",
                 display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                lineHeight: 1.3,
-                paddingRight: 16,
-                opacity: 0.75,
-                [`@media (max-width: ${BREAKPOINT}px)`]: {
-                    display: "none",
+                cursor: "pointer",
+                "&:hover": {
+                    "& div": { opacity: 1 },
                 },
             }}>
-                <div css={{ fontSize: 12, color: "var(--grey40)" }}>{t("user.logged-in-as")}</div>
+                {/* Show name of user on large screens */}
                 <div css={{
-                    flex: "0 1 auto",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                }}>{user.displayName}</div>
+                    maxWidth: 240,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    lineHeight: 1.3,
+                    paddingRight: 16,
+                    opacity: 0.75,
+                    [`@media (max-width: ${BREAKPOINT}px)`]: {
+                        display: "none",
+                    },
+                }}>
+                    <div css={{ fontSize: 12, color: "var(--grey40)" }}>
+                        {t("user.logged-in-as")}
+                    </div>
+                    <div css={{
+                        flex: "0 1 auto",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                    }}>{user.displayName}</div>
+                </div>
+
+                {/* Show icon */}
+                <ActionIcon title={t("user.settings")}>
+                    <FiUserCheck css={{ "& > polyline": { stroke: "var(--happy-color-dark)" } }}/>
+                </ActionIcon>
             </div>
 
-            {/* Show icon */}
-            <ActionIcon title={t("user.settings")}>
-                <FiUserCheck css={{ "& > polyline": { stroke: "var(--happy-color-dark)" } }}/>
-            </ActionIcon>
+            {/* Show menu if it is opened */}
+            {menu.isOpen && <Menu close={menu.close} t={t} container={ref} />}
         </div>
-
-        {/* Show menu if it is opened */}
-        {menu.isOpen && <Menu close={menu.close} t={t} />}
-    </div>
-);
+    );
+};
 
 
 type UserSettingsIconProps = {
@@ -165,13 +175,14 @@ const UserSettingsIcon: React.FC<UserSettingsIconProps> = ({ t, onClick }) => (
 type MenuProps = {
     t: TFunction;
     close: () => void;
+    container: MutableRefObject<Node | null>;
 };
 
 /**
  * A menu with some user-related settings/actions that floats on top of the page
  * and closes itself on click outside of it.
  */
-const Menu: React.FC<MenuProps> = ({ t, close }) => {
+const Menu: React.FC<MenuProps> = ({ t, close, container }) => {
     type State = "main" | "language";
     const [state, setState] = useState<State>("main");
 
@@ -179,8 +190,7 @@ const Menu: React.FC<MenuProps> = ({ t, close }) => {
     const user = userState === "none" || userState === "unknown" ? null : userState;
 
     // Close menu on clicks anywhere outside of it.
-    const ref = useRef(null);
-    useOnOutsideClick(ref, close);
+    useOnOutsideClick(container, close);
 
     const items = match(state, {
         main: () => <>
@@ -236,7 +246,7 @@ const Menu: React.FC<MenuProps> = ({ t, close }) => {
     });
 
     return (
-        <ul ref={ref} css={{
+        <ul css={{
             position: "absolute",
             zIndex: 1000,
             top: "100%",
