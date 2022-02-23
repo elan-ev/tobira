@@ -5,7 +5,6 @@ import { keyframes } from "@emotion/react";
 import { useForm } from "react-hook-form";
 import { Environment, fetchQuery } from "relay-runtime";
 import { FiCheckCircle, FiUpload } from "react-icons/fi";
-import { useBeforeunload } from "react-beforeunload";
 
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
@@ -14,7 +13,7 @@ import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { UploadJwtQuery } from "./__generated__/UploadJwtQuery.graphql";
 import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
-import { currentRef, useTitle } from "../util";
+import { currentRef, useBeforeUnload, useTitle } from "../util";
 import CONFIG from "../config";
 import { Button } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
@@ -87,9 +86,9 @@ const UploadMain: React.FC = () => {
 
     const progressHistory = useRef<ProgressHistory>([]);
 
-    useBeforeunload(event => {
+    useBeforeUnload(prevent => {
         if (uploadState.current && uploadState.current.state !== "done") {
-            event.preventDefault();
+            prevent();
         }
     });
 

@@ -1,7 +1,9 @@
 import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
 import { useTranslation } from "react-i18next";
 import CONFIG, { TranslatedString } from "../config";
+import { useRouter } from "../router";
 import { bug } from "./err";
 
 /**
@@ -132,3 +134,23 @@ export const useRefState = <T, >(
 export const currentRef = <T>(ref: React.RefObject<T>): T => (
     ref.current ?? bug("ref unexpectedly unbound")
 );
+
+/**
+ * Registers `callback` to be called when the current route/page is about to be
+ * unloaded due to browser reloads, a tab being closed, or the route being
+ * changed. The callback can call `prevent` to prevent the unload from
+ * happening.
+ */
+export const useBeforeUnload = (callback: (prevent: () => void) => void) => {
+    useBeforeunload(event => callback(() => event.preventDefault()));
+
+    const { t } = useTranslation();
+    const router = useRouter();
+    useEffect(() => (
+        router.addBeforeNavigationListener(prevent => callback(() => {
+            if (!window.confirm(t("general.leave-page-confirmation"))) {
+                prevent();
+            }
+        }))
+    ));
+};

@@ -34,9 +34,6 @@ export type MatchedRoute = {
 /** Creates the internal representation of the given route. */
 export const makeRoute = (match: (url: URL) => MatchedRoute | null): Route => ({ match });
 
-
-type Listener = () => void;
-
 /** Routing definition */
 interface Config {
     /** The fallback route. Used when no routes in `routes` match. */
@@ -96,6 +93,9 @@ export type RouterLib = {
     Router: (props: RouterProps) => JSX.Element;
 };
 
+export type Listener = () => void;
+export type BeforeNavigationListener = (preventNavigation: () => void) => void;
+
 /** Obtained via `useRouter`, allowing you to perform some routing-related actions. */
 export interface RouterControl {
     /** Navigates to a new URI, just like creating a `<Link to={uri}>` and clicking it. */
@@ -103,14 +103,21 @@ export interface RouterControl {
 
     /**
      * Adds a listener function that is called whenever a route transition is
-     * initiated. Neither the location nor the matched route has to change: the
-     * listener is also called when a navigation to the current location is
-     * initiated.
+     * about to be performed. Neither the location nor the matched route has to
+     * change: the listener is also called when a navigation to the current
+     * location is initiated.
      *
      * Returns a function that removes the listener. Call the function at an
      * appropriate time to prevent memory leaks.
      */
-    addListener(listener: Listener): () => void;
+    addListener(listener: () => void): () => void;
+
+    /**
+     * Like `addListener`, but is called *before* the navigation is performed.
+     * Each listener has the ability to prevent navigation by calling the
+     * passed function.
+     */
+    addBeforeNavigationListener(listener: BeforeNavigationListener): () => void;
 
     isTransitioning: boolean;
 }
@@ -124,6 +131,18 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         }
     };
 
+    const shouldPreventNav = (listeners: { listener: BeforeNavigationListener }[]): boolean => {
+        for (const { listener } of listeners) {
+            let prevent = false;
+            listener(() => prevent = true);
+            if (prevent) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     const useRouterImpl = (caller: string): RouterControl => {
         const context = React.useContext(Context);
         if (context === null) {
@@ -132,6 +151,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
         return {
             goto: (uri: string): void => {
+                if (shouldPreventNav(context.listeners.beforeNav)) {
+                    return;
+                }
+
                 const href = new URL(uri, document.baseURI).href;
                 const newRoute = matchRoute(href);
 
@@ -145,9 +168,18 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
             addListener: (listener: () => void): () => void => {
                 const obj = { listener };
-                context.listeners.push(obj);
+                context.listeners.atNav.push(obj);
                 return () => {
-                    context.listeners = context.listeners.filter(l => l !== obj);
+                    context.listeners.atNav = context.listeners.atNav.filter(l => l !== obj);
+                };
+            },
+
+            addBeforeNavigationListener: (listener: BeforeNavigationListener) => {
+                const obj = { listener };
+                context.listeners.beforeNav.push(obj);
+                return () => {
+                    context.listeners.beforeNav
+                        = context.listeners.beforeNav.filter(l => l !== obj);
                 };
             },
 
@@ -201,7 +233,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     type ContextData = {
         activeRoute: ActiveRoute;
         setActiveRoute: (newRoute: ActiveRoute) => void;
-        listeners: { listener: Listener }[];
+        listeners: {
+            atNav: { listener: () => void }[];
+            beforeNav: { listener: BeforeNavigationListener }[];
+        };
         isTransitioning: boolean;
     };
 
@@ -211,7 +246,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
     const Router = ({ initialRoute, children }: RouterProps) => {
-        const listeners = useRef<{ listener: Listener }[]>([]);
+        const listeners = useRef<ContextData["listeners"]>({
+            atNav: [],
+            beforeNav: [],
+        });
         const [activeRoute, setActiveRouteRaw] = useState<ActiveRoute>({
             route: initialRoute,
             initialScroll: null, // We do not want to restore any scroll position
@@ -221,7 +259,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         const setActiveRoute = (newRoute: ActiveRoute) => {
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
-                for (const { listener } of listeners.current) {
+                for (const { listener } of listeners.current.atNav) {
                     listener();
                 }
             });
@@ -233,6 +271,18 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             // we have to render the corresponding route. We also restore the
             // scroll position which we store within the history state.
             const onPopState = (e: PopStateEvent) => {
+
+                if (shouldPreventNav(listeners.current.beforeNav)) {
+                    // We want to prevent the browser from going backwards or
+                    // forwards. Unfortunately, `e.preventDefault()` does
+                    // nothing as the event is not cancelable. We still call it
+                    // to make a point!
+                    //
+                    // TODO: find a way to undo the navigation properly!
+                    e.preventDefault();
+                    return;
+                }
+
                 const newRoute = matchRoute(window.location.href);
                 setActiveRoute({ route: newRoute, initialScroll: e.state?.scrollY });
                 debugLog(

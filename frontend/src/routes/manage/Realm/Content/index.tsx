@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useBeforeunload } from "react-beforeunload";
 
 import { RootLoader } from "../../../../layout/Root";
 import type {
@@ -20,6 +19,7 @@ import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
 import { EditBlock } from "./Block";
 import { Breadcrumbs } from "../../../../ui/Breadcrumbs";
+import { useBeforeUnload } from "../../../../util";
 
 
 export const PATH = "/~manage/realm/content";
@@ -109,9 +109,9 @@ const ManageContent: React.FC<Props> = ({ data }) => {
 
     const hasUnsavedChanges = blocks.some(block => block.editMode);
 
-    useBeforeunload(event => {
+    useBeforeUnload(prevent => {
         if (hasUnsavedChanges) {
-            event.preventDefault();
+            prevent();
         }
     });
 
