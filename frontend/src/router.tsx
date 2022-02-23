@@ -55,8 +55,11 @@ type LinkProps = {
     htmlLink?: boolean;
 } & Omit<React.ComponentPropsWithoutRef<"a">, "href">;
 
-const Link = ({ to, children, htmlLink = false, ...props }: LinkProps): JSX.Element => (
-    htmlLink || to.startsWith("http://") || to.startsWith("https://")
+const Link = ({ to, children, htmlLink = false, ...props }: LinkProps): JSX.Element => {
+    const isExternalLink
+        = new URL(to, document.baseURI).origin !== new URL(document.baseURI).origin;
+
+    return htmlLink || isExternalLink
         ? <a href={to} {...props}>{children}</a>
-        : <RautaLink to={to} {...props}>{children}</RautaLink>
-);
+        : <RautaLink to={to} {...props}>{children}</RautaLink>;
+};
