@@ -2,7 +2,7 @@ import React from "react";
 import { graphql, useFragment } from "react-relay";
 
 import { keyOfId } from "../../util";
-import { BlockContainer, Title } from ".";
+import { BlockContainer } from ".";
 import { Link } from "../../router";
 import { SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
 import {
@@ -73,18 +73,30 @@ const VIDEO_GRID_BREAKPOINT = 600;
 
 export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath, activeEventId }) => (
     <BlockContainer>
-        <Title title={title ?? series.title} />
         <div css={{
+            position: "relative",
             display: "flex",
             flexWrap: "wrap",
-            marginTop: 8,
+            marginTop: 18,
             padding: 12,
-            backgroundColor: "var(--grey97)",
-            borderRadius: 4,
+            paddingTop: 32,
+            backgroundColor: "var(--grey95)",
+            borderRadius: 10,
             [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
                 justifyContent: "center",
             },
         }}>
+            <h2 css={{
+                position: "absolute",
+                backgroundColor: "var(--accent-color)",
+                color: "white",
+                padding: "2px 12px",
+                borderRadius: 10,
+                transform: "translateY(-50%)",
+                top: 0,
+                fontSize: 19,
+                marginLeft: 8,
+            }}>{title ?? series.title}</h2>
             {series.events.map(event => <GridTile
                 key={event.id}
                 active={event.id === activeEventId}
@@ -101,8 +113,29 @@ type GridTypeProps = {
 };
 
 const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
+    const TRANSITION_DURATION = "0.3s";
+
     const inner = <>
-        <Thumbnail event={event} active={active} />
+        <div css={{ borderRadius: 8 }}>
+            <Thumbnail event={event} active={active} />
+            <div css={{
+                position: "absolute",
+                top: 0,
+                height: "100%",
+                width: "100%",
+                overflow: "hidden",
+            }}>
+                <div css={{
+                    background: "linear-gradient(to top, white, rgba(255, 255, 255, 0.1))",
+                    height: 90,
+                    transition: `transform ${TRANSITION_DURATION}, opacity ${TRANSITION_DURATION}`,
+                    opacity: 0.1,
+                    filter: "blur(3px)",
+                    transformOrigin: "bottom right",
+                    transform: "translateY(-60px) rotate(30deg)",
+                }} />
+            </div>
+        </div>
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
@@ -143,6 +176,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
     </>;
 
     const containerStyle = {
+        position: "relative",
         display: "block",
         margin: 8,
         marginBottom: 32,
@@ -154,15 +188,23 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
             maxWidth: 360,
         },
         ...!active && {
+            "& > div:first-child": {
+                transition: `transform ${TRANSITION_DURATION}, box-shadow ${TRANSITION_DURATION}`,
+            },
             "&:hover > div:first-child": {
-                boxShadow: "0 0 10px var(--grey80)",
+                boxShadow: "0 6px 10px rgb(0 0 0 / 40%)",
+                transform: "perspective(500px) rotateX(7deg) scale(1.05)",
+                "& > div:nth-child(2) > div": {
+                    opacity: 0.2,
+                    transform: "rotate(30deg)",
+                },
             },
             "&:focus-visible": {
                 outline: "none",
                 boxShadow: "0 0 0 2px var(--accent-color)",
             },
         },
-    };
+    } as const;
 
     return active
         ? <div css={{ ...containerStyle, display: "inline-block" }}>{inner}</div>

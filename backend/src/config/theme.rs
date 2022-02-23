@@ -137,6 +137,7 @@ impl ThemeConfig {
         add!("--nav-hue" => format_args!("{:.2}", nav.h));
         add!("--nav-sat" => format_args!("{:.2}%", nav.s * 100.0));
         add!("--nav-color" => hsl!("nav", nav.l));
+        add!("--nav-color-dark" => hsl!("nav", nav.darken(0.2).l));
         add!("--nav-color-darker" => hsl!("nav", nav.darken(0.4).l));
         add!("--nav-color-bw-contrast" => self.color.navigation.bw_contrast());
 
@@ -167,6 +168,7 @@ impl ThemeConfig {
         add!("--grey-hue" => format_args!("{:.2}", grey.h));
         add!("--grey-sat" => format_args!("{:.2}%", grey.s * 100.0));
         add!("--grey97" => hsl!("grey", 0.97));
+        add!("--grey95" => hsl!("grey", 0.95));
         add!("--grey92" => hsl!("grey", 0.92));
         add!("--grey80" => hsl!("grey", 0.80));
         add!("--grey65" => hsl!("grey", 0.65));

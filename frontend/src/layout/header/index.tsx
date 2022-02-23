@@ -29,7 +29,8 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
     return (
         <header css={{
             margin: OUTER_CONTAINER_MARGIN,
-            marginBottom: "16px",
+            marginBottom: 8,
+            marginTop: 8,
             height: "var(--outer-header-height)",
             display: "flex",
             paddingTop: BASE_LOGO_MARGIN,
