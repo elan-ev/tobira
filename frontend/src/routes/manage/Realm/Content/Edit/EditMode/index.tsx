@@ -9,6 +9,7 @@ import { currentRef, match } from "../../../../../../util";
 import { bug } from "../../../../../../util/err";
 import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
 import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
+import { EditTitleBlock } from "./Title";
 import { EditTextBlock } from "./Text";
 import { EditSeriesBlock } from "./Series";
 import { EditVideoBlock } from "./Video";
@@ -36,6 +37,7 @@ export const EditMode: React.FC<EditModeProps> = props => {
                 # Querying only the type and the fragments bugs out Relay type generation
                 id
                 __typename
+                ... on TitleBlock { ...TitleEditModeBlockData }
                 ... on TextBlock { ...TextEditModeBlockData }
                 ... on SeriesBlock { ...SeriesEditModeBlockData }
                 ... on VideoBlock { ...VideoEditModeBlockData }
@@ -51,6 +53,7 @@ export const EditMode: React.FC<EditModeProps> = props => {
     return <EditModeFormContext.Provider value={{ ...props, realm: result }}>
         <FormProvider {...form}>
             {match(type, {
+                TitleBlock: () => <EditTitleBlock block={block} />,
                 TextBlock: () => <EditTextBlock block={block} />,
                 SeriesBlock: () => <EditSeriesBlock block={block} />,
                 VideoBlock: () => <EditVideoBlock block={block} />,

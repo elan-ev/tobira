@@ -247,6 +247,7 @@ manage:
       heading-root: Inhalte der <1>Startseite</1> bearbeiten
 
       add: Hier einen neuen Block einfügen
+      add-title: Hier Titel einfügen
       add-text: Hier Text einfügen
       add-series: Hier Serie einfügen
       add-video: Hier Video einfügen
@@ -255,6 +256,9 @@ manage:
       move-up: Block nach oben verschieben
       edit: Block bearbeiten
       remove: Block entfernen
+
+      title:
+        content: Hier können Sie ihren Titel einfügen.
 
       text:
         content: Hier können Sie ihren Text einfügen. Sie können sogar Markdown verwenden.

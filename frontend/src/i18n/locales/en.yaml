@@ -238,6 +238,7 @@ manage:
       heading-root: Edit <1>homepage</1> content
 
       add: Insert a new block here
+      add-title: Insert title here
       add-text: Insert text here
       add-series: Insert a series here
       add-video: Insert a video here
@@ -246,6 +247,9 @@ manage:
       move-up: Move block up
       edit: Edit block
       remove: Remove block
+
+      title:
+        content: You can put your title here.
 
       text:
         content: You can put your text content here. You can even use Markdown.
