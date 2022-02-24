@@ -29,7 +29,10 @@ create table blocks (
     videolist_order video_list_order,
 
     -- Video blocks
-    video_id bigint references events on delete set null
+    video_id bigint references events on delete set null,
+
+    -- Blocks with a "natural title"
+    show_title boolean
 );
 
 -- Blocks are almost always looked up by realm ID.
