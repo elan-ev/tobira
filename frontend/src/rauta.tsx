@@ -131,6 +131,39 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         }
     };
 
+    /** What rauta stores in the history state */
+    type State = {
+        /** The last scroll position of the route */
+        scrollY: number;
+        /** An increasing number. Is used to undo popstate events. */
+        index: number;
+    };
+
+    // We maintain an index in a variable here to know the "previous index" when
+    // we are reacting to "onPopState" events.
+    let currentIndex = 0;
+
+    // If the page is first loaded, we want to correctly set the state.
+    if (window.history.state?.index == null) {
+        window.history.replaceState({ index: 0, scrollY: window.scrollY }, "");
+    }
+
+    /** Wrapper for `history.pushState` */
+    const push = (url: string, state: State) => {
+        window.history.pushState(state, "", url);
+        currentIndex = state.index;
+    };
+
+    /** Wrapper for `history.replaceState`. If `url` is `null`, it is not changed. */
+    const replace = (url: string | null, scrollY: number) => {
+        const state = {
+            scrollY,
+            index: currentIndex,
+        };
+        window.history.replaceState(state, "", url ?? undefined);
+    };
+
+
     const shouldPreventNav = (listeners: { listener: BeforeNavigationListener }[]): boolean => {
         for (const { listener } of listeners) {
             let prevent = false;
@@ -161,9 +194,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 // When navigating to new routes, the scroll position always
                 // starts as 0 (i.e. the very top).
                 context.setActiveRoute({ route: newRoute, initialScroll: 0 });
-                history.pushState({ scrollY: 0 }, "", href);
+                const index = currentIndex + 1;
+                push(href, { scrollY: 0, index });
 
-                debugLog(`Setting active route for '${href}' to: `, newRoute);
+                debugLog(`Setting active route for '${href}' (index ${index}) to: `, newRoute);
             },
 
             addListener: (listener: () => void): () => void => {
@@ -270,18 +304,44 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             // Whenever the user navigates forwards or backwards in the browser,
             // we have to render the corresponding route. We also restore the
             // scroll position which we store within the history state.
+            // Finally, this is used to prevent navigating away from a route if
+            // this is blocked.
+            let ignoreNextPop = false;
             const onPopState = (e: PopStateEvent) => {
-
-                if (shouldPreventNav(listeners.current.beforeNav)) {
-                    // We want to prevent the browser from going backwards or
-                    // forwards. Unfortunately, `e.preventDefault()` does
-                    // nothing as the event is not cancelable. We still call it
-                    // to make a point!
-                    //
-                    // TODO: find a way to undo the navigation properly!
-                    e.preventDefault();
+                if (ignoreNextPop) {
+                    ignoreNextPop = false;
                     return;
                 }
+
+                const newIndexRaw = e.state?.index;
+                const newIndex = typeof newIndexRaw === "number" ? newIndexRaw : null;
+                debugLog(`Handling popstate event to '${window.location.href}' `
+                    + `(indices ${currentIndex} -> ${newIndex})`);
+                if (shouldPreventNav(listeners.current.beforeNav)) {
+                    // We want to prevent the browser from going backwards or forwards.
+                    // Unfortunately, `e.preventDefault()` does nothing as the event is not
+                    // cancelable. So we can only undo the change, at least most of the time.
+                    if (newIndex != null) {
+                        // The state that was transitioned to was controlled by us (this will
+                        // be the case most of the time). We ignore a delta of 0
+                        const delta = currentIndex - newIndex;
+                        debugLog(`Undoing popstate event via go(${delta})`);
+                        ignoreNextPop = true;
+                        window.history.go(delta);
+                        return;
+                    } else {
+                        // There was no index stored in the state. This should almost never happen,
+                        // except if other JS code here uses the `history` API directly. If the
+                        // forward/backward buttons direct to a non-Tobira site, the "popstate"
+                        // event is not fired, but the onbeforeunload is triggered.
+                        //
+                        // If this happens, we do not `return` and actually render the correct
+                        // route. Otherwise we have a strange inconsistent app state.
+                        debugLog("Can't undo popstate event :-(");
+                    }
+                }
+
+                currentIndex = newIndex ?? 0;
 
                 const newRoute = matchRoute(window.location.href);
                 setActiveRoute({ route: newRoute, initialScroll: e.state?.scrollY });
@@ -298,7 +358,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             // could be executed 1 million times per second. And scroll events are usually
             // not fired faster than `requestAnimationFrame`. So this should be fine!
             const onScroll = () => {
-                history.replaceState({ scrollY: window.scrollY }, "");
+                replace(null, window.scrollY);
             };
 
             // To prevent the browser restoring any scroll position.
