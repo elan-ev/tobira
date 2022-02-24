@@ -184,7 +184,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
     // If the page is first loaded, we want to correctly set the state.
     if (window.history.state?.index == null) {
-        window.history.replaceState({ index: 0, scrollY: window.scrollY }, "");
+        window.history.replaceState({ index: 0, ...window.history.state }, "");
+    }
+    if (window.history.state?.scrollY == null) {
+        window.history.replaceState({ scrollY: window.scrollY, ...window.history.state }, "");
     }
 
     /** Wrapper for `history.pushState` */
@@ -202,6 +205,8 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         };
         window.history.replaceState(state, "", url ?? undefined);
     };
+
+    const updateScrollPos = () => replace(null, window.scrollY);
 
 
     const shouldPreventNav = (listeners: Listeners<BeforeNavListener>): boolean => {
@@ -231,6 +236,8 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             listenBeforeNav: (listener: BeforeNavListener) =>
                 context.listeners.beforeNav.add(listener),
             goto: (uri: string): void => {
+                updateScrollPos();
+
                 if (shouldPreventNav(context.listeners.beforeNav)) {
                     return;
                 }
@@ -314,7 +321,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         });
         const [activeRoute, setActiveRouteRaw] = useState<ActiveRoute>({
             route: initialRoute,
-            initialScroll: null, // We do not want to restore any scroll position
+            initialScroll: window.history.state?.scrollY ?? null,
         });
         const [isPending, startTransition] = useTransition();
 
@@ -378,23 +385,25 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 );
             };
 
-            // To actually get the correct scroll position into the history state, we
-            // unfortunately need to listen for scroll events. They can fire at a high
-            // rate, but `replaceState` is really fast to call. On jsbench.me the line
-            // could be executed 1 million times per second. And scroll events are usually
-            // not fired faster than `requestAnimationFrame`. So this should be fine!
-            const onScroll = () => {
-                replace(null, window.scrollY);
-            };
-
             // To prevent the browser restoring any scroll position.
             history.scrollRestoration = "manual";
 
+            // We want an up2date scroll value in our history state. Always
+            // updating it in onScroll unfortunately lead to laggy behavior on
+            // some machines. So we are debouncing here.
+            let timer: ReturnType<typeof setTimeout>;
+            const onScroll = () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => updateScrollPos(), 200);
+            };
+
             window.addEventListener("popstate", onPopState);
             window.addEventListener("scroll", onScroll);
+            window.addEventListener("beforeunload", updateScrollPos);
             return () => {
                 window.removeEventListener("popstate", onPopState);
                 window.removeEventListener("scroll", onScroll);
+                window.removeEventListener("beforeunload", updateScrollPos);
             };
         }, []);
 
