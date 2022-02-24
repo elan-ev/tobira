@@ -20,6 +20,7 @@ export const LoadingIndicator: React.FC = () => {
     return <Transition in={router.isTransitioning} timeout={EXIT_DURATION}>{state => (
         <div css={{
             position: "fixed",
+            zIndex: 2000,
             left: 0,
             top: 0,
             height: 4,
