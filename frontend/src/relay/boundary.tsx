@@ -29,7 +29,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
     }
 
     public componentDidMount() {
-        this.unlisten = this.props.router.addListener(() => this.setState({ error: undefined }));
+        this.unlisten = this.props.router.listenAtNav(() => this.setState({ error: undefined }));
     }
 
     public componentWillUnmount() {

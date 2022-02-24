@@ -147,7 +147,7 @@ export const useBeforeUnload = (callback: (prevent: () => void) => void) => {
     const { t } = useTranslation();
     const router = useRouter();
     useEffect(() => (
-        router.addBeforeNavigationListener(prevent => callback(() => {
+        router.listenBeforeNav(prevent => callback(() => {
             if (!window.confirm(t("general.leave-page-confirmation"))) {
                 prevent();
             }

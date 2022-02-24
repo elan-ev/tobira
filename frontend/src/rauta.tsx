@@ -93,8 +93,29 @@ export type RouterLib = {
     Router: (props: RouterProps) => JSX.Element;
 };
 
-export type Listener = () => void;
-export type BeforeNavigationListener = (preventNavigation: () => void) => void;
+/** Helper class: a list of listeners */
+class Listeners<F extends (...args: any) => any> {
+    public list: { listener: F }[] = [];
+
+    /** Adds a new listener. Returns function to remove that listener again. */
+    public add(listener: F): () => void {
+        const obj = { listener };
+        this.list.push(obj);
+        return () => {
+            this.list = this.list.filter(l => l !== obj);
+        };
+    }
+
+    /** Call all listeners with the same arguments. */
+    public callAll(args: Parameters<F>) {
+        for (const { listener } of this.list) {
+            listener(args);
+        }
+    }
+}
+
+export type AtNavListener = () => void;
+export type BeforeNavListener = (preventNavigation: () => void) => void;
 
 /** Obtained via `useRouter`, allowing you to perform some routing-related actions. */
 export interface RouterControl {
@@ -124,15 +145,19 @@ export interface RouterControl {
      * Returns a function that removes the listener. Call the function at an
      * appropriate time to prevent memory leaks.
      */
-    addListener(listener: () => void): () => void;
+    listenAtNav(listener: AtNavListener): () => void;
 
     /**
-     * Like `addListener`, but is called *before* the navigation is performed.
+     * Like `listenAtNav`, but is called *before* the navigation is performed.
      * Each listener has the ability to prevent navigation by calling the
      * passed function.
      */
-    addBeforeNavigationListener(listener: BeforeNavigationListener): () => void;
+    listenBeforeNav(listener: BeforeNavListener): () => void;
 
+    /**
+     * Indicates whether we are currently transitioning to a new route. Intended
+     * to show a loading indicator.
+     */
     isTransitioning: boolean;
 }
 
@@ -179,8 +204,8 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     };
 
 
-    const shouldPreventNav = (listeners: { listener: BeforeNavigationListener }[]): boolean => {
-        for (const { listener } of listeners) {
+    const shouldPreventNav = (listeners: Listeners<BeforeNavListener>): boolean => {
+        for (const { listener } of listeners.list) {
             let prevent = false;
             listener(() => prevent = true);
             if (prevent) {
@@ -201,7 +226,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             isTransitioning: context.isTransitioning,
             push: (url: string) => push(url),
             replace: (url: string) => replace(url, window.scrollY),
-
+            listenAtNav: (listener: AtNavListener) =>
+                context.listeners.atNav.add(listener),
+            listenBeforeNav: (listener: BeforeNavListener) =>
+                context.listeners.beforeNav.add(listener),
             goto: (uri: string): void => {
                 if (shouldPreventNav(context.listeners.beforeNav)) {
                     return;
@@ -218,24 +246,6 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 debugLog(`Setting active route for '${href}' (index ${currentIndex}) `
                     + "to: ", newRoute);
             },
-
-            addListener: (listener: () => void): () => void => {
-                const obj = { listener };
-                context.listeners.atNav.push(obj);
-                return () => {
-                    context.listeners.atNav = context.listeners.atNav.filter(l => l !== obj);
-                };
-            },
-
-            addBeforeNavigationListener: (listener: BeforeNavigationListener) => {
-                const obj = { listener };
-                context.listeners.beforeNav.push(obj);
-                return () => {
-                    context.listeners.beforeNav
-                        = context.listeners.beforeNav.filter(l => l !== obj);
-                };
-            },
-
         };
     };
 
@@ -286,8 +296,8 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         activeRoute: ActiveRoute;
         setActiveRoute: (newRoute: ActiveRoute) => void;
         listeners: {
-            atNav: { listener: () => void }[];
-            beforeNav: { listener: BeforeNavigationListener }[];
+            atNav: Listeners<AtNavListener>;
+            beforeNav: Listeners<BeforeNavListener>;
         };
         isTransitioning: boolean;
     };
@@ -299,8 +309,8 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
     const Router = ({ initialRoute, children }: RouterProps) => {
         const listeners = useRef<ContextData["listeners"]>({
-            atNav: [],
-            beforeNav: [],
+            atNav: new Listeners(),
+            beforeNav: new Listeners(),
         });
         const [activeRoute, setActiveRouteRaw] = useState<ActiveRoute>({
             route: initialRoute,
@@ -311,9 +321,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         const setActiveRoute = (newRoute: ActiveRoute) => {
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
-                for (const { listener } of listeners.current.atNav) {
-                    listener();
-                }
+                listeners.current.atNav.callAll([]);
             });
         };
 
