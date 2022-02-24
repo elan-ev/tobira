@@ -204,10 +204,12 @@ type SeriesBlock implements Block {
 
 input NewVideoBlock {
   event: ID!
+  showTitle: Boolean!
 }
 
 input UpdateSeriesBlock {
   series: ID
+  showTitle: Boolean
   layout: VideoListLayout
   order: VideoListOrder
 }
@@ -248,6 +250,7 @@ input UpdateTitleBlock {
 
 input UpdateVideoBlock {
   event: ID
+  showTitle: Boolean
 }
 
 enum EventSortColumn {
@@ -267,6 +270,7 @@ type VideoBlock implements Block {
 
 input NewSeriesBlock {
   series: ID!
+  showTitle: Boolean!
   layout: VideoListLayout!
   order: VideoListOrder!
 }

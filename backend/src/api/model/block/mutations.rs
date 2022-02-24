@@ -70,9 +70,9 @@ impl BlockValue {
         context.db
             .execute(
                 "insert into blocks \
-                    (realm_id, index, type, series_id, videolist_order, videolist_layout) \
-                    values ($1, $2, 'series', $3, $4, $5)",
-                &[&realm, &index, &series, &block.order, &block.layout],
+                    (realm_id, index, type, series_id, videolist_order, videolist_layout, show_title) \
+                    values ($1, $2, 'series', $3, $4, $5, $6)",
+                &[&realm, &index, &series, &block.order, &block.layout, &block.show_title],
             )
             .await?;
 
@@ -96,9 +96,9 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks (realm_id, index, type, video_id) \
-                    values ($1, $2, 'video', $3)",
-                &[&realm, &index, &event],
+                "insert into blocks (realm_id, index, type, video_id, show_title) \
+                    values ($1, $2, 'video', $3, $4)",
+                &[&realm, &index, &event, &block.show_title],
             )
             .await?;
 
@@ -287,7 +287,8 @@ impl BlockValue {
                     "update blocks set \
                         series_id = coalesce($2, series_id), \
                         videolist_layout = coalesce($3, videolist_layout), \
-                        videolist_order = coalesce($4, videolist_order) \
+                        videolist_order = coalesce($4, videolist_order), \
+                        show_title = coalesce($5, show_title) \
                         where id = $1 \
                         and type = 'series' \
                         returning {}",
@@ -302,6 +303,7 @@ impl BlockValue {
                     ).transpose()?,
                     &set.layout,
                     &set.order,
+                    &set.show_title,
                 ],
             )
             .await?;
@@ -318,7 +320,8 @@ impl BlockValue {
             .query_one(
                 &format!(
                     "update blocks set \
-                        video_id = coalesce($2, video_id) \
+                        video_id = coalesce($2, video_id), \
+                        show_title = coalesce($3, show_title) \
                         where id = $1 \
                         and type = 'video' \
                         returning {}",
@@ -331,6 +334,7 @@ impl BlockValue {
                         |series| series.key_for(Id::EVENT_KIND)
                             .ok_or_else(|| invalid_input!("`set.event` does not refer to a event"))
                     ).transpose()?,
+                    &set.show_title,
                 ],
             )
             .await?;
@@ -390,6 +394,7 @@ pub(crate) struct NewTextBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeriesBlock {
     series: Id,
+    show_title: bool,
     layout: VideoListLayout,
     order: VideoListOrder,
 }
@@ -397,6 +402,7 @@ pub(crate) struct NewSeriesBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewVideoBlock {
     event: Id,
+    show_title: bool,
 }
 
 
@@ -413,6 +419,7 @@ pub(crate) struct UpdateTextBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateSeriesBlock {
     series: Option<Id>,
+    show_title: Option<bool>,
     layout: Option<VideoListLayout>,
     order: Option<VideoListOrder>,
 }
@@ -420,6 +427,7 @@ pub(crate) struct UpdateSeriesBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateVideoBlock {
     event: Option<Id>,
+    show_title: Option<bool>,
 }
 
 
