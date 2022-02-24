@@ -217,7 +217,7 @@ manage:
       heading: Reihenfolge Unterseiten
       sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
       sort-alphabetically-desc: Alphabetisch absteigend sortieren
-      order-manually: Manuell ordnen
+      order-manually: Manuell ordnen (neue Unterseiten werden hinten angehangen)
       failed: Änderung fehlgeschlagen.
 
     danger-zone:
