@@ -3,7 +3,7 @@ import { graphql, useFragment } from "react-relay";
 
 import { keyOfId } from "../../util";
 import { Link } from "../../router";
-import { SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
+import { SeriesBlockData, SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
 import {
     SeriesBlockSeriesData,
     SeriesBlockSeriesData$key,
@@ -50,28 +50,42 @@ type FromBlockProps = SharedProps & {
 
 export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
     const { t } = useTranslation();
-    const { series } = useFragment(blockFragment, fragRef);
+    const { series, ...block } = useFragment(blockFragment, fragRef);
     return series === null
         ? <Card kind="error">{t("series.deleted-series-block")}</Card>
-        : <SeriesBlockFromSeries fragRef={series} {...rest} />;
+        : <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
+
+type BlockOnlyProps = Omit<NonNullable<SeriesBlockData>, "series" | " $fragmentType">;
 
 type FromSeriesProps = SharedProps & {
     fragRef: SeriesBlockSeriesData$key;
-};
+} & Partial<BlockOnlyProps>;
 
 export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = ({ fragRef, ...rest }) => {
     const series = useFragment(seriesFragment, fragRef);
-    return <SeriesBlock {...{ series, ...rest }} />;
+    return <SeriesBlock
+        {...{ series }}
+        layout="GRID"
+        order="NEW_TO_OLD"
+        showTitle={true}
+        {...rest}
+    />;
 };
 
-type Props = SharedProps & {
+type Props = SharedProps & BlockOnlyProps & {
     series: NonNullable<SeriesBlockSeriesData>;
 };
 
 const VIDEO_GRID_BREAKPOINT = 600;
 
-export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath, activeEventId }) => (
+export const SeriesBlock: React.FC<Props> = ({
+    title,
+    series,
+    showTitle,
+    realmPath,
+    activeEventId,
+}) => (
     <div css={{
         position: "relative",
         display: "flex",
@@ -85,7 +99,7 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath, activeE
             justifyContent: "center",
         },
     }}>
-        <h2 css={{
+        {(title || showTitle) && <h2 css={{
             position: "absolute",
             backgroundColor: "var(--accent-color)",
             color: "white",
@@ -95,7 +109,7 @@ export const SeriesBlock: React.FC<Props> = ({ title, series, realmPath, activeE
             top: 0,
             fontSize: 19,
             marginLeft: 8,
-        }}>{title ?? series.title}</h2>
+        }}>{title ?? series.title}</h2>}
         {series.events.map(event => <GridTile
             key={event.id}
             active={event.id === activeEventId}

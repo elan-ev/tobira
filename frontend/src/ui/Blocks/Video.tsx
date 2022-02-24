@@ -13,7 +13,7 @@ type Props = {
 
 export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     const { t } = useTranslation();
-    const { event } = useFragment(graphql`
+    const { event, showTitle } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
                 title
@@ -29,7 +29,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     }
 
     return <>
-        <Title title={event.title} />
+        {showTitle && <Title title={event.title} />}
         <Player
             {...event}
             // Relay returns `readonly` objects ...
