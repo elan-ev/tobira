@@ -14,7 +14,7 @@ import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { UploadJwtQuery } from "./__generated__/UploadJwtQuery.graphql";
 import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
-import { currentRef } from "../util";
+import { currentRef, useTitle } from "../util";
 import CONFIG from "../config";
 import { Button } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
@@ -56,6 +56,8 @@ type Metadata = {
 
 const Upload: React.FC = () => {
     const { t } = useTranslation();
+    const title = t("upload.title");
+    useTitle(title);
 
     return (
         <div css={{
@@ -64,7 +66,7 @@ const Upload: React.FC = () => {
             display: "flex",
             flexDirection: "column",
         }}>
-            <h1>{t("upload.title")}</h1>
+            <h1>{title}</h1>
             <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
             <UploadMain />
         </div>

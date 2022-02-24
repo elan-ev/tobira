@@ -8,6 +8,7 @@ import { loadQuery } from "../relay";
 import { AboutQuery } from "./__generated__/AboutQuery.graphql";
 import { ABOUT_PATH } from "./paths";
 import { makeRoute } from "../rauta";
+import { useTitle } from "../util";
 
 
 export const AboutRoute = makeRoute(url => {
@@ -37,10 +38,12 @@ const query = graphql`
 
 const About: React.FC = () => {
     const { t } = useTranslation();
+    const title = t("about-tobira.title");
+    useTitle(title);
 
     return (
         <div css={{ margin: "0 auto", maxWidth: 600 }}>
-            <h1>{t("about-tobira.title")}</h1>
+            <h1>{title}</h1>
             <p css={{ margin: "16px 0" }}>
                 <Trans i18nKey="about-tobira.body">
                     Description.
