@@ -92,6 +92,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         pathSegment: string;
     };
 
+    const router = useRouter();
     const { t } = useTranslation();
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
         mode: "onChange",
@@ -116,8 +117,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
             onCompleted: () => {
                 // We have to change the current URL path, otherwise the URL is invalid.
                 const newPath = realm.path.replace(pathSegmentRegex, data.pathSegment);
-                const newUrl = `/~manage/realm?path=${newPath}`;
-                window.history.pushState(null, "", newUrl);
+                router.replace(`/~manage/realm?path=${newPath}`);
             },
             onError: error => {
                 const failure = t("manage.realm.danger-zone.change-path.failed");
