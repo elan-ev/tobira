@@ -102,6 +102,20 @@ export interface RouterControl {
     goto(uri: string): void;
 
     /**
+     * Like `history.pushState` (with fewer arguments): pushes a new history
+     * entry, but does NOT trigger rendering the correct route. So you rarely
+     * want this! Use `goto` instead.
+     */
+    push(uri: string): void;
+
+    /**
+     * Like `history.replaceState` (with fewer arguments): replaces the URL of
+     * the current history entry. Does NOT cause the router to render the
+     * appropriate route.
+     */
+    replace(uri: string): void;
+
+    /**
      * Adds a listener function that is called whenever a route transition is
      * about to be performed. Neither the location nor the matched route has to
      * change: the listener is also called when a navigation to the current
@@ -132,7 +146,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     };
 
     /** What rauta stores in the history state */
-    type State = {
+    type _State = {
         /** The last scroll position of the route */
         scrollY: number;
         /** An increasing number. Is used to undo popstate events. */
@@ -149,9 +163,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     }
 
     /** Wrapper for `history.pushState` */
-    const push = (url: string, state: State) => {
-        window.history.pushState(state, "", url);
-        currentIndex = state.index;
+    const push = (url: string) => {
+        const index = currentIndex + 1;
+        window.history.pushState({ scrollY: 0, index }, "", url);
+        currentIndex = index;
     };
 
     /** Wrapper for `history.replaceState`. If `url` is `null`, it is not changed. */
@@ -183,6 +198,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         }
 
         return {
+            isTransitioning: context.isTransitioning,
+            push: (url: string) => push(url),
+            replace: (url: string) => replace(url, window.scrollY),
+
             goto: (uri: string): void => {
                 if (shouldPreventNav(context.listeners.beforeNav)) {
                     return;
@@ -194,10 +213,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 // When navigating to new routes, the scroll position always
                 // starts as 0 (i.e. the very top).
                 context.setActiveRoute({ route: newRoute, initialScroll: 0 });
-                const index = currentIndex + 1;
-                push(href, { scrollY: 0, index });
+                push(href);
 
-                debugLog(`Setting active route for '${href}' (index ${index}) to: `, newRoute);
+                debugLog(`Setting active route for '${href}' (index ${currentIndex}) `
+                    + "to: ", newRoute);
             },
 
             addListener: (listener: () => void): () => void => {
@@ -217,7 +236,6 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 };
             },
 
-            isTransitioning: context.isTransitioning,
         };
     };
 
