@@ -82,17 +82,20 @@ const Login: React.FC<Props> = ({ queryRef }) => {
 
 const BackButton: React.FC = () => {
     const { t } = useTranslation();
-    const inner = <><FiChevronLeft />{t("back")}</>;
-    const css = {
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-    };
 
-    return history.length === 1
-        ? <Link css={css} to="/">{inner}</Link>
-        : <a css={css} onClick={() => history.back()}>{inner}</a>;
+    // This link does `window.history.back()`. If there is nothing to go back
+    // to, the call will silently do nothing. In that case, the link is taken,
+    // bringing the user to the home page.
+    return <Link
+        to="/"
+        onClick={() => window.history.back()}
+        css={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+        }}
+    ><FiChevronLeft />{t("back")}</Link>;
 };
 
 type FormData = {

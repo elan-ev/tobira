@@ -253,6 +253,11 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         const router = useRouterImpl("<Link>");
 
         const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+            // If the caller specified a handler, we will call it first.
+            if (onClick) {
+                onClick(e);
+            }
+
             // We only want to react to simple mouse clicks.
             if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.button !== 0) {
                 return;
@@ -260,11 +265,6 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
             e.preventDefault();
             router.goto(to);
-
-            // If the caller specified a handler, we will call it as well.
-            if (onClick) {
-                onClick(e);
-            }
         };
 
         return <a href={to} onClick={handleClick} {...props}>{children}</a>;

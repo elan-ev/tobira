@@ -53,10 +53,6 @@ export const ManageSingleVideoRoute = makeRoute(url => {
 
 const BackLink: React.FC = () => {
     const { t } = useTranslation();
-
-    // TODO: if `history.length > 0`, go back in the history instead of having a
-    // link. Going back should preserve the pagination and stuff on the
-    // previous page.
     const items = [
         <LinkWithIcon key={MANAGE_VIDEOS_PATH} to={MANAGE_VIDEOS_PATH} iconPos="left">
             <FiArrowLeft />
