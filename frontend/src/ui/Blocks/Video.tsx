@@ -20,6 +20,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
                 duration
                 tracks { uri flavor mimetype resolution }
             }
+            showTitle
         }
     `, fragRef);
 

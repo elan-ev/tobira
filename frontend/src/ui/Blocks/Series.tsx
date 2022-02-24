@@ -23,6 +23,7 @@ type SharedProps = {
 const blockFragment = graphql`
     fragment SeriesBlockData on SeriesBlock {
         series { ...SeriesBlockSeriesData }
+        showTitle
         layout
         order
     }

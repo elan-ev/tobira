@@ -7,7 +7,7 @@ import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
 import { EditModeForm } from ".";
-import { Heading } from "./util";
+import { Heading, ShowTitle } from "./util";
 import type {
     VideoListOrder,
     VideoListLayout,
@@ -42,11 +42,12 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         }
     `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
 
-    const { order, layout, series } = useFragment(graphql`
+    const { series, showTitle, order, layout } = useFragment(graphql`
         fragment SeriesEditModeBlockData on SeriesBlock {
+            series { id }
+            showTitle
             order
             layout
-            series { id }
         }
     `, blockRef);
 
@@ -55,7 +56,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         mutation SeriesEditSaveMutation($id: ID!, $set: UpdateSeriesBlock!) {
             updateSeriesBlock(id: $id, set: $set) {
                 ... BlocksBlockData
-                ... SeriesBlockData
             }
         }
     `);
@@ -141,5 +141,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 <option key={id} value={id}>{title}</option>
             ))}
         </Select>
+        <ShowTitle showTitle={showTitle} />
     </EditModeForm>;
 };

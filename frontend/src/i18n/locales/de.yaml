@@ -284,6 +284,10 @@ manage:
           none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
 
+      titled:
+        title: Titel
+        show-title: Titel anzeigen
+
       save: Speichern
       cancel: Verwerfen
 

@@ -7,7 +7,7 @@ import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
 import { EditModeForm } from ".";
-import { Heading } from "./util";
+import { Heading, ShowTitle } from "./util";
 import type { VideoEditModeBlockData$key } from "./__generated__/VideoEditModeBlockData.graphql";
 import type { VideoEditModeEventData$key } from "./__generated__/VideoEditModeEventData.graphql";
 import type { VideoEditSaveMutation } from "./__generated__/VideoEditSaveMutation.graphql";
@@ -30,9 +30,10 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         }
     `, useContext(ContentManageQueryContext) as VideoEditModeEventData$key);
 
-    const { event } = useFragment(graphql`
+    const { event, showTitle } = useFragment(graphql`
         fragment VideoEditModeBlockData on VideoBlock {
             event { id }
+            showTitle
         }
     `, blockRef);
 
@@ -41,7 +42,6 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         mutation VideoEditSaveMutation($id: ID!, $set: UpdateVideoBlock!) {
             updateVideoBlock(id: $id, set: $set) {
                 ... BlocksBlockData
-                ... VideoBlockData
             }
         }
     `);
@@ -78,5 +78,6 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                 <option key={id} value={id}>{title}</option>
             ))}
         </Select>
+        <ShowTitle showTitle={showTitle} />
     </EditModeForm>;
 };

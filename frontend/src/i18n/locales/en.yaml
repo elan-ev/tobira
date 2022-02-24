@@ -275,6 +275,10 @@ manage:
           none: No event selected
           invalid: Please select an event
 
+      titled:
+        title: Title
+        show-title: Show title
+
       save: Save
       cancel: Discard
 
