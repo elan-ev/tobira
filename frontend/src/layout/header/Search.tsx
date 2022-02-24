@@ -19,13 +19,19 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     // Register global shortcut to focus search bar
     useEffect(() => {
         const handleShortcut = (ev: KeyboardEvent) => {
-            if (ev.ctrlKey || ev.altKey || ev.metaKey) {
+            // If any element is focussed that could receive character input, we
+            // don't do anything.
+            if (/^input|textarea|select|button$/i.test(document.activeElement?.tagName ?? "")) {
                 return;
             }
-            if (document.activeElement?.tagName === "INPUT") {
+
+            // With ctrl and meta key, this could be bound to some other
+            // shortcut (ctrl+s) that we want to ignore.
+            if (ev.ctrlKey || ev.metaKey) {
                 return;
             }
-            if (ev.key === "s" || ev.key === "S") {
+
+            if (ev.key === "s" || ev.key === "S" || ev.key === "/") {
                 ref.current?.focus();
             }
         };

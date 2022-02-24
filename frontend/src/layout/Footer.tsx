@@ -29,20 +29,19 @@ export const Footer: React.FC = () => {
                 },
             }}>
                 {CONFIG.footerLinks.map((entry, i) => {
-                    let link;
-                    let label;
                     if (entry === "about") {
-                        link = ABOUT_PATH;
-                        label = t("footer.about-tobira");
+                        return <li key={i}>
+                            <Link to={ABOUT_PATH}>{t("footer.about-tobira")}</Link>
+                        </li>;
                     } else if (entry === "graphiql") {
-                        link = "/~graphiql";
-                        label = <>Graph<em>i</em>QL</>;
+                        return <li key={i}>
+                            <Link to="/~graphiql" htmlLink>Graph<em>i</em>QL</Link>
+                        </li>;
                     } else {
-                        link = entry.link;
-                        label = translatedConfig(entry.label, i18n);
+                        return <li key={i}>
+                            <Link to={entry.link}>{translatedConfig(entry.label, i18n)}</Link>
+                        </li>;
                     }
-
-                    return <li key={i}><Link to={link}>{label}</Link></li>;
                 })}
             </ul>
         </footer>
