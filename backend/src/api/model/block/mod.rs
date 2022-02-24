@@ -140,6 +140,7 @@ impl TextBlock {
 pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
     pub(crate) series: Option<Id>,
+    pub(crate) show_title: bool,
     pub(crate) layout: VideoListLayout,
     pub(crate) order: VideoListOrder,
 }
@@ -159,6 +160,10 @@ impl SeriesBlock {
             // `unwrap` is okay here because of our foreign key constraint
             Some(series_id) => Ok(Some(Series::load_by_id(series_id, context).await?.unwrap())),
         }
+    }
+
+    fn show_title(&self) -> bool {
+        self.show_title
     }
 
     fn layout(&self) -> VideoListLayout {
@@ -181,6 +186,7 @@ impl SeriesBlock {
 pub(crate) struct VideoBlock {
     pub(crate) shared: SharedData,
     pub(crate) event: Option<Id>,
+    pub(crate) show_title: bool,
 }
 
 impl Block for VideoBlock {
@@ -198,6 +204,10 @@ impl VideoBlock {
             // `unwrap` is okay here because of our foreign key constraint
             Some(event_id) => Ok(Some(Event::load_by_id(event_id, context).await?.unwrap())),
         }
+    }
+
+    fn show_title(&self) -> bool {
+        self.show_title
     }
 
     fn id(&self) -> Id {
@@ -232,7 +242,7 @@ impl BlockValue {
     }
 
     const COL_NAMES: &'static str
-        = "id, type, index, text_content, series_id, videolist_layout, videolist_order, video_id";
+        = "id, type, index, text_content, series_id, videolist_layout, videolist_order, video_id, show_title";
 
     fn from_row(row: Row) -> ApiResult<Self> {
         let ty: BlockType = row.get(1);
@@ -257,11 +267,13 @@ impl BlockValue {
                 series: row.get::<_, Option<Key>>(4).map(Id::series),
                 layout: get_type_dependent(&row, 5, "videolist", "videolist_layout")?,
                 order: get_type_dependent(&row, 6, "videolist", "videolist_order")?,
+                show_title: get_type_dependent(&row, 8, "titled", "show_title")?,
             }.into(),
 
             BlockType::Video => VideoBlock {
                 shared,
                 event: row.get::<_, Option<Key>>(7).map(Id::event),
+                show_title: get_type_dependent(&row, 8, "titled", "show_title")?,
             }.into(),
         };
 
