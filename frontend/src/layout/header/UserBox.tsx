@@ -19,6 +19,7 @@ import { ActionIcon } from "./ui";
 import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
 import { LOGIN_PATH } from "../../routes/paths";
+import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 
 
 /** Viewport width in pixels where the user UI switches between narrow and wide */
@@ -69,6 +70,13 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => {
         <div ref={ref} css={{ display: "flex" }}>
             <Link
                 to={CONFIG.auth.loginLink ?? LOGIN_PATH}
+                onClick={() => {
+                    // If we are linking to our internal login page, store a
+                    // redirect link in session storage.
+                    if (!CONFIG.auth.loginLink) {
+                        window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
+                    }
+                }}
                 htmlLink={!!CONFIG.auth.loginLink}
                 css={{
                     alignSelf: "center",
