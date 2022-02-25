@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 /// A configurable string specified in different languages. Language 'en' always
 /// has to be specified.
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, Clone)]
 pub(crate) struct TranslatedString(HashMap<String, String>);
 
 impl TranslatedString {
