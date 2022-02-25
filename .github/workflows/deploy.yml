@@ -6,6 +6,10 @@ on:
     types:
       - completed
 
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-20.04
