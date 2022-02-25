@@ -41,12 +41,15 @@ struct Realm {
 enum Block {
     Title(String),
     Text(String),
-    Series {
-        series_uuid: Option<String>,
-        series_title: Option<String>,
-    }
+    Series(SeriesBlock),
 }
 
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
+enum SeriesBlock {
+    ByUuid(String),
+    ByTitle(String),
+}
 
 pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     let file = File::open(&args.input_file)?;
@@ -139,10 +142,7 @@ impl DummyBlocks {
 
                 Box::new([
                     Block::Text(DUMMY_TEXT.into()),
-                    Block::Series {
-                        series_title: None,
-                        series_uuid: Some(uuid)
-                    },
+                    Block::Series(SeriesBlock::ByUuid(uuid)),
                 ].into_iter())
             }
         }
@@ -166,10 +166,10 @@ impl Block {
                 ";
                 db.execute(query, &[&realm_id, &(index as i16), text]).await?;
             }
-            Block::Series { series_title, series_uuid } => {
+            Block::Series(series) => {
                 // Obtain the series ID
-                let series_id = match (series_title, series_uuid) {
-                    (Some(title), None) => {
+                let series_id = match series {
+                    SeriesBlock::ByTitle(title) => {
                         let rows = db
                             .query("select id from series where title = $1", &[title])
                             .await?;
@@ -179,7 +179,7 @@ impl Block {
                         }
                         rows[0].get::<_, i64>(0)
                     }
-                    (None, Some(uuid)) => {
+                    SeriesBlock::ByUuid(uuid) => {
                         let rows = db
                             .query("select id from series where opencast_id = $1", &[uuid])
                             .await?;
@@ -189,7 +189,6 @@ impl Block {
                         }
                         rows[0].get::<_, i64>(0)
                     }
-                    _ => bail!("exactly one of `series_title` and `series_uuid` has to be set"),
                 };
 
                 // Insert block

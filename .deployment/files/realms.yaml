@@ -19,9 +19,9 @@ blocks:
       deployment. This is not a real website of the ETHZ!
 
   - series:
-      series_uuid: 94ecfeed-aa7d-4a5c-912b-58b5891543f4
+      by_uuid: 94ecfeed-aa7d-4a5c-912b-58b5891543f4
   - series:
-      series_uuid: ec912549-5bac-4f97-b72a-ace807047aca
+      by_uuid: ec912549-5bac-4f97-b72a-ace807047aca
 children:
   - path: 'campus'
     name: 'Campus'

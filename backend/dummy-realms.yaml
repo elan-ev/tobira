@@ -17,7 +17,7 @@ blocks:
       testing.
 
   - series:
-      series_title: Cats
+      by_title: Cats
 
 children:
   - path: campus
@@ -25,7 +25,7 @@ children:
     blocks:
       - text: Videos about life on the campus, the canteen and more.
       - series:
-          series_title: SciFi Chicken
+          by_title: SciFi Chicken
 
   - path: library
     name: Library
