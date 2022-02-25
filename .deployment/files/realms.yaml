@@ -6,24 +6,21 @@
 path: ''
 name: 'Welcome to Tobira'
 blocks:
-  - text:
-      body: |
-        Tobira is a video portal for [Opencast](https://opencast.org). Note that it is still
-        in its *early* stages of development! Everything you see here might still change.
-        Tobira is fully open source and you can find its code
-        [here](https://github.com/elan-ev/tobira).
+  - text: |
+      Tobira is a video portal for [Opencast](https://opencast.org). Note that it is still
+      in its *early* stages of development! Everything you see here might still change.
+      Tobira is fully open source and you can find its code
+      [here](https://github.com/elan-ev/tobira).
 
-        What you are seeing here is the most recent development build (the latest `master`)
-        containing test data, mostly consisting of all CC-licensed videos from [the old video
-        portal of the ETHZ](https://video.ethz.ch/). The page structure is also borrowed
-        from that video portal. All of this is just to have meaningful data in a test
-        deployment. This is not a real website of the ETHZ!
+      What you are seeing here is the most recent development build (the latest `master`)
+      containing test data, mostly consisting of all CC-licensed videos from [the old video
+      portal of the ETHZ](https://video.ethz.ch/). The page structure is also borrowed
+      from that video portal. All of this is just to have meaningful data in a test
+      deployment. This is not a real website of the ETHZ!
 
   - series:
-      title: The best open cat videos
       series_uuid: 94ecfeed-aa7d-4a5c-912b-58b5891543f4
   - series:
-      title: Opencast Summit 2021
       series_uuid: ec912549-5bac-4f97-b72a-ace807047aca
 children:
   - path: 'campus'
@@ -177,16 +174,15 @@ children:
   - path: 'conferences'
     name: 'Conferences'
     blocks:
-      - text:
-          body: |
-            Videos from conferences our university hosts. Like:
-            - Gamescom
-            - ComicCon
-            - BlizzCon
-            - recon
-            - RustFest.eu
+      - text: |
+          Videos from conferences our university hosts. Like:
+          - Gamescom
+          - ComicCon
+          - BlizzCon
+          - recon
+          - RustFest.eu
 
-            But of course, the most bestest evar conference is the Opencast summit!
+          But of course, the most bestest evar conference is the Opencast summit!
     children:
       - path: '2020'
         name: '2020'
@@ -1278,9 +1274,8 @@ children:
   - path: 'lectures'
     name: 'Lectures'
     blocks:
-      - text:
-          body: |
-            Watch the recordings of all your favorite lectures! Knowledge at your fingertips.
+      - text: |
+          Watch the recordings of all your favorite lectures! Knowledge at your fingertips.
     children:
       - path: 'd-arch'
         name: 'D-ARCH'

@@ -39,13 +39,9 @@ struct Realm {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 enum Block {
-    Text {
-        #[serde(default)]
-        title: Option<String>,
-        body: String,
-    },
+    Title(String),
+    Text(String),
     Series {
-        title: Option<String>,
         series_uuid: Option<String>,
         series_title: Option<String>,
     }
@@ -142,12 +138,8 @@ impl DummyBlocks {
                 *idx = (*idx + 1) % series.len();
 
                 Box::new([
-                    Block::Text {
-                        title: None,
-                        body: DUMMY_TEXT.into(),
-                    },
+                    Block::Text(DUMMY_TEXT.into()),
                     Block::Series {
-                        title: None,
                         series_title: None,
                         series_uuid: Some(uuid)
                     },
@@ -160,14 +152,21 @@ impl DummyBlocks {
 impl Block {
     async fn insert(&self, realm_id: i64, index: usize, db: &impl GenericClient) -> Result<()> {
         match self {
-            Block::Text { title, body } => {
+            Block::Title(title) => {
                 let query = "
-                    insert into blocks (realm_id, type, index, title, text_content)
-                    values ($1, 'text', $2, $3, $4)
+                    insert into blocks (realm_id, type, index, text_content)
+                    values ($1, 'title', $2, $3)
                 ";
-                db.execute(query, &[&realm_id, &(index as i16), title, body]).await?;
+                db.execute(query, &[&realm_id, &(index as i16), title]).await?;
             }
-            Block::Series { title, series_title, series_uuid } => {
+            Block::Text(text) => {
+                let query = "
+                    insert into blocks (realm_id, type, index, text_content)
+                    values ($1, 'text', $2, $3)
+                ";
+                db.execute(query, &[&realm_id, &(index as i16), text]).await?;
+            }
+            Block::Series { series_title, series_uuid } => {
                 // Obtain the series ID
                 let series_id = match (series_title, series_uuid) {
                     (Some(title), None) => {
@@ -194,10 +193,10 @@ impl Block {
                 // Insert block
                 let query = "
                     insert into blocks
-                    (realm_id, type, index, title, series_id, videolist_layout, videolist_order)
-                    values ($1, 'series', $2, $3, $4, 'grid', 'new_to_old')
+                    (realm_id, type, index, series_id, videolist_layout, videolist_order, show_title)
+                    values ($1, 'series', $2, $3, 'grid', 'new_to_old', true)
                 ";
-                db.execute(query, &[&realm_id, &(index as i16), title, &series_id]).await?;
+                db.execute(query, &[&realm_id, &(index as i16), &series_id]).await?;
             }
         }
 
