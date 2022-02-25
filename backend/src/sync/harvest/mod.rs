@@ -1,6 +1,6 @@
 use std::{
     cmp::min,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use hyper::http::status::StatusCode;
@@ -54,6 +54,7 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
 
 
         // Send request to API and deserialize data.
+        let before = Instant::now();
         let req = client.send(
             sync_status.harvested_until,
             config.preferred_harvest_size.into(),
@@ -78,6 +79,12 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
 
         // Communication with Opencast succeeded: reset backoff time.
         backoff = INITIAL_BACKOFF;
+        debug!(
+            "Received {} KiB ({} items) from the harvest API (in {:.2?})",
+            body.len() / 1024,
+            harvest_data.items.len(),
+            before.elapsed(),
+        );
 
         if harvest_data.includes_items_until == sync_status.harvested_until {
             bail!("Opencast's harvest response has 'includesItemsUntil' == 'since'. This means \
@@ -136,6 +143,7 @@ async fn store_in_db(
     sync_status: &SyncStatus,
     db: &impl GenericClient,
 ) -> Result<()> {
+    let before = Instant::now();
     let mut upserted_events = 0;
     let mut removed_events = 0;
     let mut upserted_series = 0;
@@ -248,11 +256,12 @@ async fn store_in_db(
     } else {
         info!(
             "Harvest outcome: upserted {} events, upserted {} series, \
-                removed {} events, removed {} series",
+                removed {} events, removed {} series (in {:.2?})",
             upserted_events,
             upserted_series,
             removed_events,
             removed_series,
+            before.elapsed(),
         );
     }
 
