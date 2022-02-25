@@ -170,6 +170,7 @@ impl ThemeConfig {
         add!("--grey97" => hsl!("grey", 0.97));
         add!("--grey95" => hsl!("grey", 0.95));
         add!("--grey92" => hsl!("grey", 0.92));
+        add!("--grey86" => hsl!("grey", 0.86));
         add!("--grey80" => hsl!("grey", 0.80));
         add!("--grey65" => hsl!("grey", 0.65));
         add!("--grey40" => hsl!("grey", 0.40));
