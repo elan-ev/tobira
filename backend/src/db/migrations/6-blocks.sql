@@ -37,7 +37,22 @@ create table blocks (
 
     -- Enforce several constraints
     unique(realm_id, index),
-    constraint index_positive check (index >= 0)
+    constraint index_positive check (index >= 0),
+
+    constraint title_block_has_fields check (type <> 'title' or (
+        text_content is not null
+    )),
+    constraint text_block_has_fields check (type <> 'text' or (
+        text_content is not null
+    )),
+    constraint series_block_has_fields check (type <> 'series' or (
+        videolist_layout is not null and
+        videolist_order is not null and
+        show_title is not null
+    )),
+    constraint video_block_has_fields check (type <> 'video' or (
+        show_title is not null
+    ))
 );
 
 -- Blocks are almost always looked up by realm ID.
