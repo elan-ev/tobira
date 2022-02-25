@@ -175,6 +175,7 @@ impl Block {
                             .await?;
                         if rows.is_empty() {
                             warn!("Series with title '{}' not found! Skipping.", title);
+                            return Ok(());
                         }
                         rows[0].get::<_, i64>(0)
                     }
@@ -184,6 +185,7 @@ impl Block {
                             .await?;
                         if rows.is_empty() {
                             warn!("Series with UUID '{}' not found! Skipping.", uuid);
+                            return Ok(());
                         }
                         rows[0].get::<_, i64>(0)
                     }
