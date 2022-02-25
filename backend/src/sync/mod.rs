@@ -23,7 +23,7 @@ pub(crate) async fn run(daemon: bool, config: &Config) -> Result<()> {
 
     // Harvest continiously.
     let db_connection = db.get().await?;
-    harvest::run(daemon, &config.sync, &**db_connection).await?;
+    harvest::run(daemon, &config.sync, db_connection).await?;
 
     Ok(())
 }

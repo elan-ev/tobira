@@ -50,7 +50,7 @@ pub(crate) struct DbConfig {
 pub(crate) type Db = deadpool_postgres::ClientWrapper;
 
 /// Type alias for an owned DB connection.
-type DbConnection = deadpool::managed::Object<deadpool_postgres::Manager>;
+pub(crate) type DbConnection = deadpool::managed::Object<deadpool_postgres::Manager>;
 
 
 /// Creates a new database connection pool.
