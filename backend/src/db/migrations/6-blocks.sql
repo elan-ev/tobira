@@ -32,7 +32,12 @@ create table blocks (
     video_id bigint references events on delete set null,
 
     -- Blocks with a "natural title"
-    show_title boolean
+    show_title boolean,
+
+
+    -- Enforce several constraints
+    unique(realm_id, index),
+    constraint index_positive check (index >= 0)
 );
 
 -- Blocks are almost always looked up by realm ID.
