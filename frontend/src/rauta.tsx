@@ -95,7 +95,12 @@ export type RouterLib = {
 
 /** Helper class: a list of listeners */
 class Listeners<F extends (...args: any) => any> {
-    public list: { listener: F }[] = [];
+    private list: { listener: F }[] = [];
+
+    /** Pass through the iterable protocol to the inner list */
+    public [Symbol.iterator]() {
+        return this.list[Symbol.iterator]();
+    }
 
     /** Adds a new listener. Returns function to remove that listener again. */
     public add(listener: F): () => void {
@@ -212,7 +217,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
 
     const shouldPreventNav = (listeners: Listeners<BeforeNavListener>): boolean => {
-        for (const { listener } of listeners.list) {
+        for (const { listener } of listeners) {
             if (listener() === "prevent-nav") {
                 return true;
             }
