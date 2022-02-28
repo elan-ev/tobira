@@ -87,6 +87,7 @@ const query = graphql`
             created
             updated
             duration
+            thumbnail
             canWrite
             series { title, ...SeriesBlockSeriesData }
             tracks { uri flavor mimetype resolution }
@@ -129,7 +130,12 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
-        <Player tracks={tracks as Track[]} title={title} duration={event.duration} />
+        <Player
+            tracks={tracks as Track[]}
+            title={title}
+            duration={event.duration}
+            coverImage={event.thumbnail}
+        />
         <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
         {description !== null && <TextBlock content={description} />}
         <table css={{

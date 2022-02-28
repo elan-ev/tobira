@@ -1,7 +1,12 @@
 import React, { Suspense } from "react";
+import { useTranslation } from "react-i18next";
+
 import { MAIN_PADDING } from "../../layout/Root";
+import { Spinner } from "../Spinner";
+
 
 export type PlayerProps = {
+    coverImage: string | null;
     title: string;
     duration: number;
     tracks: Track[];
@@ -42,7 +47,7 @@ export const Player: React.FC<PlayerProps> = props => {
                 margin: `0 -${MAIN_PADDING}px`,
             },
         }}>
-            <Suspense fallback={<PlayerFallback />}>
+            <Suspense fallback={<PlayerFallback image={props.coverImage} />}>
                 {usePaella ? <LoadPaellaPlayer {...props} /> : <LoadPlyrPlayer {...props} />}
             </Suspense>
         </div>
@@ -52,4 +57,41 @@ export const Player: React.FC<PlayerProps> = props => {
 const LoadPaellaPlayer = React.lazy(() => import(/* webpackChunkName: "paella" */ "./Paella"));
 const LoadPlyrPlayer = React.lazy(() => import(/* webpackChunkName: "plyr" */ "./Plyr"));
 
-const PlayerFallback: React.FC = () => <div>Player loading...</div>;
+const PlayerFallback: React.FC<{ image: string | null }> = ({ image }) => {
+    const { t } = useTranslation();
+
+    return (
+        <div css={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        }}>
+            {image && <img src={image} css={{
+                objectFit: "cover",
+                opacity: 0.5,
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+            }} />}
+            <div css={{
+                zIndex: 10,
+                padding: 16,
+                minWidth: 140,
+                textAlign: "center",
+                borderRadius: 4,
+                backgroundColor: "rgba(255 255 255 / 50%)",
+                border: "1px solid rgba(255 255 255 / 15%)",
+                "@supports(backdrop-filter: none)": {
+                    backgroundColor: "rgba(255 255 255 / 10%)",
+                    backdropFilter: "blur(5px)",
+                },
+            }}>
+                <Spinner size={32} />
+                <div css={{ marginTop: 8 }}>{t("loading")}</div>
+            </div>
+        </div>
+    );
+};
