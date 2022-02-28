@@ -87,34 +87,44 @@ export const SeriesBlock: React.FC<Props> = ({
     activeEventId,
 }) => (
     <div css={{
-        position: "relative",
-        display: "flex",
-        flexWrap: "wrap",
-        marginTop: 18,
+        marginTop: 24,
         padding: 12,
-        paddingTop: 32,
+        paddingTop: 0,
         backgroundColor: "var(--grey95)",
         borderRadius: 10,
-        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-            justifyContent: "center",
-        },
     }}>
-        {(title || showTitle) && <h2 css={{
-            position: "absolute",
-            backgroundColor: "var(--accent-color)",
-            color: "white",
-            padding: "2px 12px",
-            borderRadius: 10,
-            transform: "translateY(-50%)",
-            top: 0,
-            fontSize: 19,
-            marginLeft: 8,
-        }}>{title ?? series.title}</h2>}
-        {series.events.map(event => <GridTile
-            key={event.id}
-            active={event.id === activeEventId}
-            {...{ realmPath, event }}
-        />)}
+        {/* This is a way to make this fancy title. It's not perfect, but it works fine. */}
+        {(title || showTitle) && <div css={{ maxHeight: 50 }}>
+            <h2 title={title ?? series.title} css={{
+                backgroundColor: "var(--accent-color)",
+                color: "white",
+                padding: "4px 12px",
+                borderRadius: 10,
+                transform: "translateY(-50%)",
+                fontSize: 19,
+                margin: "0 8px",
+
+                display: "-webkit-inline-box",
+                WebkitBoxOrient: "vertical",
+                textOverflow: "ellipsis",
+                WebkitLineClamp: 3,
+                overflow: "hidden",
+                lineHeight: 1.3,
+            }}>{title ?? series.title}</h2>
+        </div>}
+        <div css={{
+            display: "flex",
+            flexWrap: "wrap",
+            [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                justifyContent: "center",
+            },
+        }}>
+            {series.events.map(event => <GridTile
+                key={event.id}
+                active={event.id === activeEventId}
+                {...{ realmPath, event }}
+            />)}
+        </div>
     </div>
 );
 
