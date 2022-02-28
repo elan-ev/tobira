@@ -62,31 +62,19 @@ type Mutation {
   """
     Adds a text block to a realm.
 
-    The new block will be inserted at the given index,
-    i.e. it will be at that position after the insert.
-    Or, if you prefer to think about it this way:
-    It will be inserted before the block that currently sits
-    at that index.
+    See `addTitleBlock` for more details.
   """
   addTextBlock(realm: ID!, index: Int!, block: NewTextBlock!): Realm!
   """
     Adds a series block to a realm.
 
-    The new block will be inserted at the given index,
-    i.e. it will be at that position after the insert.
-    Or, if you prefer to think about it this way:
-    It will be inserted before the block that currently sits
-    at that index.
+    See `addTitleBlock` for more details.
   """
   addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
   """
     Adds a video block to a realm.
 
-    The new block will be inserted at the given index,
-    i.e. it will be at that position after the insert.
-    Or, if you prefer to think about it this way:
-    It will be inserted before the block that currently sits
-    at that index.
+    See `addTitleBlock` for more details.
   """
   addVideoBlock(realm: ID!, index: Int!, block: NewVideoBlock!): Realm!
   "Swap two blocks."

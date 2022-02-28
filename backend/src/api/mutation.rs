@@ -78,11 +78,7 @@ impl Mutation {
 
     /// Adds a text block to a realm.
     ///
-    /// The new block will be inserted at the given index,
-    /// i.e. it will be at that position after the insert.
-    /// Or, if you prefer to think about it this way:
-    /// It will be inserted before the block that currently sits
-    /// at that index.
+    /// See `addTitleBlock` for more details.
     async fn add_text_block(
         realm: Id,
         index: i32,
@@ -94,11 +90,7 @@ impl Mutation {
 
     /// Adds a series block to a realm.
     ///
-    /// The new block will be inserted at the given index,
-    /// i.e. it will be at that position after the insert.
-    /// Or, if you prefer to think about it this way:
-    /// It will be inserted before the block that currently sits
-    /// at that index.
+    /// See `addTitleBlock` for more details.
     async fn add_series_block(
         realm: Id,
         index: i32,
@@ -110,11 +102,7 @@ impl Mutation {
 
     /// Adds a video block to a realm.
     ///
-    /// The new block will be inserted at the given index,
-    /// i.e. it will be at that position after the insert.
-    /// Or, if you prefer to think about it this way:
-    /// It will be inserted before the block that currently sits
-    /// at that index.
+    /// See `addTitleBlock` for more details.
     async fn add_video_block(
         realm: Id,
         index: i32,
