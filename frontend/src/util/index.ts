@@ -136,21 +136,31 @@ export const currentRef = <T>(ref: React.RefObject<T>): T => (
 );
 
 /**
- * Registers `callback` to be called when the current route/page is about to be
- * unloaded due to browser reloads, a tab being closed, or the route being
- * changed. The callback can call `prevent` to prevent the unload from
- * happening.
+ * Whenever the current route/page is about to be unloaded (due to browser
+ * reloads, a tab being closed, or the route being changed), AND when
+ * `shouldBlock` or `shouldBlock()` is `true`, then the navigation attempt is
+ * blocked. That means that the user is asked whether they really want to
+ * leave. The user can still say "yes" and proceed with the navigation.
  */
-export const useBeforeUnload = (callback: (prevent: () => void) => void) => {
-    useBeforeunload(event => callback(() => event.preventDefault()));
-
+export const useNavBlocker = (shouldBlock: boolean | (() => boolean)) => {
     const { t } = useTranslation();
     const router = useRouter();
+
+    const shouldBlockImpl = typeof shouldBlock === "boolean"
+        ? () => shouldBlock
+        : shouldBlock;
+
+    useBeforeunload(event => {
+        if (shouldBlockImpl()) {
+            event.preventDefault();
+        }
+    });
+
     useEffect(() => (
-        router.listenBeforeNav(prevent => callback(() => {
-            if (!window.confirm(t("general.leave-page-confirmation"))) {
-                prevent();
-            }
-        }))
+        router.listenBeforeNav(() => (
+            shouldBlockImpl() && !window.confirm(t("general.leave-page-confirmation"))
+                ? "prevent-nav"
+                : undefined
+        ))
     ));
 };

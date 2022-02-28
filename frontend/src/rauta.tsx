@@ -117,7 +117,7 @@ class Listeners<F extends (...args: any) => any> {
 }
 
 export type AtNavListener = () => void;
-export type BeforeNavListener = (preventNavigation: () => void) => void;
+export type BeforeNavListener = () => "prevent-nav" | undefined;
 
 /** Obtained via `useRouter`, allowing you to perform some routing-related actions. */
 export interface RouterControl {
@@ -213,9 +213,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
     const shouldPreventNav = (listeners: Listeners<BeforeNavListener>): boolean => {
         for (const { listener } of listeners.list) {
-            let prevent = false;
-            listener(() => prevent = true);
-            if (prevent) {
+            if (listener() === "prevent-nav") {
                 return true;
             }
         }

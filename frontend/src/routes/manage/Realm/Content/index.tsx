@@ -19,7 +19,7 @@ import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
 import { EditBlock } from "./Block";
 import { Breadcrumbs } from "../../../../ui/Breadcrumbs";
-import { useBeforeUnload } from "../../../../util";
+import { useNavBlocker } from "../../../../util";
 
 
 export const PATH = "/~manage/realm/content";
@@ -108,12 +108,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
 
 
     const hasUnsavedChanges = blocks.some(block => block.editMode);
-
-    useBeforeUnload(prevent => {
-        if (hasUnsavedChanges) {
-            prevent();
-        }
-    });
+    useNavBlocker(hasUnsavedChanges);
 
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
