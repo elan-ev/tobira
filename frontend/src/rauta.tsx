@@ -99,6 +99,8 @@ class Listeners<F extends (...args: any) => any> {
 
     /** Adds a new listener. Returns function to remove that listener again. */
     public add(listener: F): () => void {
+        // We wrap this listener in a new object to be able to find this exact
+        // instance in the list later in order to remove it.
         const obj = { listener };
         this.list.push(obj);
         return () => {
@@ -229,7 +231,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
         return {
             isTransitioning: context.isTransitioning,
-            push: (url: string) => push(url),
+            push,
             replace: (url: string) => replace(url, window.scrollY),
             listenAtNav: (listener: AtNavListener) =>
                 context.listeners.atNav.add(listener),
@@ -261,9 +263,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
         const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
             // If the caller specified a handler, we will call it first.
-            if (onClick) {
-                onClick(e);
-            }
+            onClick?.(e);
 
             // We only want to react to simple mouse clicks.
             if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.button !== 0) {
