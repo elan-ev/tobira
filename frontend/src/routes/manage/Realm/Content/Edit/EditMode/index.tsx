@@ -57,8 +57,7 @@ export const EditMode: React.FC<EditModeProps> = props => {
                 TextBlock: () => <EditTextBlock block={block} />,
                 SeriesBlock: () => <EditSeriesBlock block={block} />,
                 VideoBlock: () => <EditVideoBlock block={block} />,
-                "%other": () => bug("unknown block type"),
-            })}
+            }, () => bug("unknown block type"))}
         </FormProvider>
     </EditModeFormContext.Provider>;
 };
