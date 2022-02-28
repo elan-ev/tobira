@@ -238,6 +238,7 @@ manage:
       heading-root: Edit <1>homepage</1> content
 
       add: Insert a new block here
+      add-title: Insert title here
       add-text: Insert text here
       add-series: Insert a series here
       add-video: Insert a video here
@@ -247,7 +248,8 @@ manage:
       edit: Edit block
       remove: Remove block
 
-      title: Block title
+      title:
+        content: You can put your title here.
 
       text:
         content: You can put your text content here. You can even use Markdown.
@@ -273,8 +275,12 @@ manage:
           none: No event selected
           invalid: Please select an event
 
-      save: Save changes
-      cancel: Discard changes
+      titled:
+        title: Title
+        show-title: Show title
+
+      save: Save
+      cancel: Discard
 
       cancel-warning: Your changes have not yet been saved!
 

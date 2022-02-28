@@ -1,6 +1,6 @@
 use futures::StreamExt;
 use pin_utils::pin_mut;
-use juniper::{GraphQLInputObject, GraphQLObject, Nullable};
+use juniper::{GraphQLInputObject, GraphQLObject};
 
 use crate::{api::{Context, Id, err::{ApiResult, invalid_input}}, dbargs};
 use crate::db::types::Key;
@@ -8,6 +8,29 @@ use super::{BlockValue, VideoListLayout, VideoListOrder, super::realm::Realm};
 
 
 impl BlockValue {
+    pub(crate) async fn add_title(
+        realm: Id,
+        index: i32,
+        block: NewTitleBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        context.require_moderator()?;
+
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
+
+        context.db
+            .execute(
+                "insert into blocks (realm_id, index, type, text_content) \
+                    values ($1, $2, 'title', $3)",
+                &[&realm, &index, &block.content],
+            )
+            .await?;
+
+        Realm::load_by_key(realm, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+    }
+
     pub(crate) async fn add_text(
         realm: Id,
         index: i32,
@@ -20,9 +43,9 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks (realm_id, index, type, title, text_content) \
-                    values ($1, $2, 'text', $3, $4)",
-                &[&realm, &index, &block.title, &block.content],
+                "insert into blocks (realm_id, index, type, text_content) \
+                    values ($1, $2, 'text', $3)",
+                &[&realm, &index, &block.content],
             )
             .await?;
 
@@ -47,9 +70,9 @@ impl BlockValue {
         context.db
             .execute(
                 "insert into blocks \
-                    (realm_id, index, type, title, series_id, videolist_order, videolist_layout) \
+                    (realm_id, index, type, series_id, videolist_order, videolist_layout, show_title) \
                     values ($1, $2, 'series', $3, $4, $5, $6)",
-                &[&realm, &index, &block.title, &series, &block.order, &block.layout],
+                &[&realm, &index, &series, &block.order, &block.layout, &block.show_title],
             )
             .await?;
 
@@ -73,9 +96,9 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks (realm_id, index, type, title, video_id) \
+                "insert into blocks (realm_id, index, type, video_id, show_title) \
                     values ($1, $2, 'video', $3, $4)",
-                &[&realm, &index, &block.title, &event],
+                &[&realm, &index, &event, &block.show_title],
             )
             .await?;
 
@@ -201,25 +224,25 @@ impl BlockValue {
         Ok(realm)
     }
 
-    pub(crate) async fn update(
+    pub(crate) async fn update_title(
         id: Id,
-        set: UpdateBlock,
+        set: UpdateTitleBlock,
         context: &Context,
     ) -> ApiResult<BlockValue> {
         let updated_block = context.db(context.require_moderator()?)
             .query_one(
                 &format!(
                     "update blocks set \
-                        title = case $2::boolean when true then $3 else title end \
+                        text_content = coalesce($2, text_content) \
                         where id = $1 \
+                        and type = 'title' \
                         returning {}",
                     Self::COL_NAMES,
                 ),
                 &[
                     &id.key_for(Id::BLOCK_KIND)
                         .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &!set.title.is_implicit_null(),
-                    &set.title.some(),
+                    &set.content,
                 ],
             )
             .await?;
@@ -236,8 +259,7 @@ impl BlockValue {
             .query_one(
                 &format!(
                     "update blocks set \
-                        title = case $2::boolean when true then $3 else title end, \
-                        text_content = coalesce($4, text_content) \
+                        text_content = coalesce($2, text_content) \
                         where id = $1 \
                         and type = 'text' \
                         returning {}",
@@ -246,8 +268,6 @@ impl BlockValue {
                 &[
                     &id.key_for(Id::BLOCK_KIND)
                         .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &!set.title.is_implicit_null(),
-                    &set.title.some(),
                     &set.content,
                 ],
             )
@@ -265,10 +285,10 @@ impl BlockValue {
             .query_one(
                 &format!(
                     "update blocks set \
-                        title = case $2::boolean when true then $3 else title end, \
-                        series_id = coalesce($4, series_id), \
-                        videolist_layout = coalesce($5, videolist_layout), \
-                        videolist_order = coalesce($6, videolist_order) \
+                        series_id = coalesce($2, series_id), \
+                        videolist_layout = coalesce($3, videolist_layout), \
+                        videolist_order = coalesce($4, videolist_order), \
+                        show_title = coalesce($5, show_title) \
                         where id = $1 \
                         and type = 'series' \
                         returning {}",
@@ -277,14 +297,13 @@ impl BlockValue {
                 &[
                     &id.key_for(Id::BLOCK_KIND)
                         .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &!set.title.is_implicit_null(),
-                    &set.title.some(),
                     &set.series.map(
                         |series| series.key_for(Id::SERIES_KIND)
                             .ok_or_else(|| invalid_input!("`set.series` does not refer to a series"))
                     ).transpose()?,
                     &set.layout,
                     &set.order,
+                    &set.show_title,
                 ],
             )
             .await?;
@@ -301,8 +320,8 @@ impl BlockValue {
             .query_one(
                 &format!(
                     "update blocks set \
-                        title = case $2::boolean when true then $3 else title end, \
-                        video_id = coalesce($4, video_id) \
+                        video_id = coalesce($2, video_id), \
+                        show_title = coalesce($3, show_title) \
                         where id = $1 \
                         and type = 'video' \
                         returning {}",
@@ -311,12 +330,11 @@ impl BlockValue {
                 &[
                     &id.key_for(Id::BLOCK_KIND)
                         .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &!set.title.is_implicit_null(),
-                    &set.title.some(),
                     &set.event.map(
                         |series| series.key_for(Id::EVENT_KIND)
                             .ok_or_else(|| invalid_input!("`set.event` does not refer to a event"))
                     ).transpose()?,
+                    &set.show_title,
                 ],
             )
             .await?;
@@ -364,49 +382,52 @@ impl BlockValue {
 
 
 #[derive(GraphQLInputObject)]
+pub(crate) struct NewTitleBlock {
+    content: String,
+}
+
+#[derive(GraphQLInputObject)]
 pub(crate) struct NewTextBlock {
-    title: Option<String>,
     content: String,
 }
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeriesBlock {
-    title: Option<String>,
     series: Id,
+    show_title: bool,
     layout: VideoListLayout,
     order: VideoListOrder,
 }
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewVideoBlock {
-    title: Option<String>,
     event: Id,
+    show_title: bool,
 }
 
 
 #[derive(GraphQLInputObject)]
-pub(crate) struct UpdateBlock {
-    title: Nullable<String>,
+pub(crate) struct UpdateTitleBlock {
+    content: Option<String>,
 }
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateTextBlock {
-    title: Nullable<String>,
     content: Option<String>,
 }
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateSeriesBlock {
-    title: Nullable<String>,
     series: Option<Id>,
+    show_title: Option<bool>,
     layout: Option<VideoListLayout>,
     order: Option<VideoListOrder>,
 }
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateVideoBlock {
-    title: Nullable<String>,
     event: Option<Id>,
+    show_title: Option<bool>,
 }
 
 

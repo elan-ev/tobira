@@ -15,10 +15,11 @@ use crate::{
 mod mutations;
 
 pub(crate) use mutations::{
+    NewTitleBlock,
     NewTextBlock,
     NewSeriesBlock,
     NewVideoBlock,
-    UpdateBlock,
+    UpdateTitleBlock,
     UpdateTextBlock,
     UpdateSeriesBlock,
     UpdateVideoBlock,
@@ -27,7 +28,7 @@ pub(crate) use mutations::{
 
 
 /// A `Block`: a UI element that belongs to a realm.
-#[graphql_interface(Context = Context, for = [TextBlock, SeriesBlock, VideoBlock])]
+#[graphql_interface(Context = Context, for = [TitleBlock, TextBlock, SeriesBlock, VideoBlock])]
 pub(crate) trait Block {
     // To avoid code duplication, all the shared data is stored in `SharedData`
     // and only a `shared` method is mandatory. All other method (in particular,
@@ -41,14 +42,13 @@ pub(crate) trait Block {
     fn index(&self) -> i32 {
         self.shared().index
     }
-    fn title(&self) -> Option<&str> {
-        self.shared().title.as_deref()
-    }
 }
 
 #[derive(Debug, Clone, Copy, FromSql)]
 #[postgres(name = "block_type")]
 pub(crate) enum BlockType {
+    #[postgres(name = "title")]
+    Title,
     #[postgres(name = "text")]
     Text,
     #[postgres(name = "series")]
@@ -81,7 +81,33 @@ pub(crate) enum VideoListOrder {
 pub(crate) struct SharedData {
     pub(crate) id: Id,
     pub(crate) index: i32,
-    pub(crate) title: Option<String>,
+}
+
+pub(crate) struct TitleBlock {
+    pub(crate) shared: SharedData,
+    pub(crate) content: String,
+}
+
+impl Block for TitleBlock {
+    fn shared(&self) -> &SharedData {
+        &self.shared
+    }
+}
+
+/// A block just showing some title.
+#[graphql_object(Context = Context, impl = BlockValue)]
+impl TitleBlock {
+    fn content(&self) -> &str {
+        &self.content
+    }
+
+    fn id(&self) -> Id {
+        self.shared().id
+    }
+
+    fn index(&self) -> i32 {
+        self.shared().index
+    }
 }
 
 pub(crate) struct TextBlock {
@@ -109,15 +135,12 @@ impl TextBlock {
     fn index(&self) -> i32 {
         self.shared().index
     }
-
-    fn title(&self) -> Option<&str> {
-        self.shared().title.as_deref()
-    }
 }
 
 pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
     pub(crate) series: Option<Id>,
+    pub(crate) show_title: bool,
     pub(crate) layout: VideoListLayout,
     pub(crate) order: VideoListOrder,
 }
@@ -139,6 +162,10 @@ impl SeriesBlock {
         }
     }
 
+    fn show_title(&self) -> bool {
+        self.show_title
+    }
+
     fn layout(&self) -> VideoListLayout {
         self.layout
     }
@@ -154,15 +181,12 @@ impl SeriesBlock {
     fn index(&self) -> i32 {
         self.shared().index
     }
-
-    fn title(&self) -> Option<&str> {
-        self.shared().title.as_deref()
-    }
 }
 
 pub(crate) struct VideoBlock {
     pub(crate) shared: SharedData,
     pub(crate) event: Option<Id>,
+    pub(crate) show_title: bool,
 }
 
 impl Block for VideoBlock {
@@ -182,16 +206,16 @@ impl VideoBlock {
         }
     }
 
+    fn show_title(&self) -> bool {
+        self.show_title
+    }
+
     fn id(&self) -> Id {
         self.shared().id
     }
 
     fn index(&self) -> i32 {
         self.shared().index
-    }
-
-    fn title(&self) -> Option<&str> {
-        self.shared().title.as_deref()
     }
 }
 
@@ -218,32 +242,38 @@ impl BlockValue {
     }
 
     const COL_NAMES: &'static str
-        = "id, type, index, title, text_content, series_id, videolist_layout, videolist_order, video_id";
+        = "id, type, index, text_content, series_id, videolist_layout, videolist_order, video_id, show_title";
 
     fn from_row(row: Row) -> ApiResult<Self> {
         let ty: BlockType = row.get(1);
         let shared = SharedData {
             id: Id::block(row.get(0)),
             index: row.get::<_, i16>(2).into(),
-            title: row.get(3),
         };
 
         let block = match ty {
+            BlockType::Title => TitleBlock {
+                shared,
+                content: get_type_dependent(&row, 3, "title", "text_content")?,
+            }.into(),
+
             BlockType::Text => TextBlock {
                 shared,
-                content: get_type_dependent(&row, 4, "text", "text_content")?,
+                content: get_type_dependent(&row, 3, "text", "text_content")?,
             }.into(),
 
             BlockType::Series => SeriesBlock {
                 shared,
-                series: row.get::<_, Option<Key>>(5).map(Id::series),
-                layout: get_type_dependent(&row, 6, "videolist", "videolist_layout")?,
-                order: get_type_dependent(&row, 7, "videolist", "videolist_order")?,
+                series: row.get::<_, Option<Key>>(4).map(Id::series),
+                layout: get_type_dependent(&row, 5, "videolist", "videolist_layout")?,
+                order: get_type_dependent(&row, 6, "videolist", "videolist_order")?,
+                show_title: get_type_dependent(&row, 8, "titled", "show_title")?,
             }.into(),
 
             BlockType::Video => VideoBlock {
                 shared,
-                event: row.get::<_, Option<Key>>(8).map(Id::event),
+                event: row.get::<_, Option<Key>>(7).map(Id::event),
+                show_title: get_type_dependent(&row, 8, "titled", "show_title")?,
             }.into(),
         };
 
@@ -277,6 +307,17 @@ impl fmt::Display for BlockTypeError {
 }
 
 impl Error for BlockTypeError {}
+
+// TODO? What about video?
+impl TryFrom<BlockValue> for TitleBlock {
+    type Error = BlockTypeError;
+    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
+        match block {
+            BlockValue::TitleBlock(b) => Ok(b),
+            _ => Err(BlockTypeError),
+        }
+    }
+}
 
 impl TryFrom<BlockValue> for TextBlock {
     type Error = BlockTypeError;

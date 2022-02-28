@@ -20,6 +20,10 @@ type Event implements Node {
   series: Series
 }
 
+input NewTitleBlock {
+  content: String!
+}
+
 type EventPageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
@@ -46,39 +50,37 @@ type Mutation {
   "Remove a realm from the tree."
   removeRealm(id: ID!): RemovedRealm!
   """
-    Adds a text block to a realm.
+    Adds a title block to a realm.
 
     The new block will be inserted at the given index,
     i.e. it will be at that position after the insert.
     Or, if you prefer to think about it this way:
     It will be inserted before the block that currently sits
     at that index.
+  """
+  addTitleBlock(realm: ID!, index: Int!, block: NewTitleBlock!): Realm!
+  """
+    Adds a text block to a realm.
+
+    See `addTitleBlock` for more details.
   """
   addTextBlock(realm: ID!, index: Int!, block: NewTextBlock!): Realm!
   """
     Adds a series block to a realm.
 
-    The new block will be inserted at the given index,
-    i.e. it will be at that position after the insert.
-    Or, if you prefer to think about it this way:
-    It will be inserted before the block that currently sits
-    at that index.
+    See `addTitleBlock` for more details.
   """
   addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
   """
     Adds a video block to a realm.
 
-    The new block will be inserted at the given index,
-    i.e. it will be at that position after the insert.
-    Or, if you prefer to think about it this way:
-    It will be inserted before the block that currently sits
-    at that index.
+    See `addTitleBlock` for more details.
   """
   addVideoBlock(realm: ID!, index: Int!, block: NewVideoBlock!): Realm!
   "Swap two blocks."
   swapBlocksByIndex(realm: ID!, indexA: Int!, indexB: Int!): Realm!
-  "Update a block's data."
-  updateBlock(id: ID!, set: UpdateBlock!): Block!
+  "Update a title block's data."
+  updateTitleBlock(id: ID!, set: UpdateTitleBlock!): Block!
   "Update a text block's data."
   updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
   "Update a series block's data."
@@ -90,7 +92,6 @@ type Mutation {
 }
 
 input NewTextBlock {
-  title: String
   content: String!
 }
 
@@ -107,7 +108,6 @@ type TextBlock implements Block {
   content: String!
   id: ID!
   index: Int!
-  title: String
 }
 
 "An opaque cursor used for pagination"
@@ -183,21 +183,21 @@ type RemovedRealm {
 "A block just showing the list of videos in an Opencast series"
 type SeriesBlock implements Block {
   series: Series
+  showTitle: Boolean!
   layout: VideoListLayout!
   order: VideoListOrder!
   id: ID!
   index: Int!
-  title: String
 }
 
 input NewVideoBlock {
-  title: String
   event: ID!
+  showTitle: Boolean!
 }
 
 input UpdateSeriesBlock {
-  title: String
   series: ID
+  showTitle: Boolean
   layout: VideoListLayout
   order: VideoListOrder
 }
@@ -224,7 +224,6 @@ input EventSortOrder {
 interface Block {
   id: ID!
   index: Int!
-  title: String
 }
 
 input UpdateRealm {
@@ -233,9 +232,13 @@ input UpdateRealm {
   pathSegment: String
 }
 
+input UpdateTitleBlock {
+  content: String
+}
+
 input UpdateVideoBlock {
-  title: String
   event: ID
+  showTitle: Boolean
 }
 
 enum EventSortColumn {
@@ -248,16 +251,23 @@ enum EventSortColumn {
 "A block for presenting a single Opencast event"
 type VideoBlock implements Block {
   event: Event
+  showTitle: Boolean!
   id: ID!
   index: Int!
-  title: String
 }
 
 input NewSeriesBlock {
-  title: String
   series: ID!
+  showTitle: Boolean!
   layout: VideoListLayout!
   order: VideoListOrder!
+}
+
+"A block just showing some title."
+type TitleBlock implements Block {
+  content: String!
+  id: ID!
+  index: Int!
 }
 
 "A node with a globally unique ID. Mostly useful for relay."
@@ -283,10 +293,6 @@ type User {
     Exactly one of `first` and `last` must be set!
   """
   myVideos(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}, first: Int, after: Cursor, last: Int, before: Cursor): EventConnection!
-}
-
-input UpdateBlock {
-  title: String
 }
 
 type Track {
@@ -352,7 +358,6 @@ type Realm implements Node {
 }
 
 input UpdateTextBlock {
-  title: String
   content: String
 }
 

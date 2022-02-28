@@ -7,7 +7,7 @@
 
 select prepare_randomized_ids('block');
 
-create type block_type as enum ('text', 'series', 'video');
+create type block_type as enum ('title', 'text', 'series', 'video');
 create type video_list_layout as enum ('horizontal', 'vertical', 'grid');
 create type video_list_order as enum ('new_to_old', 'old_to_new');
 
@@ -17,9 +17,8 @@ create table blocks (
     realm_id bigint not null references realms on delete cascade,
     type block_type not null,
     index smallint not null,
-    title text,
 
-    -- Text blocks
+    -- Title and text blocks
     text_content text,
 
     -- Series blocks
@@ -30,7 +29,30 @@ create table blocks (
     videolist_order video_list_order,
 
     -- Video blocks
-    video_id bigint references events on delete set null
+    video_id bigint references events on delete set null,
+
+    -- Blocks with a "natural title"
+    show_title boolean,
+
+
+    -- Enforce several constraints
+    unique(realm_id, index),
+    constraint index_positive check (index >= 0),
+
+    constraint title_block_has_fields check (type <> 'title' or (
+        text_content is not null
+    )),
+    constraint text_block_has_fields check (type <> 'text' or (
+        text_content is not null
+    )),
+    constraint series_block_has_fields check (type <> 'series' or (
+        videolist_layout is not null and
+        videolist_order is not null and
+        show_title is not null
+    )),
+    constraint video_block_has_fields check (type <> 'video' or (
+        show_title is not null
+    ))
 );
 
 -- Blocks are almost always looked up by realm ID.

@@ -3,7 +3,6 @@ import { graphql, useFragment } from "react-relay";
 import ReactMarkdown from "react-markdown";
 import type { Options } from "react-markdown";
 
-import { BlockContainer, Title } from ".";
 import { TextBlockData$key } from "./__generated__/TextBlockData.graphql";
 
 
@@ -14,17 +13,15 @@ const fragment = graphql`
 `;
 
 type ByQueryProps = {
-    title?: string;
     fragRef: TextBlockData$key;
 };
 
-export const TextBlockByQuery: React.FC<ByQueryProps> = ({ title, fragRef }) => {
+export const TextBlockByQuery: React.FC<ByQueryProps> = ({ fragRef }) => {
     const { content } = useFragment(fragment, fragRef);
-    return <TextBlock {...{ content, title }} />;
+    return <TextBlock {...{ content }} />;
 };
 
 type Props = {
-    title?: string;
     content: string;
 };
 
@@ -83,17 +80,14 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
     />,
 };
 
-export const TextBlock: React.FC<Props> = ({ title, content }) => (
-    <BlockContainer>
-        <Title title={title} />
-        <div css={{
-            maxWidth: 1200,
-            "& > *:first-of-type": { marginTop: 0 },
-            "& > *:last-of-type": { marginBottom: 0 },
-        }}>
-            <ReactMarkdown allowedElements={ALLOWED_MARKDOWN_TAGS} components={MARKDOWN_COMPONENTS}>
-                {content}
-            </ReactMarkdown>
-        </div>
-    </BlockContainer>
+export const TextBlock: React.FC<Props> = ({ content }) => (
+    <div css={{
+        maxWidth: 1200,
+        "& > *:first-of-type": { marginTop: 0 },
+        "& > *:last-of-type": { marginBottom: 0 },
+    }}>
+        <ReactMarkdown allowedElements={ALLOWED_MARKDOWN_TAGS} components={MARKDOWN_COMPONENTS}>
+            {content}
+        </ReactMarkdown>
+    </div>
 );

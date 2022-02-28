@@ -4,62 +4,54 @@
 name: ""
 path: ""
 blocks:
-  - text:
-      body: |
-        **Welcome to Tobira!**
+  - text: |
+      **Welcome to Tobira!**
 
-        Tobira is a video portal for [Opencast](https://opencast.org). Note that it is still
-        in its *early* stages of development! Everything you see here might still change.
-        Tobira is fully open source and you can find its source
-        code [here](https://github.com/elan-ev/tobira).
+      Tobira is a video portal for [Opencast](https://opencast.org). Note that it is still
+      in its *early* stages of development! Everything you see here might still change.
+      Tobira is fully open source and you can find its source
+      code [here](https://github.com/elan-ev/tobira).
 
-        What you are seeing here is the most recent development build (the latest `master`)
-        containing a bunch of dummy data. All text and videos you can see here are just for
-        testing.
+      What you are seeing here is the most recent development build (the latest `master`)
+      containing a bunch of dummy data. All text and videos you can see here are just for
+      testing.
 
   - series:
-      title: The best cat videos
-      series_title: Cats
+      by_title: Cats
 
 children:
   - path: campus
     name: Campus
     blocks:
-      - text:
-          body: Videos about life on the campus, the canteen and more.
+      - text: Videos about life on the campus, the canteen and more.
       - series:
-          title: Campus Introduction
-          series_title: SciFi Chicken
+          by_title: SciFi Chicken
 
   - path: library
     name: Library
     blocks:
-      - text:
-          body: Videos about life on the campus, the library, and more.
+      - text: Videos about life on the campus, the library, and more.
 
   - path: conferences
     name: Conferences
     blocks:
-      - text:
-          body: |
-            Videos from conferences our university hosts. Like:
-            - Gamescom
-            - ComicCon
-            - BlizzCon
-            - recon
-            - RustFest.eu
+      - text: |
+          Videos from conferences our university hosts. Like:
+          - Gamescom
+          - ComicCon
+          - BlizzCon
+          - recon
+          - RustFest.eu
 
   - path: events
     name: Events
     blocks:
-      - text:
-          body: This university has very nice events. So very nice.
+      - text: This university has very nice events. So very nice.
 
   - path: lectures
     name: Lectures
     blocks:
-      - text:
-          body: Here you can see all lecture recordings, separated by departments.
+      - text: Here you can see all lecture recordings, separated by departments.
     children:
       - path: math
         name: Mathematics

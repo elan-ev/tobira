@@ -33,11 +33,11 @@ begin
             'containing a bunch of dummy data. All text and videos you can see here are just for '
             'testing.'
         );
-    insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order)
-        values (0, 'series', 1, series_university_highlights, 'grid', 'new_to_old');
+    insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order, show_title)
+        values (0, 'series', 1, series_university_highlights, 'grid', 'new_to_old', true);
 
-    insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order)
-        values (events_realm_id, 'series', 1, series_christmas, 'grid', 'new_to_old');
+    insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order, show_title)
+        values (events_realm_id, 'series', 1, series_christmas, 'grid', 'new_to_old', true);
 
 
     -- Add a bunch of events/videos
@@ -243,8 +243,8 @@ begin
         values ('Lectures', 0, 'lectures')
         returning id into root;
 
-    insert into blocks (realm_id, type, index, title, text_content)
-        values (root, 'text', '0', 'Description', 'Here you can see all lecture recordings.');
+    insert into blocks (realm_id, type, index, text_content)
+        values (root, 'text', '0', 'Here you can see all lecture recordings.');
 
     perform department(root, 'Mathematics');
     perform department(root, 'Computer Science');
@@ -267,8 +267,8 @@ begin
         values (name, lectures_root, replace(lower(name), ' ', '-'))
         returning id into root;
 
-    insert into blocks (realm_id, type, index, title, text_content)
-        values (root, 'text', '0', 'Description', format(
+    insert into blocks (realm_id, type, index, text_content)
+        values (root, 'text', '0', format(
             'Hello to the department of %s! We are very proud of what we have achieved in '
                 || 'this department and there is a lot of interesting stuff around here. '
                 || 'Take a look at our swell videos. And do not forget to like, subscribe '

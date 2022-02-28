@@ -39,18 +39,17 @@ struct Realm {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 enum Block {
-    Text {
-        #[serde(default)]
-        title: Option<String>,
-        body: String,
-    },
-    Series {
-        title: Option<String>,
-        series_uuid: Option<String>,
-        series_title: Option<String>,
-    }
+    Title(String),
+    Text(String),
+    Series(SeriesBlock),
 }
 
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
+enum SeriesBlock {
+    ByUuid(String),
+    ByTitle(String),
+}
 
 pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     let file = File::open(&args.input_file)?;
@@ -142,15 +141,8 @@ impl DummyBlocks {
                 *idx = (*idx + 1) % series.len();
 
                 Box::new([
-                    Block::Text {
-                        title: None,
-                        body: DUMMY_TEXT.into(),
-                    },
-                    Block::Series {
-                        title: None,
-                        series_title: None,
-                        series_uuid: Some(uuid)
-                    },
+                    Block::Text(DUMMY_TEXT.into()),
+                    Block::Series(SeriesBlock::ByUuid(uuid)),
                 ].into_iter())
             }
         }
@@ -160,44 +152,52 @@ impl DummyBlocks {
 impl Block {
     async fn insert(&self, realm_id: i64, index: usize, db: &impl GenericClient) -> Result<()> {
         match self {
-            Block::Text { title, body } => {
+            Block::Title(title) => {
                 let query = "
-                    insert into blocks (realm_id, type, index, title, text_content)
-                    values ($1, 'text', $2, $3, $4)
+                    insert into blocks (realm_id, type, index, text_content)
+                    values ($1, 'title', $2, $3)
                 ";
-                db.execute(query, &[&realm_id, &(index as i16), title, body]).await?;
+                db.execute(query, &[&realm_id, &(index as i16), title]).await?;
             }
-            Block::Series { title, series_title, series_uuid } => {
+            Block::Text(text) => {
+                let query = "
+                    insert into blocks (realm_id, type, index, text_content)
+                    values ($1, 'text', $2, $3)
+                ";
+                db.execute(query, &[&realm_id, &(index as i16), text]).await?;
+            }
+            Block::Series(series) => {
                 // Obtain the series ID
-                let series_id = match (series_title, series_uuid) {
-                    (Some(title), None) => {
+                let series_id = match series {
+                    SeriesBlock::ByTitle(title) => {
                         let rows = db
                             .query("select id from series where title = $1", &[title])
                             .await?;
                         if rows.is_empty() {
                             warn!("Series with title '{}' not found! Skipping.", title);
+                            return Ok(());
                         }
                         rows[0].get::<_, i64>(0)
                     }
-                    (None, Some(uuid)) => {
+                    SeriesBlock::ByUuid(uuid) => {
                         let rows = db
                             .query("select id from series where opencast_id = $1", &[uuid])
                             .await?;
                         if rows.is_empty() {
                             warn!("Series with UUID '{}' not found! Skipping.", uuid);
+                            return Ok(());
                         }
                         rows[0].get::<_, i64>(0)
                     }
-                    _ => bail!("exactly one of `series_title` and `series_uuid` has to be set"),
                 };
 
                 // Insert block
                 let query = "
                     insert into blocks
-                    (realm_id, type, index, title, series_id, videolist_layout, videolist_order)
-                    values ($1, 'series', $2, $3, $4, 'grid', 'new_to_old')
+                    (realm_id, type, index, series_id, videolist_layout, videolist_order, show_title)
+                    values ($1, 'series', $2, $3, 'grid', 'new_to_old', true)
                 ";
-                db.execute(query, &[&realm_id, &(index as i16), title, &series_id]).await?;
+                db.execute(query, &[&realm_id, &(index as i16), &series_id]).await?;
             }
         }
 

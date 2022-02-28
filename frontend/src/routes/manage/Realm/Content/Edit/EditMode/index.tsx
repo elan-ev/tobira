@@ -1,20 +1,18 @@
-import React, { useRef } from "react";
+import React, { useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { FiX, FiCheck } from "react-icons/fi";
-import { useForm, useFormContext, FormProvider } from "react-hook-form";
+import { useForm, useFormContext, FormProvider, UnpackNestedValue } from "react-hook-form";
 
-import type {
-    EditModeRealmData$key,
-} from "./__generated__/EditModeRealmData.graphql";
-import { currentRef, match } from "../../../../../../util";
-import { Input } from "../../../../../../ui/Input";
-import { Button } from "../../util";
-import { ButtonGroup } from "..";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
-import { EditTextBlock, TextFormData } from "./Text";
-import { EditSeriesBlock, SeriesFormData } from "./Series";
-import { EditVideoBlock, VideoFormData } from "./Video";
+import { Button } from "../../../../../../ui/Button";
+import { currentRef, match } from "../../../../../../util";
+import { bug } from "../../../../../../util/err";
+import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
+import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
+import { EditTitleBlock } from "./Title";
+import { EditTextBlock } from "./Text";
+import { EditSeriesBlock } from "./Series";
+import { EditVideoBlock } from "./Video";
 
 
 type EditModeProps = {
@@ -26,117 +24,113 @@ type EditModeProps = {
     onError?: (error: Error) => void;
 };
 
-type BlockFormData = (
-    { type: "TextBlock" } & TextFormData
-) | (
-    { type: "SeriesBlock" } & SeriesFormData
-) | (
-    { type: "VideoBlock" } & VideoFormData
-);
+type EditModeFormContextContent =
+    Omit<EditModeProps, "realm"> & { realm: EditModeFormRealmData$key };
 
-export type EditModeFormData = {
-    title: string;
-} & BlockFormData;
+const EditModeFormContext = React.createContext<EditModeFormContextContent | null>(null);
 
-type ProcessFormData = {
-    title: string | null;
-} & BlockFormData;
-
-export type EditModeRef = {
-    save: (
-        id: string,
-        data: ProcessFormData,
-        onCompleted?: () => void,
-        onError?: (error: Error) => void,
-    ) => void;
-    create: (
-        realm: string,
-        index: number,
-        data: ProcessFormData,
-        onCompleted?: () => void,
-        onError?: (error: Error) => void,
-    ) => void;
-};
-
-export const EditMode: React.FC<EditModeProps> = ({
-    realm: realmRef,
-    index,
-    onSave,
-    onCancel,
-    onCompleted,
-    onError,
-}) => {
-    const { t } = useTranslation();
-
-    const { id: realmId, blocks } = useFragment(graphql`
+export const EditMode: React.FC<EditModeProps> = props => {
+    const { realm: realmRef, index } = props;
+    const result = useFragment(graphql`
         fragment EditModeRealmData on Realm {
-            id
             blocks {
+                # Querying only the type and the fragments bugs out Relay type generation
                 id
-                title
                 __typename
-                ... on TextBlock { ... TextEditModeBlockData }
-                ... on SeriesBlock { ... SeriesEditModeBlockData }
-                ... on VideoBlock { ... VideoEditModeBlockData }
+                ... on TitleBlock { ...TitleEditModeBlockData }
+                ... on TextBlock { ...TextEditModeBlockData }
+                ... on SeriesBlock { ...SeriesEditModeBlockData }
+                ... on VideoBlock { ...VideoEditModeBlockData }
             }
+            ...EditModeFormRealmData
         }
     `, realmRef);
-    const block = blocks[index];
-    const { id, title, __typename: type } = block;
+    const block = result.blocks[index];
+    const { __typename: type } = block;
+
+    const form = useForm();
+
+    return <EditModeFormContext.Provider value={{ ...props, realm: result }}>
+        <FormProvider {...form}>
+            {match(type, {
+                TitleBlock: () => <EditTitleBlock block={block} />,
+                TextBlock: () => <EditTextBlock block={block} />,
+                SeriesBlock: () => <EditSeriesBlock block={block} />,
+                VideoBlock: () => <EditVideoBlock block={block} />,
+            }, () => bug("unknown block type"))}
+        </FormProvider>
+    </EditModeFormContext.Provider>;
+};
 
 
-    const form = useForm<EditModeFormData>({
-        defaultValues: {
-            type: type as "TextBlock" | "SeriesBlock" | "VideoBlock",
-        },
-    });
-    const editModeRef = useRef<EditModeRef>(null);
+type EditModeFormProps<T> = {
+    save: (config: {
+        variables: {
+            id: string;
+            set: UnpackNestedValue<T>;
+        };
+        onCompleted?: () => void;
+        onError?: (error: Error) => void;
+    }) => void;
+    create: (config: {
+        variables: {
+            realm: string;
+            index: number;
+            block: UnpackNestedValue<T>;
+        };
+        onCompleted?: () => void;
+        onError?: (error: Error) => void;
+    }) => void;
+};
+
+export const EditModeForm = <T extends object, >(
+    { save, create, children }: React.PropsWithChildren<EditModeFormProps<T>>,
+) => {
+    const { realm: realmRef, index, onSave, onCancel, onCompleted, onError }
+        = useContext(EditModeFormContext) ?? bug("missing context provider");
+
+
+    const { id: realm, blocks } = useFragment(graphql`
+        fragment EditModeFormRealmData on Realm {
+            id
+            blocks { id }
+        }
+    `, realmRef);
+    const { id } = blocks[index];
+
+
+    const form = useFormContext<T>();
 
     const onSubmit = form.handleSubmit(data => {
-        // Empty titles should set the field to `null`
-        // This is to avoid empty headings when rendering the block.
-        // In the future we might want to check this at render site,
-        // and we also might want more sophisticated checks
-        // (like "all whitespace").
-        const processData = { ...data, title: data.title || null };
-
         onSave?.();
 
         if (id.startsWith("cl")) {
-            currentRef(editModeRef).create(
-                realmId,
-                index,
-                processData,
+            create({
+                variables: {
+                    realm,
+                    index,
+                    block: data,
+                },
                 onCompleted,
                 onError,
-            );
+            });
         } else {
-            currentRef(editModeRef).save(
-                id,
-                processData,
+            save({
+                variables: {
+                    id,
+                    set: data,
+                },
                 onCompleted,
                 onError,
-            );
+            });
         }
     });
 
 
-    return <FormProvider<EditModeFormData> {...form}>
+    return <FormProvider<T> {...form}>
         <form onSubmit={onSubmit}>
+            {children}
             <EditModeButtons onCancel={onCancel} />
-            <h2 css={{ margin: "16px 0" }}>
-                <Input
-                    css={{ display: "block" }}
-                    placeholder={t("manage.realm.content.title")}
-                    defaultValue={title ?? ""}
-                    {...form.register("title")}
-                />
-            </h2>
-            {match(block.__typename, {
-                "TextBlock": () => <EditTextBlock ref={editModeRef} block={block} />,
-                "SeriesBlock": () => <EditSeriesBlock ref={editModeRef} block={block} />,
-                "VideoBlock": () => <EditVideoBlock ref={editModeRef} block={block} />,
-            })}
         </form>
     </FormProvider>;
 };
@@ -153,9 +147,13 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
 
     const { formState: { isDirty } } = useFormContext();
 
-    return <ButtonGroup css={{ marginTop: -24 }}>
+    return <div css={{
+        marginTop: 8,
+        display: "flex",
+        justifyContent: "space-between",
+    }}>
         <Button
-            title={t("manage.realm.content.cancel")}
+            kind="danger"
             onClick={() => {
                 if (isDirty) {
                     currentRef(modalRef).open();
@@ -164,13 +162,13 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
                 }
             }}
         >
-            <FiX />
+            {t("manage.realm.content.cancel")}
         </Button>
         <Button
+            kind="happy"
             type="submit"
-            title={t("manage.realm.content.save")}
         >
-            <FiCheck />
+            {t("manage.realm.content.save")}
         </Button>
         <ConfirmationModal
             buttonContent={t("manage.realm.content.cancel")}
@@ -179,5 +177,5 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
         >
             <p>{t("manage.realm.content.cancel-warning")}</p>
         </ConfirmationModal>
-    </ButtonGroup>;
+    </div>;
 };

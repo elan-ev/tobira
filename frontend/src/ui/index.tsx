@@ -110,3 +110,12 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
 export const CenteredContent: React.FC = ({ children }) => (
     <div css={{ margin: "0 auto", maxWidth: 600 }}>{children}</div>
 );
+
+type TitleProps = {
+    title: string;
+    className?: string;
+};
+
+export const Title: React.FC<TitleProps> = ({ title, className }) => (
+    <h2 className={className} css={{ margin: "16px 0" }}>{title}</h2>
+);

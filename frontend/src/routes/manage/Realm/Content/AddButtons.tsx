@@ -4,6 +4,7 @@ import { graphql, useFragment, commitLocalUpdate, useRelayEnvironment } from "re
 import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
 import {
     FiPlus,
+    FiAlignLeft,
     FiType,
     FiGrid,
     FiFilm,
@@ -63,8 +64,11 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
         >
             <FiPlus />
         </span>
-        <Button title={t("manage.realm.content.add-text")} onClick={() => addBlock("Text")}>
+        <Button title={t("manage.realm.content.add-title")} onClick={() => addBlock("Title")}>
             <FiType />
+        </Button>
+        <Button title={t("manage.realm.content.add-text")} onClick={() => addBlock("Text")}>
+            <FiAlignLeft />
         </Button>
         <Button
             title={t("manage.realm.content.add-series")}

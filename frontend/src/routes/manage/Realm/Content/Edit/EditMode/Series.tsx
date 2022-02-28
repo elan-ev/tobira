@@ -1,8 +1,13 @@
-import React, { useContext, useImperativeHandle } from "react";
+import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useFormContext } from "react-hook-form";
 
+import { Card } from "../../../../../../ui/Card";
+import { Select } from "../../../../../../ui/Input";
+import { ContentManageQueryContext } from "../..";
+import { EditModeForm } from ".";
+import { Heading, ShowTitle } from "./util";
 import type {
     VideoListOrder,
     VideoListLayout,
@@ -17,14 +22,9 @@ import {
 import {
     SeriesEditCreateMutation,
 } from "./__generated__/SeriesEditCreateMutation.graphql";
-import { bug } from "../../../../../../util/err";
-import { Card } from "../../../../../../ui/Card";
-import { Select } from "../../../../../../ui/Input";
-import { ContentManageQueryContext } from "../..";
-import type { EditModeRef, EditModeFormData } from ".";
 
 
-export type SeriesFormData = {
+type SeriesFormData = {
     series: string;
     order: VideoListOrder;
     layout: VideoListLayout;
@@ -34,142 +34,113 @@ type EditSeriesBlockProps = {
     block: SeriesEditModeBlockData$key;
 };
 
-export const EditSeriesBlock = React.forwardRef<EditModeRef, EditSeriesBlockProps>(
-    ({ block: blockRef }, ref) => {
+export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRef }) => {
 
-        const { series: allSeries } = useFragment(graphql`
-            fragment SeriesEditModeSeriesData on Query {
-                series { id title }
+    const { series: allSeries } = useFragment(graphql`
+        fragment SeriesEditModeSeriesData on Query {
+            series { id title }
+        }
+    `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
+
+    const { series, showTitle, order, layout } = useFragment(graphql`
+        fragment SeriesEditModeBlockData on SeriesBlock {
+            series { id }
+            showTitle
+            order
+            layout
+        }
+    `, blockRef);
+
+
+    const [save] = useMutation<SeriesEditSaveMutation>(graphql`
+        mutation SeriesEditSaveMutation($id: ID!, $set: UpdateSeriesBlock!) {
+            updateSeriesBlock(id: $id, set: $set) {
+                ... BlocksBlockData
             }
-        `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
+        }
+    `);
 
-        const { order, layout, series } = useFragment(graphql`
-            fragment SeriesEditModeBlockData on SeriesBlock {
-                order
-                layout
-                series { id }
+    const [create] = useMutation<SeriesEditCreateMutation>(graphql`
+        mutation SeriesEditCreateMutation($realm: ID!, $index: Int!, $block: NewSeriesBlock!) {
+            addSeriesBlock(realm: $realm, index: $index, block: $block) {
+                ... ContentManageRealmData
             }
-        `, blockRef);
+        }
+    `);
 
 
-        const [save] = useMutation<SeriesEditSaveMutation>(graphql`
-            mutation SeriesEditSaveMutation($id: ID!, $set: UpdateSeriesBlock!) {
-                updateSeriesBlock(id: $id, set: $set) {
-                    ... BlocksBlockData
-                    ... SeriesBlockData
-                }
-            }
-        `);
+    const { t } = useTranslation();
 
-        const [create] = useMutation<SeriesEditCreateMutation>(graphql`
-            mutation SeriesEditCreateMutation($realm: ID!, $index: Int!, $block: NewSeriesBlock!) {
-                addSeriesBlock(realm: $realm, index: $index, block: $block) {
-                    ... ContentManageRealmData
-                }
-            }
-        `);
+    const form = useFormContext<SeriesFormData>();
+    const { formState: { errors } } = form;
 
-        useImperativeHandle(ref, () => ({
-            save: (id, data, onCompleted, onError) => {
-                const { type: _type, ...set } = data.type === "SeriesBlock"
-                    ? data
-                    : bug("not a series block");
+    return <EditModeForm create={create} save={save}>
+        <Heading>{t("manage.realm.content.series.order.heading")}</Heading>
+        <label>
+            <input
+                type="radio"
+                value="NEW_TO_OLD"
+                defaultChecked={order === "NEW_TO_OLD"}
+                {...form.register("order")}
+            />
+            {t("manage.realm.content.series.order.new-to-old")}
+        </label><br />
+        <label>
+            <input
+                type="radio"
+                value="OLD_TO_NEW"
+                defaultChecked={order === "OLD_TO_NEW"}
+                {...form.register("order")}
+            />
+            {t("manage.realm.content.series.order.old-to-new")}
+        </label>
 
-                save({
-                    variables: { id, set },
-                    onCompleted,
-                    onError,
-                });
-            },
-            create: (realm, index, data, onCompleted, onError) => {
-                const { type: _type, ...block } = data.type === "SeriesBlock"
-                    ? data
-                    : bug("not a series block");
+        <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
+        <label>
+            <input
+                type="radio"
+                value="GRID"
+                defaultChecked={layout === "GRID"}
+                {...form.register("layout")}
+            />
+            {t("manage.realm.content.series.layout.grid")}
+        </label><br />
+        <label>
+            <input
+                type="radio"
+                value="HORIZONTAL"
+                defaultChecked={layout === "HORIZONTAL"}
+                {...form.register("layout")}
+            />
+            {t("manage.realm.content.series.layout.horizontal")}
+        </label><br />
+        <label>
+            <input
+                type="radio"
+                value="VERTICAL"
+                defaultChecked={layout === "VERTICAL"}
+                {...form.register("layout")}
+            />
+            {t("manage.realm.content.series.layout.vertical")}
+        </label>
 
-                create({
-                    variables: { realm, index, block },
-                    onCompleted,
-                    onError,
-                });
-            },
-        }));
-
-
-        const { t } = useTranslation();
-
-        const form = useFormContext<EditModeFormData>();
-        const { formState: { errors } } = form;
-
-        return <div css={{ "& > h3": {
-            marginTop: 8,
-            marginBottom: 4,
-        } }}>
-            <h3>{t("manage.realm.content.series.order.heading")}</h3>
-            <label>
-                <input
-                    type="radio"
-                    value="NEW_TO_OLD"
-                    defaultChecked={order === "NEW_TO_OLD"}
-                    {...form.register("order")}
-                />
-                {t("manage.realm.content.series.order.new-to-old")}
-            </label><br />
-            <label>
-                <input
-                    type="radio"
-                    value="OLD_TO_NEW"
-                    defaultChecked={order === "OLD_TO_NEW"}
-                    {...form.register("order")}
-                />
-                {t("manage.realm.content.series.order.old-to-new")}
-            </label>
-
-            <h3>{t("manage.realm.content.series.layout.heading")}</h3>
-            <label>
-                <input
-                    type="radio"
-                    value="GRID"
-                    defaultChecked={layout === "GRID"}
-                    {...form.register("layout")}
-                />
-                {t("manage.realm.content.series.layout.grid")}
-            </label><br />
-            <label>
-                <input
-                    type="radio"
-                    value="HORIZONTAL"
-                    defaultChecked={layout === "HORIZONTAL"}
-                    {...form.register("layout")}
-                />
-                {t("manage.realm.content.series.layout.horizontal")}
-            </label><br />
-            <label>
-                <input
-                    type="radio"
-                    value="VERTICAL"
-                    defaultChecked={layout === "VERTICAL"}
-                    {...form.register("layout")}
-                />
-                {t("manage.realm.content.series.layout.vertical")}
-            </label>
-
-            <h3>{t("manage.realm.content.series.series.heading")}</h3>
-            {"series" in errors && <div css={{ margin: "8px 0" }}>
-                <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
-            </div>}
-            <Select
-                css={{ maxWidth: "100%" }}
-                error={"series" in errors}
-                defaultValue={series?.id}
-                {...form.register("series", { required: true })}
-            >
-                <option value="" hidden>
-                    {t("manage.realm.content.series.series.none")}
-                </option>
-                {allSeries.map(({ id, title }) => (
-                    <option key={id} value={id}>{title}</option>
-                ))}
-            </Select>
-        </div>;
-    },
-);
+        <Heading>{t("manage.realm.content.series.series.heading")}</Heading>
+        {"series" in errors && <div css={{ margin: "8px 0" }}>
+            <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
+        </div>}
+        <Select
+            css={{ maxWidth: "100%" }}
+            error={"series" in errors}
+            defaultValue={series?.id}
+            {...form.register("series", { required: true })}
+        >
+            <option value="" hidden>
+                {t("manage.realm.content.series.series.none")}
+            </option>
+            {allSeries.map(({ id, title }) => (
+                <option key={id} value={id}>{title}</option>
+            ))}
+        </Select>
+        <ShowTitle showTitle={showTitle} />
+    </EditModeForm>;
+};

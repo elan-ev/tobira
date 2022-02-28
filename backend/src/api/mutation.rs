@@ -8,10 +8,11 @@ use super::{
         realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
         block::{
             BlockValue,
+            NewTitleBlock,
             NewTextBlock,
             NewSeriesBlock,
             NewVideoBlock,
-            UpdateBlock,
+            UpdateTitleBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
             UpdateVideoBlock,
@@ -59,13 +60,25 @@ impl Mutation {
         Realm::remove(id, context).await
     }
 
-    /// Adds a text block to a realm.
+    /// Adds a title block to a realm.
     ///
     /// The new block will be inserted at the given index,
     /// i.e. it will be at that position after the insert.
     /// Or, if you prefer to think about it this way:
     /// It will be inserted before the block that currently sits
     /// at that index.
+    async fn add_title_block(
+        realm: Id,
+        index: i32,
+        block: NewTitleBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        BlockValue::add_title(realm, index, block, context).await
+    }
+
+    /// Adds a text block to a realm.
+    ///
+    /// See `addTitleBlock` for more details.
     async fn add_text_block(
         realm: Id,
         index: i32,
@@ -77,11 +90,7 @@ impl Mutation {
 
     /// Adds a series block to a realm.
     ///
-    /// The new block will be inserted at the given index,
-    /// i.e. it will be at that position after the insert.
-    /// Or, if you prefer to think about it this way:
-    /// It will be inserted before the block that currently sits
-    /// at that index.
+    /// See `addTitleBlock` for more details.
     async fn add_series_block(
         realm: Id,
         index: i32,
@@ -93,11 +102,7 @@ impl Mutation {
 
     /// Adds a video block to a realm.
     ///
-    /// The new block will be inserted at the given index,
-    /// i.e. it will be at that position after the insert.
-    /// Or, if you prefer to think about it this way:
-    /// It will be inserted before the block that currently sits
-    /// at that index.
+    /// See `addTitleBlock` for more details.
     async fn add_video_block(
         realm: Id,
         index: i32,
@@ -117,9 +122,13 @@ impl Mutation {
         BlockValue::swap_by_index(realm, index_a, index_b, context).await
     }
 
-    /// Update a block's data.
-    async fn update_block(id: Id, set: UpdateBlock, context: &Context) -> ApiResult<BlockValue> {
-        BlockValue::update(id, set, context).await
+    /// Update a title block's data.
+    async fn update_title_block(
+        id: Id,
+        set: UpdateTitleBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
+        BlockValue::update_title(id, set, context).await
     }
 
     /// Update a text block's data.

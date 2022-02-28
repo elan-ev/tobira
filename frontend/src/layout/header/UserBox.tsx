@@ -377,6 +377,7 @@ const Logout: React.FC = () => {
                         // TODO: this is not great. It should happen only
                         // extremely rarely, but still, just showing a triangle
                         // is not very great for the uesr.
+                        // eslint-disable-next-line no-console
                         console.error("Error during logout: ", error);
                         setState("error");
                     });

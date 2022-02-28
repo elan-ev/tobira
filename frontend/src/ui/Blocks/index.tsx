@@ -5,6 +5,7 @@ import { BlocksData$key } from "./__generated__/BlocksData.graphql";
 import { BlocksRealmData$key } from "./__generated__/BlocksRealmData.graphql";
 import { BlocksBlockData$key } from "./__generated__/BlocksBlockData.graphql";
 import { match } from "../../util";
+import { TitleBlock } from "./Title";
 import { TextBlockByQuery } from "./Text";
 import { SeriesBlockFromBlock } from "./Series";
 import { VideoBlock } from "./Video";
@@ -53,36 +54,22 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
 
     const block = useFragment(graphql`
         fragment BlocksBlockData on Block {
-            title
+            id # TODO just querying for the type and fragments bugs out Relay's type generation
             __typename
+            ... on TitleBlock { ... TitleBlockData }
             ... on TextBlock { ... TextBlockData }
             ... on SeriesBlock { ... SeriesBlockData }
             ... on VideoBlock { ... VideoBlockData }
         }
     `, blockRef);
-    const { title, __typename } = block;
+    const { __typename } = block;
 
-    return <>
+    return <div>
         {match(__typename, {
-            "TextBlock": () => <TextBlockByQuery
-                title={title ?? undefined}
-                fragRef={block}
-            />,
-            "SeriesBlock": () => <SeriesBlockFromBlock
-                title={title ?? undefined}
-                realmPath={path}
-                fragRef={block}
-            />,
-            "VideoBlock": () => <VideoBlock
-                title={title ?? ""}
-                fragRef={block}
-            />,
+            "TitleBlock": () => <TitleBlock fragRef={block} />,
+            "TextBlock": () => <TextBlockByQuery fragRef={block} />,
+            "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} realmPath={path} />,
+            "VideoBlock": () => <VideoBlock fragRef={block} />,
         })}
-    </>;
+    </div>;
 };
-
-export const Title: React.FC<{ title?: string }> = ({ title }) => (
-    title === undefined ? null : <h2 css={{ margin: "16px 0" }}>{title}</h2>
-);
-
-export const BlockContainer: React.FC = ({ children }) => <div>{children}</div>;
