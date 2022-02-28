@@ -119,6 +119,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     </Item>
                 );
             } else {
+                // eslint-disable-next-line no-console
                 console.warn("Unknown search item type: ", item.__typename);
                 return null;
             }

@@ -85,6 +85,7 @@ module.exports = {
         "space-infix-ops": "warn",
         "space-unary-ops": "warn",
         "spaced-comment": "warn",
+        "no-console": "warn",
     },
     overrides: [{
         files: ["./*"],

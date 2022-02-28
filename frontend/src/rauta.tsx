@@ -119,6 +119,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     // Helper to log debug messages if `config.debug` is true.
     const debugLog = (...args: any[]) => {
         if (config.debug) {
+            // eslint-disable-next-line no-console
             console.debug("[rauta] ", ...args);
         }
     };

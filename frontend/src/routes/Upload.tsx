@@ -246,6 +246,7 @@ const onProgress = (
 
 const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
     // Log error once.
+    // eslint-disable-next-line no-console
     useEffect(() => console.error("Error uploading: ", error), [error]);
 
     const { t, i18n } = useTranslation();
@@ -725,6 +726,7 @@ const startUpload = async (
         // empty new media package.
         const userInfo = JSON.parse(await ocRequest(relayEnv, "/info/me.json"));
         delete userInfo.org;
+        // eslint-disable-next-line no-console
         console.debug("JWT user: ", userInfo);
 
         // Create a new media package to start the upload

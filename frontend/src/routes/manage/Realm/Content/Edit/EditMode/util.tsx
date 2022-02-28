@@ -18,8 +18,6 @@ export const ShowTitle: React.FC<ShowTitleProps> = ({ showTitle }) => {
     const { t } = useTranslation();
     const { register } = useFormContext<ShowTitleProps>();
 
-    console.log(showTitle);
-
     return <>
         <Heading>{t("manage.realm.content.titled.title")}</Heading>
         <label>
