@@ -8,7 +8,7 @@ import { PlayerProps } from ".";
 import { SPEEDS } from "./consts";
 
 
-export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
+const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
     const source = {
         type: "video" as const,
         title,
@@ -92,3 +92,5 @@ export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
         </div>
     </>;
 };
+
+export default PlyrPlayer;

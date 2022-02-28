@@ -7,7 +7,7 @@ import { SPEEDS } from "./consts";
 import { bug } from "../../util/err";
 
 
-export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration }) => {
+const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration }) => {
     const ref = useRef<HTMLDivElement>(null);
     const paella = useRef<Paella>();
 
@@ -188,3 +188,5 @@ const trackToPaellaSource = (t: Track): Mp4Source => {
         res: { w, h },
     };
 };
+
+export default PaellaPlayer;
