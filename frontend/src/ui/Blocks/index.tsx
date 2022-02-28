@@ -66,19 +66,10 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
 
     return <div>
         {match(__typename, {
-            "TitleBlock": () => <TitleBlock
-                fragRef={block}
-            />,
-            "TextBlock": () => <TextBlockByQuery
-                fragRef={block}
-            />,
-            "SeriesBlock": () => <SeriesBlockFromBlock
-                realmPath={path}
-                fragRef={block}
-            />,
-            "VideoBlock": () => <VideoBlock
-                fragRef={block}
-            />,
+            "TitleBlock": () => <TitleBlock fragRef={block} />,
+            "TextBlock": () => <TextBlockByQuery fragRef={block} />,
+            "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} realmPath={path} />,
+            "VideoBlock": () => <VideoBlock fragRef={block} />,
         })}
     </div>;
 };

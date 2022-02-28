@@ -94,9 +94,7 @@ export const EditModeForm = <T extends object, >(
     const { id: realm, blocks } = useFragment(graphql`
         fragment EditModeFormRealmData on Realm {
             id
-            blocks {
-                id
-            }
+            blocks { id }
         }
     `, realmRef);
     const { id } = blocks[index];
