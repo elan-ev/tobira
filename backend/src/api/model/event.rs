@@ -29,7 +29,7 @@ pub(crate) struct Event {
     duration: i32,
     created: DateTime<Utc>,
     updated: DateTime<Utc>,
-    creator: Option<String>,
+    creators: Option<Vec<String>>,
 
     thumbnail: Option<String>,
     tracks: Vec<Track>,
@@ -83,8 +83,8 @@ impl Event {
     fn updated(&self) -> DateTime<Utc> {
         self.updated
     }
-    fn creator(&self) -> &Option<String> {
-        &self.creator
+    fn creators(&self) -> &Option<Vec<String>> {
+        &self.creators
     }
 
     /// Whether the current user has write access to this event.
@@ -328,7 +328,7 @@ impl Event {
     }
 
     pub(crate) const COL_NAMES: &'static str = "id, series, opencast_id, title, description, \
-        duration, created, updated, creator, thumbnail, tracks, write_roles && $1 as can_write";
+        duration, created, updated, creators, thumbnail, tracks, write_roles && $1 as can_write";
 
     pub(crate) fn from_row(row: Row) -> Self {
         Self {
@@ -340,7 +340,7 @@ impl Event {
             duration: row.get(5),
             created: row.get(6),
             updated: row.get(7),
-            creator: row.get(8),
+            creators: row.get(8),
             thumbnail: row.get(9),
             tracks: row.get::<_, Vec<EventTrack>>(10).into_iter().map(Track::from).collect(),
             can_write: row.get(11),

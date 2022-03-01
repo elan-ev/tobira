@@ -84,7 +84,7 @@ const query = graphql`
         event(id: $id) {
             title
             description
-            creator
+            creators
             created
             updated
             duration
@@ -149,7 +149,8 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
             },
         }}>
             <tbody>
-                <MetaDatum label={t("video.creator")} value={event.creator} />
+                {/* TODO: improve upon join */}
+                <MetaDatum label={t("video.creator")} value={event.creators?.join(", ")} />
                 <MetaDatum label={t("video.created")} value={created} />
                 <MetaDatum label={t("video.updated")} value={updated} />
                 <MetaDatum label={t("video.part-of-series")} value={event.series?.title} />

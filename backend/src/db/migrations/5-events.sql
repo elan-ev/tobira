@@ -39,7 +39,7 @@ create table events (
     duration int not null, -- in ms
     created timestamp with time zone not null,
     updated timestamp with time zone not null,
-    creator text,
+    creators text[],
 
     -- Media
     thumbnail text, -- URL to an image
