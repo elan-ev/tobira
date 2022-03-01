@@ -106,13 +106,13 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
     } else if (error instanceof APIError) {
         // OK response, but it contained GraphQL errors.
         const kinds = new Set();
-        const causes: string[] = [];
+        const causes = new Set<string>();
         let notOurFault = true;
         for (const err of error.errors) {
             // Use a message fitting to the exact error key, if it is present.
             const translationKey = err.key ? `api-remote-errors.${err.key}` : null;
             if (translationKey && i18n.exists(translationKey)) {
-                causes.push(t(translationKey));
+                causes.add(t(translationKey));
             } else {
                 // Otherwise, derive an error message from the error kind. We
                 // use a set to make sure we only emit each kind-derived error
@@ -128,7 +128,7 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
                 // careful and handle this case, too.
                 if (!err.kind) {
                     notOurFault = false;
-                    causes.push(t("errors.unexpected-server-error"));
+                    causes.add(t("errors.unexpected-server-error"));
                 } else {
                     const msg = match(err.kind, {
                         INTERNAL_SERVER_ERROR: () => {
@@ -138,13 +138,13 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
                         INVALID_INPUT: () => t("errors.invalid-input"),
                         NOT_AUTHORIZED: () => t("errors.not-authorized"),
                     });
-                    causes.push(msg);
+                    causes.add(msg);
                 }
             }
         }
 
 
-        if (causes.length === 0) {
+        if (causes.size === 0) {
             // This should never happen?
             return {
                 causes: [t("errors.unexpected-server-error")],
@@ -153,7 +153,7 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
             };
         } else {
             return {
-                causes,
+                causes: Array.from(causes.keys()),
                 probablyOurFault: !notOurFault,
                 potentiallyInternetProblem: false,
             };
