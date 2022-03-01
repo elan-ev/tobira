@@ -12,6 +12,9 @@ rename: Rename
 this-field-is-required: This field is required.
 copy-to-clipboard: Copy to clipboard
 
+general:
+  leave-page-confirmation: Leave page? Changes you made may not be saved!
+
 errors:
   not-your-fault: This is likely not your fault. You can try again later.
   unexpected-response: 'Internal application error: unexpected response from server.'
@@ -207,7 +210,7 @@ manage:
       heading: Order of subpages
       sort-alphabetically-asc: Sort alphabetically ascending
       sort-alphabetically-desc: Sort alphabetically descending
-      order-manually: Manually order
+      order-manually: Manually order (new subpages will be added at the end)
       failed: Changing the order failed.
 
     danger-zone:

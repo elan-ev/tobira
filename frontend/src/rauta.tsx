@@ -34,9 +34,6 @@ export type MatchedRoute = {
 /** Creates the internal representation of the given route. */
 export const makeRoute = (match: (url: URL) => MatchedRoute | null): Route => ({ match });
 
-
-type Listener = () => void;
-
 /** Routing definition */
 interface Config {
     /** The fallback route. Used when no routes in `routes` match. */
@@ -96,22 +93,78 @@ export type RouterLib = {
     Router: (props: RouterProps) => JSX.Element;
 };
 
+/** Helper class: a list of listeners */
+class Listeners<F extends (...args: any) => any> {
+    private list: { listener: F }[] = [];
+
+    /** Pass through the iterable protocol to the inner list */
+    public [Symbol.iterator]() {
+        return this.list[Symbol.iterator]();
+    }
+
+    /** Adds a new listener. Returns function to remove that listener again. */
+    public add(listener: F): () => void {
+        // We wrap this listener in a new object to be able to find this exact
+        // instance in the list later in order to remove it.
+        const obj = { listener };
+        this.list.push(obj);
+        return () => {
+            this.list = this.list.filter(l => l !== obj);
+        };
+    }
+
+    /** Call all listeners with the same arguments. */
+    public callAll(args: Parameters<F>) {
+        for (const { listener } of this.list) {
+            listener(args);
+        }
+    }
+}
+
+export type AtNavListener = () => void;
+export type BeforeNavListener = () => "prevent-nav" | undefined;
+
 /** Obtained via `useRouter`, allowing you to perform some routing-related actions. */
 export interface RouterControl {
     /** Navigates to a new URI, just like creating a `<Link to={uri}>` and clicking it. */
     goto(uri: string): void;
 
     /**
+     * Like `history.pushState` (with fewer arguments): pushes a new history
+     * entry, but does NOT trigger rendering the correct route. So you rarely
+     * want this! Use `goto` instead.
+     */
+    push(uri: string): void;
+
+    /**
+     * Like `history.replaceState` (with fewer arguments): replaces the URL of
+     * the current history entry. Does NOT cause the router to render the
+     * appropriate route.
+     */
+    replace(uri: string): void;
+
+    /**
      * Adds a listener function that is called whenever a route transition is
-     * initiated. Neither the location nor the matched route has to change: the
-     * listener is also called when a navigation to the current location is
-     * initiated.
+     * about to be performed. Neither the location nor the matched route has to
+     * change: the listener is also called when a navigation to the current
+     * location is initiated.
      *
      * Returns a function that removes the listener. Call the function at an
      * appropriate time to prevent memory leaks.
      */
-    addListener(listener: Listener): () => void;
+    listenAtNav(listener: AtNavListener): () => void;
 
+    /**
+     * Like `listenAtNav`, but is called *before* the navigation is performed.
+     * Each listener has the ability to prevent navigation by calling the
+     * passed function.
+     */
+    listenBeforeNav(listener: BeforeNavListener): () => void;
+
+    /**
+     * Indicates whether we are currently transitioning to a new route. Intended
+     * to show a loading indicator.
+     */
     isTransitioning: boolean;
 }
 
@@ -124,6 +177,55 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         }
     };
 
+    /** What rauta stores in the history state */
+    type _State = {
+        /** The last scroll position of the route */
+        scrollY: number;
+        /** An increasing number. Is used to undo popstate events. */
+        index: number;
+    };
+
+    // We maintain an index in a variable here to know the "previous index" when
+    // we are reacting to "onPopState" events.
+    let currentIndex = 0;
+
+    // If the page is first loaded, we want to correctly set the state.
+    if (window.history.state?.index == null) {
+        window.history.replaceState({ index: 0, ...window.history.state }, "");
+    }
+    if (window.history.state?.scrollY == null) {
+        window.history.replaceState({ scrollY: window.scrollY, ...window.history.state }, "");
+    }
+
+    /** Wrapper for `history.pushState` */
+    const push = (url: string) => {
+        const index = currentIndex + 1;
+        window.history.pushState({ scrollY: 0, index }, "", url);
+        currentIndex = index;
+    };
+
+    /** Wrapper for `history.replaceState`. If `url` is `null`, it is not changed. */
+    const replace = (url: string | null, scrollY: number) => {
+        const state = {
+            scrollY,
+            index: currentIndex,
+        };
+        window.history.replaceState(state, "", url ?? undefined);
+    };
+
+    const updateScrollPos = () => replace(null, window.scrollY);
+
+
+    const shouldPreventNav = (listeners: Listeners<BeforeNavListener>): boolean => {
+        for (const { listener } of listeners) {
+            if (listener() === "prevent-nav") {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     const useRouterImpl = (caller: string): RouterControl => {
         const context = React.useContext(Context);
         if (context === null) {
@@ -131,27 +233,31 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         }
 
         return {
+            isTransitioning: context.isTransitioning,
+            push,
+            replace: (url: string) => replace(url, window.scrollY),
+            listenAtNav: (listener: AtNavListener) =>
+                context.listeners.atNav.add(listener),
+            listenBeforeNav: (listener: BeforeNavListener) =>
+                context.listeners.beforeNav.add(listener),
             goto: (uri: string): void => {
+                updateScrollPos();
+
+                if (shouldPreventNav(context.listeners.beforeNav)) {
+                    return;
+                }
+
                 const href = new URL(uri, document.baseURI).href;
                 const newRoute = matchRoute(href);
 
                 // When navigating to new routes, the scroll position always
                 // starts as 0 (i.e. the very top).
                 context.setActiveRoute({ route: newRoute, initialScroll: 0 });
-                history.pushState({ scrollY: 0 }, "", href);
+                push(href);
 
-                debugLog(`Setting active route for '${href}' to: `, newRoute);
+                debugLog(`Setting active route for '${href}' (index ${currentIndex}) `
+                    + "to: ", newRoute);
             },
-
-            addListener: (listener: () => void): () => void => {
-                const obj = { listener };
-                context.listeners.push(obj);
-                return () => {
-                    context.listeners = context.listeners.filter(l => l !== obj);
-                };
-            },
-
-            isTransitioning: context.isTransitioning,
         };
     };
 
@@ -159,6 +265,9 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         const router = useRouterImpl("<Link>");
 
         const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+            // If the caller specified a handler, we will call it first.
+            onClick?.(e);
+
             // We only want to react to simple mouse clicks.
             if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.button !== 0) {
                 return;
@@ -166,11 +275,6 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
             e.preventDefault();
             router.goto(to);
-
-            // If the caller specified a handler, we will call it as well.
-            if (onClick) {
-                onClick(e);
-            }
         };
 
         return <a href={to} onClick={handleClick} {...props}>{children}</a>;
@@ -201,7 +305,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     type ContextData = {
         activeRoute: ActiveRoute;
         setActiveRoute: (newRoute: ActiveRoute) => void;
-        listeners: { listener: Listener }[];
+        listeners: {
+            atNav: Listeners<AtNavListener>;
+            beforeNav: Listeners<BeforeNavListener>;
+        };
         isTransitioning: boolean;
     };
 
@@ -211,19 +318,20 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
     const Router = ({ initialRoute, children }: RouterProps) => {
-        const listeners = useRef<{ listener: Listener }[]>([]);
+        const listeners = useRef<ContextData["listeners"]>({
+            atNav: new Listeners(),
+            beforeNav: new Listeners(),
+        });
         const [activeRoute, setActiveRouteRaw] = useState<ActiveRoute>({
             route: initialRoute,
-            initialScroll: null, // We do not want to restore any scroll position
+            initialScroll: window.history.state?.scrollY ?? null,
         });
         const [isPending, startTransition] = useTransition();
 
         const setActiveRoute = (newRoute: ActiveRoute) => {
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
-                for (const { listener } of listeners.current) {
-                    listener();
-                }
+                listeners.current.atNav.callAll([]);
             });
         };
 
@@ -232,7 +340,53 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             // Whenever the user navigates forwards or backwards in the browser,
             // we have to render the corresponding route. We also restore the
             // scroll position which we store within the history state.
+            // Finally, this is used to prevent navigating away from a route if
+            // this is blocked.
+            let ignoreNextPop = false;
             const onPopState = (e: PopStateEvent) => {
+                // This is unfortunately necessary since we need to use `go()`
+                // below to undo some navigation. So we trigger this event ourselves.
+                // But that we want to ignore. This boolean variable is not 100%
+                // guaranteed to work as intended. There could be `popstate` events
+                // already queued or happening during this handler function. So we
+                // might ignore the wrong event. But we have not found any way to
+                // improve this situation, unfortunately. AND: we weren't able to
+                // trigger any weird behavior in practice, so that's good.
+                if (ignoreNextPop) {
+                    ignoreNextPop = false;
+                    return;
+                }
+
+                const newIndexRaw = e.state?.index;
+                const newIndex = typeof newIndexRaw === "number" ? newIndexRaw : null;
+                debugLog(`Handling popstate event to '${window.location.href}' `
+                    + `(indices ${currentIndex} -> ${newIndex})`);
+                if (shouldPreventNav(listeners.current.beforeNav)) {
+                    // We want to prevent the browser from going backwards or forwards.
+                    // Unfortunately, `e.preventDefault()` does nothing as the event is not
+                    // cancelable. So we can only undo the change, at least most of the time.
+                    if (newIndex != null) {
+                        // The state that was transitioned to was controlled by us (this will
+                        // be the case most of the time). We ignore a delta of 0
+                        const delta = currentIndex - newIndex;
+                        debugLog(`Undoing popstate event via go(${delta})`);
+                        ignoreNextPop = true;
+                        window.history.go(delta);
+                        return;
+                    } else {
+                        // There was no index stored in the state. This should almost never happen,
+                        // except if other JS code here uses the `history` API directly. If the
+                        // forward/backward buttons direct to a non-Tobira site, the "popstate"
+                        // event is not fired, but the onbeforeunload is triggered.
+                        //
+                        // If this happens, we do not `return` and actually render the correct
+                        // route. Otherwise we have a strange inconsistent app state.
+                        debugLog("Can't undo popstate event :-(");
+                    }
+                }
+
+                currentIndex = newIndex ?? 0;
+
                 const newRoute = matchRoute(window.location.href);
                 setActiveRoute({ route: newRoute, initialScroll: e.state?.scrollY });
                 debugLog(
@@ -242,23 +396,25 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 );
             };
 
-            // To actually get the correct scroll position into the history state, we
-            // unfortunately need to listen for scroll events. They can fire at a high
-            // rate, but `replaceState` is really fast to call. On jsbench.me the line
-            // could be executed 1 million times per second. And scroll events are usually
-            // not fired faster than `requestAnimationFrame`. So this should be fine!
-            const onScroll = () => {
-                history.replaceState({ scrollY: window.scrollY }, "");
-            };
-
             // To prevent the browser restoring any scroll position.
             history.scrollRestoration = "manual";
 
+            // We want an up2date scroll value in our history state. Always
+            // updating it in onScroll unfortunately lead to laggy behavior on
+            // some machines. So we are debouncing here.
+            let timer: ReturnType<typeof setTimeout>;
+            const onScroll = () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => updateScrollPos(), 200);
+            };
+
             window.addEventListener("popstate", onPopState);
             window.addEventListener("scroll", onScroll);
+            window.addEventListener("beforeunload", updateScrollPos);
             return () => {
                 window.removeEventListener("popstate", onPopState);
                 window.removeEventListener("scroll", onScroll);
+                window.removeEventListener("beforeunload", updateScrollPos);
             };
         }, []);
 

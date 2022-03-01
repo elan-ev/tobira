@@ -12,6 +12,10 @@ rename: Umbenennen
 this-field-is-required: Dieses Feld ist erforderlich.
 copy-to-clipboard: In Zwischenablage kopieren
 
+general:
+  leave-page-confirmation: >
+    Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
+
 errors:
   not-your-fault: >
     Dies ist höchstwahrscheinlich nicht Ihre Schuld. Sie können es später nochmal versuchen.
@@ -213,7 +217,7 @@ manage:
       heading: Reihenfolge Unterseiten
       sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
       sort-alphabetically-desc: Alphabetisch absteigend sortieren
-      order-manually: Manuell ordnen
+      order-manually: Manuell ordnen (neue Unterseiten werden hinten angehangen)
       failed: Änderung fehlgeschlagen.
 
     danger-zone:

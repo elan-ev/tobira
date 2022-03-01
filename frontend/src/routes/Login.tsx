@@ -22,6 +22,8 @@ import { LOGIN_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 
 
+export const REDIRECT_STORAGE_KEY = "tobira-redirect-after-login";
+
 export const LoginRoute = makeRoute(url => {
     if (url.pathname !== LOGIN_PATH) {
         return null;
@@ -82,17 +84,20 @@ const Login: React.FC<Props> = ({ queryRef }) => {
 
 const BackButton: React.FC = () => {
     const { t } = useTranslation();
-    const inner = <><FiChevronLeft />{t("back")}</>;
-    const css = {
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-    };
 
-    return history.length === 1
-        ? <Link css={css} to="/">{inner}</Link>
-        : <a css={css} onClick={() => history.back()}>{inner}</a>;
+    // This link does `window.history.back()`. If there is nothing to go back
+    // to, the call will silently do nothing. In that case, the link is taken,
+    // bringing the user to the home page.
+    return <Link
+        to="/"
+        onClick={() => window.history.back()}
+        css={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+        }}
+    ><FiChevronLeft />{t("back")}</Link>;
 };
 
 type FormData = {
@@ -130,7 +135,9 @@ const LoginBox: React.FC = () => {
             // data that we might have cached. It's probably be possible to
             // wipe the relay cache manually, but I cannot figure it out right
             // now. And well, this way we are sure everything is reloaded.
-            window.location.href = "/";
+            const redirectTo = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY) ?? "/";
+            window.sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
+            window.location.href = redirectTo;
         } else if (response.status === 403) {
             // 403 Forbidden means the login data was incorrect
             setState("idle");
