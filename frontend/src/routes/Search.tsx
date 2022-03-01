@@ -88,9 +88,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     <Item key={item.id} link={`/!${item.id.slice(2)}`}>
                         <Thumbnail
                             event={{
+                                title: item.title ?? bug("SearchEvent without title"),
                                 thumbnail: item.thumbnail ?? null,
                                 duration: item.duration ?? bug("SearchEvent without duration"),
-                                tracks: item.tracks ?? bug(""),
+                                tracks: item.tracks ?? bug("SearchEvent without tracks"),
                             }}
                             css={{ width: "100%" }}
                         />

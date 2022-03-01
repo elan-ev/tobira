@@ -87,6 +87,7 @@ video:
   part-of-series: Part of
   more-from-series: More from “{{series}}”
   deleted-video-block: The video referenced here was deleted.
+  thumbnail-for: Thumbnail for “{{video}}”
 
 series:
   deleted-series-block: The series referenced here was deleted.

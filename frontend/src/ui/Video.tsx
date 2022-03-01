@@ -1,10 +1,12 @@
 import { keyframes } from "@emotion/react";
+import { useTranslation } from "react-i18next";
 import { FiFilm, FiPlay, FiVolume2 } from "react-icons/fi";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
     /** The event of which a thumbnail should be shown */
     event: {
+        title: string;
         thumbnail: string | null;
         duration: number;
         tracks: readonly { resolution: readonly number[] | null }[];
@@ -19,6 +21,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     active = false,
     ...rest
 }) => {
+    const { t } = useTranslation();
     const audioOnly = event.tracks.every(t => t.resolution == null);
 
     let inner;
@@ -26,6 +29,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         // We have a proper thumbnail.
         inner = <img
             src={event.thumbnail}
+            alt={t("video.thumbnail-for", { video: event.title })}
             width={16}
             height={9}
             css={{ display: "block", width: "100%", height: "auto" }}
