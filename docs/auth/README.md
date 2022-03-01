@@ -30,7 +30,7 @@ Tobira blindly trusts these header values and assumes they come from your auth p
 
 Tobira does authorization simply by comparing the roles of a user with roles associated with a specific action.
 For example, Tobira evaluates the ACL of Opencast events (specifically, the `read` and `write` roles) to determine what a user can do with an event.
-Tobira also has a special *moderator role* which grants users with that role special privileges related to data stored by Tobira (e.g. the page structure).
+Tobira also has a few special roles which grant users with those roles additional privileges like editing the page structure (`ROLE_TOBIRA_MODERATOR`) or uploading videos (`ROLE_TOBIRA_UPLOAD`).
 
 This means you have to model all your authorization logic in terms of these roles.
 
@@ -56,6 +56,7 @@ For a more concrete look at how a setup might look like, check out these specifi
 
 - [Tobira's login page and session management](./all-tobira.md)
 
+<br>
 
 ### Using Tobira's session management
 
@@ -108,7 +109,7 @@ Tobira itself does not handle this route as it expects you to intercept this req
 Tobira's login page expects the following outcomes from the `POST /~login`:
 
 - 204 No Content: this signals Tobira that the login attempt was successful.
-  Tobira's frontend will then signal success and redirect the user back to the home page.
+  Tobira's frontend will then signal success and redirect the user back to the page they came from.
 
 - 403 Forbidden: this signals Tobira that the login attempt was unsuccessful.
   Tobira's frontend will signal this failure and stay on the login page.

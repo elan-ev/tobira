@@ -16,11 +16,14 @@ Additionally, if you are a developer (planning to work on Tobira), you might wan
 
 ## Run requirements
 
-The only thing Tobira requires is a PostgreSQL (≥10) database.
+To run, Tobira requires:
 
-If you are a developer and just need a PostgeSQL database for development, you can use the `docker-compose` script in [the `scripts/dev-db` folder](../scripts/dev-db).
-For that, you have to install docker-compose (or an equivalent tool like Podman) and then run `docker-compose up -d` in the `scripts/dev-db` folder.
-As a (production) user of Tobira, you should setup your own PostgreSQL DB and not use our script.
+- A PostgreSQL (≥10) database. For PostgreSQL version 12 and older, you have to manually enable the `pgcrypto` extension!
 
-Tobira also requires certain things from your Opencast installation.
-See [this document](./opencast-requirements.md).
+- [Meilisearch](https://www.meilisearch.com/). TODO: exact requirements still unclear.
+
+- Certain things from your Opencast installation. See [this document](./opencast-requirements.md) for more information.
+
+
+If you are a developer, checkout the `scripts` folder!
+
