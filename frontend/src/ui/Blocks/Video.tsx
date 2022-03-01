@@ -18,6 +18,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
             event {
                 title
                 duration
+                thumbnail
                 tracks { uri flavor mimetype resolution }
             }
             showTitle
@@ -34,6 +35,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
             {...event}
             // Relay returns `readonly` objects ...
             tracks={event.tracks as Track[]}
+            coverImage={event.thumbnail}
         />
     </>;
 };

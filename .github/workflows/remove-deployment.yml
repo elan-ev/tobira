@@ -5,6 +5,10 @@ on:
   pull_request_target:
     types: [ closed ]
 
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
 jobs:
   main:
     if: github.repository_owner == 'elan-ev'

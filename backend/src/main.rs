@@ -71,6 +71,12 @@ async fn start_server(config: Config) -> Result<()> {
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
 
+    // Start DB maintenance jobs
+    let conn = db.get().await?;
+    let auth_config = config.auth.clone();
+    tokio::spawn(async move { auth::db_maintenance(&conn, &auth_config).await });
+
+    // Start web server
     let root_node = api::root_node();
     http::serve(config, root_node, db).await
         .context("failed to start HTTP server")?;

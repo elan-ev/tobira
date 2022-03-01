@@ -12,9 +12,17 @@ module.exports = (_env, argv) => ({
     context: __dirname,
 
     output: {
-        filename: "bundle.js",
+        filename: "[name].bundle.js",
         path: OUT_PATH,
         publicPath: "/~assets/",
+    },
+    optimization: {
+        // This disables the automatic chunk splitting by webpack. This is only
+        // temporary until we use proper code splitting. But for now we only
+        // have a few dynamic imports to split certain things manually.
+        splitChunks: {
+            chunks: () => false,
+        },
     },
 
     resolve: {

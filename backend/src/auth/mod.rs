@@ -29,7 +29,7 @@ const SESSION_COOKIE: &str = "tobira-session";
 
 
 /// Authentification and authorization
-#[derive(Debug, confique::Config)]
+#[derive(Debug, Clone, confique::Config)]
 pub(crate) struct AuthConfig {
     /// The mode of authentication. Compare the authentication docs! Possible values:
     ///
@@ -101,7 +101,7 @@ pub(crate) struct AuthConfig {
 }
 
 /// Authentification and authorization
-#[derive(Debug, confique::Config)]
+#[derive(Debug, Clone, confique::Config)]
 pub(crate) struct LoginPageConfig {
     /// Label for the user-ID field. If not set, "User ID" is used.
     pub(crate) user_id_label: Option<TranslatedString>,
@@ -319,5 +319,26 @@ impl HasRoles for Option<User> {
 impl HasRoles for User {
     fn roles(&self) -> &[String] {
         &self.roles
+    }
+}
+
+/// Long running task to perform various DB maintenance.
+pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) {
+    /// Delete outdated user sessions every hour. Note that the session
+    /// expiration time is still checked whenever the session is validated. So
+    /// this duration is not about correctness, just about how often to clean
+    /// up.
+    const RUN_PERIOD: Duration = Duration::from_secs(60 * 60);
+
+    loop {
+        // Remove outdated user sessions.
+        let sql = "delete from user_sessions where extract(epoch from now() - created) > $1";
+        match db.execute(sql, &[&config.session_duration.as_secs_f64()]).await {
+            Err(e) => error!("Error deleting outdated user sessions: {}", e),
+            Ok(0) => debug!("No outdated user sessions found in DB"),
+            Ok(num) => info!("Deleted {num} outdated user sessions from DB"),
+        }
+
+        tokio::time::sleep(RUN_PERIOD).await;
     }
 }

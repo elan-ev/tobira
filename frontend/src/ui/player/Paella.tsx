@@ -7,7 +7,7 @@ import { SPEEDS } from "./consts";
 import { bug } from "../../util/err";
 
 
-export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration }) => {
+const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration }) => {
     const ref = useRef<HTMLDivElement>(null);
     const paella = useRef<Paella>();
 
@@ -71,12 +71,7 @@ export const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration })
         <div
             ref={ref}
             css={{
-                // TODO: a fixed 16:9 aspect ratio is not optimal here. But it's
-                // unclear what dimensions the container should have.
-                width: `min(100%, (90vh - var(--outer-header-height) - 80px) * ${16 / 9})`,
-                height: "auto",
-                minWidth: "320px",
-                aspectRatio: "16 / 9",
+                height: "100%",
                 overflow: "hidden",
                 margin: "auto",
 
@@ -188,3 +183,5 @@ const trackToPaellaSource = (t: Track): Mp4Source => {
         res: { w, h },
     };
 };
+
+export default PaellaPlayer;

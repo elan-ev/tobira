@@ -8,7 +8,7 @@ import { PlayerProps } from ".";
 import { SPEEDS } from "./consts";
 
 
-export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
+const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
     const source = {
         type: "video" as const,
         title,
@@ -32,7 +32,6 @@ export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
     const defaultQuality = Math.max(...qualities.filter(h => h <= 1080));
 
     const aspectRatio = tracks[0].resolution ?? [16, 9];
-    const aspectRatioNum = aspectRatio[0] / aspectRatio[1];
 
     const options = {
         // Compared to the default, "pip" and "airplay" were removed.
@@ -71,24 +70,10 @@ export const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
 
     return <>
         <Global styles={plyrCss} />
-        <div css={{
-            "--plyr-color-main": "var(--accent-color)",
-
-            // We want to make sure that the video player never takes up too
-            // much height in the viewport. That could make scrolling hard or
-            // somewhat hide that there is still content below it. The Plyr
-            // player can be best resized by changing its width, the height
-            // will follow automatically according to the aspect ratio.
-            //
-            // I'm not 100% sure all of this is necessary or good. So we might
-            // still rip it out.
-            "& > div": {
-                maxWidth: `calc((90vh - var(--outer-header-height) - 80px) * ${aspectRatioNum})`,
-                minWidth: "320px",
-                margin: "auto",
-            },
-        }}>
+        <div css={{ "--plyr-color-main": "var(--accent-color)" }}>
             <Plyr source={source} options={options} />
         </div>
     </>;
 };
+
+export default PlyrPlayer;

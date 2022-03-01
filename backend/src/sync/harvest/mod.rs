@@ -1,12 +1,12 @@
 use std::{
     cmp::min,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use hyper::http::status::StatusCode;
-use tokio_postgres::{GenericClient, types::ToSql};
+use tokio_postgres::types::ToSql;
 
-use crate::{db::types::EventTrack, prelude::*};
+use crate::{db::{types::EventTrack, DbConnection}, prelude::*};
 use super::{SyncConfig, status::SyncStatus};
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
 
@@ -24,7 +24,11 @@ const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
 
 /// Continuiously fetches from the harvesting API and writes new data into our
 /// database.
-pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClient) -> Result<()> {
+pub(crate) async fn run(
+    daemon: bool,
+    config: &SyncConfig,
+    mut db: DbConnection,
+) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
     let mut backoff = INITIAL_BACKOFF;
@@ -49,11 +53,12 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
     let client = HarvestClient::new(config);
 
     loop {
-        let sync_status = SyncStatus::fetch(db).await
+        let sync_status = SyncStatus::fetch(&**db).await
             .context("failed to fetch sync status from DB")?;
 
 
         // Send request to API and deserialize data.
+        let before = Instant::now();
         let req = client.send(
             sync_status.harvested_until,
             config.preferred_harvest_size.into(),
@@ -78,6 +83,12 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
 
         // Communication with Opencast succeeded: reset backoff time.
         backoff = INITIAL_BACKOFF;
+        debug!(
+            "Received {} KiB ({} items) from the harvest API (in {:.2?})",
+            body.len() / 1024,
+            harvest_data.items.len(),
+            before.elapsed(),
+        );
 
         if harvest_data.includes_items_until == sync_status.harvested_until {
             bail!("Opencast's harvest response has 'includesItemsUntil' == 'since'. This means \
@@ -92,8 +103,10 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
         // Write received data into the database, updating the sync status if
         // everything worked out alright.
         let last_updated = harvest_data.items.last().map(|item| item.updated());
-        store_in_db(harvest_data.items, &sync_status, db).await?;
-        SyncStatus::update_harvested_until(harvest_data.includes_items_until, db).await?;
+        let transaction = db.transaction().await?;
+        store_in_db(harvest_data.items, &sync_status, &transaction).await?;
+        SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
+        transaction.commit().await?;
 
 
         // Decide how to proceed (immediately continue, sleep or exit).
@@ -134,8 +147,9 @@ pub(crate) async fn run(daemon: bool, config: &SyncConfig, db: &impl GenericClie
 async fn store_in_db(
     items: Vec<HarvestItem>,
     sync_status: &SyncStatus,
-    db: &impl GenericClient,
+    db: &deadpool_postgres::Transaction<'_>,
 ) -> Result<()> {
+    let before = Instant::now();
     let mut upserted_events = 0;
     let mut removed_events = 0;
     let mut upserted_series = 0;
@@ -248,11 +262,12 @@ async fn store_in_db(
     } else {
         info!(
             "Harvest outcome: upserted {} events, upserted {} series, \
-                removed {} events, removed {} series",
+                removed {} events, removed {} series (in {:.2?})",
             upserted_events,
             upserted_series,
             removed_events,
             removed_series,
+            before.elapsed(),
         );
     }
 
@@ -273,7 +288,7 @@ fn check_affected_rows_removed(rows_affected: u64, entity: &str, opencast_id: &s
 /// already exists. Returns the value of the `id` column, which is assumed to
 /// be `i64`.
 async fn upsert(
-    db: &impl GenericClient,
+    db: &deadpool_postgres::Transaction<'_>,
     table_name: &str,
     unique_col: &str,
     cols: &[(&str, &(dyn ToSql + Sync))],
@@ -312,5 +327,8 @@ async fn upsert(
         query_update,
     );
 
-    Ok(db.query_one(&*query, &values).await?.get::<_, i64>(0))
+    // We prepare the statement beforehand. This is cached by `db` so this
+    // actually makes sense to do here.
+    let statement = db.prepare_cached(&*query).await?;
+    Ok(db.query_one(&statement, &values).await?.get::<_, i64>(0))
 }
