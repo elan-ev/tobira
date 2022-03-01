@@ -185,6 +185,7 @@ const LoginBox: React.FC = () => {
                             id="userid"
                             autoComplete="username email"
                             required
+                            autoFocus
                             {...register("userid", validation)}
                         />
                     </Field>

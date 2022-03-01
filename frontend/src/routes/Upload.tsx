@@ -576,6 +576,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                     required
                     error={!!errors.title}
                     css={{ width: 400, maxWidth: "100%" }}
+                    autoFocus
                     {...register("title", {
                         required: t("upload.errors.field-required") as string,
                     })}

@@ -153,6 +153,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                         css={{ width: 350, maxWidth: "100%" }}
                         placeholder={t("manage.realm.general.rename-label")}
                         error={!!errors.name}
+                        autoFocus
                         {...register("name", validations.name)}
                     />
                     {boxError(errors.name?.message)}
