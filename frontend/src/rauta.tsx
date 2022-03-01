@@ -344,6 +344,14 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             // this is blocked.
             let ignoreNextPop = false;
             const onPopState = (e: PopStateEvent) => {
+                // This is unfortunately necessary since we need to use `go()`
+                // below to undo some navigation. So we trigger this event ourselves.
+                // But that we want to ignore. This boolean variable is not 100%
+                // guaranteed to work as intended. There could be `popstate` events
+                // already queued or happening during this handler function. So we
+                // might ignore the wrong event. But we have not found any way to
+                // improve this situation, unfortunately. AND: we weren't able to
+                // trigger any weird behavior in practice, so that's good.
                 if (ignoreNextPop) {
                     ignoreNextPop = false;
                     return;
