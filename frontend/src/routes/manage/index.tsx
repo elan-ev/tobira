@@ -16,6 +16,7 @@ import { NotAuthorized } from "../../ui/error";
 import { useUser } from "../../User";
 import CONFIG from "../../config";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
+import { PageTitle } from "../../layout/header/ui";
 
 
 const PATH = "/~manage";
@@ -53,7 +54,7 @@ const Manage: React.FC = () => {
 
     return <>
         <Breadcrumbs path={[]} tail={t("manage.management")} />
-        <h1>{t("manage.dashboard.title")}</h1>
+        <PageTitle title={t("manage.dashboard.title")} />
         <div css={{
             display: "grid",
             width: 950,

@@ -9,11 +9,11 @@ import { Link } from "../router";
 import { LoginQuery } from "./__generated__/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { Logo } from "../layout/header/Logo";
-import { BASE_LOGO_MARGIN } from "../layout/header/ui";
+import { BASE_LOGO_MARGIN, PageTitle } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/Button";
 import { boxError } from "../ui/error";
-import { match, translatedConfig, useTitle } from "../util";
+import { match, translatedConfig } from "../util";
 import { Spinner } from "../ui/Spinner";
 import { FiCheck, FiChevronLeft } from "react-icons/fi";
 import { Card } from "../ui/Card";
@@ -49,7 +49,6 @@ type Props = {
 const Login: React.FC<Props> = ({ queryRef }) => {
     const { t } = useTranslation();
     const { currentUser } = usePreloadedQuery(query, queryRef);
-    useTitle(t("user.login"));
 
     return <Outer>
         <div css={{
@@ -69,7 +68,7 @@ const Login: React.FC<Props> = ({ queryRef }) => {
             {currentUser !== null
                 ? <AlreadyLoggedIn displayName={currentUser.displayName} />
                 : <>
-                    <h1>{t("user.login")}</h1>
+                    <PageTitle title={t("user.login")} />
                     <LoginBox />
                     <div css={{ marginTop: 12, fontSize: 14, lineHeight: 1 }}>
                         <BackButton />

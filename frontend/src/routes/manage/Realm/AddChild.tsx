@@ -24,6 +24,7 @@ import { makeRoute } from "../../../rauta";
 import { Card } from "../../../ui/Card";
 import { ILLEGAL_CHARS, RESERVED_CHARS } from "../../Realm";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
+import { PageTitle } from "../../../layout/header/ui";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -129,7 +130,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
     return (
         <RealmSettingsContainer>
             <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.add-sub-page")}</i>} />
-            <h1>{t("manage.add-child.heading")}</h1>
+            <PageTitle title={t("manage.add-child.heading")} />
             <p>
                 {
                     parent.isRoot

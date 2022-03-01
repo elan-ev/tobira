@@ -16,12 +16,13 @@ import { loadQuery } from "../../../relay";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Thumbnail } from "../../../ui/Video";
-import { keyOfId, match, useTitle } from "../../../util";
+import { keyOfId, match } from "../../../util";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { Card } from "../../../ui/Card";
 import { Description } from "../../../ui/metadata";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
+import { PageTitle } from "../../../layout/header/ui";
 
 
 export const PATH = "/~manage/videos";
@@ -101,7 +102,6 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
     }
 
     const title = t("manage.my-videos.title");
-    useTitle(title);
 
     return (
         <div css={{
@@ -114,7 +114,7 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
                 path={[{ label: t("manage.management"), link: "/~manage" }]}
                 tail={title}
             />
-            <h1>{title}</h1>
+            <PageTitle title={title} />
             {inner}
         </div>
     );

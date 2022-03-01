@@ -20,6 +20,7 @@ import { NotAuthorized } from "../../../ui/error";
 import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
+import { PageTitle } from "../../../layout/header/ui";
 
 
 // Route definition
@@ -88,7 +89,7 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
     return (
         <RealmSettingsContainer css={{ maxWidth: 900 }}>
             <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.page-settings")}</i>} />
-            <h1>{heading}</h1>
+            <PageTitle title={heading} />
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
             <div css={{
                 margin: "32px 0",

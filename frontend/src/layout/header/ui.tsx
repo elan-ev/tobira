@@ -1,6 +1,7 @@
 import React from "react";
 
 import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
+import { useTitle } from "../../util";
 
 
 export const BASE_LOGO_MARGIN = "calc(var(--logo-margin) * var(--inner-header-height))";
@@ -46,3 +47,14 @@ export const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, children
         >{children}</div>
     </div>
 );
+
+type PageTitleProps = {
+    title: string;
+    className?: string;
+};
+
+/** A `h1` wrapper that calls `useTitle` */
+export const PageTitle: React.FC<PageTitleProps> = ({ title, className }) => {
+    useTitle(title);
+    return <h1 {...{ className }}>{title}</h1>;
+};

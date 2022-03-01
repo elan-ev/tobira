@@ -13,7 +13,7 @@ import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { UploadJwtQuery } from "./__generated__/UploadJwtQuery.graphql";
 import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
-import { currentRef, useNavBlocker, useTitle } from "../util";
+import { currentRef, useNavBlocker } from "../util";
 import CONFIG from "../config";
 import { Button } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
@@ -23,6 +23,7 @@ import { User, useUser } from "../User";
 import { useRefState } from "../util";
 import { Card } from "../ui/Card";
 import { InputContainer, TitleLabel } from "../ui/metadata";
+import { PageTitle } from "../layout/header/ui";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -55,8 +56,6 @@ type Metadata = {
 
 const Upload: React.FC = () => {
     const { t } = useTranslation();
-    const title = t("upload.title");
-    useTitle(title);
 
     return (
         <div css={{
@@ -65,7 +64,7 @@ const Upload: React.FC = () => {
             display: "flex",
             flexDirection: "column",
         }}>
-            <h1>{title}</h1>
+            <PageTitle title={t("upload.title")} />
             <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
             <UploadMain />
         </div>

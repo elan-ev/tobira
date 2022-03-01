@@ -7,11 +7,11 @@ import { makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link } from "../router";
 import { Thumbnail } from "../ui/Video";
-import { useTitle } from "../util";
 import { bug } from "../util/err";
 import { Description } from "../ui/metadata";
 import { FiFolder } from "react-icons/fi";
 import { Card } from "../ui/Card";
+import { PageTitle } from "../layout/header/ui";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -56,11 +56,9 @@ type Props = {
 
 const SearchPage: React.FC<Props> = ({ q, results }) => {
     const { t } = useTranslation();
-    const title = t("search.title", { query: q });
-    useTitle(title);
 
     return <div css={{ maxWidth: 950, margin: "0 auto" }}>
-        <h1>{title}</h1>
+        <PageTitle title={t("search.title", { query: q })} />
         {results === null
             ? <CenteredNote>{t("search.too-few-characters")}</CenteredNote>
             : results.items.length === 0
