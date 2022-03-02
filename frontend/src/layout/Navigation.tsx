@@ -4,7 +4,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
 import { useTranslation } from "react-i18next";
-import { LinkList, LinkWithIcon } from "../ui";
+import { FOCUS_STYLE_INSET, LinkList, LinkWithIcon } from "../ui";
 import { match } from "../util";
 
 
@@ -59,10 +59,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 iconPos="left"
                 css={{
                     padding: "6px 4px",
-                    "&:focus-visible": {
-                        outline: "none",
-                        boxShadow: "inset 0 0 0 2px var(--accent-color)",
-                    },
+                    ...FOCUS_STYLE_INSET,
                 }}
             >
                 <FiChevronLeft css={{ marginRight: "8px !important" }}/>

@@ -1,5 +1,5 @@
 import { TFunction } from "i18next";
-import React, { MutableRefObject } from "react";
+import React, { MutableRefObject, KeyboardEvent } from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,6 +20,7 @@ import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
 import { LOGIN_PATH } from "../../routes/paths";
 import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
+import { FOCUS_STYLE_INSET } from "../../ui";
 
 
 /** Viewport width in pixels where the user UI switches between narrow and wide */
@@ -344,13 +345,24 @@ const MenuItem: React.FC<MenuItemProps> = ({
         "&:hover": {
             backgroundColor: "var(--grey97)",
         },
+        ...FOCUS_STYLE_INSET,
     } as const;
+
+
+    // One should be able to use the menu with keyboard only. So if the item is
+    // focussed, pressing enter should have the same effect as clicking it.
+    // Thats already true automatically for links.
+    const onKeyDown = (e: KeyboardEvent<HTMLLIElement>) => {
+        if (document.activeElement === e.currentTarget && e.key === "Enter") {
+            onClick();
+        }
+    };
 
     return linkTo
         ? <li {... { className }}>
             <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
         </li>
-        : <li css={css} {...{ onClick, className }}>
+        : <li tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
             {inner}
         </li>;
 };

@@ -25,10 +25,12 @@ export const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, children
         display: "flex",
         alignItems: "center",
     }}>
-        <div
+        <button
             title={title}
             onClick={onClick}
             css={{
+                border: "none",
+                background: "none",
                 padding: 5,
                 margin: "0 4px",
                 borderRadius: 4,
@@ -43,6 +45,6 @@ export const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, children
                     fontSize: 24,
                 },
             }}
-        >{children}</div>
+        >{children}</button>
     </div>
 );

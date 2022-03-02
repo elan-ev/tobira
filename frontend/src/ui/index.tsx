@@ -26,10 +26,7 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             listStyle: "none",
             margin: 0,
             padding: 0,
-            "& a:focus-visible": {
-                outline: "none",
-                boxShadow: "inset 0 0 0 2px var(--accent-color)",
-            },
+            "& a": { ...FOCUS_STYLE_INSET },
             "& > li": {
                 borderBottom: "2px solid white",
                 "&:last-of-type": {
@@ -119,3 +116,10 @@ type TitleProps = {
 export const Title: React.FC<TitleProps> = ({ title, className }) => (
     <h2 className={className} css={{ margin: "16px 0" }}>{title}</h2>
 );
+
+export const FOCUS_STYLE_INSET = {
+    "&:focus-visible": {
+        outline: "none",
+        boxShadow: "inset 0 0 0 2px var(--accent-color)",
+    },
+} as const;
