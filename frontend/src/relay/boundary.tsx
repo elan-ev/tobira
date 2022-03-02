@@ -7,6 +7,7 @@ import { useRouter } from "../router";
 import { Card } from "../ui/Card";
 import { ErrorDisplay, NetworkError } from "../util/err";
 import { RouterControl } from "../rauta";
+import { UserProvider, Props as UserProviderProps } from "../User";
 
 
 type Props = {
@@ -54,31 +55,46 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
             return this.props.children;
         }
 
+        // Try to retrieve user data if we have any.
+        let userData: UserProviderProps["data"] = undefined;
+        if (error instanceof APIError) {
+            // This check is not perfect, as it does not make sure the
+            // currentUser has all the fields that are actually expected. But
+            // given that this object comes from the API and the API is well
+            // defined, we just assume if there is a `currentUser`, it has the
+            // correct form.
+            if (error.response?.data && "currentUser" in error.response.data) {
+                userData = error.response.data.currentUser;
+            }
+        }
+
         return (
-            <Root nav={[]}>
-                <Translation>{t => (
-                    <div css={{ margin: "0 auto", maxWidth: 600 }}>
-                        <div>
-                            <Card kind="error"><ErrorDisplay error={error} /></Card>
+            <UserProvider data={userData}>
+                <Root nav={[]}>
+                    <Translation>{t => (
+                        <div css={{ margin: "0 auto", maxWidth: 600 }}>
+                            <div>
+                                <Card kind="error"><ErrorDisplay error={error} /></Card>
+                            </div>
+                            <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
+                                {t("errors.detailed-error-info")}
+                            </p>
+                            <div css={{
+                                backgroundColor: "var(--grey97)",
+                                borderRadius: 4,
+                                padding: 16,
+                                fontSize: 14,
+                            }}>
+                                <pre>
+                                    <code css={{ whiteSpace: "pre-wrap" }}>
+                                        {error.toString()}
+                                    </code>
+                                </pre>
+                            </div>
                         </div>
-                        <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
-                            {t("errors.detailed-error-info")}
-                        </p>
-                        <div css={{
-                            backgroundColor: "var(--grey97)",
-                            borderRadius: 4,
-                            padding: 16,
-                            fontSize: 14,
-                        }}>
-                            <pre>
-                                <code css={{ whiteSpace: "pre-wrap" }}>
-                                    {error.toString()}
-                                </code>
-                            </pre>
-                        </div>
-                    </div>
-                )}</Translation>
-            </Root>
+                    )}</Translation>
+                </Root>
+            </UserProvider>
         );
     }
 }
