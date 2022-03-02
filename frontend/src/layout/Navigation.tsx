@@ -54,7 +54,17 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
 
     return <nav>
         {realm.parent !== null && <>
-            <LinkWithIcon to={realm.parent.path} iconPos="left" css={{ padding: "6px 4px" }}>
+            <LinkWithIcon
+                to={realm.parent.path}
+                iconPos="left"
+                css={{
+                    padding: "6px 4px",
+                    "&:focus-visible": {
+                        outline: "none",
+                        boxShadow: "inset 0 0 0 2px var(--accent-color)",
+                    },
+                }}
+            >
                 <FiChevronLeft css={{ marginRight: "8px !important" }}/>
                 {realm.parent.isRoot ? t("home") : realm.parent.name}
             </LinkWithIcon>

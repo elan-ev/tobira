@@ -93,6 +93,10 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => {
                         backgroundColor: "var(--nav-color-dark)",
                         color: "white",
                     },
+                    "&:focus-visible": {
+                        outline: "none",
+                        boxShadow: "0 0 0 2px black",
+                    },
                     [`@media (max-width: ${BREAKPOINT}px)`]: {
                         display: "none",
                     },
