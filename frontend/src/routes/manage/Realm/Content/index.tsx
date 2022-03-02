@@ -22,6 +22,7 @@ import { useNavBlocker } from "../../../../util";
 import { LinkButton } from "../../../../ui/Button";
 import { FiArrowLeft } from "react-icons/fi";
 import { PageTitle } from "../../../../layout/header/ui";
+import { RealmEditLinks } from "../../../Realm";
 
 
 export const PATH = "/~manage/realm/content";
@@ -41,7 +42,12 @@ export const ManageRealmContentRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
-            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            nav={data => data.realm
+                ? [
+                    <Nav key="main-nav" fragRef={data.realm} />,
+                    <RealmEditLinks key="edit-buttons" path={path} />,
+                ]
+                : []}
             render={data => {
                 if (!data.realm) {
                     return <PathInvalid />;

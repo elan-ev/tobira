@@ -21,6 +21,7 @@ import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
+import { RealmEditLinks } from "../../Realm";
 
 
 // Route definition
@@ -42,7 +43,12 @@ export const ManageRealmRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
-            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            nav={data => data.realm
+                ? [
+                    <Nav key="main-nav" fragRef={data.realm} />,
+                    <RealmEditLinks key="edit-buttons" path={path} />,
+                ]
+                : []}
             render={data => data.realm ? <SettingsPage realm={data.realm} /> : <PathInvalid />}
         />,
         dispose: () => queryRef.dispose(),

@@ -22,7 +22,7 @@ import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
 import { Card } from "../../../ui/Card";
-import { ILLEGAL_CHARS, RESERVED_CHARS } from "../../Realm";
+import { ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 
@@ -44,7 +44,12 @@ export const AddChildRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
-            nav={data => data.parent ? <Nav fragRef={data.parent} /> : []}
+            nav={data => data.parent
+                ? [
+                    <Nav key="main-nav" fragRef={data.parent} />,
+                    <RealmEditLinks key="edit-buttons" path={parent} />,
+                ]
+                : []}
             render={data => {
                 const parent = data.parent;
                 if (!parent) {
