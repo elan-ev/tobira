@@ -52,7 +52,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
         },
     }, () => {});
 
-    return <>
+    return <nav>
         {realm.parent !== null && <>
             <LinkWithIcon to={realm.parent.path} iconPos="left" css={{ padding: "6px 4px" }}>
                 <FiChevronLeft css={{ marginRight: "8px !important" }}/>
@@ -84,7 +84,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 },
             }}
         />
-    </>;
+    </nav>;
 };
 
 type ItemProps = {
