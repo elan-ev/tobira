@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
 
     return (
         <footer css={{
-            backgroundColor: "var(--grey92)",
+            backgroundColor: "var(--grey95)",
             padding: 16,
             fontSize: 14,
             textAlign: "center",

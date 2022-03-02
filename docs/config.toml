@@ -336,8 +336,8 @@
 #favicon =
 
 [theme.color]
-# Default value: "#357C58"
-#navigation = "#357C58"
+# Default value: "#347856"
+#navigation = "#347856"
 
 # Accent color with large contrast to navigation color.
 #

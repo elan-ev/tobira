@@ -68,7 +68,7 @@ pub(crate) struct LogoResolution(pub(crate) [u32; 2]);
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ColorConfig {
-    #[config(default = "#357C58")]
+    #[config(default = "#347856")]
     pub(crate) navigation: Color,
 
     /// Accent color with large contrast to navigation color.
