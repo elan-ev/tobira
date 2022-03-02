@@ -247,8 +247,9 @@ manage:
           mitgelöscht. Die Löschung kann nicht wieder rückgängig gemacht werden!
 
     content:
-      heading: Inhalte der Seite „<1>{{realm}}</1>“ bearbeiten
-      heading-root: Inhalte der <1>Startseite</1> bearbeiten
+      heading: Seite „{{realm}}“ bearbeiten
+      heading-root: Startseite bearbeiten
+      view-page: Seite ansehen
 
       add: Hier einen neuen Block einfügen
       add-title: Hier Titel einfügen
