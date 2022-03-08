@@ -14,6 +14,7 @@ copy-to-clipboard: Copy to clipboard
 
 general:
   leave-page-confirmation: Leave page? Changes you made may not be saved!
+  logo-alt: Logo of “{{title}}”
 
 errors:
   not-your-fault: This is likely not your fault. You can try again later.
@@ -87,6 +88,7 @@ video:
   part-of-series: Part of
   more-from-series: More from “{{series}}”
   deleted-video-block: The video referenced here was deleted.
+  thumbnail-for: Thumbnail for “{{video}}”
 
 series:
   deleted-series-block: The series referenced here was deleted.

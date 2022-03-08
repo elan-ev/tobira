@@ -73,7 +73,9 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             ref={ref}
             type="text"
             placeholder={t("search.input-label")}
+            title={t("search.input-label")}
             defaultValue={defaultValue}
+            autoFocus={variant === "mobile"}
             onChange={e => {
                 if (lastTimeout.current !== null) {
                     clearTimeout(lastTimeout.current);

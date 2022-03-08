@@ -1,10 +1,14 @@
+import { useTranslation } from "react-i18next";
 import CONFIG from "../../config";
 import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
 import { Link } from "../../router";
+import { translatedConfig } from "../../util";
 import { BASE_LOGO_MARGIN, BUTTONS_WIDTH } from "./ui";
 
 
 export const Logo: React.FC = () => {
+    const { t, i18n } = useTranslation();
+
     // This is a bit tricky: we want to specify the `width` and `height`
     // attributes on the `img` elements in order to avoid layout shift. That
     // already rules out the `<picture>` element since that assumes all sources
@@ -52,6 +56,8 @@ export const Logo: React.FC = () => {
         calc((max(100vw, var(--min-page-width)) - ${BUTTONS_WIDTH}px) / (2 + ${ar}))
     )`;
 
+    const alt = t("general.logo-alt", { title: translatedConfig(CONFIG.siteTitle, i18n) });
+
     return (
         <Link
             to="/"
@@ -74,6 +80,7 @@ export const Logo: React.FC = () => {
                 width={large.resolution[0]}
                 height={large.resolution[1]}
                 src={large.path}
+                alt={alt}
                 css={{
                     [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
                         display: "none",
@@ -84,6 +91,7 @@ export const Logo: React.FC = () => {
                 width={small.resolution[0]}
                 height={small.resolution[1]}
                 src={small.path}
+                alt={alt}
                 css={{
                     [`@media not all and (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
                         display: "none",
