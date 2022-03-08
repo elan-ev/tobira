@@ -9,8 +9,8 @@ import { Footer } from "./Footer";
 import { BurgerMenu } from "./Burger";
 import { SideBox } from "../ui";
 import { OUTER_CONTAINER_MARGIN } from ".";
-import { UserProvider, UserQueryRef } from "../User";
-import { GraphQLTaggedNode, PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { userDataFragment, UserProvider } from "../User";
+import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
 
@@ -19,57 +19,54 @@ export const MAIN_PADDING = 16;
 
 type Props = {
     nav: NavItems;
-    userQuery?: UserQueryRef;
 };
 
-export const Root: React.FC<Props> = ({ nav, userQuery, children }) => {
+export const Root: React.FC<Props> = ({ nav, children }) => {
     const menu = useMenu();
     const navElements = Array.isArray(nav) ? nav : [nav];
     const navExists = navElements.length > 0;
 
     return (
-        <UserProvider fragRef={userQuery}>
-            <Outer disableScrolling={menu.state === "burger"}>
-                <Header hideNavIcon={!navExists} />
-                {menu.state === "burger" && navExists && (
-                    <BurgerMenu hide={() => menu.close()}>
-                        {navElements.map((elem, i) => <div key={i}>{elem}</div>)}
-                    </BurgerMenu>
-                )}
-                <div css={{ margin: OUTER_CONTAINER_MARGIN }}>
-                    <div css={{
-                        margin: "0 16px 32px 16px",
-                        height: 2,
-                        backgroundColor: "var(--grey92)",
-                    }}/>
-                </div>
-                <Main>
-                    {/* Sidebar */}
-                    {navExists && <div css={{
-                        flex: "1 0 12.5%",
-                        minWidth: 240,
-                        maxWidth: 360,
-                        marginRight: 48,
-                        [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
-                            display: "none",
-                        },
-                    }}>
-                        {navElements.map((elem, i) => <SideBox key={i}>{elem}</SideBox>)}
-                    </div>}
+        <Outer disableScrolling={menu.state === "burger"}>
+            <Header hideNavIcon={!navExists} />
+            {menu.state === "burger" && navExists && (
+                <BurgerMenu hide={() => menu.close()}>
+                    {navElements.map((elem, i) => <div key={i}>{elem}</div>)}
+                </BurgerMenu>
+            )}
+            <div css={{ margin: OUTER_CONTAINER_MARGIN }}>
+                <div css={{
+                    margin: "0 16px 32px 16px",
+                    height: 2,
+                    backgroundColor: "var(--grey92)",
+                }}/>
+            </div>
+            <Main>
+                {/* Sidebar */}
+                {navExists && <div css={{
+                    flex: "1 0 12.5%",
+                    minWidth: 240,
+                    maxWidth: 360,
+                    marginRight: 48,
+                    [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
+                        display: "none",
+                    },
+                }}>
+                    {navElements.map((elem, i) => <SideBox key={i}>{elem}</SideBox>)}
+                </div>}
 
-                    {/* Main part */}
-                    <div css={{
-                        width: "100%",
-                        minWidth: 0,
-                        flex: "12 0 0",
-                        "& > h1:first-child": { marginBottom: 12 },
-                    }}>
-                        {children}
-                    </div>
-                </Main>
-                <Footer />
-            </Outer>
-        </UserProvider>
+                {/* Main part */}
+                <div css={{
+                    width: "100%",
+                    minWidth: 0,
+                    flex: "12 0 0",
+                    "& > h1:first-child": { marginBottom: 12 },
+                }}>
+                    {children}
+                </div>
+            </Main>
+            <Footer />
+        </Outer>
     );
 };
 
@@ -144,5 +141,11 @@ export const RootLoader = <Q extends QueryWithUserData>({
     render,
 }: RootLoaderProps<Q>) => {
     const data = usePreloadedQuery(query, queryRef);
-    return <Root nav={nav(data)} userQuery={data}>{render(data)}</Root>;
+    const userData = useFragment(userDataFragment, data);
+
+    return (
+        <UserProvider data={userData?.currentUser}>
+            <Root nav={nav(data)}>{render(data)}</Root>;
+        </UserProvider>
+    );
 };

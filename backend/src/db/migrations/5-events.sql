@@ -39,7 +39,10 @@ create table events (
     duration int not null, -- in ms
     created timestamp with time zone not null,
     updated timestamp with time zone not null,
-    creator text,
+    creators text[] not null
+        default '{}'
+        -- Make sure there are no `null` elements in the array.
+        check (array_position(creators, null) is null),
 
     -- Media
     thumbnail text, -- URL to an image

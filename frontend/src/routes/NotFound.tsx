@@ -8,6 +8,7 @@ import { CenteredContent } from "../ui";
 import { loadQuery } from "../relay";
 import { NotFoundQuery } from "./__generated__/NotFoundQuery.graphql";
 import { graphql } from "react-relay";
+import { PageTitle } from "../layout/header/ui";
 
 
 export const NotFoundRoute = {
@@ -34,15 +35,17 @@ type Props = {
 
 export const NotFound: React.FC<Props> = ({ kind }) => {
     const { t } = useTranslation();
+    const title = match(kind, {
+        "page": () => t("not-found.page-not-found"),
+        "video": () => t("not-found.video-not-found"),
+    });
 
     return <>
         <FiFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
-        <h1 css={{ textAlign: "center", margin: "32px 0 48px 0 !important" }}>
-            {match(kind, {
-                "page": () => t("not-found.page-not-found"),
-                "video": () => t("not-found.video-not-found"),
-            })}
-        </h1>
+        <PageTitle
+            title={title}
+            css={{ textAlign: "center", margin: "32px 0 48px 0 !important" }}
+        />
         <CenteredContent>
             <p css={{ margin: "16px 0" }}>
                 {match(kind, {

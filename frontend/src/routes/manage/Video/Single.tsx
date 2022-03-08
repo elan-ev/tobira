@@ -16,7 +16,6 @@ import { Form } from "../../../ui/Form";
 import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { Thumbnail } from "../../../ui/Video";
-import { useTitle } from "../../../util";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../Video";
 import { PATH as MANAGE_VIDEOS_PATH } from ".";
@@ -24,6 +23,7 @@ import { useUser } from "../../../User";
 import { LinkButton } from "../../../ui/Button";
 import CONFIG from "../../../config";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
+import { PageTitle } from "../../../layout/header/ui";
 
 
 export const ManageSingleVideoRoute = makeRoute(url => {
@@ -92,8 +92,6 @@ const BREAKPOINT = 1100;
 
 const ManageSingleVideo: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
-    const title = t("manage.my-videos.video-details", { title: event.title });
-    useTitle(title);
 
     const breadcrumbs = [
         { label: t("manage.management"), link: "/~manage" },
@@ -108,11 +106,10 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
-        <h1 css={{
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-        }}>{title}</h1>
+        <PageTitle
+            title={t("manage.my-videos.video-details", { title: event.title })}
+            css={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+        />
         <section css={{
             width: 1100,
             maxWidth: "100%",

@@ -16,6 +16,7 @@ import { Link } from "../router";
 import { FiChevronRight } from "react-icons/fi";
 import { isValidPathSegment } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
+import { PageTitle } from "../layout/header/ui";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -83,7 +84,7 @@ const query = graphql`
         event(id: $id) {
             title
             description
-            creator
+            creators
             created
             updated
             duration
@@ -136,7 +137,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
             duration={event.duration}
             coverImage={event.thumbnail}
         />
-        <h1 css={{ marginTop: 24, fontSize: 24 }}>{title}</h1>
+        <PageTitle title={title} css={{ marginTop: 24, fontSize: 24 }} />
         {description !== null && <TextBlock content={description} />}
         <table css={{
             marginBottom: 16,
@@ -148,7 +149,8 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
             },
         }}>
             <tbody>
-                <MetaDatum label={t("video.creator")} value={event.creator} />
+                {/* TODO: improve upon join */}
+                <MetaDatum label={t("video.creator")} value={event.creators.join(", ")} />
                 <MetaDatum label={t("video.created")} value={created} />
                 <MetaDatum label={t("video.updated")} value={updated} />
                 <MetaDatum label={t("video.part-of-series")} value={event.series?.title} />

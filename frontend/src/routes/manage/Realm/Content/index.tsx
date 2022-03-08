@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import { RootLoader } from "../../../../layout/Root";
@@ -14,12 +14,15 @@ import { NotAuthorized } from "../../../../ui/error";
 import { RealmSettingsContainer } from "../util";
 import { Nav } from "../../../../layout/Navigation";
 import { makeRoute } from "../../../../rauta";
-import { Link } from "../../../../router";
 import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
 import { EditBlock } from "./Block";
 import { Breadcrumbs } from "../../../../ui/Breadcrumbs";
 import { useNavBlocker } from "../../../../util";
+import { LinkButton } from "../../../../ui/Button";
+import { FiArrowLeft } from "react-icons/fi";
+import { PageTitle } from "../../../../layout/header/ui";
+import { RealmEditLinks } from "../../../Realm";
 
 
 export const PATH = "/~manage/realm/content";
@@ -39,7 +42,12 @@ export const ManageRealmContentRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
-            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            nav={data => data.realm
+                ? [
+                    <Nav key="main-nav" fragRef={data.realm} />,
+                    <RealmEditLinks key="edit-buttons" path={path} />,
+                ]
+                : []}
             render={data => {
                 if (!data.realm) {
                     return <PathInvalid />;
@@ -116,19 +124,21 @@ const ManageContent: React.FC<Props> = ({ data }) => {
     return <ContentManageQueryContext.Provider value={data}>
         <RealmSettingsContainer>
             <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.edit-page-content")}</i>} />
-            <h1>
-                {realmIsRoot
-                    ? <Trans i18nKey="manage.realm.content.heading-root">
-                        Editing the <Link to="/">root realm</Link>
-                    </Trans>
-                    : <Trans i18nKey="manage.realm.content.heading">
-                        Editing realm <Link to={path}>{{ realm: name }}</Link>
-                    </Trans>}
-            </h1>
+            <PageTitle title={
+                realmIsRoot
+                    ? t("manage.realm.content.heading-root")
+                    : t("manage.realm.content.heading", { realm: name })
+            } />
+
+            <LinkButton to={path}>
+                <FiArrowLeft />
+                {t("manage.realm.content.view-page")}
+            </LinkButton>
 
             <div css={{
                 display: "flex",
                 flexDirection: "column",
+                marginTop: 16,
                 rowGap: 16,
                 padding: 0,
                 // To position the loading overlay

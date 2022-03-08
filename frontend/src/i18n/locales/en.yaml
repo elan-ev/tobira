@@ -239,8 +239,9 @@ manage:
           cannot be undone!
 
     content:
-      heading: Edit content of page “<1>{{realm}}</1>”
-      heading-root: Edit <1>homepage</1> content
+      heading: Edit page “{{realm}}”
+      heading-root: Edit homepage
+      view-page: View page
 
       add: Insert a new block here
       add-title: Insert title here

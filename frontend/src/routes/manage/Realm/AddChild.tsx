@@ -22,8 +22,9 @@ import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
 import { Card } from "../../../ui/Card";
-import { ILLEGAL_CHARS, RESERVED_CHARS } from "../../Realm";
+import { ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
+import { PageTitle } from "../../../layout/header/ui";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -43,7 +44,12 @@ export const AddChildRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
-            nav={data => data.parent ? <Nav fragRef={data.parent} /> : []}
+            nav={data => data.parent
+                ? [
+                    <Nav key="main-nav" fragRef={data.parent} />,
+                    <RealmEditLinks key="edit-buttons" path={parent} />,
+                ]
+                : []}
             render={data => {
                 const parent = data.parent;
                 if (!parent) {
@@ -129,7 +135,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
     return (
         <RealmSettingsContainer>
             <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.add-sub-page")}</i>} />
-            <h1>{t("manage.add-child.heading")}</h1>
+            <PageTitle title={t("manage.add-child.heading")} />
             <p>
                 {
                     parent.isRoot
@@ -153,6 +159,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                         css={{ width: 350, maxWidth: "100%" }}
                         placeholder={t("manage.realm.general.rename-label")}
                         error={!!errors.name}
+                        autoFocus
                         {...register("name", validations.name)}
                     />
                     {boxError(errors.name?.message)}
@@ -160,7 +167,8 @@ const AddChild: React.FC<Props> = ({ parent }) => {
 
                 <InputWithInfo
                     info={<Trans i18nKey="manage.add-child.path-segment-info">
-                        {{ illegalChars: ILLEGAL_CHARS, reservedChars: RESERVED_CHARS }}
+                        {{ illegalChars: ILLEGAL_CHARS }}
+                        {{ reservedChars: RESERVED_CHARS }}
                     </Trans>}
                 >
                     <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>

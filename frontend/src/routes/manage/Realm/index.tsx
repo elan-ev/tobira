@@ -20,6 +20,8 @@ import { NotAuthorized } from "../../../ui/error";
 import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
+import { PageTitle } from "../../../layout/header/ui";
+import { RealmEditLinks } from "../../Realm";
 
 
 // Route definition
@@ -41,7 +43,12 @@ export const ManageRealmRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
-            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            nav={data => data.realm
+                ? [
+                    <Nav key="main-nav" fragRef={data.realm} />,
+                    <RealmEditLinks key="edit-buttons" path={path} />,
+                ]
+                : []}
             render={data => data.realm ? <SettingsPage realm={data.realm} /> : <PathInvalid />}
         />,
         dispose: () => queryRef.dispose(),
@@ -88,7 +95,7 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
     return (
         <RealmSettingsContainer css={{ maxWidth: 900 }}>
             <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.page-settings")}</i>} />
-            <h1>{heading}</h1>
+            <PageTitle title={heading} />
             <p>{t("manage.realm.descendants-count", { count: realm.numberOfDescendants })}</p>
             <div css={{
                 margin: "32px 0",

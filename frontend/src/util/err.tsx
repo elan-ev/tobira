@@ -66,7 +66,7 @@ type ErrorDisplayInfo = {
      * A list of causes: human readable strings (already translated). Usually
      * contains a single element.
      */
-    causes: string[];
+    causes: Set<string>;
 
     /**
      * If `true`, this error is likely caused by a programming bug or server
@@ -86,33 +86,33 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
 
     if (error instanceof NetworkError) {
         return {
-            causes: [t("errors.network-error")],
+            causes: new Set([t("errors.network-error")]),
             probablyOurFault: false,
             potentiallyInternetProblem: true,
         };
     } else if (error instanceof ServerError) {
         // TODO: choose better error messages according to status code
         return {
-            causes: [t("errors.unexpected-server-error")],
+            causes: new Set([t("errors.unexpected-server-error")]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
     } else if (error instanceof NotJson) {
         return {
-            causes: [t("errors.unexpected-response")],
+            causes: new Set([t("errors.unexpected-response")]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
     } else if (error instanceof APIError) {
         // OK response, but it contained GraphQL errors.
         const kinds = new Set();
-        const causes: string[] = [];
+        const causes = new Set<string>();
         let notOurFault = true;
         for (const err of error.errors) {
             // Use a message fitting to the exact error key, if it is present.
             const translationKey = err.key ? `api-remote-errors.${err.key}` : null;
             if (translationKey && i18n.exists(translationKey)) {
-                causes.push(t(translationKey));
+                causes.add(t(translationKey));
             } else {
                 // Otherwise, derive an error message from the error kind. We
                 // use a set to make sure we only emit each kind-derived error
@@ -128,7 +128,7 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
                 // careful and handle this case, too.
                 if (!err.kind) {
                     notOurFault = false;
-                    causes.push(t("errors.unexpected-server-error"));
+                    causes.add(t("errors.unexpected-server-error"));
                 } else {
                     const msg = match(err.kind, {
                         INTERNAL_SERVER_ERROR: () => {
@@ -138,16 +138,16 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
                         INVALID_INPUT: () => t("errors.invalid-input"),
                         NOT_AUTHORIZED: () => t("errors.not-authorized"),
                     });
-                    causes.push(msg);
+                    causes.add(msg);
                 }
             }
         }
 
 
-        if (causes.length === 0) {
+        if (causes.size === 0) {
             // This should never happen?
             return {
-                causes: [t("errors.unexpected-server-error")],
+                causes: new Set([t("errors.unexpected-server-error")]),
                 probablyOurFault: true,
                 potentiallyInternetProblem: false,
             };
@@ -160,7 +160,7 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
         }
     } else {
         return {
-            causes: [t("errors.unknown")],
+            causes: new Set([t("errors.unknown")]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
@@ -176,13 +176,14 @@ type ErrorDisplayProps = {
 export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ failedAction, ...props }) => {
     const { t, i18n } = useTranslation();
     const info = "info" in props ? props.info : errorDisplayInfo(props.error, i18n);
+    const causes = Array.from(info.causes);
 
     return <>
         <p>
             {failedAction && failedAction + " "}
-            {info.causes.length === 1
-                ? info.causes[0] + " "
-                : <ul>{info.causes.map(cause => <li key={cause}>{cause}</li>)}</ul>
+            {causes.length === 1
+                ? causes[0] + " "
+                : <ul>{causes.map(cause => <li key={cause}>{cause}</li>)}</ul>
             }
             {info.potentiallyInternetProblem && t("errors.are-you-connected-to-internet")}
         </p>
