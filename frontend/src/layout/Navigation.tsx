@@ -4,7 +4,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
 import { useTranslation } from "react-i18next";
-import { FOCUS_STYLE_INSET, LinkList, LinkWithIcon } from "../ui";
+import { FOCUS_STYLE_INSET, LinkList, LinkWithIcon, SIDE_BOX_BORDER_RADIUS } from "../ui";
 import { match } from "../util";
 
 
@@ -59,6 +59,9 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 iconPos="left"
                 css={{
                     padding: "6px 4px",
+                    [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
+                        borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
+                    },
                     ...FOCUS_STYLE_INSET,
                 }}
             >

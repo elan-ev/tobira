@@ -1,12 +1,14 @@
 import { Link } from "../router";
 import { match } from "../util";
+import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 
 
+export const SIDE_BOX_BORDER_RADIUS = 10;
 
 export const SideBox: React.FC = ({ children }) => (
     <div css={{
         backgroundColor: "var(--grey95)",
-        borderRadius: 10,
+        borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
         "&:not(:first-child)": {
             marginTop: 32,
@@ -35,6 +37,14 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
                 "& > *": {
                     padding: "6px 10px",
                     display: "flex",
+                },
+            },
+            [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+                "& > li:last-child > a": {
+                    borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
+                },
+                "&:first-child > li:first-child > a": {
+                    borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
                 },
             },
         }}
