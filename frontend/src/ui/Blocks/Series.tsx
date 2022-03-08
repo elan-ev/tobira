@@ -183,7 +183,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
                     whiteSpace: "nowrap",
                 },
             }}>
-                {event.creators != null && <span css={{
+                <span css={{
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     "&:after": {
@@ -191,7 +191,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
                         padding: "0 8px",
                     },
                     // TODO: maybe find something better than `join`
-                }}>{event.creators.join(", ")}</span>}
+                }}>{event.creators.join(", ")}</span>
                 {/* `new Date` is well defined for our ISO Date strings */}
                 <RelativeDate date={new Date(event.created)} />
             </div>

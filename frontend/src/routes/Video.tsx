@@ -150,7 +150,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
         }}>
             <tbody>
                 {/* TODO: improve upon join */}
-                <MetaDatum label={t("video.creator")} value={event.creators?.join(", ")} />
+                <MetaDatum label={t("video.creator")} value={event.creators.join(", ")} />
                 <MetaDatum label={t("video.created")} value={created} />
                 <MetaDatum label={t("video.updated")} value={updated} />
                 <MetaDatum label={t("video.part-of-series")} value={event.series?.title} />

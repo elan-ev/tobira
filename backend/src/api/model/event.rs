@@ -29,7 +29,7 @@ pub(crate) struct Event {
     duration: i32,
     created: DateTime<Utc>,
     updated: DateTime<Utc>,
-    creators: Option<Vec<String>>,
+    creators: Vec<String>,
 
     thumbnail: Option<String>,
     tracks: Vec<Track>,
@@ -83,7 +83,7 @@ impl Event {
     fn updated(&self) -> DateTime<Utc> {
         self.updated
     }
-    fn creators(&self) -> &Option<Vec<String>> {
+    fn creators(&self) -> &Vec<String> {
         &self.creators
     }
 

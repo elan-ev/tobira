@@ -197,7 +197,7 @@ async fn store_in_db(
                     ("duration", &duration),
                     ("created", &created),
                     ("updated", &updated),
-                    ("creators", &creator.map(|creator| vec![creator])),
+                    ("creators", &creator.map_or(vec![], |creator| vec![creator])),
                     ("thumbnail", &thumbnail),
                     ("read_roles", &acl.read),
                     ("write_roles", &acl.write),

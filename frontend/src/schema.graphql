@@ -14,7 +14,7 @@ type Event implements Node {
   tracks: [Track!]!
   created: DateTimeUtc!
   updated: DateTimeUtc!
-  creators: [String!]
+  creators: [String!]!
   "Whether the current user has write access to this event."
   canWrite: Boolean!
   series: Series
