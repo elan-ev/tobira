@@ -3,6 +3,7 @@ import { FiChevronRight, FiHome } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 
 import { Link } from "../router";
+import { FOCUS_STYLE_INSET } from ".";
 
 
 type Props = {
@@ -22,7 +23,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
     const { t } = useTranslation();
 
     return (
-        <nav aria-label="breadcrumbs" css={{ overflowX: "auto", marginBottom: 24 }}>
+        <nav aria-label="breadcrumbs" css={{ overflowX: "auto", marginBottom: 16 }}>
             <ol css={{
                 display: "flex",
                 alignItems: "center",
@@ -36,7 +37,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
                 },
             }}>
                 <li css={LI_STYLE}>
-                    <Link to="/" css={{ lineHeight: 1 }}>
+                    <Link to="/" css={{ lineHeight: 1, padding: 2, ...FOCUS_STYLE_INSET }}>
                         <FiHome title={t("home")} />
                     </Link>
                 </li>
@@ -57,6 +58,7 @@ type SegmentProps = {
 const TEXT_STYLE = {
     textOverflow: "ellipsis" as const,
     overflow: "hidden" as const,
+    padding: 2,
 };
 
 const Segment: React.FC<SegmentProps> = ({ target, children }) => (
@@ -64,9 +66,9 @@ const Segment: React.FC<SegmentProps> = ({ target, children }) => (
         css={{ maxWidth: "100%", ...LI_STYLE }}
         {...target === undefined && { "aria-current": "location" }}
     >
-        <FiChevronRight css={{ margin: "0 5px", flexShrink: 0, color: "var(--grey65)" }}/>
+        <FiChevronRight css={{ margin: "0 3px", flexShrink: 0, color: "var(--grey65)" }}/>
         {target === undefined
             ? <div css={TEXT_STYLE}>{children}</div>
-            : <Link css={TEXT_STYLE} to={target}>{children}</Link>}
+            : <Link css={[TEXT_STYLE, FOCUS_STYLE_INSET]} to={target}>{children}</Link>}
     </li>
 );
