@@ -249,14 +249,14 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
     let info;
     if (error instanceof OcNetworkError) {
         info = {
-            causes: [t("upload.errors.opencast-unreachable")],
+            causes: new Set([t("upload.errors.opencast-unreachable")]),
             // Opencast could be down, but it's confusing setting this to true
             probablyOurFault: false,
             potentiallyInternetProblem: true,
         };
     } else if (error instanceof OcServerError) {
         info = {
-            causes: [t("upload.errors.opencast-server-error")],
+            causes: new Set([t("upload.errors.opencast-server-error")]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
@@ -264,7 +264,7 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
         // TODO: make it so that this error should not occur. And once that is
         // done, change `probablyOurFault` to `true`.
         info = {
-            causes: [t("upload.errors.jwt-expired")],
+            causes: new Set([t("upload.errors.jwt-expired")]),
             probablyOurFault: false, // Well...
             potentiallyInternetProblem: false,
         };

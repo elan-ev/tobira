@@ -66,7 +66,7 @@ type ErrorDisplayInfo = {
      * A list of causes: human readable strings (already translated). Usually
      * contains a single element.
      */
-    causes: string[];
+    causes: Set<string>;
 
     /**
      * If `true`, this error is likely caused by a programming bug or server
@@ -86,20 +86,20 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
 
     if (error instanceof NetworkError) {
         return {
-            causes: [t("errors.network-error")],
+            causes: new Set([t("errors.network-error")]),
             probablyOurFault: false,
             potentiallyInternetProblem: true,
         };
     } else if (error instanceof ServerError) {
         // TODO: choose better error messages according to status code
         return {
-            causes: [t("errors.unexpected-server-error")],
+            causes: new Set([t("errors.unexpected-server-error")]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
     } else if (error instanceof NotJson) {
         return {
-            causes: [t("errors.unexpected-response")],
+            causes: new Set([t("errors.unexpected-response")]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
@@ -147,20 +147,20 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
         if (causes.size === 0) {
             // This should never happen?
             return {
-                causes: [t("errors.unexpected-server-error")],
+                causes: new Set([t("errors.unexpected-server-error")]),
                 probablyOurFault: true,
                 potentiallyInternetProblem: false,
             };
         } else {
             return {
-                causes: Array.from(causes.keys()),
+                causes,
                 probablyOurFault: !notOurFault,
                 potentiallyInternetProblem: false,
             };
         }
     } else {
         return {
-            causes: [t("errors.unknown")],
+            causes: new Set([t("errors.unknown")]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
@@ -176,13 +176,14 @@ type ErrorDisplayProps = {
 export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ failedAction, ...props }) => {
     const { t, i18n } = useTranslation();
     const info = "info" in props ? props.info : errorDisplayInfo(props.error, i18n);
+    const causes = Array.from(info.causes);
 
     return <>
         <p>
             {failedAction && failedAction + " "}
-            {info.causes.length === 1
-                ? info.causes[0] + " "
-                : <ul>{info.causes.map(cause => <li key={cause}>{cause}</li>)}</ul>
+            {causes.length === 1
+                ? causes[0] + " "
+                : <ul>{causes.map(cause => <li key={cause}>{cause}</li>)}</ul>
             }
             {info.potentiallyInternetProblem && t("errors.are-you-connected-to-internet")}
         </p>
