@@ -36,8 +36,6 @@ const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
     const options = {
         // Compared to the default, "pip" and "airplay" were removed.
         controls: [
-            // TODO: maybe remove "player-large" -> it's bad for pausing lecture recordings
-            "play-large",
             "play",
             "progress",
             "current-time",
