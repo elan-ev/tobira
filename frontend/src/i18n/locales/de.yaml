@@ -15,7 +15,7 @@ copy-to-clipboard: In Zwischenablage kopieren
 general:
   leave-page-confirmation: >
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
-  logo-alt: Das Logo von {{title}}
+  logo-alt: Das Logo von „{{title}}“
 
 
 errors:
@@ -92,7 +92,7 @@ video:
   part-of-series: Teil von
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
-  thumbnail-for: Vorschaubild für “{{video}}”
+  thumbnail-for: Vorschaubild für „{{video}}“
 
 series:
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
