@@ -63,9 +63,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
             // given that this object comes from the API and the API is well
             // defined, we just assume if there is a `currentUser`, it has the
             // correct form.
-            if (error.response?.data && "currentUser" in error.response.data) {
-                userData = error.response.data.currentUser;
-            }
+            userData = error.response?.data?.currentUser;
         }
 
         return (
