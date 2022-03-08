@@ -203,7 +203,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
         margin: 8,
         marginBottom: 32,
         width: 16 * 15,
-        borderRadius: 4,
+        borderRadius: 8,
         "& a": { color: "black", textDecoration: "none" },
         [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
             width: "100%",
@@ -213,7 +213,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
             "& > div:first-child": {
                 transition: `transform ${TRANSITION_DURATION}, box-shadow ${TRANSITION_DURATION}`,
             },
-            "&:hover > div:first-child": {
+            "&:hover > div:first-child, &:focus-visible > div:first-child": {
                 boxShadow: "0 6px 10px rgb(0 0 0 / 40%)",
                 transform: "perspective(500px) rotateX(7deg) scale(1.05)",
                 "& > div:nth-child(2) > div": {
