@@ -70,7 +70,12 @@ const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
 
     return <>
         <Global styles={plyrCss} />
-        <div css={{ "--plyr-color-main": "var(--accent-color)" }}>
+        <div css={{
+            "--plyr-color-main": "var(--accent-color)",
+            "& > div:focus-visible": {
+                outline: "3px dotted var(--accent-color)",
+            },
+        }}>
             <Plyr source={source} options={options} />
         </div>
     </>;
