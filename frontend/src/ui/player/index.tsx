@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 
 import { MAIN_PADDING } from "../../layout/Root";
 import { Spinner } from "../Spinner";
+import PaellaPlayer from "./Paella";
+import PlyrPlayer from "./Plyr";
 
 
 export type PlayerProps = {
@@ -54,8 +56,8 @@ export const Player: React.FC<PlayerProps> = props => {
     );
 };
 
-const LoadPaellaPlayer = React.lazy(() => import(/* webpackChunkName: "paella" */ "./Paella"));
-const LoadPlyrPlayer = React.lazy(() => import(/* webpackChunkName: "plyr" */ "./Plyr"));
+const LoadPaellaPlayer = PaellaPlayer;
+const LoadPlyrPlayer = PlyrPlayer;
 
 const PlayerFallback: React.FC<{ image: string | null }> = ({ image }) => {
     const { t } = useTranslation();

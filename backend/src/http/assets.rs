@@ -17,19 +17,7 @@ const ASSETS: Setup = assets! {
         hash,
         append: b"//# sourceMappingURL=/~assets/{{: path:main.bundle.js.map :}}"
     },
-    "paella.bundle.js": {
-        template,
-        hash,
-        append: b"//# sourceMappingURL=/~assets/{{: path:paella.bundle.js.map :}}"
-    },
-    "plyr.bundle.js": {
-        template,
-        hash,
-        append: b"//# sourceMappingURL=/~assets/{{: path:plyr.bundle.js.map :}}"
-    },
     "main.bundle.js.map": { hash },
-    "paella.bundle.js.map": { hash },
-    "plyr.bundle.js.map": { hash },
 
     // Static files for the plyr media player.
     "blank.mp4": { hash },
