@@ -364,6 +364,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
             <div css={{ marginTop: 16 }}>
                 <Button
                     kind="happy"
+                    type="submit"
                     onClick={() => currentRef(fileInput).click()}
                 >{t("upload.select-files")}</Button>
                 <input
