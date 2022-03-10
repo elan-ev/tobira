@@ -145,7 +145,7 @@ export const RootLoader = <Q extends QueryWithUserData>({
 
     return (
         <UserProvider data={userData?.currentUser}>
-            <Root nav={nav(data)}>{render(data)}</Root>;
+            <Root nav={nav(data)}>{render(data)}</Root>
         </UserProvider>
     );
 };
