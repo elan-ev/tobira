@@ -590,7 +590,9 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
             </InputContainer>
 
             {/* Submit button */}
-            <Button kind="happy" disabled={disabled}>{t("upload.metadata.save")}</Button>
+            <Button kind="happy" type="submit" disabled={disabled}>
+                {t("upload.metadata.save")}
+            </Button>
         </Form>
     );
 };
