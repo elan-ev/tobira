@@ -18,8 +18,7 @@ signing_algorithm = "ES256"
 secret_key = "jwt-key.pem"
 
 [sync]
-host = "localhost:8081"
-use_insecure_connection = true
+host = "http://localhost:8081"
 user = "admin"
 password = "opencast"
 preferred_harvest_size = 3

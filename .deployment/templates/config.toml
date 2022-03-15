@@ -25,7 +25,7 @@ expiration_time = "10min"
 file = "/var/log/tobira/{{ id }}.log"
 
 [sync]
-host = "oc.tobira.ethz.ch"
+host = "https://oc.tobira.ethz.ch"
 user = "admin"
 password = "{{ opencast_admin_password }}"
 poll_period = "1min"
