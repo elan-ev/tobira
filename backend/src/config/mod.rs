@@ -62,6 +62,9 @@ pub(crate) struct Config {
     pub(crate) sync: crate::sync::SyncConfig,
 
     #[config(nested)]
+    pub(crate) meili: crate::search::MeiliConfig,
+
+    #[config(nested)]
     pub(crate) theme: ThemeConfig,
 }
 
@@ -102,6 +105,7 @@ impl Config {
     fn validate(&self) -> Result<()> {
         debug!("Validating configuration...");
         self.sync.validate()?;
+        self.meili.validate()?;
 
         Ok(())
     }

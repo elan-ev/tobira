@@ -28,6 +28,7 @@ pub(crate) async fn run(
     daemon: bool,
     config: &SyncConfig,
     mut db: DbConnection,
+    search: &crate::search::Client,
 ) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
@@ -104,7 +105,7 @@ pub(crate) async fn run(
         // everything worked out alright.
         let last_updated = harvest_data.items.last().map(|item| item.updated());
         let transaction = db.transaction().await?;
-        store_in_db(harvest_data.items, &sync_status, &transaction).await?;
+        store_in_db(harvest_data.items, &sync_status, &transaction, search).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
         transaction.commit().await?;
 
@@ -148,6 +149,7 @@ async fn store_in_db(
     items: Vec<HarvestItem>,
     sync_status: &SyncStatus,
     db: &deadpool_postgres::Transaction<'_>,
+    search: &crate::search::Client,
 ) -> Result<()> {
     let before = Instant::now();
     let mut upserted_events = 0;

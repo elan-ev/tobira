@@ -7,6 +7,9 @@ site_title.en = "Tobira Videoportal"
 [db]
 password = "tobira"
 
+[meili]
+key = "tobira"
+
 [log]
 level = "trace"
 

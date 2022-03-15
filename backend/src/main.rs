@@ -18,6 +18,7 @@ mod db;
 mod http;
 mod logger;
 mod prelude;
+mod search;
 mod sync;
 mod util;
 
