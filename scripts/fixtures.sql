@@ -41,7 +41,7 @@ begin
 
 
     -- Add a bunch of events/videos
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles)
         values (
             'bbb',
             'Big Buck Bunny',
@@ -56,13 +56,13 @@ begin
             'Big Buck Bunny (code-named Project Peach) is a 2008 short computer-animated comedy film featuring animals of the forest, made by the Blender Institute, part of the Blender Foundation.',
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
-            'Blender Foundation',
+            '{"Blender Foundation"}',
             now(),
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles)
         values (
             'cosmos-laundromat',
             'Cosmos Laundromat',
@@ -77,13 +77,13 @@ begin
             'Cosmos Laundromat: First Cycle is an animated absurdist sci-fi fantasy short film directed by Mathieu Auvray, written by Esther Wouda, and produced by Ton Roosendaal. It is the Blender Institutes 5th "open movie" project, and was made utilizing the Blender software.',
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
-            'Blender Foundation',
+            '{"Blender Foundation"}',
             now(),
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles)
         values (
             'spring',
             'Spring',
@@ -98,14 +98,14 @@ begin
             'Spring is a 2019 animated fantasy short film directed and written by Andreas Goralczyk and produced by Ton Roosendaal and Francesco Siddi. It is the Blender Institutes 12th "open movie", and was made utilizing the open-source software, Blender.',
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
-            'Blender Foundation',
+            '{"Blender Foundation"}',
             now(),
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
 
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles)
         values (
             'bee',
             'Guest Lecture: Group Intelligence of Bumblebees',
@@ -120,14 +120,14 @@ begin
             'Bumblebees are remarkable creatures. While a single one cannot achieve a lot on its own, in a group, they can even solve quantum gravity. Also, the video is actually Big Buck Bunny again.',
             series_christmas,
             'f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d',
-            'Prof. Dr. Joachim Biene',
+            '{"Prof. Dr. Joachim Biene", "Dr. Sakura Hanabachi"}',
             now(),
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
 
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles)
         values (
             'pir-introduction',
             'Programmieren in Rust: Einführung',
@@ -142,13 +142,13 @@ begin
             'Programmieren in Rust ist eine deutsche Vorlesung über die Programmiersprache Rust.',
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
-            'Lukas Kalbertodt',
+            '{"Lukas Kalbertodt"}',
             now(),
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles)
         values (
             'pir-modules',
             'Programmieren in Rust: Module',
@@ -163,13 +163,13 @@ begin
             'Programmieren in Rust ist eine deutsche Vorlesung über die Programmiersprache Rust.',
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
-            'Lukas Kalbertodt',
+            '{"Lukas Kalbertodt"}',
             now(),
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles)
         values (
             'pir-stack-heap',
             'Programmieren in Rust: Stack & Heap',
@@ -184,13 +184,13 @@ begin
             'Programmieren in Rust ist eine deutsche Vorlesung über die Programmiersprache Rust.',
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
-            'Lukas Kalbertodt',
+            '{"Lukas Kalbertodt"}',
             now(),
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creator, created, updated, read_roles, write_roles)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles)
         values (
             'pir-performance',
             'Programmieren in Rust: Performance & Effizienz',
@@ -205,7 +205,7 @@ begin
             'Programmieren in Rust ist eine deutsche Vorlesung über die Programmiersprache Rust.',
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
-            'Lukas Kalbertodt',
+            '{"Lukas Kalbertodt"}',
             now(),
             now(),
             '{"ROLE_ANONYMOUS"}',
