@@ -197,9 +197,9 @@ impl BlockValue {
                 ),
                 dbargs![
                     &(i16::try_from(index_a)
-                        .map_err(|_| invalid_input!("`index_a` is not a valid block index"))?),
+                        .map_err(|_| invalid_input!("`indexA` is not a valid block index"))?),
                     &(i16::try_from(index_b)
-                        .map_err(|_| invalid_input!("`index_b` is not a valid block index"))?),
+                        .map_err(|_| invalid_input!("`indexB` is not a valid block index"))?),
                     &realm.key_for(Id::REALM_KIND)
                         .ok_or_else(|| invalid_input!("`realm` is not a valid realm id"))?,
                 ],
@@ -217,7 +217,7 @@ impl BlockValue {
             .next()
             .await
             .ok_or_else(|| invalid_input!(
-                "`index1`, `index2` or `realm` wasn't a valid block index or realm"
+                "`indexA`, `indexB` or `realm` wasn't a valid block index or realm"
             ))?
             .map(Realm::from_row)?;
 
