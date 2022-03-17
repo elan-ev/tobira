@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -23,6 +23,7 @@ import { LinkButton } from "../../../../ui/Button";
 import { FiArrowLeft } from "react-icons/fi";
 import { PageTitle } from "../../../../layout/header/ui";
 import { RealmEditLinks } from "../../../Realm";
+import { bug } from "../../../../util/err";
 
 
 export const PATH = "/~manage/realm/content";
@@ -115,8 +116,20 @@ const ManageContent: React.FC<Props> = ({ data }) => {
     };
 
 
-    const hasUnsavedChanges = blocks.some(block => block.editMode);
+    const editedBlock = blocks.find(block => block.editMode);
+    const hasUnsavedChanges = editedBlock !== undefined;
     useNavBlocker(hasUnsavedChanges);
+
+
+    // When a block goes into edit mode, we want to scroll it into view
+    const blockRefs = useRef(new Map<string, HTMLDivElement>());
+    useEffect(() => {
+        if (hasUnsavedChanges) {
+            const ref = blockRefs.current.get(editedBlock.id) ?? bug("unbound ref");
+            ref.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [hasUnsavedChanges, editedBlock]);
+
 
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
@@ -148,7 +161,16 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                     <React.Fragment key={block.id}>
                         <AddButtons index={index} realm={realm} />
 
-                        <div css={block.editMode && !inFlight ? { zIndex: 2 } : {}}>
+                        <div
+                            ref={ref => {
+                                if (ref) {
+                                    blockRefs.current.set(block.id, ref);
+                                } else {
+                                    blockRefs.current.delete(block.id);
+                                }
+                            }}
+                            css={block.editMode && !inFlight ? { zIndex: 2 } : {}}
+                        >
                             <EditBlock
                                 {...{ realm, index }}
                                 onCommit={onCommit}
