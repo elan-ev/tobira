@@ -1,7 +1,9 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import { keyOfId } from "../../util";
+import { keyOfId, compareBy, swap } from "../../util";
+import { unreachable } from "../../util/err";
 import { Link } from "../../router";
 import { SeriesBlockData, SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
 import {
@@ -11,7 +13,6 @@ import {
 import { Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
-import { useTranslation } from "react-i18next";
 
 
 type SharedProps = {
@@ -85,8 +86,22 @@ export const SeriesBlock: React.FC<Props> = ({
     showTitle,
     realmPath,
     activeEventId,
-}) => (
-    <div css={{
+    order,
+}) => {
+    const sortedEvents = [...series.events];
+
+    switch (order) {
+        case "NEW_TO_OLD":
+            sortedEvents.sort(compareNewToOld);
+            break;
+        case "OLD_TO_NEW":
+            sortedEvents.sort(compareOldToNew);
+            break;
+        default:
+            return unreachable();
+    }
+
+    return <div css={{
         marginTop: 24,
         padding: 12,
         paddingTop: 0,
@@ -119,14 +134,19 @@ export const SeriesBlock: React.FC<Props> = ({
                 justifyContent: "center",
             },
         }}>
-            {series.events.map(event => <GridTile
+            {sortedEvents.map(event => <GridTile
                 key={event.id}
                 active={event.id === activeEventId}
                 {...{ realmPath, event }}
             />)}
         </div>
-    </div>
-);
+    </div>;
+};
+
+const compareNewToOld = compareBy((event: SeriesBlockSeriesData["events"][0]): number => (
+    new Date(event.created).getTime()
+));
+const compareOldToNew = swap(compareNewToOld);
 
 type GridTypeProps = {
     realmPath: string;
