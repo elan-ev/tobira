@@ -78,8 +78,8 @@ begin
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             '{"Blender Foundation"}',
-            now(),
-            now(),
+            now() - interval '1 week',
+            now() - interval '1 week',
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
@@ -99,8 +99,8 @@ begin
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             '{"Blender Foundation"}',
-            now(),
-            now(),
+            now() - interval '2 weeks',
+            now() - interval '2 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
@@ -143,8 +143,8 @@ begin
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             '{"Lukas Kalbertodt"}',
-            now(),
-            now(),
+            now() - interval '3 weeks',
+            now() - interval '3 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
@@ -164,8 +164,8 @@ begin
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             '{"Lukas Kalbertodt"}',
-            now(),
-            now(),
+            now() - interval '4 weeks',
+            now() - interval '4 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
@@ -185,8 +185,8 @@ begin
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             '{"Lukas Kalbertodt"}',
-            now(),
-            now(),
+            now() - interval '5 weeks',
+            now() - interval '5 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
@@ -206,8 +206,8 @@ begin
             series_university_highlights,
             '6d3f7e0c-c18f-4806-acc1-219a02cc7343',
             '{"Lukas Kalbertodt"}',
-            now(),
-            now(),
+            now() - interval '6 weeks',
+            now() - interval '6 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}'
         );
