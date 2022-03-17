@@ -59,7 +59,6 @@ module.exports = {
         "max-statements-per-line": "warn",
         "multiline-comment-style": ["warn", "separate-lines"],
         "multiline-ternary": ["warn", "always-multiline"],
-        "no-extra-semi": "warn",
         "no-mixed-spaces-and-tabs": "warn",
         "no-multi-spaces": "warn",
         "no-multiple-empty-lines": ["warn", { max: 5 }],
@@ -117,6 +116,7 @@ module.exports = {
             "lines-between-class-members": "off",
             "no-unused-vars": "off",
             "semi": "off",
+            "no-extra-semi": "off",
 
             "@typescript-eslint/no-unused-vars": ["warn", noUnusedVarsOptions],
 
@@ -135,6 +135,7 @@ module.exports = {
             "@typescript-eslint/object-curly-spacing": ["warn", "always"],
             "@typescript-eslint/quotes": "warn",
             "@typescript-eslint/semi": "warn",
+            "@typescript-eslint/no-extra-semi": "warn",
             "@typescript-eslint/space-before-function-paren": ["warn", {
                 "anonymous": "always",
                 "named": "never",
