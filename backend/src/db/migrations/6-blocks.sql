@@ -32,7 +32,7 @@ create table blocks (
     video_id bigint references events on delete set null,
 
     -- Blocks with a "natural title"
-    show_title boolean,
+    show_title boolean default true,
 
 
     -- Enforce several constraints

@@ -75,13 +75,16 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
             onClick={() => addBlock("Series", (_store, block) => {
                 block.setValue("NEW_TO_OLD", "order");
                 block.setValue("GRID", "layout");
+                block.setValue(true, "showTitle");
             })}
         >
             <FiGrid />
         </Button>
         <Button
             title={t("manage.realm.content.add-video")}
-            onClick={() => addBlock("Video")}
+            onClick={() => addBlock("Video", (_store, block) => {
+                block.setValue(true, "showTitle");
+            })}
         >
             <FiFilm />
         </Button>
