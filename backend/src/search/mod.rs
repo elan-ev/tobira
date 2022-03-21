@@ -4,6 +4,8 @@ use serde::{Serialize, Deserialize};
 
 use crate::{prelude::*, util::HttpHost};
 
+pub(crate) mod cmd;
+
 
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct MeiliConfig {
@@ -26,6 +28,7 @@ pub(crate) struct MeiliConfig {
 impl MeiliConfig {
     pub(crate) async fn connect(&self) -> Result<Client> {
         Client::new(self.clone()).await
+            .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))
     }
 
     pub(crate) fn validate(&self) -> Result<()> {
@@ -63,12 +66,14 @@ impl Client {
         info!("Connected to MeiliSearch at '{}'", config.host);
 
         let event_index = create_index(&client, &config.event_index_name()).await?;
+        debug!("All required Meili indexes exist (they might be empty though)");
 
         Ok(Self { client, config, event_index })
     }
 }
 
 async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
+    debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");
     let task = client.create_index(name, Some("id"))
         .await?
         .wait_for_completion(&client, None, None)
@@ -79,12 +84,16 @@ async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
             => unreachable!("waited for task to complete, but it is not"),
         Task::Failed { content } => {
             if content.error.error_code == ErrorCode::IndexAlreadyExists {
+                debug!("Meili index '{name}' already exists");
                 client.index(name)
             } else {
                 bail!("Failed to create Meili index '{}': {:#?}", name, content.error);
             }
         }
-        _ => task.try_make_index(&client).unwrap(),
+        Task::Succeeded { .. } => {
+            debug!("Created Meili index '{name}'");
+            task.try_make_index(&client).unwrap()
+        }
     };
 
     Ok(index)

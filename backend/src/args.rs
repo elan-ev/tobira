@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use crate::{cmd, db::cmd::DbCommand};
+use crate::{cmd, db::cmd::DbCommand, search::cmd::SearchIndexCommand};
 
 
 #[derive(Debug, StructOpt)]
@@ -38,6 +38,15 @@ pub(crate) enum Command {
     Db {
         #[structopt(subcommand)]
         cmd: DbCommand,
+
+        #[structopt(flatten)]
+        shared: Shared,
+    },
+
+    /// Search index operations
+    SearchIndex {
+        #[structopt(subcommand)]
+        cmd: SearchIndexCommand,
 
         #[structopt(flatten)]
         shared: Shared,

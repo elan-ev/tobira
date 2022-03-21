@@ -79,6 +79,10 @@ async fn run() -> Result<()> {
             let config = load_config_and_init_logger(shared)?;
             db::cmd::run(cmd, &config.db).await?;
         }
+        Command::SearchIndex { cmd, shared } => {
+            let config = load_config_and_init_logger(shared)?;
+            search::cmd::run(cmd, &config).await?;
+        }
         Command::WriteConfig { target } => config::write_template(target.as_ref())?,
         Command::ExportApiSchema { args } => cmd::export_api_schema::run(args)?,
         Command::ImportRealmTree { options, shared } => {
