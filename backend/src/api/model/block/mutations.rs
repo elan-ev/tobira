@@ -162,7 +162,15 @@ impl BlockValue {
                 .ok_or_else(|| invalid_input!("`realm` is not a valid realm"));
         }
 
-        let realm_stream = context.db(context.require_moderator()?)
+        let db = context.db(context.require_moderator()?);
+
+        // The next query will swap two blocks' indices;
+        // during the execution of that statement a moment will exist
+        // in which two blocks of a realm have the same index.
+        // Since this violates one of our constraints, we defer it.
+        db.execute("set constraints index_unique_in_realm deferred", &[]).await?;
+
+        let realm_stream = db
             .query_raw(
                 &format!(
                     // This query is a bit involved, but this allows us to do the full swap in one
@@ -197,9 +205,9 @@ impl BlockValue {
                 ),
                 dbargs![
                     &(i16::try_from(index_a)
-                        .map_err(|_| invalid_input!("`index_a` is not a valid block index"))?),
+                        .map_err(|_| invalid_input!("`indexA` is not a valid block index"))?),
                     &(i16::try_from(index_b)
-                        .map_err(|_| invalid_input!("`index_b` is not a valid block index"))?),
+                        .map_err(|_| invalid_input!("`indexB` is not a valid block index"))?),
                     &realm.key_for(Id::REALM_KIND)
                         .ok_or_else(|| invalid_input!("`realm` is not a valid realm id"))?,
                 ],
@@ -211,13 +219,16 @@ impl BlockValue {
             // we know it did.
             .skip(1);
 
+        // TODO Actually reset to whatever it was before, but that needs nested transactions
+        db.execute("set constraints index_unique_in_realm immediate", &[]).await?;
+
         pin_mut!(realm_stream);
 
         let realm = realm_stream
             .next()
             .await
             .ok_or_else(|| invalid_input!(
-                "`index1`, `index2` or `realm` wasn't a valid block index or realm"
+                "`indexA`, `indexB` or `realm` wasn't a valid block index or realm"
             ))?
             .map(Realm::from_row)?;
 

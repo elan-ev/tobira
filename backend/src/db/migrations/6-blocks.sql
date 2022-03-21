@@ -36,7 +36,7 @@ create table blocks (
 
 
     -- Enforce several constraints
-    unique(realm_id, index),
+    constraint index_unique_in_realm unique(realm_id, index) deferrable initially immediate,
     constraint index_positive check (index >= 0),
 
     constraint title_block_has_fields check (type <> 'title' or (
