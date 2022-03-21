@@ -60,11 +60,11 @@ export function keyOfId(id: string): string {
  * Create a comparison function for `Array.prototype.sort` comparing whatever
  * the given key function returns as numbers.
  */
-export function compareBy<T>(key: (item: T) => number): (itemA: T, itemB: T) => number {
+export function compareByKey<T>(key: (item: T) => number): (itemA: T, itemB: T) => number {
     return (itemA, itemB) => key(itemB) - key(itemA);
 }
 
-/** Swap a binary function's arguments. Useful for example for comparison funcitons. */
+/** Swap a binary function's arguments. Useful for example for comparison functions. */
 export function swap<T, U, R>(f: (x: T, y: U) => R): (y: U, x: T) => R {
     return (y, x) => f(x, y);
 }

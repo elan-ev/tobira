@@ -2,7 +2,8 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import { keyOfId, compareBy, swap } from "../../util";
+import { keyOfId, compareByKey, swap } from "../../util";
+import { match } from "../../util";
 import { unreachable } from "../../util/err";
 import { Link } from "../../router";
 import { SeriesBlockData, SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
@@ -90,60 +91,56 @@ export const SeriesBlock: React.FC<Props> = ({
 }) => {
     const sortedEvents = [...series.events];
 
-    switch (order) {
-        case "NEW_TO_OLD":
-            sortedEvents.sort(compareNewToOld);
-            break;
-        case "OLD_TO_NEW":
-            sortedEvents.sort(compareOldToNew);
-            break;
-        default:
-            return unreachable();
-    }
+    match(order, {
+        NEW_TO_OLD: () => sortedEvents.sort(compareNewToOld),
+        OLD_TO_NEW: () => sortedEvents.sort(compareOldToNew),
+    }, unreachable);
 
-    return <div css={{
-        marginTop: 24,
-        padding: 12,
-        paddingTop: 0,
-        backgroundColor: "var(--grey95)",
-        borderRadius: 10,
-    }}>
-        {/* This is a way to make this fancy title. It's not perfect, but it works fine. */}
-        {(title || showTitle) && <div css={{ maxHeight: 50 }}>
-            <h2 title={title ?? series.title} css={{
-                backgroundColor: "var(--accent-color)",
-                color: "white",
-                padding: "4px 12px",
-                borderRadius: 10,
-                transform: "translateY(-50%)",
-                fontSize: 19,
-                margin: "0 8px",
-
-                display: "-webkit-inline-box",
-                WebkitBoxOrient: "vertical",
-                textOverflow: "ellipsis",
-                WebkitLineClamp: 3,
-                overflow: "hidden",
-                lineHeight: 1.3,
-            }}>{title ?? series.title}</h2>
-        </div>}
+    return (
         <div css={{
-            display: "flex",
-            flexWrap: "wrap",
-            [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-                justifyContent: "center",
-            },
+            marginTop: 24,
+            padding: 12,
+            paddingTop: 0,
+            backgroundColor: "var(--grey95)",
+            borderRadius: 10,
         }}>
-            {sortedEvents.map(event => <GridTile
-                key={event.id}
-                active={event.id === activeEventId}
-                {...{ realmPath, event }}
-            />)}
+            {/* This is a way to make this fancy title. It's not perfect, but it works fine. */}
+            {(title || showTitle) && <div css={{ maxHeight: 50 }}>
+                <h2 title={title ?? series.title} css={{
+                    backgroundColor: "var(--accent-color)",
+                    color: "white",
+                    padding: "4px 12px",
+                    borderRadius: 10,
+                    transform: "translateY(-50%)",
+                    fontSize: 19,
+                    margin: "0 8px",
+
+                    display: "-webkit-inline-box",
+                    WebkitBoxOrient: "vertical",
+                    textOverflow: "ellipsis",
+                    WebkitLineClamp: 3,
+                    overflow: "hidden",
+                    lineHeight: 1.3,
+                }}>{title ?? series.title}</h2>
+            </div>}
+            <div css={{
+                display: "flex",
+                flexWrap: "wrap",
+                [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                    justifyContent: "center",
+                },
+            }}>
+                {sortedEvents.map(event => <GridTile
+                    key={event.id}
+                    active={event.id === activeEventId}
+                    {...{ realmPath, event }}
+                />)}
+            </div>
         </div>
-    </div>;
+    );
 };
 
-const compareNewToOld = compareBy((event: SeriesBlockSeriesData["events"][0]): number => (
+const compareNewToOld = compareByKey((event: SeriesBlockSeriesData["events"][0]): number => (
     new Date(event.created).getTime()
 ));
 const compareOldToNew = swap(compareNewToOld);
