@@ -89,3 +89,20 @@ async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
 
     Ok(index)
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct Event {
+    pub(crate) id: i64,
+    pub(crate) opencast_id: String,
+    pub(crate) title: String,
+    pub(crate) description: Option<String>,
+    pub(crate) creators: Vec<String>,
+    pub(crate) thumbnail: Option<String>,
+}
+
+impl Document for Event {
+   type UIDType = i64;
+   fn get_uid(&self) -> &Self::UIDType {
+       &self.id
+   }
+}

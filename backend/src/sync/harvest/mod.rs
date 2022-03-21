@@ -157,6 +157,8 @@ async fn store_in_db(
     let mut upserted_series = 0;
     let mut removed_series = 0;
 
+    let mut search_events = Vec::new();
+
     for item in items {
         // Make sure we haven't received this update yet. The code below can
         // handle duplicate items alright, but this way we can save on some DB
@@ -190,7 +192,7 @@ async fn store_in_db(
                 };
 
                 // We upsert the event data.
-                upsert(db, "events", "opencast_id", &[
+                let new_id = upsert(db, "events", "opencast_id", &[
                     ("opencast_id", &opencast_id),
                     ("series", &series),
                     ("part_of", &part_of),
@@ -199,12 +201,21 @@ async fn store_in_db(
                     ("duration", &duration),
                     ("created", &created),
                     ("updated", &updated),
-                    ("creators", &creator.map_or(vec![], |creator| vec![creator])),
+                    ("creators", &creator.clone().map_or(vec![], |creator| vec![creator])),
                     ("thumbnail", &thumbnail),
                     ("read_roles", &acl.read),
                     ("write_roles", &acl.write),
                     ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),
                 ]).await?;
+
+                search_events.push(crate::search::Event {
+                    id: new_id,
+                    opencast_id: opencast_id.clone(),
+                    title: title.clone(),
+                    description,
+                    creators: creator.map_or(vec![], |creator| vec![creator]),
+                    thumbnail: thumbnail.clone(),
+                });
 
                 debug!("Inserted or updated event {} ({})", opencast_id, title);
                 upserted_events += 1;
@@ -271,6 +282,12 @@ async fn store_in_db(
             removed_series,
             before.elapsed(),
         );
+    }
+
+    if !search_events.is_empty() {
+        // TODO: rollback DB transaction if indexing fails
+        search.event_index.add_documents(&search_events, None).await?;
+        debug!("Enqueued {} events for indexing", search_events.len());
     }
 
     Ok(())
