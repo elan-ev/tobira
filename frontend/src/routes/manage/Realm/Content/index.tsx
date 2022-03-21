@@ -126,7 +126,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
     useEffect(() => {
         if (hasUnsavedChanges) {
             const ref = blockRefs.current.get(editedBlock.id) ?? bug("unbound ref");
-            ref.scrollIntoView({ behavior: "smooth" });
+            ref.scrollIntoView({ behavior: "smooth", block: "center" });
         }
     }, [hasUnsavedChanges, editedBlock]);
 
