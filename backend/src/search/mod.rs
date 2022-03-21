@@ -1,10 +1,17 @@
-use meilisearch_sdk::{client::Client as MeiliClient, indexes::Index, tasks::Task, errors::ErrorCode, document::Document};
+use meilisearch_sdk::{
+    client::Client as MeiliClient,
+    indexes::Index,
+    tasks::Task,
+    errors::ErrorCode,
+};
 use secrecy::{Secret, ExposeSecret};
-use serde::{Serialize, Deserialize};
 
-use crate::{prelude::*, util::HttpHost};
+use crate::{prelude::*, util::HttpHost, db::DbConnection};
 
 pub(crate) mod cmd;
+mod event;
+
+pub(crate) use self::event::Event;
 
 
 #[derive(Debug, Clone, confique::Config)]
@@ -99,19 +106,16 @@ async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
     Ok(index)
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct Event {
-    pub(crate) id: i64,
-    pub(crate) opencast_id: String,
-    pub(crate) title: String,
-    pub(crate) description: Option<String>,
-    pub(crate) creators: Vec<String>,
-    pub(crate) thumbnail: Option<String>,
-}
+pub(crate) async fn rebuild_index(meili: &Client, db: &DbConnection) -> Result<()> {
+    // TODO: Make sure no other updates reach the search index during this
+    // rebuild, as otherwise those might get overwritten and thus lost.
+    //
+    // We might want to use the "read only mode" that we have to develop anyway
+    // in case Opencast is unreachable.
 
-impl Document for Event {
-   type UIDType = i64;
-   fn get_uid(&self) -> &Self::UIDType {
-       &self.id
-   }
+    let _event_task = event::rebuild(meili, db).await?;
+
+    // TODO: regularly poll the status of each task to wait for their completion
+
+    Ok(())
 }

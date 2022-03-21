@@ -1,7 +1,7 @@
 use meilisearch_sdk::indexes::Index;
 use structopt::StructOpt;
 
-use crate::{prelude::*, config::Config};
+use crate::{prelude::*, config::Config, db};
 
 use super::Client;
 
@@ -25,10 +25,18 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
     match cmd {
         SearchIndexCommand::Status => status(&meili).await?,
         SearchIndexCommand::Clear => clear(meili).await?,
-        _ => todo!(),
+        SearchIndexCommand::Rebuild => rebuild(&meili, config).await?,
     }
 
     Ok(())
+}
+
+// ===== Rebuild ===============================================================================
+
+async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
+    let pool = db::create_pool(&config.db).await?;
+    let db = pool.get().await?;
+    super::rebuild_index(meili, &db).await
 }
 
 
