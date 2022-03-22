@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use meilisearch_sdk::{
     client::Client as MeiliClient,
     indexes::Index,
@@ -113,9 +115,31 @@ pub(crate) async fn rebuild_index(meili: &Client, db: &DbConnection) -> Result<(
     // We might want to use the "read only mode" that we have to develop anyway
     // in case Opencast is unreachable.
 
-    let _event_task = event::rebuild(meili, db).await?;
+    let event_task = event::rebuild(meili, db).await?;
 
-    // TODO: regularly poll the status of each task to wait for their completion
+    info!("Sent all data to Meili, now waiting for it to complete indexing... \
+        (note: stopping this process does not stop indexing)");
 
+    let event_task = event_task.wait_for_completion(
+        &meili.client,
+        Some(Duration::from_millis(200)),
+        Some(Duration::MAX),
+    ).await?;
+    error_on_failed_task(&event_task)?;
+
+    info!("Meili finished indexing");
+
+    Ok(())
+}
+
+fn error_on_failed_task(task: &Task) -> Result<()> {
+    if let Task::Failed { content } = task {
+        error!("Task failed: {:#?}", content);
+        bail!(
+            "Indexing task for index '{}' failed: {}",
+            content.task.index_uid,
+            content.error.error_message,
+        );
+    }
     Ok(())
 }
