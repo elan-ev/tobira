@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::{prelude::*, db::{DbConnection, types::Key}};
 
-use super::{Client, SearchId, hex_encode_roles};
+use super::{Client, SearchId, encode_acl};
 
 
 
@@ -57,8 +57,8 @@ pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
                 creators: row.get(5),
                 thumbnail: row.get(6),
                 duration: row.get(7),
-                read_roles: hex_encode_roles(&row.get::<_, Vec<String>>(8)),
-                write_roles: hex_encode_roles(&row.get::<_, Vec<String>>(9)),
+                read_roles: encode_acl(&row.get::<_, Vec<String>>(8)),
+                write_roles: encode_acl(&row.get::<_, Vec<String>>(9)),
             }
         })
         .try_collect::<Vec<_>>()

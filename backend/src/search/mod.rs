@@ -9,7 +9,12 @@ use meilisearch_sdk::{
 use secrecy::{Secret, ExposeSecret};
 use serde::{Deserialize, Serialize};
 
-use crate::{prelude::*, util::HttpHost, db::{DbConnection, types::Key}};
+use crate::{
+    auth::ROLE_ADMIN,
+    db::{DbConnection, types::Key},
+    prelude::*,
+    util::HttpHost,
+};
 
 pub(crate) mod cmd;
 mod event;
@@ -180,6 +185,14 @@ impl fmt::Debug for SearchId {
     }
 }
 
-pub(crate) fn hex_encode_roles(roles: &[String]) -> Vec<String> {
-    roles.iter().map(hex::encode).collect()
+/// Encodes roles inside an ACL (e.g. for an event) to be stored in the index.
+/// The roles are hex encoded to be filterable properly with Meili's
+/// case-insensitive filtering. Also, `ROLE_ADMIN` is removed as an space
+/// optimization. We handle this case specifically by skipping the ACL check if
+/// the user has ROLE_ADMIN.
+pub(crate) fn encode_acl(roles: &[String]) -> Vec<String> {
+    roles.iter()
+        .filter(|&role| role != ROLE_ADMIN)
+        .map(hex::encode)
+        .collect()
 }

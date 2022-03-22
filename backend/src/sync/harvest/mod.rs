@@ -9,7 +9,7 @@ use tokio_postgres::types::ToSql;
 use crate::{
     db::{types::{EventTrack, Key}, DbConnection},
     prelude::*,
-    search::{SearchId, hex_encode_roles},
+    search::{SearchId, encode_acl},
 };
 use super::{SyncConfig, status::SyncStatus};
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
@@ -226,8 +226,8 @@ async fn store_in_db(
                     creators: creator.map_or(vec![], |creator| vec![creator]),
                     thumbnail: thumbnail.clone(),
                     duration,
-                    read_roles: hex_encode_roles(&acl.read),
-                    write_roles: hex_encode_roles(&acl.write),
+                    read_roles: encode_acl(&acl.read),
+                    write_roles: encode_acl(&acl.write),
                 });
 
                 debug!("Inserted or updated event {} ({})", opencast_id, title);

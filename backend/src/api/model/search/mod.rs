@@ -5,7 +5,7 @@ use crate::{
         NodeValue,
     },
     auth::HasRoles,
-    search::{self, hex_encode_roles},
+    search,
 };
 
 
@@ -19,25 +19,33 @@ pub(crate) struct SearchResults {
     items: Vec<NodeValue>,
 }
 
-pub(crate) async fn perform(query: &str, context: &Context) -> ApiResult<Option<SearchResults>> {
-    if query.is_empty() {
+pub(crate) async fn perform(
+    user_query: &str,
+    context: &Context,
+) -> ApiResult<Option<SearchResults>> {
+    if user_query.is_empty() {
         return Ok(None);
     }
 
-    // Build ACL filter: there has to be one user role inside the event's ACL.
-    let user_roles = hex_encode_roles(context.user.roles());
-    let filter = user_roles.into_iter()
-        .map(|hex_role| format!("read_roles = '{hex_role}'"))
-        .collect::<Vec<_>>()
-        .join(" OR ");
+    // If the user is not admin, build ACL filter: there has to be one user role
+    // inside the event's ACL.
+    let filter = if context.user.is_admin() {
+        None
+    } else {
+        let filter = context.user.roles()
+            .iter()
+            .map(|role| format!("read_roles = '{}'", hex::encode(role)))
+            .collect::<Vec<_>>()
+            .join(" OR ");
+        Some(filter)
+    };
 
     // Actually perform the search.
-    let event_results = context.search.event_index.search()
-        .with_query(query)
-        .with_limit(20)
-        .with_filter(&filter)
-        .execute::<search::Event>()
-        .await?;
+    let mut query = context.search.event_index.search();
+    query.with_query(user_query);
+    query.with_limit(20);
+    query.filter = filter.as_deref();
+    let event_results = query.execute::<search::Event>().await?;
 
     let events = event_results.hits.into_iter()
         .map(|result| NodeValue::from(result.result))
