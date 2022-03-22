@@ -1,4 +1,4 @@
-use meilisearch_sdk::{document::Document, tasks::Task};
+use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
 
 use crate::{prelude::*, db::DbConnection};
@@ -10,11 +10,13 @@ use super::Client;
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct Event {
     pub(crate) id: i64,
-    pub(crate) opencast_id: String,
+    pub(crate) series_id: Option<i64>,
+    pub(crate) series_title: Option<String>,
     pub(crate) title: String,
     pub(crate) description: Option<String>,
     pub(crate) creators: Vec<String>,
     pub(crate) thumbnail: Option<String>,
+    pub(crate) duration: i32,
 }
 
 impl Document for Event {
@@ -25,19 +27,22 @@ impl Document for Event {
 }
 
 pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
-    let query = "select \
-        id, opencast_id, title, description, creators, thumbnail \
-        from events";
+    let query = "select events.id, events.series, series.title, \
+        events.title, events.description, creators, thumbnail, duration \
+        from events \
+        left join series on events.series = series.id";
     let events = db.query_raw(query, dbargs![])
         .await?
         .map_ok(|row| {
             Event {
                 id: row.get(0),
-                opencast_id: row.get(1),
-                title: row.get(2),
-                description: row.get(3),
-                creators: row.get(4),
-                thumbnail: row.get(5),
+                series_id: row.get(1),
+                series_title: row.get(2),
+                title: row.get(3),
+                description: row.get(4),
+                creators: row.get(5),
+                thumbnail: row.get(6),
+                duration: row.get(7),
             }
         })
         .try_collect::<Vec<_>>()
@@ -48,4 +53,10 @@ pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
     debug!("Sent {} events to Meili for indexing", events.len());
 
     Ok(task)
+}
+
+pub(super) async fn prepare_index(index: &Index) -> Result<()> {
+    index.set_searchable_attributes(["title", "creators", "description", "series_title"]).await?;
+
+    Ok(())
 }

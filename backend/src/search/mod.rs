@@ -75,6 +75,7 @@ impl Client {
         info!("Connected to MeiliSearch at '{}'", config.host);
 
         let event_index = create_index(&client, &config.event_index_name()).await?;
+        event::prepare_index(&event_index).await?;
         debug!("All required Meili indexes exist (they might be empty though)");
 
         Ok(Self { client, config, event_index })

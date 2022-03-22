@@ -182,19 +182,24 @@ async fn store_in_db(
                 acl,
                 updated,
             } => {
-                let series = match &part_of {
-                    None => None,
+                let (series_id, series_title) = match &part_of {
+                    None => (None, None),
                     Some(part_of) => {
-                        db.query_opt("select id from series where opencast_id = $1", &[part_of])
-                            .await?
-                            .map(|row| row.get::<_, i64>(0))
+                        let query = "select id, title from series where opencast_id = $1";
+                        match db.query_opt(query, &[part_of]).await? {
+                            None => (None, None),
+                            Some(row) => (
+                                Some(row.get::<_, i64>(0)),
+                                Some(row.get::<_, String>(1))
+                            ),
+                        }
                     },
                 };
 
                 // We upsert the event data.
                 let new_id = upsert(db, "events", "opencast_id", &[
                     ("opencast_id", &opencast_id),
-                    ("series", &series),
+                    ("series", &series_id),
                     ("part_of", &part_of),
                     ("title", &title),
                     ("description", &description),
@@ -210,11 +215,13 @@ async fn store_in_db(
 
                 search_events.push(crate::search::Event {
                     id: new_id,
-                    opencast_id: opencast_id.clone(),
+                    series_id,
+                    series_title,
                     title: title.clone(),
                     description,
                     creators: creator.map_or(vec![], |creator| vec![creator]),
                     thumbnail: thumbnail.clone(),
+                    duration,
                 });
 
                 debug!("Inserted or updated event {} ({})", opencast_id, title);
