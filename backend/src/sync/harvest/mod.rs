@@ -6,7 +6,7 @@ use std::{
 use hyper::http::status::StatusCode;
 use tokio_postgres::types::ToSql;
 
-use crate::{db::{types::EventTrack, DbConnection}, prelude::*};
+use crate::{db::{types::{EventTrack, Key}, DbConnection}, prelude::*, search::SearchId};
 use super::{SyncConfig, status::SyncStatus};
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
 
@@ -189,7 +189,7 @@ async fn store_in_db(
                         match db.query_opt(query, &[part_of]).await? {
                             None => (None, None),
                             Some(row) => (
-                                Some(row.get::<_, i64>(0)),
+                                Some(row.get::<_, Key>(0)),
                                 Some(row.get::<_, String>(1))
                             ),
                         }
@@ -214,8 +214,8 @@ async fn store_in_db(
                 ]).await?;
 
                 search_events.push(crate::search::Event {
-                    id: new_id,
-                    series_id,
+                    id: SearchId(Key(new_id as u64)),
+                    series_id: series_id.map(SearchId),
                     series_title,
                     title: title.clone(),
                     description,

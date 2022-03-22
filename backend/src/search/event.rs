@@ -1,16 +1,16 @@
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
 
-use crate::{prelude::*, db::DbConnection};
+use crate::{prelude::*, db::{DbConnection, types::Key}};
 
-use super::Client;
+use super::{Client, SearchId};
 
 
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct Event {
-    pub(crate) id: i64,
-    pub(crate) series_id: Option<i64>,
+    pub(crate) id: SearchId,
+    pub(crate) series_id: Option<SearchId>,
     pub(crate) series_title: Option<String>,
     pub(crate) title: String,
     pub(crate) description: Option<String>,
@@ -20,7 +20,7 @@ pub(crate) struct Event {
 }
 
 impl Document for Event {
-   type UIDType = i64;
+   type UIDType = SearchId;
    fn get_uid(&self) -> &Self::UIDType {
        &self.id
    }
@@ -35,8 +35,8 @@ pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
         .await?
         .map_ok(|row| {
             Event {
-                id: row.get(0),
-                series_id: row.get(1),
+                id: SearchId(row.get(0)),
+                series_id: row.get::<_, Option<Key>>(1).map(SearchId),
                 series_title: row.get(2),
                 title: row.get(3),
                 description: row.get(4),

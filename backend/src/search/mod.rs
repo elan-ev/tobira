@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{time::Duration, fmt};
 
 use meilisearch_sdk::{
     client::Client as MeiliClient,
@@ -7,8 +7,9 @@ use meilisearch_sdk::{
     errors::ErrorCode,
 };
 use secrecy::{Secret, ExposeSecret};
+use serde::{Deserialize, Serialize};
 
-use crate::{prelude::*, util::HttpHost, db::DbConnection};
+use crate::{prelude::*, util::HttpHost, db::{DbConnection, types::Key}};
 
 pub(crate) mod cmd;
 mod event;
@@ -143,4 +144,35 @@ fn error_on_failed_task(task: &Task) -> Result<()> {
         );
     }
     Ok(())
+}
+
+/// Wrapper type for our primary ID that serializes and deserializes as base64
+/// encoded string.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "&str", into = "String")]
+pub(crate) struct SearchId(pub(crate) Key);
+
+impl TryFrom<&str> for SearchId {
+    type Error = &'static str;
+    fn try_from(src: &str) -> Result<Self, Self::Error> {
+        Key::from_base64(src)
+            .ok_or("invalid base64 encoded ID")
+            .map(Self)
+    }
+}
+
+impl From<SearchId> for String {
+    fn from(src: SearchId) -> Self {
+        src.to_string()
+    }
+}
+
+impl fmt::Display for SearchId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut out = [0; 11];
+        self.0.to_base64(&mut out);
+        std::str::from_utf8(&out)
+            .expect("bug: base64 did produce non-ASCII character")
+            .fmt(f)
+    }
 }
