@@ -5,6 +5,7 @@ use crate::{
     auth::{AuthToken, JwtContext, User},
     config::Config,
     db::Transaction,
+    search,
     prelude::*,
 };
 
@@ -15,6 +16,7 @@ pub(crate) struct Context {
     pub(crate) user: Option<User>,
     pub(crate) config: Arc<Config>,
     pub(crate) jwt: Arc<JwtContext>,
+    pub(crate) search: Arc<search::Client>,
 }
 
 impl juniper::Context for Context {}

@@ -103,6 +103,11 @@ async fn start_server(config: Config) -> Result<()> {
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
 
+
+    // Get client for MeiliSearch index.
+    let search = config.meili.connect().await
+        .context("failed to connect to MeiliSearch")?;
+
     // Start DB maintenance jobs
     let conn = db.get().await?;
     let auth_config = config.auth.clone();
@@ -110,7 +115,7 @@ async fn start_server(config: Config) -> Result<()> {
 
     // Start web server
     let root_node = api::root_node();
-    http::serve(config, root_node, db).await
+    http::serve(config, root_node, db, search).await
         .context("failed to start HTTP server")?;
 
     Ok(())
