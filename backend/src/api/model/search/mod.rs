@@ -1,24 +1,15 @@
-use rand::{SeedableRng, prelude::SliceRandom};
-
 use crate::{
     api::{
         Context,
-        err::ApiResult,
+        err::{ApiResult, ApiErrorKind, ApiError},
         NodeValue,
     },
-    prelude::*, db::types::EventTrack,
+    search,
 };
 
 
 mod event;
-mod realm;
-
-pub(crate) use self::{
-    event::SearchEvent,
-    realm::SearchRealm,
-};
-
-use super::event::Track;
+// mod realm;
 
 
 #[derive(juniper::GraphQLObject)]
@@ -32,46 +23,26 @@ pub(crate) async fn perform(query: &str, context: &Context) -> ApiResult<Option<
         return Ok(None);
     }
 
-    // TODO: all of this is only temporary until we use a proper search index
-    let escaped_query = query.replace("_", "\\_").replace("%", "\\%");
+    let event_results = context.search.event_index.search()
+        .with_query(query)
+        .with_limit(20)
+        .execute::<search::Event>()
+        .await?;
 
-    let events = {
-        let sql = "select id, title, description, thumbnail, duration, tracks \
-            from events \
-            where title ilike '%' || $1 || '%' \
-            and read_roles && $2 \
-            limit 10";
-        context.db.query_mapped(sql, dbargs![&escaped_query, &context.user.roles()], |row| {
-            NodeValue::from(SearchEvent {
-                key: row.get(0),
-                title: row.get(1),
-                description: row.get(2),
-                thumbnail: row.get(3),
-                duration: row.get(4),
-                tracks: row.get::<_, Vec<EventTrack>>(5).into_iter().map(Track::from).collect(),
-            })
-        }).await?
-    };
+    let events = event_results.hits.into_iter()
+        .map(|result| NodeValue::from(result.result))
+        .collect();
 
-    let realms = {
-        let sql = "select id, name, full_path \
-            from realms \
-            where name ilike '%' || $1 || '%' \
-            limit 7";
-        context.db.query_mapped(sql, dbargs![&escaped_query], |row| {
-            NodeValue::from(SearchRealm {
-                key: row.get(0),
-                name: row.get(1),
-                full_path: row.get(2),
-            })
-        }).await?
-    };
 
-    let mut items: Vec<_> = realms.into_iter().chain(events).collect();
-    let mut rng = rand::rngs::StdRng::seed_from_u64(123);
-    items.shuffle(&mut rng);
-
-    Ok(Some(SearchResults { items }))
+    Ok(Some(SearchResults { items: events }))
 }
 
-
+impl From<meilisearch_sdk::errors::Error> for ApiError {
+    fn from(src: meilisearch_sdk::errors::Error) -> Self {
+        Self {
+            msg: format!("DB error: {src}"),
+            kind: ApiErrorKind::InternalServerError,
+            key: None,
+        }
+    }
+}

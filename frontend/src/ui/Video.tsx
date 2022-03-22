@@ -9,8 +9,10 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
         title: string;
         thumbnail: string | null;
         duration: number;
-        tracks: readonly { resolution: readonly number[] | null }[];
-    };
+    } & (
+        { tracks: readonly { resolution: readonly number[] | null }[] }
+        | { audioOnly: boolean }
+    );
 
     /** If `true`, an indicator overlay is shown */
     active?: boolean;
@@ -22,7 +24,9 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     ...rest
 }) => {
     const { t } = useTranslation();
-    const audioOnly = event.tracks.every(t => t.resolution == null);
+    const audioOnly = "audioOnly" in event
+        ? event.audioOnly
+        : event.tracks.every(t => t.resolution == null);
 
     let inner;
     if (event.thumbnail != null) {
