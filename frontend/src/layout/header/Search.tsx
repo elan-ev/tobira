@@ -82,7 +82,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 }
                 lastTimeout.current = setTimeout(() => {
                     router.goto(`/~search?q=${encodeURIComponent(e.target.value)}`);
-                }, 200);
+                }, 30);
             }}
             css={{
                 flex: "1 1 0px",
