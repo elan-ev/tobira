@@ -119,7 +119,7 @@ pub(crate) async fn rebuild_index(meili: &Client, db: &DbConnection) -> Result<(
 
     let event_task = event::rebuild(meili, db).await?;
 
-    info!("Sent all data to Meili, now waiting for it to complete indexing... \
+    info!("Sent all data to Meili, now waiting for it to complete indexing...\n\
         (note: stopping this process does not stop indexing)");
 
     let event_task = event_task.wait_for_completion(
@@ -178,4 +178,8 @@ impl fmt::Debug for SearchId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "SearchId({:?})", self.0)
     }
+}
+
+pub(crate) fn hex_encode_roles(roles: &[String]) -> Vec<String> {
+    roles.iter().map(hex::encode).collect()
 }

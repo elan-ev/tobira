@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::{prelude::*, db::{DbConnection, types::Key}};
 
-use super::{Client, SearchId};
+use super::{Client, SearchId, hex_encode_roles};
 
 
 
@@ -17,6 +17,19 @@ pub(crate) struct Event {
     pub(crate) creators: Vec<String>,
     pub(crate) thumbnail: Option<String>,
     pub(crate) duration: i32,
+
+    // These are filterable. All roles are hex encoded to work around Meilis
+    // inability to filter case-sensitively. For roles, we have to compare
+    // case-sensitively. Encoding as hex is one possibility. There likely also
+    // exists a more compact encoding, but hex is good for now.
+    //
+    // Alternatively, one could also let Meili do the case-insensitive checking
+    // and do another check in our backend, case-sensitive. That could work if
+    // we just assume that the cases where this matters are very rare. And in
+    // those cases we just accept that our endpoint returns fewer than X
+    // items.
+    pub(crate) read_roles: Vec<String>,
+    pub(crate) write_roles: Vec<String>,
 }
 
 impl Document for Event {
@@ -28,7 +41,8 @@ impl Document for Event {
 
 pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
     let query = "select events.id, events.series, series.title, \
-        events.title, events.description, creators, thumbnail, duration \
+        events.title, events.description, creators, thumbnail, duration, \
+        read_roles, write_roles \
         from events \
         left join series on events.series = series.id";
     let events = db.query_raw(query, dbargs![])
@@ -43,6 +57,8 @@ pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
                 creators: row.get(5),
                 thumbnail: row.get(6),
                 duration: row.get(7),
+                read_roles: hex_encode_roles(&row.get::<_, Vec<String>>(8)),
+                write_roles: hex_encode_roles(&row.get::<_, Vec<String>>(9)),
             }
         })
         .try_collect::<Vec<_>>()
@@ -57,6 +73,7 @@ pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
     index.set_searchable_attributes(["title", "creators", "description", "series_title"]).await?;
+    index.set_filterable_attributes(["read_roles", "write_roles"]).await?;
 
     Ok(())
 }

@@ -4,7 +4,8 @@ use crate::{
         err::{ApiResult, ApiErrorKind, ApiError},
         NodeValue,
     },
-    search,
+    auth::HasRoles,
+    search::{self, hex_encode_roles},
 };
 
 
@@ -23,9 +24,18 @@ pub(crate) async fn perform(query: &str, context: &Context) -> ApiResult<Option<
         return Ok(None);
     }
 
+    // Build ACL filter: there has to be one user role inside the event's ACL.
+    let user_roles = hex_encode_roles(context.user.roles());
+    let filter = user_roles.into_iter()
+        .map(|hex_role| format!("read_roles = '{hex_role}'"))
+        .collect::<Vec<_>>()
+        .join(" OR ");
+
+    // Actually perform the search.
     let event_results = context.search.event_index.search()
         .with_query(query)
         .with_limit(20)
+        .with_filter(&filter)
         .execute::<search::Event>()
         .await?;
 
