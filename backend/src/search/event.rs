@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::{prelude::*, db::{DbConnection, types::Key}};
 
-use super::{Client, SearchId, encode_acl};
+use super::{Client, SearchId, encode_acl, lazy_set_special_attributes};
 
 
 
@@ -72,8 +72,10 @@ pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    index.set_searchable_attributes(["title", "creators", "description", "series_title"]).await?;
-    index.set_filterable_attributes(["read_roles", "write_roles"]).await?;
-
-    Ok(())
+    lazy_set_special_attributes(
+        index,
+        "event",
+        &["title", "creators", "description", "series_title"],
+        &["read_roles", "write_roles"],
+    ).await
 }

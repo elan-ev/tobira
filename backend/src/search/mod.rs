@@ -88,6 +88,7 @@ impl Client {
     }
 }
 
+// Creates a new index with the given `name` if it does not exist yet.
 async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
     debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");
     let task = client.create_index(name, Some("id"))
@@ -113,6 +114,28 @@ async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
     };
 
     Ok(index)
+}
+
+// Helper function to only set special attributes when they are not correctly
+// set yet. Unfortunately Meili seems to perform lots of work when setting
+// them, even if the special attribute set was the same before.
+async fn lazy_set_special_attributes(
+    index: &Index,
+    index_name: &str,
+    searchable_attrs: &[&str],
+    filterable_attrs: &[&str],
+) -> Result<()> {
+    if index.get_searchable_attributes().await? != searchable_attrs {
+        debug!("Updating `searchable_attributes` of {index_name} index");
+        index.set_searchable_attributes(searchable_attrs).await?;
+    }
+
+    if index.get_filterable_attributes().await? != filterable_attrs {
+        debug!("Updating `filterable_attributes` of {index_name} index");
+        index.set_filterable_attributes(filterable_attrs).await?;
+    }
+
+    Ok(())
 }
 
 pub(crate) async fn rebuild_index(meili: &Client, db: &DbConnection) -> Result<()> {
