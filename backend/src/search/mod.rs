@@ -18,6 +18,7 @@ use crate::{
 
 pub(crate) mod cmd;
 mod event;
+mod realm;
 
 pub(crate) use self::event::Event;
 
@@ -54,12 +55,17 @@ impl MeiliConfig {
     fn event_index_name(&self) -> String {
         format!("{}{}", self.index_prefix, "events")
     }
+
+    fn realm_index_name(&self) -> String {
+        format!("{}{}", self.index_prefix, "realms")
+    }
 }
 
 pub(crate) struct Client {
     config: MeiliConfig,
     client: MeiliClient,
     pub(crate) event_index: Index,
+    pub(crate) realm_index: Index,
 }
 
 impl Client {
@@ -79,11 +85,14 @@ impl Client {
 
         info!("Connected to MeiliSearch at '{}'", config.host);
 
+        // Preparing the indexes.
         let event_index = create_index(&client, &config.event_index_name()).await?;
         event::prepare_index(&event_index).await?;
+        let realm_index = create_index(&client, &config.realm_index_name()).await?;
+        realm::prepare_index(&realm_index).await?;
         debug!("All required Meili indexes exist (they might be empty though)");
 
-        Ok(Self { client, config, event_index })
+        Ok(Self { client, config, event_index, realm_index })
     }
 }
 
@@ -145,11 +154,13 @@ pub(crate) async fn rebuild_index(meili: &Client, db: &DbConnection) -> Result<(
     // in case Opencast is unreachable.
 
     let event_task = event::rebuild(meili, db).await?;
+    let realm_task = realm::rebuild(meili, db).await?;
 
     info!("Sent all data to Meili, now waiting for it to complete indexing...\n\
         (note: stopping this process does not stop indexing)");
 
     wait_on_task(event_task, meili).await?;
+    wait_on_task(realm_task, meili).await?;
 
     info!("Meili finished indexing");
 
