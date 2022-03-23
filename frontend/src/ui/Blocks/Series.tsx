@@ -94,6 +94,8 @@ export const SeriesBlock: React.FC<Props> = ({
         OLD_TO_NEW: () => sortedEvents.sort(compareOldToNew),
     }, unreachable);
 
+    const { t } = useTranslation();
+
     return (
         <div css={{
             marginTop: 24,
@@ -128,11 +130,13 @@ export const SeriesBlock: React.FC<Props> = ({
                     justifyContent: "center",
                 },
             }}>
-                {sortedEvents.map(event => <GridTile
-                    key={event.id}
-                    active={event.id === activeEventId}
-                    {...{ realmPath, event }}
-                />)}
+                {sortedEvents.length
+                    ? sortedEvents.map(event => <GridTile
+                        key={event.id}
+                        active={event.id === activeEventId}
+                        {...{ realmPath, event }}
+                    />)
+                    : t("series.no-events")}
             </div>
         </div>
     );

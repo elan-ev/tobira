@@ -13,6 +13,9 @@ begin
     insert into series (opencast_id, title, description, updated)
         values ('f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d', 'Christmas Chemistry', 'Prof goes boom', now())
         returning id into series_christmas;
+    -- Empty series for testing edge cases
+    insert into series (opencast_id, title, updated)
+        values ('68612b2e-423b-40c2-8933-92c3dd4a47a9', 'Empty series', now());
 
     -- Add lots of realms
     perform create_departments();

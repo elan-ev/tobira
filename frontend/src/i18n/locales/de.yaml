@@ -96,6 +96,7 @@ video:
 
 series:
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
+  no-events: Diese Serie enthält keine Videos oder Sie sind nicht berechtigt, diese zu sehen.
 
 realm:
   page-settings: Seiteneinstellungen
