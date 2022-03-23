@@ -184,7 +184,8 @@ impl Realm {
     }
 
     /// Returns all ancestors between the root realm to this realm
-    /// (excluding both, the root realm and this realm).
+    /// (excluding both, the root realm and this realm). It starts with a
+    /// direct child of the root and ends with the parent of `self`.
     async fn ancestors(&self, context: &Context) -> ApiResult<Vec<Realm>> {
         let result = context.db
             .query_raw(
