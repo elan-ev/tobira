@@ -1,3 +1,5 @@
+use std::fmt;
+
 use bytes::BytesMut;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
@@ -17,7 +19,7 @@ pub struct EventTrack {
 /// Our primary database ID type, which we call "key". In the database, it's a
 /// `bigint` (`i64`), but we have a separate Rust type for it for several
 /// reasons. Implements `ToSql` and `FromSql` by casting to/from `i64`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct Key(pub(crate) u64);
 
 impl ToSql for Key {
@@ -46,5 +48,12 @@ impl<'a> FromSql<'a> for Key {
 
     fn accepts(ty: &postgres_types::Type) -> bool {
         <i64 as FromSql>::accepts(ty)
+    }
+}
+
+impl fmt::Debug for Key {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut buf = [0; 11];
+        write!(f, "Key({} :: {})", self.0, self.to_base64(&mut buf))
     }
 }

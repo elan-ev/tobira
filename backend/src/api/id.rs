@@ -133,7 +133,7 @@ impl Key {
         decode_base64(s.as_bytes())
     }
 
-    pub(crate) fn to_base64(&self, out: &mut [u8; 11]) {
+    pub(crate) fn to_base64<'a>(&self, out: &'a mut [u8; 11]) -> &'a str {
         // Base64 encoding. After this loop, `n` is always 0, because `u64::MAX`
         // divided by 64 eleven times is 0.
         let mut n = self.0;
@@ -142,6 +142,9 @@ impl Key {
             n /= 64;
         }
         debug_assert!(n == 0);
+
+        std::str::from_utf8(out)
+            .expect("bug: base64 did produce non-ASCII character")
     }
 }
 
@@ -171,7 +174,7 @@ impl fmt::Display for Id {
         self.key.to_base64((&mut out[2..]).try_into().unwrap());
 
         std::str::from_utf8(&out)
-            .expect("bug: base64 did produce non-ASCII character")
+            .expect("base64 encoding resulted in non-ASCII")
             .fmt(f)
     }
 }
