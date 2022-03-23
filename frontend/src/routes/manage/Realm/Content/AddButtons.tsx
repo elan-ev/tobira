@@ -74,7 +74,6 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
             title={t("manage.realm.content.add-series")}
             onClick={() => addBlock("Series", (_store, block) => {
                 block.setValue("NEW_TO_OLD", "order");
-                block.setValue("GRID", "layout");
                 block.setValue(true, "showTitle");
             })}
         >

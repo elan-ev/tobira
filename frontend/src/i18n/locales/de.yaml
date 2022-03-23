@@ -276,11 +276,6 @@ manage:
           heading: Reihenfolge
           new-to-old: Neuste zuerst
           old-to-new: Älteste zuerst
-        layout:
-          heading: Anordnung
-          grid: Raster
-          horizontal: Horizontal
-          vertical: Vertikal
         series:
           heading: Serie
           none: Keine Serie ausgewählt

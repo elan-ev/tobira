@@ -8,7 +8,6 @@
 select prepare_randomized_ids('block');
 
 create type block_type as enum ('title', 'text', 'series', 'video');
-create type video_list_layout as enum ('horizontal', 'vertical', 'grid');
 create type video_list_order as enum ('new_to_old', 'old_to_new');
 
 create table blocks (
@@ -25,7 +24,6 @@ create table blocks (
     series_id bigint references series on delete set null,
 
     -- All videolist-like blocks
-    videolist_layout video_list_layout,
     videolist_order video_list_order,
 
     -- Video blocks
@@ -46,7 +44,6 @@ create table blocks (
         text_content is not null
     )),
     constraint series_block_has_fields check (type <> 'series' or (
-        videolist_layout is not null and
         videolist_order is not null and
         show_title is not null
     )),

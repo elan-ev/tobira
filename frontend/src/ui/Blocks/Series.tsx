@@ -26,7 +26,6 @@ const blockFragment = graphql`
     fragment SeriesBlockData on SeriesBlock {
         series { ...SeriesBlockSeriesData }
         showTitle
-        layout
         order
     }
 `;
@@ -68,7 +67,6 @@ export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = ({ fragRef, ...r
     const series = useFragment(seriesFragment, fragRef);
     return <SeriesBlock
         {...{ series }}
-        layout="GRID"
         order="NEW_TO_OLD"
         showTitle={true}
         {...rest}

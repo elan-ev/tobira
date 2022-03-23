@@ -194,8 +194,8 @@ impl Block {
                 // Insert block
                 let query = "
                     insert into blocks
-                    (realm_id, type, index, series_id, videolist_layout, videolist_order, show_title)
-                    values ($1, 'series', $2, $3, 'grid', 'new_to_old', true)
+                    (realm_id, type, index, series_id, videolist_order, show_title)
+                    values ($1, 'series', $2, $3, 'new_to_old', true)
                 ";
                 db.execute(query, &[&realm_id, &(index as i16), &series_id]).await?;
             }

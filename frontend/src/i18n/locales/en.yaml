@@ -265,11 +265,6 @@ manage:
           heading: Order
           new-to-old: Newest first
           old-to-new: Oldest first
-        layout:
-          heading: Layout
-          grid: Grid
-          horizontal: Horizontal
-          vertical: Vertical
         series:
           heading: Series
           none: No series selected
