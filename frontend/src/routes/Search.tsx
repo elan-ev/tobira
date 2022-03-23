@@ -12,6 +12,8 @@ import { Description } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
 import { FiFolder } from "react-icons/fi";
+import { TFunction } from "i18next";
+import { HiOutlineUserCircle } from "react-icons/hi";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -41,7 +43,7 @@ const query = graphql`
             items {
                 id
                 __typename
-                ... on SearchEvent { title description thumbnail duration }
+                ... on SearchEvent { title description thumbnail duration creators seriesTitle }
                 ... on SearchRealm { name path ancestorNames }
             }
         }
@@ -62,7 +64,7 @@ const SearchPage: React.FC<Props> = ({ q, results }) => {
             ? <CenteredNote>{t("search.too-few-characters")}</CenteredNote>
             : results.items.length === 0
                 ? <CenteredNote>{t("search.no-results")}</CenteredNote>
-                : <SearchResults items={results.items} />
+                : <SearchResults items={results.items} t={t} />
         }
     </div>;
 };
@@ -75,24 +77,27 @@ const CenteredNote: React.FC = ({ children }) => (
 
 type SearchResultsProps = {
     items: NonNullable<SearchQueryResponse["search"]>["items"];
+    t: TFunction;
 };
 
-const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
+const SearchResults: React.FC<SearchResultsProps> = ({ items, t }) => (
     <ul css={{ listStyle: "none", padding: 0 }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
+                const title = item.title ?? bug("SearchEvent without title");
+                const creators = item.creators ?? bug("SearchEvent without creators");
                 return (
                     <Item key={item.id} link={`/!${item.id.slice(2)}`}>
                         <Thumbnail
                             event={{
-                                title: item.title ?? bug("SearchEvent without title"),
+                                title,
                                 thumbnail: item.thumbnail ?? null,
                                 duration: item.duration ?? bug("SearchEvent without duration"),
                                 audioOnly: false, // TODO
                             }}
                             css={{ width: "100%" }}
                         />
-                        <div>
+                        <div css={{ color: "black" }}>
                             <h3 css={{
                                 marginBottom: 6,
                                 display: "-webkit-box",
@@ -100,8 +105,20 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 WebkitLineClamp: 2,
-                            }}>{item.title}</h3>
+                            }}>{title}</h3>
+                            <div css={{ fontSize: 14, display: "flex", alignItems: "center" }}>
+                                <HiOutlineUserCircle css={{
+                                    color: "var(--grey40)",
+                                    fontSize: 16,
+                                    marginRight: 8,
+                                }} />
+                                {creators.join(", ")}
+                            </div>
                             <Description text={item.description ?? null} lines={3} />
+                            {/* TODO: link to series */}
+                            {item.seriesTitle && <div css={{ fontSize: 14, marginTop: 4 }}>
+                                {t("video.part-of-series") + ": " + item.seriesTitle}
+                            </div>}
                         </div>
                     </Item>
                 );
