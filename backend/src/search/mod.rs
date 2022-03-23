@@ -148,7 +148,7 @@ fn error_on_failed_task(task: &Task) -> Result<()> {
 
 /// Wrapper type for our primary ID that serializes and deserializes as base64
 /// encoded string.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "&str", into = "String")]
 pub(crate) struct SearchId(pub(crate) Key);
 
@@ -170,9 +170,12 @@ impl From<SearchId> for String {
 impl fmt::Display for SearchId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut out = [0; 11];
-        self.0.to_base64(&mut out);
-        std::str::from_utf8(&out)
-            .expect("bug: base64 did produce non-ASCII character")
-            .fmt(f)
+        self.0.to_base64(&mut out).fmt(f)
+    }
+}
+
+impl fmt::Debug for SearchId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "SearchId({:?})", self.0)
     }
 }
