@@ -64,7 +64,6 @@ pub(crate) struct Client {
 
 impl Client {
     async fn new(config: MeiliConfig) -> Result<Self> {
-        // TODO: allow HTTPS connections
         let client = MeiliClient::new(
             &config.host.to_string(),
             config.key.expose_secret(),
@@ -150,19 +149,20 @@ pub(crate) async fn rebuild_index(meili: &Client, db: &DbConnection) -> Result<(
     info!("Sent all data to Meili, now waiting for it to complete indexing...\n\
         (note: stopping this process does not stop indexing)");
 
-    let event_task = event_task.wait_for_completion(
-        &meili.client,
-        Some(Duration::from_millis(200)),
-        Some(Duration::MAX),
-    ).await?;
-    error_on_failed_task(&event_task)?;
+    wait_on_task(event_task, meili).await?;
 
     info!("Meili finished indexing");
 
     Ok(())
 }
 
-fn error_on_failed_task(task: &Task) -> Result<()> {
+async fn wait_on_task(task: Task, meili: &Client) -> Result<()> {
+    let task = task.wait_for_completion(
+        &meili.client,
+        Some(Duration::from_millis(200)),
+        Some(Duration::MAX),
+    ).await?;
+
     if let Task::Failed { content } = task {
         error!("Task failed: {:#?}", content);
         bail!(
@@ -171,8 +171,10 @@ fn error_on_failed_task(task: &Task) -> Result<()> {
             content.error.error_message,
         );
     }
+
     Ok(())
 }
+
 
 /// Wrapper type for our primary ID that serializes and deserializes as base64
 /// encoded string.
