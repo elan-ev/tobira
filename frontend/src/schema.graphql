@@ -205,6 +205,13 @@ type Series implements Node {
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
 }
 
+type SearchRealm implements Node {
+  id: ID!
+  name: String!
+  path: String!
+  ancestorNames: [String!]!
+}
+
 "Defines the sort order for events."
 input EventSortOrder {
   column: EventSortColumn!

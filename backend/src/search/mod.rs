@@ -20,7 +20,10 @@ pub(crate) mod cmd;
 mod event;
 mod realm;
 
-pub(crate) use self::event::Event;
+pub(crate) use self::{
+    event::Event,
+    realm::Realm,
+};
 
 
 #[derive(Debug, Clone, confique::Config)]

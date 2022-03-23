@@ -11,6 +11,7 @@ import { bug } from "../util/err";
 import { Description } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
+import { FiFolder } from "react-icons/fi";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -41,6 +42,7 @@ const query = graphql`
                 id
                 __typename
                 ... on SearchEvent { title description thumbnail duration }
+                ... on SearchRealm { name path ancestorNames }
             }
         }
     }
@@ -100,6 +102,23 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                                 WebkitLineClamp: 2,
                             }}>{item.title}</h3>
                             <Description text={item.description ?? null} lines={3} />
+                        </div>
+                    </Item>
+                );
+            } else if (item.__typename === "SearchRealm") {
+                const fullPath = item.path ?? bug("fullPath is null for realm");
+                const ancestorNames = item.ancestorNames ?? bug("ancestorNames missing for realm");
+                return (
+                    <Item key={item.id} link={fullPath}>
+                        <div css={{ textAlign: "center" }}>
+                            <FiFolder css={{ margin: 8, fontSize: 26 }}/>
+                        </div>
+                        <div>
+                            {/* TODO: use proper breadcrumbs, not this uhg */}
+                            <div>
+                                {"/ " + ancestorNames.map(name => name + " / ").join("")}
+                            </div>
+                            <h3>{item.name}</h3>
                         </div>
                     </Item>
                 );
