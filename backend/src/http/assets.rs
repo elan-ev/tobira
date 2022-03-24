@@ -80,6 +80,7 @@ impl Assets {
         }
 
         let mut variables = <HashMap<String, String>>::new();
+        variables.insert("version".into(), crate::version());
         variables.insert("global-style".into(), config.theme.to_css());
         variables.insert("auth".into(), json!({
             "loginLink": config.auth.login_link,

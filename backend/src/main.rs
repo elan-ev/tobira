@@ -21,10 +21,6 @@ mod prelude;
 mod sync;
 mod util;
 
-mod build_info {
-    include!(concat!(env!("OUT_DIR"), "/built.rs"));
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     // If `RUST_BACKTRACE` wasn't already set, we default to `1`. Backtraces are
@@ -42,17 +38,7 @@ async fn main() -> Result<()> {
     // using some runtime code.
     let args = Args::from_clap(
         &Args::clap()
-            .version(&*format!(
-                "{} ({}{}), built {}",
-                build_info::PKG_VERSION,
-                build_info::GIT_COMMIT_HASH.unwrap(),
-                if let Some(true) = build_info::GIT_DIRTY {
-                    ", dirty"
-                } else {
-                    ""
-                },
-                build_info::BUILT_TIME_UTC,
-            ))
+            .version(&*version())
             .get_matches(),
     );
 
@@ -116,4 +102,21 @@ fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
     logger::init(&config.log)?;
 
     Ok(config)
+}
+
+pub fn version() -> String {
+    mod build_info {
+        include!(concat!(env!("OUT_DIR"), "/built.rs"));
+    }
+    format!(
+        "{} ({}{}), built {}",
+        build_info::PKG_VERSION,
+        build_info::GIT_COMMIT_HASH.unwrap(),
+        if let Some(true) = build_info::GIT_DIRTY {
+            ", dirty"
+        } else {
+            ""
+        },
+        build_info::BUILT_TIME_UTC,
+    )
 }
