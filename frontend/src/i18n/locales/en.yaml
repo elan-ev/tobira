@@ -62,7 +62,6 @@ footer:
 
 main-menu:
   label: Menu
-  theme: Theme
   settings: Settings
   about: About
 
@@ -70,7 +69,6 @@ user:
   login: Login
   logout: Log out
   settings: User settings
-  your-page: Your page
   manage-content: Manage content
   logged-in-as: Logged in as
 

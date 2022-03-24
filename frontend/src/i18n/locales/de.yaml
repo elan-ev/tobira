@@ -66,7 +66,6 @@ footer:
 
 main-menu:
   label: Menü
-  theme: Design
   settings: Einstellungen
   about: Info
 
@@ -74,7 +73,6 @@ user:
   login: Anmelden
   logout: Abmelden
   settings: Nutzereinstellungen
-  your-page: Persönliche Seite
   manage-content: Inhalte verwalten
   logged-in-as: Angemeldet als
 

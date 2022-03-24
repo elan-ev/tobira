@@ -4,10 +4,10 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle,
-    FiCheck, FiChevronLeft, FiFilm, FiLogIn, FiLogOut, FiMoon,
+    FiCheck, FiChevronLeft, FiFilm, FiLogIn, FiLogOut,
     FiMoreVertical, FiUpload, FiUserCheck,
 } from "react-icons/fi";
-import { HiOutlineSparkles, HiOutlineTranslate } from "react-icons/hi";
+import { HiOutlineTranslate } from "react-icons/hi";
 
 import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
 import { languages } from "../../i18n";
@@ -230,11 +230,6 @@ const Menu: React.FC<MenuProps> = ({ t, close, container }) => {
                     onClick={() => close()}
                 >{t("upload.title")}</MenuItem>}
                 <MenuItem
-                    icon={<HiOutlineSparkles />}
-                    linkTo={`/@${user.username}`}
-                    onClick={() => close()}
-                >{t("user.your-page")}</MenuItem>
-                <MenuItem
                     icon={<FiFilm />}
                     linkTo="/~manage"
                     onClick={() => close()}
@@ -244,8 +239,6 @@ const Menu: React.FC<MenuProps> = ({ t, close, container }) => {
             <MenuItem icon={<HiOutlineTranslate />} onClick={() => setState("language")}>
                 {t("language")}
             </MenuItem>
-            {/* TODO: make this do something */}
-            <MenuItem icon={<FiMoon />}>{t("main-menu.theme")}</MenuItem>
 
             {/* Logout button if the user is logged in */}
             {user && <Logout />}
