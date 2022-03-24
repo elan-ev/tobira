@@ -6,6 +6,10 @@ database = "tobira-{{ id }}"
 user = "tobira-{{ id }}"
 password = "tobira-{{ id }}"
 
+[meili]
+key = "tobira"
+index_prefix = "tobira_{{ id }}_"
+
 [http]
 unix_socket = "/opt/tobira/{{ id }}/socket/tobira.sock"
 unix_socket_permissions = 0o777

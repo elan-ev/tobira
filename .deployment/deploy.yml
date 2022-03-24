@@ -20,6 +20,32 @@
           - python3-psycopg2
           - nginx
 
+    # MeiliSearch
+
+    - name: create MeiliSearch directory
+      become: true
+      file:
+        path: /opt/meili
+        state: directory
+        mode: '0755'
+
+    - name: install MeiliSearch
+      become: true
+      get_url:
+        url: https://github.com/meilisearch/meilisearch/releases/download/v0.26.1/meilisearch-linux-amd64
+        dest: /opt/meili/meilisearch
+        mode: '0755'
+
+    - name: install MeiliSearch service file
+      become: true
+      template:
+        src: meili.service
+        dest: /etc/systemd/system/meili.service
+        mode: '0644'
+        owner: root
+        group: root
+      notify: restart meili
+
     # DATABASE
 
     - name: initialize database
@@ -305,3 +331,9 @@
       service:
         name: nginx
         state: reloaded
+
+    - name: restart meili
+      become: true
+      service:
+        name: meili
+        state: restarted
