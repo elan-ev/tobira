@@ -103,7 +103,6 @@ async fn start_server(config: Config) -> Result<()> {
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
 
-
     // Get client for MeiliSearch index.
     let search = config.meili.connect().await
         .context("failed to connect to MeiliSearch")?;

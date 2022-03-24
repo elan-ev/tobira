@@ -10,6 +10,7 @@ use crate::{
     config::Config,
     db,
     prelude::*,
+    search,
 };
 
 
@@ -61,13 +62,22 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
         .context("failed to create database connection pool (database not running?)")?;
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
-    let conn = &**db.get().await?;
+    let conn = db.get().await?;
 
-    let mut dummy_blocks = DummyBlocks::new(args.dummy_blocks, conn).await?;
+    // Get client for MeiliSearch index.
+    let search = config.meili.connect().await
+        .context("failed to connect to MeiliSearch")?;
+
+    let mut dummy_blocks = DummyBlocks::new(args.dummy_blocks, &**conn).await?;
 
     info!("Starting to insert realms into the DB...");
-    insert_realm(conn, &root, 0, &mut dummy_blocks).await?;
+    insert_realm(&**conn, &root, 0, &mut dummy_blocks).await?;
     info!("Done inserting realms");
+
+    // TODO: we only need to rebuild the realm index
+    info!("Rebuilding search index");
+    search::rebuild_index(&search, &conn).await?;
+    info!("Done rebuilding search index");
 
     Ok(())
 }
