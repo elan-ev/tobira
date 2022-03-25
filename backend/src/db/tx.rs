@@ -4,7 +4,10 @@ use tokio_postgres::{Error, Row, RowStream};
 
 use crate::prelude::*;
 
-use super::util::collect_rows_mapped;
+use super::{
+    types::{SearchIndexItemKind, Key},
+    util::collect_rows_mapped,
+};
 
 
 /// A database transaction that has been started for one API request.
@@ -43,6 +46,20 @@ impl Transaction {
         }
 
         res
+    }
+
+    /// Marks a specific item as "needs reindex". Meaning that data that is
+    /// relevant for the search index has changed.
+    pub(crate) async fn queue_for_reindex(
+        &self,
+        kind: SearchIndexItemKind,
+        id: Key,
+    ) -> Result<(), Error> {
+        let query = "insert into search_index_queue (item_id, kind) \
+            values ($1, $2) \
+            on conflict do nothing";
+        self.execute(query, &[&id, &kind]).await?;
+        Ok(())
     }
 
     // The following methods shadow the ones from `deadpool_postgres::Transaction`
