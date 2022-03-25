@@ -216,4 +216,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     06: "blocks",
     07: "sync-status",
     08: "user-sessions",
+    09: "search-index-queue",
 ];
