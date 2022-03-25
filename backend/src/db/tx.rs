@@ -1,4 +1,4 @@
-use std::sync::{Arc, atomic::{AtomicU32, Ordering}};
+use std::sync::{Arc, atomic::{AtomicU32, Ordering, AtomicBool}};
 use postgres_types::{BorrowToSql, ToSql};
 use tokio_postgres::{Error, Row, RowStream};
 
@@ -11,20 +11,38 @@ use super::util::collect_rows_mapped;
 pub struct Transaction {
     inner: Arc<deadpool_postgres::Transaction<'static>>,
     num_queries: AtomicU32,
+    error: AtomicBool,
 }
 
 impl Transaction {
     pub fn new(inner: Arc<deadpool_postgres::Transaction<'static>>) -> Self {
-        Self { inner, num_queries: AtomicU32::new(0) }
+        Self {
+            inner,
+            num_queries: AtomicU32::new(0),
+            error: AtomicBool::new(false),
+        }
     }
 
     pub fn num_queries(&self) -> u32 {
         self.num_queries.load(Ordering::SeqCst)
     }
 
+    pub fn has_errored(&self) -> bool {
+        self.error.load(Ordering::SeqCst)
+    }
+
     fn increase_num_queries(&self) {
         // `Relaxed` would probably be fine for these metrics.
         self.num_queries.fetch_add(1, Ordering::SeqCst);
+    }
+
+    fn check_error<T>(&self, res: Result<T, Error>) -> Result<T, Error> {
+        if let Err(e) = &res {
+            error!("Error when executing query: {}", e);
+            self.error.store(true, Ordering::SeqCst);
+        }
+
+        res
     }
 
     // The following methods shadow the ones from `deadpool_postgres::Transaction`
@@ -47,7 +65,7 @@ impl Transaction {
         trace!("Executing SQL query: \"{}\" with {:?}", query, params);
         let statement = self.inner.prepare_cached(query).await?;
         self.increase_num_queries();
-        self.inner.query_one(&statement, params).await
+        self.check_error(self.inner.query_one(&statement, params).await)
     }
 
     pub async fn query_opt(
@@ -58,7 +76,7 @@ impl Transaction {
         trace!("Executing SQL query: \"{}\" with {:?}", query, params);
         let statement = self.inner.prepare_cached(query).await?;
         self.increase_num_queries();
-        self.inner.query_opt(&statement, params).await
+        self.check_error(self.inner.query_opt(&statement, params).await)
     }
 
     pub async fn query_raw<P, I>(&self, query: &str, params: I) -> Result<RowStream, Error>
@@ -70,7 +88,7 @@ impl Transaction {
         trace!("Executing SQL query: \"{}\" with {:?}", query, params);
         let statement = self.inner.prepare_cached(query).await?;
         self.increase_num_queries();
-        self.inner.query_raw(&statement, params).await
+        self.check_error(self.inner.query_raw(&statement, params).await)
     }
 
     /// Convenience method to query many rows and convert each row to a specific
@@ -98,6 +116,6 @@ impl Transaction {
         trace!("Executing SQL query: \"{}\" with {:?}", query, params);
         let statement = self.inner.prepare_cached(query).await?;
         self.increase_num_queries();
-        self.inner.execute(&statement, params).await
+        self.check_error(self.inner.execute(&statement, params).await)
     }
 }

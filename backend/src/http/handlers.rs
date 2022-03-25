@@ -170,6 +170,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
 
     // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();
+    let has_errored = api_context.db.has_errored();
     let username = auth::debug_log_username(&api_context.user);
     drop(api_context);
 
@@ -186,6 +187,17 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
             std::process::abort();
         }
         Ok(tx) => {
+            if has_errored {
+                error!("Error has occured during API DB transaction. Rolling back transaction...");
+                if let Err(e) = tx.rollback().await {
+                    error!("Failed to rollback transaction: {e}\nWill give up now. Transaction \
+                        should be rolled back automatically since it won't be committed.");
+
+                }
+
+                return Ok(response::internal_server_error());
+            }
+
             match tx.commit().await {
                 // If the transaction succeeded we can return the generated response.
                 Ok(_) => Ok(out),
