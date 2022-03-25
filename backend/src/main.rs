@@ -104,6 +104,10 @@ fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
     Ok(config)
 }
 
+/// Gives you information about this very version of Tobira,
+/// i.e. it's semantic version, which commit it was built from,
+/// and when. It also indicates whether or not the working directory
+/// was clean at the time, since this is a potential source of errors.
 pub fn version() -> String {
     mod build_info {
         include!(concat!(env!("OUT_DIR"), "/built.rs"));
