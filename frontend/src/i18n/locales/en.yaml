@@ -11,7 +11,7 @@ navigation: Navigation
 rename: Rename
 this-field-is-required: This field is required.
 copy-to-clipboard: Copy to clipboard
-version-information: Version information
+version-information: Version
 
 general:
   leave-page-confirmation: Leave page? Changes you made may not be saved!
