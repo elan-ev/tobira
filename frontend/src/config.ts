@@ -21,6 +21,7 @@ const parseConfig: () => Config = () => {
 };
 
 type Config = {
+    version: string;
     auth: AuthConfig;
     siteTitle: TranslatedString;
     ocUrl: string;

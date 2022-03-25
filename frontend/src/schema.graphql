@@ -20,10 +20,6 @@ type Event implements Node {
   series: Series
 }
 
-input NewTitleBlock {
-  content: String!
-}
-
 type EventPageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
@@ -184,7 +180,6 @@ type RemovedRealm {
 type SeriesBlock implements Block {
   series: Series
   showTitle: Boolean!
-  layout: VideoListLayout!
   order: VideoListOrder!
   id: ID!
   index: Int!
@@ -198,7 +193,6 @@ input NewVideoBlock {
 input UpdateSeriesBlock {
   series: ID
   showTitle: Boolean
-  layout: VideoListLayout
   order: VideoListOrder
 }
 
@@ -259,7 +253,6 @@ type VideoBlock implements Block {
 input NewSeriesBlock {
   series: ID!
   showTitle: Boolean!
-  layout: VideoListLayout!
   order: VideoListOrder!
 }
 
@@ -361,10 +354,8 @@ input UpdateTextBlock {
   content: String
 }
 
-enum VideoListLayout {
-  HORIZONTAL
-  VERTICAL
-  GRID
+input NewTitleBlock {
+  content: String!
 }
 
 schema {

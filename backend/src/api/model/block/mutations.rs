@@ -4,7 +4,7 @@ use juniper::{GraphQLInputObject, GraphQLObject};
 
 use crate::{api::{Context, Id, err::{ApiResult, invalid_input}}, dbargs};
 use crate::db::types::Key;
-use super::{BlockValue, VideoListLayout, VideoListOrder, super::realm::Realm};
+use super::{BlockValue, VideoListOrder, super::realm::Realm};
 
 
 impl BlockValue {
@@ -70,9 +70,9 @@ impl BlockValue {
         context.db
             .execute(
                 "insert into blocks \
-                    (realm_id, index, type, series_id, videolist_order, videolist_layout, show_title) \
-                    values ($1, $2, 'series', $3, $4, $5, $6)",
-                &[&realm, &index, &series, &block.order, &block.layout, &block.show_title],
+                    (realm_id, index, type, series_id, videolist_order, show_title) \
+                    values ($1, $2, 'series', $3, $4, $5)",
+                &[&realm, &index, &series, &block.order, &block.show_title],
             )
             .await?;
 
@@ -297,9 +297,8 @@ impl BlockValue {
                 &format!(
                     "update blocks set \
                         series_id = coalesce($2, series_id), \
-                        videolist_layout = coalesce($3, videolist_layout), \
-                        videolist_order = coalesce($4, videolist_order), \
-                        show_title = coalesce($5, show_title) \
+                        videolist_order = coalesce($3, videolist_order), \
+                        show_title = coalesce($4, show_title) \
                         where id = $1 \
                         and type = 'series' \
                         returning {}",
@@ -312,7 +311,6 @@ impl BlockValue {
                         |series| series.key_for(Id::SERIES_KIND)
                             .ok_or_else(|| invalid_input!("`set.series` does not refer to a series"))
                     ).transpose()?,
-                    &set.layout,
                     &set.order,
                     &set.show_title,
                 ],
@@ -406,7 +404,6 @@ pub(crate) struct NewTextBlock {
 pub(crate) struct NewSeriesBlock {
     series: Id,
     show_title: bool,
-    layout: VideoListLayout,
     order: VideoListOrder,
 }
 
@@ -431,7 +428,6 @@ pub(crate) struct UpdateTextBlock {
 pub(crate) struct UpdateSeriesBlock {
     series: Option<Id>,
     show_title: Option<bool>,
-    layout: Option<VideoListLayout>,
     order: Option<VideoListOrder>,
 }
 

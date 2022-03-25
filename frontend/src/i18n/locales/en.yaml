@@ -11,6 +11,7 @@ navigation: Navigation
 rename: Rename
 this-field-is-required: This field is required.
 copy-to-clipboard: Copy to clipboard
+version-information: Version
 
 general:
   leave-page-confirmation: Leave page? Changes you made may not be saved!
@@ -61,7 +62,6 @@ footer:
 
 main-menu:
   label: Menu
-  theme: Theme
   settings: Settings
   about: About
 
@@ -69,7 +69,6 @@ user:
   login: Login
   logout: Log out
   settings: User settings
-  your-page: Your page
   manage-content: Manage content
   logged-in-as: Logged in as
 
@@ -92,6 +91,7 @@ video:
 
 series:
   deleted-series-block: The series referenced here was deleted.
+  no-events: This series does not contain any events, or you might not be authorized to see them.
 
 realm:
   page-settings: Page settings
@@ -265,11 +265,6 @@ manage:
           heading: Order
           new-to-old: Newest first
           old-to-new: Oldest first
-        layout:
-          heading: Layout
-          grid: Grid
-          horizontal: Horizontal
-          vertical: Vertical
         series:
           heading: Series
           none: No series selected

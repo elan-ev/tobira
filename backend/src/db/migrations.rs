@@ -183,7 +183,9 @@ macro_rules! include_migrations {
             $(
                 let prev = m.insert($id, Migration {
                     name: $name,
-                    script: include_str!(concat!("migrations/", $id, "-", $name, ".sql")),
+                    script: include_str!(
+                        concat!("migrations/", stringify!($id), "-", $name, ".sql")
+                    ),
                 });
 
                 assert!(prev.is_none(), "duplicate key in `include_migrations!`");
@@ -206,12 +208,12 @@ struct Migration {
 }
 
 static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
-    1: "xtea",
-    2: "id-generation",
-    3: "realms",
-    4: "series",
-    5: "events",
-    6: "blocks",
-    7: "sync-status",
-    8: "user-sessions",
+    01: "xtea",
+    02: "id-generation",
+    03: "realms",
+    04: "series",
+    05: "events",
+    06: "blocks",
+    07: "sync-status",
+    08: "user-sessions",
 ];

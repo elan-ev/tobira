@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { graphql } from "react-relay";
 
+import CONFIG from "../config";
 import { Nav } from "../layout/Navigation";
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
@@ -48,6 +49,8 @@ const About: React.FC = () => {
                     <a href="https://github.com/elan-ev/tobira">GitHub repo</a>
                 </Trans>
             </p>
+            <h2>{t("version-information")}</h2>
+            <code>tobira {CONFIG.version}</code>
         </div>
     );
 };

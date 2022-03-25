@@ -13,6 +13,9 @@ begin
     insert into series (opencast_id, title, description, updated)
         values ('f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d', 'Christmas Chemistry', 'Prof goes boom', now())
         returning id into series_christmas;
+    -- Empty series for testing edge cases
+    insert into series (opencast_id, title, updated)
+        values ('68612b2e-423b-40c2-8933-92c3dd4a47a9', 'Empty series', now());
 
     -- Add lots of realms
     perform create_departments();
@@ -33,11 +36,11 @@ begin
             'containing a bunch of dummy data. All text and videos you can see here are just for '
             'testing.'
         );
-    insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order, show_title)
-        values (0, 'series', 1, series_university_highlights, 'grid', 'new_to_old', true);
+    insert into blocks (realm_id, type, index, series_id, videolist_order, show_title)
+        values (0, 'series', 1, series_university_highlights, 'new_to_old', true);
 
-    insert into blocks (realm_id, type, index, series_id, videolist_layout, videolist_order, show_title)
-        values (events_realm_id, 'series', 1, series_christmas, 'grid', 'new_to_old', true);
+    insert into blocks (realm_id, type, index, series_id, videolist_order, show_title)
+        values (events_realm_id, 'series', 1, series_christmas, 'new_to_old', true);
 
 
     -- Add a bunch of events/videos

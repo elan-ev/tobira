@@ -26,7 +26,6 @@ const blockFragment = graphql`
     fragment SeriesBlockData on SeriesBlock {
         series { ...SeriesBlockSeriesData }
         showTitle
-        layout
         order
     }
 `;
@@ -68,7 +67,6 @@ export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = ({ fragRef, ...r
     const series = useFragment(seriesFragment, fragRef);
     return <SeriesBlock
         {...{ series }}
-        layout="GRID"
         order="NEW_TO_OLD"
         showTitle={true}
         {...rest}
@@ -95,6 +93,8 @@ export const SeriesBlock: React.FC<Props> = ({
         NEW_TO_OLD: () => sortedEvents.sort(compareNewToOld),
         OLD_TO_NEW: () => sortedEvents.sort(compareOldToNew),
     }, unreachable);
+
+    const { t } = useTranslation();
 
     return (
         <div css={{
@@ -130,11 +130,13 @@ export const SeriesBlock: React.FC<Props> = ({
                     justifyContent: "center",
                 },
             }}>
-                {sortedEvents.map(event => <GridTile
-                    key={event.id}
-                    active={event.id === activeEventId}
-                    {...{ realmPath, event }}
-                />)}
+                {sortedEvents.length
+                    ? sortedEvents.map(event => <GridTile
+                        key={event.id}
+                        active={event.id === activeEventId}
+                        {...{ realmPath, event }}
+                    />)
+                    : t("series.no-events")}
             </div>
         </div>
     );

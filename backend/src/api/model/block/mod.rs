@@ -58,17 +58,6 @@ pub(crate) enum BlockType {
 }
 
 #[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
-#[postgres(name = "video_list_layout")]
-pub(crate) enum VideoListLayout {
-    #[postgres(name = "horizontal")]
-    Horizontal,
-    #[postgres(name = "vertical")]
-    Vertical,
-    #[postgres(name = "grid")]
-    Grid,
-}
-
-#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
 #[postgres(name = "video_list_order")]
 pub(crate) enum VideoListOrder {
     #[postgres(name = "new_to_old")]
@@ -141,7 +130,6 @@ pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
     pub(crate) series: Option<Id>,
     pub(crate) show_title: bool,
-    pub(crate) layout: VideoListLayout,
     pub(crate) order: VideoListOrder,
 }
 
@@ -164,10 +152,6 @@ impl SeriesBlock {
 
     fn show_title(&self) -> bool {
         self.show_title
-    }
-
-    fn layout(&self) -> VideoListLayout {
-        self.layout
     }
 
     fn order(&self) -> VideoListOrder {
@@ -242,7 +226,7 @@ impl BlockValue {
     }
 
     const COL_NAMES: &'static str
-        = "id, type, index, text_content, series_id, videolist_layout, videolist_order, video_id, show_title";
+        = "id, type, index, text_content, series_id, videolist_order, video_id, show_title";
 
     fn from_row(row: Row) -> ApiResult<Self> {
         let ty: BlockType = row.get(1);
@@ -265,15 +249,14 @@ impl BlockValue {
             BlockType::Series => SeriesBlock {
                 shared,
                 series: row.get::<_, Option<Key>>(4).map(Id::series),
-                layout: get_type_dependent(&row, 5, "videolist", "videolist_layout")?,
-                order: get_type_dependent(&row, 6, "videolist", "videolist_order")?,
-                show_title: get_type_dependent(&row, 8, "titled", "show_title")?,
+                order: get_type_dependent(&row, 5, "videolist", "videolist_order")?,
+                show_title: get_type_dependent(&row, 7, "titled", "show_title")?,
             }.into(),
 
             BlockType::Video => VideoBlock {
                 shared,
-                event: row.get::<_, Option<Key>>(7).map(Id::event),
-                show_title: get_type_dependent(&row, 8, "titled", "show_title")?,
+                event: row.get::<_, Option<Key>>(6).map(Id::event),
+                show_title: get_type_dependent(&row, 7, "titled", "show_title")?,
             }.into(),
         };
 

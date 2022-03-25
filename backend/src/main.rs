@@ -21,7 +21,6 @@ mod prelude;
 mod sync;
 mod util;
 
-
 #[tokio::main]
 async fn main() -> Result<()> {
     // If `RUST_BACKTRACE` wasn't already set, we default to `1`. Backtraces are
@@ -35,7 +34,13 @@ async fn main() -> Result<()> {
     }
 
     // Parse CLI args.
-    let args = Args::from_args();
+    // This is a bit roundabout because we want to override the version
+    // using some runtime code.
+    let args = Args::from_clap(
+        &Args::clap()
+            .version(&*version())
+            .get_matches(),
+    );
 
     // Dispatch subcommand.
     match &args.cmd {
@@ -97,4 +102,25 @@ fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
     logger::init(&config.log)?;
 
     Ok(config)
+}
+
+/// Gives you information about this very version of Tobira,
+/// i.e. it's semantic version, which commit it was built from,
+/// and when. It also indicates whether or not the working directory
+/// was clean at the time, since this is a potential source of errors.
+pub fn version() -> String {
+    mod build_info {
+        include!(concat!(env!("OUT_DIR"), "/built.rs"));
+    }
+    format!(
+        "{} ({}{}), built {}",
+        build_info::PKG_VERSION,
+        build_info::GIT_COMMIT_HASH.unwrap(),
+        if let Some(true) = build_info::GIT_DIRTY {
+            ", dirty"
+        } else {
+            ""
+        },
+        build_info::BUILT_TIME_UTC,
+    )
 }

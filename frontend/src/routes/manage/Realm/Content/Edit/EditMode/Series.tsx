@@ -10,7 +10,6 @@ import { EditModeForm } from ".";
 import { Heading, ShowTitle } from "./util";
 import type {
     VideoListOrder,
-    VideoListLayout,
     SeriesEditModeBlockData$key,
 } from "./__generated__/SeriesEditModeBlockData.graphql";
 import {
@@ -27,7 +26,6 @@ import {
 type SeriesFormData = {
     series: string;
     order: VideoListOrder;
-    layout: VideoListLayout;
 };
 
 type EditSeriesBlockProps = {
@@ -42,12 +40,11 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         }
     `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
 
-    const { series, showTitle, order, layout } = useFragment(graphql`
+    const { series, showTitle, order } = useFragment(graphql`
         fragment SeriesEditModeBlockData on SeriesBlock {
             series { id }
             showTitle
             order
-            layout
         }
     `, blockRef);
 
@@ -93,35 +90,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 {...form.register("order")}
             />
             {t("manage.realm.content.series.order.old-to-new")}
-        </label>
-
-        <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
-        <label>
-            <input
-                type="radio"
-                value="GRID"
-                defaultChecked={layout === "GRID"}
-                {...form.register("layout")}
-            />
-            {t("manage.realm.content.series.layout.grid")}
-        </label><br />
-        <label>
-            <input
-                type="radio"
-                value="HORIZONTAL"
-                defaultChecked={layout === "HORIZONTAL"}
-                {...form.register("layout")}
-            />
-            {t("manage.realm.content.series.layout.horizontal")}
-        </label><br />
-        <label>
-            <input
-                type="radio"
-                value="VERTICAL"
-                defaultChecked={layout === "VERTICAL"}
-                {...form.register("layout")}
-            />
-            {t("manage.realm.content.series.layout.vertical")}
         </label>
 
         <Heading>{t("manage.realm.content.series.series.heading")}</Heading>
