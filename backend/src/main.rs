@@ -22,7 +22,29 @@ mod sync;
 mod util;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
+    if let Err(e) = run().await {
+        // Log error in case stdout is not connected and it is logged into a file.
+        error!("{:?}", e);
+
+        // Show a somewhat nice representation of the error
+        eprintln!();
+        eprintln!();
+        bunt::eprintln!("{$red}▶▶▶ {$bold}Error:{/$}{/$} {[yellow+intense]}", e);
+        eprintln!();
+        bunt::eprintln!("{$red+italic}Caused by:{/$}");
+
+        for (i, cause) in e.chain().skip(1).enumerate() {
+            eprint!(" {: >1$}", "", i * 2);
+            eprintln!("‣ {cause}");
+        }
+
+        std::process::exit(1);
+    }
+}
+
+/// Main entry point.
+async fn run() -> Result<()> {
     // If `RUST_BACKTRACE` wasn't already set, we default to `1`. Backtraces are
     // almost always useful for debugging. Generating a backtrace is somewhat
     // costly, which is why it is disabled by default. However, we don't expect
