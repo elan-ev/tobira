@@ -104,7 +104,8 @@ async fn start_server(config: Config) -> Result<()> {
         .context("failed to check/run DB migrations")?;
 
     // Get client for MeiliSearch index.
-    let search = config.meili.connect().await
+    let mut conn = db.get().await?;
+    let search = config.meili.connect_and_prepare(&mut conn).await
         .context("failed to connect to MeiliSearch")?;
 
     // Start DB maintenance jobs

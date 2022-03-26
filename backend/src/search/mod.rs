@@ -31,6 +31,7 @@ pub(crate) use self::{
     update::{update_index, update_index_daemon},
 };
 
+// ===== Configuration ============================================================================
 
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct MeiliConfig {
@@ -55,11 +56,24 @@ pub(crate) struct MeiliConfig {
 }
 
 impl MeiliConfig {
-    pub(crate) async fn connect(&self) -> Result<Client> {
+    /// Connects to Meili, tests the connections and prepares all indexes.
+    pub(crate) async fn connect_and_prepare(&self, db: &mut DbConnection) -> Result<Client> {
+        let client = Client::new(self.clone()).await
+            .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))?;
+
+        client.prepare(db).await?;
+
+        Ok(client)
+    }
+
+    /// Connects to Meili, but does not check whether required indexes exist or
+    /// are in the correct shape!
+    pub(crate) async fn connect_only(&self) -> Result<Client> {
         Client::new(self.clone()).await
             .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))
     }
 
+    /// Validates the configuration.
     pub(crate) fn validate(&self) -> Result<()> {
         self.host.assert_safety().context("failed to validate 'meili.host'")?;
         Ok(())
@@ -74,6 +88,13 @@ impl MeiliConfig {
     }
 }
 
+
+// ===== Client ===================================================================================
+
+/// Search index client: the entry point to communicate with the search index.
+///
+/// Note that any operations that change the index should be done through
+/// `write::with_write_lock`! See its documentation for more detail.
 pub(crate) struct Client {
     config: MeiliConfig,
     client: MeiliClient,
@@ -82,6 +103,11 @@ pub(crate) struct Client {
 }
 
 impl Client {
+    /// Creates a new connection to Meili, makes sure that Meili is healthy and
+    /// creates an instance of `Self`. The `Index` fields in `Self` are only
+    /// references and it is NOT checked whether these indexes actually exist
+    /// or are in the right form. So in most situations, you also want to call
+    /// `prepare` to make sure Meili is ready to be used.
     async fn new(config: MeiliConfig) -> Result<Self> {
         let client = MeiliClient::new(
             &config.host.to_string(),
@@ -98,14 +124,30 @@ impl Client {
 
         info!("Connected to MeiliSearch at '{}'", config.host);
 
-        // Preparing the indexes.
-        let event_index = create_index(&client, &config.event_index_name()).await?;
-        event::prepare_index(&event_index).await?;
-        let realm_index = create_index(&client, &config.realm_index_name()).await?;
-        realm::prepare_index(&realm_index).await?;
-        debug!("All required Meili indexes exist (they might be empty though)");
+        // Store some references to the indices (without checking whether they
+        // actually exist!).
+        let event_index = client.index(&config.event_index_name());
+        let realm_index = client.index(&config.realm_index_name());
 
         Ok(Self { client, config, event_index, realm_index })
+    }
+
+    /// Makes sure that all required indexes exist and are in the correct shape.
+    /// If they are not, this function attempts to fix that.
+    async fn prepare(&self, db: &mut DbConnection) -> Result<()> {
+        writer::with_write_lock(db, self, |_tx, meili| Box::pin(async move {
+            let event_index = create_index(&meili.client, &meili.config.event_index_name()).await?;
+            event::prepare_index(&event_index).await?;
+
+            let realm_index = create_index(&meili.client, &meili.config.realm_index_name()).await?;
+            realm::prepare_index(&realm_index).await?;
+
+            debug!("All Meili indexes exist and are ready");
+
+            Ok(())
+        })).await?;
+
+        Ok(())
     }
 }
 
@@ -219,10 +261,20 @@ async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
     Ok(index)
 }
 
-/// Deletes all indexes (used by Tobira) including all their data!
+/// Deletes all indexes (used by Tobira) including all their data! If any index
+/// does not exist, this function just does nothing.
 pub(crate) async fn clear(meili: Client) -> Result<()> {
-    meili.event_index.delete().await?;
-    meili.realm_index.delete().await?;
+    use meilisearch_sdk::errors::Error;
+    let ignore_missing_index = |res: Result<Task, Error>| -> Result<(), Error> {
+        match res {
+            Ok(_) => Ok(()),
+            Err(e) if util::is_index_not_found(&e) => Ok(()),
+            Err(e) => Err(e),
+        }
+    };
+
+    ignore_missing_index(meili.event_index.delete().await)?;
+    ignore_missing_index(meili.realm_index.delete().await)?;
 
     info!("Deleted search indexes");
     Ok(())

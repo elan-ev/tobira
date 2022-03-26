@@ -1,4 +1,4 @@
-use meilisearch_sdk::indexes::Index;
+use meilisearch_sdk::{errors::{Error, ErrorCode}, indexes::Index};
 
 use crate::{
     auth::ROLE_ADMIN,
@@ -38,4 +38,9 @@ pub(super) fn encode_acl(roles: &[String]) -> Vec<String> {
         .filter(|&role| role != ROLE_ADMIN)
         .map(hex::encode)
         .collect()
+}
+
+/// Returns `true` if the given error has the error code `IndexNotFound`
+pub(super) fn is_index_not_found(err: &Error) -> bool {
+    matches!(err, Error::Meilisearch(e) if e.error_code == ErrorCode::IndexNotFound)
 }

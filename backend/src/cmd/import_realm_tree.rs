@@ -62,10 +62,10 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
         .context("failed to create database connection pool (database not running?)")?;
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
-    let conn = db.get().await?;
+    let mut conn = db.get().await?;
 
     // Get client for MeiliSearch index.
-    let search = config.meili.connect().await
+    let search = config.meili.connect_and_prepare(&mut conn).await
         .context("failed to connect to MeiliSearch")?;
 
     let mut dummy_blocks = DummyBlocks::new(args.dummy_blocks, &**conn).await?;

@@ -3,7 +3,7 @@ use structopt::StructOpt;
 
 use crate::{prelude::*, config::Config, db};
 
-use super::Client;
+use super::{Client, util};
 
 
 #[derive(Debug, StructOpt)]
@@ -28,7 +28,7 @@ pub(crate) enum SearchIndexCommand {
 
 /// Entry point for `search-index` commands.
 pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()> {
-    let meili = config.meili.connect().await?;
+    let meili = config.meili.connect_only().await?;
 
     match cmd {
         SearchIndexCommand::Status => status(&meili).await?,
@@ -44,7 +44,8 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
 
 async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
     let pool = db::create_pool(&config.db).await?;
-    let db = pool.get().await?;
+    let mut db = pool.get().await?;
+    meili.prepare(&mut db).await?;
     super::rebuild_index(meili, &db).await
 }
 
@@ -53,6 +54,8 @@ async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
 async fn update(meili: &Client, config: &Config, daemon: bool) -> Result<()> {
     let pool = db::create_pool(&config.db).await?;
     let mut db = pool.get().await?;
+    meili.prepare(&mut db).await?;
+
     if daemon {
         super::update_index_daemon(meili, &mut db).await.map(|_| ())
     } else {
@@ -98,18 +101,26 @@ async fn status(meili: &Client) -> Result<()> {
     println!();
 
     // Individual indexes
-    index_status(&meili.event_index).await?;
+    index_status("event", &meili.event_index).await?;
     println!();
-    index_status(&meili.realm_index).await?;
+    index_status("realm", &meili.realm_index).await?;
     println!();
 
     Ok(())
 }
 
-async fn index_status(index: &Index) -> Result<()> {
-    let info = index.fetch_info().await?;
+async fn index_status(name: &str, index: &Index) -> Result<()> {
+    bunt::println!("{$bold}# Index `{[green+intense]}`:{/$}", name);
+
+    let info = match index.fetch_info().await {
+        Ok(info) => info,
+        Err(e) if util::is_index_not_found(&e) => {
+            bunt::println!("{$red+intense}Does not exist!{/$}");
+            return Ok(());
+        },
+        Err(e) => return Err(e.into()),
+    };
     let stats = index.get_stats().await?;
-    bunt::println!("{$bold}# Index `{[green+intense]}`:{/$}", info.uid);
     info_line!("Number of documents", stats.number_of_documents);
     info_line!("Is currently indexing", stats.is_indexing);
     info_line!("Created", info.createdAt);
