@@ -77,7 +77,7 @@ async fn run() -> Result<()> {
         }
         Command::Db { cmd, shared } => {
             let config = load_config_and_init_logger(shared)?;
-            db::cmd::run(cmd, &config.db).await?;
+            db::cmd::run(cmd, &config).await?;
         }
         Command::SearchIndex { cmd, shared } => {
             let config = load_config_and_init_logger(shared)?;
