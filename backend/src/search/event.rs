@@ -1,10 +1,11 @@
+use deadpool_postgres::Transaction;
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
 use tokio_postgres::{Row, GenericClient};
 
 use crate::{
     prelude::*,
-    db::{DbConnection, types::Key, util::collect_rows_mapped},
+    db::{types::Key, util::collect_rows_mapped},
 };
 
 use super::{Client, SearchId, IndexItem, IndexItemKind, util};
@@ -93,8 +94,8 @@ impl Event {
     }
 }
 
-pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
-    let events = Event::load_all(&***db).await?;
+pub(super) async fn rebuild(meili: &Client, db: &Transaction<'_>) -> Result<Task> {
+    let events = Event::load_all(&**db).await?;
     debug!("Loaded {} events from DB", events.len());
 
     let task = meili.event_index.add_documents(&events, None).await?;

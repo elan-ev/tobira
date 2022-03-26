@@ -76,7 +76,7 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
 
     // TODO: we only need to rebuild the realm index
     info!("Rebuilding search index");
-    search::rebuild_index(&search, &conn).await?;
+    search::rebuild_index(&search, &mut conn).await?;
     info!("Done rebuilding search index");
 
     Ok(())

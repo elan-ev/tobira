@@ -1,8 +1,9 @@
+use deadpool_postgres::Transaction;
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
 use tokio_postgres::{GenericClient, Row};
 
-use crate::{prelude::*, db::{DbConnection, types::Key, util::collect_rows_mapped}};
+use crate::{prelude::*, db::{types::Key, util::collect_rows_mapped}};
 
 use super::{Client, SearchId, IndexItem, IndexItemKind, util};
 
@@ -63,10 +64,10 @@ impl Realm {
 }
 
 /// Load all realms from the DB and store them in the index.
-pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
+pub(super) async fn rebuild(meili: &Client, db: &Transaction<'_>) -> Result<Task> {
     // This nifty query gets all ancestors as array for each realm. We don't
     // include the root realm nor the realm itself in that array though.
-    let realms = Realm::load_all(&***db).await?;
+    let realms = Realm::load_all(&**db).await?;
     debug!("Loaded {} realms from DB", realms.len());
 
     let task = meili.realm_index.add_documents(&realms, None).await?;

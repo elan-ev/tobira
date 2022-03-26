@@ -1,4 +1,4 @@
-use std::{time::Duration, fmt};
+use std::{time::{Duration, Instant}, fmt};
 
 use futures::pin_mut;
 use meilisearch_sdk::{
@@ -95,6 +95,7 @@ impl MeiliConfig {
 ///
 /// Note that any operations that change the index should be done through
 /// `write::with_write_lock`! See its documentation for more detail.
+#[derive(Clone)]
 pub(crate) struct Client {
     config: MeiliConfig,
     client: MeiliClient,
@@ -281,23 +282,29 @@ pub(crate) async fn clear(meili: Client) -> Result<()> {
 }
 
 
-pub(crate) async fn rebuild_index(meili: &Client, db: &DbConnection) -> Result<()> {
-    // TODO: Make sure no other updates reach the search index during this
-    // rebuild, as otherwise those might get overwritten and thus lost.
-    //
-    // We might want to use the "read only mode" that we have to develop anyway
-    // in case Opencast is unreachable.
+pub(crate) async fn rebuild_index(meili: &Client, db: &mut DbConnection) -> Result<()> {
+    let before = Instant::now();
+    let tasks = writer::with_write_lock(db, meili, |tx, meili| Box::pin(async move {
+        let event_task = event::rebuild(&meili, tx).await?;
+        let realm_task = realm::rebuild(&meili, tx).await?;
 
-    let event_task = event::rebuild(meili, db).await?;
-    let realm_task = realm::rebuild(meili, db).await?;
+        Ok([
+            (IndexItemKind::Event, event_task),
+            (IndexItemKind::Realm, realm_task),
+        ])
+    })).await?;
 
-    info!("Sent all data to Meili, now waiting for it to complete indexing...\n\
-        (note: stopping this process does not stop indexing)");
+    info!("Sent all data to Meili in {:.1?}", before.elapsed());
 
-    wait_on_task(event_task, meili).await?;
-    wait_on_task(realm_task, meili).await?;
 
-    info!("Meili finished indexing");
+    info!("Waiting for Meili to complete indexing...\n\
+        (note: you may ctrl+c this command now -- this won't stop indexing)");
+    let before = Instant::now();
+    for (_kind, task) in tasks {
+        wait_on_task(task, meili).await?;
+    }
+
+    info!("Meili finished indexing in {:.1?}", before.elapsed());
 
     Ok(())
 }

@@ -14,8 +14,14 @@ pub(crate) enum SearchIndexCommand {
     /// Removes all data from the search index.
     Clear,
 
-    /// Completely rebuild the search index from data in the DB. Can take a while!
-    Rebuild,
+    /// Completely clears (optional) and rebuilds the search index from data in
+    /// the DB. Can take a while!
+    Rebuild {
+        /// If specified, does not clear the index before rebuild. Note that
+        /// this can leave remnants of old items in there.
+        #[structopt(long)]
+        without_clear: bool,
+    },
 
     /// Reads queued updates from the DB and pushes them into the search index.
     Update {
@@ -33,8 +39,14 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
     match cmd {
         SearchIndexCommand::Status => status(&meili).await?,
         SearchIndexCommand::Clear => clear(meili).await?,
-        SearchIndexCommand::Rebuild => rebuild(&meili, config).await?,
         SearchIndexCommand::Update { daemon } => update(&meili, config, *daemon).await?,
+        SearchIndexCommand::Rebuild { without_clear } => {
+            if !without_clear {
+                clear(meili.clone()).await?;
+            }
+
+            rebuild(&meili, config).await?;
+        }
     }
 
     Ok(())
@@ -46,8 +58,9 @@ async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
     let pool = db::create_pool(&config.db).await?;
     let mut db = pool.get().await?;
     meili.prepare(&mut db).await?;
-    super::rebuild_index(meili, &db).await
+    super::rebuild_index(meili, &mut db).await
 }
+
 
 // ===== Update ================================================================================
 
@@ -61,6 +74,24 @@ async fn update(meili: &Client, config: &Config, daemon: bool) -> Result<()> {
     } else {
         super::update_index(meili, &mut db).await
     }
+}
+
+
+// ===== Clear =================================================================================
+
+async fn clear(meili: Client) -> Result<()> {
+    println!("Are you sure you want to clear the search index? The search will be disabled \
+        until you rebuild the index! Type 'yes' to proceed to delete the data.");
+
+    let mut line = String::new();
+    std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
+    if line.trim() != "yes" {
+        println!("Answer was not 'yes'. Aborting.");
+        bail!("user did not confirm deleting index: operation was aborted.");
+    }
+
+    // Actually delete
+    super::clear(meili).await
 }
 
 
@@ -129,20 +160,3 @@ async fn index_status(name: &str, index: &Index) -> Result<()> {
     Ok(())
 }
 
-
-// ===== Clear =================================================================================
-
-async fn clear(meili: Client) -> Result<()> {
-    println!("Are you sure you want to clear the search index? The search will be disabled \
-        until you rebuild the index! Type 'yes' to proceed to delete the data.");
-
-    let mut line = String::new();
-    std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
-    if line.trim() != "yes" {
-        println!("Answer was not 'yes'. Aborting.");
-        bail!("user did not confirm deleting index: operation was aborted.");
-    }
-
-    // Actually delete
-    super::clear(meili).await
-}
