@@ -290,6 +290,11 @@
 # Default value: "tobira_"
 #index_prefix = "tobira_"
 
+# How often DB changes are written back to the search index.
+#
+# Default value: "5s"
+#update_interval = "5s"
+
 [theme]
 # Default value: 50
 #header_height = 50

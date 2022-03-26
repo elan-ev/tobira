@@ -16,6 +16,14 @@ pub(crate) enum SearchIndexCommand {
 
     /// Completely rebuild the search index from data in the DB. Can take a while!
     Rebuild,
+
+    /// Reads queued updates from the DB and pushes them into the search index.
+    Update {
+        /// If specified, will not stop after clearing the queue, but runs
+        /// forever regularly updating.
+        #[structopt(long)]
+        daemon: bool,
+    },
 }
 
 /// Entry point for `search-index` commands.
@@ -26,6 +34,7 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
         SearchIndexCommand::Status => status(&meili).await?,
         SearchIndexCommand::Clear => clear(meili).await?,
         SearchIndexCommand::Rebuild => rebuild(&meili, config).await?,
+        SearchIndexCommand::Update { daemon } => update(&meili, config, *daemon).await?,
     }
 
     Ok(())
@@ -37,6 +46,18 @@ async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
     let pool = db::create_pool(&config.db).await?;
     let db = pool.get().await?;
     super::rebuild_index(meili, &db).await
+}
+
+// ===== Update ================================================================================
+
+async fn update(meili: &Client, config: &Config, daemon: bool) -> Result<()> {
+    let pool = db::create_pool(&config.db).await?;
+    let mut db = pool.get().await?;
+    if daemon {
+        super::update_index_daemon(meili, &mut db).await.map(|_| ())
+    } else {
+        super::update_index(meili, &mut db).await
+    }
 }
 
 

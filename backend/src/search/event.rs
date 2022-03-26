@@ -72,6 +72,17 @@ impl Event {
         }
     }
 
+    pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
+        let query = format!(
+            "select {} from events \
+                left join series on events.series = series.id \
+                where events.id = any($1)",
+            Self::SQL_SELECT_FIELDS,
+        );
+        let rows = db.query_raw(&query, dbargs![&ids]);
+        collect_rows_mapped(rows, Self::from_row).await.map_err(Into::into)
+    }
+
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
         let query = format!(
             "select {} from events left join series on events.series = series.id",

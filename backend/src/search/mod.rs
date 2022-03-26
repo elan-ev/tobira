@@ -20,10 +20,13 @@ use crate::{
 pub(crate) mod cmd;
 mod event;
 mod realm;
+mod writer;
+mod update;
 
 pub(crate) use self::{
     event::Event,
     realm::Realm,
+    update::{update_index, update_index_daemon},
 };
 
 
@@ -43,6 +46,10 @@ pub(crate) struct MeiliConfig {
     /// other services use Meili as well.
     #[config(default = "tobira_")]
     index_prefix: String,
+
+    /// How often DB changes are written back to the search index.
+    #[config(default = "5s", deserialize_with = crate::config::deserialize_duration)]
+    update_interval: Duration,
 }
 
 impl MeiliConfig {
@@ -107,6 +114,15 @@ pub(crate) enum IndexItemKind {
     Realm,
     #[postgres(name = "event")]
     Event,
+}
+
+impl IndexItemKind {
+    fn plural_name(self) -> &'static str {
+        match self {
+            IndexItemKind::Realm => "realms",
+            IndexItemKind::Event => "events",
+        }
+    }
 }
 
 pub(crate) trait IndexItem: meilisearch_sdk::document::Document<UIDType = SearchId> {

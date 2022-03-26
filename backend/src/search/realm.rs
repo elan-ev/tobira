@@ -2,7 +2,7 @@ use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
 use tokio_postgres::{GenericClient, Row};
 
-use crate::{prelude::*, db::{DbConnection, util::collect_rows_mapped}};
+use crate::{prelude::*, db::{DbConnection, types::Key, util::collect_rows_mapped}};
 
 use super::{Client, SearchId, lazy_set_special_attributes, IndexItem, IndexItemKind};
 
@@ -47,6 +47,12 @@ impl Realm {
             full_path: row.get(2),
             ancestor_names: row.get(3),
         }
+    }
+
+    pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
+        let query = format!("select {} from realms where id = any($1)", Self::SQL_SELECT_FIELDS);
+        let rows = db.query_raw(&query, dbargs![&ids]);
+        collect_rows_mapped(rows, Self::from_row).await.map_err(Into::into)
     }
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
