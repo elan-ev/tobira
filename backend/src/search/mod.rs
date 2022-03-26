@@ -137,6 +137,15 @@ async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
     Ok(index)
 }
 
+/// Deletes all indexes (used by Tobira) including all their data!
+pub(crate) async fn clear(meili: Client) -> Result<()> {
+    meili.event_index.delete().await?;
+    meili.realm_index.delete().await?;
+
+    info!("Deleted search indexes");
+    Ok(())
+}
+
 // Helper function to only set special attributes when they are not correctly
 // set yet. Unfortunately Meili seems to perform lots of work when setting
 // them, even if the special attribute set was the same before.

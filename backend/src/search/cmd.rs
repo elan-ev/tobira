@@ -112,8 +112,5 @@ async fn clear(meili: Client) -> Result<()> {
     }
 
     // Actually delete
-    meili.event_index.delete().await?;
-
-    info!("Deleted search index");
-    Ok(())
+    super::clear(meili).await
 }
