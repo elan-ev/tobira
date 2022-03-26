@@ -222,6 +222,13 @@
         cmd: /opt/tobira/{{ id }}/tobira import-realm-tree realms.yaml --dummy-blocks
         chdir: /opt/tobira/{{ id }}/
 
+    - name: Build search index once
+      become: true
+      become_user: tobira
+      command:
+        cmd: /opt/tobira/{{ id }}/tobira search-index update
+        chdir: /opt/tobira/{{ id }}/
+
     - name: install tobira service files
       become: true
       template:
