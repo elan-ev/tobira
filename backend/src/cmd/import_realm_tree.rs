@@ -10,7 +10,6 @@ use crate::{
     config::Config,
     db,
     prelude::*,
-    search,
 };
 
 
@@ -62,11 +61,7 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
         .context("failed to create database connection pool (database not running?)")?;
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
-    let mut conn = db.get().await?;
-
-    // Get client for MeiliSearch index.
-    let search = config.meili.connect_and_prepare(&mut conn).await
-        .context("failed to connect to MeiliSearch")?;
+    let conn = db.get().await?;
 
     let mut dummy_blocks = DummyBlocks::new(args.dummy_blocks, &**conn).await?;
 
@@ -74,10 +69,17 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     insert_realm(&**conn, &root, 0, &mut dummy_blocks).await?;
     info!("Done inserting realms");
 
-    // TODO: we only need to rebuild the realm index
-    info!("Rebuilding search index");
-    search::rebuild_index(&search, &mut conn).await?;
-    info!("Done rebuilding search index");
+    // To reindex them, we just queue them all. This tool is currently only used
+    // as intial import, so it's fine.
+    info!("Queue all realms for reindexing...");
+    let sql = "\
+        insert into search_index_queue (item_id, kind) \
+        select id, 'realm' \
+        from realms \
+        on conflict do nothing\
+    ";
+    conn.execute(sql, &[]).await?;
+    info!("Queued all realms");
 
     Ok(())
 }
