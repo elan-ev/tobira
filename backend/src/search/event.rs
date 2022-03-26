@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::{prelude::*, db::{DbConnection, types::Key}};
 
-use super::{Client, SearchId, encode_acl, lazy_set_special_attributes};
+use super::{Client, SearchId, encode_acl, lazy_set_special_attributes, IndexItem, IndexItemKind};
 
 
 
@@ -37,6 +37,10 @@ impl Document for Event {
    fn get_uid(&self) -> &Self::UIDType {
        &self.id
    }
+}
+
+impl IndexItem for Event {
+    const KIND: IndexItemKind = IndexItemKind::Event;
 }
 
 pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {

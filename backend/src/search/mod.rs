@@ -109,6 +109,14 @@ pub(crate) enum IndexItemKind {
     Event,
 }
 
+pub(crate) trait IndexItem: meilisearch_sdk::document::Document<UIDType = SearchId> {
+    const KIND: IndexItemKind;
+
+    fn id(&self) -> SearchId {
+        *self.get_uid()
+    }
+}
+
 // Creates a new index with the given `name` if it does not exist yet.
 async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
     debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");

@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::{prelude::*, db::DbConnection};
 
-use super::{Client, SearchId, lazy_set_special_attributes};
+use super::{Client, SearchId, lazy_set_special_attributes, IndexItem, IndexItemKind};
 
 
 /// Representation of realms in the search index.
@@ -24,6 +24,10 @@ impl Document for Realm {
    fn get_uid(&self) -> &Self::UIDType {
        &self.id
    }
+}
+
+impl IndexItem for Realm {
+    const KIND: IndexItemKind = IndexItemKind::Realm;
 }
 
 /// Load all realms from the DB and store them in the index.
