@@ -89,7 +89,7 @@
       ignore_errors: true
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
 
     - name: drop database
       become: true
@@ -239,7 +239,7 @@
         group: root
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
         - tobiraauth
       notify: restart tobira
 
@@ -252,7 +252,7 @@
         enabled: true
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
         - tobiraauth
 
     # NGINX
@@ -330,7 +330,7 @@
         state: restarted
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
         - tobiraauth
 
     - name: reload nginx

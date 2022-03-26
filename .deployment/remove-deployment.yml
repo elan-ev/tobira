@@ -17,7 +17,7 @@
       ignore_errors: true
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
         - tobiraauth
 
     - name: remove deployed files and folders
@@ -28,7 +28,7 @@
       loop:
         - /opt/tobira/{{ id }}
         - /etc/systemd/system/tobira-{{ id }}.service
-        - /etc/systemd/system/tobirasync-{{ id }}.service
+        - /etc/systemd/system/tobiraworker-{{ id }}.service
         - /etc/systemd/system/tobiraauth-{{ id }}.service
         - /etc/nginx/conf.d/tobira-{{ id }}.conf
       notify: reload nginx
