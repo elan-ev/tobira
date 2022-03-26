@@ -15,14 +15,6 @@ pub struct EventTrack {
     pub resolution: Option<[i32; 2]>,
 }
 
-#[derive(Debug, Clone, Copy, FromSql, ToSql)]
-#[postgres(name = "search_index_item_kind")]
-pub(crate) enum SearchIndexItemKind {
-    #[postgres(name = "realm")]
-    Realm,
-    #[postgres(name = "event")]
-    Event,
-}
 
 /// Our primary database ID type, which we call "key". In the database, it's a
 /// `bigint` (`i64`), but we have a separate Rust type for it for several

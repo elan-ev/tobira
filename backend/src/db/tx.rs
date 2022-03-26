@@ -2,10 +2,10 @@ use std::sync::{Arc, atomic::{AtomicU32, Ordering, AtomicBool}};
 use postgres_types::{BorrowToSql, ToSql};
 use tokio_postgres::{Error, Row, RowStream};
 
-use crate::prelude::*;
+use crate::{prelude::*, search};
 
 use super::{
-    types::{SearchIndexItemKind, Key},
+    types::Key,
     util::collect_rows_mapped,
 };
 
@@ -52,7 +52,7 @@ impl Transaction {
     /// relevant for the search index has changed.
     pub(crate) async fn queue_for_reindex(
         &self,
-        kind: SearchIndexItemKind,
+        kind: search::IndexItemKind,
         id: Key,
     ) -> Result<(), Error> {
         let query = "insert into search_index_queue (item_id, kind) \

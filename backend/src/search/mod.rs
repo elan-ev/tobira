@@ -6,6 +6,7 @@ use meilisearch_sdk::{
     tasks::Task,
     errors::ErrorCode,
 };
+use postgres_types::{FromSql, ToSql};
 use secrecy::{Secret, ExposeSecret};
 use serde::{Deserialize, Serialize};
 
@@ -97,6 +98,15 @@ impl Client {
 
         Ok(Self { client, config, event_index, realm_index })
     }
+}
+
+#[derive(Debug, Clone, Copy, FromSql, ToSql, PartialEq, Eq)]
+#[postgres(name = "search_index_item_kind")]
+pub(crate) enum IndexItemKind {
+    #[postgres(name = "realm")]
+    Realm,
+    #[postgres(name = "event")]
+    Event,
 }
 
 // Creates a new index with the given `name` if it does not exist yet.
