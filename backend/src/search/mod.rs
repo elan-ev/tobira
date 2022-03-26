@@ -136,6 +136,34 @@ impl Client {
     /// Makes sure that all required indexes exist and are in the correct shape.
     /// If they are not, this function attempts to fix that.
     async fn prepare(&self, db: &mut DbConnection) -> Result<()> {
+        /// Creates a new index with the given `name` if it does not exist yet.
+        async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
+            debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");
+            let task = client.create_index(name, Some("id"))
+                .await?
+                .wait_for_completion(&client, None, None)
+                .await?;
+
+            let index = match task {
+                Task::Enqueued { .. } | Task::Processing { .. }
+                    => unreachable!("waited for task to complete, but it is not"),
+                Task::Failed { content } => {
+                    if content.error.error_code == ErrorCode::IndexAlreadyExists {
+                        debug!("Meili index '{name}' already exists");
+                        client.index(name)
+                    } else {
+                        bail!("Failed to create Meili index '{}': {:#?}", name, content.error);
+                    }
+                }
+                Task::Succeeded { .. } => {
+                    debug!("Created Meili index '{name}'");
+                    task.try_make_index(&client).unwrap()
+                }
+            };
+
+            Ok(index)
+        }
+
         writer::with_write_lock(db, self, |_tx, meili| Box::pin(async move {
             let event_index = create_index(&meili.client, &meili.config.event_index_name()).await?;
             event::prepare_index(&event_index).await?;
@@ -151,6 +179,9 @@ impl Client {
         Ok(())
     }
 }
+
+
+// ===== Abstracting over search items ============================================================
 
 #[derive(Debug, Clone, Copy, FromSql, ToSql, PartialEq, Eq)]
 #[postgres(name = "search_index_item_kind")]
@@ -177,6 +208,46 @@ pub(crate) trait IndexItem: meilisearch_sdk::document::Document<UIDType = Search
         *self.get_uid()
     }
 }
+
+
+// ===== `SearchId` ===============================================================================
+
+/// Wrapper type for our primary ID that serializes and deserializes as base64
+/// encoded string.
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "&str", into = "String")]
+pub(crate) struct SearchId(pub(crate) Key);
+
+impl TryFrom<&str> for SearchId {
+    type Error = &'static str;
+    fn try_from(src: &str) -> Result<Self, Self::Error> {
+        Key::from_base64(src)
+            .ok_or("invalid base64 encoded ID")
+            .map(Self)
+    }
+}
+
+impl From<SearchId> for String {
+    fn from(src: SearchId) -> Self {
+        src.to_string()
+    }
+}
+
+impl fmt::Display for SearchId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut out = [0; 11];
+        self.0.to_base64(&mut out).fmt(f)
+    }
+}
+
+impl fmt::Debug for SearchId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "SearchId({:?})", self.0)
+    }
+}
+
+
+// ===== Various functions ========================================================================
 
 /// Adds many items to the "search index queue" to mark them as "needs update in
 /// index".
@@ -234,34 +305,6 @@ pub(crate) async fn queue_many(
     Ok(())
 }
 
-// Creates a new index with the given `name` if it does not exist yet.
-async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
-    debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");
-    let task = client.create_index(name, Some("id"))
-        .await?
-        .wait_for_completion(&client, None, None)
-        .await?;
-
-    let index = match task {
-        Task::Enqueued { .. } | Task::Processing { .. }
-            => unreachable!("waited for task to complete, but it is not"),
-        Task::Failed { content } => {
-            if content.error.error_code == ErrorCode::IndexAlreadyExists {
-                debug!("Meili index '{name}' already exists");
-                client.index(name)
-            } else {
-                bail!("Failed to create Meili index '{}': {:#?}", name, content.error);
-            }
-        }
-        Task::Succeeded { .. } => {
-            debug!("Created Meili index '{name}'");
-            task.try_make_index(&client).unwrap()
-        }
-    };
-
-    Ok(index)
-}
-
 /// Deletes all indexes (used by Tobira) including all their data! If any index
 /// does not exist, this function just does nothing.
 pub(crate) async fn clear(meili: Client) -> Result<()> {
@@ -281,7 +324,9 @@ pub(crate) async fn clear(meili: Client) -> Result<()> {
     Ok(())
 }
 
-
+/// Rebuilds all indexes by loading all data from the DB and adding it to the
+/// index. Old entries that are in the index, but not in the DB anymore, are
+/// not removed. Thus, to cleanly rebuild, clear all indexes before.
 pub(crate) async fn rebuild_index(meili: &Client, db: &mut DbConnection) -> Result<()> {
     let before = Instant::now();
     let tasks = writer::with_write_lock(db, meili, |tx, meili| Box::pin(async move {
@@ -301,64 +346,10 @@ pub(crate) async fn rebuild_index(meili: &Client, db: &mut DbConnection) -> Resu
         (note: you may ctrl+c this command now -- this won't stop indexing)");
     let before = Instant::now();
     for (_kind, task) in tasks {
-        wait_on_task(task, meili).await?;
+        util::wait_on_task(task, meili).await?;
     }
 
     info!("Meili finished indexing in {:.1?}", before.elapsed());
 
     Ok(())
-}
-
-async fn wait_on_task(task: Task, meili: &Client) -> Result<()> {
-    let task = task.wait_for_completion(
-        &meili.client,
-        Some(Duration::from_millis(200)),
-        Some(Duration::MAX),
-    ).await?;
-
-    if let Task::Failed { content } = task {
-        error!("Task failed: {:#?}", content);
-        bail!(
-            "Indexing task for index '{}' failed: {}",
-            content.task.index_uid,
-            content.error.error_message,
-        );
-    }
-
-    Ok(())
-}
-
-
-/// Wrapper type for our primary ID that serializes and deserializes as base64
-/// encoded string.
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(try_from = "&str", into = "String")]
-pub(crate) struct SearchId(pub(crate) Key);
-
-impl TryFrom<&str> for SearchId {
-    type Error = &'static str;
-    fn try_from(src: &str) -> Result<Self, Self::Error> {
-        Key::from_base64(src)
-            .ok_or("invalid base64 encoded ID")
-            .map(Self)
-    }
-}
-
-impl From<SearchId> for String {
-    fn from(src: SearchId) -> Self {
-        src.to_string()
-    }
-}
-
-impl fmt::Display for SearchId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut out = [0; 11];
-        self.0.to_base64(&mut out).fmt(f)
-    }
-}
-
-impl fmt::Debug for SearchId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "SearchId({:?})", self.0)
-    }
 }
