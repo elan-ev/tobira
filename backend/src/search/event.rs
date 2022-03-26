@@ -1,7 +1,11 @@
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
+use tokio_postgres::{Row, GenericClient};
 
-use crate::{prelude::*, db::{DbConnection, types::Key}};
+use crate::{
+    prelude::*,
+    db::{DbConnection, types::Key, util::collect_rows_mapped},
+};
 
 use super::{Client, SearchId, encode_acl, lazy_set_special_attributes, IndexItem, IndexItemKind};
 
@@ -43,30 +47,43 @@ impl IndexItem for Event {
     const KIND: IndexItemKind = IndexItemKind::Event;
 }
 
+impl Event {
+    const SQL_SELECT_FIELDS: &'static str = "\
+        events.id, \
+        events.series, series.title, \
+        events.title, events.description, events.creators, \
+        events.thumbnail, events.duration, \
+        events.read_roles, events.write_roles\
+    ";
+
+    /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.
+    fn from_row(row: Row) -> Self {
+        Self {
+            id: SearchId(row.get(0)),
+            series_id: row.get::<_, Option<Key>>(1).map(SearchId),
+            series_title: row.get(2),
+            title: row.get(3),
+            description: row.get(4),
+            creators: row.get(5),
+            thumbnail: row.get(6),
+            duration: row.get(7),
+            read_roles: encode_acl(&row.get::<_, Vec<String>>(8)),
+            write_roles: encode_acl(&row.get::<_, Vec<String>>(9)),
+        }
+    }
+
+    pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
+        let query = format!(
+            "select {} from events left join series on events.series = series.id",
+            Self::SQL_SELECT_FIELDS,
+        );
+        let rows = db.query_raw(&query, dbargs![]);
+        collect_rows_mapped(rows, Self::from_row).await.map_err(Into::into)
+    }
+}
+
 pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
-    let query = "select events.id, events.series, series.title, \
-        events.title, events.description, creators, thumbnail, duration, \
-        read_roles, write_roles \
-        from events \
-        left join series on events.series = series.id";
-    let events = db.query_raw(query, dbargs![])
-        .await?
-        .map_ok(|row| {
-            Event {
-                id: SearchId(row.get(0)),
-                series_id: row.get::<_, Option<Key>>(1).map(SearchId),
-                series_title: row.get(2),
-                title: row.get(3),
-                description: row.get(4),
-                creators: row.get(5),
-                thumbnail: row.get(6),
-                duration: row.get(7),
-                read_roles: encode_acl(&row.get::<_, Vec<String>>(8)),
-                write_roles: encode_acl(&row.get::<_, Vec<String>>(9)),
-            }
-        })
-        .try_collect::<Vec<_>>()
-        .await?;
+    let events = Event::load_all(&***db).await?;
     debug!("Loaded {} events from DB", events.len());
 
     let task = meili.event_index.add_documents(&events, None).await?;

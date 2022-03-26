@@ -1,7 +1,8 @@
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
+use tokio_postgres::{GenericClient, Row};
 
-use crate::{prelude::*, db::DbConnection};
+use crate::{prelude::*, db::{DbConnection, util::collect_rows_mapped}};
 
 use super::{Client, SearchId, lazy_set_special_attributes, IndexItem, IndexItemKind};
 
@@ -30,25 +31,36 @@ impl IndexItem for Realm {
     const KIND: IndexItemKind = IndexItemKind::Realm;
 }
 
+impl Realm {
+    const SQL_SELECT_FIELDS: &'static str = "\
+        id, \
+        name, \
+        full_path, \
+        ARRAY(select name from ancestors_of_realm(id) where height <> 0 offset 1)\
+    ";
+
+    /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.
+    fn from_row(row: Row) -> Self {
+        Self {
+            id: SearchId(row.get(0)),
+            name: row.get(1),
+            full_path: row.get(2),
+            ancestor_names: row.get(3),
+        }
+    }
+
+    pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
+        let query = format!("select {} from realms", Self::SQL_SELECT_FIELDS);
+        let rows = db.query_raw(&query, dbargs![]);
+        collect_rows_mapped(rows, Self::from_row).await.map_err(Into::into)
+    }
+}
+
 /// Load all realms from the DB and store them in the index.
 pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
     // This nifty query gets all ancestors as array for each realm. We don't
     // include the root realm nor the realm itself in that array though.
-    let query = "select id, name, full_path, \
-        ARRAY(select name from ancestors_of_realm(id) where height <> 0 offset 1) \
-        from realms";
-    let realms = db.query_raw(query, dbargs![])
-        .await?
-        .map_ok(|row| {
-            Realm {
-                id: SearchId(row.get(0)),
-                name: row.get(1),
-                full_path: row.get(2),
-                ancestor_names: row.get(3),
-            }
-        })
-        .try_collect::<Vec<_>>()
-        .await?;
+    let realms = Realm::load_all(&***db).await?;
     debug!("Loaded {} realms from DB", realms.len());
 
     let task = meili.realm_index.add_documents(&realms, None).await?;
