@@ -7,7 +7,7 @@ use crate::{
     db::{DbConnection, types::Key, util::collect_rows_mapped},
 };
 
-use super::{Client, SearchId, encode_acl, lazy_set_special_attributes, IndexItem, IndexItemKind};
+use super::{Client, SearchId, IndexItem, IndexItemKind, util};
 
 
 
@@ -67,8 +67,8 @@ impl Event {
             creators: row.get(5),
             thumbnail: row.get(6),
             duration: row.get(7),
-            read_roles: encode_acl(&row.get::<_, Vec<String>>(8)),
-            write_roles: encode_acl(&row.get::<_, Vec<String>>(9)),
+            read_roles: util::encode_acl(&row.get::<_, Vec<String>>(8)),
+            write_roles: util::encode_acl(&row.get::<_, Vec<String>>(9)),
         }
     }
 
@@ -104,7 +104,7 @@ pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    lazy_set_special_attributes(
+    util::lazy_set_special_attributes(
         index,
         "event",
         &["title", "creators", "description", "series_title"],

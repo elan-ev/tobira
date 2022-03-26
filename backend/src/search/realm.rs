@@ -4,7 +4,7 @@ use tokio_postgres::{GenericClient, Row};
 
 use crate::{prelude::*, db::{DbConnection, types::Key, util::collect_rows_mapped}};
 
-use super::{Client, SearchId, lazy_set_special_attributes, IndexItem, IndexItemKind};
+use super::{Client, SearchId, IndexItem, IndexItemKind, util};
 
 
 /// Representation of realms in the search index.
@@ -76,5 +76,5 @@ pub(super) async fn rebuild(meili: &Client, db: &DbConnection) -> Result<Task> {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    lazy_set_special_attributes(index, "relam", &["name"], &[]).await
+    util::lazy_set_special_attributes(index, "relam", &["name"], &[]).await
 }
