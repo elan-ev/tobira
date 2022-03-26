@@ -52,6 +52,16 @@ pub(crate) enum Command {
         shared: Shared,
     },
 
+    /// Starts a worker/daemon process that performs all tasks that should be
+    /// performed regularly.
+    ///
+    /// This currently includes: updating the search index and syncing with
+    /// Opencast.
+    Worker {
+        #[structopt(flatten)]
+        shared: Shared,
+    },
+
     /// Outputs a template for the configuration file (which includes
     /// descriptions or all options).
     WriteConfig {

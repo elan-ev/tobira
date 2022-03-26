@@ -1,6 +1,7 @@
 //! The Tobira backend server.
 
 use std::env;
+use deadpool_postgres::Pool;
 use structopt::StructOpt;
 
 use crate::{
@@ -73,7 +74,7 @@ async fn run() -> Result<()> {
         }
         Command::Sync { daemon, shared } => {
             let config = load_config_and_init_logger(shared)?;
-            sync::run(*daemon, &config).await?;
+            sync::cmd::run(*daemon, &config).await?;
         }
         Command::Db { cmd, shared } => {
             let config = load_config_and_init_logger(shared)?;
@@ -82,6 +83,10 @@ async fn run() -> Result<()> {
         Command::SearchIndex { cmd, shared } => {
             let config = load_config_and_init_logger(shared)?;
             search::cmd::run(cmd, &config).await?;
+        }
+        Command::Worker { shared } => {
+            let config = load_config_and_init_logger(shared)?;
+            start_worker(config).await?;
         }
         Command::WriteConfig { target } => config::write_template(target.as_ref())?,
         Command::ExportApiSchema { args } => cmd::export_api_schema::run(args)?,
@@ -97,16 +102,7 @@ async fn run() -> Result<()> {
 async fn start_server(config: Config) -> Result<()> {
     info!("Starting Tobira backend ...");
     trace!("Configuration: {:#?}", config);
-
-    let db = db::create_pool(&config.db).await
-        .context("failed to create database connection pool (database not running?)")?;
-    db::migrate(&mut *db.get().await?).await
-        .context("failed to check/run DB migrations")?;
-
-    // Get client for MeiliSearch index.
-    let mut conn = db.get().await?;
-    let search = config.meili.connect_and_prepare(&mut conn).await
-        .context("failed to connect to MeiliSearch")?;
+    let (db, search) = connect_and_prepare_db_and_meili(&config).await?;
 
     // Start DB maintenance jobs
     let conn = db.get().await?;
@@ -120,6 +116,22 @@ async fn start_server(config: Config) -> Result<()> {
 
     Ok(())
 }
+
+async fn start_worker(config: Config) -> Result<()> {
+    info!("Starting Tobira worker ...");
+    let (db, search) = connect_and_prepare_db_and_meili(&config).await?;
+
+    let mut search_conn = db.get().await?;
+    let sync_conn = db.get().await?;
+
+    tokio::select! {
+        _ = search::update_index_daemon(&search, &mut search_conn) => {}
+        _ = sync::run(true, sync_conn, &config) => {}
+    };
+
+    Ok(())
+}
+
 
 fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
     // Load configuration.
@@ -135,6 +147,25 @@ fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
 
     Ok(config)
 }
+
+async fn connect_and_migrate_db(config: &Config) -> Result<Pool> {
+    let db = db::create_pool(&config.db).await
+        .context("failed to create database connection pool (database not running?)")?;
+    db::migrate(&mut *db.get().await?).await
+        .context("failed to check/run DB migrations")?;
+    Ok(db)
+}
+
+async fn connect_and_prepare_db_and_meili(config: &Config) -> Result<(Pool, search::Client)> {
+    let db = connect_and_migrate_db(config).await?;
+
+    let mut conn = db.get().await?;
+    let search = config.meili.connect_and_prepare(&mut conn).await
+        .context("failed to connect to MeiliSearch")?;
+
+    Ok((db, search))
+}
+
 
 /// Gives you information about this very version of Tobira,
 /// i.e. it's semantic version, which commit it was built from,
