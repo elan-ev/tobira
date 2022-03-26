@@ -9,7 +9,7 @@ use tokio_postgres::types::ToSql;
 use crate::{
     db::{types::{EventTrack, Key}, DbConnection},
     prelude::*,
-    search::{SearchId, encode_acl},
+    search::{self, IndexItemKind},
 };
 use super::{SyncConfig, status::SyncStatus};
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
@@ -32,7 +32,6 @@ pub(crate) async fn run(
     daemon: bool,
     config: &SyncConfig,
     mut db: DbConnection,
-    search: &crate::search::Client,
 ) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
@@ -109,7 +108,7 @@ pub(crate) async fn run(
         // everything worked out alright.
         let last_updated = harvest_data.items.last().map(|item| item.updated());
         let transaction = db.transaction().await?;
-        store_in_db(harvest_data.items, &sync_status, &transaction, search).await?;
+        store_in_db(harvest_data.items, &sync_status, &transaction).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
         transaction.commit().await?;
 
@@ -153,7 +152,6 @@ async fn store_in_db(
     items: Vec<HarvestItem>,
     sync_status: &SyncStatus,
     db: &deadpool_postgres::Transaction<'_>,
-    search: &crate::search::Client,
 ) -> Result<()> {
     let before = Instant::now();
     let mut upserted_events = 0;
@@ -161,7 +159,7 @@ async fn store_in_db(
     let mut upserted_series = 0;
     let mut removed_series = 0;
 
-    let mut search_events = Vec::new();
+    let mut new_search_items = Vec::new();
 
     for item in items {
         // Make sure we haven't received this update yet. The code below can
@@ -186,17 +184,12 @@ async fn store_in_db(
                 acl,
                 updated,
             } => {
-                let (series_id, series_title) = match &part_of {
-                    None => (None, None),
+                let series_id = match &part_of {
+                    None => None,
                     Some(part_of) => {
-                        let query = "select id, title from series where opencast_id = $1";
-                        match db.query_opt(query, &[part_of]).await? {
-                            None => (None, None),
-                            Some(row) => (
-                                Some(row.get::<_, Key>(0)),
-                                Some(row.get::<_, String>(1))
-                            ),
-                        }
+                        db.query_opt("select id from series where opencast_id = $1", &[part_of])
+                            .await?
+                            .map(|row| row.get::<_, i64>(0))
                     },
                 };
 
@@ -217,18 +210,7 @@ async fn store_in_db(
                     ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),
                 ]).await?;
 
-                search_events.push(crate::search::Event {
-                    id: SearchId(Key(new_id as u64)),
-                    series_id: series_id.map(SearchId),
-                    series_title,
-                    title: title.clone(),
-                    description,
-                    creators: creator.map_or(vec![], |creator| vec![creator]),
-                    thumbnail: thumbnail.clone(),
-                    duration,
-                    read_roles: encode_acl(&acl.read),
-                    write_roles: encode_acl(&acl.write),
-                });
+                new_search_items.push((Key(new_id as u64), IndexItemKind::Event));
 
                 debug!("Inserted or updated event {} ({})", opencast_id, title);
                 upserted_events += 1;
@@ -297,10 +279,8 @@ async fn store_in_db(
         );
     }
 
-    if !search_events.is_empty() {
-        // TODO: rollback DB transaction if indexing fails
-        search.event_index.add_documents(&search_events, None).await?;
-        debug!("Enqueued {} events for indexing", search_events.len());
+    if !new_search_items.is_empty() {
+        search::queue_many(db, new_search_items).await?;
     }
 
     Ok(())

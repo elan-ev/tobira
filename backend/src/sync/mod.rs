@@ -18,13 +18,9 @@ pub(crate) async fn run(daemon: bool, config: &Config) -> Result<()> {
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
 
-    // Get client for MeiliSearch index.
-    let search = config.meili.connect().await
-        .context("failed to connect to MeiliSearch")?;
-
     // Harvest continiously.
     let db_connection = db.get().await?;
-    harvest::run(daemon, &config.sync, db_connection, &search).await?;
+    harvest::run(daemon, &config.sync, db_connection).await?;
 
     Ok(())
 }

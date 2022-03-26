@@ -1,5 +1,6 @@
 use std::{time::Duration, fmt};
 
+use futures::pin_mut;
 use meilisearch_sdk::{
     client::Client as MeiliClient,
     indexes::Index,
@@ -9,6 +10,7 @@ use meilisearch_sdk::{
 use postgres_types::{FromSql, ToSql};
 use secrecy::{Secret, ExposeSecret};
 use serde::{Deserialize, Serialize};
+use tokio_postgres::binary_copy::BinaryCopyInWriter;
 
 use crate::{
     auth::ROLE_ADMIN,
@@ -131,6 +133,32 @@ pub(crate) trait IndexItem: meilisearch_sdk::document::Document<UIDType = Search
     fn id(&self) -> SearchId {
         *self.get_uid()
     }
+}
+
+/// Adds many items to the "search index queue" to mark them as "needs update in
+/// index".
+pub(crate) async fn queue_many(
+    db: &tokio_postgres::Transaction<'_>,
+    items: impl IntoIterator<Item = (Key, IndexItemKind)>,
+) -> Result<()> {
+    // Here we prepare a dummy statement in order to acquire the `Type`s of the
+    // both fields.
+    let statement = db
+        .prepare("insert into search_index_queue (item_id, kind) values ($1, $2)")
+        .await?;
+    let id_type = statement.params()[0].clone();
+    let kind_type = statement.params()[1].clone();
+
+    // We insert the data via `COPY IN`, one of the fastest ways to bulk insert.
+    let sink = db.copy_in("copy search_index_queue (item_id, kind) from stdin binary").await?;
+    let writer = BinaryCopyInWriter::new(sink, &[id_type, kind_type]);
+    pin_mut!(writer);
+    for (id, kind) in items {
+        writer.as_mut().write(&[&id, &kind]).await?;
+    }
+    writer.finish().await?;
+
+    Ok(())
 }
 
 // Creates a new index with the given `name` if it does not exist yet.
