@@ -4,6 +4,8 @@ use tokio_postgres::{Error, Row, RowStream};
 
 use crate::prelude::*;
 
+use super::util::collect_rows_mapped;
+
 
 /// A database transaction that has been started for one API request.
 pub struct Transaction {
@@ -85,12 +87,7 @@ impl Transaction {
         I::IntoIter: ExactSizeIterator,
         F: FnMut(Row) -> T,
     {
-        self.query_raw(query, params)
-            .await?
-            .map_ok(from_row)
-            .try_collect::<Vec<_>>()
-            .await?
-            .pipe(Ok)
+        collect_rows_mapped(self.query_raw(query, params), from_row).await
     }
 
     pub async fn execute(
