@@ -109,6 +109,12 @@ impl TryFrom<String> for HttpHost {
     }
 }
 
+/// An empty `enum` for signaling the fact that a function (potentially) never returns.
+/// Note that you can't construct a value of this type, so a function returning it
+/// can never return. A function returning `Result<NeverReturns>` never returns
+/// when it succeeds, but it might still fail.
+pub(crate) enum Never {}
+
 
 #[cfg(test)]
 mod tests {
