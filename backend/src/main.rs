@@ -104,11 +104,6 @@ async fn start_server(config: Config) -> Result<()> {
     trace!("Configuration: {:#?}", config);
     let (db, search) = connect_and_prepare_db_and_meili(&config).await?;
 
-    // Start DB maintenance jobs
-    let conn = db.get().await?;
-    let auth_config = config.auth.clone();
-    tokio::spawn(async move { auth::db_maintenance(&conn, &auth_config).await });
-
     // Start web server
     let root_node = api::root_node();
     http::serve(config, root_node, db, search).await
@@ -123,10 +118,13 @@ async fn start_worker(config: Config) -> Result<()> {
 
     let mut search_conn = db.get().await?;
     let sync_conn = db.get().await?;
+    let db_maintenance_conn = db.get().await?;
+    let auth_config = config.auth.clone();
 
     tokio::select! {
         _ = search::update_index_daemon(&search, &mut search_conn) => {}
         _ = sync::run(true, sync_conn, &config) => {}
+        _ = auth::db_maintenance(&db_maintenance_conn, &auth_config) => {}
     };
 
     Ok(())
