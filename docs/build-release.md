@@ -32,6 +32,9 @@ cargo build --release
 
 This builds the backend, embeds all required frontend files and produces the final binary `backend/target/release/tobira`.
 This is a (mostly) stand-alone binary that you can simply deploy to your server.
+To reduce the size of the binary, you should run `objcopy --compress-debug-sections tobira`.
+This has no disadvantages.
+You probably don't want to `strip tobira`: this removes all debug information, making it harder to investigate any potential crashes/bugs.
 
 To actually run Tobira, you still need to provide a valid configuration and related files (e.g. a logo).
 For that and more, see [the deployment docs](./deploy.md).
