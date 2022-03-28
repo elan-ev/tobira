@@ -6,10 +6,10 @@ Until we provide official releases, you have to [build Tobira yourself](./build-
 Afterwards, copy the binary to your server.
 
 
-## 2. Setup PostgreSQL
+## 2. Setup PostgreSQL and MeiliSearch
 
-As described in [the prerequisite docs](./prerequisites.md), Tobira needs a PostgreSQL DB.
-How to setup such a DB is out of scope for these docs.
+As described in [the prerequisite docs](./run-requirements.md), Tobira needs a PostgreSQL DB and MeiliSearch.
+How to setup those things is out of scope for these docs.
 
 
 ## 3. Setup reverse proxy
@@ -39,8 +39,6 @@ All file paths you use in the configuration file are relative to the configurati
 There are two main long running processes you want to run on your server:
 
 - `tobira serve`: the web server
-- `tobira sync --daemon`: synchronizing with an Opencast instance
+- `tobira worker`: run all regular tasks, like syncing with Opencast or keeping the search index up to date.
 
 You likely want to setup services for those.
-
-

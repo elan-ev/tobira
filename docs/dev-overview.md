@@ -17,11 +17,11 @@ You should at least be somewhat familiar with both of these to work on this part
 
 The entry point is `index.tsx` which renders the `App` component (`App.tsx`) as root node.
 `App` itself does not render anything visible directly, but just sets up several contexts and renders the `Router` and the `ActiveRoute`.
-We use our own router (defined in `router.tsx`) as it's not terribly hard to do and because it allows us to use some advantages of Relay, our GraphQL framework.
-The `ROUTES` constant in `router.tsx` defines all routes in the application (which are matched from top to bottom).
+We use our own router (defined in `rauta.tsx`) as it's not terribly hard to do and because it allows us to use some advantages of Relay, our GraphQL framework.
+The `routes` array in `router.tsx` defines all routes in the application (which are matched from top to bottom).
 
 The routes themselves are defined inside `routes/`.
-Most of these use the `Root` component (`layout/Root.tsx`) to render.
+Most of these use the `Root` component (`layout/Root.tsx`) to render, mostly through `RootLoader` which also loads the GraphQL query.
 This component provides the main layout of the whole page (i.e. header, footer, burger menu, ...) and renders other components defined in `layout/`.
 Additionally:
 
@@ -32,7 +32,7 @@ Additionally:
 - `util/`: several utilities.
 
 Another thing worth mentioning is that the backend embeds the frontend configuration into the HTML data as a JSON object.
-Compare `index.html` and `config.ts`.
+See `index.html` and `config.ts`.
 The weird template-looking things in `index.html` are from `reinda`, the asset management library of the backend.
 
 Some additional notes:
@@ -69,8 +69,6 @@ To pass CLI args to Tobira (instead of cargo), list Tobira args after a double d
 
 The main entry point is `main.rs` where CLI args are parsed and the correct function, according to the subcommand, is called.
 The CLI args itself are defined in `args.rs` as multiple types with the `derive(StructOpt)` attribute.
-The HTTP server stuff is defined in `http/` where the hyper server is configured and started.
-The `sync/` folder is about everything for the `sync` subcommand: communicating with Opencast.
 
 In `db/`, everything about DB handling is defined, including migrations, the table-definitions and the `db` subcommands.
 We have our own migration logic with an ordered list of migrations, currently all written in SQL (inside `db/migrations/`).
@@ -81,6 +79,15 @@ In many cases, migrations are automatically applied if they are missing.
 However, if any migrations have changed (compared to the applied migrations in the DB), Tobira cannot know what best to do.
 In that case, Tobira refuses to start and you have to figure out and fix the DB situation yourself.
 For developers (think: no important data in the DB) you can usually call `tobira db reset`.
+
+List of remaining important modules:
+
+- `api/`: the GraphQL API definition (see below).
+- `auth/`: authentification and authorization.
+- `cmd/`: some special subcommands.
+- `http/`: the HTTP server stuff is defined and the hyper server is configured and started here.
+- `search/`: everything about the search index.
+- `sync/`: all about communicating with Opencast.
 
 For the API, the main entry points are `query.rs` and `mutation.rs`.
 Relay (in the frontend) requires us to have globally unique IDs for all nodes in our API.
