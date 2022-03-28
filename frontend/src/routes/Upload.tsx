@@ -603,7 +603,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
 // ==============================================================================================
 
 /** Returns the full Opencast URL for the given path */
-const ocUrl = (path: string): string => `${CONFIG.ocUrl}${path}`;
+const ocUrl = (path: string): string => `${CONFIG.opencast.uploadNode}${path}`;
 
 /** Opencast returned a non-OK status code */
 export class OcServerError extends Error {

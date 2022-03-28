@@ -47,8 +47,8 @@ impl HarvestClient {
 
         Self {
             http_client,
-            scheme: config.opencast.host.scheme.clone(),
-            authority: config.opencast.host.authority.clone(),
+            scheme: config.opencast.sync_node().scheme.clone(),
+            authority: config.opencast.sync_node().authority.clone(),
             auth_header: Secret::new(auth_header),
         }
     }

@@ -221,16 +221,35 @@
 #stdout = true
 
 [opencast]
-# URL of the connected Opencast instance that runs the Tobira module.
+# URL to Opencast. Currently used for all purposes (syncing, Studio,
+# upload, ...) unless overwritten below. In the future, Tobira might use
+# the service registry API to figure out suitable nodes for each
+# purpose (again, unless explicitly specified below).
 #
 # Some HTTP requests to Opencast contain the unencrypted `sync.password`,
 # so using HTTPS is strongly encouraged. In fact, HTTP is only allowed if
 # the host resolves to a loopback address.
 #
 # Example: "http://localhost:8080" or "https://oc.my-uni.edu".
-#
-# Required! This value must be specified.
 #host =
+
+# Explicitly set Opencast node used for data synchronization. The Tobira
+# module needs to run on this node.
+#sync_node =
+
+# Explicitly set Opencast node used for the video uploader. Has to offer
+# the ingest API.
+#upload_node =
+
+# Explicitly set base-URL to Opencast Studio.
+#
+# Example: "https://admin.oc.my-uni.edu/studio".
+#studio_url =
+
+# Explicitly set the base-URL to the Opencast editor.
+#
+# Example: "https://admin.oc.my-uni.edu/editor-ui/index.html".
+#editor_url =
 
 [sync]
 # Username of the user used to communicate with Opencast for data syncing.

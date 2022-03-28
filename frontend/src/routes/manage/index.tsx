@@ -50,7 +50,7 @@ const Manage: React.FC = () => {
         return <NotAuthorized />;
     }
     const returnTarget = encodeURIComponent(document.location.href);
-    const studioUrl = `${CONFIG.ocUrl}/studio?return.target=${returnTarget}`;
+    const studioUrl = `${CONFIG.opencast.studioUrl}?return.target=${returnTarget}`;
 
     return <>
         <Breadcrumbs path={[]} tail={t("manage.management")} />
