@@ -12,7 +12,11 @@ pub(crate) enum SearchIndexCommand {
     Status,
 
     /// Removes all data from the search index.
-    Clear,
+    Clear {
+        /// If specified, skips the "Are you sure?" question.
+        #[structopt(long)]
+        yes_absolutely_clear_index: bool,
+    },
 
     /// Completely clears (optional) and rebuilds the search index from data in
     /// the DB. Can take a while!
@@ -38,11 +42,11 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
 
     match cmd {
         SearchIndexCommand::Status => status(&meili).await?,
-        SearchIndexCommand::Clear => clear(meili).await?,
+        SearchIndexCommand::Clear { yes_absolutely_clear_index: yes } => clear(meili, *yes).await?,
         SearchIndexCommand::Update { daemon } => update(&meili, config, *daemon).await?,
         SearchIndexCommand::Rebuild { without_clear } => {
             if !without_clear {
-                clear(meili.clone()).await?;
+                clear(meili.clone(), false).await?;
             }
 
             rebuild(&meili, config).await?;
@@ -79,15 +83,17 @@ async fn update(meili: &Client, config: &Config, daemon: bool) -> Result<()> {
 
 // ===== Clear =================================================================================
 
-async fn clear(meili: Client) -> Result<()> {
-    println!("Are you sure you want to clear the search index? The search will be disabled \
-        until you rebuild the index! Type 'yes' to proceed to delete the data.");
+async fn clear(meili: Client, yes: bool) -> Result<()> {
+    if !yes {
+        println!("Are you sure you want to clear the search index? The search will be disabled \
+            until you rebuild the index! Type 'yes' to proceed to delete the data.");
 
-    let mut line = String::new();
-    std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
-    if line.trim() != "yes" {
-        println!("Answer was not 'yes'. Aborting.");
-        bail!("user did not confirm deleting index: operation was aborted.");
+        let mut line = String::new();
+        std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
+        if line.trim() != "yes" {
+            println!("Answer was not 'yes'. Aborting.");
+            bail!("user did not confirm deleting index: operation was aborted.");
+        }
     }
 
     // Actually delete
