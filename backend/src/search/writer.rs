@@ -32,8 +32,8 @@ impl std::ops::Deref for MeiliWriter<'_> {
 /// allowed to modify the database, but only data that is not reflected in the
 /// search index at all. For example, it is fine to delete entries from
 /// `search_index_queue` (this is basically the only useful write operation to
-/// the DB that `f` might do). But it is not Ok for `f` to insert new data into
-/// the DB and then also sent it to Meili.
+/// the DB that `f` might do). But it is not OK for `f` to insert new data into
+/// the DB and then also send it to Meili.
 ///
 /// The reason for this is that all writes to the `DB` could still fail and be
 /// rolled back. And we never want to end up in a situation where the index has
@@ -41,8 +41,8 @@ impl std::ops::Deref for MeiliWriter<'_> {
 ///
 /// In addition to being semantically/logically tricky, writing this in Rust is
 /// also a bit tricky. In short: accepting a closure returning a Future that
-/// references an reference-type argument is hard to impossible to implement
-/// right now. It's sad. After quite some testing stuff, I decided to simply go
+/// references a reference-type argument is hard to impossible to implement
+/// right now. It's sad. After testing quite a few things, I decided to simply go
 /// with a `dyn Future`.
 pub(crate) async fn with_write_lock<F, T>(db: &mut DbConnection, meili: &Client, f: F) -> Result<T>
 where

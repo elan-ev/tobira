@@ -258,7 +258,7 @@ pub(crate) async fn queue_many(
     let tx = db.transaction().await?;
 
     // Here we prepare a dummy statement in order to acquire the `Type`s of the
-    // both fields.
+    // two fields.
     let statement = tx
         .prepare("insert into search_index_queue (item_id, kind) values ($1, $2)")
         .await?;
