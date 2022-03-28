@@ -107,8 +107,8 @@ pub(crate) async fn run(
         // Write received data into the database, updating the sync status if
         // everything worked out alright.
         let last_updated = harvest_data.items.last().map(|item| item.updated());
-        let transaction = db.transaction().await?;
-        store_in_db(harvest_data.items, &sync_status, &transaction).await?;
+        let mut transaction = db.transaction().await?;
+        store_in_db(harvest_data.items, &sync_status, &mut transaction).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
         transaction.commit().await?;
 
@@ -151,7 +151,7 @@ pub(crate) async fn run(
 async fn store_in_db(
     items: Vec<HarvestItem>,
     sync_status: &SyncStatus,
-    db: &deadpool_postgres::Transaction<'_>,
+    db: &mut deadpool_postgres::Transaction<'_>,
 ) -> Result<()> {
     let before = Instant::now();
     let mut upserted_events = 0;
@@ -280,7 +280,7 @@ async fn store_in_db(
     }
 
     if !new_search_items.is_empty() {
-        search::queue_many(db, new_search_items).await?;
+        search::queue_many(&mut **db, new_search_items).await?;
     }
 
     Ok(())
