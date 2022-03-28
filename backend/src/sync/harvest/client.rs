@@ -13,7 +13,7 @@ use hyper::{
 use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use secrecy::{ExposeSecret, Secret};
 
-use crate::{prelude::*, sync::SyncConfig};
+use crate::{prelude::*, config::Config};
 
 
 /// Used to send request to the harvesting API.
@@ -27,7 +27,7 @@ pub(super) struct HarvestClient {
 impl HarvestClient {
     const API_PATH: &'static str = "/tobira/harvest";
 
-    pub(super) fn new(config: &SyncConfig) -> Self {
+    pub(super) fn new(config: &Config) -> Self {
         // Prepare HTTP client
         let https = HttpsConnectorBuilder::new()
             .with_native_roots()
@@ -40,15 +40,15 @@ impl HarvestClient {
         // Prepare authentication
         let credentials = format!(
             "{}:{}",
-            config.user,
-            config.password.expose_secret(),
+            config.sync.user,
+            config.sync.password.expose_secret(),
         );
         let auth_header = format!("Basic {}", base64::encode(credentials));
 
         Self {
             http_client,
-            scheme: config.host.scheme.clone(),
-            authority: config.host.authority.clone(),
+            scheme: config.opencast.sync_node().scheme.clone(),
+            authority: config.opencast.sync_node().authority.clone(),
             auth_header: Secret::new(auth_header),
         }
     }

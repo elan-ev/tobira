@@ -24,7 +24,7 @@ type Config = {
     version: string;
     auth: AuthConfig;
     siteTitle: TranslatedString;
-    ocUrl: string;
+    opencast: OpencastConfig;
     footerLinks: FooterLink[];
     logo: LogoConfig;
     plyr: PlyrConfig;
@@ -55,6 +55,12 @@ type SingleLogoConfig = {
 type PlyrConfig = {
     blankVideo: string;
     svg: string;
+};
+
+type OpencastConfig = {
+    uploadNode: string;
+    studioUrl: string;
+    editorUrl: string;
 };
 
 export type TranslatedString = { en: string } & Record<"de", string | undefined>;

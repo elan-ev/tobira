@@ -20,8 +20,10 @@ mode = "login-proxy"
 signing_algorithm = "ES256"
 secret_key = "jwt-key.pem"
 
-[sync]
+[opencast]
 host = "http://localhost:8081"
+
+[sync]
 user = "admin"
 password = "opencast"
 preferred_harvest_size = 3

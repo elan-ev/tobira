@@ -1,7 +1,7 @@
 use secrecy::Secret;
 use std::time::Duration;
 
-use crate::{config::Config, db::DbConnection, prelude::*, util::HttpHost};
+use crate::{config::Config, db::DbConnection, prelude::*};
 
 
 pub(crate) mod cmd;
@@ -10,24 +10,14 @@ mod status;
 
 
 pub(crate) async fn run(daemon: bool, db: DbConnection, config: &Config) -> Result<()> {
-    harvest::run(daemon, &config.sync, db).await
+    harvest::run(daemon, config, db).await
 }
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct SyncConfig {
-    /// Host of the connected Opencast instance. This host has to be reachable
-    /// via HTTPS or HTTP. If no port is specified here, the default HTTPS port
-    /// 443 (or HTTP port 80) is used.
-    ///
-    /// The HTTP requests to Opencast contain the unencrypted `password`, so
-    /// using HTTPS is strongly encouraged. In fact, HTTP is only allowed if
-    /// the host resolves to a loopback address.
-    ///
-    /// Example: "localhost:8080".
-    pub(crate) host: HttpHost,
-
-    /// Username of the user used to communicate with Opencast. This user has to have
-    /// access to all events and series. Currently, that user has to be admin.
+    /// Username of the user used to communicate with Opencast for data syncing.
+    /// This user has to have access to all events and series. Currently, that
+    /// user has to be admin.
     user: String,
 
     /// Password of the user used to communicate with Opencast.
@@ -57,9 +47,3 @@ pub(crate) struct SyncConfig {
     poll_period: Duration,
 }
 
-impl SyncConfig {
-    pub(crate) fn validate(&self) -> Result<()> {
-        self.host.assert_safety().context("failed to validate 'sync.host'")?;
-        Ok(())
-    }
-}

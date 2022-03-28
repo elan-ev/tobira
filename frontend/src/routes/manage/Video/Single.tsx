@@ -102,7 +102,7 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
     }
-    const editorUrl = `${CONFIG.ocUrl}/editor-ui/index.html?mediaPackageId=${event.opencastId}`;
+    const editorUrl = `${CONFIG.opencast.editorUrl}?mediaPackageId=${event.opencastId}`;
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />

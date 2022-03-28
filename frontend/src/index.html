@@ -13,8 +13,12 @@
         "version": "{{: var:version :}}",
         "auth": {{: var:auth :}},
         "siteTitle": {{: var:site-title :}},
-        "ocUrl": "{{: var:oc-url :}}",
         "footerLinks": {{: var:footer-links :}},
+        "opencast": {
+          "uploadNode": "{{: var:upload-node :}}",
+          "studioUrl": "{{: var:studio-url :}}",
+          "editorUrl": "{{: var:editor-url :}}"
+        },
         "logo": {
           "large": {
             "path": "/~assets/{{: path:logo-large.svg :}}",

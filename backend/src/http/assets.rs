@@ -88,7 +88,11 @@ impl Assets {
             "passwordLabel": config.auth.login_page.password_label,
             "loginPageNote": config.auth.login_page.note,
         }).to_string());
-        variables.insert("oc-url".into(), config.sync.host.to_string());
+
+        variables.insert("upload-node".into(), config.opencast.upload_node().to_string());
+        variables.insert("studio-url".into(), config.opencast.studio_url());
+        variables.insert("editor-url".into(), config.opencast.editor_url());
+
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());
         variables.insert("footer-links".into(), json!(config.general.footer_links()).to_string());
