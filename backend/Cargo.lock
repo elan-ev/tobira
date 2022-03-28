@@ -1922,7 +1922,6 @@ dependencies = [
  "p256",
  "paste",
  "pem",
- "pin-utils",
  "postgres-types",
  "rand",
  "reinda",

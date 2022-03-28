@@ -1,5 +1,4 @@
 use futures::StreamExt;
-use pin_utils::pin_mut;
 use juniper::{GraphQLInputObject, GraphQLObject};
 
 use crate::{api::{Context, Id, err::{ApiResult, invalid_input}}, dbargs};
@@ -222,7 +221,7 @@ impl BlockValue {
         // TODO Actually reset to whatever it was before, but that needs nested transactions
         db.execute("set constraints index_unique_in_realm immediate", &[]).await?;
 
-        pin_mut!(realm_stream);
+        futures::pin_mut!(realm_stream);
 
         let realm = realm_stream
             .next()
