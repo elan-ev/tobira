@@ -222,20 +222,17 @@
 
 [sync]
 # Host of the connected Opencast instance. This host has to be reachable
-# via HTTPS (or HTTP, see `use_insecure_connection`). If no port is
-# specified here, the default HTTPS port 443 (or HTTP port 80) is used.
+# via HTTPS or HTTP. If no port is specified here, the default HTTPS port
+# 443 (or HTTP port 80) is used.
+#
+# The HTTP requests to Opencast contain the unencrypted `password`, so
+# using HTTPS is strongly encouraged. In fact, HTTP is only allowed if
+# the host resolves to a loopback address.
+#
 # Example: "localhost:8080".
 #
 # Required! This value must be specified.
 #host =
-
-# If set to `true`, Tobira will communicate with Opencast via HTTP instead of
-# HTTPS. This is strongly recommended against! The HTTP requests contain the
-# unencrypted `sync_password`! Setting this to `true` is only allowed if
-# the `host` resolves to a loopback address.
-#
-# Default value: false
-#use_insecure_connection = false
 
 # Username of the user used to communicate with Opencast. This user has to have
 # access to all events and series. Currently, that user has to be admin.

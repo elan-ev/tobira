@@ -37,7 +37,6 @@ export const SearchRoute = makeRoute(url => {
 const query = graphql`
     query SearchQuery($q: String!) {
         ... UserData
-        rootRealm { ... NavigationData }
         search(query: $q) {
             items {
                 id

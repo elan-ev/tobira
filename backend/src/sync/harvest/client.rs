@@ -1,4 +1,4 @@
-use std::{net::Ipv6Addr, time::Duration};
+use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use hyper::{
@@ -37,19 +37,6 @@ impl HarvestClient {
             .build();
         let http_client = Client::builder().build(https);
 
-        // Prepare URL
-        let scheme = if config.use_insecure_connection {
-            Scheme::HTTP
-        } else {
-            Scheme::HTTPS
-        };
-        let host = if config.host.parse::<Ipv6Addr>().is_ok() {
-            format!("[{}]", config.host)
-        } else {
-            config.host.clone()
-        };
-        let authority = host.parse::<Authority>().expect("bug: invalid config");
-
         // Prepare authentication
         let credentials = format!(
             "{}:{}",
@@ -60,8 +47,8 @@ impl HarvestClient {
 
         Self {
             http_client,
-            scheme,
-            authority,
+            scheme: config.host.scheme.clone(),
+            authority: config.host.authority.clone(),
             auth_header: Secret::new(auth_header),
         }
     }

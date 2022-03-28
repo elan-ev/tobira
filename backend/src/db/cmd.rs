@@ -9,7 +9,7 @@ use tokio_postgres::IsolationLevel;
 
 use secrecy::ExposeSecret;
 
-use crate::prelude::*;
+use crate::{prelude::*, util::Never};
 use super::{Db, DbConfig, create_pool, query};
 
 
@@ -132,7 +132,7 @@ async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn console(config: &DbConfig) -> Result<NeverReturns> {
+fn console(config: &DbConfig) -> Result<Never> {
     let connection_uri = format!(
         "postgresql://{}:{}@{}:{}/{}",
         config.user,
@@ -149,9 +149,3 @@ fn console(config: &DbConfig) -> Result<NeverReturns> {
     };
     Err(error).context(message)
 }
-
-/// An empty `enum` for signaling the fact that a function (potentially) never returns.
-/// Note that you can't construct a value of this type, so a function returning it
-/// can never return. A function returning `Result<NeverReturns>` never returns
-/// when it succeeds, but it might still fail.
-enum NeverReturns {}

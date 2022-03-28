@@ -91,9 +91,12 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
             potentiallyInternetProblem: true,
         };
     } else if (error instanceof ServerError) {
-        // TODO: choose better error messages according to status code
+        const cause = error.response.status >= 500 && error.response.status < 600
+            ? t("errors.internal-server-error")
+            : t("errors.unexpected-server-error");
+
         return {
-            causes: new Set([t("errors.unexpected-server-error")]),
+            causes: new Set([cause]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
