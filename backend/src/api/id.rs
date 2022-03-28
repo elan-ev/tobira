@@ -124,6 +124,27 @@ impl Id {
 const BASE64_DIGITS: &[u8; 64] =
     b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
+impl Key {
+    pub(crate) fn from_base64(s: &str) -> Option<Self> {
+        if s.len() != 11 {
+            return None;
+        }
+
+        decode_base64(s.as_bytes())
+    }
+
+    pub(crate) fn to_base64(&self, out: &mut [u8; 11]) {
+        // Base64 encoding. After this loop, `n` is always 0, because `u64::MAX`
+        // divided by 64 eleven times is 0.
+        let mut n = self.0;
+        for i in (0..out.len()).rev() {
+            out[i] = BASE64_DIGITS[(n % 64) as usize];
+            n /= 64;
+        }
+        debug_assert!(n == 0);
+    }
+}
+
 impl std::str::FromStr for Id {
     // TODO: we might want to have more information about the error later, but
     // the GraphQL API doesn't currently use it anyway.
@@ -134,9 +155,9 @@ impl std::str::FromStr for Id {
             return Err(());
         }
 
-        let s = s.as_bytes();
-        let kind = [s[0], s[1]];
-        let key = decode_base64(&s[2..]).ok_or(())?;
+        let bytes = s.as_bytes();
+        let kind = [bytes[0], bytes[1]];
+        let key = Key::from_base64(&s[2..]).ok_or(())?;
 
         Ok(Self { kind, key })
     }
@@ -147,15 +168,7 @@ impl fmt::Display for Id {
         let mut out = [b' '; 13];
         out[0] = self.kind[0];
         out[1] = self.kind[1];
-
-        // Base64 encoding. After this loop, `n` is always 0, because `u64::MAX`
-        // divided by 64 eleven times is 0.
-        let mut n = self.key.0;
-        for i in (2..out.len()).rev() {
-            out[i] = BASE64_DIGITS[(n % 64) as usize];
-            n /= 64;
-        }
-        debug_assert!(n == 0);
+        self.key.to_base64((&mut out[2..]).try_into().unwrap());
 
         std::str::from_utf8(&out)
             .expect("bug: base64 did produce non-ASCII character")
