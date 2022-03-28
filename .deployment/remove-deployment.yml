@@ -20,6 +20,13 @@
         - tobiraworker
         - tobiraauth
 
+    - name: Clear search index
+      become: true
+      become_user: tobira
+      command:
+        cmd: /opt/tobira/{{ id }}/tobira search-index clear --yes-absolutely-clear-index
+        chdir: /opt/tobira/{{ id }}/
+
     - name: remove deployed files and folders
       become: true
       file:
