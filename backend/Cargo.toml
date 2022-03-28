@@ -42,7 +42,6 @@ once_cell = "1.5"
 p256 = { version = "0.10", features = ["jwk"] }
 paste = "1"
 pem = "1"
-pin-utils = "0.1.0"
 postgres-types = { version = "0.2.2", features = ["derive", "array-impls"] }
 rand = "0.8.4"
 reinda = "0.2"
