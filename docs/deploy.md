@@ -8,7 +8,7 @@ Afterwards, copy the binary to your server.
 
 ## 2. Setup PostgreSQL
 
-As described in [the prerequisite docs](./prerequisites.md), Tobira needs a PostgreSQL DB.
+As described in [the prerequisite docs](./run-requirements.md), Tobira needs a PostgreSQL DB.
 How to setup such a DB is out of scope for these docs.
 
 

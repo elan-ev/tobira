@@ -8,7 +8,7 @@ If you are a developer, [the development workflow document](./dev-workflow.md) i
 
 ## 1. Install Prerequisites
 
-See [this document](./prerequisites.md) for information on this step.
+See [this document](./build-requirements.md) for information on this step.
 
 
 ## 2. Build frontend

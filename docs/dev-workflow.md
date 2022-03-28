@@ -1,5 +1,7 @@
 # Development workflow (compiling/building/testing)
 
+Some software is required to build Tobira. See [this document](./build-requirements.md) for more information.
+
 Unfortunately, the build process is a bit involved.
 **We recommend using [`floof`](https://github.com/LukasKalbertodt/floof)** so you can use `floof.yaml` to handle that complexity for you.
 Floof also gives you auto-rebuilds and browser-reloads whenever you change any file.
