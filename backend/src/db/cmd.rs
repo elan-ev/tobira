@@ -9,13 +9,13 @@ use tokio_postgres::IsolationLevel;
 
 use secrecy::ExposeSecret;
 
-use crate::{prelude::*, util::Never};
+use crate::{prelude::*, util::Never, config::Config};
 use super::{Db, DbConfig, create_pool, query};
 
 
 #[derive(Debug, StructOpt)]
 pub(crate) enum DbCommand {
-    /// Removes all data and tables from the database.
+    /// Removes all data and tables from the database. Also clears search index.
     Clear,
 
     /// Runs an `.sql` script with the configured database connection.
@@ -38,13 +38,13 @@ pub(crate) enum DbCommand {
 }
 
 /// Entry point for `db` commands.
-pub(crate) async fn run(cmd: &DbCommand, config: &DbConfig) -> Result<()> {
+pub(crate) async fn run(cmd: &DbCommand, config: &Config) -> Result<()> {
     if let DbCommand::Console = cmd {
-        return console(config).map(|_| ());
+        return console(&config.db).map(|_| ());
     }
 
     // Connect to database
-    let pool = create_pool(config).await?;
+    let pool = create_pool(&config.db).await?;
     let mut db = pool.get().await?;
 
     // Dispatch command
@@ -68,7 +68,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &DbConfig) -> Result<()> {
 /// This also has a interactive check, asking the user to confirm the removal.
 /// If the user did not confirm and the database is not changed, `false` is
 /// returned; `true` otherwise.
-async fn clear(db: &mut Db, config: &DbConfig) -> Result<()> {
+async fn clear(db: &mut Db, config: &Config) -> Result<()> {
     let tx = db.build_transaction()
         .isolation_level(IsolationLevel::Serializable)
         .start()
@@ -82,8 +82,8 @@ async fn clear(db: &mut Db, config: &DbConfig) -> Result<()> {
     if let Ok(Ok(hostname)) = hostname::get().map(|n| n.into_string()) {
         println!("Hostname: {}", hostname);
     }
-    println!("Database host: {}", config.host);
-    println!("Database name: {}", config.database);
+    println!("Database host: {}", config.db.host);
+    println!("Database name: {}", config.db.database);
 
     println!();
     println!("The database currently holds these tables:");
@@ -96,9 +96,11 @@ async fn clear(db: &mut Db, config: &DbConfig) -> Result<()> {
     }
 
     println!();
-    println!("Are you sure you want to completely remove everything in this database? This \
-        completely drops the 'public' schema. Please double-check the server \
-        you are running this on! Type 'yes' to proceed to delete the data.");
+    println!("Are you sure you want to completely remove everything in this database \
+        and clear the search index? \
+        This completely drops the 'public' schema. \
+        Please double-check the server you are running this on!\n\
+        Type 'yes' to proceed to delete the data.");
 
     let mut line = String::new();
     std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
@@ -111,12 +113,15 @@ async fn clear(db: &mut Db, config: &DbConfig) -> Result<()> {
     // here, for example: https://stackoverflow.com/a/21247009/2408867
     tx.execute("drop schema public cascade", &[]).await?;
     tx.execute("create schema public", &[]).await?;
-    tx.execute(&*format!("grant all on schema public to {}", config.user), &[]).await?;
+    tx.execute(&*format!("grant all on schema public to {}", config.db.user), &[]).await?;
     tx.execute("grant all on schema public to public", &[]).await?;
     tx.execute("comment on schema public is 'standard public schema'", &[]).await?;
     tx.commit().await.context("failed to commit clear transaction")?;
 
     info!("Dropped and recreated schema 'public'");
+
+    let meili = config.meili.connect_only().await?;
+    crate::search::clear(meili).await?;
 
     Ok(())
 }

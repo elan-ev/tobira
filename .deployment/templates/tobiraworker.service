@@ -1,5 +1,5 @@
 [Unit]
-Description=Tobira Sync {{ id }}
+Description=Tobira Worker {{ id }}
 Documentation=https://github.com/elan-ev/tobira
 
 After=local-fs.target
@@ -7,7 +7,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/tobira/{{ id }}/
-ExecStart=/opt/tobira/{{ id }}/tobira sync --daemon
+ExecStart=/opt/tobira/{{ id }}/tobira worker
 Restart=always
 User=tobira
 

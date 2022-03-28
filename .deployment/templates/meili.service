@@ -1,0 +1,16 @@
+[Unit]
+Description=MeiliSearch
+Documentation=https://docs.meilisearch.com/
+
+After=local-fs.target
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/meili
+Environment="MEILI_NO_ANALYTICS=true"
+Environment="MEILI_MASTER_KEY=tobira"
+ExecStart=/opt/meili/meilisearch
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

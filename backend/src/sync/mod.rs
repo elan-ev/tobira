@@ -1,28 +1,16 @@
 use secrecy::Secret;
 use std::time::Duration;
 
-use crate::{config::Config, db, prelude::*, util::HttpHost};
+use crate::{config::Config, db::DbConnection, prelude::*, util::HttpHost};
 
 
+pub(crate) mod cmd;
 mod harvest;
 mod status;
 
 
-pub(crate) async fn run(daemon: bool, config: &Config) -> Result<()> {
-    info!("Starting Tobira <-> Opencast synchronization ...");
-    trace!("Configuration: {:#?}", config);
-
-    // Open DB connection, check consistency and migrate if necessary.
-    let db = db::create_pool(&config.db).await
-        .context("failed to create database connection pool (database not running?)")?;
-    db::migrate(&mut *db.get().await?).await
-        .context("failed to check/run DB migrations")?;
-
-    // Harvest continiously.
-    let db_connection = db.get().await?;
-    harvest::run(daemon, &config.sync, db_connection).await?;
-
-    Ok(())
+pub(crate) async fn run(daemon: bool, db: DbConnection, config: &Config) -> Result<()> {
+    harvest::run(daemon, &config.sync, db).await
 }
 
 #[derive(Debug, confique::Config)]

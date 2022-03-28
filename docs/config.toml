@@ -270,6 +270,31 @@
 # Default value: "30s"
 #poll_period = "30s"
 
+[meili]
+# The access key. This can be the master key, but ideally should be an API
+# key that only has the priviliges it needs.
+#
+# Required! This value must be specified.
+#key =
+
+# The host MeiliSearch is running on. As requests include the `key`, you
+# should use HTTPS if Meili is running on another machine. In fact, HTTP
+# is disallowed unless the host resolves to a loopback address.
+#
+# Default value: "http://127.0.0.1:7700"
+#host = "http://127.0.0.1:7700"
+
+# A prefix for index names in Meili. Useful only to avoid collision if
+# other services use Meili as well.
+#
+# Default value: "tobira_"
+#index_prefix = "tobira_"
+
+# How often DB changes are written back to the search index.
+#
+# Default value: "5s"
+#update_interval = "5s"
+
 [theme]
 # Default value: 50
 #header_height = 50

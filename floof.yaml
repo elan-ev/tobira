@@ -18,6 +18,7 @@ start-scripts:
   - set-workdir: scripts
   - concurrently:
     - docker-compose -f auth-proxy/docker-compose.yml up -d
+    - docker-compose -f meilisearch/docker-compose.yml up -d
     - docker-compose -f dev-db/docker-compose.yml up -d
     - docker-compose -f login-handler/docker-compose.yml up -d
     - docker-compose -f opencast-cors/docker-compose.yml up -d
@@ -27,6 +28,7 @@ stop-scripts:
   - set-workdir: scripts
   - concurrently:
     - docker-compose -f auth-proxy/docker-compose.yml stop
+    - docker-compose -f meilisearch/docker-compose.yml stop
     - docker-compose -f dev-db/docker-compose.yml stop
     - docker-compose -f login-handler/docker-compose.yml stop
     - docker-compose -f opencast-cors/docker-compose.yml stop
@@ -37,6 +39,7 @@ run-scripts:
   - set-workdir: scripts
   - concurrently:
     - docker-compose -f auth-proxy/docker-compose.yml up
+    - docker-compose -f meilisearch/docker-compose.yml up
     - docker-compose -f dev-db/docker-compose.yml up
     - docker-compose -f login-handler/docker-compose.yml up
     - docker-compose -f opencast-cors/docker-compose.yml up

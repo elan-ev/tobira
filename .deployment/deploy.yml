@@ -20,6 +20,32 @@
           - python3-psycopg2
           - nginx
 
+    # MeiliSearch
+
+    - name: create MeiliSearch directory
+      become: true
+      file:
+        path: /opt/meili
+        state: directory
+        mode: '0755'
+
+    - name: install MeiliSearch
+      become: true
+      get_url:
+        url: https://github.com/meilisearch/meilisearch/releases/download/v0.26.1/meilisearch-linux-amd64
+        dest: /opt/meili/meilisearch
+        mode: '0755'
+
+    - name: install MeiliSearch service file
+      become: true
+      template:
+        src: meili.service
+        dest: /etc/systemd/system/meili.service
+        mode: '0644'
+        owner: root
+        group: root
+      notify: restart meili
+
     # DATABASE
 
     - name: initialize database
@@ -63,7 +89,7 @@
       ignore_errors: true
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
 
     - name: drop database
       become: true
@@ -196,6 +222,20 @@
         cmd: /opt/tobira/{{ id }}/tobira import-realm-tree realms.yaml --dummy-blocks
         chdir: /opt/tobira/{{ id }}/
 
+    - name: Clear search index
+      become: true
+      become_user: tobira
+      command:
+        cmd: /opt/tobira/{{ id }}/tobira search-index clear --yes-absolutely-clear-index
+        chdir: /opt/tobira/{{ id }}/
+
+    - name: Build search index once
+      become: true
+      become_user: tobira
+      command:
+        cmd: /opt/tobira/{{ id }}/tobira search-index update
+        chdir: /opt/tobira/{{ id }}/
+
     - name: install tobira service files
       become: true
       template:
@@ -206,7 +246,7 @@
         group: root
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
         - tobiraauth
       notify: restart tobira
 
@@ -219,7 +259,7 @@
         enabled: true
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
         - tobiraauth
 
     # NGINX
@@ -297,7 +337,7 @@
         state: restarted
       with_items:
         - tobira
-        - tobirasync
+        - tobiraworker
         - tobiraauth
 
     - name: reload nginx
@@ -305,3 +345,9 @@
       service:
         name: nginx
         state: reloaded
+
+    - name: restart meili
+      become: true
+      service:
+        name: meili
+        state: restarted

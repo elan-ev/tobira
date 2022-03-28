@@ -5,8 +5,10 @@ use crate::{
     api::{
         Id, Context,
         err::{self, ApiResult},
-        model::{event::Event, series::Series, realm::Realm, search::{SearchEvent, SearchRealm}},
+        model::{event::Event, series::Series, realm::Realm},
     },
+    search::Event as SearchEvent,
+    search::Realm as SearchRealm,
 };
 
 

@@ -6,7 +6,11 @@ use std::{
 use hyper::http::status::StatusCode;
 use tokio_postgres::types::ToSql;
 
-use crate::{db::{types::EventTrack, DbConnection}, prelude::*};
+use crate::{
+    db::{types::{EventTrack, Key}, DbConnection},
+    prelude::*,
+    search::{self, IndexItemKind},
+};
 use super::{SyncConfig, status::SyncStatus};
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
 
@@ -103,8 +107,8 @@ pub(crate) async fn run(
         // Write received data into the database, updating the sync status if
         // everything worked out alright.
         let last_updated = harvest_data.items.last().map(|item| item.updated());
-        let transaction = db.transaction().await?;
-        store_in_db(harvest_data.items, &sync_status, &transaction).await?;
+        let mut transaction = db.transaction().await?;
+        store_in_db(harvest_data.items, &sync_status, &mut transaction).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
         transaction.commit().await?;
 
@@ -147,13 +151,15 @@ pub(crate) async fn run(
 async fn store_in_db(
     items: Vec<HarvestItem>,
     sync_status: &SyncStatus,
-    db: &deadpool_postgres::Transaction<'_>,
+    db: &mut deadpool_postgres::Transaction<'_>,
 ) -> Result<()> {
     let before = Instant::now();
     let mut upserted_events = 0;
     let mut removed_events = 0;
     let mut upserted_series = 0;
     let mut removed_series = 0;
+
+    let mut new_search_items = Vec::new();
 
     for item in items {
         // Make sure we haven't received this update yet. The code below can
@@ -178,7 +184,7 @@ async fn store_in_db(
                 acl,
                 updated,
             } => {
-                let series = match &part_of {
+                let series_id = match &part_of {
                     None => None,
                     Some(part_of) => {
                         db.query_opt("select id from series where opencast_id = $1", &[part_of])
@@ -188,21 +194,23 @@ async fn store_in_db(
                 };
 
                 // We upsert the event data.
-                upsert(db, "events", "opencast_id", &[
+                let new_id = upsert(db, "events", "opencast_id", &[
                     ("opencast_id", &opencast_id),
-                    ("series", &series),
+                    ("series", &series_id),
                     ("part_of", &part_of),
                     ("title", &title),
                     ("description", &description),
                     ("duration", &duration),
                     ("created", &created),
                     ("updated", &updated),
-                    ("creators", &creator.map_or(vec![], |creator| vec![creator])),
+                    ("creators", &creator.clone().map_or(vec![], |creator| vec![creator])),
                     ("thumbnail", &thumbnail),
                     ("read_roles", &acl.read),
                     ("write_roles", &acl.write),
                     ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),
                 ]).await?;
+
+                new_search_items.push((Key(new_id as u64), IndexItemKind::Event));
 
                 debug!("Inserted or updated event {} ({})", opencast_id, title);
                 upserted_events += 1;
@@ -269,6 +277,10 @@ async fn store_in_db(
             removed_series,
             before.elapsed(),
         );
+    }
+
+    if !new_search_items.is_empty() {
+        search::queue_many(&mut **db, new_search_items).await?;
     }
 
     Ok(())

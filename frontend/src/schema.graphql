@@ -154,11 +154,13 @@ enum RealmOrder {
 }
 
 type SearchEvent implements Node {
+  id: ID!
   title: String!
+  seriesTitle: String
   description: String
+  creators: [String!]!
   thumbnail: String
   duration: Int!
-  tracks: [Track!]!
 }
 
 input ChildIndex {
@@ -204,8 +206,10 @@ type Series implements Node {
 }
 
 type SearchRealm implements Node {
+  id: ID!
   name: String!
-  fullPath: String!
+  path: String!
+  ancestorNames: [String!]!
 }
 
 "Defines the sort order for events."

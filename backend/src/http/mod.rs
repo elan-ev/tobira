@@ -20,7 +20,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{api, auth::JwtContext, config::Config, prelude::*};
+use crate::{api, auth::JwtContext, config::Config, prelude::*, search};
 use self::{
     assets::Assets,
     handlers::handle,
@@ -65,6 +65,7 @@ pub(crate) struct Context {
     pub(crate) assets: Assets,
     pub(crate) config: Arc<Config>,
     pub(crate) jwt: Arc<JwtContext>,
+    pub(crate) search: Arc<search::Client>,
 }
 
 
@@ -74,6 +75,7 @@ pub(crate) async fn serve(
     config: Config,
     api_root: api::RootNode,
     db: Pool,
+    search: search::Client,
 ) -> Result<()> {
     let assets = Assets::init(&config).await.context("failed to initialize assets")?;
     let http_config = config.http.clone();
@@ -83,6 +85,7 @@ pub(crate) async fn serve(
         assets,
         jwt: Arc::new(JwtContext::new(&config.auth.jwt)?),
         config: Arc::new(config),
+        search: Arc::new(search),
     });
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching

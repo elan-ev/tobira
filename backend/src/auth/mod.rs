@@ -21,7 +21,7 @@ pub(crate) use self::{
 
 /// Users with this role can do anything as they are the global Opencast
 /// administrator.
-const ROLE_ADMIN: &str = "ROLE_ADMIN";
+pub(crate) const ROLE_ADMIN: &str = "ROLE_ADMIN";
 
 const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
 

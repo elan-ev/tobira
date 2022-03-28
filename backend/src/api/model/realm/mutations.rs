@@ -4,6 +4,7 @@ use crate::{
     api::{Context, Id, err::{ApiResult, invalid_input}},
     db::types::Key,
     prelude::*,
+    search,
 };
 use super::{Realm, RealmOrder};
 
@@ -24,6 +25,7 @@ impl Realm {
             )
             .await?
             .get(0);
+        db.queue_for_reindex(search::IndexItemKind::Realm, key).await?;
 
         Self::load_by_key(key, context).await.map(Option::unwrap)
     }
@@ -159,6 +161,7 @@ impl Realm {
             return Err(invalid_input!("`id` does not refer to an existing realm"));
         }
 
+        db.queue_for_reindex(search::IndexItemKind::Realm, key).await?;
         Self::load_by_key(key, context).await.map(Option::unwrap)
     }
 
@@ -174,6 +177,7 @@ impl Realm {
             .ok_or_else(|| invalid_input!("`id` does not refer to an existing realm"))?;
 
         db.execute("delete from realms where id = $1", &[&key]).await?;
+        db.queue_for_reindex(search::IndexItemKind::Realm, key).await?;
 
         // We checked above that `realm` is not the root realm, so we can unwrap.
         let parent = Self::load_by_key(realm.parent_key.expect("missing parent"), context)

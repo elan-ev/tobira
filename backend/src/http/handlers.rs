@@ -165,6 +165,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         user,
         config: ctx.config.clone(),
         jwt: ctx.jwt.clone(),
+        search: ctx.search.clone(),
     });
     let out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
 

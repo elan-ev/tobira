@@ -7,11 +7,12 @@ import { makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link } from "../router";
 import { Thumbnail } from "../ui/Video";
-import { bug } from "../util/err";
+import { unreachable } from "../util/err";
 import { Description } from "../ui/metadata";
-import { FiFolder } from "react-icons/fi";
 import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
+import { FiFolder } from "react-icons/fi";
+import { HiOutlineUserCircle } from "react-icons/hi";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -41,8 +42,8 @@ const query = graphql`
             items {
                 id
                 __typename
-                ... on SearchEvent { title description thumbnail duration tracks { resolution }}
-                ... on SearchRealm { name fullPath }
+                ... on SearchEvent { title description thumbnail duration creators seriesTitle }
+                ... on SearchRealm { name path ancestorNames }
             }
         }
     }
@@ -77,45 +78,30 @@ type SearchResultsProps = {
     items: NonNullable<SearchQueryResponse["search"]>["items"];
 };
 
+const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "undefined"
+    ? unreachable("type dependent field for search item is not set")
+    : value;
+
 const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     <ul css={{ listStyle: "none", padding: 0 }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
-                return (
-                    <Item key={item.id} link={`/!${item.id.slice(2)}`}>
-                        <Thumbnail
-                            event={{
-                                title: item.title ?? bug("SearchEvent without title"),
-                                thumbnail: item.thumbnail ?? null,
-                                duration: item.duration ?? bug("SearchEvent without duration"),
-                                tracks: item.tracks ?? bug("SearchEvent without tracks"),
-                            }}
-                            css={{ width: "100%" }}
-                        />
-                        <div>
-                            <h3 css={{
-                                marginBottom: 6,
-                                display: "-webkit-box",
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                WebkitLineClamp: 2,
-                            }}>{item.title}</h3>
-                            <Description text={item.description ?? null} lines={3} />
-                        </div>
-                    </Item>
-                );
+                return <SearchEvent {...{
+                    id: item.id,
+                    title: unwrapUndefined(item.title),
+                    description: unwrapUndefined(item.description),
+                    thumbnail: unwrapUndefined(item.thumbnail),
+                    duration: unwrapUndefined(item.duration),
+                    creators: unwrapUndefined(item.creators),
+                    seriesTitle: unwrapUndefined(item.seriesTitle),
+                }}/>;
             } else if (item.__typename === "SearchRealm") {
-                const fullPath = item.fullPath ?? bug("fullPath is null for realm");
-                // TODO: show breadcrumbs
-                return (
-                    <Item key={item.id} link={fullPath}>
-                        <div css={{ textAlign: "center" }}>
-                            <FiFolder css={{ margin: 8, fontSize: 26 }}/>
-                        </div>
-                        <h3>{item.name}</h3>
-                    </Item>
-                );
+                return <SearchRealm {...{
+                    id: item.id,
+                    name: unwrapUndefined(item.name),
+                    fullPath: unwrapUndefined(item.path),
+                    ancestorNames: unwrapUndefined(item.ancestorNames),
+                }} />;
             } else {
                 // eslint-disable-next-line no-console
                 console.warn("Unknown search item type: ", item.__typename);
@@ -123,6 +109,81 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
             }
         })}
     </ul>
+);
+
+type SearchEventProps = {
+    id: string;
+    title: string;
+    description: string | null;
+    thumbnail: string | null;
+    duration: number;
+    creators: readonly string[];
+    seriesTitle: string | null;
+};
+
+const SearchEvent: React.FC<SearchEventProps> = ({
+    id, title, description, thumbnail, duration, creators, seriesTitle,
+}) => {
+    const { t } = useTranslation();
+
+    return (
+        <Item key={id} link={`/!${id.slice(2)}`}>
+            <Thumbnail
+                event={{
+                    title,
+                    thumbnail: thumbnail ?? null,
+                    duration: duration,
+                    audioOnly: false, // TODO
+                }}
+                css={{ width: "100%" }}
+            />
+            <div css={{ color: "black" }}>
+                <h3 css={{
+                    marginBottom: 6,
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    WebkitLineClamp: 2,
+                }}>{title}</h3>
+                <div css={{ fontSize: 14, display: "flex", alignItems: "center" }}>
+                    <HiOutlineUserCircle css={{
+                        color: "var(--grey40)",
+                        fontSize: 16,
+                        marginRight: 8,
+                    }} />
+                    {creators.join(", ")}
+                </div>
+                <Description text={description} lines={3} />
+                {/* TODO: link to series */}
+                {seriesTitle && <div css={{ fontSize: 14, marginTop: 4 }}>
+                    {t("video.part-of-series") + ": " + seriesTitle}
+                </div>}
+            </div>
+        </Item>
+    );
+};
+
+type SearchRealmProps = {
+    id: string;
+    name: string;
+    ancestorNames: readonly string[];
+    fullPath: string;
+};
+
+const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, fullPath }) => (
+    <Item key={id} link={fullPath}>
+        <div css={{ textAlign: "center" }}>
+            <FiFolder css={{ margin: 8, fontSize: 26 }}/>
+        </div>
+        <div>
+            {/* TODO: use proper breadcrumbs, not this uhg */}
+            <div>
+                {"/ " + ancestorNames.map(name => name + " / ").join("")}
+            </div>
+            <h3>{name}</h3>
+        </div>
+    </Item>
 );
 
 type ItemProps = {

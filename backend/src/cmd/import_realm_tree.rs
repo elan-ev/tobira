@@ -61,13 +61,25 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
         .context("failed to create database connection pool (database not running?)")?;
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
-    let conn = &**db.get().await?;
+    let conn = db.get().await?;
 
-    let mut dummy_blocks = DummyBlocks::new(args.dummy_blocks, conn).await?;
+    let mut dummy_blocks = DummyBlocks::new(args.dummy_blocks, &**conn).await?;
 
     info!("Starting to insert realms into the DB...");
-    insert_realm(conn, &root, 0, &mut dummy_blocks).await?;
+    insert_realm(&**conn, &root, 0, &mut dummy_blocks).await?;
     info!("Done inserting realms");
+
+    // To reindex them, we just queue them all. This tool is currently only used
+    // as intial import, so it's fine.
+    info!("Queue all realms for reindexing...");
+    let sql = "\
+        insert into search_index_queue (item_id, kind) \
+        select id, 'realm' \
+        from realms \
+        on conflict do nothing\
+    ";
+    conn.execute(sql, &[]).await?;
+    info!("Queued all realms");
 
     Ok(())
 }

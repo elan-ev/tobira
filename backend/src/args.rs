@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use crate::{cmd, db::cmd::DbCommand};
+use crate::{cmd, db::cmd::DbCommand, search::cmd::SearchIndexCommand};
 
 
 #[derive(Debug, StructOpt)]
@@ -39,6 +39,25 @@ pub(crate) enum Command {
         #[structopt(subcommand)]
         cmd: DbCommand,
 
+        #[structopt(flatten)]
+        shared: Shared,
+    },
+
+    /// Search index operations
+    SearchIndex {
+        #[structopt(subcommand)]
+        cmd: SearchIndexCommand,
+
+        #[structopt(flatten)]
+        shared: Shared,
+    },
+
+    /// Starts a worker/daemon process that performs all tasks that should be
+    /// performed regularly.
+    ///
+    /// This currently includes: updating the search index and syncing with
+    /// Opencast.
+    Worker {
         #[structopt(flatten)]
         shared: Shared,
     },
