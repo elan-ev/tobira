@@ -9,9 +9,9 @@ use tokio_postgres::types::ToSql;
 use crate::{
     db::{types::{EventTrack, Key}, DbConnection},
     prelude::*,
-    search::{self, IndexItemKind},
+    search::{self, IndexItemKind}, config::Config,
 };
-use super::{SyncConfig, status::SyncStatus};
+use super::status::SyncStatus;
 use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
 
 
@@ -30,7 +30,7 @@ const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
 /// database.
 pub(crate) async fn run(
     daemon: bool,
-    config: &SyncConfig,
+    config: &Config,
     mut db: DbConnection,
 ) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
@@ -65,7 +65,7 @@ pub(crate) async fn run(
         let before = Instant::now();
         let req = client.send(
             sync_status.harvested_until,
-            config.preferred_harvest_size.into(),
+            config.sync.preferred_harvest_size.into(),
         );
         let (response, body) = match req.await {
             Ok(v) => v,
@@ -128,18 +128,18 @@ pub(crate) async fn run(
                 debug!(
                     "Detected `includesItemsUntil` being capped at `now() - buffer`: waiting {:?} \
                         before starting next harvest.",
-                    config.poll_period,
+                    config.sync.poll_period,
                 );
-                tokio::time::sleep(config.poll_period).await;
+                tokio::time::sleep(config.sync.poll_period).await;
             }
         } else {
             if daemon {
                 debug!(
                     "Harvested all available data: waiting {:?} before starting next harvest",
-                    config.poll_period,
+                    config.sync.poll_period,
                 );
 
-                tokio::time::sleep(config.poll_period).await;
+                tokio::time::sleep(config.sync.poll_period).await;
             } else {
                 info!("Harvested all available data: exiting now.");
                 return Ok(());

@@ -13,11 +13,13 @@ mod color;
 mod general;
 mod theme;
 mod translated_string;
+mod opencast;
 
 pub(crate) use self::{
     color::{Color, Hsl},
     translated_string::TranslatedString,
     theme::ThemeConfig,
+    opencast::OpencastConfig,
 };
 
 
@@ -57,6 +59,9 @@ pub(crate) struct Config {
 
     #[config(nested)]
     pub(crate) log: crate::logger::LogConfig,
+
+    #[config(nested)]
+    pub(crate) opencast: OpencastConfig,
 
     #[config(nested)]
     pub(crate) sync: crate::sync::SyncConfig,
@@ -104,7 +109,7 @@ impl Config {
     /// illegal or conflicting values.
     fn validate(&self) -> Result<()> {
         debug!("Validating configuration...");
-        self.sync.validate()?;
+        self.opencast.validate()?;
         self.meili.validate()?;
 
         Ok(())
