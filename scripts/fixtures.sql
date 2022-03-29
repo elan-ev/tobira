@@ -7,8 +7,8 @@ declare
     events_realm_id realms.id%type;
 begin
     -- Add a few series
-    insert into series (opencast_id, title, updated)
-        values ('6d3f7e0c-c18f-4806-acc1-219a02cc7343', 'University Highlights', now())
+    insert into series (opencast_id, title, description, updated)
+        values ('6d3f7e0c-c18f-4806-acc1-219a02cc7343', 'University Highlights', 'Some of the nicest videos this university has to offer!', now())
         returning id into series_university_highlights;
     insert into series (opencast_id, title, description, updated)
         values ('f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d', 'Christmas Chemistry', 'Prof goes boom', now())
