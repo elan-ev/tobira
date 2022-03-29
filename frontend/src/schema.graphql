@@ -137,6 +137,8 @@ type Query {
   event(id: ID!): Event
   "Returns a list of all events the current user has read access to"
   events: [Event!]!
+  "Returns a series by its Opencast ID"
+  seriesByOpencastId(id: String!): Series
   "Returns a list of all series"
   series: [Series!]!
   "Returns the current user."

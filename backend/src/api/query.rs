@@ -53,6 +53,11 @@ impl Query {
         Event::load_all(context).await
     }
 
+    /// Returns a series by its Opencast ID
+    async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
+        Series::load_by_opencast_id(id, context).await
+    }
+
     /// Returns a list of all series
     async fn series(context: &Context) -> ApiResult<Vec<Series>> {
         Series::load_all(context).await

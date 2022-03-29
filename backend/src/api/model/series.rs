@@ -82,6 +82,23 @@ impl Series {
         Ok(result)
     }
 
+    pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
+        let result = context.db
+            .query_opt(
+                &format!(
+                    "select {} \
+                        from series \
+                        where opencast_id = $1",
+                    Self::COL_NAMES,
+                ),
+                &[&id],
+            )
+            .await?
+            .map(Self::from_row);
+
+        Ok(result)
+    }
+
     const COL_NAMES: &'static str = "id, title, description";
 
     fn from_row(row: Row) -> Self {
