@@ -77,6 +77,8 @@ type OuterProps = {
 export const Outer: React.FC<OuterProps> = ({ children, disableScrolling = false }) => (
     <div css={{
         minHeight: "100%",
+        maxWidth: 2290,
+        margin: "0 auto",
         display: "flex",
         flexDirection: "column",
         ...disableScrolling && {
