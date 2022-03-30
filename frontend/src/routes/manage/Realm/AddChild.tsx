@@ -22,7 +22,7 @@ import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
 import { Card } from "../../../ui/Card";
-import { ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
+import { pathParam, ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 
@@ -120,7 +120,8 @@ const AddChild: React.FC<Props> = ({ parent }) => {
             },
             onCompleted: response => {
                 const typedResponse = response as AddChildMutationResponse;
-                router.goto(`/~manage/realm/content?path=${typedResponse.addRealm.path}`);
+                const path = pathParam(typedResponse.addRealm.path);
+                router.goto(`/~manage/realm/content?path=${path}`);
             },
             onError: error => {
                 setCommitError(displayCommitError(error, t("manage.add-child.failed-to-add")));

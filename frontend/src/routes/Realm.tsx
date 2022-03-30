@@ -128,16 +128,18 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     const { t } = useTranslation();
 
+    const encodedPath = pathParam(path);
+
     const items = [
-        <LinkWithIcon key={0} to={`/~manage/realm?path=${path}`} iconPos="left">
+        <LinkWithIcon key={0} to={`/~manage/realm?path=${encodedPath}`} iconPos="left">
             <FiTool />
             {t("realm.page-settings")}
         </LinkWithIcon>,
-        <LinkWithIcon key={1} to={`/~manage/realm/content?path=${path}`} iconPos="left">
+        <LinkWithIcon key={1} to={`/~manage/realm/content?path=${encodedPath}`} iconPos="left">
             <FiLayout />
             {t("realm.edit-page-content")}
         </LinkWithIcon>,
-        <LinkWithIcon key={1} to={`/~manage/realm/add-child?parent=${path}`} iconPos="left">
+        <LinkWithIcon key={1} to={`/~manage/realm/add-child?parent=${encodedPath}`} iconPos="left">
             <FiPlus />
             {t("realm.add-sub-page")}
         </LinkWithIcon>,
@@ -145,3 +147,8 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
 
     return <LinkList items={items} />;
 };
+
+/** Formats a realm path for inclusion in a URL parameter. */
+export const pathParam = (path: string): string => (
+    encodeURIComponent(path).replace(/%2f/gui, "/")
+);
