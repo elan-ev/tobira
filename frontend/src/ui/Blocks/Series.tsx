@@ -220,7 +220,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
     const containerStyle = {
         position: "relative",
         display: "block",
-        margin: 8,
+        margin: "8px 12px",
         marginBottom: 32,
         width: 16 * 15,
         borderRadius: 8,
