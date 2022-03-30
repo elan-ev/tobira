@@ -4,11 +4,16 @@ import plyrCss from "plyr/dist/plyr.css";
 import { Global } from "@emotion/react";
 
 import CONFIG from "../../config";
-import { PlayerProps } from ".";
+import { Track } from ".";
 import { SPEEDS } from "./consts";
 
 
-const PlyrPlayer: React.FC<PlayerProps> = ({ tracks, title }) => {
+type PlyrPlayerProps = {
+    title: string;
+    tracks: Track[];
+};
+
+const PlyrPlayer: React.FC<PlyrPlayerProps> = ({ tracks, title }) => {
     const source = {
         type: "video" as const,
         title,

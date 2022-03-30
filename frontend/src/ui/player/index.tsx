@@ -21,14 +21,19 @@ export type Track = {
     resolution: number[] | null;
 };
 
-export const Player: React.FC<PlayerProps> = props => {
-    const flavors = new Set(props.tracks.map(t => t.flavor));
+export const Player: React.FC<PlayerProps> = ({
+    tracks,
+    coverImage,
+    title,
+    duration,
+}) => {
+    const flavors = new Set(tracks.map(t => t.flavor));
     const usePaella = flavors.size > 1;
 
     // Find a suitable aspect ratio for our height/width limiting below. For
     // Paella, we just use 16:9 because it's unclear what else we should use
     // with multi stream video.
-    const aspectRatio = usePaella ? [16, 9] : props.tracks[0].resolution ?? [16, 9];
+    const aspectRatio = usePaella ? [16, 9] : tracks[0].resolution ?? [16, 9];
 
     return (
         <div css={{
@@ -49,8 +54,10 @@ export const Player: React.FC<PlayerProps> = props => {
                 margin: `0 -${MAIN_PADDING}px`,
             },
         }}>
-            <Suspense fallback={<PlayerFallback image={props.coverImage} />}>
-                {usePaella ? <LoadPaellaPlayer {...props} /> : <LoadPlyrPlayer {...props} />}
+            <Suspense fallback={<PlayerFallback image={coverImage} />}>
+                {usePaella
+                    ? <LoadPaellaPlayer {...{ duration, title, tracks }} />
+                    : <LoadPlyrPlayer {...{ title, tracks }} />}
             </Suspense>
         </div>
     );
