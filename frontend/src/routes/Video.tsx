@@ -136,6 +136,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
             title={title}
             duration={event.duration}
             coverImage={event.thumbnail}
+            css={{ margin: "0 auto" }}
         />
         <PageTitle title={title} css={{ marginTop: 24, fontSize: 24 }} />
         {description !== null && <TextBlock content={description} />}

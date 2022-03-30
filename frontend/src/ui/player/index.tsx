@@ -47,7 +47,6 @@ export const Player: React.FC<PlayerProps> = ({
             // the players is actually best controlled by setting the width.
             maxWidth: `calc((90vh - 80px) * ${aspectRatio[0] / aspectRatio[1]})`,
             minWidth: "320px",
-            margin: "auto",
             aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
 
             // If the player gets too small, the controls are pretty crammed, so
