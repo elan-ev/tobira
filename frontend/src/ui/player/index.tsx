@@ -12,6 +12,7 @@ export type PlayerProps = {
     title: string;
     duration: number;
     tracks: Track[];
+    className?: string;
 };
 
 export type Track = {
@@ -22,6 +23,7 @@ export type Track = {
 };
 
 export const Player: React.FC<PlayerProps> = ({
+    className,
     tracks,
     coverImage,
     title,
@@ -36,7 +38,7 @@ export const Player: React.FC<PlayerProps> = ({
     const aspectRatio = usePaella ? [16, 9] : tracks[0].resolution ?? [16, 9];
 
     return (
-        <div css={{
+        <div className={className} css={{
             // We want to make sure that the player does not take up all the
             // vertical and horizontal page, as this could make scrolling hard.
             // And if users want that, there is a fullscreen mode for a reason.

@@ -36,6 +36,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
             // Relay returns `readonly` objects ...
             tracks={event.tracks as Track[]}
             coverImage={event.thumbnail}
+            css={{ width: 800 }}
         />
     </>;
 };
