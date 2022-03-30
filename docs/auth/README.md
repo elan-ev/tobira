@@ -51,7 +51,7 @@ In either case, you need a reverse proxy in front of Tobira.
 In this documentation, we will use nginx.
 We assume basic understanding of how to set up a reverse proxy in front of a backend application.
 
-The following subsection describe the general approach when using/not using Tobira's login page/session management.
+The following subsection describes the general approach when using/not using Tobira's login page/session management.
 For a more concrete look at how a setup might look like, check out these specific cases:
 
 - [Tobira's login page and session management](./all-tobira.md)
@@ -95,6 +95,7 @@ Skipping authentication for these paths is recommended for performance reasons.
 
 To create new sessions, you have to intercept login attempts (see "Login page" sections), read the login data, and authenticate the user and send an appropriate response to the login-page (likely containing a `Set-Cookie` header).
 To destroy sessions, you have to intercept logout attempts (`DELETE /~session`) and delete the session as appropriate.
+Alternatively, you can set `auth.logout_link` in the config to make the logout button a simple `<a>` link to that URL.
 
 
 ### Using Tobira's login page

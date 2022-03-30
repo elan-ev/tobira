@@ -49,6 +49,10 @@ pub(crate) struct AuthConfig {
     /// (not via `<a>`, but through JavaScript) links to Tobira's own login page.
     pub(crate) login_link: Option<String>,
 
+    /// Link of the logout button. If not set, clicking the logout button will
+    /// send a `DELETE` request to `/~session`.
+    pub(crate) logout_link: Option<String>,
+
     /// The header containing a unique and stable username of the current user.
     /// TODO: describe properties, requirements and usages of username.
     #[config(default = "x-tobira-username")]

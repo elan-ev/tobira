@@ -37,6 +37,7 @@ type FooterLink = "about" | "graphiql" | {
 
 type AuthConfig = {
     loginLink: string | null;
+    logoutLink: string | null;
     userIdLabel: TranslatedString | null;
     passwordLabel: TranslatedString | null;
     loginPageNote: TranslatedString | null;

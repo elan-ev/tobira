@@ -367,15 +367,15 @@ const Logout: React.FC = () => {
     type State = "idle" | "pending" | "error";
     const [state, setState] = useState<State>("idle");
 
-    return (
-        <MenuItem
-            icon={match(state, {
-                "idle": () => <FiLogOut />,
-                "pending": () => <Spinner />,
-                "error": () => <FiAlertTriangle />,
-            })}
-            borderTop
-            onClick={() => {
+    const actionProps = CONFIG.auth.logoutLink !== null
+        // Just a normal link to the specified URL
+        ? {
+            htmlLink: true,
+            linkTo: CONFIG.auth.logoutLink,
+        }
+        // Our own internal link
+        : {
+            onClick: () => {
                 // We don't do anything if a request is already pending.
                 if (state === "pending") {
                     return;
@@ -398,8 +398,19 @@ const Logout: React.FC = () => {
                         console.error("Error during logout: ", error);
                         setState("error");
                     });
-            }}
+            },
+        };
+
+    return (
+        <MenuItem
+            icon={match(state, {
+                "idle": () => <FiLogOut />,
+                "pending": () => <Spinner />,
+                "error": () => <FiAlertTriangle />,
+            })}
+            borderTop
             css={{ color: "var(--danger-color)" }}
+            {...actionProps}
         >{t("user.logout")}</MenuItem>
     );
 };
