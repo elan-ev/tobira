@@ -70,6 +70,19 @@ export function swap<T, U, R>(f: (x: T, y: U) => R): (y: U, x: T) => R {
 }
 
 /**
+ * A safe way to make a character class matching regexp out of a string of characters.
+ * Note that characters that have a meaning inside of a character class are unconditionally escaped,
+ * i.e. `characterClass("a-z")` might not do what you think it does!
+ */
+export function characterClass(characters: string): string {
+    characters = characters.replace(
+        /[\\\]^-]/gu,
+        specialChar => `\\${specialChar}`,
+    );
+    return `[${characters}]`;
+}
+
+/**
  * Sets the HTML title to the given string (plus base title) on mount, resets
  * it on unmount.
  */

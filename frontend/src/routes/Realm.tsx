@@ -13,11 +13,12 @@ import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
-import { useTitle, useTranslatedConfig } from "../util";
+import { characterClass, useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 
 
-export const ILLEGAL_CHARS = "<>\"[\\]^`{|}#%/?";
+// eslint-disable-next-line @typescript-eslint/quotes
+export const ILLEGAL_CHARS = '<>"[\\]^`{|}#%/?';
 export const RESERVED_CHARS = "-+~@_!$&;:.,=*'()";
 
 export type PathSegmentValidity = "valid"
@@ -38,10 +39,10 @@ export const checkPathSegment = (segment: string): PathSegmentValidity => {
     if (segment.match(/[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u)) {
         return "whitespace";
     }
-    if (segment.match(new RegExp(`[${ILLEGAL_CHARS}]`, "u"))) {
+    if (segment.match(new RegExp(characterClass(ILLEGAL_CHARS), "u"))) {
         return "illegal-chars";
     }
-    if (segment.match(new RegExp(`^[${RESERVED_CHARS}]`, "u"))) {
+    if (segment.match(new RegExp(`^${characterClass(RESERVED_CHARS)}`, "u"))) {
         return "reserved-chars-at-beginning";
     }
 
