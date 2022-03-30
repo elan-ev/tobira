@@ -22,7 +22,7 @@ import { PageTitle } from "../layout/header/ui";
 export const b64regex = "[a-zA-Z0-9\\-_]";
 
 export const VideoRoute = makeRoute(url => {
-    const urlPath = decodeURI(url.pathname).replace(/^\//, "").replace(/\/$/, "");
+    const urlPath = decodeURIComponent(url.pathname).replace(/^\//, "").replace(/\/$/, "");
     const parts = urlPath.split("/");
     if (parts.length < 2) {
         return null;
@@ -48,7 +48,7 @@ export const VideoRoute = makeRoute(url => {
 
 export const DirectVideoRoute = makeRoute(url => {
     const regex = new RegExp(`^/!(${b64regex}+)/?$`, "u");
-    const params = regex.exec(decodeURI(url.pathname));
+    const params = regex.exec(decodeURIComponent(url.pathname));
     if (params === null) {
         return null;
     }

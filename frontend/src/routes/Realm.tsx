@@ -52,7 +52,7 @@ export const isValidPathSegment = (segment: string): boolean =>
     checkPathSegment(segment) === "valid";
 
 export const RealmRoute = makeRoute(url => {
-    const urlPath = decodeURI(url.pathname).replace(/^\//, "").replace(/\/$/, "");
+    const urlPath = decodeURIComponent(url.pathname).replace(/^\//, "").replace(/\/$/, "");
     if (urlPath !== "") {
         for (const segment of urlPath.split("/")) {
             if (!isValidPathSegment(segment)) {
