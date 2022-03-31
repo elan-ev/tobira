@@ -84,6 +84,7 @@ impl Assets {
         variables.insert("global-style".into(), config.theme.to_css());
         variables.insert("auth".into(), json!({
             "loginLink": config.auth.login_link,
+            "logoutLink": config.auth.logout_link,
             "userIdLabel": config.auth.login_page.user_id_label,
             "passwordLabel": config.auth.login_page.password_label,
             "loginPageNote": config.auth.login_page.note,
