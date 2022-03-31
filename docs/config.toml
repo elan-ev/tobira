@@ -332,6 +332,11 @@
 # If not set, the default font will be used.
 #fonts =
 
+# Path to an SVG file that is used as favicon.
+#
+# Required! This value must be specified.
+#favicon =
+
 [theme.logo]
 # The margin around the logo in terms of logo height. A value of 0.5 means
 # that there will be a margin around the logo of half the height of the
@@ -370,11 +375,6 @@
 #
 # Required! This value must be specified.
 #resolution =
-
-# Path to an SVG file that is used as favicon.
-#
-# Required! This value must be specified.
-#favicon =
 
 [theme.color]
 # Default value: "#347856"

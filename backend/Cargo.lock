@@ -296,9 +296,9 @@ dependencies = [
 
 [[package]]
 name = "confique"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b99f6d3cb4a2e6b9a3c999e9980268363f4467e2c028bb4564d5d5a36261476"
+checksum = "3f9c39146cc93d4e8602c27793bd285e7baa804cead058f125f48700451c16b0"
 dependencies = [
  "confique-macro",
  "serde",
