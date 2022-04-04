@@ -5,7 +5,7 @@ import { graphql } from "react-relay";
 import { RootLoader } from "../../../layout/Root";
 import {
     SingleVideoManageQuery,
-    SingleVideoManageQueryResponse,
+    SingleVideoManageQuery$data,
 } from "./__generated__/SingleVideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
@@ -82,7 +82,7 @@ const query = graphql`
     }
 `;
 
-type Event = NonNullable<SingleVideoManageQueryResponse["event"]>;
+type Event = NonNullable<SingleVideoManageQuery$data["event"]>;
 
 type Props = {
     event: Event;

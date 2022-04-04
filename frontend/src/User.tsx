@@ -2,7 +2,7 @@ import React from "react";
 import { useContext } from "react";
 import { graphql } from "react-relay/hooks";
 
-import { UserData, UserData$key } from "./__generated__/UserData.graphql";
+import { UserData$data, UserData$key } from "./__generated__/UserData.graphql";
 
 
 export type UserQueryRef = UserData$key;
@@ -22,7 +22,7 @@ const UserContext = React.createContext<UserState>("unknown");
 export const useUser = (): UserState => useContext(UserContext);
 
 export type Props = {
-    data?: UserData["currentUser"];
+    data?: UserData$data["currentUser"];
 };
 
 export const UserProvider: React.FC<Props> = ({ data, children }) => {

@@ -9,7 +9,7 @@ import {
     EventSortColumn,
     SortDirection,
     VideoManageQuery,
-    VideoManageQueryResponse,
+    VideoManageQuery$data,
 } from "./__generated__/VideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
@@ -74,7 +74,7 @@ const query = graphql`
     }
 `;
 
-type EventConnection = NonNullable<VideoManageQueryResponse["currentUser"]>["myVideos"];
+type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
 type Events = EventConnection["items"];
 
 type Props = {

@@ -4,7 +4,7 @@ import { graphql, useFragment, useMutation } from "react-relay";
 import { useForm } from "react-hook-form";
 
 import type {
-    DangerZoneRealmData,
+    DangerZoneRealmData$data,
     DangerZoneRealmData$key,
 } from "./__generated__/DangerZoneRealmData.graphql";
 import { bug } from "../../../util/err";
@@ -15,7 +15,7 @@ import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { boxError } from "../../../ui/error";
 import { displayCommitError, realmValidations } from "./util";
 import {
-    DangerZoneRemoveRealmMutationResponse,
+    DangerZoneRemoveRealmMutation$data,
 } from "./__generated__/DangerZoneRemoveRealmMutation.graphql";
 import { useRouter } from "../../../router";
 import { useState } from "react";
@@ -84,7 +84,7 @@ const changePathMutation = graphql`
 `;
 
 type InnerProps = {
-    realm: DangerZoneRealmData;
+    realm: DangerZoneRealmData$data;
 };
 
 const ChangePath: React.FC<InnerProps> = ({ realm }) => {
@@ -182,7 +182,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
                 id: realm.id,
             },
             onCompleted: response => {
-                const typedResponse = response as DangerZoneRemoveRealmMutationResponse;
+                const typedResponse = response as DangerZoneRemoveRealmMutation$data;
                 router.goto(typedResponse.removeRealm.parent.path);
             },
             onError: error => {

@@ -5,7 +5,7 @@ import { graphql, useFragment } from "react-relay";
 import { RootLoader } from "../../../../layout/Root";
 import type {
     ContentManageQuery,
-    ContentManageQueryResponse,
+    ContentManageQuery$data,
 } from "./__generated__/ContentManageQuery.graphql";
 import { ContentManageRealmData$key } from "./__generated__/ContentManageRealmData.graphql";
 import { loadQuery } from "../../../../relay";
@@ -77,10 +77,10 @@ const query = graphql`
 `;
 
 export const ContentManageQueryContext
-    = React.createContext<ContentManageQueryResponse | null>(null);
+    = React.createContext<ContentManageQuery$data | null>(null);
 
 type Props = {
-    data: ContentManageQueryResponse;
+    data: ContentManageQuery$data;
 };
 
 const ManageContent: React.FC<Props> = ({ data }) => {

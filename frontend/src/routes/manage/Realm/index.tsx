@@ -5,7 +5,7 @@ import { graphql } from "react-relay";
 import { RootLoader } from "../../../layout/Root";
 import type {
     RealmManageQuery,
-    RealmManageQueryResponse,
+    RealmManageQuery$data,
 } from "./__generated__/RealmManageQuery.graphql";
 import { loadQuery } from "../../../relay";
 import { ChildOrder } from "./ChildOrder";
@@ -75,7 +75,7 @@ const query = graphql`
 `;
 
 type Props = {
-    realm: Exclude<RealmManageQueryResponse["realm"], null>;
+    realm: Exclude<RealmManageQuery$data["realm"], null>;
 };
 
 /** The actual settings page */

@@ -1,7 +1,7 @@
 import React from "react";
 
 import { graphql, loadQuery } from "react-relay/hooks";
-import type { RealmQuery, RealmQueryResponse } from "./__generated__/RealmQuery.graphql";
+import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
 import { FiLayout, FiPlus, FiTool } from "react-icons/fi";
 
@@ -107,7 +107,7 @@ const query = graphql`
 `;
 
 type Props = {
-    realm: NonNullable<RealmQueryResponse["realm"]>;
+    realm: NonNullable<RealmQuery$data["realm"]>;
 };
 
 const RealmPage: React.FC<Props> = ({ realm }) => {

@@ -6,9 +6,9 @@ import { keyOfId, compareByKey, swap } from "../../util";
 import { match } from "../../util";
 import { unreachable } from "../../util/err";
 import { Link } from "../../router";
-import { SeriesBlockData, SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
+import { SeriesBlockData$data, SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
 import {
-    SeriesBlockSeriesData,
+    SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
 import { Thumbnail } from "../Video";
@@ -57,7 +57,7 @@ export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...res
         : <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
 
-type BlockOnlyProps = Omit<NonNullable<SeriesBlockData>, "series" | " $fragmentType">;
+type BlockOnlyProps = Omit<NonNullable<SeriesBlockData$data>, "series" | " $fragmentType">;
 
 type FromSeriesProps = SharedProps & {
     fragRef: SeriesBlockSeriesData$key;
@@ -74,7 +74,7 @@ export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = ({ fragRef, ...r
 };
 
 type Props = SharedProps & BlockOnlyProps & {
-    series: NonNullable<SeriesBlockSeriesData>;
+    series: NonNullable<SeriesBlockSeriesData$data>;
 };
 
 const VIDEO_GRID_BREAKPOINT = 600;
@@ -142,14 +142,14 @@ export const SeriesBlock: React.FC<Props> = ({
     );
 };
 
-const compareNewToOld = compareByKey((event: SeriesBlockSeriesData["events"][0]): number => (
+const compareNewToOld = compareByKey((event: SeriesBlockSeriesData$data["events"][0]): number => (
     new Date(event.created).getTime()
 ));
 const compareOldToNew = swap(compareNewToOld);
 
 type GridTypeProps = {
     realmPath: string;
-    event: NonNullable<SeriesBlockSeriesData>["events"][0];
+    event: NonNullable<SeriesBlockSeriesData$data>["events"][0];
     active: boolean;
 };
 

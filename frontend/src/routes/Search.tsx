@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../layout/Root";
-import { SearchQuery, SearchQueryResponse } from "./__generated__/SearchQuery.graphql";
+import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
 import { makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link } from "../router";
@@ -51,7 +51,7 @@ const query = graphql`
 
 type Props = {
     q: string;
-    results: SearchQueryResponse["search"];
+    results: SearchQuery$data["search"];
 };
 
 const SearchPage: React.FC<Props> = ({ q, results }) => {
@@ -75,7 +75,7 @@ const CenteredNote: React.FC = ({ children }) => (
 );
 
 type SearchResultsProps = {
-    items: NonNullable<SearchQueryResponse["search"]>["items"];
+    items: NonNullable<SearchQuery$data["search"]>["items"];
 };
 
 const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "undefined"
