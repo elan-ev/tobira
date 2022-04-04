@@ -311,8 +311,9 @@ manage:
       Der Seitename wird im Navigationsmenü und als Überschrift auf der Seite selber angezeigt.
       Seitennamen können jederzeit geändert werden.
     path-segment-info: >
-      Pfadsegmente sollten möglichst kurz sein und keine Information aus vorangehenden
-      Pfadsegmenten wiederholen. Eine spätere Änderung des Pfadsegments sollte vermieden werden.
+      Das Pfadsegment wird Teil der URL/des Links der neuen Seite. Pfadsegmente
+      sollten möglichst kurz sein und keine Information aus vorangehenden
+      Pfadsegmenten wiederholen. Eine spätere Änderung sollte vermieden werden.
       <br />
       Pfadsegmente dürfen weder Leerzeichen noch <code>{{illegalChars}}</code> enthalten und nicht
       mit <code>{{reservedChars}}</code> beginnen.

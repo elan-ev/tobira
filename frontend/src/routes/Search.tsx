@@ -86,7 +86,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     <ul css={{ listStyle: "none", padding: 0 }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
-                return <SearchEvent {...{
+                return <SearchEvent key={item.id} {...{
                     id: item.id,
                     title: unwrapUndefined(item.title),
                     description: unwrapUndefined(item.description),
@@ -96,7 +96,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     seriesTitle: unwrapUndefined(item.seriesTitle),
                 }}/>;
             } else if (item.__typename === "SearchRealm") {
-                return <SearchRealm {...{
+                return <SearchRealm key={item.id} {...{
                     id: item.id,
                     name: unwrapUndefined(item.name),
                     fullPath: unwrapUndefined(item.path),

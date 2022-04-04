@@ -2,12 +2,18 @@ import { useEffect, useRef } from "react";
 import { Config, Manifest, Mp4Source, Paella } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 
-import { PlayerProps, Track } from ".";
+import { Track } from ".";
 import { SPEEDS } from "./consts";
 import { bug } from "../../util/err";
 
 
-const PaellaPlayer: React.FC<PlayerProps> = ({ tracks, title, duration }) => {
+type PaellaPlayerProps = {
+    title: string;
+    duration: number;
+    tracks: Track[];
+};
+
+const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration }) => {
     const ref = useRef<HTMLDivElement>(null);
     const paella = useRef<Paella>();
 
