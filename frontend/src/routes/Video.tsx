@@ -16,6 +16,7 @@ import { FiChevronRight } from "react-icons/fi";
 import { isValidPathSegment } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
+import { unreachable } from "../util/err";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -53,11 +54,12 @@ export const DirectVideoRoute = makeRoute(url => {
     }
 
     const videoId = params[1];
-    return prepare(`ev${videoId}`, "/");
+    return prepare(`ev${videoId}`, null);
 });
 
-const prepare = (id: string, realmPath: string): MatchedRoute => {
-    const queryRef = loadQuery<VideoQuery>(query, { id, realmPath });
+const prepare = (id: string, realmPath: string | null): MatchedRoute => {
+    const isDirectLink = realmPath === null;
+    const queryRef = loadQuery<VideoQuery>(query, { id, realmPath: realmPath ?? "/" });
 
     return {
         render: () => <RootLoader
@@ -66,10 +68,20 @@ const prepare = (id: string, realmPath: string): MatchedRoute => {
             render={result => {
                 const { event, realm } = result;
 
-                // TODO: this realm check is useless once we check a video belongs to a realm.
-                return !event || !realm
-                    ? <NotFound kind="video" />
-                    : <VideoPage {...{ event, realm, realmPath, id }} />;
+                if (isDirectLink) {
+                    if (!realm) {
+                        return unreachable("Root realm doesn't exist");
+                    }
+
+                    return !event
+                        ? <NotFound kind="video" />
+                        : <VideoPage {...{ event, realm, realmPath: "/", id }} />;
+                } else {
+                    return !event || !realm || !realm.referencesVideo
+                        ? <NotFound kind="video" />
+                        : <VideoPage {...{ event, realm, realmPath, id }} />;
+
+                }
             }}
         />,
         dispose: () => queryRef.dispose(),
@@ -97,6 +109,7 @@ const query = graphql`
             path
             isRoot
             ancestors { name path }
+            referencesVideo: references(id: $id)
             ... NavigationData
         }
     }
