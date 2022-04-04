@@ -78,6 +78,7 @@ const query = graphql`
             canWrite
             series { title ...SeriesBlockSeriesData }
             tracks { flavor resolution }
+            hostRealms { id isRoot name path }
         }
     }
 `;
@@ -131,6 +132,9 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
                 <DirectLink event={event} />
                 <MetadataSection event={event} />
             </div>
+        </section>
+        <section css={{ marginBottom: 32 }}>
+            <HostRealms event={event} />
         </section>
         <section>
             <TechnicalDetails event={event} />
@@ -219,6 +223,26 @@ const MetadataSection: React.FC<Props> = ({ event }) => {
             </InputContainer>
         </Form>
     );
+};
+
+const HostRealms: React.FC<Props> = ({ event }) => {
+    const { t } = useTranslation();
+
+    return <>
+        <h2 css={{ fontSize: 20, marginBottom: 8 }}>{t("manage.my-videos.referencing-pages")}</h2>
+        {event.hostRealms.length === 0
+            ? <i>{t("manage.my-videos.no-referencing-pages")}</i>
+            : <>
+                <p>{t("manage.my-videos.referencing-pages-explanation")}</p>
+                <ul>{event.hostRealms.map(realm => <li key={realm.id}>
+                    <Link to={realm.path}>{
+                        realm.isRoot
+                            ? <i>{t("general.homepage")}</i>
+                            : realm.name
+                    }</Link>
+                </li>)}</ul>
+            </>}
+    </>;
 };
 
 const TechnicalDetails: React.FC<Props> = ({ event }) => {

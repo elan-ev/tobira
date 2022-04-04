@@ -14,6 +14,7 @@ copy-to-clipboard: Copy to clipboard
 version-information: Version
 
 general:
+  homepage: Homepage
   leave-page-confirmation: Leave page? Changes you made may not be saved!
   logo-alt: Logo of “{{title}}”
 
@@ -178,6 +179,9 @@ manage:
     share-direct-link: Share via direct link
     open-in-editor: Open in video editor
     manage-video: Manage video
+    referencing-pages: Referencing pages
+    referencing-pages-explanation: 'This video is referenced on the following pages:'
+    no-referencing-pages: No pages reference this video.
 
   are-you-sure: Are you sure?
 
