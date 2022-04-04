@@ -18,6 +18,8 @@ type Event implements Node {
   "Whether the current user has write access to this event."
   canWrite: Boolean!
   series: Series
+  "Returns a list of realms where this event is referenced (via some kind of block)."
+  hostRealms: [Realm!]!
 }
 
 type EventPageInfo {

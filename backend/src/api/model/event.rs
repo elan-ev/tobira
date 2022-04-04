@@ -10,7 +10,7 @@ use crate::{
     api::{
         Context, Cursor, Id, Node, NodeValue,
         err::{self, ApiResult, invalid_input},
-        model::series::Series,
+        model::{series::Series, realm::Realm},
     },
     db::types::{EventTrack, Key},
     prelude::*,
@@ -98,6 +98,25 @@ impl Event {
         } else {
             Ok(None)
         }
+    }
+
+    /// Returns a list of realms where this event is referenced (via some kind of block).
+    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        let cols = Realm::col_names("realms");
+        let query = format!("\
+            select {cols} \
+            from realms \
+            inner join blocks \
+                on realms.id = blocks.realm_id and (\
+                    (type = 'video' and blocks.video_id = $1) or \
+                    (type = 'series' and blocks.series_id = ( \
+                        select series from events where id = $1 \
+                    )) \
+                ) \
+        ");
+        context.db.query_mapped(&query, dbargs![&self.key], Realm::from_row)
+            .await?
+            .pipe(Ok)
     }
 }
 
