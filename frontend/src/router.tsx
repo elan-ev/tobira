@@ -57,7 +57,7 @@ type LinkProps = {
 
 const Link = ({ to, children, htmlLink = false, ...props }: LinkProps): JSX.Element => {
     const isExternalLink
-        = new URL(to, document.baseURI).origin !== new URL(document.baseURI).origin;
+        = new URL(to, document.baseURI).origin !== document.location.origin;
 
     return htmlLink || isExternalLink
         ? <a href={to} {...props}>{children}</a>

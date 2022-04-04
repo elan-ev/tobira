@@ -47,9 +47,9 @@ create table realms (
         and path_segment !~ '[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]'
         -- exclude characters that are disallowed in URL paths or that have a
         -- semantic meaning there
-        and path_segment !~ '["<>[\\]^`{|}#%/?]'
+        and path_segment !~ $$["<>[\\\]^`{|}#%/?]$$
         -- exclude reserved characters in leading position
-        and path_segment !~ '^[-+~@_!$&;:.,=*''()]'
+        and path_segment !~ $$^[-+~@_!$&;:.,=*'()]$$
         -- ensure at least two bytes (we want to reserve single ASCII char segments
         -- for internal use)
         and octet_length(path_segment) >= 2

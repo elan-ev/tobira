@@ -13,11 +13,12 @@ import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
-import { useTitle, useTranslatedConfig } from "../util";
+import { characterClass, useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 
 
-export const ILLEGAL_CHARS = "<>\"[\\]^`{|}#%/?";
+// eslint-disable-next-line @typescript-eslint/quotes
+export const ILLEGAL_CHARS = '<>"[\\]^`{|}#%/?';
 export const RESERVED_CHARS = "-+~@_!$&;:.,=*'()";
 
 export type PathSegmentValidity = "valid"
@@ -38,10 +39,10 @@ export const checkPathSegment = (segment: string): PathSegmentValidity => {
     if (segment.match(/[\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u)) {
         return "whitespace";
     }
-    if (segment.match(new RegExp(`[${ILLEGAL_CHARS}]`, "u"))) {
+    if (segment.match(new RegExp(characterClass(ILLEGAL_CHARS), "u"))) {
         return "illegal-chars";
     }
-    if (segment.match(new RegExp(`^[${RESERVED_CHARS}]`, "u"))) {
+    if (segment.match(new RegExp(`^${characterClass(RESERVED_CHARS)}`, "u"))) {
         return "reserved-chars-at-beginning";
     }
 
@@ -52,7 +53,7 @@ export const isValidPathSegment = (segment: string): boolean =>
     checkPathSegment(segment) === "valid";
 
 export const RealmRoute = makeRoute(url => {
-    const urlPath = decodeURI(url.pathname).replace(/^\//, "").replace(/\/$/, "");
+    const urlPath = decodeURIComponent(url.pathname).replace(/^\//, "").replace(/\/$/, "");
     if (urlPath !== "") {
         for (const segment of urlPath.split("/")) {
             if (!isValidPathSegment(segment)) {
@@ -127,16 +128,18 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     const { t } = useTranslation();
 
+    const encodedPath = pathToQuery(path);
+
     const items = [
-        <LinkWithIcon key={0} to={`/~manage/realm?path=${path}`} iconPos="left">
+        <LinkWithIcon key={0} to={`/~manage/realm?path=${encodedPath}`} iconPos="left">
             <FiTool />
             {t("realm.page-settings")}
         </LinkWithIcon>,
-        <LinkWithIcon key={1} to={`/~manage/realm/content?path=${path}`} iconPos="left">
+        <LinkWithIcon key={1} to={`/~manage/realm/content?path=${encodedPath}`} iconPos="left">
             <FiLayout />
             {t("realm.edit-page-content")}
         </LinkWithIcon>,
-        <LinkWithIcon key={1} to={`/~manage/realm/add-child?parent=${path}`} iconPos="left">
+        <LinkWithIcon key={1} to={`/~manage/realm/add-child?parent=${encodedPath}`} iconPos="left">
             <FiPlus />
             {t("realm.add-sub-page")}
         </LinkWithIcon>,
@@ -144,3 +147,13 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
 
     return <LinkList items={items} />;
 };
+
+/**
+ * Formats a realm path for inclusion in a query parameter.
+ * Specifically, it preserves the path separators (`/`) between the
+ * individual path segments for better readability.
+ * It is thus **not** suited for use in path-part of a URL!
+ */
+export const pathToQuery = (path: string): string => (
+    encodeURIComponent(path).replace(/%2f/gui, "/")
+);

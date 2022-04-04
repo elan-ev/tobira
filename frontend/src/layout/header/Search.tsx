@@ -58,7 +58,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const lastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const defaultValue = isSearchActive()
-        ? new URL(document.location.href).searchParams.get("q") ?? undefined
+        ? new URLSearchParams(document.location.search).get("q") ?? undefined
         : undefined;
 
     return <div css={{ position: "relative", margin: "0 8px", ...extraCss }}>
