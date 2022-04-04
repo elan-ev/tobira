@@ -47,7 +47,7 @@ export const VideoRoute = makeRoute(url => {
 });
 
 export const DirectVideoRoute = makeRoute(url => {
-    const regex = new RegExp(`^/!(${b64regex}+)/?$`, "u");
+    const regex = new RegExp(`^/!v/(${b64regex}+)/?$`, "u");
     const params = regex.exec(decodeURIComponent(url.pathname));
     if (params === null) {
         return null;
