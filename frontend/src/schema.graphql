@@ -355,6 +355,18 @@ type Realm implements Node {
   """
   numberOfDescendants: Int!
   canCurrentUserEdit: Boolean!
+  """
+    Returns `true` if this realm somehow references the given node via
+    blocks. Currently, the following rules are used:
+
+    - If `id` refers to a series: returns `true` if the realm has a series
+      block with that series.
+    - If `id` refers to an event: returns `true` if the realm has a video
+      block with that video OR if the realm has a series block with that
+      event's series.
+    - Otherwise, `false` is returned.
+  """
+  references(id: ID!): Boolean!
 }
 
 input UpdateTextBlock {
