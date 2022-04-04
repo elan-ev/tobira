@@ -54,35 +54,37 @@ export const DirectVideoRoute = makeRoute(url => {
     }
 
     const videoId = params[1];
-    return prepare(`ev${videoId}`, null);
+    return prepare(`ev${videoId}`);
 });
 
-const prepare = (id: string, realmPath: string | null): MatchedRoute => {
-    const isDirectLink = realmPath === null;
+const prepare = (id: string, realmPath?: string): MatchedRoute => {
+    const isDirectLink = realmPath === undefined;
     const queryRef = loadQuery<VideoQuery>(query, { id, realmPath: realmPath ?? "/" });
+
+    const render: (result: VideoQuery$data) => JSX.Element
+        = isDirectLink
+            ? ({ event, realm }) => (
+                !event
+                    ? <NotFound kind="video" />
+                    : <VideoPage
+                        {...{ event, realm: realm ?? unreachable("root realm doesn't exist"), id }}
+                        basePath="/!v"
+                    />
+            )
+            : ({ event, realm }) => (
+                !event || !realm || !realm.referencesVideo
+                    ? <NotFound kind="video" />
+                    : <VideoPage
+                        {...{ event, realm, id }}
+                        basePath={realmPath.replace(/\/$/u, "") + "/v"}
+                    />
+            );
 
     return {
         render: () => <RootLoader
             {... { query, queryRef }}
             nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-            render={result => {
-                const { event, realm } = result;
-
-                if (isDirectLink) {
-                    if (!realm) {
-                        return unreachable("Root realm doesn't exist");
-                    }
-
-                    return !event
-                        ? <NotFound kind="video" />
-                        : <VideoPage {...{ event, realm, realmPath: "/", id }} />;
-                } else {
-                    return !event || !realm || !realm.referencesVideo
-                        ? <NotFound kind="video" />
-                        : <VideoPage {...{ event, realm, realmPath, id }} />;
-
-                }
-            }}
+            render={render}
         />,
         dispose: () => queryRef.dispose(),
     };
@@ -118,11 +120,11 @@ const query = graphql`
 type Props = {
     event: NonNullable<VideoQuery$data["event"]>;
     realm: NonNullable<VideoQuery$data["realm"]>;
-    realmPath: string;
+    basePath: string;
     id: string;
 };
 
-const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
+const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     const { t, i18n } = useTranslation();
 
     const createdDate = new Date(event.created);
@@ -182,7 +184,8 @@ const VideoPage: React.FC<Props> = ({ event, realm, realmPath, id }) => {
         <div css={{ height: 80 }} />
 
         {event.series && <SeriesBlockFromSeries
-            realmPath={realmPath} fragRef={event.series}
+            basePath={basePath}
+            fragRef={event.series}
             title={t("video.more-from-series", { series: event.series.title })}
             activeEventId={id}
         />}
