@@ -30,7 +30,7 @@ const query = graphql`
 `;
 
 type Props = {
-    kind: "page" | "video";
+    kind: "page" | "video" | "series";
 };
 
 export const NotFound: React.FC<Props> = ({ kind }) => {
@@ -38,6 +38,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
     const title = match(kind, {
         "page": () => t("not-found.page-not-found"),
         "video": () => t("not-found.video-not-found"),
+        "series": () => t("not-found.series-not-found"),
     });
 
     return <>
@@ -51,6 +52,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
                 {match(kind, {
                     "page": () => t("not-found.page-explanation"),
                     "video": () => t("not-found.video-explanation"),
+                    "series": () => t("not-found.series-explanation"),
                 })}
                 {t("not-found.url-typo")}
             </p>

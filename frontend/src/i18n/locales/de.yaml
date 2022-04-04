@@ -38,11 +38,15 @@ errors:
 not-found:
   page-not-found: Seite nicht gefunden
   video-not-found: Video nicht gefunden
+  series-not-found: Serie nicht gefunden
   page-explanation: >
     Die von Ihnen gewünschte Seite existiert nicht. Sie wurde möglicherweise
     gelöscht und umbenannt.
   video-explanation: >
     Das von Ihnen gewünschte Video existiert nicht. Es wurde möglicherweise
+    gelöscht oder verschoben.
+  series-explanation: >
+    Die von Ihnen gewünschte Serie existiert nicht. Sie wurde möglicherweise
     gelöscht oder verschoben.
   url-typo: >
     Falls Sie die Adresse/URL manuell eingegeben haben, prüfen Sie diese auf
@@ -97,6 +101,8 @@ video:
 series:
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
   no-events: Diese Serie enthält keine Videos oder Sie sind nicht berechtigt, diese zu sehen.
+  videos:
+    heading: Videos
 
 realm:
   page-settings: Seiteneinstellungen
