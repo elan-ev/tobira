@@ -40,7 +40,7 @@
     "i18next": "^21.6.14",
     "i18next-browser-languagedetector": "^6.1.4",
     "paella-basic-plugins": "^1.0.4",
-    "paella-core": "^1.0.15",
+    "paella-core": "^1.0.40",
     "plyr-react": "^3.2.1",
     "raw-loader": "^4.0.2",
     "react": "^18.0.0",
