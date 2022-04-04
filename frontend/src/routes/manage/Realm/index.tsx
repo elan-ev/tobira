@@ -21,7 +21,7 @@ import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
-import { pathParam, RealmEditLinks } from "../../Realm";
+import { pathToQuery, RealmEditLinks } from "../../Realm";
 
 
 // Route definition
@@ -107,7 +107,7 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
                     <FiArrowRightCircle />
                     {t("manage.realm.view-page")}
                 </LinkButton>
-                <LinkButton to={`/~manage/realm/add-child?parent=${pathParam(realm.path)}`}>
+                <LinkButton to={`/~manage/realm/add-child?parent=${pathToQuery(realm.path)}`}>
                     <FiPlus />
                     {t("realm.add-sub-page")}
                 </LinkButton>

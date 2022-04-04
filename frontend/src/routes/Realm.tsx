@@ -128,7 +128,7 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     const { t } = useTranslation();
 
-    const encodedPath = pathParam(path);
+    const encodedPath = pathToQuery(path);
 
     const items = [
         <LinkWithIcon key={0} to={`/~manage/realm?path=${encodedPath}`} iconPos="left">
@@ -148,7 +148,12 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     return <LinkList items={items} />;
 };
 
-/** Formats a realm path for inclusion in a URL parameter. */
-export const pathParam = (path: string): string => (
+/**
+ * Formats a realm path for inclusion in a query parameter.
+ * Specifically, it preserves the path separators (`/`) between the
+ * individual path segments for better readability.
+ * It is thus **not** suited for use in path-part of a URL!
+ */
+export const pathToQuery = (path: string): string => (
     encodeURIComponent(path).replace(/%2f/gui, "/")
 );
