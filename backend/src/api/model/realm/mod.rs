@@ -280,24 +280,26 @@ impl Realm {
     /// - Otherwise, `false` is returned.
     async fn references(&self, id: Id, context: &Context) -> ApiResult<bool> {
         if let Some(event_key) = id.key_for(Id::EVENT_KIND) {
-            let query = "select count(*) \
+            let query = "select exists(\
+                select 1 \
                 from blocks \
                 where realm_id = $1 and ( \
-                    video_id = $2 or
+                    video_id = $2 or \
                     series_id = (select series from events where id = $2) \
-                )";
-            let count = context.db.query_one(&query, &[&self.key, &event_key])
+                )\
+            )";
+            context.db.query_one(&query, &[&self.key, &event_key])
                 .await?
-                .get::<_, i64>(0);
-
-            Ok(count > 0)
+                .get::<_, bool>(0)
+                .pipe(Ok)
         } else if let Some(series_key) = id.key_for(Id::SERIES_KIND) {
-            let query = "select count(*) from blocks where realm_id = $1 and series_id = $2";
-            let count = context.db.query_one(&query, &[&self.key, &series_key])
+            let query = "select exists(\
+                select 1 from blocks where realm_id = $1 and series_id = $2\
+            )";
+            context.db.query_one(&query, &[&self.key, &series_key])
                 .await?
-                .get::<_, i64>(0);
-
-            Ok(count > 0)
+                .get::<_, bool>(0)
+                .pipe(Ok)
         } else {
             Ok(false)
         }
