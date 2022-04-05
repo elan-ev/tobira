@@ -10,6 +10,8 @@
 
 use juniper::{FieldError, IntoFieldError, ScalarValue, graphql_value};
 
+use crate::prelude::*;
+
 
 pub(crate) type ApiResult<T> = Result<T, ApiError>;
 
@@ -51,6 +53,10 @@ impl ApiErrorKind {
 
 impl From<tokio_postgres::Error> for ApiError {
     fn from(src: tokio_postgres::Error) -> Self {
+        // Logging the error here is not _ideal_ but it's probably totally fine
+        // for us.
+        error!("DB error during API handling: {}", src);
+        debug!("Detailed error: {:#?}", src);
         Self {
             // TODO: can this leak sensitive information?
             msg: format!("DB error: {}", src),

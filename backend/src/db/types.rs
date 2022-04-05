@@ -54,6 +54,6 @@ impl<'a> FromSql<'a> for Key {
 impl fmt::Debug for Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = [0; 11];
-        write!(f, "Key({} :: {})", self.0, self.to_base64(&mut buf))
+        write!(f, "Key({} :: {})", self.0 as i64, self.to_base64(&mut buf))
     }
 }

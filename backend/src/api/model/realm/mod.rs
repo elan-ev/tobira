@@ -268,4 +268,40 @@ impl Realm {
         // TODO: at some point, we want ACLs per realm
         context.user.is_moderator(&context.config.auth)
     }
+
+    /// Returns `true` if this realm somehow references the given node via
+    /// blocks. Currently, the following rules are used:
+    ///
+    /// - If `id` refers to a series: returns `true` if the realm has a series
+    ///   block with that series.
+    /// - If `id` refers to an event: returns `true` if the realm has a video
+    ///   block with that video OR if the realm has a series block with that
+    ///   event's series.
+    /// - Otherwise, `false` is returned.
+    async fn references(&self, id: Id, context: &Context) -> ApiResult<bool> {
+        if let Some(event_key) = id.key_for(Id::EVENT_KIND) {
+            let query = "select exists(\
+                select 1 \
+                from blocks \
+                where realm_id = $1 and ( \
+                    video_id = $2 or \
+                    series_id = (select series from events where id = $2) \
+                )\
+            )";
+            context.db.query_one(&query, &[&self.key, &event_key])
+                .await?
+                .get::<_, bool>(0)
+                .pipe(Ok)
+        } else if let Some(series_key) = id.key_for(Id::SERIES_KIND) {
+            let query = "select exists(\
+                select 1 from blocks where realm_id = $1 and series_id = $2\
+            )";
+            context.db.query_one(&query, &[&self.key, &series_key])
+                .await?
+                .get::<_, bool>(0)
+                .pipe(Ok)
+        } else {
+            Ok(false)
+        }
+    }
 }

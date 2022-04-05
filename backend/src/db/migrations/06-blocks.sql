@@ -54,3 +54,7 @@ create table blocks (
 
 -- Blocks are almost always looked up by realm ID.
 create index idx_block_realm_id on blocks (realm_id);
+
+-- Sometimes, we quickly need to find out which blocks reference a specific event or series.
+create index idx_block_series_id on blocks (series_id);
+create index idx_block_video_id on blocks (video_id);

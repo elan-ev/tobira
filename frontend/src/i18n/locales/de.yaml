@@ -14,6 +14,7 @@ copy-to-clipboard: In Zwischenablage kopieren
 version-information: Version
 
 general:
+  homepage: Startseite
   leave-page-confirmation: >
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
   logo-alt: Das Logo von „{{title}}“
@@ -186,6 +187,9 @@ manage:
     share-direct-link: Via Direktlink teilen
     open-in-editor: Im Videoeditor öffnen
     manage-video: Video verwalten
+    referencing-pages: Referenzierende Seiten
+    referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
+    no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
 
   are-you-sure: Sind Sie sich sicher?
 
