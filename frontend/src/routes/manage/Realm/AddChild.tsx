@@ -5,7 +5,7 @@ import { graphql, useMutation } from "react-relay";
 import { RootLoader } from "../../../layout/Root";
 import type {
     AddChildQuery,
-    AddChildQueryResponse,
+    AddChildQuery$data,
 } from "./__generated__/AddChildQuery.graphql";
 import { loadQuery } from "../../../relay";
 import { useRouter } from "../../../router";
@@ -17,7 +17,7 @@ import { PathInvalid } from ".";
 import { boxError, NotAuthorized } from "../../../ui/error";
 import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "../../../ui/Button";
-import { AddChildMutationResponse } from "./__generated__/AddChildMutation.graphql";
+import { AddChildMutation$data } from "./__generated__/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
@@ -92,7 +92,7 @@ const addChildMutation = graphql`
 `;
 
 type Props = {
-    parent: NonNullable<AddChildQueryResponse["parent"]>;
+    parent: NonNullable<AddChildQuery$data["parent"]>;
 };
 
 const AddChild: React.FC<Props> = ({ parent }) => {
@@ -119,7 +119,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                 },
             },
             onCompleted: response => {
-                const typedResponse = response as AddChildMutationResponse;
+                const typedResponse = response as AddChildMutation$data;
                 const path = pathToQuery(typedResponse.addRealm.path);
                 router.goto(`/~manage/realm/content?path=${path}`);
             },

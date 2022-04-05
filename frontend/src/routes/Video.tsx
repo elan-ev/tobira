@@ -1,7 +1,7 @@
 import React from "react";
 import { graphql } from "react-relay/hooks";
 
-import type { VideoQuery, VideoQueryResponse } from "./__generated__/VideoQuery.graphql";
+import type { VideoQuery, VideoQuery$data } from "./__generated__/VideoQuery.graphql";
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
@@ -103,8 +103,8 @@ const query = graphql`
 `;
 
 type Props = {
-    event: NonNullable<VideoQueryResponse["event"]>;
-    realm: NonNullable<VideoQueryResponse["realm"]>;
+    event: NonNullable<VideoQuery$data["event"]>;
+    realm: NonNullable<VideoQuery$data["realm"]>;
     realmPath: string;
     id: string;
 };

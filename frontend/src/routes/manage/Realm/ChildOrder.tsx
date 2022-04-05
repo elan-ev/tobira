@@ -7,7 +7,7 @@ import { match } from "../../../util";
 import { bug } from "../../../util/err";
 import { RealmOrder } from "../../../layout/__generated__/NavigationData.graphql";
 import {
-    ChildOrderEditData,
+    ChildOrderEditData$data,
     ChildOrderEditData$key,
 } from "./__generated__/ChildOrderEditData.graphql";
 import { Button } from "../../../ui/Button";
@@ -44,7 +44,7 @@ const mutation = graphql`
 
 
 
-type Child = ChildOrderEditData["children"][0];
+type Child = ChildOrderEditData$data["children"][0];
 type SortOrder = "by-index" | "alphabetical:asc" | "alphabetical:desc";
 
 type Props = {
