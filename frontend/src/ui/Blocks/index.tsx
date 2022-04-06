@@ -64,11 +64,12 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
     `, blockRef);
     const { __typename } = block;
 
+    const basePath = path.replace(/\/$/u, "") + "/v";
     return <div>
         {match(__typename, {
             "TitleBlock": () => <TitleBlock fragRef={block} />,
             "TextBlock": () => <TextBlockByQuery fragRef={block} />,
-            "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} realmPath={path} />,
+            "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} basePath={basePath} />,
             "VideoBlock": () => <VideoBlock fragRef={block} />,
         })}
     </div>;

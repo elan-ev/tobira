@@ -35,11 +35,15 @@ errors:
 not-found:
   page-not-found: Page not found
   video-not-found: Video not found
+  series-not-found: Series not found
   page-explanation: >
     The page you want to visit does not exist. It might have been removed or
     renamed.
   video-explanation: >
     The video you want to watch does not exist. It might have been removed or
+    moved.
+  series-explanation: >
+    The series you want to view does not exist. It might have been removed or
     moved.
   url-typo: >
     If you entered the address/URL manually, please double check it for
@@ -93,6 +97,8 @@ video:
 series:
   deleted-series-block: The series referenced here was deleted.
   no-events: This series does not contain any events, or you might not be authorized to see them.
+  videos:
+    heading: Videos
 
 realm:
   page-settings: Page settings

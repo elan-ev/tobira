@@ -18,7 +18,7 @@ import { Card } from "../Card";
 
 type SharedProps = {
     title?: string;
-    realmPath: string;
+    basePath: string;
     activeEventId?: string;
 };
 
@@ -83,7 +83,7 @@ export const SeriesBlock: React.FC<Props> = ({
     title,
     series,
     showTitle,
-    realmPath,
+    basePath,
     activeEventId,
     order,
 }) => {
@@ -134,7 +134,7 @@ export const SeriesBlock: React.FC<Props> = ({
                     ? sortedEvents.map(event => <GridTile
                         key={event.id}
                         active={event.id === activeEventId}
-                        {...{ realmPath, event }}
+                        {...{ basePath, event }}
                     />)
                     : t("series.no-events")}
             </div>
@@ -148,12 +148,12 @@ const compareNewToOld = compareByKey((event: SeriesBlockSeriesData$data["events"
 const compareOldToNew = swap(compareNewToOld);
 
 type GridTypeProps = {
-    realmPath: string;
+    basePath: string;
     event: NonNullable<SeriesBlockSeriesData$data>["events"][0];
     active: boolean;
 };
 
-const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
+const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
     const TRANSITION_DURATION = "0.3s";
 
     const inner = <>
@@ -251,8 +251,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, realmPath, active }) => {
     return active
         ? <div css={{ ...containerStyle, display: "inline-block" }}>{inner}</div>
         : <Link
-            to={`${realmPath}${realmPath.endsWith("/") ? "" : "/"}v/${keyOfId(event.id)}`}
+            to={`${basePath}/${keyOfId(event.id)}`}
             css={containerStyle}
         >{inner}</Link>;
 };
-

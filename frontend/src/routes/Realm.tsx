@@ -152,7 +152,7 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
  * Formats a realm path for inclusion in a query parameter.
  * Specifically, it preserves the path separators (`/`) between the
  * individual path segments for better readability.
- * It is thus **not** suited for use in path-part of a URL!
+ * It is thus **not** suited for use in the path-part of a URL!
  */
 export const pathToQuery = (path: string): string => (
     encodeURIComponent(path).replace(/%2f/gui, "/")
