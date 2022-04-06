@@ -17,7 +17,7 @@ import {
 
 export const DirectSeriesRoute = makeRoute(url => {
 
-    const regex = new RegExp("^/!s/:(.+)", "u");
+    const regex = new RegExp("^/!s/:([^/]+)$", "u");
     const path = decodeURIComponent(url.pathname);
     const matches = path.match(regex);
 
