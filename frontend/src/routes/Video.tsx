@@ -61,24 +61,24 @@ const prepare = (id: string, realmPath?: string): MatchedRoute => {
     const isDirectLink = realmPath === undefined;
     const queryRef = loadQuery<VideoQuery>(query, { id, realmPath: realmPath ?? "/" });
 
-    const render: (result: VideoQuery$data) => JSX.Element
-        = isDirectLink
-            ? ({ event, realm }) => (
-                !event
-                    ? <NotFound kind="video" />
-                    : <VideoPage
-                        {...{ event, realm: realm ?? unreachable("root realm doesn't exist"), id }}
-                        basePath="/!v"
-                    />
-            )
-            : ({ event, realm }) => (
-                !event || !realm || !realm.referencesVideo
-                    ? <NotFound kind="video" />
-                    : <VideoPage
-                        {...{ event, realm, id }}
-                        basePath={realmPath.replace(/\/$/u, "") + "/v"}
-                    />
-            );
+    const render: (result: VideoQuery$data) => JSX.Element = isDirectLink
+        ? ({ event, realm }) => (
+            !event
+                ? <NotFound kind="video" />
+                : <VideoPage
+                    {...{ id, event }}
+                    realm={realm ?? unreachable("root realm doesn't exist")}
+                    basePath="/!v"
+                />
+        )
+        : ({ event, realm }) => (
+            !event || !realm || !realm.referencesVideo
+                ? <NotFound kind="video" />
+                : <VideoPage
+                    {...{ id, event, realm }}
+                    basePath={realmPath.replace(/\/$/u, "") + "/v"}
+                />
+        );
 
     return {
         render: () => <RootLoader
