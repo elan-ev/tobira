@@ -28,12 +28,12 @@ import { PageTitle } from "../../../layout/header/ui";
 
 export const ManageSingleVideoRoute = makeRoute(url => {
     const regex = new RegExp(`^/~manage/videos/(${b64regex}+)/?$`, "u");
-    const params = regex.exec(decodeURIComponent(url.pathname));
+    const params = regex.exec(url.pathname);
     if (params === null) {
         return null;
     }
 
-    const videoId = params[1];
+    const videoId = decodeURIComponent(params[1]);
     const queryRef = loadQuery<SingleVideoManageQuery>(query, { id: `ev${videoId}` });
 
     return {

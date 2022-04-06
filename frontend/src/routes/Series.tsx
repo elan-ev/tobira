@@ -18,15 +18,14 @@ import {
 export const DirectSeriesRoute = makeRoute(url => {
 
     const regex = new RegExp("^/!s/:([^/]+)$", "u");
-    const path = decodeURIComponent(url.pathname);
-    const matches = path.match(regex);
+    const matches = regex.exec(url.pathname);
 
     if (!matches) {
         return null;
     }
 
 
-    const [, opencastId] = matches;
+    const opencastId = decodeURIComponent(matches[1]);
     const query = graphql`
         query SeriesByOpencastIdQuery($id: String!) {
             ... UserData

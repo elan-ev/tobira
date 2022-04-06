@@ -53,19 +53,19 @@ export const isValidPathSegment = (segment: string): boolean =>
     checkPathSegment(segment) === "valid";
 
 export const RealmRoute = makeRoute(url => {
-    const urlPath = decodeURIComponent(url.pathname).replace(/^\//, "").replace(/\/$/, "");
+    const urlPath = url.pathname.replace(/^\/|\/$/g, "");
+    const pathSegments = urlPath.split("/").map(decodeURIComponent);
     if (urlPath !== "") {
-        for (const segment of urlPath.split("/")) {
+        for (const segment of pathSegments) {
             if (!isValidPathSegment(segment)) {
                 return null;
             }
         }
     }
 
-    const realmPath = "/" + urlPath;
+    const realmPath = "/" + pathSegments.join("/");
 
-    const path = realmPath === "" ? "/" : realmPath;
-    const queryRef = loadQuery<RealmQuery>(relayEnv, query, { path });
+    const queryRef = loadQuery<RealmQuery>(relayEnv, query, { path: realmPath });
 
     return {
         render: () => <RootLoader
@@ -77,12 +77,12 @@ export const RealmRoute = makeRoute(url => {
 
                 const mainNav = <Nav key="nav" fragRef={data.realm} />;
                 return data.realm.canCurrentUserEdit
-                    ? [mainNav, <RealmEditLinks key="edit-buttons" path={path} />]
+                    ? [mainNav, <RealmEditLinks key="edit-buttons" path={realmPath} />]
                     : mainNav;
             }}
             render={data => (
                 data.realm
-                    ? <RealmPage {...{ path, realm: data.realm }} />
+                    ? <RealmPage realm={data.realm} />
                     : <NotFound kind="page" />
             )}
         />,
