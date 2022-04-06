@@ -60,13 +60,15 @@ const SeriesPage: React.FC<SeriesByOpencastIdQuery$data> = ({ series }) => {
         return <NotFound kind="series" />;
     }
 
-    return <>
+    return <div css={{ display: "flex", flexDirection: "column" }}>
         <PageTitle title={series.title} />
         <p>{series.description}</p>
-        <SeriesBlockFromSeries
-            title={t("series.videos.heading")}
-            basePath="/!v"
-            fragRef={series}
-        />
-    </>;
+        <div css={{ marginTop: 12 }}>
+            <SeriesBlockFromSeries
+                title={t("series.videos.heading")}
+                basePath="/!v"
+                fragRef={series}
+            />
+        </div>
+    </div>;
 };
