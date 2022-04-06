@@ -9,7 +9,10 @@ import { Nav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 
 import { NotFound } from "./NotFound";
-import { SeriesByOpencastIdQuery } from "./__generated__/SeriesByOpencastIdQuery.graphql";
+import {
+    SeriesByOpencastIdQuery,
+    SeriesByOpencastIdQuery$data,
+} from "./__generated__/SeriesByOpencastIdQuery.graphql";
 
 
 export const DirectSeriesRoute = makeRoute(url => {
@@ -27,7 +30,7 @@ export const DirectSeriesRoute = makeRoute(url => {
     const query = graphql`
         query SeriesByOpencastIdQuery($id: String!) {
             ... UserData
-            seriesByOpencastId(id: $id) {
+            series: seriesByOpencastId(id: $id) {
                 title
                 description
                 ... SeriesBlockSeriesData
@@ -44,24 +47,26 @@ export const DirectSeriesRoute = makeRoute(url => {
         render: () => <RootLoader
             {...{ query, queryRef }}
             nav={data => <Nav fragRef={data.rootRealm} />}
-            render={({ seriesByOpencastId: series }) => {
-                if (!series) {
-                    return <NotFound kind="series" />;
-                }
-
-                const { t } = useTranslation();
-
-                return <>
-                    <PageTitle title={series.title} />
-                    <p>{series.description}</p>
-                    <SeriesBlockFromSeries
-                        title={t("series.videos.heading")}
-                        basePath="/!v"
-                        fragRef={series}
-                    />
-                </>;
-            }}
+            render={result => <SeriesPage {...result} />}
         />,
         dispose: () => queryRef.dispose(),
     };
 });
+
+const SeriesPage: React.FC<SeriesByOpencastIdQuery$data> = ({ series }) => {
+    const { t } = useTranslation();
+
+    if (!series) {
+        return <NotFound kind="series" />;
+    }
+
+    return <>
+        <PageTitle title={series.title} />
+        <p>{series.description}</p>
+        <SeriesBlockFromSeries
+            title={t("series.videos.heading")}
+            basePath="/!v"
+            fragRef={series}
+        />
+    </>;
+};
