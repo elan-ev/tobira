@@ -52,6 +52,14 @@ not-found:
     You can try visiting <1>the homepage</1> or using the search bar to find the
     page you are looking for.
 
+invalid-url:
+  title: Invalid address
+  description: >
+    The URL you entered is not valid. If you typed it in manually, please verify
+    you didn't, for example, make any spelling mistakes or included invalid characters.
+    If you followed a link instead, please contact the appropriate authority
+    responsible for publishing that link.
+
 about-tobira:
   title: About “Tobira”
   body: >

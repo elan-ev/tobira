@@ -55,6 +55,14 @@ not-found:
     Sie können versuchen <1>die Startseite</1> zu besuchen oder die Suche zu
     benutzen, um die gewünschte Seite zu finden.
 
+invalid-url:
+  title: Ungültige Adresse
+  description: >
+    Die von Ihnen eingegebene URL ist nicht gültig. Haben Sie diese per Hand
+    eingegeben, überprüfen Sie sie bitte z.B. auf Tippfehler und unerlaubte Zeichen.
+    Sind Sie hingegen einem Link gefolgt, richten Sie sich an die entsprechende
+    Stelle, die diesen veröffentlicht hat.
+
 about-tobira:
   title: Informationen über „Tobira“
   body: >

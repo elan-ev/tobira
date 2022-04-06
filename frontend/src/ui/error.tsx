@@ -1,7 +1,10 @@
 import { ReactNode } from "react";
+import { FiFrown } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import { useUser } from "../User";
 
+import { useUser } from "../User";
+import { PageTitle } from "../layout/header/ui";
+import { CenteredContent } from ".";
 import { Card } from "./Card";
 
 
@@ -28,3 +31,21 @@ export const NotAuthorized: React.FC = () => {
         {user === "none" && " " + t("errors.might-need-to-login")}
     </ErrorBox>;
 };
+
+
+type ErrorPageProps = {
+    title: string;
+};
+
+export const ErrorPage: React.FC<ErrorPageProps> = ({ title, children }) => (
+    <>
+        <FiFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
+        <PageTitle
+            title={title}
+            css={{ textAlign: "center", margin: "32px 0 48px 0 !important" }}
+        />
+        <CenteredContent>
+            {children}
+        </CenteredContent>
+    </>
+);
