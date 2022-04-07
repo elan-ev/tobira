@@ -13,6 +13,7 @@
 #     site_title.de = "Meine Universität"
 #
 
+
 [general]
 # The main title of the video portal. Used in the HTML `<title>`, as main
 # heading on the home page, and potentially more.
@@ -38,6 +39,7 @@
 # ]
 # ```
 #footer_links =
+
 
 [db]
 # The username of the database user.
@@ -66,6 +68,7 @@
 # Default value: "tobira"
 #database = "tobira"
 
+
 [http]
 # The TCP port the HTTP server should listen on.
 #
@@ -85,6 +88,7 @@
 #
 # Default value: 493
 #unix_socket_permissions = 493
+
 
 [auth]
 # The mode of authentication. Compare the authentication docs! Possible values:
@@ -158,8 +162,8 @@
 # Default value: "30d"
 #session_duration = "30d"
 
-# Configuration related to the built-in login page.
 
+# Configuration related to the built-in login page.
 [auth.login_page]
 # Label for the user-ID field. If not set, "User ID" is used.
 #user_id_label =
@@ -171,10 +175,10 @@
 # additional note is shown.
 #note =
 
+
 # JWT configuration. JWTs are only used to automatically authenticate
 # users against Opencast with short-lived tokens. They are not used for
 # user sessions.
-
 [auth.jwt]
 # Signing algorithm for JWTs. Prefer `ES` style algorithms over others.
 # The algorithm choice has to be configured in Opencast as well.
@@ -207,6 +211,7 @@
 # Default value: "30s"
 #expiration_time = "30s"
 
+
 [log]
 # Determines how many messages are logged. Log messages below
 # this level are not emitted. Possible values: "trace", "debug",
@@ -223,6 +228,7 @@
 #
 # Default value: true
 #stdout = true
+
 
 [opencast]
 # URL to Opencast. Currently used for all purposes (syncing, Studio,
@@ -254,6 +260,7 @@
 #
 # Example: "https://admin.oc.my-uni.edu/editor-ui/index.html".
 #editor_url =
+
 
 [sync]
 # Username of the user used to communicate with Opencast for data syncing.
@@ -293,6 +300,7 @@
 # Default value: "30s"
 #poll_period = "30s"
 
+
 [meili]
 # The access key. This can be the master key, but ideally should be an API
 # key that only has the priviliges it needs.
@@ -318,6 +326,7 @@
 # Default value: "5s"
 #update_interval = "5s"
 
+
 [theme]
 # Default value: 50
 #header_height = 50
@@ -341,6 +350,7 @@
 # Required! This value must be specified.
 #favicon =
 
+
 [theme.logo]
 # The margin around the logo in terms of logo height. A value of 0.5 means
 # that there will be a margin around the logo of half the height of the
@@ -349,8 +359,8 @@
 # Default value: 0.4
 #margin = 0.4
 
-# The normal, usually wide logo that is shown on desktop screens.
 
+# The normal, usually wide logo that is shown on desktop screens.
 [theme.logo.large]
 # Path to the image file.
 #
@@ -364,9 +374,9 @@
 # Required! This value must be specified.
 #resolution =
 
+
 # A smaller logo (usually close to square) used for small screens, mostly
 # on mobile phones.
-
 [theme.logo.small]
 # Path to the image file.
 #
@@ -379,6 +389,7 @@
 #
 # Required! This value must be specified.
 #resolution =
+
 
 [theme.color]
 # Default value: "#347856"
