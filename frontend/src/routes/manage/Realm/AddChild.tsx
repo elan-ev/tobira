@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
@@ -168,8 +168,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
 
                 <InputWithInfo
                     info={<Trans i18nKey="manage.add-child.path-segment-info">
-                        {{ illegalChars: ILLEGAL_CHARS }}
-                        {{ reservedChars: RESERVED_CHARS }}
+                        {{ illegalChars: ILLEGAL_CHARS, reservedChars: RESERVED_CHARS }}
                     </Trans>}
                 >
                     <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>
@@ -198,6 +197,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
 
 type InputWithInfoProps = {
     info: JSX.Element;
+    children: ReactNode;
 };
 
 const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (

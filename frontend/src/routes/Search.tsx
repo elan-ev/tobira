@@ -13,6 +13,7 @@ import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
 import { FiFolder } from "react-icons/fi";
 import { HiOutlineUserCircle } from "react-icons/hi";
+import { ReactNode } from "react";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -68,7 +69,7 @@ const SearchPage: React.FC<Props> = ({ q, results }) => {
     </div>;
 };
 
-const CenteredNote: React.FC = ({ children }) => (
+const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{ textAlign: "center" }}>
         <Card kind="info">{children}</Card>
     </div>
@@ -188,6 +189,7 @@ const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, full
 
 type ItemProps = {
     link: string;
+    children: ReactNode;
 };
 
 const Item: React.FC<ItemProps> = ({ link, children }) => (

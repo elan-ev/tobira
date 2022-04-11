@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 
@@ -16,7 +17,7 @@ export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
 };
 
 /** Separates different inputs in the metadata form */
-export const InputContainer: React.FC = ({ children }) => (
+export const InputContainer: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{ margin: "16px 0 " }}>{children}</div>
 );
 

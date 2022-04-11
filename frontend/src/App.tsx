@@ -45,14 +45,14 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
  *
  * Full story: https://github.com/emotion-js/emotion/issues/1105
  */
-const SilenceEmotionWarnings: React.FC = ({ children }) => {
+const SilenceEmotionWarnings: React.FC<{ children: ReactNode }> = ({ children }) => {
     const cache = createEmotionCache({ key: "css" });
     cache.compat = true;
 
     return <CacheProvider value={cache}>{children}</CacheProvider>;
 };
 
-const APIWrapper: React.FC = ({ children }) => (
+const APIWrapper: React.FC<{ children: ReactNode }> = ({ children }) => (
     <GraphQLErrorBoundary>
         <Suspense fallback={<InitialLoading />}>
             {children}

@@ -1,11 +1,12 @@
 import { Link } from "../router";
 import { match } from "../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
+import { ReactNode } from "react";
 
 
 export const SIDE_BOX_BORDER_RADIUS = 10;
 
-export const SideBox: React.FC = ({ children }) => (
+export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{
         backgroundColor: "var(--grey95)",
         borderRadius: SIDE_BOX_BORDER_RADIUS,
@@ -61,6 +62,7 @@ type LinkWithIconProps = {
     iconPos: "left" | "right";
     active?: boolean;
     className?: string;
+    children: ReactNode;
 };
 
 /** A link designed for `LinkList`. Has an icon on the left or right side. */
@@ -114,7 +116,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
         : <Link to={to} css={style} {...rest}>{children}</Link>;
 };
 
-export const CenteredContent: React.FC = ({ children }) => (
+export const CenteredContent: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{ margin: "0 auto", maxWidth: 600 }}>{children}</div>
 );
 

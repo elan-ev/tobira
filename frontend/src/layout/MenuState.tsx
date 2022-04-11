@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { ReactNode, useContext, useState } from "react";
 
 
 type MenuState = "closed" | "burger" | "search";
@@ -25,7 +25,7 @@ const MenuContext = React.createContext<Menu>(new Menu("closed", () => {
 }));
 export const useMenu = (): Menu => useContext(MenuContext);
 
-export const MenuProvider: React.FC = ({ children }) => {
+export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [state, setState] = useState<MenuState>("closed");
 
     return (

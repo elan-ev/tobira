@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRelayEnvironment } from "react-relay";
 import { keyframes } from "@emotion/react";
@@ -463,8 +463,13 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
     }
 };
 
+type BarWithTextProps = {
+    state: ProgressBarProps["state"];
+    children: ReactNode;
+};
+
 /** Helper component for `UploadState` */
-const BarWithText: React.FC<ProgressBarProps> = ({ state, children }) => <>
+const BarWithText: React.FC<BarWithTextProps> = ({ state, children }) => <>
     <div>
         <div css={{
             display: "flex",
