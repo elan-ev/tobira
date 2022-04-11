@@ -73,12 +73,6 @@ impl MeiliConfig {
             .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))
     }
 
-    /// Validates the configuration.
-    pub(crate) fn validate(&self) -> Result<()> {
-        self.host.assert_safety().context("failed to validate 'meili.host'")?;
-        Ok(())
-    }
-
     fn event_index_name(&self) -> String {
         format!("{}{}", self.index_prefix, "events")
     }

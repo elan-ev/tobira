@@ -110,7 +110,6 @@ impl Config {
     fn validate(&self) -> Result<()> {
         debug!("Validating configuration...");
         self.opencast.validate()?;
-        self.meili.validate()?;
 
         Ok(())
     }

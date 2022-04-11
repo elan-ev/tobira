@@ -57,15 +57,6 @@ impl OpencastConfig {
             bail!("Either `opencast.host` or all specific overrides in `opencast` must be set");
         }
 
-        if let Some(host) = &self.host {
-            host.assert_safety().context("failed to validate 'opencast.host'")?;
-        }
-        if let Some(upload_node) = &self.upload_node {
-            upload_node.assert_safety().context("failed to validate 'opencast.upload_node'")?;
-        }
-
-        // TODO: maybe make sure that the `ToolBaseUri`s are HTTPS?
-
         Ok(())
     }
 
