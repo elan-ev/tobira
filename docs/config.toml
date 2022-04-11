@@ -281,7 +281,7 @@
 #
 # A very large number might cause problems due to the Opencast or Tobira
 # node having to hold that many items in memory, or due to network
-# request size restrictions. Too small of a number not means that the
+# request size restrictions. Too small of a number means that the
 # overhead of each request will become more significant, slowing down
 # harvesting. But more importantly: if your Opencast instance has more
 # items with exactly the same `updated` timestamp than the configured

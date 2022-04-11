@@ -1,4 +1,5 @@
 use std::{fmt, str::FromStr, net::Ipv6Addr};
+use hyper::http::uri;
 use serde::Deserialize;
 
 use crate::prelude::*;
@@ -93,6 +94,10 @@ impl FromStr for HttpHost {
             .ok_or(anyhow!("invalid HTTP host: contains no authority part"))?;
         let scheme = parts.scheme
             .ok_or(anyhow!("invalid HTTP host: has to specify 'http' or 'https'"))?;
+
+        if scheme != uri::Scheme::HTTP && scheme != uri::Scheme::HTTPS {
+            bail!("scheme has to be 'http' or 'https'");
+        }
 
         if !authority.as_str().starts_with(authority.host()) {
             bail!("userinfo not allowed in authority");
