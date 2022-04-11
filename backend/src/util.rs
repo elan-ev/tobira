@@ -1,4 +1,4 @@
-use std::{fmt, str::FromStr, net::Ipv6Addr};
+use std::{fmt, str::FromStr, net::{Ipv6Addr, Ipv4Addr}};
 use hyper::http::uri;
 use serde::Deserialize;
 
@@ -40,34 +40,6 @@ pub(crate) struct HttpHost {
     pub(crate) authority: hyper::http::uri::Authority,
 }
 
-impl HttpHost {
-    /// Makes sure that the scheme is HTTPS or that the host resolves to a loopback address.
-    pub(crate) fn assert_safety(&self) -> Result<()> {
-        use std::net::ToSocketAddrs;
-
-        if self.scheme == hyper::http::uri::Scheme::HTTP {
-            let host = self.authority.host();
-
-            let bracketed_ipv6 =
-                (|| host.strip_prefix('[')?.strip_suffix(']')?.parse::<Ipv6Addr>().ok())();
-            let is_loopback = match bracketed_ipv6 {
-                Some(ipv6) => ipv6.is_loopback(),
-                None => (host, 0u16).to_socket_addrs()
-                    .context("failed to resolve host")?
-                    .all(|sa| sa.ip().is_loopback()),
-            };
-
-            anyhow::ensure!(
-                is_loopback,
-                "Host '{self}' uses unsecure HTTP, but does not resolve to a loopback \
-                    address. For security, this is not allowed.",
-            );
-        }
-
-        Ok(())
-    }
-}
-
 impl fmt::Display for HttpHost {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}://{}", self.scheme, self.authority)
@@ -103,6 +75,33 @@ impl FromStr for HttpHost {
             bail!("userinfo not allowed in authority");
         }
 
+        // Next, we check for HTTP safety. For local hosts, we allow HTTP, but
+        // for others, we require a special "safe word" at the end. This is
+        // just to avoid human errors.
+        let host = authority.host();
+        let is_local = {
+            let bracketed_ipv6 =
+                (|| host.strip_prefix('[')?.strip_suffix(']')?.parse::<Ipv6Addr>().ok())();
+
+
+            if let Some(ipv6) = bracketed_ipv6 {
+                ipv6.is_loopback()
+            } else if let Ok(ipv4) = host.parse::<Ipv4Addr>() {
+                ipv4.is_loopback()
+            } else {
+                // Sure, "localhost" could resolve to anything. But this check
+                // is for catching human errors, not for defending against
+                // attackers, so nothing here needs to be bulletproof.
+                host == "localhost"
+            }
+        };
+
+        const SAFE_WORD: &str = "#allow-insecure";
+        if scheme == uri::Scheme::HTTP && !(is_local || src.ends_with(SAFE_WORD)) {
+            bail!("if you really want to use unencrypted HTTP for non-local hosts, \
+                confirm by specifing the host as 'http://{host}{SAFE_WORD}'");
+        }
+
         Ok(Self { scheme, authority })
     }
 }
@@ -129,54 +128,51 @@ mod tests {
         s.parse::<HttpHost>().expect(&format!("could not parse '{s}' as HttpHost"))
     }
 
-    #[test]
-    fn http_hosts_loopback() {
-        let hosts = [
-            "localhost",
-            "localhost:1234",
-            "127.0.0.1",
-            "127.0.0.1:4321",
-            "127.1.2.3",
-            "127.1.2.3:4321",
-            "[::1]",
-            "[::1]:4321",
-        ];
+    const LOCAL_HOSTS: &[&str] = &[
+        "localhost",
+        "localhost:1234",
+        "127.0.0.1",
+        "127.0.0.1:4321",
+        "127.1.2.3",
+        "127.1.2.3:4321",
+        "[::1]",
+        "[::1]:4321",
+    ];
 
-        for host in hosts {
-            for scheme in ["http", "https"] {
-                let http_host = parse_http_host(&format!("{scheme}://{host}"));
-                if let Err(e) = http_host.assert_safety() {
-                    panic!("Failed to validate {http_host}: {e}");
-                }
-            }
+    const NON_LOCAL_HOSTS: &[&str] = &[
+        "1.1.1.1",
+        "1.1.1.1:3456",
+        "[2606:4700:4700::1111]",
+        "[2606:4700:4700::1111]:3456",
+        "github.com",
+        "github.com:3456",
+    ];
+
+    #[test]
+    fn http_host_parse_https() {
+        for host in LOCAL_HOSTS.iter().chain(NON_LOCAL_HOSTS) {
+            parse_http_host(&format!("https://{host}"));
         }
     }
 
     #[test]
-    fn http_hosts_non_loopback() {
-        let hosts = [
-            "1.1.1.1",
-            "1.1.1.1:3456",
-            "[2606:4700:4700::1111]",
-            "[2606:4700:4700::1111]:3456",
-            "github.com",
-            "github.com:3456",
-        ];
+    fn http_host_parse_http_local() {
+        for host in LOCAL_HOSTS {
+            parse_http_host(&format!("http://{host}"));
+        }
+    }
 
-        for host in hosts {
-            for scheme in ["http", "https"] {
-                let http_host = parse_http_host(&format!("{scheme}://{host}"));
+    #[test]
+    fn http_host_parse_http_non_local_safeword() {
+        for host in NON_LOCAL_HOSTS {
+            parse_http_host(&format!("http://{host}#allow-insecure"));
+        }
+    }
 
-                if scheme == "http" {
-                    if http_host.assert_safety().is_ok() {
-                        panic!("HttpHost validated successfully, but shouldn't! {http_host}");
-                    }
-                } else {
-                    if let Err(e) = http_host.assert_safety() {
-                        panic!("Failed to validate {http_host}: {e}");
-                    }
-                }
-            }
+    #[test]
+    fn http_host_parse_http_non_local_error() {
+        for host in NON_LOCAL_HOSTS {
+            format!("http://{host}").parse::<HttpHost>().unwrap_err();
         }
     }
 }
