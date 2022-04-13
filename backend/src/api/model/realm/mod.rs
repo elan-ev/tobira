@@ -67,21 +67,16 @@ impl Realm {
 
         let result = context.db
             .query_opt(
-                "select parent, name, path_segment, full_path, index, child_order \
-                    from realms \
-                    where id = $1",
+                &format!(
+                    "select {} \
+                        from realms \
+                        where id = $1",
+                    Self::col_names("realms"),
+                ),
                 &[&key],
             )
             .await?
-            .map(|row| Self {
-                key,
-                parent_key: Some(row.get(0)),
-                name: row.get(1),
-                path_segment: row.get(2),
-                full_path: row.get(3),
-                index: row.get(4),
-                child_order: row.get(5),
-            });
+            .map(Self::from_row);
 
         Ok(result)
     }
@@ -122,21 +117,16 @@ impl Realm {
 
         let result = context.db
             .query_opt(
-                "select id, parent, name, path_segment, index, child_order \
-                    from realms \
-                    where full_path = $1",
+                &format!(
+                    "select {} \
+                        from realms \
+                        where full_path = $1",
+                    Self::col_names("realms"),
+                ),
                 &[&path],
             )
             .await?
-            .map(|row| Self {
-                key: row.get(0),
-                parent_key: row.get(1),
-                name: row.get(2),
-                path_segment: row.get(3),
-                full_path: path,
-                index: row.get(4),
-                child_order: row.get(5),
-            });
+            .map(Self::from_row);
 
         Ok(result)
     }
