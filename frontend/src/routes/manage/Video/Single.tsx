@@ -144,7 +144,7 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
 
 const DirectLink: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
-    const url = new URL(`/!${event.id.slice(2)}`, document.baseURI);
+    const url = new URL(`/!v/${event.id.slice(2)}`, document.baseURI);
 
     return (
         <div css={{ marginBottom: 40 }}>
