@@ -840,7 +840,7 @@ const finishUpload = async (
                 throw `Field \`userRole\` from 'info/me.json' is not valid: ${userRole}`;
             }
 
-            const acl = constructAcl(["ROLE_ANONYMOUS"], [userRole]);
+            const acl = constructAcl(["ROLE_ANONYMOUS", userRole], [userRole]);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
             body.append("mediaPackage", mediaPackage);
