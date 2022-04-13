@@ -2,10 +2,11 @@ use juniper::graphql_object;
 
 use super::{
     Context,
-    err::ApiResult,
+    err::{ApiResult, invalid_input},
     id::Id,
     model::{
-        realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm},
+        realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm, RealmSpecifier},
+        series::Series,
         block::{
             BlockValue,
             NewTitleBlock,
@@ -17,6 +18,7 @@ use super::{
             UpdateSeriesBlock,
             UpdateVideoBlock,
             RemovedBlock,
+            VideoListOrder,
         },
     },
 };
@@ -161,5 +163,55 @@ impl Mutation {
     /// Remove a block from a realm.
     async fn remove_block(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
         BlockValue::remove(id, context).await
+    }
+
+    /// Atomically mount a series into an (empty) realm;
+    /// Creates all the necessary realms on the path to the target
+    /// and adds a block with the given series at the leaf.
+    async fn mount_series(
+        oc_series_id: String,
+        parent_realm_path: String,
+        #[graphql(default = vec![])]
+        new_realms: Vec<RealmSpecifier>,
+        context: &Context
+    ) -> ApiResult<Realm> {
+
+        let parent_realm = Realm::load_by_path(parent_realm_path, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`parentRealmPath` does not refer to a valid realm"))?;
+
+        if new_realms.is_empty() {
+            let blocks = BlockValue::load_for_realm(parent_realm.key, context).await?;
+            if !blocks.is_empty() {
+                return Err(invalid_input!("series can only be mounted in empty realms"));
+            }
+        }
+
+        let target_realm = {
+            let mut target_realm = parent_realm;
+            for RealmSpecifier { name, path_segment } in new_realms {
+                target_realm = Realm::add(NewRealm {
+                    name,
+                    path_segment,
+                    parent: Id::realm(target_realm.key),
+                }, context).await?
+            }
+            target_realm
+        };
+
+        let series = Series::load_by_opencast_id(oc_series_id, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`oc_series_id` does not refer to a valid Opencast series ID"))?;
+
+        BlockValue::add_series(
+            Id::realm(target_realm.key),
+            0,
+            NewSeriesBlock {
+                series: Id::series(series.key),
+                show_title: false,
+                order: VideoListOrder::NewToOld,
+            },
+            context,
+        ).await
     }
 }

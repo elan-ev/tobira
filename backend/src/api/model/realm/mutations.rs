@@ -209,9 +209,15 @@ pub(crate) struct UpdateRealm {
 
 #[derive(juniper::GraphQLInputObject)]
 pub(crate) struct NewRealm {
-    parent: Id,
-    name: String,
-    path_segment: String,
+    pub(crate) parent: Id,
+    pub(crate) name: String,
+    pub(crate) path_segment: String,
+}
+
+#[derive(Clone, juniper::GraphQLInputObject)]
+pub(crate) struct RealmSpecifier {
+    pub(crate) name: String,
+    pub(crate) path_segment: String,
 }
 
 #[derive(juniper::GraphQLObject)]

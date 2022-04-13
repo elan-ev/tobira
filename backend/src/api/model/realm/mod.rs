@@ -11,7 +11,7 @@ use super::block::BlockValue;
 
 mod mutations;
 
-pub(crate) use mutations::{ChildIndex, NewRealm, RemovedRealm, UpdateRealm};
+pub(crate) use mutations::{ChildIndex, NewRealm, RemovedRealm, UpdateRealm, RealmSpecifier};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]

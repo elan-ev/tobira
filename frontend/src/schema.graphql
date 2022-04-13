@@ -87,6 +87,12 @@ type Mutation {
   updateVideoBlock(id: ID!, set: UpdateVideoBlock!): Block!
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
+  """
+    Atomically mount a series into an (empty) realm;
+    Creates all the necessary realms on the path to the target
+    and adds a block with the given series at the leaf.
+  """
+  mountSeries(ocSeriesId: String!, parentRealmPath: String!, newRealms: [RealmSpecifier!]!): Realm!
 }
 
 input NewTextBlock {
@@ -269,6 +275,11 @@ type TitleBlock implements Block {
   content: String!
   id: ID!
   index: Int!
+}
+
+input RealmSpecifier {
+  name: String!
+  pathSegment: String!
 }
 
 "A node with a globally unique ID. Mostly useful for relay."

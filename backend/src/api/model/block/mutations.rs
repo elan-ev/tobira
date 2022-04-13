@@ -401,9 +401,9 @@ pub(crate) struct NewTextBlock {
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeriesBlock {
-    series: Id,
-    show_title: bool,
-    order: VideoListOrder,
+    pub(crate) series: Id,
+    pub(crate) show_title: bool,
+    pub(crate) order: VideoListOrder,
 }
 
 #[derive(GraphQLInputObject)]
