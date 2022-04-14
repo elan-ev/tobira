@@ -127,7 +127,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     const { t } = useTranslation();
 
     return (
-        <Item key={id} link={`/!${id.slice(2)}`}>
+        <Item key={id} link={`/!v/${id.slice(2)}`}>
             <Thumbnail
                 event={{
                     title,
