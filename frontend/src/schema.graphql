@@ -6,6 +6,7 @@
 type Event implements Node {
   id: ID!
   opencastId: String!
+  isLive: Boolean!
   title: String!
   description: String
   "Duration in ms."

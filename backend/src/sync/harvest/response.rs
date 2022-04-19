@@ -31,6 +31,7 @@ pub(super) enum HarvestItem {
         tracks: Vec<Track>,
         thumbnail: Option<String>,
         acl: Acl,
+        is_live: bool,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },

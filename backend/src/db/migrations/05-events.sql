@@ -29,6 +29,10 @@ create table events (
     series bigint references series on delete set null,
     part_of text,
 
+    -- If `true`, this is a live event. In that case, `created` is the planned
+    -- start date. Note: `true` does not imply it is _currently_ live streaming!
+    is_live bool,
+
     -- Permissions: roles that are allowed to read/write
     read_roles text[] not null,
     write_roles text[] not null,

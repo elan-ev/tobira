@@ -182,6 +182,7 @@ async fn store_in_db(
                 duration,
                 thumbnail,
                 acl,
+                is_live,
                 updated,
             } => {
                 let series_id = match &part_of {
@@ -198,6 +199,7 @@ async fn store_in_db(
                     ("opencast_id", &opencast_id),
                     ("series", &series_id),
                     ("part_of", &part_of),
+                    ("is_live", &is_live),
                     ("title", &title),
                     ("description", &description),
                     ("duration", &duration),

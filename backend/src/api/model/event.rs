@@ -23,6 +23,7 @@ pub(crate) struct Event {
     key: Key,
     series: Option<Key>,
     opencast_id: String,
+    is_live: bool,
 
     title: String,
     description: Option<String>,
@@ -60,6 +61,9 @@ impl Event {
     }
     fn opencast_id(&self) -> &str {
         &self.opencast_id
+    }
+    fn is_live(&self) -> bool {
+        self.is_live
     }
     fn title(&self) -> &str {
         &self.title
@@ -346,23 +350,25 @@ impl Event {
         })
     }
 
-    pub(crate) const COL_NAMES: &'static str = "id, series, opencast_id, title, description, \
-        duration, created, updated, creators, thumbnail, tracks, write_roles && $1 as can_write";
+    pub(crate) const COL_NAMES: &'static str = "id, series, opencast_id, is_live, \
+        title, description, duration, created, updated, creators, \
+        thumbnail, tracks, write_roles && $1 as can_write";
 
     pub(crate) fn from_row(row: Row) -> Self {
         Self {
             key: row.get(0),
             series: row.get(1),
             opencast_id: row.get(2),
-            title: row.get(3),
-            description: row.get(4),
-            duration: row.get(5),
-            created: row.get(6),
-            updated: row.get(7),
-            creators: row.get(8),
-            thumbnail: row.get(9),
-            tracks: row.get::<_, Vec<EventTrack>>(10).into_iter().map(Track::from).collect(),
-            can_write: row.get(11),
+            is_live: row.get(3),
+            title: row.get(4),
+            description: row.get(5),
+            duration: row.get(6),
+            created: row.get(7),
+            updated: row.get(8),
+            creators: row.get(9),
+            thumbnail: row.get(10),
+            tracks: row.get::<_, Vec<EventTrack>>(11).into_iter().map(Track::from).collect(),
+            can_write: row.get(12),
         }
     }
 }
