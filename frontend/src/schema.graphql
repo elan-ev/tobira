@@ -166,6 +166,8 @@ type SearchEvent implements Node {
   creators: [String!]!
   thumbnail: String
   duration: Int!
+  isLive: Boolean!
+  created: DateTimeUtc!
 }
 
 input ChildIndex {
