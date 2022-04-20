@@ -42,7 +42,9 @@ const query = graphql`
             items {
                 id
                 __typename
-                ... on SearchEvent { title description thumbnail duration creators seriesTitle }
+                ... on SearchEvent {
+                    title description thumbnail duration creators seriesTitle isLive created
+                }
                 ... on SearchRealm { name path ancestorNames }
             }
         }
@@ -94,6 +96,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     duration: unwrapUndefined(item.duration),
                     creators: unwrapUndefined(item.creators),
                     seriesTitle: unwrapUndefined(item.seriesTitle),
+                    isLive: unwrapUndefined(item.isLive),
+                    created: unwrapUndefined(item.created),
                 }}/>;
             } else if (item.__typename === "SearchRealm") {
                 return <SearchRealm key={item.id} {...{
@@ -119,10 +123,12 @@ type SearchEventProps = {
     duration: number;
     creators: readonly string[];
     seriesTitle: string | null;
+    isLive: boolean;
+    created: string;
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
-    id, title, description, thumbnail, duration, creators, seriesTitle,
+    id, title, description, thumbnail, duration, creators, seriesTitle, isLive, created,
 }) => {
     const { t } = useTranslation();
 
@@ -130,7 +136,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
         <Item key={id} link={`/!v/${id.slice(2)}`}>
             <Thumbnail
                 event={{
-                    title,
+                    ...{ title, isLive, created },
                     thumbnail: thumbnail ?? null,
                     duration: duration,
                     audioOnly: false, // TODO

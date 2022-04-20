@@ -66,7 +66,7 @@ const query = graphql`
                     startIndex endIndex
                 }
                 items {
-                    id title duration thumbnail created updated description
+                    id title duration thumbnail created updated description isLive
                     tracks { resolution }
                 }
             }

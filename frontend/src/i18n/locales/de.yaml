@@ -105,6 +105,7 @@ video:
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
   thumbnail-for: Vorschaubild für „{{video}}“
+  live: Live
 
 series:
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.

@@ -40,6 +40,7 @@ const seriesFragment = graphql`
             duration
             created
             creators
+            isLive
             tracks { resolution }
         }
     }
