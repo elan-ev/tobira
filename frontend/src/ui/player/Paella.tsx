@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Config, Manifest, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 
-import { Track } from ".";
+import { isHlsTrack, Track } from ".";
 import { SPEEDS } from "./consts";
 import { bug } from "../../util/err";
 
@@ -198,7 +198,6 @@ const PAELLA_CONFIG = {
 };
 
 const tracksToPaellaSources = (tracks: Track[], isLive: boolean): Stream["sources"] => {
-    const isHls = (t: Track) => t.mimetype === "application/x-mpegURL" || t.uri.endsWith("m3u8");
     const trackToSource = (t: Track): Source => {
         const [w, h] = t.resolution || bug("missing track resolution");
         return {
@@ -209,8 +208,8 @@ const tracksToPaellaSources = (tracks: Track[], isLive: boolean): Stream["source
         };
     };
 
-    const hlsTracks = tracks.filter(isHls);
-    const mp4Tracks = tracks.filter(t => !isHls(t));
+    const hlsTracks = tracks.filter(isHlsTrack);
+    const mp4Tracks = tracks.filter(t => !isHlsTrack(t));
 
     const hlsKey = isLive ? "hlsLive" : "hls";
 

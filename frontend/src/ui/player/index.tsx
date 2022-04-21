@@ -32,7 +32,7 @@ export const Player: React.FC<PlayerProps> = ({
     isLive,
 }) => {
     const flavors = new Set(tracks.map(t => t.flavor));
-    const usePaella = flavors.size > 1 || isLive;
+    const usePaella = flavors.size > 1;
 
     // Find a suitable aspect ratio for our height/width limiting below. For
     // Paella, we just use 16:9 because it's unclear what else we should use
@@ -60,7 +60,7 @@ export const Player: React.FC<PlayerProps> = ({
             <Suspense fallback={<PlayerFallback image={coverImage} />}>
                 {usePaella
                     ? <LoadPaellaPlayer {...{ duration, title, tracks, isLive }} />
-                    : <LoadPlyrPlayer {...{ title, tracks }} />}
+                    : <LoadPlyrPlayer {...{ title, tracks, isLive }} />}
             </Suspense>
         </div>
     );
@@ -107,3 +107,6 @@ const PlayerFallback: React.FC<{ image: string | null }> = ({ image }) => {
         </div>
     );
 };
+
+export const isHlsTrack = (t: Track) =>
+    t.mimetype === "application/x-mpegURL" || t.uri.endsWith(".m3u8");
