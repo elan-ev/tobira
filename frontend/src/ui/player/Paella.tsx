@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Config, Manifest, Mp4Source, Paella } from "paella-core";
+import { Config, Manifest, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 
 import { Track } from ".";
@@ -11,9 +11,10 @@ type PaellaPlayerProps = {
     title: string;
     duration: number;
     tracks: Track[];
+    isLive: boolean;
 };
 
-const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration }) => {
+const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration, isLive }) => {
     const ref = useRef<HTMLDivElement>(null);
     const paella = useRef<Paella>();
 
@@ -33,18 +34,14 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration }) 
             const manifest = {
                 metadata: { title, duration },
                 streams: [
-                    {
+                    ...presentationTracks.length === 0 ? [] : [{
                         content: "presentation",
-                        sources: {
-                            mp4: presentationTracks.map(trackToPaellaSource),
-                        },
-                    },
-                    {
+                        sources: tracksToPaellaSources(presentationTracks, isLive),
+                    }],
+                    ...presenterTracks.length === 0 ? [] : [{
                         content: "presenter",
-                        sources: {
-                            "mp4": presenterTracks.map(trackToPaellaSource),
-                        },
-                    },
+                        sources: tracksToPaellaSources(presenterTracks, isLive),
+                    }],
                 ],
             };
 
@@ -71,7 +68,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration }) 
             paellaSnapshot.unload();
             paella.current = undefined;
         };
-    }, [tracks, title, duration]);
+    }, [tracks, title, duration, isLive]);
 
     return (
         <div
@@ -148,6 +145,26 @@ const PAELLA_CONFIG = {
             enabled: true,
             order: 1,
         },
+        "es.upv.paella.hlsVideoFormat": {
+            "enabled": true,
+            "order": 0,
+            "corsConfig": {
+                "withCredentials": false,
+                "requestHeaders": {
+                    "Access-Control-Allow-Credentials": false,
+                },
+            },
+        },
+        "es.upv.paella.hlsLiveVideoFormat": {
+            "enabled": true,
+            "order": 0,
+            "corsConfig": {
+                "withCredentials": false,
+                "requestHeaders": {
+                    "Access-Control-Allow-Credentials": false,
+                },
+            },
+        },
 
         // Buttons on the left side
         "es.upv.paella.playPauseButton": {
@@ -180,13 +197,26 @@ const PAELLA_CONFIG = {
     },
 };
 
-const trackToPaellaSource = (t: Track): Mp4Source => {
-    const [w, h] = t.resolution || bug("missing track resolution");
+const tracksToPaellaSources = (tracks: Track[], isLive: boolean): Stream["sources"] => {
+    const isHls = (t: Track) => t.mimetype === "application/x-mpegURL" || t.uri.endsWith("m3u8");
+    const trackToSource = (t: Track): Source => {
+        const [w, h] = t.resolution || bug("missing track resolution");
+        return {
+            src: t.uri,
+            // TODO: what to do if `t.mimetype` is not mp4 or not specified?
+            mimetype: "video/mp4" as const,
+            res: { w, h },
+        };
+    };
+
+    const hlsTracks = tracks.filter(isHls);
+    const mp4Tracks = tracks.filter(t => !isHls(t));
+
+    const hlsKey = isLive ? "hlsLive" : "hls";
+
     return {
-        src: t.uri,
-        // TODO: what to do if `t.mimetype` is not mp4 or not specified?
-        mimetype: "video/mp4" as const,
-        res: { w, h },
+        ...mp4Tracks.length > 0 && { "mp4": mp4Tracks.map(trackToSource) },
+        ...hlsTracks.length > 0 && { [hlsKey]: hlsTracks.map(trackToSource) },
     };
 };
 

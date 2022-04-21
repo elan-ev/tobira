@@ -102,6 +102,7 @@ const query = graphql`
             updated
             duration
             thumbnail
+            isLive
             canWrite
             series { title, ...SeriesBlockSeriesData }
             tracks { uri flavor mimetype resolution }
@@ -147,6 +148,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
         <Player
             tracks={tracks as Track[]}
             title={title}
+            isLive={event.isLive}
             duration={event.duration}
             coverImage={event.thumbnail}
             css={{ margin: "0 auto" }}

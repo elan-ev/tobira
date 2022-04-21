@@ -13,6 +13,7 @@ export type PlayerProps = {
     duration: number;
     tracks: Track[];
     className?: string;
+    isLive: boolean;
 };
 
 export type Track = {
@@ -28,9 +29,10 @@ export const Player: React.FC<PlayerProps> = ({
     coverImage,
     title,
     duration,
+    isLive,
 }) => {
     const flavors = new Set(tracks.map(t => t.flavor));
-    const usePaella = flavors.size > 1;
+    const usePaella = flavors.size > 1 || isLive;
 
     // Find a suitable aspect ratio for our height/width limiting below. For
     // Paella, we just use 16:9 because it's unclear what else we should use
@@ -57,7 +59,7 @@ export const Player: React.FC<PlayerProps> = ({
         }}>
             <Suspense fallback={<PlayerFallback image={coverImage} />}>
                 {usePaella
-                    ? <LoadPaellaPlayer {...{ duration, title, tracks }} />
+                    ? <LoadPaellaPlayer {...{ duration, title, tracks, isLive }} />
                     : <LoadPlyrPlayer {...{ title, tracks }} />}
             </Suspense>
         </div>
