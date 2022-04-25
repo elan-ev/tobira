@@ -11,3 +11,5 @@ create table series (
     description text,
     updated timestamp with time zone not null
 );
+
+create index idx_series_opencast_id on series (opencast_id);
