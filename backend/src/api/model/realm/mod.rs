@@ -29,6 +29,7 @@ pub(crate) struct Realm {
     pub(crate) key: Key,
     parent_key: Option<Key>,
     name: String,
+    path_segment: String,
     full_path: String,
     index: i32,
     child_order: RealmOrder,
@@ -44,6 +45,7 @@ impl Realm {
             key: Key(0),
             parent_key: None,
             name: String::new(),
+            path_segment: String::new(),
             full_path: String::new(),
             index: 0,
             child_order: row.get(0),
@@ -63,28 +65,23 @@ impl Realm {
             return Ok(Some(Self::root(context).await?));
         }
 
-        let result = context.db
+        context.db
             .query_opt(
-                "select parent, name, full_path, index, child_order \
-                    from realms \
-                    where id = $1",
+                &format!(
+                    "select {} \
+                        from realms \
+                        where id = $1",
+                    Self::col_names("realms"),
+                ),
                 &[&key],
             )
             .await?
-            .map(|row| Self {
-                key,
-                parent_key: Some(row.get(0)),
-                name: row.get(1),
-                full_path: row.get(2),
-                index: row.get(3),
-                child_order: row.get(4),
-            });
-
-        Ok(result)
+            .map(Self::from_row)
+            .pipe(Ok)
     }
 
     pub(crate) fn col_names(from: &str) -> String {
-        ["id", "parent", "name", "full_path", "index", "child_order"]
+        ["id", "parent", "name", "path_segment", "full_path", "index", "child_order"]
             .map(|column| format!("{}.{}", from, column))
             .join(",")
     }
@@ -94,9 +91,10 @@ impl Realm {
             key: row.get(0),
             parent_key: row.get(1),
             name: row.get(2),
-            full_path: row.get(3),
-            index: row.get(4),
-            child_order: row.get(5),
+            path_segment: row.get(3),
+            full_path: row.get(4),
+            index: row.get(5),
+            child_order: row.get(6),
         }
     }
 
@@ -116,24 +114,19 @@ impl Realm {
             return Ok(None);
         }
 
-        let result = context.db
+        context.db
             .query_opt(
-                "select id, parent, name, index, child_order \
-                    from realms \
-                    where full_path = $1",
+                &format!(
+                    "select {} \
+                        from realms \
+                        where full_path = $1",
+                    Self::col_names("realms"),
+                ),
                 &[&path],
             )
             .await?
-            .map(|row| Self {
-                key: row.get(0),
-                parent_key: Some(row.get(1)),
-                name: row.get(2),
-                full_path: path,
-                index: row.get(3),
-                child_order: row.get(4),
-            });
-
-        Ok(result)
+            .map(Self::from_row)
+            .pipe(Ok)
     }
 }
 
@@ -168,6 +161,12 @@ impl Realm {
         self.child_order
     }
 
+    /// Returns the trailing segment of this realm's path, without any instances of `/`.
+    /// Empty for the root realm.
+    fn path_segment(&self) -> &str {
+        &self.path_segment
+    }
+
     /// Returns the full path of this realm. `"/"` for the root realm. For
     /// non-root realms, the path always starts with `/` and never has a
     /// trailing `/`.
@@ -187,28 +186,19 @@ impl Realm {
     /// (excluding both, the root realm and this realm). It starts with a
     /// direct child of the root and ends with the parent of `self`.
     async fn ancestors(&self, context: &Context) -> ApiResult<Vec<Realm>> {
-        let result = context.db
-            .query_raw(
-                "select id, parent, name, full_path, index, child_order \
-                    from ancestors_of_realm($1) \
-                    where height <> 0 and id <> 0",
+        context.db
+            .query_mapped(
+                &format!(
+                    "select {} \
+                        from ancestors_of_realm($1) as ancestors \
+                        where height <> 0 and id <> 0",
+                    Self::col_names("ancestors"),
+                ),
                 &[&self.key],
+                Self::from_row,
             )
             .await?
-            .map_ok(|row| {
-                Self {
-                    key: row.get(0),
-                    parent_key: Some(row.get(1)),
-                    name: row.get(2),
-                    full_path: row.get(3),
-                    index: row.get(4),
-                    child_order: row.get(5),
-                }
-            })
-            .try_collect()
-            .await?;
-
-        Ok(result)
+            .pipe(Ok)
     }
 
     /// Returns all immediate children of this realm. The children are always
@@ -216,29 +206,20 @@ impl Realm {
     /// different from `BY_INDEX`, the frontend is supposed to sort the
     /// children.
     async fn children(&self, context: &Context) -> ApiResult<Vec<Self>> {
-        let result = context.db
-            .query_raw(
-                "select id, name, full_path, index, child_order \
-                    from realms \
-                    where parent = $1 \
-                    order by index",
+        context.db
+            .query_mapped(
+                &format!(
+                    "select {} \
+                        from realms \
+                        where parent = $1 \
+                        order by index",
+                    Self::col_names("realms"),
+                ),
                 &[&self.key],
+                Self::from_row,
             )
             .await?
-            .map_ok(|row| {
-                Self {
-                    key: row.get(0),
-                    parent_key: Some(self.key),
-                    name: row.get(1),
-                    full_path: row.get(2),
-                    index: row.get(3),
-                    child_order: row.get(4),
-                }
-            })
-            .try_collect()
-            .await?;
-
-        Ok(result)
+            .pipe(Ok)
     }
 
     /// Returns the (content) blocks of this realm.

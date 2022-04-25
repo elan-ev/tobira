@@ -329,6 +329,11 @@ type Realm implements Node {
   """
   childOrder: RealmOrder!
   """
+    Returns the trailing segment of this realm's path, without any instances of `/`.
+    Empty for the root realm.
+  """
+  pathSegment: String!
+  """
     Returns the full path of this realm. `"/"` for the root realm. For
     non-root realms, the path always starts with `/` and never has a
     trailing `/`.
