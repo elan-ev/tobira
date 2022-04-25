@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
 import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
 import { useTitle } from "../../util";
@@ -7,7 +7,7 @@ import { useTitle } from "../../util";
 export const BASE_LOGO_MARGIN = "calc(var(--logo-margin) * var(--inner-header-height))";
 export const BUTTONS_WIDTH = 138;
 
-export const ButtonContainer: React.FC = ({ children }) => (
+export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{ display: "flex", height: "100%", position: "relative" }}>
         {children}
     </div>
@@ -17,6 +17,7 @@ type ActionIconProps = {
     onClick?: () => void;
     title: string;
     className?: string;
+    children: ReactNode;
 };
 
 /** A single button with icon in the header. */

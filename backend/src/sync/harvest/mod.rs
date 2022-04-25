@@ -212,7 +212,7 @@ async fn store_in_db(
 
                 new_search_items.push((Key(new_id as u64), IndexItemKind::Event));
 
-                debug!("Inserted or updated event {} ({})", opencast_id, title);
+                trace!("Inserted or updated event {} ({})", opencast_id, title);
                 upserted_events += 1;
             }
 
@@ -239,7 +239,7 @@ async fn store_in_db(
                 let query = "update events set series = $1 where part_of = $2 and series <> $1";
                 let updated_events = db.execute(query, &[&new_id, &opencast_id]).await?;
 
-                debug!("Inserted or updated series {} ({})", opencast_id, title);
+                trace!("Inserted or updated series {} ({})", opencast_id, title);
                 if updated_events != 0 {
                     debug!(
                         "Fixed foreign series key of {} event(s) after upserting series {} ({})",
@@ -291,7 +291,7 @@ fn check_affected_rows_removed(rows_affected: u64, entity: &str, opencast_id: &s
     // have it, then we don't have to do anything.
     match rows_affected {
         0 => debug!("The deleted {} {} from OC did not exist in our database", entity, opencast_id),
-        1 => debug!("Removed {} {}", entity, opencast_id),
+        1 => trace!("Removed {} {}", entity, opencast_id),
         _ => unreachable!("DB unique constraints violation when removing a {}", entity),
     }
 }

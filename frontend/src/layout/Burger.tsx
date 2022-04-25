@@ -1,5 +1,9 @@
+import { ReactNode } from "react";
+
+
 type BurgerMenuProps = {
     hide: () => void;
+    children: ReactNode;
 };
 
 export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, children }) => (

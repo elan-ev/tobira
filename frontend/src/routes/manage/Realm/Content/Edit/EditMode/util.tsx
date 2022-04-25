@@ -1,9 +1,9 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useFormContext } from "react-hook-form";
 
 
-export const Heading: React.FC = ({ children }) => <h3 css={{
+export const Heading: React.FC<{ children: ReactNode }> = ({ children }) => <h3 css={{
     marginTop: 8,
     marginBottom: 4,
 }}>

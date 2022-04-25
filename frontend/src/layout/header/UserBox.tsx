@@ -1,5 +1,5 @@
 import { TFunction } from "i18next";
-import React, { MutableRefObject, KeyboardEvent } from "react";
+import React, { MutableRefObject, KeyboardEvent, ReactNode } from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -59,12 +59,12 @@ type Menu = {
 };
 
 type LoggedOutProps = {
-    t: TFunction;
     menu: Menu;
 };
 
 /** User-related UI in header when the user is NOT logged in. */
-const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => {
+const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
+    const { t } = useTranslation();
     const ref = useRef(null);
 
     return (
@@ -104,20 +104,20 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ t, menu }) => {
                 }}
             ><FiLogIn />{t("user.login")}</Link>
             <UserSettingsIcon t={t} onClick={menu.toggle} />
-            {menu.isOpen && <Menu close={menu.close} t={t} container={ref} />}
+            {menu.isOpen && <Menu close={menu.close} container={ref} />}
         </div>
     );
 };
 
 
 type LoggedInProps = {
-    t: TFunction;
     user: User;
     menu: Menu;
 };
 
 /** User-related UI in header when the user IS logged in. */
-const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => {
+const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
+    const { t } = useTranslation();
     const ref = useRef(null);
 
     return (
@@ -162,7 +162,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ t, user, menu }) => {
             </div>
 
             {/* Show menu if it is opened */}
-            {menu.isOpen && <Menu close={menu.close} t={t} container={ref} />}
+            {menu.isOpen && <Menu close={menu.close} container={ref} />}
         </div>
     );
 };
@@ -186,7 +186,6 @@ const UserSettingsIcon: React.FC<UserSettingsIconProps> = ({ t, onClick }) => (
 
 
 type MenuProps = {
-    t: TFunction;
     close: () => void;
     container: MutableRefObject<Node | null>;
 };
@@ -195,7 +194,9 @@ type MenuProps = {
  * A menu with some user-related settings/actions that floats on top of the page
  * and closes itself on click outside of it.
  */
-const Menu: React.FC<MenuProps> = ({ t, close, container }) => {
+const Menu: React.FC<MenuProps> = ({ close, container }) => {
+    const { t } = useTranslation();
+
     type State = "main" | "language";
     const [state, setState] = useState<State>("main");
 
@@ -294,6 +295,7 @@ type MenuItemProps = {
     htmlLink?: boolean;
     borderBottom?: boolean;
     borderTop?: boolean;
+    children: ReactNode;
 };
 
 /** A single item in the user menu. */

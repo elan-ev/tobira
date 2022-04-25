@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp } from "react-icons/fi";
 import { graphql, VariablesOf } from "react-relay";
@@ -332,6 +332,7 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => 
 type PageLinkProps = {
     vars: VariablesOf<VideoManageQuery>;
     disabled: boolean;
+    children: ReactNode;
 };
 
 const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (

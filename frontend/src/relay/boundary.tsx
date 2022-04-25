@@ -99,7 +99,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
 
 // The actual error boundary is a class component, but we want to use the router
 // control (which is only available via hook). So we have this wrapper.
-export const GraphQLErrorBoundary: React.FC = ({ children }) => {
+export const GraphQLErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => {
     const router = useRouter();
     return <GraphQLErrorBoundaryImpl router={router}>{children}</GraphQLErrorBoundaryImpl>;
 };

@@ -8,7 +8,7 @@ import { CenteredContent } from ".";
 import { Card } from "./Card";
 
 
-export const ErrorBox: React.FC = ({ children }) => (
+export const ErrorBox: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{ marginTop: 8 }}>
         <Card kind="error">{children}</Card>
     </div>
@@ -35,6 +35,7 @@ export const NotAuthorized: React.FC = () => {
 
 type ErrorPageProps = {
     title: string;
+    children: ReactNode;
 };
 
 export const ErrorPage: React.FC<ErrorPageProps> = ({ title, children }) => (

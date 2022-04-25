@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { ReactNode, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useForm } from "react-hook-form";
@@ -43,7 +43,7 @@ export const DangerZone: React.FC<Props> = ({ fragRef }) => {
     const { t } = useTranslation();
     const realm = useFragment(fragment, fragRef);
 
-    const Section: React.FC = ({ children }) => (
+    const Section: React.FC<{ children: ReactNode }> = ({ children }) => (
         <div css={{
             padding: "16px 16px",
             "&:not(:last-child)": {

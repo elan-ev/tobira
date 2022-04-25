@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { useContext } from "react";
 import { graphql } from "react-relay/hooks";
 
@@ -23,6 +23,7 @@ export const useUser = (): UserState => useContext(UserContext);
 
 export type Props = {
     data?: UserData$data["currentUser"];
+    children: ReactNode;
 };
 
 export const UserProvider: React.FC<Props> = ({ data, children }) => {

@@ -1,4 +1,4 @@
-import { ReactElement } from "react";
+import { ReactElement, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { FiFilm, FiUpload, FiVideo } from "react-icons/fi";
 import { HiOutlineTemplate } from "react-icons/hi";
@@ -88,6 +88,7 @@ const Manage: React.FC = () => {
 
 type GridTileProps = {
     link?: string;
+    children: ReactNode;
 };
 
 const GridTile: React.FC<GridTileProps> = ({ link, children }) => {

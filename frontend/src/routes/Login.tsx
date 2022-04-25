@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
@@ -231,6 +231,7 @@ const LoginBox: React.FC = () => {
 
 type FieldProps = {
     isEmpty: boolean;
+    children: ReactNode;
 };
 
 const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {

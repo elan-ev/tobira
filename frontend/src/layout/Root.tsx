@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
@@ -19,6 +19,7 @@ export const MAIN_PADDING = 16;
 
 type Props = {
     nav: NavItems;
+    children: ReactNode;
 };
 
 export const Root: React.FC<Props> = ({ nav, children }) => {
@@ -72,6 +73,7 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
 
 type OuterProps = {
     disableScrolling?: boolean;
+    children: ReactNode;
 };
 
 export const Outer: React.FC<OuterProps> = ({ children, disableScrolling = false }) => (
@@ -88,7 +90,7 @@ export const Outer: React.FC<OuterProps> = ({ children, disableScrolling = false
     }}>{children}</div>
 );
 
-const Main: React.FC = ({ children }) => (
+const Main: React.FC<{ children: ReactNode }> = ({ children }) => (
     <main css={{
         margin: OUTER_CONTAINER_MARGIN,
         padding: MAIN_PADDING,

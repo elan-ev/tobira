@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { FiChevronRight, FiHome } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 
@@ -53,6 +53,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
 type SegmentProps = {
     /** The link target or `undefined` if this item segment is active */
     target?: string;
+    children: ReactNode;
 };
 
 const TEXT_STYLE = {
