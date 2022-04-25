@@ -65,7 +65,7 @@ impl Realm {
             return Ok(Some(Self::root(context).await?));
         }
 
-        let result = context.db
+        context.db
             .query_opt(
                 &format!(
                     "select {} \
@@ -76,9 +76,8 @@ impl Realm {
                 &[&key],
             )
             .await?
-            .map(Self::from_row);
-
-        Ok(result)
+            .map(Self::from_row)
+            .pipe(Ok)
     }
 
     pub(crate) fn col_names(from: &str) -> String {
@@ -115,7 +114,7 @@ impl Realm {
             return Ok(None);
         }
 
-        let result = context.db
+        context.db
             .query_opt(
                 &format!(
                     "select {} \
@@ -126,9 +125,8 @@ impl Realm {
                 &[&path],
             )
             .await?
-            .map(Self::from_row);
-
-        Ok(result)
+            .map(Self::from_row)
+            .pipe(Ok)
     }
 }
 
