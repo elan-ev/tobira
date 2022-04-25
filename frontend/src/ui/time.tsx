@@ -9,6 +9,7 @@ type RelativeDateProps = {
 export const RelativeDate: React.FC<RelativeDateProps> = ({ date }) => {
     const { i18n } = useTranslation();
     const secsAgo = Math.floor((Date.now() - date.getTime()) / 1000);
+    const secsDiff = Math.abs(secsAgo);
 
     const MINUTE = 60;
     const HOUR = 60 * MINUTE;
@@ -19,17 +20,17 @@ export const RelativeDate: React.FC<RelativeDateProps> = ({ date }) => {
 
     const prettyDate = (() => {
         const intl = new Intl.RelativeTimeFormat(i18n.language);
-        if (secsAgo <= 55) {
+        if (secsDiff <= 55) {
             return intl.format(-secsAgo, "second");
-        } else if (secsAgo <= 55 * MINUTE) {
+        } else if (secsDiff <= 55 * MINUTE) {
             return intl.format(-Math.round(secsAgo / MINUTE), "minute");
-        } else if (secsAgo <= 23 * HOUR) {
+        } else if (secsDiff <= 23 * HOUR) {
             return intl.format(-Math.round(secsAgo / HOUR), "hour");
-        } else if (secsAgo <= 6 * DAY) {
+        } else if (secsDiff <= 6 * DAY) {
             return intl.format(-Math.round(secsAgo / DAY), "day");
-        } else if (secsAgo <= 3.5 * WEEK) {
+        } else if (secsDiff <= 3.5 * WEEK) {
             return intl.format(-Math.round(secsAgo / WEEK), "week");
-        } else if (secsAgo <= 11 * MONTH) {
+        } else if (secsDiff <= 11 * MONTH) {
             return intl.format(-Math.round(secsAgo / MONTH), "month");
         } else {
             return intl.format(-Math.round(secsAgo / YEAR), "year");
