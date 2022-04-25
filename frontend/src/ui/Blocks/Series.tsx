@@ -40,6 +40,7 @@ const seriesFragment = graphql`
             duration
             created
             creators
+            isLive
             tracks { resolution }
         }
     }
@@ -202,7 +203,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                     whiteSpace: "nowrap",
                 },
             }}>
-                <span css={{
+                {event.creators.length > 0 && <span css={{
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     "&:after": {
@@ -210,7 +211,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                         padding: "0 8px",
                     },
                     // TODO: maybe find something better than `join`
-                }}>{event.creators.join(", ")}</span>
+                }}>{event.creators.join(", ")}</span>}
                 {/* `new Date` is well defined for our ISO Date strings */}
                 <RelativeDate date={new Date(event.created)} />
             </div>

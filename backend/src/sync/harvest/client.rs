@@ -31,7 +31,7 @@ impl HarvestClient {
         // Prepare HTTP client
         let https = HttpsConnectorBuilder::new()
             .with_native_roots()
-            .https_only()
+            .https_or_http()
             .enable_http1()
             .enable_http2()
             .build();

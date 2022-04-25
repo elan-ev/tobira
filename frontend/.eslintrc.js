@@ -58,7 +58,6 @@ module.exports = {
         "max-len": ["warn", { code: 100 }],
         "max-statements-per-line": "warn",
         "multiline-comment-style": ["warn", "separate-lines"],
-        "multiline-ternary": ["warn", "always-multiline"],
         "no-mixed-spaces-and-tabs": "warn",
         "no-multi-spaces": "warn",
         "no-multiple-empty-lines": ["warn", { max: 5 }],

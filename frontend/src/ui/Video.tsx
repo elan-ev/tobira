@@ -1,6 +1,6 @@
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
-import { FiFilm, FiPlay, FiVolume2 } from "react-icons/fi";
+import { FiFilm, FiPlay, FiRadio, FiVolume2 } from "react-icons/fi";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
@@ -9,6 +9,8 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
         title: string;
         thumbnail: string | null;
         duration: number;
+        isLive: boolean;
+        created: string;
     } & (
         { tracks: readonly { resolution: readonly number[] | null }[] }
         | { audioOnly: boolean }
@@ -56,6 +58,35 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         );
     }
 
+    const overlayBaseCss = {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        position: "absolute",
+        right: 6,
+        bottom: 6,
+        borderRadius: 4,
+        padding: "1px 5px",
+        fontSize: 14,
+        backgroundColor: "hsla(0, 0%, 0%, 0.75)",
+        color: "white",
+    } as const;
+    let overlay;
+    if (event.isLive) {
+        // TODO: we might want to have a better "is currently live" detection.
+        const created = new Date(event.created);
+        const currentlyLive = created < new Date();
+        overlay = <div css={{
+            ...overlayBaseCss,
+            ...currentlyLive ? { backgroundColor: "rgba(200, 0, 0, 0.9)" } : {},
+        }}>
+            {currentlyLive && <FiRadio css={{ fontSize: 19, strokeWidth: 1.4 }} />}
+            {t("video.live")}
+        </div>;
+    } else {
+        overlay = <div css={overlayBaseCss}>{formatDuration(event.duration)}</div>;
+    }
+
     return (
         <div css={{
             position: "relative",
@@ -68,17 +99,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         }} {...rest}>
             {inner}
             {active && <ActiveIndicator />}
-            <div css={{
-                position: "absolute",
-                right: 6,
-                bottom: 6,
-                backgroundColor: "hsla(0, 0%, 0%, 0.75)",
-                border: "1px solid black",
-                borderRadius: 4,
-                padding: "0 4px",
-                color: "white",
-                fontSize: 14,
-            }}>{formatDuration(event.duration)}</div>
+            {overlay}
         </div>
     );
 };

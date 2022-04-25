@@ -6,6 +6,7 @@
 type Event implements Node {
   id: ID!
   opencastId: String!
+  isLive: Boolean!
   title: String!
   description: String
   "Duration in ms."
@@ -165,6 +166,8 @@ type SearchEvent implements Node {
   creators: [String!]!
   thumbnail: String
   duration: Int!
+  isLive: Boolean!
+  created: DateTimeUtc!
 }
 
 input ChildIndex {

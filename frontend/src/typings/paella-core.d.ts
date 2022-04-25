@@ -62,21 +62,28 @@ declare module "paella-core" {
             // TODO: `related`
         };
 
-        streams: {
-            content: string;
-            sources: {
-                mp4?: Mp4Source[];
-            };
-            // TODO: `role`
-        }[];
+        streams: Stream[];
 
         // TODO: `frameList`
         // TODO: `captions`
     }
 
+    export interface Stream {
+        content: string;
+        sources: {
+            mp4?: Source[];
+            hls?: Source[];
+            hlsLive?: Source[];
+        };
+        // TODO: `role`
+    }
+
     // https://github.com/polimediaupv/paella-core/blob/main/doc/mp4-video-plugin.md
-    export interface Mp4Source {
+    // https://github.com/polimediaupv/paella-core/blob/main/doc/hls-video-plugin.md
+    // https://github.com/polimediaupv/paella-core/blob/main/doc/hls-live-video-plugin.md
+    export interface Source {
         src: string;
+        // Currently unused...
         mimetype: "video/mp4";
         res: {
             w: number;

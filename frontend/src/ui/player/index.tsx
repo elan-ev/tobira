@@ -13,6 +13,7 @@ export type PlayerProps = {
     duration: number;
     tracks: Track[];
     className?: string;
+    isLive: boolean;
 };
 
 export type Track = {
@@ -28,6 +29,7 @@ export const Player: React.FC<PlayerProps> = ({
     coverImage,
     title,
     duration,
+    isLive,
 }) => {
     const flavors = new Set(tracks.map(t => t.flavor));
     const usePaella = flavors.size > 1;
@@ -57,8 +59,8 @@ export const Player: React.FC<PlayerProps> = ({
         }}>
             <Suspense fallback={<PlayerFallback image={coverImage} />}>
                 {usePaella
-                    ? <LoadPaellaPlayer {...{ duration, title, tracks }} />
-                    : <LoadPlyrPlayer {...{ title, tracks }} />}
+                    ? <LoadPaellaPlayer {...{ duration, title, tracks, isLive }} />
+                    : <LoadPlyrPlayer {...{ title, tracks, isLive }} />}
             </Suspense>
         </div>
     );
@@ -105,3 +107,6 @@ const PlayerFallback: React.FC<{ image: string | null }> = ({ image }) => {
         </div>
     );
 };
+
+export const isHlsTrack = (t: Track) =>
+    t.mimetype === "application/x-mpegURL" || t.uri.endsWith(".m3u8");

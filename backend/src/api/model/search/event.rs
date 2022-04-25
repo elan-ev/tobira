@@ -1,3 +1,5 @@
+use chrono::{DateTime, Utc};
+
 use crate::{
     api::{Context, Node, Id, NodeValue},
     search,
@@ -39,5 +41,13 @@ impl search::Event {
 
     fn duration(&self) -> i32 {
         self.duration
+    }
+
+    fn is_live(&self) -> bool {
+        self.is_live
+    }
+
+    fn created(&self) -> DateTime<Utc> {
+        self.created
     }
 }

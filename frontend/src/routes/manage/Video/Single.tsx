@@ -76,6 +76,7 @@ const query = graphql`
             updated
             duration
             canWrite
+            isLive
             series { title ...SeriesBlockSeriesData }
             tracks { flavor resolution }
             hostRealms { id isRoot name path }

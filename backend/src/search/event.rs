@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use deadpool_postgres::Transaction;
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
@@ -22,6 +23,8 @@ pub(crate) struct Event {
     pub(crate) creators: Vec<String>,
     pub(crate) thumbnail: Option<String>,
     pub(crate) duration: i32,
+    pub(crate) created: DateTime<Utc>,
+    pub(crate) is_live: bool,
 
     // These are filterable. All roles are hex encoded to work around Meilis
     // inability to filter case-sensitively. For roles, we have to compare
@@ -54,6 +57,7 @@ impl Event {
         events.series, series.title, \
         events.title, events.description, events.creators, \
         events.thumbnail, events.duration, \
+        events.is_live, events.created, \
         events.read_roles, events.write_roles\
     ";
 
@@ -68,8 +72,10 @@ impl Event {
             creators: row.get(5),
             thumbnail: row.get(6),
             duration: row.get(7),
-            read_roles: util::encode_acl(&row.get::<_, Vec<String>>(8)),
-            write_roles: util::encode_acl(&row.get::<_, Vec<String>>(9)),
+            is_live: row.get(8),
+            created: row.get(9),
+            read_roles: util::encode_acl(&row.get::<_, Vec<String>>(10)),
+            write_roles: util::encode_acl(&row.get::<_, Vec<String>>(11)),
         }
     }
 
