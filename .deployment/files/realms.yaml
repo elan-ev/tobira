@@ -21,6 +21,8 @@ blocks:
   - series:
       by_uuid: 94ecfeed-aa7d-4a5c-912b-58b5891543f4
   - series:
+      by_uuid: 089944f4-e69c-4eb6-81fd-44b8b9924f0b
+  - series:
       by_uuid: ec912549-5bac-4f97-b72a-ace807047aca
 children:
   - path: 'campus'
