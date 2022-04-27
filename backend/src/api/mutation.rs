@@ -165,7 +165,7 @@ impl Mutation {
         BlockValue::remove(id, context).await
     }
 
-    /// Atomically mount a series into an (empty) realm;
+    /// Atomically mount a series into an (empty) realm.
     /// Creates all the necessary realms on the path to the target
     /// and adds a block with the given series at the leaf.
     async fn mount_series(
@@ -173,8 +173,14 @@ impl Mutation {
         parent_realm_path: String,
         #[graphql(default = vec![])]
         new_realms: Vec<RealmSpecifier>,
-        context: &Context
+        context: &Context,
     ) -> ApiResult<Realm> {
+        // Note: This is a rather ad hoc, use-case specific compound mutation.
+        // So for the sake of simplicity and being able to change it fast
+        // we just reuse all the mutations we already have.
+        // Once this code stabilizes, we might want to change that,
+        // because doing it like this duplicates some work
+        // like checking moderator rights, input validity, etc.
 
         let parent_realm = Realm::load_by_path(parent_realm_path, context)
             .await?
@@ -187,6 +193,10 @@ impl Mutation {
             }
         }
 
+        let series = Series::load_by_opencast_id(oc_series_id, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`ocSeriesId` does not refer to a valid Opencast series ID"))?;
+
         let target_realm = {
             let mut target_realm = parent_realm;
             for RealmSpecifier { name, path_segment } in new_realms {
@@ -198,10 +208,6 @@ impl Mutation {
             }
             target_realm
         };
-
-        let series = Series::load_by_opencast_id(oc_series_id, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`oc_series_id` does not refer to a valid Opencast series ID"))?;
 
         BlockValue::add_series(
             Id::realm(target_realm.key),

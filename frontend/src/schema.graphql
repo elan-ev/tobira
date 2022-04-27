@@ -88,7 +88,7 @@ type Mutation {
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
   """
-    Atomically mount a series into an (empty) realm;
+    Atomically mount a series into an (empty) realm.
     Creates all the necessary realms on the path to the target
     and adds a block with the given series at the leaf.
   """
