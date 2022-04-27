@@ -9,7 +9,7 @@ use crate::{
 
 
 pub(crate) struct Series {
-    key: Key,
+    pub(crate) key: Key,
     title: String,
     description: Option<String>,
 }
