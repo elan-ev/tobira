@@ -215,6 +215,7 @@ type Series implements Node {
   id: ID!
   title: String!
   description: String
+  opencastId: String!
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
 }
 

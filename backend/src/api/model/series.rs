@@ -10,6 +10,7 @@ use crate::{
 
 pub(crate) struct Series {
     pub(crate) key: Key,
+    opencast_id: String,
     title: String,
     description: Option<String>,
 }
@@ -33,6 +34,10 @@ impl Series {
 
     fn description(&self) -> Option<&str> {
         self.description.as_deref()
+    }
+
+    fn opencast_id(&self) -> &str {
+        &self.opencast_id
     }
 
     #[graphql(arguments(order(default = Default::default())))]
@@ -91,13 +96,14 @@ impl Series {
             .pipe(Ok)
     }
 
-    const COL_NAMES: &'static str = "id, title, description";
+    const COL_NAMES: &'static str = "id, opencast_id, title, description";
 
     fn from_row(row: Row) -> Self {
         Self {
             key: row.get(0),
-            title: row.get(1),
-            description: row.get(2),
+            opencast_id: row.get(1),
+            title: row.get(2),
+            description: row.get(3),
         }
     }
 }
