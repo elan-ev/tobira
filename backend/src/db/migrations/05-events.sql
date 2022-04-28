@@ -31,7 +31,7 @@ create table events (
 
     -- If `true`, this is a live event. In that case, `created` is the planned
     -- start date. Note: `true` does not imply it is _currently_ live streaming!
-    is_live bool,
+    is_live bool not null,
 
     -- Permissions: roles that are allowed to read/write
     read_roles text[] not null,
