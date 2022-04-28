@@ -2,7 +2,17 @@ use juniper::graphql_object;
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, err::ApiResult, Id, model::event::{Event, EventSortOrder}, Node, NodeValue},
+    api::{
+        Context,
+        err::ApiResult,
+        Id,
+        model::{
+            realm::Realm,
+            event::{Event, EventSortOrder}
+        },
+        Node,
+        NodeValue,
+    },
     db::{types::Key},
     prelude::*,
 };
@@ -43,6 +53,21 @@ impl Series {
     #[graphql(arguments(order(default = Default::default())))]
     async fn events(&self, order: EventSortOrder, context: &Context) -> ApiResult<Vec<Event>> {
         Event::load_for_series(self.key, order, context).await
+    }
+
+    /// Returns a list of realms where this series is referenced (via some kind of block).
+    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        let cols = Realm::col_names("realms");
+        let query = format!("\
+            select {cols} \
+            from realms \
+            inner join blocks \
+                on realms.id = blocks.realm_id and
+                type = 'series' and blocks.series_id = $1 \
+        ");
+        context.db.query_mapped(&query, dbargs![&self.key], Realm::from_row)
+            .await?
+            .pipe(Ok)
     }
 }
 
