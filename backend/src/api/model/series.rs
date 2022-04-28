@@ -2,7 +2,17 @@ use juniper::graphql_object;
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, err::ApiResult, Id, model::event::{Event, EventSortOrder}, Node, NodeValue},
+    api::{
+        Context,
+        err::ApiResult,
+        Id,
+        model::{
+            realm::Realm,
+            event::{Event, EventSortOrder}
+        },
+        Node,
+        NodeValue,
+    },
     db::{types::Key},
     prelude::*,
 };
@@ -10,6 +20,7 @@ use crate::{
 
 pub(crate) struct Series {
     pub(crate) key: Key,
+    opencast_id: String,
     title: String,
     description: Option<String>,
 }
@@ -35,9 +46,28 @@ impl Series {
         self.description.as_deref()
     }
 
+    fn opencast_id(&self) -> &str {
+        &self.opencast_id
+    }
+
     #[graphql(arguments(order(default = Default::default())))]
     async fn events(&self, order: EventSortOrder, context: &Context) -> ApiResult<Vec<Event>> {
         Event::load_for_series(self.key, order, context).await
+    }
+
+    /// Returns a list of realms where this series is referenced (via some kind of block).
+    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        let cols = Realm::col_names("realms");
+        let query = format!("\
+            select {cols} \
+            from realms \
+            inner join blocks \
+                on realms.id = blocks.realm_id and
+                type = 'series' and blocks.series_id = $1 \
+        ");
+        context.db.query_mapped(&query, dbargs![&self.key], Realm::from_row)
+            .await?
+            .pipe(Ok)
     }
 }
 
@@ -91,13 +121,14 @@ impl Series {
             .pipe(Ok)
     }
 
-    const COL_NAMES: &'static str = "id, title, description";
+    const COL_NAMES: &'static str = "id, opencast_id, title, description";
 
     fn from_row(row: Row) -> Self {
         Self {
             key: row.get(0),
-            title: row.get(1),
-            description: row.get(2),
+            opencast_id: row.get(1),
+            title: row.get(2),
+            description: row.get(3),
         }
     }
 }

@@ -215,7 +215,10 @@ type Series implements Node {
   id: ID!
   title: String!
   description: String
+  opencastId: String!
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [Event!]!
+  "Returns a list of realms where this series is referenced (via some kind of block)."
+  hostRealms: [Realm!]!
 }
 
 type SearchRealm implements Node {
