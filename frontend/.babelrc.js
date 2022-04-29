@@ -20,14 +20,14 @@ module.exports = {
         [
             "@babel/preset-typescript",
             {
-                "allowDeclareFields": true,
+                allowDeclareFields: true,
             },
         ],
         [
             "@babel/preset-react",
             {
-                "runtime": "automatic",
-                "importSource": "@emotion/react",
+                runtime: "automatic",
+                importSource: "@emotion/react",
             },
         ],
     ],
