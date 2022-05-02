@@ -6,28 +6,6 @@ use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
 
-/// Represents the `event_track` type defined in `5-events.sql`.
-#[derive(Debug, FromSql, ToSql)]
-#[postgres(name = "event_track")]
-pub struct EventTrack {
-    pub uri: String,
-    pub flavor: String,
-    pub mimetype: Option<String>,
-    pub resolution: Option<[i32; 2]>,
-}
-
-/// Represents the `series_state` type defined in `04-series.sql`.
-#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
-#[postgres(name = "series_state")]
-#[graphql(description = "Represents the different states a series can be in during its lifecycle")]
-pub enum SeriesState {
-    #[postgres(name = "ready")]
-    Ready,
-    #[postgres(name = "waiting")]
-    Waiting,
-}
-
-
 /// Our primary database ID type, which we call "key". In the database, it's a
 /// `bigint` (`i64`), but we have a separate Rust type for it for several
 /// reasons. Implements `ToSql` and `FromSql` by casting to/from `i64`.
@@ -68,4 +46,26 @@ impl fmt::Debug for Key {
         let mut buf = [0; 11];
         write!(f, "Key({} :: {})", self.0 as i64, self.to_base64(&mut buf))
     }
+}
+
+
+/// Represents the `event_track` type defined in `5-events.sql`.
+#[derive(Debug, FromSql, ToSql)]
+#[postgres(name = "event_track")]
+pub struct EventTrack {
+    pub uri: String,
+    pub flavor: String,
+    pub mimetype: Option<String>,
+    pub resolution: Option<[i32; 2]>,
+}
+
+/// Represents the `series_state` type defined in `04-series.sql`.
+#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
+#[postgres(name = "series_state")]
+#[graphql(description = "Represents the different states a series can be in during its lifecycle")]
+pub enum SeriesState {
+    #[postgres(name = "ready")]
+    Ready,
+    #[postgres(name = "waiting")]
+    Waiting,
 }
