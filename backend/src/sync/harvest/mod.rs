@@ -7,7 +7,7 @@ use hyper::http::status::StatusCode;
 use tokio_postgres::types::ToSql;
 
 use crate::{
-    db::{types::{EventTrack, Key}, DbConnection},
+    db::{types::{EventTrack, SeriesState, Key}, DbConnection},
     prelude::*,
     search::{self, IndexItemKind}, config::Config,
 };
@@ -230,6 +230,7 @@ async fn store_in_db(
                 // We first simply upsert the series.
                 let new_id = upsert(db, "series", "opencast_id", &[
                     ("opencast_id", &opencast_id),
+                    ("state", &SeriesState::Ready),
                     ("title", &title),
                     ("description", &description),
                     ("updated", &updated),

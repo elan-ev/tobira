@@ -10,7 +10,7 @@ use crate::{
     api::{
         Context, Cursor, Id, Node, NodeValue,
         err::{self, ApiResult, invalid_input},
-        model::{series::Series, realm::Realm},
+        model::{series::{SeriesValue, ReadySeries}, realm::Realm},
     },
     db::types::{EventTrack, Key},
     prelude::*,
@@ -95,9 +95,17 @@ impl Event {
         self.can_write
     }
 
-    async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
+    async fn series(&self, context: &Context) -> ApiResult<Option<ReadySeries>> {
         if let Some(series) = self.series {
-            Series::load_by_id(Id::series(series), context).await
+            let series = SeriesValue::load_by_id(Id::series(series), context)
+                .await?
+                .map(|series| match series {
+                    SeriesValue::ReadySeries(series) => series,
+                    // We currently assume (and guarantee) that a series that is referenced by an event
+                    // is completely synced before that event.
+                    SeriesValue::WaitingSeries(_) => unreachable!(),
+                });
+            Ok(series)
         } else {
             Ok(None)
         }

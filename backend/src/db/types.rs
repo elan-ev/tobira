@@ -1,6 +1,7 @@
 use std::fmt;
 
 use bytes::BytesMut;
+use juniper::GraphQLEnum;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +14,17 @@ pub struct EventTrack {
     pub flavor: String,
     pub mimetype: Option<String>,
     pub resolution: Option<[i32; 2]>,
+}
+
+/// Represents the `series_state` type defined in `04-series.sql`.
+#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
+#[postgres(name = "series_state")]
+#[graphql(description = "Represents the different states a series can be in during its lifecycle")]
+pub enum SeriesState {
+    #[postgres(name = "ready")]
+    Ready,
+    #[postgres(name = "waiting")]
+    Waiting,
 }
 
 

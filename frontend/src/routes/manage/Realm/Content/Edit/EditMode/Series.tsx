@@ -36,13 +36,19 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
 
     const { series: allSeries } = useFragment(graphql`
         fragment SeriesEditModeSeriesData on Query {
-            series { id title }
+            series {
+                id
+                __typename
+                ... on ReadySeries {
+                    title
+                }
+            }
         }
     `, useContext(ContentManageQueryContext) as SeriesEditModeSeriesData$key);
 
     const { series, showTitle, order } = useFragment(graphql`
         fragment SeriesEditModeBlockData on SeriesBlock {
-            series { id }
+            series { id __typename}
             showTitle
             order
         }
@@ -105,9 +111,12 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             <option value="" hidden>
                 {t("manage.realm.content.series.series.none")}
             </option>
-            {allSeries.map(({ id, title }) => (
-                <option key={id} value={id}>{title}</option>
-            ))}
+            {series && series.__typename !== "ReadySeries" && <option value={series.id} hidden>
+                {t("manage.realm.content.series.series.waiting")}
+            </option>}
+            {allSeries
+                .filter(series => series.__typename === "ReadySeries")
+                .map(({ id, title }) => <option key={id} value={id}>{title}</option>)}
         </Select>
         <ShowTitle showTitle={showTitle} />
     </EditModeForm>;

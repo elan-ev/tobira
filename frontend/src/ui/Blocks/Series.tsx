@@ -1,9 +1,9 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import { keyOfId, compareByKey, swap } from "../../util";
-import { match } from "../../util";
+import { match, discriminate } from "../../util";
 import { unreachable } from "../../util/err";
 import { Link } from "../../router";
 import { SeriesBlockData$data, SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
@@ -32,17 +32,23 @@ const blockFragment = graphql`
 
 const seriesFragment = graphql`
     fragment SeriesBlockSeriesData on Series {
-        title
-        events {
-            id
+        __typename
+        ... on ReadySeries {
             title
-            thumbnail
-            duration
-            created
-            creators
-            isLive
-            tracks { resolution }
+            events {
+                id
+                title
+                thumbnail
+                duration
+                created
+                creators
+                isLive
+                tracks { resolution }
+            }
         }
+        # Unfortunately we have to query **something** from this variant as well
+        # in order to reign in the Relay compiler type generation.
+        ... on WaitingSeries { id }
     }
 `;
 
@@ -88,71 +94,94 @@ export const SeriesBlock: React.FC<Props> = ({
     activeEventId,
     order,
 }) => {
-    const sortedEvents = [...series.events];
-
-    sortedEvents.sort(match(order, {
-        NEW_TO_OLD: () => compareNewToOld,
-        OLD_TO_NEW: () => compareOldToNew,
-    }, unreachable));
-
     const { t } = useTranslation();
 
-    const blockTitle = title ?? (showTitle && series.title);
+    return discriminate(series, "__typename", {
+        ReadySeries: series => {
+            const finalTitle = title ?? (showTitle ? series.title : undefined);
 
-    return (
-        <div css={{
-            marginTop: 24,
-            padding: 12,
-            ...blockTitle && { paddingTop: 0 },
-            backgroundColor: "var(--grey95)",
-            borderRadius: 10,
-        }}>
-            {/* This is a way to make this fancy title. It's not perfect, but it works fine. */}
-            {blockTitle && <div css={{ maxHeight: 50 }}>
-                <h2 title={blockTitle} css={{
-                    backgroundColor: "var(--accent-color)",
-                    color: "white",
-                    padding: "4px 12px",
-                    borderRadius: 10,
-                    transform: "translateY(-50%)",
-                    fontSize: 19,
-                    margin: "0 8px",
+            if (!series.events.length) {
+                return <SeriesBlockContainer title={finalTitle}>
+                    {t("series.no-events")}
+                </SeriesBlockContainer>;
+            }
+            const sortedEvents = [...series.events];
 
-                    display: "-webkit-inline-box",
-                    WebkitBoxOrient: "vertical",
-                    textOverflow: "ellipsis",
-                    WebkitLineClamp: 3,
-                    overflow: "hidden",
-                    lineHeight: 1.3,
-                }}>{title ?? series.title}</h2>
-            </div>}
-            <div css={{
-                display: "flex",
-                flexWrap: "wrap",
-                [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-                    justifyContent: "center",
-                },
-            }}>
-                {sortedEvents.length
-                    ? sortedEvents.map(event => <GridTile
+            sortedEvents.sort(match(order, {
+                NEW_TO_OLD: () => compareNewToOld,
+                OLD_TO_NEW: () => compareOldToNew,
+            }, unreachable));
+
+            return <SeriesBlockContainer title={finalTitle}>
+                {sortedEvents.map(
+                    event => <GridTile
                         key={event.id}
                         active={event.id === activeEventId}
                         {...{ basePath, event }}
-                    />)
-                    : t("series.no-events")}
-            </div>
-        </div>
-    );
+                    />,
+                )}
+            </SeriesBlockContainer>;
+        },
+        WaitingSeries: () => <SeriesBlockContainer title={title}>
+            {t("series.not-ready.text")}
+        </SeriesBlockContainer>,
+    }, () => unreachable());
 };
 
-const compareNewToOld = compareByKey((event: SeriesBlockSeriesData$data["events"][0]): number => (
+type Event = Extract<SeriesBlockSeriesData$data, { __typename: "ReadySeries" }>["events"][0];
+
+const compareNewToOld = compareByKey((event: Event): number => (
     new Date(event.created).getTime()
 ));
 const compareOldToNew = swap(compareNewToOld);
 
+type SeriesBlockContainerProps = {
+    title?: string;
+    children: ReactNode;
+};
+
+const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = ({ title, children }) => (
+    <div css={{
+        marginTop: 24,
+        padding: 12,
+        ...title && { paddingTop: 0 },
+        backgroundColor: "var(--grey95)",
+        borderRadius: 10,
+    }}>
+        {/* This is a way to make this fancy title. It's not perfect, but it works fine. */}
+        {title && <div css={{ maxHeight: 50 }}>
+            <h2 title={title} css={{
+                backgroundColor: "var(--accent-color)",
+                color: "white",
+                padding: "4px 12px",
+                borderRadius: 10,
+                transform: "translateY(-50%)",
+                fontSize: 19,
+                margin: "0 8px",
+
+                display: "-webkit-inline-box",
+                WebkitBoxOrient: "vertical",
+                textOverflow: "ellipsis",
+                WebkitLineClamp: 3,
+                overflow: "hidden",
+                lineHeight: 1.3,
+            }}>{title}</h2>
+        </div>}
+        <div css={{
+            display: "flex",
+            flexWrap: "wrap",
+            [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                justifyContent: "center",
+            },
+        }}>
+            {children}
+        </div>
+    </div>
+);
+
 type GridTypeProps = {
     basePath: string;
-    event: NonNullable<SeriesBlockSeriesData$data>["events"][0];
+    event: Event;
     active: boolean;
 };
 

@@ -5,7 +5,12 @@ use postgres_types::{FromSql, ToSql};
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, err::{ApiError, ApiResult, internal_server_err}, Id, model::{series::Series, event::Event}},
+    api::{
+        Context,
+        err::{ApiError, ApiResult, internal_server_err},
+        Id,
+        model::{event::Event, series::SeriesValue},
+    },
     db::types::Key,
     prelude::*,
 };
@@ -141,11 +146,11 @@ impl Block for SeriesBlock {
 /// A block just showing the list of videos in an Opencast series
 #[graphql_object(Context = Context, impl = BlockValue)]
 impl SeriesBlock {
-    async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
+    async fn series(&self, context: &Context) -> ApiResult<Option<SeriesValue>> {
         match self.series {
             None => Ok(None),
             // `unwrap` is okay here because of our foreign key constraint
-            Some(series_id) => Ok(Some(Series::load_by_id(series_id, context).await?.unwrap())),
+            Some(series_id) => Ok(Some(SeriesValue::load_by_id(series_id, context).await?.unwrap())),
         }
     }
 
