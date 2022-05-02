@@ -58,7 +58,7 @@ export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...res
         : <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
 
-type BlockOnlyProps = Omit<NonNullable<SeriesBlockData$data>, "series" | " $fragmentType">;
+type BlockOnlyProps = Omit<SeriesBlockData$data, "series" | " $fragmentType">;
 
 type FromSeriesProps = SharedProps & {
     fragRef: SeriesBlockSeriesData$key;
