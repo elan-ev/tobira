@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, collections::HashMap};
 
 use bytes::BytesMut;
 use juniper::GraphQLEnum;
@@ -68,4 +68,55 @@ pub enum SeriesState {
     Ready,
     #[postgres(name = "waiting")]
     Waiting,
+}
+
+
+/// Represents extra metadata in the DB. Is a map from "namespace" to a
+/// `string -> string array` map.
+///
+/// Each namespace key is a URL pointing to an XML namespace definition OR
+/// `"dcterms"` for the dc terms (most common namespace). The value for each
+/// namespace is a simple string-key map where each value is an array of string
+/// values.
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct ExtraMetadata {
+    /// Metadata of the dcterms
+    pub(crate) dcterms: MetadataMap,
+
+    /// Extended metadata.
+    #[serde(flatten)]
+    pub(crate) extended: HashMap<String, MetadataMap>,
+}
+
+type MetadataMap = HashMap<String, Vec<String>>;
+
+impl ToSql for ExtraMetadata {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        serde_json::to_value(self)
+            .expect("failed to convert `ExtraMetadata` to JSON value")
+            .to_sql(ty, out)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        <serde_json::Value as ToSql>::accepts(ty)
+    }
+
+    postgres_types::to_sql_checked!();
+}
+
+impl<'a> FromSql<'a> for ExtraMetadata {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        serde_json::from_value(<_>::from_sql(ty, raw)?).map_err(Into::into)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        <serde_json::Value as FromSql>::accepts(ty)
+    }
 }

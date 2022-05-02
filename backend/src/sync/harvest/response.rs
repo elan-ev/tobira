@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-use crate::db::types::EventTrack;
+use crate::db::types::{EventTrack, ExtraMetadata};
 
 
 /// What the harvesting API returns.
@@ -32,6 +32,7 @@ pub(super) enum HarvestItem {
         thumbnail: Option<String>,
         acl: Acl,
         is_live: bool,
+        metadata: ExtraMetadata,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },

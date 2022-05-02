@@ -183,6 +183,7 @@ async fn store_in_db(
                 thumbnail,
                 acl,
                 is_live,
+                metadata,
                 updated,
             } => {
                 let series_id = match &part_of {
@@ -207,6 +208,7 @@ async fn store_in_db(
                     ("updated", &updated),
                     ("creators", &creators),
                     ("thumbnail", &thumbnail),
+                    ("metadata", &metadata),
                     ("read_roles", &acl.read),
                     ("write_roles", &acl.write),
                     ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),

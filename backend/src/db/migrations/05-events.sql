@@ -48,6 +48,9 @@ create table events (
         -- Make sure there are no `null` elements in the array.
         check (array_position(creators, null) is null),
 
+    -- Additional metadata as an JSON object, where each value is a string array.
+    metadata jsonb not null,
+
     -- Media
     thumbnail text, -- URL to an image
     tracks event_track[] not null
@@ -59,3 +62,58 @@ create index idx_events_series on events (series);
 -- To perform queries like `write_roles && $1` on the whole table. Probably just
 -- to list all events that a user has write access to.
 create index idx_events_write_roles on events using gin (write_roles);
+
+
+-- The following triggers make sure that the extra JSON metadata is always in a
+-- predefined format. There are multiple PostgreSQL extensions that do JSON
+-- schema validation, but we don't want to rely on those to not add no
+-- additional burden on the DB admin. But thus, this is a bit more verbose than
+-- I'd like it to. The outer three `if`s are not technically necessary, but
+-- result in better error messages.
+create function check_metadata_format() returns trigger as $$
+declare
+    col text := 'events.metadata';
+    namespace record;
+    field record;
+    element jsonb;
+begin
+    if jsonb_typeof(new.metadata) <> 'object' then
+        raise exception '% is %, but should be a JSON object', col, jsonb_typeof(new.metadata);
+    end if;
+
+    for namespace in select * from jsonb_each(new.metadata) loop
+        if jsonb_typeof(namespace.value) <> 'object' then
+            raise exception '%: type of top level field "%" is %, but should be object',
+                col,
+                namespace.key,
+                jsonb_typeof(namespace.value);
+        end if;
+
+        for field in select * from jsonb_each(namespace.value) loop
+            if jsonb_typeof(field.value) <> 'array' then
+                raise exception '%: type of field "%.%" is %, but should be array',
+                    col,
+                    namespace.key,
+                    field.key,
+                    jsonb_typeof(field.value);
+            end if;
+
+            for element in select * from jsonb_array_elements(field.value) loop
+                if jsonb_typeof(element) <> 'string' then
+                    raise exception '%: found non-string element "%" in "%.%", but that field should be a string array',
+                        col,
+                        element,
+                        namespace.key,
+                        field.key;
+                end if;
+            end loop;
+        end loop;
+    end loop;
+    return new;
+end;
+$$ language plpgsql;
+
+create trigger check_metadata_format_on_insert
+    before insert or update on events
+    for each row
+    execute procedure check_metadata_format();
