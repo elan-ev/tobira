@@ -10,6 +10,7 @@ module.exports = {
     customScalars: {
         "DateTimeUtc": "string",
         "Cursor": "string",
+        "ExtraMetadata": "Record<string, Record<string, string[]>>",
     },
     schemaExtensions: [APP_PATH],
 };

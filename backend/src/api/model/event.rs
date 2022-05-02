@@ -12,7 +12,7 @@ use crate::{
         err::{self, ApiResult, invalid_input},
         model::{series::{SeriesValue, ReadySeries}, realm::Realm},
     },
-    db::types::{EventTrack, Key},
+    db::types::{EventTrack, Key, ExtraMetadata},
     prelude::*,
     util::lazy_format,
 };
@@ -32,6 +32,7 @@ pub(crate) struct Event {
     updated: DateTime<Utc>,
     creators: Vec<String>,
 
+    metadata: ExtraMetadata,
     thumbnail: Option<String>,
     tracks: Vec<Track>,
     can_write: bool,
@@ -88,6 +89,9 @@ impl Event {
     }
     fn creators(&self) -> &Vec<String> {
         &self.creators
+    }
+    fn metadata(&self) -> &ExtraMetadata {
+        &self.metadata
     }
 
     /// Whether the current user has write access to this event.
@@ -359,7 +363,7 @@ impl Event {
 
     pub(crate) const COL_NAMES: &'static str = "id, series, opencast_id, is_live, \
         title, description, duration, created, updated, creators, \
-        thumbnail, tracks, write_roles && $1 as can_write";
+        thumbnail, tracks, metadata, write_roles && $1 as can_write";
 
     pub(crate) fn from_row(row: Row) -> Self {
         Self {
@@ -375,7 +379,8 @@ impl Event {
             creators: row.get(9),
             thumbnail: row.get(10),
             tracks: row.get::<_, Vec<EventTrack>>(11).into_iter().map(Track::from).collect(),
-            can_write: row.get(12),
+            metadata: row.get(12),
+            can_write: row.get(13),
         }
     }
 }

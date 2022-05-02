@@ -16,6 +16,7 @@ type Event implements Node {
   created: DateTimeUtc!
   updated: DateTimeUtc!
   creators: [String!]!
+  metadata: ExtraMetadata!
   "Whether the current user has write access to this event."
   canWrite: Boolean!
   series: ReadySeries
@@ -99,6 +100,9 @@ type Mutation {
 input NewTextBlock {
   content: String!
 }
+
+"Arbitrary metadata for events/series. Serialized as JSON object."
+scalar ExtraMetadata
 
 enum VideoListOrder {
   NEW_TO_OLD
