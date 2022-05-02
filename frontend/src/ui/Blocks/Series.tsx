@@ -97,17 +97,19 @@ export const SeriesBlock: React.FC<Props> = ({
 
     const { t } = useTranslation();
 
+    const blockTitle = title ?? (showTitle && series.title);
+
     return (
         <div css={{
             marginTop: 24,
             padding: 12,
-            paddingTop: 0,
+            ...blockTitle && { paddingTop: 0 },
             backgroundColor: "var(--grey95)",
             borderRadius: 10,
         }}>
             {/* This is a way to make this fancy title. It's not perfect, but it works fine. */}
-            {(title || showTitle) && <div css={{ maxHeight: 50 }}>
-                <h2 title={title ?? series.title} css={{
+            {blockTitle && <div css={{ maxHeight: 50 }}>
+                <h2 title={blockTitle} css={{
                     backgroundColor: "var(--accent-color)",
                     color: "white",
                     padding: "4px 12px",
