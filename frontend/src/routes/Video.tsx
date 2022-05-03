@@ -108,7 +108,7 @@ const query = graphql`
             isLive
             metadata
             canWrite
-            series { title ... SeriesBlockReadySeriesData }
+            series { id, title ... SeriesBlockReadySeriesData }
             tracks { uri flavor mimetype resolution }
         }
         realm: realmByPath(path: $realmPath) {
@@ -357,7 +357,11 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
     const pairs: [string, ReactNode][] = [];
 
     if (event.series !== null) {
-        pairs.push([t("video.part-of-series"), event.series.title]);
+        pairs.push([
+            t("video.part-of-series"),
+            // eslint-disable-next-line react/jsx-key
+            <Link to={`/!s/${event.series.id.slice(2)}`}>{event.series.title}</Link>,
+        ]);
     }
 
     for (const [namespace, fields] of Object.entries(CONFIG.metadataLabels)) {
