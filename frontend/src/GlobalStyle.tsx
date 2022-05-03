@@ -104,4 +104,8 @@ const GLOBAL_STYLE = css({
             color: "var(--nav-color-darker)",
         },
     },
+    hr: {
+        border: "none",
+        borderTop: "1px solid var(--grey80)",
+    },
 });
