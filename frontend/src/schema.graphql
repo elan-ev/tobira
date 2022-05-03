@@ -145,7 +145,7 @@ type Query {
   """
   realmByPath(path: String!): Realm
   "Returns an event by its ID."
-  event(id: ID!): Event
+  eventById(id: ID!): Event
   "Returns a list of all events the current user has read access to"
   allEvents: [Event!]!
   "Returns a series by its Opencast ID"

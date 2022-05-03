@@ -44,7 +44,7 @@ impl Query {
     }
 
     /// Returns an event by its ID.
-    async fn event(id: Id, context: &Context) -> ApiResult<Option<Event>> {
+    async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
         Event::load_by_id(id, context).await
     }
 

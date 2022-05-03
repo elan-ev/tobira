@@ -98,7 +98,7 @@ const prepare = (id: string, realmPath?: string): MatchedRoute => {
 const query = graphql`
     query VideoQuery($id: ID!, $realmPath: String!) {
         ... UserData
-        event(id: $id) {
+        event: eventById(id: $id) {
             title
             description
             creators

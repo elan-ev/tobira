@@ -66,7 +66,7 @@ const BackLink: React.FC = () => {
 const query = graphql`
     query SingleVideoManageQuery($id: ID!) {
         ...UserData
-        event(id: $id) {
+        event: eventById(id: $id) {
             id
             title
             description
