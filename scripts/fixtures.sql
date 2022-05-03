@@ -46,7 +46,7 @@ begin
 
 
     -- Add a bunch of events/videos
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
             'bbb',
             'Big Buck Bunny',
@@ -66,9 +66,10 @@ begin
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}',
-            false
+            false,
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
             'cosmos-laundromat',
             'Cosmos Laundromat',
@@ -88,9 +89,10 @@ begin
             now() - interval '1 week',
             '{"ROLE_ANONYMOUS"}',
             '{}',
-            false
+            false,
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
             'spring',
             'Spring',
@@ -110,10 +112,11 @@ begin
             now() - interval '2 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}',
-            false
+            false,
+            '{}'
         );
 
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
             'bee',
             'Guest Lecture: Group Intelligence of Bumblebees',
@@ -133,10 +136,11 @@ begin
             now(),
             '{"ROLE_ANONYMOUS"}',
             '{}',
-            false
+            false,
+            '{}'
         );
 
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
             'pir-introduction',
             'Programmieren in Rust: Einführung',
@@ -156,9 +160,10 @@ begin
             now() - interval '3 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}',
-            false
+            false,
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
             'pir-modules',
             'Programmieren in Rust: Module',
@@ -178,9 +183,10 @@ begin
             now() - interval '4 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}',
-            false
+            false,
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
             'pir-stack-heap',
             'Programmieren in Rust: Stack & Heap',
@@ -200,9 +206,10 @@ begin
             now() - interval '5 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}',
-            false
+            false,
+            '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live)
+    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
             'pir-performance',
             'Programmieren in Rust: Performance & Effizienz',
@@ -222,7 +229,8 @@ begin
             now() - interval '6 weeks',
             '{"ROLE_ANONYMOUS"}',
             '{}',
-            false
+            false,
+            '{}'
         );
 end; $$;
 
