@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+
+use once_cell::sync::Lazy;
+
 use super::TranslatedString;
 
 
@@ -28,11 +32,47 @@ pub(crate) struct GeneralConfig {
     // TODO: this shouldn't be `Option`, but `config(default = ...)` does not
     // support complex types like this yet.
     footer_links: Option<Vec<FooterLink>>,
+
+    /// Additional metadata that is shown below a video. Example:
+    ///
+    ///     [general.metadata]
+    ///     dcterms.spatial = { en = "Location", de = "Ort" }
+    ///     "http://my.domain/xml/namespace".courseLink = { en = "Course", de = "Kurs"}
+    ///
+    /// As you can see, this is a mapping of a metadata location (the XML
+    /// namespace and the name) to a translated label. For the XML namespace
+    /// URL, there is one shortcut: the "http://purl.org/dc/terms/" is
+    /// abbreviated as just "dcterms".
+    ///
+    /// Instead of the manually translated label, you can use some builtin
+    /// labels like this:
+    ///
+    ///     dcterms.license = "builtin:license"
+    ///     dcterms.source = "builtin:source"
+    ///
+    /// As soon as you add your own metadata fields, this default is
+    /// overwritten. If you want to keep showing the license and source data,
+    /// you have to add those two lines to your configuration.
+    //
+    // TODO: this shouldn't be `Option`, but `config(default = ...)` does not
+    // support complex types like this yet.
+    metadata: Option<MetadataLabels>,
 }
 
 impl GeneralConfig {
     pub(crate) fn footer_links(&self) -> &[FooterLink] {
         self.footer_links.as_deref().unwrap_or(&[FooterLink::About, FooterLink::GraphiQL])
+    }
+
+    pub(crate) fn metadata(&self) -> &MetadataLabels {
+        static DEFAULT: Lazy<MetadataLabels> = Lazy::new(|| HashMap::from([
+            ("dcterms".to_string(), HashMap::from([
+                ("license".to_string(), MetadataLabel::License),
+                ("source".to_string(), MetadataLabel::Source),
+            ]))
+        ]));
+
+        self.metadata.as_ref().unwrap_or(&DEFAULT)
     }
 }
 
@@ -75,3 +115,18 @@ macro_rules! make_fixed_string_deserializer {
 
 make_fixed_string_deserializer!(serde_about_footer, "about");
 make_fixed_string_deserializer!(serde_graphiql_footer, "graphiql");
+
+pub(crate) type MetadataLabels = HashMap<String, HashMap<String, MetadataLabel>>;
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
+pub(crate) enum MetadataLabel {
+    #[serde(with = "serde_metadata_license")]
+    License,
+    #[serde(with = "serde_metadata_source")]
+    Source,
+    Custom(TranslatedString),
+}
+
+make_fixed_string_deserializer!(serde_metadata_license, "builtin:license");
+make_fixed_string_deserializer!(serde_metadata_source, "builtin:source");

@@ -26,6 +26,7 @@ type Config = {
     siteTitle: TranslatedString;
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
+    metadataLabels: Record<string, Record<string, MetadataLabel>>;
     logo: LogoConfig;
     plyr: PlyrConfig;
 };
@@ -63,6 +64,8 @@ type OpencastConfig = {
     studioUrl: string;
     editorUrl: string;
 };
+
+type MetadataLabel = "builtin:license" | "builtin:source" | TranslatedString;
 
 export type TranslatedString = { en: string } & Record<"de", string | undefined>;
 

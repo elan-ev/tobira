@@ -17,6 +17,9 @@ import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { LinkButton } from "../ui/Button";
+import CONFIG from "../config";
+import { translatedConfig, match } from "../util";
+import { Link } from "../router";
 import { useUser } from "../User";
 
 
@@ -350,7 +353,7 @@ type MetadataTableProps = {
 };
 
 const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const pairs: [string, ReactNode][] = [];
 
@@ -358,7 +361,30 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
         pairs.push([t("video.part-of-series"), event.series.title]);
     }
 
-    // TODO: show additional metadata here
+    for (const [namespace, fields] of Object.entries(CONFIG.metadataLabels)) {
+        const metadataNs = event.metadata[namespace];
+        if (metadataNs === undefined) {
+            continue;
+        }
+
+        for (const [field, label] of Object.entries(fields)) {
+            if (field in metadataNs) {
+                const translatedLabel = typeof label === "object"
+                    ? translatedConfig(label, i18n)
+                    : match(label, {
+                        "builtin:license": () => t("video.license"),
+                        "builtin:source": () => t("video.source"),
+                    });
+
+                const values = metadataNs[field].map((value, i) => <React.Fragment key={i}>
+                    {i > 0 && <br />}
+                    {isValidLink(value) ? <Link to={value}>{value}</Link> : value}
+                </React.Fragment>);
+
+                pairs.push([translatedLabel, values]);
+            }
+        }
+    }
 
     return (
         <dl css={{
@@ -381,4 +407,19 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
             </React.Fragment>)}
         </dl>
     );
+};
+
+const isValidLink = (s: string): boolean => {
+    const trimmed = s.trim();
+    if (!(trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
+        return false;
+    }
+
+    try {
+        new URL(trimmed);
+    } catch (_) {
+        return false;
+    }
+
+    return true;
 };

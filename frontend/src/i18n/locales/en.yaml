@@ -101,6 +101,8 @@ video:
   deleted-video-block: The video referenced here was deleted.
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
+  license: License
+  source: Source
 
 series:
   deleted-series-block: The series referenced here was deleted.

@@ -1,6 +1,11 @@
 [general]
 site_title.en = "Tobira Test Deployment"
 
+[general.metadata]
+dcterms.source = "builtin:source"
+dcterms.license = "builtin:license"
+dcterms.spatial = { en = "Location", de = "Ort" }
+
 [db]
 database = "tobira-{{ id }}"
 user = "tobira-{{ id }}"
