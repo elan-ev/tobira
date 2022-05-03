@@ -1,4 +1,4 @@
-import { graphql } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { useTranslation } from "react-i18next";
 
 import { discriminate } from "../util";
@@ -12,14 +12,13 @@ import { Nav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 
 import { NotFound } from "./NotFound";
-import {
-    SeriesByOpencastIdQuery,
-    SeriesByOpencastIdQuery$data,
-} from "./__generated__/SeriesByOpencastIdQuery.graphql";
+import { SeriesByOpencastIdQuery } from "./__generated__/SeriesByOpencastIdQuery.graphql";
+import { b64regex } from "./util";
+import { SeriesByIdQuery } from "./__generated__/SeriesByIdQuery.graphql";
+import { SeriesRouteData$key } from "./__generated__/SeriesRouteData.graphql";
 
 
-export const DirectSeriesRoute = makeRoute(url => {
-
+export const DirectSeriesOCRoute = makeRoute(url => {
     const regex = new RegExp("^/!s/:([^/]+)$", "u");
     const matches = regex.exec(url.pathname);
 
@@ -32,18 +31,8 @@ export const DirectSeriesRoute = makeRoute(url => {
     const query = graphql`
         query SeriesByOpencastIdQuery($id: String!) {
             ... UserData
-            series: seriesByOpencastId(id: $id) {
-                __typename
-                ... on WaitingSeries { id } # only for correct type generation ...
-                ... on ReadySeries {
-                    title
-                    description
-                    ... SeriesBlockReadySeriesData
-                }
-            }
-            rootRealm {
-               ... NavigationData
-            }
+            series: seriesByOpencastId(id: $id) { ...SeriesRouteData }
+            rootRealm { ... NavigationData }
         }
     `;
     const queryRef = loadQuery<SeriesByOpencastIdQuery>(query, { id: opencastId });
@@ -53,14 +42,61 @@ export const DirectSeriesRoute = makeRoute(url => {
         render: () => <RootLoader
             {...{ query, queryRef }}
             nav={data => <Nav fragRef={data.rootRealm} />}
-            render={result => <SeriesPage {...result} />}
+            render={result => <SeriesPage seriesFrag={result.series} />}
         />,
         dispose: () => queryRef.dispose(),
     };
 });
 
-const SeriesPage: React.FC<SeriesByOpencastIdQuery$data> = ({ series }) => {
+export const DirectSeriesRoute = makeRoute(url => {
+    const regex = new RegExp(`^/!s/(${b64regex}+)$`, "u");
+    const matches = regex.exec(url.pathname);
+
+    if (!matches) {
+        return null;
+    }
+
+
+    const id = decodeURIComponent(matches[1]);
+    const query = graphql`
+        query SeriesByIdQuery($id: ID!) {
+            ... UserData
+            series: seriesById(id: $id) { ...SeriesRouteData }
+            rootRealm { ... NavigationData }
+        }
+    `;
+    const queryRef = loadQuery<SeriesByIdQuery>(query, { id: `sr${id}` });
+
+
+    return {
+        render: () => <RootLoader
+            {...{ query, queryRef }}
+            nav={data => <Nav fragRef={data.rootRealm} />}
+            render={result => <SeriesPage seriesFrag={result.series} />}
+        />,
+        dispose: () => queryRef.dispose(),
+    };
+});
+
+const fragment = graphql`
+    fragment SeriesRouteData on Series {
+        __typename
+        ... on WaitingSeries { id } # only for correct type generation ...
+        ... on ReadySeries {
+            title
+            description
+            ... SeriesBlockReadySeriesData
+        }
+    }
+`;
+
+type SeriesPageProps = {
+    seriesFrag: SeriesRouteData$key | null;
+};
+
+const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
     const { t } = useTranslation();
+    const series = useFragment(fragment, seriesFrag);
 
     if (!series) {
         return <NotFound kind="series" />;

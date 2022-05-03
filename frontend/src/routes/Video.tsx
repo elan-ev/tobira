@@ -1,5 +1,7 @@
 import React, { ReactNode, useState } from "react";
 import { graphql } from "react-relay/hooks";
+import { HiOutlineUserCircle } from "react-icons/hi";
+import { useTranslation } from "react-i18next";
 
 import type { VideoQuery, VideoQuery$data } from "./__generated__/VideoQuery.graphql";
 import { loadQuery } from "../relay";
@@ -7,7 +9,6 @@ import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { Player, Track } from "../ui/player";
-import { useTranslation } from "react-i18next";
 import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
@@ -15,15 +16,13 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
-import { HiOutlineUserCircle } from "react-icons/hi";
 import { LinkButton } from "../ui/Button";
 import CONFIG from "../config";
 import { translatedConfig, match } from "../util";
 import { Link } from "../router";
 import { useUser } from "../User";
+import { b64regex } from "./util";
 
-
-export const b64regex = "[a-zA-Z0-9\\-_]";
 
 export const VideoRoute = makeRoute(url => {
     const urlPath = url.pathname.replace(/^\/|\/$/g, "");
