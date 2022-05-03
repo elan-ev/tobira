@@ -147,11 +147,11 @@ type Query {
   "Returns an event by its ID."
   event(id: ID!): Event
   "Returns a list of all events the current user has read access to"
-  events: [Event!]!
+  allEvents: [Event!]!
   "Returns a series by its Opencast ID"
   seriesByOpencastId(id: String!): Series
   "Returns a list of all series"
-  series: [Series!]!
+  allSeries: [Series!]!
   "Returns the current user."
   currentUser: User
   "Returns a new JWT that can be used to authenticate against Opencast for uploading videos."

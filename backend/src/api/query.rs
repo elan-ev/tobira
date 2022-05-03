@@ -49,7 +49,7 @@ impl Query {
     }
 
     /// Returns a list of all events the current user has read access to
-    async fn events(context: &Context) -> ApiResult<Vec<Event>> {
+    async fn all_events(context: &Context) -> ApiResult<Vec<Event>> {
         Event::load_all(context).await
     }
 
@@ -59,7 +59,7 @@ impl Query {
     }
 
     /// Returns a list of all series
-    async fn series(context: &Context) -> ApiResult<Vec<SeriesValue>> {
+    async fn all_series(context: &Context) -> ApiResult<Vec<SeriesValue>> {
         SeriesValue::load_all(context).await
     }
 
