@@ -17,6 +17,7 @@ import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { LinkButton } from "../ui/Button";
+import { useUser } from "../User";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -162,6 +163,7 @@ type MetadataProps = {
 
 const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const { t } = useTranslation();
+    const user = useUser();
 
     return <>
         <div css={{ display: "flex", alignItems: "center", marginTop: 24 }}>
@@ -170,7 +172,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <VideoDate created={event.created} updated={event.updated} />
             </div>
             <div>
-                {event.canWrite && (
+                {event.canWrite && user !== "none" && user !== "unknown" && (
                     <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
                         {t("manage.my-videos.manage-video")}
                     </LinkButton>
