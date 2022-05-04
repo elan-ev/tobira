@@ -90,10 +90,10 @@ export const SeriesBlock: React.FC<Props> = ({
 }) => {
     const sortedEvents = [...series.events];
 
-    match(order, {
-        NEW_TO_OLD: () => sortedEvents.sort(compareNewToOld),
-        OLD_TO_NEW: () => sortedEvents.sort(compareOldToNew),
-    }, unreachable);
+    sortedEvents.sort(match(order, {
+        NEW_TO_OLD: () => compareNewToOld,
+        OLD_TO_NEW: () => compareOldToNew,
+    }, unreachable));
 
     const { t } = useTranslation();
 
