@@ -99,6 +99,7 @@ video:
   part-of-series: Part of series
   more-from-series: More from “{{series}}”
   deleted-video-block: The video referenced here was deleted.
+  not-allowed-video-block: You are not allowed to view the video embedded here.
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
   license: License
@@ -301,6 +302,8 @@ manage:
           heading: Event
           none: No event selected
           invalid: Please select an event
+          no-read-acccess-to-current: >
+            You do not have read access to the video that is currently referenced here.
 
       titled:
         title: Title

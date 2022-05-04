@@ -10,7 +10,7 @@ use super::{
     err::ApiResult,
     model::{
         realm::Realm,
-        event::Event,
+        event::{Event, EventById},
         series::SeriesValue,
         search::{self, SearchResults},
     },
@@ -44,7 +44,7 @@ impl Query {
     }
 
     /// Returns an event by its ID.
-    async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
+    async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<EventById>> {
         Event::load_by_id(id, context).await
     }
 
@@ -92,7 +92,9 @@ impl Query {
                     SeriesValue::ReadySeries(series) => NodeValue::from(series),
                 }
             })),
-            Id::EVENT_KIND => Ok(Event::load_by_id(id, context).await?.map(NodeValue::from)),
+            Id::EVENT_KIND => Event::load_by_id(id, context).await?
+                .map(|e| e.into_result().map(NodeValue::from))
+                .transpose(),
             _ => Ok(None),
         }
     }

@@ -23,6 +23,21 @@ pub(crate) trait Node {
     fn id(&self) -> Id;
 }
 
+/// Marker type (mostly to be used in unions) to signal that the user is not
+/// allowed to access some data.
+///
+/// This is used instead of GraphQL errors in places where we easily want to
+/// deal with the "not allowed" case.
+pub(crate) struct NotAllowed;
+
+#[juniper::graphql_object(Context = Context)]
+impl NotAllowed {
+    /// Unused dummy field for this marker type. GraphQL requires all objects to
+    /// have at least one field. Always returns `null`.
+    fn dummy() -> Option<bool> {
+        None
+    }
+}
 
 /// Opaque cursor for pagination. Serializes as string.
 ///

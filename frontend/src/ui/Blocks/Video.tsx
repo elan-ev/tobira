@@ -5,6 +5,7 @@ import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
+import { unreachable } from "../../util/err";
 
 
 type Props = {
@@ -16,11 +17,15 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     const { event, showTitle } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
-                title
-                duration
-                thumbnail
-                isLive
-                tracks { uri flavor mimetype resolution }
+                __typename
+                ... on NotAllowed { dummy } # workaround
+                ... on Event {
+                    title
+                    duration
+                    thumbnail
+                    isLive
+                    tracks { uri flavor mimetype resolution }
+                }
             }
             showTitle
         }
@@ -28,6 +33,13 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
 
     if (event === null) {
         return <Card kind="error">{t("video.deleted-video-block")}</Card>;
+    }
+
+    if (event.__typename === "NotAllowed") {
+        return <Card kind="error">{t("video.not-allowed-video-block")}</Card>;
+    }
+    if (event.__typename !== "Event") {
+        return unreachable();
     }
 
     return <>

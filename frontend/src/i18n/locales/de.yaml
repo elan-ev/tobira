@@ -103,6 +103,7 @@ video:
   part-of-series: Teil von Serie
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
+  not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
   license: Lizenz
@@ -313,6 +314,8 @@ manage:
           heading: Video
           none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
+          no-read-acccess-to-current: >
+            Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
 
       titled:
         title: Titel

@@ -9,6 +9,7 @@ use juniper::{GraphQLObject, graphql_object};
 use crate::{
     api::{
         Context, Cursor, Id, Node, NodeValue,
+        common::NotAllowed,
         err::{self, ApiResult, invalid_input},
         model::{series::{SeriesValue, ReadySeries}, realm::Realm},
     },
@@ -135,6 +136,25 @@ impl Event {
     }
 }
 
+#[derive(juniper::GraphQLUnion)]
+#[graphql(Context = Context)]
+pub(crate) enum EventById {
+    Event(Event),
+    NotAllowed(NotAllowed),
+}
+
+impl EventById {
+    pub(crate) fn into_result(self) -> ApiResult<Event> {
+        match self {
+            Self::Event(e) => Ok(e),
+            Self::NotAllowed(_) => Err(err::not_authorized!(
+                key = "view.event",
+                "you cannot view this event",
+            )),
+        }
+    }
+}
+
 impl Event {
     pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
         context.db(context.require_moderator()?)
@@ -152,7 +172,7 @@ impl Event {
             .pipe(Ok)
     }
 
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
+    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<EventById>> {
         let key = match id.key_for(Id::EVENT_KIND) {
             None => return Ok(None),
             Some(key) => key,
@@ -167,15 +187,12 @@ impl Event {
             .await?
             .map(|row| {
                 if row.get::<_, bool>("can_read") {
-                    Ok(Self::from_row(row))
+                    EventById::Event(Self::from_row(row))
                 } else {
-                    Err(err::not_authorized!(
-                        key = "view.event",
-                        "you cannot view this event",
-                    ))
+                    EventById::NotAllowed(NotAllowed)
                 }
             })
-            .transpose()
+            .pipe(Ok)
     }
 
     pub(crate) async fn load_for_series(
