@@ -71,7 +71,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                 <Root nav={[]}>
                     <Translation>{t => (
                         <div css={{ margin: "0 auto", maxWidth: 600 }}>
-                            <div>
+                            <div css={{ display: "flex", justifyContent: "center" }}>
                                 <Card kind="error"><ErrorDisplay error={error} /></Card>
                             </div>
                             <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
