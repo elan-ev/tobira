@@ -25,7 +25,6 @@ pub(crate) struct Series {
     description: Option<String>,
 }
 
-#[juniper::graphql_interface]
 impl Node for Series {
     fn id(&self) -> Id {
         Id::series(self.key)

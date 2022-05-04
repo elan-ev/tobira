@@ -4,7 +4,6 @@ use crate::{
 };
 
 
-#[juniper::graphql_interface]
 impl Node for search::Realm {
     fn id(&self) -> Id {
         Id::search_realm(self.id.0)

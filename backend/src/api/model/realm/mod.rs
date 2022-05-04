@@ -130,7 +130,6 @@ impl Realm {
     }
 }
 
-#[juniper::graphql_interface]
 impl Node for Realm {
     fn id(&self) -> Id {
         Id::realm(self.key)

@@ -47,7 +47,6 @@ pub(crate) struct Track {
     resolution: Option<Vec<i32>>,
 }
 
-#[juniper::graphql_interface]
 impl Node for Event {
     fn id(&self) -> Id {
         Id::event(self.key)
