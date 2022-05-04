@@ -30,7 +30,7 @@ errors:
   internal-server-error: Internal server error (something is wrong with the server).
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
-  detailed-error-info: 'Detailed error information for developers:'
+  detailed-error-info: Detailed error information for developers
 
 not-found:
   page-not-found: Page not found

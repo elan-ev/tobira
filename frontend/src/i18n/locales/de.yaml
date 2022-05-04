@@ -33,7 +33,7 @@ errors:
   internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
   unknown: Unbekannter Fehler.
-  detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
+  detailed-error-info: Detaillierte Fehlerinformationen für Entwickler
 
 not-found:
   page-not-found: Seite nicht gefunden
