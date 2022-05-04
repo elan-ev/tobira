@@ -47,7 +47,8 @@ export const Player: React.FC<PlayerProps> = ({
             // So here we just say: there should be always 10% + 80px of
             // vertical space left (not taken up by the player). The height of
             // the players is actually best controlled by setting the width.
-            maxWidth: `calc((90vh - 80px) * ${aspectRatio[0] / aspectRatio[1]})`,
+            "--ideal-max-width": `calc((90vh - 80px) * ${aspectRatio[0] / aspectRatio[1]})`,
+            maxWidth: "min(100%, var(--ideal-max-width))",
             minWidth: "320px",
             aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
 
@@ -55,6 +56,7 @@ export const Player: React.FC<PlayerProps> = ({
             // we used all available width.
             "@media (max-width: 380px)": {
                 margin: `0 -${MAIN_PADDING}px`,
+                maxWidth: `min(100% + ${2 * MAIN_PADDING}px, var(--ideal-max-width))`,
             },
         }}>
             <Suspense fallback={<PlayerFallback image={coverImage} />}>
