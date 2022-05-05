@@ -1,6 +1,5 @@
 //! Blocks that make up the content of realm pages.
 
-use std::{fmt, error::Error};
 use juniper::{graphql_interface, graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
 use tokio_postgres::Row;
@@ -278,46 +277,4 @@ fn get_type_dependent<'a, T: FromSql<'a>>(
         type_name,
         field_name,
     ))
-}
-
-#[derive(Debug)]
-pub(crate) struct BlockTypeError;
-
-impl fmt::Display for BlockTypeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "wrong block type")
-    }
-}
-
-impl Error for BlockTypeError {}
-
-// TODO? What about video?
-impl TryFrom<BlockValue> for TitleBlock {
-    type Error = BlockTypeError;
-    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
-        match block {
-            BlockValue::TitleBlock(b) => Ok(b),
-            _ => Err(BlockTypeError),
-        }
-    }
-}
-
-impl TryFrom<BlockValue> for TextBlock {
-    type Error = BlockTypeError;
-    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
-        match block {
-            BlockValue::TextBlock(b) => Ok(b),
-            _ => Err(BlockTypeError),
-        }
-    }
-}
-
-impl TryFrom<BlockValue> for SeriesBlock {
-    type Error = BlockTypeError;
-    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
-        match block {
-            BlockValue::SeriesBlock(b) => Ok(b),
-            _ => Err(BlockTypeError),
-        }
-    }
 }
