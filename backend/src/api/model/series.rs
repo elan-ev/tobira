@@ -94,7 +94,7 @@ impl Series {
         }
     }
 
-    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Series>> {
+    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
         let result = context.db
             .query_opt(
                 &format!(
@@ -111,7 +111,7 @@ impl Series {
         Ok(result)
     }
 
-    pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
+    pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Self>> {
         let query = format!("select {} from series where opencast_id = $1", Self::COL_NAMES);
         context.db
             .query_opt(&query, &[&id])
