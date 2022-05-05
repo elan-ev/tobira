@@ -64,6 +64,7 @@ backend:
 frontend:
   - set-workdir: frontend
   - npm i --no-save
+  - mkdir -p build
   - concurrently:
     - npx webpack watch --mode=development --no-stats
     - npx relay-compiler --output quiet-with-errors --watch
