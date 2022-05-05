@@ -77,7 +77,10 @@ export class APIError extends Error {
             for (const err of this.errors) {
                 out += `\n- ${err.message}`;
                 if (err.path) {
-                    out += ` (at \`${err.path}\`)`;
+                    const path = typeof err.path === "string"
+                        ? err.path
+                        : err.path.join(".");
+                    out += ` (at \`${path}\`)`;
                 }
                 if (err.key) {
                     out += ` [key: '${err.key}']`;
@@ -96,7 +99,7 @@ export const hasErrors = (
 
 export type ApiError = {
     message: string;
-    path?: string;
+    path?: string | string[];
     kind?: ErrorKind;
     key?: string;
 };
