@@ -120,7 +120,26 @@ impl Series {
             .pipe(Ok)
     }
 
-    const COL_NAMES: &'static str = "id, opencast_id, title, description";
+    pub(crate) async fn load_or_create_by_opencast_id(id: String, context: &Context) -> ApiResult<Self> {
+        let cols = Self::COL_NAMES;
+        let query = format!(
+            "with \
+                existing as (select {cols} from series where opencast_id = $1), \
+                new as (insert into series (opencast_id, state, updated) \
+                    select $1, 'waiting', '-infinity' \
+                        where not exists select null from existing \
+                        returning {cols}) \
+            select {cols} from existing \
+                union all select {cols} from new",
+        );
+        context.db(context.require_moderator()?)
+            .query_one(&query, &[&id])
+            .await?
+            .pipe(Self::from_row)
+            .pipe(Ok)
+    }
+
+    const COL_NAMES: &'static str = "id, opencast_id, state, title, description";
 
     fn from_row(row: Row) -> Self {
         Self {

@@ -193,9 +193,7 @@ impl Mutation {
             }
         }
 
-        let series = Series::load_by_opencast_id(oc_series_id, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`ocSeriesId` does not refer to a valid Opencast series ID"))?;
+        let series = Series::load_or_create_by_opencast_id(oc_series_id, context).await?;
 
         let target_realm = {
             let mut target_realm = parent_realm;
