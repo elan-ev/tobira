@@ -58,6 +58,11 @@ impl Query {
         SeriesValue::load_by_opencast_id(id, context).await
     }
 
+    /// Returns a series by its ID.
+    async fn series_by_id(id: Id, context: &Context) -> ApiResult<Option<SeriesValue>> {
+        SeriesValue::load_by_id(id, context).await
+    }
+
     /// Returns a list of all series
     async fn all_series(context: &Context) -> ApiResult<Vec<SeriesValue>> {
         SeriesValue::load_all(context).await
