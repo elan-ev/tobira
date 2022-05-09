@@ -9,7 +9,7 @@ import {
 } from "react-icons/fi";
 import { HiOutlineTranslate } from "react-icons/hi";
 
-import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
+import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { useOnOutsideClick } from "../../util";
@@ -22,9 +22,6 @@ import { LOGIN_PATH } from "../../routes/paths";
 import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { FOCUS_STYLE_INSET } from "../../ui";
 
-
-/** Viewport width in pixels where the user UI switches between narrow and wide */
-const BREAKPOINT = 650;
 
 /** User-related UI in the header. */
 export const UserBox: React.FC = () => {
@@ -98,7 +95,7 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
                         outline: "none",
                         boxShadow: "0 0 0 2px black",
                     },
-                    [`@media (max-width: ${BREAKPOINT}px)`]: {
+                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                         display: "none",
                     },
                 }}
@@ -140,7 +137,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
                     lineHeight: 1.3,
                     paddingRight: 16,
                     opacity: 0.75,
-                    [`@media (max-width: ${BREAKPOINT}px)`]: {
+                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                         display: "none",
                     },
                 }}>
@@ -177,7 +174,7 @@ const UserSettingsIcon: React.FC<UserSettingsIconProps> = ({ t, onClick }) => (
     <ActionIcon title={t("user.settings")} onClick={onClick}>
         <FiMoreVertical css={{
             fontSize: 26,
-            [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+            [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
                 fontSize: 22,
             },
         }} />
@@ -217,7 +214,7 @@ const Menu: React.FC<MenuProps> = ({ close, container }) => {
                     htmlLink={!!CONFIG.auth.loginLink}
                     css={{
                         color: "var(--nav-color)",
-                        [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
+                        [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                             display: "none",
                         },
                     }}
