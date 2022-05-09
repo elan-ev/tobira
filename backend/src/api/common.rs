@@ -5,7 +5,7 @@ use crate::{
     api::{
         Id, Context,
         err::{self, ApiResult},
-        model::{event::Event, series::Series, realm::Realm},
+        model::{event::Event, series::{WaitingSeries, ReadySeries}, realm::Realm},
     },
     search::Event as SearchEvent,
     search::Realm as SearchRealm,
@@ -15,7 +15,7 @@ use crate::{
 /// A node with a globally unique ID. Mostly useful for relay.
 #[juniper::graphql_interface(
     Context = Context,
-    for = [Event, Realm, Series, SearchEvent, SearchRealm]
+    for = [Event, Realm, WaitingSeries, ReadySeries, SearchEvent, SearchRealm]
 )]
 pub(crate) trait Node {
     fn id(&self) -> Id;

@@ -108,6 +108,11 @@ series:
   no-events: This series does not contain any events, or you might not be authorized to see them.
   videos:
     heading: Videos
+  not-ready:
+    title: Series not synchronized, yet
+    text: >
+      This Opencast series has not been fully synchronized with Tobira, yet.
+      It will probably arrive soon, though, so you can just check back in at a later time.
 
 realm:
   page-settings: Page settings
@@ -288,6 +293,7 @@ manage:
           heading: Series
           none: No series selected
           invalid: Please select a series
+          waiting: Non-synchronized series
 
       event:
         event:

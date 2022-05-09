@@ -1,12 +1,16 @@
 //! Blocks that make up the content of realm pages.
 
-use std::{fmt, error::Error};
 use juniper::{graphql_interface, graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
 use tokio_postgres::Row;
 
 use crate::{
-    api::{Context, err::{ApiError, ApiResult, internal_server_err}, Id, model::{series::Series, event::Event}},
+    api::{
+        Context,
+        err::{ApiError, ApiResult, internal_server_err},
+        Id,
+        model::{event::Event, series::SeriesValue},
+    },
     db::types::Key,
     prelude::*,
 };
@@ -142,11 +146,11 @@ impl Block for SeriesBlock {
 /// A block just showing the list of videos in an Opencast series
 #[graphql_object(Context = Context, impl = BlockValue)]
 impl SeriesBlock {
-    async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
+    async fn series(&self, context: &Context) -> ApiResult<Option<SeriesValue>> {
         match self.series {
             None => Ok(None),
             // `unwrap` is okay here because of our foreign key constraint
-            Some(series_id) => Ok(Some(Series::load_by_id(series_id, context).await?.unwrap())),
+            Some(series_id) => Ok(Some(SeriesValue::load_by_id(series_id, context).await?.unwrap())),
         }
     }
 
@@ -278,46 +282,4 @@ fn get_type_dependent<'a, T: FromSql<'a>>(
         type_name,
         field_name,
     ))
-}
-
-#[derive(Debug)]
-pub(crate) struct BlockTypeError;
-
-impl fmt::Display for BlockTypeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "wrong block type")
-    }
-}
-
-impl Error for BlockTypeError {}
-
-// TODO? What about video?
-impl TryFrom<BlockValue> for TitleBlock {
-    type Error = BlockTypeError;
-    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
-        match block {
-            BlockValue::TitleBlock(b) => Ok(b),
-            _ => Err(BlockTypeError),
-        }
-    }
-}
-
-impl TryFrom<BlockValue> for TextBlock {
-    type Error = BlockTypeError;
-    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
-        match block {
-            BlockValue::TextBlock(b) => Ok(b),
-            _ => Err(BlockTypeError),
-        }
-    }
-}
-
-impl TryFrom<BlockValue> for SeriesBlock {
-    type Error = BlockTypeError;
-    fn try_from(block: BlockValue) -> Result<Self, Self::Error> {
-        match block {
-            BlockValue::SeriesBlock(b) => Ok(b),
-            _ => Err(BlockTypeError),
-        }
-    }
 }

@@ -112,6 +112,12 @@ series:
   no-events: Diese Serie enthält keine Videos oder Sie sind nicht berechtigt, diese zu sehen.
   videos:
     heading: Videos
+  not-ready:
+    title: Serie noch nicht synchronisiert
+    text: >
+      Diese Opencast-Serie wurde noch nicht vollständig mit Tobira synchronisiert.
+      Sie wird aber wahrscheinlich bald ankommen, also können Sie einfach später
+      noch einmal vorbeischauen.
 
 realm:
   page-settings: Seiteneinstellungen
@@ -299,6 +305,7 @@ manage:
           heading: Serie
           none: Keine Serie ausgewählt
           invalid: Bitte eine Serie auswählen
+          waiting: Nicht synchronisierte Serie
 
       event:
         event:

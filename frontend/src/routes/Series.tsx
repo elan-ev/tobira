@@ -1,8 +1,11 @@
 import { graphql } from "react-relay";
 import { useTranslation } from "react-i18next";
 
+import { discriminate } from "../util";
+import { unreachable } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
+import { ErrorPage } from "../ui/error";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { RootLoader } from "../layout/Root";
 import { Nav } from "../layout/Navigation";
@@ -30,9 +33,13 @@ export const DirectSeriesRoute = makeRoute(url => {
         query SeriesByOpencastIdQuery($id: String!) {
             ... UserData
             series: seriesByOpencastId(id: $id) {
-                title
-                description
-                ... SeriesBlockSeriesData
+                __typename
+                ... on WaitingSeries { id } # only for correct type generation ...
+                ... on ReadySeries {
+                    title
+                    description
+                    ... SeriesBlockSeriesData
+                }
             }
             rootRealm {
                ... NavigationData
@@ -59,15 +66,24 @@ const SeriesPage: React.FC<SeriesByOpencastIdQuery$data> = ({ series }) => {
         return <NotFound kind="series" />;
     }
 
-    return <div css={{ display: "flex", flexDirection: "column" }}>
-        <PageTitle title={series.title} />
-        <p>{series.description}</p>
-        <div css={{ marginTop: 12 }}>
-            <SeriesBlockFromSeries
-                title={t("series.videos.heading")}
-                basePath="/!v"
-                fragRef={series}
-            />
-        </div>
-    </div>;
+    return discriminate(series, "__typename", {
+        WaitingSeries: () => (
+            <ErrorPage title={t("series.not-ready.title")}>
+                {t("series.not-ready.text")}
+            </ErrorPage>
+        ),
+        ReadySeries: series => (
+            <div css={{ display: "flex", flexDirection: "column" }}>
+                <PageTitle title={series.title} />
+                <p>{series.description}</p>
+                <div css={{ marginTop: 12 }}>
+                    <SeriesBlockFromSeries
+                        title={t("series.videos.heading")}
+                        basePath="/!v"
+                        fragRef={series}
+                    />
+                </div>
+            </div>
+        ),
+    }, () => unreachable());
 };

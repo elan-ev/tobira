@@ -5,8 +5,8 @@ use super::{
     err::{ApiResult, invalid_input},
     id::Id,
     model::{
+        series::{Series, SeriesValue},
         realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm, RealmSpecifier},
-        series::Series,
         block::{
             BlockValue,
             NewTitleBlock,
@@ -193,9 +193,7 @@ impl Mutation {
             }
         }
 
-        let series = Series::load_by_opencast_id(oc_series_id, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`ocSeriesId` does not refer to a valid Opencast series ID"))?;
+        let series = SeriesValue::load_or_create_by_opencast_id(oc_series_id, context).await?;
 
         let target_realm = {
             let mut target_realm = parent_realm;
@@ -213,7 +211,7 @@ impl Mutation {
             Id::realm(target_realm.key),
             0,
             NewSeriesBlock {
-                series: Id::series(series.key),
+                series: Series::id(&series),
                 show_title: false,
                 order: VideoListOrder::NewToOld,
             },

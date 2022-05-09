@@ -6,7 +6,6 @@ use crate::{
 };
 
 
-#[juniper::graphql_interface]
 impl Node for search::Event {
     fn id(&self) -> Id {
         Id::search_event(self.id.0)
