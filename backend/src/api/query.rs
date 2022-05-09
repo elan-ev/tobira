@@ -48,7 +48,7 @@ impl Query {
         Event::load_by_id(id, context).await
     }
 
-    /// Returns a list of all events the current user has read access to
+    /// Returns a list of all events the current user has read access to.
     async fn all_events(context: &Context) -> ApiResult<Vec<Event>> {
         Event::load_all(context).await
     }
@@ -63,7 +63,7 @@ impl Query {
         SeriesValue::load_by_id(id, context).await
     }
 
-    /// Returns a list of all series
+    /// Returns a list of all series.
     async fn all_series(context: &Context) -> ApiResult<Vec<SeriesValue>> {
         SeriesValue::load_all(context).await
     }
