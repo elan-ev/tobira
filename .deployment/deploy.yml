@@ -46,6 +46,13 @@
         group: root
       notify: restart meili
 
+  - name: start and enable Meili
+    become: true
+    service:
+      name: meili
+      state: started
+      enabled: yes
+
     # DATABASE
 
     - name: initialize database
