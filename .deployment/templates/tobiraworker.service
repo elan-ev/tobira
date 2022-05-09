@@ -4,6 +4,8 @@ Documentation=https://github.com/elan-ev/tobira
 
 After=local-fs.target
 After=network.target
+After=postgresql.service
+After=meili.service
 
 [Service]
 WorkingDirectory=/opt/tobira/{{ id }}/
