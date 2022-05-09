@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode } from "react";
 import { graphql } from "react-relay/hooks";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
@@ -296,7 +296,6 @@ type VideoDateProps = {
 
 const VideoDate: React.FC<VideoDateProps> = props => {
     const { t, i18n } = useTranslation();
-    const [hovering, setHovering] = useState(false);
 
     const created = new Date(props.created);
     const updated = new Date(props.updated);
@@ -309,18 +308,18 @@ const VideoDate: React.FC<VideoDateProps> = props => {
         : null;
 
     return (
-        <div
-            onMouseEnter={() => setHovering(true)}
-            onMouseLeave={() => setHovering(false)}
-            css={{
-                display: "inline-block",
-                position: "relative",
-                color: "var(--grey40)",
-                fontSize: 14,
-            }}
-        >
+        <div css={{
+            display: "inline-block",
+            position: "relative",
+            color: "var(--grey40)",
+            fontSize: 14,
+            "&:hover > div": {
+                display: "initial",
+            },
+        }}>
             {createdDate}
-            {hovering && <div css={{
+            <div css={{
+                display: "none",
                 position: "absolute",
                 left: 2,
                 bottom: "calc(100% + 10px)",
@@ -342,7 +341,7 @@ const VideoDate: React.FC<VideoDateProps> = props => {
                 <i>{t("video.created")}</i>: {createdFull}
                 <br/>
                 <i>{t("video.updated")}</i>: {updatedFull}
-            </div>}
+            </div>
         </div>
     );
 };
