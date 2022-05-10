@@ -85,7 +85,7 @@ type Props = SharedFromSeriesProps & {
 
 const VIDEO_GRID_BREAKPOINT = 600;
 
-export const SeriesBlock: React.FC<Props> = ({
+const SeriesBlock: React.FC<Props> = ({
     basePath,
     title,
     series,
