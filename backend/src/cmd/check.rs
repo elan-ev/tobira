@@ -5,10 +5,10 @@
 use anyhow::Result;
 
 use crate::{
-    args,
-    load_config_and_init_logger,
+    args, load_config_and_init_logger,
     config::Config,
-    prelude::*, db,
+    db::{self, MigrationPlan},
+    prelude::*,
     sync::harvest::HarvestClient,
 };
 
@@ -21,8 +21,12 @@ pub(crate) async fn run(shared: &args::Shared) -> Result<()> {
     // Perform main checks
     info!("Starting to verify various things...");
     let referenced_files = check_referenced_files(&config).await;
-    let meili = check_meili(&config).await;
     let db_pool = db::create_pool(&config.db).await;
+    let db_migrations = match &db_pool {
+        Err(_) => None,
+        Ok(pool) => Some(check_db_migrations(pool).await),
+    };
+    let meili = check_meili(&config).await;
     let opencast_sync = check_opencast_sync(&config).await;
     info!("Done verifing various things");
 
@@ -34,8 +38,20 @@ pub(crate) async fn run(shared: &args::Shared) -> Result<()> {
     println!();
     print_outcome(&mut any_errors, "Load configuration", &Ok(()));
     print_outcome(&mut any_errors, "Checking all referenced files", &referenced_files);
-    print_outcome(&mut any_errors, "Connection to MeiliSearch", &meili);
     print_outcome(&mut any_errors, "Connection to DB", &db_pool);
+    if let Some(db_migrations) = db_migrations {
+        print_outcome(&mut any_errors, "DB migrations", &db_migrations);
+        match db_migrations {
+            Err(_) => {},
+            Ok(MigrationPlan::UpToDate)
+                => println!("    ▸ DB up to date"),
+            Ok(MigrationPlan::EmptyDb)
+                => println!("    ▸ DB is empty, all migrations will be applied"),
+            Ok(MigrationPlan::Migrate { new_migrations })
+                => println!("    ▸ DB is compatible, {new_migrations} new migrations will be applied"),
+        }
+    }
+    print_outcome(&mut any_errors, "Connection to MeiliSearch", &meili);
     print_outcome(&mut any_errors, "Connection to Opencast harvesting API", &opencast_sync);
 
     println!();
@@ -45,7 +61,7 @@ pub(crate) async fn run(shared: &args::Shared) -> Result<()> {
     } else {
         bunt::println!("{$green+intense}⮕  Everything OK{/$} \
             {$dimmed}(Tobira probably works in this environment){/$}");
-        println!("   ");
+        println!();
         Ok(())
     }
 }
@@ -102,4 +118,10 @@ async fn check_meili(config: &Config) -> Result<()> {
 
 async fn check_opencast_sync(config: &Config) -> Result<()> {
     HarvestClient::new(config).test_connection().await
+}
+
+async fn check_db_migrations(db_pool: &deadpool_postgres::Pool) -> Result<MigrationPlan> {
+    let mut db = db_pool.get().await?;
+    let tx = db.transaction().await?;
+    MigrationPlan::build(&tx).await
 }

@@ -10,7 +10,7 @@ use super::Db;
 
 /// Describes the actions needed to bring the database into a state that we
 /// expect.
-enum MigrationPlan {
+pub(crate) enum MigrationPlan {
     /// The database is completely empty: we need to create the meta table and
     /// apply all migrations.
     EmptyDb,
