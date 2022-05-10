@@ -107,8 +107,8 @@ const SeriesBlock: React.FC<Props> = ({
             const sortedEvents = [...series.events];
 
             sortedEvents.sort(match(order, {
-                NEW_TO_OLD: () => compareNewToOld,
-                OLD_TO_NEW: () => compareOldToNew,
+                "NEW_TO_OLD": () => compareNewToOld,
+                "OLD_TO_NEW": () => compareOldToNew,
             }, unreachable));
 
             return <SeriesBlockContainer title={finalTitle}>
