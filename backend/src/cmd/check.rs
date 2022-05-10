@@ -59,13 +59,16 @@ fn print_outcome<T>(any_errors: &mut bool, label: &str, result: &Result<T>) {
             *any_errors = true;
             bunt::println!(" ▸ {[bold+intense]}  {$red+bold}✘ error{/$}", label);
             bunt::println!("      {$red}▶▶▶ {$bold}Error:{/$}{/$} {[yellow+intense]}", e);
-            println!();
-            bunt::println!("      {$red+italic}Caused by:{/$}");
 
-            for (i, cause) in e.chain().skip(1).enumerate() {
-                print!("       {: >1$}", "", i * 2);
-                println!("‣ {cause}");
+            if e.chain().len() > 1 {
+                bunt::println!("      {$red+italic}Caused by:{/$}");
+
+                for (i, cause) in e.chain().skip(1).enumerate() {
+                    print!("       {: >1$}", "", i * 2);
+                    println!("‣ {cause}");
+                }
             }
+
             println!();
         }
     }
