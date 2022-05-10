@@ -62,6 +62,17 @@ pub(crate) enum Command {
         shared: Shared,
     },
 
+    /// Checks config, DB connection, and much more to find problems in Tobira's
+    /// environment.
+    ///
+    /// Useful for updates as you can catch many errors early, without needing
+    /// to restart the running Tobira process. Exits with 0 if everything is
+    /// Ok, and with 1 otherwise.
+    Check {
+        #[structopt(flatten)]
+        shared: Shared,
+    },
+
     /// Outputs a template for the configuration file (which includes
     /// descriptions or all options).
     WriteConfig {

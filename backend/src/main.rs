@@ -88,6 +88,7 @@ async fn run() -> Result<()> {
             let config = load_config_and_init_logger(shared)?;
             start_worker(config).await?;
         }
+        Command::Check { shared } => cmd::check::run(shared).await?,
         Command::WriteConfig { target } => config::write_template(target.as_ref())?,
         Command::ExportApiSchema { args } => cmd::export_api_schema::run(args)?,
         Command::ImportRealmTree { options, shared } => {
