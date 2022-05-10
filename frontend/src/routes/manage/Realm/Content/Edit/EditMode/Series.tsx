@@ -34,9 +34,9 @@ type EditSeriesBlockProps = {
 
 export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRef }) => {
 
-    const { series: allSeries } = useFragment(graphql`
+    const { allSeries } = useFragment(graphql`
         fragment SeriesEditModeSeriesData on Query {
-            series {
+            allSeries {
                 id
                 __typename
                 ... on ReadySeries {

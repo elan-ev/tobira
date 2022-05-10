@@ -40,6 +40,28 @@
 # ```
 #footer_links =
 
+# Additional metadata that is shown below a video. Example:
+#
+#     [general.metadata]
+#     dcterms.spatial = { en = "Location", de = "Ort" }
+#     "http://my.domain/xml/namespace".courseLink = { en = "Course", de = "Kurs"}
+#
+# As you can see, this is a mapping of a metadata location (the XML
+# namespace and the name) to a translated label. For the XML namespace
+# URL, there is one shortcut: the "http://purl.org/dc/terms/" is
+# abbreviated as just "dcterms".
+#
+# Instead of the manually translated label, you can use some builtin
+# labels like this:
+#
+#     dcterms.license = "builtin:license"
+#     dcterms.source = "builtin:source"
+#
+# As soon as you add your own metadata fields, this default is
+# overwritten. If you want to keep showing the license and source data,
+# you have to add those two lines to your configuration.
+#metadata =
+
 
 [db]
 # The username of the database user.

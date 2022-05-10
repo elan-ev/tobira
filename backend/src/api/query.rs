@@ -44,12 +44,12 @@ impl Query {
     }
 
     /// Returns an event by its ID.
-    async fn event(id: Id, context: &Context) -> ApiResult<Option<Event>> {
+    async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
         Event::load_by_id(id, context).await
     }
 
-    /// Returns a list of all events the current user has read access to
-    async fn events(context: &Context) -> ApiResult<Vec<Event>> {
+    /// Returns a list of all events the current user has read access to.
+    async fn all_events(context: &Context) -> ApiResult<Vec<Event>> {
         Event::load_all(context).await
     }
 
@@ -58,8 +58,13 @@ impl Query {
         SeriesValue::load_by_opencast_id(id, context).await
     }
 
-    /// Returns a list of all series
-    async fn series(context: &Context) -> ApiResult<Vec<SeriesValue>> {
+    /// Returns a series by its ID.
+    async fn series_by_id(id: Id, context: &Context) -> ApiResult<Option<SeriesValue>> {
+        SeriesValue::load_by_id(id, context).await
+    }
+
+    /// Returns a list of all series.
+    async fn all_series(context: &Context) -> ApiResult<Vec<SeriesValue>> {
         SeriesValue::load_all(context).await
     }
 

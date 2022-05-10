@@ -7,7 +7,8 @@ export const GlobalStyle: React.FC = () => <>
     <Global styles={GLOBAL_STYLE} />
 </>;
 
-export const SMALLER_FONT_BREAKPOINT = 450;
+export const BREAKPOINT_SMALL = 450;
+export const BREAKPOINT_MEDIUM = 650;
 
 /**
  * The following is a minimal set of CSS reset rules in order to get rid of
@@ -80,19 +81,19 @@ const GLOBAL_STYLE = css({
         fontSize: 30,
         lineHeight: 1.3,
         marginBottom: 16,
-        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
             fontSize: 26,
         },
     },
     h2: {
         fontSize: 23,
-        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
             fontSize: 20,
         },
     },
     h3: {
         fontSize: 19,
-        [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
             fontSize: 18,
         },
     },
@@ -102,5 +103,9 @@ const GLOBAL_STYLE = css({
         "&:hover": {
             color: "var(--nav-color-darker)",
         },
+    },
+    hr: {
+        border: "none",
+        borderTop: "1px solid var(--grey80)",
     },
 });

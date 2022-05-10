@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import CONFIG from "../../config";
-import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
+import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { Link } from "../../router";
 import { translatedConfig } from "../../util";
 import { BASE_LOGO_MARGIN, BUTTONS_WIDTH } from "./ui";
@@ -65,7 +65,7 @@ export const Logo: React.FC = () => {
                 height: "100%",
                 flex: `0 1 calc(var(--inner-header-height) * ${largeAr})`,
                 margin: `0 ${actualMargin(largeAr)}`,
-                [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+                [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
                     flex: `0 1 calc(var(--inner-header-height) * ${smallAr})`,
                     margin: `0 ${actualMargin(smallAr)}`,
                 },
@@ -82,7 +82,7 @@ export const Logo: React.FC = () => {
                 src={large.path}
                 alt={alt}
                 css={{
-                    [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+                    [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
                         display: "none",
                     },
                 }}
@@ -93,7 +93,7 @@ export const Logo: React.FC = () => {
                 src={small.path}
                 alt={alt}
                 css={{
-                    [`@media not all and (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+                    [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
                         display: "none",
                     },
                 }}

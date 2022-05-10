@@ -98,14 +98,15 @@ login-page:
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
 
 video:
-  creator: Von
   created: Erstellt
   updated: Zuletzt angepasst
-  part-of-series: Teil von
+  part-of-series: Teil von Serie
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
+  license: Lizenz
+  source: Quelle
 
 series:
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.

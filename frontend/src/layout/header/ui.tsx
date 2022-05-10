@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 
-import { SMALLER_FONT_BREAKPOINT } from "../../GlobalStyle";
+import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { useTitle } from "../../util";
 
 
@@ -43,7 +43,7 @@ export const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, children
                 "&:hover": {
                     opacity: "1",
                 },
-                [`@media (max-width: ${SMALLER_FONT_BREAKPOINT}px)`]: {
+                [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
                     fontSize: 24,
                 },
             }}

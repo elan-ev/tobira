@@ -17,13 +17,13 @@ import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { Thumbnail } from "../../../ui/Video";
 import { NotFound } from "../../NotFound";
-import { b64regex } from "../../Video";
 import { PATH as MANAGE_VIDEOS_PATH } from ".";
 import { useUser } from "../../../User";
 import { LinkButton } from "../../../ui/Button";
 import CONFIG from "../../../config";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
+import { b64regex } from "../../util";
 
 
 export const ManageSingleVideoRoute = makeRoute(url => {
@@ -66,7 +66,7 @@ const BackLink: React.FC = () => {
 const query = graphql`
     query SingleVideoManageQuery($id: ID!) {
         ...UserData
-        event(id: $id) {
+        event: eventById(id: $id) {
             id
             title
             description

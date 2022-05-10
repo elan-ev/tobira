@@ -7,8 +7,10 @@ use crate::{
         err::{self, ApiResult},
         model::{event::Event, series::{WaitingSeries, ReadySeries}, realm::Realm},
     },
+    prelude::*,
     search::Event as SearchEvent,
     search::Realm as SearchRealm,
+    db::types::ExtraMetadata,
 };
 
 
@@ -74,5 +76,49 @@ where
 
     fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
         <String as juniper::ParseScalarValue<S>>::from_str(value)
+    }
+}
+
+
+#[juniper::graphql_scalar(
+    name = "ExtraMetadata",
+    description = "Arbitrary metadata for events/series. Serialized as JSON object.",
+)]
+impl<S> GraphQLScalar for ExtraMetadata
+where
+    S: juniper::ScalarValue
+{
+    fn resolve(&self) -> juniper::Value {
+        use juniper::Value;
+
+        std::iter::once(("dcterms", &self.dcterms))
+            .chain(self.extended.iter().map(|(k, v)| (&**k, v)))
+            .map(|(k, v)| {
+                let value = v.iter()
+                    .map(|(k, v)| {
+                        let elements = v.iter()
+                            .map(|s| Value::Scalar(S::from(s.clone())))
+                            .collect();
+                        (k, Value::List(elements))
+                    })
+                    .collect::<juniper::Object<S>>();
+
+                (k, Value::Object(value))
+            })
+            .collect::<juniper::Object<S>>()
+            .pipe(Value::Object)
+    }
+
+    fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
+        // I did not want to waste time implementing this now, given that we
+        // likely never use it.
+        let _ = value;
+        todo!("ExtraMetadata cannot be used as input value yet")
+    }
+
+    fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
+        // See `from_input_value`
+        let _ = value;
+        todo!()
     }
 }

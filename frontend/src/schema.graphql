@@ -16,6 +16,7 @@ type Event implements Node {
   created: DateTimeUtc!
   updated: DateTimeUtc!
   creators: [String!]!
+  metadata: ExtraMetadata!
   "Whether the current user has write access to this event."
   canWrite: Boolean!
   series: ReadySeries
@@ -100,6 +101,9 @@ input NewTextBlock {
   content: String!
 }
 
+"Arbitrary metadata for events/series. Serialized as JSON object."
+scalar ExtraMetadata
+
 enum VideoListOrder {
   NEW_TO_OLD
   OLD_TO_NEW
@@ -141,13 +145,15 @@ type Query {
   """
   realmByPath(path: String!): Realm
   "Returns an event by its ID."
-  event(id: ID!): Event
-  "Returns a list of all events the current user has read access to"
-  events: [Event!]!
+  eventById(id: ID!): Event
+  "Returns a list of all events the current user has read access to."
+  allEvents: [Event!]!
   "Returns a series by its Opencast ID"
   seriesByOpencastId(id: String!): Series
-  "Returns a list of all series"
-  series: [Series!]!
+  "Returns a series by its ID."
+  seriesById(id: ID!): Series
+  "Returns a list of all series."
+  allSeries: [Series!]!
   "Returns the current user."
   currentUser: User
   "Returns a new JWT that can be used to authenticate against Opencast for uploading videos."

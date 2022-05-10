@@ -26,7 +26,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
 
     const { events } = useFragment(graphql`
         fragment VideoEditModeEventData on Query {
-            events { id title }
+            events: allEvents { id title }
         }
     `, useContext(ContentManageQueryContext) as VideoEditModeEventData$key);
 
