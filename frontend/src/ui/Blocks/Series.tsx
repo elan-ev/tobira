@@ -82,7 +82,7 @@ export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = ({ fragRef, ...r
 };
 
 type Props = SharedProps & BlockOnlyProps & {
-    series: NonNullable<SeriesBlockSeriesData$data>;
+    series: SeriesBlockSeriesData$data;
 };
 
 const VIDEO_GRID_BREAKPOINT = 600;
