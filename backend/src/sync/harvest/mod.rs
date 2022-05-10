@@ -11,8 +11,9 @@ use crate::{
     search::{self, IndexItemKind}, config::Config,
 };
 use super::status::SyncStatus;
-use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
+use self::response::{HarvestItem, HarvestResponse};
 
+pub(crate) use self::client::HarvestClient;
 
 
 mod client;

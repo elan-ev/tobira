@@ -9,6 +9,7 @@ use crate::{
     load_config_and_init_logger,
     config::Config,
     prelude::*, db,
+    sync::harvest::HarvestClient,
 };
 
 
@@ -22,6 +23,7 @@ pub(crate) async fn run(shared: &args::Shared) -> Result<()> {
     let referenced_files = check_referenced_files(&config).await;
     let meili = check_meili(&config).await;
     let db_pool = db::create_pool(&config.db).await;
+    let opencast_sync = check_opencast_sync(&config).await;
     info!("Done verifing various things");
 
 
@@ -34,6 +36,7 @@ pub(crate) async fn run(shared: &args::Shared) -> Result<()> {
     print_outcome(&mut any_errors, "Checking all referenced files", &referenced_files);
     print_outcome(&mut any_errors, "Connection to MeiliSearch", &meili);
     print_outcome(&mut any_errors, "Connection to DB", &db_pool);
+    print_outcome(&mut any_errors, "Connection to Opencast harvesting API", &opencast_sync);
 
     println!();
     if any_errors {
@@ -92,4 +95,8 @@ async fn check_meili(config: &Config) -> Result<()> {
     // TODO: maybe check additional things?
     let _meili = config.meili.connect_only().await?;
     Ok(())
+}
+
+async fn check_opencast_sync(config: &Config) -> Result<()> {
+    HarvestClient::new(config).test_connection().await
 }

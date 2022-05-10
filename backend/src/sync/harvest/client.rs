@@ -16,7 +16,7 @@ use super::HarvestResponse;
 
 
 /// Used to send request to the harvesting API.
-pub(super) struct HarvestClient {
+pub(crate) struct HarvestClient {
     http_client: Client<HttpsConnector<HttpConnector>, Body>,
     scheme: Scheme,
     authority: Authority,
@@ -26,7 +26,7 @@ pub(super) struct HarvestClient {
 impl HarvestClient {
     const API_PATH: &'static str = "/tobira/harvest";
 
-    pub(super) fn new(config: &Config) -> Self {
+    pub(crate) fn new(config: &Config) -> Self {
         // Prepare HTTP client
         let https = HttpsConnectorBuilder::new()
             .with_native_roots()
@@ -50,6 +50,12 @@ impl HarvestClient {
             authority: config.opencast.sync_node().authority.clone(),
             auth_header: Secret::new(auth_header),
         }
+    }
+
+    pub(crate) async fn test_connection(&self) -> Result<()> {
+        self.send(Utc.timestamp(0, 0), 2).await
+            .map(|_| ())
+            .context("test harvest request failed")
     }
 
     /// Sends a request to the harvesting API, checks and deserializes the
