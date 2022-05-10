@@ -5,6 +5,7 @@ import { graphql, useFragment } from "react-relay";
 import { keyOfId, compareByKey, swap } from "../../util";
 import { match, discriminate } from "../../util";
 import { unreachable } from "../../util/err";
+import type { Fields } from "../../relay";
 import { Link } from "../../router";
 import { SeriesBlockData$data, SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
 import {
@@ -64,7 +65,7 @@ export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...res
         : <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
 
-type BlockOnlyProps = Omit<SeriesBlockData$data, "series" | " $fragmentType">;
+type BlockOnlyProps = Omit<Fields<SeriesBlockData$data>, "series">;
 
 type FromSeriesProps = SharedProps & {
     fragRef: SeriesBlockSeriesData$key;
