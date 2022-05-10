@@ -18,9 +18,7 @@ import { Card } from "../Card";
 
 
 type SharedProps = {
-    title?: string;
     basePath: string;
-    activeEventId?: string;
 };
 
 const blockFragment = graphql`
@@ -65,35 +63,35 @@ export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...res
         : <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
 
-type BlockOnlyProps = Omit<Fields<SeriesBlockData$data>, "series">;
+type BlockProps = Partial<Omit<Fields<SeriesBlockData$data>, "series">>;
 
-type FromSeriesProps = SharedProps & {
+type SharedFromSeriesProps = SharedProps & BlockProps & {
+    title?: string;
+    activeEventId?: string;
+};
+
+type FromSeriesProps = SharedFromSeriesProps & {
     fragRef: SeriesBlockSeriesData$key;
-} & Partial<BlockOnlyProps>;
+};
 
 export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = ({ fragRef, ...rest }) => {
     const series = useFragment(seriesFragment, fragRef);
-    return <SeriesBlock
-        {...{ series }}
-        order="NEW_TO_OLD"
-        showTitle={true}
-        {...rest}
-    />;
+    return <SeriesBlock series={series} {...rest} />;
 };
 
-type Props = SharedProps & BlockOnlyProps & {
+type Props = SharedFromSeriesProps & {
     series: SeriesBlockSeriesData$data;
 };
 
 const VIDEO_GRID_BREAKPOINT = 600;
 
 export const SeriesBlock: React.FC<Props> = ({
+    basePath,
     title,
     series,
-    showTitle,
-    basePath,
     activeEventId,
-    order,
+    order = "NEW_TO_OLD",
+    showTitle = true,
 }) => {
     const { t } = useTranslation();
 
