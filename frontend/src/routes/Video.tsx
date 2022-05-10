@@ -104,7 +104,7 @@ const query = graphql`
             thumbnail
             isLive
             canWrite
-            series { title, ...SeriesBlockSeriesData }
+            series { title ... SeriesBlockSeriesData }
             tracks { uri flavor mimetype resolution }
         }
         realm: realmByPath(path: $realmPath) {
