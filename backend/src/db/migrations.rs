@@ -1,39 +1,39 @@
 use chrono::{DateTime, Utc, offset::TimeZone};
+use deadpool_postgres::Transaction;
 use once_cell::sync::Lazy;
-use std::{collections::BTreeMap, time::Duration};
+use std::{collections::BTreeMap, time::Duration, num::NonZeroU64};
 use tokio_postgres::{IsolationLevel, error::SqlState};
 
 use crate::prelude::*;
 use super::Db;
 
 
-/// Makes sure the database schema is up to date by checking the active
-/// migrations and applying all missing ones.
-///
-/// If anything unexpected is noticed, an error is returned to notify the user
-/// they have to manually deal with it.
-pub async fn migrate(db: &mut Db) -> Result<()> {
-    // The whole migration process is wrapped in one serializable transaction.
-    // This guarantees that only one Tobira node ever does the migrations. As
-    // this only happens during startup, the potential slow down from such a
-    // strong isolation level is fine.
-    //
-    // Serializable transactions can fail when committing them. That means we
-    // have to wrap everything in a loop and retry. If the transaction ever
-    // fails for one Tobira node and that node retries, we _expect_ that in the
-    // second loop iteration the node will observe that the `__db_migrations`
-    // table already exists as the transaction of another node is expected to
-    // have correctly committed by that point.
-    loop {
-        let tx = db.build_transaction()
-            .isolation_level(IsolationLevel::Serializable)
-            .start()
-            .await?;
+/// Describes the actions needed to bring the database into a state that we
+/// expect.
+enum MigrationPlan {
+    /// The database is completely empty: we need to create the meta table and
+    /// apply all migrations.
+    EmptyDb,
 
+    /// The database is completely up to date and all migrations match.
+    UpToDate,
+
+    /// The DB can be migrated to the state we expect by applying that many new
+    /// migrations.
+    Migrate {
+        new_migrations: NonZeroU64,
+    },
+}
+
+impl MigrationPlan {
+    /// Builds a migration plan by querying the current state of the DB. If the
+    /// DB is in a state that we cannot fix, `Err` is returned. Does not modify
+    /// the DB.
+    pub(crate) async fn build(tx: &Transaction<'_>) -> Result<Self> {
         // Create the meta table `__db_migrations` if it doesn't exist yet.
-        if !super::query::does_table_exist(&*tx, "__db_migrations").await? {
+        if !super::query::does_table_exist(&**tx, "__db_migrations").await? {
             // Check if there are any other tables in the database, which would be fishy.
-            let tables = super::query::all_table_names(&*tx).await?;
+            let tables = super::query::all_table_names(&**tx).await?;
             if !tables.is_empty() {
                 bail!(
                     "migration table '__db_migrations' does not exist, but some other \
@@ -42,10 +42,7 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
                 );
             }
 
-            info!("Database is empty. Creating table '__db_migrations'...");
-            tx.batch_execute(include_str!("db-migrations.sql"))
-                .await
-                .context("could not create migrations meta table")?;
+            return Ok(Self::EmptyDb)
         } else {
             debug!("Table '__db_migrations' already exists");
         }
@@ -64,7 +61,8 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
         // Retrieve all active migrations from the DB.
         let active_migrations = tx
             .query_raw("select id, name, applied_on, script from __db_migrations", dbargs![])
-            .await?
+            .await
+            .context("failed to query meta migrations table")?
             .map_ok(|row| (
                 row.get::<_, i64>(0) as u64,
                 RawMigration {
@@ -116,44 +114,86 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
             }
         }
 
-
-        // Apply missing migrations in order. We already know that `MIGRATIONS` and
-        // `active_migrations` have consecutive IDs, so we can simply iterate over
-        // this range. We already know that `MIGRATIONS` contains at least as many
-        // elements as `active_migrations`.
-        if MIGRATIONS.len() == active_migrations.len() {
-            info!("All migrations are already applied: database schema is up to date.")
-        } else {
-            info!("The database is missing some migrations. Applying them now.");
-            for (id, migration) in MIGRATIONS.range(active_migrations.len() as u64 + 1..) {
-                debug!("Applying migration '{}-{}' ...", id, migration.name);
-                trace!("Executing:\n{}", migration.script);
-
-                tx.batch_execute(migration.script)
-                    .await
-                    .context(format!("failed to run script for '{}-{}'", id, migration.name))?;
-
-                let query = "insert into __db_migrations (id, name, applied_on, script) \
-                    values ($1, $2, now() at time zone 'utc', $3)";
-                // let params = ;
-                tx.execute(query, &[&(*id as i64), &migration.name, &migration.script])
-                    .await
-                    .context("failed to update __db_migrations")?;
-            }
+        // We already know that `MIGRATIONS` contains at least as many elements
+        // as `active_migrations`, therefore we can subtract here.
+        match NonZeroU64::new(MIGRATIONS.len() as u64 - active_migrations.len() as u64) {
+            None => Ok(Self::UpToDate),
+            Some(new_migrations) => Ok(Self::Migrate { new_migrations }),
         }
+    }
 
-        match tx.commit().await {
-            Ok(_) => {
-                let number_of_executed_migrations = MIGRATIONS.len() - active_migrations.len();
-                if number_of_executed_migrations > 0 {
-                    info!(
-                        "Applied {} migrations. DB is up to date now.",
-                        number_of_executed_migrations,
-                    );
-                }
-
+    /// Executes this plan on the database, bringing it into the state we expect.
+    pub(crate) async fn execute(&self, tx: &Transaction<'_>) -> Result<()> {
+        let new_migrations = match self {
+            Self::UpToDate => {
+                info!("All migrations are already applied: database schema is up to date.");
                 return Ok(());
             }
+            Self::EmptyDb => {
+                info!("Database is empty. Creating table '__db_migrations'...");
+                tx.batch_execute(include_str!("db-migrations.sql"))
+                    .await
+                    .context("could not create migrations meta table")?;
+                MIGRATIONS.len() as u64
+            }
+            Self::Migrate { new_migrations } => {
+                debug!("Table '__db_migrations' already exists");
+                new_migrations.get()
+            }
+        };
+
+        // Apply missing migrations in order.
+        info!("The database is missing {new_migrations} migrations. Applying them now.");
+        for (id, migration) in MIGRATIONS.range(MIGRATIONS.len() as u64 - new_migrations..) {
+            debug!("Applying migration '{}-{}' ...", id, migration.name);
+            trace!("Executing:\n{}", migration.script);
+
+            tx.batch_execute(migration.script)
+                .await
+                .context(format!("failed to run script for '{}-{}'", id, migration.name))?;
+
+            let query = "insert into __db_migrations (id, name, applied_on, script) \
+                values ($1, $2, now() at time zone 'utc', $3)";
+            tx.execute(query, &[&(*id as i64), &migration.name, &migration.script])
+                .await
+                .context("failed to update __db_migrations")?;
+        }
+
+        info!("Applied {new_migrations} migrations. DB is up to date now.");
+
+        Ok(())
+    }
+}
+
+
+/// Makes sure the database schema is up to date by checking the active
+/// migrations and applying all missing ones.
+///
+/// If anything unexpected is noticed, an error is returned to notify the user
+/// they have to manually deal with it.
+pub async fn migrate(db: &mut Db) -> Result<()> {
+    // The whole migration process is wrapped in one serializable transaction.
+    // This guarantees that only one Tobira node ever does the migrations. As
+    // this only happens during startup, the potential slow down from such a
+    // strong isolation level is fine.
+    //
+    // Serializable transactions can fail when committing them. That means we
+    // have to wrap everything in a loop and retry. If the transaction ever
+    // fails for one Tobira node and that node retries, we _expect_ that in the
+    // second loop iteration the node will observe that the `__db_migrations`
+    // table already exists as the transaction of another node is expected to
+    // have correctly committed by that point.
+    loop {
+        let tx = db.build_transaction()
+            .isolation_level(IsolationLevel::Serializable)
+            .start()
+            .await?;
+
+        let plan = MigrationPlan::build(&tx).await?;
+        plan.execute(&tx).await?;
+
+        match tx.commit().await {
+            Ok(_) => return Ok(()),
 
             Err(e) if e.code() == Some(&SqlState::T_R_SERIALIZATION_FAILURE) => {
                 let backoff_duration = Duration::from_millis(500);
