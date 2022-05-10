@@ -5,21 +5,24 @@ import { graphql, useFragment } from "react-relay";
 import { keyOfId, compareByKey, swap } from "../../util";
 import { match, discriminate } from "../../util";
 import { unreachable } from "../../util/err";
+import type { Fields } from "../../relay";
 import { Link } from "../../router";
 import { SeriesBlockData$data, SeriesBlockData$key } from "./__generated__/SeriesBlockData.graphql";
 import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
+import {
+    SeriesBlockReadySeriesData$data,
+    SeriesBlockReadySeriesData$key,
+} from "./__generated__/SeriesBlockReadySeriesData.graphql";
 import { Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
 
 
 type SharedProps = {
-    title?: string;
     basePath: string;
-    activeEventId?: string;
 };
 
 const blockFragment = graphql`
@@ -34,21 +37,27 @@ const seriesFragment = graphql`
     fragment SeriesBlockSeriesData on Series {
         __typename
         ... on ReadySeries {
-            title
-            events {
-                id
-                title
-                thumbnail
-                duration
-                created
-                creators
-                isLive
-                tracks { resolution }
-            }
+            ... SeriesBlockReadySeriesData
         }
         # Unfortunately we have to query **something** from this variant as well
         # in order to reign in the Relay compiler type generation.
         ... on WaitingSeries { id }
+    }
+`;
+
+const readySeriesFragment = graphql`
+    fragment SeriesBlockReadySeriesData on ReadySeries {
+        title
+        events {
+            id
+            title
+            thumbnail
+            duration
+            created
+            creators
+            isLive
+            tracks { resolution }
+        }
     }
 `;
 
@@ -64,71 +73,95 @@ export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...res
         : <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
 
-type BlockOnlyProps = Omit<SeriesBlockData$data, "series" | " $fragmentType">;
+type BlockProps = Partial<Omit<Fields<SeriesBlockData$data>, "series">>;
 
-type FromSeriesProps = SharedProps & {
-    fragRef: SeriesBlockSeriesData$key;
-} & Partial<BlockOnlyProps>;
-
-export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = ({ fragRef, ...rest }) => {
-    const series = useFragment(seriesFragment, fragRef);
-    return <SeriesBlock
-        {...{ series }}
-        order="NEW_TO_OLD"
-        showTitle={true}
-        {...rest}
-    />;
+type SharedFromSeriesProps = SharedProps & BlockProps & {
+    title?: string;
+    activeEventId?: string;
 };
 
-type Props = SharedProps & BlockOnlyProps & {
-    series: NonNullable<SeriesBlockSeriesData$data>;
+type FromSeriesProps = SharedFromSeriesProps & {
+    fragRef: SeriesBlockSeriesData$key;
+};
+
+const SeriesBlockFromSeries: React.FC<FromSeriesProps> = (
+    { fragRef, ...rest },
+) => {
+    const series = useFragment(seriesFragment, fragRef);
+    return <SeriesBlock series={series} {...rest} />;
+};
+
+type FromReadySeriesProps = SharedFromSeriesProps & {
+    fragRef: SeriesBlockReadySeriesData$key;
+};
+
+export const SeriesBlockFromReadySeries: React.FC<FromReadySeriesProps> = (
+    { fragRef, ...rest },
+) => {
+    const series = useFragment(readySeriesFragment, fragRef);
+    return <ReadySeriesBlock series={series} {...rest} />;
+};
+
+type Props = SharedFromSeriesProps & {
+    series: SeriesBlockSeriesData$data;
 };
 
 const VIDEO_GRID_BREAKPOINT = 600;
 
-export const SeriesBlock: React.FC<Props> = ({
-    title,
-    series,
-    showTitle,
-    basePath,
-    activeEventId,
-    order,
-}) => {
+const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
-
     return discriminate(series, "__typename", {
-        ReadySeries: series => {
-            const finalTitle = title ?? (showTitle ? series.title : undefined);
-
-            if (!series.events.length) {
-                return <SeriesBlockContainer title={finalTitle}>
-                    {t("series.no-events")}
-                </SeriesBlockContainer>;
-            }
-            const sortedEvents = [...series.events];
-
-            sortedEvents.sort(match(order, {
-                NEW_TO_OLD: () => compareNewToOld,
-                OLD_TO_NEW: () => compareOldToNew,
-            }, unreachable));
-
-            return <SeriesBlockContainer title={finalTitle}>
-                {sortedEvents.map(
-                    event => <GridTile
-                        key={event.id}
-                        active={event.id === activeEventId}
-                        {...{ basePath, event }}
-                    />,
-                )}
+        ReadySeries: series => <SeriesBlockFromReadySeries fragRef={series} {...props} />,
+        WaitingSeries: () => {
+            const { title } = props;
+            return <SeriesBlockContainer title={title}>
+                {t("series.not-ready.text")}
             </SeriesBlockContainer>;
         },
-        WaitingSeries: () => <SeriesBlockContainer title={title}>
-            {t("series.not-ready.text")}
-        </SeriesBlockContainer>,
     }, () => unreachable());
 };
 
-type Event = Extract<SeriesBlockSeriesData$data, { __typename: "ReadySeries" }>["events"][0];
+type ReadyProps = SharedFromSeriesProps & {
+    series: SeriesBlockReadySeriesData$data;
+};
+
+const ReadySeriesBlock: React.FC<ReadyProps> = ({
+    basePath,
+    title,
+    series,
+    activeEventId,
+    order = "NEW_TO_OLD",
+    showTitle = true,
+}) => {
+    const { t } = useTranslation();
+
+    const finalTitle = title ?? (showTitle ? series.title : undefined);
+
+    if (!series.events.length) {
+        return <SeriesBlockContainer title={finalTitle}>
+            {t("series.no-events")}
+        </SeriesBlockContainer>;
+    }
+
+    const sortedEvents = [...series.events];
+
+    sortedEvents.sort(match(order, {
+        "NEW_TO_OLD": () => compareNewToOld,
+        "OLD_TO_NEW": () => compareOldToNew,
+    }, unreachable));
+
+    return <SeriesBlockContainer title={finalTitle}>
+        {sortedEvents.map(
+            event => <GridTile
+                key={event.id}
+                active={event.id === activeEventId}
+                {...{ basePath, event }}
+            />,
+        )}
+    </SeriesBlockContainer>;
+};
+
+type Event = SeriesBlockReadySeriesData$data["events"][0];
 
 const compareNewToOld = compareByKey((event: Event): number => (
     new Date(event.created).getTime()

@@ -57,4 +57,11 @@ export function loadQuery<TQuery extends OperationType>(
 }
 
 
+/** Extract queried fields from Relay types. Removes internal properties. */
+export type Fields<T> = {
+    [K in FieldKeys<keyof T>]: T[K];
+};
+type FieldKeys<T> = T extends ` ${infer _}` ? never : T;
+
+
 export * from "./errors";

@@ -9,7 +9,7 @@ import { Nav } from "../layout/Navigation";
 import { TextBlock } from "../ui/Blocks/Text";
 import { Player, Track } from "../ui/player";
 import { useTranslation } from "react-i18next";
-import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
+import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { Link } from "../router";
 import { FiChevronRight } from "react-icons/fi";
@@ -104,7 +104,7 @@ const query = graphql`
             thumbnail
             isLive
             canWrite
-            series { title, ...SeriesBlockSeriesData }
+            series { title ... SeriesBlockReadySeriesData }
             tracks { uri flavor mimetype resolution }
         }
         realm: realmByPath(path: $realmPath) {
@@ -185,7 +185,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
 
         <div css={{ height: 80 }} />
 
-        {event.series && <SeriesBlockFromSeries
+        {event.series && <SeriesBlockFromReadySeries
             basePath={basePath}
             fragRef={event.series}
             title={t("video.more-from-series", { series: event.series.title })}

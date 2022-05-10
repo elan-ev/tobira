@@ -6,7 +6,7 @@ import { unreachable } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
 import { ErrorPage } from "../ui/error";
-import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
+import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
 import { RootLoader } from "../layout/Root";
 import { Nav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
@@ -38,7 +38,7 @@ export const DirectSeriesRoute = makeRoute(url => {
                 ... on ReadySeries {
                     title
                     description
-                    ... SeriesBlockSeriesData
+                    ... SeriesBlockReadySeriesData
                 }
             }
             rootRealm {
@@ -77,7 +77,7 @@ const SeriesPage: React.FC<SeriesByOpencastIdQuery$data> = ({ series }) => {
                 <PageTitle title={series.title} />
                 <p>{series.description}</p>
                 <div css={{ marginTop: 12 }}>
-                    <SeriesBlockFromSeries
+                    <SeriesBlockFromReadySeries
                         title={t("series.videos.heading")}
                         basePath="/!v"
                         fragRef={series}
