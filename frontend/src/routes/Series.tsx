@@ -5,7 +5,6 @@ import { discriminate } from "../util";
 import { unreachable } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
-import { ErrorPage } from "../ui/error";
 import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
 import { RootLoader } from "../layout/Root";
 import { Nav } from "../layout/Navigation";
@@ -16,6 +15,9 @@ import { SeriesByOpencastIdQuery } from "./__generated__/SeriesByOpencastIdQuery
 import { b64regex } from "./util";
 import { SeriesByIdQuery } from "./__generated__/SeriesByIdQuery.graphql";
 import { SeriesRouteData$key } from "./__generated__/SeriesRouteData.graphql";
+import { Card } from "../ui/Card";
+import { FiTruck } from "react-icons/fi";
+import { keyframes } from "@emotion/react";
 
 
 export const DirectSeriesOCRoute = makeRoute(url => {
@@ -103,11 +105,7 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
     }
 
     return discriminate(series, "__typename", {
-        WaitingSeries: () => (
-            <ErrorPage title={t("series.not-ready.title")}>
-                {t("series.not-ready.text")}
-            </ErrorPage>
-        ),
+        WaitingSeries: () => <WaitingSeriesPage />,
         ReadySeries: series => (
             <div css={{ display: "flex", flexDirection: "column" }}>
                 <PageTitle title={series.title} />
@@ -122,4 +120,22 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
             </div>
         ),
     }, () => unreachable());
+};
+
+const WaitingSeriesPage: React.FC = () => {
+    const { t } = useTranslation();
+
+    return (
+        <div css={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 32 }}>
+            <div><FiTruck css={{
+                fontSize: 40,
+                animation: `500ms steps(2, end) infinite none ${keyframes({
+                    "0%": { transform: "translateY(5px)" },
+                    "100%": { transform: "none" },
+                })}`,
+            }}/></div>
+            <Card kind="info">{t("series.not-ready.title")}</Card>
+            <div css={{ maxWidth: 700 }}>{t("series.not-ready.text")}</div>
+        </div>
+    );
 };
