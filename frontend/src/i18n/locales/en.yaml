@@ -113,8 +113,8 @@ series:
   not-ready:
     title: Series not synchronized, yet
     text: >
-      This Opencast series has not been fully synchronized with Tobira, yet.
-      It will probably arrive soon, though, so you can just check back in at a later time.
+      The data of the requested series has not been fully transferred yet. This should
+      happen automatically soon. Try again in a few minutes.
 
 realm:
   page-settings: Page settings
