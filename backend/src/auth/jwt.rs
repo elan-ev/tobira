@@ -29,7 +29,7 @@ pub(crate) struct JwtConfig {
     ///
     /// Here, the `sec1.pem` is encoded as SEC1 instead of PKCS#8. The second
     /// command converts the key.
-    secret_key: PathBuf,
+    pub(crate) secret_key: PathBuf,
 
 
     /// The duration for which a JWT is valid. JWTs are just used as temporary

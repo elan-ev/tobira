@@ -15,9 +15,9 @@ mod tx;
 pub(crate) mod types;
 pub(crate) mod util;
 
-pub use self::{
+pub(crate) use self::{
     tx::Transaction,
-    migrations::migrate,
+    migrations::{migrate, MigrationPlan},
 };
 
 

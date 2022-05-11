@@ -3,7 +3,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use hyper::http::status::StatusCode;
 use tokio_postgres::types::ToSql;
 
 use crate::{
@@ -12,8 +11,9 @@ use crate::{
     search::{self, IndexItemKind}, config::Config,
 };
 use super::status::SyncStatus;
-use self::{client::HarvestClient, response::{HarvestItem, HarvestResponse}};
+use self::response::{HarvestItem, HarvestResponse};
 
+pub(crate) use self::client::HarvestClient;
 
 
 mod client;
@@ -37,62 +37,32 @@ pub(crate) async fn run(
     // case of an error.
     let mut backoff = INITIAL_BACKOFF;
 
-    /// Helper macro to call in case of not being able to get a proper response
-    /// from Opencast. Forwards all arguments to `error!`, increases `backoff`
-    /// and sleeps for the backoff period.
-    macro_rules! request_failed {
-        ($($t:tt)*) => {{
-            error!($($t)*);
-
-            // We increase the backoff duration exponentially until we hit the
-            // defined maximum.
-            info!("Waiting {:.1?} due to error before trying again", backoff);
-            tokio::time::sleep(backoff).await;
-            backoff = min(MAX_BACKOFF, backoff.mul_f32(1.5));
-
-            continue;
-        }};
-    }
-
     let client = HarvestClient::new(config);
+    let preferred_amount = config.sync.preferred_harvest_size.into();
 
     loop {
         let sync_status = SyncStatus::fetch(&**db).await
             .context("failed to fetch sync status from DB")?;
 
-
         // Send request to API and deserialize data.
-        let before = Instant::now();
-        let req = client.send(
-            sync_status.harvested_until,
-            config.sync.preferred_harvest_size.into(),
-        );
-        let (response, body) = match req.await {
-            Ok(v) => v,
-            Err(e) => request_failed!("Harvest request failed: {:?}", e),
-        };
-
-        if response.status != StatusCode::OK {
-            trace!("HTTP response: {:#?}", response);
-            request_failed!("Harvest API returned unexpected HTTP code {}", response.status);
-        }
-
-        let harvest_data = match serde_json::from_slice::<HarvestResponse>(&body) {
+        let harvest_data = match client.send(sync_status.harvested_until, preferred_amount).await {
             Ok(v) => v,
             Err(e) => {
-                trace!("HTTP response: {:#?}", response);
-                request_failed!("Failed to deserialize response from harvesting API: {}", e);
-            }
+                error!("Harvest request failed: {:?}", e);
+
+                // We increase the backoff duration exponentially until we hit the
+                // defined maximum.
+                info!("Waiting {:.1?} due to error before trying again", backoff);
+                tokio::time::sleep(backoff).await;
+                backoff = min(MAX_BACKOFF, backoff.mul_f32(1.5));
+
+                continue;
+            },
         };
 
         // Communication with Opencast succeeded: reset backoff time.
         backoff = INITIAL_BACKOFF;
-        debug!(
-            "Received {} KiB ({} items) from the harvest API (in {:.2?})",
-            body.len() / 1024,
-            harvest_data.items.len(),
-            before.elapsed(),
-        );
+
 
         if harvest_data.includes_items_until == sync_status.harvested_until {
             bail!("Opencast's harvest response has 'includesItemsUntil' == 'since'. This means \

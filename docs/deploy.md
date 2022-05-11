@@ -33,6 +33,8 @@ That file also serves as a good template to copy to your server and then adjust.
 You usually have some additional files that Tobira needs access to (e.g. the logo).
 All file paths you use in the configuration file are relative to the configuration file itself.
 
+You can check the configuration file and all connections by running `tobira check`.
+
 
 ## 6. Run server and sync daemon
 
