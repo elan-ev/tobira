@@ -33,7 +33,7 @@ errors:
   internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
   unknown: Unbekannter Fehler.
-  detailed-error-info: 'Detaillierte Fehlerinformationen für Entwickler:'
+  detailed-error-info: Detaillierte Fehlerinformationen für Entwickler
 
 not-found:
   page-not-found: Seite nicht gefunden
@@ -103,6 +103,7 @@ video:
   part-of-series: Teil von Serie
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
+  not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
   license: Lizenz
@@ -116,9 +117,8 @@ series:
   not-ready:
     title: Serie noch nicht synchronisiert
     text: >
-      Diese Opencast-Serie wurde noch nicht vollständig mit Tobira synchronisiert.
-      Sie wird aber wahrscheinlich bald ankommen, also können Sie einfach später
-      noch einmal vorbeischauen.
+      Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
+      in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
 
 realm:
   page-settings: Seiteneinstellungen
@@ -313,6 +313,8 @@ manage:
           heading: Video
           none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
+          no-read-acccess-to-current: >
+            Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
 
       titled:
         title: Titel

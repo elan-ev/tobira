@@ -32,7 +32,11 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
 
     const { event, showTitle } = useFragment(graphql`
         fragment VideoEditModeBlockData on VideoBlock {
-            event { id }
+            event {
+                __typename,
+                ... on NotAllowed { dummy }
+                ... on AuthorizedEvent { id }
+            }
             showTitle
         }
     `, blockRef);
@@ -65,10 +69,13 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         {"event" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.event.event.invalid")}</Card>
         </div>}
+        {event?.__typename === "NotAllowed" && <Card kind="error" css={{ margin: "8px 0" }}>
+            {t("manage.realm.content.event.event.no-read-acccess-to-current")}
+        </Card>}
         <Select
             css={{ maxWidth: "100%" }}
             error={"event" in errors}
-            defaultValue={event?.id}
+            defaultValue={event?.__typename === "AuthorizedEvent" ? event.id : undefined}
             {...form.register("event", { required: true })}
         >
             <option value="" hidden>

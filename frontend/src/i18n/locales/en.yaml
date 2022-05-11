@@ -30,7 +30,7 @@ errors:
   internal-server-error: Internal server error (something is wrong with the server).
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
-  detailed-error-info: 'Detailed error information for developers:'
+  detailed-error-info: Detailed error information for developers
 
 not-found:
   page-not-found: Page not found
@@ -99,6 +99,7 @@ video:
   part-of-series: Part of series
   more-from-series: More from “{{series}}”
   deleted-video-block: The video referenced here was deleted.
+  not-allowed-video-block: You are not allowed to view the video embedded here.
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
   license: License
@@ -112,8 +113,8 @@ series:
   not-ready:
     title: Series not synchronized, yet
     text: >
-      This Opencast series has not been fully synchronized with Tobira, yet.
-      It will probably arrive soon, though, so you can just check back in at a later time.
+      The data of the requested series has not been fully transferred yet. This should
+      happen automatically soon. Try again in a few minutes.
 
 realm:
   page-settings: Page settings
@@ -301,6 +302,8 @@ manage:
           heading: Event
           none: No event selected
           invalid: Please select an event
+          no-read-acccess-to-current: >
+            You do not have read access to the video that is currently referenced here.
 
       titled:
         title: Title

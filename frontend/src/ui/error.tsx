@@ -1,11 +1,9 @@
 import { ReactNode } from "react";
-import { FiFrown } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 
 import { useUser } from "../User";
-import { PageTitle } from "../layout/header/ui";
-import { CenteredContent } from ".";
 import { Card } from "./Card";
+import { useTitle } from "../util";
 
 
 export const ErrorBox: React.FC<{ children: ReactNode }> = ({ children }) => (
@@ -35,18 +33,21 @@ export const NotAuthorized: React.FC = () => {
 
 type ErrorPageProps = {
     title: string;
-    children: ReactNode;
+    children?: ReactNode;
 };
 
-export const ErrorPage: React.FC<ErrorPageProps> = ({ title, children }) => (
-    <>
-        <FiFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
-        <PageTitle
-            title={title}
-            css={{ textAlign: "center", margin: "32px 0 48px 0 !important" }}
-        />
-        <CenteredContent>
-            {children}
-        </CenteredContent>
-    </>
-);
+/** Simple error page showing a red box. Additional information can be passed as `children`. */
+export const ErrorPage: React.FC<ErrorPageProps> = ({ title, children }) => {
+    useTitle(`Error: ${title}`);
+
+    return (
+        <div css={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Card kind="error" iconPos="top" css={{ fontSize: 18, marginBottom: 48 }}>
+                {title}
+            </Card>
+            <div css={{ maxWidth: 700 }}>
+                {children}
+            </div>
+        </div>
+    );
+};

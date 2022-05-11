@@ -6,10 +6,9 @@ use tokio_postgres::Row;
 
 use crate::{
     api::{
-        Context,
+        Context, Id,
         err::{ApiError, ApiResult, internal_server_err},
-        Id,
-        model::{event::Event, series::SeriesValue},
+        model::{event::{AuthorizedEvent, Event}, series::SeriesValue},
     },
     db::types::Key,
     prelude::*,
@@ -173,6 +172,7 @@ impl SeriesBlock {
 
 pub(crate) struct VideoBlock {
     pub(crate) shared: SharedData,
+    // Is `None` if the video was removed from the DB.
     pub(crate) event: Option<Id>,
     pub(crate) show_title: bool,
 }
@@ -190,7 +190,7 @@ impl VideoBlock {
         match self.event {
             None => Ok(None),
             // `unwrap` is okay here because of our foreign key constraint
-            Some(event_id) => Ok(Some(Event::load_by_id(event_id, context).await?.unwrap())),
+            Some(event_id) => Ok(Some(AuthorizedEvent::load_by_id(event_id, context).await?.unwrap())),
         }
     }
 

@@ -9,6 +9,7 @@ use juniper::{GraphQLObject, graphql_object};
 use crate::{
     api::{
         Context, Cursor, Id, Node, NodeValue,
+        common::NotAllowed,
         err::{self, ApiResult, invalid_input},
         model::{series::{SeriesValue, ReadySeries}, realm::Realm},
     },
@@ -19,7 +20,7 @@ use crate::{
 
 
 #[derive(Debug)]
-pub(crate) struct Event {
+pub(crate) struct AuthorizedEvent {
     key: Key,
     series: Option<Key>,
     opencast_id: String,
@@ -48,14 +49,14 @@ pub(crate) struct Track {
     resolution: Option<Vec<i32>>,
 }
 
-impl Node for Event {
+impl Node for AuthorizedEvent {
     fn id(&self) -> Id {
         Id::event(self.key)
     }
 }
 
 #[graphql_object(Context = Context, impl = NodeValue)]
-impl Event {
+impl AuthorizedEvent {
     fn id(&self) -> Id {
         Node::id(self)
     }
@@ -135,7 +136,26 @@ impl Event {
     }
 }
 
+#[derive(juniper::GraphQLUnion)]
+#[graphql(Context = Context)]
+pub(crate) enum Event {
+    Event(AuthorizedEvent),
+    NotAllowed(NotAllowed),
+}
+
 impl Event {
+    pub(crate) fn into_result(self) -> ApiResult<AuthorizedEvent> {
+        match self {
+            Self::Event(e) => Ok(e),
+            Self::NotAllowed(_) => Err(err::not_authorized!(
+                key = "view.event",
+                "you cannot view this event",
+            )),
+        }
+    }
+}
+
+impl AuthorizedEvent {
     pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
         context.db(context.require_moderator()?)
             .query_mapped(
@@ -152,7 +172,7 @@ impl Event {
             .pipe(Ok)
     }
 
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
+    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
         let key = match id.key_for(Id::EVENT_KIND) {
             None => return Ok(None),
             Some(key) => key,
@@ -167,15 +187,12 @@ impl Event {
             .await?
             .map(|row| {
                 if row.get::<_, bool>("can_read") {
-                    Ok(Self::from_row(row))
+                    Event::Event(Self::from_row(row))
                 } else {
-                    Err(err::not_authorized!(
-                        key = "view.event",
-                        "you cannot view this event",
-                    ))
+                    Event::NotAllowed(NotAllowed)
                 }
             })
-            .transpose()
+            .pipe(Ok)
     }
 
     pub(crate) async fn load_for_series(
@@ -470,7 +487,7 @@ impl SortDirection {
 #[graphql(Context = Context)]
 pub(crate) struct EventConnection {
     page_info: EventPageInfo,
-    items: Vec<Event>,
+    items: Vec<AuthorizedEvent>,
     total_count: i32,
 }
 
@@ -489,7 +506,7 @@ enum CursorSortFilter {
 }
 
 impl EventCursor {
-    fn new(event: &Event, order: &EventSortOrder) -> Self {
+    fn new(event: &AuthorizedEvent, order: &EventSortOrder) -> Self {
         let sort_filter = match order.column {
             EventSortColumn::Title => CursorSortFilter::Title(event.title.clone()),
             EventSortColumn::Duration => CursorSortFilter::Duration(event.duration),

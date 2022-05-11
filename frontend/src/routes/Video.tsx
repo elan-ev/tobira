@@ -22,6 +22,7 @@ import { translatedConfig, match } from "../util";
 import { Link } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
+import { ErrorPage } from "../ui/error";
 
 
 export const VideoRoute = makeRoute(url => {
@@ -98,18 +99,22 @@ const query = graphql`
     query VideoQuery($id: ID!, $realmPath: String!) {
         ... UserData
         event: eventById(id: $id) {
-            title
-            description
-            creators
-            created
-            updated
-            duration
-            thumbnail
-            isLive
-            metadata
-            canWrite
-            series { id, title ... SeriesBlockReadySeriesData }
-            tracks { uri flavor mimetype resolution }
+            __typename
+            ... on NotAllowed { dummy } # workaround
+            ... on AuthorizedEvent {
+                title
+                description
+                creators
+                created
+                updated
+                duration
+                thumbnail
+                isLive
+                metadata
+                canWrite
+                series { id title ... SeriesBlockReadySeriesData }
+                tracks { uri flavor mimetype resolution }
+            }
         }
         realm: realmByPath(path: $realmPath) {
             name
@@ -131,6 +136,13 @@ type Props = {
 
 const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     const { t } = useTranslation();
+
+    if (event.__typename === "NotAllowed") {
+        return <ErrorPage title={t("api-remote-errors.view.event")} />;
+    }
+    if (event.__typename !== "AuthorizedEvent") {
+        return unreachable();
+    }
 
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
@@ -158,9 +170,11 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     </>;
 };
 
+type Event = Extract<NonNullable<VideoQuery$data["event"]>, { __typename: "AuthorizedEvent" }>;
+
 type MetadataProps = {
     id: string;
-    event: NonNullable<VideoQuery$data["event"]>;
+    event: Event;
 };
 
 const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
@@ -347,7 +361,7 @@ const VideoDate: React.FC<VideoDateProps> = props => {
 };
 
 type MetadataTableProps = {
-    event: NonNullable<VideoQuery$data["event"]>;
+    event: Event;
 };
 
 const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {

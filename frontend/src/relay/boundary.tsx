@@ -71,24 +71,31 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                 <Root nav={[]}>
                     <Translation>{t => (
                         <div css={{ margin: "0 auto", maxWidth: 600 }}>
-                            <div>
+                            <div css={{ display: "flex", justifyContent: "center" }}>
                                 <Card kind="error"><ErrorDisplay error={error} /></Card>
                             </div>
-                            <p css={{ marginBottom: 16, marginTop: "min(150px, 12vh)" }}>
-                                {t("errors.detailed-error-info")}
-                            </p>
-                            <div css={{
-                                backgroundColor: "var(--grey97)",
+                            <details css={{
+                                border: "1px solid var(--grey65)",
                                 borderRadius: 4,
-                                padding: 16,
-                                fontSize: 14,
+                                padding: "6px 8px",
+                                marginTop: "min(150px, 12vh)",
+                                marginBottom: 16,
                             }}>
-                                <pre>
+                                <summary css={{ }}>
+                                    {t("errors.detailed-error-info")}
+                                </summary>
+                                <pre css={{
+                                    backgroundColor: "var(--grey97)",
+                                    borderRadius: 4,
+                                    padding: "12px 16px",
+                                    fontSize: 14,
+                                    marginTop: 10,
+                                }}>
                                     <code css={{ whiteSpace: "pre-wrap" }}>
                                         {error.toString()}
                                     </code>
                                 </pre>
-                            </div>
+                            </details>
                         </div>
                     )}</Translation>
                 </Root>
