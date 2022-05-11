@@ -42,7 +42,7 @@ export const ManageSingleVideoRoute = makeRoute(url => {
             nav={() => <BackLink />}
             render={data => data.event === null
                 ? <NotFound kind="video" />
-                : data.event.__typename === "Event" && data.event.canWrite
+                : data.event.__typename === "AuthorizedEvent" && data.event.canWrite
                     ? <ManageSingleVideo event={data.event}/>
                     : <NotAuthorized />
             }
@@ -68,7 +68,7 @@ const query = graphql`
         ...UserData
         event: eventById(id: $id) {
             __typename
-            ... on Event {
+            ... on AuthorizedEvent {
                 id
                 title
                 description
@@ -87,10 +87,11 @@ const query = graphql`
     }
 `;
 
-type Event = Extract<NonNullable<SingleVideoManageQuery$data["event"]>, { __typename: "Event" }>;
+type Event = NonNullable<SingleVideoManageQuery$data["event"]>;
+type AuthorizedEvent = Extract<Event, { __typename: "AuthorizedEvent" }>;
 
 type Props = {
-    event: Event;
+    event: AuthorizedEvent;
 };
 
 const BREAKPOINT = 1100;

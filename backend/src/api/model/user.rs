@@ -3,7 +3,7 @@ use crate::{
         Context,
         common::Cursor,
         err::ApiResult,
-        model::event::{Event, EventConnection, EventSortOrder},
+        model::event::{AuthorizedEvent, EventConnection, EventSortOrder},
     },
     auth::User,
     prelude::*,
@@ -51,6 +51,6 @@ impl User {
         before: Option<Cursor>,
         context: &Context,
     ) -> ApiResult<EventConnection> {
-        Event::load_writable_for_user(context, order, first, after, last, before).await
+        AuthorizedEvent::load_writable_for_user(context, order, first, after, last, before).await
     }
 }

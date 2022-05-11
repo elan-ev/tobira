@@ -35,7 +35,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
             event {
                 __typename,
                 ... on NotAllowed { dummy }
-                ... on Event { id }
+                ... on AuthorizedEvent { id }
             }
             showTitle
         }
@@ -75,7 +75,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         <Select
             css={{ maxWidth: "100%" }}
             error={"event" in errors}
-            defaultValue={event?.__typename === "Event" ? event.id : undefined}
+            defaultValue={event?.__typename === "AuthorizedEvent" ? event.id : undefined}
             {...form.register("event", { required: true })}
         >
             <option value="" hidden>

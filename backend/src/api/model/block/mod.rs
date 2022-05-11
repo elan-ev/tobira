@@ -8,7 +8,7 @@ use crate::{
     api::{
         Context, Id,
         err::{ApiError, ApiResult, internal_server_err},
-        model::{event::{Event, EventById}, series::SeriesValue},
+        model::{event::{AuthorizedEvent, Event}, series::SeriesValue},
     },
     db::types::Key,
     prelude::*,
@@ -186,11 +186,11 @@ impl Block for VideoBlock {
 /// A block for presenting a single Opencast event
 #[graphql_object(Context = Context, impl = BlockValue)]
 impl VideoBlock {
-    async fn event(&self, context: &Context) -> ApiResult<Option<EventById>> {
+    async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
         match self.event {
             None => Ok(None),
             // `unwrap` is okay here because of our foreign key constraint
-            Some(event_id) => Ok(Some(Event::load_by_id(event_id, context).await?.unwrap())),
+            Some(event_id) => Ok(Some(AuthorizedEvent::load_by_id(event_id, context).await?.unwrap())),
         }
     }
 

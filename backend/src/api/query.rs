@@ -10,7 +10,7 @@ use super::{
     err::ApiResult,
     model::{
         realm::Realm,
-        event::{Event, EventById},
+        event::{AuthorizedEvent, Event},
         series::SeriesValue,
         search::{self, SearchResults},
     },
@@ -44,13 +44,13 @@ impl Query {
     }
 
     /// Returns an event by its ID.
-    async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<EventById>> {
-        Event::load_by_id(id, context).await
+    async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
+        AuthorizedEvent::load_by_id(id, context).await
     }
 
     /// Returns a list of all events the current user has read access to.
-    async fn all_events(context: &Context) -> ApiResult<Vec<Event>> {
-        Event::load_all(context).await
+    async fn all_events(context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
+        AuthorizedEvent::load_all(context).await
     }
 
     /// Returns a series by its Opencast ID
@@ -92,7 +92,7 @@ impl Query {
                     SeriesValue::ReadySeries(series) => NodeValue::from(series),
                 }
             })),
-            Id::EVENT_KIND => Event::load_by_id(id, context).await?
+            Id::EVENT_KIND => AuthorizedEvent::load_by_id(id, context).await?
                 .map(|e| e.into_result().map(NodeValue::from))
                 .transpose(),
             _ => Ok(None),

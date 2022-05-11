@@ -19,7 +19,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
             event {
                 __typename
                 ... on NotAllowed { dummy } # workaround
-                ... on Event {
+                ... on AuthorizedEvent {
                     title
                     duration
                     thumbnail
@@ -38,7 +38,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     if (event.__typename === "NotAllowed") {
         return <Card kind="error">{t("video.not-allowed-video-block")}</Card>;
     }
-    if (event.__typename !== "Event") {
+    if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
     }
 

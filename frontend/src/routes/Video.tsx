@@ -101,7 +101,7 @@ const query = graphql`
         event: eventById(id: $id) {
             __typename
             ... on NotAllowed { dummy } # workaround
-            ... on Event {
+            ... on AuthorizedEvent {
                 title
                 description
                 creators
@@ -140,7 +140,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     if (event.__typename === "NotAllowed") {
         return <ErrorPage title={t("api-remote-errors.view.event")} />;
     }
-    if (event.__typename !== "Event") {
+    if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
     }
 
@@ -170,7 +170,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     </>;
 };
 
-type Event = Extract<NonNullable<VideoQuery$data["event"]>, { __typename: "Event" }>;
+type Event = Extract<NonNullable<VideoQuery$data["event"]>, { __typename: "AuthorizedEvent" }>;
 
 type MetadataProps = {
     id: string;
