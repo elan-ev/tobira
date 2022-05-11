@@ -5,7 +5,7 @@ use std::{
     time::Instant,
 };
 
-use crate::{api, auth::{self, User}, db::{self, Transaction}, prelude::*};
+use crate::{api, auth::{self, AuthContext}, db::{self, Transaction}, prelude::*};
 use super::{Context, Request, Response, assets::Assets, response};
 
 
@@ -114,9 +114,9 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     // Get a connection for this request.
     let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
-    // Get user session
-    let user = match User::new(req.headers(), &ctx.config.auth, &connection).await {
-        Ok(user) => user,
+    // Get auth session
+    let auth = match AuthContext::new(req.headers(), &ctx.config.auth, &connection).await {
+        Ok(auth) => auth,
         Err(e) => {
             error!("DB error when checking user session: {}", e);
             return Err(response::internal_server_error());
@@ -162,7 +162,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
 
     let api_context = Arc::new(api::Context {
         db: Transaction::new(tx.clone()),
-        user,
+        auth,
         config: ctx.config.clone(),
         jwt: ctx.jwt.clone(),
         search: ctx.search.clone(),
@@ -172,7 +172,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();
     let has_errored = api_context.db.has_errored();
-    let username = auth::debug_log_username(&api_context.user);
+    let username = api_context.auth.debug_log_username();
     drop(api_context);
 
     // Check whether we own the last remaining handle of this Arc.

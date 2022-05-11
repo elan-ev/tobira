@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     api::err::{ApiError, ApiErrorKind, ApiResult},
-    auth::{AuthToken, JwtContext, User},
+    auth::{AuthToken, JwtContext, AuthContext},
     config::Config,
     db::Transaction,
     search,
@@ -13,7 +13,7 @@ use crate::{
 /// The context that is accessible to every resolver in our API.
 pub(crate) struct Context {
     pub(crate) db: Transaction,
-    pub(crate) user: Option<User>,
+    pub(crate) auth: AuthContext,
     pub(crate) config: Arc<Config>,
     pub(crate) jwt: Arc<JwtContext>,
     pub(crate) search: Arc<search::Client>,
@@ -29,8 +29,8 @@ impl Context {
     }
 
     pub(crate) fn require_upload_permission(&self) -> ApiResult<AuthToken> {
-        self.user.required_upload_permission(&self.config.auth).ok_or_else(|| {
-            if let Some(user) = &self.user {
+        self.auth.required_upload_permission(&self.config.auth).ok_or_else(|| {
+            if let AuthContext::User(user) = &self.auth {
                 ApiError {
                     msg: format!("User '{}' is not allowed to upload videos", user.username),
                     kind: ApiErrorKind::NotAuthorized,
@@ -47,8 +47,8 @@ impl Context {
     }
 
     pub(crate) fn require_moderator(&self) -> ApiResult<AuthToken> {
-        self.user.require_moderator(&self.config.auth).ok_or_else(|| {
-            if let Some(user) = &self.user {
+        self.auth.require_moderator(&self.config.auth).ok_or_else(|| {
+            if let AuthContext::User(user) = &self.auth {
                 ApiError {
                     msg: format!("moderator required, but '{}' is not a moderator", user.username),
                     kind: ApiErrorKind::NotAuthorized,

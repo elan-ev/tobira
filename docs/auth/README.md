@@ -126,3 +126,20 @@ Tobira's "login" buttons in the header will then directly link to that URL.
 You are then responsible for presenting a login page for that URL.
 Of course, then you define how a login attempt looks like and what to do on a successful login.
 
+
+## Authenticating Opencast against Tobira
+
+If you happen to use the integration of Tobira into the Opencast Admin-UI
+to directly mount newly created series, Opencast has to authenticate
+against Tobira as well. This does not use most of the mechanisms above.
+Instead, Tobira and Opencast have to share a secret, which Opencast
+sends to Tobira under the `x-tobira-trusted-external-key`-header.
+Note that this means that your login handler **must not** remove this header.
+Don't worry, though! Tobira is going to verify the secret.
+However, you should make sure that it is never sent over an untrusted channel.
+
+Note that this "backdoor" is "only" valid for any request that the current
+Opencast integration uses. To tell Tobira about this secret,
+put it under the key `auth.trusted_key` in your Tobira configuration.
+To tell Opencast, put it in `etc/org.opencastproject.adminui.endpoint.SeriesEndpoint.cfg`
+under the key `tobira.trustedKey`.
