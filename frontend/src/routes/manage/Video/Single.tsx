@@ -181,7 +181,7 @@ const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
                 borderLeft: "1px dashed var(--grey80)",
             },
         }}>
-            <Link to={`/!${event.id.slice(2)}`}>
+            <Link to={`/!v/${event.id.slice(2)}`}>
                 <Thumbnail event={event} css={{ width: 16 * 12 }} />
             </Link>
             <div css={{ fontSize: 14, margin: 4 }}>
