@@ -67,7 +67,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
-            '{}'
+            '{"dcterms": {}}'
         );
     insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
@@ -90,7 +90,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
-            '{}'
+            '{"dcterms": {}}'
         );
     insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
@@ -113,7 +113,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
-            '{}'
+            '{"dcterms": {}}'
         );
 
     insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
@@ -137,7 +137,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
-            '{}'
+            '{"dcterms": {}}'
         );
 
     insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
@@ -161,7 +161,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
-            '{}'
+            '{"dcterms": {}}'
         );
     insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
@@ -184,7 +184,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
-            '{}'
+            '{"dcterms": {}}'
         );
     insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
@@ -207,7 +207,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
-            '{}'
+            '{"dcterms": {}}'
         );
     insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
@@ -230,7 +230,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
-            '{}'
+            '{"dcterms": {}}'
         );
 end; $$;
 
