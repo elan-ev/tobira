@@ -81,6 +81,7 @@ pub enum SeriesState {
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct ExtraMetadata {
     /// Metadata of the dcterms
+    #[serde(default)]
     pub(crate) dcterms: MetadataMap,
 
     /// Extended metadata.
