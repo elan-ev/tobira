@@ -86,10 +86,10 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
                     gap: 8,
                     alignItems: "center",
                     backgroundColor: "var(--nav-color)",
-                    color: "white",
+                    color: "var(--nav-color-bw-contrast)",
                     "&:hover": {
                         backgroundColor: "var(--nav-color-dark)",
-                        color: "white",
+                        color: "var(--nav-color-bw-contrast)",
                     },
                     "&:focus-visible": {
                         outline: "none",

@@ -185,7 +185,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = ({ title, chil
         {title && <div css={{ maxHeight: 50 }}>
             <h2 title={title} css={{
                 backgroundColor: "var(--accent-color)",
-                color: "white",
+                color: "var(--accent-color-bw-contrast)",
                 padding: "4px 12px",
                 borderRadius: 10,
                 transform: "translateY(-50%)",

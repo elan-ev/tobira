@@ -48,7 +48,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
             "&:hover": {
                 border: "1px solid var(--danger-color-darker)",
                 backgroundColor: "var(--danger-color)",
-                color: "white",
+                color: "var(--danger-color-bw-contrast)",
             },
         }),
 
@@ -59,7 +59,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
             "&:hover": {
                 border: "1px solid var(--happy-color-dark)",
                 backgroundColor: "var(--happy-color-darker)",
-                color: "white",
+                color: "var(--happy-color-bw-contrast)",
             },
         }),
     });
