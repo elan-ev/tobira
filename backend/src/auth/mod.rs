@@ -3,6 +3,7 @@ use std::{borrow::Cow, time::Duration};
 use deadpool_postgres::Client;
 use hyper::HeaderMap;
 use once_cell::sync::Lazy;
+use secrecy::{Secret, ExposeSecret};
 use tokio_postgres::Error as PgError;
 
 use crate::{config::TranslatedString, prelude::*};
@@ -93,6 +94,14 @@ pub(crate) struct AuthConfig {
     #[config(default = "30d", deserialize_with = crate::config::deserialize_duration)]
     pub(crate) session_duration: Duration,
 
+    /// A shared secret for **trusted** external applications.
+    /// Send this value as the `x-tobira-trusted-key`-header
+    /// to use certain APIs without having to invent a user.
+    /// Note that this should be hard to guess, and kept secret.
+    /// Specifically, you are going to want to encrypt every channel
+    /// this is sent over.
+    pub(crate) trusted_external_key: Option<Secret<String>>,
+
     /// Configuration related to the built-in login page.
     #[config(nested)]
     pub(crate) login_page: LoginPageConfig,
@@ -126,19 +135,51 @@ pub(crate) enum AuthMode {
     LoginProxy,
 }
 
+/// Information about whether or not, and if so how
+/// someone or something talking to Tobira is authenticated
+#[derive(PartialEq, Eq)]
+pub(crate) enum AuthContext {
+    Anonymous,
+    TrustedExternal,
+    User(User),
+}
+
 /// Data about a user.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct User {
     pub(crate) username: String,
     pub(crate) display_name: String,
     pub(crate) roles: Vec<String>,
 }
 
-/// Returns a representation of the optional username useful for logging.
-pub(crate) fn debug_log_username(session: &Option<User>) -> Cow<'static, str> {
-    match session {
-        None => "none".into(),
-        Some(user) => format!("'{}'", user.username).into(),
+impl AuthContext {
+    pub(crate) async fn new(
+        headers: &HeaderMap,
+        auth_config: &AuthConfig,
+        db: &Client,
+    ) -> Result<Self, PgError> {
+
+        if let Some(given_key) = headers.get("x-tobira-trusted-external-key") {
+            if let Some(trusted_key) = &auth_config.trusted_external_key {
+                if trusted_key.expose_secret() == given_key {
+                    return Ok(Self::TrustedExternal);
+                }
+            }
+        }
+
+        User::new(headers, auth_config, db)
+            .await?
+            .map_or(Self::Anonymous, Self::User)
+            .pipe(Ok)
+    }
+
+    /// Returns a representation of the optional username useful for logging.
+    pub(crate) fn debug_log_username(&self) -> Cow<'static, str> {
+        match self {
+            Self::Anonymous => "anonymous".into(),
+            Self::TrustedExternal => "trusted external".into(),
+            Self::User(user) => format!("'{}'", user.username).into(),
+        }
     }
 }
 
@@ -323,6 +364,18 @@ impl HasRoles for Option<User> {
 impl HasRoles for User {
     fn roles(&self) -> &[String] {
         &self.roles
+    }
+}
+
+impl HasRoles for AuthContext {
+    fn roles(&self) -> &[String] {
+        // Note: We would like the trusted user to be rather restricted,
+        // but as it's currently implemented, it needs at least moderator rights
+        // to be able to use the `mount`-API.
+        // For simplicity's sake we just make them admin here, but this will
+        // likely change in the future. There are no guarantees being made, here!
+        static TRUSTED_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ADMIN.into()]);
+        &*TRUSTED_ROLES
     }
 }
 

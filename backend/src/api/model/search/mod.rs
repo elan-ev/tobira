@@ -32,8 +32,8 @@ pub(crate) async fn perform(
     let event_query = {
         // If the user is not admin, build ACL filter: there has to be one user role
         // inside the event's ACL.
-        if !context.user.is_admin() {
-            let filter = context.user.roles()
+        if !context.auth.is_admin() {
+            let filter = context.auth.roles()
                 .iter()
                 .map(|role| format!("read_roles = '{}'", hex::encode(role)))
                 .collect::<Vec<_>>()

@@ -165,7 +165,7 @@ impl AuthorizedEvent {
                         order by title",
                     Self::COL_NAMES,
                 ),
-                dbargs![&context.user.roles()],
+                dbargs![&context.auth.roles()],
                 Self::from_row,
             )
             .await?
@@ -183,7 +183,7 @@ impl AuthorizedEvent {
             Self::COL_NAMES,
         );
         context.db
-            .query_opt(&query, &[&context.user.roles(), &key])
+            .query_opt(&query, &[&context.auth.roles(), &key])
             .await?
             .map(|row| {
                 if row.get::<_, bool>("can_read") {
@@ -206,7 +206,7 @@ impl AuthorizedEvent {
             order.to_sql(),
         );
         context.db
-            .query_mapped(&query, dbargs![&context.user.roles(), &series_key], Self::from_row)
+            .query_mapped(&query, dbargs![&context.auth.roles(), &series_key], Self::from_row)
             .await?
             .pipe(Ok)
     }
@@ -245,7 +245,7 @@ impl AuthorizedEvent {
 
         // Assemble argument list and the "where" part of the query. This
         // depends on `after` and `before`.
-        let arg_user_roles = &context.user.roles() as &(dyn ToSql + Sync);
+        let arg_user_roles = &context.auth.roles() as &(dyn ToSql + Sync);
         let mut args = vec![arg_user_roles];
 
         let col = order.column.to_sql();
@@ -331,7 +331,7 @@ impl AuthorizedEvent {
                     from events \
                     where write_roles && $1 and read_roles && $1";
                 context.db
-                    .query_one(query, &[&context.user.roles()])
+                    .query_one(query, &[&context.auth.roles()])
                     .await?
                     .get::<_, i64>(0)
             }

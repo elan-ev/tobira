@@ -1,7 +1,7 @@
 use juniper::graphql_object;
 
 
-use crate::auth::User;
+use crate::auth::{AuthContext, User};
 
 use super::{
     Context,
@@ -70,15 +70,18 @@ impl Query {
 
     /// Returns the current user.
     fn current_user(context: &Context) -> Option<&User> {
-        context.user.as_ref()
+        match &context.auth {
+            AuthContext::User(user) => Some(user),
+            _ => None,
+        }
     }
 
     /// Returns a new JWT that can be used to authenticate against Opencast for uploading videos.
     fn upload_jwt(context: &Context) -> ApiResult<String> {
         context.require_upload_permission()?;
-        match &context.user {
-            None => unreachable!("user not logged in, but has upload permissions"),
-            Some(data) => Ok(context.jwt.new_upload_token(data)),
+        match &context.auth {
+            AuthContext::User(data) => Ok(context.jwt.new_upload_token(data)),
+            _ => unreachable!("user not logged in, but has upload permissions"),
         }
     }
 

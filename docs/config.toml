@@ -184,6 +184,14 @@
 # Default value: "30d"
 #session_duration = "30d"
 
+# A shared secret for **trusted** external applications.
+# Send this value as the `x-tobira-trusted-key`-header
+# to use certain APIs without having to invent a user.
+# Note that this should be hard to guess, and kept secret.
+# Specifically, you are going to want to encrypt every channel
+# this is sent over.
+#trusted_external_key =
+
 
 # Configuration related to the built-in login page.
 [auth.login_page]

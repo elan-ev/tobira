@@ -1,8 +1,9 @@
 use juniper::graphql_object;
 
+use crate::auth::AuthContext;
 use super::{
     Context,
-    err::{ApiResult, invalid_input},
+    err::{ApiResult, invalid_input, not_authorized},
     id::Id,
     model::{
         series::{Series, SeriesValue},
@@ -181,6 +182,10 @@ impl Mutation {
         // Once this code stabilizes, we might want to change that,
         // because doing it like this duplicates some work
         // like checking moderator rights, input validity, etc.
+
+        if context.auth == AuthContext::TrustedExternal {
+            return Err(not_authorized!("only trusted external applications can use this mutation"));
+        }
 
         let parent_realm = Realm::load_by_path(parent_realm_path, context)
             .await?
