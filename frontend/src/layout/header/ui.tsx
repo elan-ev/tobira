@@ -4,8 +4,7 @@ import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { useTitle } from "../../util";
 
 
-export const BASE_LOGO_MARGIN = "calc(var(--logo-margin) * var(--inner-header-height))";
-export const BUTTONS_WIDTH = 138;
+export const HEADER_BASE_PADDING = 24;
 
 export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{ display: "flex", height: "100%", position: "relative" }}>

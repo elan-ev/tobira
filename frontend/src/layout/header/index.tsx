@@ -7,7 +7,7 @@ import { useMenu } from "../MenuState";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { match } from "../../util";
 import { OUTER_CONTAINER_MARGIN } from "..";
-import { ActionIcon, BASE_LOGO_MARGIN, ButtonContainer } from "./ui";
+import { ActionIcon, ButtonContainer, HEADER_BASE_PADDING } from "./ui";
 import { SearchField } from "./Search";
 import { Logo } from "./Logo";
 import { UserBox } from "./UserBox";
@@ -29,13 +29,9 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
     return (
         <header css={{
             margin: OUTER_CONTAINER_MARGIN,
-            marginBottom: 8,
-            marginTop: 8,
-            height: "var(--outer-header-height)",
+            height: "var(--header-height)",
             display: "flex",
-            paddingTop: BASE_LOGO_MARGIN,
-            paddingBottom: BASE_LOGO_MARGIN,
-            paddingRight: 8,
+            padding: `${HEADER_BASE_PADDING}px 8px`,
             alignItems: "center",
             justifyContent: "space-between",
             backgroundColor: "white",

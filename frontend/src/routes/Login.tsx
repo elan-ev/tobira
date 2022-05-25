@@ -9,7 +9,7 @@ import { Link } from "../router";
 import { LoginQuery } from "./__generated__/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { Logo } from "../layout/header/Logo";
-import { BASE_LOGO_MARGIN, PageTitle } from "../layout/header/ui";
+import { HEADER_BASE_PADDING, PageTitle } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/Button";
 import { boxError } from "../ui/error";
@@ -52,8 +52,9 @@ const Login: React.FC<Props> = ({ queryRef }) => {
 
     return <Outer>
         <div css={{
-            height: "calc(1.5 * var(--outer-header-height))",
-            padding: `calc(1.5 * ${BASE_LOGO_MARGIN}) 0`,
+            height: "calc(1.7 * var(--header-height))",
+            maxHeight: "35vh",
+            padding: `${HEADER_BASE_PADDING}px 0`,
             textAlign: "center",
         }}><Logo /></div>
 
