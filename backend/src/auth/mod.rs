@@ -349,18 +349,6 @@ pub(crate) trait HasRoles {
     }
 }
 
-impl HasRoles for Option<User> {
-    /// Returns the roles of the user if logged in, and `ROLE_ANONYMOUS` otherwise.
-    fn roles(&self) -> &[String] {
-        static LOGGED_OUT_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ANONYMOUS.into()]);
-
-        match self {
-            Self::None => &*LOGGED_OUT_ROLES,
-            Self::Some(user) => &user.roles,
-        }
-    }
-}
-
 impl HasRoles for User {
     fn roles(&self) -> &[String] {
         &self.roles
