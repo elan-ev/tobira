@@ -7,7 +7,7 @@ import { useTitle } from "../../util";
 export const HEADER_BASE_PADDING = 24;
 
 export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children }) => (
-    <div css={{ display: "flex", height: "100%", position: "relative" }}>
+    <div css={{ display: "flex", position: "relative", alignItems: "center" }}>
         {children}
     </div>
 );

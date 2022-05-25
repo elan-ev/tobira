@@ -65,7 +65,7 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
     const ref = useRef(null);
 
     return (
-        <div ref={ref} css={{ display: "flex" }}>
+        <div ref={ref} css={{ display: "flex", padding: "8px 0" }}>
             <Link
                 to={CONFIG.auth.loginLink ?? LOGIN_PATH}
                 onClick={() => {
@@ -121,6 +121,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
         <div ref={ref} css={{ position: "relative" }}>
             <div onClick={menu.toggle} css={{
                 height: "100%",
+                padding: "8px 0",
                 alignSelf: "center",
                 display: "flex",
                 cursor: "pointer",
