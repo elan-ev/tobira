@@ -369,13 +369,19 @@ impl HasRoles for User {
 
 impl HasRoles for AuthContext {
     fn roles(&self) -> &[String] {
-        // Note: We would like the trusted user to be rather restricted,
-        // but as it's currently implemented, it needs at least moderator rights
-        // to be able to use the `mount`-API.
-        // For simplicity's sake we just make them admin here, but this will
-        // likely change in the future. There are no guarantees being made, here!
         static TRUSTED_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ADMIN.into()]);
-        &*TRUSTED_ROLES
+        static ANONYMOUS_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ANONYMOUS.into()]);
+
+        match self {
+            Self::Anonymous => &*ANONYMOUS_ROLES,
+            Self::User(user) => user.roles(),
+            // Note: We would like the trusted user to be rather restricted,
+            // but as it's currently implemented, it needs at least moderator rights
+            // to be able to use the `mount`-API.
+            // For simplicity's sake we just make them admin here, but this will
+            // likely change in the future. There are no guarantees being made, here!
+            Self::TrustedExternal => &*TRUSTED_ROLES,
+        }
     }
 }
 
