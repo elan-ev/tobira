@@ -95,7 +95,7 @@ pub(crate) struct AuthConfig {
     pub(crate) session_duration: Duration,
 
     /// A shared secret for **trusted** external applications.
-    /// Send this value as the `x-tobira-trusted-key`-header
+    /// Send this value as the `x-tobira-trusted-external-key`-header
     /// to use certain APIs without having to invent a user.
     /// Note that this should be hard to guess, and kept secret.
     /// Specifically, you are going to want to encrypt every channel
