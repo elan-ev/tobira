@@ -65,7 +65,7 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
     const ref = useRef(null);
 
     return (
-        <div ref={ref} css={{ display: "flex" }}>
+        <div ref={ref} css={{ display: "flex", padding: "8px 0" }}>
             <Link
                 to={CONFIG.auth.loginLink ?? LOGIN_PATH}
                 onClick={() => {
@@ -86,10 +86,10 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
                     gap: 8,
                     alignItems: "center",
                     backgroundColor: "var(--nav-color)",
-                    color: "white",
+                    color: "var(--nav-color-bw-contrast)",
                     "&:hover": {
                         backgroundColor: "var(--nav-color-dark)",
-                        color: "white",
+                        color: "var(--nav-color-bw-contrast)",
                     },
                     "&:focus-visible": {
                         outline: "none",
@@ -121,6 +121,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
         <div ref={ref} css={{ position: "relative" }}>
             <div onClick={menu.toggle} css={{
                 height: "100%",
+                padding: "8px 0",
                 alignSelf: "center",
                 display: "flex",
                 cursor: "pointer",

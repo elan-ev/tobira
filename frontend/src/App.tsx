@@ -102,7 +102,7 @@ class GlobalErrorBoundary
             }}>
                 <div css={{
                     backgroundColor: "var(--danger-color, #b64235)",
-                    color: "white",
+                    color: "var(--danger-color-bw-contrast, white)",
                     borderRadius: 4,
                     padding: 16,
                 }}>

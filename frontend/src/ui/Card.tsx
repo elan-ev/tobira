@@ -25,7 +25,7 @@ export const Card: React.FC<Props> = ({ kind, iconPos = "left", children, ...res
                 "error": () => ({
                     backgroundColor: "var(--danger-color)",
                     border: "1.5px solid var(--danger-color)",
-                    color: "white",
+                    color: "var(--danger-color-bw-contrast)",
                 }) as Record<string, string>,
                 "info": () => ({
                     backgroundColor: "var(--grey97)",

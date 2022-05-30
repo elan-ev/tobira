@@ -15,7 +15,7 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, children }) => (
         }}
         css={{
             position: "absolute",
-            top: "var(--outer-header-height)",
+            top: "var(--header-height)",
             bottom: 0,
             left: 0,
             right: 0,

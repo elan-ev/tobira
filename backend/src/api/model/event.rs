@@ -161,7 +161,7 @@ impl AuthorizedEvent {
             .query_mapped(
                 &format!(
                     "select {} from events \
-                        where read_roles && $1 \
+                        where (read_roles || 'ROLE_ADMIN'::text) && $1 \
                         order by title",
                     Self::COL_NAMES,
                 ),
@@ -179,7 +179,9 @@ impl AuthorizedEvent {
         };
 
         let query = format!(
-            "select {}, $1 && read_roles as can_read from events where id = $2",
+            "select {}, $1 && (read_roles || 'ROLE_ADMIN'::text) as can_read \
+                from events \
+                where id = $2",
             Self::COL_NAMES,
         );
         context.db
@@ -201,7 +203,8 @@ impl AuthorizedEvent {
         context: &Context,
     ) -> ApiResult<Vec<Self>> {
         let query = format!(
-            "select {} from events where series = $2 and read_roles && $1 {}",
+            "select {} from events \
+                where series = $2 and (read_roles || 'ROLE_ADMIN'::text) && $1 {}",
             Self::COL_NAMES,
             order.to_sql(),
         );
@@ -279,6 +282,11 @@ impl AuthorizedEvent {
         // retrieve the total count, the absolute offsets of our window and all
         // the event data in one go. The "over(...)" things are window
         // functions.
+        let acl_filter = if context.auth.is_admin() {
+            ""
+        } else {
+            "where write_roles && $1 and read_roles && $1"
+        };
         let query = format!(
             "select {cols}, row_num, total_count \
                 from (\
@@ -287,7 +295,7 @@ impl AuthorizedEvent {
                         row_number() over(order by ({sort_col}, id) {sort_order}) as row_num, \
                         count(*) over() as total_count \
                     from events \
-                    where write_roles && $1 and read_roles && $1 \
+                    {acl_filter} \
                     order by ({sort_col}, id) {sort_order} \
                 ) as tmp \
                 {filter} \
@@ -296,6 +304,7 @@ impl AuthorizedEvent {
             sort_col = order.column.to_sql(),
             sort_order = sql_sort_order.to_sql(),
             limit = limit,
+            acl_filter = acl_filter,
             filter = filter,
         );
 
@@ -327,11 +336,9 @@ impl AuthorizedEvent {
         let total_count = match total_count {
             Some(c) => c,
             None => {
-                let query = "select count(*) \
-                    from events \
-                    where write_roles && $1 and read_roles && $1";
+                let query = format!("select count(*) from events {}", acl_filter);
                 context.db
-                    .query_one(query, &[&context.auth.roles()])
+                    .query_one(&query, &[&context.auth.roles()])
                     .await?
                     .get::<_, i64>(0)
             }
@@ -380,7 +387,7 @@ impl AuthorizedEvent {
 
     pub(crate) const COL_NAMES: &'static str = "id, series, opencast_id, is_live, \
         title, description, duration, created, updated, creators, \
-        thumbnail, tracks, metadata, write_roles && $1 as can_write";
+        thumbnail, tracks, metadata, (write_roles || 'ROLE_ADMIN'::text) && $1 as can_write";
 
     pub(crate) fn from_row(row: Row) -> Self {
         Self {

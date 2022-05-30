@@ -6,9 +6,11 @@ use std::{
 use tokio_postgres::types::ToSql;
 
 use crate::{
+    auth::ROLE_ADMIN,
+    config::Config,
     db::{types::{EventTrack, SeriesState, Key}, DbConnection},
     prelude::*,
-    search::{self, IndexItemKind}, config::Config,
+    search::{self, IndexItemKind},
 };
 use super::status::SyncStatus;
 use self::response::{HarvestItem, HarvestResponse};
@@ -151,7 +153,7 @@ async fn store_in_db(
                 creators,
                 duration,
                 thumbnail,
-                acl,
+                mut acl,
                 is_live,
                 metadata,
                 updated,
@@ -164,6 +166,11 @@ async fn store_in_db(
                             .map(|row| row.get::<_, i64>(0))
                     },
                 };
+
+                // We always handle the admin role in a special way, so no need
+                // to store it for every single event.
+                acl.read.retain(|role| role != ROLE_ADMIN);
+                acl.write.retain(|role| role != ROLE_ADMIN);
 
                 // We upsert the event data.
                 let new_id = upsert(db, "events", "opencast_id", &[

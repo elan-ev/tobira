@@ -358,8 +358,12 @@
 
 
 [theme]
-# Default value: 50
-#header_height = 50
+# Height of the header (containing the logo, search bar, and several
+# icons). Increasing this size only enlarges the logo, the other elements
+# stay the same size and centered.
+#
+# Default value: 100
+#header_height = 100
 
 # Path to CSS file that includes all used font files and sets the variable
 # `--main-font` in the `:root` selector. For example:
@@ -382,13 +386,6 @@
 
 
 [theme.logo]
-# The margin around the logo in terms of logo height. A value of 0.5 means
-# that there will be a margin around the logo of half the height of the
-# logo.
-#
-# Default value: 0.4
-#margin = 0.4
-
 
 # The normal, usually wide logo that is shown on desktop screens.
 [theme.logo.large]

@@ -62,7 +62,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
                 color: "var(--danger-color)",
                 "&&:hover": {
                     backgroundColor: "var(--danger-color)",
-                    color: "white",
+                    color: "var(--danger-color-bw-contrast)",
                 },
             }}
             onClick={() => {

@@ -5,7 +5,10 @@ use super::{Color, Hsl};
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ThemeConfig {
-    #[config(default = 50)]
+    /// Height of the header (containing the logo, search bar, and several
+    /// icons). Increasing this size only enlarges the logo, the other elements
+    /// stay the same size and centered.
+    #[config(default = 100)]
     pub(crate) header_height: u32,
 
     /// Path to CSS file that includes all used font files and sets the variable
@@ -36,12 +39,6 @@ pub(crate) struct ThemeConfig {
 /// Logo used in the top left corner of the page. Using SVG logos is recommended.
 #[derive(Debug, confique::Config)]
 pub(crate) struct LogoConfig {
-    /// The margin around the logo in terms of logo height. A value of 0.5 means
-    /// that there will be a margin around the logo of half the height of the
-    /// logo.
-    #[config(default = 0.4)]
-    pub(crate) margin: f32,
-
     /// The normal, usually wide logo that is shown on desktop screens.
     #[config(nested)]
     pub(crate) large: SingleLogoConfig,
@@ -126,10 +123,7 @@ impl ThemeConfig {
 
 
         // Header and logo sizes.
-        add!("--logo-margin" => self.logo.margin);
-        add!("--inner-header-height" => format_args!("{}px", self.header_height));
-        add!("--outer-header-height" =>
-            "calc(var(--inner-header-height) * (1 + 2 * var(--logo-margin)))");
+        add!("--header-height" => format_args!("{}px", self.header_height));
 
 
         // Colors
