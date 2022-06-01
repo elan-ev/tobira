@@ -183,7 +183,7 @@ impl Mutation {
         // because doing it like this duplicates some work
         // like checking moderator rights, input validity, etc.
 
-        if context.auth == AuthContext::TrustedExternal {
+        if context.auth != AuthContext::TrustedExternal {
             return Err(not_authorized!("only trusted external applications can use this mutation"));
         }
 
