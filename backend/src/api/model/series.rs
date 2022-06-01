@@ -200,8 +200,8 @@ impl SeriesValue {
                 existing as (select {cols} from series where opencast_id = $1), \
                 new as (insert into series (opencast_id, state, updated) \
                     select $1, 'waiting', '-infinity' \
-                        where not exists select null from existing \
-                        returning {cols}) \
+                        where not exists (select null from existing) \
+                    returning {cols}) \
             select {cols} from existing \
                 union all select {cols} from new",
         );
