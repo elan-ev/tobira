@@ -27,10 +27,7 @@ const ASSETS: Setup = assets! {
     "logo-small.svg": { hash, dynamic },
     "favicon.svg": { hash, dynamic },
 
-    "fonts.css": {
-        template,
-        serve: false,
-    },
+    "fonts.css": { hash, template },
 
     // Font files
     "fonts/cyrillic-400.woff2": { hash },
