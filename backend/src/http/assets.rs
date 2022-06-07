@@ -5,7 +5,7 @@ use reinda::{assets, Setup};
 use serde_json::json;
 
 use crate::{config::Config, prelude::*};
-use super::Response;
+use super::{Response, handlers::CommonHeadersExt};
 
 
 const ASSETS: Setup = assets! {
@@ -167,17 +167,17 @@ impl Assets {
     /// Serves the main entry point of the application. This is replied to `/`
     /// and other "public routes", like `/lectures`. Basically everywhere where
     /// the user is supposed to see the website.
-    pub(crate) async fn serve_index(&self) -> Response {
+    pub(crate) async fn serve_index(&self, config: &Config) -> Response {
         let html = self.index().await;
 
         // TODO: include useful data into the HTML file
 
-        let mut builder = Response::builder();
-        builder = builder.header("Content-Type", "text/html; charset=UTF-8");
-
         // TODO: content length
         // TODO: lots of other headers maybe
-
-        builder.body(html).expect("bug: invalid response")
+        Response::builder()
+            .header("Content-Type", "text/html; charset=UTF-8")
+            .with_content_security_policies(config)
+            .body(html)
+            .expect("bug: invalid response")
     }
 }
