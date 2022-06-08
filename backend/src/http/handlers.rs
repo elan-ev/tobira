@@ -5,8 +5,8 @@ use std::{
     time::Instant,
 };
 
-use crate::{api, auth::{self, AuthContext}, db::{self, Transaction}, prelude::*};
-use super::{Context, Request, Response, assets::Assets, response};
+use crate::{api, auth::{self, AuthContext}, Config, db::{self, Transaction}, prelude::*};
+use super::{Context, Request, Response, response};
 
 
 /// This is the main HTTP entry point, called for each incoming request.
@@ -46,7 +46,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
             let asset_path = &path[ASSET_PREFIX.len()..];
             match ctx.assets.serve(asset_path).await {
                 Some(r) => r,
-                None => reply_404(&ctx.assets, &method, path).await,
+                None => reply_404(&ctx, &method, path).await,
             }
         }
 
@@ -67,7 +67,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // Listing all potential routes here is duplication of routing logic and not really
         // all that useful. So for now at least, we just assume all non-asset requests
         // to `/~*` are fine.
-        path if path.starts_with("/~") => ctx.assets.serve_index().await,
+        path if path.starts_with("/~") => ctx.assets.serve_index(&ctx.config).await,
 
 
         // Currently we just reply with our `index.html` to everything else.
@@ -83,12 +83,12 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // duplicate logic. So yeah:
         //
         // TODO: fix that at some point ^
-        _ => ctx.assets.serve_index().await,
+        _ => ctx.assets.serve_index(&ctx.config).await,
     }
 }
 
 /// Replies with a 404 Not Found.
-pub(super) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> Response {
+pub(super) async fn reply_404(ctx: &Context, method: &Method, path: &str) -> Response {
     debug!("Responding with 404 to {:?} '{}'", method, path);
 
     // We simply send the normal index and let the frontend router determinate
@@ -99,10 +99,11 @@ pub(super) async fn reply_404(assets: &Assets, method: &Method, path: &str) -> R
     // frontend is the same as the backend router. Maybe we want to indicate to
     // the frontend explicitly to show a 404 page? However, without redirecting
     // to like `/404` because that's annoying for users.
-    let html = assets.index().await;
+    let html = ctx.assets.index().await;
     Response::builder()
         .status(StatusCode::NOT_FOUND)
         .header("Content-Type", "text/html; charset=UTF-8")
+        .with_content_security_policies(&ctx.config)
         .body(html)
         .unwrap()
 }
@@ -226,3 +227,45 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     out
 }
 
+/// Extension trait for response builder to add common headers.
+pub(super) trait CommonHeadersExt {
+    /// Sets the `Content-Security-Policy` header.
+    fn with_content_security_policies(self, config: &Config) -> Self;
+}
+
+impl CommonHeadersExt for hyper::http::response::Builder {
+    fn with_content_security_policies(self, config: &Config) -> Self {
+        // Some comments about all relaxations:
+        //
+        // - `img` and `media` are loaded from Opencast. We know one URL host,
+        //   but it's not guaranteed that the images are on that configured
+        //   host. So we kind of have to allow any source.
+        //
+        // - `font-src` is similar: some might setup Tobira to load fonts from
+        //   Google fonts or elsewhere.
+        //
+        // - `style-src` has to include `unsafe-inline` unfortunately. Our CSS
+        //   lib, emotion-js, requires that. It does support setting a nonce
+        //   for generated CSS, which we can also include in the CSP header.
+        //   (TODO: investigate if that's worth it. I kind of doubt it if we
+        //   use client side rendering).
+        //
+        //
+        // TODO: check if configuring allowed hosts for `img-src`, `media-src`
+        // and `font-src` is an option. Then again, admins can also
+        // set/override those headers in their nginx?
+        let upload_node = config.opencast.upload_node();
+        let value = format!("\
+            default-src 'none'; \
+            img-src *; \
+            media-src *; \
+            font-src *; \
+            script-src 'self'; \
+            style-src 'self' 'unsafe-inline'; \
+            connect-src 'self' {upload_node}; \
+            form-action 'none'; \
+        ");
+
+        self.header("Content-Security-Policy", value)
+    }
+}
