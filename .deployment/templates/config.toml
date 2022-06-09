@@ -24,6 +24,8 @@ mode = "login-proxy"
 login_page.note.en = 'Dummy users: "augustus", "sabine" and "admin". Password for all: "tobira".'
 login_page.note.de = 'Testnutzer: "augustus", "sabine" und "admin". Passwort für alle: "tobira".'
 
+trusted_external_key = "tobira"
+
 [auth.jwt]
 signing_algorithm = "ES256"
 # This is currently not created by scripts, but is expected to be generated there manually.
