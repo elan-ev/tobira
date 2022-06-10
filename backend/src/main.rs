@@ -72,9 +72,9 @@ async fn run() -> Result<()> {
             let config = load_config_and_init_logger(shared)?;
             start_server(config).await?;
         }
-        Command::Sync { daemon, shared } => {
+        Command::Sync { args, shared } => {
             let config = load_config_and_init_logger(shared)?;
-            sync::cmd::run(*daemon, &config).await?;
+            sync::cmd::run(args, &config).await?;
         }
         Command::Db { cmd, shared } => {
             let config = load_config_and_init_logger(shared)?;

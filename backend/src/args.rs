@@ -26,9 +26,8 @@ pub(crate) enum Command {
 
     /// Synchronizes Tobira with the configured Opencast instance.
     Sync {
-        /// If specified, the command will run forever listening for new data.
-        #[structopt(long)]
-        daemon: bool,
+        #[structopt(flatten)]
+        args: crate::sync::cmd::Args,
 
         #[structopt(flatten)]
         shared: Shared,
