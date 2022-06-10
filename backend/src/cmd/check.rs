@@ -107,6 +107,8 @@ async fn check_referenced_files(config: &Config) -> Result<()> {
             .context(format!("could not open '{}' for reading", path.display()))?;
     }
 
+    config.db.check_server_cert()?;
+
     Ok(())
 }
 
