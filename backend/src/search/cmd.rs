@@ -87,13 +87,7 @@ async fn clear(meili: Client, yes: bool) -> Result<()> {
     if !yes {
         println!("Are you sure you want to clear the search index? The search will be disabled \
             until you rebuild the index! Type 'yes' to proceed to delete the data.");
-
-        let mut line = String::new();
-        std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
-        if line.trim() != "yes" {
-            println!("Answer was not 'yes'. Aborting.");
-            bail!("user did not confirm deleting index: operation was aborted.");
-        }
+        crate::cmd::prompt_for_yes()?;
     }
 
     // Actually delete
