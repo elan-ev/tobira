@@ -42,7 +42,7 @@
     "i18next-browser-languagedetector": "^6.1.4",
     "paella-basic-plugins": "^1.0.13",
     "paella-core": "^1.0.43",
-    "plyr-react": "^3.2.1",
+    "plyr-react": "^5.0.2",
     "raw-loader": "^4.0.2",
     "react": "^18.0.0",
     "react-beforeunload": "^2.5.2",
