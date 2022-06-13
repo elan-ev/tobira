@@ -6,6 +6,7 @@ site_title.en = "Tobira Videoportal"
 
 [db]
 password = "tobira"
+tls_mode = "off"
 
 [meili]
 key = "tobira"

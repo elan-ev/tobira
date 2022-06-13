@@ -90,6 +90,24 @@
 # Default value: "tobira"
 #database = "tobira"
 
+# The TLS mode for the database connection.
+#
+# - "on": encryption is required and the server certificate is validated
+#    against trusted certificates which are loaded from the system's
+#    native certificate store. If `server_cert` is set, that's also
+#    loaded and trusted.
+# - "without-verify-cert": encryption is required, but the server
+#   certificate is not checked. Allows MiiM attacks! Discouraged.
+# - "off": no encryption. Discouraged even more.
+#
+# Default value: "on"
+#tls_mode = "on"
+
+# Path to the server certificate. This makes sense if you don't want to
+# install the certificate globally on the system. Has to be a PEM encoded
+# file containing one or more X509 certificates.
+#server_cert =
+
 
 [http]
 # The TCP port the HTTP server should listen on.
