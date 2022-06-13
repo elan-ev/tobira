@@ -137,7 +137,7 @@ fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
     let config = match &args.config {
         Some(path) => Config::load_from(path)
             .context(format!("failed to load config from '{}'", path.display()))?,
-        None => Config::from_default_locations()?,
+        None => Config::from_env_or_default_locations()?,
     };
 
     // Initialize logger. Unfortunately, we can only do this here

@@ -94,7 +94,8 @@ pub(crate) enum Command {
 #[derive(Debug, clap::Args)]
 pub(crate) struct Shared {
     /// Path to the configuration file. If this is not specified, Tobira will
-    /// try opening `config.toml` or `/etc/tobira/config.toml`.
+    /// try opening the path inside `TOBIRA_CONFIG_PATH`, `config.toml` or
+    /// `/etc/tobira/config.toml`.
     #[clap(short, long)]
     pub(crate) config: Option<PathBuf>,
 }
