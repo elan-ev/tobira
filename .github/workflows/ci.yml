@@ -96,4 +96,4 @@ jobs:
           backend/favicon.svg
           deploy-id
           .deployment/templates/config.toml
-          scripts/login-handler/login-handler.py
+          util/login-handler/login-handler.py

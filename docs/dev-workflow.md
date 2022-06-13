@@ -44,11 +44,11 @@ A freshly started Tobira instance has no data in it.
 This repository provides some dummy data that you can use.
 We are mainly talking about *video data* (event & series from Opencast) and *realm data* (page structure).
 
-You can use `scripts/fixtures.sql` to get both kinds of data into the development database:
+You can use `util/fixtures.sql` to get both kinds of data into the development database:
 
 ```sh
 # in `backend` folder
-cargo run -- db script ../scripts/fixtures.sql
+cargo run -- db script ../util/fixtures.sql
 ```
 
 To import video data, you can also sync with an Opencast instance that has the Tobira module enabled (there is currently no public one, sorry).

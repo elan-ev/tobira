@@ -13,9 +13,9 @@ with-login:
     - run-task: frontend
     - run-task: backend
 
-# Starts all services from `scripts`
+# Starts all services from `util`
 start-scripts:
-  - set-workdir: scripts
+  - set-workdir: util
   - concurrently:
     - docker-compose -f auth-proxy/docker-compose.yml up -d
     - docker-compose -f meilisearch/docker-compose.yml up -d
@@ -25,7 +25,7 @@ start-scripts:
 
 # Stop all those servives again
 stop-scripts:
-  - set-workdir: scripts
+  - set-workdir: util
   - concurrently:
     - docker-compose -f auth-proxy/docker-compose.yml stop
     - docker-compose -f meilisearch/docker-compose.yml stop
@@ -34,9 +34,9 @@ stop-scripts:
     - docker-compose -f opencast-cors/docker-compose.yml stop
 
 
-# Runs all services from `scripts`
+# Runs all services from `util`
 run-scripts:
-  - set-workdir: scripts
+  - set-workdir: util
   - concurrently:
     - docker-compose -f auth-proxy/docker-compose.yml up
     - docker-compose -f meilisearch/docker-compose.yml up
