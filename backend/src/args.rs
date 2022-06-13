@@ -1,53 +1,49 @@
 //! This module defines the command line arguments Tobira accepts.
 
 use std::path::PathBuf;
-use structopt::StructOpt;
 
 use crate::{cmd, db::cmd::DbCommand, search::cmd::SearchIndexCommand};
 
 
-#[derive(Debug, StructOpt)]
-#[structopt(
-    about = "Video portal for Opencast.",
-    setting(structopt::clap::AppSettings::VersionlessSubcommands),
-)]
+#[derive(Debug, clap::Parser)]
+#[clap(about = "Video portal for Opencast.")]
 pub(crate) struct Args {
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     pub(crate) cmd: Command,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Parser)]
 pub(crate) enum Command {
     /// Starts the backend HTTP server.
     Serve {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         shared: Shared,
     },
 
     /// Synchronizes Tobira with the configured Opencast instance.
     Sync {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         args: crate::sync::cmd::Args,
 
-        #[structopt(flatten)]
+        #[clap(flatten)]
         shared: Shared,
     },
 
     /// Database operations.
     Db {
-        #[structopt(subcommand)]
+        #[clap(subcommand)]
         cmd: DbCommand,
 
-        #[structopt(flatten)]
+        #[clap(flatten)]
         shared: Shared,
     },
 
     /// Search index operations
     SearchIndex {
-        #[structopt(subcommand)]
+        #[clap(subcommand)]
         cmd: SearchIndexCommand,
 
-        #[structopt(flatten)]
+        #[clap(flatten)]
         shared: Shared,
     },
 
@@ -57,7 +53,7 @@ pub(crate) enum Command {
     /// This currently includes: updating the search index and syncing with
     /// Opencast.
     Worker {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         shared: Shared,
     },
 
@@ -68,7 +64,7 @@ pub(crate) enum Command {
     /// to restart the running Tobira process. Exits with 0 if everything is
     /// Ok, and with 1 otherwise.
     Check {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         shared: Shared,
     },
 
@@ -81,24 +77,24 @@ pub(crate) enum Command {
 
     /// Exports the API as GraphQL schema.
     ExportApiSchema {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         args: cmd::export_api_schema::Args,
     },
 
     /// Imports a realm tree from a YAML description (internal tool, no stability guaranteed!).
     ImportRealmTree {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         options: cmd::import_realm_tree::Args,
 
-        #[structopt(flatten)]
+        #[clap(flatten)]
         shared: Shared,
     },
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Args)]
 pub(crate) struct Shared {
     /// Path to the configuration file. If this is not specified, Tobira will
     /// try opening `config.toml` or `/etc/tobira/config.toml`.
-    #[structopt(short, long)]
+    #[clap(short, long)]
     pub(crate) config: Option<PathBuf>,
 }

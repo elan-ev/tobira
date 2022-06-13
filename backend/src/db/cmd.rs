@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
-use structopt::StructOpt;
 use tokio_postgres::IsolationLevel;
 
 use secrecy::ExposeSecret;
@@ -13,7 +12,7 @@ use crate::{prelude::*, util::Never, config::Config};
 use super::{Db, DbConfig, create_pool, query};
 
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Subcommand)]
 pub(crate) enum DbCommand {
     /// Removes all data and tables from the database. Also clears search index.
     Clear,

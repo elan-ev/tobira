@@ -1,22 +1,20 @@
-use structopt::StructOpt;
-
 use crate::{
     config::Config,
     prelude::*, db::DbConnection,
 };
 
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Args)]
 pub(crate) struct Args {
     /// If specified, the command will run forever listening for new data.
-    #[structopt(long)]
+    #[clap(long)]
     daemon: bool,
 
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     cmd: Option<SyncCommand>,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Subcommand)]
 pub(crate) enum SyncCommand {
     /// Resets the "harvested until" timestamp, causing all data to be
     /// re-synchronized when the sync process is next started. Does *not*

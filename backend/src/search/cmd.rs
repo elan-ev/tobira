@@ -1,12 +1,11 @@
 use meilisearch_sdk::indexes::Index;
-use structopt::StructOpt;
 
 use crate::{prelude::*, config::Config, db};
 
 use super::{Client, util};
 
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Subcommand)]
 pub(crate) enum SearchIndexCommand {
     /// Shows some information about the search index.
     Status,
@@ -14,7 +13,7 @@ pub(crate) enum SearchIndexCommand {
     /// Removes all data from the search index.
     Clear {
         /// If specified, skips the "Are you sure?" question.
-        #[structopt(long)]
+        #[clap(long)]
         yes_absolutely_clear_index: bool,
     },
 
@@ -23,7 +22,7 @@ pub(crate) enum SearchIndexCommand {
     Rebuild {
         /// If specified, does not clear the index before rebuild. Note that
         /// this can leave remnants of old items in there.
-        #[structopt(long)]
+        #[clap(long)]
         without_clear: bool,
     },
 
@@ -31,7 +30,7 @@ pub(crate) enum SearchIndexCommand {
     Update {
         /// If specified, will not stop after clearing the queue, but runs
         /// forever regularly updating.
-        #[structopt(long)]
+        #[clap(long)]
         daemon: bool,
     },
 }

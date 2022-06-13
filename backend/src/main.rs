@@ -1,8 +1,8 @@
 //! The Tobira backend server.
 
-use std::env;
+use clap::{FromArgMatches, IntoApp};
 use deadpool_postgres::Pool;
-use structopt::StructOpt;
+use std::env;
 
 use crate::{
     args::{Args, Command},
@@ -60,11 +60,11 @@ async fn run() -> Result<()> {
     // Parse CLI args.
     // This is a bit roundabout because we want to override the version
     // using some runtime code.
-    let args = Args::from_clap(
-        &Args::clap()
+    let args = Args::from_arg_matches(
+        &Args::command()
             .version(&*version())
             .get_matches(),
-    );
+    )?;
 
     // Dispatch subcommand.
     match &args.cmd {
