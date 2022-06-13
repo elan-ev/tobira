@@ -67,7 +67,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // Listing all potential routes here is duplication of routing logic and not really
         // all that useful. So for now at least, we just assume all non-asset requests
         // to `/~*` are fine.
-        path if path.starts_with("/~") => ctx.assets.serve_index(&ctx.config).await,
+        path if path.starts_with("/~") => ctx.assets.serve_index(StatusCode::OK, &ctx.config).await,
 
 
         // Currently we just reply with our `index.html` to everything else.
@@ -83,7 +83,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // duplicate logic. So yeah:
         //
         // TODO: fix that at some point ^
-        _ => ctx.assets.serve_index(&ctx.config).await,
+        _ => ctx.assets.serve_index(StatusCode::OK, &ctx.config).await,
     }
 }
 
@@ -99,13 +99,7 @@ pub(super) async fn reply_404(ctx: &Context, method: &Method, path: &str) -> Res
     // frontend is the same as the backend router. Maybe we want to indicate to
     // the frontend explicitly to show a 404 page? However, without redirecting
     // to like `/404` because that's annoying for users.
-    let html = ctx.assets.index().await;
-    Response::builder()
-        .status(StatusCode::NOT_FOUND)
-        .header("Content-Type", "text/html; charset=UTF-8")
-        .with_content_security_policies(&ctx.config)
-        .body(html)
-        .unwrap()
+    ctx.assets.serve_index(StatusCode::NOT_FOUND, &ctx.config).await
 }
 
 /// Handles a request to `/graphql`.
@@ -230,11 +224,11 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
 /// Extension trait for response builder to add common headers.
 pub(super) trait CommonHeadersExt {
     /// Sets the `Content-Security-Policy` header.
-    fn with_content_security_policies(self, config: &Config) -> Self;
+    fn with_content_security_policies(self, config: &Config, nonce: &str) -> Self;
 }
 
 impl CommonHeadersExt for hyper::http::response::Builder {
-    fn with_content_security_policies(self, config: &Config) -> Self {
+    fn with_content_security_policies(self, config: &Config, nonce: &str) -> Self {
         // Some comments about all relaxations:
         //
         // - `img` and `media` are loaded from Opencast. We know one URL host,
@@ -244,11 +238,13 @@ impl CommonHeadersExt for hyper::http::response::Builder {
         // - `font-src` is similar: some might setup Tobira to load fonts from
         //   Google fonts or elsewhere.
         //
-        // - `style-src` has to include `unsafe-inline` unfortunately. Our CSS
-        //   lib, emotion-js, requires that. It does support setting a nonce
-        //   for generated CSS, which we can also include in the CSP header.
-        //   (TODO: investigate if that's worth it. I kind of doubt it if we
-        //   use client side rendering).
+        // - `style-src` has to include `unsafe-inline` due to Paella player
+        //   emitting inline CSS. Our CSS lib, emotion-js, uses inline CSS, but
+        //   it allows passing it a nonce. We already use that nonce system,
+        //   which is kinda useless while we still have `unsafe-inline` due to
+        //   Paella anyway. But it means once Paella is changed to work in
+        //   strict CSP environment, it's easier to remove. Paella issue:
+        //   https://github.com/polimediaupv/paella-core/issues/74
         //
         //
         // TODO: check if configuring allowed hosts for `img-src`, `media-src`
@@ -261,7 +257,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             media-src *; \
             font-src *; \
             script-src 'self'; \
-            style-src 'self' 'unsafe-inline'; \
+            style-src 'self' 'unsafe-inline' nonce-{nonce}'; \
             connect-src 'self' {upload_node}; \
             form-action 'none'; \
         ");

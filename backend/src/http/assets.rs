@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
-use hyper::Body;
+use bstr::ByteSlice;
+use hyper::{Body, StatusCode};
 use reinda::{assets, Setup};
+use secrecy::ExposeSecret;
 use serde_json::json;
 
 use crate::{config::Config, prelude::*};
@@ -155,29 +157,25 @@ impl Assets {
         Some(builder.body(body).expect("bug: invalid response"))
     }
 
-    pub(crate) async fn index(&self) -> Body {
-        // We treat the `index.html` missing as internal server error. We are
-        // not a general file server. We require this index file to function.
-        self.assets.get(INDEX_FILE).await
-            .expect("failed to read 'index.html'")
-            .expect("`index.html` missing in internal assets")
-            .into()
-    }
-
     /// Serves the main entry point of the application. This is replied to `/`
     /// and other "public routes", like `/lectures`. Basically everywhere where
     /// the user is supposed to see the website.
-    pub(crate) async fn serve_index(&self, config: &Config) -> Response {
-        let html = self.index().await;
+    pub(crate) async fn serve_index(&self, status: StatusCode, config: &Config) -> Response {
+        let bytes = self.assets.get(INDEX_FILE).await
+            .expect("failed to read 'index.html'")
+            .expect("`index.html` missing in internal assets");
 
-        // TODO: include useful data into the HTML file
+        // Generate nonce and put it into the HTML response.
+        let nonce_bytes = crate::util::gen_random_bytes_crypto::<16>();
+        let nonce = hex::encode(&nonce_bytes.expose_secret());
+        let body = bytes.replace("{{ nonce }}", &nonce);
 
-        // TODO: content length
-        // TODO: lots of other headers maybe
+        // Build response
         Response::builder()
+            .status(status)
             .header("Content-Type", "text/html; charset=UTF-8")
-            .with_content_security_policies(config)
-            .body(html)
+            .with_content_security_policies(config, &nonce)
+            .body(body.into())
             .expect("bug: invalid response")
     }
 }
