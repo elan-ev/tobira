@@ -144,21 +144,18 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
             let system_certs = rustls_native_certs::load_native_certs()
                 .context("failed to load all system-wide certificates")?;
 
-            let count = system_certs.len();
+            let system_count = system_certs.len();
             for cert in system_certs {
                 root_certs.add(&rustls::Certificate(cert.0))
                     .context("failed to load system-wide certificate")?;
             }
-            debug!("Loaded {count} system-wide certificates");
+            debug!("Loaded {system_count} system-wide certificates");
 
+            // If a custom cert is given, we try to load it.
             if let Some(cert_path) = &config.server_cert {
-                load_pem_file(cert_path, &mut root_certs)
+                let custom_count = load_pem_file(cert_path, &mut root_certs)
                     .with_context(|| format!("failed to load '{}'", cert_path.display()))?;
-                debug!(
-                    "Loaded {} certificates from '{}'",
-                    root_certs.len() - count,
-                    cert_path.display(),
-                );
+                debug!("Loaded {} certificates from '{}'", custom_count, cert_path.display());
             }
         }
 
@@ -218,11 +215,13 @@ pub(crate) async fn get_conn_or_service_unavailable(pool: &Pool) -> Result<DbCon
 
 
 /// Loads the PEM file at `path` and adds all X509 certificates in it to
-/// `root_certs`. Returns an error if a non-x509 item is found.
-fn load_pem_file(path: &Path, root_certs: &mut rustls::RootCertStore) -> Result<()> {
+/// `root_certs`. Returns an error if a non-x509 item is found. Returns the
+/// number of certs added to `root_certs`.
+fn load_pem_file(path: &Path, root_certs: &mut rustls::RootCertStore) -> Result<usize> {
     let file = fs::read(path).context("could not read file")?;
 
     let items = rustls_pemfile::read_all(&mut &*file).context("could not parse file as PEM")?;
+    let count = items.len();
     for item in items {
         if let rustls_pemfile::Item::X509Certificate(cert) = item {
             root_certs.add(&rustls::Certificate(cert)).context("failed to load X509 certificate")?;
@@ -231,7 +230,7 @@ fn load_pem_file(path: &Path, root_certs: &mut rustls::RootCertStore) -> Result<
         }
     }
 
-    Ok(())
+    Ok(count)
 }
 
 /// Dummy certificate verifier, that blindly always says "it's valid". This is
