@@ -134,15 +134,19 @@ async fn start_worker(config: Config) -> Result<()> {
 
 fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
     // Load configuration.
-    let config = match &args.config {
-        Some(path) => Config::load_from(path)
-            .context(format!("failed to load config from '{}'", path.display()))?,
+    let (config, path) = match &args.config {
+        Some(path) => {
+            let config = Config::load_from(path)
+                .context(format!("failed to load config from '{}'", path.display()))?;
+            (config, path.clone())
+        }
         None => Config::from_env_or_default_locations()?,
     };
 
     // Initialize logger. Unfortunately, we can only do this here
     // after reading the config.
     logger::init(&config.log)?;
+    info!("Loaded config from '{}'", path.display());
 
     Ok(config)
 }
