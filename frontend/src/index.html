@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html data-tobira-style-nonce="{{ nonce }}">
   <head>
     <title>{{: var:html-title :}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/~assets/{{: path:favicon.svg :}}" sizes="any" type="image/svg+xml">
     <link rel="stylesheet" href="/~assets/{{: path:fonts.css :}}">
-    <style>
+    <style nonce="{{ nonce }}">
       {{: var:global-style :}}
     </style>
     <script id="tobira-frontend-config" type="application/json">

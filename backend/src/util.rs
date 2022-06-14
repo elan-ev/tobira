@@ -1,5 +1,7 @@
 use std::{fmt, str::FromStr, net::{Ipv6Addr, Ipv4Addr}};
 use hyper::http::uri;
+use rand::{RngCore, CryptoRng};
+use secrecy::Secret;
 use serde::Deserialize;
 
 use crate::prelude::*;
@@ -118,6 +120,26 @@ impl TryFrom<String> for HttpHost {
 /// can never return. A function returning `Result<NeverReturns>` never returns
 /// when it succeeds, but it might still fail.
 pub(crate) enum Never {}
+
+/// Generate random bytes with a crypotgraphically secure RNG.
+pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> Secret<[u8; N]> {
+    // We use this extra function here to make sure we use a
+    // cryptographically secure RNG, even after updating to newer `rand`
+    // versions. Right now, we use `thread_rng` and it is cryptographically
+    // secure. But if the `rand` authors make `thread_rng` return a
+    // non-cryptographically secure RNG in future major version (a dangerous
+    // API decision in my opinion) and if the Tobira dev updating the
+    // library does not check the changelog, then we would have a problem.
+    // This explicit `CryptoRng` bound makes sure that such a change would
+    // not silently compile.
+    fn imp<const N: usize>(mut rng: impl RngCore + CryptoRng) -> [u8; N] {
+        let mut bytes = [0; N];
+        rng.fill_bytes(&mut bytes);
+        bytes
+    }
+
+    Secret::new(imp(rand::thread_rng()))
+}
 
 
 #[cfg(test)]

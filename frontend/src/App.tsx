@@ -19,10 +19,10 @@ type Props = {
 };
 
 export const App: React.FC<Props> = ({ initialRoute }) => (
-    <GlobalErrorBoundary>
-        <RelayEnvironmentProvider {...{ environment }}>
-            <GlobalStyle />
-            <SilenceEmotionWarnings>
+    <SilenceEmotionWarnings>
+        <GlobalErrorBoundary>
+            <RelayEnvironmentProvider {...{ environment }}>
+                <GlobalStyle />
                 <Router initialRoute={initialRoute}>
                     <APIWrapper>
                         <MenuProvider>
@@ -31,9 +31,9 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
                         </MenuProvider>
                     </APIWrapper>
                 </Router>
-            </SilenceEmotionWarnings>
-        </RelayEnvironmentProvider>
-    </GlobalErrorBoundary>
+            </RelayEnvironmentProvider>
+        </GlobalErrorBoundary>
+    </SilenceEmotionWarnings>
 );
 
 /**
@@ -46,7 +46,10 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
  * Full story: https://github.com/emotion-js/emotion/issues/1105
  */
 const SilenceEmotionWarnings: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const cache = createEmotionCache({ key: "css" });
+    const cache = createEmotionCache({
+        key: "css",
+        nonce: document.documentElement.dataset.tobiraStyleNonce,
+    });
     cache.compat = true;
 
     return <CacheProvider value={cache}>{children}</CacheProvider>;
