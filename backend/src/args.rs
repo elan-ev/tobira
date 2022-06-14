@@ -20,7 +20,7 @@ pub(crate) enum Command {
         shared: Shared,
     },
 
-    /// Synchronizes Tobira with the configured Opencast instance.
+    /// Tools for Tobira <-> Opencast synchronization.
     Sync {
         #[clap(flatten)]
         args: crate::sync::cmd::Args,

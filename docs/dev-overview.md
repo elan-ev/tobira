@@ -62,7 +62,7 @@ The backend is written in Rust and uses the following libraries:
 
 Tobira is a single executable crate.
 That executable expects CLI arguments and in particular: a subcommand.
-`tobira serve` starts the HTTP server, `tobira sync` synchronizes with Opencast, `tobira db` provides DB utilities, and so on.
+`tobira serve` starts the HTTP server, `tobira sync` provides "synchronization with Opencast" tools, `tobira db` provides DB utilities, and so on.
 Here, `tobira` stands for the executable which is created at `backend/target/<mode>/tobira` where `<mode>` can be `release` or `debug`.
 You would usually run this executable with `cargo run`.
 To pass CLI args to Tobira (instead of cargo), list Tobira args after a double dash `--` that is surrounded by spaces, e.g. `cargo run -- serve`.

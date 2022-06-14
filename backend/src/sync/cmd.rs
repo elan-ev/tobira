@@ -6,16 +6,21 @@ use crate::{
 
 #[derive(Debug, clap::Args)]
 pub(crate) struct Args {
-    /// If specified, the command will run forever listening for new data.
-    #[clap(long)]
-    daemon: bool,
-
     #[clap(subcommand)]
-    cmd: Option<SyncCommand>,
+    cmd: SyncCommand,
 }
 
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SyncCommand {
+    /// Synchronizes Tobira with the configured Opencast instance by talking to
+    /// the harvest API.
+    Run {
+        /// If specified, the command will run forever listening for new data.
+        /// Otherwise it will stop as soon as Opencast says "no new items".
+        #[clap(long)]
+        daemon: bool,
+    },
+
     /// Resets the "harvested until" timestamp, causing all data to be
     /// re-synchronized when the sync process is next started. Does *not*
     /// delete any data from the DB.
@@ -31,8 +36,8 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     let conn = db.get().await?;
 
     match args.cmd {
-        None => super::run(args.daemon, conn, config).await,
-        Some(SyncCommand::Reset) => reset(conn).await,
+        SyncCommand::Run { daemon } => super::run(daemon, conn, config).await,
+        SyncCommand::Reset => reset(conn).await,
     }
 }
 
@@ -40,7 +45,7 @@ async fn reset(db: DbConnection) -> Result<()> {
     bunt::println!(
         "\n{$bold+red+intense}Are you sure you want to reset the sync status?{/$}\n\
             That will cause all items to be resynced, which could take a long time \
-            and puts some stress on your Opencast server.\n\
+            and puts stress on your Opencast server.\n\
             \n\
             Type 'yes' to reset the sync status."
     );
