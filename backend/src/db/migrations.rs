@@ -144,7 +144,7 @@ impl MigrationPlan {
 
         // Apply missing migrations in order.
         info!("The database is missing {new_migrations} migrations. Applying them now.");
-        for (id, migration) in MIGRATIONS.range(MIGRATIONS.len() as u64 - new_migrations..) {
+        for (id, migration) in MIGRATIONS.range(MIGRATIONS.len() as u64 - new_migrations + 1..) {
             debug!("Applying migration '{}-{}' ...", id, migration.name);
             trace!("Executing:\n{}", migration.script);
 
