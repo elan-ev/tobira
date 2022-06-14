@@ -231,7 +231,7 @@
 # Signing algorithm for JWTs. Prefer `ES` style algorithms over others.
 # The algorithm choice has to be configured in Opencast as well.
 #
-# Valid values: TODO.
+# Valid values: "ES256", "ES384"
 #
 # Required! This value must be specified.
 #signing_algorithm =
@@ -241,7 +241,8 @@
 # # For `ES*` algorithms
 #
 # Has to be an EC key encoded as PKCS#8. To generate such a key, you can
-# run these commands:
+# run the following commands. You can replace `secp256r1` with other
+# supported values like `secp384r1`.
 #
 #     openssl ecparam -name secp256r1 -genkey -noout -out sec1.pem
 #     openssl pkcs8 -topk8 -nocrypt -in sec1.pem -out private-key.pem

@@ -29,6 +29,8 @@ pub(crate) use self::{
 // "file not found". Or do we want to have a different path for Windows?
 const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
 
+const TOBIRA_CONFIG_PATH_ENV: &str = "TOBIRA_CONFIG_PATH";
+
 /// Configuration for Tobira.
 ///
 /// All relative paths are relative to the location of this configuration file.
@@ -74,28 +76,32 @@ pub(crate) struct Config {
 }
 
 impl Config {
-    /// Tries to find a config file from a list of possible default config file
-    /// locations. The first config file is loaded via [`Self::load_from`].
-    pub fn from_default_locations() -> Result<Self> {
-        let path = DEFAULT_PATHS.iter()
-            .map(Path::new)
-            .find(|p| p.exists())
-            .ok_or(anyhow!(
-                "no configuration file found. Note: we checked the following paths: {}",
-                DEFAULT_PATHS.join(", "),
-            ))?;
+    /// Tries to find a config file by checking `TOBIRA_CONFIG_PATH` and from a
+    /// list of possible default config file locations. The first config file
+    /// is loaded via[`Self::load_from`]. Returns the loaded config and the
+    /// path that it was loaded from.
+    pub fn from_env_or_default_locations() -> Result<(Self, PathBuf)> {
+        let path = if let Some(path) = std::env::var_os(TOBIRA_CONFIG_PATH_ENV) {
+            PathBuf::from(path)
+        } else {
+            DEFAULT_PATHS.iter()
+                .map(PathBuf::from)
+                .find(|p| p.exists())
+                .ok_or(anyhow!(
+                    "no configuration file found. Note: we checked the following paths: {}",
+                    DEFAULT_PATHS.join(", "),
+                ))?
+        };
 
-        let config = Self::load_from(path)
+        let config = Self::load_from(&path)
             .context(format!("failed to load configuration from '{}'", path.display()))?;
 
-        Ok(config)
+        Ok((config, path))
     }
 
     /// Loads the configuration from a specific TOML file.
     pub fn load_from(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
-        info!("Loading configuration from '{}'", path.display());
-
         let mut config = Config::from_file(path)
             .context(format!("failed to read config file '{}'", path.display()))?;
 

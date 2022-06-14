@@ -26,6 +26,7 @@ See the [authentication docs](./auth) for more information on this part.
 ## 5. Configure Tobira & provide additional files
 
 Tobira will check for `config.toml` (in the working directory) and `/etc/tobira/config.toml` and use the first one it finds.
+You can set an explicit config path with the environment variable `TOBIRA_CONFIG_PATH` or the `-c` CLI flag.
 If none of these is found, Tobira will exit with an error.
 For all configuration options and their respective explanations, see [`config.toml`](./config.toml).
 That file also serves as a good template to copy to your server and then adjust.

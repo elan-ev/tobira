@@ -4,7 +4,6 @@
 use serde::Deserialize;
 use tokio_postgres::GenericClient;
 use std::{fs::File, future::Future, path::PathBuf, pin::Pin};
-use structopt::StructOpt;
 
 use crate::{
     config::Config,
@@ -13,13 +12,13 @@ use crate::{
 };
 
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Args)]
 pub(crate) struct Args {
     /// YAML file specifying the realm tree.
     input_file: PathBuf,
 
     /// Add dummy blocks to realms without any blocks.
-    #[structopt(long)]
+    #[clap(long)]
     dummy_blocks: bool,
 }
 

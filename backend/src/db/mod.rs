@@ -121,6 +121,7 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
         } else {
             deadpool_postgres::SslMode::Require
         }),
+        application_name: Some("Tobira".into()),
         .. PoolConfig::default()
     };
 

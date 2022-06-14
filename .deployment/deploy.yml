@@ -219,7 +219,7 @@
       become: true
       become_user: tobira
       command:
-        cmd: /opt/tobira/{{ id }}/tobira sync
+        cmd: /opt/tobira/{{ id }}/tobira sync run
         chdir: /opt/tobira/{{ id }}/
 
     - name: insert demo realms

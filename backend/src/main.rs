@@ -1,8 +1,8 @@
 //! The Tobira backend server.
 
-use std::env;
+use clap::{FromArgMatches, IntoApp};
 use deadpool_postgres::Pool;
-use structopt::StructOpt;
+use std::env;
 
 use crate::{
     args::{Args, Command},
@@ -60,11 +60,11 @@ async fn run() -> Result<()> {
     // Parse CLI args.
     // This is a bit roundabout because we want to override the version
     // using some runtime code.
-    let args = Args::from_clap(
-        &Args::clap()
+    let args = Args::from_arg_matches(
+        &Args::command()
             .version(&*version())
             .get_matches(),
-    );
+    )?;
 
     // Dispatch subcommand.
     match &args.cmd {
@@ -72,9 +72,9 @@ async fn run() -> Result<()> {
             let config = load_config_and_init_logger(shared)?;
             start_server(config).await?;
         }
-        Command::Sync { daemon, shared } => {
+        Command::Sync { args, shared } => {
             let config = load_config_and_init_logger(shared)?;
-            sync::cmd::run(*daemon, &config).await?;
+            sync::cmd::run(args, &config).await?;
         }
         Command::Db { cmd, shared } => {
             let config = load_config_and_init_logger(shared)?;
@@ -134,15 +134,19 @@ async fn start_worker(config: Config) -> Result<()> {
 
 fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
     // Load configuration.
-    let config = match &args.config {
-        Some(path) => Config::load_from(path)
-            .context(format!("failed to load config from '{}'", path.display()))?,
-        None => Config::from_default_locations()?,
+    let (config, path) = match &args.config {
+        Some(path) => {
+            let config = Config::load_from(path)
+                .context(format!("failed to load config from '{}'", path.display()))?;
+            (config, path.clone())
+        }
+        None => Config::from_env_or_default_locations()?,
     };
 
     // Initialize logger. Unfortunately, we can only do this here
     // after reading the config.
     logger::init(&config.log)?;
+    info!("Loaded config from '{}'", path.display());
 
     Ok(config)
 }

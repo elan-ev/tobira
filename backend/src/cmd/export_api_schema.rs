@@ -3,10 +3,9 @@
 
 use anyhow::Result;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Args)]
 pub(crate) struct Args {
     /// Optional path to output file. If this is not specified, the schema is
     /// written directly to stdout. If the file does not exist, it and all its

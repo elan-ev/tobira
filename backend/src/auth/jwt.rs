@@ -14,7 +14,7 @@ pub(crate) struct JwtConfig {
     /// Signing algorithm for JWTs. Prefer `ES` style algorithms over others.
     /// The algorithm choice has to be configured in Opencast as well.
     ///
-    /// Valid values: TODO.
+    /// Valid values: "ES256", "ES384"
     signing_algorithm: Algorithm,
 
     /// Path to the secret signing key. The key has to be PEM encoded.
@@ -22,7 +22,8 @@ pub(crate) struct JwtConfig {
     /// # For `ES*` algorithms
     ///
     /// Has to be an EC key encoded as PKCS#8. To generate such a key, you can
-    /// run these commands:
+    /// run the following commands. You can replace `secp256r1` with other
+    /// supported values like `secp384r1`.
     ///
     ///     openssl ecparam -name secp256r1 -genkey -noout -out sec1.pem
     ///     openssl pkcs8 -topk8 -nocrypt -in sec1.pem -out private-key.pem
@@ -43,12 +44,14 @@ pub(crate) struct JwtConfig {
 #[derive(Debug, Clone, Copy, serde::Deserialize)]
 pub(crate) enum Algorithm {
     ES256,
+    ES384,
 }
 
 impl Algorithm {
     fn to_str(&self) -> &'static str {
         match self {
             Algorithm::ES256 => "ES256",
+            Algorithm::ES384 => "ES384",
         }
     }
 }
@@ -125,7 +128,7 @@ impl JwtConfig {
             .context("secret key file is not a valid PEM encoded key")?;
 
         match self.signing_algorithm {
-            algo @ Algorithm::ES256 => JwtAuth::load_es(algo, &pem.contents),
+            algo @ (Algorithm::ES256 | Algorithm::ES384) => JwtAuth::load_es(algo, &pem.contents),
         }
     }
 }
@@ -138,25 +141,33 @@ struct JwtAuth {
 }
 
 impl JwtAuth {
-    /// Loads an elliptic curve key. `algo` has to be `ES256`!
+    /// Loads an elliptic curve key. `algo` has to be `ES256` or `ES384`!
     fn load_es(algo: Algorithm, key: &[u8]) -> Result<JwtAuth> {
         use elliptic_curve::pkcs8::DecodePrivateKey;
 
         // Create a `ring` key pair that is used for signing.
         let ring_algo = match algo {
             Algorithm::ES256 => &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-            // Algorithm::ES384 => &ring::signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+            Algorithm::ES384 => &ring::signature::ECDSA_P384_SHA384_FIXED_SIGNING,
         };
         let ring_key = EcdsaKeyPair::from_pkcs8(ring_algo, key).map_err(|e| {
-            anyhow!("`jwt.secret_key` is not a valid ECDSA keypair in PKCS8 format: {}", e)
+            anyhow!("`jwt.secret_key` is not a valid ECDSA keypair for the expected \
+                algorithm in PKCS8 format: {e}")
         })?;
 
         // Create the JWK(S) from the given key for the public route.
+        macro_rules! get_jwk {
+            ($curve:path) => {
+                <elliptic_curve::SecretKey<$curve>>::from_pkcs8_der(key)
+                    .expect("failed to read ECDSA keypair, but it worked with `ring`?!")
+                    .public_key()
+                    .to_jwk()
+            }
+        }
+
         let jwk = match algo {
-            Algorithm::ES256 => <elliptic_curve::SecretKey<p256::NistP256>>::from_pkcs8_der(key)
-                .expect("failed to read ECDSA keypair, but it worked with `ring`?!")
-                .public_key()
-                .to_jwk(),
+            Algorithm::ES256 => get_jwk!(p256::NistP256),
+            Algorithm::ES384 => get_jwk!(p384::NistP384),
         };
 
 

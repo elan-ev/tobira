@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
-use structopt::StructOpt;
 use tokio_postgres::IsolationLevel;
 
 use secrecy::ExposeSecret;
@@ -13,7 +12,7 @@ use crate::{prelude::*, util::Never, config::Config};
 use super::{Db, DbConfig, create_pool, query};
 
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Subcommand)]
 pub(crate) enum DbCommand {
     /// Removes all data and tables from the database. Also clears search index.
     Clear,
@@ -101,13 +100,7 @@ async fn clear(db: &mut Db, config: &Config) -> Result<()> {
         This completely drops the 'public' schema. \
         Please double-check the server you are running this on!\n\
         Type 'yes' to proceed to delete the data.");
-
-    let mut line = String::new();
-    std::io::stdin().read_line(&mut line).context("could not read from stdin")?;
-    if line.trim() != "yes" {
-        println!("Answer was not 'yes'. Aborting.");
-        bail!("user did not confirm deleting all data: operation was aborted.");
-    }
+    crate::cmd::prompt_for_yes()?;
 
     // We clear everything by dropping the 'public' schema. This is suggested
     // here, for example: https://stackoverflow.com/a/21247009/2408867
