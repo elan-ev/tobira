@@ -278,6 +278,12 @@
 # Default value: true
 #stdout = true
 
+# If set to `true`, HTTP header of each incoming request are logged
+# (with 'trace' level).
+#
+# Default value: false
+#log_http_headers = false
+
 
 [opencast]
 # URL to Opencast. Currently used for all purposes (syncing, Studio,

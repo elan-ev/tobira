@@ -24,6 +24,11 @@ pub(crate) struct LogConfig {
     /// If this is set to `false`, log messages are not written to stdout.
     #[config(default = true)]
     pub(crate) stdout: bool,
+
+    /// If set to `true`, HTTP header of each incoming request are logged
+    /// (with 'trace' level).
+    #[config(default = false)]
+    pub(crate) log_http_headers: bool,
 }
 
 

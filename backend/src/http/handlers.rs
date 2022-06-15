@@ -16,6 +16,14 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         req.method(),
         req.uri().path_and_query().map_or("", |pq| pq.as_str()),
     );
+    if ctx.config.log.log_http_headers {
+        let mut out = String::new();
+        for (name, value) in req.headers() {
+            use std::fmt::Write;
+            write!(out, "\n  {}: {}", name, String::from_utf8_lossy(value.as_bytes())).unwrap();
+        }
+        trace!("HTTP Headers: {}", out);
+    }
 
     let method = req.method().clone();
     let path = req.uri().path().trim_end_matches('/');
