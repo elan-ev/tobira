@@ -265,7 +265,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             media-src *; \
             font-src *; \
             script-src 'self'; \
-            style-src 'self' 'unsafe-inline' nonce-{nonce}'; \
+            style-src 'self' 'unsafe-inline' 'nonce-{nonce}'; \
             connect-src 'self' {upload_node}; \
             form-action 'none'; \
         ");
