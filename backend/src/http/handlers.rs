@@ -236,7 +236,7 @@ pub(super) trait CommonHeadersExt {
 }
 
 impl CommonHeadersExt for hyper::http::response::Builder {
-    fn with_content_security_policies(self, config: &Config, nonce: &str) -> Self {
+    fn with_content_security_policies(self, config: &Config, _nonce: &str) -> Self {
         // Some comments about all relaxations:
         //
         // - `img` and `media` are loaded from Opencast. We know one URL host,
@@ -248,10 +248,10 @@ impl CommonHeadersExt for hyper::http::response::Builder {
         //
         // - `style-src` has to include `unsafe-inline` due to Paella player
         //   emitting inline CSS. Our CSS lib, emotion-js, uses inline CSS, but
-        //   it allows passing it a nonce. We already use that nonce system,
-        //   which is kinda useless while we still have `unsafe-inline` due to
-        //   Paella anyway. But it means once Paella is changed to work in
-        //   strict CSP environment, it's easier to remove. Paella issue:
+        //   it allows passing it a nonce. Everything is prepared to use that
+        //   `nonce` system, but we can't include 'nonce-123' in the CSP header
+        //   as then browsers will disregard the 'unsafe-inline'. We hope to
+        //   remove 'unsafe-inline' once this is fixed:
         //   https://github.com/polimediaupv/paella-core/issues/74
         //
         //
@@ -265,7 +265,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             media-src *; \
             font-src *; \
             script-src 'self'; \
-            style-src 'self' 'unsafe-inline' 'nonce-{nonce}'; \
+            style-src 'self' 'unsafe-inline'; \
             connect-src 'self' {upload_node}; \
             form-action 'none'; \
         ");
