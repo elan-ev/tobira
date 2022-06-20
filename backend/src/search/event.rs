@@ -187,6 +187,6 @@ pub(super) async fn prepare_index(index: &Index) -> Result<()> {
         index,
         "event",
         &["title", "creators", "description", "series_title"],
-        &["read_roles", "write_roles"],
+        &["listed", "read_roles", "write_roles"],
     ).await
 }
