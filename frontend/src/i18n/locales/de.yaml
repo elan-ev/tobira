@@ -18,7 +18,14 @@ general:
   leave-page-confirmation: >
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
   logo-alt: Das Logo von „{{title}}“
+  no-root-children: Noch keine Seiten ...
 
+welcome:
+  title: Willkommen zu Tobira!
+  body: >
+    Die Hauptseite scheint noch leer zu sein! Um Inhalte oder weitere Seiten
+    hinzuzufügen, melden Sie sich zuerst mit einem Konto mit Moderator-Rechten
+    an. Danach finden Sie auf der linken Seite Schaltflächen zum Editieren von Seiten.
 
 errors:
   not-your-fault: >

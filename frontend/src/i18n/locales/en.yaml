@@ -17,6 +17,15 @@ general:
   homepage: Homepage
   leave-page-confirmation: Leave page? Changes you made may not be saved!
   logo-alt: Logo of “{{title}}”
+  no-root-children: No pages yet ...
+
+welcome:
+  title: Welcome to Tobira!
+  body: >
+    It looks like your main page is still empty! To add content to this page
+    or add other pages, first log in with an account that has moderator priviliges.
+    Afterwards, you can use the buttons on the left to modify the pages of this
+    video portal.
 
 errors:
   not-your-fault: This is likely not your fault. You can try again later.

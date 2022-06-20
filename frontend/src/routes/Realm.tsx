@@ -3,7 +3,7 @@ import React from "react";
 import { graphql, loadQuery } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
-import { FiLayout, FiPlus, FiTool } from "react-icons/fi";
+import { FiLayout, FiPlus, FiSunrise, FiTool } from "react-icons/fi";
 
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -97,6 +97,8 @@ const query = graphql`
             id
             name
             path
+            children { id }
+            blocks { id }
             canCurrentUserEdit
             ancestors { name path }
             parent { id }
@@ -121,8 +123,37 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
     return <>
         {!isRoot && <Breadcrumbs path={breadcrumbs} tail={realm.name} />}
         {title && <h1>{title}</h1>}
-        <Blocks realm={realm} />
+        {realm.blocks.length === 0 && realm.parent === null
+            ? <WelcomeMessage />
+            : <Blocks realm={realm} />}
     </>;
+};
+
+const WelcomeMessage: React.FC = () => {
+    const { t } = useTranslation();
+
+    return (
+        <div css={{
+            maxWidth: 500,
+            marginTop: 32,
+            display: "inline-flex",
+            flexDirection: "column",
+            borderRadius: 4,
+            padding: "8px 16px",
+            gap: 16,
+            alignItems: "center",
+            backgroundColor: "var(--grey97)",
+            border: "2px dashed var(--happy-color)",
+        }}>
+            <FiSunrise css={{ marginTop: 8, fontSize: 32, minWidth: 32 }} />
+            <div>
+                <h2 css={{ textAlign: "center", fontSize: 20, marginBottom: 16 }}>
+                    {t("welcome.title")}
+                </h2>
+                <p>{t("welcome.body")}</p>
+            </div>
+        </div>
+    );
 };
 
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
