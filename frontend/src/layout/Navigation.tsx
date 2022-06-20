@@ -42,6 +42,12 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
         fragRef,
     );
 
+    // We expect all production instances to have more than the root realm. So
+    // we print this information instead of an empty div to avoid confusion.
+    if (realm.children.length === 0 && realm.parent === null) {
+        return <div css={{ margin: "8px 12px" }}>{t("general.no-root-children")}</div>;
+    }
+
     const children = [...realm.children];
     match(realm.childOrder, {
         "ALPHABETIC_ASC": () => {

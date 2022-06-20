@@ -22,6 +22,8 @@ Collectively, these are called **auth headers** in this documentation.
   A list of roles belonging to this user.
   See section "Authorization" for more information.
 
+All these header values have to be a **UTF-8** string that has been **base64 encoded**! (It is strongly recommended by the standard to only include ASCII bytes in HTTP headers. Arbitrary bytes are usually passed through verbatim, but this is not guaranteed and often forbidden. base64 encoding is the safer option).
+
 **Important**: you have to make sure that your reverse proxy removes any of these header values that the user might have sent!
 Tobira blindly trusts these header values and assumes they come from your auth proxy and *not* from the user.
 
