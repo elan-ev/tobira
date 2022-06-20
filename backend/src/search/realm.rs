@@ -34,10 +34,10 @@ impl IndexItem for Realm {
 
 impl Realm {
     const SQL_SELECT_FIELDS: &'static str = "\
-        id, \
+        realms.id, \
         name, \
         full_path, \
-        array(select name from ancestors_of_realm(id) where height <> 0 offset 1) \
+        array(select name from ancestors_of_realm(realms.id) where height <> 0 offset 1) as ancestor_names \
     ";
 
     /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.

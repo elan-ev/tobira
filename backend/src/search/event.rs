@@ -9,7 +9,7 @@ use crate::{
     db::{types::Key, util::collect_rows_mapped},
 };
 
-use super::{Client, SearchId, IndexItem, IndexItemKind, util};
+use super::{realm::Realm, Client, SearchId, IndexItem, IndexItemKind, util};
 
 
 
@@ -38,6 +38,9 @@ pub(crate) struct Event {
     // items.
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
+
+    pub(crate) listed: bool,
+    pub(crate) host_realms: Vec<Realm>,
 }
 
 impl Document for Event {
@@ -63,6 +66,7 @@ impl Event {
 
     /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.
     fn from_row(row: Row) -> Self {
+        let host_realms = row.get::<_, Vec<serde_json::Value>>(12);
         Self {
             id: SearchId(row.get(0)),
             series_id: row.get::<_, Option<Key>>(1).map(SearchId),
@@ -76,14 +80,54 @@ impl Event {
             created: row.get(9),
             read_roles: util::encode_acl(&row.get::<_, Vec<String>>(10)),
             write_roles: util::encode_acl(&row.get::<_, Vec<String>>(11)),
+            listed: !host_realms.is_empty(),
+            host_realms: host_realms.into_iter()
+                .map(|host_realm| Realm {
+                    id: SearchId(Key(
+                        host_realm["id"]
+                            .as_str().unwrap()
+                            .parse::<i64>().unwrap() as u64,
+                    )),
+                    name: host_realm["name"].as_str().unwrap().into(),
+                    full_path: host_realm["full_path"].as_str().unwrap().into(),
+                    ancestor_names: host_realm["ancestor_names"].as_array().unwrap()
+                        .into_iter()
+                        .map(|name| name.as_str().unwrap().into())
+                        .collect(),
+                })
+                .collect(),
         }
     }
 
     pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
         let query = format!(
-            "select {} from events \
-                left join series on events.series = series.id \
-                where events.id = any($1)",
+            "select \
+                {}, \
+                coalesce( \
+                    array_agg( \
+                        json_build_object( \
+                            'id', realms.id::text, \
+                            'name', name, \
+                            'full_path', full_path, \
+                            'ancestor_names', array( \
+                                select name from ancestors_of_realm(realms.id) \
+                                where height <> 0 offset 1 \
+                            ) \
+                        ) \
+                    ) filter(where realms.id is not null), \
+                    '{{}}' \
+                ) as host_realms \
+            from events \
+            left join series on events.series = series.id \
+            left join realms on exists ( \
+                select true as includes from blocks \
+                where realms.id = realm_id and ( \
+                    type = 'series' and series_id = events.series \
+                    or type = 'video' and video_id = events.id \
+                ) \
+            ) \
+            where events.id = any($1) \
+            group by events.id, series.id",
             Self::SQL_SELECT_FIELDS,
         );
         let rows = db.query_raw(&query, dbargs![&ids]);
@@ -91,8 +135,36 @@ impl Event {
     }
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
+        // TODO This is the same query as above with an additional `where`-clause.
+        // It should probably be factored out somehow but with the formatting going on
+        // that can't really be done at compile time. :(
         let query = format!(
-            "select {} from events left join series on events.series = series.id",
+            "select \
+                {}, \
+                coalesce( \
+                    array_agg( \
+                        json_build_object( \
+                            'id', realms.id::text, \
+                            'name', name, \
+                            'full_path', full_path, \
+                            'ancestor_names', array( \
+                                select name from ancestors_of_realm(realms.id) \
+                                where height <> 0 offset 1 \
+                            ) \
+                        ) \
+                    ) filter(where realms.id is not null), \
+                    '{{}}' \
+                ) as host_realms \
+            from events \
+            left join series on events.series = series.id \
+            left join realms on exists ( \
+                select true as includes from blocks \
+                where realms.id = realm_id and ( \
+                    type = 'series' and series_id = events.series \
+                    or type = 'video' and video_id = events.id \
+                ) \
+            ) \
+            group by events.id, series.id",
             Self::SQL_SELECT_FIELDS,
         );
         let rows = db.query_raw(&query, dbargs![]);
