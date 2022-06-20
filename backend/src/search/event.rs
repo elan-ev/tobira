@@ -58,7 +58,7 @@ impl Event {
         events.title, events.description, events.creators, \
         events.thumbnail, events.duration, \
         events.is_live, events.created, \
-        events.read_roles, events.write_roles\
+        events.read_roles, events.write_roles \
     ";
 
     /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.
