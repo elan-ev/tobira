@@ -43,9 +43,13 @@ pub(crate) trait Series {
         let query = format!("\
             select {cols} \
             from realms \
-            inner join blocks \
-                on realms.id = blocks.realm_id and
-                type = 'series' and blocks.series_id = $1 \
+            where exists ( \
+                select 1 as contains \
+                from blocks \
+                where realm_id = realms.id \
+                and type = 'series' \
+                and series_id = $1 \
+            ) \
         ");
         context.db.query_mapped(
             &query,

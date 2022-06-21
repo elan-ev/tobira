@@ -122,13 +122,17 @@ impl AuthorizedEvent {
         let query = format!("\
             select {cols} \
             from realms \
-            inner join blocks \
-                on realms.id = blocks.realm_id and (\
-                    (type = 'video' and blocks.video_id = $1) or \
-                    (type = 'series' and blocks.series_id = ( \
+            where exists ( \
+                select 1 as contains \
+                from blocks \
+                where realm_id = realms.id \
+                and ( \
+                    type = 'video' and video_id = $1 \
+                    or type = 'series' and series_id = ( \
                         select series from events where id = $1 \
-                    )) \
+                    ) \
                 ) \
+            ) \
         ");
         context.db.query_mapped(&query, dbargs![&self.key], Realm::from_row)
             .await?
