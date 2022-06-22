@@ -52,6 +52,7 @@ type SearchEvent implements Node {
   duration: Int!
   isLive: Boolean!
   created: DateTimeUtc!
+  hostRealms: [SearchRealm!]!
 }
 
 input ChildIndex {

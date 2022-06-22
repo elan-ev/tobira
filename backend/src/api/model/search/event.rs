@@ -49,4 +49,8 @@ impl search::Event {
     fn created(&self) -> DateTime<Utc> {
         self.created
     }
+
+    fn host_realms(&self) -> &[search::Realm] {
+        &self.host_realms
+    }
 }
