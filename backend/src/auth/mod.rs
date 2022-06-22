@@ -1,4 +1,4 @@
-use std::{borrow::Cow, time::Duration};
+use std::{borrow::Cow, time::Duration, collections::HashSet};
 
 use deadpool_postgres::Client;
 use hyper::HeaderMap;
@@ -149,7 +149,7 @@ pub(crate) enum AuthContext {
 pub(crate) struct User {
     pub(crate) username: String,
     pub(crate) display_name: String,
-    pub(crate) roles: Vec<String>,
+    pub(crate) roles: HashSet<String>,
 }
 
 impl AuthContext {
@@ -222,7 +222,7 @@ impl User {
         let display_name = get_header(&auth_config.display_name_header)?;
 
         // Get roles from the user. If the header is not set, the user simply has no extra roles.
-        let mut roles = vec![ROLE_ANONYMOUS.to_string()];
+        let mut roles = HashSet::from([ROLE_ANONYMOUS.to_string()]);
         if let Some(roles_raw) = get_header(&auth_config.roles_header) {
             roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
         };
@@ -255,7 +255,7 @@ impl User {
         Ok(Some(Self {
             username: row.get(0),
             display_name: row.get(1),
-            roles: row.get(2),
+            roles: row.get::<_, Vec<String>>(2).into_iter().collect(),
         }))
     }
 
@@ -268,11 +268,12 @@ impl User {
         // here. We just pass the error up and respond with 500. Note that
         // Postgres will always error in case of collision, so security is
         // never compromised.
+        let roles = self.roles.iter().collect::<Vec<_>>();
         db.execute_raw(
             "insert into \
                 user_sessions (id, username, display_name, roles) \
                 values ($1, $2, $3, $4)",
-            dbargs![&session_id, &self.username, &self.display_name, &self.roles],
+            dbargs![&session_id, &self.username, &self.display_name, &roles],
         ).await?;
 
         Ok(session_id)
@@ -306,7 +307,13 @@ fn base64encode(input: impl AsRef<[u8]>) -> String {
 
 pub(crate) trait HasRoles {
     /// Returns the role of the user.
-    fn roles(&self) -> &[String];
+    fn roles(&self) -> &HashSet<String>;
+
+    /// Returns the role as `Vec` instead of `HashSet`, purely for convenience
+    /// of passing it as SQL parameter.
+    fn roles_vec(&self) -> Vec<&str> {
+        self.roles().iter().map(|s| &**s).collect()
+    }
 
     /// Returns an auth token IF this user is a Tobira moderator (as determined
     /// by `config.moderator_role`).
@@ -347,18 +354,28 @@ pub(crate) trait HasRoles {
     fn is_admin(&self) -> bool {
         self.roles().iter().any(|role| role == ROLE_ADMIN)
     }
+
+    fn is_allowed_by_acl<I, T>(&self, acls: I) -> bool
+    where
+        I: IntoIterator<Item = T>,
+        T: AsRef<str>,
+    {
+        self.is_admin() || acls.into_iter().any(|role| self.roles().contains(role.as_ref()))
+    }
 }
 
 impl HasRoles for User {
-    fn roles(&self) -> &[String] {
+    fn roles(&self) -> &HashSet<String> {
         &self.roles
     }
 }
 
 impl HasRoles for AuthContext {
-    fn roles(&self) -> &[String] {
-        static TRUSTED_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ADMIN.into()]);
-        static ANONYMOUS_ROLES: Lazy<[String; 1]> = Lazy::new(|| [ROLE_ANONYMOUS.into()]);
+    fn roles(&self) -> &HashSet<String> {
+        static TRUSTED_ROLES: Lazy<HashSet<String>>
+            = Lazy::new(|| HashSet::from([ROLE_ADMIN.into()]));
+        static ANONYMOUS_ROLES: Lazy<HashSet<String>>
+            = Lazy::new(|| HashSet::from([ROLE_ANONYMOUS.into()]));
 
         match self {
             Self::Anonymous => &*ANONYMOUS_ROLES,

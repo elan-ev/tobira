@@ -169,7 +169,7 @@ impl AuthorizedEvent {
                         order by title",
                     Self::COL_NAMES,
                 ),
-                dbargs![&context.auth.roles()],
+                dbargs![&context.auth.roles_vec()],
                 Self::from_row,
             )
             .await?
@@ -189,7 +189,7 @@ impl AuthorizedEvent {
             Self::COL_NAMES,
         );
         context.db
-            .query_opt(&query, &[&context.auth.roles(), &key])
+            .query_opt(&query, &[&context.auth.roles_vec(), &key])
             .await?
             .map(|row| {
                 if row.get::<_, bool>("can_read") {
@@ -213,7 +213,7 @@ impl AuthorizedEvent {
             order.to_sql(),
         );
         context.db
-            .query_mapped(&query, dbargs![&context.auth.roles(), &series_key], Self::from_row)
+            .query_mapped(&query, dbargs![&context.auth.roles_vec(), &series_key], Self::from_row)
             .await?
             .pipe(Ok)
     }
@@ -252,7 +252,7 @@ impl AuthorizedEvent {
 
         // Assemble argument list and the "where" part of the query. This
         // depends on `after` and `before`.
-        let arg_user_roles = &context.auth.roles() as &(dyn ToSql + Sync);
+        let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
         let mut args = vec![arg_user_roles];
 
         let col = order.column.to_sql();
@@ -342,7 +342,7 @@ impl AuthorizedEvent {
             None => {
                 let query = format!("select count(*) from events {}", acl_filter);
                 context.db
-                    .query_one(&query, &[&context.auth.roles()])
+                    .query_one(&query, &[&context.auth.roles_vec()])
                     .await?
                     .get::<_, i64>(0)
             }
