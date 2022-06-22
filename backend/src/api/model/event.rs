@@ -36,7 +36,8 @@ pub(crate) struct AuthorizedEvent {
     metadata: ExtraMetadata,
     thumbnail: Option<String>,
     tracks: Vec<Track>,
-    can_write: bool,
+    read_roles: Vec<String>,
+    write_roles: Vec<String>,
 }
 
 #[derive(Debug, GraphQLObject)]
@@ -96,8 +97,8 @@ impl AuthorizedEvent {
     }
 
     /// Whether the current user has write access to this event.
-    fn can_write(&self) -> bool {
-        self.can_write
+    fn can_write(&self, context: &Context) -> bool {
+        context.auth.is_allowed_by_acl(&self.write_roles)
     }
 
     async fn series(&self, context: &Context) -> ApiResult<Option<ReadySeries>> {
@@ -183,17 +184,16 @@ impl AuthorizedEvent {
         };
 
         let query = format!(
-            "select {}, $1 && (read_roles || 'ROLE_ADMIN'::text) as can_read \
-                from events \
-                where id = $2",
+            "select {} from events where id = $1",
             Self::COL_NAMES,
         );
         context.db
-            .query_opt(&query, &[&context.auth.roles_vec(), &key])
+            .query_opt(&query, &[&key])
             .await?
             .map(|row| {
-                if row.get::<_, bool>("can_read") {
-                    Event::Event(Self::from_row(row))
+                let event = Self::from_row(row);
+                if context.auth.is_allowed_by_acl(&event.read_roles) {
+                    Event::Event(event)
                 } else {
                     Event::NotAllowed(NotAllowed)
                 }
@@ -391,7 +391,7 @@ impl AuthorizedEvent {
 
     pub(crate) const COL_NAMES: &'static str = "id, series, opencast_id, is_live, \
         title, description, duration, created, updated, creators, \
-        thumbnail, tracks, metadata, (write_roles || 'ROLE_ADMIN'::text) && $1 as can_write";
+        thumbnail, tracks, metadata, read_roles, write_roles";
 
     pub(crate) fn from_row(row: Row) -> Self {
         Self {
@@ -408,7 +408,8 @@ impl AuthorizedEvent {
             thumbnail: row.get(10),
             tracks: row.get::<_, Vec<EventTrack>>(11).into_iter().map(Track::from).collect(),
             metadata: row.get(12),
-            can_write: row.get(13),
+            read_roles: row.get::<_, Vec<String>>(13),
+            write_roles: row.get::<_, Vec<String>>(14),
         }
     }
 }
