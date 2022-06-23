@@ -17,3 +17,44 @@ create table search_index_queue (
     -- Every item should be in the queue only once.
     constraint id_type_unique unique(item_id, kind)
 );
+
+
+-- Some triggers (and surrounding infrastructure) to automatically queue
+-- events for reindexing when they become (un-)listed by a change to
+-- the block (and indirectly realm) structure. These changes lead to
+-- a change in the host realms of the corresponding events, which the
+-- index needs to pick up. This is simpler than doing it in application code.
+
+create function queue_block_for_reindex(block blocks)
+   returns void
+   language sql
+as $$
+    with listed_events as (
+        select id from events where id = block.video_id
+        union all select id from events where series = block.series_id
+    )
+    insert into search_index_queue (item_id, kind)
+    select id, 'event' from listed_events
+    on conflict do nothing;
+$$;
+
+create function queue_blocks_for_reindex()
+   returns trigger
+   language plpgsql
+as $$
+begin
+    if tg_op <> 'INSERT' then
+        perform queue_block_for_reindex(old);
+    end if;
+    if tg_op <> 'DELETE' then
+        perform queue_block_for_reindex(new);
+    end if;
+    return null;
+end;
+$$;
+
+create trigger queue_blocks_for_reindex
+after insert or delete or update of video_id, series_id
+on blocks
+for each row
+execute procedure queue_blocks_for_reindex();
