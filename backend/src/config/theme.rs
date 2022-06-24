@@ -11,20 +11,6 @@ pub(crate) struct ThemeConfig {
     #[config(default = 100)]
     pub(crate) header_height: u32,
 
-    /// Path to CSS file that includes all used font files and sets the variable
-    /// `--main-font` in the `:root` selector. For example:
-    ///
-    /// ```text
-    /// :root {
-    ///     --main-font: 'Open Sans';
-    /// }
-    ///
-    /// @font-face { font-family: 'Open Sans'; src: ...; }
-    /// ```
-    ///
-    /// If not set, the default font will be used.
-    pub(crate) fonts: Option<String>,
-
     #[config(nested)]
     pub(crate) logo: LogoConfig,
 
