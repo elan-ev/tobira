@@ -74,9 +74,6 @@ impl Assets {
         path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.path.clone());
         path_overrides.insert("logo-small.svg".into(), config.theme.logo.small.path.clone());
         path_overrides.insert("favicon.svg".into(), config.theme.favicon.clone());
-        if let Some(fonts_css) = &config.theme.fonts {
-            path_overrides.insert("fonts.css".into(), fonts_css.into());
-        }
 
         let mut variables = <HashMap<String, String>>::new();
         variables.insert("version".into(), crate::version());

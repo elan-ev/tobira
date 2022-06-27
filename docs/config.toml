@@ -390,20 +390,6 @@
 # Default value: 100
 #header_height = 100
 
-# Path to CSS file that includes all used font files and sets the variable
-# `--main-font` in the `:root` selector. For example:
-#
-# ```text
-# :root {
-#     --main-font: 'Open Sans';
-# }
-#
-# @font-face { font-family: 'Open Sans'; src: ...; }
-# ```
-#
-# If not set, the default font will be used.
-#fonts =
-
 # Path to an SVG file that is used as favicon.
 #
 # Required! This value must be specified.
