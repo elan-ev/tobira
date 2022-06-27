@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Config, Manifest, Paella, Source, Stream } from "paella-core";
+import { Config, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
+import getZoomPluginContext from "paella-zoom-plugin";
 
 import { isHlsTrack, Track } from ".";
 import { SPEEDS } from "./consts";
@@ -55,9 +56,10 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration, is
                 getVideoId: async () => "dummy-id",
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
-                loadVideoManifest: async (): Promise<Manifest> => manifest,
+                loadVideoManifest: async () => manifest,
                 customPluginContext: [
                     getBasicPluginsContext(),
+                    getZoomPluginContext(),
                 ],
             });
             paella.current.loadManifest();
@@ -137,10 +139,18 @@ const PAELLA_CONFIG = {
                 },
             ],
         },
+
+        // Canvas plugins
         "es.upv.paella.videoCanvas": {
             enabled: true,
             order: 1,
         },
+        "es.upv.paella.zoomPlugin": {
+            enabled: true,
+            order: 0,
+        },
+
+        // Format plugins
         "es.upv.paella.mp4VideoFormat": {
             enabled: true,
             order: 1,
