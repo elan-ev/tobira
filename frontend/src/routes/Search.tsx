@@ -44,7 +44,15 @@ const query = graphql`
                 id
                 __typename
                 ... on SearchEvent {
-                    title description thumbnail duration creators seriesTitle isLive created
+                    title
+                    description
+                    thumbnail
+                    duration
+                    creators
+                    seriesTitle
+                    isLive
+                    created
+                    hostRealms { path }
                 }
                 ... on SearchRealm { name path ancestorNames }
             }
@@ -99,6 +107,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     seriesTitle: unwrapUndefined(item.seriesTitle),
                     isLive: unwrapUndefined(item.isLive),
                     created: unwrapUndefined(item.created),
+                    hostRealms: unwrapUndefined(item.hostRealms),
                 }}/>;
             } else if (item.__typename === "SearchRealm") {
                 return <SearchRealm key={item.id} {...{
@@ -126,15 +135,22 @@ type SearchEventProps = {
     seriesTitle: string | null;
     isLive: boolean;
     created: string;
+    hostRealms: readonly { readonly path: string }[];
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
-    id, title, description, thumbnail, duration, creators, seriesTitle, isLive, created,
+    id, title, description, thumbnail, duration, creators, seriesTitle, isLive, created, hostRealms,
 }) => {
     const { t } = useTranslation();
 
+    // TODO: decide what to do in the case of more than two host realms. Direct
+    // link should be avoided.
+    const link = hostRealms.length !== 1
+        ? `/!v/${id.slice(2)}`
+        : `${hostRealms[0].path}/v/${id.slice(2)}`;
+
     return (
-        <Item key={id} link={`/!v/${id.slice(2)}`}>
+        <Item key={id} link={link}>
             <Thumbnail
                 event={{
                     ...{ title, isLive, created },

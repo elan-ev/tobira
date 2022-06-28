@@ -28,17 +28,17 @@ pub(crate) async fn perform(
     }
 
     // Prepare the event search
-    let mut acl_filter = None;
+    let mut filter = "listed = true".to_string();
     let event_query = {
         // If the user is not admin, build ACL filter: there has to be one user role
         // inside the event's ACL.
         if !context.auth.is_admin() {
-            let filter = context.auth.roles()
+            let acl_filter = context.auth.roles()
                 .iter()
                 .map(|role| format!("read_roles = '{}'", hex::encode(role)))
                 .collect::<Vec<_>>()
                 .join(" OR ");
-            acl_filter = Some(filter);
+            filter = format!("{} AND ({})", filter, acl_filter);
         };
 
         // Build search query
@@ -46,7 +46,7 @@ pub(crate) async fn perform(
         query.with_query(user_query);
         query.with_limit(15);
         query.with_matches(true);
-        query.filter = acl_filter.as_deref();
+        query.with_filter(&filter);
         query
     };
 

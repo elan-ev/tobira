@@ -37,7 +37,7 @@ impl Realm {
         id, \
         name, \
         full_path, \
-        ARRAY(select name from ancestors_of_realm(id) where height <> 0 offset 1)\
+        array(select name from ancestors_of_realm(id) where height <> 0 offset 1) \
     ";
 
     /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.
