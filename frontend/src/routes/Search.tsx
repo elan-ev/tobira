@@ -143,6 +143,8 @@ const SearchEvent: React.FC<SearchEventProps> = ({
 }) => {
     const { t } = useTranslation();
 
+    // TODO: decide what to do in the case of more than two host realms. Direct
+    // link should be avoided.
     const link = hostRealms.length !== 1
         ? `/!v/${id.slice(2)}`
         : `${hostRealms[0].path}/v/${id.slice(2)}`;

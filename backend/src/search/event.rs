@@ -39,6 +39,8 @@ pub(crate) struct Event {
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
 
+    // The `listed` field is always `!host_realms.is_empty()`, but we need to
+    // store it explicitly to filter for this condition in Meili.
     pub(crate) listed: bool,
     pub(crate) host_realms: Vec<Realm>,
 }
@@ -61,8 +63,40 @@ impl Event {
         events.title, events.description, events.creators, \
         events.thumbnail, events.duration, \
         events.is_live, events.created, \
-        events.read_roles, events.write_roles \
+        events.read_roles, events.write_roles, \
+        coalesce( \
+            array_agg( \
+                json_build_object( \
+                    'id', realms.id::text, \
+                    'name', name, \
+                    'full_path', full_path, \
+                    'ancestor_names', array( \
+                        select name from ancestors_of_realm(realms.id) \
+                        where height <> 0 offset 1 \
+                    ) \
+                ) \
+            ) filter(where realms.id is not null), \
+            '{}' \
+        ) as host_realms \
     ";
+
+    fn sql_query(where_clause: &str) -> String {
+        let cols = Self::SQL_SELECT_FIELDS;
+        format!(
+            "select {cols} \
+                from events \
+                left join series on events.series = series.id \
+                left join realms on exists ( \
+                    select true as includes from blocks \
+                    where realms.id = realm_id and ( \
+                        type = 'series' and series_id = events.series \
+                        or type = 'video' and video_id = events.id \
+                    ) \
+                ) \
+                {where_clause} \
+                group by events.id, series.id",
+        )
+    }
 
     /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.
     fn from_row(row: Row) -> Self {
@@ -100,75 +134,18 @@ impl Event {
     }
 
     pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
-        let query = format!(
-            "select \
-                {}, \
-                coalesce( \
-                    array_agg( \
-                        json_build_object( \
-                            'id', realms.id::text, \
-                            'name', name, \
-                            'full_path', full_path, \
-                            'ancestor_names', array( \
-                                select name from ancestors_of_realm(realms.id) \
-                                where height <> 0 offset 1 \
-                            ) \
-                        ) \
-                    ) filter(where realms.id is not null), \
-                    '{{}}' \
-                ) as host_realms \
-            from events \
-            left join series on events.series = series.id \
-            left join realms on exists ( \
-                select true as includes from blocks \
-                where realms.id = realm_id and ( \
-                    type = 'series' and series_id = events.series \
-                    or type = 'video' and video_id = events.id \
-                ) \
-            ) \
-            where events.id = any($1) \
-            group by events.id, series.id",
-            Self::SQL_SELECT_FIELDS,
-        );
+        let query = Self::sql_query("where events.id = any($1)");
         let rows = db.query_raw(&query, dbargs![&ids]);
-        collect_rows_mapped(rows, Self::from_row).await.map_err(Into::into)
+        collect_rows_mapped(rows, Self::from_row).await.context("failed to load events from DB")
     }
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
         // TODO This is the same query as above with an additional `where`-clause.
         // It should probably be factored out somehow but with the formatting going on
         // that can't really be done at compile time. :(
-        let query = format!(
-            "select \
-                {}, \
-                coalesce( \
-                    array_agg( \
-                        json_build_object( \
-                            'id', realms.id::text, \
-                            'name', name, \
-                            'full_path', full_path, \
-                            'ancestor_names', array( \
-                                select name from ancestors_of_realm(realms.id) \
-                                where height <> 0 offset 1 \
-                            ) \
-                        ) \
-                    ) filter(where realms.id is not null), \
-                    '{{}}' \
-                ) as host_realms \
-            from events \
-            left join series on events.series = series.id \
-            left join realms on exists ( \
-                select true as includes from blocks \
-                where realms.id = realm_id and ( \
-                    type = 'series' and series_id = events.series \
-                    or type = 'video' and video_id = events.id \
-                ) \
-            ) \
-            group by events.id, series.id",
-            Self::SQL_SELECT_FIELDS,
-        );
+        let query = Self::sql_query("");
         let rows = db.query_raw(&query, dbargs![]);
-        collect_rows_mapped(rows, Self::from_row).await.map_err(Into::into)
+        collect_rows_mapped(rows, Self::from_row).await.context("failed to load events from DB")
     }
 }
 
