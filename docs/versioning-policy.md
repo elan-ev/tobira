@@ -27,7 +27,7 @@ Additionally, there is a release overview with breaking changes [here](./release
 
 ## Breaking and non-breaking changes
 
-Our definition of these terms for Tobira. Defines what we guarantee and what not.
+Our definition of these terms for Tobira. Defines what we guarantee and what we don't.
 
 ### Breaking changes/stability guarantees
 
@@ -36,7 +36,7 @@ The short tags at the beginning are the table column headers in said release ove
 
 - *config*: Changing the configuration file in a backwards-incompatible way.
 - *auth*: Changing the auth-system in a backwards-incompatible way.
-- *cli*: Changing the stabilized parts of the CLI in a backwards-incompatible way.
+- *cli*: Changing the stable parts of the CLI in a backwards-incompatible way (see below).
 - *meili*: Requiring a new version of MeiliSearch.
 - *pg*: Dropping support for a non-EOL version of PostgreSQL.
 - *oc-version*: Requiring a new Opencast version (often by requiring a newer version of the Tobira module).
@@ -63,19 +63,14 @@ To name a few things explicitly (this is not a complete list!):
 <br>
 <br>
 
----
 
-## Stable components of Tobira
+### Stable parts of the CLI (command line interface)
 
-See the section "Breaking and non-breaking changes" for context.
+The following commands/flags are considered stable and changing them will include a "breaking change" mention in the changelog.
 
-### CLI (command line interface)
-
-- `tobira serve`: starts the web server.
-- `tobira worker`: runs forever syncing with Opencast and keeping the search index up to date.
-- `tobira check`: checks for some potential problems with Tobira's configuration and environment.
-  Will return a non-zero error code if some problem was found.
+- `tobira serve`
+- `tobira worker`
+- `tobira check`
 - `tobira sync run [--daemon]`
 - `tobira search-index update [--daemon]`
-
-And the `-c config-file` option for all these commands.
+- `-c config-file` for all above commands
