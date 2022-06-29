@@ -2,6 +2,7 @@
 
 use clap::{FromArgMatches, IntoApp};
 use deadpool_postgres::Pool;
+use util::Never;
 use std::env;
 
 use crate::{
@@ -113,7 +114,7 @@ async fn start_server(config: Config) -> Result<()> {
     Ok(())
 }
 
-async fn start_worker(config: Config) -> Result<()> {
+async fn start_worker(config: Config) -> Result<Never> {
     info!("Starting Tobira worker ...");
     let (db, search) = connect_and_prepare_db_and_meili(&config).await?;
 
@@ -123,12 +124,15 @@ async fn start_worker(config: Config) -> Result<()> {
     let auth_config = config.auth.clone();
 
     tokio::select! {
-        _ = search::update_index_daemon(&search, &mut search_conn) => {}
-        _ = sync::run(true, sync_conn, &config) => {}
-        _ = auth::db_maintenance(&db_maintenance_conn, &auth_config) => {}
-    };
-
-    Ok(())
+        res = search::update_index_daemon(&search, &mut search_conn) => {
+            res.context("error updating the search index")
+        }
+        res = sync::run(true, sync_conn, &config) => {
+            res.map(|()| unreachable!("sync task unexpectedly stopped"))
+                .context("error synchronizing with Opencast")
+        }
+        never = auth::db_maintenance(&db_maintenance_conn, &auth_config) => { never }
+    }
 }
 
 

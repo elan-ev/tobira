@@ -374,7 +374,7 @@ impl HasRoles for AuthContext {
 }
 
 /// Long running task to perform various DB maintenance.
-pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) {
+pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) -> ! {
     /// Delete outdated user sessions every hour. Note that the session
     /// expiration time is still checked whenever the session is validated. So
     /// this duration is not about correctness, just about how often to clean
