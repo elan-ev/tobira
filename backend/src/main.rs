@@ -35,7 +35,9 @@ async fn main() {
         eprintln!();
         bunt::eprintln!("{$red}▶▶▶ {$bold}Error:{/$}{/$} {[yellow+intense]}", e);
         eprintln!();
-        bunt::eprintln!("{$red+italic}Caused by:{/$}");
+        if e.chain().len() > 1 {
+            bunt::eprintln!("{$red+italic}Caused by:{/$}");
+        }
 
         for (i, cause) in e.chain().skip(1).enumerate() {
             eprint!(" {: >1$}", "", i * 2);
