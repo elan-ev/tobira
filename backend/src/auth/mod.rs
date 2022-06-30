@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 use secrecy::{Secret, ExposeSecret};
 use tokio_postgres::Error as PgError;
 
-use crate::{config::TranslatedString, prelude::*};
+use crate::{config::TranslatedString, prelude::*, db::util::select};
 
 
 mod handlers;
@@ -244,18 +244,21 @@ impl User {
         };
 
         // Check if such a session exists in the DB.
-        let sql = "select username, display_name, roles from user_sessions \
-            where id = $1 \
-            and extract(epoch from now() - created) < $2";
-        let row = match db.query_opt(sql, &[&session_id, &session_duration.as_secs_f64()]).await? {
+        let (selection, mapping) = select!(username, display_name, roles);
+        let query = format!(
+            "select {selection} from user_sessions \
+                where id = $1 \
+                and extract(epoch from now() - created) < $2"
+        );
+        let row = match db.query_opt(&query, &[&session_id, &session_duration.as_secs_f64()]).await? {
             None => return Ok(None),
             Some(row) => row,
         };
 
         Ok(Some(Self {
-            username: row.get(0),
-            display_name: row.get(1),
-            roles: row.get::<_, Vec<String>>(2).into_iter().collect(),
+            username: mapping.username.of(&row),
+            display_name: mapping.display_name.of(&row),
+            roles: mapping.roles.of::<Vec<String>>(&row).into_iter().collect(),
         }))
     }
 

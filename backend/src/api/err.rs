@@ -109,15 +109,10 @@ macro_rules! invalid_input {
     ($($t:tt)+) => { $crate::api::err::api_err!(InvalidInput, $($t)*) };
 }
 
-macro_rules! internal_server_err {
-    ($($t:tt)+) => { $crate::api::err::api_err!(InternalServerError, $($t)*) };
-}
-
 macro_rules! not_authorized {
     ($($t:tt)+) => { $crate::api::err::api_err!(NotAuthorized, $($t)*) };
 }
 
 pub(crate) use api_err;
 pub(crate) use invalid_input;
-pub(crate) use internal_server_err;
 pub(crate) use not_authorized;

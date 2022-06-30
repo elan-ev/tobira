@@ -2,15 +2,14 @@
 
 use juniper::{graphql_interface, graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
-use tokio_postgres::Row;
 
 use crate::{
     api::{
         Context, Id,
-        err::{ApiError, ApiResult, internal_server_err},
+        err::{ApiError, ApiResult},
         model::{event::{AuthorizedEvent, Event}, series::SeriesValue},
     },
-    db::types::Key,
+    db::{types::Key, util::impl_from_db},
     prelude::*,
 };
 
@@ -207,79 +206,71 @@ impl VideoBlock {
     }
 }
 
-impl BlockValue {
-    /// Fetches all blocks for the given realm from the database.
-    pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
-        context.db
-            .query_raw(
-                &format!(
-                    "select {} \
-                        from blocks \
-                        where realm_id = $1 \
-                        order by index asc",
-                    Self::COL_NAMES,
-                ),
-                &[realm_key],
-            )
-            .await?
-            .err_into::<ApiError>()
-            .and_then(|row| async move { Self::from_row(row) })
-            .try_collect()
-            .await
-            .map_err(Into::into)
-    }
-
-    const COL_NAMES: &'static str
-        = "id, type, index, text_content, series_id, videolist_order, video_id, show_title";
-
-    fn from_row(row: Row) -> ApiResult<Self> {
-        let ty: BlockType = row.get(1);
+impl_from_db!(
+    BlockValue,
+    "blocks",
+    { id, ty: "type", index, text_content, series_id, videolist_order, video_id, show_title },
+    |row| {
+        let ty: BlockType = row.ty();
         let shared = SharedData {
-            id: Id::block(row.get(0)),
-            index: row.get::<_, i16>(2).into(),
+            id: Id::block(row.id()),
+            index: row.index::<i16>().into(),
         };
 
-        let block = match ty {
+        match ty {
             BlockType::Title => TitleBlock {
                 shared,
-                content: get_type_dependent(&row, 3, "title", "text_content")?,
+                content: unwrap_type_dep(row.text_content(), "title", "text_content"),
             }.into(),
 
             BlockType::Text => TextBlock {
                 shared,
-                content: get_type_dependent(&row, 3, "text", "text_content")?,
+                content: unwrap_type_dep(row.text_content(), "text", "text_content"),
             }.into(),
 
             BlockType::Series => SeriesBlock {
                 shared,
-                series: row.get::<_, Option<Key>>(4).map(Id::series),
-                order: get_type_dependent(&row, 5, "videolist", "videolist_order")?,
-                show_title: get_type_dependent(&row, 7, "titled", "show_title")?,
+                series: row.series_id::<Option<Key>>().map(Id::series),
+                order: unwrap_type_dep(row.videolist_order(), "series", "videolist_order"),
+                show_title: unwrap_type_dep(row.show_title(), "series", "show_title"),
             }.into(),
 
             BlockType::Video => VideoBlock {
                 shared,
-                event: row.get::<_, Option<Key>>(6).map(Id::event),
-                show_title: get_type_dependent(&row, 7, "titled", "show_title")?,
+                event: row.video_id::<Option<Key>>().map(Id::event),
+                show_title: unwrap_type_dep(row.show_title(), "event", "show_title"),
             }.into(),
-        };
-
-        Ok(block)
+        }
     }
-}
+);
 
-/// Helper functions to fetch fields from the table that are bound to a type of
-/// block. For example, "text" blocks need to have the "text_content" column
-/// set (non-null).
-fn get_type_dependent<'a, T: FromSql<'a>>(
-    row: &'a Row,
-    idx: usize,
-    type_name: &str,
-    field_name: &str,
-) -> ApiResult<T> {
-    row.get::<_, Option<_>>(idx).ok_or_else(|| internal_server_err!(
+/// Helper functions to unwrap a value from DB that should be non-null due to
+/// the block type. Panics with a nice error message in case of null.
+fn unwrap_type_dep<T>(value: Option<T>, type_name: &str, field_name: &str) -> T {
+    value.unwrap_or_else(|| panic!(
         "DB broken: block with type='{}' has null `{}`",
         type_name,
         field_name,
     ))
+}
+
+impl BlockValue {
+    /// Fetches all blocks for the given realm from the database.
+    pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
+        let (selection, mapping) = Self::select();
+        let query = format!(
+            "select {selection} \
+                from blocks \
+                where realm_id = $1 \
+                order by index asc",
+        );
+        context.db
+            .query_raw(&query, &[realm_key])
+            .await?
+            .err_into::<ApiError>()
+            .map_ok(|row| Self::from_row(row, mapping))
+            .try_collect()
+            .await
+            .map_err(Into::into)
+    }
 }

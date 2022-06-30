@@ -4,7 +4,7 @@ use once_cell::sync::Lazy;
 use std::{collections::BTreeMap, time::Duration, num::NonZeroU64};
 use tokio_postgres::{IsolationLevel, error::SqlState};
 
-use crate::prelude::*;
+use crate::{prelude::*, db::util::select};
 use super::Db;
 
 
@@ -59,16 +59,18 @@ impl MigrationPlan {
         debug!("Checking DB migrations");
 
         // Retrieve all active migrations from the DB.
+        let (selection, mapping) = select!(id, name, applied_on, script);
+        let query = format!("select {selection} from __db_migrations");
         let active_migrations = tx
-            .query_raw("select id, name, applied_on, script from __db_migrations", dbargs![])
+            .query_raw(&query, dbargs![])
             .await
             .context("failed to query meta migrations table")?
             .map_ok(|row| (
-                row.get::<_, i64>(0) as u64,
+                mapping.id.of::<i64>(&row) as u64,
                 RawMigration {
-                    name: row.get(1),
-                    applied_on: Utc.from_utc_datetime(&row.get(2)),
-                    script: row.get(3),
+                    name: mapping.name.of(&row),
+                    applied_on: Utc.from_utc_datetime(&mapping.applied_on.of(&row)),
+                    script: mapping.script.of(&row),
                 }
             ))
             .try_collect::<BTreeMap<_, _>>()

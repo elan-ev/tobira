@@ -3,7 +3,7 @@ use postgres_types::{FromSql, ToSql};
 
 use crate::{
     api::{Context, Id, err::ApiResult, Node, NodeValue},
-    db::types::Key,
+    db::{types::Key, util::{select, impl_from_db}},
     prelude::*,
 };
 use super::block::BlockValue;
@@ -35,10 +35,28 @@ pub(crate) struct Realm {
     child_order: RealmOrder,
 }
 
+impl_from_db!(
+    Realm,
+    "realms",
+    { id, parent, name, path_segment, full_path, index, child_order },
+    |row| {
+        Self {
+            key: row.id(),
+            parent_key: row.parent(),
+            name: row.name(),
+            path_segment: row.path_segment(),
+            full_path: row.full_path(),
+            index: row.index(),
+            child_order: row.child_order(),
+        }
+    }
+);
+
 impl Realm {
     pub(crate) async fn root(context: &Context) -> ApiResult<Self> {
+        let (selection, mapping) = select!(child_order);
         let row = context.db
-            .query_one("select child_order from realms where id = 0", &[])
+            .query_one(&format!("select {selection} from realms where id = 0"), &[])
             .await?;
 
         Ok(Self {
@@ -48,7 +66,7 @@ impl Realm {
             path_segment: String::new(),
             full_path: String::new(),
             index: 0,
-            child_order: row.get(0),
+            child_order: mapping.child_order.of(&row),
         })
     }
 
@@ -65,37 +83,13 @@ impl Realm {
             return Ok(Some(Self::root(context).await?));
         }
 
+        let (selection, mapping) = Self::select();
+        let query = format!("select {selection} from realms where id = $1");
         context.db
-            .query_opt(
-                &format!(
-                    "select {} \
-                        from realms \
-                        where id = $1",
-                    Self::col_names("realms"),
-                ),
-                &[&key],
-            )
+            .query_opt(&query, &[&key])
             .await?
-            .map(Self::from_row)
+            .map(|row| Self::from_row(row, mapping))
             .pipe(Ok)
-    }
-
-    pub(crate) fn col_names(from: &str) -> String {
-        ["id", "parent", "name", "path_segment", "full_path", "index", "child_order"]
-            .map(|column| format!("{}.{}", from, column))
-            .join(",")
-    }
-
-    pub(crate) fn from_row(row: tokio_postgres::Row) -> Self {
-        Self {
-            key: row.get(0),
-            parent_key: row.get(1),
-            name: row.get(2),
-            path_segment: row.get(3),
-            full_path: row.get(4),
-            index: row.get(5),
-            child_order: row.get(6),
-        }
     }
 
     pub(crate) async fn load_by_path(mut path: String, context: &Context) -> ApiResult<Option<Self>> {
@@ -114,18 +108,12 @@ impl Realm {
             return Ok(None);
         }
 
+        let (selection, mapping) = Self::select();
+        let query = format!("select {selection} from realms where full_path = $1");
         context.db
-            .query_opt(
-                &format!(
-                    "select {} \
-                        from realms \
-                        where full_path = $1",
-                    Self::col_names("realms"),
-                ),
-                &[&path],
-            )
+            .query_opt(&query, &[&path])
             .await?
-            .map(Self::from_row)
+            .map(|row| Self::from_row(row, mapping))
             .pipe(Ok)
     }
 }
@@ -185,17 +173,14 @@ impl Realm {
     /// (excluding both, the root realm and this realm). It starts with a
     /// direct child of the root and ends with the parent of `self`.
     async fn ancestors(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        let (selection, mapping) = Self::select_from_table("ancestors");
+        let query = format!(
+            "select {selection} \
+                from ancestors_of_realm($1) as ancestors \
+                where height <> 0 and id <> 0",
+        );
         context.db
-            .query_mapped(
-                &format!(
-                    "select {} \
-                        from ancestors_of_realm($1) as ancestors \
-                        where height <> 0 and id <> 0",
-                    Self::col_names("ancestors"),
-                ),
-                &[&self.key],
-                Self::from_row,
-            )
+            .query_mapped(&query, &[&self.key], |row| Self::from_row(row, mapping))
             .await?
             .pipe(Ok)
     }
@@ -205,17 +190,18 @@ impl Realm {
     /// different from `BY_INDEX`, the frontend is supposed to sort the
     /// children.
     async fn children(&self, context: &Context) -> ApiResult<Vec<Self>> {
+        let (selection, mapping) = Self::select();
+        let query = format!(
+            "select {selection} \
+                from realms \
+                where parent = $1 \
+                order by index",
+        );
         context.db
             .query_mapped(
-                &format!(
-                    "select {} \
-                        from realms \
-                        where parent = $1 \
-                        order by index",
-                    Self::col_names("realms"),
-                ),
+                &query,
                 &[&self.key],
-                Self::from_row,
+                |row| Self::from_row(row, mapping),
             )
             .await?
             .pipe(Ok)

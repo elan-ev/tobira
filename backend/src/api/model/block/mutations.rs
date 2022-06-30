@@ -1,8 +1,11 @@
 use futures::StreamExt;
 use juniper::{GraphQLInputObject, GraphQLObject};
 
-use crate::{api::{Context, Id, err::{ApiResult, invalid_input}}, dbargs};
-use crate::db::types::Key;
+use crate::{
+    api::{Context, Id, err::{ApiResult, invalid_input}},
+    db::{types::Key, util::select},
+    prelude::*,
+};
 use super::{BlockValue, VideoListOrder, super::realm::Realm};
 
 
@@ -169,39 +172,40 @@ impl BlockValue {
         // Since this violates one of our constraints, we defer it.
         db.execute("set constraints index_unique_in_realm deferred", &[]).await?;
 
+        // This query is a bit involved, but this allows us to do the full swap in one
+        // go, including "bound checking".
+        //
+        // The query basically joins the tables `blocks`, `realms` and two temporary
+        // tables. The first temporary contains two rows with the
+        // `(old_index, new_index)` and `(new_index, old_index)` pairs. The second only
+        // contains the number of blocks for that realm. The join conditions are
+        // `realm_id = realms.id` and `blocks.index = updates.old_index`, meaning that
+        // the resulting joined table should contain exactly two rows if both indices
+        // are valid. For these two rows, the `update` is performed.
+        //
+        // `updates.new_index < count` and `updates.new_index >= 0` are only to make
+        // sure the new index is in bounds.
+        let (selection, mapping) = Realm::select();
+        let query = format!(
+            "update blocks \
+                set index = updates.new_index \
+                from realms, (values \
+                    ($1::smallint, $2::smallint), \
+                    ($2::smallint, $1::smallint) \
+                ) as updates(old_index, new_index), ( \
+                    select count(*) as count from blocks \
+                    where realm_id = $3 \
+                ) as count \
+                where realm_id = realms.id \
+                and realm_id = $3 \
+                and blocks.index = updates.old_index \
+                and updates.new_index < count \
+                and updates.new_index >= 0 \
+                returning {selection}",
+        );
         let realm_stream = db
             .query_raw(
-                &format!(
-                    // This query is a bit involved, but this allows us to do the full swap in one
-                    // go, including "bound checking".
-                    //
-                    // The query basically joins the tables `blocks`, `realms` and two temporary
-                    // tables. The first temporary contains two rows with the
-                    // `(old_index, new_index)` and `(new_index, old_index)` pairs. The second only
-                    // contains the number of blocks for that realm. The join conditions are
-                    // `realm_id = realms.id` and `blocks.index = updates.old_index`, meaning that
-                    // the resulting joined table should contain exactly two rows if both indices
-                    // are valid. For these two rows, the `update` is performed.
-                    //
-                    // `updates.new_index < count` and `updates.new_index >= 0` are only to make
-                    // sure the new index is in bounds.
-                    "update blocks \
-                        set index = updates.new_index \
-                        from realms, (values \
-                            ($1::smallint, $2::smallint), \
-                            ($2::smallint, $1::smallint) \
-                        ) as updates(old_index, new_index), ( \
-                            select count(*) as count from blocks \
-                            where realm_id = $3 \
-                        ) as count \
-                        where realm_id = realms.id \
-                        and realm_id = $3 \
-                        and blocks.index = updates.old_index \
-                        and updates.new_index < count \
-                        and updates.new_index >= 0 \
-                        returning {}",
-                    Realm::col_names("realms"),
-                ),
+                &query,
                 dbargs![
                     &(i16::try_from(index_a)
                         .map_err(|_| invalid_input!("`indexA` is not a valid block index"))?),
@@ -229,7 +233,7 @@ impl BlockValue {
             .ok_or_else(|| invalid_input!(
                 "`indexA`, `indexB` or `realm` wasn't a valid block index or realm"
             ))?
-            .map(Realm::from_row)?;
+            .map(|row| Realm::from_row(row, mapping))?;
 
         Ok(realm)
     }
@@ -238,52 +242,38 @@ impl BlockValue {
         id: Id,
         set: UpdateTitleBlock,
         context: &Context,
-    ) -> ApiResult<BlockValue> {
-        let updated_block = context.db(context.require_moderator()?)
-            .query_one(
-                &format!(
-                    "update blocks set \
-                        text_content = coalesce($2, text_content) \
-                        where id = $1 \
-                        and type = 'title' \
-                        returning {}",
-                    Self::COL_NAMES,
-                ),
-                &[
-                    &id.key_for(Id::BLOCK_KIND)
-                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &set.content,
-                ],
-            )
-            .await?;
-
-        Ok(Self::from_row(updated_block)?)
+    ) -> ApiResult<Self> {
+        let (selection, mapping) = Self::select();
+        let query = format!(
+            "update blocks set \
+                text_content = coalesce($2, text_content) \
+                where id = $1 \
+                and type = 'title' \
+                returning {selection}",
+        );
+        context.db(context.require_moderator()?)
+            .query_one(&query, &[&Self::key_for(id)?, &set.content])
+            .await?
+            .pipe(|row| Ok(Self::from_row(row, mapping)))
     }
 
     pub(crate) async fn update_text(
         id: Id,
         set: UpdateTextBlock,
         context: &Context,
-    ) -> ApiResult<BlockValue> {
-        let updated_block = context.db(context.require_moderator()?)
-            .query_one(
-                &format!(
-                    "update blocks set \
-                        text_content = coalesce($2, text_content) \
-                        where id = $1 \
-                        and type = 'text' \
-                        returning {}",
-                    Self::COL_NAMES,
-                ),
-                &[
-                    &id.key_for(Id::BLOCK_KIND)
-                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &set.content,
-                ],
-            )
-            .await?;
-
-        Ok(Self::from_row(updated_block)?)
+    ) -> ApiResult<Self> {
+        let (selection, mapping) = Self::select();
+        let query = format!(
+            "update blocks set \
+                text_content = coalesce($2, text_content) \
+                where id = $1 \
+                and type = 'text' \
+                returning {selection}",
+        );
+        context.db(context.require_moderator()?)
+            .query_one(&query, &[&Self::key_for(id)?, &set.content])
+            .await?
+            .pipe(|row| Ok(Self::from_row(row, mapping)))
     }
 
     pub(crate) async fn update_series(
@@ -291,32 +281,25 @@ impl BlockValue {
         set: UpdateSeriesBlock,
         context: &Context,
     ) -> ApiResult<BlockValue> {
-        let updated_block = context.db(context.require_moderator()?)
-            .query_one(
-                &format!(
-                    "update blocks set \
-                        series_id = coalesce($2, series_id), \
-                        videolist_order = coalesce($3, videolist_order), \
-                        show_title = coalesce($4, show_title) \
-                        where id = $1 \
-                        and type = 'series' \
-                        returning {}",
-                    Self::COL_NAMES,
-                ),
-                &[
-                    &id.key_for(Id::BLOCK_KIND)
-                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &set.series.map(
-                        |series| series.key_for(Id::SERIES_KIND)
-                            .ok_or_else(|| invalid_input!("`set.series` does not refer to a series"))
-                    ).transpose()?,
-                    &set.order,
-                    &set.show_title,
-                ],
-            )
-            .await?;
+        let series_id = set.series.map(
+            |series| series.key_for(Id::SERIES_KIND)
+                .ok_or_else(|| invalid_input!("`set.series` does not refer to a series"))
+        ).transpose()?;
 
-        Ok(Self::from_row(updated_block)?)
+        let (selection, mapping) = Self::select();
+        let query = format!(
+            "update blocks set \
+                series_id = coalesce($2, series_id), \
+                videolist_order = coalesce($3, videolist_order), \
+                show_title = coalesce($4, show_title) \
+                where id = $1 \
+                and type = 'series' \
+                returning {selection}",
+        );
+        context.db(context.require_moderator()?)
+            .query_one(&query, &[&Self::key_for(id)?, &series_id, &set.order, &set.show_title])
+            .await?
+            .pipe(|row| Ok(Self::from_row(row, mapping)))
     }
 
     pub(crate) async fn update_video(
@@ -324,54 +307,45 @@ impl BlockValue {
         set: UpdateVideoBlock,
         context: &Context,
     ) -> ApiResult<BlockValue> {
-        let updated_block = context.db(context.require_moderator()?)
-            .query_one(
-                &format!(
-                    "update blocks set \
-                        video_id = coalesce($2, video_id), \
-                        show_title = coalesce($3, show_title) \
-                        where id = $1 \
-                        and type = 'video' \
-                        returning {}",
-                    Self::COL_NAMES,
-                ),
-                &[
-                    &id.key_for(Id::BLOCK_KIND)
-                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?,
-                    &set.event.map(
-                        |series| series.key_for(Id::EVENT_KIND)
-                            .ok_or_else(|| invalid_input!("`set.event` does not refer to a event"))
-                    ).transpose()?,
-                    &set.show_title,
-                ],
-            )
-            .await?;
+        let video_id = set.event.map(
+            |series| series.key_for(Id::EVENT_KIND)
+                .ok_or_else(|| invalid_input!("`set.event` does not refer to a event"))
+        ).transpose()?;
 
-        Ok(Self::from_row(updated_block)?)
+        let (selection, mapping) = Self::select();
+        let query = format!(
+            "update blocks set \
+                video_id = coalesce($2, video_id), \
+                show_title = coalesce($3, show_title) \
+                where id = $1 \
+                and type = 'video' \
+                returning {selection}",
+        );
+        context.db(context.require_moderator()?)
+            .query_one(&query, &[&Self::key_for(id)?, &video_id, &set.show_title])
+            .await?
+            .pipe(|row| Ok(Self::from_row(row, mapping)))
     }
 
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
         let db = context.db(context.require_moderator()?);
+        let block_id = id.key_for(Id::BLOCK_KIND)
+            .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?;
 
+        let (selection, mapping) = select!(realm: Realm, index: "blocks.index");
+        let query = format!(
+            "delete from blocks \
+                using realms \
+                where blocks.realm_id = realms.id \
+                and blocks.id = $1 \
+                returning {selection}, blocks.index",
+        );
         let result = db
-            .query_one(
-                &format!(
-                    "delete from blocks \
-                        using realms \
-                        where blocks.realm_id = realms.id \
-                        and blocks.id = $1 \
-                        returning {}, blocks.index",
-                    Realm::col_names("realms")
-                ),
-                &[
-                    &id.key_for(Id::BLOCK_KIND)
-                        .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?
-                ],
-            )
+            .query_one(&query, &[&block_id])
             .await?;
 
-        let index: i16 = result.get(result.len() - 1);
-        let realm = Realm::from_row(result);
+        let index: i16 = mapping.index.of(&result);
+        let realm = Realm::from_row(result, mapping.realm);
 
         // Fix indices after removed block
         db
@@ -385,6 +359,11 @@ impl BlockValue {
             .await?;
 
         Ok(RemovedBlock { id, realm })
+    }
+
+    fn key_for(id: Id) -> ApiResult<Key> {
+        id.key_for(Id::BLOCK_KIND)
+            .ok_or_else(|| invalid_input!("`id` does not refer to a block"))
     }
 }
 
