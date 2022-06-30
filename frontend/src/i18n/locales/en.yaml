@@ -279,10 +279,11 @@ manage:
       view-page: View page
 
       add: Insert a new block here
-      add-title: Insert title here
-      add-text: Insert text here
-      add-series: Insert a series here
-      add-video: Insert a video here
+      add-popup-title: Add here
+      add-title: Title
+      add-text: Text
+      add-series: Series
+      add-video: Video
 
       move-down: Move block down
       move-up: Move block up

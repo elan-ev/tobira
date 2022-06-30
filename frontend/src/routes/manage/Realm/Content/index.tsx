@@ -20,7 +20,7 @@ import { EditBlock } from "./Block";
 import { Breadcrumbs } from "../../../../ui/Breadcrumbs";
 import { useNavBlocker } from "../../../../util";
 import { LinkButton } from "../../../../ui/Button";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiEye } from "react-icons/fi";
 import { PageTitle } from "../../../../layout/header/ui";
 import { RealmEditLinks } from "../../../Realm";
 import { bug } from "../../../../util/err";
@@ -144,7 +144,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
             } />
 
             <LinkButton to={path}>
-                <FiArrowLeft />
+                <FiEye />
                 {t("manage.realm.content.view-page")}
             </LinkButton>
 
