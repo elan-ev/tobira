@@ -288,10 +288,11 @@ manage:
       view-page: Seite ansehen
 
       add: Hier einen neuen Block einfügen
-      add-title: Hier Titel einfügen
-      add-text: Hier Text einfügen
-      add-series: Hier Serie einfügen
-      add-video: Hier Video einfügen
+      add-popup-title: Hier einfügen
+      add-title: Titel
+      add-text: Text
+      add-series: Serie
+      add-video: Video
 
       move-down: Block nach unten verschieben
       move-up: Block nach oben verschieben
