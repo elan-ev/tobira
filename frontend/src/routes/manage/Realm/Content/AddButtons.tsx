@@ -2,13 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, commitLocalUpdate, useRelayEnvironment } from "react-relay";
 import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
-import {
-    FiPlus,
-    FiAlignLeft,
-    FiType,
-    FiGrid,
-    FiFilm,
-} from "react-icons/fi";
+import { FiPlus, FiType, FiGrid, FiFilm, FiHash } from "react-icons/fi";
 
 import { AddButtonsRealmData$key } from "./__generated__/AddButtonsRealmData.graphql";
 import { bug } from "../../../../util/err";
@@ -65,10 +59,10 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
             <FiPlus />
         </span>
         <Button title={t("manage.realm.content.add-title")} onClick={() => addBlock("Title")}>
-            <FiType />
+            <FiHash />
         </Button>
         <Button title={t("manage.realm.content.add-text")} onClick={() => addBlock("Text")}>
-            <FiAlignLeft />
+            <FiType />
         </Button>
         <Button
             title={t("manage.realm.content.add-series")}
