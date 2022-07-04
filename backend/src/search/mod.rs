@@ -325,13 +325,27 @@ pub(crate) async fn clear(meili: Client) -> Result<()> {
 pub(crate) async fn rebuild_index(meili: &Client, db: &mut DbConnection) -> Result<()> {
     let before = Instant::now();
     let tasks = writer::with_write_lock(db, meili, |tx, meili| Box::pin(async move {
-        let event_task = event::rebuild(&meili, tx).await?;
-        let realm_task = realm::rebuild(&meili, tx).await?;
+        let mut tasks = Vec::new();
 
-        Ok([
-            (IndexItemKind::Event, event_task),
-            (IndexItemKind::Realm, realm_task),
-        ])
+        macro_rules! rebuild_index {
+            ($plural:literal, $ty:ty, $index:expr) => {
+                let items = <$ty>::load_all(&**tx).await?;
+                debug!("Loaded {} {} from DB", items.len(), $plural);
+
+                if items.is_empty() {
+                    debug!("No {} in the DB -> Not sending anything to Meili", $plural);
+                } else {
+                    let task = $index.add_documents(&items, None).await?;
+                    debug!("Sent {} {} to Meili for indexing", items.len(), $plural);
+                    tasks.push(task);
+                }
+            }
+        }
+
+        rebuild_index!("events", Event, meili.event_index);
+        rebuild_index!("realms", Realm, meili.realm_index);
+
+        Ok(tasks)
     })).await?;
 
     info!("Sent all data to Meili in {:.1?}", before.elapsed());
@@ -340,7 +354,7 @@ pub(crate) async fn rebuild_index(meili: &Client, db: &mut DbConnection) -> Resu
     info!("Waiting for Meili to complete indexing...\n\
         (note: you may ctrl+c this command now -- this won't stop indexing)");
     let before = Instant::now();
-    for (_kind, task) in tasks {
+    for task in tasks {
         util::wait_on_task(task, meili).await?;
     }
 

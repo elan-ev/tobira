@@ -1,12 +1,11 @@
-use deadpool_postgres::Transaction;
-use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
+use meilisearch_sdk::{document::Document, indexes::Index};
 use postgres_types::FromSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
 use crate::{prelude::*, db::{types::Key, util::{collect_rows_mapped, impl_from_db}}};
 
-use super::{Client, SearchId, IndexItem, IndexItemKind, util};
+use super::{SearchId, IndexItem, IndexItemKind, util};
 
 
 /// Representation of realms in the search index.
@@ -64,19 +63,6 @@ impl Realm {
     }
 }
 
-/// Load all realms from the DB and store them in the index.
-pub(super) async fn rebuild(meili: &Client, db: &Transaction<'_>) -> Result<Task> {
-    // This nifty query gets all ancestors as array for each realm. We don't
-    // include the root realm nor the realm itself in that array though.
-    let realms = Realm::load_all(&**db).await?;
-    debug!("Loaded {} realms from DB", realms.len());
-
-    let task = meili.realm_index.add_documents(&realms, None).await?;
-    debug!("Sent {} realms to Meili for indexing", realms.len());
-
-    Ok(task)
-}
-
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(index, "relam", &["name"], &[]).await
+    util::lazy_set_special_attributes(index, "realm", &["name"], &[]).await
 }

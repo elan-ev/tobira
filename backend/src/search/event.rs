@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
-use deadpool_postgres::Transaction;
-use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
+use meilisearch_sdk::{document::Document, indexes::Index};
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
@@ -9,7 +8,7 @@ use crate::{
     db::{types::Key, util::{collect_rows_mapped, impl_from_db}},
 };
 
-use super::{realm::Realm, Client, SearchId, IndexItem, IndexItemKind, util};
+use super::{realm::Realm, SearchId, IndexItem, IndexItemKind, util};
 
 
 
@@ -101,20 +100,6 @@ impl Event {
         collect_rows_mapped(rows, |row| Self::from_row(row, mapping))
             .await
             .context("failed to load events from DB")
-    }
-}
-
-pub(super) async fn rebuild(meili: &Client, db: &Transaction<'_>) -> Result<Option<Task>> {
-    let events = Event::load_all(&**db).await?;
-    debug!("Loaded {} events from DB", events.len());
-
-    if events.is_empty() {
-        debug!("No events in the DB -> Not sending anything to Meili");
-        Ok(None)
-    } else {
-        let task = meili.event_index.add_documents(&events, None).await?;
-        debug!("Sent {} events to Meili for indexing", events.len());
-        Ok(Some(task))
     }
 }
 
