@@ -64,7 +64,7 @@ impl_from_db!(
         duration, is_live, created, read_roles, write_roles, host_realms,
     },
     |row| {
-        let host_realms = row.host_realms::<Vec<serde_json::Value>>();
+        let host_realms = row.host_realms::<Vec<Realm>>();
         Self {
             id: row.id(),
             series_id: row.series(),
@@ -79,21 +79,7 @@ impl_from_db!(
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed: !host_realms.is_empty(),
-            host_realms: host_realms.into_iter()
-                .map(|host_realm| Realm {
-                    id: SearchId(Key(
-                        host_realm["id"]
-                            .as_str().unwrap()
-                            .parse::<i64>().unwrap() as u64,
-                    )),
-                    name: host_realm["name"].as_str().unwrap().into(),
-                    full_path: host_realm["full_path"].as_str().unwrap().into(),
-                    ancestor_names: host_realm["ancestor_names"].as_array().unwrap()
-                        .into_iter()
-                        .map(|name| name.as_str().unwrap().into())
-                        .collect(),
-                })
-                .collect(),
+            host_realms,
         }
     }
 );
@@ -118,14 +104,18 @@ impl Event {
     }
 }
 
-pub(super) async fn rebuild(meili: &Client, db: &Transaction<'_>) -> Result<Task> {
+pub(super) async fn rebuild(meili: &Client, db: &Transaction<'_>) -> Result<Option<Task>> {
     let events = Event::load_all(&**db).await?;
     debug!("Loaded {} events from DB", events.len());
 
-    let task = meili.event_index.add_documents(&events, None).await?;
-    debug!("Sent {} events to Meili for indexing", events.len());
-
-    Ok(task)
+    if events.is_empty() {
+        debug!("No events in the DB -> Not sending anything to Meili");
+        Ok(None)
+    } else {
+        let task = meili.event_index.add_documents(&events, None).await?;
+        debug!("Sent {} events to Meili for indexing", events.len());
+        Ok(Some(task))
+    }
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {

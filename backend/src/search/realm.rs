@@ -1,5 +1,6 @@
 use deadpool_postgres::Transaction;
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
+use postgres_types::FromSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
@@ -9,7 +10,8 @@ use super::{Client, SearchId, IndexItem, IndexItemKind, util};
 
 
 /// Representation of realms in the search index.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, FromSql)]
+#[postgres(name = "search_realms")]
 pub(crate) struct Realm {
     pub(crate) id: SearchId,
     pub(crate) name: String,
