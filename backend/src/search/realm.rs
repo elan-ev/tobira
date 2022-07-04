@@ -1,9 +1,9 @@
 use deadpool_postgres::Transaction;
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
-use tokio_postgres::{GenericClient, Row};
+use tokio_postgres::GenericClient;
 
-use crate::{prelude::*, db::{types::Key, util::collect_rows_mapped}};
+use crate::{prelude::*, db::{types::Key, util::{collect_rows_mapped, impl_from_db}}};
 
 use super::{Client, SearchId, IndexItem, IndexItemKind, util};
 
@@ -32,34 +32,33 @@ impl IndexItem for Realm {
     const KIND: IndexItemKind = IndexItemKind::Realm;
 }
 
-impl Realm {
-    const SQL_SELECT_FIELDS: &'static str = "\
-        id, \
-        name, \
-        full_path, \
-        array(select name from ancestors_of_realm(id) offset 1) \
-    ";
-
-    /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.
-    fn from_row(row: Row) -> Self {
+impl_from_db!(
+    Realm,
+    "search_realms",
+    { id, name, full_path, ancestor_names },
+    |row| {
         Self {
-            id: SearchId(row.get(0)),
-            name: row.get(1),
-            full_path: row.get(2),
-            ancestor_names: row.get(3),
+            id: SearchId(row.id()),
+            name: row.name(),
+            full_path: row.full_path(),
+            ancestor_names: row.ancestor_names(),
         }
     }
+);
 
+impl Realm {
     pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
-        let query = format!("select {} from realms where id = any($1)", Self::SQL_SELECT_FIELDS);
+        let (selection, mapping) = Self::select();
+        let query = format!("select {selection} from search_realms where id = any($1)");
         let rows = db.query_raw(&query, dbargs![&ids]);
-        collect_rows_mapped(rows, Self::from_row).await.map_err(Into::into)
+        collect_rows_mapped(rows, |row| Self::from_row(row, mapping)).await.map_err(Into::into)
     }
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
-        let query = format!("select {} from realms", Self::SQL_SELECT_FIELDS);
+        let (selection, mapping) = Self::select();
+        let query = format!("select {selection} from search_realms");
         let rows = db.query_raw(&query, dbargs![]);
-        collect_rows_mapped(rows, Self::from_row).await.map_err(Into::into)
+        collect_rows_mapped(rows, |row| Self::from_row(row, mapping)).await.map_err(Into::into)
     }
 }
 

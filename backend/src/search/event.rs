@@ -2,11 +2,11 @@ use chrono::{DateTime, Utc};
 use deadpool_postgres::Transaction;
 use meilisearch_sdk::{document::Document, tasks::Task, indexes::Index};
 use serde::{Serialize, Deserialize};
-use tokio_postgres::{Row, GenericClient};
+use tokio_postgres::GenericClient;
 
 use crate::{
     prelude::*,
-    db::{types::Key, util::collect_rows_mapped},
+    db::{types::Key, util::{collect_rows_mapped, impl_from_db}},
 };
 
 use super::{realm::Realm, Client, SearchId, IndexItem, IndexItemKind, util};
@@ -56,64 +56,28 @@ impl IndexItem for Event {
     const KIND: IndexItemKind = IndexItemKind::Event;
 }
 
-impl Event {
-    const SQL_SELECT_FIELDS: &'static str = "\
-        events.id, \
-        events.series, series.title, \
-        events.title, events.description, events.creators, \
-        events.thumbnail, events.duration, \
-        events.is_live, events.created, \
-        events.read_roles, events.write_roles, \
-        coalesce( \
-            array_agg( \
-                json_build_object( \
-                    'id', realms.id::text, \
-                    'name', name, \
-                    'full_path', full_path, \
-                    'ancestor_names', array( \
-                        select name from ancestors_of_realm(realms.id) \
-                        offset 1 \
-                    ) \
-                ) \
-            ) filter(where realms.id is not null), \
-            '{}' \
-        ) as host_realms \
-    ";
-
-    fn sql_query(where_clause: &str) -> String {
-        let cols = Self::SQL_SELECT_FIELDS;
-        format!(
-            "select {cols} \
-                from events \
-                left join series on events.series = series.id \
-                left join realms on exists ( \
-                    select true as includes from blocks \
-                    where realms.id = realm_id and ( \
-                        type = 'series' and series_id = events.series \
-                        or type = 'video' and video_id = events.id \
-                    ) \
-                ) \
-                {where_clause} \
-                group by events.id, series.id",
-        )
-    }
-
-    /// Converts a row to `Self` when the query selected `SQL_SELECT_FIELDS`.
-    fn from_row(row: Row) -> Self {
-        let host_realms = row.get::<_, Vec<serde_json::Value>>(12);
+impl_from_db!(
+    Event,
+    "search_events",
+    {
+        id, series, series_title, title, description, creators, thumbnail,
+        duration, is_live, created, read_roles, write_roles, host_realms,
+    },
+    |row| {
+        let host_realms = row.host_realms::<Vec<serde_json::Value>>();
         Self {
-            id: SearchId(row.get(0)),
-            series_id: row.get::<_, Option<Key>>(1).map(SearchId),
-            series_title: row.get(2),
-            title: row.get(3),
-            description: row.get(4),
-            creators: row.get(5),
-            thumbnail: row.get(6),
-            duration: row.get(7),
-            is_live: row.get(8),
-            created: row.get(9),
-            read_roles: util::encode_acl(&row.get::<_, Vec<String>>(10)),
-            write_roles: util::encode_acl(&row.get::<_, Vec<String>>(11)),
+            id: SearchId(row.id()),
+            series_id: row.series::<Option<Key>>().map(SearchId),
+            series_title: row.series_title(),
+            title: row.title(),
+            description: row.description(),
+            creators: row.creators(),
+            thumbnail: row.thumbnail(),
+            duration: row.duration(),
+            is_live: row.is_live(),
+            created: row.created(),
+            read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
+            write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed: !host_realms.is_empty(),
             host_realms: host_realms.into_iter()
                 .map(|host_realm| Realm {
@@ -132,20 +96,25 @@ impl Event {
                 .collect(),
         }
     }
+);
 
+impl Event {
     pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
-        let query = Self::sql_query("where events.id = any($1)");
+        let (selection, mapping) = Self::select();
+        let query = format!("select {selection} from search_events where id = any($1)");
         let rows = db.query_raw(&query, dbargs![&ids]);
-        collect_rows_mapped(rows, Self::from_row).await.context("failed to load events from DB")
+        collect_rows_mapped(rows, |row| Self::from_row(row, mapping))
+            .await
+            .context("failed to load events from DB")
     }
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
-        // TODO This is the same query as above with an additional `where`-clause.
-        // It should probably be factored out somehow but with the formatting going on
-        // that can't really be done at compile time. :(
-        let query = Self::sql_query("");
+        let (selection, mapping) = Self::select();
+        let query = format!("select {selection} from search_events");
         let rows = db.query_raw(&query, dbargs![]);
-        collect_rows_mapped(rows, Self::from_row).await.context("failed to load events from DB")
+        collect_rows_mapped(rows, |row| Self::from_row(row, mapping))
+            .await
+            .context("failed to load events from DB")
     }
 }
 
