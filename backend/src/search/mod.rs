@@ -208,8 +208,9 @@ pub(crate) trait IndexItem: meilisearch_sdk::document::Document<UIDType = Search
 
 /// Wrapper type for our primary ID that serializes and deserializes as base64
 /// encoded string.
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, FromSql)]
 #[serde(try_from = "&str", into = "String")]
+#[postgres(transparent)]
 pub(crate) struct SearchId(pub(crate) Key);
 
 impl TryFrom<&str> for SearchId {

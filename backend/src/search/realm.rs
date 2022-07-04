@@ -38,7 +38,7 @@ impl_from_db!(
     { id, name, full_path, ancestor_names },
     |row| {
         Self {
-            id: SearchId(row.id()),
+            id: row.id(),
             name: row.name(),
             full_path: row.full_path(),
             ancestor_names: row.ancestor_names(),

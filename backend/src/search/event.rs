@@ -66,8 +66,8 @@ impl_from_db!(
     |row| {
         let host_realms = row.host_realms::<Vec<serde_json::Value>>();
         Self {
-            id: SearchId(row.id()),
-            series_id: row.series::<Option<Key>>().map(SearchId),
+            id: row.id(),
+            series_id: row.series(),
             series_title: row.series_title(),
             title: row.title(),
             description: row.description(),
