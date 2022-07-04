@@ -177,7 +177,7 @@ impl Realm {
         let query = format!(
             "select {selection} \
                 from ancestors_of_realm($1) as ancestors \
-                where height <> 0 and id <> 0",
+                where id <> 0",
         );
         context.db
             .query_mapped(&query, &[&self.key], |row| Self::from_row(row, mapping))

@@ -72,7 +72,7 @@ impl Event {
                     'full_path', full_path, \
                     'ancestor_names', array( \
                         select name from ancestors_of_realm(realms.id) \
-                        where height <> 0 offset 1 \
+                        offset 1 \
                     ) \
                 ) \
             ) filter(where realms.id is not null), \

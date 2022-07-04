@@ -189,9 +189,11 @@ create trigger fix_full_path_after_update
 
 -- Useful functions ---------------------------------------------------------------------
 
--- Returns all ancestors of the given realm, including the root realm and the
--- given realm itself. Returns all columns plus a `height` column that counts
--- up, starting from the given realm which has `height = 0`.
+-- Returns all ancestors of the given realm, including the root realm, excluding
+-- the given realm itself. Returns all realm columns plus a `height` column
+-- that counts up from the given realm's parent which has `height = 1`. The
+-- returned rows are ordered by `height` descendingly, i.e. the root realm is
+-- always the first row.
 create function ancestors_of_realm(realm_id bigint)
     returns table (
         id bigint,
@@ -206,8 +208,8 @@ create function ancestors_of_realm(realm_id bigint)
     language 'sql'
 as $$
 with recursive ancestors(id, parent, name, path_segment, index, child_order, full_path) as (
-    select *, 0 as height from realms
-    where id = realm_id
+    select *, 1 as height from realms
+    where id = (select parent from realms where id = realm_id)
   union
     select r.id, r.parent, r.name, r.path_segment, r.index, r.child_order, r.full_path, a.height + 1 as height
     from ancestors a
