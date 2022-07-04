@@ -21,25 +21,16 @@ create view search_events as
         events.read_roles, events.write_roles,
         coalesce(
             array_agg(
-                row(
-                    realms.id,
-                    name,
-                    full_path,
-                    array(
-                        select name from ancestors_of_realm(realms.id)
-                        offset 1
-                    )
-                )::search_realms
-            ) filter(where realms.id is not null),
+                distinct
+                row(search_realms.id, name, full_path, ancestor_names)::search_realms
+            ) filter(where search_realms.id is not null),
             '{}'
         ) as host_realms
     from events
     left join series on events.series = series.id
-    left join realms on exists (
-        select true as includes from blocks
-        where realms.id = realm_id and (
-            type = 'series' and series_id = events.series
-            or type = 'video' and video_id = events.id
-        )
+    left join blocks on (
+        type = 'series' and series_id = events.series
+        or type = 'video' and video_id = events.id
     )
-    group by events.id, series.id
+    left join search_realms on search_realms.id = blocks.realm_id
+    group by events.id, series.id;
