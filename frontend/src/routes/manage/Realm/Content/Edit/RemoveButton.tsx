@@ -5,7 +5,9 @@ import { FiTrash } from "react-icons/fi";
 
 import type { RemoveButtonData$key } from "./__generated__/RemoveButtonData.graphql";
 import type { RemoveButtonMutation } from "./__generated__/RemoveButtonMutation.graphql";
-import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../ui/Modal";
+import {
+    ConfirmationModal, ConfirmationModalHandle, Modal, ModalHandle,
+} from "../../../../../ui/Modal";
 import { displayCommitError } from "../../util";
 import { Button } from "../util";
 import { currentRef } from "../../../../../util";
@@ -14,9 +16,10 @@ import { currentRef } from "../../../../../util";
 type Props = {
     block: RemoveButtonData$key;
     onConfirm?: () => void;
+    nameSourceBlock?: string;
 };
 
-export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) => {
+export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, nameSourceBlock }) => {
     const { t } = useTranslation();
 
 
@@ -54,6 +57,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
 
 
     const modalRef = useRef<ConfirmationModalHandle>(null);
+    const cannotDeleteModalRef = useRef<ModalHandle>(null);
 
     return <>
         <Button
@@ -66,12 +70,19 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm }) =>
                 },
             }}
             onClick={() => {
-                currentRef(modalRef).open();
-                onConfirm?.();
+                if (nameSourceBlock === block.id) {
+                    currentRef(cannotDeleteModalRef).open();
+                } else {
+                    currentRef(modalRef).open();
+                    onConfirm?.();
+                }
             }}
         >
             <FiTrash />
         </Button>
+        <Modal ref={cannotDeleteModalRef} title={t("manage.realm.content.cannot-remove-block")}>
+            {t("manage.realm.content.cannot-remove-name-source-block")}
+        </Modal>
         <ConfirmationModal
             buttonContent={t("manage.realm.content.remove")}
             onSubmit={remove}

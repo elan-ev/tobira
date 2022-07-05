@@ -1,11 +1,11 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
 import { useTranslation } from "react-i18next";
 import { FOCUS_STYLE_INSET, LinkList, LinkWithIcon, SIDE_BOX_BORDER_RADIUS } from "../ui";
-import { match } from "../util";
+import { MissingRealmName, sortRealms } from "../routes/util";
 
 
 /** The breakpoint, in pixels, where mobile/desktop navigations are swapped. */
@@ -32,11 +32,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 name
                 childOrder
                 children { id name path }
-                parent {
-                    isRoot
-                    name
-                    path
-                }
+                parent { isRoot name path }
             }
         `,
         fragRef,
@@ -48,15 +44,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
         return <div css={{ margin: "8px 12px" }}>{t("general.no-root-children")}</div>;
     }
 
-    const children = [...realm.children];
-    match(realm.childOrder, {
-        "ALPHABETIC_ASC": () => {
-            children.sort((a, b) => a.name.localeCompare(b.name, i18n.language));
-        },
-        "ALPHABETIC_DESC": () => {
-            children.sort((a, b) => b.name.localeCompare(a.name, i18n.language));
-        },
-    }, () => {});
+    const children = sortRealms(realm.children, realm.childOrder, i18n.language);
 
     return <nav>
         {realm.parent !== null && <>
@@ -72,7 +60,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 }}
             >
                 <FiChevronLeft css={{ marginRight: "8px !important" }}/>
-                {realm.parent.isRoot ? t("home") : realm.parent.name}
+                {realm.parent.isRoot ? t("home") : realm.parent.name ?? <MissingRealmName />}
             </LinkWithIcon>
             <div css={{
                 padding: 12,
@@ -83,13 +71,13 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 border: "2px solid white",
                 borderLeft: "none",
                 borderRight: "none",
-            }}>{realm.name}</div>
+            }}>{realm.name ?? <MissingRealmName />}</div>
         </>}
         <LinkList
             items={children.map(child => (
                 <Item
                     key={child.id}
-                    label={child.name}
+                    label={child.name ?? <MissingRealmName />}
                     link={child.path}
                 />
             ))}
@@ -104,7 +92,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
 };
 
 type ItemProps = {
-    label: string;
+    label: ReactNode;
     link: string;
 };
 

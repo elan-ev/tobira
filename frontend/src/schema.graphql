@@ -35,6 +35,11 @@ type TextBlock implements Block {
   index: Int!
 }
 
+"A realm name that is derived from a block of that realm."
+type RealmNameFromBlock {
+  block: RealmNameSourceBlock!
+}
+
 "An opaque cursor used for pagination"
 scalar Cursor
 
@@ -66,18 +71,20 @@ type EventConnection {
   totalCount: Int!
 }
 
+"A simple realm name: a fixed string."
+type PlainRealmName {
+  name: String!
+}
+
+union RealmNameSource = PlainRealmName | RealmNameFromBlock
+
 "A block just showing the list of videos in an Opencast series"
-type SeriesBlock implements Block {
+type SeriesBlock implements Block & RealmNameSourceBlock {
   series: Series
   showTitle: Boolean!
   order: VideoListOrder!
   id: ID!
   index: Int!
-}
-
-input NewVideoBlock {
-  event: ID!
-  showTitle: Boolean!
 }
 
 """
@@ -104,6 +111,11 @@ interface Series {
   hostRealms: [Realm!]!
 }
 
+input NewVideoBlock {
+  event: ID!
+  showTitle: Boolean!
+}
+
 "A `Block`: a UI element that belongs to a realm."
 interface Block {
   id: ID!
@@ -124,7 +136,7 @@ input UpdateVideoBlock {
 }
 
 "A block for presenting a single Opencast event"
-type VideoBlock implements Block {
+type VideoBlock implements Block & RealmNameSourceBlock {
   event: Event
   showTitle: Boolean!
   id: ID!
@@ -186,7 +198,18 @@ input UpdateTextBlock {
 
 type Realm implements Node {
   id: ID!
-  name: String!
+  """
+    The name of this realm or `null` if there is no name (for some reason).
+    To find out why a realm has no name, you have to check `name_source`
+    which gives you the raw information about the realm name.
+  """
+  name: String
+  """
+    The raw information about the name of the realm, showing where the name
+    is coming from and if there is no name, why that is. Is `null` for the
+    root realm, non-null for all other realms.
+  """
+  nameSource: RealmNameSource
   isRoot: Boolean!
   index: Int!
   """
@@ -242,6 +265,12 @@ type Realm implements Node {
   references(id: ID!): Boolean!
 }
 
+"Exactly one of `plain` or `block` has to be non-null."
+input UpdatedRealmName {
+  plain: String
+  block: ID
+}
+
 type Mutation {
   "Adds a new realm."
   addRealm(realm: NewRealm!): Realm!
@@ -252,6 +281,8 @@ type Mutation {
     for realms without children.
   """
   setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
+  "Changes the name of a realm."
+  renameRealm(id: ID!, name: UpdatedRealmName!): Realm!
   "Updates a realm's data."
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
   "Remove a realm from the tree."
@@ -349,6 +380,10 @@ type Query {
   search(query: String!): SearchResults
 }
 
+interface RealmNameSourceBlock {
+  id: ID!
+}
+
 enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
@@ -383,7 +418,6 @@ input EventSortOrder {
 
 input UpdateRealm {
   parent: ID
-  name: String
   pathSegment: String
 }
 

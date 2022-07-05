@@ -8,8 +8,10 @@ select prepare_randomized_ids('realm');
 create table realms (
     id bigint primary key default randomized_id('realm'),
     parent bigint references realms on delete cascade,
-    name text not null,
     path_segment text not null,
+
+    -- Also see `realm-names.sql`!
+    name text,
 
     -- Index to define an order of this realm and all its siblings. It defaults
     -- to max int such that newly added realms appear after manually ordered
@@ -56,9 +58,9 @@ create table realms (
     )),
     constraint root_no_path check (id <> 0 or (parent is null and path_segment = '' and full_path = '')),
     constraint has_parent check (id = 0 or parent is not null),
-    constraint names_non_empty_except_root check (
-        (id = 0 and name = '') or (id <> 0 and name <> '')
-    )
+    constraint no_empty_name check (name <> '')
+
+    -- NOTE: the definition is expanded and adjusted in `realm-names.sql`!
 );
 
 -- Full path to realm lookups happen on nearly every page view. We specify
@@ -82,7 +84,7 @@ select setval(
     xtea(0, (select key from __xtea_keys where entity = 'realm'), false),
     false
 );
-insert into realms (name, parent, path_segment, full_path) values ('', null, '', '');
+insert into realms (name, parent, path_segment, full_path) values (null, null, '', '');
 
 
 -- Make sure the root realm is never deleted and its ID is never changed.

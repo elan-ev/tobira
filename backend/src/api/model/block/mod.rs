@@ -12,6 +12,7 @@ use crate::{
     db::{types::Key, util::impl_from_db},
     prelude::*,
 };
+use super::realm::RealmNameSourceBlockValue;
 
 
 mod mutations;
@@ -69,11 +70,13 @@ pub(crate) enum VideoListOrder {
 }
 
 /// Data shared by all blocks.
+#[derive(Debug)]
 pub(crate) struct SharedData {
     pub(crate) id: Id,
     pub(crate) index: i32,
 }
 
+#[derive(Debug)]
 pub(crate) struct TitleBlock {
     pub(crate) shared: SharedData,
     pub(crate) content: String,
@@ -101,6 +104,7 @@ impl TitleBlock {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct TextBlock {
     pub(crate) shared: SharedData,
     pub(crate) content: String,
@@ -128,6 +132,7 @@ impl TextBlock {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
     pub(crate) series: Option<Id>,
@@ -142,7 +147,7 @@ impl Block for SeriesBlock {
 }
 
 /// A block just showing the list of videos in an Opencast series
-#[graphql_object(Context = Context, impl = BlockValue)]
+#[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
 impl SeriesBlock {
     async fn series(&self, context: &Context) -> ApiResult<Option<SeriesValue>> {
         match self.series {
@@ -169,6 +174,7 @@ impl SeriesBlock {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct VideoBlock {
     pub(crate) shared: SharedData,
     // Is `None` if the video was removed from the DB.
@@ -183,7 +189,7 @@ impl Block for VideoBlock {
 }
 
 /// A block for presenting a single Opencast event
-#[graphql_object(Context = Context, impl = BlockValue)]
+#[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
 impl VideoBlock {
     async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
         match self.event {
@@ -274,6 +280,16 @@ impl BlockValue {
             .map_ok(|row| Self::from_row_start(&row))
             .try_collect()
             .await
+            .map_err(Into::into)
+    }
+
+    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Self> {
+        let selection = Self::select();
+        let query = format!("select {selection} from blocks where id = $1 ");
+        context.db
+            .query_one(&query, &[&key])
+            .await
+            .map(|row| Self::from_row_start(&row))
             .map_err(Into::into)
     }
 }

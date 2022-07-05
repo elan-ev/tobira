@@ -4,11 +4,17 @@
 
 create view search_realms as
     select
-        id,
-        name,
-        full_path,
-        array(select name from ancestors_of_realm(id) offset 1) as ancestor_names
-    from realms;
+        realms.id,
+        coalesce(realms.name, series.title, events.title) as name,
+        realms.full_path,
+        array(select name from ancestors_of_realm(realms.id) offset 1) as ancestor_names
+    from realms
+    left join blocks on blocks.id = realms.name_from_block
+    left join events on blocks.video_id = events.id
+    left join series on blocks.series_id = series.id
+    -- The name is the only searchable attribute of realms, so it does not make
+    -- sense to include a realm without name in the search.
+    where coalesce(realms.name, series.title, events.title) is not null;
 
 
 create view search_events as

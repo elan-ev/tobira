@@ -154,11 +154,11 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                 }}
             >
                 <InputWithInfo info={t("manage.add-child.page-name-info")}>
-                    <label htmlFor="name-field">{t("manage.realm.general.rename-label")}</label>
+                    <label htmlFor="name-field">{t("manage.realm.general.page-name")}</label>
                     <Input
                         id="name-field"
                         css={{ width: 350, maxWidth: "100%" }}
-                        placeholder={t("manage.realm.general.rename-label")}
+                        placeholder={t("manage.realm.general.page-name")}
                         error={!!errors.name}
                         autoFocus
                         {...register("name", validations.name)}

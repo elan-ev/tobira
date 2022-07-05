@@ -36,6 +36,11 @@ export const EditButtons: React.FC<Props> = ({
             blocks {
                 ... RemoveButtonData
             }
+            nameSource {
+                ... on RealmNameFromBlock {
+                    block { id }
+                }
+            }
         }
     `, realmRef);
     const { blocks } = realm;
@@ -52,7 +57,11 @@ export const EditButtons: React.FC<Props> = ({
         >
             <FiEdit />
         </Button>
-        <RemoveButton block={blocks[index]} onConfirm={onCompleted} />
+        <RemoveButton
+            block={blocks[index]}
+            onConfirm={onCompleted}
+            nameSourceBlock={realm.nameSource?.block?.id}
+        />
     </ButtonGroup>;
 };
 

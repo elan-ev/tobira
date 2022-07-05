@@ -7,7 +7,16 @@ use super::{
     id::Id,
     model::{
         series::{Series, SeriesValue},
-        realm::{ChildIndex, NewRealm, Realm, RealmOrder, RemovedRealm, UpdateRealm, RealmSpecifier},
+        realm::{
+            ChildIndex,
+            NewRealm,
+            Realm,
+            RealmOrder,
+            RemovedRealm,
+            UpdatedRealmName,
+            UpdateRealm,
+            RealmSpecifier,
+        },
         block::{
             BlockValue,
             NewTitleBlock,
@@ -51,6 +60,11 @@ impl Mutation {
         context: &Context,
     ) -> ApiResult<Realm> {
         Realm::set_child_order(parent, child_order, child_indices, context).await
+    }
+
+    /// Changes the name of a realm.
+    async fn rename_realm(id: Id, name: UpdatedRealmName, context: &Context) -> ApiResult<Realm> {
+        Realm::rename(id, name, context).await
     }
 
     /// Updates a realm's data.

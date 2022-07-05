@@ -138,6 +138,33 @@ impl Realm {
             }))
     }
 
+    pub async fn rename(id: Id, name: UpdatedRealmName, context: &Context) -> ApiResult<Realm> {
+        let db = context.db(context.require_moderator()?);
+        let key = id_to_key(id, "`id`")?;
+        if name.plain.is_some() == name.block.is_some() {
+            return Err(invalid_input!("exactly one of name.block and name.plain has to be set"));
+        }
+        let block = name.block
+            .map(|id| id.key_for(Id::BLOCK_KIND)
+                .ok_or_else(|| invalid_input!("name.block does not refer to a block")))
+            .transpose()?;
+
+        let stmt = "
+            update realms set \
+                name = $2, \
+                name_from_block = $3 \
+                where id = $1
+            ";
+        let affected_rows = db.execute(stmt, &[&key, &name.plain, &block]).await?;
+
+        if affected_rows != 1 {
+            return Err(invalid_input!("`id` does not refer to an existing realm"));
+        }
+
+        db.queue_for_reindex(search::IndexItemKind::Realm, key).await?;
+        Self::load_by_key(key, context).await.map(Option::unwrap)
+    }
+
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
         // TODO: validate input
 
@@ -150,10 +177,9 @@ impl Realm {
             .execute(
                 "update realms set \
                     parent = coalesce($2, parent), \
-                    name = coalesce($3, name), \
                     path_segment = coalesce($4, path_segment) \
                     where id = $1",
-                &[&key, &parent_key, &set.name, &set.path_segment],
+                &[&key, &parent_key, &set.path_segment],
             )
             .await?;
 
@@ -203,8 +229,14 @@ pub(crate) struct ChildIndex {
 #[derive(juniper::GraphQLInputObject)]
 pub(crate) struct UpdateRealm {
     parent: Option<Id>,
-    name: Option<String>,
     path_segment: Option<String>,
+}
+
+/// Exactly one of `plain` or `block` has to be non-null.
+#[derive(juniper::GraphQLInputObject)]
+pub(crate) struct UpdatedRealmName {
+    plain: Option<String>,
+    block: Option<Id>,
 }
 
 #[derive(juniper::GraphQLInputObject)]

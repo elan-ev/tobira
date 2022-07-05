@@ -11,7 +11,7 @@ use crate::{
         Context, Cursor, Id, Node, NodeValue,
         common::NotAllowed,
         err::{self, ApiResult, invalid_input},
-        model::{series::{SeriesValue, ReadySeries}, realm::Realm},
+        model::{series::{SeriesValue, ReadySeries}, realm::{Realm, REALM_JOINS}},
     },
     db::{types::{EventTrack, Key, ExtraMetadata}, util::{impl_from_db, select}},
     prelude::*,
@@ -156,6 +156,7 @@ impl AuthorizedEvent {
         let query = format!("\
             select {selection} \
             from realms \
+            {REALM_JOINS} \
             where exists ( \
                 select 1 as contains \
                 from blocks \

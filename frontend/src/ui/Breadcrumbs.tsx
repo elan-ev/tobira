@@ -8,7 +8,7 @@ import { FOCUS_STYLE_INSET } from ".";
 
 type Props = {
     path: {
-        label: string;
+        label: ReactNode;
         link: string;
     }[];
     tail: JSX.Element | string;

@@ -103,6 +103,8 @@ login-page:
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
 
 video:
+  video: Video
+  deleted: Deleted video
   created: Created
   updated: Last updated
   part-of-series: Part of series
@@ -115,11 +117,14 @@ video:
   source: Source
 
 series:
+  series: Series
+  deleted: Deleted series
   deleted-series-block: The series referenced here was deleted.
   no-events: This series does not contain any events, or you might not be authorized to see them.
   videos:
     heading: Videos
   not-ready:
+    name: Pending series
     title: Series not synchronized, yet
     text: >
       The data of the requested series has not been fully transferred yet. This should
@@ -129,6 +134,7 @@ realm:
   page-settings: Page settings
   edit-page-content: Edit page content
   add-sub-page: Add sub-page
+  missing-name: Missing name
 
 search:
   input-label: Search
@@ -237,7 +243,13 @@ manage:
     no-path: Missing path! You opened an invalid link.
 
     general:
-      rename-label: Page name
+      page-name: Page name
+      name-directly: Name directly
+      name-directly-description: Set a fixed name for this page.
+      name-from-block: Derive name from video or series
+      name-from-block-description: >
+        Link a video/series-element from this page: the page name will always be the title of the linked element.
+      no-blocks: There are no linkable video/series on this page.
       rename-failed: Failed to change the name.
       no-rename-root: >
         The homepage cannot be renamed. The heading is controlled by the global
@@ -289,6 +301,12 @@ manage:
       move-up: Move block up
       edit: Edit block
       remove: Remove block
+
+      cannot-remove-block: Cannot remove block
+      cannot-remove-name-source-block: >
+        Removal not possible as the current page derives its name from this
+        block. In order to remove this block, change the name of this page in
+        the page settings.
 
       title:
         content: You can put your title here.
