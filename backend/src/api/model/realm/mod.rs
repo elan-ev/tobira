@@ -88,7 +88,7 @@ impl Realm {
         context.db
             .query_opt(&query, &[&key])
             .await?
-            .map(|row| Self::from_row(row, mapping))
+            .map(|row| Self::from_row(&row, mapping))
             .pipe(Ok)
     }
 
@@ -113,7 +113,7 @@ impl Realm {
         context.db
             .query_opt(&query, &[&path])
             .await?
-            .map(|row| Self::from_row(row, mapping))
+            .map(|row| Self::from_row(&row, mapping))
             .pipe(Ok)
     }
 }
@@ -180,7 +180,7 @@ impl Realm {
                 where id <> 0",
         );
         context.db
-            .query_mapped(&query, &[&self.key], |row| Self::from_row(row, mapping))
+            .query_mapped(&query, &[&self.key], |row| Self::from_row(&row, mapping))
             .await?
             .pipe(Ok)
     }
@@ -201,7 +201,7 @@ impl Realm {
             .query_mapped(
                 &query,
                 &[&self.key],
-                |row| Self::from_row(row, mapping),
+                |row| Self::from_row(&row, mapping),
             )
             .await?
             .pipe(Ok)

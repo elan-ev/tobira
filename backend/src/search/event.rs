@@ -88,7 +88,7 @@ impl Event {
         let (selection, mapping) = Self::select();
         let query = format!("select {selection} from search_events where id = any($1)");
         let rows = db.query_raw(&query, dbargs![&ids]);
-        collect_rows_mapped(rows, |row| Self::from_row(row, mapping))
+        collect_rows_mapped(rows, |row| Self::from_row(&row, mapping))
             .await
             .context("failed to load events from DB")
     }
@@ -97,7 +97,7 @@ impl Event {
         let (selection, mapping) = Self::select();
         let query = format!("select {selection} from search_events");
         let rows = db.query_raw(&query, dbargs![]);
-        collect_rows_mapped(rows, |row| Self::from_row(row, mapping))
+        collect_rows_mapped(rows, |row| Self::from_row(&row, mapping))
             .await
             .context("failed to load events from DB")
     }

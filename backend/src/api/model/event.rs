@@ -167,7 +167,7 @@ impl AuthorizedEvent {
                 ) \
             ) \
         ");
-        context.db.query_mapped(&query, dbargs![&self.key], |row| Realm::from_row(row, mapping))
+        context.db.query_mapped(&query, dbargs![&self.key], |row| Realm::from_row(&row, mapping))
             .await?
             .pipe(Ok)
     }
@@ -204,7 +204,7 @@ impl AuthorizedEvent {
             .query_mapped(
                 &query,
                 dbargs![&context.auth.roles_vec()],
-                |row| Self::from_row(row, mapping),
+                |row| Self::from_row(&row, mapping),
             )
             .await?
             .pipe(Ok)
@@ -222,7 +222,7 @@ impl AuthorizedEvent {
             .query_opt(&query, &[&key])
             .await?
             .map(|row| {
-                let event = Self::from_row(row, mapping);
+                let event = Self::from_row(&row, mapping);
                 if context.auth.is_allowed_by_acl(&event.read_roles) {
                     Event::Event(event)
                 } else {
@@ -247,7 +247,7 @@ impl AuthorizedEvent {
             .query_mapped(
                 &query,
                 dbargs![&context.auth.roles_vec(), &series_key],
-                |row| Self::from_row(row, mapping),
+                |row| Self::from_row(&row, mapping),
             )
             .await?
             .pipe(Ok)
@@ -367,7 +367,7 @@ impl AuthorizedEvent {
             }
 
             // Retrieve actual event data
-            Self::from_row(row, mapping.event)
+            Self::from_row(&row, mapping.event)
         }).await?;
 
         // If total count is `None`, there are no events. We really do want to

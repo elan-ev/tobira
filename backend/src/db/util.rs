@@ -78,7 +78,7 @@ where
 /// let query = format!("select {selection} from foos");
 /// db.query(&query, dbargs![])
 ///     .await?
-///     .map(|row| Foo::from_row(row, mapping))
+///     .map(|row| Foo::from_row(&row, mapping))
 /// ```
 ///
 /// One limitation of this trait is (currently) that it does not allow arbitrary
@@ -97,22 +97,9 @@ pub(crate) trait FromDb {
     /// be retrieved by index from the row.
     type RowMapping: RowMapping;
 
-    /// A type that contains `Self::RowMapping` and an actual row. The type
-    /// created by `impl_from_db` has a method for each column.
-    type RowView: RowView<Self::RowMapping>;
-
-    /// The main entry point that defines how an instance of this type is
-    /// created from a row of data, given the column -> index mapping.
-    fn from_row_view(row: Self::RowView) -> Self;
-
     /// Provided method that just combines `raw_row` and `mapping` into
     /// `Self::RowView` and calls `from_row_view`.
-    fn from_row(raw_row: Row, mapping: Self::RowMapping) -> Self
-    where
-        Self: Sized,
-    {
-        Self::from_row_view(Self::RowView::from_mapping(mapping, raw_row))
-    }
+    fn from_row(raw_row: &Row, mapping: Self::RowMapping) -> Self;
 
     /// Returns `sql_selection()` plus the appropriate trivial mapping.
     fn select() -> (SqlSelection<'static>, Self::RowMapping) {
@@ -162,17 +149,6 @@ pub(crate) trait FromDb {
 /// column.
 pub(crate) trait RowMapping {
     fn from_offset(offset: u8) -> Self;
-}
-
-/// A `RowMapping` paired with an actual row. Again, this trait doesn't capture
-/// the main usefulness of these types. These generated types usually (like in
-/// the case of `impl_from_db`) have a `<T: FromSql>() -> T` method for each
-/// column, allowing the `from_row_view` method to be defined in very robust
-/// manner.
-///
-/// TODO: make this work with merely a reference to `row`.
-pub(crate) trait RowView<M: RowMapping> {
-    fn from_mapping(mapping: M, row: Row) -> Self;
 }
 
 /// Helper type that is used in `RowMapping` types. Basically just a u8, but
@@ -227,7 +203,7 @@ impl fmt::Display for SqlSelection<'_> {
 ///     TypeName,
 ///     "default_table",
 ///     { foo, bar, baz: "renamed" },  // The columns to select
-///     |row| { /* function body of `FromDb::from_row_view` */ }
+///     |row| { /* ... */ }
 /// );
 /// ```
 ///
@@ -236,8 +212,13 @@ impl fmt::Display for SqlSelection<'_> {
 /// rename a column, e.g. in case of Rust keywords. The former syntax `foo` is
 /// equivalent to `foo: "foo"`.
 ///
-/// The `RowMapping` and `RowView` types created by this macro look like this
-/// (with the invocation above):
+/// The last argument (the closure looking thing) is a function that needs to
+/// return `TypeName`. The type of the `row` argument is an anonymous generated
+/// type that has a method for each column with the following signature:
+/// `fn<T: FromSql<'_>>(&self) -> T`.
+///
+/// The generated types created by this macro look like this(with the invocation
+/// above):
 ///
 /// ```ignore
 /// struct TypeNameRowMapping {
@@ -277,24 +258,15 @@ macro_rules! impl_from_db {
                 }
             }
 
-            pub(crate) struct [<$ty RowView>] {
+            pub(crate) struct [<$ty RowView>]<'a> {
                 mapping: [<$ty RowMapping>],
-                row: tokio_postgres::row::Row,
+                raw_row: &'a tokio_postgres::row::Row,
             }
 
-            impl crate::db::util::RowView<[<$ty RowMapping>]> for [<$ty RowView>] {
-                fn from_mapping(
-                    mapping: [<$ty RowMapping>],
-                    row: tokio_postgres::row::Row,
-                ) -> Self {
-                    Self { mapping, row }
-                }
-            }
-
-            impl [<$ty RowView>] {
+            impl<'a> [<$ty RowView>]<'a> {
                 $(
-                    fn $field<'a, T: tokio_postgres::types::FromSql<'a>>(&'a self) -> T {
-                        self.mapping.$field.of(&self.row)
+                    fn $field<T: tokio_postgres::types::FromSql<'a>>(&self) -> T {
+                        self.mapping.$field.of(&self.raw_row)
                     }
                 )+
             }
@@ -305,10 +277,10 @@ macro_rules! impl_from_db {
                 ];
                 const DEFAULT_TABLE: &'static str = $default_table;
                 type RowMapping = [<$ty RowMapping>];
-                type RowView = [<$ty RowView>];
 
-                fn from_row_view($row: Self::RowView) -> Self {
-                    $($body)*
+                fn from_row(raw_row: &tokio_postgres::row::Row, mapping: Self::RowMapping) -> Self {
+                    let $row = [<$ty RowView>] { raw_row, mapping};
+                    { $($body)* }
                 }
             }
         }

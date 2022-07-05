@@ -268,7 +268,7 @@ impl BlockValue {
             .query_raw(&query, &[realm_key])
             .await?
             .err_into::<ApiError>()
-            .map_ok(|row| Self::from_row(row, mapping))
+            .map_ok(|row| Self::from_row(&row, mapping))
             .try_collect()
             .await
             .map_err(Into::into)

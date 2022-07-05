@@ -233,7 +233,7 @@ impl BlockValue {
             .ok_or_else(|| invalid_input!(
                 "`indexA`, `indexB` or `realm` wasn't a valid block index or realm"
             ))?
-            .map(|row| Realm::from_row(row, mapping))?;
+            .map(|row| Realm::from_row(&row, mapping))?;
 
         Ok(realm)
     }
@@ -254,7 +254,7 @@ impl BlockValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&Self::key_for(id)?, &set.content])
             .await?
-            .pipe(|row| Ok(Self::from_row(row, mapping)))
+            .pipe(|row| Ok(Self::from_row(&row, mapping)))
     }
 
     pub(crate) async fn update_text(
@@ -273,7 +273,7 @@ impl BlockValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&Self::key_for(id)?, &set.content])
             .await?
-            .pipe(|row| Ok(Self::from_row(row, mapping)))
+            .pipe(|row| Ok(Self::from_row(&row, mapping)))
     }
 
     pub(crate) async fn update_series(
@@ -299,7 +299,7 @@ impl BlockValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&Self::key_for(id)?, &series_id, &set.order, &set.show_title])
             .await?
-            .pipe(|row| Ok(Self::from_row(row, mapping)))
+            .pipe(|row| Ok(Self::from_row(&row, mapping)))
     }
 
     pub(crate) async fn update_video(
@@ -324,7 +324,7 @@ impl BlockValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&Self::key_for(id)?, &video_id, &set.show_title])
             .await?
-            .pipe(|row| Ok(Self::from_row(row, mapping)))
+            .pipe(|row| Ok(Self::from_row(&row, mapping)))
     }
 
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
@@ -345,7 +345,7 @@ impl BlockValue {
             .await?;
 
         let index: i16 = mapping.index.of(&result);
-        let realm = Realm::from_row(result, mapping.realm);
+        let realm = Realm::from_row(&result, mapping.realm);
 
         // Fix indices after removed block
         db

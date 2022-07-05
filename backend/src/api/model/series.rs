@@ -51,7 +51,7 @@ pub(crate) trait Series {
             ) \
         ");
         let id = self.id().key_for(Id::SERIES_KIND).unwrap();
-        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row(row, mapping))
+        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row(&row, mapping))
             .await?
             .pipe(Ok)
     }
@@ -164,7 +164,7 @@ impl SeriesValue {
         let (selection, mapping) = Self::select();
         let query = format!("select {selection} from series order by title");
         context.db(context.require_moderator()?)
-            .query_mapped(&query, dbargs![], |row| Self::from_row(row, mapping))
+            .query_mapped(&query, dbargs![], |row| Self::from_row(&row, mapping))
             .await?
             .pipe(Ok)
     }
@@ -184,7 +184,7 @@ impl SeriesValue {
         context.db
             .query_opt(&query, &[&key])
             .await?
-            .map(|row| Self::from_row(row, mapping))
+            .map(|row| Self::from_row(&row, mapping))
             .pipe(Ok)
     }
 
@@ -194,7 +194,7 @@ impl SeriesValue {
         context.db
             .query_opt(&query, &[&id])
             .await?
-            .map(|row| Self::from_row(row, mapping))
+            .map(|row| Self::from_row(&row, mapping))
             .pipe(Ok)
     }
 
@@ -213,7 +213,7 @@ impl SeriesValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&id])
             .await?
-            .pipe(|row| Self::from_row(row, mapping))
+            .pipe(|row| Self::from_row(&row, mapping))
             .pipe(Ok)
     }
 }
