@@ -42,13 +42,14 @@ pub(crate) struct AuthorizedEvent {
 
 impl_from_db!(
     AuthorizedEvent,
-    "events",
-    {
-        id, series, opencast_id, is_live,
-        title, description, duration, creators, thumbnail, metadata,
-        created, updated,
-        tracks,
-        read_roles, write_roles,
+    select: {
+        events.{
+            id, series, opencast_id, is_live,
+            title, description, duration, creators, thumbnail, metadata,
+            created, updated,
+            tracks,
+            read_roles, write_roles,
+        },
     },
     |row| {
         Self {
@@ -151,7 +152,7 @@ impl AuthorizedEvent {
 
     /// Returns a list of realms where this event is referenced (via some kind of block).
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
-        let (selection, mapping) = Realm::select();
+        let selection = Realm::select();
         let query = format!("\
             select {selection} \
             from realms \
@@ -167,7 +168,7 @@ impl AuthorizedEvent {
                 ) \
             ) \
         ");
-        context.db.query_mapped(&query, dbargs![&self.key], |row| Realm::from_row(&row, mapping))
+        context.db.query_mapped(&query, dbargs![&self.key], |row| Realm::from_row_start(&row))
             .await?
             .pipe(Ok)
     }
@@ -194,7 +195,7 @@ impl Event {
 
 impl AuthorizedEvent {
     pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!(
             "select {selection} from events \
                 where (read_roles || 'ROLE_ADMIN'::text) && $1 \
@@ -204,7 +205,7 @@ impl AuthorizedEvent {
             .query_mapped(
                 &query,
                 dbargs![&context.auth.roles_vec()],
-                |row| Self::from_row(&row, mapping),
+                |row| Self::from_row_start(&row),
             )
             .await?
             .pipe(Ok)
@@ -216,13 +217,13 @@ impl AuthorizedEvent {
             Some(key) => key,
         };
 
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!("select {selection} from events where id = $1");
         context.db
             .query_opt(&query, &[&key])
             .await?
             .map(|row| {
-                let event = Self::from_row(&row, mapping);
+                let event = Self::from_row_start(&row);
                 if context.auth.is_allowed_by_acl(&event.read_roles) {
                     Event::Event(event)
                 } else {
@@ -237,7 +238,7 @@ impl AuthorizedEvent {
         order: EventSortOrder,
         context: &Context,
     ) -> ApiResult<Vec<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!(
             "select {selection} from events \
                 where series = $2 and (read_roles || 'ROLE_ADMIN'::text) && $1 {}",
@@ -247,7 +248,7 @@ impl AuthorizedEvent {
             .query_mapped(
                 &query,
                 dbargs![&context.auth.roles_vec(), &series_key],
-                |row| Self::from_row(&row, mapping),
+                |row| Self::from_row_start(&row),
             )
             .await?
             .pipe(Ok)
@@ -326,7 +327,12 @@ impl AuthorizedEvent {
         } else {
             "where write_roles && $1 and read_roles && $1"
         };
-        let (selection, mapping) = select!(event: AuthorizedEvent on none, row_num, total_count);
+        let (selection, mapping) = select!(
+            event: AuthorizedEvent from
+                AuthorizedEvent::select().with_omitted_table_prefix("events"),
+            row_num,
+            total_count,
+        );
         let query = format!(
             "select {selection} \
                 from (\
@@ -339,7 +345,7 @@ impl AuthorizedEvent {
                 ) as tmp \
                 {filter} \
                 limit {limit}",
-            event_cols = Self::sql_selection_without_table(),
+            event_cols = Self::select().with_omitted_table_prefix("events"),
             sort_col = order.column.to_sql(),
             sort_order = sql_sort_order.to_sql(),
             limit = limit,

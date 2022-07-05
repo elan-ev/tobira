@@ -208,8 +208,11 @@ impl VideoBlock {
 
 impl_from_db!(
     BlockValue,
-    "blocks",
-    { id, ty: "type", index, text_content, series_id, videolist_order, video_id, show_title },
+    select: {
+        blocks.{
+            id, ty: "type", index, text_content, series_id, videolist_order, video_id, show_title,
+        },
+    },
     |row| {
         let ty: BlockType = row.ty();
         let shared = SharedData {
@@ -257,7 +260,7 @@ fn unwrap_type_dep<T>(value: Option<T>, type_name: &str, field_name: &str) -> T 
 impl BlockValue {
     /// Fetches all blocks for the given realm from the database.
     pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!(
             "select {selection} \
                 from blocks \
@@ -268,7 +271,7 @@ impl BlockValue {
             .query_raw(&query, &[realm_key])
             .await?
             .err_into::<ApiError>()
-            .map_ok(|row| Self::from_row(&row, mapping))
+            .map_ok(|row| Self::from_row_start(&row))
             .try_collect()
             .await
             .map_err(Into::into)

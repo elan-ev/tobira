@@ -2,7 +2,7 @@ use futures::StreamExt;
 use juniper::{GraphQLInputObject, GraphQLObject};
 
 use crate::{
-    api::{Context, Id, err::{ApiResult, invalid_input}},
+    api::{Context, Id, err::{ApiResult, invalid_input}, model::realm::REALM_JOINS},
     db::{types::Key, util::select},
     prelude::*,
 };
@@ -185,7 +185,7 @@ impl BlockValue {
         //
         // `updates.new_index < count` and `updates.new_index >= 0` are only to make
         // sure the new index is in bounds.
-        let (selection, mapping) = Realm::select();
+        let selection = Realm::select();
         let query = format!(
             "update blocks \
                 set index = updates.new_index \
@@ -233,7 +233,7 @@ impl BlockValue {
             .ok_or_else(|| invalid_input!(
                 "`indexA`, `indexB` or `realm` wasn't a valid block index or realm"
             ))?
-            .map(|row| Realm::from_row(&row, mapping))?;
+            .map(|row| Realm::from_row_start(&row))?;
 
         Ok(realm)
     }
@@ -243,7 +243,7 @@ impl BlockValue {
         set: UpdateTitleBlock,
         context: &Context,
     ) -> ApiResult<Self> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!(
             "update blocks set \
                 text_content = coalesce($2, text_content) \
@@ -254,7 +254,7 @@ impl BlockValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&Self::key_for(id)?, &set.content])
             .await?
-            .pipe(|row| Ok(Self::from_row(&row, mapping)))
+            .pipe(|row| Ok(Self::from_row_start(&row)))
     }
 
     pub(crate) async fn update_text(
@@ -262,7 +262,7 @@ impl BlockValue {
         set: UpdateTextBlock,
         context: &Context,
     ) -> ApiResult<Self> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!(
             "update blocks set \
                 text_content = coalesce($2, text_content) \
@@ -273,7 +273,7 @@ impl BlockValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&Self::key_for(id)?, &set.content])
             .await?
-            .pipe(|row| Ok(Self::from_row(&row, mapping)))
+            .pipe(|row| Ok(Self::from_row_start(&row)))
     }
 
     pub(crate) async fn update_series(
@@ -286,7 +286,7 @@ impl BlockValue {
                 .ok_or_else(|| invalid_input!("`set.series` does not refer to a series"))
         ).transpose()?;
 
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!(
             "update blocks set \
                 series_id = coalesce($2, series_id), \
@@ -299,7 +299,7 @@ impl BlockValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&Self::key_for(id)?, &series_id, &set.order, &set.show_title])
             .await?
-            .pipe(|row| Ok(Self::from_row(&row, mapping)))
+            .pipe(|row| Ok(Self::from_row_start(&row)))
     }
 
     pub(crate) async fn update_video(
@@ -312,7 +312,7 @@ impl BlockValue {
                 .ok_or_else(|| invalid_input!("`set.event` does not refer to a event"))
         ).transpose()?;
 
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!(
             "update blocks set \
                 video_id = coalesce($2, video_id), \
@@ -324,7 +324,7 @@ impl BlockValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&Self::key_for(id)?, &video_id, &set.show_title])
             .await?
-            .pipe(|row| Ok(Self::from_row(&row, mapping)))
+            .pipe(|row| Ok(Self::from_row_start(&row)))
     }
 
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
@@ -332,13 +332,16 @@ impl BlockValue {
         let block_id = id.key_for(Id::BLOCK_KIND)
             .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?;
 
-        let (selection, mapping) = select!(realm: Realm, index: "blocks.index");
+        let (selection, mapping) = select!(realm: Realm, index: "(select index from deleted)");
         let query = format!(
-            "delete from blocks \
-                using realms \
-                where blocks.realm_id = realms.id \
-                and blocks.id = $1 \
-                returning {selection}, blocks.index",
+            "with deleted as (\
+                delete from blocks \
+                where id = $1 \
+                returning realm_id, index\
+            ) \
+            select {selection} \
+            from realms {REALM_JOINS} \
+            where realms.id = (select realm_id from deleted)"
         );
         let result = db
             .query_one(&query, &[&block_id])

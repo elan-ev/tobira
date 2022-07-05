@@ -57,10 +57,11 @@ impl IndexItem for Event {
 
 impl_from_db!(
     Event,
-    "search_events",
-    {
-        id, series, series_title, title, description, creators, thumbnail,
-        duration, is_live, created, read_roles, write_roles, host_realms,
+    select: {
+        search_events.{
+            id, series, series_title, title, description, creators, thumbnail,
+            duration, is_live, created, read_roles, write_roles, host_realms,
+        },
     },
     |row| {
         let host_realms = row.host_realms::<Vec<Realm>>();
@@ -85,19 +86,19 @@ impl_from_db!(
 
 impl Event {
     pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!("select {selection} from search_events where id = any($1)");
         let rows = db.query_raw(&query, dbargs![&ids]);
-        collect_rows_mapped(rows, |row| Self::from_row(&row, mapping))
+        collect_rows_mapped(rows, |row| Self::from_row_start(&row))
             .await
             .context("failed to load events from DB")
     }
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!("select {selection} from search_events");
         let rows = db.query_raw(&query, dbargs![]);
-        collect_rows_mapped(rows, |row| Self::from_row(&row, mapping))
+        collect_rows_mapped(rows, |row| Self::from_row_start(&row))
             .await
             .context("failed to load events from DB")
     }

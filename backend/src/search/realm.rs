@@ -35,8 +35,9 @@ impl IndexItem for Realm {
 
 impl_from_db!(
     Realm,
-    "search_realms",
-    { id, name, full_path, ancestor_names },
+    select: {
+        search_realms.{ id, name, full_path, ancestor_names },
+    },
     |row| {
         Self {
             id: row.id(),
@@ -49,17 +50,17 @@ impl_from_db!(
 
 impl Realm {
     pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!("select {selection} from search_realms where id = any($1)");
         let rows = db.query_raw(&query, dbargs![&ids]);
-        collect_rows_mapped(rows, |row| Self::from_row(&row, mapping)).await.map_err(Into::into)
+        collect_rows_mapped(rows, |row| Self::from_row_start(&row)).await.map_err(Into::into)
     }
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!("select {selection} from search_realms");
         let rows = db.query_raw(&query, dbargs![]);
-        collect_rows_mapped(rows, |row| Self::from_row(&row, mapping)).await.map_err(Into::into)
+        collect_rows_mapped(rows, |row| Self::from_row_start(&row)).await.map_err(Into::into)
     }
 }
 

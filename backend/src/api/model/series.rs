@@ -38,7 +38,7 @@ pub(crate) trait Series {
 
     /// Returns a list of realms where this series is referenced (via some kind of block).
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
-        let (selection, mapping) = Realm::select();
+        let selection = Realm::select();
         let query = format!("\
             select {selection} \
             from realms \
@@ -51,7 +51,7 @@ pub(crate) trait Series {
             ) \
         ");
         let id = self.id().key_for(Id::SERIES_KIND).unwrap();
-        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row(&row, mapping))
+        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row_start(&row))
             .await?
             .pipe(Ok)
     }
@@ -143,28 +143,34 @@ impl<S: Series> Node for S {
     }
 }
 
-impl_from_db!(SeriesValue, "series", { id, opencast_id, state, title, description }, |row| {
-    let shared = SharedData {
-        key: row.id(),
-        opencast_id: row.opencast_id(),
-    };
+impl_from_db!(
+    SeriesValue,
+    select: {
+        series.{ id, opencast_id, state, title, description },
+    },
+    |row| {
+        let shared = SharedData {
+            key: row.id(),
+            opencast_id: row.opencast_id(),
+        };
 
-    match row.state::<State>() {
-        State::Waiting => WaitingSeries { shared }.into(),
-        State::Ready => ReadySeries {
-            shared,
-            title: row.title(),
-            description: row.description(),
-        }.into(),
-    }
-});
+        match row.state::<State>() {
+            State::Waiting => WaitingSeries { shared }.into(),
+            State::Ready => ReadySeries {
+                shared,
+                title: row.title(),
+                description: row.description(),
+            }.into(),
+        }
+    },
+);
 
 impl SeriesValue {
     pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!("select {selection} from series order by title");
         context.db(context.require_moderator()?)
-            .query_mapped(&query, dbargs![], |row| Self::from_row(&row, mapping))
+            .query_mapped(&query, dbargs![], |row| Self::from_row_start(&row))
             .await?
             .pipe(Ok)
     }
@@ -178,28 +184,28 @@ impl SeriesValue {
     }
 
     pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!("select {selection} from series where id = $1");
 
         context.db
             .query_opt(&query, &[&key])
             .await?
-            .map(|row| Self::from_row(&row, mapping))
+            .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 
     pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Self>> {
-        let (selection, mapping) = Self::select();
+        let selection = Self::select();
         let query = format!("select {selection} from series where opencast_id = $1");
         context.db
             .query_opt(&query, &[&id])
             .await?
-            .map(|row| Self::from_row(&row, mapping))
+            .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 
     pub(crate) async fn load_or_create_by_opencast_id(id: String, context: &Context) -> ApiResult<Self> {
-        let (selection, mapping) = Self::select_without_table();
+        let selection = Self::select().with_omitted_table_prefix("series");
         let query = format!(
             "with \
                 existing as (select {selection} from series where opencast_id = $1), \
@@ -213,7 +219,7 @@ impl SeriesValue {
         context.db(context.require_moderator()?)
             .query_one(&query, &[&id])
             .await?
-            .pipe(|row| Self::from_row(&row, mapping))
+            .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 }
