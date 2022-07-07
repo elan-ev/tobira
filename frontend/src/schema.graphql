@@ -412,7 +412,7 @@ type SearchRealm implements Node {
   id: ID!
   name: String!
   path: String!
-  ancestorNames: [String!]!
+  ancestorNames: [String]!
 }
 
 "Defines the sort order for events."

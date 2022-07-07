@@ -19,7 +19,7 @@ pub(crate) struct Realm {
     /// Includes the names of all ancestors, excluding the root and this realm
     /// itself. It starts with a direct child of the root and ends with the
     /// parent of `self`.
-    pub(crate) ancestor_names: Vec<String>,
+    pub(crate) ancestor_names: Vec<Option<String>>,
 }
 
 impl Document for Realm {

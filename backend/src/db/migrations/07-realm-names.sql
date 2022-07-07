@@ -71,3 +71,28 @@ create trigger check_name_source_block_on_block_update
         or new.type is distinct from old.type)
     execute procedure check_block_as_name_source();
 
+
+-- Useful functions ---------------------------------------------------------------------
+
+-- Returns the resolved name of the given realm. The resolved name is either
+-- `realm.name` or the title of the event/series if `realm.name_from_block` is
+-- set. NULL is returned when the event/series does not exist or does not have
+-- a title.
+--
+-- Note: you can actually use the `.accessor` syntax like so:
+--     select realms.full_path, realms.resolved_name from realms
+--
+-- Unfortunately, using this function is often slower than doing the join
+-- manually, judging from my few experiments.
+create function resolved_name(realm realms)
+    returns text
+    language 'sql'
+as $$
+    select coalesce(series.title, events.title)
+    from blocks
+    left join events on blocks.video_id = events.id
+    left join series on blocks.series_id = series.id
+    where blocks.id = realm.name_from_block
+    union
+    select realm.name where realm.name_from_block is null
+$$;

@@ -24,7 +24,7 @@ impl search::Realm {
         &self.full_path
     }
 
-    fn ancestor_names(&self) -> &[String] {
+    fn ancestor_names(&self) -> &[Option<String>] {
         &self.ancestor_names
     }
 }

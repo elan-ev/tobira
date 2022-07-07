@@ -7,7 +7,11 @@ create view search_realms as
         realms.id,
         coalesce(realms.name, series.title, events.title) as name,
         realms.full_path,
-        array(select name from ancestors_of_realm(realms.id) offset 1) as ancestor_names
+        array(
+            select ancestors.resolved_name
+            from ancestors_of_realm(realms.id) ancestors
+            offset 1
+        ) as ancestor_names
     from realms
     left join blocks on blocks.id = realms.name_from_block
     left join events on blocks.video_id = events.id
