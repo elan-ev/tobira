@@ -7,12 +7,15 @@ use crate::{
     api::{
         Context, Id,
         err::{ApiError, ApiResult},
-        model::{event::{AuthorizedEvent, Event}, series::SeriesValue},
+        model::{
+            event::{AuthorizedEvent, Event},
+            series::SeriesValue,
+            realm::{Realm, RealmNameSourceBlockValue},
+        },
     },
     db::{types::Key, util::impl_from_db},
     prelude::*,
 };
-use super::realm::RealmNameSourceBlockValue;
 
 
 mod mutations;
@@ -45,6 +48,12 @@ pub(crate) trait Block {
     fn index(&self) -> i32 {
         self.shared().index
     }
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Realm::load_by_key(self.shared().realm_key, context)
+            .await
+            // Foreign key constraints guarantee the realm exists
+            .map(Option::unwrap)
+    }
 }
 
 #[derive(Debug, Clone, Copy, FromSql)]
@@ -74,6 +83,7 @@ pub(crate) enum VideoListOrder {
 pub(crate) struct SharedData {
     pub(crate) id: Id,
     pub(crate) index: i32,
+    pub(crate) realm_key: Key,
 }
 
 #[derive(Debug)]
@@ -96,11 +106,15 @@ impl TitleBlock {
     }
 
     fn id(&self) -> Id {
-        self.shared().id
+        Block::id(self)
     }
 
     fn index(&self) -> i32 {
-        self.shared().index
+        Block::index(self)
+    }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
     }
 }
 
@@ -124,11 +138,15 @@ impl TextBlock {
     }
 
     fn id(&self) -> Id {
-        self.shared().id
+        Block::id(self)
     }
 
     fn index(&self) -> i32 {
-        self.shared().index
+        Block::index(self)
+    }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
     }
 }
 
@@ -166,11 +184,15 @@ impl SeriesBlock {
     }
 
     fn id(&self) -> Id {
-        self.shared().id
+        Block::id(self)
     }
 
     fn index(&self) -> i32 {
-        self.shared().index
+        Block::index(self)
+    }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
     }
 }
 
@@ -204,11 +226,15 @@ impl VideoBlock {
     }
 
     fn id(&self) -> Id {
-        self.shared().id
+        Block::id(self)
     }
 
     fn index(&self) -> i32 {
-        self.shared().index
+        Block::index(self)
+    }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
     }
 }
 
@@ -216,7 +242,14 @@ impl_from_db!(
     BlockValue,
     select: {
         blocks.{
-            id, ty: "type", index, text_content, series_id, videolist_order, video_id, show_title,
+            id,
+            ty: "type",
+            index,
+            text_content,
+            series_id,
+            videolist_order,
+            video_id, show_title,
+            realm_id,
         },
     },
     |row| {
@@ -224,6 +257,7 @@ impl_from_db!(
         let shared = SharedData {
             id: Id::block(row.id()),
             index: row.index::<i16>().into(),
+            realm_key: row.realm_id(),
         };
 
         match ty {
