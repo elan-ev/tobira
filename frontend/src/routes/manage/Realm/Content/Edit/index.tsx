@@ -78,3 +78,17 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
         marginRight: -8,
     }} {...props} />
 );
+
+// For use in block mutations that might have an effect on the realm name.
+graphql`
+    fragment EditBlockUpdateRealmNameData on Block {
+        realm {
+            name,
+            nameSource {
+                ... on RealmNameFromBlock {
+                    block { id }
+                }
+            }
+        }
+    }
+`;

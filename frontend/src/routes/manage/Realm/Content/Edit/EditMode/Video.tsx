@@ -46,6 +46,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         mutation VideoEditSaveMutation($id: ID!, $set: UpdateVideoBlock!) {
             updateVideoBlock(id: $id, set: $set) {
                 ... BlocksBlockData
+                ... EditBlockUpdateRealmNameData
             }
         }
     `);
