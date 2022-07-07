@@ -19,6 +19,8 @@ create table search_index_queue (
 );
 
 
+-- Triggers that automatically queue items for reindex.
+
 -- Some triggers (and surrounding infrastructure) to automatically queue
 -- events for reindexing when they become (un-)listed by a change to
 -- the block (and indirectly realm) structure. These changes lead to
@@ -58,3 +60,77 @@ after insert or delete or update of video_id, series_id
 on blocks
 for each row
 execute procedure queue_blocks_for_reindex();
+
+
+-- Triggers to queue realms.
+
+create function queue_realm_for_reindex(realm realms) returns void language sql as $$
+    insert into search_index_queue (item_id, kind)
+    values (realm.id, 'realm')
+    on conflict do nothing
+$$;
+
+create function queue_touched_realm_for_reindex()
+   returns trigger
+   language plpgsql
+as $$
+begin
+    if tg_op <> 'INSERT' then
+        perform queue_realm_for_reindex(old);
+    end if;
+    if tg_op <> 'DELETE' then
+        perform queue_realm_for_reindex(new);
+    end if;
+
+    if tg_op = 'UPDATE' and (
+        old.name is distinct from new.name or
+        old.name_from_block is distinct from new.name_from_block
+    ) then
+        insert into search_index_queue (item_id, kind)
+        select id, 'realm'
+        from realms
+        where full_path like new.full_path || '/%'
+        on conflict do nothing;
+    end if;
+    return null;
+end;
+$$;
+
+create trigger queue_touched_realm_for_reindex
+after insert or delete or update of id, parent, full_path, name, name_from_block
+on realms
+for each row
+execute procedure queue_touched_realm_for_reindex();
+
+
+create function queue_realm_on_updated_title() returns trigger language plpgsql as $$
+begin
+    insert into search_index_queue (item_id, kind)
+    select affected.id, 'realm'
+    from blocks
+    inner join realms on blocks.realm_id = realms.id
+    inner join realms affected on affected.full_path like realms.full_path || '%'
+    -- Ho ho ho, this is interesting. To deduplicate some code, we use this
+    -- function with both, events and series. And we don't even care which kind
+    -- this function is called with. We just accept both. This is fine
+    -- because: (a) a series and realm having the same ID is exceeeeedingly
+    -- rare, and (b) if this virtually impossible case actually arises, we just
+    -- unnecessarily queue some realms -> no harm done.
+    where blocks.series_id = new.id or blocks.video_id = new.id
+    on conflict do nothing;
+
+    return null;
+end;
+$$;
+
+create trigger queue_realm_on_updated_series_title
+after update of title
+on series
+for each row
+execute procedure queue_realm_on_updated_title();
+
+create trigger queue_realm_on_updated_event_title
+after update of title
+on events
+for each row
+execute procedure queue_realm_on_updated_title();
