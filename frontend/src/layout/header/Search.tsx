@@ -81,7 +81,9 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     clearTimeout(lastTimeout.current);
                 }
                 lastTimeout.current = setTimeout(() => {
-                    router.goto(`/~search?q=${encodeURIComponent(e.target.value)}`);
+                    const newUrl = `/~search?q=${encodeURIComponent(e.target.value)}`;
+                    const replace = document.location.pathname === "/~search";
+                    router.goto(newUrl, replace);
                 }, 30);
             }}
             css={{
