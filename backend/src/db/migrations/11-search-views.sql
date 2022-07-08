@@ -15,10 +15,7 @@ create view search_realms as
     from realms
     left join blocks on blocks.id = realms.name_from_block
     left join events on blocks.video_id = events.id
-    left join series on blocks.series_id = series.id
-    -- The name is the only searchable attribute of realms, so it does not make
-    -- sense to include a realm without name in the search.
-    where coalesce(realms.name, series.title, events.title) is not null;
+    left join series on blocks.series_id = series.id;
 
 
 create view search_events as

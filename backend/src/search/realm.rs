@@ -13,7 +13,7 @@ use super::{SearchId, IndexItem, IndexItemKind, util};
 #[postgres(name = "search_realms")]
 pub(crate) struct Realm {
     pub(crate) id: SearchId,
-    pub(crate) name: String,
+    pub(crate) name: Option<String>,
     pub(crate) full_path: String,
 
     /// Includes the names of all ancestors, excluding the root and this realm
@@ -51,14 +51,16 @@ impl_from_db!(
 impl Realm {
     pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
         let selection = Self::select();
-        let query = format!("select {selection} from search_realms where id = any($1)");
+        let query = format!("select {selection} \
+            from search_realms \
+            where id = any($1) and name is not null");
         let rows = db.query_raw(&query, dbargs![&ids]);
         collect_rows_mapped(rows, |row| Self::from_row_start(&row)).await.map_err(Into::into)
     }
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
         let selection = Self::select();
-        let query = format!("select {selection} from search_realms");
+        let query = format!("select {selection} from search_realms where name is not null");
         let rows = db.query_raw(&query, dbargs![]);
         collect_rows_mapped(rows, |row| Self::from_row_start(&row)).await.map_err(Into::into)
     }

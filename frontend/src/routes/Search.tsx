@@ -191,7 +191,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
 
 type SearchRealmProps = {
     id: string;
-    name: string;
+    name: string | null;
     ancestorNames: readonly (string | null)[];
     fullPath: string;
 };
@@ -208,7 +208,7 @@ const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, full
                     <BreadcrumbSeparator />
                 </li>)}
             </BreadcrumbsContainer>
-            <h3>{name}</h3>
+            <h3>{name ?? <MissingRealmName />}</h3>
         </div>
     </Item>
 );

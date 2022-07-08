@@ -127,7 +127,8 @@ pub(crate) async fn perform(
             "name" => 10.0,
             _ => 0.0,
         }
-    }, |realm| realm.name.to_lowercase() == user_query.to_lowercase());
+    }, |realm| realm.name.as_ref()
+        .map_or(false, |name| name.to_lowercase() == user_query.to_lowercase()));
 
 
     // Merge and sort the results. We could simply sort by our own relevancy,
