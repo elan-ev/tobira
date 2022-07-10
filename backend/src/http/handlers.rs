@@ -278,6 +278,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             script-src 'self'; \
             style-src 'self' 'unsafe-inline'; \
             connect-src *; \
+            worker-src blob: 'self'; \
             child-src 'none'; \
             frame-src 'none'; \
             manifest-src 'none'; \
