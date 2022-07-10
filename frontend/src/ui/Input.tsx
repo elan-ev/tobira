@@ -59,7 +59,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         <select
             ref={ref}
             css={{
-                padding: "8px 10px",
+                padding: "4px 10px",
                 ...style(error),
             }}
             {...rest}

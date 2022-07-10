@@ -236,7 +236,7 @@ pub(super) trait CommonHeadersExt {
 }
 
 impl CommonHeadersExt for hyper::http::response::Builder {
-    fn with_content_security_policies(self, config: &Config, _nonce: &str) -> Self {
+    fn with_content_security_policies(self, _config: &Config, _nonce: &str) -> Self {
         // Some comments about all relaxations:
         //
         // - Unfortunately, there is a problem with Firefox, Plyr and CSP.
@@ -248,7 +248,8 @@ impl CommonHeadersExt for hyper::http::response::Builder {
         //
         // - `img` and `media` are loaded from Opencast. We know one URL host,
         //   but it's not guaranteed that the images are on that configured
-        //   host. So we kind of have to allow any source.
+        //   host. So we kind of have to allow any source. For live streams via
+        //   hls.js, we need to allow `blob:` sources too.
         //
         // - `font-src` is similar: some might setup Tobira to load fonts from
         //   Google fonts or elsewhere.
@@ -261,19 +262,22 @@ impl CommonHeadersExt for hyper::http::response::Builder {
         //   remove 'unsafe-inline' once this is fixed:
         //   https://github.com/polimediaupv/paella-core/issues/74
         //
+        // - `connect-src` unfortunately has to be `*` right now due to live
+        //   streams. Loading the m3u8 file is done via a JS fetch, and since
+        //   we don't know where these m3u8 files live, we have to allow
+        //   everything here.
         //
         // TODO: check if configuring allowed hosts for `img-src`, `media-src`
         // and `font-src` is an option. Then again, admins can also
         // set/override those headers in their nginx?
-        let upload_node = config.opencast.upload_node();
         let value = format!("\
             default-src 'self'; \
             img-src *; \
-            media-src *; \
+            media-src * blob:; \
             font-src *; \
             script-src 'self'; \
             style-src 'self' 'unsafe-inline'; \
-            connect-src 'self' {upload_node}; \
+            connect-src *; \
             child-src 'none'; \
             frame-src 'none'; \
             manifest-src 'none'; \

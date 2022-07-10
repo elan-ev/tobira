@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import { FiArrowDown, FiArrowUp } from "react-icons/fi";
-import { match } from "../../../util";
 import { bug } from "../../../util/err";
 import { RealmOrder } from "../../../layout/__generated__/NavigationData.graphql";
 import {
@@ -14,6 +13,7 @@ import { Button } from "../../../ui/Button";
 import { Spinner } from "../../../ui/Spinner";
 import { boxError } from "../../../ui/error";
 import { displayCommitError } from "./util";
+import { sortRealms } from "../../util";
 
 
 
@@ -45,7 +45,7 @@ const mutation = graphql`
 
 
 type Child = ChildOrderEditData$data["children"][0];
-type SortOrder = "by-index" | "alphabetical:asc" | "alphabetical:desc";
+type SortOrder = Exclude<RealmOrder, "%future added value">;
 
 type Props = {
     fragRef: ChildOrderEditData$key;
@@ -56,16 +56,12 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
     const { t, i18n } = useTranslation();
     const realm = useFragment(fragment, fragRef);
 
-    const intialSortOrder = match<RealmOrder, SortOrder>(realm.childOrder, {
-        "ALPHABETIC_ASC": () => "alphabetical:asc",
-        "ALPHABETIC_DESC": () => "alphabetical:desc",
-        "BY_INDEX": () => "by-index",
-
+    const intialSortOrder = realm.childOrder === "%future added value"
         // This is not optimal. The only useful thing we could do in the future
         // is to disable the whole form just to be save, whenever we encounter
         // a sort order we don't know.
-        "%future added value": () => bug("unknown realm sort order"),
-    });
+        ? bug("unknown realm sort order")
+        : realm.childOrder;
     const [sortOrder, setSortOrder] = useState<SortOrder>(intialSortOrder);
     const [children, setChildren] = useState(realm.children);
 
@@ -89,12 +85,8 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
         commit({
             variables: {
                 parent: realm.id,
-                order: match(sortOrder, {
-                    "alphabetical:asc": () => "ALPHABETIC_ASC",
-                    "alphabetical:desc": () => "ALPHABETIC_DESC",
-                    "by-index": () => "BY_INDEX",
-                }),
-                indices: sortOrder === "by-index"
+                order: sortOrder,
+                indices: sortOrder === "BY_INDEX"
                     ? children.map((c, i) => ({ id: c.id, index: i }))
                     : null,
             },
@@ -124,31 +116,25 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
         </div>
     );
 
-    const sortedChildren = match(sortOrder, {
-        "alphabetical:asc": () =>
-            [...children].sort((a, b) => a.name.localeCompare(b.name, i18n.language)),
-        "alphabetical:desc": () =>
-            [...children].sort((a, b) => b.name.localeCompare(a.name, i18n.language)),
-        "by-index": () => children,
-    });
+    const sortedChildren = sortRealms(children, sortOrder, i18n.language);
 
     return <>
         <h2>{t("manage.realm.children.heading")}</h2>
         <div>
             <SortOrderOption
                 label={t("manage.realm.children.sort-alphabetically-asc")}
-                order="alphabetical:asc"
+                order="ALPHABETIC_ASC"
             />
             <SortOrderOption
                 label={t("manage.realm.children.sort-alphabetically-desc")}
-                order="alphabetical:desc"
+                order="ALPHABETIC_DESC"
             />
             <SortOrderOption
                 label={t("manage.realm.children.order-manually") + ":"}
-                order="by-index"
+                order="BY_INDEX"
             />
 
-            <ChildList disabled={sortOrder !== "by-index"} swap={swap}>
+            <ChildList disabled={sortOrder !== "BY_INDEX"} swap={swap}>
                 {sortedChildren}
             </ChildList>
 

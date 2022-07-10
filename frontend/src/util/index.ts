@@ -166,12 +166,14 @@ export function characterClass(characters: string): string {
 
 /**
  * Sets the HTML title to the given string (plus base title) on mount, resets
- * it on unmount.
+ * it on unmount. If the given title is `null`, does not do anything on mount.
  */
-export const useTitle = (title: string, noSuffix = false): void => {
+export const useTitle = (title: string | null, noSuffix = false): void => {
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
     useEffect(() => {
-        document.title = noSuffix ? title : `${title} • ${siteTitle}`;
+        if (title !== null) {
+            document.title = noSuffix ? title : `${title} • ${siteTitle}`;
+        }
 
         // On unmount, we set the title to the base title.
         return () => {

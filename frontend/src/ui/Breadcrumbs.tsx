@@ -8,15 +8,10 @@ import { FOCUS_STYLE_INSET } from ".";
 
 type Props = {
     path: {
-        label: string;
+        label: ReactNode;
         link: string;
     }[];
     tail: JSX.Element | string;
-};
-
-const LI_STYLE = {
-    display: "inline-flex",
-    alignItems: "center",
 };
 
 export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
@@ -24,19 +19,8 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
 
     return (
         <nav aria-label="breadcrumbs" css={{ overflowX: "auto", marginBottom: 16 }}>
-            <ol css={{
-                display: "flex",
-                alignItems: "center",
-                padding: 0,
-                margin: 0,
-                fontSize: 14,
-                flexWrap: "wrap",
-                whiteSpace: "nowrap",
-                "& svg": {
-                    fontSize: 16,
-                },
-            }}>
-                <li css={LI_STYLE}>
+            <BreadcrumbsContainer>
+                <li>
                     <Link to="/" css={{ lineHeight: 1, padding: 2, ...FOCUS_STYLE_INSET }}>
                         <FiHome title={t("home")} />
                     </Link>
@@ -45,10 +29,29 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
                     <Segment key={i} target={segment.link}>{segment.label}</Segment>
                 ))}
                 <Segment>{tail}</Segment>
-            </ol>
+            </BreadcrumbsContainer>
         </nav>
     );
 };
+
+export const BreadcrumbsContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <ol css={{
+        display: "flex",
+        alignItems: "center",
+        padding: 0,
+        margin: 0,
+        fontSize: 14,
+        flexWrap: "wrap",
+        whiteSpace: "nowrap",
+        "& svg": {
+            fontSize: 16,
+        },
+        "& > li": {
+            display: "inline-flex",
+            alignItems: "center",
+        },
+    }}>{children}</ol>
+);
 
 type SegmentProps = {
     /** The link target or `undefined` if this item segment is active */
@@ -64,12 +67,16 @@ const TEXT_STYLE = {
 
 const Segment: React.FC<SegmentProps> = ({ target, children }) => (
     <li
-        css={{ maxWidth: "100%", ...LI_STYLE }}
+        css={{ maxWidth: "100%" }}
         {...target === undefined && { "aria-current": "location" }}
     >
-        <FiChevronRight css={{ margin: "0 3px", flexShrink: 0, color: "var(--grey65)" }}/>
+        <BreadcrumbSeparator />
         {target === undefined
             ? <div css={TEXT_STYLE}>{children}</div>
             : <Link css={[TEXT_STYLE, FOCUS_STYLE_INSET]} to={target}>{children}</Link>}
     </li>
+);
+
+export const BreadcrumbSeparator: React.FC = () => (
+    <FiChevronRight css={{ margin: "0 3px", flexShrink: 0, color: "var(--grey65)" }} />
 );

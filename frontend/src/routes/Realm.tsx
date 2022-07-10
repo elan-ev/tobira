@@ -15,6 +15,7 @@ import { LinkList, LinkWithIcon } from "../ui";
 import CONFIG from "../config";
 import { characterClass, useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
+import { MissingRealmName } from "./util";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -114,14 +115,17 @@ type Props = {
 
 const RealmPage: React.FC<Props> = ({ realm }) => {
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
-    const breadcrumbs = realm.ancestors.map(({ name, path }) => ({ label: name, link: path }));
+    const breadcrumbs = realm.ancestors.map(({ name, path }) => ({
+        label: name ?? <MissingRealmName />,
+        link: path,
+    }));
 
     const isRoot = realm.parent === null;
     const title = isRoot ? siteTitle : realm.name;
     useTitle(title, isRoot);
 
     return <>
-        {!isRoot && <Breadcrumbs path={breadcrumbs} tail={realm.name} />}
+        {!isRoot && <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />}
         {title && <h1>{title}</h1>}
         {realm.blocks.length === 0 && realm.parent === null
             ? <WelcomeMessage />

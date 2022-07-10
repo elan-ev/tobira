@@ -16,15 +16,15 @@ impl search::Realm {
         Node::id(self)
     }
 
-    fn name(&self) -> &str {
-        &self.name
+    fn name(&self) -> Option<&str> {
+        self.name.as_deref()
     }
 
     fn path(&self) -> &str {
         &self.full_path
     }
 
-    fn ancestor_names(&self) -> &[String] {
+    fn ancestor_names(&self) -> &[Option<String>] {
         &self.ancestor_names
     }
 }

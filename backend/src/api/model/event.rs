@@ -11,9 +11,9 @@ use crate::{
         Context, Cursor, Id, Node, NodeValue,
         common::NotAllowed,
         err::{self, ApiResult, invalid_input},
-        model::{series::{SeriesValue, ReadySeries}, realm::Realm},
+        model::{series::{SeriesValue, ReadySeries}, realm::{Realm, REALM_JOINS}},
     },
-    db::types::{EventTrack, Key, ExtraMetadata},
+    db::{types::{EventTrack, Key, ExtraMetadata}, util::{impl_from_db, select}},
     prelude::*,
     util::lazy_format,
 };
@@ -36,8 +36,42 @@ pub(crate) struct AuthorizedEvent {
     metadata: ExtraMetadata,
     thumbnail: Option<String>,
     tracks: Vec<Track>,
-    can_write: bool,
+    read_roles: Vec<String>,
+    write_roles: Vec<String>,
 }
+
+impl_from_db!(
+    AuthorizedEvent,
+    select: {
+        events.{
+            id, series, opencast_id, is_live,
+            title, description, duration, creators, thumbnail, metadata,
+            created, updated,
+            tracks,
+            read_roles, write_roles,
+        },
+    },
+    |row| {
+        Self {
+            key: row.id(),
+            series: row.series(),
+            opencast_id: row.opencast_id(),
+            is_live: row.is_live(),
+            title: row.title(),
+            description: row.description(),
+            duration: row.duration(),
+            created: row.created(),
+            updated: row.updated(),
+            creators: row.creators(),
+            thumbnail: row.thumbnail(),
+            tracks: row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect(),
+            metadata: row.metadata(),
+            read_roles: row.read_roles::<Vec<String>>(),
+            write_roles: row.write_roles::<Vec<String>>(),
+        }
+    }
+);
+
 
 #[derive(Debug, GraphQLObject)]
 pub(crate) struct Track {
@@ -96,8 +130,8 @@ impl AuthorizedEvent {
     }
 
     /// Whether the current user has write access to this event.
-    fn can_write(&self) -> bool {
-        self.can_write
+    fn can_write(&self, context: &Context) -> bool {
+        context.auth.is_allowed_by_acl(&self.write_roles)
     }
 
     async fn series(&self, context: &Context) -> ApiResult<Option<ReadySeries>> {
@@ -118,10 +152,11 @@ impl AuthorizedEvent {
 
     /// Returns a list of realms where this event is referenced (via some kind of block).
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
-        let cols = Realm::col_names("realms");
+        let selection = Realm::select();
         let query = format!("\
-            select {cols} \
+            select {selection} \
             from realms \
+            {REALM_JOINS} \
             where exists ( \
                 select 1 as contains \
                 from blocks \
@@ -134,7 +169,7 @@ impl AuthorizedEvent {
                 ) \
             ) \
         ");
-        context.db.query_mapped(&query, dbargs![&self.key], Realm::from_row)
+        context.db.query_mapped(&query, dbargs![&self.key], |row| Realm::from_row_start(&row))
             .await?
             .pipe(Ok)
     }
@@ -161,16 +196,17 @@ impl Event {
 
 impl AuthorizedEvent {
     pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
+        let selection = Self::select();
+        let query = format!(
+            "select {selection} from events \
+                where (read_roles || 'ROLE_ADMIN'::text) && $1 \
+                order by title",
+        );
         context.db(context.require_moderator()?)
             .query_mapped(
-                &format!(
-                    "select {} from events \
-                        where (read_roles || 'ROLE_ADMIN'::text) && $1 \
-                        order by title",
-                    Self::COL_NAMES,
-                ),
-                dbargs![&context.auth.roles()],
-                Self::from_row,
+                &query,
+                dbargs![&context.auth.roles_vec()],
+                |row| Self::from_row_start(&row),
             )
             .await?
             .pipe(Ok)
@@ -182,18 +218,15 @@ impl AuthorizedEvent {
             Some(key) => key,
         };
 
-        let query = format!(
-            "select {}, $1 && (read_roles || 'ROLE_ADMIN'::text) as can_read \
-                from events \
-                where id = $2",
-            Self::COL_NAMES,
-        );
+        let selection = Self::select();
+        let query = format!("select {selection} from events where id = $1");
         context.db
-            .query_opt(&query, &[&context.auth.roles(), &key])
+            .query_opt(&query, &[&key])
             .await?
             .map(|row| {
-                if row.get::<_, bool>("can_read") {
-                    Event::Event(Self::from_row(row))
+                let event = Self::from_row_start(&row);
+                if context.auth.is_allowed_by_acl(&event.read_roles) {
+                    Event::Event(event)
                 } else {
                     Event::NotAllowed(NotAllowed)
                 }
@@ -206,14 +239,18 @@ impl AuthorizedEvent {
         order: EventSortOrder,
         context: &Context,
     ) -> ApiResult<Vec<Self>> {
+        let selection = Self::select();
         let query = format!(
-            "select {} from events \
+            "select {selection} from events \
                 where series = $2 and (read_roles || 'ROLE_ADMIN'::text) && $1 {}",
-            Self::COL_NAMES,
             order.to_sql(),
         );
         context.db
-            .query_mapped(&query, dbargs![&context.auth.roles(), &series_key], Self::from_row)
+            .query_mapped(
+                &query,
+                dbargs![&context.auth.roles_vec(), &series_key],
+                |row| Self::from_row_start(&row),
+            )
             .await?
             .pipe(Ok)
     }
@@ -252,7 +289,7 @@ impl AuthorizedEvent {
 
         // Assemble argument list and the "where" part of the query. This
         // depends on `after` and `before`.
-        let arg_user_roles = &context.auth.roles() as &(dyn ToSql + Sync);
+        let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
         let mut args = vec![arg_user_roles];
 
         let col = order.column.to_sql();
@@ -291,11 +328,16 @@ impl AuthorizedEvent {
         } else {
             "where write_roles && $1 and read_roles && $1"
         };
+        let (selection, mapping) = select!(
+            event: AuthorizedEvent from
+                AuthorizedEvent::select().with_omitted_table_prefix("events"),
+            row_num,
+            total_count,
+        );
         let query = format!(
-            "select {cols}, row_num, total_count \
+            "select {selection} \
                 from (\
-                    select {cols}, \
-                        write_roles, \
+                    select {event_cols}, \
                         row_number() over(order by ({sort_col}, id) {sort_order}) as row_num, \
                         count(*) over() as total_count \
                     from events \
@@ -304,7 +346,7 @@ impl AuthorizedEvent {
                 ) as tmp \
                 {filter} \
                 limit {limit}",
-            cols = Self::COL_NAMES,
+            event_cols = Self::select().with_omitted_table_prefix("events"),
             sort_col = order.column.to_sql(),
             sort_order = sql_sort_order.to_sql(),
             limit = limit,
@@ -321,18 +363,18 @@ impl AuthorizedEvent {
         let mut events = context.db.query_mapped(&query, args, |row: Row| {
             // Retrieve total count once
             if total_count.is_none() {
-                total_count = Some(row.get::<_, i64>("total_count"));
+                total_count = Some(mapping.total_count.of(&row));
             }
 
             // Handle row numbers
-            let row_num = row.get::<_, i64>("row_num");
+            let row_num = mapping.row_num.of(&row);
             last_num = Some(row_num);
             if first_num.is_none() {
                 first_num = Some(row_num);
             }
 
             // Retrieve actual event data
-            Self::from_row(row)
+            Self::from_row(&row, mapping.event)
         }).await?;
 
         // If total count is `None`, there are no events. We really do want to
@@ -342,7 +384,7 @@ impl AuthorizedEvent {
             None => {
                 let query = format!("select count(*) from events {}", acl_filter);
                 context.db
-                    .query_one(&query, &[&context.auth.roles()])
+                    .query_one(&query, &[&context.auth.roles_vec()])
                     .await?
                     .get::<_, i64>(0)
             }
@@ -387,29 +429,6 @@ impl AuthorizedEvent {
             },
             items: events,
         })
-    }
-
-    pub(crate) const COL_NAMES: &'static str = "id, series, opencast_id, is_live, \
-        title, description, duration, created, updated, creators, \
-        thumbnail, tracks, metadata, (write_roles || 'ROLE_ADMIN'::text) && $1 as can_write";
-
-    pub(crate) fn from_row(row: Row) -> Self {
-        Self {
-            key: row.get(0),
-            series: row.get(1),
-            opencast_id: row.get(2),
-            is_live: row.get(3),
-            title: row.get(4),
-            description: row.get(5),
-            duration: row.get(6),
-            created: row.get(7),
-            updated: row.get(8),
-            creators: row.get(9),
-            thumbnail: row.get(10),
-            tracks: row.get::<_, Vec<EventTrack>>(11).into_iter().map(Track::from).collect(),
-            metadata: row.get(12),
-            can_write: row.get(13),
-        }
     }
 }
 

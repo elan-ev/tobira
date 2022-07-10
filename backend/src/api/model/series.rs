@@ -1,5 +1,4 @@
 use juniper::{graphql_interface, graphql_object};
-use tokio_postgres::Row;
 
 use crate::{
     api::{
@@ -12,7 +11,7 @@ use crate::{
         },
         Node,
     },
-    db::types::{SeriesState as State, Key},
+    db::{types::{SeriesState as State, Key}, util::impl_from_db},
     prelude::*,
 };
 
@@ -39,9 +38,9 @@ pub(crate) trait Series {
 
     /// Returns a list of realms where this series is referenced (via some kind of block).
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
-        let cols = Realm::col_names("realms");
+        let selection = Realm::select();
         let query = format!("\
-            select {cols} \
+            select {selection} \
             from realms \
             where exists ( \
                 select 1 as contains \
@@ -51,11 +50,8 @@ pub(crate) trait Series {
                 and series_id = $1 \
             ) \
         ");
-        context.db.query_mapped(
-            &query,
-            dbargs![&self.id().key_for(Id::SERIES_KIND)],
-            Realm::from_row,
-        )
+        let id = self.id().key_for(Id::SERIES_KIND).unwrap();
+        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row_start(&row))
             .await?
             .pipe(Ok)
     }
@@ -147,18 +143,34 @@ impl<S: Series> Node for S {
     }
 }
 
+impl_from_db!(
+    SeriesValue,
+    select: {
+        series.{ id, opencast_id, state, title, description },
+    },
+    |row| {
+        let shared = SharedData {
+            key: row.id(),
+            opencast_id: row.opencast_id(),
+        };
+
+        match row.state::<State>() {
+            State::Waiting => WaitingSeries { shared }.into(),
+            State::Ready => ReadySeries {
+                shared,
+                title: row.title(),
+                description: row.description(),
+            }.into(),
+        }
+    },
+);
+
 impl SeriesValue {
     pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
+        let selection = Self::select();
+        let query = format!("select {selection} from series order by title");
         context.db(context.require_moderator()?)
-            .query_mapped(
-                &format!(
-                    "select {} from series \
-                        order by title",
-                    Self::COL_NAMES,
-                ),
-                dbargs![],
-                Self::from_row,
-            )
+            .query_mapped(&query, dbargs![], |row| Self::from_row_start(&row))
             .await?
             .pipe(Ok)
     }
@@ -172,65 +184,42 @@ impl SeriesValue {
     }
 
     pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
-        let result = context.db
-            .query_opt(
-                &format!(
-                    "select {} \
-                        from series \
-                        where id = $1",
-                    Self::COL_NAMES,
-                ),
-                &[&key],
-            )
-            .await?
-            .map(Self::from_row);
+        let selection = Self::select();
+        let query = format!("select {selection} from series where id = $1");
 
-        Ok(result)
+        context.db
+            .query_opt(&query, &[&key])
+            .await?
+            .map(|row| Self::from_row_start(&row))
+            .pipe(Ok)
     }
 
     pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Self>> {
-        let query = format!("select {} from series where opencast_id = $1", Self::COL_NAMES);
+        let selection = Self::select();
+        let query = format!("select {selection} from series where opencast_id = $1");
         context.db
             .query_opt(&query, &[&id])
             .await?
-            .map(Self::from_row)
+            .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 
     pub(crate) async fn load_or_create_by_opencast_id(id: String, context: &Context) -> ApiResult<Self> {
-        let cols = Self::COL_NAMES;
+        let selection = Self::select().with_omitted_table_prefix("series");
         let query = format!(
             "with \
-                existing as (select {cols} from series where opencast_id = $1), \
+                existing as (select {selection} from series where opencast_id = $1), \
                 new as (insert into series (opencast_id, state, updated) \
                     select $1, 'waiting', '-infinity' \
                         where not exists (select null from existing) \
-                    returning {cols}) \
-            select {cols} from existing \
-                union all select {cols} from new",
+                    returning {selection}) \
+            select {selection} from existing \
+                union all select {selection} from new",
         );
         context.db(context.require_moderator()?)
             .query_one(&query, &[&id])
             .await?
-            .pipe(Self::from_row)
+            .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
-    }
-
-    const COL_NAMES: &'static str = "id, opencast_id, state, title, description";
-
-    fn from_row(row: Row) -> Self {
-        let shared = SharedData {
-            key: row.get(0),
-            opencast_id: row.get(1),
-        };
-        let state = row.get::<_, State>(2);
-        match state {
-            State::Waiting => WaitingSeries { shared }.into(),
-            State::Ready => ReadySeries {
-                shared,
-                title: row.get(3),
-                description: row.get(4),
-            }.into(),
-        }
     }
 }

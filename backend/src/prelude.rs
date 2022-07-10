@@ -8,5 +8,5 @@ pub(crate) use tap::Pipe;
 
 pub(crate) use crate::{
     auth::HasRoles,
-    db::util::dbargs,
+    db::util::{dbargs, FromDb},
 };

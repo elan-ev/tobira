@@ -8,8 +8,10 @@ select prepare_randomized_ids('realm');
 create table realms (
     id bigint primary key default randomized_id('realm'),
     parent bigint references realms on delete cascade,
-    name text not null,
     path_segment text not null,
+
+    -- Also see `realm-names.sql`!
+    name text,
 
     -- Index to define an order of this realm and all its siblings. It defaults
     -- to max int such that newly added realms appear after manually ordered
@@ -56,9 +58,9 @@ create table realms (
     )),
     constraint root_no_path check (id <> 0 or (parent is null and path_segment = '' and full_path = '')),
     constraint has_parent check (id = 0 or parent is not null),
-    constraint names_non_empty_except_root check (
-        (id = 0 and name = '') or (id <> 0 and name <> '')
-    )
+    constraint no_empty_name check (name <> '')
+
+    -- NOTE: the definition is expanded and adjusted in `realm-names.sql`!
 );
 
 -- Full path to realm lookups happen on nearly every page view. We specify
@@ -82,7 +84,7 @@ select setval(
     xtea(0, (select key from __xtea_keys where entity = 'realm'), false),
     false
 );
-insert into realms (name, parent, path_segment, full_path) values ('', null, '', '');
+insert into realms (name, parent, path_segment, full_path) values (null, null, '', '');
 
 
 -- Make sure the root realm is never deleted and its ID is never changed.
@@ -189,30 +191,22 @@ create trigger fix_full_path_after_update
 
 -- Useful functions ---------------------------------------------------------------------
 
--- Returns all ancestors of the given realm, including the root realm and the
--- given realm itself. Returns all columns plus a `height` column that counts
--- up, starting from the given realm which has `height = 0`.
+-- Returns all ancestors of the given realm, including the root realm, excluding
+-- the given realm itself. The first returned row is the root realm, followed
+-- by a child of the root realm, ending with the parent of the given realm.
 create function ancestors_of_realm(realm_id bigint)
-    returns table (
-        id bigint,
-        parent bigint,
-        name text,
-        path_segment text,
-        index int,
-        child_order realm_order,
-        full_path text,
-        height int
-    )
+    returns setof realms
     language 'sql'
 as $$
-with recursive ancestors(id, parent, name, path_segment, index, child_order, full_path) as (
-    select *, 0 as height from realms
-    where id = realm_id
-  union
-    select r.id, r.parent, r.name, r.path_segment, r.index, r.child_order, r.full_path, a.height + 1 as height
+with recursive ancestors as (
+    select realms, 1 as height
+    from realms
+    where id = (select parent from realms where id = realm_id)
+  union all
+    select r, a.height + 1 as height
     from ancestors a
-    join realms r on a.parent = r.id
-    where a.id <> 0
+    join realms r on (a.realms).parent = r.id
+    where (a.realms).id <> 0
 )
-SELECT * FROM ancestors order by height desc
+SELECT (ancestors.realms).* FROM ancestors order by height desc
 $$;

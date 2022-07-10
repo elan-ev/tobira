@@ -105,6 +105,8 @@ login-page:
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
 
 video:
+  video: Video
+  deleted: Gelöschtes Video
   created: Erstellt
   updated: Zuletzt angepasst
   part-of-series: Teil von Serie
@@ -117,11 +119,14 @@ video:
   source: Quelle
 
 series:
+  series: Serie
+  deleted: Gelöschte Serie
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
   no-events: Diese Serie enthält keine Videos oder Sie sind nicht berechtigt, diese zu sehen.
   videos:
     heading: Videos
   not-ready:
+    name: Ausstehende Serie
     title: Serie noch nicht synchronisiert
     text: >
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
@@ -131,6 +136,7 @@ realm:
   page-settings: Seiteneinstellungen
   edit-page-content: Seiteninhalt bearbeiten
   add-sub-page: Unterseite hinzufügen
+  missing-name: Fehlender Name
 
 search:
   input-label: Suche
@@ -243,7 +249,14 @@ manage:
     no-path: Pfad fehlt! Den Link, den Sie aufgerufen haben, ist ungültig.
 
     general:
-      rename-label: Seitenname
+      page-name: Seitenname
+      name-directly: Direkt benennen
+      name-directly-description: Festen Namen für diese Seite vergeben.
+      name-from-block: Name von Video oder Serie beziehen
+      name-from-block-description: >
+        Video/Serie-Element von dieser Seite verknüpfen, sodass der Seitenname
+        immer dem Titel des verknüpften Elements entspricht.
+      no-blocks: Auf dieser Seite befinden sich keine verknüpfbaren Videos/Serien.
       rename-failed: Änderung des Namen fehlgeschlagen.
       no-rename-root: >
         Der Name der Startseite kann nicht geändert werden. Die Überschrift wird
@@ -298,6 +311,12 @@ manage:
       move-up: Block nach oben verschieben
       edit: Block bearbeiten
       remove: Block entfernen
+
+      cannot-remove-block: Block nicht entfernbar
+      cannot-remove-name-source-block: >
+        Entfernung nicht möglich, da diese Seite ihren Namen von diesem Block
+        bezieht. Um den Block zu entfernen, müssen Sie zuerst den Seitennamen in
+        den Seiteneinstellungen ändern.
 
       title:
         content: Hier können Sie Ihren Titel einfügen.

@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    db::{DbConnection, types::Key},
+    db::{DbConnection, types::Key, util::select},
     prelude::*,
     util::Never,
 };
@@ -37,7 +37,8 @@ pub(crate) async fn update_index(meili: &Client, db: &mut DbConnection) -> Resul
     loop {
         let done = writer::with_write_lock(db, meili, move |tx, meili| Box::pin(async move {
             // First, we retrieve a list of items that need updating.
-            let query = format!("select item_id, kind \
+            let (selection, mapping) = select!(item_id, kind);
+            let query = format!("select {selection} \
                 from search_index_queue \
                 order by id \
                 limit {CHUNK_SIZE}");
@@ -49,8 +50,8 @@ pub(crate) async fn update_index(meili: &Client, db: &mut DbConnection) -> Resul
             let mut realm_ids = Vec::new();
             futures::pin_mut!(row_stream);
             while let Some(row) = row_stream.try_next().await? {
-                let key: Key = row.get(0);
-                let kind: IndexItemKind = row.get(1);
+                let key: Key = mapping.item_id.of(&row);
+                let kind: IndexItemKind = mapping.kind.of(&row);
                 match kind {
                     IndexItemKind::Realm => realm_ids.push(key),
                     IndexItemKind::Event => event_ids.push(key),

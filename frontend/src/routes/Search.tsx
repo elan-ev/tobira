@@ -14,6 +14,8 @@ import { PageTitle } from "../layout/header/ui";
 import { FiFolder } from "react-icons/fi";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { ReactNode } from "react";
+import { BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
+import { MissingRealmName } from "./util";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -189,8 +191,8 @@ const SearchEvent: React.FC<SearchEventProps> = ({
 
 type SearchRealmProps = {
     id: string;
-    name: string;
-    ancestorNames: readonly string[];
+    name: string | null;
+    ancestorNames: readonly (string | null)[];
     fullPath: string;
 };
 
@@ -200,11 +202,13 @@ const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, full
             <FiFolder css={{ margin: 8, fontSize: 26 }}/>
         </div>
         <div>
-            {/* TODO: use proper breadcrumbs, not this uhg */}
-            <div>
-                {"/ " + ancestorNames.map(name => name + " / ").join("")}
-            </div>
-            <h3>{name}</h3>
+            <BreadcrumbsContainer>
+                {ancestorNames.map((name, i) => <li key={i}>
+                    {name ?? <MissingRealmName />}
+                    <BreadcrumbSeparator />
+                </li>)}
+            </BreadcrumbsContainer>
+            <h3>{name ?? <MissingRealmName />}</h3>
         </div>
     </Item>
 );

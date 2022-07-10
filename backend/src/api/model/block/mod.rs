@@ -2,15 +2,18 @@
 
 use juniper::{graphql_interface, graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
-use tokio_postgres::Row;
 
 use crate::{
     api::{
         Context, Id,
-        err::{ApiError, ApiResult, internal_server_err},
-        model::{event::{AuthorizedEvent, Event}, series::SeriesValue},
+        err::{ApiError, ApiResult},
+        model::{
+            event::{AuthorizedEvent, Event},
+            series::SeriesValue,
+            realm::{Realm, RealmNameSourceBlockValue},
+        },
     },
-    db::types::Key,
+    db::{types::Key, util::impl_from_db},
     prelude::*,
 };
 
@@ -45,6 +48,12 @@ pub(crate) trait Block {
     fn index(&self) -> i32 {
         self.shared().index
     }
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Realm::load_by_key(self.shared().realm_key, context)
+            .await
+            // Foreign key constraints guarantee the realm exists
+            .map(Option::unwrap)
+    }
 }
 
 #[derive(Debug, Clone, Copy, FromSql)]
@@ -70,11 +79,14 @@ pub(crate) enum VideoListOrder {
 }
 
 /// Data shared by all blocks.
+#[derive(Debug)]
 pub(crate) struct SharedData {
     pub(crate) id: Id,
     pub(crate) index: i32,
+    pub(crate) realm_key: Key,
 }
 
+#[derive(Debug)]
 pub(crate) struct TitleBlock {
     pub(crate) shared: SharedData,
     pub(crate) content: String,
@@ -94,14 +106,19 @@ impl TitleBlock {
     }
 
     fn id(&self) -> Id {
-        self.shared().id
+        Block::id(self)
     }
 
     fn index(&self) -> i32 {
-        self.shared().index
+        Block::index(self)
+    }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct TextBlock {
     pub(crate) shared: SharedData,
     pub(crate) content: String,
@@ -121,14 +138,19 @@ impl TextBlock {
     }
 
     fn id(&self) -> Id {
-        self.shared().id
+        Block::id(self)
     }
 
     fn index(&self) -> i32 {
-        self.shared().index
+        Block::index(self)
+    }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
     pub(crate) series: Option<Id>,
@@ -143,7 +165,7 @@ impl Block for SeriesBlock {
 }
 
 /// A block just showing the list of videos in an Opencast series
-#[graphql_object(Context = Context, impl = BlockValue)]
+#[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
 impl SeriesBlock {
     async fn series(&self, context: &Context) -> ApiResult<Option<SeriesValue>> {
         match self.series {
@@ -162,14 +184,19 @@ impl SeriesBlock {
     }
 
     fn id(&self) -> Id {
-        self.shared().id
+        Block::id(self)
     }
 
     fn index(&self) -> i32 {
-        self.shared().index
+        Block::index(self)
+    }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct VideoBlock {
     pub(crate) shared: SharedData,
     // Is `None` if the video was removed from the DB.
@@ -184,7 +211,7 @@ impl Block for VideoBlock {
 }
 
 /// A block for presenting a single Opencast event
-#[graphql_object(Context = Context, impl = BlockValue)]
+#[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
 impl VideoBlock {
     async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
         match self.event {
@@ -199,87 +226,104 @@ impl VideoBlock {
     }
 
     fn id(&self) -> Id {
-        self.shared().id
+        Block::id(self)
     }
 
     fn index(&self) -> i32 {
-        self.shared().index
+        Block::index(self)
     }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
+    }
+}
+
+impl_from_db!(
+    BlockValue,
+    select: {
+        blocks.{
+            id,
+            ty: "type",
+            index,
+            text_content,
+            series_id,
+            videolist_order,
+            video_id, show_title,
+            realm_id,
+        },
+    },
+    |row| {
+        let ty: BlockType = row.ty();
+        let shared = SharedData {
+            id: Id::block(row.id()),
+            index: row.index::<i16>().into(),
+            realm_key: row.realm_id(),
+        };
+
+        match ty {
+            BlockType::Title => TitleBlock {
+                shared,
+                content: unwrap_type_dep(row.text_content(), "title", "text_content"),
+            }.into(),
+
+            BlockType::Text => TextBlock {
+                shared,
+                content: unwrap_type_dep(row.text_content(), "text", "text_content"),
+            }.into(),
+
+            BlockType::Series => SeriesBlock {
+                shared,
+                series: row.series_id::<Option<Key>>().map(Id::series),
+                order: unwrap_type_dep(row.videolist_order(), "series", "videolist_order"),
+                show_title: unwrap_type_dep(row.show_title(), "series", "show_title"),
+            }.into(),
+
+            BlockType::Video => VideoBlock {
+                shared,
+                event: row.video_id::<Option<Key>>().map(Id::event),
+                show_title: unwrap_type_dep(row.show_title(), "event", "show_title"),
+            }.into(),
+        }
+    }
+);
+
+/// Helper functions to unwrap a value from DB that should be non-null due to
+/// the block type. Panics with a nice error message in case of null.
+fn unwrap_type_dep<T>(value: Option<T>, type_name: &str, field_name: &str) -> T {
+    value.unwrap_or_else(|| panic!(
+        "DB broken: block with type='{}' has null `{}`",
+        type_name,
+        field_name,
+    ))
 }
 
 impl BlockValue {
     /// Fetches all blocks for the given realm from the database.
     pub(crate) async fn load_for_realm(realm_key: Key, context: &Context) -> ApiResult<Vec<Self>> {
+        let selection = Self::select();
+        let query = format!(
+            "select {selection} \
+                from blocks \
+                where realm_id = $1 \
+                order by index asc",
+        );
         context.db
-            .query_raw(
-                &format!(
-                    "select {} \
-                        from blocks \
-                        where realm_id = $1 \
-                        order by index asc",
-                    Self::COL_NAMES,
-                ),
-                &[realm_key],
-            )
+            .query_raw(&query, &[realm_key])
             .await?
             .err_into::<ApiError>()
-            .and_then(|row| async move { Self::from_row(row) })
+            .map_ok(|row| Self::from_row_start(&row))
             .try_collect()
             .await
             .map_err(Into::into)
     }
 
-    const COL_NAMES: &'static str
-        = "id, type, index, text_content, series_id, videolist_order, video_id, show_title";
-
-    fn from_row(row: Row) -> ApiResult<Self> {
-        let ty: BlockType = row.get(1);
-        let shared = SharedData {
-            id: Id::block(row.get(0)),
-            index: row.get::<_, i16>(2).into(),
-        };
-
-        let block = match ty {
-            BlockType::Title => TitleBlock {
-                shared,
-                content: get_type_dependent(&row, 3, "title", "text_content")?,
-            }.into(),
-
-            BlockType::Text => TextBlock {
-                shared,
-                content: get_type_dependent(&row, 3, "text", "text_content")?,
-            }.into(),
-
-            BlockType::Series => SeriesBlock {
-                shared,
-                series: row.get::<_, Option<Key>>(4).map(Id::series),
-                order: get_type_dependent(&row, 5, "videolist", "videolist_order")?,
-                show_title: get_type_dependent(&row, 7, "titled", "show_title")?,
-            }.into(),
-
-            BlockType::Video => VideoBlock {
-                shared,
-                event: row.get::<_, Option<Key>>(6).map(Id::event),
-                show_title: get_type_dependent(&row, 7, "titled", "show_title")?,
-            }.into(),
-        };
-
-        Ok(block)
+    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Self> {
+        let selection = Self::select();
+        let query = format!("select {selection} from blocks where id = $1 ");
+        context.db
+            .query_one(&query, &[&key])
+            .await
+            .map(|row| Self::from_row_start(&row))
+            .map_err(Into::into)
     }
-}
-
-/// Helper functions to fetch fields from the table that are bound to a type of
-/// block. For example, "text" blocks need to have the "text_content" column
-/// set (non-null).
-fn get_type_dependent<'a, T: FromSql<'a>>(
-    row: &'a Row,
-    idx: usize,
-    type_name: &str,
-    field_name: &str,
-) -> ApiResult<T> {
-    row.get::<_, Option<_>>(idx).ok_or_else(|| internal_server_err!(
-        "DB broken: block with type='{}' has null `{}`",
-        type_name,
-        field_name,
-    ))
 }

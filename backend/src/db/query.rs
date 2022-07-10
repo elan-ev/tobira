@@ -6,7 +6,8 @@ use crate::prelude::*;
 /// Returns meta information about all tables in the `public` schema.
 pub(super) async fn all_table_names(db: &impl GenericClient) -> Result<Vec<String>> {
     let rows = db.query_raw(
-            "select table_name from information_schema.tables where table_schema='public'",
+            "select table_name from information_schema.tables \
+                where table_schema = 'public' and table_type = 'BASE TABLE'",
             dbargs![],
         )
         .await?

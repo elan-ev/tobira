@@ -126,8 +126,12 @@ export type BeforeNavListener = () => "prevent-nav" | undefined;
 
 /** Obtained via `useRouter`, allowing you to perform some routing-related actions. */
 export interface RouterControl {
-    /** Navigates to a new URI, just like creating a `<Link to={uri}>` and clicking it. */
-    goto(uri: string): void;
+    /**
+     * Navigates to a new URI, just like creating a `<Link to={uri}>` and
+     * clicking it. If `replace` is `false`, a new entry is added to the
+     * history stack. If it is `true`, the current entry is replaced.
+     */
+    goto(uri: string, replace?: boolean): void;
 
     /**
      * Like `history.pushState` (with fewer arguments): pushes a new history
@@ -205,15 +209,15 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     };
 
     /** Wrapper for `history.replaceState`. If `url` is `null`, it is not changed. */
-    const replace = (url: string | null, scrollY: number) => {
+    const replace = (url: string | null) => {
         const state = {
-            scrollY,
+            scrollY: window.scrollY,
             index: currentIndex,
         };
         window.history.replaceState(state, "", url ?? undefined);
     };
 
-    const updateScrollPos = () => replace(null, window.scrollY);
+    const updateScrollPos = () => replace(null);
 
 
     const shouldPreventNav = (listeners: Listeners<BeforeNavListener>): boolean => {
@@ -235,12 +239,12 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         return {
             isTransitioning: context.isTransitioning,
             push,
-            replace: (url: string) => replace(url, window.scrollY),
+            replace,
             listenAtNav: (listener: AtNavListener) =>
                 context.listeners.atNav.add(listener),
             listenBeforeNav: (listener: BeforeNavListener) =>
                 context.listeners.beforeNav.add(listener),
-            goto: (uri: string): void => {
+            goto: (uri: string, replaceEntry = false): void => {
                 updateScrollPos();
 
                 if (shouldPreventNav(context.listeners.beforeNav)) {
@@ -253,7 +257,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 // When navigating to new routes, the scroll position always
                 // starts as 0 (i.e. the very top).
                 context.setActiveRoute({ route: newRoute, initialScroll: 0 });
-                push(href);
+                replaceEntry ? replace(href) : push(href);
 
                 debugLog(`Setting active route for '${href}' (index ${currentIndex}) `
                     + "to: ", newRoute);

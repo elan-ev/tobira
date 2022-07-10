@@ -59,6 +59,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         mutation SeriesEditSaveMutation($id: ID!, $set: UpdateSeriesBlock!) {
             updateSeriesBlock(id: $id, set: $set) {
                 ... BlocksBlockData
+                ... EditBlockUpdateRealmNameData
             }
         }
     `);
