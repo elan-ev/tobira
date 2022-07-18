@@ -1,4 +1,4 @@
-use meilisearch_sdk::{document::Document, indexes::Index};
+use meilisearch_sdk::indexes::Index;
 use postgres_types::FromSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
@@ -22,15 +22,11 @@ pub(crate) struct Realm {
     pub(crate) ancestor_names: Vec<Option<String>>,
 }
 
-impl Document for Realm {
-   type UIDType = SearchId;
-   fn get_uid(&self) -> &Self::UIDType {
-       &self.id
-   }
-}
-
 impl IndexItem for Realm {
     const KIND: IndexItemKind = IndexItemKind::Realm;
+    fn id(&self) -> SearchId {
+        self.id
+    }
 }
 
 impl_from_db!(

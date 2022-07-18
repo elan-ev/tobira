@@ -32,7 +32,7 @@
     - name: install MeiliSearch
       become: true
       get_url:
-        url: https://github.com/meilisearch/meilisearch/releases/download/v0.26.1/meilisearch-linux-amd64
+        url: https://github.com/meilisearch/meilisearch/releases/download/v0.27.2/meilisearch-linux-amd64
         dest: /opt/meili/meilisearch
         mode: '0755'
 
