@@ -314,7 +314,7 @@ manage:
 
       cannot-remove-block: Block nicht entfernbar
       cannot-remove-name-source-block: >
-        Entfernung nicht möglich, da diese Seite ihren Namen von diesem Block
+        Entfernen nicht möglich, da diese Seite ihren Namen von diesem Block
         bezieht. Um den Block zu entfernen, müssen Sie zuerst den Seitennamen in
         den Seiteneinstellungen ändern.
 
