@@ -204,13 +204,15 @@ async fn store_in_db(
                 removed_events += 1;
             }
 
-            HarvestItem::Series { id: opencast_id, title, description, updated } => {
+            HarvestItem::Series { id: opencast_id, title, description, updated, acl } => {
                 // We first simply upsert the series.
                 let new_id = upsert(db, "series", "opencast_id", &[
                     ("opencast_id", &opencast_id),
                     ("state", &SeriesState::Ready),
                     ("title", &title),
                     ("description", &description),
+                    ("read_roles", &acl.read),
+                    ("write_roles", &acl.write),
                     ("updated", &updated),
                 ]).await?;
 

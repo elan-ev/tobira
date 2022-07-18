@@ -26,13 +26,19 @@ create table series (
     -- Opencast internal data
     opencast_id text not null unique,
 
+    -- Permissions: roles that are allowed to read/write
+    read_roles text[],
+    write_roles text[],
+
     -- Meta data
     title text,
     description text,
     updated timestamp with time zone not null,
 
     constraint ready_series_has_fields check (state <> 'ready' or (
-        title is not null
+        title is not null and
+        read_roles is not null and
+        write_roles is not null
     )),
     constraint waiting_series_not_updated check (state <> 'waiting' or (
         updated = '-infinity'

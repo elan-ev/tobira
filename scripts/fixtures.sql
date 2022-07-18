@@ -7,15 +7,15 @@ declare
     events_realm_id realms.id%type;
 begin
     -- Add a few series
-    insert into series (opencast_id, state, title, description, updated)
-        values ('6d3f7e0c-c18f-4806-acc1-219a02cc7343', 'ready', 'University Highlights', 'Some of the nicest videos this university has to offer!', now())
+    insert into series (opencast_id, state, title, description, read_roles, write_roles, updated)
+        values ('6d3f7e0c-c18f-4806-acc1-219a02cc7343', 'ready', 'University Highlights', 'Some of the nicest videos this university has to offer!', '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', now())
         returning id into series_university_highlights;
-    insert into series (opencast_id, state, title, description, updated)
-        values ('f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d', 'ready', 'Christmas Chemistry', 'Prof goes boom', now())
+    insert into series (opencast_id, state, title, description, read_roles, write_roles, updated)
+        values ('f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d', 'ready', 'Christmas Chemistry', 'Prof goes boom', '{"ROLE_ANONYMOUS"}', '{"ROLE_ADMIN"}', now())
         returning id into series_christmas;
     -- Some series for testing edge cases
-    insert into series (opencast_id, state, title, updated)
-        values ('68612b2e-423b-40c2-8933-92c3dd4a47a9', 'ready', 'Empty series', now());
+    insert into series (opencast_id, state, title, read_roles, write_roles, updated)
+        values ('68612b2e-423b-40c2-8933-92c3dd4a47a9', 'ready', 'Empty series', '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', now());
     insert into series (opencast_id, state, updated)
         values ('d9c9402d-2966-48a1-b082-ad5849202bca', 'waiting', '-infinity');
 

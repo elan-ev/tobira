@@ -49,6 +49,7 @@ pub(crate) enum HarvestItem {
         id: String,
         title: String,
         description: Option<String>,
+        acl: Acl,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
