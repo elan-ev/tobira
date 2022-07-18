@@ -1,4 +1,5 @@
 use secrecy::Secret;
+use core::fmt;
 use std::time::Duration;
 
 use crate::{config::Config, db::DbConnection, prelude::*};
@@ -12,9 +13,27 @@ mod status;
 pub(crate) use self::client::OcClient;
 
 
+/// The minimum API version this Tobira requires from the Tobira-module API.
+const MIN_REQUIRED_API_VERSION: ApiVersion = ApiVersion::new(1, 0);
+
 
 pub(crate) async fn run(daemon: bool, db: DbConnection, config: &Config) -> Result<()> {
-    harvest::run(daemon, config, db).await
+    let client = OcClient::new(config);
+    check_compatibility(&client).await?;
+    harvest::run(daemon, config, &client, db).await
+}
+
+pub(crate) async fn check_compatibility(client: &OcClient) -> Result<()> {
+    let response = client.get_version().await.context("failed to fetch API version")?;
+    let version = response.version();
+    if !version.is_compatible() {
+        bail!("Tobira-module API version incompatible! Required: \
+            `^{MIN_REQUIRED_API_VERSION}`, but actual version is: {version}");
+    }
+
+    info!("Tobira-module API version is compatible. Required: \
+        `^{MIN_REQUIRED_API_VERSION}`, actual version: {version}");
+    Ok(())
 }
 
 #[derive(Debug, confique::Config)]
@@ -51,3 +70,52 @@ pub(crate) struct SyncConfig {
     poll_period: Duration,
 }
 
+
+/// Version of the Tobira-module API in Opencast.
+struct ApiVersion {
+    major: u32,
+    minor: u32,
+}
+
+impl ApiVersion {
+    const fn new(major: u32, minor: u32) -> Self {
+        Self { major, minor }
+    }
+
+    /// Returns `true` if the API version `self` can be used with this Tobira,
+    /// according to `MIN_REQUIRED_API_VERSION`.
+    fn is_compatible(&self) -> bool {
+        self.major == MIN_REQUIRED_API_VERSION.major
+            && self.minor >= MIN_REQUIRED_API_VERSION.minor
+    }
+}
+
+impl fmt::Display for ApiVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}", self.major, self.minor)
+    }
+}
+
+impl std::str::FromStr for ApiVersion {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (major, minor) = s.split_once('.').ok_or("invalid API version string")?;
+
+        Ok(Self {
+            major: major.parse().map_err(|_| "invalid major version number")?,
+            minor: minor.parse().map_err(|_| "invalid minor version number")?,
+        })
+    }
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub(crate) struct VersionResponse {
+    version: String,
+}
+
+impl VersionResponse {
+    fn version(&self) -> ApiVersion {
+        self.version.parse().expect("invalid version string")
+    }
+}

@@ -31,13 +31,13 @@ const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
 pub(crate) async fn run(
     daemon: bool,
     config: &Config,
+    client: &OcClient,
     mut db: DbConnection,
 ) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
     let mut backoff = INITIAL_BACKOFF;
 
-    let client = OcClient::new(config);
     let preferred_amount = config.sync.preferred_harvest_size.into();
 
     loop {
