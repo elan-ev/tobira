@@ -12,13 +12,11 @@ use crate::{
     prelude::*,
     search::{self, IndexItemKind},
 };
-use super::status::SyncStatus;
-use self::response::{HarvestItem, HarvestResponse};
+use super::{status::SyncStatus, OcClient};
 
-pub(crate) use self::client::HarvestClient;
+pub(crate) use self::response::{HarvestItem, HarvestResponse};
 
 
-mod client;
 mod response;
 
 
@@ -39,7 +37,7 @@ pub(crate) async fn run(
     // case of an error.
     let mut backoff = INITIAL_BACKOFF;
 
-    let client = HarvestClient::new(config);
+    let client = OcClient::new(config);
     let preferred_amount = config.sync.preferred_harvest_size.into();
 
     loop {
@@ -47,7 +45,8 @@ pub(crate) async fn run(
             .context("failed to fetch sync status from DB")?;
 
         // Send request to API and deserialize data.
-        let harvest_data = match client.send(sync_status.harvested_until, preferred_amount).await {
+        let resp = client.send_harvest(sync_status.harvested_until, preferred_amount).await;
+        let harvest_data = match resp {
             Ok(v) => v,
             Err(e) => {
                 error!("Harvest request failed: {:?}", e);

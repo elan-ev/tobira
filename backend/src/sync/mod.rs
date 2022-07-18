@@ -6,7 +6,11 @@ use crate::{config::Config, db::DbConnection, prelude::*};
 
 pub(crate) mod cmd;
 pub(crate) mod harvest;
+mod client;
 mod status;
+
+pub(crate) use self::client::OcClient;
+
 
 
 pub(crate) async fn run(daemon: bool, db: DbConnection, config: &Config) -> Result<()> {

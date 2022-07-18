@@ -11,19 +11,22 @@ use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use secrecy::{ExposeSecret, Secret};
 use tap::TapFallible;
 
-use crate::{prelude::*, config::Config};
-use super::HarvestResponse;
+use crate::{
+    prelude::*,
+    config::Config,
+    sync::harvest::HarvestResponse,
+};
 
 
 /// Used to send request to the harvesting API.
-pub(crate) struct HarvestClient {
+pub(crate) struct OcClient {
     http_client: Client<HttpsConnector<HttpConnector>, Body>,
     scheme: Scheme,
     authority: Authority,
     auth_header: Secret<String>,
 }
 
-impl HarvestClient {
+impl OcClient {
     const API_PATH: &'static str = "/tobira/harvest";
 
     pub(crate) fn new(config: &Config) -> Self {
@@ -52,15 +55,15 @@ impl HarvestClient {
         }
     }
 
-    pub(crate) async fn test_connection(&self) -> Result<()> {
-        self.send(Utc.timestamp(0, 0), 2).await
+    pub(crate) async fn test_harvest(&self) -> Result<()> {
+        self.send_harvest(Utc.timestamp(0, 0), 2).await
             .map(|_| ())
             .context("test harvest request failed")
     }
 
     /// Sends a request to the harvesting API, checks and deserializes the
     /// response.
-    pub(super) async fn send(
+    pub(super) async fn send_harvest(
         &self,
         since: DateTime<Utc>,
         preferred_amount: u64,

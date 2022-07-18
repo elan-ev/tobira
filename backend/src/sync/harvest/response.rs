@@ -7,17 +7,17 @@ use crate::db::types::{EventTrack, ExtraMetadata};
 /// What the harvesting API returns.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(super) struct HarvestResponse {
+pub(crate) struct HarvestResponse {
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub(super) includes_items_until: DateTime<Utc>,
-    pub(super) has_more: bool,
-    pub(super) items: Vec<HarvestItem>,
+    pub(crate) includes_items_until: DateTime<Utc>,
+    pub(crate) has_more: bool,
+    pub(crate) items: Vec<HarvestItem>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "kind")]
 #[serde(rename_all = "kebab-case")]
-pub(super) enum HarvestItem {
+pub(crate) enum HarvestItem {
     #[serde(rename_all = "camelCase")]
     Event {
         id: String,
@@ -62,7 +62,7 @@ pub(super) enum HarvestItem {
 }
 
 impl HarvestItem {
-    pub(super) fn updated(&self) -> DateTime<Utc> {
+    pub(crate) fn updated(&self) -> DateTime<Utc> {
         match *self {
             Self::Event { updated, .. } => updated,
             Self::EventDeleted { updated, .. } =>  updated,
@@ -74,7 +74,7 @@ impl HarvestItem {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(super) struct Track {
+pub(crate) struct Track {
     uri: String,
     flavor: String,
     mimetype: Option<String>,
@@ -93,7 +93,7 @@ impl Into<EventTrack> for Track {
 }
 
 #[derive(Debug, Deserialize)]
-pub(super) struct Acl {
-    pub(super) read: Vec<String>,
-    pub(super) write: Vec<String>,
+pub(crate) struct Acl {
+    pub(crate) read: Vec<String>,
+    pub(crate) write: Vec<String>,
 }
