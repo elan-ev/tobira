@@ -96,6 +96,6 @@ pub(crate) struct Shared {
     /// Path to the configuration file. If this is not specified, Tobira will
     /// try opening the path inside `TOBIRA_CONFIG_PATH`, `config.toml` or
     /// `/etc/tobira/config.toml`.
-    #[clap(short, long)]
+    #[clap(short, long, global = true)]
     pub(crate) config: Option<PathBuf>,
 }
