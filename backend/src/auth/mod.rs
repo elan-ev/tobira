@@ -358,7 +358,7 @@ pub(crate) trait HasRoles {
         self.roles().iter().any(|role| role == ROLE_ADMIN)
     }
 
-    fn is_allowed_by_acl<I, T>(&self, acls: I) -> bool
+    fn overlaps_roles<I, T>(&self, acls: I) -> bool
     where
         I: IntoIterator<Item = T>,
         T: AsRef<str>,

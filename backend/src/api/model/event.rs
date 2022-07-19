@@ -131,7 +131,7 @@ impl AuthorizedEvent {
 
     /// Whether the current user has write access to this event.
     fn can_write(&self, context: &Context) -> bool {
-        context.auth.is_allowed_by_acl(&self.write_roles)
+        context.auth.overlaps_roles(&self.write_roles)
     }
 
     async fn series(&self, context: &Context) -> ApiResult<Option<ReadySeries>> {
@@ -225,7 +225,7 @@ impl AuthorizedEvent {
             .await?
             .map(|row| {
                 let event = Self::from_row_start(&row);
-                if context.auth.is_allowed_by_acl(&event.read_roles) {
+                if context.auth.overlaps_roles(&event.read_roles) {
                     Event::Event(event)
                 } else {
                     Event::NotAllowed(NotAllowed)

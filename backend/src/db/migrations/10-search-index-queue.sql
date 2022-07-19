@@ -113,9 +113,9 @@ begin
     -- Ho ho ho, this is interesting. To deduplicate some code, we use this
     -- function with both, events and series. And we don't even care which kind
     -- this function is called with. We just accept both. This is fine
-    -- because: (a) a series and realm having the same ID is exceeeeedingly
+    -- because: (a) a series and event having the same ID is exceeeeedingly
     -- rare, and (b) if this virtually impossible case actually arises, we just
-    -- unnecessarily queue some realms -> no harm done.
+    -- unnecessarily queue some events -> no harm done.
     where blocks.series_id = new.id or blocks.video_id = new.id
     on conflict do nothing;
 

@@ -208,5 +208,5 @@ with recursive ancestors as (
     join realms r on (a.realms).parent = r.id
     where (a.realms).id <> 0
 )
-SELECT (ancestors.realms).* FROM ancestors order by height desc
+select (ancestors.realms).* from ancestors order by height desc
 $$;
