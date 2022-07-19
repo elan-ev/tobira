@@ -12,13 +12,11 @@ use crate::{
     prelude::*,
     search::{self, IndexItemKind},
 };
-use super::status::SyncStatus;
-use self::response::{HarvestItem, HarvestResponse};
+use super::{status::SyncStatus, OcClient};
 
-pub(crate) use self::client::HarvestClient;
+pub(crate) use self::response::{HarvestItem, HarvestResponse};
 
 
-mod client;
 mod response;
 
 
@@ -33,13 +31,13 @@ const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
 pub(crate) async fn run(
     daemon: bool,
     config: &Config,
+    client: &OcClient,
     mut db: DbConnection,
 ) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
     let mut backoff = INITIAL_BACKOFF;
 
-    let client = HarvestClient::new(config);
     let preferred_amount = config.sync.preferred_harvest_size.into();
 
     loop {
@@ -47,7 +45,8 @@ pub(crate) async fn run(
             .context("failed to fetch sync status from DB")?;
 
         // Send request to API and deserialize data.
-        let harvest_data = match client.send(sync_status.harvested_until, preferred_amount).await {
+        let resp = client.send_harvest(sync_status.harvested_until, preferred_amount).await;
+        let harvest_data = match resp {
             Ok(v) => v,
             Err(e) => {
                 error!("Harvest request failed: {:?}", e);
@@ -205,13 +204,15 @@ async fn store_in_db(
                 removed_events += 1;
             }
 
-            HarvestItem::Series { id: opencast_id, title, description, updated } => {
+            HarvestItem::Series { id: opencast_id, title, description, updated, acl } => {
                 // We first simply upsert the series.
                 let new_id = upsert(db, "series", "opencast_id", &[
                     ("opencast_id", &opencast_id),
                     ("state", &SeriesState::Ready),
                     ("title", &title),
                     ("description", &description),
+                    ("read_roles", &acl.read),
+                    ("write_roles", &acl.write),
                     ("updated", &updated),
                 ]).await?;
 

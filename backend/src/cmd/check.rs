@@ -9,7 +9,7 @@ use crate::{
     config::Config,
     db::{self, MigrationPlan},
     prelude::*,
-    sync::harvest::HarvestClient,
+    sync::OcClient,
 };
 
 
@@ -119,7 +119,10 @@ async fn check_meili(config: &Config) -> Result<()> {
 }
 
 async fn check_opencast_sync(config: &Config) -> Result<()> {
-    HarvestClient::new(config).test_connection().await
+    let client = OcClient::new(config);
+    crate::sync::check_compatibility(&client).await?;
+    client.test_harvest().await?;
+    Ok(())
 }
 
 async fn check_db_migrations(db_pool: &deadpool_postgres::Pool) -> Result<MigrationPlan> {
