@@ -2,7 +2,7 @@ use meilisearch_sdk::indexes::Index;
 
 use crate::{prelude::*, config::Config, db};
 
-use super::{Client, util};
+use super::Client;
 
 
 #[derive(Debug, clap::Subcommand)]
@@ -144,19 +144,9 @@ async fn status(meili: &Client) -> Result<()> {
 async fn index_status(name: &str, index: &Index) -> Result<()> {
     bunt::println!("{$bold}# Index `{[green+intense]}`:{/$}", name);
 
-    let info = match index.fetch_info().await {
-        Ok(info) => info,
-        Err(e) if util::is_index_not_found(&e) => {
-            bunt::println!("{$red+intense}Does not exist!{/$}");
-            return Ok(());
-        },
-        Err(e) => return Err(e.into()),
-    };
     let stats = index.get_stats().await?;
     info_line!("Number of documents", stats.number_of_documents);
     info_line!("Is currently indexing", stats.is_indexing);
-    info_line!("Created", info.createdAt);
-    info_line!("Updated", info.updatedAt);
 
     Ok(())
 }

@@ -2,7 +2,7 @@ version: '2'
 
 services:
   meili:
-    image: getmeili/meilisearch:v0.25.2
+    image: getmeili/meilisearch:v0.27.2
     restart: unless-stopped
     ports:
       - 127.0.0.1:7700:7700

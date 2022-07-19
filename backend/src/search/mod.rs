@@ -195,12 +195,9 @@ impl IndexItemKind {
     }
 }
 
-pub(crate) trait IndexItem: meilisearch_sdk::document::Document<UIDType = SearchId> {
+pub(crate) trait IndexItem: serde::Serialize {
     const KIND: IndexItemKind;
-
-    fn id(&self) -> SearchId {
-        *self.get_uid()
-    }
+    fn id(&self) -> SearchId;
 }
 
 

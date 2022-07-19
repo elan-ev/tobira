@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use meilisearch_sdk::{document::Document, indexes::Index};
+use meilisearch_sdk::indexes::Index;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
@@ -44,15 +44,11 @@ pub(crate) struct Event {
     pub(crate) host_realms: Vec<Realm>,
 }
 
-impl Document for Event {
-   type UIDType = SearchId;
-   fn get_uid(&self) -> &Self::UIDType {
-       &self.id
-   }
-}
-
 impl IndexItem for Event {
     const KIND: IndexItemKind = IndexItemKind::Event;
+    fn id(&self) -> SearchId {
+        self.id
+    }
 }
 
 impl_from_db!(
