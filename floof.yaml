@@ -4,6 +4,7 @@ default:
         proxy: 127.0.0.1:3080
     - run-task: frontend
     - run-task: backend
+    - run-task: reload_on_config_change
 
 # Proxies to auth proxy so that one can login. Requires the scripts below.
 with-login:
@@ -12,6 +13,7 @@ with-login:
         proxy: 127.0.0.1:3090
     - run-task: frontend
     - run-task: backend
+    - run-task: reload_on_config_change
 
 # Starts all services from `util`
 start-scripts:
@@ -52,7 +54,6 @@ backend:
   - watch:
       paths:
         - Cargo.lock
-        - config.toml
         - src
       run:
         - cargo build
@@ -74,6 +75,13 @@ frontend:
         run:
           - reload:
 
+reload_on_config_change:
+  - watch:
+      paths:
+        - util/dev-config
+      run:
+        - reload:
+
 # Creating a production build
 build:
   - command:
@@ -93,9 +101,9 @@ build:
   - mkdir -p deploy
   - cp backend/target/release/tobira deploy
   - objcopy --compress-debug-sections deploy/tobira
-  - cp backend/config.toml deploy
-  - cp backend/logo-large.svg deploy
-  - cp backend/logo-small.svg deploy
+  - cp util/dev-config/config.toml deploy
+  - cp util/dev-config/logo-large.svg deploy
+  - cp util/dev-config/logo-small.svg deploy
 
 clean:
   - command:

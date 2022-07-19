@@ -27,7 +27,14 @@ pub(crate) use self::{
 /// existing file in this list is used.
 // TODO: does the absolute path break on Windows? I hope it just results in
 // "file not found". Or do we want to have a different path for Windows?
-const DEFAULT_PATHS: &[&str] = &["config.toml", "/etc/tobira/config.toml"];
+const DEFAULT_PATHS: &[&str] = &[
+    // For better DX, we include this special path here, but just in debug mode.
+    #[cfg(debug_assertions)]
+    "../util/dev-config/config.toml",
+
+    "config.toml",
+    "/etc/tobira/config.toml",
+];
 
 const TOBIRA_CONFIG_PATH_ENV: &str = "TOBIRA_CONFIG_PATH";
 

@@ -52,13 +52,13 @@ cargo run -- db script ../util/fixtures.sql
 ```
 
 To import video data, you can also sync with an Opencast instance that has the Tobira module enabled (there is currently no public one, sorry).
-To do this, create a copy of `backend/config.toml` and call it `backend/sync-config.toml`.
+To do this, create a copy of `util/dev-config/config.toml` and call it `util/dev-config/sync-config.toml`.
 Change the sync section in that file to contain the correct credentials for your Opencast instance.
-Then run `cargo run -- -c sync-config.toml sync run`.
+Then run `cargo run -- sync run -c ../util/dev-config/sync-config.toml`.
 
 To just import realm data, you can use the `import-realm-tree` subcommand and pass it a fitting YAML file.
-This repository contains `.deployment/files/realms.yaml` (big) and `backend/dummy-realms.yaml` (small).
-Import those with `cargo run -- import-realm-tree dummy-realms.yaml`.
+This repository contains `.deployment/files/realms.yaml` (big) and `util/dummy-realms.yaml` (small).
+Import those with `cargo run -- import-realm-tree ../util/dummy-realms.yaml`.
 
 
 ## DB management, migrations and more
