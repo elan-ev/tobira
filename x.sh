@@ -3,7 +3,7 @@
 basedir=$(dirname "$0")
 
 
-if [[ $#  < 1 ]]; then
+if [[ $# -lt 1 ]]; then
     >&2 echo "Missing argument! Run like './x.sh start'"
     >&2 echo
     >&2 echo "x.sh is a helper script for Tobira development. You need to pass it some argument"
@@ -52,17 +52,17 @@ containers() {
 
 case "$1" in
     "check-system")
-        $basedir/util/scripts/check-system.sh
+        "$basedir"/util/scripts/check-system.sh
         ;;
     "clean")
-        $basedir/util/scripts/clean.sh
+        "$basedir"/util/scripts/clean.sh
         ;;
     "start")
-        if ! $basedir/util/scripts/check-system.sh > /dev/null; then
+        if ! "$basedir"/util/scripts/check-system.sh > /dev/null; then
             >&2 echo "Your system is missing some tools. Run './x.sh check-system' for more information"
             exit 1
         fi
-        $basedir/util/scripts/start-dev.sh
+        "$basedir"/util/scripts/start-dev.sh
         ;;
     "containers")
         containers "$2"

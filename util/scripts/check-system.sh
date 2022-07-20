@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-basedir=$(dirname "$0")
-cd $basedir/../..
-
 
 has_command() {
-    command -v $1 &> /dev/null
+    command -v "$1" &> /dev/null
 }
 
 print_yes() {

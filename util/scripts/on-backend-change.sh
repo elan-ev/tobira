@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 basedir=$(dirname "$0")
-source $basedir/common-vars.sh
+source "$basedir"/common-vars.sh
 
 
 # Regularly checks whether the Tobira port 3080 is open and once it is, reloads
@@ -14,7 +14,7 @@ reload_once_port_is_open() {
 }
 
 
-cd $basedir/../../backend
+cd "$basedir"/../../backend || exit 1
 
 cargo build
 

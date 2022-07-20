@@ -8,7 +8,7 @@
 # the auth-proxy for some reason.
 
 basedir=$(dirname "$0")
-source $basedir/common-vars.sh
+source "$basedir"/common-vars.sh
 
 target_port=3090
 if [[ $1 == without-login ]]; then
@@ -24,8 +24,8 @@ fi
     trap 'kill 0' SIGINT;
 
     # Start dev server for auto reload
-    penguin -p $our_port proxy localhost:$target_port &
+    penguin -p "$our_port" proxy localhost:$target_port &
 
     # Build everything once and start watching for filechanges
-    $basedir/watch.sh
+    "$basedir"/watch.sh
 )

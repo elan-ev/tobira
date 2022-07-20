@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 basedir=$(dirname "$0")
-source $basedir/common-vars.sh
+source "$basedir"/common-vars.sh
 
-cd $basedir/../../frontend
+cd "$basedir"/../../frontend || exit 1
 
 # This is created by webpack, but we need it to be present already as
 # otherwise 'watchexec' will error when attempting to watch it.
