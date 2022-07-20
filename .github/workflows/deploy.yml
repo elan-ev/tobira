@@ -63,7 +63,7 @@ jobs:
         rm util/dev-config/logo-large.svg || true
         rm util/dev-config/logo-small.svg || true
         rm util/dev-config/favicon.svg || true
-        rm util/login-handler/login-handler.py || true
+        rm util/containers/login-handler.py || true
         unzip artifacts.zip
 
     - name: Prepare files for deployment
@@ -72,7 +72,7 @@ jobs:
         cp -v util/dev-config/logo-large.svg .deployment/files/
         cp -v util/dev-config/logo-small.svg .deployment/files/
         cp -v util/dev-config/favicon.svg .deployment/files/
-        cp -v util/login-handler/login-handler.py .deployment/files/
+        cp -v util/containers/login-handler.py .deployment/files/
 
     - name: prepare deploy key
       env:
