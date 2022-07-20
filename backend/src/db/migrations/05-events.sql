@@ -34,8 +34,10 @@ create table events (
     is_live bool not null,
 
     -- Permissions: roles that are allowed to read/write
-    read_roles text[] not null,
-    write_roles text[] not null,
+    -- The check makes sure there are no `null` elements in the array,
+    -- and will be used for other arrays further down as well.
+    read_roles text[] not null check (array_position(read_roles, null) is null),
+    write_roles text[] not null check (array_position(read_roles, null) is null),
 
     -- Meta data
     title text not null,
@@ -43,17 +45,17 @@ create table events (
     duration int not null, -- in ms
     created timestamp with time zone not null,
     updated timestamp with time zone not null,
-    creators text[] not null
-        default '{}'
-        -- Make sure there are no `null` elements in the array.
-        check (array_position(creators, null) is null),
+    creators text[] not null default '{}' check (array_position(creators, null) is null),
 
     -- Additional metadata as an JSON object, where each value is a string array.
     metadata jsonb not null,
 
     -- Media
     thumbnail text, -- URL to an image
-    tracks event_track[] not null
+    tracks event_track[] not null check (
+        array_position(tracks, null) is null
+        and array_length(tracks, 1) > 0
+    ),
 );
 
 -- To get all events of a series (which happens often), we can use this index.
