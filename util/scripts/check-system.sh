@@ -14,7 +14,7 @@ print_no() {
 }
 
 
-echo "Checking if you have all tools required for Tobira development..."
+echo "Checking tools required to build Tobira..."
 exit_code=0
 
 
@@ -36,6 +36,13 @@ else
     print_no
     exit_code=1
 fi
+
+if [[ $1 == building-only ]]; then
+    exit $exit_code;
+fi
+
+echo
+echo "Checking additional/optionals tools for Tobira development..."
 
 printf "▸ docker-compose installed?"
 if has_command docker-compose; then
