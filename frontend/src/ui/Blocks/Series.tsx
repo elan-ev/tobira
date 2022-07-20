@@ -51,12 +51,14 @@ const readySeriesFragment = graphql`
         events {
             id
             title
-            thumbnail
-            duration
             created
             creators
             isLive
-            tracks { resolution }
+            syncedData {
+                duration
+                thumbnail
+                tracks { resolution }
+            }
         }
     }
 `;

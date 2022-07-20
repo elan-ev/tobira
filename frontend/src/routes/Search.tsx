@@ -155,10 +155,14 @@ const SearchEvent: React.FC<SearchEventProps> = ({
         <Item key={id} link={link}>
             <Thumbnail
                 event={{
-                    ...{ title, isLive, created },
-                    thumbnail: thumbnail ?? null,
-                    duration: duration,
-                    audioOnly: false, // TODO
+                    title,
+                    isLive,
+                    created,
+                    syncedData: {
+                        thumbnail,
+                        duration,
+                        audioOnly: false, // TODO
+                    },
                 }}
                 css={{ width: "100%" }}
             />

@@ -111,6 +111,12 @@ video:
   more-from-series: More from “{{series}}”
   deleted-video-block: The video referenced here was deleted.
   not-allowed-video-block: You are not allowed to view the video embedded here.
+  not-ready:
+    title: Video not processed, yet
+    text: >
+      This video hasn't been processed by Opencast, yet. This should
+      happen automatically soon. Try again in a few minutes.
+    label: unprocessed
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
   license: License

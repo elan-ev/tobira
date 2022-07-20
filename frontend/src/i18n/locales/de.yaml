@@ -113,6 +113,12 @@ video:
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
   not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
+  not-ready:
+    title: Video noch nicht verarbeitet
+    text: >
+      Das gewünschte Video ist leider noch nicht von Opencast verarbeitet worden. Dies sollte
+      in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
+    label: unverarbeitet
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
   license: Lizenz

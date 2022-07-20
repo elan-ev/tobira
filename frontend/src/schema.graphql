@@ -118,6 +118,14 @@ input NewVideoBlock {
   showTitle: Boolean!
 }
 
+type SyncedEventData {
+  updated: DateTimeUtc!
+  "Duration in milliseconds"
+  duration: Int!
+  tracks: [Track!]!
+  thumbnail: String
+}
+
 "A `Block`: a UI element that belongs to a realm."
 interface Block {
   id: ID!
@@ -153,14 +161,10 @@ type AuthorizedEvent implements Node {
   isLive: Boolean!
   title: String!
   description: String
-  "Duration in ms."
-  duration: Int!
-  thumbnail: String
-  tracks: [Track!]!
   created: DateTimeUtc!
-  updated: DateTimeUtc!
   creators: [String!]!
   metadata: ExtraMetadata!
+  syncedData: SyncedEventData
   "Whether the current user has write access to this event."
   canWrite: Boolean!
   series: ReadySeries

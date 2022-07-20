@@ -73,14 +73,16 @@ const query = graphql`
                 title
                 description
                 opencastId
-                thumbnail
                 created
-                updated
-                duration
                 canWrite
                 isLive
+                syncedData {
+                    duration
+                    thumbnail
+                    updated
+                    tracks { flavor resolution }
+                }
                 series { title ...SeriesBlockSeriesData }
-                tracks { flavor resolution }
                 hostRealms { id isRoot name path }
             }
         }
@@ -103,7 +105,7 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
         { label: t("manage.management"), link: "/~manage" },
         { label: t("manage.my-videos.title"), link: "/~manage/videos" },
     ];
-    
+
     const user = useUser();
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
@@ -167,7 +169,9 @@ const DirectLink: React.FC<Props> = ({ event }) => {
 const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
     const { t, i18n } = useTranslation();
     const created = new Date(event.created).toLocaleString(i18n.language);
-    const updated = new Date(event.updated).toLocaleString(i18n.language);
+    const updated = event.syncedData?.updated == null
+        ? null
+        : new Date(event.syncedData.updated).toLocaleString(i18n.language);
 
     return (
         <div css={{
@@ -187,7 +191,9 @@ const ThumbnailDateInfo: React.FC<Props> = ({ event }) => {
             <div css={{ fontSize: 14, margin: 4 }}>
                 {/* TODO: move those translation strings somewhere more appropriate */}
                 <DateValue label={t("video.created")} value={created} />
-                <DateValue label={t("video.updated")} value={updated} />
+                {updated
+                    ? <DateValue label={t("video.updated")} value={updated} />
+                    : t("video.not-ready.title")}
             </div>
         </div>
     );
@@ -261,17 +267,17 @@ const TechnicalDetails: React.FC<Props> = ({ event }) => {
             </span>
             <code css={{ fontSize: 14 }}>{event.opencastId}</code>
         </div>
-        <div css={{ marginTop: 8 }}>
+        {event.syncedData && <div css={{ marginTop: 8 }}>
             <span css={{ color: "var(--grey40)", marginRight: 8 }}>
                 {t("manage.my-videos.available-resolutions") + ":"}
             </span>
-            {event.tracks
+            {(event.syncedData?.tracks ?? [])
                 .map(track => track.resolution)
                 .filter((r): r is number[] => r !== null)
                 .sort((a, b) => a[0] - b[0])
                 .map(r => r.join("x"))
                 .join(", ")
             }
-        </div>
+        </div>}
     </>;
 };

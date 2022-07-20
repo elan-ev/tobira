@@ -13,11 +13,13 @@ begin
     insert into series (opencast_id, state, title, description, read_roles, write_roles, updated)
         values ('f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d', 'ready', 'Christmas Chemistry', 'Prof goes boom', '{"ROLE_ANONYMOUS"}', '{"ROLE_ADMIN"}', now())
         returning id into series_christmas;
-    -- Some series for testing edge cases
+    -- Some series and events for testing edge cases
     insert into series (opencast_id, state, title, read_roles, write_roles, updated)
         values ('68612b2e-423b-40c2-8933-92c3dd4a47a9', 'ready', 'Empty series', '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', now());
     insert into series (opencast_id, state, updated)
         values ('d9c9402d-2966-48a1-b082-ad5849202bca', 'waiting', '-infinity');
+    insert into events (opencast_id, state, updated, is_live, read_roles, write_roles, title, created, metadata)
+        values ('d9c9402d-2966-48a1-b082-ad5849202bca', 'waiting', '-infinity', false, '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', 'Waiting event', now(), '{}');
 
     -- Add lots of realms
     perform create_departments();
@@ -46,8 +48,9 @@ begin
 
 
     -- Add a bunch of events/videos
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
+            'ready',
             'bbb',
             'Big Buck Bunny',
             array[row(
@@ -69,8 +72,9 @@ begin
             false,
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
+        'ready',
             'cosmos-laundromat',
             'Cosmos Laundromat',
             array[row(
@@ -92,8 +96,9 @@ begin
             false,
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
+        'ready',
             'spring',
             'Spring',
             array[row(
@@ -116,8 +121,9 @@ begin
             '{}'
         );
 
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
+        'ready',
             'bee',
             'Guest Lecture: Group Intelligence of Bumblebees',
             array[row(
@@ -140,8 +146,9 @@ begin
             '{}'
         );
 
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
+        'ready',
             'pir-introduction',
             'Programmieren in Rust: Einführung',
             array[row(
@@ -163,8 +170,9 @@ begin
             false,
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
+        'ready',
             'pir-modules',
             'Programmieren in Rust: Module',
             array[row(
@@ -186,8 +194,9 @@ begin
             false,
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
+        'ready',
             'pir-stack-heap',
             'Programmieren in Rust: Stack & Heap',
             array[row(
@@ -209,8 +218,9 @@ begin
             false,
             '{}'
         );
-    insert into events (opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata)
         values (
+        'ready',
             'pir-performance',
             'Programmieren in Rust: Performance & Effizienz',
             array[row(

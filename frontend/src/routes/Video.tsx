@@ -7,6 +7,7 @@ import type { VideoQuery, VideoQuery$data } from "./__generated__/VideoQuery.gra
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
+import { WaitingPage } from "./Waiting";
 import { Nav } from "../layout/Navigation";
 import { Player, Track } from "../ui/player";
 import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
@@ -106,14 +107,16 @@ const query = graphql`
                 description
                 creators
                 created
-                updated
-                duration
-                thumbnail
                 isLive
                 metadata
                 canWrite
+                syncedData {
+                    updated
+                    duration
+                    thumbnail
+                    tracks { uri flavor mimetype resolution }
+                }
                 series { id title ... SeriesBlockReadySeriesData }
-                tracks { uri flavor mimetype resolution }
             }
         }
         realm: realmByPath(path: $realmPath) {
@@ -144,17 +147,21 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
         return unreachable();
     }
 
+    if (!isSynced(event)) {
+        return <WaitingPage type="video" />;
+    }
+
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <Player
-            tracks={event.tracks as Track[]}
+            tracks={event.syncedData.tracks as Track[]}
             title={event.title}
             isLive={event.isLive}
-            duration={event.duration}
-            coverImage={event.thumbnail}
+            duration={event.syncedData.duration}
+            coverImage={event.syncedData.thumbnail}
             css={{ margin: "0 auto" }}
         />
         <Metadata id={id} event={event} />
@@ -171,10 +178,13 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
 };
 
 type Event = Extract<NonNullable<VideoQuery$data["event"]>, { __typename: "AuthorizedEvent" }>;
+type SyncedEvent = Event & { syncedData: NonNullable<Event["syncedData"]> };
+
+const isSynced = (event: Event): event is SyncedEvent => Boolean(event.syncedData);
 
 type MetadataProps = {
     id: string;
-    event: Event;
+    event: SyncedEvent;
 };
 
 const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
@@ -185,7 +195,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
         <div css={{ display: "flex", alignItems: "center", marginTop: 24 }}>
             <div css={{ flex: "1" }}>
                 <VideoTitle title={event.title} />
-                <VideoDate created={event.created} updated={event.updated} />
+                <VideoDate created={event.created} updated={event.syncedData.updated} />
             </div>
             <div>
                 {event.canWrite && user !== "none" && user !== "unknown" && (

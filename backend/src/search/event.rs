@@ -83,7 +83,8 @@ impl_from_db!(
 impl Event {
     pub(crate) async fn load_by_ids(db: &impl GenericClient, ids: &[Key]) -> Result<Vec<Self>> {
         let selection = Self::select();
-        let query = format!("select {selection} from search_events where id = any($1)");
+        let query = format!("select {selection} from search_events \
+            where id = any($1) and state <> 'waiting'");
         let rows = db.query_raw(&query, dbargs![&ids]);
         collect_rows_mapped(rows, |row| Self::from_row_start(&row))
             .await
@@ -92,7 +93,7 @@ impl Event {
 
     pub(crate) async fn load_all(db: &impl GenericClient) -> Result<Vec<Self>> {
         let selection = Self::select();
-        let query = format!("select {selection} from search_events");
+        let query = format!("select {selection} from search_events where state <> 'waiting'");
         let rows = db.query_raw(&query, dbargs![]);
         collect_rows_mapped(rows, |row| Self::from_row_start(&row))
             .await

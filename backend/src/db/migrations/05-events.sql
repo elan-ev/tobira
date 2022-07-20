@@ -1,5 +1,23 @@
 select prepare_randomized_ids('event');
 
+-- Like series, events can exist in different states during their lifecycle:
+-- `'waiting'`: The series was created "out of band" in regards to the
+--     usual path of communication between Opencast and Tobira
+--     (i.e. the harvesting protocol).
+--     Thus, it does not have all its (meta-)data, yet,
+--     and is *waiting* to be fully synced.
+--     This can currently only happen using the `mount`-API
+--     used by the Opencast Admin UI.
+--     In this state, only the Opencast ID is valid.
+--     The value of all the other nullable fields is undefined,
+--     and the updated timestamp should be `-infinity`, i.e. before
+--     all other timestamps.
+-- `'ready'`: The event is fully synced and up to date, as far as
+--     Tobira is concerned. All of its mandatory data fields are set,
+--     and the optional ones should reflect the state of the Opencast
+--     event as of the last harvest.
+create type event_state as enum ('waiting', 'ready');
+
 create type event_track as (
     uri text,
     flavor text,
@@ -9,6 +27,8 @@ create type event_track as (
 
 create table events (
     id bigint primary key default randomized_id('event'),
+
+    state event_state not null,
 
     -- The Opencast UUID
     opencast_id text not null unique,
@@ -42,7 +62,7 @@ create table events (
     -- Meta data
     title text not null,
     description text,
-    duration int not null, -- in ms
+    duration int, -- in ms
     created timestamp with time zone not null,
     updated timestamp with time zone not null,
     creators text[] not null default '{}' check (array_position(creators, null) is null),
@@ -52,10 +72,15 @@ create table events (
 
     -- Media
     thumbnail text, -- URL to an image
-    tracks event_track[] not null check (
-        array_position(tracks, null) is null
-        and array_length(tracks, 1) > 0
-    ),
+    tracks event_track[] check (array_position(creators, null) is null),
+
+    constraint ready_event_has_fields check (state <> 'ready' or (
+        duration is not null
+        and tracks is not null and array_length(tracks, 1) > 0
+    )),
+    constraint waiting_event_not_updated check (state <> 'waiting' or (
+        updated = '-infinity'
+    ))
 );
 
 -- To get all events of a series (which happens often), we can use this index.
@@ -79,6 +104,10 @@ declare
     field record;
     element jsonb;
 begin
+    if new.state <> 'ready' then
+        return new;
+    end if;
+
     if jsonb_typeof(new.metadata) <> 'object' then
         raise exception '% is %, but should be a JSON object', col, jsonb_typeof(new.metadata);
     end if;
