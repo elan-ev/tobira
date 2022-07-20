@@ -32,6 +32,11 @@ fi
 
 # Manage the dev containers
 containers() {
+    if ! command -v docker-compose &> /dev/null; then
+        >&2 echo "'docker-compose' is not installed! (Also see './x.sh check-system')"
+        exit 1
+    fi
+
     docker_command="docker-compose -f $basedir/util/containers/docker-compose.yml"
     case "$1" in
         "start")
