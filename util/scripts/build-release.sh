@@ -3,6 +3,17 @@
 basedir=$(dirname "$0")
 cd "$basedir"/../.. || exit 1
 
+if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+    echo "The git working directory is not clean. This will be visible in the version string"
+    echo "of the generated Tobira binary. Are you sure you want to build anyway? (Write 'yes')"
+    read -r answer
+    if [[ $answer != yes ]]; then
+        echo "Stopping..."
+        exit 1;
+    fi
+fi
+
+
 # Build frontend
 cd frontend || exit 1
 npm ci
