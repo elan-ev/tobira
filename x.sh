@@ -10,6 +10,9 @@ if [[ $#  < 1 ]]; then
     >&2 echo "to tell it what to do. It mostly dispatches to the scripts in 'util/scripts'."
     >&2 echo
     >&2 echo "Useful commands:"
+    >&2 echo "  - ./x.sh check-system"
+    >&2 echo "        Check if you have all the tools required for Tobira development"
+    >&2 echo
     >&2 echo "  - ./x.sh start"
     >&2 echo "        Starts a development server on http://localhost:8030, watches all files"
     >&2 echo "        for modifications, automatically rebuilds when necessary and then reloads"
@@ -48,10 +51,17 @@ containers() {
 
 
 case "$1" in
+    "check-system")
+        $basedir/util/scripts/check-system.sh
+        ;;
     "clean")
         $basedir/util/scripts/clean.sh
         ;;
     "start")
+        if ! $basedir/util/scripts/check-system.sh > /dev/null; then
+            >&2 echo "Your system is missing some tools. Run './x.sh check-system' for more information"
+            exit 1
+        fi
         $basedir/util/scripts/start-dev.sh
         ;;
     "containers")
