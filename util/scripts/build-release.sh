@@ -33,8 +33,4 @@ cd .. || exit 1
 mkdir -p deploy
 cp backend/target/release/tobira deploy
 objcopy --compress-debug-sections deploy/tobira
-cp util/dev-config/config.toml deploy
-cp util/dev-config/logo-large.svg deploy
-cp util/dev-config/logo-small.svg deploy
-cp util/dev-config/favicon.svg deploy
-cp util/dev-config/jwt-key.pem deploy
+deploy/tobira write-config deploy/config.toml
