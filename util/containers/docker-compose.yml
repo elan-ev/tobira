@@ -15,7 +15,7 @@ services:
     network_mode: "host"
     volumes:
       - ./login-handler.py:/usr/bin/login-handler.py
-    command: python /usr/bin/login-handler.py
+    command: python -u /usr/bin/login-handler.py
 
   # A reverse proxy in front of Opencast that just adds some CORS headers
   # (required for the Tobira uploader, for example).
