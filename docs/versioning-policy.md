@@ -8,7 +8,7 @@ Only the latest version is officially supported.
 
 Tobira version identifiers look like `x.y`, e.g. `3.12`.
 
-- `x`: main version number. Is increased for releases that contain new features, major UI changes, or any other significant change.
+- `x`: main version number. Is increased for releases that contain new features, major UI changes, or any other significant changes.
 - `y`: patch version number. Is increased for releases that only contain bugfixes and other minor changes. Is reset to 0 whenever `x` is increased.
 
 **Important**: the version is simply an identifier that's easy to communicate and useful for "marketing".
@@ -16,7 +16,7 @@ You must **not** rely on these numbers to derive any information about breaking 
 **This is not SemVer!**
 
 However, we do care a lot about providing you with all relevant information about breaking changes!
-Every release mentions all potentially breaking changes in its changelog.
+Every release mentions all potentially breaking changes in its release notes.
 
 <br>
 <br>
