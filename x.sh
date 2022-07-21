@@ -67,14 +67,18 @@ case "$1" in
         ;;
     "start")
         if ! "$basedir"/util/scripts/check-system.sh > /dev/null; then
-            >&2 echo "Your system is missing some tools. Run './x.sh check-system' for more information"
+            "$basedir"/util/scripts/check-system.sh
+            >&2 echo
+            >&2 echo "Your system is missing some tools. Run './x.sh check-system' to repeat this check."
             exit 1
         fi
         "$basedir"/util/scripts/start-dev.sh
         ;;
     "build-release")
         if ! "$basedir"/util/scripts/check-system.sh building-only > /dev/null; then
-            >&2 echo "Your system is missing some tools. Run './x.sh check-system' for more information"
+            "$basedir"/util/scripts/check-system.sh building-only
+            >&2 echo
+            >&2 echo "Your system is missing some tools. Run './x.sh check-system' to repeat this check."
             exit 1
         fi
         "$basedir"/util/scripts/build-release.sh
