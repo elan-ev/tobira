@@ -6,11 +6,10 @@ We only maintain one branch and thus only have one release track.
 In other words: we don't backport bugfixes or other patches.
 Only the latest version is officially supported.
 
-Tobira version identifiers look like `x.y-name`, e.g. `3.12-cherry`.
+Tobira version identifiers look like `x.y`, e.g. `3.12`.
 
 - `x`: main version number. Is increased for releases that contain new features, major UI changes, or any other significant change.
-- `y`: patch version number. Is increased for releases that only contain bugfixes and other minor changes. Reset to 0 whenever `x` is increased.
-- `name`: an arbitrary nickname for this release. Is associated to `x` and changes if and only if `x` changes.
+- `y`: patch version number. Is increased for releases that only contain bugfixes and other minor changes. Is reset to 0 whenever `x` is increased.
 
 **Important**: the version is simply an identifier that's easy to communicate and useful for "marketing".
 You must **not** rely on these numbers to derive any information about breaking changes or ease of updating.
