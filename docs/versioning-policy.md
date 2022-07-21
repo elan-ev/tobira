@@ -17,7 +17,6 @@ You must **not** rely on these numbers to derive any information about breaking 
 
 However, we do care a lot about providing you with all relevant information about breaking changes!
 Every release mentions all potentially breaking changes in its changelog.
-Additionally, we maintain [a release overview, marking breaking changes](./releases.md).
 
 <br>
 <br>
@@ -30,8 +29,7 @@ Our definition of these terms for Tobira. Defines what we guarantee and what we 
 
 ### Breaking changes/stability guarantees
 
-We consider the following changes as *breaking*, highlighting them in changelogs and tracking them in [the release overview](./releases.md).
-The short tags at the beginning are the table column headers in said release overview.
+We consider the following changes as *breaking*, highlighting them in changelogs.
 
 - *config*: Changing the configuration file in a backwards-incompatible way.
 - *auth*: Changing the auth-system in a backwards-incompatible way.
