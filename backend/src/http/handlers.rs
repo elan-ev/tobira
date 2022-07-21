@@ -42,6 +42,16 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
         _ if method != Method::GET && method != Method::HEAD => {
+            // Do some helpful logging
+            let note = if path == "/~login" {
+                " (You have to configure your reverse proxy to handle login \
+                    requests for you! These should never arrive at Tobira. Please \
+                    see the docs about auth.)"
+            } else {
+                ""
+            };
+            debug!("Responding 405 Method not allowed to {method:?} {path} {note}");
+
             Response::builder()
                 .status(StatusCode::METHOD_NOT_ALLOWED)
                 .header("Content-Type", "text/plain; charset=UTF-8")
