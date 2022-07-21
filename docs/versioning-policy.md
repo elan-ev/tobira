@@ -8,8 +8,8 @@ Only the latest version is officially supported.
 
 Tobira version identifiers look like `x.y-name`, e.g. `3.12-cherry`.
 
-- `x`: main version number. Is increased for releases that contain new features, major UI changes, or any other non-small change.
-- `y`: patch version number. Is increased for releases that only contain bugfixes and other very minor changes. Reset to 0 whenever `x` is increased.
+- `x`: main version number. Is increased for releases that contain new features, major UI changes, or any other significant change.
+- `y`: patch version number. Is increased for releases that only contain bugfixes and other minor changes. Reset to 0 whenever `x` is increased.
 - `name`: an arbitrary nickname for this release. Is associated to `x` and changes if and only if `x` changes.
 
 **Important**: the version is simply an identifier that's easy to communicate and useful for "marketing".
@@ -18,7 +18,7 @@ You must **not** rely on these numbers to derive any information about breaking 
 
 However, we do care a lot about providing you with all relevant information about breaking changes!
 Every release mentions all potentially breaking changes in its changelog.
-Additionally, there is a release overview with breaking changes [here](./releases.md).
+Additionally, we maintain [a release overview, marking breaking changes](./releases.md).
 
 <br>
 <br>
