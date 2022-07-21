@@ -36,7 +36,7 @@ The short tags at the beginning are the table column headers in said release ove
 
 - *config*: Changing the configuration file in a backwards-incompatible way.
 - *auth*: Changing the auth-system in a backwards-incompatible way.
-- *cli*: Changing the stable parts of the CLI in a backwards-incompatible way (see below).
+- *cli*: Changing the command line interface in a backwards-incompatible way.
 - *meili*: Requiring a new version of MeiliSearch.
 - *pg*: Dropping support for a non-EOL version of PostgreSQL.
 - *oc-version*: Requiring a new Opencast version (often by requiring a newer version of the Tobira module).
@@ -47,30 +47,12 @@ The short tags at the beginning are the table column headers in said release ove
 
 All changes not listed in the previous section are considered *non-breaking* by us.
 We may release these changes at any time.
-And while most will likely be mentioned in the changelog somewhere, some may not.
-
 To name a few things explicitly (this is not a complete list!):
 
 - Any changes to the GraphQL API. **This API is internal and we will break it very regularly.**
 - Any changes to emitted HTML, DOM nodes, CSS, and JS.
-- Any user-facing changes, like adding features, removing features, changing features, change the design, ...
+- Any user-facing changes, like adding/removing/changing features, changing the design, ...
 - Database schema changes: we always provide scripts to easily migrate the database.
   Tobira automatically runs the appropriate scripts when starting, so you don't have to do anything.
 - Anything that requires a search index rebuild.
   These rebuilds will be performed automatically after updating Tobira and should be done within a few seconds (for tens of thousands of events/series).
-
-
-<br>
-<br>
-
-
-### Stable parts of the CLI (command line interface)
-
-The following commands/flags are considered stable and changing them will include a "breaking change" mention in the changelog.
-
-- `tobira serve`
-- `tobira worker`
-- `tobira check`
-- `tobira sync run [--daemon]`
-- `tobira search-index update [--daemon]`
-- `-c config-file` for all above commands
