@@ -36,10 +36,10 @@ create table series (
     updated timestamp with time zone not null,
 
     constraint ready_series_has_fields check (state <> 'ready' or (
-        title is not null and
-        read_roles is not null and
-        write_roles is not null and
-        updated <> '-infinity'
+        title is not null
+        and read_roles is not null
+        and write_roles is not null
+        and updated <> '-infinity'
     )),
     constraint waiting_series_not_updated check (state <> 'waiting' or (
         updated = '-infinity'
