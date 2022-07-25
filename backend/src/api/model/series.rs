@@ -137,7 +137,13 @@ impl ReadySeries {
     }
 }
 
-impl<S: Series> Node for S {
+impl Node for WaitingSeries {
+    fn id(&self) -> Id {
+        Series::id(self)
+    }
+}
+
+impl Node for ReadySeries {
     fn id(&self) -> Id {
         Series::id(self)
     }
