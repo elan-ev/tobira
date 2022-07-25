@@ -102,7 +102,7 @@ impl OcClient {
         let (out, body_len) = Self::deserialize_response::<HarvestResponse>(response, &uri).await?;
         debug!(
             "Received {} KiB ({} items) from the harvest API (in {:.2?})",
-            body_len,
+            body_len / 1024,
             out.items.len(),
             before.elapsed(),
         );
