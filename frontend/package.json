@@ -42,7 +42,6 @@
     "paella-basic-plugins": "^1.0.16",
     "paella-core": "^1.1.3",
     "paella-zoom-plugin": "^1.0.11",
-    "plyr-react": "^5.0.2",
     "raw-loader": "^4.0.2",
     "react": "^18.1.0",
     "react-beforeunload": "^2.5.3",

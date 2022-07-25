@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { MAIN_PADDING } from "../../layout/Root";
 import { Spinner } from "../Spinner";
 import PaellaPlayer from "./Paella";
-import PlyrPlayer from "./Plyr";
 
 
 export type PlayerProps = {
@@ -23,6 +22,14 @@ export type Track = {
     resolution: number[] | null;
 };
 
+/**
+ * Video player.
+ *
+ * This is currently always Paella, but we once had two players that were used
+ * depending on the number of tracks. For now we removed the other player, but
+ * we might have multiple players in the future again. That's the reason for
+ * leaving a bit of the "dispatch" logic in place.
+ */
 export const Player: React.FC<PlayerProps> = ({
     className,
     tracks,
@@ -32,12 +39,11 @@ export const Player: React.FC<PlayerProps> = ({
     isLive,
 }) => {
     const flavors = new Set(tracks.map(t => t.flavor));
-    const usePaella = flavors.size > 1;
 
     // Find a suitable aspect ratio for our height/width limiting below. For
     // Paella, we just use 16:9 because it's unclear what else we should use
     // with multi stream video.
-    const aspectRatio = usePaella ? [16, 9] : tracks[0].resolution ?? [16, 9];
+    const aspectRatio = flavors.size > 1 ? [16, 9] : tracks[0].resolution ?? [16, 9];
 
     return (
         <div className={className} css={{
@@ -60,17 +66,19 @@ export const Player: React.FC<PlayerProps> = ({
             },
         }}>
             <Suspense fallback={<PlayerFallback image={coverImage} />}>
-                {usePaella
-                    ? <LoadPaellaPlayer {...{ duration, title, tracks, isLive }} />
-                    : <LoadPlyrPlayer {...{ title, tracks, isLive }} />}
+                <LoadPaellaPlayer {...{ duration, title, tracks, isLive }} />
             </Suspense>
         </div>
     );
 };
 
 const LoadPaellaPlayer = PaellaPlayer;
-const LoadPlyrPlayer = PlyrPlayer;
 
+/**
+ * Suspense fallback while the player JS files are still loading. This is
+ * completely unused right now as the player code is embedded in the main
+ * bundle. Splitting the bundle is tracked by #257.
+ */
 const PlayerFallback: React.FC<{ image: string | null }> = ({ image }) => {
     const { t } = useTranslation();
 
