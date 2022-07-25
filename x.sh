@@ -87,6 +87,6 @@ case "$1" in
         containers "$2"
         ;;
     *)
-        foo;
+        >&2 echo "Unknown command '$1'. Run this script without arguments for more information."
         ;;
 esac
