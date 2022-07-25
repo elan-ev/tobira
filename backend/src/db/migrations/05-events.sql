@@ -47,7 +47,7 @@ create table events (
     updated timestamp with time zone not null,
     creators text[] not null default '{}' check (array_position(creators, null) is null),
 
-    -- Additional metadata as an JSON object, where each value is a string array.
+    -- Additional metadata as a JSON object, where each value is a string array.
     metadata jsonb not null,
 
     -- Media
