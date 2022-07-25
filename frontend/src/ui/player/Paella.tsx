@@ -192,6 +192,14 @@ const PAELLA_CONFIG = {
             enabled: true,
             side: "left",
         },
+        "es.upv.paella.forwardButtonPlugin": {
+            "enabled": true,
+            "side": "left",
+        },
+        "es.upv.paella.backwardButtonPlugin": {
+            "enabled": true,
+            "side": "left",
+        },
 
         // Buttons on the right side
         "es.upv.paella.captionsSelectorPlugin": {
