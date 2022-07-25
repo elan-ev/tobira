@@ -110,7 +110,7 @@ begin
     insert into search_index_queue (item_id, kind)
     select affected.id, 'realm'
     from blocks
-    inner join realms on blocks.realm_id = realms.id
+    inner join realms on blocks.id = realms.name_from_block
     inner join realms affected on affected.full_path like realms.full_path || '%'
     -- Ho ho ho, this is interesting. To deduplicate some code, we use this
     -- function with both, events and series. And we don't even care which kind
