@@ -8,9 +8,8 @@ use tokio_postgres::types::ToSql;
 use crate::{
     auth::ROLE_ADMIN,
     config::Config,
-    db::{types::{EventTrack, SeriesState, Key}, DbConnection},
+    db::{types::{EventTrack, SeriesState}, DbConnection},
     prelude::*,
-    search::{self, IndexItemKind},
 };
 use super::{status::SyncStatus, OcClient};
 
@@ -130,8 +129,6 @@ async fn store_in_db(
     let mut upserted_series = 0;
     let mut removed_series = 0;
 
-    let mut new_search_items = Vec::new();
-
     for item in items {
         // Make sure we haven't received this update yet. The code below can
         // handle duplicate items alright, but this way we can save on some DB
@@ -172,7 +169,7 @@ async fn store_in_db(
                 acl.write.retain(|role| role != ROLE_ADMIN);
 
                 // We upsert the event data.
-                let new_id = upsert(db, "events", "opencast_id", &[
+                upsert(db, "events", "opencast_id", &[
                     ("opencast_id", &opencast_id),
                     ("series", &series_id),
                     ("part_of", &part_of),
@@ -189,8 +186,6 @@ async fn store_in_db(
                     ("write_roles", &acl.write),
                     ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),
                 ]).await?;
-
-                new_search_items.push((Key(new_id as u64), IndexItemKind::Event));
 
                 trace!("Inserted or updated event {} ({})", opencast_id, title);
                 upserted_events += 1;
@@ -260,10 +255,6 @@ async fn store_in_db(
             removed_series,
             before.elapsed(),
         );
-    }
-
-    if !new_search_items.is_empty() {
-        search::queue_many(&mut **db, new_search_items).await?;
     }
 
     Ok(())
