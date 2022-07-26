@@ -1,6 +1,5 @@
 use std::{time::{Duration, Instant}, fmt};
 
-use futures::pin_mut;
 use meilisearch_sdk::{
     client::Client as MeiliClient,
     indexes::Index,
@@ -10,7 +9,6 @@ use meilisearch_sdk::{
 use postgres_types::{FromSql, ToSql};
 use secrecy::{Secret, ExposeSecret};
 use serde::{Deserialize, Serialize};
-use tokio_postgres::{binary_copy::BinaryCopyInWriter, GenericClient};
 
 use crate::{
     db::{DbConnection, types::Key},
@@ -241,61 +239,6 @@ impl fmt::Debug for SearchId {
 
 // ===== Various functions ========================================================================
 
-/// Adds many items to the "search index queue" to mark them as "needs update in
-/// index".
-pub(crate) async fn queue_many(
-    db: &mut impl GenericClient,
-    items: impl IntoIterator<Item = (Key, IndexItemKind)>,
-) -> Result<()> {
-    let tx = db.transaction().await?;
-
-    // Here we prepare a dummy statement in order to acquire the `Type`s of the
-    // two fields.
-    let statement = tx
-        .prepare("insert into search_index_queue (item_id, kind) values ($1, $2)")
-        .await?;
-    let id_type = statement.params()[0].clone();
-    let kind_type = statement.params()[1].clone();
-
-    // Unfortunately, upserting via `COPY IN` is not trivially possible, so we
-    // have to use a workaround. We create a new temporary table in which we
-    // `COPY IN`.
-    let temp_table = format!(
-        "temp_search_index_queue_bulk_upsert_helper_{}",
-        rand::random::<u128>(),
-    );
-    let sql = format!("create temp table {temp_table} \
-        (like search_index_queue including defaults including identity)
-        on commit drop");
-    tx.execute(&sql, &[]).await
-        .context("failed to create temporary table for bulk upsert")?;
-
-    // We insert the data via `COPY IN`, one of the fastest ways to bulk insert.
-    let sql = format!("copy {temp_table} (item_id, kind) from stdin binary");
-    let sink = tx.copy_in(&sql).await?;
-    let writer = BinaryCopyInWriter::new(sink, &[id_type, kind_type]);
-    pin_mut!(writer);
-    for (id, kind) in items {
-        writer.as_mut().write(&[&id, &kind]).await?;
-    }
-    writer.finish().await?;
-
-    // Now we still have to move the data from the temporary table to the main
-    // table.
-    let sql = format!("insert into search_index_queue (item_id, kind) \
-        select item_id, kind \
-        from {temp_table} \
-        on conflict do nothing");
-    let affected = tx.execute(&sql, &[]).await?;
-
-    // Commit transaction, which also drops the temporary table.
-    tx.commit().await
-        .context("failed to commit bulk search queue insert")?;
-
-    debug!("Enqueued {affected} items into search index queue");
-
-    Ok(())
-}
 
 /// Deletes all indexes (used by Tobira) including all their data! If any index
 /// does not exist, this function just does nothing.

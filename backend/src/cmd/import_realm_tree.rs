@@ -68,18 +68,6 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     insert_realm(&**conn, &root, 0, &mut dummy_blocks).await?;
     info!("Done inserting realms");
 
-    // To reindex them, we just queue them all. This tool is currently only used
-    // as intial import, so it's fine.
-    info!("Queue all realms for reindexing...");
-    let sql = "\
-        insert into search_index_queue (item_id, kind) \
-        select id, 'realm' \
-        from realms \
-        on conflict do nothing\
-    ";
-    conn.execute(sql, &[]).await?;
-    info!("Queued all realms");
-
     Ok(())
 }
 
