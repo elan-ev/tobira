@@ -74,6 +74,13 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration, is
 
     return (
         <div
+            // We use `key` here to force React to re-create this `div` and not
+            // reuse the old one. This is useful as Paella's cleanup function
+            // sometimes does not clean everything. We can (and should) always
+            // report those bugs and then update Paella, but this way we avoid
+            // all these problems. And re-rendering the div is really not
+            // problematic as it doesn't have many children.
+            key={title}
             ref={ref}
             css={{
                 height: "100%",
@@ -184,6 +191,14 @@ const PAELLA_CONFIG = {
         "es.upv.paella.volumeButtonPlugin": {
             enabled: true,
             side: "left",
+        },
+        "es.upv.paella.forwardButtonPlugin": {
+            "enabled": true,
+            "side": "left",
+        },
+        "es.upv.paella.backwardButtonPlugin": {
+            "enabled": true,
+            "side": "left",
         },
 
         // Buttons on the right side

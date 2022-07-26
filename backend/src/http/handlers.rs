@@ -249,13 +249,6 @@ impl CommonHeadersExt for hyper::http::response::Builder {
     fn with_content_security_policies(self, _config: &Config, _nonce: &str) -> Self {
         // Some comments about all relaxations:
         //
-        // - Unfortunately, there is a problem with Firefox, Plyr and CSP.
-        //   Plyr's icons are basically:
-        //   `<svg><use xlink:href="/~assets/plyr.svg#some-id" /></svg>`
-        //   Firefox does not consider this to be a `img-src` case, but rather
-        //   something new that is currently only covered by `default-src`. See
-        //   https://bugzilla.mozilla.org/show_bug.cgi?id=1303364
-        //
         // - `img` and `media` are loaded from Opencast. We know one URL host,
         //   but it's not guaranteed that the images are on that configured
         //   host. So we kind of have to allow any source. For live streams via
@@ -281,7 +274,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
         // and `font-src` is an option. Then again, admins can also
         // set/override those headers in their nginx?
         let value = format!("\
-            default-src 'self'; \
+            default-src 'none'; \
             img-src *; \
             media-src * blob:; \
             font-src *; \
@@ -289,10 +282,6 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             style-src 'self' 'unsafe-inline'; \
             connect-src *; \
             worker-src blob: 'self'; \
-            child-src 'none'; \
-            frame-src 'none'; \
-            manifest-src 'none'; \
-            object-src 'none'; \
             form-action 'none'; \
         ");
 
