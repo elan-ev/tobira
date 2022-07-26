@@ -403,7 +403,8 @@ pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) -> ! {
 
     loop {
         // Remove outdated user sessions.
-        let sql = "delete from user_sessions where extract(epoch from now() - created) > $1";
+        let sql = "delete from user_sessions \
+            where extract(epoch from now() - created) > $1::double precision";
         match db.execute(sql, &[&config.session_duration.as_secs_f64()]).await {
             Err(e) => error!("Error deleting outdated user sessions: {}", e),
             Ok(0) => debug!("No outdated user sessions found in DB"),
