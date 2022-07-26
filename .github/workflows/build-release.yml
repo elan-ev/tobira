@@ -1,0 +1,40 @@
+on:
+  push:
+    tags:
+    - 'v*.*'
+
+name: Create draft release and build release artifacts
+
+# We have two separate jobs so that a human can start proof-reading and
+# improving the release notes as quickly as possible. Generating the artifacts
+# takes quite a while. This way, they are simply added once ready.
+jobs:
+  create-draft-release:
+    name: Create draft release from tag
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Create draft release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          generate_release_notes: true
+
+  build-and-attach-artifacts:
+    name: Build and attach release artifacts
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create release build
+        run: ./x.sh build-release
+
+      - name: create new release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            deploy/tobira
+            deploy/config.toml
+          draft: true
+          fail_on_unmatched_files: true
+          generate_release_notes: true
