@@ -82,6 +82,8 @@ begin
         perform queue_realm_for_reindex(new);
     end if;
 
+    -- If the name of this realm has changed, we also need to queue all child
+    -- realms as their 'ancestor_names' have changed.
     if tg_op = 'UPDATE' and (
         old.name is distinct from new.name or
         old.name_from_block is distinct from new.name_from_block
