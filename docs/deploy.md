@@ -2,8 +2,11 @@
 
 ## 1. Deploy binary
 
-Until we provide official releases, you have to [build Tobira yourself](./build-release.md).
-Afterwards, copy the binary to your server.
+Copy the `tobira` binary attached to [our releases](https://github.com/elan-ev/tobira/releases) to your server (e.g. to `/opt/tobira`).
+
+If you need to build your own binary, run `./x.sh build-release` at the top of the repository.
+You will find the release artifacts in `deploy/`.
+Also check [our build requirements](./build-requirements.md).
 
 
 ## 2. Setup PostgreSQL and MeiliSearch

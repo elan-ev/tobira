@@ -25,5 +25,3 @@ There are some requirements.
 - We assume that everyone who has `write` access to something also has `read`
   access. We often don't check the roles allowed to read if we already checked
   the roles allowed to write.
-
-- ... (list in progress)
