@@ -21,7 +21,7 @@ const parseConfig: () => Config = () => {
 };
 
 type Config = {
-    version: string;
+    version: VersionInfo;
     auth: AuthConfig;
     siteTitle: TranslatedString;
     opencast: OpencastConfig;
@@ -63,6 +63,13 @@ type OpencastConfig = {
     uploadNode: string;
     studioUrl: string;
     editorUrl: string;
+};
+
+type VersionInfo = {
+    identifier: string;
+    buildDateUtc: string;
+    gitCommitHash: string;
+    gitWasDirty: boolean;
 };
 
 type MetadataLabel = "builtin:license" | "builtin:source" | TranslatedString;

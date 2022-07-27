@@ -1,6 +1,10 @@
 name: Build & test
 
-on: [pull_request, push]
+on:
+  pull_request:
+  push:
+    branches:
+
 
 env:
   CARGO_TERM_COLOR: always
