@@ -39,6 +39,7 @@ const query = graphql`
 
 const About: React.FC = () => {
     const { t } = useTranslation();
+    const version = CONFIG.version;
 
     return (
         <div css={{ margin: "0 auto", maxWidth: 600 }}>
@@ -50,7 +51,17 @@ const About: React.FC = () => {
                 </Trans>
             </p>
             <h2>{t("version-information")}</h2>
-            <code>tobira {CONFIG.version}</code>
+            <a href={`https://github.com/elan-ev/tobira/releases/tag/${version.identifier}`}>
+                Tobira <strong>{version.identifier}</strong>
+            </a>
+            <br />
+            {"Git info: "}
+            <a href={`https://github.com/elan-ev/tobira/commit/${version.gitCommitHash}`}>
+                <code css={{ fontSize: 14 }}>{version.gitCommitHash}</code>
+            </a>
+            {version.gitWasDirty && ", dirty"}
+            <br />
+            Built: {version.buildDateUtc}
         </div>
     );
 };

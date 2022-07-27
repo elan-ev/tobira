@@ -72,7 +72,12 @@ impl Assets {
         path_overrides.insert("favicon.svg".into(), config.theme.favicon.clone());
 
         let mut variables = <HashMap<String, String>>::new();
-        variables.insert("version".into(), crate::version());
+        variables.insert("version".into(), json!({
+            "identifier": crate::version::identifier(),
+            "buildDateUtc": crate::version::build_time_utc(),
+            "gitCommitHash": crate::version::git_commit_hash(),
+            "gitWasDirty": crate::version::git_was_dirty(),
+        }).to_string());
         variables.insert("global-style".into(), config.theme.to_css());
         variables.insert("auth".into(), json!({
             "loginLink": config.auth.login_link,

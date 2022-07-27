@@ -23,6 +23,8 @@ mod prelude;
 mod search;
 mod sync;
 mod util;
+mod version;
+
 
 #[tokio::main]
 async fn main() {
@@ -65,7 +67,7 @@ async fn run() -> Result<()> {
     // using some runtime code.
     let args = Args::from_arg_matches(
         &Args::command()
-            .version(&*version())
+            .version(&*version::full())
             .get_matches(),
     )?;
 
@@ -173,26 +175,4 @@ async fn connect_and_prepare_db_and_meili(config: &Config) -> Result<(Pool, sear
         .context("failed to connect to MeiliSearch")?;
 
     Ok((db, search))
-}
-
-
-/// Gives you information about this very version of Tobira,
-/// i.e. it's semantic version, which commit it was built from,
-/// and when. It also indicates whether or not the working directory
-/// was clean at the time, since this is a potential source of errors.
-pub fn version() -> String {
-    mod build_info {
-        include!(concat!(env!("OUT_DIR"), "/built.rs"));
-    }
-    format!(
-        "{} ({}{}), built {}",
-        build_info::PKG_VERSION,
-        build_info::GIT_COMMIT_HASH.unwrap(),
-        if let Some(true) = build_info::GIT_DIRTY {
-            ", dirty"
-        } else {
-            ""
-        },
-        build_info::BUILT_TIME_UTC,
-    )
 }
