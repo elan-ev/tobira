@@ -42,7 +42,7 @@ if [[ $1 == building-only ]]; then
 fi
 
 echo
-echo "Checking additional/optionals tools for Tobira development..."
+echo "Checking additional/optional tools for Tobira development..."
 
 printf "▸ docker-compose installed?"
 if has_command docker-compose; then

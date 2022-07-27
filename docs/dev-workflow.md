@@ -28,7 +28,7 @@ Once the relevant component has been rebuilt, all browser sessions of Tobira are
 ## Using `mold` as linker to improve incremental build times
 
 You can use [the `mold` linker](https://github.com/rui314/mold) to substantially reduce backend build times for incremental builds (i.e. when you compiled the backend once already).
-Install mold, then create the file `backend/.cargo/config` and fill it with this:
+Install mold, then create the file `backend/.cargo/config.toml` and fill it with this:
 
 ```toml
 [target.x86_64-unknown-linux-gnu]

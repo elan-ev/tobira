@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import base64
 import cgi
@@ -108,8 +108,6 @@ class UnixSocketHttpServer(socketserver.UnixStreamServer):
 
 
 if __name__ == "__main__":
-    httpd = None
-
     if len(sys.argv) == 2:
         socket = sys.argv[1]
 
@@ -132,8 +130,8 @@ if __name__ == "__main__":
     # it seems to work fine without this. But in docker containers, this is
     # required. 🤷
     def terminate(signal,frame):
-      httpd.server_close()
-      sys.exit(0)
+        httpd.server_close()
+        sys.exit(0)
     signal.signal(signal.SIGTERM, terminate)
 
     httpd.serve_forever()
