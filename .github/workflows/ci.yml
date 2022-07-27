@@ -100,4 +100,4 @@ jobs:
           util/dev-config/favicon.svg
           deploy-id
           .deployment/templates/config.toml
-          util/login-handler/login-handler.py
+          util/containers/login-handler.py
