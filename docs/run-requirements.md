@@ -11,5 +11,5 @@ To run, Tobira requires:
 - Certain things from your Opencast installation. See [this document](./opencast-requirements.md) for more information.
 
 
-If you are a developer, checkout the `scripts` folder!
+If you are a developer, checkout the `util` folder!
 

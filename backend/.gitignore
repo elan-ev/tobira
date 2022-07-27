@@ -1,3 +1,2 @@
 /target
-sync-config.toml
-.cargo/config
+.cargo/config.toml

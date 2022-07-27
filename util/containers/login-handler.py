@@ -1,9 +1,10 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 import base64
 import cgi
 import http.server
 import os
+import signal
 import socket
 import socketserver
 import sys
@@ -120,9 +121,17 @@ if __name__ == "__main__":
         httpd = UnixSocketHttpServer(socket, Handler)
         os.chmod(socket, 0o777)
         print(f"Dummy login handler listening on socket {socket}...")
-        httpd.serve_forever()
     else:
         port = 3091
         httpd = DevTCPServer(("", port), Handler)
         print(f"Dummy login handler listening on port {port}...")
-        httpd.serve_forever()
+
+    # React to sigterm to be able to quickly shut down. Interestingly, on host
+    # it seems to work fine without this. But in docker containers, this is
+    # required. 🤷
+    def terminate(signal,frame):
+        httpd.server_close()
+        sys.exit(0)
+    signal.signal(signal.SIGTERM, terminate)
+
+    httpd.serve_forever()

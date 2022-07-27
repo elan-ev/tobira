@@ -1,32 +1,34 @@
 # Development workflow (compiling/building/testing)
 
+**TL;DR: Run `./x.sh start`**.
+
 Some software is required to build Tobira. See [this document](./build-requirements.md) for more information.
 
 Unfortunately, the build process is a bit involved.
-**We recommend using [`floof`](https://github.com/LukasKalbertodt/floof)** so you can use `floof.yaml` to handle that complexity for you.
-Floof also gives you auto-rebuilds and browser-reloads whenever you change any file.
+**We recommend using our script `x.sh`** which handles most of that complexity for you.
+In particular, with `./x.sh start` you get auto-rebuilds and browser-reloads whenever you change any file.
+Simply running `./x.sh` shows you the available commands/scripts.
 
 
-## Using floof (recommended)
+## Using `x.sh` (recommended)
 
-After installing floof, you just have to run `floof` inside the root directory of this repository.
-This will then build everything in the right order for you and then watch for file changes.
+Ideally you want to use `./x.sh start`, but for that you need to install a few tools.
+Run `./x.sh check-system` to see what you are still missing and how to install those.
+
+After you installed all tools, **simply run `./x.sh start`**.
+This will compile everything and watch for file changes to recompile and reload your browser sessions.
 Note that the first build can take a while.
-Floof also starts a dev server on http://127.0.0.1:8030 that forwards all requests to the Tobira backend.
+This also starts a dev server, which you want to use to access Tobira: http://127.0.0.1:8030.
 You want to open that URL in your browser during development.
 
-Whenever a source file changes, floof will automatically rebuild what's necessary.
 Frontend rebuilds are fairly quick, backend ones can take up to 15s.
 Once the relevant component has been rebuilt, all browser sessions of Tobira are automatically reloaded.
 
-Note that the `floof` build uses `relay-compiler --watch` which relies on [`watchman`](https://github.com/facebook/watchman).
-This needs to be installed on your system somehow or this part of the script will not work,
-and `relay-compiler` will only run once.
 
 ## Using `mold` as linker to improve incremental build times
 
 You can use [the `mold` linker](https://github.com/rui314/mold) to substantially reduce backend build times for incremental builds (i.e. when you compiled the backend once already).
-Install mold, then create the file `backend/.cargo/config` and fill it with this:
+Install mold, then create the file `backend/.cargo/config.toml` and fill it with this:
 
 ```toml
 [target.x86_64-unknown-linux-gnu]
@@ -35,8 +37,6 @@ rustflags = ["-C", "link-arg=-fuse-ld=/path/to/mold"]
 ```
 
 Where `/path/to/mold` is likely `/usr/local/bin/mold` (check `which mold`!).
-Unfortunately, currently Cargo doesn't allow to specify this per profile (e.g. debug), so this enables mold for release builds as well.
-Just be aware of that before creating release artifacts, for example.
 
 ## Test data
 
@@ -44,21 +44,21 @@ A freshly started Tobira instance has no data in it.
 This repository provides some dummy data that you can use.
 We are mainly talking about *video data* (event & series from Opencast) and *realm data* (page structure).
 
-You can use `scripts/fixtures.sql` to get both kinds of data into the development database:
+You can use `util/fixtures.sql` to get both kinds of data into the development database:
 
 ```sh
 # in `backend` folder
-cargo run -- db script ../scripts/fixtures.sql
+cargo run -- db script ../util/fixtures.sql
 ```
 
 To import video data, you can also sync with an Opencast instance that has the Tobira module enabled (there is currently no public one, sorry).
-To do this, create a copy of `backend/config.toml` and call it `backend/sync-config.toml`.
+To do this, create a copy of `util/dev-config/config.toml` and call it `util/dev-config/sync-config.toml`.
 Change the sync section in that file to contain the correct credentials for your Opencast instance.
-Then run `cargo run -- -c sync-config.toml sync run`.
+Then run `cargo run -- sync run -c ../util/dev-config/sync-config.toml`.
 
 To just import realm data, you can use the `import-realm-tree` subcommand and pass it a fitting YAML file.
-This repository contains `.deployment/files/realms.yaml` (big) and `backend/dummy-realms.yaml` (small).
-Import those with `cargo run -- import-realm-tree dummy-realms.yaml`.
+This repository contains `.deployment/files/realms.yaml` (big) and `util/dummy-realms.yaml` (small).
+Import those with `cargo run -- import-realm-tree ../util/dummy-realms.yaml`.
 
 
 ## DB management, migrations and more
@@ -81,8 +81,8 @@ For Rust, [the IntelliJ plugin](https://intellij-rust.github.io/) is apparently 
 
 ## Building manually
 
-This section describes the knowledge encoded in `floof.yaml`.
-If you use `floof`, you do not really care about this section.
+This section describes the knowledge encoded in `x.sh` and other scripts.
+If you use these scripts, you do not really care about this section.
 
 
 ### Export GraphQL Schema
@@ -136,6 +136,7 @@ npx relay-compiler --watch
 
 This gives you the fastest rebuilds.
 In rare cases, some caching problems occur and you need to restart these commands to get rid of outdated errors.
+Note: `relay-compiler --watch` requires `watchman` to be installed!
 
 
 ### Building the backend

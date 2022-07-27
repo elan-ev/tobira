@@ -1,0 +1,2 @@
+# A separate config for syncing with oc.tobira.ethz.ch, containing the admin password.
+sync-config.toml

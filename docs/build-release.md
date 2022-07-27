@@ -6,12 +6,25 @@ This is primarily targeted at users of Tobira.
 If you are a developer, [the development workflow document](./dev-workflow.md) is likely more important to you.
 
 
-## 1. Install Prerequisites
+## Using our script (recommended)
+
+In the root of the repository, just run:
+
+```
+./x.sh build-release
+```
+
+You will find the release artifacts in `deploy/`.
+
+
+## Building manually
+
+### 1. Install Prerequisites
 
 See [this document](./build-requirements.md) for information on this step.
 
 
-## 2. Build frontend
+### 2. Build frontend
 
 Switch to the `frontend` directory and run the following commands:
 
@@ -22,7 +35,7 @@ npx webpack --progress --mode=production    # Bundle & optimize everything
 ```
 
 
-## 3. Build backend (deployable binary)
+### 3. Build backend (deployable binary)
 
 Switch to the `backend` directory and run the following command:
 
@@ -35,6 +48,9 @@ This is a (mostly) stand-alone binary that you can simply deploy to your server.
 To reduce the size of the binary, you should run `objcopy --compress-debug-sections tobira`.
 This has no disadvantages.
 You probably don't want to `strip tobira`: this removes all debug information, making it harder to investigate any potential crashes/bugs.
+
+
+## After building: deploy
 
 To actually run Tobira, you still need to provide a valid configuration and related files (e.g. a logo).
 For that and more, see [the deployment docs](./deploy.md).
