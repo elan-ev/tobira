@@ -61,6 +61,9 @@ create table events (
     duration int, -- in ms
     created timestamp with time zone not null,
     updated timestamp with time zone not null,
+    start_time timestamp with time zone,
+    end_time timestamp with time zone,
+    
     creators text[] not null default '{}' check (array_position(creators, null) is null),
 
     -- Additional metadata as a JSON object, where each value is a string array.
