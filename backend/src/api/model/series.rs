@@ -6,7 +6,7 @@ use crate::{
         err::ApiResult,
         Id,
         model::{
-            realm::Realm,
+            realm::{Realm, REALM_JOINS},
             event::{AuthorizedEvent, EventSortOrder}
         },
         Node,
@@ -42,6 +42,7 @@ pub(crate) trait Series {
         let query = format!("\
             select {selection} \
             from realms \
+            {REALM_JOINS} \
             where exists ( \
                 select 1 as contains \
                 from blocks \
