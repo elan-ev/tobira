@@ -9,8 +9,8 @@ import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
 import { RootLoader } from "../layout/Root";
 import { Nav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
+import { WaitingPage } from "../ui/Waiting";
 
-import { WaitingPage } from "./Waiting";
 import { NotFound } from "./NotFound";
 import { SeriesByOpencastIdQuery } from "./__generated__/SeriesByOpencastIdQuery.graphql";
 import { b64regex } from "./util";

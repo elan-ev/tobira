@@ -4,13 +4,9 @@ select prepare_randomized_ids('event');
 -- `'waiting'`: The series was created "out of band" in regards to the
 --     usual path of communication between Opencast and Tobira
 --     (i.e. the harvesting protocol).
---     Thus, it does not have all its (meta-)data, yet,
+--     Thus, it might not have all its (meta-)data, yet,
 --     and is *waiting* to be fully synced.
---     This can currently only happen using the `mount`-API
---     used by the Opencast Admin UI.
---     In this state, only the Opencast ID is valid.
---     The value of all the other nullable fields is undefined,
---     and the updated timestamp should be `-infinity`, i.e. before
+--     The updated timestamp should be `-infinity`, i.e. before
 --     all other timestamps.
 -- `'ready'`: The event is fully synced and up to date, as far as
 --     Tobira is concerned. All of its mandatory data fields are set,
@@ -104,10 +100,6 @@ declare
     field record;
     element jsonb;
 begin
-    if new.state <> 'ready' then
-        return new;
-    end if;
-
     if jsonb_typeof(new.metadata) <> 'object' then
         raise exception '% is %, but should be a JSON object', col, jsonb_typeof(new.metadata);
     end if;

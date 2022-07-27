@@ -114,7 +114,7 @@ video:
   not-ready:
     title: Video not processed, yet
     text: >
-      This video hasn't been processed by Opencast, yet. This should
+      This video hasn't been processed, yet. This should
       happen automatically soon. Try again in a few minutes.
     label: unprocessed
   thumbnail-for: Thumbnail for “{{video}}”

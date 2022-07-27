@@ -271,7 +271,7 @@ const TechnicalDetails: React.FC<Props> = ({ event }) => {
             <span css={{ color: "var(--grey40)", marginRight: 8 }}>
                 {t("manage.my-videos.available-resolutions") + ":"}
             </span>
-            {(event.syncedData?.tracks ?? [])
+            {(event.syncedData.tracks ?? [])
                 .map(track => track.resolution)
                 .filter((r): r is number[] => r !== null)
                 .sort((a, b) => a[0] - b[0])

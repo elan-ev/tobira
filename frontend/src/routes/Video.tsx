@@ -7,8 +7,8 @@ import type { VideoQuery, VideoQuery$data } from "./__generated__/VideoQuery.gra
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
-import { WaitingPage } from "./Waiting";
 import { Nav } from "../layout/Navigation";
+import { WaitingPage } from "../ui/Waiting";
 import { Player, Track } from "../ui/player";
 import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";

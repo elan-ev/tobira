@@ -60,9 +60,8 @@ pub struct EventTrack {
 }
 
 /// Represents the `event_state` type defined in `05-events.sql`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql)]
 #[postgres(name = "event_state")]
-#[graphql(description = "Represents the different states an event can be in during its lifecycle")]
 pub enum EventState {
     #[postgres(name = "ready")]
     Ready,
