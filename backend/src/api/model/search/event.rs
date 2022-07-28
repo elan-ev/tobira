@@ -50,6 +50,14 @@ impl search::Event {
         self.created
     }
 
+    fn start_time(&self) -> Option<DateTime<Utc>> {
+        self.start_time
+    }
+
+    fn end_time(&self) -> Option<DateTime<Utc>> {
+        self.end_time
+    }
+
     fn host_realms(&self) -> &[search::Realm] {
         &self.host_realms
     }
