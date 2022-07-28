@@ -2,14 +2,12 @@
 
 ![CI Status](https://github.com/elan-ev/tobira/workflows/CI/badge.svg)
 ![License](https://img.shields.io/github/license/elan-ev/tobira)
-![Status: alpha](https://img.shields.io/badge/status-alpha-red)
-
-__The project is in its very early stages. While the text below uses present-tense, by far not everything is implemented yet!__
+![Latest release](https://img.shields.io/github/v/release/elan-ev/tobira?label=latest%20release)
 
 Tobira is a video portal for [Opencast](https://opencast.org).
-It provides a hierarchical page structure, with each page consisting of simple configurable content blocks (e.g. text or video list).
-Opencast content (series or single events) can be embedded on these pages.
-Users also have their own personal page and can upload, edit and share their own videos.
+It provides a hierarchical page structure, with each page consisting of simple configurable content blocks (e.g. text, videos or series).
+Opencast content (series or single events) can be shown on these pages.
+Users can upload, edit (via external editor) and share their videos.
 
 The current version of our main branch is deployed at https://tobira.opencast.org.
 This is just a test deployment and all data is wiped whenever it is re-deployed.
