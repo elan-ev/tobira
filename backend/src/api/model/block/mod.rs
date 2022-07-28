@@ -246,10 +246,11 @@ impl_from_db!(
             ty: "type",
             index,
             text_content,
-            series_id,
+            series,
             videolist_order,
-            video_id, show_title,
-            realm_id,
+            video,
+            show_title,
+            realm,
         },
     },
     |row| {
@@ -257,7 +258,7 @@ impl_from_db!(
         let shared = SharedData {
             id: Id::block(row.id()),
             index: row.index::<i16>().into(),
-            realm_key: row.realm_id(),
+            realm_key: row.realm(),
         };
 
         match ty {
@@ -273,14 +274,14 @@ impl_from_db!(
 
             BlockType::Series => SeriesBlock {
                 shared,
-                series: row.series_id::<Option<Key>>().map(Id::series),
+                series: row.series::<Option<Key>>().map(Id::series),
                 order: unwrap_type_dep(row.videolist_order(), "series", "videolist_order"),
                 show_title: unwrap_type_dep(row.show_title(), "series", "show_title"),
             }.into(),
 
             BlockType::Video => VideoBlock {
                 shared,
-                event: row.video_id::<Option<Key>>().map(Id::event),
+                event: row.video::<Option<Key>>().map(Id::event),
                 show_title: unwrap_type_dep(row.show_title(), "event", "show_title"),
             }.into(),
         }
@@ -304,7 +305,7 @@ impl BlockValue {
         let query = format!(
             "select {selection} \
                 from blocks \
-                where realm_id = $1 \
+                where realm = $1 \
                 order by index asc",
         );
         context.db

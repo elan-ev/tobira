@@ -14,8 +14,8 @@ create view search_realms as
         ) as ancestor_names
     from realms
     left join blocks on blocks.id = realms.name_from_block
-    left join events on blocks.video_id = events.id
-    left join series on blocks.series_id = series.id;
+    left join events on blocks.video = events.id
+    left join series on blocks.series = series.id;
 
 
 create view search_events as
@@ -36,8 +36,8 @@ create view search_events as
     from events
     left join series on events.series = series.id
     left join blocks on (
-        type = 'series' and series_id = events.series
-        or type = 'video' and video_id = events.id
+        type = 'series' and blocks.series = events.series
+        or type = 'video' and blocks.video = events.id
     )
-    left join search_realms on search_realms.id = blocks.realm_id
+    left join search_realms on search_realms.id = blocks.realm
     group by events.id, series.id;

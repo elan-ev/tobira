@@ -46,9 +46,9 @@ pub(crate) trait Series {
             where exists ( \
                 select 1 as contains \
                 from blocks \
-                where realm_id = realms.id \
+                where realm = realms.id \
                 and type = 'series' \
-                and series_id = $1 \
+                and series = $1 \
             ) \
         ");
         let id = self.id().key_for(Id::SERIES_KIND).unwrap();

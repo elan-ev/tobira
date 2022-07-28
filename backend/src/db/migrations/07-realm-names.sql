@@ -17,7 +17,7 @@ alter table realms
 
 create function check_name_source_block_of_realm(block bigint, realm bigint) returns void as $$
 begin
-    if (select realm_id from blocks where id = block) <> realm then
+    if (select realm from blocks where id = block) <> realm then
         raise exception
             'a realm can only use its own blocks as name source (block %, realm %)',
             block, realm;
@@ -55,11 +55,11 @@ create trigger check_name_source_block_on_realm_update
 create function check_block_as_name_source() returns trigger as $$
 begin
     -- If the updated block is not used as name source, all is good.
-    if (select name_from_block from realms where id = new.realm_id) <> new.id then
+    if (select name_from_block from realms where id = new.realm) <> new.id then
         return new;
     end if;
 
-    perform check_name_source_block_of_realm(new.id, new.realm_id);
+    perform check_name_source_block_of_realm(new.id, new.realm);
     return new;
 end;
 $$ language plpgsql;
@@ -67,7 +67,7 @@ $$ language plpgsql;
 create trigger check_name_source_block_on_block_update
     before update on blocks
     for each row
-    when (new.realm_id is distinct from old.realm_id
+    when (new.realm is distinct from old.realm
         or new.type is distinct from old.type)
     execute procedure check_block_as_name_source();
 
@@ -90,8 +90,8 @@ create function resolved_name(realm realms)
 as $$
     select coalesce(series.title, events.title)
     from blocks
-    left join events on blocks.video_id = events.id
-    left join series on blocks.series_id = series.id
+    left join events on blocks.video = events.id
+    left join series on blocks.series = series.id
     where blocks.id = realm.name_from_block
     union
     select realm.name where realm.name_from_block is null

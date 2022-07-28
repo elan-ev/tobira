@@ -32,8 +32,8 @@ create function queue_block_for_reindex(block blocks)
    language sql
 as $$
     with listed_events as (
-        select id from events where id = block.video_id
-        union all select id from events where series = block.series_id
+        select id from events where id = block.video
+        union all select id from events where series = block.series
     )
     insert into search_index_queue (item_id, kind)
     select id, 'event' from listed_events
@@ -56,7 +56,7 @@ end;
 $$;
 
 create trigger queue_blocks_for_reindex
-after insert or delete or update of video_id, series_id
+after insert or delete or update of video, series
 on blocks
 for each row
 execute procedure queue_blocks_for_reindex();
@@ -101,10 +101,10 @@ begin
         select events.id, 'event'
         from events
         inner join blocks on (
-            type = 'series' and series_id = events.series
-            or type = 'video' and video_id = events.id
+            type = 'series' and series = events.series
+            or type = 'video' and video = events.id
         )
-        inner join realms on realms.id = blocks.realm_id
+        inner join realms on realms.id = blocks.realm
         where full_path like new.full_path || '%'
         on conflict do nothing;
     end if;
@@ -136,7 +136,7 @@ begin
         -- because: (a) a series and event having the same ID is exceeeeedingly
         -- rare, and (b) if this virtually impossible case actually arises, we just
         -- unnecessarily queue some events -> no harm done.
-        where blocks.series_id = new.id or blocks.video_id = new.id
+        where blocks.series = new.id or blocks.video = new.id
     )
     insert into search_index_queue (item_id, kind)
     -- The realms themselves have to be queued.
@@ -146,10 +146,10 @@ begin
     -- But also all events included somewhere in those realms.
     select events.id, 'event'::search_index_item_kind
     from affected_realms
-    inner join blocks on affected_realms.id = blocks.realm_id
+    inner join blocks on affected_realms.id = blocks.realm
     inner join events on (
-        type = 'series' and series_id = events.series
-        or type = 'video' and video_id = events.id
+        type = 'series' and series = events.series
+        or type = 'video' and video = events.id
     )
     on conflict do nothing;
 

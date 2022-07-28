@@ -28,7 +28,7 @@ begin
     perform create_top_level_realm('Conferences', E'Videos from conferences our university hosts. Like: '
         '\n- Gamescom \n- ComicCon \n- BlizzCon \n- recon \n- RustFest.eu');
 
-    insert into blocks (realm_id, type, index, text_content)
+    insert into blocks (realm, type, index, text_content)
         values (
             0, 'text', 0,
             E'**Welcome to Tobira!**\n\n'
@@ -40,10 +40,10 @@ begin
             'containing a bunch of dummy data. All text and videos you can see here are just for '
             'testing.'
         );
-    insert into blocks (realm_id, type, index, series_id, videolist_order, show_title)
+    insert into blocks (realm, type, index, series, videolist_order, show_title)
         values (0, 'series', 1, series_university_highlights, 'new_to_old', true);
 
-    insert into blocks (realm_id, type, index, series_id, videolist_order, show_title)
+    insert into blocks (realm, type, index, series, videolist_order, show_title)
         values (events_realm_id, 'series', 1, series_christmas, 'new_to_old', true);
 
 
@@ -256,7 +256,7 @@ begin
         values (name, 0, replace(lower(name), ' ', '-'))
         returning id into realm_id;
 
-    insert into blocks (realm_id, type, index, text_content)
+    insert into blocks (realm, type, index, text_content)
         values (realm_id, 'text', '0', description);
 
     return realm_id;
@@ -274,7 +274,7 @@ begin
         values ('Lectures', 0, 'lectures')
         returning id into root;
 
-    insert into blocks (realm_id, type, index, text_content)
+    insert into blocks (realm, type, index, text_content)
         values (root, 'text', '0', 'Here you can see all lecture recordings.');
 
     perform department(root, 'Mathematics');
@@ -298,7 +298,7 @@ begin
         values (name, lectures_root, replace(lower(name), ' ', '-'))
         returning id into root;
 
-    insert into blocks (realm_id, type, index, text_content)
+    insert into blocks (realm, type, index, text_content)
         values (root, 'text', '0', format(
             'Hello to the department of %s! We are very proud of what we have achieved in '
                 || 'this department and there is a lot of interesting stuff around here. '

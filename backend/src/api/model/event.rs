@@ -163,10 +163,10 @@ impl AuthorizedEvent {
             where exists ( \
                 select 1 as contains \
                 from blocks \
-                where realm_id = realms.id \
+                where realm = realms.id \
                 and ( \
-                    type = 'video' and video_id = $1 \
-                    or type = 'series' and series_id = ( \
+                    type = 'video' and video = $1 \
+                    or type = 'series' and series = ( \
                         select series from events where id = $1 \
                     ) \
                 ) \

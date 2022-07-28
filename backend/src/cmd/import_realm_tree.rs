@@ -153,14 +153,14 @@ impl Block {
         match self {
             Block::Title(title) => {
                 let query = "
-                    insert into blocks (realm_id, type, index, text_content)
+                    insert into blocks (realm, type, index, text_content)
                     values ($1, 'title', $2, $3)
                 ";
                 db.execute(query, &[&realm_id, &(index as i16), title]).await?;
             }
             Block::Text(text) => {
                 let query = "
-                    insert into blocks (realm_id, type, index, text_content)
+                    insert into blocks (realm, type, index, text_content)
                     values ($1, 'text', $2, $3)
                 ";
                 db.execute(query, &[&realm_id, &(index as i16), text]).await?;
@@ -193,7 +193,7 @@ impl Block {
                 // Insert block
                 let query = "
                     insert into blocks
-                    (realm_id, type, index, series_id, videolist_order, show_title)
+                    (realm, type, index, series, videolist_order, show_title)
                     values ($1, 'series', $2, $3, 'new_to_old', true)
                 ";
                 db.execute(query, &[&realm_id, &(index as i16), &series_id]).await?;
