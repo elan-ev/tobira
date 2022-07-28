@@ -101,8 +101,8 @@ begin
         select events.id, 'event'
         from events
         inner join blocks on (
-            type = 'series' and series = events.series
-            or type = 'video' and video = events.id
+            type = 'series' and blocks.series = events.series
+            or type = 'video' and blocks.video = events.id
         )
         inner join realms on realms.id = blocks.realm
         where full_path like new.full_path || '%'
@@ -148,8 +148,8 @@ begin
     from affected_realms
     inner join blocks on affected_realms.id = blocks.realm
     inner join events on (
-        type = 'series' and series = events.series
-        or type = 'video' and video = events.id
+        type = 'series' and blocks.series = events.series
+        or type = 'video' and blocks.video = events.id
     )
     on conflict do nothing;
 

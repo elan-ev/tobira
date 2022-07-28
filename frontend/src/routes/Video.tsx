@@ -333,12 +333,12 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
 
     const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
     let inner;
-    if (endTime && endTime < new Date()) {
+    if (event.isLive && endTime && endTime < new Date()) {
         inner = <>
             {t("video.ended") + ": "}
             {endTime.toLocaleString(i18n.language, fullOptions)}
         </>;
-    } else if (startTime && startTime > new Date()) {
+    } else if (event.isLive && startTime && startTime > new Date()) {
         inner = <>
             {t("video.upcoming") + ": "}
             {startTime.toLocaleString(i18n.language, fullOptions)}

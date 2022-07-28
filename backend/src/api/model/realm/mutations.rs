@@ -52,10 +52,6 @@ impl Realm {
                 ));
             }
 
-            if child_indices.is_empty() {
-                return Err(invalid_input!("`setChildOrder` was called with zero children"));
-            }
-
             let all_indices_unique = {
                 let index_set = child_indices.iter().map(|c| c.index).collect::<HashSet<_>>();
                 index_set.len() == child_indices.len()
@@ -174,7 +170,7 @@ impl Realm {
             .execute(
                 "update realms set \
                     parent = coalesce($2, parent), \
-                    path_segment = coalesce($4, path_segment) \
+                    path_segment = coalesce($3, path_segment) \
                     where id = $1",
                 &[&key, &parent_key, &set.path_segment],
             )

@@ -93,6 +93,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                 width: 200,
                 borderRadius: 8,
                 overflow: "hidden",
+                zIndex: 100,
             }}>
                 <div css={{
                     fontSize: 14,
