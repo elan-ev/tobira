@@ -6,7 +6,7 @@ import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graph
 import { makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link } from "../router";
-import { Thumbnail } from "../ui/Video";
+import { isPastLiveEvent, Thumbnail } from "../ui/Video";
 import { unreachable } from "../util/err";
 import { Description } from "../ui/metadata";
 import { Card } from "../ui/Card";
@@ -53,6 +53,8 @@ const query = graphql`
                     creators
                     seriesTitle
                     isLive
+                    startTime
+                    endTime
                     created
                     hostRealms { path }
                 }
@@ -99,6 +101,13 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     <ul css={{ listStyle: "none", padding: 0 }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
+                // Filter out live events that are over
+                const endTime = unwrapUndefined(item.endTime);
+                const isLive = unwrapUndefined(item.isLive);
+                if (isPastLiveEvent(endTime, isLive)) {
+                    return null;
+                }
+
                 return <SearchEvent key={item.id} {...{
                     id: item.id,
                     title: unwrapUndefined(item.title),
@@ -107,8 +116,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     duration: unwrapUndefined(item.duration),
                     creators: unwrapUndefined(item.creators),
                     seriesTitle: unwrapUndefined(item.seriesTitle),
-                    isLive: unwrapUndefined(item.isLive),
+                    isLive,
                     created: unwrapUndefined(item.created),
+                    startTime: unwrapUndefined(item.startTime),
+                    endTime,
                     hostRealms: unwrapUndefined(item.hostRealms),
                 }}/>;
             } else if (item.__typename === "SearchRealm") {
@@ -137,11 +148,24 @@ type SearchEventProps = {
     seriesTitle: string | null;
     isLive: boolean;
     created: string;
+    startTime: string | null;
+    endTime: string | null;
     hostRealms: readonly { readonly path: string }[];
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
-    id, title, description, thumbnail, duration, creators, seriesTitle, isLive, created, hostRealms,
+    id,
+    title,
+    description,
+    thumbnail,
+    duration,
+    creators,
+    seriesTitle,
+    isLive,
+    created,
+    startTime,
+    endTime,
+    hostRealms,
 }) => {
     const { t } = useTranslation();
 
@@ -161,6 +185,8 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     syncedData: {
                         thumbnail,
                         duration,
+                        startTime,
+                        endTime,
                         audioOnly: false, // TODO
                     },
                 }}

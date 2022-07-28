@@ -41,6 +41,9 @@ pub(crate) struct AuthorizedEvent {
 #[derive(Debug, GraphQLObject)]
 pub(crate) struct SyncedEventData {
     updated: DateTime<Utc>,
+    start_time: Option<DateTime<Utc>>,
+    end_time: Option<DateTime<Utc>>,
+
     /// Duration in milliseconds
     duration: i32,
     tracks: Vec<Track>,
@@ -53,7 +56,7 @@ impl_from_db!(
         events.{
             id, state, series, opencast_id, is_live,
             title, description, duration, creators, thumbnail, metadata,
-            created, updated,
+            created, updated, start_time, end_time,
             tracks,
             read_roles, write_roles,
         },
@@ -74,6 +77,8 @@ impl_from_db!(
             synced_data: match row.state::<EventState>() {
                 EventState::Ready => Some(SyncedEventData {
                     updated: row.updated(),
+                    start_time: row.start_time(),
+                    end_time: row.end_time(),
                     duration: row.duration(),
                     thumbnail: row.thumbnail(),
                     tracks: row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect(),

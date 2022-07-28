@@ -58,6 +58,8 @@ type SearchEvent implements Node {
   duration: Int!
   isLive: Boolean!
   created: DateTimeUtc!
+  startTime: DateTimeUtc
+  endTime: DateTimeUtc
   hostRealms: [SearchRealm!]!
 }
 
@@ -120,6 +122,8 @@ input NewVideoBlock {
 
 type SyncedEventData {
   updated: DateTimeUtc!
+  startTime: DateTimeUtc
+  endTime: DateTimeUtc
   "Duration in milliseconds"
   duration: Int!
   tracks: [Track!]!

@@ -23,6 +23,8 @@ pub(crate) struct Event {
     pub(crate) thumbnail: Option<String>,
     pub(crate) duration: i32,
     pub(crate) created: DateTime<Utc>,
+    pub(crate) start_time: Option<DateTime<Utc>>,
+    pub(crate) end_time: Option<DateTime<Utc>>,
     pub(crate) is_live: bool,
 
     // These are filterable. All roles are hex encoded to work around Meilis
@@ -56,7 +58,7 @@ impl_from_db!(
     select: {
         search_events.{
             id, series, series_title, title, description, creators, thumbnail,
-            duration, is_live, created, read_roles, write_roles, host_realms,
+            duration, is_live, created, start_time, end_time, read_roles, write_roles, host_realms,
         },
     },
     |row| {
@@ -72,6 +74,8 @@ impl_from_db!(
             duration: row.duration(),
             is_live: row.is_live(),
             created: row.created(),
+            start_time: row.start_time(),
+            end_time: row.end_time(),
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed: !host_realms.is_empty(),

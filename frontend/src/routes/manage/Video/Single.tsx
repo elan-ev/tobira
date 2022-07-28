@@ -80,6 +80,8 @@ const query = graphql`
                     duration
                     thumbnail
                     updated
+                    startTime
+                    endTime
                     tracks { flavor resolution }
                 }
                 series { title ...SeriesBlockSeriesData }

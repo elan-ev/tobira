@@ -16,7 +16,7 @@ import {
     SeriesBlockReadySeriesData$data,
     SeriesBlockReadySeriesData$key,
 } from "./__generated__/SeriesBlockReadySeriesData.graphql";
-import { Thumbnail } from "../Video";
+import { isPastLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
 
@@ -57,6 +57,8 @@ const readySeriesFragment = graphql`
             syncedData {
                 duration
                 thumbnail
+                startTime
+                endTime
                 tracks { resolution }
             }
         }
@@ -139,13 +141,16 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 
     const finalTitle = title ?? (showTitle ? series.title : undefined);
 
-    if (!series.events.length) {
+    const events = series.events.filter(event =>
+        !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive));
+
+    if (!events.length) {
         return <SeriesBlockContainer title={finalTitle}>
             {t("series.no-events")}
         </SeriesBlockContainer>;
     }
 
-    const sortedEvents = [...series.events];
+    const sortedEvents = [...events];
 
     sortedEvents.sort(match(order, {
         "NEW_TO_OLD": () => compareNewToOld,

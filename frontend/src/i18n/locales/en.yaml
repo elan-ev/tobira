@@ -119,6 +119,8 @@ video:
     label: unprocessed
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
+  upcoming: Upcoming
+  ended: Ended
   license: License
   source: Source
 
