@@ -1,5 +1,19 @@
 select prepare_randomized_ids('event');
 
+-- Like series, events can exist in different states during their lifecycle:
+-- `'waiting'`: The series was created "out of band" in regards to the
+--     usual path of communication between Opencast and Tobira
+--     (i.e. the harvesting protocol).
+--     Thus, it might not have all its (meta-)data, yet,
+--     and is *waiting* to be fully synced.
+--     The updated timestamp should be `-infinity`, i.e. before
+--     all other timestamps.
+-- `'ready'`: The event is fully synced and up to date, as far as
+--     Tobira is concerned. All of its mandatory data fields are set,
+--     and the optional ones should reflect the state of the Opencast
+--     event as of the last harvest.
+create type event_state as enum ('waiting', 'ready');
+
 create type event_track as (
     uri text,
     flavor text,
@@ -9,6 +23,8 @@ create type event_track as (
 
 create table events (
     id bigint primary key default randomized_id('event'),
+
+    state event_state not null,
 
     -- The Opencast UUID
     opencast_id text not null unique,
@@ -34,26 +50,33 @@ create table events (
     is_live bool not null,
 
     -- Permissions: roles that are allowed to read/write
-    read_roles text[] not null,
-    write_roles text[] not null,
+    -- The check makes sure there are no `null` elements in the array,
+    -- and will be used for other arrays further down as well.
+    read_roles text[] not null check (array_position(read_roles, null) is null),
+    write_roles text[] not null check (array_position(read_roles, null) is null),
 
     -- Meta data
     title text not null,
     description text,
-    duration int not null, -- in ms
+    duration int, -- in ms
     created timestamp with time zone not null,
     updated timestamp with time zone not null,
-    creators text[] not null
-        default '{}'
-        -- Make sure there are no `null` elements in the array.
-        check (array_position(creators, null) is null),
+    creators text[] not null default '{}' check (array_position(creators, null) is null),
 
-    -- Additional metadata as an JSON object, where each value is a string array.
+    -- Additional metadata as a JSON object, where each value is a string array.
     metadata jsonb not null,
 
     -- Media
     thumbnail text, -- URL to an image
-    tracks event_track[] not null
+    tracks event_track[] check (array_position(creators, null) is null),
+
+    constraint ready_event_has_fields check (state <> 'ready' or (
+        duration is not null
+        and tracks is not null and array_length(tracks, 1) > 0
+    )),
+    constraint waiting_event_not_updated check (state <> 'waiting' or (
+        updated = '-infinity'
+    ))
 );
 
 -- To get all events of a series (which happens often), we can use this index.

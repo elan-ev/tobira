@@ -13,7 +13,7 @@ use crate::{
         err::{self, ApiResult, invalid_input},
         model::{series::{SeriesValue, ReadySeries}, realm::{Realm, REALM_JOINS}},
     },
-    db::{types::{EventTrack, Key, ExtraMetadata}, util::{impl_from_db, select}},
+    db::{types::{EventTrack, EventState, Key, ExtraMetadata}, util::{impl_from_db, select}},
     prelude::*,
     util::lazy_format,
 };
@@ -28,23 +28,30 @@ pub(crate) struct AuthorizedEvent {
 
     title: String,
     description: Option<String>,
-    duration: i32,
     created: DateTime<Utc>,
-    updated: DateTime<Utc>,
     creators: Vec<String>,
 
     metadata: ExtraMetadata,
-    thumbnail: Option<String>,
-    tracks: Vec<Track>,
     read_roles: Vec<String>,
     write_roles: Vec<String>,
+
+    synced_data: Option<SyncedEventData>,
+}
+
+#[derive(Debug, GraphQLObject)]
+pub(crate) struct SyncedEventData {
+    updated: DateTime<Utc>,
+    /// Duration in milliseconds
+    duration: i32,
+    tracks: Vec<Track>,
+    thumbnail: Option<String>,
 }
 
 impl_from_db!(
     AuthorizedEvent,
     select: {
         events.{
-            id, series, opencast_id, is_live,
+            id, state, series, opencast_id, is_live,
             title, description, duration, creators, thumbnail, metadata,
             created, updated,
             tracks,
@@ -59,15 +66,20 @@ impl_from_db!(
             is_live: row.is_live(),
             title: row.title(),
             description: row.description(),
-            duration: row.duration(),
             created: row.created(),
-            updated: row.updated(),
             creators: row.creators(),
-            thumbnail: row.thumbnail(),
-            tracks: row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect(),
             metadata: row.metadata(),
             read_roles: row.read_roles::<Vec<String>>(),
             write_roles: row.write_roles::<Vec<String>>(),
+            synced_data: match row.state::<EventState>() {
+                EventState::Ready => Some(SyncedEventData {
+                    updated: row.updated(),
+                    duration: row.duration(),
+                    thumbnail: row.thumbnail(),
+                    tracks: row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect(),
+                }),
+                EventState::Waiting => None,
+            },
         }
     }
 );
@@ -106,27 +118,18 @@ impl AuthorizedEvent {
     fn description(&self) -> Option<&str> {
         self.description.as_deref()
     }
-    /// Duration in ms.
-    fn duration(&self) -> i32 {
-        self.duration
-    }
-    fn thumbnail(&self) -> Option<&str> {
-        self.thumbnail.as_deref()
-    }
-    fn tracks(&self) -> &[Track] {
-        &self.tracks
-    }
     fn created(&self) -> DateTime<Utc> {
         self.created
-    }
-    fn updated(&self) -> DateTime<Utc> {
-        self.updated
     }
     fn creators(&self) -> &Vec<String> {
         &self.creators
     }
     fn metadata(&self) -> &ExtraMetadata {
         &self.metadata
+    }
+
+    fn synced_data(&self) -> &Option<SyncedEventData> {
+        &self.synced_data
     }
 
     /// Whether the current user has write access to this event.
@@ -453,7 +456,6 @@ pub(crate) struct EventSortOrder {
 #[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
 enum EventSortColumn {
     Title,
-    Duration,
     Created,
     Updated,
 }
@@ -485,7 +487,6 @@ impl EventSortColumn {
     fn to_sql(self) -> &'static str {
         match self {
             EventSortColumn::Title => "title",
-            EventSortColumn::Duration => "duration",
             EventSortColumn::Created => "created",
             EventSortColumn::Updated => "updated",
         }
@@ -530,18 +531,19 @@ pub(crate) struct EventCursor {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum CursorSortFilter {
     Title(String),
-    Duration(i32),
+    Duration(Option<i32>),
     Created(DateTime<Utc>),
-    Updated(DateTime<Utc>),
+    Updated(Option<DateTime<Utc>>),
 }
 
 impl EventCursor {
     fn new(event: &AuthorizedEvent, order: &EventSortOrder) -> Self {
         let sort_filter = match order.column {
             EventSortColumn::Title => CursorSortFilter::Title(event.title.clone()),
-            EventSortColumn::Duration => CursorSortFilter::Duration(event.duration),
             EventSortColumn::Created => CursorSortFilter::Created(event.created),
-            EventSortColumn::Updated => CursorSortFilter::Updated(event.updated),
+            EventSortColumn::Updated => CursorSortFilter::Updated(
+                event.synced_data.as_ref().map(|s| s.updated)
+            ),
         };
 
         Self {
@@ -556,9 +558,13 @@ impl EventCursor {
     fn to_sql_arg(&self, order: &EventSortOrder) -> ApiResult<&(dyn ToSql + Sync + '_)> {
         match (&self.sort_filter, order.column) {
             (CursorSortFilter::Title(title), EventSortColumn::Title) => Ok(title),
-            (CursorSortFilter::Duration(duration), EventSortColumn::Duration) => Ok(duration),
             (CursorSortFilter::Created(created), EventSortColumn::Created) => Ok(created),
-            (CursorSortFilter::Updated(updated), EventSortColumn::Updated) => Ok(updated),
+            (CursorSortFilter::Updated(updated), EventSortColumn::Updated) => {
+                match updated {
+                    Some(updated) => Ok(updated),
+                    None => Ok(&postgres_types::Timestamp::<DateTime<Utc>>::NegInfinity),
+                }
+            },
             _ => Err(invalid_input!("sort order does not match 'before'/'after' argument")),
         }
     }

@@ -66,8 +66,11 @@ const query = graphql`
                     startIndex endIndex
                 }
                 items {
-                    id title duration thumbnail created updated description isLive
-                    tracks { resolution }
+                    id title created description isLive
+                    syncedData {
+                        duration thumbnail updated
+                        tracks { resolution }
+                    }
                 }
             }
         }
@@ -256,7 +259,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
 const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
     const created = new Date(event.created);
     const link = `${PATH}/${keyOfId(event.id)}`;
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     return (
         <tr>
@@ -267,10 +270,22 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
             </td>
             <td>
                 <div css={{
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                    overflow: "hidden",
-                }}><Link to={link}>{event.title}</Link></div>
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 8,
+                }}>
+                    <div css={{
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                    }}><Link to={link}>{event.title}</Link></div>
+                    {!event.syncedData && <span css={{
+                        padding: "0 8px",
+                        fontSize: "small",
+                        borderRadius: 10,
+                        backgroundColor: "var(--grey95)",
+                    }}>{t("video.not-ready.label")}</span>}
+                </div>
                 <Description text={event.description} />
             </td>
             <td css={{ fontSize: 14 }}>
@@ -370,7 +385,6 @@ const queryParamsToVars = (queryParams: URLSearchParams): VariablesOf<VideoManag
     const sortBy = queryParams.get("sortBy");
     const column = sortBy !== null && match<string, EventSortColumn>(sortBy, {
         "title": () => "TITLE",
-        "duration": () => "DURATION",
         "created": () => "CREATED",
         "updated": () => "UPDATED",
     });

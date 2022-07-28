@@ -7,14 +7,19 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
     /** The event of which a thumbnail should be shown */
     event: {
         title: string;
-        thumbnail: string | null;
-        duration: number;
         isLive: boolean;
         created: string;
-    } & (
-        { tracks: readonly { resolution: readonly number[] | null }[] }
-        | { audioOnly: boolean }
-    );
+        syncedData: {
+            duration: number;
+            thumbnail: string | null;
+        } & (
+            {
+                tracks: readonly { resolution: readonly number[] | null }[];
+            } | {
+                audioOnly: boolean;
+            }
+        ) | null;
+    };
 
     /** If `true`, an indicator overlay is shown */
     active?: boolean;
@@ -26,15 +31,19 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     ...rest
 }) => {
     const { t } = useTranslation();
-    const audioOnly = "audioOnly" in event
-        ? event.audioOnly
-        : event.tracks.every(t => t.resolution == null);
+    const audioOnly = event.syncedData
+        ? (
+            "audioOnly" in event.syncedData
+                ? event.syncedData.audioOnly
+                : event.syncedData.tracks.every(t => t.resolution == null)
+        )
+        : false;
 
     let inner;
-    if (event.thumbnail != null) {
+    if (event.syncedData?.thumbnail != null) {
         // We have a proper thumbnail.
         inner = <img
-            src={event.thumbnail}
+            src={event.syncedData.thumbnail}
             alt={t("video.thumbnail-for", { video: event.title })}
             width={16}
             height={9}
@@ -83,8 +92,8 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             {currentlyLive && <FiRadio css={{ fontSize: 19, strokeWidth: 1.4 }} />}
             {t("video.live")}
         </div>;
-    } else {
-        overlay = <div css={overlayBaseCss}>{formatDuration(event.duration)}</div>;
+    } else if (event.syncedData) {
+        overlay = <div css={overlayBaseCss}>{formatDuration(event.syncedData.duration)}</div>;
     }
 
     return (

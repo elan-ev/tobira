@@ -8,7 +8,7 @@ use tokio_postgres::types::ToSql;
 use crate::{
     auth::ROLE_ADMIN,
     config::Config,
-    db::{types::{EventTrack, SeriesState}, DbConnection},
+    db::{types::{EventTrack, EventState, SeriesState}, DbConnection},
     prelude::*,
 };
 use super::{status::SyncStatus, OcClient};
@@ -171,6 +171,7 @@ async fn store_in_db(
                 // We upsert the event data.
                 upsert(db, "events", "opencast_id", &[
                     ("opencast_id", &opencast_id),
+                    ("state", &EventState::Ready),
                     ("series", &series_id),
                     ("part_of", &part_of),
                     ("is_live", &is_live),

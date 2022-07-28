@@ -59,6 +59,17 @@ pub struct EventTrack {
     pub resolution: Option<[i32; 2]>,
 }
 
+/// Represents the `event_state` type defined in `05-events.sql`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql)]
+#[postgres(name = "event_state")]
+pub enum EventState {
+    #[postgres(name = "ready")]
+    Ready,
+    #[postgres(name = "waiting")]
+    Waiting,
+}
+
+
 /// Represents the `series_state` type defined in `04-series.sql`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
 #[postgres(name = "series_state")]

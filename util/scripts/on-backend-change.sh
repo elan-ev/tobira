@@ -16,7 +16,7 @@ reload_once_port_is_open() {
 
 cd "$basedir"/../../backend || exit 1
 
-cargo build
+cargo build || exit 1
 
 cargo run -- export-api-schema ../frontend/src/schema.graphql
 cargo run -- write-config ../docs/config.toml

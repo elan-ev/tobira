@@ -9,7 +9,7 @@ select prepare_randomized_ids('series');
 --     This can currently only happen using the `mount`-API
 --     used by the Opencast Admin UI.
 --     In this state, only the Opencast ID is valid.
---     All other (nullable) fields should be `null`,
+--     The value of all the other nullable fields is undefined,
 --     and the updated timestamp should be `-infinity`, i.e. before
 --     all other timestamps.
 -- `'ready'`: The series is fully synced and up to date, as far as
@@ -36,9 +36,10 @@ create table series (
     updated timestamp with time zone not null,
 
     constraint ready_series_has_fields check (state <> 'ready' or (
-        title is not null and
-        read_roles is not null and
-        write_roles is not null
+        title is not null
+        and read_roles is not null
+        and write_roles is not null
+        and updated <> '-infinity'
     )),
     constraint waiting_series_not_updated check (state <> 'waiting' or (
         updated = '-infinity'

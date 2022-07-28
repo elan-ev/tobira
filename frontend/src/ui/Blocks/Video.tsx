@@ -21,10 +21,12 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
                 ... on NotAllowed { dummy } # workaround
                 ... on AuthorizedEvent {
                     title
-                    duration
-                    thumbnail
                     isLive
-                    tracks { uri flavor mimetype resolution }
+                    syncedData {
+                        duration
+                        thumbnail
+                        tracks { uri flavor mimetype resolution }
+                    }
                 }
             }
             showTitle
@@ -44,13 +46,16 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
 
     return <>
         {showTitle && <Title title={event.title} />}
-        <Player
-            {...event}
-            // Relay returns `readonly` objects ...
-            tracks={event.tracks as Track[]}
-            isLive={event.isLive}
-            coverImage={event.thumbnail}
-            css={{ width: 800 }}
-        />
+        {event.syncedData
+            ? <Player
+                {...event}
+                duration={event.syncedData.duration}
+                // Relay returns `readonly` objects ...
+                tracks={event.syncedData.tracks as Track[]}
+                isLive={event.isLive}
+                coverImage={event.syncedData.thumbnail}
+                css={{ width: 800 }}
+            />
+            : <Card kind="info">{t("video.not-ready.title")}</Card>}
     </>;
 };
