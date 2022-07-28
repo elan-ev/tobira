@@ -456,7 +456,6 @@ pub(crate) struct EventSortOrder {
 #[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
 enum EventSortColumn {
     Title,
-    Duration,
     Created,
     Updated,
 }
@@ -488,7 +487,6 @@ impl EventSortColumn {
     fn to_sql(self) -> &'static str {
         match self {
             EventSortColumn::Title => "title",
-            EventSortColumn::Duration => "duration",
             EventSortColumn::Created => "created",
             EventSortColumn::Updated => "updated",
         }
@@ -542,9 +540,6 @@ impl EventCursor {
     fn new(event: &AuthorizedEvent, order: &EventSortOrder) -> Self {
         let sort_filter = match order.column {
             EventSortColumn::Title => CursorSortFilter::Title(event.title.clone()),
-            EventSortColumn::Duration => CursorSortFilter::Duration(
-                event.synced_data.as_ref().map(|s| s.duration)
-            ),
             EventSortColumn::Created => CursorSortFilter::Created(event.created),
             EventSortColumn::Updated => CursorSortFilter::Updated(
                 event.synced_data.as_ref().map(|s| s.updated)
@@ -563,7 +558,6 @@ impl EventCursor {
     fn to_sql_arg(&self, order: &EventSortOrder) -> ApiResult<&(dyn ToSql + Sync + '_)> {
         match (&self.sort_filter, order.column) {
             (CursorSortFilter::Title(title), EventSortColumn::Title) => Ok(title),
-            (CursorSortFilter::Duration(duration), EventSortColumn::Duration) => Ok(duration),
             (CursorSortFilter::Created(created), EventSortColumn::Created) => Ok(created),
             (CursorSortFilter::Updated(updated), EventSortColumn::Updated) => Ok(updated),
             _ => Err(invalid_input!("sort order does not match 'before'/'after' argument")),

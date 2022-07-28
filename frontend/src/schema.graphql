@@ -446,7 +446,6 @@ type ReadySeries implements Series {
 
 enum EventSortColumn {
   TITLE
-  DURATION
   CREATED
   UPDATED
 }

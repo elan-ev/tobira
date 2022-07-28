@@ -385,7 +385,6 @@ const queryParamsToVars = (queryParams: URLSearchParams): VariablesOf<VideoManag
     const sortBy = queryParams.get("sortBy");
     const column = sortBy !== null && match<string, EventSortColumn>(sortBy, {
         "title": () => "TITLE",
-        "duration": () => "DURATION",
         "created": () => "CREATED",
         "updated": () => "UPDATED",
     });
