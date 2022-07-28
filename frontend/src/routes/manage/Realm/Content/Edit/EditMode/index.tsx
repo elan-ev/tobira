@@ -1,7 +1,7 @@
 import React, { useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useForm, useFormContext, FormProvider, UnpackNestedValue } from "react-hook-form";
+import { useForm, useFormContext, FormProvider } from "react-hook-form";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
 import { Button } from "../../../../../../ui/Button";
@@ -67,7 +67,7 @@ type EditModeFormProps<T> = {
     save: (config: {
         variables: {
             id: string;
-            set: UnpackNestedValue<T>;
+            set: T;
         };
         onCompleted?: () => void;
         onError?: (error: Error) => void;
@@ -76,7 +76,7 @@ type EditModeFormProps<T> = {
         variables: {
             realm: string;
             index: number;
-            block: UnpackNestedValue<T>;
+            block: T;
         };
         onCompleted?: () => void;
         onError?: (error: Error) => void;
