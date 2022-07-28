@@ -17,7 +17,7 @@ alter table realms
 
 create function check_name_source_block_of_realm(block bigint, realm bigint) returns void as $$
 begin
-    if (select realm from blocks where id = block) <> realm then
+    if (select blocks.realm from blocks where id = block) <> realm then
         raise exception
             'a realm can only use its own blocks as name source (block %, realm %)',
             block, realm;
