@@ -327,6 +327,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                 border: "3px dashed",
                 borderRadius: 10,
                 display: "flex",
+                padding: 8,
                 flexDirection: "column",
                 gap: 16,
                 alignItems: "center",
