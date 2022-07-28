@@ -292,9 +292,7 @@ impl AuthorizedEvent {
 
         // Assemble argument list and the "where" part of the query. This
         // depends on `after` and `before`.
-        let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
-        let mut args = vec![arg_user_roles];
-
+        let mut args = vec![];
         let col = order.column.to_sql();
         let op_after = if order.direction.is_ascending() { '>' } else { '<' };
         let op_before = if order.direction.is_ascending() { '<' } else { '>' };
@@ -302,11 +300,11 @@ impl AuthorizedEvent {
             (None, None) => String::new(),
             (Some(after), None) => {
                 args.extend_from_slice(&[after.to_sql_arg(&order)?, &after.key]);
-                format!("where ({}, id) {} ($2, $3)", col, op_after)
+                format!("where ({}, id) {} ($1, $2)", col, op_after)
             }
             (None, Some(before)) => {
                 args.extend_from_slice(&[before.to_sql_arg(&order)?, &before.key]);
-                format!("where ({}, id) {} ($2, $3)", col, op_before)
+                format!("where ({}, id) {} ($1, $2)", col, op_before)
             }
             (Some(after), Some(before)) => {
                 args.extend_from_slice(&[
@@ -316,7 +314,7 @@ impl AuthorizedEvent {
                     &before.key,
                 ]);
                 format!(
-                    "where ({}, id) {} ($2, $3) and ({}, id) {} ($4, $5)",
+                    "where ({}, id) {} ($1, $2) and ({}, id) {} ($3, $4)",
                     col, op_after, col, op_before,
                 )
             },
@@ -326,10 +324,14 @@ impl AuthorizedEvent {
         // retrieve the total count, the absolute offsets of our window and all
         // the event data in one go. The "over(...)" things are window
         // functions.
+        let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
         let acl_filter = if context.auth.is_admin() {
-            ""
+            String::new()
         } else {
-            "where write_roles && $1 and read_roles && $1"
+            args.push(arg_user_roles);
+            let arg_index = args.len();
+
+            format!("where write_roles && ${arg_index} and read_roles && ${arg_index}")
         };
         let (selection, mapping) = select!(
             event: AuthorizedEvent from
