@@ -174,7 +174,7 @@ impl Realm {
             .execute(
                 "update realms set \
                     parent = coalesce($2, parent), \
-                    path_segment = coalesce($4, path_segment) \
+                    path_segment = coalesce($3, path_segment) \
                     where id = $1",
                 &[&key, &parent_key, &set.path_segment],
             )
