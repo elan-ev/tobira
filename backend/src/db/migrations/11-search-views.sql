@@ -20,7 +20,7 @@ create view search_realms as
 
 create view search_events as
     select
-        events.id,
+        events.id, events.state,
         events.series, series.title as series_title,
         events.title, events.description, events.creators,
         events.thumbnail, events.duration,

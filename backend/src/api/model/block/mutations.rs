@@ -1,12 +1,11 @@
-use futures::StreamExt;
 use juniper::{GraphQLInputObject, GraphQLObject};
 
 use crate::{
-    api::{Context, Id, err::{ApiResult, invalid_input}, model::realm::REALM_JOINS},
+    api::{Context, Id, err::{ApiResult, invalid_input}, model::realm::{REALM_JOINS, Realm}},
     db::{types::Key, util::select},
     prelude::*,
 };
-use super::{BlockValue, VideoListOrder, super::realm::Realm};
+use super::{BlockValue, VideoListOrder};
 
 
 impl BlockValue {
@@ -157,9 +156,11 @@ impl BlockValue {
         index_b: i32,
         context: &Context,
     ) -> ApiResult<Realm> {
+        let realm_key = realm.key_for(Id::REALM_KIND)
+            .ok_or_else(|| invalid_input!("`realm` is not a valid realm id"))?;
 
         if index_a == index_b {
-            return Realm::load_by_id(realm, context)
+            return Realm::load_by_key(realm_key, context)
                 .await?
                 .ok_or_else(|| invalid_input!("`realm` is not a valid realm"));
         }
@@ -185,57 +186,49 @@ impl BlockValue {
         //
         // `updates.new_index < count` and `updates.new_index >= 0` are only to make
         // sure the new index is in bounds.
-        let selection = Realm::select();
         let query = format!(
             "update blocks \
                 set index = updates.new_index \
-                from realms, (values \
+                from (values \
                     ($1::smallint, $2::smallint), \
                     ($2::smallint, $1::smallint) \
                 ) as updates(old_index, new_index), ( \
                     select count(*) as count from blocks \
                     where realm_id = $3 \
                 ) as count \
-                where realm_id = realms.id \
-                and realm_id = $3 \
+                where realm_id = $3 \
                 and blocks.index = updates.old_index \
                 and updates.new_index < count \
-                and updates.new_index >= 0 \
-                returning {selection}",
+                and updates.new_index >= 0",
         );
-        let realm_stream = db
-            .query_raw(
+        let rows_modified = db
+            .execute(
                 &query,
-                dbargs![
+                &[
                     &(i16::try_from(index_a)
                         .map_err(|_| invalid_input!("`indexA` is not a valid block index"))?),
                     &(i16::try_from(index_b)
                         .map_err(|_| invalid_input!("`indexB` is not a valid block index"))?),
-                    &realm.key_for(Id::REALM_KIND)
-                        .ok_or_else(|| invalid_input!("`realm` is not a valid realm id"))?,
+                    &realm_key,
                 ],
             )
-            .await?
-            // We will get the realm twice for two updated rows
-            // if everything goes according to plan.
-            // If we skip the first and can successfully grab the second,
-            // we know it did.
-            .skip(1);
+            .await?;
 
         // TODO Actually reset to whatever it was before, but that needs nested transactions
         db.execute("set constraints index_unique_in_realm immediate", &[]).await?;
 
-        futures::pin_mut!(realm_stream);
-
-        let realm = realm_stream
-            .next()
-            .await
-            .ok_or_else(|| invalid_input!(
+        // We will get the block id twice for two updated rows if everything
+        // goes according to plan.
+        if rows_modified != 2 {
+            return Err(invalid_input!(
                 "`indexA`, `indexB` or `realm` wasn't a valid block index or realm"
-            ))?
-            .map(|row| Realm::from_row_start(&row))?;
+            ));
+        }
 
-        Ok(realm)
+        Realm::load_by_key(realm_key, context)
+            .await?
+            .expect("unreachable: we just swapped two blocks of a realm that does not exist?")
+            .pipe(Ok)
     }
 
     pub(crate) async fn update_title(
