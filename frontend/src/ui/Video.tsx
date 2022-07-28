@@ -12,6 +12,8 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
         syncedData: {
             duration: number;
             thumbnail: string | null;
+            startTime: string | null;
+            endTime: string | null;
         } & (
             {
                 tracks: readonly { resolution: readonly number[] | null }[];
@@ -83,14 +85,30 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     let overlay;
     if (event.isLive) {
         // TODO: we might want to have a better "is currently live" detection.
-        const created = new Date(event.created);
-        const currentlyLive = created < new Date();
+        const now = new Date();
+        const startTime = new Date(event.syncedData?.startTime ?? event.created);
+        const endTime = event.syncedData?.endTime;
+        const hasEnded = endTime == null ? null : new Date(endTime) < now;
+        const hasStarted = startTime < now;
+        const currentlyLive = hasStarted && !hasEnded;
+
+        let innerOverlay;
+        if (hasEnded) {
+            innerOverlay = t("video.ended");
+        } else if (hasStarted) {
+            innerOverlay = <>
+                <FiRadio css={{ fontSize: 19, strokeWidth: 1.4 }} />
+                {t("video.live")}
+            </>;
+        } else {
+            innerOverlay = t("video.upcoming");
+        }
+
         overlay = <div css={{
             ...overlayBaseCss,
             ...currentlyLive ? { backgroundColor: "rgba(200, 0, 0, 0.9)" } : {},
         }}>
-            {currentlyLive && <FiRadio css={{ fontSize: 19, strokeWidth: 1.4 }} />}
-            {t("video.live")}
+            {innerOverlay}
         </div>;
     } else if (event.syncedData) {
         overlay = <div css={overlayBaseCss}>{formatDuration(event.syncedData.duration)}</div>;
@@ -160,3 +178,6 @@ export const formatDuration = (totalMs: number): string => {
         return `${minutes}:${pad(seconds)}`;
     }
 };
+
+export const isPastLiveEvent = (endTime: string | null, isLive: boolean): boolean =>
+    isLive && endTime != null && new Date(endTime) < new Date();

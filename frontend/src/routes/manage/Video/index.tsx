@@ -68,7 +68,7 @@ const query = graphql`
                 items {
                     id title created description isLive
                     syncedData {
-                        duration thumbnail updated
+                        duration thumbnail updated startTime endTime
                         tracks { resolution }
                     }
                 }

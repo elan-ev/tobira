@@ -121,6 +121,8 @@ video:
     label: unverarbeitet
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
+  upcoming: Anstehend
+  ended: Beendet
   license: Lizenz
   source: Quelle
 

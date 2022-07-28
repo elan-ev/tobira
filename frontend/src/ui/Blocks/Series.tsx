@@ -16,7 +16,7 @@ import {
     SeriesBlockReadySeriesData$data,
     SeriesBlockReadySeriesData$key,
 } from "./__generated__/SeriesBlockReadySeriesData.graphql";
-import { Thumbnail } from "../Video";
+import { isPastLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
 
@@ -57,6 +57,8 @@ const readySeriesFragment = graphql`
             syncedData {
                 duration
                 thumbnail
+                startTime
+                endTime
                 tracks { resolution }
             }
         }
@@ -222,6 +224,10 @@ type GridTypeProps = {
 
 const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
     const TRANSITION_DURATION = "0.3s";
+
+    if (isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)) {
+        return null;
+    }
 
     const inner = <>
         <div css={{ borderRadius: 8 }}>
