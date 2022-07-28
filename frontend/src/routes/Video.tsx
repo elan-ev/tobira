@@ -362,6 +362,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
                 backgroundColor: "var(--grey86)",
                 borderRadius: 5,
                 color: "black",
+                zIndex: 100,
             }}>
                 <div css={{
                     position: "absolute",
@@ -373,8 +374,10 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
                     transform: "rotate(45deg)",
                 }} />
                 <i>{t("video.created")}</i>: {createdFull}
-                <br/>
-                <i>{t("video.updated")}</i>: {updatedFull}
+                {updatedFull && <>
+                    <br/>
+                    <i>{t("video.updated")}</i>: {updatedFull}
+                </>}
             </div>
         </>;
     }
