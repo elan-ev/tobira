@@ -141,13 +141,16 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 
     const finalTitle = title ?? (showTitle ? series.title : undefined);
 
-    if (!series.events.length) {
+    const events = series.events.filter(event =>
+        !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive));
+
+    if (!events.length) {
         return <SeriesBlockContainer title={finalTitle}>
             {t("series.no-events")}
         </SeriesBlockContainer>;
     }
 
-    const sortedEvents = [...series.events];
+    const sortedEvents = [...events];
 
     sortedEvents.sort(match(order, {
         "NEW_TO_OLD": () => compareNewToOld,
@@ -224,10 +227,6 @@ type GridTypeProps = {
 
 const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
     const TRANSITION_DURATION = "0.3s";
-
-    if (isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)) {
-        return null;
-    }
 
     const inner = <>
         <div css={{ borderRadius: 8 }}>
