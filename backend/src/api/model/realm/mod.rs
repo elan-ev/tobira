@@ -104,8 +104,8 @@ pub(crate) struct Realm {
 /// SQL join expression that is used in almost all realm-related queries.
 pub(crate) const REALM_JOINS: &str = "\
     left join blocks on blocks.id = name_from_block \
-    left join events on blocks.video_id = events.id \
-    left join series on blocks.series_id = series.id \
+    left join events on blocks.video = events.id \
+    left join series on blocks.series = series.id \
 ";
 
 impl_from_db!(
@@ -351,9 +351,9 @@ impl Realm {
             let query = "select exists(\
                 select 1 \
                 from blocks \
-                where realm_id = $1 and ( \
-                    video_id = $2 or \
-                    series_id = (select series from events where id = $2) \
+                where realm = $1 and ( \
+                    video = $2 or \
+                    series = (select series from events where id = $2) \
                 )\
             )";
             context.db.query_one(&query, &[&self.key, &event_key])
@@ -362,7 +362,7 @@ impl Realm {
                 .pipe(Ok)
         } else if let Some(series_key) = id.key_for(Id::SERIES_KIND) {
             let query = "select exists(\
-                select 1 from blocks where realm_id = $1 and series_id = $2\
+                select 1 from blocks where realm = $1 and series = $2\
             )";
             context.db.query_one(&query, &[&self.key, &series_key])
                 .await?

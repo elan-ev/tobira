@@ -13,7 +13,7 @@ create type video_list_order as enum ('new_to_old', 'old_to_new');
 create table blocks (
     -- Shared properties
     id bigint primary key default randomized_id('block'),
-    realm_id bigint not null references realms on delete cascade,
+    realm bigint not null references realms on delete cascade,
     type block_type not null,
     index smallint not null,
 
@@ -21,20 +21,20 @@ create table blocks (
     text_content text,
 
     -- Series blocks
-    series_id bigint references series on delete set null,
+    series bigint references series on delete set null,
 
     -- All videolist-like blocks
     videolist_order video_list_order,
 
     -- Video blocks
-    video_id bigint references events on delete set null,
+    video bigint references events on delete set null,
 
     -- Blocks with a "natural title"
     show_title boolean default true,
 
 
     -- Enforce several constraints
-    constraint index_unique_in_realm unique(realm_id, index) deferrable initially immediate,
+    constraint index_unique_in_realm unique(realm, index) deferrable initially immediate,
     constraint index_positive check (index >= 0),
 
     constraint title_block_has_fields check (type <> 'title' or (
@@ -53,8 +53,8 @@ create table blocks (
 );
 
 -- Blocks are almost always looked up by realm ID.
-create index idx_block_realm_id on blocks (realm_id);
+create index idx_block_realm on blocks (realm);
 
 -- Sometimes, we quickly need to find out which blocks reference a specific event or series.
-create index idx_block_series_id on blocks (series_id);
-create index idx_block_video_id on blocks (video_id);
+create index idx_block_series on blocks (series);
+create index idx_block_video on blocks (video);

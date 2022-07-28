@@ -21,7 +21,7 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks (realm_id, index, type, text_content) \
+                "insert into blocks (realm, index, type, text_content) \
                     values ($1, $2, 'title', $3)",
                 &[&realm, &index, &block.content],
             )
@@ -44,7 +44,7 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks (realm_id, index, type, text_content) \
+                "insert into blocks (realm, index, type, text_content) \
                     values ($1, $2, 'text', $3)",
                 &[&realm, &index, &block.content],
             )
@@ -71,7 +71,7 @@ impl BlockValue {
         context.db
             .execute(
                 "insert into blocks \
-                    (realm_id, index, type, series_id, videolist_order, show_title) \
+                    (realm, index, type, series, videolist_order, show_title) \
                     values ($1, $2, 'series', $3, $4, $5)",
                 &[&realm, &index, &series, &block.order, &block.show_title],
             )
@@ -97,7 +97,7 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks (realm_id, index, type, video_id, show_title) \
+                "insert into blocks (realm, index, type, video, show_title) \
                     values ($1, $2, 'video', $3, $4)",
                 &[&realm, &index, &event, &block.show_title],
             )
@@ -124,7 +124,7 @@ impl BlockValue {
 
         let num_blocks: i64 = context.db
             .query_one(
-                "select count(*) from blocks where realm_id = $1",
+                "select count(*) from blocks where realm = $1",
                 &[&realm],
             )
             .await?
@@ -141,7 +141,7 @@ impl BlockValue {
             .execute(
                 "update blocks \
                     set index = index + 1 \
-                    where realm_id = $1 \
+                    where realm = $1 \
                     and index >= $2",
                 &[&realm, &index],
             )
@@ -180,7 +180,7 @@ impl BlockValue {
         // tables. The first temporary contains two rows with the
         // `(old_index, new_index)` and `(new_index, old_index)` pairs. The second only
         // contains the number of blocks for that realm. The join conditions are
-        // `realm_id = realms.id` and `blocks.index = updates.old_index`, meaning that
+        // `realm = realms.id` and `blocks.index = updates.old_index`, meaning that
         // the resulting joined table should contain exactly two rows if both indices
         // are valid. For these two rows, the `update` is performed.
         //
@@ -194,9 +194,9 @@ impl BlockValue {
                     ($2::smallint, $1::smallint) \
                 ) as updates(old_index, new_index), ( \
                     select count(*) as count from blocks \
-                    where realm_id = $3 \
+                    where realm = $3 \
                 ) as count \
-                where realm_id = $3 \
+                where realm = $3 \
                 and blocks.index = updates.old_index \
                 and updates.new_index < count \
                 and updates.new_index >= 0",
@@ -282,7 +282,7 @@ impl BlockValue {
         let selection = Self::select();
         let query = format!(
             "update blocks set \
-                series_id = coalesce($2, series_id), \
+                series = coalesce($2, series), \
                 videolist_order = coalesce($3, videolist_order), \
                 show_title = coalesce($4, show_title) \
                 where id = $1 \
@@ -308,7 +308,7 @@ impl BlockValue {
         let selection = Self::select();
         let query = format!(
             "update blocks set \
-                video_id = coalesce($2, video_id), \
+                video = coalesce($2, video), \
                 show_title = coalesce($3, show_title) \
                 where id = $1 \
                 and type = 'video' \
@@ -330,11 +330,11 @@ impl BlockValue {
             "with deleted as (\
                 delete from blocks \
                 where id = $1 \
-                returning realm_id, index\
+                returning realm, index\
             ) \
             select {selection} \
             from realms {REALM_JOINS} \
-            where realms.id = (select realm_id from deleted)"
+            where realms.id = (select realm from deleted)"
         );
         let result = db
             .query_one(&query, &[&block_id])
@@ -348,7 +348,7 @@ impl BlockValue {
             .execute(
                 "update blocks \
                     set index = index - 1 \
-                    where realm_id = $1 \
+                    where realm = $1 \
                     and index > $2",
                 &[&realm.key, &index],
             )
