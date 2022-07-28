@@ -114,6 +114,8 @@ const query = graphql`
                     updated
                     duration
                     thumbnail
+                    startTime
+                    endTime
                     tracks { uri flavor mimetype resolution }
                 }
                 series { id title ... SeriesBlockReadySeriesData }
@@ -195,7 +197,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
         <div css={{ display: "flex", alignItems: "center", marginTop: 24 }}>
             <div css={{ flex: "1" }}>
                 <VideoTitle title={event.title} />
-                <VideoDate created={event.created} updated={event.syncedData.updated} />
+                <VideoDate event={event} />
             </div>
             <div>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
@@ -314,33 +316,41 @@ const Description: React.FC<DescriptionProps> = ({ description }) => {
 };
 
 type VideoDateProps = {
-    created: string;
-    updated: string;
+    event: SyncedEvent;
 };
 
-const VideoDate: React.FC<VideoDateProps> = props => {
+const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
     const { t, i18n } = useTranslation();
 
-    const created = new Date(props.created);
-    const updated = new Date(props.updated);
+    const created = new Date(event.created);
+    const updated = new Date(event.syncedData.updated);
+    const startTime = event.syncedData.startTime == null
+        ? null
+        : new Date(event.syncedData.startTime);
+    const endTime = event.syncedData.endTime == null
+        ? null
+        : new Date(event.syncedData.endTime);
 
     const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
-    const createdDate = created.toLocaleDateString(i18n.language, { dateStyle: "long" });
-    const createdFull = created.toLocaleString(i18n.language, fullOptions);
-    const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
-        ? updated.toLocaleString(i18n.language, fullOptions)
-        : null;
+    let inner;
+    if (endTime && endTime < new Date()) {
+        inner = <>
+            {t("video.ended") + ": "}
+            {endTime.toLocaleString(i18n.language, fullOptions)}
+        </>;
+    } else if (startTime && startTime > new Date()) {
+        inner = <>
+            {t("video.upcoming") + ": "}
+            {startTime.toLocaleString(i18n.language, fullOptions)}
+        </>;
+    } else {
+        const createdDate = created.toLocaleDateString(i18n.language, { dateStyle: "long" });
+        const createdFull = created.toLocaleString(i18n.language, fullOptions);
+        const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
+            ? updated.toLocaleString(i18n.language, fullOptions)
+            : null;
 
-    return (
-        <div css={{
-            display: "inline-block",
-            position: "relative",
-            color: "var(--grey40)",
-            fontSize: 14,
-            "&:hover > div": {
-                display: "initial",
-            },
-        }}>
+        inner = <>
             {createdDate}
             <div css={{
                 display: "none",
@@ -366,7 +376,19 @@ const VideoDate: React.FC<VideoDateProps> = props => {
                 <br/>
                 <i>{t("video.updated")}</i>: {updatedFull}
             </div>
-        </div>
+        </>;
+    }
+
+    return (
+        <div css={{
+            display: "inline-block",
+            position: "relative",
+            color: "var(--grey40)",
+            fontSize: 14,
+            "&:hover > div": {
+                display: "initial",
+            },
+        }}>{inner}</div>
     );
 };
 
