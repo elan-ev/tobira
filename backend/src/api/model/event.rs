@@ -559,7 +559,12 @@ impl EventCursor {
         match (&self.sort_filter, order.column) {
             (CursorSortFilter::Title(title), EventSortColumn::Title) => Ok(title),
             (CursorSortFilter::Created(created), EventSortColumn::Created) => Ok(created),
-            (CursorSortFilter::Updated(updated), EventSortColumn::Updated) => Ok(updated),
+            (CursorSortFilter::Updated(updated), EventSortColumn::Updated) => {
+                match updated {
+                    Some(updated) => Ok(updated),
+                    None => Ok(&postgres_types::Timestamp::<DateTime<Utc>>::NegInfinity),
+                }
+            },
             _ => Err(invalid_input!("sort order does not match 'before'/'after' argument")),
         }
     }
