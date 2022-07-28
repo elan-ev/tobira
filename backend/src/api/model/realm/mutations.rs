@@ -52,10 +52,6 @@ impl Realm {
                 ));
             }
 
-            if child_indices.is_empty() {
-                return Err(invalid_input!("`setChildOrder` was called with zero children"));
-            }
-
             let all_indices_unique = {
                 let index_set = child_indices.iter().map(|c| c.index).collect::<HashSet<_>>();
                 index_set.len() == child_indices.len()
