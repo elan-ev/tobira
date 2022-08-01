@@ -60,6 +60,7 @@ type PlyrConfig = {
 };
 
 type OpencastConfig = {
+    presentationNode: string;
     uploadNode: string;
     studioUrl: string;
     editorUrl: string;
