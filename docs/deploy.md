@@ -2,7 +2,9 @@
 
 ## 1. Deploy binary
 
-Copy the `tobira` binary attached to [our releases](https://github.com/elan-ev/tobira/releases) to your server (e.g. to `/opt/tobira`).
+Get the appropriate `tobira-<target>` binary for your architecture from [our releases](https://github.com/elan-ev/tobira/releases) and copy it to your server.
+You can place it anywhere you want, but we suggest creating a directory `/opt/tobira` and placing it there.
+The rest of these docs also assumes that you rename it to just `tobira`, i.e. stripping the target suffix.
 
 If you need to build your own binary, run `./x.sh build-release` at the top of the repository.
 You will find the release artifacts in `deploy/`.
