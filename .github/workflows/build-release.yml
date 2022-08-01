@@ -29,11 +29,14 @@ jobs:
       - name: Create release build
         run: ./x.sh build-release
 
+      - name: Rename binary to include target information
+        run: mv deploy/tobira deploy/tobira-x86_64-unknown-linux-gnu
+
       - name: create new release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            deploy/tobira
+            deploy/tobira-x86_64-unknown-linux-gnu
             deploy/config.toml
           draft: true
           fail_on_unmatched_files: true
