@@ -7,8 +7,7 @@ path: ''
 name: 'Welcome to Tobira'
 blocks:
   - text: |
-      Tobira is a video portal for [Opencast](https://opencast.org). Note that it is still
-      in its *early* stages of development! Everything you see here might still change.
+      Welcome to Tobira, a video portal for [Opencast](https://opencast.org)!
       Tobira is fully open source and you can find its code
       [here](https://github.com/elan-ev/tobira).
 
