@@ -9,6 +9,7 @@ const noUnusedVarsOptions = {
     ignoreRestSiblings: true,
 };
 const braceStyle = ["warn", "1tbs", { allowSingleLine: true }];
+const quoteOptions = ["double", { avoidEscape: true }];
 
 // eslint quote-props: "warn", "consistent-as-needed"
 module.exports = {
@@ -70,7 +71,7 @@ module.exports = {
         "one-var": ["warn", "never"],
         "operator-linebreak": ["warn", "before"],
         "padding-line-between-statements": "warn",
-        "quotes": ["warn", "double", { avoidEscape: true }],
+        "quotes": ["warn", ...quoteOptions],
         "rest-spread-spacing": "warn",
         "semi": "warn",
         "semi-spacing": "warn",
@@ -132,7 +133,7 @@ module.exports = {
                 format: ["PascalCase", "camelCase"],
             }],
             "@typescript-eslint/object-curly-spacing": ["warn", "always"],
-            "@typescript-eslint/quotes": "warn",
+            "@typescript-eslint/quotes": ["warn", ...quoteOptions],
             "@typescript-eslint/semi": "warn",
             "@typescript-eslint/no-extra-semi": "warn",
             "@typescript-eslint/space-before-function-paren": ["warn", {
