@@ -87,6 +87,9 @@ impl Assets {
             "loginPageNote": config.auth.login_page.note,
         }).to_string());
 
+        // Note the mismatch between presentation and sync node;
+        // these might not be the same forever!
+        variables.insert("presentation-node".into(), config.opencast.sync_node().to_string());
         variables.insert("upload-node".into(), config.opencast.upload_node().to_string());
         variables.insert("studio-url".into(), config.opencast.studio_url());
         variables.insert("editor-url".into(), config.opencast.editor_url());

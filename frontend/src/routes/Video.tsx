@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useRef } from "react";
 import { graphql } from "react-relay/hooks";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
@@ -15,15 +15,18 @@ import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
+import { currentRef } from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
-import { LinkButton } from "../ui/Button";
+import { Button, LinkButton } from "../ui/Button";
 import CONFIG from "../config";
 import { translatedConfig, match } from "../util";
 import { Link } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
+import { Modal, ModalHandle } from "../ui/Modal";
+import { CopyableInput } from "../ui/Input";
 
 
 export const VideoRoute = makeRoute(url => {
@@ -103,6 +106,7 @@ const query = graphql`
             __typename
             ... on NotAllowed { dummy } # workaround
             ... on AuthorizedEvent {
+                opencastId
                 title
                 description
                 creators
@@ -194,18 +198,17 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const user = useUser();
 
     return <>
-        <div css={{ display: "flex", alignItems: "center", marginTop: 24 }}>
+        <div css={{ display: "flex", alignItems: "center", marginTop: 24, gap: 8 }}>
             <div css={{ flex: "1" }}>
                 <VideoTitle title={event.title} />
                 <VideoDate event={event} />
             </div>
-            <div>
-                {event.canWrite && user !== "none" && user !== "unknown" && (
-                    <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
-                        {t("manage.my-videos.manage-video")}
-                    </LinkButton>
-                )}
-            </div>
+            {event.canWrite && user !== "none" && user !== "unknown" && (
+                <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
+                    {t("manage.my-videos.manage-video")}
+                </LinkButton>
+            )}
+            <EmbedCode event={event} />
         </div>
         <hr />
         <div css={{
@@ -249,6 +252,40 @@ const VideoTitle: React.FC<VideoTitleProps> = ({ title }) => (
         overflow: "hidden",
     }} />
 );
+
+type EmbedCodeProps = {
+    event: {
+        opencastId: string;
+    };
+};
+
+const EmbedCode: React.FC<EmbedCodeProps> = ({ event: { opencastId: id } }) => {
+    const { t } = useTranslation();
+
+    const modal = useRef<ModalHandle>(null);
+
+    const embedCode = `<iframe ${[
+        `src="${CONFIG.opencast.presentationNode}/play/${id}"`,
+        "allowfullscreen",
+        `style="${[
+            "border: none;",
+            "width: 100%;",
+            "aspect-ratio: 16/9;",
+        ].join(" ")}"`,
+        'name="Player"',
+        'scrolling="no"',
+        'frameborder="0"',
+        'marginheight="0px"',
+        'marginwidth="0px"',
+    ].join(" ")}></iframe>`;
+
+    return <>
+        <Button onClick={() => currentRef(modal).open()}>{t("video.embed.button")}</Button>
+        <Modal title={t("video.embed.title")} ref={modal}>
+            <CopyableInput value={embedCode} />
+        </Modal>
+    </>;
+};
 
 type CreatorsProps = {
     creators: readonly string[];
