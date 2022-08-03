@@ -126,8 +126,8 @@ video:
   license: Lizenz
   source: Quelle
   embed:
-    button: embed
-    title: Embed video
+    button: Einbetten
+    title: Video einbetten
 
 series:
   series: Serie

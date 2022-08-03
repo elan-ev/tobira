@@ -198,26 +198,17 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const user = useUser();
 
     return <>
-        <div css={{ display: "flex", alignItems: "center", marginTop: 24 }}>
+        <div css={{ display: "flex", alignItems: "center", marginTop: 24, gap: 8 }}>
             <div css={{ flex: "1" }}>
-                <div css={{
-                    display: "flex",
-                    flexDirection: "row",
-                }}>
-                    <div css={{ flexGrow: 1 }}>
-                        <VideoTitle title={event.title} />
-                    </div>
-                    <EmbedCode event={event} />
-                </div>
+                <VideoTitle title={event.title} />
                 <VideoDate event={event} />
             </div>
-            <div>
-                {event.canWrite && user !== "none" && user !== "unknown" && (
-                    <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
-                        {t("manage.my-videos.manage-video")}
-                    </LinkButton>
-                )}
-            </div>
+            {event.canWrite && user !== "none" && user !== "unknown" && (
+                <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
+                    {t("manage.my-videos.manage-video")}
+                </LinkButton>
+            )}
+            <EmbedCode event={event} />
         </div>
         <hr />
         <div css={{
@@ -280,7 +271,7 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: { opencastId: id } }) => {
             "border: none;",
             "width: 100%;",
             "aspect-ratio: 16/9;",
-        ].join(" ")}`,
+        ].join(" ")}"`,
         'name="Player"',
         'scrolling="no"',
         'frameborder="0"',

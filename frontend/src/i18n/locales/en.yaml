@@ -124,8 +124,8 @@ video:
   license: License
   source: Source
   embed:
-    button: einbetten
-    title: Video einbetten
+    button: Embed
+    title: Embed video
 
 series:
   series: Series
