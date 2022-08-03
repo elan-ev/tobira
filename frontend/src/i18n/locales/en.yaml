@@ -123,6 +123,9 @@ video:
   ended: Ended
   license: License
   source: Source
+  embed:
+    button: einbetten
+    title: Video einbetten
 
 series:
   series: Series

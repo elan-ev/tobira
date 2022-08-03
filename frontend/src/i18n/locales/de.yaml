@@ -125,6 +125,9 @@ video:
   ended: Beendet
   license: Lizenz
   source: Quelle
+  embed:
+    button: embed
+    title: Embed video
 
 series:
   series: Serie
