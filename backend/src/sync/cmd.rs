@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crate::{
     config::Config,
     prelude::*, db::DbConnection,
@@ -36,7 +38,12 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     let conn = db.get().await?;
 
     match args.cmd {
-        SyncCommand::Run { daemon } => super::run(daemon, conn, config).await,
+        SyncCommand::Run { daemon } => {
+            let before = Instant::now();
+            super::run(daemon, conn, config).await?;
+            info!("Finished harvest in {:.2?}", before.elapsed());
+            Ok(())
+        }
         SyncCommand::Reset => reset(conn).await,
     }
 }
