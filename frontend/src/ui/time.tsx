@@ -39,6 +39,9 @@ export const RelativeDate: React.FC<RelativeDateProps> = ({ date }) => {
 
     const preciseDate = date.toLocaleString(i18n.language);
 
-    return <span title={preciseDate}>{prettyDate}</span>;
+    return <time
+        dateTime={date.toISOString()}
+        title={preciseDate}
+    >{prettyDate}</time>;
 };
 
