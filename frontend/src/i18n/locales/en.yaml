@@ -18,6 +18,7 @@ general:
   leave-page-confirmation: Leave page? Changes you made may not be saved!
   logo-alt: Logo of “{{title}}”
   no-root-children: No pages yet ...
+  failed-to-load-thumbnail: Failed to load thumbnail
 
 welcome:
   title: Welcome to Tobira!

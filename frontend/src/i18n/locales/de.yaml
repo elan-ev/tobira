@@ -19,6 +19,7 @@ general:
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
   logo-alt: Das Logo von „{{title}}“
   no-root-children: Noch keine Seiten ...
+  failed-to-load-thumbnail: Konnte Vorschaubild nicht laden
 
 welcome:
   title: Willkommen zu Tobira!
