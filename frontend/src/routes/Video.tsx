@@ -357,27 +357,29 @@ type CreatorsProps = {
 };
 
 const Creators: React.FC<CreatorsProps> = ({ creators }) => (
-    <div css={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-        <HiOutlineUserCircle css={{ color: "var(--grey40)" }} />
-        <ul css={{
-            display: "inline-block",
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            fontSize: 14,
-            fontWeight: "bold",
-            "& > li": {
+    creators.length === 0
+        ? null
+        : <div css={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <HiOutlineUserCircle css={{ color: "var(--grey40)" }} />
+            <ul css={{
                 display: "inline-block",
-                "&:not(:last-child)::after": {
-                    content: "'•'",
-                    margin: "0 8px",
-                    color: "var(--grey65)",
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+                fontSize: 14,
+                fontWeight: "bold",
+                "& > li": {
+                    display: "inline-block",
+                    "&:not(:last-child)::after": {
+                        content: "'•'",
+                        margin: "0 8px",
+                        color: "var(--grey65)",
+                    },
                 },
-            },
-        }}>
-            {creators.map((c, i) => <li key={i}>{c}</li>)}
-        </ul>
-    </div>
+            }}>
+                {creators.map((c, i) => <li key={i}>{c}</li>)}
+            </ul>
+        </div>
 );
 
 type DescriptionProps = {
