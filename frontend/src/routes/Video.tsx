@@ -1,4 +1,4 @@
-import React, { ReactNode, useRef } from "react";
+import React, { ReactNode, useEffect, useRef } from "react";
 import { graphql } from "react-relay/hooks";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { Trans, useTranslation } from "react-i18next";
@@ -20,7 +20,7 @@ import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
 import CONFIG from "../config";
-import { translatedConfig, match } from "../util";
+import { translatedConfig, match, useForceRerender } from "../util";
 import { Link } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
@@ -147,6 +147,7 @@ type Props = {
 
 const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     const { t } = useTranslation();
+    const rerender = useForceRerender();
 
     if (event.__typename === "NotAllowed") {
         return <ErrorPage title={t("api-remote-errors.view.event")} />;
@@ -165,10 +166,11 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     const { startTime, hasStarted } = getEventTimeInfo(event);
     const pendingLiveEvent = event.isLive && startTime && !hasStarted;
 
+
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         {pendingLiveEvent
-            ? <PendingEventPlaceholder {...{ event, startTime }} />
+            ? <PendingEventPlaceholder rerenderParent={rerender} {...{ event, startTime }} />
             : <Player
                 tracks={event.syncedData.tracks as Track[]}
                 title={event.title}
@@ -193,10 +195,22 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
 type PendingEventPlaceholderProps = {
     event: SyncedEvent;
     startTime: Date;
+    rerenderParent: () => void;
 };
 
-const PendingEventPlaceholder: React.FC<PendingEventPlaceholderProps> = ({ event, startTime }) => {
+const PendingEventPlaceholder: React.FC<PendingEventPlaceholderProps> = ({
+    event,
+    startTime,
+    rerenderParent,
+}) => {
     const { t } = useTranslation();
+
+    // When the livestream starts, rerender the parent. We add some extra time
+    // to be sure the stream is actually already running by that time.
+    useEffect(() => {
+        const handle = setTimeout(rerenderParent, (startTime.getTime() - Date.now()) + 500);
+        return () => clearTimeout(handle);
+    });
 
     return (
         <PlayerContainer
