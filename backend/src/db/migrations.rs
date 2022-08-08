@@ -261,4 +261,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     09: "user-sessions",
     10: "search-index-queue",
     11: "search-views",
+    12: "deleted-items",
 ];
