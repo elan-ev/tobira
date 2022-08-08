@@ -113,8 +113,13 @@ async fn check_referenced_files(config: &Config) -> Result<()> {
 }
 
 async fn check_meili(config: &Config) -> Result<()> {
-    // TODO: maybe check additional things?
-    let _meili = config.meili.connect_only().await?;
+    let meili = config.meili.connect_only().await?;
+
+    // Check that the API key is valid and can access the indexes.
+    let _ = meili.client.get_stats().await?;
+    let _ = meili.event_index.get_stats().await?;
+    let _ = meili.realm_index.get_stats().await?;
+
     Ok(())
 }
 

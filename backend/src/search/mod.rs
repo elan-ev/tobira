@@ -90,7 +90,7 @@ impl MeiliConfig {
 #[derive(Clone)]
 pub(crate) struct Client {
     config: MeiliConfig,
-    client: MeiliClient,
+    pub(crate) client: MeiliClient,
     pub(crate) event_index: Index,
     pub(crate) realm_index: Index,
 }
