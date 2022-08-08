@@ -43,6 +43,11 @@ impl Query {
         Realm::load_by_path(path, context).await
     }
 
+    /// Returns an event by its Opencast ID.
+    async fn event_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Event>> {
+        AuthorizedEvent::load_by_opencast_id(id, context).await
+    }
+
     /// Returns an event by its ID.
     async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
         AuthorizedEvent::load_by_id(id, context).await
@@ -53,7 +58,7 @@ impl Query {
         AuthorizedEvent::load_all(context).await
     }
 
-    /// Returns a series by its Opencast ID
+    /// Returns a series by its Opencast ID.
     async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<SeriesValue>> {
         SeriesValue::load_by_opencast_id(id, context).await
     }

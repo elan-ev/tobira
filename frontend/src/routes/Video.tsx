@@ -1,9 +1,8 @@
 import React, { ReactNode, useEffect, useRef } from "react";
-import { graphql } from "react-relay/hooks";
+import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { Trans, useTranslation } from "react-i18next";
 
-import type { VideoQuery, VideoQuery$data } from "./__generated__/VideoQuery.graphql";
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
@@ -29,8 +28,26 @@ import { Modal, ModalHandle } from "../ui/Modal";
 import { CopyableInput } from "../ui/Input";
 import { FiClock } from "react-icons/fi";
 import { RelativeDate } from "../ui/time";
+import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
+import {
+    VideoPageEventData$data,
+    VideoPageEventData$key,
+} from "./__generated__/VideoPageEventData.graphql";
+import { VideoPageRealmData$key } from "./__generated__/VideoPageRealmData.graphql";
+import { VideoPageDirectLinkQuery } from "./__generated__/VideoPageDirectLinkQuery.graphql";
+import {
+    VideoPageDirectOpencastLinkQuery,
+} from "./__generated__/VideoPageDirectOpencastLinkQuery.graphql";
+import { UserData$key } from "../__generated__/UserData.graphql";
+import { OperationType } from "relay-runtime";
+import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
 
 
+// ===========================================================================================
+// ===== Route definitions
+// ===========================================================================================
+
+/** Video in realm route: `/path/to/realm/v/<videoid>` */
 export const VideoRoute = makeRoute(url => {
     const urlPath = url.pathname.replace(/^\/|\/$/g, "");
     const parts = urlPath.split("/").map(decodeURIComponent);
@@ -52,10 +69,38 @@ export const VideoRoute = makeRoute(url => {
         }
     }
 
+    const query = graphql`
+        query VideoPageInRealmQuery($id: ID!, $realmPath: String!) {
+            ... UserData
+            event: eventById(id: $id) { ... VideoPageEventData }
+            realm: realmByPath(path: $realmPath) {
+                referencesVideo: references(id: $id)
+                ... VideoPageRealmData
+                ... NavigationData
+            }
+        }
+    `;
     const realmPath = "/" + realmPathParts.join("/");
-    return prepare(`ev${videoId}`, realmPath);
+    const eventId = `ev${videoId}`;
+    const queryRef = loadQuery<VideoPageInRealmQuery>(query, { id: eventId, realmPath });
+
+    return {
+        render: () => <RootLoader
+            {... { query, queryRef }}
+            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            render={({ event, realm }) => !event || !realm || !realm.referencesVideo
+                ? <NotFound kind="video" />
+                : <VideoPage
+                    eventRef={event}
+                    realmRef={realm}
+                    basePath={realmPath.replace(/\/$/u, "") + "/v"}
+                />}
+        />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
+/** Direct link to video with our ID: `/!v/<videoid>` */
 export const DirectVideoRoute = makeRoute(url => {
     const regex = new RegExp(`^/!v/(${b64regex}+)/?$`, "u");
     const params = regex.exec(url.pathname);
@@ -63,91 +108,131 @@ export const DirectVideoRoute = makeRoute(url => {
         return null;
     }
 
-    const videoId = decodeURIComponent(params[1]);
-    return prepare(`ev${videoId}`);
-});
-
-const prepare = (id: string, realmPath?: string): MatchedRoute => {
-    const isDirectLink = realmPath === undefined;
-    const queryRef = loadQuery<VideoQuery>(query, { id, realmPath: realmPath ?? "/" });
-
-    const render: (result: VideoQuery$data) => JSX.Element = isDirectLink
-        ? ({ event, realm }) => (
-            !event
-                ? <NotFound kind="video" />
-                : <VideoPage
-                    {...{ id, event }}
-                    realm={realm ?? unreachable("root realm doesn't exist")}
-                    basePath="/!v"
-                />
-        )
-        : ({ event, realm }) => (
-            !event || !realm || !realm.referencesVideo
-                ? <NotFound kind="video" />
-                : <VideoPage
-                    {...{ id, event, realm }}
-                    basePath={realmPath.replace(/\/$/u, "") + "/v"}
-                />
-        );
-
-    return {
-        render: () => <RootLoader
-            {... { query, queryRef }}
-            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-            render={render}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
-};
-
-
-const query = graphql`
-    query VideoQuery($id: ID!, $realmPath: String!) {
-        ... UserData
-        event: eventById(id: $id) {
-            __typename
-            ... on NotAllowed { dummy } # workaround
-            ... on AuthorizedEvent {
-                opencastId
-                title
-                description
-                creators
-                created
-                isLive
-                metadata
-                canWrite
-                syncedData {
-                    updated
-                    duration
-                    thumbnail
-                    startTime
-                    endTime
-                    tracks { uri flavor mimetype resolution }
-                }
-                series { id title ... SeriesBlockReadySeriesData }
+    const query = graphql`
+        query VideoPageDirectLinkQuery($id: ID!) {
+            ... UserData
+            event: eventById(id: $id) { ... VideoPageEventData }
+            realm: rootRealm {
+                ... VideoPageRealmData
+                ... NavigationData
             }
         }
-        realm: realmByPath(path: $realmPath) {
-            name
-            path
-            isRoot
-            ancestors { name path }
-            referencesVideo: references(id: $id)
-            ... NavigationData
+    `;
+    const videoId = decodeURIComponent(params[1]);
+    const eventId = `ev${videoId}`;
+    const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, { id: eventId });
+
+    return matchedDirectRoute(query, queryRef);
+});
+
+/** Direct link to video with Opencast ID: `/!v/:<ocid>` */
+export const DirectOpencastVideoRoute = makeRoute(url => {
+    const regex = new RegExp("^/!v/:([^/]+)$", "u");
+    const matches = regex.exec(url.pathname);
+    if (!matches) {
+        return null;
+    }
+
+    const query = graphql`
+        query VideoPageDirectOpencastLinkQuery($id: String!) {
+            ... UserData
+            event: eventByOpencastId(id: $id) { ... VideoPageEventData }
+            realm: rootRealm {
+                ... VideoPageRealmData
+                ... NavigationData
+            }
+        }
+    `;
+    const videoId = decodeURIComponent(matches[1]);
+    const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, { id: videoId });
+
+    return matchedDirectRoute(query, queryRef);
+});
+
+
+interface DirectRouteQuery extends OperationType {
+    response: UserData$key & {
+        realm: VideoPageRealmData$key & NavigationData$key;
+        event: VideoPageEventData$key | null;
+    };
+}
+
+/** Shared code of both direct routes */
+const matchedDirectRoute = (
+    query: GraphQLTaggedNode,
+    queryRef: PreloadedQuery<DirectRouteQuery>,
+): MatchedRoute => ({
+    render: () => <RootLoader
+        {... { query, queryRef }}
+        nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+        render={({ event, realm }) => !event
+            ? <NotFound kind="video" />
+            : <VideoPage
+                eventRef={event}
+                realmRef={realm ?? unreachable("root realm doesn't exist")}
+                basePath="/!v"
+            />}
+    />,
+    dispose: () => queryRef.dispose(),
+});
+
+
+// ===========================================================================================
+// ===== GraphQL Fragments
+// ===========================================================================================
+
+const realmFragment = graphql`
+    fragment VideoPageRealmData on Realm {
+        name
+        path
+        isRoot
+        ancestors { name path }
+    }
+`;
+
+const eventFragment = graphql`
+    fragment VideoPageEventData on Event {
+        __typename
+        ... on NotAllowed { dummy } # workaround
+        ... on AuthorizedEvent {
+            id
+            title
+            description
+            creators
+            created
+            isLive
+            opencastId
+            metadata
+            canWrite
+            syncedData {
+                updated
+                duration
+                thumbnail
+                startTime
+                endTime
+                tracks { uri flavor mimetype resolution }
+            }
+            series { id title ... SeriesBlockReadySeriesData }
         }
     }
 `;
 
+
+// ===========================================================================================
+// ===== Components
+// ===========================================================================================
+
 type Props = {
-    event: NonNullable<VideoQuery$data["event"]>;
-    realm: NonNullable<VideoQuery$data["realm"]>;
+    eventRef: NonNullable<VideoPageEventData$key>;
+    realmRef: NonNullable<VideoPageRealmData$key>;
     basePath: string;
-    id: string;
 };
 
-const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
+const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     const { t } = useTranslation();
     const rerender = useForceRerender();
+    const event = useFragment(eventFragment, eventRef);
+    const realm = useFragment(realmFragment, realmRef);
 
     if (event.__typename === "NotAllowed") {
         return <ErrorPage title={t("api-remote-errors.view.event")} />;
@@ -155,10 +240,12 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
     }
+    event;
 
     if (!isSynced(event)) {
         return <WaitingPage type="video" />;
     }
+    event;
 
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
@@ -179,7 +266,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
                 coverImage={event.syncedData.thumbnail}
                 css={{ margin: "0 auto" }}
             />}
-        <Metadata id={id} event={event} />
+        <Metadata id={event.id} event={event} />
 
         <div css={{ height: 80 }} />
 
@@ -187,7 +274,7 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
             basePath={basePath}
             fragRef={event.series}
             title={t("video.more-from-series", { series: event.series.title })}
-            activeEventId={id}
+            activeEventId={event.id}
         />}
     </>;
 };
@@ -248,7 +335,7 @@ const PendingEventPlaceholder: React.FC<PendingEventPlaceholderProps> = ({
     );
 };
 
-type Event = Extract<NonNullable<VideoQuery$data["event"]>, { __typename: "AuthorizedEvent" }>;
+type Event = Extract<NonNullable<VideoPageEventData$data>, { __typename: "AuthorizedEvent" }>;
 type SyncedEvent = Event & { syncedData: NonNullable<Event["syncedData"]> };
 
 const isSynced = (event: Event): event is SyncedEvent => Boolean(event.syncedData);

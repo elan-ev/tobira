@@ -7,7 +7,7 @@ import { AddChildRoute } from "./routes/manage/Realm/AddChild";
 import { ManageRealmContentRoute } from "./routes/manage/Realm/Content";
 import { NotFoundRoute } from "./routes/NotFound";
 import { RealmRoute } from "./routes/Realm";
-import { DirectVideoRoute, VideoRoute } from "./routes/Video";
+import { DirectOpencastVideoRoute, DirectVideoRoute, VideoRoute } from "./routes/Video";
 import { DirectSeriesOCRoute, DirectSeriesRoute } from "./routes/Series";
 import { ManageVideosRoute } from "./routes/manage/Video";
 import { ManageSingleVideoRoute } from "./routes/manage/Video/Single";
@@ -34,6 +34,7 @@ const {
         SearchRoute,
         VideoRoute,
         DirectVideoRoute,
+        DirectOpencastVideoRoute,
         DirectSeriesRoute,
         DirectSeriesOCRoute,
         ManageRoute,
