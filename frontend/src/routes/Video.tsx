@@ -1,7 +1,7 @@
 import React, { ReactNode, useRef } from "react";
 import { graphql } from "react-relay/hooks";
 import { HiOutlineUserCircle } from "react-icons/hi";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 import type { VideoQuery, VideoQuery$data } from "./__generated__/VideoQuery.graphql";
 import { loadQuery } from "../relay";
@@ -9,7 +9,7 @@ import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { Player, Track } from "../ui/player";
+import { getPlayerAspectRatio, Player, PlayerContainer, Track } from "../ui/player";
 import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
@@ -27,6 +27,8 @@ import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
 import { Modal, ModalHandle } from "../ui/Modal";
 import { CopyableInput } from "../ui/Input";
+import { FiClock } from "react-icons/fi";
+import { RelativeDate } from "../ui/time";
 
 
 export const VideoRoute = makeRoute(url => {
@@ -160,16 +162,21 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
 
+    const { startTime, hasStarted } = getEventTimeInfo(event);
+    const pendingLiveEvent = event.isLive && startTime && !hasStarted;
+
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
-        <Player
-            tracks={event.syncedData.tracks as Track[]}
-            title={event.title}
-            isLive={event.isLive}
-            duration={event.syncedData.duration}
-            coverImage={event.syncedData.thumbnail}
-            css={{ margin: "0 auto" }}
-        />
+        {pendingLiveEvent
+            ? <PendingEventPlaceholder {...{ event, startTime }} />
+            : <Player
+                tracks={event.syncedData.tracks as Track[]}
+                title={event.title}
+                isLive={event.isLive}
+                duration={event.syncedData.duration}
+                coverImage={event.syncedData.thumbnail}
+                css={{ margin: "0 auto" }}
+            />}
         <Metadata id={id} event={event} />
 
         <div css={{ height: 80 }} />
@@ -181,6 +188,50 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
             activeEventId={id}
         />}
     </>;
+};
+
+type PendingEventPlaceholderProps = {
+    event: SyncedEvent;
+    startTime: Date;
+};
+
+const PendingEventPlaceholder: React.FC<PendingEventPlaceholderProps> = ({ event, startTime }) => {
+    const { t } = useTranslation();
+
+    return (
+        <PlayerContainer
+            aspectRatio={getPlayerAspectRatio(event.syncedData.tracks as Track[])}
+            css={{
+                backgroundColor: "var(--grey20)",
+                color: "white",
+                padding: 8,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5%",
+                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    "& > *": {
+                        transform: "scale(0.8)",
+                    },
+                },
+            }}
+        >
+            <div css={{ textAlign: "center" }}>
+                <FiClock css={{ fontSize: 40, margin: "16px 0", strokeWidth: 1.5 }} />
+                <div>{t("video.stream-not-started-yet")}</div>
+            </div>
+            <div css={{
+                backgroundColor: "black",
+                borderRadius: 4,
+                padding: "8px 16px",
+            }}>
+                <Trans i18nKey={"video.starts-in"}>
+                    Starts <RelativeDate date={startTime} />
+                </Trans>
+            </div>
+        </PlayerContainer>
+    );
 };
 
 type Event = Extract<NonNullable<VideoQuery$data["event"]>, { __typename: "AuthorizedEvent" }>;
@@ -352,13 +403,16 @@ const Description: React.FC<DescriptionProps> = ({ description }) => {
     );
 };
 
-type VideoDateProps = {
-    event: SyncedEvent;
+type TimeInfo = {
+    created: Date;
+    updated: Date;
+    startTime: Date | null;
+    endTime: Date | null;
+    hasEnded: boolean;
+    hasStarted: boolean;
 };
 
-const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
-    const { t, i18n } = useTranslation();
-
+const getEventTimeInfo = (event: SyncedEvent): TimeInfo => {
     const created = new Date(event.created);
     const updated = new Date(event.syncedData.updated);
     const startTime = event.syncedData.startTime == null
@@ -368,14 +422,33 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         ? null
         : new Date(event.syncedData.endTime);
 
+    return {
+        created,
+        updated,
+        startTime,
+        endTime,
+        hasStarted: startTime != null && startTime < new Date(),
+        hasEnded: endTime != null && endTime < new Date(),
+    };
+};
+
+type VideoDateProps = {
+    event: SyncedEvent;
+};
+
+const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
+    const { t, i18n } = useTranslation();
+
+    const { created, updated, startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
+
     const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
     let inner;
-    if (event.isLive && endTime && endTime < new Date()) {
+    if (event.isLive && endTime && hasEnded) {
         inner = <>
             {t("video.ended") + ": "}
             {endTime.toLocaleString(i18n.language, fullOptions)}
         </>;
-    } else if (event.isLive && startTime && startTime > new Date()) {
+    } else if (event.isLive && startTime && !hasStarted) {
         inner = <>
             {t("video.upcoming") + ": "}
             {startTime.toLocaleString(i18n.language, fullOptions)}
