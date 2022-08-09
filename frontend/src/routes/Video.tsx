@@ -257,7 +257,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         {pendingLiveEvent
-            ? <PendingEventPlaceholder rerenderParent={rerender} {...{ event, startTime }} />
+            ? <PendingEventPlaceholder onEventStart={rerender} {...{ event, startTime }} />
             : <Player
                 tracks={event.syncedData.tracks as Track[]}
                 title={event.title}
@@ -282,20 +282,20 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
 type PendingEventPlaceholderProps = {
     event: SyncedEvent;
     startTime: Date;
-    rerenderParent: () => void;
+    onEventStart: () => void;
 };
 
 const PendingEventPlaceholder: React.FC<PendingEventPlaceholderProps> = ({
     event,
     startTime,
-    rerenderParent,
+    onEventStart,
 }) => {
     const { t } = useTranslation();
 
     // When the livestream starts, rerender the parent. We add some extra time
     // to be sure the stream is actually already running by that time.
     useEffect(() => {
-        const handle = setTimeout(rerenderParent, (startTime.getTime() - Date.now()) + 500);
+        const handle = setTimeout(onEventStart, (startTime.getTime() - Date.now()) + 500);
         return () => clearTimeout(handle);
     });
 

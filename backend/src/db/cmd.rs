@@ -131,7 +131,8 @@ async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
 }
 
 fn console(config: &DbConfig) -> Result<Never> {
-    let encode = |s| percent_encoding::utf8_percent_encode(s, percent_encoding::NON_ALPHANUMERIC);
+    use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+    let encode = |s| utf8_percent_encode(s, NON_ALPHANUMERIC);
 
     let connection_uri = format!(
         "postgresql://{}:{}@{}:{}/{}",
