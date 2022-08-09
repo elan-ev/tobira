@@ -45,8 +45,8 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
             return { error };
         }
 
-        // Not our problem
-        return { error: undefined };
+        // Not our problem, but still an error, so we throw it up to the next boundary
+        throw error;
     }
 
     public render(): ReactNode {
