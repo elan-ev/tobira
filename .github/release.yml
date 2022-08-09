@@ -1,0 +1,12 @@
+changelog:
+  categories:
+    - title: Breaking changes ⚠
+      labels: ['changelog:breaking']
+    - title: User-facing changes
+      labels: ['changelog:user']
+    - title: Changes primarily for admins
+      labels: ['changelog:admin']
+    - title: Changes primarily for developers
+      labels: ['changelog:dev']
+    - title: No category
+      labels: ['*']
