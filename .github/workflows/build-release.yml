@@ -18,6 +18,10 @@ jobs:
         with:
           draft: true
           generate_release_notes: true
+          body: |
+            <!-- Add this when there are no breaking changes.
+            🟢 There are no [breaking changes](https://github.com/elan-ev/tobira/blob/master/docs/versioning-policy.md#breaking-changesstability-guarantees).
+            -->
 
   build-and-attach-artifacts:
     name: Build and attach release artifacts
