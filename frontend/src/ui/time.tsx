@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 
@@ -8,8 +9,19 @@ type RelativeDateProps = {
 /** Formats a date as something relative like "3 days ago" */
 export const RelativeDate: React.FC<RelativeDateProps> = ({ date }) => {
     const { i18n } = useTranslation();
-    const secsAgo = Math.floor((Date.now() - date.getTime()) / 1000);
+    const [now, setNow] = useState(Date.now());
+    const secsAgo = Math.floor((now - date.getTime()) / 1000);
     const secsDiff = Math.abs(secsAgo);
+
+    // We rerender this component regularly so that it's basically always up to
+    // date. Most dates are more than a couple minutes in the past, and for
+    // those we only update every 30 seconds to reduce CPU usage minimally.
+    useEffect(() => {
+        const intervalLength = secsAgo > 2 * 60 ? 30000 : 1000;
+        const interval = setInterval(() => setNow(Date.now()), intervalLength);
+        return () => clearInterval(interval);
+    });
+
 
     const MINUTE = 60;
     const HOUR = 60 * MINUTE;
@@ -39,6 +51,9 @@ export const RelativeDate: React.FC<RelativeDateProps> = ({ date }) => {
 
     const preciseDate = date.toLocaleString(i18n.language);
 
-    return <span title={preciseDate}>{prettyDate}</span>;
+    return <time
+        dateTime={date.toISOString()}
+        title={preciseDate}
+    >{prettyDate}</time>;
 };
 

@@ -373,11 +373,13 @@ type Query {
     to start with `"/"`.
   """
   realmByPath(path: String!): Realm
+  "Returns an event by its Opencast ID."
+  eventByOpencastId(id: String!): Event
   "Returns an event by its ID."
   eventById(id: ID!): Event
   "Returns a list of all events the current user has read access to."
   allEvents: [AuthorizedEvent!]!
-  "Returns a series by its Opencast ID"
+  "Returns a series by its Opencast ID."
   seriesByOpencastId(id: String!): Series
   "Returns a series by its ID."
   seriesById(id: ID!): Series

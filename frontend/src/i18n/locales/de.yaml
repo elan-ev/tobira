@@ -19,6 +19,7 @@ general:
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
   logo-alt: Das Logo von „{{title}}“
   no-root-children: Noch keine Seiten ...
+  failed-to-load-thumbnail: Konnte Vorschaubild nicht laden
 
 welcome:
   title: Willkommen zu Tobira!
@@ -125,6 +126,8 @@ video:
   ended: Beendet
   license: Lizenz
   source: Quelle
+  stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
+  starts-in: 'Startet <1></1>'
   embed:
     button: Einbetten
     title: Video einbetten

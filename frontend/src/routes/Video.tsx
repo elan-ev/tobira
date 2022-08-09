@@ -1,15 +1,14 @@
-import React, { ReactNode, useRef } from "react";
-import { graphql } from "react-relay/hooks";
+import React, { ReactNode, useEffect, useRef } from "react";
+import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { HiOutlineUserCircle } from "react-icons/hi";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
-import type { VideoQuery, VideoQuery$data } from "./__generated__/VideoQuery.graphql";
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { Player, Track } from "../ui/player";
+import { getPlayerAspectRatio, Player, PlayerContainer, Track } from "../ui/player";
 import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
@@ -20,15 +19,35 @@ import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
 import CONFIG from "../config";
-import { translatedConfig, match } from "../util";
+import { translatedConfig, match, useForceRerender } from "../util";
 import { Link } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
 import { Modal, ModalHandle } from "../ui/Modal";
 import { CopyableInput } from "../ui/Input";
+import { FiClock } from "react-icons/fi";
+import { RelativeDate } from "../ui/time";
+import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
+import {
+    VideoPageEventData$data,
+    VideoPageEventData$key,
+} from "./__generated__/VideoPageEventData.graphql";
+import { VideoPageRealmData$key } from "./__generated__/VideoPageRealmData.graphql";
+import { VideoPageDirectLinkQuery } from "./__generated__/VideoPageDirectLinkQuery.graphql";
+import {
+    VideoPageDirectOpencastLinkQuery,
+} from "./__generated__/VideoPageDirectOpencastLinkQuery.graphql";
+import { UserData$key } from "../__generated__/UserData.graphql";
+import { OperationType } from "relay-runtime";
+import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
 
 
+// ===========================================================================================
+// ===== Route definitions
+// ===========================================================================================
+
+/** Video in realm route: `/path/to/realm/v/<videoid>` */
 export const VideoRoute = makeRoute(url => {
     const urlPath = url.pathname.replace(/^\/|\/$/g, "");
     const parts = urlPath.split("/").map(decodeURIComponent);
@@ -50,10 +69,38 @@ export const VideoRoute = makeRoute(url => {
         }
     }
 
+    const query = graphql`
+        query VideoPageInRealmQuery($id: ID!, $realmPath: String!) {
+            ... UserData
+            event: eventById(id: $id) { ... VideoPageEventData }
+            realm: realmByPath(path: $realmPath) {
+                referencesVideo: references(id: $id)
+                ... VideoPageRealmData
+                ... NavigationData
+            }
+        }
+    `;
     const realmPath = "/" + realmPathParts.join("/");
-    return prepare(`ev${videoId}`, realmPath);
+    const eventId = `ev${videoId}`;
+    const queryRef = loadQuery<VideoPageInRealmQuery>(query, { id: eventId, realmPath });
+
+    return {
+        render: () => <RootLoader
+            {... { query, queryRef }}
+            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+            render={({ event, realm }) => !event || !realm || !realm.referencesVideo
+                ? <NotFound kind="video" />
+                : <VideoPage
+                    eventRef={event}
+                    realmRef={realm}
+                    basePath={realmPath.replace(/\/$/u, "") + "/v"}
+                />}
+        />,
+        dispose: () => queryRef.dispose(),
+    };
 });
 
+/** Direct link to video with our ID: `/!v/<videoid>` */
 export const DirectVideoRoute = makeRoute(url => {
     const regex = new RegExp(`^/!v/(${b64regex}+)/?$`, "u");
     const params = regex.exec(url.pathname);
@@ -61,90 +108,131 @@ export const DirectVideoRoute = makeRoute(url => {
         return null;
     }
 
-    const videoId = decodeURIComponent(params[1]);
-    return prepare(`ev${videoId}`);
-});
-
-const prepare = (id: string, realmPath?: string): MatchedRoute => {
-    const isDirectLink = realmPath === undefined;
-    const queryRef = loadQuery<VideoQuery>(query, { id, realmPath: realmPath ?? "/" });
-
-    const render: (result: VideoQuery$data) => JSX.Element = isDirectLink
-        ? ({ event, realm }) => (
-            !event
-                ? <NotFound kind="video" />
-                : <VideoPage
-                    {...{ id, event }}
-                    realm={realm ?? unreachable("root realm doesn't exist")}
-                    basePath="/!v"
-                />
-        )
-        : ({ event, realm }) => (
-            !event || !realm || !realm.referencesVideo
-                ? <NotFound kind="video" />
-                : <VideoPage
-                    {...{ id, event, realm }}
-                    basePath={realmPath.replace(/\/$/u, "") + "/v"}
-                />
-        );
-
-    return {
-        render: () => <RootLoader
-            {... { query, queryRef }}
-            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-            render={render}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
-};
-
-
-const query = graphql`
-    query VideoQuery($id: ID!, $realmPath: String!) {
-        ... UserData
-        event: eventById(id: $id) {
-            __typename
-            ... on NotAllowed { dummy } # workaround
-            ... on AuthorizedEvent {
-                opencastId
-                title
-                description
-                creators
-                created
-                isLive
-                metadata
-                canWrite
-                syncedData {
-                    updated
-                    duration
-                    thumbnail
-                    startTime
-                    endTime
-                    tracks { uri flavor mimetype resolution }
-                }
-                series { id title ... SeriesBlockReadySeriesData }
+    const query = graphql`
+        query VideoPageDirectLinkQuery($id: ID!) {
+            ... UserData
+            event: eventById(id: $id) { ... VideoPageEventData }
+            realm: rootRealm {
+                ... VideoPageRealmData
+                ... NavigationData
             }
         }
-        realm: realmByPath(path: $realmPath) {
-            name
-            path
-            isRoot
-            ancestors { name path }
-            referencesVideo: references(id: $id)
-            ... NavigationData
+    `;
+    const videoId = decodeURIComponent(params[1]);
+    const eventId = `ev${videoId}`;
+    const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, { id: eventId });
+
+    return matchedDirectRoute(query, queryRef);
+});
+
+/** Direct link to video with Opencast ID: `/!v/:<ocid>` */
+export const DirectOpencastVideoRoute = makeRoute(url => {
+    const regex = new RegExp("^/!v/:([^/]+)$", "u");
+    const matches = regex.exec(url.pathname);
+    if (!matches) {
+        return null;
+    }
+
+    const query = graphql`
+        query VideoPageDirectOpencastLinkQuery($id: String!) {
+            ... UserData
+            event: eventByOpencastId(id: $id) { ... VideoPageEventData }
+            realm: rootRealm {
+                ... VideoPageRealmData
+                ... NavigationData
+            }
+        }
+    `;
+    const videoId = decodeURIComponent(matches[1]);
+    const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, { id: videoId });
+
+    return matchedDirectRoute(query, queryRef);
+});
+
+
+interface DirectRouteQuery extends OperationType {
+    response: UserData$key & {
+        realm: VideoPageRealmData$key & NavigationData$key;
+        event: VideoPageEventData$key | null;
+    };
+}
+
+/** Shared code of both direct routes */
+const matchedDirectRoute = (
+    query: GraphQLTaggedNode,
+    queryRef: PreloadedQuery<DirectRouteQuery>,
+): MatchedRoute => ({
+    render: () => <RootLoader
+        {... { query, queryRef }}
+        nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+        render={({ event, realm }) => !event
+            ? <NotFound kind="video" />
+            : <VideoPage
+                eventRef={event}
+                realmRef={realm ?? unreachable("root realm doesn't exist")}
+                basePath="/!v"
+            />}
+    />,
+    dispose: () => queryRef.dispose(),
+});
+
+
+// ===========================================================================================
+// ===== GraphQL Fragments
+// ===========================================================================================
+
+const realmFragment = graphql`
+    fragment VideoPageRealmData on Realm {
+        name
+        path
+        isRoot
+        ancestors { name path }
+    }
+`;
+
+const eventFragment = graphql`
+    fragment VideoPageEventData on Event {
+        __typename
+        ... on NotAllowed { dummy } # workaround
+        ... on AuthorizedEvent {
+            id
+            title
+            description
+            creators
+            created
+            isLive
+            opencastId
+            metadata
+            canWrite
+            syncedData {
+                updated
+                duration
+                thumbnail
+                startTime
+                endTime
+                tracks { uri flavor mimetype resolution }
+            }
+            series { id title ... SeriesBlockReadySeriesData }
         }
     }
 `;
 
+
+// ===========================================================================================
+// ===== Components
+// ===========================================================================================
+
 type Props = {
-    event: NonNullable<VideoQuery$data["event"]>;
-    realm: NonNullable<VideoQuery$data["realm"]>;
+    eventRef: NonNullable<VideoPageEventData$key>;
+    realmRef: NonNullable<VideoPageRealmData$key>;
     basePath: string;
-    id: string;
 };
 
-const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
+const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     const { t } = useTranslation();
+    const rerender = useForceRerender();
+    const event = useFragment(eventFragment, eventRef);
+    const realm = useFragment(realmFragment, realmRef);
 
     if (event.__typename === "NotAllowed") {
         return <ErrorPage title={t("api-remote-errors.view.event")} />;
@@ -152,25 +240,33 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
     if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
     }
+    event;
 
     if (!isSynced(event)) {
         return <WaitingPage type="video" />;
     }
+    event;
 
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
 
+    const { startTime, hasStarted } = getEventTimeInfo(event);
+    const pendingLiveEvent = event.isLive && startTime && !hasStarted;
+
+
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
-        <Player
-            tracks={event.syncedData.tracks as Track[]}
-            title={event.title}
-            isLive={event.isLive}
-            duration={event.syncedData.duration}
-            coverImage={event.syncedData.thumbnail}
-            css={{ margin: "0 auto" }}
-        />
-        <Metadata id={id} event={event} />
+        {pendingLiveEvent
+            ? <PendingEventPlaceholder onEventStart={rerender} {...{ event, startTime }} />
+            : <Player
+                tracks={event.syncedData.tracks as Track[]}
+                title={event.title}
+                isLive={event.isLive}
+                duration={event.syncedData.duration}
+                coverImage={event.syncedData.thumbnail}
+                css={{ margin: "0 auto" }}
+            />}
+        <Metadata id={event.id} event={event} />
 
         <div css={{ height: 80 }} />
 
@@ -178,12 +274,68 @@ const VideoPage: React.FC<Props> = ({ event, realm, id, basePath }) => {
             basePath={basePath}
             fragRef={event.series}
             title={t("video.more-from-series", { series: event.series.title })}
-            activeEventId={id}
+            activeEventId={event.id}
         />}
     </>;
 };
 
-type Event = Extract<NonNullable<VideoQuery$data["event"]>, { __typename: "AuthorizedEvent" }>;
+type PendingEventPlaceholderProps = {
+    event: SyncedEvent;
+    startTime: Date;
+    onEventStart: () => void;
+};
+
+const PendingEventPlaceholder: React.FC<PendingEventPlaceholderProps> = ({
+    event,
+    startTime,
+    onEventStart,
+}) => {
+    const { t } = useTranslation();
+
+    // When the livestream starts, rerender the parent. We add some extra time
+    // to be sure the stream is actually already running by that time.
+    useEffect(() => {
+        const handle = setTimeout(onEventStart, (startTime.getTime() - Date.now()) + 500);
+        return () => clearTimeout(handle);
+    });
+
+    return (
+        <PlayerContainer
+            aspectRatio={getPlayerAspectRatio(event.syncedData.tracks as Track[])}
+            css={{
+                backgroundColor: "var(--grey20)",
+                color: "white",
+                padding: 8,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5%",
+                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    "& > *": {
+                        transform: "scale(0.8)",
+                    },
+                },
+            }}
+        >
+            <div css={{ textAlign: "center" }}>
+                <FiClock css={{ fontSize: 40, margin: "16px 0", strokeWidth: 1.5 }} />
+                <div>{t("video.stream-not-started-yet")}</div>
+            </div>
+            <div css={{
+                backgroundColor: "black",
+                borderRadius: 4,
+                padding: "8px 16px",
+            }}>
+                <Trans i18nKey={"video.starts-in"}>
+                    Starts <RelativeDate date={startTime} />
+                </Trans>
+            </div>
+        </PlayerContainer>
+    );
+};
+
+type Event = Extract<NonNullable<VideoPageEventData$data>, { __typename: "AuthorizedEvent" }>;
 type SyncedEvent = Event & { syncedData: NonNullable<Event["syncedData"]> };
 
 const isSynced = (event: Event): event is SyncedEvent => Boolean(event.syncedData);
@@ -292,27 +444,29 @@ type CreatorsProps = {
 };
 
 const Creators: React.FC<CreatorsProps> = ({ creators }) => (
-    <div css={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-        <HiOutlineUserCircle css={{ color: "var(--grey40)" }} />
-        <ul css={{
-            display: "inline-block",
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            fontSize: 14,
-            fontWeight: "bold",
-            "& > li": {
+    creators.length === 0
+        ? null
+        : <div css={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <HiOutlineUserCircle css={{ color: "var(--grey40)" }} />
+            <ul css={{
                 display: "inline-block",
-                "&:not(:last-child)::after": {
-                    content: "'•'",
-                    margin: "0 8px",
-                    color: "var(--grey65)",
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+                fontSize: 14,
+                fontWeight: "bold",
+                "& > li": {
+                    display: "inline-block",
+                    "&:not(:last-child)::after": {
+                        content: "'•'",
+                        margin: "0 8px",
+                        color: "var(--grey65)",
+                    },
                 },
-            },
-        }}>
-            {creators.map((c, i) => <li key={i}>{c}</li>)}
-        </ul>
-    </div>
+            }}>
+                {creators.map((c, i) => <li key={i}>{c}</li>)}
+            </ul>
+        </div>
 );
 
 type DescriptionProps = {
@@ -352,13 +506,16 @@ const Description: React.FC<DescriptionProps> = ({ description }) => {
     );
 };
 
-type VideoDateProps = {
-    event: SyncedEvent;
+type TimeInfo = {
+    created: Date;
+    updated: Date;
+    startTime: Date | null;
+    endTime: Date | null;
+    hasEnded: boolean;
+    hasStarted: boolean;
 };
 
-const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
-    const { t, i18n } = useTranslation();
-
+const getEventTimeInfo = (event: SyncedEvent): TimeInfo => {
     const created = new Date(event.created);
     const updated = new Date(event.syncedData.updated);
     const startTime = event.syncedData.startTime == null
@@ -368,14 +525,33 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         ? null
         : new Date(event.syncedData.endTime);
 
+    return {
+        created,
+        updated,
+        startTime,
+        endTime,
+        hasStarted: startTime != null && startTime < new Date(),
+        hasEnded: endTime != null && endTime < new Date(),
+    };
+};
+
+type VideoDateProps = {
+    event: SyncedEvent;
+};
+
+const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
+    const { t, i18n } = useTranslation();
+
+    const { created, updated, startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
+
     const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
     let inner;
-    if (event.isLive && endTime && endTime < new Date()) {
+    if (event.isLive && endTime && hasEnded) {
         inner = <>
             {t("video.ended") + ": "}
             {endTime.toLocaleString(i18n.language, fullOptions)}
         </>;
-    } else if (event.isLive && startTime && startTime > new Date()) {
+    } else if (event.isLive && startTime && !hasStarted) {
         inner = <>
             {t("video.upcoming") + ": "}
             {startTime.toLocaleString(i18n.language, fullOptions)}

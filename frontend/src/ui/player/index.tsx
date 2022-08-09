@@ -38,39 +38,60 @@ export const Player: React.FC<PlayerProps> = ({
     duration,
     isLive,
 }) => {
-    const flavors = new Set(tracks.map(t => t.flavor));
-
-    // Find a suitable aspect ratio for our height/width limiting below. For
-    // Paella, we just use 16:9 because it's unclear what else we should use
-    // with multi stream video.
-    const aspectRatio = flavors.size > 1 ? [16, 9] : tracks[0].resolution ?? [16, 9];
-
+    const aspectRatio = getPlayerAspectRatio(tracks);
     return (
-        <div className={className} css={{
-            // We want to make sure that the player does not take up all the
-            // vertical and horizontal page, as this could make scrolling hard.
-            // And if users want that, there is a fullscreen mode for a reason.
-            // So here we just say: there should be always 10% + 80px of
-            // vertical space left (not taken up by the player). The height of
-            // the players is actually best controlled by setting the width.
-            "--ideal-max-width": `calc((90vh - 80px) * ${aspectRatio[0] / aspectRatio[1]})`,
-            maxWidth: "min(100%, var(--ideal-max-width))",
-            minWidth: "320px",
-            aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
-
-            // If the player gets too small, the controls are pretty crammed, so
-            // we used all available width.
-            "@media (max-width: 380px)": {
-                margin: `0 -${MAIN_PADDING}px`,
-                maxWidth: `min(100% + ${2 * MAIN_PADDING}px, var(--ideal-max-width))`,
-            },
-        }}>
+        <PlayerContainer {...{ className, aspectRatio }}>
             <Suspense fallback={<PlayerFallback image={coverImage} />}>
                 <LoadPaellaPlayer {...{ duration, title, tracks, isLive }} />
             </Suspense>
-        </div>
+        </PlayerContainer>
     );
 };
+
+/**
+ * Finds a suitable aspect ratio for our height/width limiting below. For events
+ * with multiple streams, we just use 16:9 because it's unclear what else we
+ * should use with multi stream video.
+ */
+export const getPlayerAspectRatio = (tracks: Track[]): [number, number] => {
+    const flavors = new Set(tracks.map(t => t.flavor));
+    const default_: [number, number] = [16, 9];
+    return flavors.size > 1
+        ? default_
+        : tracks[0].resolution as [number, number] ?? default_;
+};
+
+export type PlayerContainerProps = React.PropsWithChildren<{
+    className?: string;
+    aspectRatio: [number, number];
+}>;
+
+export const PlayerContainer: React.FC<PlayerContainerProps> = ({
+    className,
+    aspectRatio,
+    children,
+}) => (
+    <div className={className} css={{
+        // We want to make sure that the player does not take up all the
+        // vertical and horizontal page, as this could make scrolling hard.
+        // And if users want that, there is a fullscreen mode for a reason.
+        // So here we just say: there should be always 10% + 80px of
+        // vertical space left (not taken up by the player). The height of
+        // the players is actually best controlled by setting the width.
+        "--ideal-max-width": `calc((90vh - 80px) * ${aspectRatio[0] / aspectRatio[1]})`,
+        maxWidth: "min(100%, var(--ideal-max-width))",
+        minWidth: "320px",
+        aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
+
+        // If the player gets too small, the controls are pretty crammed, so
+        // we use all available width.
+        "@media (max-width: 380px)": {
+            margin: `0 -${MAIN_PADDING}px`,
+            maxWidth: `min(100% + ${2 * MAIN_PADDING}px, var(--ideal-max-width))`,
+        },
+    }}>{children}</div>
+);
+
 
 const LoadPaellaPlayer = PaellaPlayer;
 

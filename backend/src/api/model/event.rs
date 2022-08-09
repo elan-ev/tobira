@@ -221,15 +221,25 @@ impl AuthorizedEvent {
     }
 
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
-        let key = match id.key_for(Id::EVENT_KIND) {
+        match id.key_for(Id::EVENT_KIND) {
             None => return Ok(None),
-            Some(key) => key,
-        };
+            Some(key) => Self::load_by_any_id_impl("id", &key, context).await,
+        }
+    }
 
+    pub(crate) async fn load_by_opencast_id(oc_id: String, context: &Context) -> ApiResult<Option<Event>> {
+        Self::load_by_any_id_impl("opencast_id", &oc_id, context).await
+    }
+
+    pub(crate) async fn load_by_any_id_impl(
+        col: &str,
+        id: &(dyn ToSql + Sync),
+        context: &Context,
+    ) -> ApiResult<Option<Event>> {
         let selection = Self::select();
-        let query = format!("select {selection} from events where id = $1");
+        let query = format!("select {selection} from events where {col} = $1");
         context.db
-            .query_opt(&query, &[&key])
+            .query_opt(&query, &[id])
             .await?
             .map(|row| {
                 let event = Self::from_row_start(&row);

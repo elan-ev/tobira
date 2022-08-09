@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiExternalLink } from "react-icons/fi";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
@@ -134,8 +134,8 @@ const ManageSingleVideo: React.FC<Props> = ({ event }) => {
             <ThumbnailDateInfo event={event} />
             <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
                 {user.canUseEditor && event.canWrite && (
-                    <LinkButton to={editorUrl} css={{ marginBottom: 16 }}>
-                        {t("manage.my-videos.open-in-editor")}
+                    <LinkButton to={editorUrl} css={{ marginBottom: 16 }} target="_blank">
+                        {t("manage.my-videos.open-in-editor")} <FiExternalLink size={16} />
                     </LinkButton>
                 )}
                 <DirectLink event={event} />

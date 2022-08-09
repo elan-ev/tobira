@@ -1,6 +1,7 @@
 import { keyframes } from "@emotion/react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiFilm, FiPlay, FiRadio, FiVolume2 } from "react-icons/fi";
+import { FiAlertTriangle, FiFilm, FiPlay, FiRadio, FiVolume2 } from "react-icons/fi";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
@@ -44,12 +45,9 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     let inner;
     if (event.syncedData?.thumbnail != null) {
         // We have a proper thumbnail.
-        inner = <img
+        inner = <ThumbnailImg
             src={event.syncedData.thumbnail}
             alt={t("video.thumbnail-for", { video: event.title })}
-            width={16}
-            height={9}
-            css={{ display: "block", width: "100%", height: "auto" }}
         />;
     } else {
         // We have no thumbnail. If the resolution is `null` as well, we are
@@ -181,3 +179,37 @@ export const formatDuration = (totalMs: number): string => {
 
 export const isPastLiveEvent = (endTime: string | null, isLive: boolean): boolean =>
     isLive && endTime != null && new Date(endTime) < new Date();
+
+const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+    const { t } = useTranslation();
+    const [loadError, setLoadError] = useState(false);
+
+    return loadError
+        ? <div css={{
+            backgroundColor: "var(--grey40)",
+            aspectRatio: "16 / 9",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            justifyContent: "center",
+            alignItems: "center",
+            color: "var(--grey92)",
+            fontSize: 14,
+            "& > svg": {
+                fontSize: 32,
+                color: "var(--grey80)",
+                strokeWidth: 1.5,
+            },
+        }}>
+            <FiAlertTriangle />
+            {t("general.failed-to-load-thumbnail")}
+        </div>
+        : <img
+            {...{ src, alt }}
+            onError={() => setLoadError(true)}
+            width={16}
+            height={9}
+            css={{ display: "block", width: "100%", height: "auto" }}
+        />;
+};
