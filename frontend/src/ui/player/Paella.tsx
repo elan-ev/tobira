@@ -5,8 +5,10 @@ import getZoomPluginContext from "paella-zoom-plugin";
 
 import { isHlsTrack, Track } from ".";
 import { SPEEDS } from "./consts";
-import { bug } from "../../util/err";
 
+
+// Paella currently can't handle audio tracks
+type VideoTrack = Track & { resolution: NonNullable<Track["resolution"]> };
 
 type PaellaPlayerProps = {
     title: string;
@@ -30,8 +32,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration, is
         // do that now and set the initialized instance to `ref.current.paella`.
         if (!paella.current) {
             // Video/event specific information we have to give to Paella.
-            const presentationTracks = tracks.filter(t => t.flavor.startsWith("presentation"));
-            const presenterTracks = tracks.filter(t => t.flavor.startsWith("presenter"));
+            const videoTracks = tracks.filter((t): t is VideoTrack => !!t.resolution);
+            const presentationTracks = videoTracks.filter(t => t.flavor.startsWith("presentation"));
+            const presenterTracks = videoTracks.filter(t => t.flavor.startsWith("presenter"));
             const manifest = {
                 metadata: { title, duration },
                 streams: [
@@ -222,9 +225,9 @@ const PAELLA_CONFIG = {
     },
 };
 
-const tracksToPaellaSources = (tracks: Track[], isLive: boolean): Stream["sources"] => {
-    const trackToSource = (t: Track): Source => {
-        const [w, h] = t.resolution || bug("missing track resolution");
+const tracksToPaellaSources = (tracks: VideoTrack[], isLive: boolean): Stream["sources"] => {
+    const trackToSource = (t: VideoTrack): Source => {
+        const [w, h] = t.resolution;
         return {
             src: t.uri,
             // TODO: what to do if `t.mimetype` is not mp4 or not specified?
