@@ -37,7 +37,7 @@ const fragment = graphql`
             }
             ... on SeriesBlock {
                 series {
-                    ... on ReadySeries { title }
+                    syncedData { title }
                 }
             }
         }
@@ -149,8 +149,8 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
             let label;
             if (block.event?.title != null) {
                 label = t("video.video") + ": " + block.event.title;
-            } else if (block.series?.title != null) {
-                label = t("series.series") + ": " + block.series.title;
+            } else if (block.series?.syncedData?.title != null) {
+                label = t("series.series") + ": " + block.series.syncedData.title;
             } else {
                 return null;
             }

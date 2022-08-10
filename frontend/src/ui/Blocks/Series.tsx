@@ -2,8 +2,8 @@ import React, { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import { keyOfId, compareByKey, swap } from "../../util";
-import { match, discriminate } from "../../util";
+import { keyOfId, compareByKey, swap, isSynced, SyncedOpencastEntity } from "../../util";
+import { match } from "../../util";
 import { unreachable } from "../../util/err";
 import type { Fields } from "../../relay";
 import { Link } from "../../router";
@@ -12,10 +12,6 @@ import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
-import {
-    SeriesBlockReadySeriesData$data,
-    SeriesBlockReadySeriesData$key,
-} from "./__generated__/SeriesBlockReadySeriesData.graphql";
 import { isPastLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
@@ -35,19 +31,9 @@ const blockFragment = graphql`
 
 const seriesFragment = graphql`
     fragment SeriesBlockSeriesData on Series {
-        __typename
-        ... on ReadySeries {
-            ... SeriesBlockReadySeriesData
+        syncedData {
+            title
         }
-        # Unfortunately we have to query **something** from this variant as well
-        # in order to reign in the Relay compiler type generation.
-        ... on WaitingSeries { id }
-    }
-`;
-
-const readySeriesFragment = graphql`
-    fragment SeriesBlockReadySeriesData on ReadySeries {
-        title
         events {
             id
             title
@@ -88,22 +74,11 @@ type FromSeriesProps = SharedFromSeriesProps & {
     fragRef: SeriesBlockSeriesData$key;
 };
 
-const SeriesBlockFromSeries: React.FC<FromSeriesProps> = (
+export const SeriesBlockFromSeries: React.FC<FromSeriesProps> = (
     { fragRef, ...rest },
 ) => {
     const series = useFragment(seriesFragment, fragRef);
     return <SeriesBlock series={series} {...rest} />;
-};
-
-type FromReadySeriesProps = SharedFromSeriesProps & {
-    fragRef: SeriesBlockReadySeriesData$key;
-};
-
-export const SeriesBlockFromReadySeries: React.FC<FromReadySeriesProps> = (
-    { fragRef, ...rest },
-) => {
-    const series = useFragment(readySeriesFragment, fragRef);
-    return <ReadySeriesBlock series={series} {...rest} />;
 };
 
 type Props = SharedFromSeriesProps & {
@@ -114,19 +89,19 @@ const VIDEO_GRID_BREAKPOINT = 600;
 
 const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
-    return discriminate(series, "__typename", {
-        ReadySeries: series => <SeriesBlockFromReadySeries fragRef={series} {...props} />,
-        WaitingSeries: () => {
-            const { title } = props;
-            return <SeriesBlockContainer title={title}>
-                {t("series.not-ready.text")}
-            </SeriesBlockContainer>;
-        },
-    }, () => unreachable());
+
+    if (!isSynced(series)) {
+        const { title } = props;
+        return <SeriesBlockContainer title={title}>
+            {t("series.not-ready.text")}
+        </SeriesBlockContainer>;
+    }
+
+    return <ReadySeriesBlock series={series} {...props} />;
 };
 
 type ReadyProps = SharedFromSeriesProps & {
-    series: SeriesBlockReadySeriesData$data;
+    series: SyncedOpencastEntity<SeriesBlockSeriesData$data>;
 };
 
 const ReadySeriesBlock: React.FC<ReadyProps> = ({
@@ -139,7 +114,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 }) => {
     const { t } = useTranslation();
 
-    const finalTitle = title ?? (showTitle ? series.title : undefined);
+    const finalTitle = title ?? (showTitle ? series.syncedData.title : undefined);
 
     const events = series.events.filter(event =>
         !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive));
@@ -168,7 +143,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     </SeriesBlockContainer>;
 };
 
-type Event = SeriesBlockReadySeriesData$data["events"][0];
+type Event = SeriesBlockSeriesData$data["events"][0];
 
 const compareNewToOld = compareByKey((event: Event): number => (
     new Date(event.created).getTime()

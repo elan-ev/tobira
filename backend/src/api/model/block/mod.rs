@@ -9,7 +9,7 @@ use crate::{
         err::{ApiError, ApiResult},
         model::{
             event::{AuthorizedEvent, Event},
-            series::SeriesValue,
+            series::Series,
             realm::{Realm, RealmNameSourceBlockValue},
         },
     },
@@ -167,11 +167,11 @@ impl Block for SeriesBlock {
 /// A block just showing the list of videos in an Opencast series
 #[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
 impl SeriesBlock {
-    async fn series(&self, context: &Context) -> ApiResult<Option<SeriesValue>> {
+    async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
         match self.series {
             None => Ok(None),
             // `unwrap` is okay here because of our foreign key constraint
-            Some(series_id) => Ok(Some(SeriesValue::load_by_id(series_id, context).await?.unwrap())),
+            Some(series_id) => Ok(Some(Series::load_by_id(series_id, context).await?.unwrap())),
         }
     }
 

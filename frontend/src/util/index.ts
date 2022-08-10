@@ -274,3 +274,13 @@ export const useNavBlocker = (shouldBlock: boolean | (() => boolean)) => {
         ))
     ));
 };
+
+
+// Some utilities to handle the different lifecycle stages of events and series
+type OpencastEntity = { syncedData: any };
+export type SyncedOpencastEntity<T extends OpencastEntity> = T & {
+    syncedData: NonNullable<T["syncedData"]>;
+};
+export const isSynced = <T extends OpencastEntity>(e: T): e is SyncedOpencastEntity<T> => (
+    Boolean(e.syncedData)
+);

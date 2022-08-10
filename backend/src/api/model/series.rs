@@ -1,4 +1,4 @@
-use juniper::{graphql_interface, graphql_object, GraphQLInputObject};
+use juniper::{graphql_object, GraphQLObject, GraphQLInputObject};
 use postgres_types::ToSql;
 
 use crate::{
@@ -17,163 +17,38 @@ use crate::{
 };
 
 
-/// Represents an Opencast series.
-/// These can exist in different states during their lifecycle,
-/// represented by different implementations of this interface:
-///
-/// - `WaitingSeries`: The series was created "out of band" in regards
-///     to the usual path of communication between Opencast and Tobira
-///     (i.e. the harvesting protocol).
-///     Thus, it does not have all its (meta-)data, yet,
-///     and is *waiting* to be fully synced.
-///     This can currently only happen using the `mount`-API
-///     used by the Opencast Admin UI.
-/// - `ReadySeries`: The series is fully synced and up to date, as far
-///     as Tobira is concerned. All of its mandatory data fields are set,
-///     and the optional ones should reflect the state of the Opencast
-///     series as of the last harvest.
-#[graphql_interface(Context = Context, for = [WaitingSeries, ReadySeries])]
-pub(crate) trait Series {
-    fn id(&self) -> Id;
-    fn opencast_id(&self) -> &str;
-
-    /// Returns a list of realms where this series is referenced (via some kind of block).
-    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
-        let selection = Realm::select();
-        let query = format!("\
-            select {selection} \
-            from realms \
-            {REALM_JOINS} \
-            where exists ( \
-                select 1 as contains \
-                from blocks \
-                where realm = realms.id \
-                and type = 'series' \
-                and series = $1 \
-            ) \
-        ");
-        let id = self.id().key_for(Id::SERIES_KIND).unwrap();
-        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row_start(&row))
-            .await?
-            .pipe(Ok)
-    }
-}
-
-pub(crate) struct SharedData {
+pub(crate) struct Series {
     pub(crate) key: Key,
     opencast_id: String,
+    synced_data: Option<SyncedSeriesData>,
 }
 
-pub(crate) struct WaitingSeries {
-    pub(crate) shared: SharedData,
-}
-
-impl Series for WaitingSeries {
-    fn id(&self) -> Id {
-        Id::series(self.shared.key)
-    }
-
-    fn opencast_id(&self) -> &str {
-        &self.shared.opencast_id
-    }
-}
-
-/// See `Series`
-#[graphql_object(Context = Context, impl = SeriesValue)]
-impl WaitingSeries {
-    fn id(&self) -> Id {
-        Series::id(self)
-    }
-
-    fn opencast_id(&self) -> &str {
-        Series::opencast_id(self)
-    }
-
-    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
-        Series::host_realms(self, context).await
-    }
-}
-
-pub(crate) struct ReadySeries {
-    pub(crate) shared: SharedData,
+#[derive(GraphQLObject)]
+struct SyncedSeriesData {
     title: String,
     description: Option<String>,
 }
 
-impl Series for ReadySeries {
-    fn id(&self) -> Id {
-        Id::series(self.shared.key)
-    }
-
-    fn opencast_id(&self) -> &str {
-        &self.shared.opencast_id
-    }
-}
-
-/// See `Series`
-#[graphql_object(Context = Context, impl = SeriesValue)]
-impl ReadySeries {
-    fn id(&self) -> Id {
-        Series::id(self)
-    }
-
-    fn opencast_id(&self) -> &str {
-        Series::opencast_id(self)
-    }
-
-    fn title(&self) -> &str {
-        &self.title
-    }
-
-    fn description(&self) -> Option<&str> {
-        self.description.as_deref()
-    }
-
-    #[graphql(arguments(order(default = Default::default())))]
-    async fn events(&self, order: EventSortOrder, context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
-        AuthorizedEvent::load_for_series(self.shared.key, order, context).await
-    }
-
-    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
-        Series::host_realms(self, context).await
-    }
-}
-
-impl Node for WaitingSeries {
-    fn id(&self) -> Id {
-        Series::id(self)
-    }
-}
-
-impl Node for ReadySeries {
-    fn id(&self) -> Id {
-        Series::id(self)
-    }
-}
-
 impl_from_db!(
-    SeriesValue,
+    Series,
     select: {
         series.{ id, opencast_id, state, title, description },
     },
     |row| {
-        let shared = SharedData {
+        Series {
             key: row.id(),
             opencast_id: row.opencast_id(),
-        };
-
-        match row.state::<State>() {
-            State::Waiting => WaitingSeries { shared }.into(),
-            State::Ready => ReadySeries {
-                shared,
-                title: row.title(),
-                description: row.description(),
-            }.into(),
+            synced_data: (State::Ready == row.state()).then(
+                || SyncedSeriesData {
+                    title: row.title(),
+                    description: row.description(),
+                },
+            ),
         }
     },
 );
 
-impl SeriesValue {
+impl Series {
     pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
         let selection = Self::select();
         let query = format!("select {selection} from series order by title");
@@ -230,6 +105,53 @@ impl SeriesValue {
             .await?
             .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
+    }
+}
+
+/// Represents an Opencast series.
+#[graphql_object(Context = Context)]
+impl Series {
+    fn id(&self) -> Id {
+        Node::id(self)
+    }
+
+    fn opencast_id(&self) -> &str {
+        &self.opencast_id
+    }
+
+    fn synced_data(&self) -> &Option<SyncedSeriesData> {
+        &self.synced_data
+    }
+
+    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        let selection = Realm::select();
+        let query = format!("\
+            select {selection} \
+            from realms \
+            {REALM_JOINS} \
+            where exists ( \
+                select 1 as contains \
+                from blocks \
+                where realm = realms.id \
+                and type = 'series' \
+                and series = $1 \
+            ) \
+        ");
+        let id = self.id().key_for(Id::SERIES_KIND).unwrap();
+        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row_start(&row))
+            .await?
+            .pipe(Ok)
+    }
+
+    #[graphql(arguments(order(default = Default::default())))]
+    async fn events(&self, order: EventSortOrder, context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
+        AuthorizedEvent::load_for_series(self.key, order, context).await
+    }
+}
+
+impl Node for Series {
+    fn id(&self) -> Id {
+        Id::series(self.key)
     }
 }
 

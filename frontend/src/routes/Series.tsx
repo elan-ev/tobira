@@ -1,15 +1,14 @@
 import { graphql, useFragment } from "react-relay";
 import { useTranslation } from "react-i18next";
 
-import { discriminate } from "../util";
-import { unreachable } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
-import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
+import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { RootLoader } from "../layout/Root";
 import { Nav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 import { WaitingPage } from "../ui/Waiting";
+import { isSynced } from "../util";
 
 import { NotFound } from "./NotFound";
 import { SeriesByOpencastIdQuery } from "./__generated__/SeriesByOpencastIdQuery.graphql";
@@ -80,13 +79,11 @@ export const DirectSeriesRoute = makeRoute(url => {
 
 const fragment = graphql`
     fragment SeriesRouteData on Series {
-        __typename
-        ... on WaitingSeries { id } # only for correct type generation ...
-        ... on ReadySeries {
+        syncedData {
             title
             description
-            ... SeriesBlockReadySeriesData
         }
+        ... SeriesBlockSeriesData
     }
 `;
 
@@ -102,20 +99,19 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
         return <NotFound kind="series" />;
     }
 
-    return discriminate(series, "__typename", {
-        WaitingSeries: () => <WaitingPage type="series" />,
-        ReadySeries: series => (
-            <div css={{ display: "flex", flexDirection: "column" }}>
-                <PageTitle title={series.title} />
-                <p>{series.description}</p>
-                <div css={{ marginTop: 12 }}>
-                    <SeriesBlockFromReadySeries
-                        title={t("series.videos.heading")}
-                        basePath="/!v"
-                        fragRef={series}
-                    />
-                </div>
-            </div>
-        ),
-    }, () => unreachable());
+    if (!isSynced(series)) {
+        return <WaitingPage type="series" />;
+    }
+
+    return <div css={{ display: "flex", flexDirection: "column" }}>
+        <PageTitle title={series.syncedData.title} />
+        <p>{series.syncedData.description}</p>
+        <div css={{ marginTop: 12 }}>
+            <SeriesBlockFromSeries
+                title={t("series.videos.heading")}
+                basePath="/!v"
+                fragRef={series}
+            />
+        </div>
+    </div>;
 };

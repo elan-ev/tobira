@@ -5,8 +5,9 @@ use super::{
     Context,
     err::{ApiResult, invalid_input, not_authorized},
     id::Id,
+    Node,
     model::{
-        series::{Series, SeriesValue, NewSeries},
+        series::{Series, NewSeries},
         realm::{
             ChildIndex,
             NewRealm,
@@ -212,7 +213,7 @@ impl Mutation {
             }
         }
 
-        let series = SeriesValue::load_or_create_by_opencast_id(series, context).await?;
+        let series = Series::load_or_create_by_opencast_id(series, context).await?;
 
         let target_realm = {
             let mut target_realm = parent_realm;
@@ -230,7 +231,7 @@ impl Mutation {
             Id::realm(target_realm.key),
             0,
             NewSeriesBlock {
-                series: Series::id(&series),
+                series: Node::id(&series),
                 show_title: false,
                 order: VideoListOrder::NewToOld,
             },
