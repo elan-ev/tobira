@@ -74,7 +74,7 @@ read -r
 set -e
 
 sed -i -E 's/^version = "[^"]+.0"$/version = "'"$major.$minor"'.0"/' backend/Cargo.toml
-cargo update -p tobira --offline
+(cd backend/ && cargo update -p tobira --offline)
 git add backend/Cargo.toml backend/Cargo.lock
 git commit -m "Bump version to $major.$minor"
 echo -e "\e[1;32m✔ Committed version bump\e[0m"
