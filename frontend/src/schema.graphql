@@ -345,7 +345,12 @@ type Mutation {
     Creates all the necessary realms on the path to the target
     and adds a block with the given series at the leaf.
   """
-  mountSeries(ocSeriesId: String!, parentRealmPath: String!, newRealms: [RealmSpecifier!]!): Realm!
+  mountSeries(series: NewSeries!, parentRealmPath: String!, newRealms: [RealmSpecifier!]!): Realm!
+}
+
+input NewSeries {
+  opencastId: String!
+  title: String!
 }
 
 "DateTime"

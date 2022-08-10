@@ -1,4 +1,4 @@
-use juniper::{graphql_interface, graphql_object};
+use juniper::{graphql_interface, graphql_object, GraphQLInputObject};
 
 use crate::{
     api::{
@@ -211,22 +211,34 @@ impl SeriesValue {
             .pipe(Ok)
     }
 
-    pub(crate) async fn load_or_create_by_opencast_id(id: String, context: &Context) -> ApiResult<Self> {
+    pub(crate) async fn load_or_create_by_opencast_id(series: NewSeries, context: &Context) -> ApiResult<Self> {
         let selection = Self::select().with_omitted_table_prefix("series");
         let query = format!(
             "with \
                 existing as (select {selection} from series where opencast_id = $1), \
-                new as (insert into series (opencast_id, state, updated) \
-                    select $1, 'waiting', '-infinity' \
+                new as (insert into series (opencast_id, title, state, updated) \
+                    select $1, $2, 'waiting', '-infinity' \
                         where not exists (select null from existing) \
                     returning {selection}) \
             select {selection} from existing \
                 union all select {selection} from new",
         );
         context.db(context.require_moderator()?)
-            .query_one(&query, &[&id])
+            .query_one(&query, &[&series.opencast_id, &series.title])
             .await?
             .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
+}
+
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct NewSeries {
+    opencast_id: String,
+    title: String,
+    // TODO In the future this `struct` can be extended with additional
+    // (potentially optional) fields. For now we only need these.
+    // Since `mountSeries` feels even more like a private API
+    // in some way, and since passing stuff like metadata isn't trivial either
+    // I think it's okay to leave it at that for now.
 }
