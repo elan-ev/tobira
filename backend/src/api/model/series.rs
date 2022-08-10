@@ -1,4 +1,5 @@
 use juniper::{graphql_interface, graphql_object, GraphQLInputObject};
+use postgres_types::ToSql;
 
 use crate::{
     api::{
@@ -191,21 +192,22 @@ impl SeriesValue {
     }
 
     pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
-        let selection = Self::select();
-        let query = format!("select {selection} from series where id = $1");
-
-        context.db
-            .query_opt(&query, &[&key])
-            .await?
-            .map(|row| Self::from_row_start(&row))
-            .pipe(Ok)
+        Self::load_by_any_id("id", &key, context).await
     }
 
     pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Self>> {
+        Self::load_by_any_id("opencast_id", &id, context).await
+    }
+
+    async fn load_by_any_id(
+        col: &str,
+        id: &(dyn ToSql + Sync),
+        context: &Context,
+    ) -> ApiResult<Option<Self>> {
         let selection = Self::select();
-        let query = format!("select {selection} from series where opencast_id = $1");
+        let query = format!("select {selection} from series where {col} = $1");
         context.db
-            .query_opt(&query, &[&id])
+            .query_opt(&query, &[id])
             .await?
             .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
