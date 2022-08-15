@@ -265,6 +265,7 @@ const Menu: React.FC<MenuProps> = ({ close, container }) => {
             paddingLeft: 0,
             margin: 0,
             overflow: "hidden",
+            listStyle: "none",
         }}>{items}</ul>
     );
 };

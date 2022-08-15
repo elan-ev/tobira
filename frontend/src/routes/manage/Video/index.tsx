@@ -311,7 +311,7 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => 
     return (
         <div css={{
             display: "flex",
-            justifyContent: "end",
+            justifyContent: "flex-end",
             alignItems: "center",
             gap: 48,
         }}>
