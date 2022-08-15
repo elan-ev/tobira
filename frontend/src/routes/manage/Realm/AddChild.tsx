@@ -168,7 +168,8 @@ const AddChild: React.FC<Props> = ({ parent }) => {
 
                 <InputWithInfo
                     info={<Trans i18nKey="manage.add-child.path-segment-info">
-                        {{ illegalChars: ILLEGAL_CHARS, reservedChars: RESERVED_CHARS }}
+                        {{ illegalChars: ILLEGAL_CHARS }}
+                        {{ reservedChars: RESERVED_CHARS }}
                     </Trans>}
                 >
                     <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>
