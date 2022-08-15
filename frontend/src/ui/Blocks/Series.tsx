@@ -23,7 +23,9 @@ type SharedProps = {
 
 const blockFragment = graphql`
     fragment SeriesBlockData on SeriesBlock {
-        series { ...SeriesBlockSeriesData }
+        series {
+            ...SeriesBlockSeriesData
+        }
         showTitle
         order
     }
@@ -31,9 +33,9 @@ const blockFragment = graphql`
 
 const seriesFragment = graphql`
     fragment SeriesBlockSeriesData on Series {
-        syncedData {
-            title
-        }
+        title
+        # description is only queried to get the sync status
+        syncedData { description }
         events {
             id
             title
@@ -114,7 +116,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 }) => {
     const { t } = useTranslation();
 
-    const finalTitle = title ?? (showTitle ? series.syncedData.title : undefined);
+    const finalTitle = title ?? (showTitle ? series.title : undefined);
 
     const events = series.events.filter(event =>
         !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive));

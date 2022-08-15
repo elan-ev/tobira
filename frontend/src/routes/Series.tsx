@@ -79,8 +79,8 @@ export const DirectSeriesRoute = makeRoute(url => {
 
 const fragment = graphql`
     fragment SeriesRouteData on Series {
+        title
         syncedData {
-            title
             description
         }
         ... SeriesBlockSeriesData
@@ -104,7 +104,7 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
     }
 
     return <div css={{ display: "flex", flexDirection: "column" }}>
-        <PageTitle title={series.syncedData.title} />
+        <PageTitle title={series.title} />
         <p>{series.syncedData.description}</p>
         <div css={{ marginTop: 12 }}>
             <SeriesBlockFromSeries

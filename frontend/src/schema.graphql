@@ -69,7 +69,6 @@ input ChildIndex {
 }
 
 type SyncedSeriesData {
-  title: String!
   description: String
 }
 
@@ -100,6 +99,7 @@ type SeriesBlock implements Block & RealmNameSourceBlock {
 type Series {
   id: ID!
   opencastId: String!
+  title: String!
   syncedData: SyncedSeriesData
   hostRealms: [Realm!]!
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!

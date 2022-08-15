@@ -39,8 +39,10 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         fragment SeriesEditModeSeriesData on Query {
             allSeries {
                 id
+                title
                 syncedData {
-                    title
+                    # only queried to see wether syncedData is null
+                    description
                 }
             }
         }
@@ -50,7 +52,11 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         fragment SeriesEditModeBlockData on SeriesBlock {
             series {
                 id
-                syncedData { title }
+                title
+                syncedData {
+                    # only queried to see wether syncedData is null
+                    description
+                }
             }
             showTitle
             order
@@ -120,7 +126,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             </option>}
             {allSeries
                 .filter(isSynced)
-                .map(({ id, syncedData: { title } }) => (
+                .map(({ id, title }) => (
                     <option key={id} value={id}>{title}</option>
                 ))}
         </Select>

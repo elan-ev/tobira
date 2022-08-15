@@ -21,11 +21,11 @@ pub(crate) struct Series {
     pub(crate) key: Key,
     opencast_id: String,
     synced_data: Option<SyncedSeriesData>,
+    title: String,
 }
 
 #[derive(GraphQLObject)]
 struct SyncedSeriesData {
-    title: String,
     description: Option<String>,
 }
 
@@ -38,9 +38,9 @@ impl_from_db!(
         Series {
             key: row.id(),
             opencast_id: row.opencast_id(),
+            title: row.title(),
             synced_data: (State::Ready == row.state()).then(
                 || SyncedSeriesData {
-                    title: row.title(),
                     description: row.description(),
                 },
             ),
@@ -117,6 +117,10 @@ impl Series {
 
     fn opencast_id(&self) -> &str {
         &self.opencast_id
+    }
+
+    fn title(&self) -> &str {
+        &self.title
     }
 
     fn synced_data(&self) -> &Option<SyncedSeriesData> {

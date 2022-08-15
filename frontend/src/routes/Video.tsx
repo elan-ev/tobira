@@ -214,7 +214,7 @@ const eventFragment = graphql`
             }
             series {
                 id
-                syncedData { title }
+                title
                 ... SeriesBlockSeriesData
             }
         }
@@ -277,10 +277,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
         {event.series && <SeriesBlockFromSeries
             basePath={basePath}
             fragRef={event.series}
-            title={t("video.more-from-series", {
-                series: event.series.syncedData?.title ?? unreachable(
-                    `synced event ${event.id} with unsynced series ${event.series.id}`,
-                ) })}
+            title={t("video.more-from-series", { series: event.series.title })}
             activeEventId={event.id}
         />}
     </>;
@@ -626,11 +623,7 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
         pairs.push([
             t("video.part-of-series"),
             // eslint-disable-next-line react/jsx-key
-            <Link to={`/!s/${event.series.id.slice(2)}`}>
-                {event.series.syncedData?.title ?? unreachable(
-                    `synced event ${event.id} with unsynced series ${event.series.id}`,
-                )}
-            </Link>,
+            <Link to={`/!s/${event.series.id.slice(2)}`}>{event.series.title}</Link>,
         ]);
     }
 

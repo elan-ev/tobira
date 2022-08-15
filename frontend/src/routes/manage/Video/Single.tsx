@@ -85,7 +85,7 @@ const query = graphql`
                     tracks { flavor resolution }
                 }
                 series {
-                    syncedData { title }
+                    title
                     ...SeriesBlockSeriesData
                 }
                 hostRealms { id isRoot name path }
