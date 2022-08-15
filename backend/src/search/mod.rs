@@ -56,9 +56,7 @@ pub(crate) struct MeiliConfig {
 impl MeiliConfig {
     /// Connects to Meili, tests the connections and prepares all indexes.
     pub(crate) async fn connect_and_prepare(&self, db: &mut DbConnection) -> Result<Client> {
-        let client = Client::new(self.clone()).await
-            .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))?;
-
+        let client = self.connect_only().await?;
         client.prepare(db).await?;
 
         Ok(client)
