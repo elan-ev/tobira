@@ -104,6 +104,26 @@ macro_rules! info_line {
     };
 }
 
+macro_rules! with_index {
+    ($index:expr, $index_name:expr, |$index_arg:ident| $body:tt) => {
+        match $index.get_stats().await {
+            Err(meilisearch_sdk::errors::Error::Meilisearch(e))
+                if e.error_code == ErrorCode::IndexNotFound =>
+            {
+                bunt::println!("{$yellow}Index '{}' not found{/$}", $index_name);
+            }
+            Err(_) => {
+                bunt::println!("{$yellow}Error getting info about index '{}'{/$}", $index_name);
+            }
+            Ok(_) => {
+                let $index_arg = &$index;
+                $body
+            }
+        }
+    };
+}
+
+
 async fn status(meili: &Client) -> Result<()> {
     // Configuration
     println!();
@@ -133,21 +153,22 @@ async fn status(meili: &Client) -> Result<()> {
     println!();
 
     // Individual indexes
-    index_status("event", &meili.event_index).await?;
+    index_status("event", &meili.event_index, meili.config.event_index_name()).await?;
     println!();
-    index_status("realm", &meili.realm_index).await?;
+    index_status("realm", &meili.realm_index, meili.config.realm_index_name()).await?;
     println!();
 
     Ok(())
 }
 
-async fn index_status(name: &str, index: &Index) -> Result<()> {
-    bunt::println!("{$bold}# Index `{[green+intense]}`:{/$}", name);
+async fn index_status(name: &str, index: &Index, index_name: String) -> Result<()> {
+    with_index!(index, index_name, |index| {
+        bunt::println!("{$bold}# Index `{[green+intense]}`:{/$}", name);
 
-    let stats = index.get_stats().await?;
-    info_line!("Number of documents", stats.number_of_documents);
-    info_line!("Is currently indexing", stats.is_indexing);
+        let stats = index.get_stats().await?;
+        info_line!("Number of documents", stats.number_of_documents);
+        info_line!("Is currently indexing", stats.is_indexing);
+    });
 
     Ok(())
 }
-
