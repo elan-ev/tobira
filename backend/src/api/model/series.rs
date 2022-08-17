@@ -88,17 +88,12 @@ impl Series {
             .pipe(Ok)
     }
 
-    pub(crate) async fn load_or_create_by_opencast_id(series: NewSeries, context: &Context) -> ApiResult<Self> {
-        let selection = Self::select().with_omitted_table_prefix("series");
+    pub(crate) async fn create(series: NewSeries, context: &Context) -> ApiResult<Self> {
+        let selection = Self::select();
         let query = format!(
-            "with \
-                existing as (select {selection} from series where opencast_id = $1), \
-                new as (insert into series (opencast_id, title, state, updated) \
-                    select $1, $2, 'waiting', '-infinity' \
-                        where not exists (select null from existing) \
-                    returning {selection}) \
-            select {selection} from existing \
-                union all select {selection} from new",
+            "insert into series (opencast_id, title, state, updated) \
+                values ($1, $2, 'waiting', '-infinity' \
+                returning {selection}",
         );
         context.db(context.require_moderator()?)
             .query_one(&query, &[&series.opencast_id, &series.title])

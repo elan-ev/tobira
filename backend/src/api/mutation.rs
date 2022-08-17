@@ -213,7 +213,7 @@ impl Mutation {
             }
         }
 
-        let series = Series::load_or_create_by_opencast_id(series, context).await?;
+        let series = Series::create(series, context).await?;
 
         let target_realm = {
             let mut target_realm = parent_realm;
