@@ -81,7 +81,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                                 marginTop: "min(150px, 12vh)",
                                 marginBottom: 16,
                             }}>
-                                <summary css={{ }}>
+                                <summary css={{ cursor: "pointer" }}>
                                     {t("errors.detailed-error-info")}
                                 </summary>
                                 <pre css={{
