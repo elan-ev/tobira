@@ -127,7 +127,6 @@ async fn start_worker(config: Config) -> Result<Never> {
 
     let db = connect_and_migrate_db(&config).await?;
     let search = config.meili.connect().await.context("failed to connect to MeiliSearch")?;
-    search.prepare(&mut db.get().await?).await.context("failed to prepare search index")?;
 
     let mut search_conn = db.get().await?;
     let sync_conn = db.get().await?;

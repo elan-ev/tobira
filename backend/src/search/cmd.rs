@@ -17,14 +17,9 @@ pub(crate) enum SearchIndexCommand {
         yes_absolutely_clear_index: bool,
     },
 
-    /// Completely clears (optional) and rebuilds the search index from data in
-    /// the DB. Can take a while!
-    Rebuild {
-        /// If specified, does not clear the index before rebuild. Note that
-        /// this can leave remnants of old items in there.
-        #[clap(long)]
-        without_clear: bool,
-    },
+    /// Completely clears and rebuilds the search index from data in the DB. Can
+    /// take a while!
+    Rebuild,
 
     /// Reads queued updates from the DB and pushes them into the search index.
     Update {
@@ -41,15 +36,10 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
 
     match cmd {
         SearchIndexCommand::Status => status(&meili).await?,
-        SearchIndexCommand::Clear { yes_absolutely_clear_index: yes } => clear(meili, *yes).await?,
+        SearchIndexCommand::Clear { yes_absolutely_clear_index: yes }
+            => clear(meili, config, *yes).await?,
         SearchIndexCommand::Update { daemon } => update(&meili, config, *daemon).await?,
-        SearchIndexCommand::Rebuild { without_clear } => {
-            if !without_clear {
-                clear(meili.clone(), false).await?;
-            }
-
-            rebuild(&meili, config).await?;
-        }
+        SearchIndexCommand::Rebuild => rebuild(&meili, config).await?,
     }
 
     Ok(())
@@ -60,8 +50,16 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
 async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
     let pool = db::create_pool(&config.db).await?;
     let mut db = pool.get().await?;
-    meili.prepare(&mut db).await?;
-    super::rebuild_index(meili, &mut db).await
+
+    println!("Are you sure you want to clear and rebuild the search index? (type 'yes' to confirm)");
+    crate::cmd::prompt_for_yes()?;
+
+    super::writer::with_write_lock(&mut db, meili, |tx, meili| Box::pin(async move {
+        super::clear(&meili).await.context("failed to clear search index")?;
+        super::prepare_indexes(&meili).await?;
+        super::rebuild_index(&meili, tx).await.context("failed to rebuild search index")
+        // TODO: should this also clear the "reindex queue" in the DB?
+    })).await
 }
 
 
@@ -70,7 +68,9 @@ async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
 async fn update(meili: &Client, config: &Config, daemon: bool) -> Result<()> {
     let pool = db::create_pool(&config.db).await?;
     let mut db = pool.get().await?;
-    meili.prepare(&mut db).await?;
+    super::writer::with_write_lock(&mut db, meili, |_tx, meili| Box::pin(async move {
+        super::prepare_indexes(&meili).await
+    })).await.context("failed to prepare search indexes")?;
 
     if daemon {
         super::update_index_daemon(meili, &mut db).await.map(|_| ())
@@ -84,7 +84,7 @@ async fn update(meili: &Client, config: &Config, daemon: bool) -> Result<()> {
 
 // ===== Clear =================================================================================
 
-async fn clear(meili: Client, yes: bool) -> Result<()> {
+async fn clear(meili: Client, config: &Config, yes: bool) -> Result<()> {
     if !yes {
         println!("Are you sure you want to clear the search index? The search will be disabled \
             until you rebuild the index! Type 'yes' to proceed to delete the data.");
@@ -92,7 +92,11 @@ async fn clear(meili: Client, yes: bool) -> Result<()> {
     }
 
     // Actually delete
-    super::clear(meili).await
+    let pool = db::create_pool(&config.db).await?;
+    let mut db = pool.get().await?;
+    super::writer::with_write_lock(&mut db, &meili, |_tx, meili| Box::pin(async move {
+        super::clear(&meili).await
+    })).await
 }
 
 
