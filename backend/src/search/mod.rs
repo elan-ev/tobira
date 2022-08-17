@@ -287,9 +287,6 @@ pub(crate) async fn rebuild_if_necessary(
 
         meili.meta_index.add_or_replace(&[meta::Meta::current_clean()], None).await
             .context("failed to update index version document (clean)")?;
-
-        // TODO: should this also clear the "reindex queue" in the DB?
-
     } else {
         info!("Search index schema is up to date (version: {VERSION}) -> no rebuild needed");
 
@@ -351,8 +348,14 @@ pub(crate) async fn index_all_data(
     let before = Instant::now();
     rebuild_index!("events", Event, meili.event_index);
     rebuild_index!("realms", Realm, meili.realm_index);
-
     info!("Sent all data to Meili in {:.1?}", before.elapsed());
+
+    // We can clear the search index queue as we just sent all items to Meili.
+    // This is all in one DB transaction and we submitted all data to Meili.
+    tx.execute("delete from search_index_queue", &[]).await
+        .context("failed to clear search index queue")?;
+    info!("Cleared search index queue");
+
     Ok(tasks)
 }
 
