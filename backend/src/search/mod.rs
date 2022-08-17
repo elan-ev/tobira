@@ -18,6 +18,7 @@ use crate::{
 
 pub(crate) mod cmd;
 mod event;
+mod meta;
 mod realm;
 mod writer;
 mod update;
@@ -28,6 +29,12 @@ pub(crate) use self::{
     realm::Realm,
     update::{update_index, update_index_daemon},
 };
+
+
+/// The version of search index schema. Increase whenever there is a change that
+/// requires an index rebuild.
+const VERSION: u32 = 1;
+
 
 // ===== Configuration ============================================================================
 
@@ -69,6 +76,10 @@ impl MeiliConfig {
             .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))
     }
 
+    fn meta_index_name(&self) -> String {
+        format!("{}{}", self.index_prefix, "meta")
+    }
+
     fn event_index_name(&self) -> String {
         format!("{}{}", self.index_prefix, "events")
     }
@@ -89,6 +100,7 @@ impl MeiliConfig {
 pub(crate) struct Client {
     config: MeiliConfig,
     pub(crate) client: MeiliClient,
+    pub(crate) meta_index: Index,
     pub(crate) event_index: Index,
     pub(crate) realm_index: Index,
 }
@@ -117,10 +129,11 @@ impl Client {
 
         // Store some references to the indices (without checking whether they
         // actually exist!).
+        let meta_index = client.index(&config.meta_index_name());
         let event_index = client.index(&config.event_index_name());
         let realm_index = client.index(&config.realm_index_name());
 
-        Ok(Self { client, config, event_index, realm_index })
+        Ok(Self { client, config, meta_index, event_index, realm_index })
     }
 
     /// Makes sure that all required indexes exist and are in the correct shape.
@@ -155,6 +168,8 @@ impl Client {
         }
 
         writer::with_write_lock(db, self, |_tx, meili| Box::pin(async move {
+            create_index(&meili.client, &meili.config.meta_index_name()).await?;
+
             let event_index = create_index(&meili.client, &meili.config.event_index_name()).await?;
             event::prepare_index(&event_index).await?;
 
@@ -250,6 +265,7 @@ pub(crate) async fn clear(meili: Client) -> Result<()> {
         }
     };
 
+    ignore_missing_index(meili.meta_index.delete().await)?;
     ignore_missing_index(meili.event_index.delete().await)?;
     ignore_missing_index(meili.realm_index.delete().await)?;
 

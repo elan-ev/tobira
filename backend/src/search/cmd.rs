@@ -1,6 +1,6 @@
-use meilisearch_sdk::indexes::Index;
+use meilisearch_sdk::{indexes::Index, errors::ErrorCode};
 
-use crate::{prelude::*, config::Config, db};
+use crate::{prelude::*, config::Config, db, search::meta::IndexState};
 
 use super::Client;
 
@@ -148,9 +148,25 @@ async fn status(meili: &Client) -> Result<()> {
 
     bunt::println!("{$bold}# Server info:{/$}");
     info_line!("Database size (all indexes)", human_size);
-    info_line!("Version", meili.client.get_version().await?.pkg_version);
+    info_line!("Meili version", meili.client.get_version().await?.pkg_version);
     info_line!("Health", meili.client.health().await?.status);
     println!();
+
+    with_index!(meili.meta_index, meili.config.meta_index_name(), |index| {
+        let state = IndexState::fetch(index).await?;
+        bunt::println!("{$bold}# Schema info:{/$}");
+        match state {
+            IndexState::NoVersionInfo => println!("No information (empty index?)"),
+            IndexState::BrokenVersionInfo => println!("Cannot read schema info"),
+            IndexState::Info { dirty, version } => {
+                info_line!("Schema version", version);
+                info_line!("Dirty", dirty);
+            }
+        }
+        info_line!("Needs rebuild", state.needs_rebuild());
+    });
+    println!();
+
 
     // Individual indexes
     index_status("event", &meili.event_index, meili.config.event_index_name()).await?;
