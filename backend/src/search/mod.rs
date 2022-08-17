@@ -27,6 +27,7 @@ mod util;
 use self::writer::MeiliWriter;
 pub(crate) use self::{
     event::Event,
+    meta::IndexState,
     realm::Realm,
     update::{update_index, update_index_daemon},
 };
