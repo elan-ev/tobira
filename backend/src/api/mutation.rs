@@ -231,10 +231,18 @@ impl Mutation {
             Id::realm(target_realm.key),
             0,
             NewSeriesBlock {
-                series: Node::id(&series),
+                series: series.id(),
                 show_title: false,
                 order: VideoListOrder::NewToOld,
             },
+            context,
+        ).await?;
+
+        let block = &BlockValue::load_for_realm(target_realm.key, context).await?[0];
+
+        Realm::rename(
+            target_realm.id(),
+            UpdatedRealmName::from_block(block.id()),
             context,
         ).await
     }

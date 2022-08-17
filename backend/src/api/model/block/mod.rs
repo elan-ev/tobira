@@ -327,4 +327,13 @@ impl BlockValue {
             .map(|row| Self::from_row_start(&row))
             .map_err(Into::into)
     }
+
+    pub(crate) fn id(&self) -> Id {
+        match self {
+            BlockValue::TitleBlock(block) => block.shared.id,
+            BlockValue::TextBlock(block) => block.shared.id,
+            BlockValue::VideoBlock(block) => block.shared.id,
+            BlockValue::SeriesBlock(block) => block.shared.id,
+        }
+    }
 }

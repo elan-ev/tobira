@@ -230,6 +230,15 @@ pub(crate) struct UpdatedRealmName {
     block: Option<Id>,
 }
 
+impl UpdatedRealmName {
+    pub(crate) fn from_block(block: Id) -> Self {
+        Self {
+            plain: None,
+            block: Some(block),
+        }
+    }
+}
+
 #[derive(juniper::GraphQLInputObject)]
 pub(crate) struct NewRealm {
     pub(crate) parent: Id,
