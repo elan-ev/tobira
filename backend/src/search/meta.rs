@@ -21,6 +21,26 @@ pub(crate) struct Meta {
     pub(crate) dirty: bool,
 }
 
+impl Meta {
+    pub(crate) const ID: &'static str = "meta";
+
+    pub(crate) fn current_dirty() -> Self {
+        Self {
+            id: Self::ID.into(),
+            version: VERSION,
+            dirty: true,
+        }
+    }
+
+    pub(crate) fn current_clean() -> Self {
+        Self {
+            id: Self::ID.into(),
+            version: VERSION,
+            dirty: false,
+        }
+    }
+}
+
 /// Versioning state of the index.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum IndexState {

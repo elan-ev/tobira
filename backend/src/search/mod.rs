@@ -1,5 +1,6 @@
 use std::{time::{Duration, Instant}, fmt};
 
+use deadpool_postgres::ClientWrapper;
 use meilisearch_sdk::{
     client::Client as MeiliClient,
     indexes::Index,
@@ -136,6 +137,19 @@ impl Client {
 
         Ok(())
     }
+
+    /// Makes sure all required indexes exist and have the right options set.
+    /// Also rebuilds the whole search index if it is necessary due to a schema
+    /// version mismatch.
+    pub(crate) async fn prepare_and_rebuild_if_necessary(
+        &self,
+        db: &mut ClientWrapper,
+    ) -> Result<()> {
+        writer::with_write_lock(db, self, |tx, meili| Box::pin(async move {
+            prepare_indexes(&meili).await.context("failed to prepare search indexes")?;
+            rebuild_if_necessary(&meili, tx).await
+        })).await
+    }
 }
 
 
@@ -249,6 +263,47 @@ pub(crate) async fn prepare_indexes(meili: &MeiliWriter<'_>) -> Result<()> {
     Ok(())
 }
 
+/// Checks the current schema version of the search index and if it is
+/// incompatible, rebuilds the index.
+pub(crate) async fn rebuild_if_necessary(
+    meili: &MeiliWriter<'_>,
+    tx: &deadpool_postgres::Transaction<'_>,
+) -> Result<()> {
+    let state = IndexState::fetch(&meili.meta_index).await?;
+    if state.needs_rebuild() {
+        info!("Search index schema incompatible -> will rebuild search index\n\
+            Search index state: {state:?}\n\
+            Expected version: {VERSION}");
+
+        meili.meta_index.add_or_replace(&[meta::Meta::current_dirty()], None).await
+            .context("failed to update index version document (dirty)")?;
+
+        let tasks = rebuild(meili, tx).await?;
+        info!("Waiting for Meili to finish indexing");
+        for task in tasks {
+            util::wait_on_task(task, meili).await?;
+        }
+        info!("Completely rebuild search index");
+
+        meili.meta_index.add_or_replace(&[meta::Meta::current_clean()], None).await
+            .context("failed to update index version document (clean)")?;
+
+        // TODO: should this also clear the "reindex queue" in the DB?
+
+    } else {
+        info!("Search index schema is up to date (version: {VERSION}) -> no rebuild needed");
+
+        // Reindex is not required, but the version isn't stored explicitly. So
+        // we do that now.
+        if state == IndexState::NoVersionInfo {
+            meili.meta_index.add_or_replace(&[meta::Meta::current_clean()], None).await
+                .context("failed to update index version document (clean)")?;
+        }
+    }
+
+    Ok(())
+}
+
 /// Deletes all indexes (used by Tobira) including all their data! If any index
 /// does not exist, this function just does nothing.
 pub(crate) async fn clear(meili: &MeiliWriter<'_>) -> Result<()> {
@@ -269,14 +324,13 @@ pub(crate) async fn clear(meili: &MeiliWriter<'_>) -> Result<()> {
     Ok(())
 }
 
-/// Rebuilds all indexes by loading all data from the DB and adding it to the
-/// index. Old entries that are in the index, but not in the DB anymore, are
-/// not removed. Thus, to cleanly rebuild, clear all indexes before.
-pub(crate) async fn rebuild_index(
+/// Loads all data from the DB and adding it to the index. Old entries that are
+/// in the index, but not in the DB anymore, are not removed. Thus, to cleanly
+/// rebuild, clear all indexes before.
+pub(crate) async fn index_all_data(
     meili: &MeiliWriter<'_>,
     tx: &deadpool_postgres::Transaction<'_>,
-) -> Result<()> {
-    let before = Instant::now();
+) -> Result<Vec<Task>> {
     let mut tasks = Vec::new();
 
     macro_rules! rebuild_index {
@@ -294,21 +348,21 @@ pub(crate) async fn rebuild_index(
         }
     }
 
+    let before = Instant::now();
     rebuild_index!("events", Event, meili.event_index);
     rebuild_index!("realms", Realm, meili.realm_index);
 
-
     info!("Sent all data to Meili in {:.1?}", before.elapsed());
+    Ok(tasks)
+}
 
-
-    info!("Waiting for Meili to complete indexing...\n\
-        (note: you may ctrl+c this command now -- this won't stop indexing)");
-    let before = Instant::now();
-    for task in tasks {
-        util::wait_on_task(task, meili).await?;
-    }
-
-    info!("Meili finished indexing in {:.1?}", before.elapsed());
-
-    Ok(())
+/// Clears and then rebuilds all indexes. It's `clear` + `prepare_indexes` +
+/// `index_all_data`.
+pub(crate) async fn rebuild(
+    meili: &MeiliWriter<'_>,
+    tx: &deadpool_postgres::Transaction<'_>,
+) -> Result<Vec<Task>> {
+    clear(meili).await.context("failed to clear index")?;
+    prepare_indexes(meili).await.context("failed to prepare search indexes")?;
+    index_all_data(meili, tx).await.context("failed to index all data")
 }

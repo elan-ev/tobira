@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use meilisearch_sdk::{indexes::Index, errors::ErrorCode};
 
 use crate::{prelude::*, config::Config, db, search::meta::IndexState};
@@ -55,10 +57,17 @@ async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
     crate::cmd::prompt_for_yes()?;
 
     super::writer::with_write_lock(&mut db, meili, |tx, meili| Box::pin(async move {
-        super::clear(&meili).await.context("failed to clear search index")?;
-        super::prepare_indexes(&meili).await?;
-        super::rebuild_index(&meili, tx).await.context("failed to rebuild search index")
-        // TODO: should this also clear the "reindex queue" in the DB?
+        let tasks = super::rebuild(&meili, tx).await?;
+
+        info!("Waiting for Meili to complete indexing...\n\
+            (note: you may ctrl+c this command now -- this won't stop indexing)");
+        let before = Instant::now();
+        for task in tasks {
+            super::util::wait_on_task(task, &meili).await?;
+        }
+        info!("Meili finished indexing in {:.1?}", before.elapsed());
+
+        Ok(())
     })).await
 }
 
@@ -68,9 +77,7 @@ async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
 async fn update(meili: &Client, config: &Config, daemon: bool) -> Result<()> {
     let pool = db::create_pool(&config.db).await?;
     let mut db = pool.get().await?;
-    super::writer::with_write_lock(&mut db, meili, |_tx, meili| Box::pin(async move {
-        super::prepare_indexes(&meili).await
-    })).await.context("failed to prepare search indexes")?;
+    meili.prepare_and_rebuild_if_necessary(&mut db).await?;
 
     if daemon {
         super::update_index_daemon(meili, &mut db).await.map(|_| ())

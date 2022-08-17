@@ -18,9 +18,7 @@ use super::{
 
 /// Calls `update_index` roughly every `config.update_interval` and never returns.
 pub(crate) async fn update_index_daemon(meili: &Client, db: &mut DbConnection) -> Result<Never> {
-    super::writer::with_write_lock(db, meili, |_tx, meili| Box::pin(async move {
-        super::prepare_indexes(&meili).await
-    })).await.context("failed to prepare search index")?;
+    meili.prepare_and_rebuild_if_necessary(db).await?;
 
     loop {
         let loop_started_at = Instant::now();
