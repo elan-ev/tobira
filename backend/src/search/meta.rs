@@ -34,7 +34,12 @@ pub(crate) enum IndexState {
 
 impl IndexState {
     pub(crate) fn needs_rebuild(self) -> bool {
-        self != Self::Info { dirty: false, version: VERSION }
+        match self {
+            // Tobira versions that did not store any meta info were on version 1.
+            IndexState::NoVersionInfo => VERSION != 1,
+            IndexState::BrokenVersionInfo => true,
+            IndexState::Info { dirty, version } => dirty || version != VERSION,
+        }
     }
 
     pub(crate) async fn fetch(index: &Index) -> Result<Self> {
