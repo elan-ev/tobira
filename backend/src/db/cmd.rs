@@ -113,7 +113,7 @@ async fn clear(db: &mut Db, config: &Config) -> Result<()> {
 
     info!("Dropped and recreated schema 'public'");
 
-    let meili = config.meili.connect_only().await?;
+    let meili = config.meili.connect().await?;
     crate::search::clear(meili).await?;
 
     Ok(())

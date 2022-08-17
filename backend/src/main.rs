@@ -108,7 +108,11 @@ async fn run() -> Result<()> {
 async fn start_server(config: Config) -> Result<()> {
     info!("Starting Tobira backend ...");
     trace!("Configuration: {:#?}", config);
-    let (db, search) = connect_and_prepare_db_and_meili(&config).await?;
+    let db = connect_and_migrate_db(&config).await?;
+    let search = search::Client::new(config.meili.clone());
+    if let Err(e) = search.check_connection().await {
+        warn!("Could not connect to Meili search index: {e:?}");
+    }
 
     // Start web server
     let root_node = api::root_node();
@@ -120,7 +124,10 @@ async fn start_server(config: Config) -> Result<()> {
 
 async fn start_worker(config: Config) -> Result<Never> {
     info!("Starting Tobira worker ...");
-    let (db, search) = connect_and_prepare_db_and_meili(&config).await?;
+
+    let db = connect_and_migrate_db(&config).await?;
+    let search = config.meili.connect().await.context("failed to connect to MeiliSearch")?;
+    search.prepare(&mut db.get().await?).await.context("failed to prepare search index")?;
 
     let mut search_conn = db.get().await?;
     let sync_conn = db.get().await?;
@@ -165,14 +172,4 @@ async fn connect_and_migrate_db(config: &Config) -> Result<Pool> {
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
     Ok(db)
-}
-
-async fn connect_and_prepare_db_and_meili(config: &Config) -> Result<(Pool, search::Client)> {
-    let db = connect_and_migrate_db(config).await?;
-
-    let mut conn = db.get().await?;
-    let search = config.meili.connect_and_prepare(&mut conn).await
-        .context("failed to connect to MeiliSearch")?;
-
-    Ok((db, search))
 }

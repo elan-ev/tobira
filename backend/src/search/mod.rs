@@ -61,19 +61,16 @@ pub(crate) struct MeiliConfig {
 }
 
 impl MeiliConfig {
-    /// Connects to Meili, tests the connections and prepares all indexes.
-    pub(crate) async fn connect_and_prepare(&self, db: &mut DbConnection) -> Result<Client> {
-        let client = self.connect_only().await?;
-        client.prepare(db).await?;
+    /// Connects to Meili, erroring if Meili is not reachable. Does not check
+    /// whether required indexes exist or whether they are in the correct shape!
+    pub(crate) async fn connect(&self) -> Result<Client> {
+        let client = Client::new(self.clone());
+        client.check_connection().await
+            .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))?;
+
+        info!("Connected to MeiliSearch at '{}'", self.host);
 
         Ok(client)
-    }
-
-    /// Connects to Meili, but does not check whether required indexes exist or
-    /// are in the correct shape!
-    pub(crate) async fn connect_only(&self) -> Result<Client> {
-        Client::new(self.clone()).await
-            .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))
     }
 
     fn meta_index_name(&self) -> String {
@@ -106,26 +103,15 @@ pub(crate) struct Client {
 }
 
 impl Client {
-    /// Creates a new connection to Meili, makes sure that Meili is healthy and
-    /// creates an instance of `Self`. The `Index` fields in `Self` are only
-    /// references and it is NOT checked whether these indexes actually exist
-    /// or are in the right form. So in most situations, you also want to call
-    /// `prepare` to make sure Meili is ready to be used.
-    async fn new(config: MeiliConfig) -> Result<Self> {
+    /// Creates the search client, but without contacting Meili at all. Thus,
+    /// neither the connection nor the existence of the indexes is checked.
+    /// Also see [`Self::check_connection`] and [`Self::prepare`].
+    pub(crate) fn new(config: MeiliConfig) -> Self {
+        // Create client (this does not connect to Meili).
         let client = MeiliClient::new(
             &config.host.to_string(),
             config.key.expose_secret(),
         );
-
-        if let Err(e) = client.health().await {
-            bail!("Cannot reach MeiliSearch: {e}");
-        }
-
-        if !client.is_healthy().await {
-            bail!("MeiliSearch instance is not healthy or not reachable");
-        }
-
-        info!("Connected to MeiliSearch at '{}'", config.host);
 
         // Store some references to the indices (without checking whether they
         // actually exist!).
@@ -133,12 +119,25 @@ impl Client {
         let event_index = client.index(&config.event_index_name());
         let realm_index = client.index(&config.realm_index_name());
 
-        Ok(Self { client, config, meta_index, event_index, realm_index })
+        Self { client, config, meta_index, event_index, realm_index }
+    }
+
+    /// Checks the connection to Meilisearch by accessing the `/health` endpoint.
+    pub(crate) async fn check_connection(&self) -> Result<()> {
+        if let Err(e) = self.client.health().await {
+            bail!("Cannot reach MeiliSearch: {e}");
+        }
+
+        if !self.client.is_healthy().await {
+            bail!("MeiliSearch instance is not healthy or not reachable");
+        }
+
+        Ok(())
     }
 
     /// Makes sure that all required indexes exist and are in the correct shape.
     /// If they are not, this function attempts to fix that.
-    async fn prepare(&self, db: &mut DbConnection) -> Result<()> {
+    pub(crate) async fn prepare(&self, db: &mut DbConnection) -> Result<()> {
         /// Creates a new index with the given `name` if it does not exist yet.
         async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
             debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");

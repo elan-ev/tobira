@@ -206,7 +206,6 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
                 if let Err(e) = tx.rollback().await {
                     error!("Failed to rollback transaction: {e}\nWill give up now. Transaction \
                         should be rolled back automatically since it won't be committed.");
-
                 }
 
                 return Ok(response::internal_server_error());

@@ -37,7 +37,7 @@ pub(crate) enum SearchIndexCommand {
 
 /// Entry point for `search-index` commands.
 pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()> {
-    let meili = config.meili.connect_only().await?;
+    let meili = config.meili.connect().await?;
 
     match cmd {
         SearchIndexCommand::Status => status(&meili).await?,
