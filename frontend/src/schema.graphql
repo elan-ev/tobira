@@ -44,6 +44,14 @@ type RealmNameFromBlock {
 "An opaque cursor used for pagination"
 scalar Cursor
 
+"""
+  Return type of the search API. `EmptyQuery` is only returned if the passed
+  search query is empty. `SearchUnavailable` is returned if the backend
+  search service is, for some reason, not available. Otherwise
+  `SearchResults` is returned.
+"""
+union SearchOutcome = SearchUnavailable | EmptyQuery | SearchResults
+
 type RemovedRealm {
   parent: Realm!
 }
@@ -147,6 +155,14 @@ type VideoBlock implements Block & RealmNameSourceBlock {
   id: ID!
   index: Int!
   realm: Realm!
+}
+
+type SearchUnavailable {
+  """
+    Unused dummy field for this marker type. GraphQL requires all objects to
+    have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
 }
 
 type AuthorizedEvent implements Node {
@@ -387,7 +403,7 @@ type Query {
   "Retrieve a node by globally unique ID. Mostly useful for relay."
   node(id: ID!): Node
   "Returns `null` if the query is too short."
-  search(query: String!): SearchResults
+  search(query: String!): SearchOutcome!
 }
 
 interface RealmNameSourceBlock {
@@ -398,6 +414,14 @@ enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
   ALPHABETIC_DESC
+}
+
+type EmptyQuery {
+  """
+    Unused dummy field for this marker type. GraphQL requires all objects to
+    have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
 }
 
 input UpdateSeriesBlock {

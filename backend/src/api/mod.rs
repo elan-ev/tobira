@@ -9,12 +9,13 @@ use self::{
 pub(crate) mod mutation;
 pub(crate) mod query;
 pub(crate) mod subscription;
+pub(crate) mod util;
 
+mod common;
 mod context;
 mod err;
 mod id;
 mod model;
-mod common;
 
 pub(crate) use self::{
     id::Id,

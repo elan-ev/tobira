@@ -1,10 +1,17 @@
+use meilisearch_sdk::errors::{
+    Error as MsError,
+    MeilisearchError as MsRespError,
+    ErrorCode as MsErrorCode,
+};
+
 use crate::{
     api::{
-        Context,
-        err::{ApiResult, ApiErrorKind, ApiError},
-        NodeValue,
+        Context, NodeValue,
+        err::ApiResult,
+        util::impl_object_with_dummy_field,
     },
     auth::HasRoles,
+    prelude::*,
     search,
 };
 
@@ -12,6 +19,27 @@ use crate::{
 mod event;
 mod realm;
 
+/// Marker type to signal that the search functionality is unavailable for some
+/// reason.
+pub(crate) struct SearchUnavailable;
+impl_object_with_dummy_field!(SearchUnavailable);
+
+/// Response to `search` endpoint when the query is empty.
+pub(crate) struct EmptyQuery;
+impl_object_with_dummy_field!(EmptyQuery);
+
+
+/// Return type of the search API. `EmptyQuery` is only returned if the passed
+/// search query is empty. `SearchUnavailable` is returned if the backend
+/// search service is, for some reason, not available. Otherwise
+/// `SearchResults` is returned.
+#[derive(juniper::GraphQLUnion)]
+#[graphql(Context = Context)]
+pub(crate) enum SearchOutcome {
+    SearchUnavailable(SearchUnavailable),
+    EmptyQuery(EmptyQuery),
+    Results(SearchResults),
+}
 
 #[derive(juniper::GraphQLObject)]
 #[graphql(Context = Context)]
@@ -22,9 +50,9 @@ pub(crate) struct SearchResults {
 pub(crate) async fn perform(
     user_query: &str,
     context: &Context,
-) -> ApiResult<Option<SearchResults>> {
+) -> ApiResult<SearchOutcome> {
     if user_query.is_empty() {
-        return Ok(None);
+        return Ok(SearchOutcome::EmptyQuery(EmptyQuery));
     }
 
     // Prepare the event search
@@ -62,11 +90,35 @@ pub(crate) async fn perform(
 
 
     // Perform the searches
-    let (event_results, realm_results) = tokio::try_join!(
+    let res = tokio::try_join!(
         event_query.execute::<search::Event>(),
         realm_query.execute::<search::Realm>(),
-    )?;
+    );
+    let (event_results, realm_results) = match res {
+        Ok(v) => v,
 
+        // We treat some errors in a special way because we kind of expect them
+        // to happen. In those cases, we just say that the search is currently
+        // unavailable, instead of the general error.
+        Err(e @ MsError::Meilisearch(MsRespError { error_code: MsErrorCode::IndexNotFound, .. }))
+        | Err(e @ MsError::UnreachableServer)
+        | Err(e @ MsError::Timeout) => {
+            error!("Meili search failed: {e} (=> replying 'search uavailable')");
+            return Ok(SearchOutcome::SearchUnavailable(SearchUnavailable));
+        }
+
+        // Catch when we can't serialize the JSON into our structs. This happens
+        // when we change the search index schema and the index has not been
+        // rebuilt yet. We also show "search unavailable" for this case.
+        Err(MsError::ParseError(e)) if e.is_data() => {
+            error!("Failed to deserialize search results (missing rebuild after update?): {e} \
+                (=> replying 'search uavailable')");
+            return Ok(SearchOutcome::SearchUnavailable(SearchUnavailable));
+        }
+
+        // All other errors just result in a general "internal server error".
+        Err(e) => return Err(e.into()),
+    };
 
     // Unfortunately, since Meili does not support multi-index search yet, and
     // since it does not provide any relevance score, we have to merge the
@@ -158,15 +210,5 @@ pub(crate) async fn perform(
         }
     }
 
-    Ok(Some(SearchResults { items }))
-}
-
-impl From<meilisearch_sdk::errors::Error> for ApiError {
-    fn from(src: meilisearch_sdk::errors::Error) -> Self {
-        Self {
-            msg: format!("DB error: {src}"),
-            kind: ApiErrorKind::InternalServerError,
-            key: None,
-        }
-    }
+    Ok(SearchOutcome::Results(SearchResults { items }))
 }

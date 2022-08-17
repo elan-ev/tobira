@@ -30,14 +30,8 @@ pub(crate) trait Node {
 /// deal with the "not allowed" case.
 pub(crate) struct NotAllowed;
 
-#[juniper::graphql_object(Context = Context)]
-impl NotAllowed {
-    /// Unused dummy field for this marker type. GraphQL requires all objects to
-    /// have at least one field. Always returns `null`.
-    fn dummy() -> Option<bool> {
-        None
-    }
-}
+super::util::impl_object_with_dummy_field!(NotAllowed);
+
 
 /// Opaque cursor for pagination. Serializes as string.
 ///

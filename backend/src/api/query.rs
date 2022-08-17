@@ -12,7 +12,7 @@ use super::{
         realm::Realm,
         event::{AuthorizedEvent, Event},
         series::Series,
-        search::{self, SearchResults},
+        search::{self, SearchOutcome},
     },
 };
 
@@ -103,7 +103,7 @@ impl Query {
     }
 
     /// Returns `null` if the query is too short.
-    async fn search(query: String, context: &Context) -> ApiResult<Option<SearchResults>> {
+    async fn search(query: String, context: &Context) -> ApiResult<SearchOutcome> {
         search::perform(&query, context).await
     }
 }

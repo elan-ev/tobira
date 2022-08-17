@@ -66,6 +66,20 @@ impl From<tokio_postgres::Error> for ApiError {
     }
 }
 
+impl From<meilisearch_sdk::errors::Error> for ApiError {
+    fn from(src: meilisearch_sdk::errors::Error) -> Self {
+        // Logging the error here is not _ideal_ but it's probably totally fine
+        // for us.
+        error!("Meili error: {}", src);
+        debug!("Detailed error: {:#?}", src);
+        Self {
+            msg: format!("Error with Meili: {src}"),
+            kind: ApiErrorKind::InternalServerError,
+            key: None,
+        }
+    }
+}
+
 impl<S: ScalarValue> IntoFieldError<S> for ApiError {
     fn into_field_error(self) -> juniper::FieldError<S> {
         let msg = format!("{}: {}", self.kind.message_prefix(), self.msg);
