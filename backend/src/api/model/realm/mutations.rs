@@ -132,7 +132,7 @@ impl Realm {
             }))
     }
 
-    pub async fn rename(id: Id, name: UpdatedRealmName, context: &Context) -> ApiResult<Realm> {
+    pub(crate) async fn rename(id: Id, name: UpdatedRealmName, context: &Context) -> ApiResult<Realm> {
         let db = context.db(context.require_moderator()?);
         let key = id_to_key(id, "`id`")?;
         if name.plain.is_some() == name.block.is_some() {
@@ -228,6 +228,15 @@ pub(crate) struct UpdateRealm {
 pub(crate) struct UpdatedRealmName {
     plain: Option<String>,
     block: Option<Id>,
+}
+
+impl UpdatedRealmName {
+    pub(crate) fn from_block(block: Id) -> Self {
+        Self {
+            plain: None,
+            block: Some(block),
+        }
+    }
 }
 
 #[derive(juniper::GraphQLInputObject)]
