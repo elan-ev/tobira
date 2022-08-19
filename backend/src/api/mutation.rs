@@ -5,8 +5,9 @@ use super::{
     Context,
     err::{ApiResult, invalid_input, not_authorized},
     id::Id,
+    Node,
     model::{
-        series::{Series, SeriesValue},
+        series::{Series, NewSeries},
         realm::{
             ChildIndex,
             NewRealm,
@@ -184,7 +185,7 @@ impl Mutation {
     /// Creates all the necessary realms on the path to the target
     /// and adds a block with the given series at the leaf.
     async fn mount_series(
-        oc_series_id: String,
+        series: NewSeries,
         parent_realm_path: String,
         #[graphql(default = vec![])]
         new_realms: Vec<RealmSpecifier>,
@@ -212,7 +213,7 @@ impl Mutation {
             }
         }
 
-        let series = SeriesValue::load_or_create_by_opencast_id(oc_series_id, context).await?;
+        let series = Series::create(series, context).await?;
 
         let target_realm = {
             let mut target_realm = parent_realm;
@@ -230,7 +231,7 @@ impl Mutation {
             Id::realm(target_realm.key),
             0,
             NewSeriesBlock {
-                series: Series::id(&series),
+                series: Node::id(&series),
                 show_title: false,
                 order: VideoListOrder::NewToOld,
             },

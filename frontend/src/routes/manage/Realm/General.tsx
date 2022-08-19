@@ -37,7 +37,7 @@ const fragment = graphql`
             }
             ... on SeriesBlock {
                 series {
-                    ... on ReadySeries { title }
+                    title
                 }
             }
         }

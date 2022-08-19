@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useFormContext } from "react-hook-form";
 
+import { isSynced } from "../../../../../../util";
 import { Card } from "../../../../../../ui/Card";
 import { Select } from "../../../../../../ui/Input";
 import { ContentManageQueryContext } from "../..";
@@ -38,9 +39,10 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         fragment SeriesEditModeSeriesData on Query {
             allSeries {
                 id
-                __typename
-                ... on ReadySeries {
-                    title
+                title
+                syncedData {
+                    # only queried to see wether syncedData is null
+                    description
                 }
             }
         }
@@ -48,7 +50,14 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
 
     const { series, showTitle, order } = useFragment(graphql`
         fragment SeriesEditModeBlockData on SeriesBlock {
-            series { id __typename}
+            series {
+                id
+                title
+                syncedData {
+                    # only queried to see wether syncedData is null
+                    description
+                }
+            }
             showTitle
             order
         }
@@ -112,12 +121,14 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             <option value="" hidden>
                 {t("manage.realm.content.series.series.none")}
             </option>
-            {series && series.__typename !== "ReadySeries" && <option value={series.id} hidden>
+            {series && series.syncedData && <option value={series.id} hidden>
                 {t("manage.realm.content.series.series.waiting")}
             </option>}
             {allSeries
-                .filter(series => series.__typename === "ReadySeries")
-                .map(({ id, title }) => <option key={id} value={id}>{title}</option>)}
+                .filter(isSynced)
+                .map(({ id, title }) => (
+                    <option key={id} value={id}>{title}</option>
+                ))}
         </Select>
         <ShowTitle showTitle={showTitle} />
     </EditModeForm>;

@@ -68,6 +68,10 @@ input ChildIndex {
   index: Int!
 }
 
+type SyncedSeriesData {
+  description: String
+}
+
 type EventConnection {
   pageInfo: EventPageInfo!
   items: [AuthorizedEvent!]!
@@ -91,28 +95,14 @@ type SeriesBlock implements Block & RealmNameSourceBlock {
   realm: Realm!
 }
 
-"""
-  Represents an Opencast series.
-  These can exist in different states during their lifecycle,
-  represented by different implementations of this interface:
-
-  - `WaitingSeries`: The series was created "out of band" in regards
-      to the usual path of communication between Opencast and Tobira
-      (i.e. the harvesting protocol).
-      Thus, it does not have all its (meta-)data, yet,
-      and is *waiting* to be fully synced.
-      This can currently only happen using the `mount`-API
-      used by the Opencast Admin UI.
-  - `ReadySeries`: The series is fully synced and up to date, as far
-      as Tobira is concerned. All of its mandatory data fields are set,
-      and the optional ones should reflect the state of the Opencast
-      series as of the last harvest.
-"""
-interface Series {
+"Represents an Opencast series."
+type Series {
   id: ID!
   opencastId: String!
-  "Returns a list of realms where this series is referenced (via some kind of block)."
+  title: String!
+  syncedData: SyncedSeriesData
   hostRealms: [Realm!]!
+  events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
 }
 
 input NewVideoBlock {
@@ -171,7 +161,7 @@ type AuthorizedEvent implements Node {
   syncedData: SyncedEventData
   "Whether the current user has write access to this event."
   canWrite: Boolean!
-  series: ReadySeries
+  series: Series
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!
 }
@@ -345,7 +335,12 @@ type Mutation {
     Creates all the necessary realms on the path to the target
     and adds a block with the given series at the leaf.
   """
-  mountSeries(ocSeriesId: String!, parentRealmPath: String!, newRealms: [RealmSpecifier!]!): Realm!
+  mountSeries(series: NewSeries!, parentRealmPath: String!, newRealms: [RealmSpecifier!]!): Realm!
+}
+
+input NewSeries {
+  opencastId: String!
+  title: String!
 }
 
 "DateTime"
@@ -411,13 +406,6 @@ input UpdateSeriesBlock {
   order: VideoListOrder
 }
 
-"See `Series`"
-type WaitingSeries implements Series {
-  id: ID!
-  opencastId: String!
-  hostRealms: [Realm!]!
-}
-
 type SearchRealm implements Node {
   id: ID!
   name: String
@@ -438,16 +426,6 @@ input UpdateRealm {
 
 input UpdateTitleBlock {
   content: String
-}
-
-"See `Series`"
-type ReadySeries implements Series {
-  id: ID!
-  opencastId: String!
-  title: String!
-  description: String
-  events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
-  hostRealms: [Realm!]!
 }
 
 enum EventSortColumn {

@@ -84,7 +84,10 @@ const query = graphql`
                     endTime
                     tracks { flavor resolution }
                 }
-                series { title ...SeriesBlockSeriesData }
+                series {
+                    title
+                    ...SeriesBlockSeriesData
+                }
                 hostRealms { id isRoot name path }
             }
         }

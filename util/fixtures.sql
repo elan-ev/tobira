@@ -16,8 +16,8 @@ begin
     -- Some series and events for testing edge cases
     insert into series (opencast_id, state, title, read_roles, write_roles, updated)
         values ('68612b2e-423b-40c2-8933-92c3dd4a47a9', 'ready', 'Empty series', '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', now());
-    insert into series (opencast_id, state, updated)
-        values ('d9c9402d-2966-48a1-b082-ad5849202bca', 'waiting', '-infinity');
+    insert into series (opencast_id, title, state, updated)
+        values ('d9c9402d-2966-48a1-b082-ad5849202bca', 'Waiting series', 'waiting', '-infinity');
     insert into events (opencast_id, state, updated, is_live, read_roles, write_roles, title, created, metadata)
         values ('d9c9402d-2966-48a1-b082-ad5849202bca', 'waiting', '-infinity', false, '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', 'Waiting event', now(), '{}');
 

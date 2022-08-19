@@ -11,7 +11,7 @@ use super::{
     model::{
         realm::Realm,
         event::{AuthorizedEvent, Event},
-        series::SeriesValue,
+        series::Series,
         search::{self, SearchResults},
     },
 };
@@ -59,18 +59,18 @@ impl Query {
     }
 
     /// Returns a series by its Opencast ID.
-    async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<SeriesValue>> {
-        SeriesValue::load_by_opencast_id(id, context).await
+    async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
+        Series::load_by_opencast_id(id, context).await
     }
 
     /// Returns a series by its ID.
-    async fn series_by_id(id: Id, context: &Context) -> ApiResult<Option<SeriesValue>> {
-        SeriesValue::load_by_id(id, context).await
+    async fn series_by_id(id: Id, context: &Context) -> ApiResult<Option<Series>> {
+        Series::load_by_id(id, context).await
     }
 
     /// Returns a list of all series.
-    async fn all_series(context: &Context) -> ApiResult<Vec<SeriesValue>> {
-        SeriesValue::load_all(context).await
+    async fn all_series(context: &Context) -> ApiResult<Vec<Series>> {
+        Series::load_all(context).await
     }
 
     /// Returns the current user.
@@ -94,12 +94,7 @@ impl Query {
     async fn node(id: Id, context: &Context) -> ApiResult<Option<NodeValue>> {
         match id.kind() {
             Id::REALM_KIND => Ok(Realm::load_by_id(id, context).await?.map(NodeValue::from)),
-            Id::SERIES_KIND => Ok(SeriesValue::load_by_id(id, context).await?.map(|series| {
-                match series {
-                    SeriesValue::WaitingSeries(series) => NodeValue::from(series),
-                    SeriesValue::ReadySeries(series) => NodeValue::from(series),
-                }
-            })),
+            Id::SERIES_KIND => Ok(Series::load_by_id(id, context).await?.map(NodeValue::from)),
             Id::EVENT_KIND => AuthorizedEvent::load_by_id(id, context).await?
                 .map(|e| e.into_result().map(NodeValue::from))
                 .transpose(),

@@ -9,12 +9,12 @@ import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
 import { getPlayerAspectRatio, Player, PlayerContainer, Track } from "../ui/player";
-import { SeriesBlockFromReadySeries } from "../ui/Blocks/Series";
+import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
-import { currentRef } from "../util";
+import { currentRef, SyncedOpencastEntity, isSynced } from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
@@ -212,7 +212,11 @@ const eventFragment = graphql`
                 endTime
                 tracks { uri flavor mimetype resolution }
             }
-            series { id title ... SeriesBlockReadySeriesData }
+            series {
+                id
+                title
+                ... SeriesBlockSeriesData
+            }
         }
     }
 `;
@@ -270,7 +274,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
 
         <div css={{ height: 80 }} />
 
-        {event.series && <SeriesBlockFromReadySeries
+        {event.series && <SeriesBlockFromSeries
             basePath={basePath}
             fragRef={event.series}
             title={t("video.more-from-series", { series: event.series.title })}
@@ -336,9 +340,7 @@ const PendingEventPlaceholder: React.FC<PendingEventPlaceholderProps> = ({
 };
 
 type Event = Extract<NonNullable<VideoPageEventData$data>, { __typename: "AuthorizedEvent" }>;
-type SyncedEvent = Event & { syncedData: NonNullable<Event["syncedData"]> };
-
-const isSynced = (event: Event): event is SyncedEvent => Boolean(event.syncedData);
+type SyncedEvent = SyncedOpencastEntity<Event>;
 
 type MetadataProps = {
     id: string;
