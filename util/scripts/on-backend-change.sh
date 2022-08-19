@@ -18,7 +18,7 @@ cd "$basedir"/../../backend || exit 1
 
 cargo build || exit 1
 
-cargo run -- export-api-schema ../frontend/src/schema.graphql
-cargo run -- write-config ../docs/config.toml
+./target/debug/tobira export-api-schema ../frontend/src/schema.graphql
+./target/debug/tobira write-config ../docs/config.toml
 reload_once_port_is_open &
-cargo run -- serve
+./target/debug/tobira serve
