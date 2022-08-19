@@ -13,12 +13,18 @@ reload_once_port_is_open() {
     $reload_command
 }
 
-
+"$basedir"/clr.sh
 cd "$basedir"/../../backend || exit 1
 
 cargo build || exit 1
 
-./target/debug/tobira export-api-schema ../frontend/src/schema.graphql
+# Only override schema if it changed. This is mainly to avoid 'clr.sh' being run
+# needlessly. We invoke tobira twice to avoid having to deal with temporary
+# files. The invocation is super fast anyway.
+schema_out=../frontend/src/schema.graphql
+./target/debug/tobira export-api-schema | cmp --silent - $schema_out \
+    || ./target/debug/tobira export-api-schema $schema_out
+
 ./target/debug/tobira write-config ../docs/config.toml
 reload_once_port_is_open &
 ./target/debug/tobira serve
