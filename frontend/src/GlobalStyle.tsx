@@ -108,4 +108,7 @@ const GLOBAL_STYLE = css({
         border: "none",
         borderTop: "1px solid var(--grey80)",
     },
+    "input, button": {
+        margin: 0,
+    },
 });
