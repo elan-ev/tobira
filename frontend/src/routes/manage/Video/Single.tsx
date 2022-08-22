@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FiArrowLeft, FiExternalLink } from "react-icons/fi";
+import { FiCornerLeftUp, FiExternalLink } from "react-icons/fi";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
@@ -55,7 +55,7 @@ const BackLink: React.FC = () => {
     const { t } = useTranslation();
     const items = [
         <LinkWithIcon key={MANAGE_VIDEOS_PATH} to={MANAGE_VIDEOS_PATH} iconPos="left">
-            <FiArrowLeft />
+            <FiCornerLeftUp />
             {t("manage.nav.my-videos")}
         </LinkWithIcon>,
     ];
