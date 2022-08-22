@@ -18,6 +18,13 @@ pub(crate) struct Meta {
     /// A flag that is set to `true` while transitioning to a new index version.
     /// If the transition fails or is interrupted, the flag stays set and
     /// Tobira will rebuild again next time.
+    ///
+    /// Example: Search index schema version is currently 5. Tobira executable
+    /// is updated and requires schema version 6, thus needs to rebuild
+    /// everything. Halfway through the rebuild, something breaks and the
+    /// rebuild is aborted. Now the Tobira binary gets rolled back to require
+    /// schema version 5. If we didn't have a dirty flag, the search index
+    /// (in its broken state) would just be accepted.
     pub(crate) dirty: bool,
 }
 
