@@ -155,6 +155,7 @@ search:
   title: Search results for “{{query}}”
   no-results: No results
   too-few-characters: Please type more characters to start the search.
+  unavailable: The search is currently unavailable. Try again later.
 
 upload:
   title: Upload video

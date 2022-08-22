@@ -18,6 +18,8 @@ use super::{
 
 /// Calls `update_index` roughly every `config.update_interval` and never returns.
 pub(crate) async fn update_index_daemon(meili: &Client, db: &mut DbConnection) -> Result<Never> {
+    meili.prepare_and_rebuild_if_necessary(db).await?;
+
     loop {
         let loop_started_at = Instant::now();
 

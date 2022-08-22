@@ -51,7 +51,11 @@ pub(crate) async fn run(shared: &args::Shared) -> Result<()> {
                 => println!("    ▸ DB is compatible, {new_migrations} new migrations will be applied"),
         }
     }
-    print_outcome(&mut any_errors, "Connection to MeiliSearch", &meili);
+    print_outcome(&mut any_errors, "MeiliSearch", &meili);
+    match meili {
+        Ok(true) => println!("    ▸ Requires rebuild (is automatically done by 'tobira worker')"),
+        _ => {},
+    }
     print_outcome(&mut any_errors, "Connection to Opencast harvesting API", &opencast_sync);
 
     println!();
@@ -112,15 +116,19 @@ async fn check_referenced_files(config: &Config) -> Result<()> {
     Ok(())
 }
 
-async fn check_meili(config: &Config) -> Result<()> {
-    let meili = config.meili.connect_only().await?;
+/// Returns `true` if a rebuild is necessary
+async fn check_meili(config: &Config) -> Result<bool> {
+    let meili = config.meili.connect().await?;
 
     // Check that the API key is valid and can access the indexes.
     let _ = meili.client.get_stats().await?;
     let _ = meili.event_index.get_stats().await?;
     let _ = meili.realm_index.get_stats().await?;
 
-    Ok(())
+    let state = crate::search::IndexState::fetch(&meili.meta_index).await?;
+    info!("Search index state: {state:?}");
+
+    Ok(state.needs_rebuild())
 }
 
 async fn check_opencast_sync(config: &Config) -> Result<()> {

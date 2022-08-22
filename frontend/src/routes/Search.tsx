@@ -32,7 +32,7 @@ export const SearchRoute = makeRoute(url => {
         render: () => <RootLoader
             {...{ query, queryRef }}
             nav={() => []}
-            render={data => <SearchPage q={q} results={data.search} />}
+            render={data => <SearchPage q={q} outcome={data.search} />}
         />,
         dispose: () => queryRef.dispose(),
     };
@@ -42,23 +42,28 @@ const query = graphql`
     query SearchQuery($q: String!) {
         ... UserData
         search(query: $q) {
-            items {
-                id
-                __typename
-                ... on SearchEvent {
-                    title
-                    description
-                    thumbnail
-                    duration
-                    creators
-                    seriesTitle
-                    isLive
-                    startTime
-                    endTime
-                    created
-                    hostRealms { path }
+            __typename
+            ... on EmptyQuery { dummy }
+            ... on SearchUnavailable { dummy }
+            ... on SearchResults {
+                items {
+                    id
+                    __typename
+                    ... on SearchEvent {
+                        title
+                        description
+                        thumbnail
+                        duration
+                        creators
+                        seriesTitle
+                        isLive
+                        startTime
+                        endTime
+                        created
+                        hostRealms { path }
+                    }
+                    ... on SearchRealm { name path ancestorNames }
                 }
-                ... on SearchRealm { name path ancestorNames }
             }
         }
     }
@@ -66,20 +71,30 @@ const query = graphql`
 
 type Props = {
     q: string;
-    results: SearchQuery$data["search"];
+    outcome: SearchQuery$data["search"];
 };
 
-const SearchPage: React.FC<Props> = ({ q, results }) => {
+const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     const { t } = useTranslation();
+
+    let body;
+    if (outcome.__typename === "EmptyQuery") {
+        body = <CenteredNote>{t("search.too-few-characters")}</CenteredNote>;
+    } else if (outcome.__typename === "SearchUnavailable") {
+        body = <div css={{ textAlign: "center" }}>
+            <Card kind="error">{t("search.unavailable")}</Card>
+        </div>;
+    } else if (outcome.__typename === "SearchResults") {
+        body = outcome.items.length === 0
+            ? <CenteredNote>{t("search.no-results")}</CenteredNote>
+            : <SearchResults items={outcome.items} />;
+    } else {
+        return unreachable("unknown search outcome");
+    }
 
     return <div css={{ maxWidth: 950, margin: "0 auto" }}>
         <PageTitle title={t("search.title", { query: q })} />
-        {results === null
-            ? <CenteredNote>{t("search.too-few-characters")}</CenteredNote>
-            : results.items.length === 0
-                ? <CenteredNote>{t("search.no-results")}</CenteredNote>
-                : <SearchResults items={results.items} />
-        }
+        {body}
     </div>;
 };
 
@@ -89,8 +104,10 @@ const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
     </div>
 );
 
+type Results = Extract<SearchQuery$data["search"], { __typename: "SearchResults" }>;
+
 type SearchResultsProps = {
-    items: NonNullable<SearchQuery$data["search"]>["items"];
+    items: Results["items"];
 };
 
 const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "undefined"

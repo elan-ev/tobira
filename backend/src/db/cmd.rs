@@ -113,8 +113,11 @@ async fn clear(db: &mut Db, config: &Config) -> Result<()> {
 
     info!("Dropped and recreated schema 'public'");
 
-    let meili = config.meili.connect_only().await?;
-    crate::search::clear(meili).await?;
+    let meili = config.meili.connect().await?;
+    crate::search::writer::with_write_lock(db, &meili, |_tx, meili| Box::pin(async move {
+        crate::search::clear(&meili).await
+    })).await.context("failed to clear search index")?;
+    info!("Cleared search index");
 
     Ok(())
 }

@@ -1,5 +1,6 @@
 use std::{time::{Duration, Instant}, fmt};
 
+use deadpool_postgres::ClientWrapper;
 use meilisearch_sdk::{
     client::Client as MeiliClient,
     indexes::Index,
@@ -11,23 +12,32 @@ use secrecy::{Secret, ExposeSecret};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    db::{DbConnection, types::Key},
+    db::types::Key,
     prelude::*,
     util::HttpHost,
 };
 
 pub(crate) mod cmd;
 mod event;
+mod meta;
 mod realm;
-mod writer;
+pub(crate) mod writer;
 mod update;
 mod util;
 
+use self::writer::MeiliWriter;
 pub(crate) use self::{
     event::Event,
+    meta::IndexState,
     realm::Realm,
     update::{update_index, update_index_daemon},
 };
+
+
+/// The version of search index schema. Increase whenever there is a change that
+/// requires an index rebuild.
+const VERSION: u32 = 1;
+
 
 // ===== Configuration ============================================================================
 
@@ -54,21 +64,20 @@ pub(crate) struct MeiliConfig {
 }
 
 impl MeiliConfig {
-    /// Connects to Meili, tests the connections and prepares all indexes.
-    pub(crate) async fn connect_and_prepare(&self, db: &mut DbConnection) -> Result<Client> {
-        let client = Client::new(self.clone()).await
+    /// Connects to Meili, erroring if Meili is not reachable. Does not check
+    /// whether required indexes exist or whether they are in the correct shape!
+    pub(crate) async fn connect(&self) -> Result<Client> {
+        let client = Client::new(self.clone());
+        client.check_connection().await
             .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))?;
 
-        client.prepare(db).await?;
+        info!("Connected to MeiliSearch at '{}'", self.host);
 
         Ok(client)
     }
 
-    /// Connects to Meili, but does not check whether required indexes exist or
-    /// are in the correct shape!
-    pub(crate) async fn connect_only(&self) -> Result<Client> {
-        Client::new(self.clone()).await
-            .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))
+    fn meta_index_name(&self) -> String {
+        format!("{}{}", self.index_prefix, "meta")
     }
 
     fn event_index_name(&self) -> String {
@@ -91,84 +100,55 @@ impl MeiliConfig {
 pub(crate) struct Client {
     config: MeiliConfig,
     pub(crate) client: MeiliClient,
+    pub(crate) meta_index: Index,
     pub(crate) event_index: Index,
     pub(crate) realm_index: Index,
 }
 
 impl Client {
-    /// Creates a new connection to Meili, makes sure that Meili is healthy and
-    /// creates an instance of `Self`. The `Index` fields in `Self` are only
-    /// references and it is NOT checked whether these indexes actually exist
-    /// or are in the right form. So in most situations, you also want to call
-    /// `prepare` to make sure Meili is ready to be used.
-    async fn new(config: MeiliConfig) -> Result<Self> {
+    /// Creates the search client, but without contacting Meili at all. Thus,
+    /// neither the connection nor the existence of the indexes is checked.
+    /// Also see [`Self::check_connection`] and [`Self::prepare`].
+    pub(crate) fn new(config: MeiliConfig) -> Self {
+        // Create client (this does not connect to Meili).
         let client = MeiliClient::new(
             &config.host.to_string(),
             config.key.expose_secret(),
         );
 
-        if let Err(e) = client.health().await {
-            bail!("Cannot reach MeiliSearch: {e}");
-        }
-
-        if !client.is_healthy().await {
-            bail!("MeiliSearch instance is not healthy or not reachable");
-        }
-
-        info!("Connected to MeiliSearch at '{}'", config.host);
-
         // Store some references to the indices (without checking whether they
         // actually exist!).
+        let meta_index = client.index(&config.meta_index_name());
         let event_index = client.index(&config.event_index_name());
         let realm_index = client.index(&config.realm_index_name());
 
-        Ok(Self { client, config, event_index, realm_index })
+        Self { client, config, meta_index, event_index, realm_index }
     }
 
-    /// Makes sure that all required indexes exist and are in the correct shape.
-    /// If they are not, this function attempts to fix that.
-    async fn prepare(&self, db: &mut DbConnection) -> Result<()> {
-        /// Creates a new index with the given `name` if it does not exist yet.
-        async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
-            debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");
-            let task = client.create_index(name, Some("id"))
-                .await?
-                .wait_for_completion(&client, None, None)
-                .await?;
-
-            let index = match task {
-                Task::Enqueued { .. } | Task::Processing { .. }
-                    => unreachable!("waited for task to complete, but it is not"),
-                Task::Failed { content } => {
-                    if content.error.error_code == ErrorCode::IndexAlreadyExists {
-                        debug!("Meili index '{name}' already exists");
-                        client.index(name)
-                    } else {
-                        bail!("Failed to create Meili index '{}': {:#?}", name, content.error);
-                    }
-                }
-                Task::Succeeded { .. } => {
-                    debug!("Created Meili index '{name}'");
-                    task.try_make_index(&client).unwrap()
-                }
-            };
-
-            Ok(index)
+    /// Checks the connection to Meilisearch by accessing the `/health` endpoint.
+    pub(crate) async fn check_connection(&self) -> Result<()> {
+        if let Err(e) = self.client.health().await {
+            bail!("Cannot reach MeiliSearch: {e}");
         }
 
-        writer::with_write_lock(db, self, |_tx, meili| Box::pin(async move {
-            let event_index = create_index(&meili.client, &meili.config.event_index_name()).await?;
-            event::prepare_index(&event_index).await?;
-
-            let realm_index = create_index(&meili.client, &meili.config.realm_index_name()).await?;
-            realm::prepare_index(&realm_index).await?;
-
-            debug!("All Meili indexes exist and are ready");
-
-            Ok(())
-        })).await?;
+        if !self.client.is_healthy().await {
+            bail!("MeiliSearch instance is not healthy or not reachable");
+        }
 
         Ok(())
+    }
+
+    /// Makes sure all required indexes exist and have the right options set.
+    /// Also rebuilds the whole search index if it is necessary due to a schema
+    /// version mismatch.
+    pub(crate) async fn prepare_and_rebuild_if_necessary(
+        &self,
+        db: &mut ClientWrapper,
+    ) -> Result<()> {
+        writer::with_write_lock(db, self, |tx, meili| Box::pin(async move {
+            prepare_indexes(&meili).await.context("failed to prepare search indexes")?;
+            rebuild_if_necessary(&meili, tx).await
+        })).await
     }
 }
 
@@ -239,10 +219,91 @@ impl fmt::Debug for SearchId {
 
 // ===== Various functions ========================================================================
 
+/// Makes sure that all required indexes exist and have the correct settings.
+pub(crate) async fn prepare_indexes(meili: &MeiliWriter<'_>) -> Result<()> {
+    /// Creates a new index with the given `name` if it does not exist yet.
+    async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
+        debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");
+        let task = client.create_index(name, Some("id"))
+            .await?
+            .wait_for_completion(&client, None, None)
+            .await?;
+
+        let index = match task {
+            Task::Enqueued { .. } | Task::Processing { .. }
+                => unreachable!("waited for task to complete, but it is not"),
+            Task::Failed { content } => {
+                if content.error.error_code == ErrorCode::IndexAlreadyExists {
+                    debug!("Meili index '{name}' already exists");
+                    client.index(name)
+                } else {
+                    bail!("Failed to create Meili index '{}': {:#?}", name, content.error);
+                }
+            }
+            Task::Succeeded { .. } => {
+                debug!("Created Meili index '{name}'");
+                task.try_make_index(&client).unwrap()
+            }
+        };
+
+        Ok(index)
+    }
+
+
+    create_index(&meili.client, &meili.config.meta_index_name()).await?;
+
+    let event_index = create_index(&meili.client, &meili.config.event_index_name()).await?;
+    event::prepare_index(&event_index).await?;
+
+    let realm_index = create_index(&meili.client, &meili.config.realm_index_name()).await?;
+    realm::prepare_index(&realm_index).await?;
+
+    debug!("All Meili indexes exist and are ready");
+
+    Ok(())
+}
+
+/// Checks the current schema version of the search index and if it is
+/// incompatible, rebuilds the index.
+pub(crate) async fn rebuild_if_necessary(
+    meili: &MeiliWriter<'_>,
+    tx: &deadpool_postgres::Transaction<'_>,
+) -> Result<()> {
+    let state = IndexState::fetch(&meili.meta_index).await?;
+    if state.needs_rebuild() {
+        info!("Search index schema incompatible -> will rebuild search index\n\
+            Search index state: {state:?}\n\
+            Expected version: {VERSION}");
+
+        meili.meta_index.add_or_replace(&[meta::Meta::current_dirty()], None).await
+            .context("failed to update index version document (dirty)")?;
+
+        let tasks = rebuild(meili, tx).await?;
+        info!("Waiting for Meili to finish indexing");
+        for task in tasks {
+            util::wait_on_task(task, meili).await?;
+        }
+        info!("Completely rebuild search index");
+
+        meili.meta_index.add_or_replace(&[meta::Meta::current_clean()], None).await
+            .context("failed to update index version document (clean)")?;
+    } else {
+        info!("Search index schema is up to date (version: {VERSION}) -> no rebuild needed");
+
+        // Reindex is not required, but the version isn't stored explicitly. So
+        // we do that now.
+        if state == IndexState::NoVersionInfo {
+            meili.meta_index.add_or_replace(&[meta::Meta::current_clean()], None).await
+                .context("failed to update index version document (clean)")?;
+        }
+    }
+
+    Ok(())
+}
 
 /// Deletes all indexes (used by Tobira) including all their data! If any index
 /// does not exist, this function just does nothing.
-pub(crate) async fn clear(meili: Client) -> Result<()> {
+pub(crate) async fn clear(meili: &MeiliWriter<'_>) -> Result<()> {
     use meilisearch_sdk::errors::Error;
     let ignore_missing_index = |res: Result<Task, Error>| -> Result<(), Error> {
         match res {
@@ -252,53 +313,59 @@ pub(crate) async fn clear(meili: Client) -> Result<()> {
         }
     };
 
-    ignore_missing_index(meili.event_index.delete().await)?;
-    ignore_missing_index(meili.realm_index.delete().await)?;
+    ignore_missing_index(meili.meta_index.clone().delete().await)?;
+    ignore_missing_index(meili.event_index.clone().delete().await)?;
+    ignore_missing_index(meili.realm_index.clone().delete().await)?;
 
     info!("Deleted search indexes");
     Ok(())
 }
 
-/// Rebuilds all indexes by loading all data from the DB and adding it to the
-/// index. Old entries that are in the index, but not in the DB anymore, are
-/// not removed. Thus, to cleanly rebuild, clear all indexes before.
-pub(crate) async fn rebuild_index(meili: &Client, db: &mut DbConnection) -> Result<()> {
-    let before = Instant::now();
-    let tasks = writer::with_write_lock(db, meili, |tx, meili| Box::pin(async move {
-        let mut tasks = Vec::new();
+/// Loads all data from the DB and adding it to the index. Old entries that are
+/// in the index, but not in the DB anymore, are not removed. Thus, to cleanly
+/// rebuild, clear all indexes before.
+pub(crate) async fn index_all_data(
+    meili: &MeiliWriter<'_>,
+    tx: &deadpool_postgres::Transaction<'_>,
+) -> Result<Vec<Task>> {
+    let mut tasks = Vec::new();
 
-        macro_rules! rebuild_index {
-            ($plural:literal, $ty:ty, $index:expr) => {
-                let items = <$ty>::load_all(&**tx).await?;
-                debug!("Loaded {} {} from DB", items.len(), $plural);
+    macro_rules! rebuild_index {
+        ($plural:literal, $ty:ty, $index:expr) => {
+            let items = <$ty>::load_all(&**tx).await?;
+            debug!("Loaded {} {} from DB", items.len(), $plural);
 
-                if items.is_empty() {
-                    debug!("No {} in the DB -> Not sending anything to Meili", $plural);
-                } else {
-                    let task = $index.add_documents(&items, None).await?;
-                    debug!("Sent {} {} to Meili for indexing", items.len(), $plural);
-                    tasks.push(task);
-                }
+            if items.is_empty() {
+                debug!("No {} in the DB -> Not sending anything to Meili", $plural);
+            } else {
+                let task = $index.add_documents(&items, None).await?;
+                debug!("Sent {} {} to Meili for indexing", items.len(), $plural);
+                tasks.push(task);
             }
         }
-
-        rebuild_index!("events", Event, meili.event_index);
-        rebuild_index!("realms", Realm, meili.realm_index);
-
-        Ok(tasks)
-    })).await?;
-
-    info!("Sent all data to Meili in {:.1?}", before.elapsed());
-
-
-    info!("Waiting for Meili to complete indexing...\n\
-        (note: you may ctrl+c this command now -- this won't stop indexing)");
-    let before = Instant::now();
-    for task in tasks {
-        util::wait_on_task(task, meili).await?;
     }
 
-    info!("Meili finished indexing in {:.1?}", before.elapsed());
+    let before = Instant::now();
+    rebuild_index!("events", Event, meili.event_index);
+    rebuild_index!("realms", Realm, meili.realm_index);
+    info!("Sent all data to Meili in {:.1?}", before.elapsed());
 
-    Ok(())
+    // We can clear the search index queue as we just sent all items to Meili.
+    // This is all in one DB transaction and we submitted all data to Meili.
+    tx.execute("delete from search_index_queue", &[]).await
+        .context("failed to clear search index queue")?;
+    info!("Cleared search index queue");
+
+    Ok(tasks)
+}
+
+/// Clears and then rebuilds all indexes. It's `clear` + `prepare_indexes` +
+/// `index_all_data`.
+pub(crate) async fn rebuild(
+    meili: &MeiliWriter<'_>,
+    tx: &deadpool_postgres::Transaction<'_>,
+) -> Result<Vec<Task>> {
+    clear(meili).await.context("failed to clear index")?;
+    prepare_indexes(meili).await.context("failed to prepare search indexes")?;
+    index_all_data(meili, tx).await.context("failed to index all data")
 }

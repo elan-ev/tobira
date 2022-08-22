@@ -1,11 +1,9 @@
 use std::{time::Duration, future::Future, pin::Pin};
 
+use deadpool_postgres::ClientWrapper;
 use tokio_postgres::IsolationLevel;
 
-use crate::{
-    db::DbConnection,
-    prelude::*,
-};
+use crate::prelude::*;
 
 use super::Client;
 
@@ -44,7 +42,7 @@ impl std::ops::Deref for MeiliWriter<'_> {
 /// references a reference-type argument is hard to impossible to implement
 /// right now. It's sad. After testing quite a few things, I decided to simply go
 /// with a `dyn Future`.
-pub(crate) async fn with_write_lock<F, T>(db: &mut DbConnection, meili: &Client, f: F) -> Result<T>
+pub(crate) async fn with_write_lock<F, T>(db: &mut ClientWrapper, meili: &Client, f: F) -> Result<T>
 where
     F: for<'a> FnOnce(&'a deadpool_postgres::Transaction<'a>, MeiliWriter<'a>)
         -> Pin<Box<dyn 'a + Future<Output = Result<T>>>>,
