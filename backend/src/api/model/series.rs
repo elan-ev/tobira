@@ -92,7 +92,7 @@ impl Series {
         let selection = Self::select();
         let query = format!(
             "insert into series (opencast_id, title, state, updated) \
-                values ($1, $2, 'waiting', '-infinity' \
+                values ($1, $2, 'waiting', '-infinity') \
                 returning {selection}",
         );
         context.db(context.require_moderator()?)
