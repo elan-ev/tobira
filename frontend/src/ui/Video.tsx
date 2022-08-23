@@ -59,10 +59,14 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             <div css={{
                 display: "flex",
                 height: "100%",
-                backgroundColor: "var(--grey92)",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 40,
+                background: "linear-gradient(135deg, #33333380 50%, transparent 0),"
+                    + "linear-gradient(-135deg, #33333380 50%, transparent 0)",
+                backgroundSize: "17px 17px",
+                color: "var(--grey86)",
+                backgroundColor: "#292929",
             }}>{icon}</div>
         );
     }
