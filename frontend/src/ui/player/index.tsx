@@ -1,9 +1,11 @@
 import React, { Suspense, useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { FiClock } from "react-icons/fi";
+import { HiOutlineStatusOffline } from "react-icons/hi";
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 
 import { MAIN_PADDING } from "../../layout/Root";
+import { match } from "../../util";
 import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
 import { RelativeDate } from "../time";
@@ -50,17 +52,32 @@ export type Track = {
  */
 export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange, className }) => {
     const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
-    const { startTime, hasStarted } = getEventTimeInfo(event);
-    const pendingLiveEvent = event.isLive && startTime && !hasStarted;
+    const { startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
+
+    // When the livestream starts or ends, rerender the parent. We add some
+    // extra time (500ms) to be sure the stream is actually already running by
+    // that time.
+    useEffect(() => {
+        const handles: ReturnType<typeof setTimeout>[] = [];
+        if (event.isLive && hasStarted === false) {
+            handles.push(setTimeout(onEventStateChange, startTime.getTime() - Date.now() + 500));
+        }
+        if (event.isLive && hasEnded === false) {
+            handles.push(setTimeout(onEventStateChange, endTime.getTime() - Date.now() + 500));
+        }
+        return () => handles.forEach(clearTimeout);
+    });
 
     return (
         <PlayerContainer {...{ className, aspectRatio }}>
             <Suspense fallback={<PlayerFallback image={event.syncedData.thumbnail} />}>
-                {pendingLiveEvent
-                    ? <LiveEventPlaceholder
-                        tracks={event.syncedData.tracks}
-                        {...{ startTime, onEventStateChange }}
-                    />
+                {event.isLive && (hasStarted === false || hasEnded === true)
+                    ? <LiveEventPlaceholder {...{
+                        aspectRatio,
+                        ...hasStarted === false
+                            ? { mode: "pending", startTime }
+                            : { mode: "ended" },
+                    }} />
                     : <LoadPaellaPlayer
                         title={event.title}
                         duration={event.syncedData.duration}
@@ -168,28 +185,18 @@ export const isHlsTrack = (t: Track) =>
 
 
 type LiveEventPlaceholderProps = {
-    tracks: readonly Track[];
-    startTime: Date;
-    onEventStateChange: () => void;
-};
+    aspectRatio: [number, number];
+} & (
+    { mode: "pending"; startTime: Date }
+    | { mode: "ended" }
+);
 
-const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = ({
-    tracks,
-    startTime,
-    onEventStateChange,
-}) => {
+const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
     const { t } = useTranslation();
-
-    // When the livestream starts, rerender the parent. We add some extra time
-    // to be sure the stream is actually already running by that time.
-    useEffect(() => {
-        const handle = setTimeout(onEventStateChange, (startTime.getTime() - Date.now()) + 500);
-        return () => clearTimeout(handle);
-    });
 
     return (
         <PlayerContainer
-            aspectRatio={getPlayerAspectRatio(tracks as Track[])}
+            aspectRatio={props.aspectRatio}
             css={{
                 backgroundColor: "var(--grey20)",
                 color: "white",
@@ -206,19 +213,36 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = ({
                 },
             }}
         >
-            <div css={{ textAlign: "center" }}>
-                <FiClock css={{ fontSize: 40, margin: "16px 0", strokeWidth: 1.5 }} />
-                <div>{t("video.stream-not-started-yet")}</div>
-            </div>
             <div css={{
-                backgroundColor: "black",
-                borderRadius: 4,
-                padding: "8px 16px",
+                textAlign: "center",
+                "& > svg": {
+                    fontSize: 40,
+                    margin: "16px 0",
+                    strokeWidth: 1.5,
+                },
             }}>
-                <Trans i18nKey={"video.starts-in"}>
-                    Starts <RelativeDate date={startTime} />
-                </Trans>
+                {match(props.mode, {
+                    "pending": () => <>
+                        <FiClock />
+                        <div>{t("video.stream-not-started-yet")}</div>
+                    </>,
+                    "ended": () => <>
+                        <HiOutlineStatusOffline />
+                        <div>{t("video.stream-ended")}</div>
+                    </>,
+                })}
             </div>
+            {props.mode === "pending" && (
+                <div css={{
+                    backgroundColor: "black",
+                    borderRadius: 4,
+                    padding: "8px 16px",
+                }}>
+                    <Trans i18nKey={"video.starts-in"}>
+                        Starts <RelativeDate date={props.startTime} />
+                    </Trans>
+                </div>
+            )}
         </PlayerContainer>
     );
 };
