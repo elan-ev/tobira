@@ -1,25 +1,43 @@
-import React, { Suspense } from "react";
-import { useTranslation } from "react-i18next";
+import React, { Suspense, useEffect } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import { FiClock } from "react-icons/fi";
+import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 
 import { MAIN_PADDING } from "../../layout/Root";
+import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
+import { RelativeDate } from "../time";
 import PaellaPlayer from "./Paella";
 
 
 export type PlayerProps = {
-    coverImage: string | null;
-    title: string;
-    duration: number;
-    tracks: Track[];
+    event: PlayerEvent;
+
+    /** A function to execute when an event goes from pending to live or from live to ended. */
+    onEventStateChange: () => void;
+
     className?: string;
+};
+
+export type PlayerEvent = {
+    title: string;
+    created: string;
     isLive: boolean;
+    syncedData: {
+        updated: string;
+        startTime: string | null;
+        endTime: string | null;
+        duration: number;
+        tracks: readonly Track[];
+        thumbnail: string | null;
+    };
 };
 
 export type Track = {
     uri: string;
     flavor: string;
     mimetype: string | null;
-    resolution: number[] | null;
+    resolution: readonly number[] | null;
 };
 
 /**
@@ -30,19 +48,25 @@ export type Track = {
  * we might have multiple players in the future again. That's the reason for
  * leaving a bit of the "dispatch" logic in place.
  */
-export const Player: React.FC<PlayerProps> = ({
-    className,
-    tracks,
-    coverImage,
-    title,
-    duration,
-    isLive,
-}) => {
-    const aspectRatio = getPlayerAspectRatio(tracks);
+export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange, className }) => {
+    const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
+    const { startTime, hasStarted } = getEventTimeInfo(event);
+    const pendingLiveEvent = event.isLive && startTime && !hasStarted;
+
     return (
         <PlayerContainer {...{ className, aspectRatio }}>
-            <Suspense fallback={<PlayerFallback image={coverImage} />}>
-                <LoadPaellaPlayer {...{ duration, title, tracks, isLive }} />
+            <Suspense fallback={<PlayerFallback image={event.syncedData.thumbnail} />}>
+                {pendingLiveEvent
+                    ? <LiveEventPlaceholder
+                        tracks={event.syncedData.tracks}
+                        {...{ startTime, onEventStateChange }}
+                    />
+                    : <LoadPaellaPlayer
+                        title={event.title}
+                        duration={event.syncedData.duration}
+                        isLive={event.isLive}
+                        tracks={event.syncedData.tracks}
+                    />}
             </Suspense>
         </PlayerContainer>
     );
@@ -53,7 +77,7 @@ export const Player: React.FC<PlayerProps> = ({
  * with multiple streams, we just use 16:9 because it's unclear what else we
  * should use with multi stream video.
  */
-export const getPlayerAspectRatio = (tracks: Track[]): [number, number] => {
+export const getPlayerAspectRatio = (tracks: readonly Track[]): [number, number] => {
     const flavors = new Set(tracks.map(t => t.flavor));
     const default_: [number, number] = [16, 9];
     return flavors.size > 1
@@ -141,3 +165,60 @@ const PlayerFallback: React.FC<{ image: string | null }> = ({ image }) => {
 
 export const isHlsTrack = (t: Track) =>
     t.mimetype === "application/x-mpegURL" || t.uri.endsWith(".m3u8");
+
+
+type LiveEventPlaceholderProps = {
+    tracks: readonly Track[];
+    startTime: Date;
+    onEventStateChange: () => void;
+};
+
+const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = ({
+    tracks,
+    startTime,
+    onEventStateChange,
+}) => {
+    const { t } = useTranslation();
+
+    // When the livestream starts, rerender the parent. We add some extra time
+    // to be sure the stream is actually already running by that time.
+    useEffect(() => {
+        const handle = setTimeout(onEventStateChange, (startTime.getTime() - Date.now()) + 500);
+        return () => clearTimeout(handle);
+    });
+
+    return (
+        <PlayerContainer
+            aspectRatio={getPlayerAspectRatio(tracks as Track[])}
+            css={{
+                backgroundColor: "var(--grey20)",
+                color: "white",
+                padding: 8,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5%",
+                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    "& > *": {
+                        transform: "scale(0.8)",
+                    },
+                },
+            }}
+        >
+            <div css={{ textAlign: "center" }}>
+                <FiClock css={{ fontSize: 40, margin: "16px 0", strokeWidth: 1.5 }} />
+                <div>{t("video.stream-not-started-yet")}</div>
+            </div>
+            <div css={{
+                backgroundColor: "black",
+                borderRadius: 4,
+                padding: "8px 16px",
+            }}>
+                <Trans i18nKey={"video.starts-in"}>
+                    Starts <RelativeDate date={startTime} />
+                </Trans>
+            </div>
+        </PlayerContainer>
+    );
+};

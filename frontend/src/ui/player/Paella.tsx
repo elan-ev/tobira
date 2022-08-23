@@ -13,7 +13,7 @@ type VideoTrack = Track & { resolution: NonNullable<Track["resolution"]> };
 type PaellaPlayerProps = {
     title: string;
     duration: number;
-    tracks: Track[];
+    tracks: readonly Track[];
     isLive: boolean;
 };
 

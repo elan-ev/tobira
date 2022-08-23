@@ -1,11 +1,12 @@
 import { graphql, useFragment } from "react-relay";
 
-import { Track, Player } from "../player";
+import { Player } from "../player";
 import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
 import { unreachable } from "../../util/err";
+import { isSynced, useForceRerender } from "../../util";
 
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 
 export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     const { t } = useTranslation();
+    const rerender = useForceRerender();
     const { event, showTitle } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
@@ -22,8 +24,12 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
                 ... on AuthorizedEvent {
                     title
                     isLive
+                    created
                     syncedData {
                         duration
+                        updated
+                        startTime
+                        endTime
                         thumbnail
                         tracks { uri flavor mimetype resolution }
                     }
@@ -46,16 +52,8 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
 
     return <>
         {showTitle && <Title title={event.title} />}
-        {event.syncedData
-            ? <Player
-                {...event}
-                duration={event.syncedData.duration}
-                // Relay returns `readonly` objects ...
-                tracks={event.syncedData.tracks as Track[]}
-                isLive={event.isLive}
-                coverImage={event.syncedData.thumbnail}
-                css={{ width: 800 }}
-            />
+        {isSynced(event)
+            ? <Player event={event} css={{ width: 800 }} onEventStateChange={rerender} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
     </>;
 };
