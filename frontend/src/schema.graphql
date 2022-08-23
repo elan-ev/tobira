@@ -467,6 +467,7 @@ input NewSeriesBlock {
 type User {
   "The username, a unique string identifying the user."
   username: String!
+  roles: [String!]!
   "The name of the user intended to be read by humans."
   displayName: String!
   "`True` if the user has the permission to upload videos."

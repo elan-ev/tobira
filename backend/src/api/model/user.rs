@@ -17,6 +17,10 @@ impl User {
         &self.username
     }
 
+    fn roles(&self) -> Vec<&str> {
+        self.roles.iter().map(AsRef::as_ref).collect()
+    }
+
     /// The name of the user intended to be read by humans.
     fn display_name(&self) -> &str {
         &self.display_name
