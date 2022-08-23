@@ -11,11 +11,13 @@ type EventWithTimeInfo = {
 type TimeInfo = {
     created: Date;
     updated: Date;
-    startTime: Date | null;
-    endTime: Date | null;
-    hasEnded: boolean;
-    hasStarted: boolean;
-};
+} & (
+    { hasStarted: boolean; startTime: Date }
+    | { hasStarted: null; startTime: null }
+) & (
+    { hasEnded: boolean; endTime: Date }
+    | { hasEnded: null; endTime: null }
+);
 
 /** Converts the string dates into real `Date` objects and adds useful time information. */
 export const getEventTimeInfo = (event: EventWithTimeInfo): TimeInfo => {
@@ -31,9 +33,11 @@ export const getEventTimeInfo = (event: EventWithTimeInfo): TimeInfo => {
     return {
         created,
         updated,
-        startTime,
-        endTime,
-        hasStarted: startTime != null && startTime < new Date(),
-        hasEnded: endTime != null && endTime < new Date(),
+        ...startTime == null
+            ? { startTime, hasStarted: null }
+            : { startTime, hasStarted: startTime < new Date() },
+        ...endTime == null
+            ? { endTime, hasEnded: null }
+            : { endTime, hasEnded: endTime < new Date() },
     };
 };
