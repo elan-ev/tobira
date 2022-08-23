@@ -15,6 +15,8 @@ import {
 import { isPastLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
+import { FiPlay } from "react-icons/fi";
+import { keyframes } from "@emotion/react";
 
 
 type SharedProps = {
@@ -232,15 +234,32 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
             color: "black",
         }}>
             <h3 css={{
+                display: "flex",
+                alignItems: "center",
                 fontSize: "inherit",
-                display: "-webkit-box",
-                WebkitBoxOrient: "vertical",
-                textOverflow: "ellipsis",
-                WebkitLineClamp: 2,
-                overflow: "hidden",
-                lineHeight: 1.3,
+                gap: 4,
                 marginBottom: 4,
-            }}>{event.title}</h3>
+            }}>
+                {active && <FiPlay css={{
+                    flex: "0 0 auto",
+                    strokeWidth: 3,
+                    color: "var(--accent-color)",
+                    animation: `${keyframes({
+                        "0%": { opacity: 1 },
+                        "50%": { opacity: 0.4 },
+                        "100%": { opacity: 1 },
+                    })} 2s infinite`,
+                }}/>}
+                <div css={{
+                    fontSize: "inherit",
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    textOverflow: "ellipsis",
+                    WebkitLineClamp: 2,
+                    overflow: "hidden",
+                    lineHeight: 1.3,
+                }}>{event.title}</div>
+            </h3>
             <div css={{
                 color: "var(--grey40)",
                 fontSize: 14,
@@ -269,14 +288,17 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
     const containerStyle = {
         position: "relative",
         display: "block",
-        margin: "8px 12px",
-        marginBottom: 32,
+        margin: "8px 6px 28px 6px",
+        padding: 6,
         width: 16 * 15,
-        borderRadius: 8,
+        borderRadius: 12,
         "& a": { color: "black", textDecoration: "none" },
         [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
             width: "100%",
             maxWidth: 360,
+        },
+        ...active && {
+            backgroundColor: "var(--grey86)",
         },
         ...!active && {
             "& > div:first-child": {

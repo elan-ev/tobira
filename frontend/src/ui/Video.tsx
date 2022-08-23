@@ -1,7 +1,6 @@
-import { keyframes } from "@emotion/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiAlertTriangle, FiFilm, FiPlay, FiRadio, FiVolume2 } from "react-icons/fi";
+import { FiAlertTriangle, FiFilm, FiRadio, FiVolume2 } from "react-icons/fi";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
@@ -133,33 +132,17 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     );
 };
 
-const ActiveIndicator = () => {
-    const animation = keyframes({
-        "0%": { color: "black" },
-        "50%": { color: "var(--accent-color-darker)" },
-        "100%": { color: "black" },
-    });
-
-    return (
-        <div css={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(255, 255, 255, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 64,
-            "& > svg": {
-                animation: `${animation} 3s infinite`,
-            },
-        }}>
-            <FiPlay />
-        </div>
-    );
-};
+const ActiveIndicator = () => (
+    <div css={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(255, 255, 255, 0.3)",
+        borderRadius: 8,
+    }} />
+);
 
 
 /**
