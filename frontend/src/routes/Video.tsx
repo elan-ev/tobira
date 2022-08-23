@@ -1,14 +1,14 @@
-import React, { ReactNode, useEffect, useRef } from "react";
+import React, { ReactNode, useRef } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { HiOutlineUserCircle } from "react-icons/hi";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { getPlayerAspectRatio, Player, PlayerContainer, Track } from "../ui/player";
+import { Player } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
@@ -26,8 +26,6 @@ import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
 import { Modal, ModalHandle } from "../ui/Modal";
 import { CopyableInput } from "../ui/Input";
-import { FiClock } from "react-icons/fi";
-import { RelativeDate } from "../ui/time";
 import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
 import {
     VideoPageEventData$data,
@@ -41,6 +39,7 @@ import {
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { OperationType } from "relay-runtime";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
+import { getEventTimeInfo } from "../util/video";
 
 
 // ===========================================================================================
@@ -254,22 +253,12 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
 
-    const { startTime, hasStarted } = getEventTimeInfo(event);
-    const pendingLiveEvent = event.isLive && startTime && !hasStarted;
+
 
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
-        {pendingLiveEvent
-            ? <PendingEventPlaceholder onEventStart={rerender} {...{ event, startTime }} />
-            : <Player
-                tracks={event.syncedData.tracks as Track[]}
-                title={event.title}
-                isLive={event.isLive}
-                duration={event.syncedData.duration}
-                coverImage={event.syncedData.thumbnail}
-                css={{ margin: "0 auto" }}
-            />}
+        <Player event={event} css={{ margin: "0 auto" }} onEventStateChange={rerender} />
         <Metadata id={event.id} event={event} />
 
         <div css={{ height: 80 }} />
@@ -283,61 +272,6 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     </>;
 };
 
-type PendingEventPlaceholderProps = {
-    event: SyncedEvent;
-    startTime: Date;
-    onEventStart: () => void;
-};
-
-const PendingEventPlaceholder: React.FC<PendingEventPlaceholderProps> = ({
-    event,
-    startTime,
-    onEventStart,
-}) => {
-    const { t } = useTranslation();
-
-    // When the livestream starts, rerender the parent. We add some extra time
-    // to be sure the stream is actually already running by that time.
-    useEffect(() => {
-        const handle = setTimeout(onEventStart, (startTime.getTime() - Date.now()) + 500);
-        return () => clearTimeout(handle);
-    });
-
-    return (
-        <PlayerContainer
-            aspectRatio={getPlayerAspectRatio(event.syncedData.tracks as Track[])}
-            css={{
-                backgroundColor: "var(--grey20)",
-                color: "white",
-                padding: 8,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "5%",
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    "& > *": {
-                        transform: "scale(0.8)",
-                    },
-                },
-            }}
-        >
-            <div css={{ textAlign: "center" }}>
-                <FiClock css={{ fontSize: 40, margin: "16px 0", strokeWidth: 1.5 }} />
-                <div>{t("video.stream-not-started-yet")}</div>
-            </div>
-            <div css={{
-                backgroundColor: "black",
-                borderRadius: 4,
-                padding: "8px 16px",
-            }}>
-                <Trans i18nKey={"video.starts-in"}>
-                    Starts <RelativeDate date={startTime} />
-                </Trans>
-            </div>
-        </PlayerContainer>
-    );
-};
 
 type Event = Extract<NonNullable<VideoPageEventData$data>, { __typename: "AuthorizedEvent" }>;
 type SyncedEvent = SyncedOpencastEntity<Event>;
@@ -508,34 +442,6 @@ const Description: React.FC<DescriptionProps> = ({ description }) => {
     );
 };
 
-type TimeInfo = {
-    created: Date;
-    updated: Date;
-    startTime: Date | null;
-    endTime: Date | null;
-    hasEnded: boolean;
-    hasStarted: boolean;
-};
-
-const getEventTimeInfo = (event: SyncedEvent): TimeInfo => {
-    const created = new Date(event.created);
-    const updated = new Date(event.syncedData.updated);
-    const startTime = event.syncedData.startTime == null
-        ? null
-        : new Date(event.syncedData.startTime);
-    const endTime = event.syncedData.endTime == null
-        ? null
-        : new Date(event.syncedData.endTime);
-
-    return {
-        created,
-        updated,
-        startTime,
-        endTime,
-        hasStarted: startTime != null && startTime < new Date(),
-        hasEnded: endTime != null && endTime < new Date(),
-    };
-};
 
 type VideoDateProps = {
     event: SyncedEvent;
@@ -548,12 +454,12 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
 
     const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
     let inner;
-    if (event.isLive && endTime && hasEnded) {
+    if (event.isLive && hasEnded) {
         inner = <>
             {t("video.ended") + ": "}
             {endTime.toLocaleString(i18n.language, fullOptions)}
         </>;
-    } else if (event.isLive && startTime && !hasStarted) {
+    } else if (event.isLive && hasStarted === false) {
         inner = <>
             {t("video.upcoming") + ": "}
             {startTime.toLocaleString(i18n.language, fullOptions)}

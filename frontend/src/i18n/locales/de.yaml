@@ -126,6 +126,7 @@ video:
   ended: Beendet
   license: Lizenz
   source: Quelle
+  stream-ended: Dieser Stream ist beendet.
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
   starts-in: 'Startet <1></1>'
   embed:
