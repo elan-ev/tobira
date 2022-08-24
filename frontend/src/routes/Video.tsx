@@ -39,7 +39,7 @@ import {
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { OperationType } from "relay-runtime";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
-import { getEventTimeInfo } from "../util/video";
+import { Description, getEventTimeInfo } from "../util/video";
 
 
 // ===========================================================================================
@@ -308,7 +308,10 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
         }}>
             <div css={{ maxWidth: 700 }}>
                 <Creators creators={event.creators} />
-                <Description description={event.description} />
+                <Description
+                    text={event.description}
+                    css={{ color: "var(--grey20)", fontSize: 14 }}
+                />
             </div>
             <div css={{ paddingTop: 8 }}>
                 <MetadataTable event={event} />
@@ -403,42 +406,7 @@ const Creators: React.FC<CreatorsProps> = ({ creators }) => (
         </div>
 );
 
-type DescriptionProps = {
-    description: string | null;
-};
 
-const Description: React.FC<DescriptionProps> = ({ description }) => {
-    if (description === null) {
-        return null;
-    }
-
-    // We ignore all leading or trailing newlines and then split the whole
-    // description by empty lines (two or more consecutive newlines). That's
-    // the typical "make paragraphs from text" algorithm also used by Markdown.
-    // However, we capture those newlines to be able to output any extra
-    // (in addition to two) newlines. If a user typed many newlines in their
-    // description, they probably want to have more space there. The newlines
-    // between and within the paragraphs are then displayed via `white-space:
-    // pre-line` below.
-    const paragraphs = description.replace(/^\n*|\n*$/g, "").split(/(\n{2,})/);
-
-    // TODO: auto link URL-like things?
-    return (
-        <div css={{
-            color: "var(--grey20)",
-            fontSize: 14,
-            lineHeight: "20px",
-            whiteSpace: "pre-line",
-            "& > p:not(:first-child)": {
-                marginTop: 8,
-            },
-        }}>
-            {paragraphs.map((s, i) => i % 2 === 0
-                ? <p key={i}>{s}</p>
-                : s.slice(2))}
-        </div>
-    );
-};
 
 
 type VideoDateProps = {
