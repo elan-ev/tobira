@@ -2,8 +2,9 @@ import React, { ReactNode } from "react";
 
 
 export const Heading: React.FC<{ children: ReactNode }> = ({ children }) => <h3 css={{
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 12,
+    marginBottom: 8,
+    fontSize: 18,
 }}>
     {children}
 </h3>;

@@ -149,7 +149,7 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
     const { formState: { isDirty } } = useFormContext();
 
     return <div css={{
-        marginTop: 8,
+        marginTop: 24,
         display: "flex",
         justifyContent: "space-between",
     }}>
