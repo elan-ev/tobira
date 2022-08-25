@@ -790,7 +790,7 @@ const uploadTracks = async (
                     resolve(xhr.responseText);
                 }
             };
-            xhr.onerror = () => reject(new OcNetworkError()),
+            xhr.onerror = () => reject(new OcNetworkError());
             xhr.upload.onprogress = e => {
                 const uploadedBytes = e.loaded + sizeFinishedTracks;
                 onProgress(uploadedBytes / totalBytes);

@@ -8,6 +8,10 @@ const noUnusedVarsOptions = {
     caughtErrorsIgnorePattern: "^_",
     ignoreRestSiblings: true,
 };
+const noUnusedExpressionsOptions = {
+    allowTernary: true,
+    enforceForJSX: true,
+};
 const braceStyle = ["warn", "1tbs", { allowSingleLine: true }];
 const quoteOptions = ["double", { avoidEscape: true }];
 
@@ -64,6 +68,7 @@ module.exports = {
         "no-multiple-empty-lines": ["warn", { max: 5 }],
         "no-tabs": "warn",
         "no-unused-vars": ["warn", noUnusedVarsOptions],
+        "no-unused-expressions": ["warn", noUnusedExpressionsOptions],
         "object-curly-spacing": ["warn", "always"],
         "object-property-newline": ["warn", {
             allowAllPropertiesOnSameLine: true,
@@ -115,10 +120,12 @@ module.exports = {
             "indent": "off",
             "lines-between-class-members": "off",
             "no-unused-vars": "off",
+            "no-unused-expressions": "off",
             "semi": "off",
             "no-extra-semi": "off",
 
             "@typescript-eslint/no-unused-vars": ["warn", noUnusedVarsOptions],
+            "@typescript-eslint/no-unused-expressions": ["warn", noUnusedExpressionsOptions],
 
             // Make style issues warnings
             "react/jsx-curly-spacing": ["warn", { children: true }],

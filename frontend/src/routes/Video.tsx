@@ -244,12 +244,10 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
     }
-    event;
 
     if (!isSynced(event)) {
         return <WaitingPage type="video" />;
     }
-    event;
 
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
