@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { HiSortAscending, HiSortDescending } from "react-icons/hi";
 import { graphql, VariablesOf } from "react-relay";
 
 import { ManageNav } from "..";
@@ -249,8 +250,10 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
         >
             {label}
             {vars.order.column === sortKey && match(vars.order.direction, {
-                "ASCENDING": () => <FiChevronUp />,
-                "DESCENDING": () => <FiChevronDown />,
+                // Seems like this is flipped right? But no, a short internal
+                // poll showed that this matches the intuition of almost everyone.
+                "ASCENDING": () => <HiSortDescending />,
+                "DESCENDING": () => <HiSortAscending />,
             }, () => null)}
         </Link>
     </th>
