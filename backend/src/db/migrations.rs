@@ -215,6 +215,42 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
     }
 }
 
+/// Implementation of subcommand with same name, see that for docs.
+pub(crate) async fn unsafe_overwrite_migrations(db: &mut Db) -> Result<()> {
+    let tx = db.build_transaction()
+        .isolation_level(IsolationLevel::Serializable)
+        .start()
+        .await?;
+
+    let (selection, mapping) = select!(id, name, script);
+    let query = format!("select {selection} from __db_migrations");
+    let rows = tx.query(&query, &[]).await.context("failed to fetch from __db_migrations")?;
+
+    for row in rows {
+        let id: i64 = mapping.id.of(&row);
+        let name: String = mapping.name.of(&row);
+        let script: String = mapping.script.of(&row);
+
+        if let Some(migration) = MIGRATIONS.get(&(id as u64)) {
+            if migration.script != script || migration.name != name {
+                tx.execute(
+                    "update __db_migrations set name = $1, script = $2 where id = $3",
+                    &[&migration.name, &migration.script, &id],
+                ).await?;
+                info!("Updated name & script for migration {} {}", id as u64, migration.name);
+            }
+        } else {
+            // We don't know about the migration, so we delete it.
+            tx.execute("delete from __db_migrations where id = $1", &[&id]).await?;
+            info!("Deleted migration {} ({}) as it's unknown", id as u64, name);
+        }
+    }
+    tx.commit().await?;
+
+    Ok(())
+}
+
+
 // Helper macro to include migrations in the `migations` folder and add them to
 // a map. The `assert!` and `panic!` in there should ideally be compile errors,
 // but panics are fine for now.

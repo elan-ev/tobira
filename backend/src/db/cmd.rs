@@ -9,7 +9,7 @@ use tokio_postgres::IsolationLevel;
 use secrecy::ExposeSecret;
 
 use crate::{prelude::*, util::Never, config::Config};
-use super::{Db, DbConfig, create_pool, query};
+use super::{Db, DbConfig, create_pool, query, migrations::unsafe_overwrite_migrations};
 
 
 #[derive(Debug, clap::Subcommand)]
@@ -34,6 +34,12 @@ pub(crate) enum DbCommand {
 
     /// Equivalent to `db clear` followed by `db migrate`.
     Reset,
+
+    /// Updates the migrations scripts in the table `__db_migrations` to match
+    /// the ones expected by this Tobira binary. Does not add new entries to
+    /// the table, but might delete unknown migrations. This is intended for
+    /// developers only, do not use if you don't know what you're doing!
+    UnsafeOverwriteMigrations,
 }
 
 /// Entry point for `db` commands.
@@ -56,6 +62,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &Config) -> Result<()> {
         }
         DbCommand::Script { script } => run_script(&db, &script).await?,
         DbCommand::Console => unreachable!("already handled above"),
+        DbCommand::UnsafeOverwriteMigrations => unsafe_overwrite_migrations(&mut db).await?,
     }
 
     Ok(())

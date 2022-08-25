@@ -97,6 +97,7 @@ union RealmNameSource = PlainRealmName | RealmNameFromBlock
 type SeriesBlock implements Block & RealmNameSourceBlock {
   series: Series
   showTitle: Boolean!
+  showMetadata: Boolean!
   order: VideoListOrder!
   id: ID!
   index: Int!
