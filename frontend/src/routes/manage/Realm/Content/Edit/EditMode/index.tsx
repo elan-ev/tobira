@@ -63,11 +63,11 @@ export const EditMode: React.FC<EditModeProps> = props => {
 };
 
 
-type EditModeFormProps<T> = {
+type EditModeFormProps<FormData, ApiData = FormData> = {
     save: (config: {
         variables: {
             id: string;
-            set: T;
+            set: ApiData;
         };
         onCompleted?: () => void;
         onError?: (error: Error) => void;
@@ -76,15 +76,16 @@ type EditModeFormProps<T> = {
         variables: {
             realm: string;
             index: number;
-            block: T;
+            block: ApiData;
         };
         onCompleted?: () => void;
         onError?: (error: Error) => void;
     }) => void;
+    map: (data: FormData) => ApiData;
 };
 
-export const EditModeForm = <T extends object, >(
-    { save, create, children }: React.PropsWithChildren<EditModeFormProps<T>>,
+export const EditModeForm = <FormData extends object, ApiData extends object>(
+    { save, create, children, map }: React.PropsWithChildren<EditModeFormProps<FormData, ApiData>>,
 ) => {
     const { realm: realmRef, index, onSave, onCancel, onCompleted, onError }
         = useContext(EditModeFormContext) ?? bug("missing context provider");
@@ -99,7 +100,7 @@ export const EditModeForm = <T extends object, >(
     const { id } = blocks[index];
 
 
-    const form = useFormContext<T>();
+    const form = useFormContext<FormData>();
 
     const onSubmit = form.handleSubmit(data => {
         onSave?.();
@@ -109,7 +110,7 @@ export const EditModeForm = <T extends object, >(
                 variables: {
                     realm,
                     index,
-                    block: data,
+                    block: map(data),
                 },
                 onCompleted,
                 onError,
@@ -118,7 +119,7 @@ export const EditModeForm = <T extends object, >(
             save({
                 variables: {
                     id,
-                    set: data,
+                    set: map(data),
                 },
                 onCompleted,
                 onError,
@@ -127,7 +128,7 @@ export const EditModeForm = <T extends object, >(
     });
 
 
-    return <FormProvider<T> {...form}>
+    return <FormProvider<FormData> {...form}>
         <form onSubmit={onSubmit}>
             {children}
             <EditModeButtons onCancel={onCancel} />

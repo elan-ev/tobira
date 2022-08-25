@@ -130,6 +130,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                         onClick={() => addBlock("Series", (_store, block) => {
                             block.setValue("NEW_TO_OLD", "order");
                             block.setValue(true, "showTitle");
+                            block.setValue(false, "showMetadata");
                         })}
                     />
                     <AddItem

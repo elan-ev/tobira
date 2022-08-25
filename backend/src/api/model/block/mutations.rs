@@ -71,9 +71,9 @@ impl BlockValue {
         context.db
             .execute(
                 "insert into blocks \
-                    (realm, index, type, series, videolist_order, show_title) \
-                    values ($1, $2, 'series', $3, $4, $5)",
-                &[&realm, &index, &series, &block.order, &block.show_title],
+                    (realm, index, type, series, videolist_order, show_title, show_metadata) \
+                    values ($1, $2, 'series', $3, $4, $5, $6)",
+                &[&realm, &index, &series, &block.order, &block.show_title, &block.show_metadata],
             )
             .await?;
 
@@ -284,13 +284,21 @@ impl BlockValue {
             "update blocks set \
                 series = coalesce($2, series), \
                 videolist_order = coalesce($3, videolist_order), \
-                show_title = coalesce($4, show_title) \
+                show_title = coalesce($4, show_title), \
+                show_metadata = coalesce($5, show_metadata) \
                 where id = $1 \
                 and type = 'series' \
                 returning {selection}",
         );
+        let args = [
+            (&Self::key_for(id)?) as &(dyn postgres_types::ToSql + Sync),
+            &series_id,
+            &set.order,
+            &set.show_title,
+            &set.show_metadata,
+        ];
         context.db(context.require_moderator()?)
-            .query_one(&query, &[&Self::key_for(id)?, &series_id, &set.order, &set.show_title])
+            .query_one(&query, &args)
             .await?
             .pipe(|row| Ok(Self::from_row_start(&row)))
     }
@@ -378,6 +386,7 @@ pub(crate) struct NewTextBlock {
 pub(crate) struct NewSeriesBlock {
     pub(crate) series: Id,
     pub(crate) show_title: bool,
+    pub(crate) show_metadata: bool,
     pub(crate) order: VideoListOrder,
 }
 
@@ -402,6 +411,7 @@ pub(crate) struct UpdateTextBlock {
 pub(crate) struct UpdateSeriesBlock {
     series: Option<Id>,
     show_title: Option<bool>,
+    show_metadata: Option<bool>,
     order: Option<VideoListOrder>,
 }
 

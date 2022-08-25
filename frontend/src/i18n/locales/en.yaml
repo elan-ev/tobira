@@ -340,6 +340,12 @@ manage:
           none: No series selected
           invalid: Please select a series
           waiting: Non-synchronized series
+        layout:
+          heading: Layout
+          videos-only: Videos only
+          title-and-videos: Title and videos
+          description-and-videos: Description and videos
+          everything: Title, description and videos
 
       event:
         event:

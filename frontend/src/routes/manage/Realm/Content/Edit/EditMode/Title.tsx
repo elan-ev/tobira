@@ -55,7 +55,7 @@ export const EditTitleBlock: React.FC<EditTitleBlockProps> = ({ block: blockRef 
     `);
 
 
-    return <EditModeForm create={create} save={save}>
+    return <EditModeForm create={create} save={save} map={(data: TitleFormData) => data}>
         <h3><Input
             placeholder={t("manage.realm.content.title.content")}
             defaultValue={content}
