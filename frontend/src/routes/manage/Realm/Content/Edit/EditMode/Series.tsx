@@ -139,7 +139,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             <option value="" hidden>
                 {t("manage.realm.content.series.series.none")}
             </option>
-            {series && series.syncedData && <option value={series.id} hidden>
+            {series && series.syncedData === null && <option value={series.id} hidden>
                 {t("manage.realm.content.series.series.waiting")}
             </option>}
             {allSeries
