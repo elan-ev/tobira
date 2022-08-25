@@ -107,24 +107,18 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
 
     return <EditModeForm create={create} save={save} map={mapFormData}>
         <Heading>{t("manage.realm.content.series.order.heading")}</Heading>
-        <label>
-            <input
-                type="radio"
+        <NiceRadio breakpoint={0}>
+            <NiceRadioOption
                 value="NEW_TO_OLD"
                 defaultChecked={order === "NEW_TO_OLD"}
                 {...form.register("order")}
-            />
-            {t("manage.realm.content.series.order.new-to-old")}
-        </label><br />
-        <label>
-            <input
-                type="radio"
+            >{t("manage.realm.content.series.order.new-to-old")}</NiceRadioOption>
+            <NiceRadioOption
                 value="OLD_TO_NEW"
                 defaultChecked={order === "OLD_TO_NEW"}
                 {...form.register("order")}
-            />
-            {t("manage.realm.content.series.order.old-to-new")}
-        </label>
+            >{t("manage.realm.content.series.order.old-to-new")}</NiceRadioOption>
+        </NiceRadio>
 
         <Heading>{t("manage.realm.content.series.series.heading")}</Heading>
         {"series" in errors && <div css={{ margin: "8px 0" }}>
