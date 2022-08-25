@@ -155,6 +155,7 @@ pub(crate) struct SeriesBlock {
     pub(crate) shared: SharedData,
     pub(crate) series: Option<Id>,
     pub(crate) show_title: bool,
+    pub(crate) show_metadata: bool,
     pub(crate) order: VideoListOrder,
 }
 
@@ -177,6 +178,10 @@ impl SeriesBlock {
 
     fn show_title(&self) -> bool {
         self.show_title
+    }
+
+    fn show_metadata(&self) -> bool {
+        self.show_metadata
     }
 
     fn order(&self) -> VideoListOrder {
@@ -250,6 +255,7 @@ impl_from_db!(
             videolist_order,
             video,
             show_title,
+            show_metadata,
             realm,
         },
     },
@@ -277,6 +283,7 @@ impl_from_db!(
                 series: row.series::<Option<Key>>().map(Id::series),
                 order: unwrap_type_dep(row.videolist_order(), "series", "videolist_order"),
                 show_title: unwrap_type_dep(row.show_title(), "series", "show_title"),
+                show_metadata: unwrap_type_dep(row.show_metadata(), "series", "show_metadata"),
             }.into(),
 
             BlockType::Video => VideoBlock {
