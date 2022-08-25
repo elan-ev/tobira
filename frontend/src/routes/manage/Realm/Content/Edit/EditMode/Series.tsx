@@ -106,20 +106,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
     const { formState: { errors } } = form;
 
     return <EditModeForm create={create} save={save} map={mapFormData}>
-        <Heading>{t("manage.realm.content.series.order.heading")}</Heading>
-        <NiceRadio breakpoint={0}>
-            <NiceRadioOption
-                value="NEW_TO_OLD"
-                defaultChecked={order === "NEW_TO_OLD"}
-                {...form.register("order")}
-            >{t("manage.realm.content.series.order.new-to-old")}</NiceRadioOption>
-            <NiceRadioOption
-                value="OLD_TO_NEW"
-                defaultChecked={order === "OLD_TO_NEW"}
-                {...form.register("order")}
-            >{t("manage.realm.content.series.order.old-to-new")}</NiceRadioOption>
-        </NiceRadio>
-
         <Heading>{t("manage.realm.content.series.series.heading")}</Heading>
         {"series" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
@@ -142,6 +128,21 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                     <option key={id} value={id}>{title}</option>
                 ))}
         </Select>
+
+        <Heading>{t("manage.realm.content.series.order.heading")}</Heading>
+        <NiceRadio breakpoint={0}>
+            <NiceRadioOption
+                value="NEW_TO_OLD"
+                defaultChecked={order === "NEW_TO_OLD"}
+                {...form.register("order")}
+            >{t("manage.realm.content.series.order.new-to-old")}</NiceRadioOption>
+            <NiceRadioOption
+                value="OLD_TO_NEW"
+                defaultChecked={order === "OLD_TO_NEW"}
+                {...form.register("order")}
+            >{t("manage.realm.content.series.order.old-to-new")}</NiceRadioOption>
+        </NiceRadio>
+
         <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
         <LayoutChooser {...{ currentLayout, form }} />
     </EditModeForm>;
