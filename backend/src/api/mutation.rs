@@ -202,7 +202,7 @@ impl Mutation {
             return Err(not_authorized!("only trusted external applications can use this mutation"));
         }
 
-        if new_realms[..new_realms.len() - 1].iter().any(|r| r.name.is_none()) {
+        if new_realms.iter().rev().skip(1).any(|r| r.name.is_none()) {
             return Err(invalid_input!("all new realms except the last need to have a name"));
         }
 
