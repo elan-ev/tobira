@@ -1,4 +1,4 @@
--- Adds a single `show_metadata` fields to blocks, used for series to also show
+-- Adds a single `show_metadata` field to blocks, used for series to also show
 -- their description. We also drop and re-add the appropriate constraint.
 alter table blocks
     add column show_metadata boolean default false,

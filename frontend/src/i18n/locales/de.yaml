@@ -355,7 +355,7 @@ manage:
           videos-only: Nur Videos
           title-and-videos: Titel und Videos
           description-and-videos: Bescheibung und Videos
-          everything: Title, Beschreibung und Videos
+          everything: Titel, Beschreibung und Videos
 
       event:
         event:

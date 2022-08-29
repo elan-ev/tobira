@@ -67,7 +67,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             order
         }
     `, blockRef);
-    const currentLayout: Layout = showTitle
+    const currentLayout = showTitle
         ? (showMetadata ? "everything" : "title-and-videos")
         : (showMetadata ? "description-and-videos" : "videos-only");
 
