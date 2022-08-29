@@ -202,6 +202,10 @@ impl Mutation {
             return Err(not_authorized!("only trusted external applications can use this mutation"));
         }
 
+        if new_realms[..new_realms.len() - 1].iter().any(|r| r.name.is_none()) {
+            return Err(invalid_input!("all new realms except the last need to have a name"));
+        }
+
         let parent_realm = Realm::load_by_path(parent_realm_path, context)
             .await?
             .ok_or_else(|| invalid_input!("`parentRealmPath` does not refer to a valid realm"))?;
@@ -219,7 +223,10 @@ impl Mutation {
             let mut target_realm = parent_realm;
             for RealmSpecifier { name, path_segment } in new_realms {
                 target_realm = Realm::add(NewRealm {
-                    name,
+                    // The `unwrap_or` case is only potentially used for the
+                    // last realm, which is renamed below anyway. See the check
+                    // above.
+                    name: name.unwrap_or_else(|| "temporary-dummy-name".into()),
                     path_segment,
                     parent: Id::realm(target_realm.key),
                 }, context).await?
