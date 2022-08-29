@@ -191,7 +191,7 @@ type TitleBlock implements Block {
 }
 
 input RealmSpecifier {
-  name: String!
+  name: String
   pathSegment: String!
 }
 

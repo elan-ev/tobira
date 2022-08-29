@@ -248,7 +248,7 @@ pub(crate) struct NewRealm {
 
 #[derive(Clone, juniper::GraphQLInputObject)]
 pub(crate) struct RealmSpecifier {
-    pub(crate) name: String,
+    pub(crate) name: Option<String>,
     pub(crate) path_segment: String,
 }
 
