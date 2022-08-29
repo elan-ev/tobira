@@ -17,6 +17,7 @@ import { RelativeDate } from "../time";
 import { Card } from "../Card";
 import { FiPlay } from "react-icons/fi";
 import { keyframes } from "@emotion/react";
+import { Description } from "../../util/video";
 
 
 type SharedProps = {
@@ -29,6 +30,7 @@ const blockFragment = graphql`
             ...SeriesBlockSeriesData
         }
         showTitle
+        showMetadata
         order
     }
 `;
@@ -115,6 +117,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     activeEventId,
     order = "NEW_TO_OLD",
     showTitle = true,
+    showMetadata,
 }) => {
     const { t } = useTranslation();
 
@@ -123,28 +126,34 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     const events = series.events.filter(event =>
         !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive));
 
-    if (!events.length) {
-        return <SeriesBlockContainer title={finalTitle}>
-            {t("series.no-events")}
-        </SeriesBlockContainer>;
-    }
-
     const sortedEvents = [...events];
-
     sortedEvents.sort(match(order, {
         "NEW_TO_OLD": () => compareNewToOld,
         "OLD_TO_NEW": () => compareOldToNew,
     }, unreachable));
 
-    return <SeriesBlockContainer title={finalTitle}>
-        {sortedEvents.map(
-            event => <GridTile
-                key={event.id}
-                active={event.id === activeEventId}
-                {...{ basePath, event }}
-            />,
-        )}
-    </SeriesBlockContainer>;
+    const eventsUI = events.length === 0
+        ? t("series.no-events")
+        : <VideoGrid>
+            {sortedEvents.map(
+                event => <GridTile
+                    key={event.id}
+                    active={event.id === activeEventId}
+                    {...{ basePath, event }}
+                />,
+            )}
+        </VideoGrid>;
+
+    return <>
+        {showMetadata && !showTitle && <Description text={series.syncedData.description} />}
+        <SeriesBlockContainer title={finalTitle}>
+            {showMetadata && showTitle && series.syncedData.description && <>
+                <Description text={series.syncedData.description} css={{ fontSize: 14 }} />
+                <hr css={{ margin: "20px 0" }} />
+            </>}
+            {eventsUI}
+        </SeriesBlockContainer>
+    </>;
 };
 
 type Event = SeriesBlockSeriesData$data["events"][0];
@@ -186,15 +195,19 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = ({ title, chil
                 lineHeight: 1.3,
             }}>{title}</h2>
         </div>}
-        <div css={{
-            display: "flex",
-            flexWrap: "wrap",
-            [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-                justifyContent: "center",
-            },
-        }}>
-            {children}
-        </div>
+        {children}
+    </div>
+);
+
+const VideoGrid: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <div css={{
+        display: "flex",
+        flexWrap: "wrap",
+        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+            justifyContent: "center",
+        },
+    }}>
+        {children}
     </div>
 );
 

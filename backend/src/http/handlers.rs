@@ -180,7 +180,28 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         jwt: ctx.jwt.clone(),
         search: ctx.search.clone(),
     });
-    let out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
+    let mut out = juniper_hyper::graphql(ctx.api_root.clone(), api_context.clone(), req).await;
+
+    if !out.status().is_success() {
+        error!("API request returning {}", out.status());
+        if log::log_enabled!(log::Level::Debug) {
+            // Unfortunately, there is no easy way to clone the response or the
+            // body, or to even just read the body. Juniper returns
+            // `Response<hyper::Body>`. The only way we can do it is unpack it
+            // completely (pretending the body might have to be downloaded) and
+            // then pack everything back together. From what I can tell, the
+            // `Body` is always created from a `String` so the `to_bytes`
+            // method should never error nor actually `await` anything.
+            //
+            // I opened an issue here: https://github.com/graphql-rust/juniper/issues/1096
+            let (parts, body) = out.into_parts();
+            let body = hyper::body::to_bytes(body).await
+                .expect("could not read API response body (this should never happen)");
+            debug!("Response body of failed API request: {}", String::from_utf8_lossy(&body));
+
+            out = hyper::Response::from_parts(parts, body.into());
+        }
+    }
 
     // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();

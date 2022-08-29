@@ -240,6 +240,7 @@ impl Mutation {
             NewSeriesBlock {
                 series: series.id(),
                 show_title: false,
+                show_metadata: true,
                 order: VideoListOrder::NewToOld,
             },
             context,

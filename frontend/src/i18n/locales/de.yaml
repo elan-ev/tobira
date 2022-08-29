@@ -350,6 +350,12 @@ manage:
           none: Keine Serie ausgewählt
           invalid: Bitte eine Serie auswählen
           waiting: Nicht synchronisierte Serie
+        layout:
+          heading: Layout
+          videos-only: Nur Videos
+          title-and-videos: Titel und Videos
+          description-and-videos: Bescheibung und Videos
+          everything: Titel, Beschreibung und Videos
 
       event:
         event:
