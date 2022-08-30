@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, graphql, useRelayEnvironment, commitLocalUpdate } from "react-relay";
+import type { RecordSourceProxy } from "relay-runtime";
 
 import type { BlockRealmData$key } from "./__generated__/BlockRealmData.graphql";
+import { useRouter } from "../../../../router";
 import { bug } from "../../../../util/err";
 import { Card } from "../../../../ui/Card";
 import { displayCommitError } from "../util";
@@ -65,12 +67,35 @@ export const EditBlock: React.FC<Props> = ({
 
 
     const relayEnv = useRelayEnvironment();
-    const setEditMode = (editMode: boolean) => {
-        commitLocalUpdate(relayEnv, store => {
-            const block = store.get(id) ?? bug("could not find block");
-            block.setValue(editMode, "editMode");
-        });
+    const setEditMode = (store: RecordSourceProxy, editMode: boolean) => {
+        const block = store.get(id) ?? bug("could not find block");
+        block.setValue(editMode, "editMode");
     };
+    const cleanUp = (store: RecordSourceProxy) => {
+        if (id.startsWith("cl")) {
+            const realm = store.get(realmId) ?? bug("could not find realm");
+
+            const blocks = [
+                ...realm.getLinkedRecords("blocks")
+                    ?? bug("realm does not have any blocks"),
+            ];
+
+            blocks.splice(index, 1);
+
+            realm.setLinkedRecords(blocks, "blocks");
+
+            store.delete("clNEWBLOCK");
+        } else {
+            setEditMode(store, false);
+        }
+    };
+
+    const router = useRouter();
+    useEffect(() => (
+        router.listenAtNav(() => commitLocalUpdate(relayEnv, store => (
+            cleanUp(store)
+        )))
+    ));
 
 
     return <>
@@ -92,32 +117,15 @@ export const EditBlock: React.FC<Props> = ({
                 ? <EditMode
                     {...{ realm, index }}
                     onCancel={() => {
-                        if (id.startsWith("cl")) {
-                            commitLocalUpdate(relayEnv, store => {
-                                const realm = store.get(realmId) ?? bug("could not find realm");
-
-                                const blocks = [
-                                    ...realm.getLinkedRecords("blocks")
-                                        ?? bug("realm does not have any blocks"),
-                                ];
-
-                                blocks.splice(index, 1);
-
-                                realm.setLinkedRecords(blocks, "blocks");
-
-                                store.delete("clNEWBLOCK");
-                            });
-                        } else {
-                            setEditMode(false);
-                            setError(null);
-                        }
+                        commitLocalUpdate(relayEnv, store => cleanUp(store));
+                        setError(null);
                     }}
                     onSave={onBlockCommit}
                     onError={error => onBlockError(error, "manage.realm.content.saving-failed")}
                     onCompleted={() => {
                         onBlockCompleted();
-                        setEditMode(false);
                         commitLocalUpdate(relayEnv, store => {
+                            setEditMode(store, false);
                             store.delete("clNEWBLOCK");
                         });
                     }}
@@ -128,7 +136,9 @@ export const EditBlock: React.FC<Props> = ({
                         onCompleted={onBlockCompleted}
                         onCommit={onBlockCommit}
                         onError={onBlockError}
-                        onEdit={() => setEditMode(true)}
+                        onEdit={() => commitLocalUpdate(relayEnv, store => (
+                            setEditMode(store, true)
+                        ))}
                     />
 
                     {/* TODO This counters the negative margin we employ to render title blocks. */}
