@@ -48,9 +48,15 @@ containers() {
         "run")
             (set -x; $docker_command up)
             ;;
+        "down")
+            (set -x; $docker_command down)
+            ;;
+        "rm")
+            (set -x; $docker_command down -v)
+            ;;
         *)
             >&2 echo "Incorrect argument for 'containers' command!"
-            >&2 echo "Allowed: 'start', 'stop', 'run'. Example: './x.sh containers start'"
+            >&2 echo "Allowed: 'start', 'stop', 'run', 'down', 'rm'. Example: './x.sh containers start'"
             exit 1
             ;;
     esac
