@@ -1,6 +1,7 @@
 import React, { ReactNode, useRef } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
+import { OperationType } from "relay-runtime";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -36,7 +37,6 @@ import {
     VideoPageDirectOpencastLinkQuery,
 } from "./__generated__/VideoPageDirectOpencastLinkQuery.graphql";
 import { UserData$key } from "../__generated__/UserData.graphql";
-import { OperationType } from "relay-runtime";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
 import { Description, getEventTimeInfo } from "../util/video";
 import { Creators } from "../ui/Video";

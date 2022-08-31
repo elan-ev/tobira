@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
+import { FiFolder } from "react-icons/fi";
+import { ReactNode } from "react";
 
 import { RootLoader } from "../layout/Root";
 import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
@@ -11,8 +13,6 @@ import { unreachable } from "../util/err";
 import { Description } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
-import { FiFolder } from "react-icons/fi";
-import { ReactNode } from "react";
 import { BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
 
