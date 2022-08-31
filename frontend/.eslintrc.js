@@ -132,7 +132,16 @@ module.exports = {
             "@typescript-eslint/brace-style": braceStyle,
             "@typescript-eslint/comma-spacing": "warn",
             "@typescript-eslint/explicit-member-accessibility": "warn",
-            "@typescript-eslint/indent": "warn",
+            "@typescript-eslint/indent": [
+                "warn",
+                4,
+                {
+                    "ignoredNodes": [
+                        "TSUnionType",
+                        "TSTypeAliasDeclaration *",
+                    ],
+                },
+            ],
             "@typescript-eslint/member-delimiter-style": "warn",
             "@typescript-eslint/naming-convention": ["warn", {
                 selector: "variable",
