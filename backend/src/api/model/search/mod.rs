@@ -240,7 +240,8 @@ pub(crate) async fn all_events(user_query: &str, context: &Context) -> ApiResult
     }
 
     let mut filter = String::new();
-    let event_query = event_search_query(user_query, &mut filter, context);
+    let mut event_query = event_search_query(user_query, &mut filter, context);
+    event_query.with_limit(50);
 
     let res = event_query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
