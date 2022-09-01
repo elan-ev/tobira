@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use meilisearch_sdk::{errors::{Error, ErrorCode}, indexes::Index, tasks::Task};
+use meilisearch_sdk::{errors::{Error, ErrorCode}, indexes::Index, tasks::Task, task_info::TaskInfo};
 
 use crate::{
     auth::ROLE_ADMIN,
@@ -49,7 +49,7 @@ pub(super) fn is_index_not_found(err: &Error) -> bool {
     matches!(err, Error::Meilisearch(e) if e.error_code == ErrorCode::IndexNotFound)
 }
 
-pub(super) async fn wait_on_task(task: Task, meili: &Client) -> Result<()> {
+pub(super) async fn wait_on_task(task: TaskInfo, meili: &Client) -> Result<()> {
     let task = task.wait_for_completion(
         &meili.client,
         Some(Duration::from_millis(200)),
@@ -59,7 +59,7 @@ pub(super) async fn wait_on_task(task: Task, meili: &Client) -> Result<()> {
     if let Task::Failed { content } = task {
         error!("Task failed: {:#?}", content);
         bail!(
-            "Indexing task for index '{}' failed: {}",
+            "Indexing task for index '{:?}' failed: {}",
             content.task.index_uid,
             content.error.error_message,
         );

@@ -5,7 +5,7 @@ use meilisearch_sdk::{
     client::Client as MeiliClient,
     indexes::Index,
     tasks::Task,
-    errors::ErrorCode,
+    errors::ErrorCode, task_info::TaskInfo,
 };
 use postgres_types::{FromSql, ToSql};
 use secrecy::{Secret, ExposeSecret};
@@ -305,7 +305,7 @@ pub(crate) async fn rebuild_if_necessary(
 /// does not exist, this function just does nothing.
 pub(crate) async fn clear(meili: &MeiliWriter<'_>) -> Result<()> {
     use meilisearch_sdk::errors::Error;
-    let ignore_missing_index = |res: Result<Task, Error>| -> Result<(), Error> {
+    let ignore_missing_index = |res: Result<TaskInfo, Error>| -> Result<(), Error> {
         match res {
             Ok(_) => Ok(()),
             Err(e) if util::is_index_not_found(&e) => Ok(()),
@@ -327,7 +327,7 @@ pub(crate) async fn clear(meili: &MeiliWriter<'_>) -> Result<()> {
 pub(crate) async fn index_all_data(
     meili: &MeiliWriter<'_>,
     tx: &deadpool_postgres::Transaction<'_>,
-) -> Result<Vec<Task>> {
+) -> Result<Vec<TaskInfo>> {
     let mut tasks = Vec::new();
 
     macro_rules! rebuild_index {
@@ -364,7 +364,7 @@ pub(crate) async fn index_all_data(
 pub(crate) async fn rebuild(
     meili: &MeiliWriter<'_>,
     tx: &deadpool_postgres::Transaction<'_>,
-) -> Result<Vec<Task>> {
+) -> Result<Vec<TaskInfo>> {
     clear(meili).await.context("failed to clear index")?;
     prepare_indexes(meili).await.context("failed to prepare search indexes")?;
     index_all_data(meili, tx).await.context("failed to index all data")
