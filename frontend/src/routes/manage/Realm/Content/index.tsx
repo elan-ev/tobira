@@ -72,7 +72,6 @@ const query = graphql`
             ... ContentManageRealmData
         }
         ... SeriesEditModeSeriesData
-        ... VideoEditModeEventData
     }
 `;
 

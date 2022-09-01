@@ -19,6 +19,10 @@ general:
   logo-alt: Logo of “{{title}}”
   no-root-children: No pages yet ...
   failed-to-load-thumbnail: Failed to load thumbnail
+  form:
+    select:
+      no-options: No options
+      select-option: Select option...
 
 welcome:
   title: Welcome to Tobira!
