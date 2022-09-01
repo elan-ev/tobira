@@ -53,11 +53,6 @@ impl Query {
         AuthorizedEvent::load_by_id(id, context).await
     }
 
-    /// Returns a list of all events the current user has read access to.
-    async fn all_events(context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
-        AuthorizedEvent::load_all(context).await
-    }
-
     /// Returns a series by its Opencast ID.
     async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
         Series::load_by_opencast_id(id, context).await
