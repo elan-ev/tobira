@@ -49,6 +49,7 @@ const SilenceEmotionWarnings: React.FC<{ children: ReactNode }> = ({ children })
     const cache = createEmotionCache({
         key: "css",
         nonce: document.documentElement.dataset.tobiraStyleNonce,
+        ...(process.env.NODE_ENV === "development" && { stylisPlugins: [] }),
     });
     cache.compat = true;
 
