@@ -70,6 +70,7 @@ declare module "paella-core" {
 
     export interface Stream {
         content: string;
+        role?: "mainAudio";
         sources: {
             mp4?: Source[];
             hls?: Source[];

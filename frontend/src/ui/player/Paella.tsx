@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Config, Paella, Source, Stream } from "paella-core";
+import { Config, Manifest, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 import getZoomPluginContext from "paella-zoom-plugin";
 
@@ -32,22 +32,33 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration, is
         // do that now and set the initialized instance to `ref.current.paella`.
         if (!paella.current) {
             // Video/event specific information we have to give to Paella.
+            const tracksByKind: Record<string, VideoTrack[]> = {};
             const videoTracks = tracks.filter((t): t is VideoTrack => !!t.resolution);
-            const presentationTracks = videoTracks.filter(t => t.flavor.startsWith("presentation"));
-            const presenterTracks = videoTracks.filter(t => t.flavor.startsWith("presenter"));
-            const manifest = {
+            for (const track of videoTracks) {
+                const kind = track.flavor.split("/")[0];
+                if (!(kind in tracksByKind)) {
+                    tracksByKind[kind] = [];
+                }
+                tracksByKind[kind].push(track);
+            }
+
+            const manifest: Manifest = {
                 metadata: { title, duration },
-                streams: [
-                    ...presentationTracks.length === 0 ? [] : [{
-                        content: "presentation",
-                        sources: tracksToPaellaSources(presentationTracks, isLive),
-                    }],
-                    ...presenterTracks.length === 0 ? [] : [{
-                        content: "presenter",
-                        sources: tracksToPaellaSources(presenterTracks, isLive),
-                    }],
-                ],
+                streams: Object.entries(tracksByKind).map(([key, tracks]) => ({
+                    content: key,
+                    sources: tracksToPaellaSources(tracks, isLive),
+                })),
             };
+
+            // If there are no presenter tracks (and there is more than one
+            // stream), Paella needs us to tell it which stream should function
+            // as the main audio source. We don't know either, so we pick one
+            // at random.
+            if (manifest.streams.length > 1 && !("presenter" in tracksByKind)) {
+                // eslint-disable-next-line no-console
+                console.warn("Picking first stream as main audio source. Tracks: ", videoTracks);
+                manifest.streams[0].role = "mainAudio";
+            }
 
             paella.current = new Paella(ref.current, {
                 // Paella has a weird API unfortunately. It by default loads two
