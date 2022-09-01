@@ -1235,9 +1235,9 @@ dependencies = [
 
 [[package]]
 name = "meilisearch-sdk"
-version = "0.17.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e980fc979f653877693451f5b31d065a6f607c45988ac117a8316c90f73c7cdc"
+checksum = "e82273ce66969da6cce9d546f9721509121f49982fbaf075d301ef746bfa86a9"
 dependencies = [
  "async-trait",
  "futures",
@@ -1249,9 +1249,11 @@ dependencies = [
  "serde",
  "serde_json",
  "time 0.3.11",
+ "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+ "yaup",
 ]
 
 [[package]]
@@ -2460,6 +2462,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "uuid"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
+dependencies = [
+ "getrandom",
+]
+
+[[package]]
 name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2681,6 +2692,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
 dependencies = [
  "linked-hash-map",
+]
+
+[[package]]
+name = "yaup"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a59e7d27bed43f7c37c25df5192ea9d435a8092a902e02203359ac9ce3e429d9"
+dependencies = [
+ "serde",
+ "url",
 ]
 
 [[package]]

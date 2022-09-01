@@ -73,7 +73,7 @@ pub(crate) async fn perform(
         let mut query = context.search.event_index.search();
         query.with_query(user_query);
         query.with_limit(15);
-        query.with_matches(true);
+        query.with_show_matches_position(true);
         query.with_filter(&filter);
         query
     };
@@ -84,7 +84,7 @@ pub(crate) async fn perform(
         let mut query = context.search.realm_index.search();
         query.with_query(user_query);
         query.with_limit(10);
-        query.with_matches(true);
+        query.with_show_matches_position(true);
         query
     };
 
@@ -139,7 +139,8 @@ pub(crate) async fn perform(
     {
         results.into_iter()
             .map(move |hit| {
-                let mut relevancy = hit.matches_info.expect("search result has no matches info")
+                let mut relevancy = hit.matches_position
+                    .expect("search result has no matches info")
                     .into_iter()
                     .map(|(field, matches)| {
                         // We weigh matches depending on what field was matched.

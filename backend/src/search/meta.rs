@@ -70,9 +70,10 @@ impl IndexState {
     }
 
     pub(crate) async fn fetch(index: &Index) -> Result<Self> {
-        let mut documents = index.get_documents::<serde_json::Value>(None, None, None)
+        let mut documents = index.get_documents::<serde_json::Value>()
             .await
-            .context("failed to fetch search index meta info")?;
+            .context("failed to fetch search index meta info")?
+            .results;
 
         if documents.is_empty() {
             return Ok(Self::NoVersionInfo);
