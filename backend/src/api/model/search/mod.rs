@@ -1,7 +1,10 @@
-use meilisearch_sdk::errors::{
-    Error as MsError,
-    MeilisearchError as MsRespError,
-    ErrorCode as MsErrorCode,
+use meilisearch_sdk::{
+    errors::{
+        Error as MsError,
+        MeilisearchError as MsRespError,
+        ErrorCode as MsErrorCode,
+    },
+    search::Query,
 };
 
 use crate::{
@@ -38,15 +41,61 @@ impl_object_with_dummy_field!(EmptyQuery);
 pub(crate) enum SearchOutcome {
     SearchUnavailable(SearchUnavailable),
     EmptyQuery(EmptyQuery),
-    Results(SearchResults),
+    Results(SearchResults<NodeValue>),
 }
 
-#[derive(juniper::GraphQLObject)]
-#[graphql(Context = Context)]
-pub(crate) struct SearchResults {
-    items: Vec<NodeValue>,
+pub(crate) struct SearchResults<T> {
+    items: Vec<T>,
 }
 
+#[juniper::graphql_object(Context = Context)]
+impl SearchResults<NodeValue> {
+    fn items(&self) -> &[NodeValue] {
+        &self.items
+    }
+}
+
+#[juniper::graphql_object(Context = Context, name = "EventSearchResults")]
+impl SearchResults<search::Event> {
+    fn items(&self) -> &[search::Event] {
+        &self.items
+    }
+}
+
+
+macro_rules! handle_search_result {
+    ($res:expr, $return_type:ty) => {
+        match $res {
+            Ok(v) => v,
+
+            // We treat some errors in a special way because we kind of expect them
+            // to happen. In those cases, we just say that the search is currently
+            // unavailable, instead of the general error.
+            Err(e @ MsError::Meilisearch(MsRespError { error_code: MsErrorCode::IndexNotFound, .. }))
+            | Err(e @ MsError::UnreachableServer)
+            | Err(e @ MsError::Timeout) => {
+                error!("Meili search failed: {e} (=> replying 'search unavailable')");
+                return Ok(<$return_type>::SearchUnavailable(SearchUnavailable));
+            }
+
+            // Catch when we can't serialize the JSON into our structs. This happens
+            // when we change the search index schema and the index has not been
+            // rebuilt yet. We also show "search unavailable" for this case.
+            Err(MsError::ParseError(e)) if e.is_data() => {
+                error!("Failed to deserialize search results (missing rebuild after update?): {e} \
+                    (=> replying 'search uavailable')");
+                return Ok(<$return_type>::SearchUnavailable(SearchUnavailable));
+            }
+
+            // All other errors just result in a general "internal server error".
+            Err(e) => return Err(e.into()),
+        }
+
+    };
+}
+
+
+/// Main entry point for the main search (including all items).
 pub(crate) async fn perform(
     user_query: &str,
     context: &Context,
@@ -57,26 +106,7 @@ pub(crate) async fn perform(
 
     // Prepare the event search
     let mut filter = "listed = true".to_string();
-    let event_query = {
-        // If the user is not admin, build ACL filter: there has to be one user role
-        // inside the event's ACL.
-        if !context.auth.is_admin() {
-            let acl_filter = context.auth.roles()
-                .iter()
-                .map(|role| format!("read_roles = '{}'", hex::encode(role)))
-                .collect::<Vec<_>>()
-                .join(" OR ");
-            filter = format!("{} AND ({})", filter, acl_filter);
-        };
-
-        // Build search query
-        let mut query = context.search.event_index.search();
-        query.with_query(user_query);
-        query.with_limit(15);
-        query.with_show_matches_position(true);
-        query.with_filter(&filter);
-        query
-    };
+    let event_query = event_search_query(user_query, &mut filter, context);
 
 
     // Prepare the realm search
@@ -94,31 +124,7 @@ pub(crate) async fn perform(
         event_query.execute::<search::Event>(),
         realm_query.execute::<search::Realm>(),
     );
-    let (event_results, realm_results) = match res {
-        Ok(v) => v,
-
-        // We treat some errors in a special way because we kind of expect them
-        // to happen. In those cases, we just say that the search is currently
-        // unavailable, instead of the general error.
-        Err(e @ MsError::Meilisearch(MsRespError { error_code: MsErrorCode::IndexNotFound, .. }))
-        | Err(e @ MsError::UnreachableServer)
-        | Err(e @ MsError::Timeout) => {
-            error!("Meili search failed: {e} (=> replying 'search uavailable')");
-            return Ok(SearchOutcome::SearchUnavailable(SearchUnavailable));
-        }
-
-        // Catch when we can't serialize the JSON into our structs. This happens
-        // when we change the search index schema and the index has not been
-        // rebuilt yet. We also show "search unavailable" for this case.
-        Err(MsError::ParseError(e)) if e.is_data() => {
-            error!("Failed to deserialize search results (missing rebuild after update?): {e} \
-                (=> replying 'search uavailable')");
-            return Ok(SearchOutcome::SearchUnavailable(SearchUnavailable));
-        }
-
-        // All other errors just result in a general "internal server error".
-        Err(e) => return Err(e.into()),
-    };
+    let (event_results, realm_results) = handle_search_result!(res, SearchOutcome);
 
     // Unfortunately, since Meili does not support multi-index search yet, and
     // since it does not provide any relevance score, we have to merge the
@@ -213,3 +219,68 @@ pub(crate) async fn perform(
 
     Ok(SearchOutcome::Results(SearchResults { items }))
 }
+
+
+// Unfortunately, Juniper's derives get confused when seeing generics. So we
+// have to repeat the type definition here. But well, GraphQL also doesn't
+// support generics, so we would need two types in the schema anyway.
+#[derive(juniper::GraphQLUnion)]
+#[graphql(Context = Context)]
+pub(crate) enum EventSearchOutcome {
+    SearchUnavailable(SearchUnavailable),
+    EmptyQuery(EmptyQuery),
+    Results(SearchResults<search::Event>),
+}
+
+pub(crate) async fn all_events(user_query: &str, context: &Context) -> ApiResult<EventSearchOutcome> {
+    context.require_moderator()?;
+
+    if user_query.is_empty() {
+        return Ok(EventSearchOutcome::EmptyQuery(EmptyQuery));
+    }
+
+    let mut filter = String::new();
+    let event_query = event_search_query(user_query, &mut filter, context);
+
+    let res = event_query.execute::<search::Event>().await;
+    let results = handle_search_result!(res, EventSearchOutcome);
+    let items = results.hits.into_iter().map(|h| h.result).collect();
+
+    Ok(EventSearchOutcome::Results(SearchResults { items }))
+}
+
+
+/// Constructs the appropriate `Query` to search for events. Due to a bad API
+/// design of Meili, you have to pass an empty `String` as second parameter.
+fn event_search_query<'a>(
+    user_query: &'a str,
+    filter: &'a mut String,
+    context: &'a Context,
+) -> Query<'a> {
+    use std::fmt::Write;
+
+    // If the user is not admin, build ACL filter: there has to be one user role
+    // inside the event's ACL.
+    if !context.auth.is_admin() {
+        let acl_filter = context.auth.roles()
+            .iter()
+            .map(|role| format!("read_roles = '{}'", hex::encode(role)))
+            .collect::<Vec<_>>()
+            .join(" OR ");
+        write!(
+            filter,
+            "{}({})",
+            if filter.is_empty() { "" } else { " AND " },
+            acl_filter,
+        ).unwrap();
+    };
+
+    // Build search query
+    let mut query = context.search.event_index.search();
+    query.with_query(user_query);
+    query.with_limit(15);
+    query.with_show_matches_position(true);
+    query.with_filter(filter);
+    query
+}
+

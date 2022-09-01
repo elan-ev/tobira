@@ -5,6 +5,10 @@
 
 union Event = AuthorizedEvent | NotAllowed
 
+type EventSearchResults {
+  items: [SearchEvent!]!
+}
+
 type EventPageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
@@ -113,6 +117,8 @@ type Series {
   hostRealms: [Realm!]!
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
 }
+
+union EventSearchOutcome = SearchUnavailable | EmptyQuery | EventSearchResults
 
 input NewVideoBlock {
   event: ID!
@@ -405,6 +411,11 @@ type Query {
   node(id: ID!): Node
   "Returns `null` if the query is too short."
   search(query: String!): SearchOutcome!
+  """
+    Searches through all events (including non-listed ones). Requires
+    moderator rights.
+  """
+  searchAllEvents(query: String!): EventSearchOutcome!
 }
 
 interface RealmNameSourceBlock {

@@ -12,7 +12,7 @@ use super::{
         realm::Realm,
         event::{AuthorizedEvent, Event},
         series::Series,
-        search::{self, SearchOutcome},
+        search::{self, SearchOutcome, EventSearchOutcome},
     },
 };
 
@@ -105,5 +105,11 @@ impl Query {
     /// Returns `null` if the query is too short.
     async fn search(query: String, context: &Context) -> ApiResult<SearchOutcome> {
         search::perform(&query, context).await
+    }
+
+    /// Searches through all events (including non-listed ones). Requires
+    /// moderator rights.
+    async fn search_all_events(query: String, context: &Context) -> ApiResult<EventSearchOutcome> {
+        search::all_events(&query, context).await
     }
 }
