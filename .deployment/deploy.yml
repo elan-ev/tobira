@@ -35,6 +35,8 @@
         url: https://github.com/meilisearch/meilisearch/releases/download/v0.28.1/meilisearch-linux-amd64
         dest: /opt/meili/meilisearch
         mode: '0755'
+        checksum: sha256:d394626b43c71acba0516336016285a963046b5ccf6f2c5ea6d5ef17085a3b40
+      register: meili_changed
 
     - name: install MeiliSearch service file
       become: true
@@ -44,7 +46,7 @@
         mode: '0644'
         owner: root
         group: root
-      notify: restart meili
+      register: meili_changed
 
     - name: start and enable Meili
       become: true
@@ -52,6 +54,14 @@
         name: meili
         state: started
         enabled: yes
+
+    - name: restart Meili
+      become: true
+      service:
+        name: meili
+        state: restarted
+        enabled: yes
+      when: meili_changed.changed
 
     # DATABASE
 
