@@ -198,7 +198,13 @@ const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
             onError={() => setLoadError(true)}
             width={16}
             height={9}
-            css={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
+            css={{
+                display: "block",
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                backgroundColor: "black",
+            }}
         />;
 };
 
