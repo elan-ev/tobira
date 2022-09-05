@@ -86,7 +86,6 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
             {t("manage.realm.content.event.event.no-read-acccess-to-current")}
         </Card>}
         <Controller
-            control={form.control}
             defaultValue={currentEvent?.id}
             name="event"
             rules={{ required: true }}
