@@ -50,6 +50,7 @@
     "react-icons": "^4.4.0",
     "react-markdown": "^8.0.3",
     "react-relay": "^14.1.0",
+    "react-select": "^5.4.0",
     "react-transition-group": "^4.4.2",
     "relay-compiler": "^14.1.0",
     "relay-compiler-language-typescript": "^15.0.1",

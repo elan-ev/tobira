@@ -98,11 +98,34 @@ impl ThemeConfig {
             }}
         }
         macro_rules! hsl {
-            ($base:expr, $lightness:expr) => {
+            ($base:literal) => {
                 format_args!(
-                    "hsl(var(--{base}-hue), var(--{base}-sat), {lightness:.2}%)",
+                    "hsl(var(--{base}-hue), var(--{base}-sat), var(--{base}-lightness))",
                     base = $base,
-                    lightness = $lightness * 100.0,
+                )
+            };
+            ($base:literal | lighten $amount:expr) => {
+                format_args!(
+                    "hsl(var(--{base}-hue), var(--{base}-sat), \
+                        calc(var(--{base}-lightness) * {mult} + {add}%))",
+                    base = $base,
+                    mult = (1.0 - $amount),
+                    add = $amount * 100.0,
+                )
+            };
+            ($base:literal | darken $amount:expr) => {
+                format_args!(
+                    "hsl(var(--{base}-hue), var(--{base}-sat), \
+                        calc(var(--{base}-lightness) * {mult}))",
+                    base = $base,
+                    mult = (1.0 - $amount),
+                )
+            };
+            ($base:literal, $lightness:expr) => {
+                format_args!(
+                    "hsl(var(--{base}-hue), var(--{base}-sat), {lightness}%)",
+                    base = $base,
+                    lightness = $lightness,
                 )
             }
         }
@@ -116,45 +139,49 @@ impl ThemeConfig {
         let nav = Hsl::from(self.color.navigation);
         add!("--nav-hue" => format_args!("{:.2}", nav.h));
         add!("--nav-sat" => format_args!("{:.2}%", nav.s * 100.0));
-        add!("--nav-color" => hsl!("nav", nav.l));
-        add!("--nav-color-dark" => hsl!("nav", nav.darken(0.2).l));
-        add!("--nav-color-darker" => hsl!("nav", nav.darken(0.4).l));
+        add!("--nav-lightness" => format_args!("{:.2}%", nav.l * 100.0));
+        add!("--nav-color" => hsl!("nav"));
+        add!("--nav-color-dark" => hsl!("nav" | darken 0.2));
+        add!("--nav-color-darker" => hsl!("nav" | darken 0.4));
         add!("--nav-color-bw-contrast" => self.color.navigation.bw_contrast());
 
         let accent = Hsl::from(self.color.accent);
         add!("--accent-hue" => format_args!("{:.2}", accent.h));
         add!("--accent-sat" => format_args!("{:.2}%", accent.s * 100.0));
-        add!("--accent-color" => hsl!("accent", accent.l));
-        add!("--accent-color-darker" => hsl!("accent", accent.darken(0.4).l));
+        add!("--accent-lightness" => format_args!("{:.2}%", accent.l * 100.0));
+        add!("--accent-color" => hsl!("accent"));
+        add!("--accent-color-darker" => hsl!("accent" | darken 0.4));
         add!("--accent-color-bw-contrast" => self.color.accent.bw_contrast());
 
         let danger = Hsl::from(self.color.danger);
         add!("--danger-hue" => format_args!("{:.2}", danger.h));
         add!("--danger-sat" => format_args!("{:.2}%", danger.s * 100.0));
-        add!("--danger-color" => hsl!("danger", danger.l));
-        add!("--danger-color-darker" => hsl!("danger", danger.darken(0.4).l));
+        add!("--danger-lightness" => format_args!("{:.2}%", danger.l * 100.0));
+        add!("--danger-color" => hsl!("danger"));
+        add!("--danger-color-darker" => hsl!("danger" | darken 0.4));
         add!("--danger-color-bw-contrast" => self.color.danger.bw_contrast());
 
         let happy = Hsl::from(self.color.happy);
         add!("--happy-hue" => format_args!("{:.2}", happy.h));
         add!("--happy-sat" => format_args!("{:.2}%", happy.s * 100.0));
-        add!("--happy-color" => hsl!("happy", happy.l));
-        add!("--happy-color-lighter" => hsl!("happy", happy.lighten(0.15).l));
-        add!("--happy-color-darker" => hsl!("happy", happy.darken(0.1).l));
-        add!("--happy-color-dark" => hsl!("happy", happy.darken(0.3).l));
+        add!("--happy-lightness" => format_args!("{:.2}%", happy.l * 100.0));
+        add!("--happy-color" => hsl!("happy"));
+        add!("--happy-color-lighter" => hsl!("happy" | lighten 0.15));
+        add!("--happy-color-darker" => hsl!("happy" | darken 0.1));
+        add!("--happy-color-dark" => hsl!("happy" | darken 0.3));
         add!("--happy-color-bw-contrast" => self.color.happy.bw_contrast());
 
         let grey = Hsl::from(self.color.grey50);
         add!("--grey-hue" => format_args!("{:.2}", grey.h));
         add!("--grey-sat" => format_args!("{:.2}%", grey.s * 100.0));
-        add!("--grey97" => hsl!("grey", 0.97));
-        add!("--grey95" => hsl!("grey", 0.95));
-        add!("--grey92" => hsl!("grey", 0.92));
-        add!("--grey86" => hsl!("grey", 0.86));
-        add!("--grey80" => hsl!("grey", 0.80));
-        add!("--grey65" => hsl!("grey", 0.65));
-        add!("--grey40" => hsl!("grey", 0.40));
-        add!("--grey20" => hsl!("grey", 0.20));
+        add!("--grey97" => hsl!("grey", 97.0));
+        add!("--grey95" => hsl!("grey", 95.0));
+        add!("--grey92" => hsl!("grey", 92.0));
+        add!("--grey86" => hsl!("grey", 86.0));
+        add!("--grey80" => hsl!("grey", 80.0));
+        add!("--grey65" => hsl!("grey", 65.0));
+        add!("--grey40" => hsl!("grey", 40.0));
+        add!("--grey20" => hsl!("grey", 20.0));
 
 
         // Finish

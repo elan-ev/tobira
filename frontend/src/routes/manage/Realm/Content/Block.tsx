@@ -83,7 +83,6 @@ export const EditBlock: React.FC<Props> = ({
             border: "1px solid var(--grey80)",
             borderRadius: 4,
             padding: 8,
-            overflow: "hidden",
             ...editMode && {
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 20%)",
             },

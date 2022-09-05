@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiAlertTriangle, FiFilm, FiRadio, FiVolume2 } from "react-icons/fi";
+import { HiOutlineUserCircle } from "react-icons/hi";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
@@ -197,6 +198,55 @@ const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
             onError={() => setLoadError(true)}
             width={16}
             height={9}
-            css={{ display: "block", width: "100%", height: "auto" }}
+            css={{
+                display: "block",
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                backgroundColor: "black",
+            }}
         />;
 };
+
+type CreatorsProps = {
+    creators: readonly string[] | null;
+    className?: string;
+};
+
+/**
+ * Shows a list of creators (of a video) separated by '•' with a leading user
+ * icon. If the given creators are null or empty, renders nothing.
+ */
+export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
+    creators == null || creators.length === 0
+        ? null
+        : <div
+            css={{
+                display: "flex",
+                alignItems: "center",
+                fontSize: 14,
+                gap: 8,
+            }}
+            {...{ className }}
+        >
+            <HiOutlineUserCircle css={{
+                color: "var(--grey40)",
+                fontSize: 16,
+                flexShrink: 0,
+            }} />
+            <ul css={{
+                listStyle: "none",
+                display: "inline-flex",
+                flexWrap: "wrap",
+                margin: 0,
+                padding: 0,
+                "& > li:not(:last-child)::after": {
+                    content: "'•'",
+                    padding: "0 6px",
+                    color: "var(--grey65)",
+                },
+            }}>
+                {creators.map((c, i) => <li key={i}>{c}</li>)}
+            </ul>
+        </div>
+);

@@ -1,19 +1,18 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
+import { FiFolder } from "react-icons/fi";
+import { ReactNode } from "react";
 
 import { RootLoader } from "../layout/Root";
 import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
 import { makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link } from "../router";
-import { isPastLiveEvent, Thumbnail } from "../ui/Video";
+import { Creators, isPastLiveEvent, Thumbnail } from "../ui/Video";
 import { unreachable } from "../util/err";
 import { Description } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
-import { FiFolder } from "react-icons/fi";
-import { HiOutlineUserCircle } from "react-icons/hi";
-import { ReactNode } from "react";
 import { BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
 
@@ -218,14 +217,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     textOverflow: "ellipsis",
                     WebkitLineClamp: 2,
                 }}>{title}</h3>
-                <div css={{ fontSize: 14, display: "flex", alignItems: "center" }}>
-                    <HiOutlineUserCircle css={{
-                        color: "var(--grey40)",
-                        fontSize: 16,
-                        marginRight: 8,
-                    }} />
-                    {creators.join(", ")}
-                </div>
+                <Creators creators={creators} />
                 <Description text={description} lines={3} />
                 {/* TODO: link to series */}
                 {seriesTitle && <div css={{ fontSize: 14, marginTop: 4 }}>

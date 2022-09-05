@@ -12,7 +12,7 @@ use super::{
         realm::Realm,
         event::{AuthorizedEvent, Event},
         series::Series,
-        search::{self, SearchOutcome},
+        search::{self, SearchOutcome, EventSearchOutcome},
     },
 };
 
@@ -51,11 +51,6 @@ impl Query {
     /// Returns an event by its ID.
     async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
         AuthorizedEvent::load_by_id(id, context).await
-    }
-
-    /// Returns a list of all events the current user has read access to.
-    async fn all_events(context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
-        AuthorizedEvent::load_all(context).await
     }
 
     /// Returns a series by its Opencast ID.
@@ -105,5 +100,11 @@ impl Query {
     /// Returns `null` if the query is too short.
     async fn search(query: String, context: &Context) -> ApiResult<SearchOutcome> {
         search::perform(&query, context).await
+    }
+
+    /// Searches through all events (including non-listed ones). Requires
+    /// moderator rights.
+    async fn search_all_events(query: String, context: &Context) -> ApiResult<EventSearchOutcome> {
+        search::all_events(&query, context).await
     }
 }

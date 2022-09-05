@@ -195,23 +195,6 @@ impl Event {
 }
 
 impl AuthorizedEvent {
-    pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
-        let selection = Self::select();
-        let query = format!(
-            "select {selection} from events \
-                where (read_roles || 'ROLE_ADMIN'::text) && $1 \
-                order by title",
-        );
-        context.db(context.require_moderator()?)
-            .query_mapped(
-                &query,
-                dbargs![&context.auth.roles_vec()],
-                |row| Self::from_row_start(&row),
-            )
-            .await?
-            .pipe(Ok)
-    }
-
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
         match id.key_for(Id::EVENT_KIND) {
             None => return Ok(None),

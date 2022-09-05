@@ -1,7 +1,7 @@
 import React, { ReactNode, useRef } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
-import { HiOutlineUserCircle } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
+import { OperationType } from "relay-runtime";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -37,9 +37,9 @@ import {
     VideoPageDirectOpencastLinkQuery,
 } from "./__generated__/VideoPageDirectOpencastLinkQuery.graphql";
 import { UserData$key } from "../__generated__/UserData.graphql";
-import { OperationType } from "relay-runtime";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
 import { Description, getEventTimeInfo } from "../util/video";
+import { Creators } from "../ui/Video";
 
 
 // ===========================================================================================
@@ -307,7 +307,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             },
         }}>
             <div css={{ maxWidth: 700 }}>
-                <Creators creators={event.creators} />
+                <Creators creators={event.creators} css={{ fontWeight: "bold" }} />
                 <Description
                     text={event.description}
                     css={{ color: "var(--grey20)", fontSize: 14 }}
@@ -375,38 +375,6 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: { opencastId: id } }) => {
         </Modal>
     </>;
 };
-
-type CreatorsProps = {
-    creators: readonly string[];
-};
-
-const Creators: React.FC<CreatorsProps> = ({ creators }) => (
-    creators.length === 0
-        ? null
-        : <div css={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <HiOutlineUserCircle css={{ color: "var(--grey40)" }} />
-            <ul css={{
-                display: "inline-block",
-                listStyle: "none",
-                margin: 0,
-                padding: 0,
-                fontSize: 14,
-                fontWeight: "bold",
-                "& > li": {
-                    display: "inline-block",
-                    "&:not(:last-child)::after": {
-                        content: "'•'",
-                        margin: "0 8px",
-                        color: "var(--grey65)",
-                    },
-                },
-            }}>
-                {creators.map((c, i) => <li key={i}>{c}</li>)}
-            </ul>
-        </div>
-);
-
-
 
 
 type VideoDateProps = {
