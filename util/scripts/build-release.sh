@@ -35,7 +35,7 @@ npx webpack --progress --mode=production
 # crate registries, so it's fine. And yes, people could have installed cargo
 # elsewhere... we can still add support for that later.
 cd ../backend || exit 1
-CFLAGS="-fdebug-prefix-map=$HOME/.cargo/registry/src/github.com-1ecc6299db9ec823/=<dep>" \
+CFLAGS="-fdebug-prefix-map=$HOME/.cargo/registry/src/github.com-1ecc6299db9ec823/=__dep__" \
     RUSTFLAGS="--remap-path-prefix=$(pwd)=<src> --remap-path-prefix=$HOME/.cargo/registry/src/github.com-1ecc6299db9ec823/=<dep>" \
     cargo build --release
 
