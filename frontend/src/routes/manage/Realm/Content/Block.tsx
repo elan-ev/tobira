@@ -67,7 +67,7 @@ export const EditBlock: React.FC<Props> = ({
     const relayEnv = useRelayEnvironment();
     const setEditMode = (editMode: boolean) => {
         commitLocalUpdate(relayEnv, store => {
-            const block = store.get(id) || bug("could not find block");
+            const block = store.get(id) ?? bug("could not find block");
             block.setValue(editMode, "editMode");
         });
     };
