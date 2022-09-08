@@ -36,8 +36,10 @@ hostname = "0.3"
 hyper = { version = "0.14", features = ["client", "http1", "http2"] }
 hyper-rustls = { version = "0.23", features = ["http2"] }
 hyperlocal = { version = "0.8", default-features = false, features = ["server"] }
+isahc = { version = "1", features = ["static-ssl"] }
 juniper = { version = "0.15.10", default-features = false, features = ["chrono", "schema-language"] }
 juniper_hyper = "0.8.0"
+libz-sys = { version = "1", features = ["static"] }
 log = { version = "0.4", features = ["serde", "std"] }
 meilisearch-sdk = "0.18.0"
 mime_guess = { version = "2", default-features = false }
