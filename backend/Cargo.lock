@@ -2195,6 +2195,7 @@ dependencies = [
  "isahc",
  "juniper",
  "juniper_hyper",
+ "libz-sys",
  "log",
  "meilisearch-sdk",
  "mime_guess",
