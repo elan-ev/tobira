@@ -1,0 +1,50 @@
+name: Admin UI API Check
+on: [pull_request]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes to the APIs the admin UI integration uses
+        id: graphql_inspector
+        run: |
+          npx @graphql-inspector/cli@3.4.0 diff \
+            --rule .github/workflows/check-admin-ui-api/rule.js \
+            --onComplete .github/workflows/check-admin-ui-api/onComplete.js \
+            git:${{ github.event.pull_request.base.sha }}:frontend/src/schema.graphql \
+            git:${{ github.event.pull_request.head.sha }}:frontend/src/schema.graphql \
+            | tee >( \
+              grep -v ^::set-output \
+              | sed -e 's/\[\(log\|success\|info\|error\|warn\)\] //' \
+              > diff \
+            )
+
+      - name: Read diff output
+        id: diff_output
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: diff
+          trim: true
+        if: steps.graphql_inspector.outputs.changes == 'true'
+
+      - name: Hide previous comments made by this workflow
+        uses: int128/hide-comment-action@v1
+        with:
+          starts-with: "<!-- admin-ui-api-check -->"
+
+      - name: Add a comment when there are relevant changes
+        uses: int128/comment-action@v1
+        with:
+          post: |
+            <!-- admin-ui-api-check -->
+            🚨🚨🚨 This PR changes APIs used by the Opencast Admin UI integration 🚨🚨🚨
+
+            ```
+            ${{ steps.diff_output.outputs.content }}
+            ```
+        if: steps.graphql_inspector.outputs.changes == 'true'
