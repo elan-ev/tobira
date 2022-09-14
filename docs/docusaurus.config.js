@@ -18,7 +18,6 @@ const config = {
       ({
         docs: {
           routeBasePath: "/",
-          sidebarCollapsed: false,
         },
         blog: false,
       }),
