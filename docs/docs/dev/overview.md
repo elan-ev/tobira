@@ -1,8 +1,10 @@
-# Project Overview for Developers
+---
+sidebar_position: 2
+---
+
+# Project Overview for Devs
 
 This document provides an overview over the project structure and code.
-It is aimed at developers interested in hacking on Tobira.
-Be sure to also read [the docs about building Tobira for development](./dev-workflow.md).
 
 Tobira consists of a frontend, written in Typescript, and a backend, written in Rust.
 These two communicate via a GraphQL API.

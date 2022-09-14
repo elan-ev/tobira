@@ -1,8 +1,12 @@
-# Development workflow (compiling/building/testing)
+---
+sidebar_position: 3
+---
+
+# Building during development
 
 **TL;DR: Run `./x.sh start`**.
 
-Some software is required to build Tobira. See [this document](./build-requirements.md) for more information.
+Some software is required to build Tobira. See [this document](./requirements) for more information.
 
 Unfortunately, the build process is a bit involved.
 **We recommend using our script `x.sh`** which handles most of that complexity for you.
@@ -38,51 +42,13 @@ rustflags = ["-C", "link-arg=-fuse-ld=/path/to/mold"]
 
 Where `/path/to/mold` is likely `/usr/local/bin/mold` (check `which mold`!).
 
-## Test data
 
-A freshly started Tobira instance has no data in it.
-This repository provides some dummy data that you can use.
-We are mainly talking about *video data* (event & series from Opencast) and *realm data* (page structure).
-
-You can use `util/fixtures.sql` to get both kinds of data into the development database:
-
-```sh
-# in `backend` folder
-cargo run -- db script ../util/fixtures.sql
-```
-
-To import video data, you can also sync with an Opencast instance that has the Tobira module enabled (there is currently no public one, sorry).
-To do this, create a copy of `util/dev-config/config.toml` and call it `util/dev-config/sync-config.toml`.
-Change the sync section in that file to contain the correct credentials for your Opencast instance.
-Then run `cargo run -- sync run -c ../util/dev-config/sync-config.toml`.
-
-To just import realm data, you can use the `import-realm-tree` subcommand and pass it a fitting YAML file.
-This repository contains `.deployment/files/realms.yaml` (big) and `util/dummy-realms.yaml` (small).
-Import those with `cargo run -- import-realm-tree ../util/dummy-realms.yaml`.
-
-
-## DB management, migrations and more
-
-Whenever you change existing DB migrations, you usually want to purge the DB and rerun all migrations.
-You can do that with `cargo run -- db reset`.
-
-The `db` subcommand of Tobira offers a few useful commands.
-See `cargo run -- db --help` for more information.
-
-
-## IDE/editor/dev environment
-
-We recommend using TypeScript and Rust language servers to ease development a lot.
-For Rust, use [`rust-analyzer`](https://rust-analyzer.github.io/) as it provides the best dev experience currently.
-Language servers can be used in a large number of editors.
-If you cannot decide, try Visual Studio Code, which provides a particularly high quality integration of language servers.
-For Rust, [the IntelliJ plugin](https://intellij-rust.github.io/) is apparently also pretty good.
-
+---
 
 ## Building manually
 
 This section describes the knowledge encoded in `x.sh` and other scripts.
-If you use these scripts, you do not really care about this section.
+If you use these scripts (which you should), you do not really care about this section.
 
 
 ### Export GraphQL Schema

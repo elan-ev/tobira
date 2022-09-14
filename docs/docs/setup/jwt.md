@@ -1,4 +1,8 @@
-# JWT for cross-origin user authentication (e.g. for uploading videos)
+---
+sidebar_position: 4
+---
+
+# Setup JWT auth
 
 In some situations, users of Tobira (or rather, their browsers) need to communicate with Opencast directly.
 For example, take the video uploader:
@@ -21,22 +25,23 @@ secret_key = "jwt-key.pem"
 expiration_time = "3min"
 ```
 
-Currently, the only supported signing algorithm is `ES256`.
 The secret key has to be a key matching the algorithm.
 For `ES256`, that's an EC key encoded as PKCS#8.
-To generate such a key, you can run these commands:
+To generate such a key, you can run these commands (you can replace `secp256r1` with other supported values like `secp384r1`):
 
 ```
 openssl ecparam -name secp256r1 -genkey -noout -out sec1.pem
 openssl pkcs8 -topk8 -nocrypt -in sec1.pem -out private-key.pem
 ```
 
+Here, the `sec1.pem` is encoded as SEC1 instead of PKCS#8. The second command converts the key.
+
 **Important**: the expiration time for the JWT should be chosen to be fairly short to reduce the security risk posed by a stolen JWT.
 Tobira generates a new JWT right before every request it sends to Opencast.
 So you should only need to account for network delay and clock skew.
 
 *However*, due to a stupid set of circumstances, currently, the JWT has to live as long as the video upload takes.
-So, potentially very long in case of large videos of slow connections.
+So, potentially very long in case of large videos or slow connections.
 This is a bug, or at the very least a terrible UX that needs fixing.
 We're on it!
 

@@ -1,4 +1,22 @@
-# What Tobira requires of Opencast
+---
+sidebar_position: 1
+---
+
+# Requirements
+
+To run, Tobira requires:
+
+- A Unix system.
+- A **PostgreSQL** (≥10) database. For PostgreSQL version 12 and older, you have to manually enable the `pgcrypto` extension!
+- [**Meilisearch**](https://www.meilisearch.com/) (currently v0.28.1). For installation, see [Meili's docs](https://docs.meilisearch.com/learn/getting_started/quick_start.html#step-1-setup-and-installation).
+- An **Opencast** that satisfies certain condition. See below.
+
+
+(If you are a developer, check the `util` folder!)
+
+
+
+## What Tobira requires of Opencast
 
 Tobira doesn't work with any Opencast instance out of the box.
 There are some requirements.
@@ -17,7 +35,7 @@ There are some requirements.
   (We are aware that this limitation is annoying and are investigating possible solutions.)
 
 - Opencast needs to accept JWTs created by Tobira.
-  See [this document](./auth/jwt.md) for more information.
+  See [this document](./jwt) for more information.
 
 - Opencast needs to allow cross origin requests from Tobira.
   Otherwise, things like the video uploader don't work.
