@@ -5,6 +5,7 @@ const config = {
   title: "Tobira documentation",
   url: "https://elan-ev.github.io/",
   baseUrl: "/tobira/",
+  trailingSlash: false, // This is better when deploying via GH pages.
 
   i18n: {
     defaultLocale: "en",
