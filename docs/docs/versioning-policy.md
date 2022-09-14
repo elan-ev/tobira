@@ -1,4 +1,9 @@
-# Tobira Releases and Versioning Policy
+---
+sidebar_position: 3
+---
+
+
+# Releases and Versioning Policy
 
 Tobira is released via [GitHub releases](https://github.com/elan-ev/tobira/releases).
 
@@ -18,8 +23,8 @@ You must **not** rely on these numbers to derive any information about breaking 
 However, we do care a lot about providing you with all relevant information about breaking changes!
 Every release mentions all potentially breaking changes in its release notes.
 
-<br>
-<br>
+<br />
+<br />
 
 ---
 

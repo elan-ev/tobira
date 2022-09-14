@@ -58,7 +58,7 @@ For a more concrete look at how a setup might look like, check out these specifi
 
 - [Tobira's login page and session management](./all-tobira.md)
 
-<br>
+<br />
 
 ### Using Tobira's session management
 

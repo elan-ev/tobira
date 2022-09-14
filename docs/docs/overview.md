@@ -1,4 +1,8 @@
-# Tobira high level overview
+---
+sidebar_position: 2
+---
+
+# High level overview
 
 ## Architecture
 
@@ -14,7 +18,7 @@ This has some advantages:
 
 This is an overview over the Tobira architecture:
 
-![](./architecture.svg)
+![](./img/architecture.svg)
 
 
 ## Communication with Opencast
