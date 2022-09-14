@@ -15,11 +15,7 @@ The test data was kindly provided by the ETH only for the purpose of this test d
 
 ## Documentation
 
-The documentation mainly resides inside the `docs/` folder in this repository.
-For an overview of Tobira's architecture, see [Tobira high level overview](./docs/overview.md).
-If you want to use Tobira on your server, see [Deploying Tobira](./docs/deploy.md).
-
-If you are a developer and want to work on Tobira, check out [`CONTRIBUTING.md`](./docs/CONTRIBUTING.md), [the development workflow](./docs/dev-workflow.md) and [the project overview for devs](./docs/dev-overview.md).
+[**Tobira's documentation**](https://elan-ev.github.io/tobira).
 
 ### Name
 
