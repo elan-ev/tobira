@@ -25,6 +25,6 @@ schema_out=../frontend/src/schema.graphql
 ./target/debug/tobira export-api-schema | cmp --silent - $schema_out \
     || ./target/debug/tobira export-api-schema $schema_out
 
-./target/debug/tobira write-config ../docs/config.toml
+./target/debug/tobira write-config ../docs/docs/setup/config.toml
 reload_once_port_is_open &
 ./target/debug/tobira serve
