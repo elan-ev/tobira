@@ -46,12 +46,12 @@ Before you start, you have to decide two things:
 
 These two decisions can be made independently of one another (though usually, you would use either both or neither).
 The decision depends on your requirements and the authentication system you want to connect to.
-See the appropriate documents for more information: [Session Management](./session-management) and [Login Page](./login-page).
+See the appropriate documents for more information: [Session Management](./auth/session-management) and [Login Page](./auth/login-page).
 
 There are two specific examples of authentication setups:
 
-- [Using Tobira's login page and session management](./example-all-tobira)
-- [Using your own login page and session management](./example-all-own)
+- [Using Tobira's login page and session management](./auth/example-all-tobira)
+- [Using your own login page and session management](./auth/example-all-own)
 
 
 ## Authenticating Opencast against Tobira
