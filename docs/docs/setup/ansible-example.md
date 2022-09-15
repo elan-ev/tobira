@@ -150,7 +150,7 @@ Also not shown here: **setup regular database backups!**
     owner: tobira
     group: tobira
     mode: '0755'
-  with_items:
+  loop:
     - /opt/tobira
     - /var/log/tobira
 
@@ -171,7 +171,7 @@ Also not shown here: **setup regular database backups!**
     owner: tobira
     group: tobira
     mode: '0644'
-  with_items:
+  loop:
     - logo-large.svg
     - logo-small.svg
     - favicon.svg
@@ -194,7 +194,7 @@ Also not shown here: **setup regular database backups!**
     mode: '0644'
     owner: root
     group: root
-  with_items:
+  loop:
     - tobira
     - tobira-worker
   notify: restart tobira
@@ -205,7 +205,7 @@ Also not shown here: **setup regular database backups!**
     name: '{{ item }}'
     state: started
     enabled: true
-  with_items:
+  loop:
     - tobira
     - tobira-worker
 ```

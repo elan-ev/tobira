@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Example: Your own login page & session management
 
-This example shows how one could configure a system to use your own login page and session management.
+This example shows how one could configure Tobira to use a custom login page and session management.
 
 :::caution
 All of this should only serve as a starting point, not a finished solution.
@@ -25,8 +25,8 @@ server {
     # ...
 
     location / {
-        # We have to make the authentication subrequest, retrieve some the
-        # returned information about the user and transform then into the
+        # We have to make the authentication subrequest, retrieve the
+        # returned information about the user and transform them into the
         # appropriate `x-tobira` headers.
         #
         # Usually, you would use `shib_request` and `shib_request_set` for that.

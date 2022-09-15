@@ -10,7 +10,7 @@ Tobira does not authenticate users itself: it does not know about LDAP, OpenID C
 **Your system has to pass user information to Tobira via HTTP headers** and thus typically sits in front of Tobira, acting as a **reverse proxy** (also called auth proxy).
 
 Tobira requires the following information about each user.
-The values in the parenthesis are the header names in which Tobira expects this information.
+The values in parentheses are the header names in which Tobira expects this information.
 Collectively, these are called **auth headers** in this documentation.
 
 - Username (`x-tobira-username`):
@@ -32,7 +32,7 @@ Tobira blindly trusts these header values and assumes they come from your auth p
 ## Authorization
 
 Tobira does authorization simply by comparing the roles of a user with roles associated with a specific action.
-For example, Tobira evaluates the ACL of Opencast events (specifically, the `read` and `write` roles) to determine what a user can do with an event.
+For example, Tobira evaluates the ACL of Opencast events (specifically, the `read` and `write` actions) to determine what a user can do with an event.
 Tobira also has a few special roles which grant users with those roles additional privileges like editing the page structure (`ROLE_TOBIRA_MODERATOR`) or uploading videos (`ROLE_TOBIRA_UPLOAD`).
 
 This means you have to model all your authorization logic in terms of these roles.

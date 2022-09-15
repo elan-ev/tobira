@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Contributing to Tobira
 
-As an open source project, Tobira welcomes contributions of many forms.
+As an open source project, Tobira welcomes contributions in many forms.
 Examples of contributions include:
 
 - Code patches
