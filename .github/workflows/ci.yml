@@ -72,9 +72,9 @@ jobs:
     - name: Make sure `schema.graphql` is up to date
       working-directory: backend
       run: cargo run -- export-api-schema | diff -u --color=always - ../frontend/src/schema.graphql
-    - name: Make sure `docs/config.toml` is up to date
+    - name: Make sure `docs/docs/setup/config.toml` is up to date
       working-directory: backend
-      run: cargo run -- write-config | diff -u --color=always - ../docs/config.toml
+      run: cargo run -- write-config | diff -u --color=always - ../docs/docs/setup/config.toml
 
     # Prepare binary for deployment
     - name: Build server binary for test deployment

@@ -1,0 +1,23 @@
+{
+  "name": "tobira-docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "serve": "docusaurus serve"
+  },
+  "dependencies": {
+    "@docusaurus/core": "2.1.0",
+    "@docusaurus/preset-classic": "2.1.0",
+    "@easyops-cn/docusaurus-search-local": "^0.32.0",
+    "raw-loader": "^4.0.2"
+  },
+  "devDependencies": {
+    "@tsconfig/docusaurus": "^1.0.5",
+    "typescript": "^4.7.4"
+  },
+  "engines": {
+    "node": ">=16.14"
+  }
+}

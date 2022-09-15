@@ -1,4 +1,8 @@
-# Prerequisites for building Tobira
+---
+sidebar_position: 1
+---
+
+# Requirements
 
 Generally, Tobira assumes a Unix system to build on.
 Making it compile on non-Unix should be fairly straight forward, but is not our priority at all.

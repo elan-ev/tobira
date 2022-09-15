@@ -1,0 +1,42 @@
+name: Deploy docs
+
+on:
+  push:
+    branches: ["master"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci
+        working-directory: docs
+      - name: Build documentation
+        run: npm run build
+        working-directory: docs
+      - name: Disable Jykell
+        run: touch docs/build/.nojekyll
+      - name: Upload built documentation as artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: docs/build/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-20.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
