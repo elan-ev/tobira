@@ -69,4 +69,5 @@ Note that this "backdoor" is "only" valid for any request that the current
 Opencast integration uses. To tell Tobira about this secret,
 put it under the key `auth.trusted_key` in your Tobira configuration.
 To tell Opencast, put it in `etc/org.opencastproject.adminui.endpoint.SeriesEndpoint.cfg`
-under the key `tobira.trustedKey`.
+under the key `tobira.mh_default_org.trustedKey` (where you might have to replace `mh_default_org`
+by your organization ID in case you run a multitenant system).
