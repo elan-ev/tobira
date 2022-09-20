@@ -26,7 +26,11 @@ pub(crate) enum SyncCommand {
     /// Resets the "harvested until" timestamp, causing all data to be
     /// re-synchronized when the sync process is next started. Does *not*
     /// delete any data from the DB.
-    Reset,
+    Reset {
+        /// If specified, skips the "Are you sure?" question.
+        #[clap(long)]
+        yes_absolutely_reset: bool,
+    },
 }
 
 /// Entry point for `search-index` commands.
@@ -44,19 +48,21 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
             info!("Finished harvest in {:.2?}", before.elapsed());
             Ok(())
         }
-        SyncCommand::Reset => reset(conn).await,
+        SyncCommand::Reset { yes_absolutely_reset: yes } => reset(conn, yes).await,
     }
 }
 
-async fn reset(db: DbConnection) -> Result<()> {
-    bunt::println!(
-        "\n{$bold+red+intense}Are you sure you want to reset the sync status?{/$}\n\
-            That will cause all items to be resynced, which could take a long time \
-            and puts stress on your Opencast server.\n\
-            \n\
-            Type 'yes' to reset the sync status."
-    );
-    crate::cmd::prompt_for_yes()?;
+async fn reset(db: DbConnection, yes: bool) -> Result<()> {
+    if !yes {
+        bunt::println!(
+            "\n{$bold+red+intense}Are you sure you want to reset the sync status?{/$}\n\
+                That will cause all items to be resynced, which could take a long time \
+                and puts stress on your Opencast server.\n\
+                \n\
+                Type 'yes' to reset the sync status."
+        );
+        crate::cmd::prompt_for_yes()?;
+    }
 
     db.execute(
         "update sync_status set harvested_until = (timestamp '1970-01-01 00:00:00')",
