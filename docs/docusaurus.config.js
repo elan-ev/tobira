@@ -14,29 +14,25 @@ const config = {
         locales: ["en"],
     },
 
-    presets: [
-        [
-            "classic",
-            /** @type {import("@docusaurus/preset-classic").Options} */
-            ({
-                docs: {
-                    routeBasePath: "/",
-                },
-                blog: false,
-            }),
-        ],
-    ],
-
-    themes: [
-        [
-            require.resolve("@easyops-cn/docusaurus-search-local"),
-            {
-                hashed: true,
-                indexBlog: false,
-                docsRouteBasePath: "/",
+    presets: [[
+        "classic",
+        /** @type {import("@docusaurus/preset-classic").Options} */
+        ({
+            docs: {
+                routeBasePath: "/",
             },
-        ],
-    ],
+            blog: false,
+        }),
+    ]],
+
+    themes: [[
+        require.resolve("@easyops-cn/docusaurus-search-local"),
+        {
+            hashed: true,
+            indexBlog: false,
+            docsRouteBasePath: "/",
+        },
+    ]],
 
     themeConfig:
         /** @type {import("@docusaurus/preset-classic").ThemeConfig} */
