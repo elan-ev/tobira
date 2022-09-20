@@ -58,7 +58,7 @@ const config = {
             prism: {
                 theme: require("prism-react-renderer/themes/nightOwlLight"),
                 darkTheme: require("prism-react-renderer/themes/palenight"),
-                additionalLanguages: ["toml", "nginx"],
+                additionalLanguages: ["toml", "nginx", "systemd"],
             },
         }),
 };
