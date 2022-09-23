@@ -14,6 +14,7 @@ import { ManageSingleVideoRoute } from "./routes/manage/Video/Single";
 import { UploadRoute } from "./routes/Upload";
 import { SearchRoute } from "./routes/Search";
 import { InvalidUrlRoute } from "./routes/InvalidUrl";
+import { EmbedVideoRoute } from "./routes/Embed";
 
 
 
@@ -44,6 +45,7 @@ const {
         UploadRoute,
         AddChildRoute,
         ManageRealmContentRoute,
+        EmbedVideoRoute,
     ],
 });
 
