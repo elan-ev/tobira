@@ -5,7 +5,7 @@ import { HiOutlineStatusOffline } from "react-icons/hi";
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 
 import { MAIN_PADDING } from "../../layout/Root";
-import { match } from "../../util";
+import { match, useForceRerender } from "../../util";
 import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
 import { RelativeDate } from "../time";
@@ -14,9 +14,6 @@ import PaellaPlayer from "./Paella";
 
 export type PlayerProps = {
     event: PlayerEvent;
-
-    /** A function to execute when an event goes from pending to live or from live to ended. */
-    onEventStateChange: () => void;
 
     className?: string;
 };
@@ -50,9 +47,10 @@ export type Track = {
  * we might have multiple players in the future again. That's the reason for
  * leaving a bit of the "dispatch" logic in place.
  */
-export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange, className }) => {
+export const Player: React.FC<PlayerProps> = ({ event, className }) => {
     const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
     const { startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
+    const rerender = useForceRerender();
 
     // When the livestream starts or ends, rerender the parent. We add some
     // extra time (500ms) to be sure the stream is actually already running by
@@ -60,10 +58,10 @@ export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange, class
     useEffect(() => {
         const handles: ReturnType<typeof setTimeout>[] = [];
         if (event.isLive && hasStarted === false) {
-            handles.push(setTimeout(onEventStateChange, startTime.getTime() - Date.now() + 500));
+            handles.push(setTimeout(rerender, startTime.getTime() - Date.now() + 500));
         }
         if (event.isLive && hasEnded === false) {
-            handles.push(setTimeout(onEventStateChange, endTime.getTime() - Date.now() + 500));
+            handles.push(setTimeout(rerender, endTime.getTime() - Date.now() + 500));
         }
         return () => handles.forEach(clearTimeout);
     });
