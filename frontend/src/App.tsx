@@ -99,7 +99,7 @@ class GlobalErrorBoundary
         return (
             <div css={{
                 margin: "auto",
-                marginTop: "5vh",
+                paddingTop: "5vh",
                 width: 400,
                 maxWidth: "95%",
                 fontFamily: "var(--main-font), sans-serif",
