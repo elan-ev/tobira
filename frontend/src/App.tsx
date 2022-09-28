@@ -98,7 +98,7 @@ class GlobalErrorBoundary
         // design should convey most of the information anyway.
         return (
             <div css={{
-                margin: "0 auto",
+                margin: "auto",
                 marginTop: "5vh",
                 width: 400,
                 maxWidth: "95%",
