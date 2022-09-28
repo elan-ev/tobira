@@ -1,5 +1,7 @@
 import React, { ReactNode, useContext, useState } from "react";
 
+import { bug } from "../util/err";
+
 
 type MenuState = "closed" | "burger" | "search";
 type SetMenuState = React.Dispatch<React.SetStateAction<MenuState>>;
@@ -21,9 +23,9 @@ class Menu {
     }
 }
 
-const MenuContext = React.createContext<Menu>(new Menu("closed", () => {
-    throw Error("damn");
-}));
+const MenuContext = React.createContext<Menu>(new Menu("closed", () => (
+    bug("missing menu state context provider")
+)));
 export const useMenu = (): Menu => useContext(MenuContext);
 
 export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
