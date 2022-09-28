@@ -12,7 +12,6 @@ import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
 
 
-
 type Props = {
     initialRoute: MatchedRoute;
 };
