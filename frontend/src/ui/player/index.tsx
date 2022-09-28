@@ -193,24 +193,22 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
     const { t } = useTranslation();
 
     return (
-        <PlayerContainer
-            aspectRatio={props.aspectRatio}
-            css={{
-                backgroundColor: "var(--grey20)",
-                color: "white",
-                padding: 8,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "5%",
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    "& > *": {
-                        transform: "scale(0.8)",
-                    },
+        <div css={{
+            height: "100%",
+            backgroundColor: "var(--grey20)",
+            color: "white",
+            padding: 8,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "5%",
+            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                "& > *": {
+                    transform: "scale(0.8)",
                 },
-            }}
-        >
+            },
+        }}>
             <div css={{
                 textAlign: "center",
                 "& > svg": {
@@ -241,6 +239,6 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
                     </Trans>
                 </div>
             )}
-        </PlayerContainer>
+        </div>
     );
 };
