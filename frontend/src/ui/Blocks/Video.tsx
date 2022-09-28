@@ -1,6 +1,6 @@
 import { graphql, useFragment } from "react-relay";
 
-import { Player } from "../player";
+import { InlinePlayer } from "../player";
 import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { Card } from "../Card";
@@ -52,7 +52,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     return <>
         {showTitle && <Title title={event.title} />}
         {isSynced(event)
-            ? <Player event={event} css={{ width: 800 }} />
+            ? <InlinePlayer event={event} css={{ width: 800 }} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
     </>;
 };

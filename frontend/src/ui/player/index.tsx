@@ -47,8 +47,7 @@ export type Track = {
  * we might have multiple players in the future again. That's the reason for
  * leaving a bit of the "dispatch" logic in place.
  */
-export const Player: React.FC<PlayerProps> = ({ event, className }) => {
-    const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
+export const Player: React.FC<PlayerProps> = ({ event }) => {
     const { startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
     const rerender = useForceRerender();
 
@@ -66,24 +65,51 @@ export const Player: React.FC<PlayerProps> = ({ event, className }) => {
         return () => handles.forEach(clearTimeout);
     });
 
+    return <Suspense fallback={<PlayerFallback image={event.syncedData.thumbnail} />}>
+        {event.isLive && (hasStarted === false || hasEnded === true)
+            ? <LiveEventPlaceholder {...{
+                ...hasStarted === false
+                    ? { mode: "pending", startTime }
+                    : { mode: "ended" },
+            }} />
+            : <LoadPaellaPlayer
+                title={event.title}
+                duration={event.syncedData.duration}
+                isLive={event.isLive}
+                tracks={event.syncedData.tracks}
+            />}
+    </Suspense>;
+};
+
+/**
+ * A more constrained version of the player component for use in normal page flow.
+ * You probably want this one.
+ */
+export const InlinePlayer: React.FC<PlayerProps> = ({ event, className }) => {
+    const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
+
     return (
-        <PlayerContainer {...{ className, aspectRatio }}>
-            <Suspense fallback={<PlayerFallback image={event.syncedData.thumbnail} />}>
-                {event.isLive && (hasStarted === false || hasEnded === true)
-                    ? <LiveEventPlaceholder {...{
-                        aspectRatio,
-                        ...hasStarted === false
-                            ? { mode: "pending", startTime }
-                            : { mode: "ended" },
-                    }} />
-                    : <LoadPaellaPlayer
-                        title={event.title}
-                        duration={event.syncedData.duration}
-                        isLive={event.isLive}
-                        tracks={event.syncedData.tracks}
-                    />}
-            </Suspense>
-        </PlayerContainer>
+        <div className={className} css={{
+            // We want to make sure that the player does not take up all the
+            // vertical and horizontal page, as this could make scrolling hard.
+            // And if users want that, there is a fullscreen mode for a reason.
+            // So here we just say: there should be always 10% + 80px of
+            // vertical space left (not taken up by the player). The height of
+            // the players is actually best controlled by setting the width.
+            "--ideal-max-width": `calc((90vh - 80px) * ${aspectRatio[0] / aspectRatio[1]})`,
+            maxWidth: "min(100%, var(--ideal-max-width))",
+            minWidth: "320px",
+            aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
+
+            // If the player gets too small, the controls are pretty crammed, so
+            // we use all available width.
+            "@media (max-width: 380px)": {
+                margin: `0 -${MAIN_PADDING}px`,
+                maxWidth: `min(100% + ${2 * MAIN_PADDING}px, var(--ideal-max-width))`,
+            },
+        }}>
+            <Player event={event} />
+        </div>
     );
 };
 
@@ -99,37 +125,6 @@ export const getPlayerAspectRatio = (tracks: readonly Track[]): [number, number]
         ? default_
         : tracks[0].resolution as [number, number] ?? default_;
 };
-
-export type PlayerContainerProps = React.PropsWithChildren<{
-    className?: string;
-    aspectRatio: [number, number];
-}>;
-
-export const PlayerContainer: React.FC<PlayerContainerProps> = ({
-    className,
-    aspectRatio,
-    children,
-}) => (
-    <div className={className} css={{
-        // We want to make sure that the player does not take up all the
-        // vertical and horizontal page, as this could make scrolling hard.
-        // And if users want that, there is a fullscreen mode for a reason.
-        // So here we just say: there should be always 10% + 80px of
-        // vertical space left (not taken up by the player). The height of
-        // the players is actually best controlled by setting the width.
-        "--ideal-max-width": `calc((90vh - 80px) * ${aspectRatio[0] / aspectRatio[1]})`,
-        maxWidth: "min(100%, var(--ideal-max-width))",
-        minWidth: "320px",
-        aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
-
-        // If the player gets too small, the controls are pretty crammed, so
-        // we use all available width.
-        "@media (max-width: 380px)": {
-            margin: `0 -${MAIN_PADDING}px`,
-            maxWidth: `min(100% + ${2 * MAIN_PADDING}px, var(--ideal-max-width))`,
-        },
-    }}>{children}</div>
-);
 
 
 const LoadPaellaPlayer = PaellaPlayer;
@@ -182,12 +177,9 @@ export const isHlsTrack = (t: Track) =>
     t.mimetype === "application/x-mpegURL" || t.uri.endsWith(".m3u8");
 
 
-type LiveEventPlaceholderProps = {
-    aspectRatio: [number, number];
-} & (
-    { mode: "pending"; startTime: Date }
-    | { mode: "ended" }
-);
+type LiveEventPlaceholderProps =
+    | { mode: "pending"; startTime: Date }
+    | { mode: "ended" };
 
 const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
     const { t } = useTranslation();

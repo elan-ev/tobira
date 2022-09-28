@@ -8,7 +8,7 @@ import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { Player } from "../ui/player";
+import { InlinePlayer } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
@@ -278,7 +278,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-        <Player event={event} css={{ margin: "0 auto" }} />
+        <InlinePlayer event={event} css={{ margin: "0 auto" }} />
         <Metadata id={event.id} event={event} />
 
         <div css={{ height: 80 }} />
