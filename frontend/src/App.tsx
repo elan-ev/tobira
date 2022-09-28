@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense } from "react";
+import React, { ReactNode } from "react";
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
@@ -8,7 +8,6 @@ import { GlobalStyle } from "./GlobalStyle";
 import { ActiveRoute, Router } from "./router";
 import { MatchedRoute } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
-import { InitialLoading } from "./layout/Root";
 import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
 
@@ -24,12 +23,12 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
             <RelayEnvironmentProvider {...{ environment }}>
                 <GlobalStyle />
                 <Router initialRoute={initialRoute}>
-                    <APIWrapper>
+                    <GraphQLErrorBoundary>
                         <MenuProvider>
                             <LoadingIndicator />
                             <ActiveRoute />
                         </MenuProvider>
-                    </APIWrapper>
+                    </GraphQLErrorBoundary>
                 </Router>
             </RelayEnvironmentProvider>
         </GlobalErrorBoundary>
@@ -55,15 +54,6 @@ const SilenceEmotionWarnings: React.FC<{ children: ReactNode }> = ({ children })
 
     return <CacheProvider value={cache}>{children}</CacheProvider>;
 };
-
-const APIWrapper: React.FC<{ children: ReactNode }> = ({ children }) => (
-    <GraphQLErrorBoundary>
-        <Suspense fallback={<InitialLoading />}>
-            {children}
-        </Suspense>
-    </GraphQLErrorBoundary>
-);
-
 
 type GlobalErrorBoundaryState = {
     error?: unknown;
