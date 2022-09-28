@@ -2,11 +2,12 @@ import React, { ReactNode, useContext, useState } from "react";
 
 
 type MenuState = "closed" | "burger" | "search";
+type SetMenuState = React.Dispatch<React.SetStateAction<MenuState>>;
 class Menu {
     public readonly state: MenuState;
-    private readonly setState: (state: MenuState) => void;
+    private readonly setState: SetMenuState;
 
-    public constructor(state: MenuState, setState: (state: MenuState) => void) {
+    public constructor(state: MenuState, setState: SetMenuState) {
         this.state = state;
         this.setState = setState;
     }
@@ -16,7 +17,7 @@ class Menu {
     }
 
     public toggleMenu(menu: Exclude<MenuState, "closed">) {
-        this.setState(this.state === "closed" ? menu : "closed");
+        this.setState(state => state === "closed" ? menu : "closed");
     }
 }
 
