@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { FiAlertTriangle, FiFrown } from "react-icons/fi";
 import { Translation, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -7,6 +8,7 @@ import { unreachable } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
 import { Player, PlayerPlaceholder } from "../ui/player";
+import { Spinner } from "../ui/Spinner";
 import { MovingTruck } from "../ui/Waiting";
 import { b64regex } from "./util";
 import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
@@ -51,7 +53,17 @@ export const EmbedVideoRoute = makeRoute(url => {
     const queryRef = loadQuery<EmbedQuery>(query, { id: eventId });
 
     return {
-        render: () => <Embed queryRef={queryRef} />,
+        render: () => <Suspense fallback={
+            <PlayerPlaceholder>
+                <Spinner css={{
+                    "& > circle": {
+                        stroke: "white",
+                    },
+                }} />
+            </PlayerPlaceholder>
+        }>
+            <Embed queryRef={queryRef} />
+        </Suspense>,
         dispose: () => queryRef.dispose(),
     };
 });
