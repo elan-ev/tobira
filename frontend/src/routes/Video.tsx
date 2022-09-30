@@ -382,7 +382,7 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: { opencastId: id } }) => {
             "width: 100%;",
             "aspect-ratio: 16/9;",
         ].join(" ")}"`,
-        'name="Player"',
+        'name="Tobira Player"',
     ].join(" ")}></iframe>`;
 
     return <>
