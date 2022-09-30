@@ -377,17 +377,12 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: { opencastId: id } }) => {
 
     const embedCode = `<iframe ${[
         `src="${CONFIG.opencast.presentationNode}/play/${id}"`,
-        "allowfullscreen",
         `style="${[
             "border: none;",
             "width: 100%;",
             "aspect-ratio: 16/9;",
         ].join(" ")}"`,
         'name="Player"',
-        'scrolling="no"',
-        'frameborder="0"',
-        'marginheight="0px"',
-        'marginwidth="0px"',
     ].join(" ")}></iframe>`;
 
     return <>
