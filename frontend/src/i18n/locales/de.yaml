@@ -413,3 +413,5 @@ api-remote-errors:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
     not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
 
+embed:
+  not-supported: Diese Seite kann nicht eingebettet werden

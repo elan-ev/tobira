@@ -402,3 +402,5 @@ api-remote-errors:
     not-logged-in: You have to be logged in to perform this action.
     not-a-moderator: You have to be a moderator to perform this action.
 
+embed:
+  not-supported: This page can't be embedded

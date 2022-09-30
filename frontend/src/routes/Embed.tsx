@@ -1,5 +1,5 @@
 import { FiAlertTriangle, FiFrown } from "react-icons/fi";
-import { useTranslation } from "react-i18next";
+import { Translation, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import { isSynced } from "../util";
@@ -91,3 +91,24 @@ const Embed: React.FC<EmbedProps> = ({ queryRef }) => {
 
     return <Player event={event} />;
 };
+
+export const BlockEmbedRoute = makeRoute(url => {
+    // Only do something if we are embedded
+    if (window === window.top) {
+        return null;
+    }
+
+    // And only if this is a non-embeddable route
+    if (url.pathname.startsWith("/~embed/")) {
+        return null;
+    }
+
+    return {
+        render: () => <PlayerPlaceholder>
+            <FiAlertTriangle />
+            <div><Translation>
+                {t => t("embed.not-supported")}
+            </Translation></div>
+        </PlayerPlaceholder>,
+    };
+});
