@@ -369,15 +369,17 @@ type EmbedCodeProps = {
 };
 
 const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
-    opencastId: id,
+    id,
     syncedData: { tracks },
 } }) => {
     const { t } = useTranslation();
-
     const modal = useRef<ModalHandle>(null);
 
+    const target = new URL(location.href);
+    target.pathname = `/~embed/!v/${id.slice(2)}`;
+
     const embedCode = `<iframe ${[
-        `src="${CONFIG.opencast.presentationNode}/play/${id}"`,
+        `src="${target}"`,
         `style="${[
             "border: none;",
             "width: 100%;",
