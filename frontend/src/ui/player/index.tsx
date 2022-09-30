@@ -195,31 +195,28 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
             alignItems: "center",
             justifyContent: "center",
             gap: "5%",
+            textAlign: "center",
+            "& > svg": {
+                fontSize: 40,
+                margin: "16px 0",
+                strokeWidth: 1.5,
+            },
             [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                 "& > *": {
                     transform: "scale(0.8)",
                 },
             },
         }}>
-            <div css={{
-                textAlign: "center",
-                "& > svg": {
-                    fontSize: 40,
-                    margin: "16px 0",
-                    strokeWidth: 1.5,
-                },
-            }}>
-                {match(props.mode, {
-                    "pending": () => <>
-                        <FiClock />
-                        <div>{t("video.stream-not-started-yet")}</div>
-                    </>,
-                    "ended": () => <>
-                        <HiOutlineStatusOffline />
-                        <div>{t("video.stream-ended")}</div>
-                    </>,
-                })}
-            </div>
+            {match(props.mode, {
+                "pending": () => <>
+                    <FiClock />
+                    <div>{t("video.stream-not-started-yet")}</div>
+                </>,
+                "ended": () => <>
+                    <HiOutlineStatusOffline />
+                    <div>{t("video.stream-ended")}</div>
+                </>,
+            })}
             {props.mode === "pending" && (
                 <div css={{
                     backgroundColor: "black",
