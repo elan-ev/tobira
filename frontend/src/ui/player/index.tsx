@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from "react";
+import React, { PropsWithChildren, Suspense, useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { FiClock } from "react-icons/fi";
 import { HiOutlineStatusOffline } from "react-icons/hi";
@@ -177,6 +177,33 @@ export const isHlsTrack = (t: Track) =>
     t.mimetype === "application/x-mpegURL" || t.uri.endsWith(".m3u8");
 
 
+export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => (
+    <div css={{
+        height: "100%",
+        backgroundColor: "var(--grey20)",
+        color: "white",
+        padding: 8,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "5%",
+        textAlign: "center",
+        "& > svg": {
+            fontSize: 40,
+            margin: "16px 0",
+            strokeWidth: 1.5,
+        },
+        [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+            "& > *": {
+                transform: "scale(0.8)",
+            },
+        },
+    }}>
+        {children}
+    </div>
+);
+
 type LiveEventPlaceholderProps =
     | { mode: "pending"; startTime: Date }
     | { mode: "ended" };
@@ -184,50 +211,27 @@ type LiveEventPlaceholderProps =
 const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
     const { t } = useTranslation();
 
-    return (
-        <div css={{
-            height: "100%",
-            backgroundColor: "var(--grey20)",
-            color: "white",
-            padding: 8,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "5%",
-            textAlign: "center",
-            "& > svg": {
-                fontSize: 40,
-                margin: "16px 0",
-                strokeWidth: 1.5,
-            },
-            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                "& > *": {
-                    transform: "scale(0.8)",
-                },
-            },
-        }}>
-            {match(props.mode, {
-                "pending": () => <>
-                    <FiClock />
-                    <div>{t("video.stream-not-started-yet")}</div>
-                </>,
-                "ended": () => <>
-                    <HiOutlineStatusOffline />
-                    <div>{t("video.stream-ended")}</div>
-                </>,
-            })}
-            {props.mode === "pending" && (
-                <div css={{
-                    backgroundColor: "black",
-                    borderRadius: 4,
-                    padding: "8px 16px",
-                }}>
-                    <Trans i18nKey={"video.starts-in"}>
-                        Starts <RelativeDate date={props.startTime} />
-                    </Trans>
-                </div>
-            )}
-        </div>
-    );
+    return <PlayerPlaceholder>
+        {match(props.mode, {
+            "pending": () => <>
+                <FiClock />
+                <div>{t("video.stream-not-started-yet")}</div>
+            </>,
+            "ended": () => <>
+                <HiOutlineStatusOffline />
+                <div>{t("video.stream-ended")}</div>
+            </>,
+        })}
+        {props.mode === "pending" && (
+            <div css={{
+                backgroundColor: "black",
+                borderRadius: 4,
+                padding: "8px 16px",
+            }}>
+                <Trans i18nKey={"video.starts-in"}>
+                    Starts <RelativeDate date={props.startTime} />
+                </Trans>
+            </div>
+        )}
+    </PlayerPlaceholder>;
 };
