@@ -1,7 +1,10 @@
 import { i18n } from "i18next";
+import React from "react";
+import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { match } from ".";
+
 import { APIError, NotJson, ServerError } from "../relay";
+import { match } from ".";
 
 /**
  * Make sure that the parameter is `never`. This is particularly useful for
@@ -195,3 +198,71 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ failedAction, ...pro
         </p>}
     </>;
 };
+
+
+type GlobalErrorBoundaryState = {
+    error?: unknown;
+};
+
+type GlobalErrorBoundaryProps = {
+    children: ReactNode;
+};
+
+export class GlobalErrorBoundary
+    extends React.Component<GlobalErrorBoundaryProps, GlobalErrorBoundaryState> {
+    public constructor(props: GlobalErrorBoundaryProps) {
+        super(props);
+        this.state = { error: undefined };
+    }
+
+    public static getDerivedStateFromError(error: unknown): GlobalErrorBoundaryState {
+        return { error };
+    }
+
+    public render(): ReactNode {
+        const error = this.state.error;
+        if (!error) {
+            return this.props.children;
+        }
+
+        // We are using English here instead of translated strings in order to
+        // have fewer possibilities this component will error itself. If this
+        // last error catcher errors, that would be bad. And since users should
+        // not see this anyway, I think it's fine. Even if users don't
+        // understand English at all, "error" is usually understood and the
+        // design should convey most of the information anyway.
+        return (
+            <div css={{
+                margin: "auto",
+                paddingTop: "5vh",
+                width: 400,
+                maxWidth: "95%",
+                fontFamily: "var(--main-font), sans-serif",
+            }}>
+                <div css={{
+                    backgroundColor: "var(--danger-color, #b64235)",
+                    color: "var(--danger-color-bw-contrast, white)",
+                    borderRadius: 4,
+                    padding: 16,
+                }}>
+                    <h1 css={{ marginTop: 0, fontSize: 28 }}>Critical Error</h1>
+                    <p>
+                        A critical error has occured!
+                        The application cannot resume in this state.
+                        Please try refreshing the page.
+                        If that does not work, please contact your system administrator.
+                        Sorry for the inconvenience!
+                    </p>
+                </div>
+                <div css={{ marginTop: 32 }}>
+                    <h2 css={{ fontSize: 22 }}>Information for developers</h2>
+                    <pre>
+                        <code css={{ whiteSpace: "pre-wrap" }}>
+                            {String(error)}
+                        </code>
+                    </pre>
+                </div>
+            </div>
+        );
+    }
+}

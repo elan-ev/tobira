@@ -18,7 +18,7 @@ import { Spinner } from "../../../../ui/Spinner";
 import { AddButtons } from "./AddButtons";
 import { EditBlock } from "./Block";
 import { Breadcrumbs } from "../../../../ui/Breadcrumbs";
-import { useNavBlocker } from "../../../../util";
+import { useNavBlocker } from "../../../util";
 import { LinkButton } from "../../../../ui/Button";
 import { FiEye } from "react-icons/fi";
 import { PageTitle } from "../../../../layout/header/ui";

@@ -47,6 +47,7 @@ errors:
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
   unknown: Unbekannter Fehler.
   detailed-error-info: Detaillierte Fehlerinformationen für Entwickler
+  embedded: In der eingebetteten Anwendung ist ein Fehler aufgetreten
 
 not-found:
   page-not-found: Seite nicht gefunden

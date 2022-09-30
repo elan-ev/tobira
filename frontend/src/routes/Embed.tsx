@@ -1,10 +1,10 @@
-import { Suspense } from "react";
+import { ReactNode, Suspense } from "react";
 import { FiAlertTriangle, FiFrown } from "react-icons/fi";
 import { Translation, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import { isSynced } from "../util";
-import { unreachable } from "../util/err";
+import { GlobalErrorBoundary, unreachable } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
 import { Player, PlayerPlaceholder } from "../ui/player";
@@ -53,7 +53,7 @@ export const EmbedVideoRoute = makeRoute(url => {
     const queryRef = loadQuery<EmbedQuery>(query, { id: eventId });
 
     return {
-        render: () => <Suspense fallback={
+        render: () => <ErrorBoundary><Suspense fallback={
             <PlayerPlaceholder>
                 <Spinner css={{
                     "& > circle": {
@@ -63,7 +63,7 @@ export const EmbedVideoRoute = makeRoute(url => {
             </PlayerPlaceholder>
         }>
             <Embed queryRef={queryRef} />
-        </Suspense>,
+        </Suspense></ErrorBoundary>,
         dispose: () => queryRef.dispose(),
     };
 });
@@ -124,3 +124,18 @@ export const BlockEmbedRoute = makeRoute(url => {
         </PlayerPlaceholder>,
     };
 });
+
+class ErrorBoundary extends GlobalErrorBoundary {
+    public render(): ReactNode {
+        if (!this.state.error) {
+            return this.props.children;
+        }
+
+        return <PlayerPlaceholder>
+            <FiAlertTriangle />
+            <div><Translation>
+                {t => t("errors.embedded")}
+            </Translation></div>
+        </PlayerPlaceholder>;
+    }
+}

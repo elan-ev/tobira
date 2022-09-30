@@ -45,6 +45,7 @@ errors:
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
   detailed-error-info: Detailed error information for developers
+  embedded: An error occurred in the embedded application
 
 not-found:
   page-not-found: Page not found
