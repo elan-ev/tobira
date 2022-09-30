@@ -19,9 +19,9 @@ type Props = {
 
 export const App: React.FC<Props> = ({ initialRoute }) => (
     <SilenceEmotionWarnings>
+        <GlobalStyle />
         <GlobalErrorBoundary>
             <RelayEnvironmentProvider {...{ environment }}>
-                <GlobalStyle />
                 <Router initialRoute={initialRoute}>
                     <GraphQLErrorBoundary>
                         <MenuProvider>
