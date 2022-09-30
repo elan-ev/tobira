@@ -8,7 +8,7 @@ import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { InlinePlayer } from "../ui/player";
+import { getPlayerAspectRatio, InlinePlayer } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
@@ -365,12 +365,13 @@ const VideoTitle: React.FC<VideoTitleProps> = ({ title }) => (
 );
 
 type EmbedCodeProps = {
-    event: {
-        opencastId: string;
-    };
+    event: SyncedEvent;
 };
 
-const EmbedCode: React.FC<EmbedCodeProps> = ({ event: { opencastId: id } }) => {
+const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
+    opencastId: id,
+    syncedData: { tracks },
+} }) => {
     const { t } = useTranslation();
 
     const modal = useRef<ModalHandle>(null);
@@ -380,7 +381,7 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: { opencastId: id } }) => {
         `style="${[
             "border: none;",
             "width: 100%;",
-            "aspect-ratio: 16/9;",
+            `aspect-ratio: ${getPlayerAspectRatio(tracks).join("/")};`,
         ].join(" ")}"`,
         'name="Tobira Player"',
     ].join(" ")}></iframe>`;
