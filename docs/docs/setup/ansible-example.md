@@ -225,7 +225,7 @@ The scripts assume the following files to exist:
 
 ### Service files
 
-```toml title=roles/tobira/templates/tobira.service
+```systemd title=roles/tobira/templates/tobira.service
 [Unit]
 Description=Tobira
 Documentation=https://github.com/elan-ev/tobira
@@ -245,7 +245,7 @@ User=tobira
 WantedBy=multi-user.target
 ```
 
-```toml title=roles/tobira/templates/tobira-worker.service
+```systemd title=roles/tobira/templates/tobira-worker.service
 [Unit]
 Description=Tobira Worker
 Documentation=https://github.com/elan-ev/tobira
@@ -265,7 +265,7 @@ User=tobira
 WantedBy=multi-user.target
 ```
 
-```toml title=roles/tobira/templates/meili.service
+```systemd title=roles/tobira/templates/meili.service
 [Unit]
 Description=MeiliSearch
 Documentation=https://docs.meilisearch.com/
