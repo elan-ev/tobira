@@ -28,7 +28,7 @@ You can use `util/fixtures.sql` to get both kinds of data into the development d
 cargo run -- db script ../util/fixtures.sql
 ```
 
-To import video data, you can also sync with an Opencast instance that has the Tobira module enabled (there is currently no public one, sorry).
+To import video data, you can also sync with an Opencast instance that has the Tobira module enabled (e.g. `develop.opencast.org`).
 To do this, create a copy of `util/dev-config/config.toml` and call it `util/dev-config/sync-config.toml`.
 Change the sync section in that file to contain the correct credentials for your Opencast instance.
 Then run `cargo run -- sync run -c ../util/dev-config/sync-config.toml`.

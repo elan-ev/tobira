@@ -24,7 +24,7 @@ This is an overview over the Tobira architecture:
 ## Communication with Opencast
 
 To synchronize data between Opencast and Tobira, unfortunately, a new Opencast API had to be added.
-This is implemented in the `tobira` Opencast module, which is being developed [in this repository](https://github.com/elan-ev/opencast-tobira/).
+This is implemented in the `tobira` Opencast module, which is included in Opencast starting with version 12.3.
 That module currently provides the `/tobira/harvest` API.
 It takes two GET parameters: `since` (timestamp) and `preferredAmount`.
 The `since` parameter allows to filter by events/series that have been modified after a given timestamp, thus allowing Tobira to incrementally get updates without refetching all data.
