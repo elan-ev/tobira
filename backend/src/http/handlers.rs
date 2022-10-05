@@ -1,4 +1,4 @@
-use hyper::{Body, Method, StatusCode};
+use hyper::{Body, Method, StatusCode, http::HeaderValue};
 use std::{
     mem,
     sync::Arc,
@@ -80,13 +80,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
         // information that isn't already exposed by the API itself.
-        "/~graphiql" => juniper_hyper::graphiql("/graphql", None).await,
-
-        // Listing all potential routes here is duplication of routing logic and not really
-        // all that useful. So for now at least, we just assume all non-asset requests
-        // to `/~*` are fine.
-        path if path.starts_with("/~") => ctx.assets.serve_index(StatusCode::OK, &ctx.config).await,
-
+        "/~graphiql" => juniper_hyper::graphiql("/graphql", None).await.make_noindex(true),
 
         // Currently we just reply with our `index.html` to everything else.
         // That's of course not optimal because for many paths, our frontend
@@ -101,7 +95,15 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // duplicate logic. So yeah:
         //
         // TODO: fix that at some point ^
-        _ => ctx.assets.serve_index(StatusCode::OK, &ctx.config).await,
+        _ => {
+            let noindex_prefixes = ["/!", "/~search", "/~manage"];
+            let noindex = noindex_prefixes.iter().any(|prefix| path.starts_with(prefix));
+
+            ctx.assets
+                .serve_index(StatusCode::OK, &ctx.config)
+                .await
+                .make_noindex(noindex)
+        }
     }
 }
 
@@ -306,5 +308,19 @@ impl CommonHeadersExt for hyper::http::response::Builder {
         ");
 
         self.header("Content-Security-Policy", value)
+    }
+}
+
+trait MakeNoindexExt {
+    fn make_noindex(self, noindex: bool) -> Self;
+}
+
+impl MakeNoindexExt for hyper::Response<hyper::Body> {
+    /// Adds the `x-robots-tag: noindex` header if `noindex` is true.
+    fn make_noindex(mut self, noindex: bool) -> Self {
+        if noindex {
+            self.headers_mut().append("x-robots-tag", HeaderValue::from_static("noindex"));
+        }
+        self
     }
 }
