@@ -31,6 +31,7 @@ export const ManageRoute = makeRoute(url => {
 
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={() => <ManageNav key={1} active={PATH} />}
             render={() => <Manage />}
         />,

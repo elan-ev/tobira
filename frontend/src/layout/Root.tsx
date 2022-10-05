@@ -13,6 +13,7 @@ import { userDataFragment, UserProvider } from "../User";
 import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
+import { useNoindexTag } from "../util";
 
 
 export const MAIN_PADDING = 16;
@@ -135,6 +136,8 @@ type RootLoaderProps<Q extends QueryWithUserData> = {
     queryRef: PreloadedQuery<Q>;
     nav: (data: Q["response"]) => NavItems;
     render: (data: Q["response"]) => JSX.Element;
+    /** If set to `true`, a `<meta name="robots" content="noindex">` tag is added. */
+    noindex?: boolean;
 };
 
 /** Entry point for almost all routes: loads the GraphQL query and renders the main page layout */
@@ -143,7 +146,9 @@ export const RootLoader = <Q extends QueryWithUserData>({
     queryRef,
     nav,
     render,
+    noindex = false,
 }: RootLoaderProps<Q>) => {
+    useNoindexTag(noindex);
     const data = usePreloadedQuery(query, queryRef);
     const userData = useFragment(userDataFragment, data);
 

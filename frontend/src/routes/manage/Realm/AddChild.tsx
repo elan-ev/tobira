@@ -44,6 +44,7 @@ export const AddChildRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={data => data.parent
                 ? [
                     <Nav key="main-nav" fragRef={data.parent} />,

@@ -163,6 +163,7 @@ const matchedDirectRoute = (
 ): MatchedRoute => ({
     render: () => <RootLoader
         {... { query, queryRef }}
+        noindex
         nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
         render={({ event, realm }) => !event
             ? <NotFound kind="video" />
