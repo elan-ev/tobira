@@ -3,7 +3,7 @@ import { graphql } from "react-relay";
 
 import { RootLoader } from "../layout/Root";
 import { Link } from "../router";
-import { match } from "../util";
+import { match, useNoindexTag } from "../util";
 import { loadQuery } from "../relay";
 import { NotFoundQuery } from "./__generated__/NotFoundQuery.graphql";
 import { FiFrown } from "react-icons/fi";
@@ -40,6 +40,14 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
         "video": () => t("not-found.video-not-found"),
         "series": () => t("not-found.series-not-found"),
     });
+
+    // Ideally our backend would respond with 404 here, but that's not
+    // implemented yet and takes a bit of effort. For SEO it helps if we declare
+    // this page as noindex. See Google's advice on "soft 404" in SPAs:
+    //
+    // eslint-disable-next-line max-len
+    // https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics#avoid-soft-404s
+    useNoindexTag();
 
     return <>
         <FiFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
