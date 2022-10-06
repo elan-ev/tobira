@@ -1,50 +1,69 @@
 use deadpool_postgres::Pool;
-use prometheus_client::{metrics::gauge::Gauge, registry::{Registry, Unit}, encoding::text::encode};
+use prometheus_client::{
+    metrics::{gauge::Gauge, counter::Counter, family::Family},
+    registry::{Registry, Unit},
+    encoding::text::{encode, Encode, SendSyncEncodeMetric},
+};
 
 
 
 struct MetricDesc {
     name: &'static str,
     help: &'static str,
-    unit: Unit,
+    unit: Option<Unit>,
 }
 
 const SYNC_LAG: MetricDesc = MetricDesc {
     name: "sync_lag",
     help: "Number of seconds which the Tobira database is behind the Opencast data",
-    unit: Unit::Seconds,
+    unit: Some(Unit::Seconds),
 };
 const PROC_USS : MetricDesc = MetricDesc {
     name: "proc_uss",
     help: "Unique Set Size (memory exclusively allocated for Tobira)",
-    unit: Unit::Bytes,
+    unit: Some(Unit::Bytes),
 };
 const PROC_PSS : MetricDesc = MetricDesc {
     name: "proc_pss",
     help: "Proportional Set Size",
-    unit: Unit::Bytes,
+    unit: Some(Unit::Bytes),
 };
 const PROC_RSS : MetricDesc = MetricDesc {
     name: "proc_rss",
     help: "Resident Set Size",
-    unit: Unit::Bytes,
+    unit: Some(Unit::Bytes),
 };
 const PROC_SHARED_MEMORY : MetricDesc = MetricDesc {
     name: "proc_shared_memory",
     help: "Shared memory (memory shared with other processes)",
-    unit: Unit::Bytes,
+    unit: Some(Unit::Bytes),
+};
+const HTTP_REQUESTS : MetricDesc = MetricDesc {
+    name: "http_requests",
+    help: "Number of incoming HTTP requests",
+    unit: None,
 };
 
 
-pub(crate) struct Metrics {}
+pub(crate) struct Metrics {
+    http_requests: Family<HttpReqCategory, Counter>,
+}
 
 impl Metrics {
     pub(crate) fn new() -> Self {
-        Self {}
+        Self {
+            http_requests: <Family<HttpReqCategory, Counter>>::default(),
+        }
+    }
+
+    pub(crate) fn register_http_req(&self, category: HttpReqCategory) {
+        self.http_requests.get_or_create(&category).inc();
     }
 
     pub(crate) async fn gather_and_encode(&self, db_pool: &Pool) -> Vec<u8> {
         let mut reg = <Registry>::default();
+
+        add_any(&mut reg, HTTP_REQUESTS, Box::new(self.http_requests.clone()));
 
         // Information from the DB.
         if let Ok(db) = db_pool.get().await {
@@ -73,16 +92,20 @@ impl Metrics {
     }
 }
 
+fn add_any(reg: &mut Registry, metric: MetricDesc, value: Box<dyn SendSyncEncodeMetric>) {
+    let name = format!("tobira_{}", metric.name);
+    match metric.unit {
+        Some(unit) => reg.register_with_unit(name, metric.help, unit, value),
+        None => reg.register(name, metric.help, value),
+    }
+}
+
 fn add_gauge(reg: &mut Registry, metric: MetricDesc, value: u64) {
     let gauge = <Gauge>::default();
     gauge.set(value);
-    reg.register_with_unit(
-        format!("tobira_{}", metric.name),
-        metric.help,
-        metric.unit,
-        Box::new(gauge),
-    );
+    add_any(reg, metric, Box::new(gauge));
 }
+
 
 #[derive(Debug)]
 struct MemInfo {
@@ -115,5 +138,41 @@ impl MemInfo {
         }
 
         Some(out)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub(crate) enum HttpReqCategory {
+    /// `POST /graphql`
+    GraphQL,
+    /// `POST /~session`
+    Login,
+    /// `DELETE /~session`
+    Logout,
+    /// `GET /~assets/*`
+    Assets,
+    /// `GET /~metrics`
+    Metrics,
+    /// Everything else that ends up serving our index HTML (the app basically).
+    App,
+    /// Everything else
+    Other,
+}
+
+impl Encode for HttpReqCategory {
+    fn encode(&self, writer: &mut dyn std::io::Write) -> Result<(), std::io::Error> {
+        let s = match self {
+            HttpReqCategory::GraphQL => b"graphql" as &[_],
+            HttpReqCategory::Login => b"login",
+            HttpReqCategory::Logout => b"logout",
+            HttpReqCategory::Assets => b"assets",
+            HttpReqCategory::Metrics => b"metrics",
+            HttpReqCategory::App => b"app",
+            HttpReqCategory::Other => b"other",
+        };
+        writer.write_all(b"category=\"")?;
+        writer.write_all(s)?;
+        writer.write_all(b"\"")?;
+        Ok(())
     }
 }

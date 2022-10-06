@@ -5,7 +5,14 @@ use std::{
     time::Instant,
 };
 
-use crate::{api, auth::{self, AuthContext}, Config, db::{self, Transaction}, prelude::*};
+use crate::{
+    api,
+    auth::{self, AuthContext},
+    Config,
+    db::{self, Transaction},
+    metrics::HttpReqCategory,
+    prelude::*,
+};
 use super::{Context, Request, Response, response};
 
 
@@ -32,16 +39,24 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
     match path {
         // Paths for which POST requests are allowed
-        "/graphql" if method == Method::POST
-            => handle_api(req, &ctx).await.unwrap_or_else(|r| r),
-        "/~session" if method == Method::POST
-            => auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r),
-        "/~session" if method == Method::DELETE
-            => auth::handle_logout(req, &ctx).await,
+        "/graphql" if method == Method::POST => {
+            ctx.metrics.register_http_req(HttpReqCategory::GraphQL);
+            handle_api(req, &ctx).await.unwrap_or_else(|r| r)
+        },
+        "/~session" if method == Method::POST => {
+            ctx.metrics.register_http_req(HttpReqCategory::Login);
+            auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r)
+        },
+        "/~session" if method == Method::DELETE => {
+            ctx.metrics.register_http_req(HttpReqCategory::Logout);
+            auth::handle_logout(req, &ctx).await
+        },
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
         _ if method != Method::GET && method != Method::HEAD => {
+            ctx.metrics.register_http_req(HttpReqCategory::Other);
+
             // Do some helpful logging
             let note = if path == "/~login" {
                 " (You have to configure your reverse proxy to handle login \
@@ -60,6 +75,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         }
 
         "/~metrics" => {
+            ctx.metrics.register_http_req(HttpReqCategory::Metrics);
             let out = ctx.metrics.gather_and_encode(&ctx.db_pool).await;
             Response::builder()
                 // TODO: or should this be application/openmetrics-text?
@@ -70,6 +86,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         // Assets (JS files, fonts, ...)
         path if path.starts_with(ASSET_PREFIX) => {
+            ctx.metrics.register_http_req(HttpReqCategory::Assets);
             let asset_path = &path[ASSET_PREFIX.len()..];
             match ctx.assets.serve(asset_path).await {
                 Some(r) => r,
@@ -80,6 +97,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
         "/.well-known/jwks.json" => {
+            ctx.metrics.register_http_req(HttpReqCategory::Other);
             Response::builder()
                 .header("Content-Type", "application/json")
                 .body(Body::from(ctx.jwt.jwks().to_owned()))
@@ -89,7 +107,10 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
         // information that isn't already exposed by the API itself.
-        "/~graphiql" => juniper_hyper::graphiql("/graphql", None).await.make_noindex(true),
+        "/~graphiql" => {
+            ctx.metrics.register_http_req(HttpReqCategory::Other);
+            juniper_hyper::graphiql("/graphql", None).await
+        },
 
         // Currently we just reply with our `index.html` to everything else.
         // That's of course not optimal because for many paths, our frontend
@@ -105,6 +126,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         //
         // TODO: fix that at some point ^
         _ => {
+            ctx.metrics.register_http_req(HttpReqCategory::App);
             let noindex = path.starts_with("/!")
                 || (path.starts_with("/~") && !path.starts_with("/~about"));
 
