@@ -59,6 +59,15 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 .unwrap()
         }
 
+        "/~metrics" => {
+            let out = ctx.metrics.gather_and_encode(&ctx.db_pool).await;
+            Response::builder()
+                // TODO: or should this be application/openmetrics-text?
+                .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+                .body(out.into())
+                .unwrap()
+        },
+
         // Assets (JS files, fonts, ...)
         path if path.starts_with(ASSET_PREFIX) => {
             let asset_path = &path[ASSET_PREFIX.len()..];

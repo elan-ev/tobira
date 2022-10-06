@@ -20,7 +20,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{api, auth::JwtContext, config::Config, prelude::*, search};
+use crate::{api, auth::JwtContext, config::Config, metrics, prelude::*, search};
 use self::{
     assets::Assets,
     handlers::handle,
@@ -66,6 +66,7 @@ pub(crate) struct Context {
     pub(crate) config: Arc<Config>,
     pub(crate) jwt: Arc<JwtContext>,
     pub(crate) search: Arc<search::Client>,
+    pub(crate) metrics: Arc<metrics::Metrics>,
 }
 
 
@@ -86,6 +87,7 @@ pub(crate) async fn serve(
         jwt: Arc::new(JwtContext::new(&config.auth.jwt)?),
         config: Arc::new(config),
         search: Arc::new(search),
+        metrics: Arc::new(metrics::Metrics::new()),
     });
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching
