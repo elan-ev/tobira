@@ -52,6 +52,11 @@ const SEARCH_INDEX_QUEUE_LEN: MetricDesc = MetricDesc {
     help: "Number of items queued to be reindexed for search",
     unit: None,
 };
+const NUM_USER_SESSIONS: MetricDesc = MetricDesc {
+    name: "num_user_sessions",
+    help: "Number of user sessions in the DB",
+    unit: None,
+};
 const NUM_ITEMS: MetricDesc = MetricDesc {
     name: "num_items",
     help: "Number of different kinds of items in the DB",
@@ -100,6 +105,11 @@ impl Metrics {
             // Search index queue length
             if let Ok(row) = db.query_one("select count(*) from search_index_queue", &[]).await {
                 add_gauge(&mut reg, SEARCH_INDEX_QUEUE_LEN, row.get::<_, i64>(0) as u64);
+            }
+
+            // Number user sessions
+            if let Ok(row) = db.query_one("select count(*) from user_sessions", &[]).await {
+                add_gauge(&mut reg, NUM_USER_SESSIONS, row.get::<_, i64>(0) as u64);
             }
 
             // Number of important entities in DB
