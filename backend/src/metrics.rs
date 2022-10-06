@@ -1,6 +1,8 @@
+use std::time::Duration;
+
 use deadpool_postgres::Pool;
 use prometheus_client::{
-    metrics::{gauge::Gauge, counter::Counter, family::Family},
+    metrics::{gauge::Gauge, counter::Counter, family::Family, histogram::Histogram},
     registry::{Registry, Unit},
     encoding::text::{encode, Encode, SendSyncEncodeMetric},
 };
@@ -42,6 +44,11 @@ const HTTP_REQUESTS: MetricDesc = MetricDesc {
     help: "Number of incoming HTTP requests",
     unit: None,
 };
+const RESPONSE_TIMES: MetricDesc = MetricDesc {
+    name: "response_times",
+    help: "How long Tobira took to send a response",
+    unit: Some(Unit::Seconds),
+};
 const BUILD_INFO: MetricDesc = MetricDesc {
     name: "build_info",
     help: "Different information about the app",
@@ -63,15 +70,20 @@ const NUM_ITEMS: MetricDesc = MetricDesc {
     unit: None,
 };
 
+const RESPONSE_TIMES_BASKETS: [f64; 9] = [0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5];
 
 pub(crate) struct Metrics {
     http_requests: Family<HttpReqCategory, Counter>,
+    response_times: Family<HttpReqCategory, Histogram>,
 }
 
 impl Metrics {
     pub(crate) fn new() -> Self {
         Self {
             http_requests: <Family<HttpReqCategory, Counter>>::default(),
+            response_times: <Family<HttpReqCategory, Histogram>>::new_with_constructor(|| {
+                Histogram::new(RESPONSE_TIMES_BASKETS.into_iter())
+            }),
         }
     }
 
@@ -79,10 +91,15 @@ impl Metrics {
         self.http_requests.get_or_create(&category).inc();
     }
 
+    pub(crate) fn observe_response_time(&self, category: HttpReqCategory, duration: Duration) {
+        self.response_times.get_or_create(&category).observe(duration.as_secs_f64());
+    }
+
     pub(crate) async fn gather_and_encode(&self, db_pool: &Pool) -> Vec<u8> {
         let mut reg = <Registry>::default();
 
         add_any(&mut reg, HTTP_REQUESTS, Box::new(self.http_requests.clone()));
+        add_any(&mut reg, RESPONSE_TIMES, Box::new(self.response_times.clone()));
 
         // Add build information
         let info = <Family<Vec<(String, String)>, Gauge>>::default();

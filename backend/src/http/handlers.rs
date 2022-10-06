@@ -18,6 +18,7 @@ use super::{Context, Request, Response, response};
 
 /// This is the main HTTP entry point, called for each incoming request.
 pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
+    let time_incoming = Instant::now();
     trace!(
         "Incoming HTTP {:?} request to '{}'",
         req.method(),
@@ -37,25 +38,33 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
     const ASSET_PREFIX: &str = "/~assets/";
 
-    match path {
+    let category;
+    macro_rules! register_req {
+        ($category:expr) => {
+            ctx.metrics.register_http_req($category);
+            category = $category;
+        };
+    }
+
+    let response = match path {
         // Paths for which POST requests are allowed
         "/graphql" if method == Method::POST => {
-            ctx.metrics.register_http_req(HttpReqCategory::GraphQL);
+            register_req!(HttpReqCategory::GraphQL);
             handle_api(req, &ctx).await.unwrap_or_else(|r| r)
         },
         "/~session" if method == Method::POST => {
-            ctx.metrics.register_http_req(HttpReqCategory::Login);
+            register_req!(HttpReqCategory::Login);
             auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r)
         },
         "/~session" if method == Method::DELETE => {
-            ctx.metrics.register_http_req(HttpReqCategory::Logout);
+            register_req!(HttpReqCategory::Logout);
             auth::handle_logout(req, &ctx).await
         },
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
         _ if method != Method::GET && method != Method::HEAD => {
-            ctx.metrics.register_http_req(HttpReqCategory::Other);
+            register_req!(HttpReqCategory::Other);
 
             // Do some helpful logging
             let note = if path == "/~login" {
@@ -75,7 +84,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         }
 
         "/~metrics" => {
-            ctx.metrics.register_http_req(HttpReqCategory::Metrics);
+            register_req!(HttpReqCategory::Metrics);
             let out = ctx.metrics.gather_and_encode(&ctx.db_pool).await;
             Response::builder()
                 // TODO: or should this be application/openmetrics-text?
@@ -86,7 +95,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         // Assets (JS files, fonts, ...)
         path if path.starts_with(ASSET_PREFIX) => {
-            ctx.metrics.register_http_req(HttpReqCategory::Assets);
+            register_req!(HttpReqCategory::Assets);
             let asset_path = &path[ASSET_PREFIX.len()..];
             match ctx.assets.serve(asset_path).await {
                 Some(r) => r,
@@ -97,7 +106,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
         "/.well-known/jwks.json" => {
-            ctx.metrics.register_http_req(HttpReqCategory::Other);
+            register_req!(HttpReqCategory::Other);
             Response::builder()
                 .header("Content-Type", "application/json")
                 .body(Body::from(ctx.jwt.jwks().to_owned()))
@@ -108,7 +117,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // production as it does not hurt and in particular: does not expose any
         // information that isn't already exposed by the API itself.
         "/~graphiql" => {
-            ctx.metrics.register_http_req(HttpReqCategory::Other);
+            register_req!(HttpReqCategory::Other);
             juniper_hyper::graphiql("/graphql", None).await
         },
 
@@ -126,7 +135,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         //
         // TODO: fix that at some point ^
         _ => {
-            ctx.metrics.register_http_req(HttpReqCategory::App);
+            register_req!(HttpReqCategory::App);
             let noindex = path.starts_with("/!")
                 || (path.starts_with("/~") && !path.starts_with("/~about"));
 
@@ -135,7 +144,11 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 .await
                 .make_noindex(noindex)
         }
-    }
+    };
+    
+    let response_time = time_incoming.elapsed();
+    ctx.metrics.observe_response_time(category, response_time);
+    response
 }
 
 /// Replies with a 404 Not Found.
