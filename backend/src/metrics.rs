@@ -43,6 +43,11 @@ const HTTP_REQUESTS : MetricDesc = MetricDesc {
     help: "Number of incoming HTTP requests",
     unit: None,
 };
+const BUILD_INFO : MetricDesc = MetricDesc {
+    name: "build_info",
+    help: "Different information about the app",
+    unit: None,
+};
 
 
 pub(crate) struct Metrics {
@@ -64,6 +69,15 @@ impl Metrics {
         let mut reg = <Registry>::default();
 
         add_any(&mut reg, HTTP_REQUESTS, Box::new(self.http_requests.clone()));
+
+        // Add build information
+        let info = <Family<Vec<(String, String)>, Gauge>>::default();
+        info.get_or_create(&vec![
+            ("version".into(), crate::version::identifier()),
+            ("build_time_utc".into(), crate::version::build_time_utc().into()),
+            ("git_commit_hash".into(), crate::version::git_commit_hash().into()),
+        ]).set(1);
+        add_any(&mut reg, BUILD_INFO, Box::new(info));
 
         // Information from the DB.
         if let Ok(db) = db_pool.get().await {
