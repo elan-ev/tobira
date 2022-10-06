@@ -6,7 +6,6 @@ use prometheus_client::{
 };
 
 
-
 struct MetricDesc {
     name: &'static str,
     help: &'static str,
@@ -18,34 +17,44 @@ const SYNC_LAG: MetricDesc = MetricDesc {
     help: "Number of seconds which the Tobira database is behind the Opencast data",
     unit: Some(Unit::Seconds),
 };
-const PROC_USS : MetricDesc = MetricDesc {
+const PROC_USS: MetricDesc = MetricDesc {
     name: "proc_uss",
     help: "Unique Set Size (memory exclusively allocated for Tobira)",
     unit: Some(Unit::Bytes),
 };
-const PROC_PSS : MetricDesc = MetricDesc {
+const PROC_PSS: MetricDesc = MetricDesc {
     name: "proc_pss",
     help: "Proportional Set Size",
     unit: Some(Unit::Bytes),
 };
-const PROC_RSS : MetricDesc = MetricDesc {
+const PROC_RSS: MetricDesc = MetricDesc {
     name: "proc_rss",
     help: "Resident Set Size",
     unit: Some(Unit::Bytes),
 };
-const PROC_SHARED_MEMORY : MetricDesc = MetricDesc {
+const PROC_SHARED_MEMORY: MetricDesc = MetricDesc {
     name: "proc_shared_memory",
     help: "Shared memory (memory shared with other processes)",
     unit: Some(Unit::Bytes),
 };
-const HTTP_REQUESTS : MetricDesc = MetricDesc {
+const HTTP_REQUESTS: MetricDesc = MetricDesc {
     name: "http_requests",
     help: "Number of incoming HTTP requests",
     unit: None,
 };
-const BUILD_INFO : MetricDesc = MetricDesc {
+const BUILD_INFO: MetricDesc = MetricDesc {
     name: "build_info",
     help: "Different information about the app",
+    unit: None,
+};
+const SEARCH_INDEX_QUEUE_LEN: MetricDesc = MetricDesc {
+    name: "search_index_queue_len",
+    help: "Number of items queued to be reindexed for search",
+    unit: None,
+};
+const NUM_ITEMS: MetricDesc = MetricDesc {
+    name: "num_items",
+    help: "Number of different kinds of items in the DB",
     unit: None,
 };
 
@@ -80,12 +89,34 @@ impl Metrics {
         add_any(&mut reg, BUILD_INFO, Box::new(info));
 
         // Information from the DB.
+        // TODO: Do all of that in parallel?
         if let Ok(db) = db_pool.get().await {
             // Sync lag
             let sql = "select extract(epoch from now() - harvested_until) from sync_status";
             if let Ok(row) = db.query_one(sql, &[]).await {
                 add_gauge(&mut reg, SYNC_LAG, row.get::<_, f64>(0) as u64);
             }
+
+            // Search index queue length
+            if let Ok(row) = db.query_one("select count(*) from search_index_queue", &[]).await {
+                add_gauge(&mut reg, SEARCH_INDEX_QUEUE_LEN, row.get::<_, i64>(0) as u64);
+            }
+
+            // Number of important entities in DB
+            let item_count = <Family<ItemKind, Gauge>>::default();
+            let items = [
+                (ItemKind::Realms, "realms"),
+                (ItemKind::Events, "events"),
+                (ItemKind::Series, "series"),
+                (ItemKind::Blocks, "blocks"),
+            ];
+            for (kind, table) in items {
+                let query = format!("select count(*) from {table}");
+                if let Ok(row) = db.query_one(&query, &[]).await {
+                    item_count.get_or_create(&kind).set(row.get::<_, i64>(0) as u64);
+                }
+            }
+            add_any(&mut reg, NUM_ITEMS, Box::new(item_count));
         }
 
         // Process memory information.
@@ -185,6 +216,29 @@ impl Encode for HttpReqCategory {
             HttpReqCategory::Other => b"other",
         };
         writer.write_all(b"category=\"")?;
+        writer.write_all(s)?;
+        writer.write_all(b"\"")?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub(crate) enum ItemKind {
+    Realms,
+    Events,
+    Series,
+    Blocks,
+}
+
+impl Encode for ItemKind {
+    fn encode(&self, writer: &mut dyn std::io::Write) -> Result<(), std::io::Error> {
+        let s = match self {
+            ItemKind::Realms => b"realms" as &[_],
+            ItemKind::Events => b"events",
+            ItemKind::Series => b"series",
+            ItemKind::Blocks => b"blocks",
+        };
+        writer.write_all(b"item=\"")?;
         writer.write_all(s)?;
         writer.write_all(b"\"")?;
         Ok(())
