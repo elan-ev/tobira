@@ -19,24 +19,10 @@ const SYNC_LAG: MetricDesc = MetricDesc {
     help: "Number of seconds which the Tobira database is behind the Opencast data",
     unit: Some(Unit::Seconds),
 };
-const PROC_USS: MetricDesc = MetricDesc {
-    name: "proc_uss",
-    help: "Unique Set Size (memory exclusively allocated for Tobira)",
-    unit: Some(Unit::Bytes),
-};
-const PROC_PSS: MetricDesc = MetricDesc {
-    name: "proc_pss",
-    help: "Proportional Set Size",
-    unit: Some(Unit::Bytes),
-};
-const PROC_RSS: MetricDesc = MetricDesc {
-    name: "proc_rss",
-    help: "Resident Set Size",
-    unit: Some(Unit::Bytes),
-};
-const PROC_SHARED_MEMORY: MetricDesc = MetricDesc {
-    name: "proc_shared_memory",
-    help: "Shared memory (memory shared with other processes)",
+const PROCESS_MEMORY: MetricDesc = MetricDesc {
+    name: "process_memory",
+    help: "Memory usage of the Tobira process. pss = proportional set size, \
+        uss = unique set size, rss = resident set size, shared = shared memory.",
     unit: Some(Unit::Bytes),
 };
 const HTTP_REQUESTS: MetricDesc = MetricDesc {
@@ -148,10 +134,12 @@ impl Metrics {
 
         // Process memory information.
         if let Some(info) = MemInfo::gather() {
-            add_gauge(&mut reg, PROC_PSS, info.proportional);
-            add_gauge(&mut reg, PROC_USS, info.unique);
-            add_gauge(&mut reg, PROC_RSS, info.resident);
-            add_gauge(&mut reg, PROC_SHARED_MEMORY, info.shared);
+            let memory = <Family<MemoryKind, Gauge>>::default();
+            memory.get_or_create(&MemoryKind::Pss).set(info.proportional);
+            memory.get_or_create(&MemoryKind::Uss).set(info.unique);
+            memory.get_or_create(&MemoryKind::Rss).set(info.resident);
+            memory.get_or_create(&MemoryKind::Shared).set(info.shared);
+            add_any(&mut reg, PROCESS_MEMORY, Box::new(memory));
         }
 
 
@@ -266,6 +254,29 @@ impl Encode for ItemKind {
             ItemKind::Blocks => b"blocks",
         };
         writer.write_all(b"item=\"")?;
+        writer.write_all(s)?;
+        writer.write_all(b"\"")?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub(crate) enum MemoryKind {
+    Pss,
+    Uss,
+    Rss,
+    Shared,
+}
+
+impl Encode for MemoryKind {
+    fn encode(&self, writer: &mut dyn std::io::Write) -> Result<(), std::io::Error> {
+        let s = match self {
+            MemoryKind::Pss => b"pss" as &[_],
+            MemoryKind::Uss => b"uss",
+            MemoryKind::Rss => b"rss",
+            MemoryKind::Shared => b"shared",
+        };
+        writer.write_all(b"kind=\"")?;
         writer.write_all(s)?;
         writer.write_all(b"\"")?;
         Ok(())

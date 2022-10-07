@@ -461,46 +461,10 @@
             "uid": "7s5ppwVVk"
           },
           "editorMode": "builder",
-          "expr": "tobira_proc_pss_bytes",
-          "interval": "",
-          "legendFormat": "PSS",
-          "range": true,
-          "refId": "PSS (proportional set size)"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "7s5ppwVVk"
-          },
-          "editorMode": "builder",
-          "expr": "tobira_proc_uss_bytes",
-          "hide": false,
-          "legendFormat": "USS",
-          "range": true,
-          "refId": "USS (Unique set size)"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "7s5ppwVVk"
-          },
-          "editorMode": "builder",
-          "expr": "tobira_proc_shared_memory_bytes",
-          "hide": false,
-          "legendFormat": "Shared",
-          "range": true,
-          "refId": "Shared Memory"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "7s5ppwVVk"
-          },
-          "editorMode": "builder",
-          "expr": "tobira_proc_rss_bytes",
+          "expr": "tobira_process_memory_bytes",
           "hide": false,
           "interval": "",
-          "legendFormat": "RSS",
+          "legendFormat": "{{kind}}",
           "range": true,
           "refId": "A"
         }
@@ -606,41 +570,10 @@
         "type": "prometheus",
         "uid": "7s5ppwVVk"
       },
-      "description": "Tobira's user sessions, only useful if auth.mode is set to \"login-proxy\", i.e. if you're using Tobira's session management.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
           "thresholds": {
@@ -655,7 +588,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "none"
         },
         "overrides": []
       },
@@ -665,19 +599,23 @@
         "x": 0,
         "y": 19
       },
-      "id": 14,
+      "id": 18,
+      "maxDataPoints": 50,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "showUnfilled": false
       },
+      "pluginVersion": "9.1.6",
       "targets": [
         {
           "datasource": {
@@ -685,14 +623,38 @@
             "uid": "7s5ppwVVk"
           },
           "editorMode": "builder",
-          "expr": "tobira_num_user_sessions",
-          "legendFormat": "__auto",
+          "expr": "tobira_response_times_seconds_bucket{category=\"graphql\"}",
+          "format": "heatmap",
+          "interval": "",
+          "legendFormat": "{{le}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Num user sessions",
-      "type": "timeseries"
+      "title": "Reponse times (GraphQL API)",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "+Inf": "> 500ms",
+              "0.001": "≤ 1ms",
+              "0.0025": "≤ 2.5ms",
+              "0.005": "≤ 5ms",
+              "0.01": "≤ 10ms",
+              "0.025": "≤ 25ms",
+              "0.05": "≤ 50ms",
+              "0.1": "≤ 100ms",
+              "0.25": "≤ 250ms",
+              "0.5": "≤ 500ms",
+              "Time": ""
+            }
+          }
+        }
+      ],
+      "type": "bargauge"
     },
     {
       "datasource": {
@@ -820,7 +782,7 @@
         "x": 0,
         "y": 27
       },
-      "id": 18,
+      "id": 22,
       "maxDataPoints": 50,
       "options": {
         "displayMode": "gradient",
@@ -844,7 +806,7 @@
             "uid": "7s5ppwVVk"
           },
           "editorMode": "builder",
-          "expr": "tobira_response_times_seconds_bucket{category=\"graphql\"}",
+          "expr": "tobira_response_times_seconds_bucket{category=\"metrics\"}",
           "format": "heatmap",
           "interval": "",
           "legendFormat": "{{le}}",
@@ -852,7 +814,7 @@
           "refId": "A"
         }
       ],
-      "title": "Reponse times (GraphQL API)",
+      "title": "Reponse times (metrics)",
       "transformations": [
         {
           "id": "organize",
@@ -973,10 +935,41 @@
         "type": "prometheus",
         "uid": "7s5ppwVVk"
       },
+      "description": "Tobira's user sessions, only useful if auth.mode is set to \"login-proxy\", i.e. if you're using Tobira's session management.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -991,34 +984,29 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "none"
+          }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
+        "x": 0,
         "y": 35
       },
-      "id": 22,
-      "maxDataPoints": 50,
+      "id": 14,
       "options": {
-        "displayMode": "gradient",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
-        "showUnfilled": false
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "9.1.6",
       "targets": [
         {
           "datasource": {
@@ -1026,38 +1014,14 @@
             "uid": "7s5ppwVVk"
           },
           "editorMode": "builder",
-          "expr": "tobira_response_times_seconds_bucket{category=\"metrics\"}",
-          "format": "heatmap",
-          "interval": "",
-          "legendFormat": "{{le}}",
+          "expr": "tobira_num_user_sessions",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Reponse times (metrics)",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {},
-            "indexByName": {},
-            "renameByName": {
-              "+Inf": "> 500ms",
-              "0.001": "≤ 1ms",
-              "0.0025": "≤ 2.5ms",
-              "0.005": "≤ 5ms",
-              "0.01": "≤ 10ms",
-              "0.025": "≤ 25ms",
-              "0.05": "≤ 50ms",
-              "0.1": "≤ 100ms",
-              "0.25": "≤ 250ms",
-              "0.5": "≤ 500ms",
-              "Time": ""
-            }
-          }
-        }
-      ],
-      "type": "bargauge"
+      "title": "Num user sessions",
+      "type": "timeseries"
     }
   ],
   "refresh": "5s",
@@ -1068,13 +1032,13 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Tobira",
   "uid": "88jM2Q4Vz",
-  "version": 4,
+  "version": 5,
   "weekStart": ""
 }
