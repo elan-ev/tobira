@@ -1,3 +1,7 @@
+---
+sidebar_position: 10
+---
+
 # Login and Auth
 
 When it comes to authentication, Tobira is very flexible and works with basically any authentication system you might want to use.
