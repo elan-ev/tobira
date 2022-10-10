@@ -39,6 +39,7 @@ export const ManageVideosRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={() => <ManageNav key={1} active={PATH} />}
             render={data => !data.currentUser
                 ? <NotAuthorized />

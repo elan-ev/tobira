@@ -30,6 +30,7 @@ export const SearchRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={() => []}
             render={data => <SearchPage q={q} outcome={data.search} />}
         />,

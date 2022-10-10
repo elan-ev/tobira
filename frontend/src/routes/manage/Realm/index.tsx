@@ -43,6 +43,7 @@ export const ManageRealmRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={data => data.realm
                 ? [
                     <Nav key="main-nav" fragRef={data.realm} />,

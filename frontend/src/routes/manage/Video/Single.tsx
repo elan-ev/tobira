@@ -39,6 +39,7 @@ export const ManageSingleVideoRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={() => <BackLink />}
             render={data => data.event === null
                 ? <NotFound kind="video" />

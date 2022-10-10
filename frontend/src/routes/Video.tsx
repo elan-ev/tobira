@@ -14,7 +14,7 @@ import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
-import { currentRef, SyncedOpencastEntity, isSynced } from "../util";
+import { currentRef, SyncedOpencastEntity, isSynced, toIsoDuration } from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
@@ -163,6 +163,7 @@ const matchedDirectRoute = (
 ): MatchedRoute => ({
     render: () => <RootLoader
         {... { query, queryRef }}
+        noindex
         nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
         render={({ event, realm }) => !event
             ? <NotFound kind="video" />
@@ -251,11 +252,33 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
         .map(({ name, path }) => ({ label: name, link: path }));
 
+    const { hasStarted, hasEnded } = getEventTimeInfo(event);
+    const isCurrentlyLive = hasStarted === true && hasEnded === false;
 
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        name: event.title,
+        description: event.description,
+        thumbnailUrl: event.syncedData.thumbnail,
+        uploadDate: event.created,
+        duration: toIsoDuration(event.syncedData.duration),
+        ...event.isLive && event.syncedData.startTime && event.syncedData.endTime && {
+            publication: {
+                "@type": "BroadcastEvent",
+                isLiveBroadcast: isCurrentlyLive,
+                startDate: event.syncedData.startTime,
+                endDate: event.syncedData.endTime,
+            },
+        },
+        // TODO: Provide `contentUrl` or `embedUrl`? Google docs say one should,
+        // but it's not clear what for.
+    };
 
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
+        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         <Player event={event} css={{ margin: "0 auto" }} onEventStateChange={rerender} />
         <Metadata id={event.id} event={event} />
 

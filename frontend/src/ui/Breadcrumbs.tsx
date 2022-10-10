@@ -16,9 +16,22 @@ type Props = {
 
 export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
     const { t } = useTranslation();
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: path.map(({ label, link }, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: label,
+            item: new URL(link, document.baseURI).href,
+        })),
+    };
 
     return (
         <nav aria-label="breadcrumbs" css={{ overflowX: "auto", marginBottom: 16 }}>
+            {path.length > 0 && (
+                <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+            )}
             <BreadcrumbsContainer>
                 <li>
                     <Link to="/" css={{ lineHeight: 1, padding: 2, ...FOCUS_STYLE_INSET }}>

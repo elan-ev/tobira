@@ -40,6 +40,7 @@ export const DirectSeriesOCRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={data => <Nav fragRef={data.rootRealm} />}
             render={result => <SeriesPage seriesFrag={result.series} />}
         />,
@@ -70,6 +71,7 @@ export const DirectSeriesRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={data => <Nav fragRef={data.rootRealm} />}
             render={result => <SeriesPage seriesFrag={result.series} />}
         />,

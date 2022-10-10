@@ -202,3 +202,37 @@ export type SyncedOpencastEntity<T extends OpencastEntity> = T & {
 export const isSynced = <T extends OpencastEntity>(e: T): e is SyncedOpencastEntity<T> => (
     Boolean(e.syncedData)
 );
+
+/**
+ * Adds `<meta name="robots" content="noindex">` to the document `<head>` and
+ * removes it when the calling component gets unmounted. Does nothing if
+ * `false` is passed as argument.
+ */
+export const useNoindexTag = (noindex = true) => {
+    useEffect(() => {
+        if (!noindex) {
+            return () => {};
+        }
+
+        const tag = document.createElement("meta");
+        tag.setAttribute("name", "robots");
+        tag.setAttribute("content", "noindex");
+        document.head.appendChild(tag);
+
+        return () => {
+            document.head.removeChild(tag);
+        };
+    });
+};
+
+/** Formats the given number of milliseconds as ISO 8601 duration string, e.g. "PT3M47S" */
+export const toIsoDuration = (milliseconds: number): string => {
+    let acc = Math.floor(milliseconds / 1000);
+    const seconds = acc % 60;
+    acc = Math.floor(acc / 60);
+    const minutes = acc % 60;
+    acc = Math.floor(acc / 60);
+    const hours = acc;
+
+    return `PT${hours}H${minutes}M${seconds}S`;
+};
