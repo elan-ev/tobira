@@ -22,8 +22,9 @@ Tobira doesn't work with any Opencast instance out of the box.
 There are some requirements.
 
 - The Tobira Opencast module needs to be installed.
-  This is currently developed [here](https://github.com/elan-ev/opencast-tobira).
-  The module, in turn, requires at least Opencast 11.
+  This is included in Opencast starting with 12.3 (released 2022-09-21).
+  All Tobira releases specify which Opencast version they require.
+  If you are using an earlier Opencast, you have to manually include the module in the correct version.
 
 - No static file authorization.
   Tobira links to various assets (thumbnails, videos, ...) on Opencast's servers.
