@@ -30,6 +30,7 @@ const query = graphql`
                     duration
                     thumbnail
                     tracks { uri flavor mimetype resolution }
+                    captions { uri lang }
                 }
             }
         }

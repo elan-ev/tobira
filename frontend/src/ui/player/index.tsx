@@ -31,6 +31,7 @@ export type PlayerEvent = {
         endTime: string | null;
         duration: number;
         tracks: readonly Track[];
+        captions: readonly Caption[];
         thumbnail: string | null;
     };
 };
@@ -40,6 +41,11 @@ export type Track = {
     flavor: string;
     mimetype: string | null;
     resolution: readonly number[] | null;
+};
+
+export type Caption = {
+    uri: string;
+    lang: string | null;
 };
 
 /**
@@ -85,6 +91,7 @@ export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange }) => 
                     duration={event.syncedData.duration}
                     isLive={event.isLive}
                     tracks={event.syncedData.tracks}
+                    captions={event.syncedData.captions}
                 />}
         </Suspense>
     );
