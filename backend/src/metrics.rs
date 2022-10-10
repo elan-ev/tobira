@@ -37,7 +37,7 @@ const RESPONSE_TIMES: MetricDesc = MetricDesc {
 };
 const BUILD_INFO: MetricDesc = MetricDesc {
     name: "build_info",
-    help: "Different information about the app",
+    help: "Information about the app",
     unit: None,
 };
 const SEARCH_INDEX_QUEUE_LEN: MetricDesc = MetricDesc {
@@ -66,8 +66,8 @@ pub(crate) struct Metrics {
 impl Metrics {
     pub(crate) fn new() -> Self {
         Self {
-            http_requests: <Family<HttpReqCategory, Counter>>::default(),
-            response_times: <Family<HttpReqCategory, Histogram>>::new_with_constructor(|| {
+            http_requests: Default::default(),
+            response_times: Family::new_with_constructor(|| {
                 Histogram::new(RESPONSE_TIMES_BASKETS.into_iter())
             }),
         }

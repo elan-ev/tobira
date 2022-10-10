@@ -87,7 +87,6 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
             register_req!(HttpReqCategory::Metrics);
             let out = ctx.metrics.gather_and_encode(&ctx.db_pool).await;
             Response::builder()
-                // TODO: or should this be application/openmetrics-text?
                 .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
                 .body(out.into())
                 .unwrap()

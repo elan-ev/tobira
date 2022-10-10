@@ -7,7 +7,7 @@ sidebar_position: 11
 Tobira exposes metrics in the OpenMetrics format under `/~metrics` (on the same port as the main page runs).
 These metrics are tailored to Prometheus and Grafana, using things like "Histogram" from the Prometheus data model.
 The endpoint is public as it does not expose any sensitive information.
-If you want restrict access to it anyway, you have to do that via your reverse proxy.
+If you want to restrict access to it anyway, you have to do that via your reverse proxy.
 
 Connecting Prometheus to Tobira should be completely straight forward: just add a new target with the appropriate path and host.
 As a starting point for your Grafana dashboard, take a look at [this JSON file](https://github.com/elan-ev/tobira/blob/master/docs/docs/setup/deploy.md) which you can easily import.
