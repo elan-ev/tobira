@@ -13,7 +13,10 @@ use crate::{
         err::{self, ApiResult, invalid_input},
         model::{series::Series, realm::{Realm, REALM_JOINS}},
     },
-    db::{types::{EventTrack, EventState, Key, ExtraMetadata}, util::{impl_from_db, select}},
+    db::{
+        types::{EventTrack, EventState, Key, ExtraMetadata, EventCaption},
+        util::{impl_from_db, select},
+    },
     prelude::*,
     util::lazy_format,
 };
@@ -48,6 +51,7 @@ pub(crate) struct SyncedEventData {
     duration: i32,
     tracks: Vec<Track>,
     thumbnail: Option<String>,
+    captions: Vec<Caption>,
 }
 
 impl_from_db!(
@@ -57,7 +61,7 @@ impl_from_db!(
             id, state, series, opencast_id, is_live,
             title, description, duration, creators, thumbnail, metadata,
             created, updated, start_time, end_time,
-            tracks,
+            tracks, captions,
             read_roles, write_roles,
         },
     },
@@ -82,6 +86,10 @@ impl_from_db!(
                     duration: row.duration(),
                     thumbnail: row.thumbnail(),
                     tracks: row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect(),
+                    captions: row.captions::<Vec<EventCaption>>()
+                        .into_iter()
+                        .map(Caption::from)
+                        .collect(),
                 }),
                 EventState::Waiting => None,
             },
@@ -98,6 +106,12 @@ pub(crate) struct Track {
     // TODO: this should be `[i32; 2]` but the relevant patch is not released
     // yet: https://github.com/graphql-rust/juniper/pull/966
     resolution: Option<Vec<i32>>,
+}
+
+#[derive(Debug, GraphQLObject)]
+pub(crate) struct Caption {
+    uri: String,
+    lang: Option<String>,
 }
 
 impl Node for AuthorizedEvent {
@@ -434,6 +448,15 @@ impl From<EventTrack> for Track {
             flavor: src.flavor,
             mimetype: src.mimetype,
             resolution: src.resolution.map(Into::into),
+        }
+    }
+}
+
+impl From<EventCaption> for Caption {
+    fn from(src: EventCaption) -> Self {
+        Self {
+            uri: src.uri,
+            lang: src.lang,
         }
     }
 }

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-use crate::db::types::{EventTrack, ExtraMetadata};
+use crate::db::types::{EventTrack, ExtraMetadata, EventCaption};
 
 
 /// What the harvesting API returns.
@@ -29,6 +29,8 @@ pub(crate) enum HarvestItem {
         creators: Vec<String>,
         duration: i32,
         tracks: Vec<Track>,
+        #[serde(default)] // For backwards compatibility
+        captions: Vec<Caption>,
         thumbnail: Option<String>,
         acl: Acl,
         is_live: bool,
@@ -93,6 +95,22 @@ impl Into<EventTrack> for Track {
             flavor: self.flavor,
             mimetype: self.mimetype,
             resolution: self.resolution.map(Into::into),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Caption {
+    uri: String,
+    lang: Option<String>,
+}
+
+impl Into<EventCaption> for Caption {
+    fn into(self) -> EventCaption {
+        EventCaption {
+            uri: self.uri,
+            lang: self.lang,
         }
     }
 }
