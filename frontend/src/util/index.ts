@@ -227,11 +227,11 @@ export const useNoindexTag = (noindex = true) => {
 
 /** Formats the given number of milliseconds as ISO 8601 duration string, e.g. "PT3M47S" */
 export const toIsoDuration = (milliseconds: number): string => {
-    let acc = milliseconds / 1000;
+    let acc = Math.floor(milliseconds / 1000);
     const seconds = acc % 60;
-    acc /= 60;
+    acc = Math.floor(acc / 60);
     const minutes = acc % 60;
-    acc /= 60;
+    acc = Math.floor(acc / 60);
     const hours = acc;
 
     return `PT${hours}H${minutes}M${seconds}S`;
