@@ -13,7 +13,7 @@ import { HEADER_BASE_PADDING, PageTitle } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/Button";
 import { boxError } from "../ui/error";
-import { match, translatedConfig } from "../util";
+import { match, translatedConfig, useNoindexTag } from "../util";
 import { Spinner } from "../ui/Spinner";
 import { FiCheck, FiChevronLeft } from "react-icons/fi";
 import { Card } from "../ui/Card";
@@ -47,6 +47,7 @@ type Props = {
 };
 
 const Login: React.FC<Props> = ({ queryRef }) => {
+    useNoindexTag();
     const { t } = useTranslation();
     const { currentUser } = usePreloadedQuery(query, queryRef);
 

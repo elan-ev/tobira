@@ -96,8 +96,8 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         //
         // TODO: fix that at some point ^
         _ => {
-            let noindex_prefixes = ["/!", "/~search", "/~manage"];
-            let noindex = noindex_prefixes.iter().any(|prefix| path.starts_with(prefix));
+            let noindex = path.starts_with("/!")
+                || (path.starts_with("/~") && !path.starts_with("/~about"));
 
             ctx.assets
                 .serve_index(StatusCode::OK, &ctx.config)

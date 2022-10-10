@@ -35,6 +35,7 @@ export const UploadRoute = makeRoute(url => {
     return {
         render: () => <RootLoader
             {...{ query, queryRef }}
+            noindex
             nav={() => []}
             render={() => <Upload />}
         />,
