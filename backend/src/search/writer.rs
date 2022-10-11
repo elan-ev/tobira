@@ -14,6 +14,16 @@ use super::Client;
 /// just a bit of non-enforced semantic typing.
 pub(crate) struct MeiliWriter<'a>(&'a Client);
 
+impl<'a> MeiliWriter<'a> {
+    /// Create a `MeiliWriter` without acquiring an exclusive lock first.
+    /// This should only be used when you are absolutely sure this is okay to do,
+    /// i.e. when concurrent access during your operation is either irrelevant
+    /// or not expected.
+    pub(crate) fn without_lock(client: &'a Client) -> Self {
+        Self(client)
+    }
+}
+
 impl std::ops::Deref for MeiliWriter<'_> {
     type Target = Client;
     fn deref(&self) -> &Self::Target {

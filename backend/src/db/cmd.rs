@@ -8,14 +8,17 @@ use tokio_postgres::IsolationLevel;
 
 use secrecy::ExposeSecret;
 
-use crate::{prelude::*, util::Never, config::Config};
+use crate::{prelude::*, util::Never, config::Config, search::writer::MeiliWriter};
 use super::{Db, DbConfig, create_pool, query, migrations::unsafe_overwrite_migrations};
 
 
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum DbCommand {
     /// Removes all data and tables from the database. Also clears search index.
-    Clear,
+    Clear {
+        #[clap(flatten)]
+        options: ClearOptions,
+    },
 
     /// Runs an `.sql` script with the configured database connection.
     Script {
@@ -33,13 +36,23 @@ pub(crate) enum DbCommand {
     Console,
 
     /// Equivalent to `db clear` followed by `db migrate`.
-    Reset,
+    Reset {
+        #[clap(flatten)]
+        clear: ClearOptions,
+    },
 
     /// Updates the migrations scripts in the table `__db_migrations` to match
     /// the ones expected by this Tobira binary. Does not add new entries to
     /// the table, but might delete unknown migrations. This is intended for
     /// developers only, do not use if you don't know what you're doing!
     UnsafeOverwriteMigrations,
+}
+
+#[derive(Debug, clap::Args)]
+pub(crate) struct ClearOptions {
+    /// If specified, skips the "Are you sure?" question.
+    #[clap(long)]
+    pub(crate) yes_absolutely_clear_db: bool,
 }
 
 /// Entry point for `db` commands.
@@ -54,10 +67,11 @@ pub(crate) async fn run(cmd: &DbCommand, config: &Config) -> Result<()> {
 
     // Dispatch command
     match cmd {
-        DbCommand::Clear => clear(&mut db, config).await?,
+        DbCommand::Clear { options: ClearOptions { yes_absolutely_clear_db: yes } }
+            => clear(&mut db, config, *yes).await?,
         DbCommand::Migrate => super::migrate(&mut db).await?,
-        DbCommand::Reset => {
-            clear(&mut db, config).await?;
+        DbCommand::Reset { clear: ClearOptions { yes_absolutely_clear_db: yes } } => {
+            clear(&mut db, config, *yes).await?;
             super::migrate(&mut db).await?;
         }
         DbCommand::Script { script } => run_script(&db, &script).await?,
@@ -74,7 +88,7 @@ pub(crate) async fn run(cmd: &DbCommand, config: &Config) -> Result<()> {
 /// This also has a interactive check, asking the user to confirm the removal.
 /// If the user did not confirm and the database is not changed, `false` is
 /// returned; `true` otherwise.
-async fn clear(db: &mut Db, config: &Config) -> Result<()> {
+async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
     let tx = db.build_transaction()
         .isolation_level(IsolationLevel::Serializable)
         .start()
@@ -101,13 +115,15 @@ async fn clear(db: &mut Db, config: &Config) -> Result<()> {
         println!(" - {} ({} rows)", name, num_rows);
     }
 
-    println!();
-    println!("Are you sure you want to completely remove everything in this database \
-        and clear the search index? \
-        This completely drops the 'public' schema. \
-        Please double-check the server you are running this on!\n\
-        Type 'yes' to proceed to delete the data.");
-    crate::cmd::prompt_for_yes()?;
+    if !yes {
+        println!();
+        println!("Are you sure you want to completely remove everything in this database \
+            and clear the search index? \
+            This completely drops the 'public' schema. \
+            Please double-check the server you are running this on!\n\
+            Type 'yes' to proceed to delete the data.");
+        crate::cmd::prompt_for_yes()?;
+    }
 
     // We clear everything by dropping the 'public' schema. This is suggested
     // here, for example: https://stackoverflow.com/a/21247009/2408867
@@ -121,9 +137,9 @@ async fn clear(db: &mut Db, config: &Config) -> Result<()> {
     info!("Dropped and recreated schema 'public'");
 
     let meili = config.meili.connect().await?;
-    crate::search::writer::with_write_lock(db, &meili, |_tx, meili| Box::pin(async move {
-        crate::search::clear(&meili).await
-    })).await.context("failed to clear search index")?;
+    // We can't lock the table that we just destroyed, but this is fine, since clearing
+    // the search index is something that shouldn't happen in parallel to other things anyway.
+    crate::search::clear(&MeiliWriter::without_lock(&meili)).await.context("failed to clear search index")?;
     info!("Cleared search index");
 
     Ok(())
