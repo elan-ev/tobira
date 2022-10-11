@@ -5,12 +5,20 @@ use std::{
     time::Instant,
 };
 
-use crate::{api, auth::{self, AuthContext}, Config, db::{self, Transaction}, prelude::*};
+use crate::{
+    api,
+    auth::{self, AuthContext},
+    Config,
+    db::{self, Transaction},
+    metrics::HttpReqCategory,
+    prelude::*,
+};
 use super::{Context, Request, Response, response};
 
 
 /// This is the main HTTP entry point, called for each incoming request.
 pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
+    let time_incoming = Instant::now();
     trace!(
         "Incoming HTTP {:?} request to '{}'",
         req.method(),
@@ -30,18 +38,34 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
     const ASSET_PREFIX: &str = "/~assets/";
 
-    match path {
+    let category;
+    macro_rules! register_req {
+        ($category:expr) => {
+            ctx.metrics.register_http_req($category);
+            category = $category;
+        };
+    }
+
+    let response = match path {
         // Paths for which POST requests are allowed
-        "/graphql" if method == Method::POST
-            => handle_api(req, &ctx).await.unwrap_or_else(|r| r),
-        "/~session" if method == Method::POST
-            => auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r),
-        "/~session" if method == Method::DELETE
-            => auth::handle_logout(req, &ctx).await,
+        "/graphql" if method == Method::POST => {
+            register_req!(HttpReqCategory::GraphQL);
+            handle_api(req, &ctx).await.unwrap_or_else(|r| r)
+        },
+        "/~session" if method == Method::POST => {
+            register_req!(HttpReqCategory::Login);
+            auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r)
+        },
+        "/~session" if method == Method::DELETE => {
+            register_req!(HttpReqCategory::Logout);
+            auth::handle_logout(req, &ctx).await
+        },
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
         _ if method != Method::GET && method != Method::HEAD => {
+            register_req!(HttpReqCategory::Other);
+
             // Do some helpful logging
             let note = if path == "/~login" {
                 " (You have to configure your reverse proxy to handle login \
@@ -59,8 +83,18 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 .unwrap()
         }
 
+        "/~metrics" => {
+            register_req!(HttpReqCategory::Metrics);
+            let out = ctx.metrics.gather_and_encode(&ctx.db_pool).await;
+            Response::builder()
+                .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+                .body(out.into())
+                .unwrap()
+        },
+
         // Assets (JS files, fonts, ...)
         path if path.starts_with(ASSET_PREFIX) => {
+            register_req!(HttpReqCategory::Assets);
             let asset_path = &path[ASSET_PREFIX.len()..];
             match ctx.assets.serve(asset_path).await {
                 Some(r) => r,
@@ -71,6 +105,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
         "/.well-known/jwks.json" => {
+            register_req!(HttpReqCategory::Other);
             Response::builder()
                 .header("Content-Type", "application/json")
                 .body(Body::from(ctx.jwt.jwks().to_owned()))
@@ -80,7 +115,10 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // The interactive GraphQL API explorer/IDE. We actually keep this in
         // production as it does not hurt and in particular: does not expose any
         // information that isn't already exposed by the API itself.
-        "/~graphiql" => juniper_hyper::graphiql("/graphql", None).await.make_noindex(true),
+        "/~graphiql" => {
+            register_req!(HttpReqCategory::Other);
+            juniper_hyper::graphiql("/graphql", None).await
+        },
 
         // Currently we just reply with our `index.html` to everything else.
         // That's of course not optimal because for many paths, our frontend
@@ -96,6 +134,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         //
         // TODO: fix that at some point ^
         _ => {
+            register_req!(HttpReqCategory::App);
             let noindex = path.starts_with("/!")
                 || (path.starts_with("/~") && !path.starts_with("/~about"));
 
@@ -104,7 +143,11 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 .await
                 .make_noindex(noindex)
         }
-    }
+    };
+    
+    let response_time = time_incoming.elapsed();
+    ctx.metrics.observe_response_time(category, response_time);
+    response
 }
 
 /// Replies with a 404 Not Found.
