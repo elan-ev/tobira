@@ -8,7 +8,7 @@ use tokio_postgres::IsolationLevel;
 
 use secrecy::ExposeSecret;
 
-use crate::{prelude::*, util::Never, config::Config};
+use crate::{prelude::*, util::Never, config::Config, search::writer::MeiliWriter};
 use super::{Db, DbConfig, create_pool, query, migrations::unsafe_overwrite_migrations};
 
 
@@ -121,9 +121,9 @@ async fn clear(db: &mut Db, config: &Config) -> Result<()> {
     info!("Dropped and recreated schema 'public'");
 
     let meili = config.meili.connect().await?;
-    crate::search::writer::with_write_lock(db, &meili, |_tx, meili| Box::pin(async move {
-        crate::search::clear(&meili).await
-    })).await.context("failed to clear search index")?;
+    // We can't lock the table that we just destroyed, but this is fine, since clearing
+    // the search index is something that shouldn't happen in parallel to other things anyway.
+    crate::search::clear(&MeiliWriter::without_lock(&meili)).await.context("failed to clear search index")?;
     info!("Cleared search index");
 
     Ok(())
