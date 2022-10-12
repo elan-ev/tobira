@@ -130,8 +130,8 @@ export const useOnOutsideClick = (
 
 /** Helper hook returning a function that, when called, forces a rerender of the component. */
 export const useForceRerender = (): () => void => {
-    const [_, setCounter] = useState(0);
-    return () => setCounter(old => old + 1);
+    const setState = useState({})[1];
+    return () => setState({});
 };
 
 /**
