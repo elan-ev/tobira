@@ -2,3 +2,4 @@
 
 roles:
   - cloudalchemy.prometheus
+  - cloudalchemy.grafana
