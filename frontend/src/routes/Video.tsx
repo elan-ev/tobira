@@ -380,6 +380,7 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
 
     const embedCode = `<iframe ${[
         `src="${target}"`,
+        "allow=fullscreen",
         `style="${[
             "border: none;",
             "width: 100%;",
