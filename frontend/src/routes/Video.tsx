@@ -379,6 +379,7 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
     target.pathname = `/~embed/!v/${id.slice(2)}`;
 
     const embedCode = `<iframe ${[
+        'name="Tobira Player"',
         `src="${target}"`,
         "allow=fullscreen",
         `style="${[
@@ -386,7 +387,6 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
             "width: 100%;",
             `aspect-ratio: ${getPlayerAspectRatio(tracks).join("/")};`,
         ].join(" ")}"`,
-        'name="Tobira Player"',
     ].join(" ")}></iframe>`;
 
     return <>
