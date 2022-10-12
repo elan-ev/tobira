@@ -121,7 +121,7 @@ Also not shown here: **setup regular database backups!**
   become_user: postgres
   community.postgresql.postgresql_user:
     name: tobira
-    password: {{ db_password }}
+    password: "{{ db_password }}"
 
 - name: create database
   become_user: postgres
