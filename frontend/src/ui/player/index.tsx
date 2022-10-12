@@ -65,20 +65,22 @@ export const Player: React.FC<PlayerProps> = ({ event }) => {
         return () => handles.forEach(clearTimeout);
     });
 
-    return <Suspense fallback={<PlayerFallback image={event.syncedData.thumbnail} />}>
-        {event.isLive && (hasStarted === false || hasEnded === true)
-            ? <LiveEventPlaceholder {...{
-                ...hasStarted === false
-                    ? { mode: "pending", startTime }
-                    : { mode: "ended" },
-            }} />
-            : <LoadPaellaPlayer
-                title={event.title}
-                duration={event.syncedData.duration}
-                isLive={event.isLive}
-                tracks={event.syncedData.tracks}
-            />}
-    </Suspense>;
+    return (
+        <Suspense fallback={<PlayerFallback image={event.syncedData.thumbnail} />}>
+            {event.isLive && (hasStarted === false || hasEnded === true)
+                ? <LiveEventPlaceholder {...{
+                    ...hasStarted === false
+                        ? { mode: "pending", startTime }
+                        : { mode: "ended" },
+                }} />
+                : <LoadPaellaPlayer
+                    title={event.title}
+                    duration={event.syncedData.duration}
+                    isLive={event.isLive}
+                    tracks={event.syncedData.tracks}
+                />}
+        </Suspense>
+    );
 };
 
 /**

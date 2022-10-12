@@ -29,12 +29,7 @@ const query = graphql`
                     endTime
                     duration
                     thumbnail
-                    tracks {
-                        uri
-                        flavor
-                        mimetype
-                        resolution
-                    }
+                    tracks { uri flavor mimetype resolution }
                 }
             }
         }
@@ -53,17 +48,19 @@ export const EmbedVideoRoute = makeRoute(url => {
     const queryRef = loadQuery<EmbedQuery>(query, { id: eventId });
 
     return {
-        render: () => <ErrorBoundary><Suspense fallback={
-            <PlayerPlaceholder>
-                <Spinner css={{
-                    "& > circle": {
-                        stroke: "white",
-                    },
-                }} />
-            </PlayerPlaceholder>
-        }>
-            <Embed queryRef={queryRef} />
-        </Suspense></ErrorBoundary>,
+        render: () => <ErrorBoundary>
+            <Suspense fallback={
+                <PlayerPlaceholder>
+                    <Spinner css={{
+                        "& > circle": {
+                            stroke: "white",
+                        },
+                    }} />
+                </PlayerPlaceholder>
+            }>
+                <Embed queryRef={queryRef} />
+            </Suspense>
+        </ErrorBoundary>,
         dispose: () => queryRef.dispose(),
     };
 });
@@ -118,9 +115,9 @@ export const BlockEmbedRoute = makeRoute(url => {
     return {
         render: () => <PlayerPlaceholder>
             <FiAlertTriangle />
-            <div><Translation>
-                {t => t("embed.not-supported")}
-            </Translation></div>
+            <div>
+                <Translation>{t => t("embed.not-supported")}</Translation>
+            </div>
         </PlayerPlaceholder>,
     };
 });
@@ -133,9 +130,9 @@ class ErrorBoundary extends GlobalErrorBoundary {
 
         return <PlayerPlaceholder>
             <FiAlertTriangle />
-            <div><Translation>
-                {t => t("errors.embedded")}
-            </Translation></div>
+            <div>
+                <Translation>{t => t("errors.embedded")}</Translation>
+            </div>
         </PlayerPlaceholder>;
     }
 }

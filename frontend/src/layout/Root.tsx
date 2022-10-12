@@ -158,7 +158,9 @@ export const RootLoaderImpl = <Q extends QueryWithUserData>({
     const data = usePreloadedQuery(query, queryRef);
     const userData = useFragment(userDataFragment, data);
 
-    return <UserProvider data={userData?.currentUser}>
-        <Root nav={nav(data)}>{render(data)}</Root>
-    </UserProvider>;
+    return (
+        <UserProvider data={userData?.currentUser}>
+            <Root nav={nav(data)}>{render(data)}</Root>
+        </UserProvider>
+    );
 };
