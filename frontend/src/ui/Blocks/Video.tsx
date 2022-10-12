@@ -1,12 +1,12 @@
 import { graphql, useFragment } from "react-relay";
 
-import { Player } from "../player";
+import { InlinePlayer } from "../player";
 import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
 import { unreachable } from "../../util/err";
-import { isSynced, useForceRerender } from "../../util";
+import { isSynced } from "../../util";
 
 
 type Props = {
@@ -15,7 +15,6 @@ type Props = {
 
 export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     const { t } = useTranslation();
-    const rerender = useForceRerender();
     const { event, showTitle } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
@@ -53,7 +52,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     return <>
         {showTitle && <Title title={event.title} />}
         {isSynced(event)
-            ? <Player event={event} css={{ width: 800 }} onEventStateChange={rerender} />
+            ? <InlinePlayer event={event} css={{ width: 800 }} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
     </>;
 };

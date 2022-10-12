@@ -1,5 +1,9 @@
+import { useEffect } from "react";
+import { useBeforeunload } from "react-beforeunload";
 import { useTranslation } from "react-i18next";
+
 import { match } from "../util";
+import { useRouter } from "../router";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -41,4 +45,35 @@ export const sortRealms = <T extends { readonly name: string | null }>(
         "ALPHABETIC_ASC": () => [...realms].sort((a, b) => compare(a.name, b.name)),
         "ALPHABETIC_DESC": () => [...realms].sort((a, b) => compare(b.name, a.name)),
     }, () => realms);
+};
+
+
+/**
+ * Whenever the current route/page is about to be unloaded (due to browser
+ * reloads, a tab being closed, or the route being changed), AND when
+ * `shouldBlock` or `shouldBlock()` is `true`, then the navigation attempt is
+ * blocked. That means that the user is asked whether they really want to
+ * leave. The user can still say "yes" and proceed with the navigation.
+ */
+export const useNavBlocker = (shouldBlock: boolean | (() => boolean)) => {
+    const { t } = useTranslation();
+    const router = useRouter();
+
+    const shouldBlockImpl = typeof shouldBlock === "boolean"
+        ? () => shouldBlock
+        : shouldBlock;
+
+    useBeforeunload(event => {
+        if (shouldBlockImpl()) {
+            event.preventDefault();
+        }
+    });
+
+    useEffect(() => (
+        router.listenBeforeNav(() => (
+            shouldBlockImpl() && !window.confirm(t("general.leave-page-confirmation"))
+                ? "prevent-nav"
+                : undefined
+        ))
+    ));
 };

@@ -47,6 +47,7 @@ errors:
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
   unknown: Unbekannter Fehler.
   detailed-error-info: Detaillierte Fehlerinformationen für Entwickler
+  embedded: In der eingebetteten Anwendung ist ein Fehler aufgetreten
 
 not-found:
   page-not-found: Seite nicht gefunden
@@ -413,3 +414,5 @@ api-remote-errors:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
     not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
 
+embed:
+  not-supported: Diese Seite kann nicht eingebettet werden

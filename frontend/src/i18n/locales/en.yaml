@@ -45,6 +45,7 @@ errors:
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
   detailed-error-info: Detailed error information for developers
+  embedded: An error occurred in the embedded application
 
 not-found:
   page-not-found: Page not found
@@ -402,3 +403,5 @@ api-remote-errors:
     not-logged-in: You have to be logged in to perform this action.
     not-a-moderator: You have to be a moderator to perform this action.
 
+embed:
+  not-supported: This page can't be embedded

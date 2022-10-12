@@ -4,6 +4,7 @@ as $$
 declare
     series_university_highlights series.id%type;
     series_christmas series.id%type;
+    series_event_tests series.id%type;
     events_realm_id realms.id%type;
 begin
     -- Add a few series
@@ -15,11 +16,103 @@ begin
         returning id into series_christmas;
     -- Some series and events for testing edge cases
     insert into series (opencast_id, state, title, read_roles, write_roles, updated)
-        values ('68612b2e-423b-40c2-8933-92c3dd4a47a9', 'ready', 'Empty series', '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', now());
+        values ('empty', 'ready', 'Empty series', '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', now());
     insert into series (opencast_id, title, state, updated)
-        values ('d9c9402d-2966-48a1-b082-ad5849202bca', 'Waiting series', 'waiting', '-infinity');
-    insert into events (opencast_id, state, updated, is_live, read_roles, write_roles, title, created, metadata)
-        values ('d9c9402d-2966-48a1-b082-ad5849202bca', 'waiting', '-infinity', false, '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', 'Waiting event', now(), '{}');
+        values ('waiting', 'Waiting series', 'waiting', '-infinity');
+    insert into series (opencast_id, state, title, read_roles, write_roles, updated)
+        values ('event-tests', 'ready', 'Different event states', '{"ROLE_ANONYMOUS"}', '{"ROLE_ADMIN"}', now())
+        returning id into series_event_tests;
+    insert into events (opencast_id, state, updated, is_live, read_roles, write_roles, title, created, metadata, series)
+        values ('waiting', 'waiting', '-infinity', false, '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', 'Waiting event', now(), '{}', series_event_tests);
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, is_live, metadata)
+        values (
+            'ready',
+            'restricted',
+            'Restricted video',
+            array[row(
+                'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
+                'presenter/preview',
+                'video/mp4',
+                '{640, 360}'
+            )]::event_track[],
+            'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
+            596000,
+            series_event_tests,
+            now(),
+            now(),
+            '{"ROLE_USER"}',
+            '{}',
+            false,
+            '{}'
+        );
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time)
+        values (
+            'ready',
+            'live-future',
+            'Pending livestream',
+            array[row(
+                'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
+                'presenter/preview',
+                'video/mp4',
+                '{640, 360}'
+            )]::event_track[],
+            'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
+            596000,
+            series_event_tests,
+            now(),
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}',
+            '{}',
+            true,
+            '9999-01-01'
+        );
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time, end_time)
+        values (
+            'ready',
+            'live-present',
+            'Livestream',
+            array[row(
+                'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
+                'presenter/preview',
+                'video/mp4',
+                '{640, 360}'
+            )]::event_track[],
+            'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
+            596000,
+            series_event_tests,
+            now(),
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}',
+            '{}',
+            true,
+            'epoch',
+            '9999-01-01'
+        );
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time, end_time)
+        values (
+            'ready',
+            'live-past',
+            'Past livestream',
+            array[row(
+                'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
+                'presenter/preview',
+                'video/mp4',
+                '{640, 360}'
+            )]::event_track[],
+            'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
+            596000,
+            series_event_tests,
+            now(),
+            now(),
+            '{"ROLE_ANONYMOUS"}',
+            '{}',
+            '{}',
+            true,
+            'epoch',
+            '2000-01-01'
+        );
 
     -- Add lots of realms
     perform create_departments();

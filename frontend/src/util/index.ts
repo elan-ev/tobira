@@ -1,9 +1,8 @@
 import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
-import { useBeforeunload } from "react-beforeunload";
 import { useTranslation } from "react-i18next";
+
 import CONFIG, { TranslatedString } from "../config";
-import { useRouter } from "../router";
 import { bug } from "./err";
 
 /**
@@ -131,8 +130,8 @@ export const useOnOutsideClick = (
 
 /** Helper hook returning a function that, when called, forces a rerender of the component. */
 export const useForceRerender = (): () => void => {
-    const [_, setCounter] = useState(0);
-    return () => setCounter(old => old + 1);
+    const setState = useState({})[1];
+    return () => setState({});
 };
 
 /**
@@ -162,36 +161,6 @@ export const useRefState = <T, >(
 export const currentRef = <T>(ref: React.RefObject<T>): T => (
     ref.current ?? bug("ref unexpectedly unbound")
 );
-
-/**
- * Whenever the current route/page is about to be unloaded (due to browser
- * reloads, a tab being closed, or the route being changed), AND when
- * `shouldBlock` or `shouldBlock()` is `true`, then the navigation attempt is
- * blocked. That means that the user is asked whether they really want to
- * leave. The user can still say "yes" and proceed with the navigation.
- */
-export const useNavBlocker = (shouldBlock: boolean | (() => boolean)) => {
-    const { t } = useTranslation();
-    const router = useRouter();
-
-    const shouldBlockImpl = typeof shouldBlock === "boolean"
-        ? () => shouldBlock
-        : shouldBlock;
-
-    useBeforeunload(event => {
-        if (shouldBlockImpl()) {
-            event.preventDefault();
-        }
-    });
-
-    useEffect(() => (
-        router.listenBeforeNav(() => (
-            shouldBlockImpl() && !window.confirm(t("general.leave-page-confirmation"))
-                ? "prevent-nav"
-                : undefined
-        ))
-    ));
-};
 
 
 // Some utilities to handle the different lifecycle stages of events and series

@@ -14,6 +14,7 @@ import { ManageSingleVideoRoute } from "./routes/manage/Video/Single";
 import { UploadRoute } from "./routes/Upload";
 import { SearchRoute } from "./routes/Search";
 import { InvalidUrlRoute } from "./routes/InvalidUrl";
+import { BlockEmbedRoute, EmbedVideoRoute } from "./routes/Embed";
 
 
 
@@ -27,6 +28,7 @@ const {
 } = makeRouter({
     fallback: NotFoundRoute,
     routes: [
+        BlockEmbedRoute,
         InvalidUrlRoute,
         AboutRoute,
         LoginRoute,
@@ -44,6 +46,7 @@ const {
         UploadRoute,
         AddChildRoute,
         ManageRealmContentRoute,
+        EmbedVideoRoute,
     ],
 });
 

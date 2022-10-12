@@ -8,18 +8,25 @@ import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { Player } from "../ui/player";
+import { getPlayerAspectRatio, InlinePlayer } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
-import { currentRef, SyncedOpencastEntity, isSynced, toIsoDuration } from "../util";
+import {
+    currentRef,
+    SyncedOpencastEntity,
+    isSynced,
+    toIsoDuration,
+    useForceRerender,
+    translatedConfig,
+    match,
+} from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
 import CONFIG from "../config";
-import { translatedConfig, match, useForceRerender } from "../util";
 import { Link } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
@@ -279,7 +286,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-        <Player event={event} css={{ margin: "0 auto" }} onEventStateChange={rerender} />
+        <InlinePlayer event={event} css={{ margin: "0 auto" }} onEventStateChange={rerender} />
         <Metadata id={event.id} event={event} />
 
         <div css={{ height: 80 }} />
@@ -366,29 +373,28 @@ const VideoTitle: React.FC<VideoTitleProps> = ({ title }) => (
 );
 
 type EmbedCodeProps = {
-    event: {
-        opencastId: string;
-    };
+    event: SyncedEvent;
 };
 
-const EmbedCode: React.FC<EmbedCodeProps> = ({ event: { opencastId: id } }) => {
+const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
+    id,
+    syncedData: { tracks },
+} }) => {
     const { t } = useTranslation();
-
     const modal = useRef<ModalHandle>(null);
 
+    const target = new URL(location.href);
+    target.pathname = `/~embed/!v/${id.slice(2)}`;
+
     const embedCode = `<iframe ${[
-        `src="${CONFIG.opencast.presentationNode}/play/${id}"`,
-        "allowfullscreen",
+        'name="Tobira Player"',
+        `src="${target}"`,
+        "allow=fullscreen",
         `style="${[
             "border: none;",
             "width: 100%;",
-            "aspect-ratio: 16/9;",
+            `aspect-ratio: ${getPlayerAspectRatio(tracks).join("/")};`,
         ].join(" ")}"`,
-        'name="Player"',
-        'scrolling="no"',
-        'frameborder="0"',
-        'marginheight="0px"',
-        'marginwidth="0px"',
     ].join(" ")}></iframe>`;
 
     return <>

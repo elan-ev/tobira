@@ -53,6 +53,7 @@ const CSS_RESETS = css({
     // Some elements not inhereting fonts is a really confusing browser default.
     "input, button, textarea, select": {
         font: "inherit",
+        margin: 0,
     },
 });
 
@@ -107,8 +108,5 @@ const GLOBAL_STYLE = css({
     hr: {
         border: "none",
         borderTop: "1px solid var(--grey80)",
-    },
-    "input, button": {
-        margin: 0,
     },
 });

@@ -466,4 +466,3 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         Router,
     };
 };
-
