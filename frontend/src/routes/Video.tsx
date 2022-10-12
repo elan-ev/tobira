@@ -14,12 +14,19 @@ import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidPathSegment } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
-import { currentRef, SyncedOpencastEntity, isSynced, toIsoDuration } from "../util";
+import {
+    currentRef,
+    SyncedOpencastEntity,
+    isSynced,
+    toIsoDuration,
+    useForceRerender,
+    translatedConfig,
+    match,
+} from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
 import CONFIG from "../config";
-import { translatedConfig, match } from "../util";
 import { Link } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
@@ -234,6 +241,7 @@ type Props = {
 
 const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     const { t } = useTranslation();
+    const rerender = useForceRerender();
     const event = useFragment(eventFragment, eventRef);
     const realm = useFragment(realmFragment, realmRef);
 
@@ -278,7 +286,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-        <InlinePlayer event={event} css={{ margin: "0 auto" }} />
+        <InlinePlayer event={event} css={{ margin: "0 auto" }} onEventStateChange={rerender} />
         <Metadata id={event.id} event={event} />
 
         <div css={{ height: 80 }} />

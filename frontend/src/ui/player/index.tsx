@@ -15,6 +15,9 @@ import PaellaPlayer from "./Paella";
 export type PlayerProps = {
     event: PlayerEvent;
 
+    /** A function to execute when an event goes from pending to live or from live to ended. */
+    onEventStateChange?: () => void;
+
     className?: string;
 };
 
@@ -47,7 +50,7 @@ export type Track = {
  * we might have multiple players in the future again. That's the reason for
  * leaving a bit of the "dispatch" logic in place.
  */
-export const Player: React.FC<PlayerProps> = ({ event }) => {
+export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange }) => {
     const { startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
     const rerender = useForceRerender();
 
@@ -55,12 +58,16 @@ export const Player: React.FC<PlayerProps> = ({ event }) => {
     // extra time (500ms) to be sure the stream is actually already running by
     // that time.
     useEffect(() => {
+        const handler = () => {
+            rerender();
+            onEventStateChange?.();
+        };
         const handles: ReturnType<typeof setTimeout>[] = [];
         if (event.isLive && hasStarted === false) {
-            handles.push(setTimeout(rerender, startTime.getTime() - Date.now() + 500));
+            handles.push(setTimeout(handler, startTime.getTime() - Date.now() + 500));
         }
         if (event.isLive && hasEnded === false) {
-            handles.push(setTimeout(rerender, endTime.getTime() - Date.now() + 500));
+            handles.push(setTimeout(handler, endTime.getTime() - Date.now() + 500));
         }
         return () => handles.forEach(clearTimeout);
     });
@@ -87,7 +94,7 @@ export const Player: React.FC<PlayerProps> = ({ event }) => {
  * A more constrained version of the player component for use in normal page flow.
  * You probably want this one.
  */
-export const InlinePlayer: React.FC<PlayerProps> = ({ event, className }) => {
+export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
     const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
 
     return (
@@ -110,7 +117,7 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ event, className }) => {
                 maxWidth: `min(100% + ${2 * MAIN_PADDING}px, var(--ideal-max-width))`,
             },
         }}>
-            <Player event={event} />
+            <Player {...{ event, ...playerProps }} />
         </div>
     );
 };
