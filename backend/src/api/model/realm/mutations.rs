@@ -8,13 +8,22 @@ use crate::{
 use super::{Realm, RealmOrder};
 
 
+
 impl Realm {
     pub(crate) async fn add(realm: NewRealm, context: &Context) -> ApiResult<Realm> {
         let db = context.db(context.require_moderator()?);
 
+        let parent_key = id_to_key(realm.parent, "`parent`")?;
+
+        // Check if the path is a reserved one.
+        let is_top_level_realm = parent_key.0 == 0;
+        let path_is_reserved = context.config.general.reserved_paths()
+            .any(|r| realm.path_segment == r);
+        if is_top_level_realm && path_is_reserved {
+            return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
+        }
         // TODO: validate input
 
-        let parent_key = id_to_key(realm.parent, "`parent`")?;
         let key: Key = db
             .query_one(
                 "insert into realms (parent, name, path_segment) \
@@ -165,6 +174,31 @@ impl Realm {
 
         let key = id_to_key(id, "`id`")?;
         let parent_key = set.parent.map(|parent| id_to_key(parent, "`parent`")).transpose()?;
+
+        // We have to make sure the path is not changed to a reserved one.
+        if let Some(path_segment) = &set.path_segment {
+            if context.config.general.reserved_paths().any(|r| path_segment == r) {
+                let err = invalid_input!("path is reserved and cannot be used");
+                match parent_key {
+                    // If the parent is changed to be the root realm, it's an error.
+                    Some(Key(0)) => return Err(err),
+                    // If the parent is changed to something else than the root realm, it's fine.
+                    Some(_) => {}
+                    // If the parent is not changed, we unfortunately need to
+                    // check the DB whether this realm is a top-level one.
+                    None => {
+                        let real_parent = db
+                            .query_one("select parent from realms where id = $1", &[&key])
+                            .await?
+                            .get::<_, Key>(0);
+
+                        if real_parent.0 == 0 {
+                            return Err(err);
+                        }
+                    }
+                }
+            }
+        }
 
         let affected_rows = db
             .execute(

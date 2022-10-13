@@ -57,7 +57,18 @@ pub(crate) struct GeneralConfig {
     // TODO: this shouldn't be `Option`, but `config(default = ...)` does not
     // support complex types like this yet.
     metadata: Option<MetadataLabels>,
+
+    /// A list of URL paths that are reserved for other usages. Users won't be
+    /// able to create top-level realms with those path segments. Tobira also
+    /// has some additional built-in reserved paths (e.g. `/favicon.ico`).
+    ///
+    /// Example: ["/Shibboleth.sso", "/something-else"]
+    // TODO: this shouldn't be `Option`, but `config(default = ...)` does not
+    // support complex types like this yet.
+    reserved_paths: Option<Vec<String>>,
 }
+
+const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];
 
 impl GeneralConfig {
     pub(crate) fn footer_links(&self) -> &[FooterLink] {
@@ -73,6 +84,15 @@ impl GeneralConfig {
         ]));
 
         self.metadata.as_ref().unwrap_or(&DEFAULT)
+    }
+
+    /// Returns an iterator over all reserved top-level paths without leading slash.
+    pub(crate) fn reserved_paths(&self) -> impl Iterator<Item = &str> {
+        self.reserved_paths.as_deref()
+            .unwrap_or(&[])
+            .iter()
+            .map(|s| s.strip_prefix("/").unwrap_or(s))
+            .chain(INTERNAL_RESERVED_PATHS.iter().copied())
     }
 }
 

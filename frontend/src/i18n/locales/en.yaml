@@ -402,6 +402,8 @@ api-remote-errors:
   mutation:
     not-logged-in: You have to be logged in to perform this action.
     not-a-moderator: You have to be a moderator to perform this action.
+  realm:
+    path-is-reserved: The chosen path is reserved and cannot be used for pages.
 
 embed:
   not-supported: This page can't be embedded
