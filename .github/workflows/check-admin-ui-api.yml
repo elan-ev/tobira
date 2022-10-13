@@ -43,6 +43,10 @@ jobs:
       - name: Hide previous comments made by this workflow
         uses: int128/hide-comment-action@v1
         with:
+          # We have to specify an empty author-filter here so that this step doesn't try to remove
+          # the deployment comments we create in another step (or any other comments by github-actions
+          # for that matter).
+          authors:
           starts-with: "<!-- admin-ui-api-check -->"
 
       - name: Add a comment when there are relevant changes
