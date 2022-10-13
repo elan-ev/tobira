@@ -10,10 +10,18 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Install GraphQL Inspector
+        run: |
+          npm install \
+            @graphql-inspector/ci@3.4.0 \
+            @graphql-inspector/diff-command@3.4.0 \
+            @graphql-inspector/graphql-loader@3.4.0 \
+            @graphql-inspector/git-loader@3.4.0
+
       - name: Check for changes to the APIs the admin UI integration uses
         id: graphql_inspector
         run: |
-          npx @graphql-inspector/cli@3.4.0 diff \
+          npx graphql-inspector diff \
             --rule .github/workflows/check-admin-ui-api/rule.js \
             --onComplete .github/workflows/check-admin-ui-api/onComplete.js \
             git:${{ github.event.pull_request.base.sha }}:frontend/src/schema.graphql \
