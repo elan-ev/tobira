@@ -31,6 +31,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
                         endTime
                         thumbnail
                         tracks { uri flavor mimetype resolution }
+                        captions { uri lang }
                     }
                 }
             }

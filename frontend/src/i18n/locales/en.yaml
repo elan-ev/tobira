@@ -135,6 +135,7 @@ video:
   embed:
     button: Embed
     title: Embed video
+  caption: Caption
 
 series:
   series: Series

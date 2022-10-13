@@ -64,8 +64,9 @@ declare module "paella-core" {
 
         streams: Stream[];
 
+        captions: Caption[];
+
         // TODO: `frameList`
-        // TODO: `captions`
     }
 
     export interface Stream {
@@ -77,6 +78,14 @@ declare module "paella-core" {
             hlsLive?: Source[];
         };
         // TODO: `role`
+    }
+
+    // https://github.com/polimediaupv/paella-core/blob/main/doc/video_manifest.md#captions
+    export interface Caption {
+        format: "vtt";
+        url: string;
+        lang?: string;
+        text?: string;
     }
 
     // https://github.com/polimediaupv/paella-core/blob/main/doc/mp4-video-plugin.md

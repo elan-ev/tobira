@@ -8,7 +8,7 @@ use tokio_postgres::types::ToSql;
 use crate::{
     auth::ROLE_ADMIN,
     config::Config,
-    db::{types::{EventTrack, EventState, SeriesState}, DbConnection},
+    db::{types::{EventTrack, EventState, SeriesState, EventCaption}, DbConnection},
     prelude::*,
 };
 use super::{status::SyncStatus, OcClient};
@@ -145,6 +145,7 @@ async fn store_in_db(
                 description,
                 part_of,
                 tracks,
+                captions,
                 created,
                 start_time,
                 end_time,
@@ -170,6 +171,9 @@ async fn store_in_db(
                 acl.read.retain(|role| role != ROLE_ADMIN);
                 acl.write.retain(|role| role != ROLE_ADMIN);
 
+                let tracks = tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>();
+                let captions = captions.into_iter().map(Into::into).collect::<Vec<EventCaption>>();
+
                 // We upsert the event data.
                 upsert(db, "events", "opencast_id", &[
                     ("opencast_id", &opencast_id),
@@ -189,7 +193,8 @@ async fn store_in_db(
                     ("metadata", &metadata),
                     ("read_roles", &acl.read),
                     ("write_roles", &acl.write),
-                    ("tracks", &tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>()),
+                    ("tracks", &tracks),
+                    ("captions", &captions),
                 ]).await?;
 
                 trace!("Inserted or updated event {} ({})", opencast_id, title);

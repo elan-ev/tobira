@@ -218,6 +218,7 @@ const eventFragment = graphql`
                 startTime
                 endTime
                 tracks { uri flavor mimetype resolution }
+                captions { uri lang }
             }
             series {
                 id

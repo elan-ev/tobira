@@ -133,6 +133,7 @@ type SyncedEventData {
   duration: Int!
   tracks: [Track!]!
   thumbnail: String
+  captions: [Caption!]!
 }
 
 "A `Block`: a UI element that belongs to a realm."
@@ -368,6 +369,11 @@ input NewSeries {
 
 "DateTime"
 scalar DateTimeUtc
+
+type Caption {
+  uri: String!
+  lang: String
+}
 
 type RemovedBlock {
   id: ID!

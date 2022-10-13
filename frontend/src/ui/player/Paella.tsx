@@ -3,8 +3,9 @@ import { Config, Manifest, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 import getZoomPluginContext from "paella-zoom-plugin";
 
-import { isHlsTrack, Track } from ".";
+import { Caption, isHlsTrack, Track } from ".";
 import { SPEEDS } from "./consts";
+import { useTranslation } from "react-i18next";
 
 
 // Paella currently can't handle audio tracks
@@ -14,10 +15,14 @@ type PaellaPlayerProps = {
     title: string;
     duration: number;
     tracks: readonly Track[];
+    captions: readonly Caption[];
     isLive: boolean;
 };
 
-const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration, isLive }) => {
+const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
+    tracks, title, duration, isLive, captions,
+}) => {
+    const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const paella = useRef<Paella>();
 
@@ -47,6 +52,16 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration, is
                 streams: Object.entries(tracksByKind).map(([key, tracks]) => ({
                     content: key,
                     sources: tracksToPaellaSources(tracks, isLive),
+                })),
+                captions: captions.map(({ uri, lang }, index) => ({
+                    format: "vtt",
+                    url: uri,
+                    lang: lang ?? undefined,
+                    // We try to come up with usable labels for the tracks. This should be
+                    // improved in the future, hopefully by getting better information.
+                    text: t("video.caption")
+                        + (lang ? ` (${lang})` : "")
+                        + (captions.length > 1 ? ` [${index + 1}]` : ""),
                 })),
             };
 
@@ -84,7 +99,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ tracks, title, duration, is
             paellaSnapshot.unload();
             paella.current = undefined;
         };
-    }, [tracks, title, duration, isLive]);
+    }, [tracks, title, duration, isLive, captions, t]);
 
     return (
         <div
@@ -195,6 +210,9 @@ const PAELLA_CONFIG = {
                     "Access-Control-Allow-Credentials": false,
                 },
             },
+        },
+        "es.upv.paella.vttManifestCaptionsPlugin": {
+            enabled: true,
         },
 
         // Buttons on the left side

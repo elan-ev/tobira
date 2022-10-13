@@ -59,6 +59,14 @@ pub struct EventTrack {
     pub resolution: Option<[i32; 2]>,
 }
 
+/// Represents the `event_caption` type defined in `14-event-captions.sql`.
+#[derive(Debug, FromSql, ToSql)]
+#[postgres(name = "event_caption")]
+pub struct EventCaption {
+    pub uri: String,
+    pub lang: Option<String>,
+}
+
 /// Represents the `event_state` type defined in `05-events.sql`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql)]
 #[postgres(name = "event_state")]
