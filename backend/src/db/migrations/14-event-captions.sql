@@ -9,7 +9,7 @@ create type event_caption as (
 alter table events
     add column captions event_caption[]
         default '{}'
-        check (array_position(captions, null) is null);
+        constraint no_null_caption_items check (array_position(captions, null) is null);
 
 alter table events
     -- The default above was just for all existing records. New records should
