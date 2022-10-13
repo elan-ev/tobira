@@ -390,7 +390,7 @@ type Query {
     The paths `""` and `"/"` refer to the root realm. All other paths have
     to start with `"/"`.
   """
-  realmByPath(path: String!): Realm
+  realmByPath(path: String!, test: Boolean!): Realm
   "Returns an event by its Opencast ID."
   eventByOpencastId(id: String!): Event
   "Returns an event by its ID."

@@ -39,7 +39,7 @@ impl Query {
     /// Paths with and without trailing slash are accepted and treated equally.
     /// The paths `""` and `"/"` refer to the root realm. All other paths have
     /// to start with `"/"`.
-    async fn realm_by_path(path: String, context: &Context) -> ApiResult<Option<Realm>> {
+    async fn realm_by_path(path: String, context: &Context, test: bool) -> ApiResult<Option<Realm>> {
         Realm::load_by_path(path, context).await
     }
 
