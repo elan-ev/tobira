@@ -196,6 +196,7 @@ const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
         : <img
             {...{ src, alt }}
             onError={() => setLoadError(true)}
+            loading="lazy"
             width={16}
             height={9}
             css={{
