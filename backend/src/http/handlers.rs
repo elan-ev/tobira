@@ -102,6 +102,16 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
             }
         }
 
+        // Some browser automatically request this in certain situations. As we
+        // serve our favicon differently, it's best to reply 404 here
+        // (and without our frontend!).
+        "/favicon.ico" => {
+            register_req!(HttpReqCategory::Other);
+            Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .body("Not found".into())
+                .unwrap()
+        }
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
         "/.well-known/jwks.json" => {

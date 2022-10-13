@@ -62,6 +62,13 @@
 # you have to add those two lines to your configuration.
 #metadata =
 
+# A list of URL paths that are reserved for other usages. Users won't be
+# able to create top-level realms with those path segments. Tobira also
+# has some additional built-in reserved paths (e.g. `/favicon.ico`).
+#
+# Example: ["/Shibboleth.sso", "/something-else"]
+#reserved_paths =
+
 
 [db]
 # The username of the database user.
