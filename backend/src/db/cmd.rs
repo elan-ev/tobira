@@ -35,6 +35,22 @@ pub(crate) enum DbCommand {
     /// and accessible in your `PATH`.
     Console,
 
+    /// Dumps the current state of the database.
+    /// This can be used while Tobira and its database are running
+    /// and will yield consistent results!
+    Dump {
+        path: PathBuf,
+    },
+
+    /// Restore Tobira's database from a dump.
+    /// Note this cannot be run while Tobira is running
+    /// as it will invalidate cached query plans!
+    Restore {
+        dump: PathBuf,
+        #[clap(flatten)]
+        clear: ClearOptions,
+    },
+
     /// Equivalent to `db clear` followed by `db migrate`.
     Reset {
         #[clap(flatten)]
@@ -57,8 +73,11 @@ pub(crate) struct ClearOptions {
 
 /// Entry point for `db` commands.
 pub(crate) async fn run(cmd: &DbCommand, config: &Config) -> Result<()> {
-    if let DbCommand::Console = cmd {
-        return console(&config.db).map(|_| ());
+    // Some subcommands fork out to other processes that establish their own connection
+    match cmd {
+        DbCommand::Console => { return console(&config.db).map(|_| ()); },
+        DbCommand::Dump { path } => { return dump(&config.db, path).map(|_| ()); },
+        _ => {},
     }
 
     // Connect to database
@@ -76,6 +95,11 @@ pub(crate) async fn run(cmd: &DbCommand, config: &Config) -> Result<()> {
         }
         DbCommand::Script { script } => run_script(&db, &script).await?,
         DbCommand::Console => unreachable!("already handled above"),
+        DbCommand::Dump { path: _ } => unreachable!("already handled above"),
+        DbCommand::Restore { dump, clear: ClearOptions { yes_absolutely_clear_db: yes } } => {
+            clear(&mut db, config, *yes).await?;
+            restore(&config.db, dump).map(|_| ())?;
+        },
         DbCommand::UnsafeOverwriteMigrations => unsafe_overwrite_migrations(&mut db).await?,
     }
 
@@ -157,22 +181,56 @@ async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
 }
 
 fn console(config: &DbConfig) -> Result<Never> {
-    use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
-    let encode = |s| utf8_percent_encode(s, NON_ALPHANUMERIC);
-
-    let connection_uri = format!(
-        "postgresql://{}:{}@{}:{}/{}",
-        encode(&config.user),
-        encode(&config.password.expose_secret()),
-        config.host,
-        config.port,
-        encode(&config.database),
-    );
-    let error = Command::new("psql").arg(connection_uri).exec();
+    let error = Command::new("psql").arg(connection_uri(config)).exec();
     let message = match error.kind() {
         io::ErrorKind::NotFound => "`psql` was not found in your `PATH`",
         io::ErrorKind::PermissionDenied => "you don't have sufficient permissions to execute `psql`",
         _ => "an error occured while trying to execute `psql`",
     };
     Err(error).context(message)
+}
+
+fn dump(config: &DbConfig, path: &Path) -> Result<Never> {
+    fork_command(
+        Command::new("pg_dump")
+            .arg("--dbname")
+            .arg(connection_uri(config))
+            .arg("--format")
+            .arg("custom")
+            .arg("--file")
+            .arg(path)
+    )
+}
+
+fn restore(config: &DbConfig, dump: &Path) -> Result<Never> {
+    fork_command(
+        Command::new("pg_restore")
+            .arg("--dbname")
+            .arg(connection_uri(config))
+            .arg(dump)
+    )
+}
+
+fn fork_command(command: &mut Command) -> Result<Never> {
+    let error = command.exec();
+    let message = match error.kind() {
+        io::ErrorKind::NotFound => "`pg_dump` was not found in your `PATH`",
+        io::ErrorKind::PermissionDenied => "you don't have sufficient permissions to execute `pg_dump`",
+        _ => "an error occured while trying to execute `psql`",
+    };
+    Err(error).context(message)
+}
+
+fn connection_uri(config: &DbConfig) -> String {
+    use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+    let encode = |s| utf8_percent_encode(s, NON_ALPHANUMERIC);
+
+    format!(
+        "postgresql://{}:{}@{}:{}/{}",
+        encode(&config.user),
+        encode(&config.password.expose_secret()),
+        config.host,
+        config.port,
+        encode(&config.database),
+    )
 }
