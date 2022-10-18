@@ -100,8 +100,8 @@ impl Metrics {
         // TODO: Do all of that in parallel?
         if let Ok(db) = db_pool.get().await {
             // Sync lag
-            let sql = "select extract(epoch from now() at time zone 'UTC' - harvested_until) \
-                from sync_status";
+            let sql = "select extract(epoch from now() at time zone 'UTC' \
+                - harvested_until)::double precision from sync_status";
             if let Ok(row) = db.query_one(sql, &[]).await {
                 add_gauge(&mut reg, SYNC_LAG, row.get::<_, f64>(0) as u64);
             }
