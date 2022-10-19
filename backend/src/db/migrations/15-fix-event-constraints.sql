@@ -24,6 +24,8 @@
 
 update events set
     write_roles = array_remove(write_roles, null),
+    -- Note that this will violate an unrelated constraint on `tracks` if it contained only `null` elements!
+    -- We decided it's best to let administrators intervene manually in that case.
     tracks = array_remove(tracks, null);
 
 alter table events
@@ -55,6 +57,13 @@ create function constraints_by_columns(
 $$ language sql;
 
 -- Next we want to be able to drop a constraint based on this
+-- Note that `constraints_by_columns` potentially returns multiple constraints,
+-- and this function will just delete "the first one" (which is an arbitrary one
+-- because there is no order).
+-- We made sure that this is fine for every call to this function:
+-- The list of returned constraints will contain precisely
+-- one of the affected constraints and its copy&paste duplicate,
+-- so it doesn't matter which one we drop.
 create function drop_constraint_by_columns(
     table_ information_schema.sql_identifier,
     columns text[]
@@ -67,18 +76,19 @@ create function drop_constraint_by_columns(
     end
 $$ language plpgsql;
 
--- We also want to rename constraints based on it
+-- We also want to rename constraints based on it.
+-- Note that this function will fail when the columns don't uniquely specify a constraint.
 create function rename_constraint_by_columns(
     table_ information_schema.sql_identifier,
     columns text[],
-    name_ information_schema.sql_identifier
+    name information_schema.sql_identifier
 ) returns void as $$
     declare constraint_ text;
     begin
         select constraints_by_columns(table_, columns) into strict constraint_;
         execute 'alter table ' || quote_ident(table_)
             || ' rename constraint ' || quote_ident(constraint_)
-            || ' to ' || quote_ident(name_);
+            || ' to ' || quote_ident(name);
     end
 $$ language plpgsql;
 
@@ -92,6 +102,8 @@ select rename_constraint_by_columns('__xtea_keys', '{key}', 'valid_key');
 select rename_constraint_by_columns('events', '{read_roles}', 'no_null_read_roles');
 select rename_constraint_by_columns('events', '{creators}', 'no_null_creators');
 
+
+-- Let's hope we won't need these again.
 drop function constraints_by_columns;
 drop function drop_constraint_by_columns;
 drop function rename_constraint_by_columns;
