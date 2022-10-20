@@ -61,6 +61,17 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         ? new URLSearchParams(document.location.search).get("q") ?? undefined
         : undefined;
 
+    const search = (expression: string) => {
+        if (lastTimeout.current !== null) {
+            clearTimeout(lastTimeout.current);
+        }
+        lastTimeout.current = setTimeout(() => {
+            const newUrl = `/~search?q=${encodeURIComponent(expression)}`;
+            const replace = document.location.pathname === "/~search";
+            router.goto(newUrl, replace);
+        }, 30);
+    };
+
     return <div css={{ position: "relative", margin: "0 8px", ...extraCss }}>
         <HiOutlineSearch css={{
             position: "absolute",
@@ -76,15 +87,13 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             title={t("search.input-label")}
             defaultValue={defaultValue}
             autoFocus={variant === "mobile"}
-            onChange={e => {
-                if (lastTimeout.current !== null) {
-                    clearTimeout(lastTimeout.current);
+            onKeyDown={e => {
+                if (e.key === "Enter") {
+                    search(e.target.value);
                 }
-                lastTimeout.current = setTimeout(() => {
-                    const newUrl = `/~search?q=${encodeURIComponent(e.target.value)}`;
-                    const replace = document.location.pathname === "/~search";
-                    router.goto(newUrl, replace);
-                }, 30);
+            }}
+            onChange={e => {
+                search(e.target.value);
             }}
             css={{
                 flex: "1 1 0px",
