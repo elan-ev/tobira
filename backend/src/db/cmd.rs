@@ -35,6 +35,32 @@ pub(crate) enum DbCommand {
     /// and accessible in your `PATH`.
     Console,
 
+    /// Dumps the current state of the database for later restoration
+    /// with the `db restore` command.
+    ///
+    /// Internally this uses your local copy of `pg_dump`, so make sure
+    /// that is compatible with your database!
+    ///
+    /// This can be used while Tobira is running and reading/writing the database,
+    /// and will still yield consistent results!
+    Dump {
+        path: PathBuf,
+    },
+
+    /// Restore Tobira's database from a dump created by the `db dump` command.
+    ///
+    /// Internally this uses your lcoal copy of `pg_restore`, so make sure
+    /// that is compatible with your database and the version of `pg_dump`
+    /// that created the dump! (See `db dump`.)
+    ///
+    /// Note that this will drop the entire Tobira database before restoring.
+    /// Specifically that means you will lose data if the restoration fails!
+    /// It also means that it can't be run while there are connections to the DB,
+    /// e.g. when Tobira is running.
+    Restore {
+        dump: PathBuf,
+    },
+
     /// Equivalent to `db clear` followed by `db migrate`.
     Reset {
         #[clap(flatten)]
@@ -57,8 +83,12 @@ pub(crate) struct ClearOptions {
 
 /// Entry point for `db` commands.
 pub(crate) async fn run(cmd: &DbCommand, config: &Config) -> Result<()> {
-    if let DbCommand::Console = cmd {
-        return console(&config.db).map(|_| ());
+    // Some subcommands fork out to other processes that establish their own connection
+    match cmd {
+        DbCommand::Console => { return console(&config.db).map(|_| ()); },
+        DbCommand::Dump { path } => { return dump(&config.db, path).map(|_| ()); },
+        DbCommand::Restore { dump } => { return restore(&config.db, dump).map(|_| ()); },
+        _ => {},
     }
 
     // Connect to database
@@ -75,7 +105,9 @@ pub(crate) async fn run(cmd: &DbCommand, config: &Config) -> Result<()> {
             super::migrate(&mut db).await?;
         }
         DbCommand::Script { script } => run_script(&db, &script).await?,
-        DbCommand::Console => unreachable!("already handled above"),
+        DbCommand::Console | DbCommand::Dump { .. } | DbCommand::Restore { .. } => {
+            unreachable!("already handled above");
+        },
         DbCommand::UnsafeOverwriteMigrations => unsafe_overwrite_migrations(&mut db).await?,
     }
 
@@ -157,22 +189,57 @@ async fn run_script(db: &Db, script_path: &Path) -> Result<()> {
 }
 
 fn console(config: &DbConfig) -> Result<Never> {
+    fork_command(
+        Command::new("psql")
+            .arg(connection_uri(config))
+    )
+}
+
+fn dump(config: &DbConfig, path: &Path) -> Result<Never> {
+    fork_command(
+        Command::new("pg_dump")
+            .arg("--dbname")
+            .arg(connection_uri(config))
+            .arg("--format")
+            .arg("custom")
+            .arg("--file")
+            .arg(path)
+    )
+}
+
+fn restore(config: &DbConfig, dump: &Path) -> Result<Never> {
+    fork_command(
+        Command::new("pg_restore")
+            .arg("--dbname")
+            .arg(connection_uri(&DbConfig { database: "postgres".into(), ..config.clone() }))
+            .arg("--clean")
+            .arg("--if-exists")
+            .arg("--create")
+            .arg(dump)
+    )
+}
+
+fn fork_command(command: &mut Command) -> Result<Never> {
+    let error = command.exec();
+    let program = command.get_program().to_string_lossy();
+    let message = match error.kind() {
+        io::ErrorKind::NotFound => format!("`{program}` was not found in your `PATH`"),
+        io::ErrorKind::PermissionDenied => format!("you don't have sufficient permissions to execute `{program}`"),
+        _ => format!("an error occured while trying to execute `{program}`"),
+    };
+    Err(error).context(message)
+}
+
+fn connection_uri(config: &DbConfig) -> String {
     use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
     let encode = |s| utf8_percent_encode(s, NON_ALPHANUMERIC);
 
-    let connection_uri = format!(
+    format!(
         "postgresql://{}:{}@{}:{}/{}",
         encode(&config.user),
         encode(&config.password.expose_secret()),
         config.host,
         config.port,
         encode(&config.database),
-    );
-    let error = Command::new("psql").arg(connection_uri).exec();
-    let message = match error.kind() {
-        io::ErrorKind::NotFound => "`psql` was not found in your `PATH`",
-        io::ErrorKind::PermissionDenied => "you don't have sufficient permissions to execute `psql`",
-        _ => "an error occured while trying to execute `psql`",
-    };
-    Err(error).context(message)
+    )
 }
