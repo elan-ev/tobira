@@ -98,11 +98,10 @@ async fn check_referenced_files(config: &Config) -> Result<()> {
     // TODO: log file & unix socket?
 
     let files = [
-        &config.theme.logo.large.path,
-        &config.theme.logo.small.path,
         &config.theme.favicon,
         &config.auth.jwt.secret_key,
-    ];
+        &config.theme.logo.large.path,
+    ].into_iter().chain(config.theme.logo.small.as_ref().map(|l| &l.path));
 
     for path in files {
         debug!("Trying to open '{}' for reading...", path.display());

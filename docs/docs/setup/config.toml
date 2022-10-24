@@ -410,35 +410,23 @@
 
 
 [theme.logo]
-# The normal, usually wide logo that is shown on desktop screens.
-[theme.logo.large]
-# Path to the image file.
+# The normal, usually wide logo that is shown on desktop screens. Value is
+# a map with a `path` and `resolution` key:
+#
+#     large = { path = "logo.svg", resolution = [20, 8] }
+#
+# The resolution is only an aspect ratio. It is used to avoid layout
+# shifts in the frontend by allocating the correct size for the logo
+# before the browser loaded the file.
 #
 # Required! This value must be specified.
-#path =
-
-# Resolution of the image. This is used to avoid layout shifts and to
-# calculate the correct logo margins. The exact numbers don't matter,
-# only the ratio between them does.
-#
-# Required! This value must be specified.
-#resolution =
-
+#large =
 
 # A smaller logo (usually close to square) used for small screens, mostly
-# on mobile phones.
-[theme.logo.small]
-# Path to the image file.
-#
-# Required! This value must be specified.
-#path =
-
-# Resolution of the image. This is used to avoid layout shifts and to
-# calculate the correct logo margins. The exact numbers don't matter,
-# only the ratio between them does.
-#
-# Required! This value must be specified.
-#resolution =
+# on mobile phones. Also a map like the large logo. This is optional, we
+# highly recommend that you configure a separate logo for small screens.
+# Otherwise the large logo is used for any screen size.
+#small =
 
 
 [theme.color]
