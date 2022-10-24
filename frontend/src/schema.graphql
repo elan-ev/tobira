@@ -213,6 +213,7 @@ type Track {
   flavor: String!
   mimetype: String
   resolution: [Int!]
+  isMaster: Boolean
 }
 
 type SearchResults {
