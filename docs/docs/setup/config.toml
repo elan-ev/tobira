@@ -20,16 +20,12 @@
 # Required! This value must be specified.
 #site_title =
 
-# Links that are shown in the footer. By default, two links are shown:
+# Links that are shown in the footer.
 #
-# ```
-# footer_links = ["about", "graphiql"]
-# ```
-#
-# By overwriting this value, you can remove the default links and add
-# custom ones. Note that these two default links are special and can be
-# specified with only the shown string. To add custom ones, you need to
-# define a label and a link. Example:
+# By overwriting this default value, you can remove the default links and
+# add custom ones. Note that these two default links are special and can
+# be specified with only the shown string. To add custom ones, you need
+# to define a label and a link. Example:
 #
 # ```
 # footer_links = [
@@ -37,7 +33,9 @@
 #     "about",
 # ]
 # ```
-#footer_links =
+#
+# Default value: ["about", "graphiql"]
+#footer_links = ["about", "graphiql"]
 
 # Additional metadata that is shown below a video. Example:
 #
@@ -50,23 +48,32 @@
 # URL, there is one shortcut: the "http://purl.org/dc/terms/" is
 # abbreviated as just "dcterms".
 #
+# It's likely easier to write this as shown above (as extra section)
+# instead of trying to cram it into one line (as shown below with the
+# default value).
+#
 # Instead of the manually translated label, you can use some builtin
 # labels like this:
 #
+#     [general.metadata]
 #     dcterms.license = "builtin:license"
 #     dcterms.source = "builtin:source"
 #
 # As soon as you add your own metadata fields, this default is
 # overwritten. If you want to keep showing the license and source data,
 # you have to add those two lines to your configuration.
-#metadata =
+#
+# Default value: { dcterms = { license = "builtin:license", source = "builtin:source" } }
+#metadata = { dcterms = { license = "builtin:license", source = "builtin:source" } }
 
 # A list of URL paths that are reserved for other usages. Users won't be
 # able to create top-level realms with those path segments. Tobira also
 # has some additional built-in reserved paths (e.g. `/favicon.ico`).
 #
 # Example: ["/Shibboleth.sso", "/something-else"]
-#reserved_paths =
+#
+# Default value: []
+#reserved_paths = []
 
 
 [db]
