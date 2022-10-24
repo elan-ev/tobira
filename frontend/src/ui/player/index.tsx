@@ -41,6 +41,7 @@ export type Track = {
     flavor: string;
     mimetype: string | null;
     resolution: readonly number[] | null;
+    isMaster: boolean | null;
 };
 
 export type Caption = {

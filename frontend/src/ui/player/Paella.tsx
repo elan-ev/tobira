@@ -265,7 +265,9 @@ const tracksToPaellaSources = (tracks: VideoTrack[], isLive: boolean): Stream["s
         };
     };
 
-    const hlsTracks = tracks.filter(isHlsTrack);
+    const hlsTracks = tracks.filter(isHlsTrack)
+        // Make sure a/the master playlist is in front, so that quality selection works
+        .sort((a, b) => Number(b.isMaster) - Number(a.isMaster));
     const mp4Tracks = tracks.filter(t => !isHlsTrack(t));
 
     const hlsKey = isLive ? "hlsLive" : "hls";
