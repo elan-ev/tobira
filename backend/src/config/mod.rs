@@ -169,7 +169,9 @@ pub(crate) fn write_template(path: Option<&PathBuf>) -> Result<()> {
         path.map(|p| p.display().to_string()).unwrap_or("<stdout>".into()),
     );
 
-    let template = confique::toml::format::<Config>(FormatOptions::default());
+    let mut options = FormatOptions::default();
+    options.general.nested_field_gap = 2;
+    let template = confique::toml::template::<Config>(options);
     match path {
         Some(path) => fs::write(path, template)?,
         None => io::stdout().write_all(template.as_bytes())?,

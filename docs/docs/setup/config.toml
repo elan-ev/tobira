@@ -13,7 +13,6 @@
 #     site_title.de = "Meine Universität"
 #
 
-
 [general]
 # The main title of the video portal. Used in the HTML `<title>`, as main
 # heading on the home page, and potentially more.
@@ -404,7 +403,6 @@
 
 
 [theme.logo]
-
 # The normal, usually wide logo that is shown on desktop screens.
 [theme.logo.large]
 # Path to the image file.
