@@ -301,4 +301,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     13: "series-block-show-metadata",
     14: "event-captions",
     15: "fix-event-constraints",
+    16: "master-track",
 ];
