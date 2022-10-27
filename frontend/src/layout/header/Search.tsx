@@ -62,14 +62,9 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         : undefined;
 
     const search = (expression: string) => {
-        if (lastTimeout.current !== null) {
-            clearTimeout(lastTimeout.current);
-        }
-        lastTimeout.current = setTimeout(() => {
-            const newUrl = `/~search?q=${encodeURIComponent(expression)}`;
-            const replace = document.location.pathname === "/~search";
-            router.goto(newUrl, replace);
-        }, 30);
+        const newUrl = `/~search?q=${encodeURIComponent(expression)}`;
+        const replace = document.location.pathname === "/~search";
+        router.goto(newUrl, replace);
     };
 
     return <div css={{ position: "relative", margin: "0 8px", ...extraCss }}>
@@ -93,7 +88,12 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 }
             }}
             onChange={e => {
-                search(e.target.value);
+                if (lastTimeout.current !== null) {
+                    clearTimeout(lastTimeout.current);
+                }
+                lastTimeout.current = setTimeout(() => {
+                    search(e.target.value);
+                }, 30);
             }}
             css={{
                 flex: "1 1 0px",
