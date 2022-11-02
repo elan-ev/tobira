@@ -7,7 +7,7 @@ use super::{
     Context,
     Id,
     NodeValue,
-    err::ApiResult,
+    err::{ApiResult, not_authorized},
     model::{
         realm::Realm,
         event::{AuthorizedEvent, Event},
@@ -80,8 +80,17 @@ impl Query {
     fn upload_jwt(context: &Context) -> ApiResult<String> {
         context.require_upload_permission()?;
         match &context.auth {
-            AuthContext::User(data) => Ok(context.jwt.new_upload_token(data)),
+            AuthContext::User(data) => Ok(context.jwt.new_token(data)),
             _ => unreachable!("user not logged in, but has upload permissions"),
+        }
+    }
+
+    /// Returns a new JWT that can be used to authenticate against Opencast when linking to services
+    /// like Studio and the Editor.
+    fn external_link_jwt(context: &Context) -> ApiResult<String> {
+        match &context.auth {
+            AuthContext::User(data) => Ok(context.jwt.new_token(data)),
+            _ => Err(not_authorized!("trying to get link token without user session")),
         }
     }
 

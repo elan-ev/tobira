@@ -80,7 +80,7 @@ impl JwtContext {
     }
 
     /// Creates a new JWT.
-    pub(crate) fn new_upload_token(&self, user: &User) -> String {
+    pub(crate) fn new_token(&self, user: &User) -> String {
         let exp = chrono::offset::Utc::now()
             + chrono::Duration::from_std(self.config.expiration_time)
                 .expect("failed to convert from std Duration to chrono::Duration");

@@ -412,6 +412,11 @@ type Query {
   currentUser: User
   "Returns a new JWT that can be used to authenticate against Opencast for uploading videos."
   uploadJwt: String!
+  """
+    Returns a new JWT that can be used to authenticate against Opencast when linking to services
+    like Studio and the Editor.
+  """
+  externalLinkJwt: String!
   "Retrieve a node by globally unique ID. Mostly useful for relay."
   node(id: ID!): Node
   "Returns `null` if the query is too short."
