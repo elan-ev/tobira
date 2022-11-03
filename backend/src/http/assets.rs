@@ -67,8 +67,9 @@ pub(crate) struct Assets {
 impl Assets {
     pub(crate) async fn init(config: &Config) -> Result<Self> {
         let mut path_overrides = HashMap::new();
+        let small_logo = config.theme.logo.small.as_ref().unwrap_or(&config.theme.logo.large);
         path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.path.clone());
-        path_overrides.insert("logo-small.svg".into(), config.theme.logo.small.path.clone());
+        path_overrides.insert("logo-small.svg".into(), small_logo.path.clone());
         path_overrides.insert("favicon.svg".into(), config.theme.favicon.clone());
 
         let mut variables = <HashMap<String, String>>::new();
@@ -96,15 +97,15 @@ impl Assets {
 
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());
-        variables.insert("footer-links".into(), json!(config.general.footer_links()).to_string());
-        variables.insert("metadata-labels".into(), json!(config.general.metadata()).to_string());
+        variables.insert("footer-links".into(), json!(config.general.footer_links).to_string());
+        variables.insert("metadata-labels".into(), json!(config.general.metadata).to_string());
         variables.insert(
             "large-logo-resolution".into(),
             format!("{:?}", config.theme.logo.large.resolution.0),
         );
         variables.insert(
             "small-logo-resolution".into(),
-            format!("{:?}", config.theme.logo.small.resolution.0),
+            format!("{:?}", small_logo.resolution.0),
         );
 
         let reinda_config = reinda::Config {

@@ -25,24 +25,26 @@ pub(crate) struct ThemeConfig {
 /// Logo used in the top left corner of the page. Using SVG logos is recommended.
 #[derive(Debug, confique::Config)]
 pub(crate) struct LogoConfig {
-    /// The normal, usually wide logo that is shown on desktop screens.
-    #[config(nested)]
-    pub(crate) large: SingleLogoConfig,
+    /// The normal, usually wide logo that is shown on desktop screens. The
+    /// value is a map with a `path` and `resolution` key:
+    ///
+    ///     large = { path = "logo.svg", resolution = [20, 8] }
+    ///
+    /// The resolution is only an aspect ratio. It is used to avoid layout
+    /// shifts in the frontend by allocating the correct size for the logo
+    /// before the browser loaded the file.
+    pub(crate) large: LogoDef,
 
     /// A smaller logo (usually close to square) used for small screens, mostly
-    /// on mobile phones.
-    #[config(nested)]
-    pub(crate) small: SingleLogoConfig,
+    /// on mobile phones. Also a map like the large logo. This is optional, we
+    /// highly recommend that you configure a separate logo for small screens.
+    /// Otherwise the large logo is used for all screen sizes.
+    pub(crate) small: Option<LogoDef>,
 }
 
-#[derive(Debug, confique::Config)]
-pub(crate) struct SingleLogoConfig {
-    /// Path to the image file.
+#[derive(Debug, serde::Deserialize)]
+pub(crate) struct LogoDef {
     pub(crate) path: PathBuf,
-
-    /// Resolution of the image. This is used to avoid layout shifts and to
-    /// calculate the correct logo margins. The exact numbers don't matter,
-    /// only the ratio between them does.
     pub(crate) resolution: LogoResolution,
 }
 
