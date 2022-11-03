@@ -97,11 +97,12 @@ fn print_outcome<T>(any_errors: &mut bool, label: &str, result: &Result<T>) {
 async fn check_referenced_files(config: &Config) -> Result<()> {
     // TODO: log file & unix socket?
 
-    let files = [
+    let mut files = vec![
         &config.theme.favicon,
         &config.auth.jwt.secret_key,
         &config.theme.logo.large.path,
-    ].into_iter().chain(config.theme.logo.small.as_ref().map(|l| &l.path));
+    ];
+    files.extend(config.theme.logo.small.as_ref().map(|l| &l.path));
 
     for path in files {
         debug!("Trying to open '{}' for reading...", path.display());

@@ -25,8 +25,8 @@ pub(crate) struct ThemeConfig {
 /// Logo used in the top left corner of the page. Using SVG logos is recommended.
 #[derive(Debug, confique::Config)]
 pub(crate) struct LogoConfig {
-    /// The normal, usually wide logo that is shown on desktop screens. Value is
-    /// a map with a `path` and `resolution` key:
+    /// The normal, usually wide logo that is shown on desktop screens. The
+    /// value is a map with a `path` and `resolution` key:
     ///
     ///     large = { path = "logo.svg", resolution = [20, 8] }
     ///
@@ -38,7 +38,7 @@ pub(crate) struct LogoConfig {
     /// A smaller logo (usually close to square) used for small screens, mostly
     /// on mobile phones. Also a map like the large logo. This is optional, we
     /// highly recommend that you configure a separate logo for small screens.
-    /// Otherwise the large logo is used for any screen size.
+    /// Otherwise the large logo is used for all screen sizes.
     pub(crate) small: Option<LogoDef>,
 }
 
