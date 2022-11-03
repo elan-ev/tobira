@@ -55,7 +55,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const spinnerSize = 22;
     const paddingSpinner = (height - spinnerSize) / 2;
 
-    const lastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    useEffect(() => () => clearTimeout(lastTimeout.current));
 
     const defaultValue = isSearchActive()
         ? new URLSearchParams(document.location.search).get("q") ?? undefined
@@ -84,13 +85,12 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             autoFocus={variant === "mobile"}
             onKeyDown={e => {
                 if (e.key === "Enter") {
+                    clearTimeout(lastTimeout.current);
                     search(e.target.value);
                 }
             }}
             onChange={e => {
-                if (lastTimeout.current !== null) {
-                    clearTimeout(lastTimeout.current);
-                }
+                clearTimeout(lastTimeout.current);
                 lastTimeout.current = setTimeout(() => {
                     search(e.target.value);
                 }, 30);
