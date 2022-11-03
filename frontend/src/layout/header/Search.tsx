@@ -4,6 +4,7 @@ import { HiOutlineSearch } from "react-icons/hi";
 import { useRouter } from "../../router";
 import { isSearchActive } from "../../routes/Search";
 import { Spinner } from "../../ui/Spinner";
+import { currentRef } from "../../util";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 
@@ -76,47 +77,46 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             fontSize: 20,
             color: "var(--grey40)",
         }} />
-        <input
-            ref={ref}
-            type="text"
-            placeholder={t("search.input-label")}
-            title={t("search.input-label")}
-            defaultValue={defaultValue}
-            autoFocus={variant === "mobile"}
-            onKeyDown={e => {
-                if (e.key === "Enter") {
+        <form onSubmit={() => {
+            clearTimeout(lastTimeout.current);
+            search(currentRef(ref).value);
+        }}>
+            <input
+                ref={ref}
+                type="text"
+                placeholder={t("search.input-label")}
+                title={t("search.input-label")}
+                defaultValue={defaultValue}
+                autoFocus={variant === "mobile"}
+                onChange={e => {
                     clearTimeout(lastTimeout.current);
-                    search(e.target.value);
-                }
-            }}
-            onChange={e => {
-                clearTimeout(lastTimeout.current);
-                lastTimeout.current = setTimeout(() => {
-                    search(e.target.value);
-                }, 30);
-            }}
-            css={{
-                flex: "1 1 0px",
-                minWidth: 50,
-                height,
-                borderRadius: 12,
-                paddingLeft: 40,
-                paddingRight: 12,
-                backgroundColor: "var(--grey92)",
-                border: "2px solid white",
-                "&:hover": {
-                    backgroundColor: "var(--grey86)",
-                },
-                "&:focus": {
-                    outline: "none",
-                    borderColor: "var(--accent-color)",
-                },
-                "&::placeholder": {
-                    color: "var(--grey40)",
-                },
-                ...extraCss,
-            }}
-        />
+                    lastTimeout.current = setTimeout(() => {
+                        search(e.target.value);
+                    }, 30);
+                }}
+                css={{
+                    flex: "1 1 0px",
+                    minWidth: 50,
+                    height,
+                    borderRadius: 12,
+                    paddingLeft: 40,
+                    paddingRight: 12,
+                    backgroundColor: "var(--grey92)",
+                    border: "2px solid white",
+                    "&:hover": {
+                        backgroundColor: "var(--grey86)",
+                    },
+                    "&:focus": {
+                        outline: "none",
+                        borderColor: "var(--accent-color)",
+                    },
+                    "&::placeholder": {
+                        color: "var(--grey40)",
+                    },
+                    ...extraCss,
+                }}
+            />
+        </form>
         {router.isTransitioning && isSearchActive() && <Spinner
             size={spinnerSize}
             css={{ position: "absolute", right: paddingSpinner, top: paddingSpinner }}
