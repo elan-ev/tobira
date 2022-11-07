@@ -10,10 +10,14 @@ pub(crate) fn service_unavailable() -> Response {
         .unwrap()
 }
 
-pub(crate) fn bad_request() -> Response {
+pub(crate) fn bad_request(msg: Option<&str>) -> Response {
+    let body = match msg {
+        Some(s) => hyper::Body::from(s.to_owned()),
+        None => hyper::Body::from("Bad request"),
+    };
     Response::builder()
         .status(StatusCode::BAD_REQUEST)
-        .body("Bad request".into())
+        .body(body)
         .unwrap()
 }
 
