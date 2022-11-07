@@ -5,9 +5,6 @@ import { HiOutlineTemplate } from "react-icons/hi";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../layout/Root";
-import {
-    manageDashboardQuery as ManageDashboardQuery,
-} from "./__generated__/manageDashboardQuery.graphql";
 import { makeRoute } from "../../rauta";
 import { loadQuery } from "../../relay";
 import { Link } from "../../router";
@@ -17,6 +14,10 @@ import { useUser } from "../../User";
 import CONFIG from "../../config";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
 import { PageTitle } from "../../layout/header/ui";
+import { authenticateLink } from "../../relay/auth";
+import {
+    manageDashboardQuery as ManageDashboardQuery,
+} from "./__generated__/manageDashboardQuery.graphql";
 
 
 const PATH = "/~manage";
@@ -50,8 +51,6 @@ const Manage: React.FC = () => {
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
     }
-    const returnTarget = encodeURIComponent(document.location.href);
-    const studioUrl = `${CONFIG.opencast.studioUrl}?return.target=${returnTarget}`;
 
     return <>
         <Breadcrumbs path={[]} tail={t("manage.management")} />
@@ -69,7 +68,7 @@ const Manage: React.FC = () => {
                 <h2>{t("upload.title")}</h2>
                 {t("manage.dashboard.upload-tile")}
             </GridTile>}
-            {user.canUseStudio && <GridTile link={studioUrl}>
+            {user.canUseStudio && <GridTile onClick={linkToStudio}>
                 <FiVideo />
                 <h2>{t("manage.dashboard.studio-tile-title")}</h2>
                 {t("manage.dashboard.studio-tile-body")}
@@ -85,6 +84,13 @@ const Manage: React.FC = () => {
             </GridTile>
         </div>
     </>;
+};
+
+const linkToStudio = async () => {
+    const studioUrl = new URL(CONFIG.opencast.studioUrl);
+    studioUrl.searchParams.append("return.target", document.location.href);
+    const authenticatedUrl = await authenticateLink(studioUrl);
+    location.href = authenticatedUrl.href;
 };
 
 type GridTileProps = {

@@ -7,11 +7,12 @@ import { Form } from "../../../ui/Form";
 import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { useUser } from "../../../User";
-import { LinkButton } from "../../../ui/Button";
+import { Button } from "../../../ui/Button";
 import CONFIG from "../../../config";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
+import { authenticateLink } from "../../../relay/auth";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -36,7 +37,6 @@ const Page: React.FC<Props> = ({ event }) => {
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
     }
-    const editorUrl = `${CONFIG.opencast.editorUrl}?mediaPackageId=${event.opencastId}`;
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
@@ -49,9 +49,12 @@ const Page: React.FC<Props> = ({ event }) => {
             <UpdatedCreatedInfo event={event} />
             <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
                 {user.canUseEditor && event.canWrite && (
-                    <LinkButton to={editorUrl} css={{ marginBottom: 16 }} target="_blank">
+                    <Button
+                        onClick={() => linkToEditor(event.opencastId)}
+                        css={{ marginBottom: 16 }}
+                    >
                         {t("manage.my-videos.details.open-in-editor")} <FiExternalLink size={16} />
-                    </LinkButton>
+                    </Button>
                 )}
                 <DirectLink event={event} />
                 <MetadataSection event={event} />
@@ -61,6 +64,13 @@ const Page: React.FC<Props> = ({ event }) => {
             <HostRealms event={event} />
         </section>
     </>;
+};
+
+const linkToEditor = async (id: string) => {
+    const editorUrl = new URL(CONFIG.opencast.editorUrl);
+    editorUrl.searchParams.append("mediaPackageId", id);
+    const authenticatedUrl = await authenticateLink(editorUrl);
+    window.open(authenticatedUrl, "_blank");
 };
 
 const DirectLink: React.FC<Props> = ({ event }) => {
