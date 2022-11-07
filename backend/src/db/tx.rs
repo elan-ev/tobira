@@ -62,7 +62,7 @@ impl Transaction {
         params: &[&(dyn ToSql + Sync)],
     ) -> Result<Row, Error> {
         trace!("Executing SQL query: \"{}\" with {:?}", query, params);
-        let statement = self.inner.prepare_cached(query).await?;
+        let statement = self.check_error(self.inner.prepare_cached(query).await)?;
         self.increase_num_queries();
         self.check_error(self.inner.query_one(&statement, params).await)
     }
@@ -73,7 +73,7 @@ impl Transaction {
         params: &[&(dyn ToSql + Sync)],
     ) -> Result<Option<Row>, Error> {
         trace!("Executing SQL query: \"{}\" with {:?}", query, params);
-        let statement = self.inner.prepare_cached(query).await?;
+        let statement = self.check_error(self.inner.prepare_cached(query).await)?;
         self.increase_num_queries();
         self.check_error(self.inner.query_opt(&statement, params).await)
     }
@@ -85,7 +85,7 @@ impl Transaction {
         I::IntoIter: ExactSizeIterator,
     {
         trace!("Executing SQL query: \"{}\" with {:?}", query, params);
-        let statement = self.inner.prepare_cached(query).await?;
+        let statement = self.check_error(self.inner.prepare_cached(query).await)?;
         self.increase_num_queries();
         self.check_error(self.inner.query_raw(&statement, params).await)
     }
@@ -113,7 +113,7 @@ impl Transaction {
         params: &[&(dyn ToSql + Sync)],
     ) -> Result<u64, Error> {
         trace!("Executing SQL query: \"{}\" with {:?}", query, params);
-        let statement = self.inner.prepare_cached(query).await?;
+        let statement = self.check_error(self.inner.prepare_cached(query).await)?;
         self.increase_num_queries();
         self.check_error(self.inner.execute(&statement, params).await)
     }
