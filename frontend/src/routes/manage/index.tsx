@@ -88,11 +88,16 @@ const Manage: React.FC = () => {
 };
 
 type GridTileProps = {
-    link?: string;
     children: ReactNode;
-};
+} & ({
+    link?: string;
+} | {
+    onClick?: () => void;
+});
 
-const GridTile: React.FC<GridTileProps> = ({ link, children }) => {
+const GridTile: React.FC<GridTileProps> = ({ children, ...props }) => {
+    const link = "link" in props && props.link;
+    const onClick = "onClick" in props && props.onClick;
     const style = {
         borderRadius: 4,
         border: "1px solid var(--grey92)",
@@ -100,12 +105,13 @@ const GridTile: React.FC<GridTileProps> = ({ link, children }) => {
         padding: "8px 16px 16px 16px",
         fontSize: 14,
         color: "black",
-        "&:hover": !link
+        "&:hover": !(link || onClick)
             ? {}
             : {
                 color: "black",
                 borderColor: "var(--grey80)",
                 boxShadow: "1px 1px 5px var(--grey92)",
+                cursor: "pointer",
             },
         position: "relative",
         "& > svg:first-of-type": {
@@ -123,7 +129,9 @@ const GridTile: React.FC<GridTileProps> = ({ link, children }) => {
 
     return link
         ? <Link to={link} css={style}>{children}</Link>
-        : <div css={style}>{children}</div>;
+        : onClick
+            ? <button onClick={onClick} css={style}>{children}</button>
+            : <div css={style}>{children}</div>;
 };
 
 type ManageNavProps = {
