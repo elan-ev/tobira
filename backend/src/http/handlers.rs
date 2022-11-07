@@ -223,6 +223,8 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     // block. So we must make sure not to access it at all until we get rid of
     // the transaction (by committing it below).
     type PgTx<'a> = deadpool_postgres::Transaction<'a>;
+    #[allow(unused_variables)]
+    let connection = (); // Purposefully shadow to avoid accidentally accesing. See above.
     let tx = unsafe {
         let static_tx = mem::transmute::<PgTx<'_>, PgTx<'static>>(tx);
         Arc::new(static_tx)
