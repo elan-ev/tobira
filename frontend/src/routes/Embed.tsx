@@ -29,7 +29,7 @@ const query = graphql`
                     endTime
                     duration
                     thumbnail
-                    tracks { uri flavor mimetype resolution }
+                    tracks { uri flavor mimetype resolution isMaster }
                     captions { uri lang }
                 }
             }

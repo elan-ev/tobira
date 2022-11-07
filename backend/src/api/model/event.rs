@@ -106,6 +106,7 @@ pub(crate) struct Track {
     // TODO: this should be `[i32; 2]` but the relevant patch is not released
     // yet: https://github.com/graphql-rust/juniper/pull/966
     resolution: Option<Vec<i32>>,
+    is_master: Option<bool>,
 }
 
 #[derive(Debug, GraphQLObject)]
@@ -448,6 +449,7 @@ impl From<EventTrack> for Track {
             flavor: src.flavor,
             mimetype: src.mimetype,
             resolution: src.resolution.map(Into::into),
+            is_master: src.is_master,
         }
     }
 }

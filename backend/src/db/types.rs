@@ -57,6 +57,7 @@ pub struct EventTrack {
     pub flavor: String,
     pub mimetype: Option<String>,
     pub resolution: Option<[i32; 2]>,
+    pub is_master: Option<bool>,
 }
 
 /// Represents the `event_caption` type defined in `14-event-captions.sql`.

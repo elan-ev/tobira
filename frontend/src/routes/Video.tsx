@@ -217,7 +217,7 @@ const eventFragment = graphql`
                 thumbnail
                 startTime
                 endTime
-                tracks { uri flavor mimetype resolution }
+                tracks { uri flavor mimetype resolution isMaster }
                 captions { uri lang }
             }
             series {

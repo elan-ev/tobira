@@ -86,6 +86,7 @@ pub(crate) struct Track {
     flavor: String,
     mimetype: Option<String>,
     resolution: Option<[i32; 2]>,
+    is_master: Option<bool>,
 }
 
 impl Into<EventTrack> for Track {
@@ -95,6 +96,7 @@ impl Into<EventTrack> for Track {
             flavor: self.flavor,
             mimetype: self.mimetype,
             resolution: self.resolution.map(Into::into),
+            is_master: self.is_master,
         }
     }
 }
