@@ -37,7 +37,8 @@ impl Transaction {
 
     fn check_error<T>(&self, res: Result<T, Error>) -> Result<T, Error> {
         if let Err(e) = &res {
-            error!("Error when executing query: {}", e);
+            error!("Error when executing query: {e}");
+            debug!("Detailed error: {e:#?}");
             self.error.store(true, Ordering::SeqCst);
         }
 
