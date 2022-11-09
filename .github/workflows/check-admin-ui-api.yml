@@ -1,5 +1,9 @@
 name: Admin UI API Check
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+    - "backend/**"
+    - ".github/workflows/check-admin-ui-api.yml"
 
 jobs:
   main:
