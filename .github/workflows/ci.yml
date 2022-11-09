@@ -25,6 +25,17 @@ env:
 jobs:
   main:
     runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres:10
+        env:
+          POSTGRES_USER: tobira
+          POSTGRES_PASSWORD: tobira
+          POSTGRES_DB: tobira
+        ports:
+          - 5432:5432
+        options: '--name tobira_pg'
+
     steps:
     - uses: actions/checkout@v2
 
@@ -87,6 +98,25 @@ jobs:
       run: ./tobira export-api-schema | diff -u --color=always - frontend/src/schema.graphql
     - name: Make sure `docs/docs/setup/config.toml` is up to date
       run: ./tobira write-config | diff -u --color=always - docs/docs/setup/config.toml
+
+
+    # Test DB migrations
+    - name: Download latest DB dump
+      run: curl --silent --output db-dump.xz https://s3.opencast-niedersachsen.de/tobira/db-dump-latest.xz
+    - name: Decompress DB dump
+      run: xz -d db-dump.xz
+    # We need to use the same version as the DB, so we use 'docker exec'
+    - name: Restore DB dump
+      run: |
+        docker exec -i tobira_pg pg_restore \
+          --dbname postgresql://tobira:tobira@localhost/postgres \
+          --clean \
+          --create \
+          --if-exists \
+          < db-dump
+    - name: Run migrations
+      run: ./tobira db migrate --config util/dev-config/config.toml
+
 
     # Prepare the ID (used in the subdomain) for deployment. This has to be done
     # here because in the `deploy` workflow, we don't have access to the correct
