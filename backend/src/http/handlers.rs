@@ -128,7 +128,10 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // information that isn't already exposed by the API itself.
         "/~graphiql" => {
             register_req!(HttpReqCategory::Other);
-            juniper_hyper::graphiql("/graphql", None).await
+            Response::builder()
+                .header(header::CONTENT_TYPE, "text/html; charset=UTF-8")
+                .body(juniper::http::graphiql::graphiql_source("/graphql", None).into())
+                .unwrap()
         },
 
         // Currently we just reply with our `index.html` to everything else.
