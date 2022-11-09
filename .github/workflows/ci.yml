@@ -2,6 +2,15 @@ name: Build & test
 
 on:
   pull_request:
+    paths:
+    - "backend/**"
+    - "frontend/**"
+    - "docs/docs/setup/config.toml"
+    - "util/dev-config/*"
+    - ".deployment/templates/config.toml"
+    - "util/containers/login-handler.py"
+    - ".github/workflows/ci.yml"
+    - ".github/workflows/deploy.yml"
   push:
     branches:
       - "*"
@@ -65,25 +74,19 @@ jobs:
 
     - name: Build backend
       working-directory: backend
-      run: cargo build
+      run: cargo build ${{ steps.build_mode.outputs.cargo }}
     - name: Test backend
       working-directory: backend
       run: cargo test
-    - name: Make sure `schema.graphql` is up to date
-      working-directory: backend
-      run: cargo run -- export-api-schema | diff -u --color=always - ../frontend/src/schema.graphql
-    - name: Make sure `docs/docs/setup/config.toml` is up to date
-      working-directory: backend
-      run: cargo run -- write-config | diff -u --color=always - ../docs/docs/setup/config.toml
 
-    # Prepare binary for deployment
-    - name: Build server binary for test deployment
-      working-directory: backend
-      run: cargo build ${{ steps.build_mode.outputs.cargo }}
-    - name: Move deploy binary
+    - name: Move Tobira binary
       run: mv backend/${{ steps.build_mode.outputs.targetdir }}/tobira tobira
-    - name: Compress server binary
+    - name: Compress Tobira binary
       run: objcopy --compress-debug-sections tobira
+    - name: Make sure `schema.graphql` is up to date
+      run: ./tobira export-api-schema | diff -u --color=always - frontend/src/schema.graphql
+    - name: Make sure `docs/docs/setup/config.toml` is up to date
+      run: ./tobira write-config | diff -u --color=always - docs/docs/setup/config.toml
 
     # Prepare the ID (used in the subdomain) for deployment. This has to be done
     # here because in the `deploy` workflow, we don't have access to the correct
