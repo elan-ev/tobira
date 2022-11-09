@@ -2,6 +2,15 @@ name: Build & test
 
 on:
   pull_request:
+    paths:
+    - "backend/**"
+    - "frontend/**"
+    - "docs/docs/setup/config.toml"
+    - "util/dev-config/*"
+    - ".deployment/templates/config.toml"
+    - "util/containers/login-handler.py"
+    - ".github/workflows/ci.yml"
+    - ".github/workflows/deploy.yml"
   push:
     branches:
       - "*"
