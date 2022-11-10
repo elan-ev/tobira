@@ -96,8 +96,8 @@
         state: started
         enabled: yes
 
-    # Migration with data currently does not work.
-    # That is why we drop and re-create the database for now.
+    # We always recreate the DB from the last release dump. To do that, we have
+    # to stop Tobira in case it's already running.
     - name: stop and disable tobira
       become: true
       systemd:
@@ -114,7 +114,6 @@
       community.postgresql.postgresql_db:
         name: tobira-{{ id }}
         state: absent
-    # End of migration hack.
 
     - name: create tobira postgres user
       become: true
@@ -209,14 +208,40 @@
         mode: '0644'
       notify: restart tobira
 
-    - name: copy realm demo data
+    - name: Download latest DB dump
       become: true
-      copy:
-        src: realms.yaml
-        dest: /opt/tobira/{{ id }}/
+      get_url:
+        url: 'https://s3.opencast-niedersachsen.de/tobira/db-dump-latest.xz'
+        dest: /opt/tobira/{{ id }}/db-dump.pgc.xz
         owner: root
         group: root
-        mode: '0644'
+        mode: '0755'
+
+    - name: Decompress DB dump
+      become: true
+      shell: xz -d db-dump.pgc.xz
+      args:
+        chdir: /opt/tobira/{{ id }}/
+        creates: /opt/tobira/{{ id }}/db-dump.pgc
+        removes: /opt/tobira/{{ id }}/db-dump.pgc.xz
+
+    - name: Restore DB dump
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_db:
+        state: restore
+        # The ending `pgc` is important so that `pg_restore` (and not psql) is used.
+        target: /opt/tobira/{{ id }}/db-dump.pgc
+        name:  tobira-{{ id }}
+        target_opts: '--no-owner --role=tobira-{{ id }}'
+      # Unfortunately, we have to add this here as the command fails when adding
+      # comments to the 'public' schema and to two extensions. That fails
+      # because the user can't access those. In the future, with a newer
+      # `pg_restore` function we can specify `--no-comments` which should fix
+      # this. Also note: despite those errors, the dump is correctly restored.
+      # Of course this now ignores all errors, so we might miss other stuff
+      # that goes wrong.
+      ignore_errors: true
 
     - name: run database migration
       become: true
@@ -230,13 +255,6 @@
       become_user: tobira
       command:
         cmd: /opt/tobira/{{ id }}/tobira sync run
-        chdir: /opt/tobira/{{ id }}/
-
-    - name: insert demo realms
-      become: true
-      become_user: tobira
-      command:
-        cmd: /opt/tobira/{{ id }}/tobira import-realm-tree realms.yaml --dummy-blocks
         chdir: /opt/tobira/{{ id }}/
 
     - name: Clear search index
