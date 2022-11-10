@@ -1138,20 +1138,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "juniper_hyper"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a502579036a091b0b55defae02c48d35edaabdbce68954cd9c735610652af00e"
-dependencies = [
- "futures",
- "hyper",
- "juniper",
- "serde_json",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2285,7 +2271,6 @@ dependencies = [
  "hyperlocal",
  "isahc",
  "juniper",
- "juniper_hyper",
  "libz-sys",
  "log",
  "meilisearch-sdk",

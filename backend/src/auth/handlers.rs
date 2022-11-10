@@ -47,7 +47,7 @@ pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Re
             // No auth headers are set: this should not happen. This means that
             // either there is no auth proxy or it was incorrectly configured.
             warn!("Got POST /~session request without auth headers set: this should not happen");
-            Err(http::response::bad_request())
+            Err(http::response::bad_request(None))
         }
     }
 }
