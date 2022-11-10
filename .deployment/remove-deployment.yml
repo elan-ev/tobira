@@ -23,6 +23,7 @@
     - name: Clear search index
       become: true
       become_user: tobira
+      ignore_errors: true
       command:
         cmd: /opt/tobira/{{ id }}/tobira search-index clear --yes-absolutely-clear-index
         chdir: /opt/tobira/{{ id }}/
