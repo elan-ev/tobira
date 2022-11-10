@@ -8,94 +8,6 @@
     opencast_admin_password: '{{ lookup("env", "OPENCAST_ADMIN_PASSWORD") }}'
 
   tasks:
-
-    - name: install dependencies
-      become: true
-      package:
-        state: present
-        name:
-          - postgresql-server
-          - postgresql-contrib
-          - python3
-          - python3-psycopg2
-          - nginx
-
-    # MeiliSearch
-
-    - name: create MeiliSearch directory
-      become: true
-      file:
-        path: /opt/meili
-        state: directory
-        mode: '0755'
-
-    - name: install MeiliSearch
-      become: true
-      get_url:
-        url: https://github.com/meilisearch/meilisearch/releases/download/v0.28.1/meilisearch-linux-amd64
-        dest: /opt/meili/meilisearch
-        mode: '0755'
-        checksum: sha256:d394626b43c71acba0516336016285a963046b5ccf6f2c5ea6d5ef17085a3b40
-      register: meili_changed
-
-    - name: install MeiliSearch service file
-      become: true
-      template:
-        src: meili.service
-        dest: /etc/systemd/system/meili.service
-        mode: '0644'
-        owner: root
-        group: root
-      register: meili_changed
-
-    - name: start and enable Meili
-      become: true
-      service:
-        name: meili
-        state: started
-        enabled: yes
-
-    - name: restart Meili
-      become: true
-      service:
-        name: meili
-        state: restarted
-        enabled: yes
-      when: meili_changed.changed
-
-    # DATABASE
-
-    - name: initialize database
-      become: true
-      command:
-        cmd: postgresql-setup --initdb
-        creates: /var/lib/pgsql/data/postgresql.conf
-
-    - name: set auth to scram-sha-256
-      become: true
-      lineinfile:
-        path: /var/lib/pgsql/data/postgresql.conf
-        regexp: '^password_encryption'
-        line: "password_encryption = 'scram-sha-256'"
-      notify: restart postgresql
-
-    - name: configure postgres access
-      become: true
-      copy:
-        src: pg_hba.conf
-        dest: /var/lib/pgsql/data/pg_hba.conf
-        owner: postgres
-        group: postgres
-        mode: '0644'
-      notify: restart postgresql
-
-    - name: start and enable database
-      become: true
-      service:
-        name: postgresql
-        state: started
-        enabled: yes
-
     # We always recreate the DB from the last release dump. To do that, we have
     # to stop Tobira in case it's already running.
     - name: stop and disable tobira
@@ -138,10 +50,6 @@
 
     # TOBIRA
 
-    - name: create tobira users
-      become: true
-      user:
-        name: tobira
 
     - name: create application directory
       become: true
@@ -150,15 +58,6 @@
         state: directory
         owner: root
         group: root
-        mode: '0755'
-
-    - name: create logging directory
-      become: true
-      file:
-        path: /var/log/tobira
-        state: directory
-        owner: tobira
-        group: tobira
         mode: '0755'
 
     - name: create socket directory
@@ -299,72 +198,18 @@
 
     # NGINX
 
-    - name: deploy nginx configuration
+    - name: deploy nginx host configuration
       become: true
       template:
-        src: '{{ item.src }}'
-        dest: /etc/nginx/{{ item.dest }}
+        src: nginx-host.conf
+        dest: /etc/nginx/conf.d/tobira-{{ id }}.conf
         mode: '0644'
         owner: root
         group: root
-      loop:
-        - src: nginx.conf
-          dest: nginx.conf
-        - src: nginx-host.conf
-          dest: conf.d/tobira-{{ id }}.conf
       notify: reload nginx
 
-    - name: create ssl directory
-      become: true
-      file:
-        path: /etc/nginx/ssl
-        state: directory
-        owner: nginx
-        mode: '0755'
-
-    - name: initial configuration for certificates
-      become: true
-      copy:
-        src: ssl/{{ item.src }}
-        dest: /etc/nginx/ssl/{{ item.dest }}
-        owner: root
-        group: root
-        force: false
-        mode: '0640'
-      loop:
-        - src: certificate.pem
-          dest: '{{ inventory_hostname }}.crt'
-        - src: key.pem
-          dest: '{{ inventory_hostname }}.key'
-        - src: dhparam.pem
-          dest: dhparam.pem
-      notify: reload nginx
-
-    - name: configure firewall
-      become: true
-      firewalld:
-        service: '{{ item }}'
-        state: enabled
-        permanent: yes
-        immediate: yes
-      loop:
-        - http
-        - https
-
-    - name: start and enable nginx
-      become: true
-      systemd:
-        name: nginx
-        state: started
-        enabled: true
 
   handlers:
-    - name: restart postgresql
-      become: true
-      service:
-        name: postgresql
-        state: restarted
-
     - name: restart tobira
       become: true
       service:
@@ -380,9 +225,3 @@
       service:
         name: nginx
         state: reloaded
-
-    - name: restart meili
-      become: true
-      service:
-        name: meili
-        state: restarted
