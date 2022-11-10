@@ -25,34 +25,44 @@ env:
 jobs:
   main:
     runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres:10
+        env:
+          POSTGRES_USER: tobira
+          POSTGRES_PASSWORD: tobira
+          POSTGRES_DB: tobira
+        ports:
+          - 5432:5432
+        options: '--name tobira_pg'
+
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Restore backend cache
-      uses: Swatinem/rust-cache@v1.3.0
+      uses: Swatinem/rust-cache@v2
       with:
-        working-directory: backend
+        workspaces: backend
 
     # Frontend cache: only the NPM folder is cached, not the node_modules, as
     # recommended here: https://github.com/actions/cache/blob/main/examples.md#node---npm
     - name: Restore NPM cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.npm
         key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
 
     # Figure out build mode
     - name: Determine build mode
-      id: build_mode
       run: |
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
-          echo "::set-output name=cargo::--release"
-          echo "::set-output name=targetdir::target/release"
-          echo "::set-output name=webpack::production"
+          echo "ci_cargo_flags=--release" >> $GITHUB_ENV
+          echo "ci_targetdir=target/release" >> $GITHUB_ENV
+          echo "ci_webpack_flags=production" >> $GITHUB_ENV
         else
-          echo "::set-output name=cargo::--features=embed-in-debug"
-          echo "::set-output name=targetdir::target/debug"
-          echo "::set-output name=webpack::development"
+          echo "ci_cargo_flags=--features=embed-in-debug" >> $GITHUB_ENV
+          echo "ci_targetdir=target/debug" >> $GITHUB_ENV
+          echo "ci_webpack_flags=development" >> $GITHUB_ENV
         fi
 
     # The actual building and testing!
@@ -70,23 +80,42 @@ jobs:
       run: npx eslint --max-warnings 0 .
     - name: Build frontend
       working-directory: frontend
-      run: npx webpack --mode=${{ steps.build_mode.outputs.webpack }}
+      run: npx webpack --mode=${{ env.ci_webpack_flags }}
 
     - name: Build backend
       working-directory: backend
-      run: cargo build ${{ steps.build_mode.outputs.cargo }}
+      run: cargo build ${{ env.ci_cargo_flags }}
     - name: Test backend
       working-directory: backend
       run: cargo test
 
     - name: Move Tobira binary
-      run: mv backend/${{ steps.build_mode.outputs.targetdir }}/tobira tobira
+      run: mv backend/${{ env.ci_targetdir }}/tobira tobira
     - name: Compress Tobira binary
       run: objcopy --compress-debug-sections tobira
     - name: Make sure `schema.graphql` is up to date
       run: ./tobira export-api-schema | diff -u --color=always - frontend/src/schema.graphql
     - name: Make sure `docs/docs/setup/config.toml` is up to date
       run: ./tobira write-config | diff -u --color=always - docs/docs/setup/config.toml
+
+
+    # Test DB migrations
+    - name: Download latest DB dump
+      run: curl --silent --output db-dump.xz https://s3.opencast-niedersachsen.de/tobira/db-dump-latest.xz
+    - name: Decompress DB dump
+      run: xz -d db-dump.xz
+    # We need to use the same version as the DB, so we use 'docker exec'
+    - name: Restore DB dump
+      run: |
+        docker exec -i tobira_pg pg_restore \
+          --dbname postgresql://tobira:tobira@localhost/postgres \
+          --clean \
+          --create \
+          --if-exists \
+          < db-dump
+    - name: Run migrations
+      run: ./tobira db migrate --config util/dev-config/config.toml
+
 
     # Prepare the ID (used in the subdomain) for deployment. This has to be done
     # here because in the `deploy` workflow, we don't have access to the correct
@@ -96,7 +125,7 @@ jobs:
 
     # Archive files to be used in the `deploy` workflow
     - name: Archive deployment files as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: test-deployment-files
         path: |

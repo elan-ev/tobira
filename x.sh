@@ -27,6 +27,9 @@ if [[ $# -lt 1 ]]; then
     >&2 echo "  - ./x.sh containers [start|stop|run]"
     >&2 echo "        Manages all dev containers. To only start/stop some of them, use"
     >&2 echo "        docker-compose manually in 'util/containers'"
+    >&2 echo
+    >&2 echo "  - ./x.sh db load-dump"
+    >&2 echo "        Loads a public DB dump with lots of data."
     exit 1
 fi
 
@@ -63,6 +66,21 @@ containers() {
 
 }
 
+# DB operations
+db() {
+
+    case "$1" in
+        "load-dump")
+            "$basedir"/util/scripts/db-load-dump.sh
+            ;;
+        *)
+            >&2 echo "Incorrect argument for 'db' command!"
+            >&2 echo "Allowed: 'load-dump'. Example: './x.sh db load-dump'"
+            exit 1
+            ;;
+    esac
+
+}
 
 case "$1" in
     "check-system")
@@ -91,6 +109,9 @@ case "$1" in
         ;;
     "containers")
         containers "$2"
+        ;;
+    "db")
+        db "$2"
         ;;
     *)
         >&2 echo "Unknown command '$1'. Run this script without arguments for more information."

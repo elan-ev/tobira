@@ -1,0 +1,79 @@
+on:
+  release:
+    types: [published]
+
+name: Create & upload DB dump
+
+jobs:
+  upload-db-dump:
+    name: Create & upload DB dump
+    runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: postgres:10
+        env:
+          POSTGRES_USER: tobira
+          POSTGRES_PASSWORD: tobira
+          POSTGRES_DB: tobira
+        ports:
+          - 5432:5432
+        options: '--name tobira_pg'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download Tobira binary
+        run: curl --location --output tobira 'https://github.com/elan-ev/tobira/releases/download/${{github.ref_name}}/tobira-x86_64-unknown-linux-gnu'
+      - run: chmod +x tobira
+
+      # We adjust the dev config for simplicity here. We could also provide a
+      # full config here: either solution can get out of date.
+      - name: Adjust config for syncing
+        run: |
+          sed --in-place \
+            -e 's/host = "http:\/\/localhost:8081"/host = "https:\/\/oc.tobira.ethz.ch"/g' \
+            -e 's/password = "opencast"/password = "${{ secrets.TOBIRA_OPENCAST_ADMIN_PASSWORD }}"/g' \
+            -e 's/level = "trace"/level = "debug"/g' \
+            -e '/preferred_harvest_size/d' \
+            util/dev-config/config.toml
+
+      - name: Sync with Opencast
+        run: ./tobira sync run --config util/dev-config/config.toml
+      - name: Import realm tree
+        run: ./tobira import-realm-tree --config util/dev-config/config.toml .deployment/files/realms.yaml
+
+      # Here we specifically use the `pg_dump` binary from the docker container
+      # to use the oldest supported version of `pg_dump`. We don't let PG
+      # compress the output, as we will compress with xz below anyway and that
+      # compression works best when its input is uncompressed.
+      - name: Create DB dump
+        run: |
+          docker exec tobira_pg pg_dump \
+            --format custom \
+            --dbname postgresql://tobira:tobira@localhost/tobira \
+            --compress 0 \
+            --quote-all-identifiers \
+            > db-dump
+
+      - name: Compress DB dump
+        run: xz --best db-dump
+
+
+      # Upload
+      - name: Install s3cmd
+        run: |
+          sudo apt update
+          sudo apt install s3cmd --yes
+
+      - name: Setup s3cfg
+        run: echo "${{ secrets.S3_CONFIG }}" > ~/.s3cfg
+
+      # We upload it twice so that we have an archive of all dumps but also can
+      # easily access the latest dump. Finding out the latest dump URL in other
+      # ways is really tricky actually. And given that the dump is 2MB,
+      # this "waste" of storage and bandwidth is miniscule.
+      - name: Upload DB dump
+        run: |
+          s3cmd put db-dump.xz s3://tobira/db-dump-${{github.ref_name}}.xz
+          s3cmd put db-dump.xz s3://tobira/db-dump-latest.xz
