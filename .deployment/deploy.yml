@@ -10,7 +10,7 @@
   tasks:
     # We always recreate the DB from the last release dump. To do that, we have
     # to stop Tobira in case it's already running.
-    - name: stop and disable tobira
+    - name: stop tobira
       become: true
       systemd:
         name: '{{ item }}-{{ id }}'
