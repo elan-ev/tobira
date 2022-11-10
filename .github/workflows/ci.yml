@@ -40,14 +40,14 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Restore backend cache
-      uses: Swatinem/rust-cache@v1.3.0
+      uses: Swatinem/rust-cache@v2
       with:
-        working-directory: backend
+        workspaces: backend
 
     # Frontend cache: only the NPM folder is cached, not the node_modules, as
     # recommended here: https://github.com/actions/cache/blob/main/examples.md#node---npm
     - name: Restore NPM cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.npm
         key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
