@@ -54,16 +54,15 @@ jobs:
 
     # Figure out build mode
     - name: Determine build mode
-      id: build_mode
       run: |
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
-          echo "::set-output name=cargo::--release"
-          echo "::set-output name=targetdir::target/release"
-          echo "::set-output name=webpack::production"
+          echo "ci_cargo_flags=--release" >> $GITHUB_ENV
+          echo "ci_targetdir=target/release" >> $GITHUB_ENV
+          echo "ci_webpack_flags=production" >> $GITHUB_ENV
         else
-          echo "::set-output name=cargo::--features=embed-in-debug"
-          echo "::set-output name=targetdir::target/debug"
-          echo "::set-output name=webpack::development"
+          echo "ci_cargo_flags=--features=embed-in-debug" >> $GITHUB_ENV
+          echo "ci_targetdir=target/debug" >> $GITHUB_ENV
+          echo "ci_webpack_flags=development" >> $GITHUB_ENV
         fi
 
     # The actual building and testing!
@@ -81,17 +80,17 @@ jobs:
       run: npx eslint --max-warnings 0 .
     - name: Build frontend
       working-directory: frontend
-      run: npx webpack --mode=${{ steps.build_mode.outputs.webpack }}
+      run: npx webpack --mode=${{ env.ci_webpack_flags }}
 
     - name: Build backend
       working-directory: backend
-      run: cargo build ${{ steps.build_mode.outputs.cargo }}
+      run: cargo build ${{ env.ci_cargo_flags }}
     - name: Test backend
       working-directory: backend
       run: cargo test
 
     - name: Move Tobira binary
-      run: mv backend/${{ steps.build_mode.outputs.targetdir }}/tobira tobira
+      run: mv backend/${{ env.ci_targetdir }}/tobira tobira
     - name: Compress Tobira binary
       run: objcopy --compress-debug-sections tobira
     - name: Make sure `schema.graphql` is up to date
