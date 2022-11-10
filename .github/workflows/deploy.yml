@@ -20,7 +20,7 @@ jobs:
         github.actor == 'lkiesow'
       ) }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     # Unfortunately we cannot use `actions/download-artifact` here since that
     # only allows to download artifacts from the same run.
