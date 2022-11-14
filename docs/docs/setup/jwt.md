@@ -51,6 +51,8 @@ https://docs.opencast.org/develop/admin/#configuration/security.jwt/#configurati
 
 A few points and suggestions regarding the configuration:
 
+- You need both, the request header and query parameter filter.
+
 - You have to configure the same JWT algorithm in Opencast as you did in Tobira.
 
 - Set the public key URL (`jwksUrl`) to `https://your-tobira.domain/.well-known/jwks.json`
