@@ -8,9 +8,9 @@
     "serve": "docusaurus serve"
   },
   "dependencies": {
-    "@docusaurus/core": "2.1.0",
-    "@docusaurus/preset-classic": "2.1.0",
-    "@easyops-cn/docusaurus-search-local": "^0.32.0",
+    "@docusaurus/core": "2.2.0",
+    "@docusaurus/preset-classic": "2.2.0",
+    "@easyops-cn/docusaurus-search-local": "^0.33.5",
     "raw-loader": "^4.0.2"
   },
   "devDependencies": {
