@@ -52,27 +52,17 @@ jobs:
               artifact_id: deployFiles.id,
           })
 
-    # We could run `unzip -o` to overwrite all files, but that could easily lead
-    # to security problems as the workflow creating the zip file can add
-    # arbitrary files. Right now it does not matter as this workflow explicitly
-    # only runs for trusted users, but being more careful here is better. So we
-    # explicitly remove the file we expect to get overwriten.
+
     - name: extract artifacts
-      run: |
-        rm .deployment/templates/config.toml || true
-        rm util/dev-config/logo-large.svg || true
-        rm util/dev-config/logo-small.svg || true
-        rm util/dev-config/favicon.svg || true
-        rm util/containers/login-handler.py || true
-        unzip artifacts.zip
+      run: mkdir tmp_artifacts && unzip artifacts.zip -d tmp_artifacts
 
     - name: Prepare files for deployment
       run: |
-        cp -v tobira .deployment/files/
-        cp -v util/dev-config/logo-large.svg .deployment/files/
-        cp -v util/dev-config/logo-small.svg .deployment/files/
-        cp -v util/dev-config/favicon.svg .deployment/files/
-        cp -v util/containers/login-handler.py .deployment/files/
+        cp -v tmp_artifacts/tobira .deployment/files/
+        cp -v tmp_artifacts/util/dev-config/logo-large.svg .deployment/files/
+        cp -v tmp_artifacts/util/dev-config/logo-small.svg .deployment/files/
+        cp -v tmp_artifacts/util/dev-config/favicon.svg .deployment/files/
+        cp -v tmp_artifacts/util/containers/login-handler.py .deployment/files/
 
     - name: prepare deploy key
       env:
