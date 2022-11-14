@@ -86,6 +86,7 @@ impl Assets {
             "userIdLabel": config.auth.login_page.user_id_label,
             "passwordLabel": config.auth.login_page.password_label,
             "loginPageNote": config.auth.login_page.note,
+            "preAuthExternalLinks": config.auth.pre_auth_external_links,
         }).to_string());
 
         // Note the mismatch between presentation and sync node;

@@ -42,6 +42,7 @@ type AuthConfig = {
     userIdLabel: TranslatedString | null;
     passwordLabel: TranslatedString | null;
     loginPageNote: TranslatedString | null;
+    preAuthExternalLinks: boolean;
 };
 
 type LogoConfig = {

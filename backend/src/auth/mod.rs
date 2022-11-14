@@ -110,6 +110,12 @@ pub(crate) struct AuthConfig {
     /// user sessions.
     #[config(nested)]
     pub(crate) jwt: JwtConfig,
+
+    /// Determines whether or not Tobira users are pre-authenticated when they visit
+    /// external links like the ones to Opencast Studio or the Editor.
+    /// If you have an SSO-solution, you don't need it.
+    #[config(default = false)]
+    pub(crate) pre_auth_external_links: bool,
 }
 
 /// Authentification and authorization

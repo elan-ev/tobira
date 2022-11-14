@@ -75,3 +75,17 @@ put it under the key `auth.trusted_key` in your Tobira configuration.
 To tell Opencast, put it in `etc/org.opencastproject.adminui.endpoint.SeriesEndpoint.cfg`
 under the key `tobira.mh_default_org.trustedKey` (where you might have to replace `mh_default_org`
 by your organization ID in case you run a multitenant system).
+
+## Authenticating Tobira users against Opencast services
+
+Within Tobira we provide links to Opencast Studio, the editor, and potentially other
+Opencast services in the future. Since Tobira's and Opencast's authentication mechanisms
+are disjoint, you can't expect a Tobira user to keep their authenticated context
+when visiting these sites out of the box.
+
+The easiest solution to that problem is having an SSO set up at your entire site.
+In that case, everything should just work as expected. If that's not the case,
+Tobira offers the possibility of "pre-authenticating" users against Opencast,
+sending their login session along with them to the external page neatly packaged
+in a JWT. For that to work, you need to enable the `auth.pre_auth_external_links` option
+and then [configure Tobira and Opencast to support JWTs](./jwt).
