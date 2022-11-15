@@ -36,6 +36,13 @@ jobs:
       run: echo "DEPLOY_ID=pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
       if: github.event_name != 'delete'
 
+    - name: Delete GitHub deployment status
+      uses: bobheadxi/deployments@v0.5.2
+      with:
+        step: delete-env
+        token: ${{ secrets.GITHUB_TOKEN }}
+        env: ${{ env.DEPLOY_ID }}
+
     - name: remove deployment
       working-directory: .deployment
       run: >

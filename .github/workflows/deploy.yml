@@ -56,6 +56,18 @@ jobs:
     - name: extract artifacts
       run: mkdir tmp_artifacts && unzip artifacts.zip -d tmp_artifacts
 
+    - name: Read Deploy ID
+      run: echo "DEPLOY_ID=$(cat ./tmp_artifacts/deploy-id)" >> $GITHUB_ENV
+
+    - name: Set GitHub deployment status to "Pending"
+      uses: bobheadxi/deployments@v0.5.2
+      id: gh_deployment_start
+      with:
+        step: start
+        token: ${{ secrets.GITHUB_TOKEN }}
+        env: ${{ env.DEPLOY_ID }}
+        ref: ${{ github.event.workflow_run.head_commit.id }}
+
     - name: Prepare files for deployment
       run: |
         cp -v tmp_artifacts/tobira .deployment/files/
@@ -83,56 +95,16 @@ jobs:
       run: >
         ansible-playbook
         --private-key=~/.ssh/id_ed25519
-        --extra-vars="deployid='$(cat ../deploy-id)'"
+        --extra-vars="deployid='${{ env.DEPLOY_ID }}'"
         -u github
         deploy.yml
 
-    - name: comment on PR
-      uses: actions/github-script@v6
+    - name: Set GitHub deployment status to "deployed"
+      uses: bobheadxi/deployments@v0.5.2
       with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-          const fs = require('fs');
-          const deploy_id = fs.readFileSync('${{github.workspace}}/deploy-id', 'utf8').trim();
-          if (deploy_id.startsWith('pr')) {
-              const body = `🚀 This PR was deployed at https://${deploy_id}.tobira.opencast.org. `
-                  + `The deployment will be updated whenever someone pushes onto this PR's branch.`;
-              const issue_number = Number(deploy_id.substring(2));
-
-              // Check if we commented before
-              let page = 0;
-              let commentedAlready = false;
-
-              // In theory we don't need this upper limit of 20, but I am really uncomfortable
-              // having a potentially infinite loop in here. So I rather have this artificial
-              // upper limit. The worst that can happen is that this actions adds a second
-              // comment.
-              for (let page = 0; page < 20; page++) {
-                  const comments = await github.rest.issues.listComments({
-                      issue_number,
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      per_page: 100,
-                      page,
-                  });
-
-                  if (comments.data.length == 0) {
-                      break;
-                  }
-
-                  if (comments.data.some(c => c.body == body)) {
-                      console.log("Found an identical comment: will not comment again.")
-                      commentedAlready = true;
-                      break;
-                  }
-              }
-
-              if (!commentedAlready) {
-                  await github.rest.issues.createComment({
-                      issue_number,
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      body,
-                  })
-              }
-          }
+        step: finish
+        token: ${{ secrets.GITHUB_TOKEN }}
+        env: ${{ env.DEPLOY_ID }}
+        status: ${{ job.status }}
+        deployment_id: ${{ steps.gh_deployment_start.outputs.deployment_id }}
+        env_url: ${{ format('https://{0}.tobira.opencast.org', env.DEPLOY_ID) }}
