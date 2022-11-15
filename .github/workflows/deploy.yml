@@ -60,7 +60,7 @@ jobs:
       run: echo "DEPLOY_ID=$(cat ./tmp_artifacts/deploy-id)" >> $GITHUB_ENV
 
     - name: Set GitHub deployment status to "Pending"
-      uses: bobheadxi/deployments@v0.5.2
+      uses: bobheadxi/deployments@v1.3.0
       id: gh_deployment_start
       with:
         step: start
@@ -100,7 +100,7 @@ jobs:
         deploy.yml
 
     - name: Set GitHub deployment status to "deployed"
-      uses: bobheadxi/deployments@v0.5.2
+      uses: bobheadxi/deployments@v1.3.0
       with:
         step: finish
         token: ${{ secrets.GITHUB_TOKEN }}
