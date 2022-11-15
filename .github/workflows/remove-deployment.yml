@@ -29,18 +29,25 @@ jobs:
       run: ansible-galaxy collection install community.postgresql
 
     - name: Write deploy ID (for branch) to file
-      run: ./.deployment/deploy-id.sh "${{ github.event.ref }}" > deploy-id
+      run: echo "DEPLOY_ID=$(./.deployment/deploy-id.sh "${{ github.event.ref }}")" >> $GITHUB_ENV
       if: github.event_name == 'delete'
 
     - name: Write deploy ID (for PR) to file
-      run: ./.deployment/deploy-id.sh "refs/pull/${{ github.event.pull_request.number }}/merge" > deploy-id
+      run: echo "DEPLOY_ID=pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
       if: github.event_name != 'delete'
+
+    - name: Delete GitHub deployment status
+      uses: bobheadxi/deployments@v0.5.2
+      with:
+        step: delete-env
+        token: ${{ secrets.GITHUB_TOKEN }}
+        env: ${{ env.DEPLOY_ID }}
 
     - name: remove deployment
       working-directory: .deployment
       run: >
         ansible-playbook
         --private-key=~/.ssh/id_ed25519
-        --extra-vars="deployid='$(cat ../deploy-id)'"
+        --extra-vars="deployid='${{ env.DEPLOY_ID }}'"
         -u github
         remove-deployment.yml
