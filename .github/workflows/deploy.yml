@@ -65,7 +65,7 @@ jobs:
       with:
         step: start
         token: ${{ secrets.GITHUB_TOKEN }}
-        env: ${{ env.DEPLOY_ID }}
+        env: test-deployment-${{ env.DEPLOY_ID }}
         ref: ${{ github.event.workflow_run.head_commit.id }}
 
     - name: Prepare files for deployment
@@ -104,7 +104,7 @@ jobs:
       with:
         step: finish
         token: ${{ secrets.GITHUB_TOKEN }}
-        env: ${{ env.DEPLOY_ID }}
+        env: test-deployment-${{ env.DEPLOY_ID }}
         status: ${{ job.status }}
         deployment_id: ${{ steps.gh_deployment_start.outputs.deployment_id }}
         env_url: ${{ format('https://{0}.tobira.opencast.org', env.DEPLOY_ID) }}

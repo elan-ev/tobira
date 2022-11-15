@@ -41,7 +41,7 @@ jobs:
       with:
         step: delete-env
         token: ${{ secrets.GITHUB_TOKEN }}
-        env: ${{ env.DEPLOY_ID }}
+        env: test-deployment-${{ env.DEPLOY_ID }}
 
     - name: remove deployment
       working-directory: .deployment
