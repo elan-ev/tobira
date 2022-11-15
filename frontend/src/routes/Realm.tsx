@@ -126,7 +126,7 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
 
     return <>
         {!isRoot && <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />}
-        {title && <h1>{title}</h1>}
+        {title && <h1>It is working!</h1>}
         {realm.blocks.length === 0 && realm.parent === null
             ? <WelcomeMessage />
             : <Blocks realm={realm} />}
