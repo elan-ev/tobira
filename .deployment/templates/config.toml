@@ -29,7 +29,7 @@ trusted_external_key = "tobira"
 
 [auth.jwt]
 signing_algorithm = "ES256"
-# This is currently not created by scripts, but is expected to be generated there manually.
+# This is currently not created by scripts, but is expected to be generated on site manually.
 secret_key = "/opt/tobira/secret-jwt-key.pem"
 expiration_time = "10min"
 
