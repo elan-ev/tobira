@@ -12,8 +12,10 @@ import { authUploadTokenQuery } from "./__generated__/authUploadTokenQuery.graph
  * A JWT is added only if you enabled the `pre_auth_external_links` config option.
  * Returns a new `URL` (as opposed to modifying its parameter) in any case, though.
  */
-export const authenticateLink = async (link: URL | string): Promise<URL> => {
-    const authenticatedLink = new URL(link);
+export const authenticateLink = async (
+    ...args: ConstructorParameters<typeof URL>
+): Promise<URL> => {
+    const authenticatedLink = new URL(...args);
     if (CONFIG.auth.preAuthExternalLinks) {
         const query = graphql`
             query authLinkTokenQuery {
