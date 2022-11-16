@@ -205,10 +205,7 @@ upload:
     field-required: Dieses Feld darf nicht leer sein
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
-    jwt-expired: >
-      Interner Fremdauthentifizierungsfehler: Aufgrund Ihrer Internetverbindung wurde das Video zu langsam
-      hochgeladen. Zurzeit kann diese Anwendung damit nicht umgehen. Wir arbeiten bereits daran,
-      dieses Problem zu lösen. Bitte entschuldigen Sie diese Unannehmlichkeit.
+    jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
 
 manage:
   management: Verwaltung

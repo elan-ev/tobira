@@ -199,10 +199,7 @@ upload:
     field-required: This field is required (cannot be empty)
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
-    jwt-expired: >
-      Internal cross-authentication error: due to your internet connection, the video was uploaded too slowly.
-      Currently, this application cannot deal with those cases. We are aware of this problem and
-      working on it! We are sorry for causing any inconvenience.
+    jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
 
 manage:
   management: Management
