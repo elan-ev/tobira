@@ -42,32 +42,32 @@ export const getUploadJwt = async (): Promise<string> => {
  * with using Relay observables. Errors (as opposed to rejects) when the query returns
  * more or less than one result(s).
  */
-const getJwt = <
-    Query extends OperationType,
->(
+const getJwt = <Query extends OperationType>(
     query: GraphQLTaggedNode,
-): Promise<Query["response"]> => new Promise((resolve, reject) => {
-    let gotResult = false;
-    let out: Query["response"];
+): Promise<Query["response"]> => (
+    new Promise((resolve, reject) => {
+        let gotResult = false;
+        let out: Query["response"];
 
-    // Use "network-only" as we always want a fresh JWTs. `fetchQuery` should already
-    // never write any values into the cache, but better make sure.
-    fetchQuery<Query>(environment, query, {}, { fetchPolicy: "network-only" }).subscribe({
-        complete: () => {
-            if (!gotResult) {
-                bug("'complete' callback before receiving any data");
-            } else {
-                resolve(out);
-            }
-        },
-        error: (error: unknown) => reject(error),
-        next: data => {
-            if (gotResult) {
-                bug("unexpected second data when retrieving JWT");
-            } else {
-                out = data;
-                gotResult = true;
-            }
-        },
-    });
-});
+        // Use "network-only" as we always want a fresh JWTs. `fetchQuery` should already
+        // never write any values into the cache, but better make sure.
+        fetchQuery<Query>(environment, query, {}, { fetchPolicy: "network-only" }).subscribe({
+            complete: () => {
+                if (!gotResult) {
+                    bug("'complete' callback before receiving any data");
+                } else {
+                    resolve(out);
+                }
+            },
+            error: (error: unknown) => reject(error),
+            next: data => {
+                if (gotResult) {
+                    bug("unexpected second data when retrieving JWT");
+                } else {
+                    out = data;
+                    gotResult = true;
+                }
+            },
+        });
+    })
+);

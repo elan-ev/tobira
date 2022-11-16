@@ -51,7 +51,10 @@ https://docs.opencast.org/develop/admin/#configuration/security.jwt/#configurati
 
 A few points and suggestions regarding the configuration:
 
-- You need both, the request header and query parameter filter.
+- You might need both, the request header and query parameter filter.
+  - The former is for the uploader.
+  - The latter makes the pre-authentication of external links (Studio, Editor) possible.
+    You need it when you enabled `auth.pre_auth_external_links` in the Tobira configuration.
 
 - You have to configure the same JWT algorithm in Opencast as you did in Tobira.
 
