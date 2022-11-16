@@ -22,7 +22,6 @@ For Tobira, you only need to configure some values in `auth.jwt`, for example:
 [auth.jwt]
 signing_algorithm = "ES256"
 secret_key = "jwt-key.pem"
-expiration_time = "3min"
 ```
 
 The secret key has to be a key matching the algorithm.
@@ -39,11 +38,10 @@ Here, the `sec1.pem` is encoded as SEC1 instead of PKCS#8. The second command co
 **Important**: the expiration time for the JWT should be chosen to be fairly short to reduce the security risk posed by a stolen JWT.
 Tobira generates a new JWT right before every request it sends to Opencast.
 So you should only need to account for network delay and clock skew.
-
-*However*, due to a stupid set of circumstances, currently, the JWT has to live as long as the video upload takes.
-So, potentially very long in case of large videos or slow connections.
-This is a bug, or at the very least a terrible UX that needs fixing.
-We're on it!
+The default of 30 seconds should be fine for most installations,
+but you can try to be more conservative if you want.
+We strongly recommend against going higher, though. If you need that for some reason,
+you should probably rather try to mitigate the underlying problem.
 
 
 ## Setup Opencast

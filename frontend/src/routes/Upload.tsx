@@ -262,11 +262,9 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
             potentiallyInternetProblem: false,
         };
     } else if (error instanceof JwtInvalid) {
-        // TODO: make it so that this error should not occur. And once that is
-        // done, change `probablyOurFault` to `true`.
         info = {
-            causes: new Set([t("upload.errors.jwt-expired")]),
-            probablyOurFault: false, // Well...
+            causes: new Set([t("upload.errors.jwt-invalid")]),
+            probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
     } else {
@@ -638,7 +636,7 @@ export class OcNetworkError extends Error {
     }
 }
 
-/** The JWT sent to Opencast was rejected. Likely because it expired */
+/** The JWT sent to Opencast was rejected. */
 export class JwtInvalid extends Error {
     public constructor() {
         super();
