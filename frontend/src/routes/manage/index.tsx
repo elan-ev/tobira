@@ -90,7 +90,7 @@ const linkToStudio = async () => {
     const studioUrl = new URL(CONFIG.opencast.studioUrl);
     studioUrl.searchParams.append("return.target", document.location.href);
     const authenticatedUrl = await authenticateLink(studioUrl);
-    location.href = authenticatedUrl.href;
+    window.open(authenticatedUrl, "_blank");
 };
 
 type GridTileProps = {
