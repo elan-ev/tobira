@@ -107,6 +107,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
         "&:hover": hoverActiveStyle,
         ...active && {
             color: "var(--nav-color-darker)",
+            fontWeight: "bold",
             "&": hoverActiveStyle,
         },
     };
