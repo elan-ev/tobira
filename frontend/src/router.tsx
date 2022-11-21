@@ -10,11 +10,12 @@ import { RealmRoute } from "./routes/Realm";
 import { DirectOpencastVideoRoute, DirectVideoRoute, VideoRoute } from "./routes/Video";
 import { DirectSeriesOCRoute, DirectSeriesRoute } from "./routes/Series";
 import { ManageVideosRoute } from "./routes/manage/Video";
-import { ManageSingleVideoRoute } from "./routes/manage/Video/Single";
 import { UploadRoute } from "./routes/Upload";
 import { SearchRoute } from "./routes/Search";
 import { InvalidUrlRoute } from "./routes/InvalidUrl";
 import { BlockEmbedRoute, EmbedVideoRoute } from "./routes/Embed";
+import { ManageVideoDetailsRoute } from "./routes/manage/Video/Details";
+import { ManageVideoTechnicalDetailsRoute } from "./routes/manage/Video/TechnicalDetails";
 
 
 
@@ -41,7 +42,8 @@ const {
         DirectSeriesOCRoute,
         ManageRoute,
         ManageVideosRoute,
-        ManageSingleVideoRoute,
+        ManageVideoDetailsRoute,
+        ManageVideoTechnicalDetailsRoute,
         ManageRealmRoute,
         UploadRoute,
         AddChildRoute,
