@@ -50,6 +50,7 @@ import { getEventTimeInfo } from "../util/video";
 import { Creators } from "../ui/Video";
 import { Description } from "../ui/metadata";
 import { ellipsisOverflowCss } from "../ui";
+import { PopOver } from "../ui/PopOver";
 
 
 // ===========================================================================================
@@ -450,33 +451,13 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
 
         inner = <>
             {createdDate}
-            <div css={{
-                display: "none",
-                position: "absolute",
-                left: 2,
-                bottom: "calc(100% + 10px)",
-                width: "max-content",
-                padding: "5px 10px",
-                backgroundColor: "var(--grey86)",
-                borderRadius: 5,
-                color: "black",
-                zIndex: 100,
-            }}>
-                <div css={{
-                    position: "absolute",
-                    width: 12,
-                    height: 12,
-                    bottom: -5,
-                    left: 20,
-                    backgroundColor: "inherit",
-                    transform: "rotate(45deg)",
-                }} />
+            <PopOver pos="top">
                 <i>{t("video.created")}</i>: {createdFull}
                 {updatedFull && <>
                     <br/>
                     <i>{t("video.updated")}</i>: {updatedFull}
                 </>}
-            </div>
+            </PopOver>
         </>;
     }
 
@@ -486,8 +467,8 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             position: "relative",
             color: "var(--grey40)",
             fontSize: 14,
-            "&:hover > div": {
-                display: "initial",
+            "&:not(:hover) > div[data-popover-marker]": {
+                display: "none",
             },
         }}>{inner}</div>
     );

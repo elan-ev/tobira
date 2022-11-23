@@ -21,6 +21,7 @@ import { Spinner } from "../../ui/Spinner";
 import { LOGIN_PATH } from "../../routes/paths";
 import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { FOCUS_STYLE_INSET } from "../../ui";
+import { PopOver } from "../../ui/PopOver";
 
 
 /** User-related UI in the header. */
@@ -251,22 +252,21 @@ const Menu: React.FC<MenuProps> = ({ close, container }) => {
     });
 
     return (
-        <ul css={{
-            position: "absolute",
-            zIndex: 1000,
-            top: "100%",
-            right: 8,
-            marginTop: 8,
-            borderRadius: 4,
-            border: "1px solid var(--grey80)",
-            boxShadow: "1px 1px 5px var(--grey92)",
-            backgroundColor: "white",
-            minWidth: 200,
-            paddingLeft: 0,
-            margin: 0,
-            overflow: "hidden",
-            listStyle: "none",
-        }}>{items}</ul>
+        <PopOver
+            pos="bottom"
+            anchor="right"
+            padding={0}
+            arrowSize={12}
+            arrowDist={12}
+            distance={0}
+        >
+            <ul css={{
+                listStyle: "none",
+                margin: 0,
+                paddingLeft: 0,
+                minWidth: 200,
+            }}>{items}</ul>
+        </PopOver>
     );
 };
 
