@@ -41,7 +41,11 @@ jobs:
       - name: Sync with Opencast
         run: ./tobira sync run --config util/dev-config/config.toml
       - name: Import realm tree
-        run: ./tobira import-realm-tree --config util/dev-config/config.toml .deployment/files/realms.yaml
+        run: |
+          ./tobira import-realm-tree \
+            --dummy-blocks \
+            --config util/dev-config/config.toml \
+            .deployment/files/realms.yaml
 
       # Here we specifically use the `pg_dump` binary from the docker container
       # to use the oldest supported version of `pg_dump`. We don't let PG
