@@ -17,7 +17,7 @@ import { RelativeDate } from "../time";
 import { Card } from "../Card";
 import { FiPlay } from "react-icons/fi";
 import { keyframes } from "@emotion/react";
-import { Description } from "../../util/video";
+import { Description } from "../metadata";
 
 
 type SharedProps = {

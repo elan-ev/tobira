@@ -46,8 +46,9 @@ import {
 } from "./__generated__/VideoPageDirectOpencastLinkQuery.graphql";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
-import { Description, getEventTimeInfo } from "../util/video";
+import { getEventTimeInfo } from "../util/video";
 import { Creators } from "../ui/Video";
+import { Description } from "../ui/metadata";
 
 
 // ===========================================================================================
