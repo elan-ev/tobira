@@ -233,13 +233,13 @@ manage:
     no-description: No description
     page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
     no-videos-found: No videos found.
-    share-direct-link: Share via direct link
-    open-in-editor: Open in video editor
-    referencing-pages: Referencing pages
-    referencing-pages-explanation: 'This video is referenced on the following pages:'
-    no-referencing-pages: No pages reference this video.
     details:
       title: Video details
+      share-direct-link: Share via direct link
+      open-in-editor: Open in video editor
+      referencing-pages: Referencing pages
+      referencing-pages-explanation: 'This video is referenced on the following pages:'
+      no-referencing-pages: No pages reference this video.
     thumbnail:
       title: Thumbnail
     acl:

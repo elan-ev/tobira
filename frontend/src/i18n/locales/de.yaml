@@ -240,13 +240,13 @@ manage:
     no-description: Keine Beschreibung
     page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
     no-videos-found: Keine Videos gefunden.
-    share-direct-link: Via Direktlink teilen
-    open-in-editor: Im Videoeditor öffnen
-    referencing-pages: Referenzierende Seiten
-    referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
-    no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
     details:
       title: Videodetails
+      share-direct-link: Via Direktlink teilen
+      open-in-editor: Im Videoeditor öffnen
+      referencing-pages: Referenzierende Seiten
+      referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
+      no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
     thumbnail:
       title: Vorschaubild
     acl:

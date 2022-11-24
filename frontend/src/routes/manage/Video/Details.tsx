@@ -50,7 +50,7 @@ const Page: React.FC<Props> = ({ event }) => {
             <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
                 {user.canUseEditor && event.canWrite && (
                     <LinkButton to={editorUrl} css={{ marginBottom: 16 }} target="_blank">
-                        {t("manage.my-videos.open-in-editor")} <FiExternalLink size={16} />
+                        {t("manage.my-videos.details.open-in-editor")} <FiExternalLink size={16} />
                     </LinkButton>
                 )}
                 <DirectLink event={event} />
@@ -70,7 +70,7 @@ const DirectLink: React.FC<Props> = ({ event }) => {
     return (
         <div css={{ marginBottom: 40 }}>
             <div css={{ marginBottom: 4 }}>
-                {t("manage.my-videos.share-direct-link") + ":"}
+                {t("manage.my-videos.details.share-direct-link") + ":"}
             </div>
             <CopyableInput
                 value={url.href}
@@ -137,11 +137,13 @@ const HostRealms: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
     return <>
-        <h2 css={{ fontSize: 20, marginBottom: 8 }}>{t("manage.my-videos.referencing-pages")}</h2>
+        <h2 css={{ fontSize: 20, marginBottom: 8 }}>
+            {t("manage.my-videos.details.referencing-pages")}
+        </h2>
         {event.hostRealms.length === 0
-            ? <i>{t("manage.my-videos.no-referencing-pages")}</i>
+            ? <i>{t("manage.my-videos.details.no-referencing-pages")}</i>
             : <>
-                <p>{t("manage.my-videos.referencing-pages-explanation")}</p>
+                <p>{t("manage.my-videos.details.referencing-pages-explanation")}</p>
                 <ul>{event.hostRealms.map(realm => <li key={realm.id}>
                     <Link to={realm.path}>{
                         realm.isRoot
