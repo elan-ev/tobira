@@ -154,9 +154,13 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         </LinkWithIcon>
     ));
 
+    const videoLink = event.hostRealms.length === 1
+        ? `${event.hostRealms[0].path.replace(/^\/$/, "")}/v/${id}`
+        : `/!v/${id}`;
+
     const header = (
         <div css={{ display: "flex", flexDirection: "column" }}>
-            <Link to={`/!v/${id}`} css={{
+            <Link to={videoLink} css={{
                 dislay: "block",
                 position: "relative",
                 width: "100%",
