@@ -68,13 +68,13 @@ type DescriptionProps = {
  * into proper paragraphs.
  */
 export const Description: React.FC<DescriptionProps> = ({ text, className }) => {
-    if (text === null) {
-        return null;
-    }
+    const { t } = useTranslation();
 
-    const stripped = text.trim();
-    if (stripped === "") {
-        return null;
+    const stripped = text?.trim();
+    if (!stripped) {
+        return <div {...{ className }} css={{ fontStyle: "italic" }}>
+            {t("manage.my-videos.no-description")}
+        </div>;
     }
 
     // We split the whole description by empty lines (two or more consecutive
