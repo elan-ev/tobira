@@ -81,8 +81,11 @@ To update Meili:
     - ... that videos can be played.
     - ... that search works.
 
-
 :::note
 If you encounter a problem only when restarting the processes and you think it should have been caught by `tobira check`, let us know so that we can add that check!
 :::
 
+## Afterwards
+
+- *Conditional*: if necessary, run a [resync](./resync).
+- *Conditional*: if necessary, run `tobira search-index rebuild` (see above).
