@@ -2,6 +2,7 @@ import React, { ReactNode, useRef } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
+import { FiCode, FiSettings } from "react-icons/fi";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -322,6 +323,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             </div>
             {event.canWrite && user !== "none" && user !== "unknown" && (
                 <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
+                    <FiSettings size={16} />
                     {t("manage.my-videos.manage-video")}
                 </LinkButton>
             )}
@@ -399,7 +401,10 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
     ].join(" ")}></iframe>`;
 
     return <>
-        <Button onClick={() => currentRef(modal).open()}>{t("video.embed.button")}</Button>
+        <Button onClick={() => currentRef(modal).open()}>
+            <FiCode size={16} />
+            {t("video.embed.button")}
+        </Button>
         <Modal title={t("video.embed.title")} ref={modal}>
             <CopyableInput value={embedCode} />
         </Modal>
