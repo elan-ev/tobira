@@ -21,7 +21,7 @@ impl search::Realm {
     }
 
     fn path(&self) -> &str {
-        &self.full_path
+        if self.full_path.is_empty() { "/" } else { &self.full_path }
     }
 
     fn ancestor_names(&self) -> &[Option<String>] {

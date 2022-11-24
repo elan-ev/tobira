@@ -191,7 +191,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     // link should be avoided.
     const link = hostRealms.length !== 1
         ? `/!v/${id.slice(2)}`
-        : `${hostRealms[0].path}/v/${id.slice(2)}`;
+        : `${hostRealms[0].path.replace(/^\/$/, "")}/v/${id.slice(2)}`;
 
     return (
         <Item key={id} link={link}>
