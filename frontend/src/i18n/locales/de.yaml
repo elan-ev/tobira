@@ -139,6 +139,7 @@ video:
     button: Einbetten
     title: Video einbetten
   caption: Untertitel
+  manage: Verwalten
 
 series:
   series: Serie
@@ -241,7 +242,6 @@ manage:
     no-videos-found: Keine Videos gefunden.
     share-direct-link: Via Direktlink teilen
     open-in-editor: Im Videoeditor öffnen
-    manage-video: Video verwalten
     referencing-pages: Referenzierende Seiten
     referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
     no-referencing-pages: Dieses Video wird von keiner Seite referenziert.

@@ -335,7 +335,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 {event.canWrite && user !== "none" && user !== "unknown" && (
                     <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
                         <FiSettings size={16} />
-                        {t("manage.my-videos.manage-video")}
+                        {t("video.manage")}
                     </LinkButton>
                 )}
                 <EmbedCode event={event} />
