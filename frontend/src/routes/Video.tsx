@@ -316,18 +316,30 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const user = useUser();
 
     return <>
-        <div css={{ display: "flex", alignItems: "center", marginTop: 24, gap: 8 }}>
-            <div css={{ flex: "1" }}>
+        <div css={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 24,
+            gap: 8,
+            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                flexDirection: "column",
+                alignItems: "flex-start",
+            },
+        }}>
+            <div>
                 <VideoTitle title={event.title} />
                 <VideoDate event={event} />
             </div>
-            {event.canWrite && user !== "none" && user !== "unknown" && (
-                <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
-                    <FiSettings size={16} />
-                    {t("manage.my-videos.manage-video")}
-                </LinkButton>
-            )}
-            <EmbedCode event={event} />
+            <div css={{ display: "flex", gap: 8, whiteSpace: "nowrap" }}>
+                {event.canWrite && user !== "none" && user !== "unknown" && (
+                    <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
+                        <FiSettings size={16} />
+                        {t("manage.my-videos.manage-video")}
+                    </LinkButton>
+                )}
+                <EmbedCode event={event} />
+            </div>
         </div>
         <hr />
         <div css={{
