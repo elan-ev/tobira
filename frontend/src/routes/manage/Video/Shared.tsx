@@ -86,7 +86,7 @@ const query = graphql`
                     updated
                     startTime
                     endTime
-                    tracks { flavor resolution mimetype }
+                    tracks { flavor resolution mimetype uri }
                 }
                 series {
                     title

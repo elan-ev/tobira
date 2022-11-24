@@ -64,6 +64,12 @@ const OpencastId: React.FC<Props> = ({ event }) => {
     </section>;
 };
 
+type SingleTrackInfo = {
+    resolution: readonly number[] | null;
+    mimetype: string | null;
+    uri: string;
+};
+
 const TrackInfo: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
@@ -71,23 +77,16 @@ const TrackInfo: React.FC<Props> = ({ event }) => {
         return null;
     }
 
-    type SingleTrackInfo = {
-        resolution: readonly number[] | null;
-        mimetype: string | null;
-    };
-
     const flavors: Map<string, SingleTrackInfo[]> = new Map();
-    for (const { flavor, resolution, mimetype } of event.syncedData.tracks) {
+    for (const { flavor, resolution, mimetype, uri } of event.syncedData.tracks) {
         let tracks = flavors.get(flavor);
         if (tracks === undefined) {
             tracks = [];
             flavors.set(flavor, tracks);
         }
 
-        tracks.push({ resolution, mimetype });
+        tracks.push({ resolution, mimetype, uri });
     }
-
-
 
     return <section>
         <h2>{t("manage.my-videos.technical-details.tracks")}</h2>
@@ -96,21 +95,31 @@ const TrackInfo: React.FC<Props> = ({ event }) => {
                 <code>{flavor}</code>
                 <ul>{tracks
                     .sort((a, b) => (a.resolution?.[0] ?? 0) - (b.resolution?.[0] ?? 0))
-                    .map(({ resolution, mimetype }, i) => <li key={i} css={{ marginBottom: 4 }}>
-                        {mimetype == null
-                            ? <i>{t("manage.my-videos.technical-details.unknown-mimetype")}</i>
-                            : <code>{mimetype}</code>}
-                        {resolution && <span css={{
-                            backgroundColor: "var(--grey95)",
-                            marginLeft: 8,
-                            padding: "2px 4px",
-                            borderRadius: 4,
-                        }}>{resolution.join(" × ")}</span>}
-                    </li>)
+                    .map((track, i) => <TrackItem key={i} {...track} />)
                 }</ul>
             </li>)}
         </ul>
     </section>;
+};
+
+const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => {
+    const { t } = useTranslation();
+
+    return (
+        <li css={{ marginBottom: 4 }}>
+            <a href={uri}>
+                {mimetype == null
+                    ? <i>{t("manage.my-videos.technical-details.unknown-mimetype")}</i>
+                    : <code>{mimetype}</code>}
+                {resolution && <span css={{
+                    backgroundColor: "var(--grey95)",
+                    marginLeft: 8,
+                    padding: "2px 4px",
+                    borderRadius: 4,
+                }}>{resolution.join(" × ")}</span>}
+            </a>
+        </li>
+    );
 };
 
 const OtherInfo: React.FC<Props> = ({ event }) => {
