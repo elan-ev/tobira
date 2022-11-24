@@ -49,6 +49,7 @@ import { NavigationData$key } from "../layout/__generated__/NavigationData.graph
 import { getEventTimeInfo } from "../util/video";
 import { Creators } from "../ui/Video";
 import { Description } from "../ui/metadata";
+import { ellipsisOverflowCss } from "../ui";
 
 
 // ===========================================================================================
@@ -378,13 +379,7 @@ const VideoTitle: React.FC<VideoTitleProps> = ({ title }) => (
         [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: { fontSize: 20 },
         [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 18 },
         lineHeight: 1.2,
-
-        // Truncate title after two lines
-        display: "-webkit-box",
-        WebkitBoxOrient: "vertical",
-        textOverflow: "ellipsis",
-        WebkitLineClamp: 2,
-        overflow: "hidden",
+        ...ellipsisOverflowCss(2),
     }} />
 );
 
