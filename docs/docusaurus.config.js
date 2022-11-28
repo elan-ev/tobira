@@ -45,6 +45,10 @@ const config = {
                 hideOnScroll: true,
                 items: [
                     {
+                      type: 'docsVersionDropdown',
+                      position: 'right',
+                    },
+                    {
                         href: "https://github.com/elan-ev/tobira",
                         label: "GitHub",
                         position: "right",
