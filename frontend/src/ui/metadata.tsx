@@ -21,12 +21,16 @@ export const InputContainer: React.FC<{ children: ReactNode }> = ({ children }) 
     <div css={{ margin: "16px 0 " }}>{children}</div>
 );
 
-type DescriptionProps = {
+type SmallDescriptionProps = {
     text: string | null;
     lines?: number;
 };
 
-export const Description: React.FC<DescriptionProps> = ({ text, lines = 2 }) => {
+/**
+ * An event's or series' description in at most `lines` lines. The text is not
+ * transformed at all, but emitted as is.
+ */
+export const SmallDescription: React.FC<SmallDescriptionProps> = ({ text, lines = 2 }) => {
     const { t } = useTranslation();
     const sharedStyle = {
         fontSize: 13,
@@ -51,4 +55,49 @@ export const Description: React.FC<DescriptionProps> = ({ text, lines = 2 }) => 
             overflow: "hidden",
         }}>{text}</div>;
     }
+};
+
+
+type DescriptionProps = {
+    text: string | null;
+    className?: string;
+};
+
+/**
+ * Display an event's or series' description. The text is transformed slightly
+ * into proper paragraphs.
+ */
+export const Description: React.FC<DescriptionProps> = ({ text, className }) => {
+    const { t } = useTranslation();
+
+    const stripped = text?.trim();
+    if (!stripped) {
+        return <div {...{ className }} css={{ fontStyle: "italic" }}>
+            {t("manage.my-videos.no-description")}
+        </div>;
+    }
+
+    // We split the whole description by empty lines (two or more consecutive
+    // newlines). That's the typical "make paragraphs from text" algorithm also
+    // used by Markdown. However, we capture those newlines to be able to
+    // output any extra (in addition to two) newlines. If a user typed many
+    // newlines in their description, they probably want to have more space
+    // there. The newlines between and within the paragraphs are then displayed
+    // via `white-space: pre-line` below.
+    const paragraphs = stripped.split(/(\n{2,})/);
+
+    // TODO: auto link URL-like things?
+    return (
+        <div {...{ className }} css={{
+            lineHeight: "1.43em",
+            whiteSpace: "pre-line",
+            "& > p:not(:first-child)": {
+                marginTop: 8,
+            },
+        }}>
+            {paragraphs.map((s, i) => i % 2 === 0
+                ? <p key={i}>{s}</p>
+                : s.slice(2))}
+        </div>
+    );
 };

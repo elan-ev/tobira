@@ -21,7 +21,7 @@ import { keyOfId, match } from "../../../util";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { Card } from "../../../ui/Card";
-import { Description } from "../../../ui/metadata";
+import { SmallDescription } from "../../../ui/metadata";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 
@@ -290,7 +290,7 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
                         backgroundColor: "var(--grey95)",
                     }}>{t("video.not-ready.label")}</span>}
                 </div>
-                <Description text={event.description} />
+                <SmallDescription text={event.description} />
             </td>
             <td css={{ fontSize: 14 }}>
                 {created.toLocaleDateString(i18n.language)}

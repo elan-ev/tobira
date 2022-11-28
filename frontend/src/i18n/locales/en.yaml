@@ -136,6 +136,7 @@ video:
     button: Embed
     title: Embed video
   caption: Caption
+  manage: Manage
 
 series:
   series: Series
@@ -234,7 +235,6 @@ manage:
     no-videos-found: No videos found.
     share-direct-link: Share via direct link
     open-in-editor: Open in video editor
-    manage-video: Manage video
     referencing-pages: Referencing pages
     referencing-pages-explanation: 'This video is referenced on the following pages:'
     no-referencing-pages: No pages reference this video.

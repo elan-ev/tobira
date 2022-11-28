@@ -2,6 +2,7 @@ import React, { ReactNode, useRef } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
+import { FiCode, FiSettings } from "react-icons/fi";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -45,8 +46,9 @@ import {
 } from "./__generated__/VideoPageDirectOpencastLinkQuery.graphql";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
-import { Description, getEventTimeInfo } from "../util/video";
+import { getEventTimeInfo } from "../util/video";
 import { Creators } from "../ui/Video";
+import { Description } from "../ui/metadata";
 
 
 // ===========================================================================================
@@ -315,17 +317,30 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const user = useUser();
 
     return <>
-        <div css={{ display: "flex", alignItems: "center", marginTop: 24, gap: 8 }}>
-            <div css={{ flex: "1" }}>
+        <div css={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 24,
+            gap: 8,
+            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                flexDirection: "column",
+                alignItems: "flex-start",
+            },
+        }}>
+            <div>
                 <VideoTitle title={event.title} />
                 <VideoDate event={event} />
             </div>
-            {event.canWrite && user !== "none" && user !== "unknown" && (
-                <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
-                    {t("manage.my-videos.manage-video")}
-                </LinkButton>
-            )}
-            <EmbedCode event={event} />
+            <div css={{ display: "flex", gap: 8, whiteSpace: "nowrap" }}>
+                {event.canWrite && user !== "none" && user !== "unknown" && (
+                    <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
+                        <FiSettings size={16} />
+                        {t("video.manage")}
+                    </LinkButton>
+                )}
+                <EmbedCode event={event} />
+            </div>
         </div>
         <hr />
         <div css={{
@@ -399,7 +414,10 @@ const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
     ].join(" ")}></iframe>`;
 
     return <>
-        <Button onClick={() => currentRef(modal).open()}>{t("video.embed.button")}</Button>
+        <Button onClick={() => currentRef(modal).open()}>
+            <FiCode size={16} />
+            {t("video.embed.button")}
+        </Button>
         <Modal title={t("video.embed.title")} ref={modal}>
             <CopyableInput value={embedCode} />
         </Modal>
