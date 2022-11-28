@@ -191,6 +191,32 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
             .start()
             .await?;
 
+        // Using transactions is all fine and good (and we should definitely do
+        // it), but running two of these migration transactions at the same
+        // time can lead to deadlocks. Those stop Tobira. If a systemd now
+        // automatically restarts the process, and if we have two services run
+        // like that at the same time (very common in practice), then those two
+        // services will continue to run into each other with no one ever able
+        // to complete the transaction/migration.
+        //
+        // To prevent that, we acquire an explicit lock at the very start. Only
+        // one process can hold that lock so that prevents deadlocks inside the
+        // migration.
+        let print_notice = tokio::spawn(async {
+            tokio::time::sleep(Duration::from_millis(300)).await;
+            debug!("Could not acquire exclusive lock to '__db_migrations' immediately. \
+                Likely another process is currently applying migrations. Waiting for lock...");
+        });
+        trace!("Attempting to lock table '__db_migrations'...");
+        let query = "lock table __db_migrations in share update exclusive mode";
+        let res = tx.execute(query, &[]).await;
+        print_notice.abort();
+        res.context("failed to lock table '__db_migrations'")?;
+        trace!("Locked table '__db_migrations'");
+
+
+        // We are now the only process allowed to tinker with migrations. First
+        // build a plan of what needs to be done and then execute it.
         let plan = MigrationPlan::build(&tx).await?;
         plan.execute(&tx).await?;
 
