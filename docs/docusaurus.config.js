@@ -20,6 +20,8 @@ const config = {
         ({
             docs: {
                 routeBasePath: "/",
+                editUrl: "https://github.com/elan-ev/tobira/edit/master/docs/",
+                editCurrentVersion: true,
             },
             blog: false,
         }),
