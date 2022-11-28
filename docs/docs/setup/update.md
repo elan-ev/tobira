@@ -52,9 +52,9 @@ Of course, database backups are already created automatically regularly, right?
 If Tobira requires a new MeiliSearch version, update that.
 
 *Note*: when stopping the MeiliSearch process, Tobira's search functionality immediately ceases to work.
-How to proceed best depends on whether the old Tobira also works with the new MeiliSearch:
-- Does work: perform the Meili update before restarting Tobira to reduce search down-time.
-- Does *not* work: you can chose whether to update Meili before or after Tobira – you will have search down-time in any case, unfortunately.
+How to best proceed depends on whether the old Tobira also works with the new MeiliSearch:
+- If it does work: perform the Meili update before restarting Tobira to reduce search down-time.
+- If it does *not* work: you can chose whether to update Meili before or after Tobira – you will have search down-time in any case, unfortunately.
 
 :::info
 All data in MeiliSearch can be rebuild quickly from the database.
@@ -87,5 +87,5 @@ If you encounter a problem only when restarting the processes and you think it s
 
 ## Afterwards
 
-- *Conditional*: if necessary, run a [resync](./resync).
 - *Conditional*: if necessary, run `tobira search-index rebuild` (see above).
+- *Conditional*: if necessary, run a [resync](./resync).
