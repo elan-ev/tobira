@@ -11,3 +11,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Versioned docs are not checked into the repo and are always created from git.
+# See 'util/scripts/build-versioned-docs.sh'.
+versioned_docs/
+versioned_sidebars/
+versions.json

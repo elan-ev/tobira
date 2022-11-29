@@ -20,6 +20,10 @@ const config = {
         ({
             docs: {
                 routeBasePath: "/",
+                editUrl: "https://github.com/elan-ev/tobira/edit/master/docs/",
+                editCurrentVersion: true,
+                showLastUpdateAuthor: true,
+                showLastUpdateTime: true,
             },
             blog: false,
         }),
@@ -44,6 +48,10 @@ const config = {
                 title: "Tobira Documentation",
                 hideOnScroll: true,
                 items: [
+                    {
+                      type: 'docsVersionDropdown',
+                      position: 'right',
+                    },
                     {
                         href: "https://github.com/elan-ev/tobira",
                         label: "GitHub",

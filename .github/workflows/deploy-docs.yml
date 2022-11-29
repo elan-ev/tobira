@@ -18,6 +18,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
+        with:
+          # We need to fetch all tags to build versioned docs
+          fetch-depth: 0
+
+      - name: Retrieve old versions of docs
+        run: ./util/scripts/build-versioned-docs.sh
       - run: npm ci
         working-directory: docs
       - name: Build documentation
