@@ -5,7 +5,8 @@
 use anyhow::Result;
 
 use crate::{
-    args, load_config_and_init_logger,
+    load_config_and_init_logger,
+    args::{self, Args},
     config::Config,
     db::{self, MigrationPlan},
     prelude::*,
@@ -13,8 +14,8 @@ use crate::{
 };
 
 
-pub(crate) async fn run(shared: &args::Shared) -> Result<()> {
-    let config = load_config_and_init_logger(shared)
+pub(crate) async fn run(shared: &args::Shared, args: &Args) -> Result<()> {
+    let config = load_config_and_init_logger(shared, args)
         .context("failed to load config: cannot proceed with `check` command")?;
 
 

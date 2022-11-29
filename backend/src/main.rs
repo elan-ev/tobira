@@ -72,33 +72,38 @@ async fn run() -> Result<()> {
             .get_matches(),
     )?;
 
+    // Configure output via `bunt`
+    bunt::set_stdout_color_choice(args.stdout_color());
+    bunt::set_stderr_color_choice(args.stderr_color());
+
+
     // Dispatch subcommand.
     match &args.cmd {
         Command::Serve { shared } => {
-            let config = load_config_and_init_logger(shared)?;
+            let config = load_config_and_init_logger(shared, &args)?;
             start_server(config).await?;
         }
-        Command::Sync { args, shared } => {
-            let config = load_config_and_init_logger(shared)?;
-            sync::cmd::run(args, &config).await?;
+        Command::Sync { args: sync_args, shared } => {
+            let config = load_config_and_init_logger(shared, &args)?;
+            sync::cmd::run(sync_args, &config).await?;
         }
         Command::Db { cmd, shared } => {
-            let config = load_config_and_init_logger(shared)?;
+            let config = load_config_and_init_logger(shared, &args)?;
             db::cmd::run(cmd, &config).await?;
         }
         Command::SearchIndex { cmd, shared } => {
-            let config = load_config_and_init_logger(shared)?;
+            let config = load_config_and_init_logger(shared, &args)?;
             search::cmd::run(cmd, &config).await?;
         }
         Command::Worker { shared } => {
-            let config = load_config_and_init_logger(shared)?;
+            let config = load_config_and_init_logger(shared, &args)?;
             start_worker(config).await?;
         }
-        Command::Check { shared } => cmd::check::run(shared).await?,
+        Command::Check { shared } => cmd::check::run(shared, &args).await?,
         Command::WriteConfig { target } => config::write_template(target.as_ref())?,
         Command::ExportApiSchema { args } => cmd::export_api_schema::run(args)?,
         Command::ImportRealmTree { options, shared } => {
-            let config = load_config_and_init_logger(shared)?;
+            let config = load_config_and_init_logger(shared, &args)?;
             cmd::import_realm_tree::run(options, &config).await?;
         }
     }
@@ -147,9 +152,9 @@ async fn start_worker(config: Config) -> Result<Never> {
 }
 
 
-fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
+fn load_config_and_init_logger(shared: &args::Shared, args: &Args) -> Result<Config> {
     // Load configuration.
-    let (config, path) = match &args.config {
+    let (config, path) = match &shared.config {
         Some(path) => {
             let config = Config::load_from(path)
                 .context(format!("failed to load config from '{}'", path.display()))?;
@@ -160,7 +165,7 @@ fn load_config_and_init_logger(args: &args::Shared) -> Result<Config> {
 
     // Initialize logger. Unfortunately, we can only do this here
     // after reading the config.
-    logger::init(&config.log)?;
+    logger::init(&config.log, args)?;
     info!("Loaded config from '{}'", path.display());
 
     Ok(config)

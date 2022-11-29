@@ -2,6 +2,8 @@
 
 use std::path::PathBuf;
 
+use termcolor::ColorChoice;
+
 use crate::{cmd, db::cmd::DbCommand, search::cmd::SearchIndexCommand};
 
 
@@ -10,6 +12,20 @@ use crate::{cmd, db::cmd::DbCommand, search::cmd::SearchIndexCommand};
 pub(crate) struct Args {
     #[clap(subcommand)]
     pub(crate) cmd: Command,
+
+    /// Whether to use colors when printing to stdout and stderr. Possible
+    /// values: never|auto|always.
+    ///
+    /// If set to/left at 'auto', color is used when stdout is a terminal, but
+    /// not used if you are piping the output to a file, for example. You can
+    /// then also disable colors by setting the env variable `NO_COLOR=1`.
+    #[clap(
+        long,
+        global = true,
+        default_value = "auto",
+        value_parser = parse_color_choice,
+    )]
+    pub(crate) color: termcolor::ColorChoice,
 }
 
 #[derive(Debug, clap::Parser)]
@@ -98,4 +114,23 @@ pub(crate) struct Shared {
     /// `/etc/tobira/config.toml`.
     #[clap(short, long, global = true)]
     pub(crate) config: Option<PathBuf>,
+}
+
+fn parse_color_choice(s: &str) -> Result<ColorChoice, &'static str> {
+    match s {
+        "never" => Ok(ColorChoice::Never),
+        "always" => Ok(ColorChoice::Always),
+        "auto" => Ok(ColorChoice::Auto),
+        _ => Err("invalid color choice (allowed values: never|auto|always)"),
+    }
+}
+
+impl Args {
+    pub(crate) fn stdout_color(&self) -> ColorChoice {
+        if atty::is(atty::Stream::Stdout) { self.color } else { ColorChoice::Never }
+    }
+
+    pub(crate) fn stderr_color(&self) -> ColorChoice {
+        if atty::is(atty::Stream::Stderr) { self.color } else { ColorChoice::Never }
+    }
 }

@@ -163,9 +163,9 @@ checksum = "37ccbd214614c6783386c1af30caf03192f17891059cecc394b4fb119e363de3"
 
 [[package]]
 name = "bunt"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "192bac6c13e04373feb683e4438cbc156e6bbe432f614a9d6247445108fc5551"
+checksum = "36684a2de5a8a9049e1da69e4019fb6313087327ecd1e416a3850e5158d3b922"
 dependencies = [
  "bunt-macros",
  "termcolor",
@@ -2250,6 +2250,7 @@ name = "tobira"
 version = "1.4.0"
 dependencies = [
  "anyhow",
+ "atty",
  "base64",
  "bincode",
  "bstr",

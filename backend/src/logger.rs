@@ -4,9 +4,9 @@ use std::{
     path::PathBuf,
     sync::Mutex,
 };
-use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
+use termcolor::{NoColor, StandardStream, WriteColor};
 
-use crate::prelude::*;
+use crate::{prelude::*, args::Args};
 
 
 #[derive(Debug, confique::Config)]
@@ -40,10 +40,9 @@ struct Logger {
 }
 
 /// Installs our own logger globally. Must only be called once!
-pub(crate) fn init(config: &LogConfig) -> Result<()> {
+pub(crate) fn init(config: &LogConfig, args: &Args) -> Result<()> {
     let stdout = match config.stdout {
-        // TODO: we might want to pass color choice via args
-        true => Some(Mutex::new(StandardStream::stdout(ColorChoice::Always))),
+        true => Some(Mutex::new(StandardStream::stdout(args.stdout_color()))),
         false => None,
     };
 
@@ -76,7 +75,7 @@ impl Log for Logger {
         }
 
         if let Some(stdout) = &self.stdout {
-            // We ignore a poisened mutex. The stdout handle doesn't contain
+            // We ignore a poisoned mutex. The stdout handle doesn't contain
             // any "state" that other threads could have tainted. The worst
             // that could happen is slightly weird formatting.
             //
