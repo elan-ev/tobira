@@ -30,7 +30,6 @@ impl MigrationPlan {
     /// DB is in a state that we cannot fix, `Err` is returned. Does not modify
     /// the DB.
     pub(crate) async fn build(tx: &Transaction<'_>) -> Result<Self> {
-        // Create the meta table `__db_migrations` if it doesn't exist yet.
         if !super::query::does_table_exist(&**tx, "__db_migrations").await? {
             // Check if there are any other tables in the database, which would be fishy.
             let tables = super::query::all_table_names(&**tx).await?;
@@ -43,8 +42,6 @@ impl MigrationPlan {
             }
 
             return Ok(Self::EmptyDb)
-        } else {
-            debug!("Table '__db_migrations' already exists");
         }
 
 
@@ -132,16 +129,10 @@ impl MigrationPlan {
                 return Ok(());
             }
             Self::EmptyDb => {
-                info!("Database is empty. Creating table '__db_migrations'...");
-                tx.batch_execute(include_str!("db-migrations.sql"))
-                    .await
-                    .context("could not create migrations meta table")?;
+                create_meta_table_if_missing(tx).await?;
                 MIGRATIONS.len() as u64
             }
-            Self::Migrate { new_migrations } => {
-                debug!("Table '__db_migrations' already exists");
-                new_migrations.get()
-            }
+            Self::Migrate { new_migrations } => new_migrations.get(),
         };
 
         // Apply missing migrations in order.
@@ -167,6 +158,13 @@ impl MigrationPlan {
     }
 }
 
+async fn create_meta_table_if_missing(tx: &Transaction<'_>) -> Result<()> {
+    debug!("Creating table '__db_migrations' if it does not exist yet...");
+    tx.batch_execute(include_str!("db-migrations.sql"))
+        .await
+        .context("could not create migrations meta table")?;
+    Ok(())
+}
 
 /// Makes sure the database schema is up to date by checking the active
 /// migrations and applying all missing ones.
@@ -202,6 +200,12 @@ pub async fn migrate(db: &mut Db) -> Result<()> {
         // To prevent that, we acquire an explicit lock at the very start. Only
         // one process can hold that lock so that prevents deadlocks inside the
         // migration.
+        //
+        // But the table might not even exist yet! That's why we simply create
+        // it here. The script already contains `if not exists`, so this is no
+        // problem.
+        create_meta_table_if_missing(&tx).await?;
+
         let print_notice = tokio::spawn(async {
             tokio::time::sleep(Duration::from_millis(300)).await;
             debug!("Could not acquire exclusive lock to '__db_migrations' immediately. \
