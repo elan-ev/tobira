@@ -4,6 +4,12 @@
 [general]
 site_title.en = "Tobira Videoportal"
 
+[http]
+# To make our Docker based development setup work, Tobira needs to listen
+# on every interface. This is an unfortunate side effect of us trying to avoid
+# host networking which is not supported on platforms other than Linux.
+address = "0.0.0.0"
+
 [db]
 password = "tobira"
 tls_mode = "off"
