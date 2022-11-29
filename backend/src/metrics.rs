@@ -179,6 +179,7 @@ struct MemInfo {
 impl MemInfo {
     /// Tries to gather memory info of the current process. If that fails,
     /// `None` is returned.
+    #[cfg(target_os = "linux")]
     fn gather() -> Option<Self> {
         let smaps = procfs::process::Process::myself().ok()?.smaps().ok()?;
 
@@ -199,6 +200,12 @@ impl MemInfo {
         }
 
         Some(out)
+    }
+
+    // On non-linux systems we don't gather any memory info.
+    #[cfg(not(target_os = "linux"))]
+    fn gather() -> Option<Self> {
+        None
     }
 }
 
