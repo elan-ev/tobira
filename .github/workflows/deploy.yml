@@ -17,6 +17,7 @@ jobs:
       ${{ github.event.workflow_run.conclusion == 'success' && (
         github.actor == 'LukasKalbertodt' ||
         github.actor == 'JulianKniephoff' ||
+        github.actor == 'owi92' ||
         github.actor == 'lkiesow'
       ) }}
     steps:
