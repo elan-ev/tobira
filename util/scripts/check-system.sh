@@ -27,7 +27,7 @@ exit_code=0
 
 printf "▸ Rust installed? ('rustc' and 'cargo')"
 if has_command rustc && has_command cargo; then
-    rust_version=$(rustc -V | sed --quiet --regexp-extended 's/rustc ([.0-9]+) .+/\1/p')
+    rust_version=$(rustc -V | sed -E 's/rustc ([.0-9]+) .+/\1/p')
     if version_at_least "$rust_version" $MIN_RUST_VERSION; then
         print_yes
     else

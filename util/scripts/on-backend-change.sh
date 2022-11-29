@@ -8,7 +8,7 @@ source "$basedir"/common-vars.sh
 # all browser sessions.
 reload_once_port_is_open() {
     while ! lsof -i:3080 > /dev/null; do
-        sleep 0.1s
+        sleep 0.1
     done
     $reload_command
 }
