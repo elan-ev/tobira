@@ -55,7 +55,6 @@ pub(crate) struct AuthConfig {
     pub(crate) logout_link: Option<String>,
 
     /// The header containing a unique and stable username of the current user.
-    /// TODO: describe properties, requirements and usages of username.
     #[config(default = "x-tobira-username")]
     pub(crate) username_header: String,
 

@@ -60,7 +60,7 @@ pub(crate) struct DbConfig {
     ///    native certificate store. If `server_cert` is set, that's also
     ///    loaded and trusted.
     /// - "without-verify-cert": encryption is required, but the server
-    ///   certificate is not checked. Allows MiiM attacks! Discouraged.
+    ///   certificate is not checked. Allows MITM attacks! Discouraged.
     /// - "off": no encryption. Discouraged even more.
     #[config(default = "on")]
     tls_mode: TlsMode,
