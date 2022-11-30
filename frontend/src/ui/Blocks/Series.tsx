@@ -293,7 +293,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                     // TODO: maybe find something better than `join`
                 }}>{event.creators.join(", ")}</span>}
                 {/* `new Date` is well defined for our ISO Date strings */}
-                <RelativeDate date={new Date(event.created)} />
+                <RelativeDate date={new Date(event.created)} isLive={event.isLive} />
             </div>
         </div>
     </>;

@@ -4,14 +4,20 @@ import { useTranslation } from "react-i18next";
 
 type RelativeDateProps = {
     date: Date;
+    isLive?: boolean;
 };
 
-/** Formats a date as something relative like "3 days ago" */
-export const RelativeDate: React.FC<RelativeDateProps> = ({ date }) => {
+/** 
+ * Formats a date as something relative like "3 days ago" 
+ * or "Live for 3 days" in case of live events.
+ */
+export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive }) => {
     const { i18n } = useTranslation();
     const [now, setNow] = useState(Date.now());
     const secsAgo = Math.floor((now - date.getTime()) / 1000);
     const secsDiff = Math.abs(secsAgo);
+    const intl = new Intl.RelativeTimeFormat(i18n.language);
+    const { t } = useTranslation();
 
     // We rerender this component regularly so that it's basically always up to
     // date. Most dates are more than a couple minutes in the past, and for
@@ -30,23 +36,39 @@ export const RelativeDate: React.FC<RelativeDateProps> = ({ date }) => {
     const MONTH = 30.5 * DAY;
     const YEAR = 365.25 * DAY;
 
+    const liveDate = ((time: number, unit: Intl.RelativeTimeFormatUnit) => {
+        const parts = intl.formatToParts(time, unit);
+        return String(parts[1].value) + parts[2].value;
+    });
+
     const prettyDate = (() => {
-        const intl = new Intl.RelativeTimeFormat(i18n.language);
+        let time: number;
+        let unit: Intl.RelativeTimeFormatUnit;
         if (secsDiff <= 55) {
-            return intl.format(-secsAgo, "second");
+            time = secsAgo;
+            unit = "second";
         } else if (secsDiff <= 55 * MINUTE) {
-            return intl.format(-Math.round(secsAgo / MINUTE), "minute");
+            time = Math.round(secsAgo / MINUTE);
+            unit = "minute";
         } else if (secsDiff <= 23 * HOUR) {
-            return intl.format(-Math.round(secsAgo / HOUR), "hour");
+            time = Math.round(secsAgo / HOUR);
+            unit = "hour";
         } else if (secsDiff <= 6 * DAY) {
-            return intl.format(-Math.round(secsAgo / DAY), "day");
+            time = Math.round(secsAgo / DAY);
+            unit = "day";
         } else if (secsDiff <= 3.5 * WEEK) {
-            return intl.format(-Math.round(secsAgo / WEEK), "week");
+            time = Math.round(secsAgo / WEEK);
+            unit = "week";
         } else if (secsDiff <= 11 * MONTH) {
-            return intl.format(-Math.round(secsAgo / MONTH), "month");
+            time = Math.round(secsAgo / MONTH);
+            unit = "month";
         } else {
-            return intl.format(-Math.round(secsAgo / YEAR), "year");
+            time = Math.round(secsAgo / YEAR);
+            unit = "year";
         }
+        return isLive
+            ? t("video.live-since") + " " + liveDate(time, unit)
+            : intl.format(-time, unit);
     })();
 
     const preciseDate = date.toLocaleString(i18n.language);
