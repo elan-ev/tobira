@@ -1,4 +1,4 @@
-use meilisearch_sdk::indexes::Index;
+use meilisearch_sdk::{indexes::Index, errors::{MeilisearchError, ErrorCode}};
 use serde::{Serialize, Deserialize};
 
 use crate::prelude::*;
@@ -70,10 +70,14 @@ impl IndexState {
     }
 
     pub(crate) async fn fetch(index: &Index) -> Result<Self> {
-        let mut documents = index.get_documents::<serde_json::Value>()
-            .await
-            .context("failed to fetch search index meta info")?
-            .results;
+        let mut documents = match index.get_documents::<serde_json::Value>().await {
+            Ok(v) => v.results,
+            Err(meilisearch_sdk::errors::Error::Meilisearch(MeilisearchError {
+                error_code: ErrorCode::IndexNotFound,
+                ..
+            })) => return Ok(Self::NoVersionInfo),
+            Err(e) => Err(e).context("failed to fetch search index meta info")?,
+        };
 
         if documents.is_empty() {
             return Ok(Self::NoVersionInfo);
