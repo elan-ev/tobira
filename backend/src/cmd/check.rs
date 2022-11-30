@@ -3,6 +3,7 @@
 //! possible.
 
 use anyhow::Result;
+use meilisearch_sdk::errors::{MeilisearchError, ErrorCode};
 
 use crate::{
     load_config_and_init_logger,
@@ -123,9 +124,18 @@ async fn check_meili(config: &Config) -> Result<bool> {
 
     // Check that the API key is valid and can access the indexes.
     let _ = meili.client.get_stats().await?;
-    let _ = meili.event_index.get_stats().await?;
-    let _ = meili.realm_index.get_stats().await?;
+    for index in [&meili.meta_index, &meili.event_index, &meili.realm_index] {
+        match index.get_stats().await {
+            Ok(_) => {},
+            Err(meilisearch_sdk::errors::Error::Meilisearch(MeilisearchError {
+                error_code: ErrorCode::IndexNotFound,
+                ..
+            }))  => {},
+            Err(e) => Err(e)?,
+        }
+    }
 
+    // Read index state.
     let state = crate::search::IndexState::fetch(&meili.meta_index).await?;
     info!("Search index state: {state:?}");
 
