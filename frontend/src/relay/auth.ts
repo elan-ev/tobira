@@ -1,29 +1,31 @@
 import { fetchQuery, graphql, GraphQLTaggedNode } from "react-relay";
 import { OperationType } from "relay-runtime";
 
+import { match } from "../util";
 import { bug } from "../util/err";
 import CONFIG from "../config";
 import { environment } from ".";
 import { authLinkTokenQuery } from "./__generated__/authLinkTokenQuery.graphql";
 import { authUploadTokenQuery } from "./__generated__/authUploadTokenQuery.graphql";
 
+
 /**
- * Authenticate an external link using a JWT.
+ * Authenticate a link to one of the Opencast hosted services we link to.
  * A JWT is added only if you enabled the `pre_auth_external_links` config option.
- * Returns a new `URL` (as opposed to modifying its parameter) in any case, though.
  */
-export const authenticateLink = async (
-    ...args: ConstructorParameters<typeof URL>
-): Promise<URL> => {
-    const authenticatedLink = new URL(...args);
+export const authenticateLink = async (service: "EDITOR" | "STUDIO"): Promise<URL> => {
+    const authenticatedLink = new URL(match(service, {
+        EDITOR: () => CONFIG.opencast.editorUrl,
+        STUDIO: () => CONFIG.opencast.studioUrl,
+    }));
     if (CONFIG.auth.preAuthExternalLinks) {
         const query = graphql`
-            query authLinkTokenQuery {
-                externalLinkJwt
+            query authLinkTokenQuery($service: JwtService!) {
+                jwt(service: $service)
             }
         `;
-        const result = await getJwt<authLinkTokenQuery>(query);
-        authenticatedLink.searchParams.append("jwt", result.externalLinkJwt);
+        const result = await getJwt<authLinkTokenQuery>(query, { service });
+        authenticatedLink.searchParams.append("jwt", result.jwt);
     }
     return authenticatedLink;
 };
@@ -32,11 +34,11 @@ export const authenticateLink = async (
 export const getUploadJwt = async (): Promise<string> => {
     const query = graphql`
         query authUploadTokenQuery {
-            uploadJwt
+            jwt(service: UPLOAD)
         }
     `;
     const result = await getJwt<authUploadTokenQuery>(query);
-    return result.uploadJwt;
+    return result.jwt;
 };
 
 /**
@@ -46,14 +48,20 @@ export const getUploadJwt = async (): Promise<string> => {
  */
 const getJwt = <Query extends OperationType>(
     query: GraphQLTaggedNode,
+    variables: Query["variables"] = {},
 ): Promise<Query["response"]> => (
     new Promise((resolve, reject) => {
         let gotResult = false;
         let out: Query["response"];
 
-        // Use "network-only" as we always want a fresh JWTs. `fetchQuery` should already
-        // never write any values into the cache, but better make sure.
-        fetchQuery<Query>(environment, query, {}, { fetchPolicy: "network-only" }).subscribe({
+        fetchQuery<Query>(
+            environment,
+            query,
+            variables,
+            // Use "network-only" as we always want a fresh JWTs. `fetchQuery` should already
+            // never write any values into the cache, but better make sure.
+            { fetchPolicy: "network-only" },
+        ).subscribe({
             complete: () => {
                 if (!gotResult) {
                     bug("'complete' callback before receiving any data");

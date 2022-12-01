@@ -11,7 +11,6 @@ import { Link } from "../../router";
 import { LinkList, LinkWithIcon } from "../../ui";
 import { NotAuthorized } from "../../ui/error";
 import { useUser } from "../../User";
-import CONFIG from "../../config";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
 import { PageTitle } from "../../layout/header/ui";
 import { authenticateLink } from "../../relay/auth";
@@ -87,10 +86,9 @@ const Manage: React.FC = () => {
 };
 
 const linkToStudio = async () => {
-    const studioUrl = new URL(CONFIG.opencast.studioUrl);
+    const studioUrl = await authenticateLink("STUDIO");
     studioUrl.searchParams.append("return.target", document.location.href);
-    const authenticatedUrl = await authenticateLink(studioUrl);
-    window.open(authenticatedUrl, "_blank");
+    window.open(studioUrl, "_blank");
 };
 
 type GridTileProps = {

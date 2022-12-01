@@ -8,7 +8,6 @@ import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { useUser } from "../../../User";
 import { Button } from "../../../ui/Button";
-import CONFIG from "../../../config";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
@@ -67,10 +66,9 @@ const Page: React.FC<Props> = ({ event }) => {
 };
 
 const linkToEditor = async (id: string) => {
-    const editorUrl = new URL(CONFIG.opencast.editorUrl);
+    const editorUrl = await authenticateLink("EDITOR");
     editorUrl.searchParams.append("mediaPackageId", id);
-    const authenticatedUrl = await authenticateLink(editorUrl);
-    window.open(authenticatedUrl, "_blank");
+    window.open(editorUrl, "_blank");
 };
 
 const DirectLink: React.FC<Props> = ({ event }) => {

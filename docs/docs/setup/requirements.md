@@ -44,3 +44,7 @@ There are some requirements.
 - We assume that everyone who has `write` access to something also has `read`
   access. We often don't check the roles allowed to read if we already checked
   the roles allowed to write.
+
+- If you don't have an SSO solution, you need to configure the Opencast redirect endpoint in such a way that
+  all users having with access to Studio and/or the Editor can use it, and so that the URLs to these services
+  are added to the appropriate allow-list.

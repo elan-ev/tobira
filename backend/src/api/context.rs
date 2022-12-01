@@ -28,24 +28,6 @@ impl Context {
         &self.db
     }
 
-    pub(crate) fn require_upload_permission(&self) -> ApiResult<AuthToken> {
-        self.auth.required_upload_permission(&self.config.auth).ok_or_else(|| {
-            if let AuthContext::User(user) = &self.auth {
-                ApiError {
-                    msg: format!("User '{}' is not allowed to upload videos", user.username),
-                    kind: ApiErrorKind::NotAuthorized,
-                    key: Some("upload.not-authorized"),
-                }
-            } else {
-                ApiError {
-                    msg: "upload permission required, but user is not logged in".into(),
-                    kind: ApiErrorKind::NotAuthorized,
-                    key: Some("upload.not-logged-in"),
-                }
-            }
-        })
-    }
-
     pub(crate) fn require_moderator(&self) -> ApiResult<AuthToken> {
         self.auth.require_moderator(&self.config.auth).ok_or_else(|| {
             if let AuthContext::User(user) = &self.auth {

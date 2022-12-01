@@ -7,13 +7,14 @@ use super::{
     Context,
     Id,
     NodeValue,
-    err::{ApiResult, not_authorized},
+    err::ApiResult,
     model::{
         realm::Realm,
         event::{AuthorizedEvent, Event},
         series::Series,
         search::{self, SearchOutcome, EventSearchOutcome},
     },
+    jwt::{JwtService, jwt},
 };
 
 
@@ -76,22 +77,9 @@ impl Query {
         }
     }
 
-    /// Returns a new JWT that can be used to authenticate against Opencast for uploading videos.
-    fn upload_jwt(context: &Context) -> ApiResult<String> {
-        context.require_upload_permission()?;
-        match &context.auth {
-            AuthContext::User(data) => Ok(context.jwt.new_token(data)),
-            _ => unreachable!("user not logged in, but has upload permissions"),
-        }
-    }
-
-    /// Returns a new JWT that can be used to authenticate against Opencast when linking to services
-    /// like Studio and the Editor.
-    fn external_link_jwt(context: &Context) -> ApiResult<String> {
-        match &context.auth {
-            AuthContext::User(data) => Ok(context.jwt.new_token(data)),
-            _ => Err(not_authorized!("trying to get link token without user session")),
-        }
+    /// Returns a new JWT that can be used to authenticate against Opencast for using the given service
+    fn jwt(service: JwtService, context: &Context) -> ApiResult<String> {
+        jwt(service, context)
     }
 
     /// Retrieve a node by globally unique ID. Mostly useful for relay.

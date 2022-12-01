@@ -16,6 +16,7 @@ mod context;
 mod err;
 mod id;
 mod model;
+mod jwt;
 
 pub(crate) use self::{
     id::Id,
