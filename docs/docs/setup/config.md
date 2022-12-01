@@ -16,7 +16,7 @@ All file paths you use in the configuration file are relative to the configurati
 
 The Tobira binary is able to emit a "configuration template", i.e. the empty structure of the config file without any values set, but with descriptions of all possible options.
 It's a great starting point to configure your Tobira.
-You can generate it with `./tobira write-config`, but that file is also attached to each release as `config.toml`.
+You can generate it with `./tobira write-config`, but that file is also attached to [each release](https://github.com/elan-ev/tobira/releases) as `config.toml`.
 Or you can just copy it from below.
 
 ## All configuration options
