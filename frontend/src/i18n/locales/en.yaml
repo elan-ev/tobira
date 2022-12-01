@@ -21,6 +21,7 @@ general:
   failed-to-load-thumbnail: Failed to load thumbnail
   yes: "Yes"
   no: "No"
+  share: Share
   form:
     select:
       no-options: No options
@@ -140,6 +141,15 @@ video:
   manage: Manage
   start: Start
   end: End
+  share:
+    share-video: Share video
+    direct-link: Direct link
+    embed: Embed
+    direct-link-info: >
+      This links to the video only, without including its location in this video portal
+      (the page it is included in). That means the link will continue to work as long as
+      the video exists, even if the including page is deleted or moved. However,
+      recipients of this link will not see the same navigation.
 
 series:
   series: Series

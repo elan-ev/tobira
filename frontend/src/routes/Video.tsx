@@ -1,8 +1,8 @@
-import React, { ReactNode, useRef } from "react";
+import React, { ReactNode, useRef, useState } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
-import { FiCode, FiSettings } from "react-icons/fi";
+import { FiCode, FiSettings, FiCrosshair, FiShare2 } from "react-icons/fi";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -16,13 +16,13 @@ import { isValidPathSegment } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
 import {
-    currentRef,
     SyncedOpencastEntity,
     isSynced,
     toIsoDuration,
     useForceRerender,
     translatedConfig,
     match,
+    useOnOutsideClick,
 } from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
@@ -32,7 +32,6 @@ import { Link } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
-import { Modal, ModalHandle } from "../ui/Modal";
 import { CopyableInput } from "../ui/Input";
 import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
 import {
@@ -51,6 +50,7 @@ import { Creators } from "../ui/Video";
 import { Description } from "../ui/metadata";
 import { ellipsisOverflowCss } from "../ui";
 import { PopOver } from "../ui/PopOver";
+import { Card } from "../ui/Card";
 
 
 // ===========================================================================================
@@ -341,7 +341,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                         {t("video.manage")}
                     </LinkButton>
                 )}
-                <EmbedCode event={event} />
+                <ShareButton event={event} />
             </div>
         </div>
         <hr />
@@ -369,6 +369,131 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     </>;
 };
 
+const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
+    type State = "closed" | "main" | "direct-link" | "embed";
+
+    const { t } = useTranslation();
+    const [state, setState] = useState<State>("closed");
+    const ref = useRef(null);
+    useOnOutsideClick(ref, () => setState("closed"));
+
+    const id = event.id.substring(2);
+
+    // TODO: maybe move out of this
+    const Heading: React.FC<React.PropsWithChildren> = ({ children }) => (
+        <strong css={{ fontSize: 18, display: "block", marginBottom: 16 }}>
+            {children}
+        </strong>
+    );
+
+    const inner = match(state, {
+        "closed": () => null,
+        "main": () => <>
+            <Heading>{t("video.share.share-video")}</Heading>
+            <CopyableInput
+                css={{ fontSize: 14, margin: "16px 0", width: 400 }}
+                // TODO
+                value={window.location.href}
+            />
+            <div css={{
+                display: "flex",
+                gap: 8,
+                "& > div": {
+                    display: "flex",
+                    minWidth: 85,
+                    padding: "8px 8px 4px 8px",
+                    cursor: "pointer",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    borderRadius: 4,
+                    "& > svg": {
+                        width: 48,
+                        height: 48,
+                        backgroundColor: "var(--accent-color)",
+                        color: "var(--accent-color-bw-contrast)",
+                        borderRadius: 24,
+                        padding: 12,
+                    },
+                    "&:hover": {
+                        backgroundColor: "var(--grey92)",
+                    },
+                },
+            }}>
+                <div onClick={() => setState("direct-link")}>
+                    <FiCrosshair />
+                    <div>{t("video.share.direct-link")}</div>
+                </div>
+                <div onClick={() => setState("embed")}>
+                    <FiCode />
+                    <div>{t("video.share.embed")}</div>
+                </div>
+            </div>
+        </>,
+        "direct-link": () => {
+            const target = new URL(window.location.href);
+            target.pathname = `/!v/${id}`;
+
+            return <>
+                <Heading>{t("video.share.direct-link")}</Heading>
+                <Card kind="info" iconPos="top" css={{ maxWidth: 400, fontSize: 14 }}>
+                    {t("video.share.direct-link-info")}
+                </Card>
+                <CopyableInput
+                    css={{ fontSize: 14, marginTop: 16, width: 400 }}
+                    value={target.toString()}
+                />
+            </>;
+        },
+        "embed": () => {
+            const ar = event.syncedData == null
+                ? [16, 9]
+                : getPlayerAspectRatio(event.syncedData.tracks);
+
+            const target = new URL(location.href);
+            target.pathname = `/~embed/!v/${event.id.slice(2)}`;
+
+            const embedCode = `<iframe ${[
+                'name="Tobira Player"',
+                `src="${target}"`,
+                "allow=fullscreen",
+                `style="${[
+                    "border: none;",
+                    "width: 100%;",
+                    `aspect-ratio: ${ar.join("/")};`,
+                ].join(" ")}"`,
+            ].join(" ")}></iframe>`;
+
+            return <>
+                <Heading>{t("video.share.embed")}</Heading>
+                <CopyableInput
+                    value={embedCode}
+                    multiline
+                    css={{ fontSize: 14, width: 400 }}
+                />
+            </>;
+        },
+    });
+
+
+    return <div css={{ position: "relative" }} ref={ref}>
+        <Button onClick={() => setState(state => state === "closed" ? "main" : "closed")}>
+            <FiShare2 size={16} />
+            {t("general.share")}
+        </Button>
+        <PopOver
+            pos="top"
+            anchor="right"
+            visible={state !== "closed"}
+            arrowSize={12}
+            arrowDist={24}
+            anchorDist={-12}
+            padding={[8, 16, 16, 16]}
+        >{inner}</PopOver>
+    </div>;
+};
+
+
+
 type VideoTitleProps = {
     title: string;
 };
@@ -383,42 +508,6 @@ const VideoTitle: React.FC<VideoTitleProps> = ({ title }) => (
         ...ellipsisOverflowCss(2),
     }} />
 );
-
-type EmbedCodeProps = {
-    event: SyncedEvent;
-};
-
-const EmbedCode: React.FC<EmbedCodeProps> = ({ event: {
-    id,
-    syncedData: { tracks },
-} }) => {
-    const { t } = useTranslation();
-    const modal = useRef<ModalHandle>(null);
-
-    const target = new URL(location.href);
-    target.pathname = `/~embed/!v/${id.slice(2)}`;
-
-    const embedCode = `<iframe ${[
-        'name="Tobira Player"',
-        `src="${target}"`,
-        "allow=fullscreen",
-        `style="${[
-            "border: none;",
-            "width: 100%;",
-            `aspect-ratio: ${getPlayerAspectRatio(tracks).join("/")};`,
-        ].join(" ")}"`,
-    ].join(" ")}></iframe>`;
-
-    return <>
-        <Button onClick={() => currentRef(modal).open()}>
-            <FiCode size={16} />
-            {t("video.embed.button")}
-        </Button>
-        <Modal title={t("video.embed.title")} ref={modal}>
-            <CopyableInput value={embedCode} />
-        </Modal>
-    </>;
-};
 
 
 type VideoDateProps = {

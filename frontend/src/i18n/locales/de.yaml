@@ -22,6 +22,7 @@ general:
   failed-to-load-thumbnail: Konnte Vorschaubild nicht laden
   yes: Ja
   no: Nein
+  share: Teilen
   form:
     select:
       no-options: Keine Optionen
@@ -143,6 +144,16 @@ video:
   manage: Verwalten
   start: Anfang
   end: Ende
+  share:
+    share-video: Video teilen
+    direct-link: Direktlink
+    embed: Einbetten
+    direct-link-info: >
+      Hiermit wird das Video direkt verlinkt, also ohne seine Position im
+      Videoportal (die Seite, auf der es inkludiert ist). Das heißt, dass der
+      Link weiterhin funktioniert, auch wenn die Seite gelöscht oder verschoben
+      wird. Allerdings werden Empfänger des Links nicht die gleiche Navigation
+      sehen.
 
 series:
   series: Serie
