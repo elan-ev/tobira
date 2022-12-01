@@ -33,7 +33,8 @@ begin
                 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{640, 360}'
+                '{640, 360}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
             596000,
@@ -55,7 +56,8 @@ begin
                 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{640, 360}'
+                '{640, 360}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
             596000,
@@ -78,7 +80,8 @@ begin
                 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{640, 360}'
+                '{640, 360}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
             596000,
@@ -102,7 +105,8 @@ begin
                 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{640, 360}'
+                '{640, 360}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
             596000,
@@ -154,7 +158,8 @@ begin
                 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{640, 360}'
+                '{640, 360}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/nV2D2mTx/bbb.jpg',
             596000,
@@ -179,7 +184,8 @@ begin
                 'https://upload.wikimedia.org/wikipedia/commons/3/36/Cosmos_Laundromat_-_First_Cycle_-_Official_Blender_Foundation_release.webm',
                 'presenter/preview',
                 'video/mp4',
-                '{2048, 858}'
+                '{2048, 858}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/HLQPr3mX/cosmos-laundromat.jpg',
             730000,
@@ -204,7 +210,8 @@ begin
                 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Spring_-_Blender_Open_Movie.webm',
                 'presenter/preview',
                 'video/mp4',
-                '{2048, 858}'
+                '{2048, 858}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/Wzf5BHmL/spring.jpg',
             464000,
@@ -230,7 +237,8 @@ begin
                 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{640, 360}'
+                '{640, 360}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/y83GHsrf/bumblebee.jpg',
             552000,
@@ -256,7 +264,8 @@ begin
                 'https://svs.gsfc.nasa.gov/vis/a000000/a004600/a004619/moontour_narrated_1080p30.mp4',
                 'presentation/preview',
                 'video/mp4',
-                '{1920, 1080}'
+                '{1920, 1080}',
+                true
             )]::event_track[],
             'https://svs.gsfc.nasa.gov/vis/a000000/a004600/a004619/narrated.1000_print.jpg',
             297000,
@@ -282,7 +291,8 @@ begin
                 'https://video4.virtuos.uos.de/static/mh_default_org/engage-player/2a7b1a55-5b47-4e13-bd11-45d5b6e3c2a2/20954d15-d0a5-4ce0-90ab-fc94620a4ccf/presentation_e048dadf_4cfc_4e30_be13_eb872574a7cb.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{1280, 720}'
+                '{1280, 720}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/tg0MRwK9/pir-einf-hrung.jpg',
             5159000,
@@ -307,7 +317,8 @@ begin
                 'https://video4.virtuos.uos.de/static/mh_default_org/engage-player/bac86875-bbeb-42dc-9970-55af51c9f017/241ad38e-cc98-4326-a398-8c862d07ef9d/presentation_fc713d94_30ed_4056_a8a5_81ca90e8dcca.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{1280, 720}'
+                '{1280, 720}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/cCJD5SnB/pir-modules.jpg',
             4605000,
@@ -332,7 +343,8 @@ begin
                 'https://video4.virtuos.uos.de/static/mh_default_org/engage-player/31d04ddc-80a3-4344-a2c4-b4a0316f2e3a/a389856e-cb85-445a-a696-4e520446b6fe/presentation_6969f780_37f0_49a8_9228_f30ef81cc4ee.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{1280, 720}'
+                '{1280, 720}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/k4s1c4B5/pir-heap-stack.jpg',
             4425000,
@@ -357,7 +369,8 @@ begin
                 'https://video4.virtuos.uos.de/static/mh_default_org/engage-player/84b2b573-e900-4692-bdab-7cea4fd8c332/376cb1f5-0535-4eef-bac4-ea3ee3fed6a8/presentation_c51b67c6_c5b1_498b_abbc_9171524008fd.mp4',
                 'presenter/preview',
                 'video/mp4',
-                '{1280, 720}'
+                '{1280, 720}',
+                true
             )]::event_track[],
             'https://i.postimg.cc/Y9MDYg2V/pir-performance.jpg',
             5191000,

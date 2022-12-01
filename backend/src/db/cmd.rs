@@ -132,10 +132,10 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
     // Print some data about this machine and the database
     println!();
     if let Ok(Ok(hostname)) = hostname::get().map(|n| n.into_string()) {
-        println!("Hostname: {}", hostname);
+        bunt::println!("Hostname: {[yellow+bold+intense]}", hostname);
     }
-    println!("Database host: {}", config.db.host);
-    println!("Database name: {}", config.db.database);
+    bunt::println!("Database host: {[yellow+bold+intense]}", config.db.host);
+    bunt::println!("Database name: {[yellow+bold+intense]}", config.db.database);
 
     println!();
     println!("The database currently holds these tables:");
@@ -144,10 +144,17 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
         let num_rows = tx.query_one(&*format!("select count(*) from {}", name), &[])
             .await?
             .get::<_, i64>(0);
-        println!(" - {} ({} rows)", name, num_rows);
+        bunt::println!(" - {} ({[blue+intense]} rows)", name, num_rows);
     }
 
     if !yes {
+        if !cfg!(debug_assertions) {
+            println!();
+            println!("⚠️ ⚠️ ⚠️");
+            bunt::println!("{$red+bold+intense}This is a production build of Tobira, \
+                indicating that you are likely executing this on a production system.{/$}");
+            println!("⚠️ ⚠️ ⚠️");
+        }
         println!();
         println!("Are you sure you want to completely remove everything in this database \
             and clear the search index? \
