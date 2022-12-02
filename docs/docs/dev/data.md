@@ -10,7 +10,7 @@ The `tobira db` subcommand (usually via `cargo run -- db`) contains a number of 
 Run `db --help` to find out more.
 
 Whenever you change existing DB migrations, Tobira won't start.
-You can fix that by either purging the DB and rerunning all migrations, but that obviously also deletes your all data.
+You can fix that by either purging the DB and rerunning all migrations, but that obviously also deletes all your data.
 You can do that with `cargo run -- db reset`.
 Another option for when the migration change doesn't actually change anything in the DB (e.g. a comment change), is to use `cargo run -- db unsafe-overwrite-migrations`.
 
