@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, Suspense, useEffect } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { FiClock } from "react-icons/fi";
 import { HiOutlineStatusOffline } from "react-icons/hi";
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
@@ -244,10 +244,8 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
                 backgroundColor: "black",
                 borderRadius: 4,
                 padding: "8px 16px",
-            }}>
-                <Trans i18nKey={"video.starts-in"}>
-                    Starts <RelativeDate date={props.startTime} />
-                </Trans>
+            }}>                
+                <RelativeDate date={props.startTime} isLive />
             </div>
         )}
     </PlayerPlaceholder>;

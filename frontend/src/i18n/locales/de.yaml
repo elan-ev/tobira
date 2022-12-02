@@ -135,7 +135,8 @@ video:
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
-  starts-in: 'Startet <1></1>'
+  started: Gestartet {{duration}}
+  starts-in: Startet {{duration}}
   embed:
     button: Einbetten
     title: Video einbetten
