@@ -9,7 +9,7 @@ type RelativeDateProps = {
 
 /** 
  * Formats a date as something relative like "3 days ago" 
- * or "Started 3 days ago" in case of live events.
+ * or "Live in/for 3 days" in case of live events.
  */
 export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive }) => {
     const { i18n } = useTranslation();
@@ -54,9 +54,9 @@ export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive }) => {
             timeAndUnit = [secsAgo / YEAR, "year"];
         }
         const [time, unit] = timeAndUnit;
-        const prefix = time < 0 ? "video.starts-in" : "video.started";
+        const prefix = time < 0 ? "video.live-in" : "video.live-for";
         return isLive
-            ? t(prefix, { duration: intl.format(Math.round(-time), unit) })
+            ? t(prefix, { duration: Math.round(Math.abs(time)), timeUnit: unit })
             : intl.format(Math.round(-time), unit);
     })();
 

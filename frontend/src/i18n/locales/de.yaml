@@ -24,6 +24,21 @@ general:
     select:
       no-options: Keine Optionen
       select-option: Option auswählen...
+  time:
+    second: '{{count}} Sekunde'
+    second_other: '{{count}} Sekunden'
+    minute: '{{count}} Minute'
+    minute_other: '{{count}} Minuten'
+    hour: '{{count}} Stunde'
+    hour_other: '{{count}} Stunden'
+    day: '{{count}} Tag'
+    day_other: '{{count}} Tagen'
+    week: '{{count}} Woche'
+    week_other: '{{count}} Wochen'
+    month: '{{count}} Monat'
+    month_other: '{{count}} Monaten'
+    year: '{{count}} Jahr'
+    year_other: '{{count}} Jahren'
 
 
 welcome:
@@ -128,15 +143,14 @@ video:
     label: unverarbeitet
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
-  live-since: Live seit
+  live-in: 'Live in $t(general.time.{{timeUnit}}, {"count": {{duration}} })'
+  live-for: 'Live seit $t(general.time.{{timeUnit}}, {"count": {{duration}} })'
   upcoming: Anstehend
   ended: Beendet
   license: Lizenz
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
-  started: Gestartet {{duration}}
-  starts-in: Startet {{duration}}
   embed:
     button: Einbetten
     title: Video einbetten

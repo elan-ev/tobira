@@ -23,6 +23,21 @@ general:
     select:
       no-options: No options
       select-option: Select option...
+  time:
+    second: '{{count}} second'
+    second_other: '{{count}} seconds'
+    minute: '{{count}} minute'
+    minute_other: '{{count}} minutes'
+    hour: '{{count}} hour'
+    hour_other: '{{count}} hours'
+    day: '{{count}} day'
+    day_other: '{{count}} days'
+    week: '{{count}} week'
+    week_other: '{{count}} weeks'
+    month: '{{count}} month'
+    month_other: '{{count}} months'
+    year: '{{count}} year'
+    year_other: '{{count}} years'
 
 welcome:
   title: Welcome to Tobira!
@@ -125,14 +140,14 @@ video:
     label: unprocessed
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
+  live-in: 'Live in $t(general.time.{{timeUnit}}, {"count": {{duration}} })'
+  live-for: 'Live for $t(general.time.{{timeUnit}}, {"count": {{duration}} })'
   upcoming: Upcoming
   ended: Ended
   license: License
   source: Source
   stream-ended: This stream has ended.
   stream-not-started-yet: This stream has not started yet.
-  started: Started {{duration}}
-  starts-in: Starts {{duration}}
   embed:
     button: Embed
     title: Embed video
