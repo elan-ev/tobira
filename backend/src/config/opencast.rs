@@ -103,7 +103,7 @@ impl OpencastConfig {
 /// fragment.
 #[derive(Clone, Deserialize)]
 #[serde(try_from = "String")]
-pub(crate) struct ToolBaseUri(Uri);
+pub(crate) struct ToolBaseUri(pub(crate) Uri);
 
 
 impl fmt::Display for ToolBaseUri {

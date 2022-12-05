@@ -7,11 +7,10 @@ import { Form } from "../../../ui/Form";
 import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { useUser } from "../../../User";
-import { Button } from "../../../ui/Button";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
-import { authenticateLink } from "../../../relay/auth";
+import { ExternalLink } from "../../../relay/auth";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -48,12 +47,14 @@ const Page: React.FC<Props> = ({ event }) => {
             <UpdatedCreatedInfo event={event} />
             <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
                 {user.canUseEditor && event.canWrite && (
-                    <Button
-                        onClick={() => linkToEditor(event.opencastId)}
+                    <ExternalLink
+                        service="EDITOR"
+                        params={{ mediaPackageId: event.opencastId }}
+                        fallback="button"
                         css={{ marginBottom: 16 }}
                     >
                         {t("manage.my-videos.details.open-in-editor")} <FiExternalLink size={16} />
-                    </Button>
+                    </ExternalLink>
                 )}
                 <DirectLink event={event} />
                 <MetadataSection event={event} />
@@ -63,12 +64,6 @@ const Page: React.FC<Props> = ({ event }) => {
             <HostRealms event={event} />
         </section>
     </>;
-};
-
-const linkToEditor = async (id: string) => {
-    const editorUrl = await authenticateLink("EDITOR");
-    editorUrl.searchParams.append("mediaPackageId", id);
-    window.open(editorUrl, "_blank");
 };
 
 const DirectLink: React.FC<Props> = ({ event }) => {
