@@ -28,7 +28,7 @@ welcome:
   title: Welcome to Tobira!
   body: >
     It looks like your main page is still empty! To add content to this page
-    or add other pages, first log in with an account that has moderator priviliges.
+    or add other pages, first log in with an account that has moderator privileges.
     Afterwards, you can use the buttons on the left to modify the pages of this
     video portal.
 
@@ -196,7 +196,7 @@ upload:
     save: Save and finish
   errors:
     failed-to-upload: Failed to upload video.
-    unknown: Unknown error occured during video upload.
+    unknown: Unknown error occurred during video upload.
     field-required: This field is required (cannot be empty)
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
@@ -355,7 +355,7 @@ manage:
           heading: Event
           none: No event selected
           invalid: Please select an event
-          no-read-acccess-to-current: >
+          no-read-access-to-current: >
             You do not have read access to the video that is currently referenced here.
 
       titled:
@@ -383,7 +383,7 @@ manage:
       You can change the page name at any time.
     path-segment-info: >
       The path segment appears in the URL/link to the new page. Try keeping
-      it rather short and don't repeat information already contained in preceeding
+      it rather short and don't repeat information already contained in preceding
       path segments. Changing the path segment later should be avoided.
       <br />
       Path segments must not contain whitespace nor <code>{{illegalChars}}</code>

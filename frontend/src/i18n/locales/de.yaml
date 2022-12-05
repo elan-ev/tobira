@@ -366,7 +366,7 @@ manage:
           heading: Video
           none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
-          no-read-acccess-to-current: >
+          no-read-access-to-current: >
             Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
 
       titled:

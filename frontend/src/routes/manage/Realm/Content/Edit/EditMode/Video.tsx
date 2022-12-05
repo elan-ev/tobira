@@ -83,7 +83,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
             <Card kind="error">{t("manage.realm.content.event.event.invalid")}</Card>
         </div>}
         {event?.__typename === "NotAllowed" && <Card kind="error" css={{ margin: "8px 0" }}>
-            {t("manage.realm.content.event.event.no-read-acccess-to-current")}
+            {t("manage.realm.content.event.event.no-read-access-to-current")}
         </Card>}
         <Controller
             defaultValue={currentEvent?.id}
