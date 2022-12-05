@@ -24,7 +24,7 @@ We provide some dummy data that you can use for development.
 ### Big dataset (recommended)
 
 Run the following command, which downloads a roughly 3MB DB dump and imports it into your dev DB.
-This is roughly the same data you can see on [tobira.opencast.org](tobira.opencast.org).
+This is roughly the same data you can see on [tobira.opencast.org](https://tobira.opencast.org).
 
 ```shell
 ./x.sh db load-dump
