@@ -13,7 +13,7 @@ import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { useOnOutsideClick } from "../../util";
-import { User, useUser } from "../../User";
+import { isRealUser, User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon } from "./ui";
 import CONFIG from "../../config";
@@ -35,13 +35,17 @@ export const UserBox: React.FC = () => {
         close: () => setMenuOpen(false),
     };
 
+    const iconCss = {
+        height: "100%",
+        margin: "0 9px",
+        fontSize: 22,
+        opacity: 0.4,
+    };
     if (user === "unknown") {
-        return <Spinner css={{
-            height: "100%",
-            margin: "0 9px",
-            fontSize: 22,
-            opacity: 0.4,
-        }} />;
+        return <Spinner css={iconCss} />;
+    } else if (user === "error") {
+        // TODO: tooltip
+        return <FiAlertTriangle css={iconCss} />;
     } else if (user === "none") {
         return <LoggedOut {...{ t, menu }} />;
     } else {
@@ -195,8 +199,7 @@ const Menu: React.FC<MenuProps> = ({ close, container }) => {
     type State = "main" | "language";
     const [state, setState] = useState<State>("main");
 
-    const userState = useUser();
-    const user = userState === "none" || userState === "unknown" ? null : userState;
+    const user = useUser();
 
     // Close menu on clicks anywhere outside of it.
     useOnOutsideClick(container, close);
@@ -204,7 +207,7 @@ const Menu: React.FC<MenuProps> = ({ close, container }) => {
     const items = match(state, {
         main: () => <>
             {/* Login button if the user is NOT logged in */}
-            {!user && (
+            {user === "none" && (
                 <MenuItem
                     icon={<FiLogIn />}
                     borderBottom
@@ -219,7 +222,7 @@ const Menu: React.FC<MenuProps> = ({ close, container }) => {
                 >{t("user.login")}</MenuItem>
             )}
 
-            {user && <>
+            {isRealUser(user) && <>
                 {user.canUpload && <MenuItem
                     icon={<FiUpload />}
                     linkTo={"/~upload"}
@@ -237,7 +240,7 @@ const Menu: React.FC<MenuProps> = ({ close, container }) => {
             </MenuItem>
 
             {/* Logout button if the user is logged in */}
-            {user && <Logout />}
+            {isRealUser(user) && <Logout />}
         </>,
         language: () => <>
             <MenuItem icon={<FiChevronLeft />} onClick={() => setState("main")} borderBottom>

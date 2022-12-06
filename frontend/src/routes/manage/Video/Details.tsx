@@ -6,7 +6,7 @@ import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
 import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
-import { useUser } from "../../../User";
+import { isRealUser, useUser } from "../../../User";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
@@ -33,7 +33,7 @@ const Page: React.FC<Props> = ({ event }) => {
     ];
 
     const user = useUser();
-    if (user === "none" || user === "unknown") {
+    if (!isRealUser(user)) {
         return <NotAuthorized />;
     }
 

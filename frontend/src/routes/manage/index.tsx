@@ -10,7 +10,7 @@ import { loadQuery } from "../../relay";
 import { Link } from "../../router";
 import { LinkList, LinkWithIcon } from "../../ui";
 import { NotAuthorized } from "../../ui/error";
-import { useUser } from "../../User";
+import { isRealUser, useUser } from "../../User";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
 import { PageTitle } from "../../layout/header/ui";
 import { ExternalLink } from "../../relay/auth";
@@ -48,7 +48,7 @@ const query = graphql`
 const Manage: React.FC = () => {
     const { t } = useTranslation();
     const user = useUser();
-    if (user === "none" || user === "unknown") {
+    if (!isRealUser(user)) {
         return <NotAuthorized />;
     }
 
