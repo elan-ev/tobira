@@ -22,7 +22,7 @@ import { currentRef, useRefState } from "../util";
 import { Card } from "../ui/Card";
 import { InputContainer, TitleLabel } from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
-import { getUploadJwt } from "../relay/auth";
+import { getJwt } from "../relay/auth";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -648,7 +648,7 @@ const ocRequest = async (
     path: string,
     options: RequestInit = {},
 ): Promise<string> => {
-    const jwt = await getUploadJwt();
+    const jwt = await getJwt("UPLOAD");
 
     const url = ocUrl(path);
     const response = await fetch(url, {
@@ -738,7 +738,7 @@ const uploadTracks = async (
         body.append("BODY", file, file.name);
 
         const url = ocUrl("/ingest/addTrack");
-        const jwt = await getUploadJwt();
+        const jwt = await getJwt("UPLOAD");
         mediaPackage = await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open("POST", url);

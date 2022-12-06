@@ -69,26 +69,30 @@ impl OpencastConfig {
     }
 
     pub(crate) fn studio_url(&self) -> ToolBaseUri {
-        self.studio_url.to_owned().unwrap_or_else(|| {
+        self.studio_url.clone().unwrap_or_else(|| {
             let host = self.unwrap_host();
             let uri = Uri::builder()
                 .scheme(host.scheme.clone())
                 .authority(host.authority.clone())
                 .path_and_query("/studio")
                 .build()
+                // This is fine since scheme and host come from a trusted source
+                // and the path is known to be fine statically.
                 .unwrap();
             ToolBaseUri(uri)
         })
     }
 
     pub(crate) fn editor_url(&self) -> ToolBaseUri {
-        self.editor_url.to_owned().unwrap_or_else(|| {
+        self.editor_url.clone().unwrap_or_else(|| {
             let host = self.unwrap_host();
             let uri = Uri::builder()
                 .scheme(host.scheme.clone())
                 .authority(host.authority.clone())
                 .path_and_query("/editor-ui/index.html")
                 .build()
+                // This is fine since scheme and host come from a trusted source
+                // and the path is known to be fine statically.
                 .unwrap();
             ToolBaseUri(uri)
         })

@@ -3,7 +3,8 @@ use juniper::http::GraphQLRequest;
 use std::{
     mem,
     sync::Arc,
-    time::Instant, collections::HashSet,
+    time::Instant,
+    collections::HashSet,
 };
 
 use crate::{
