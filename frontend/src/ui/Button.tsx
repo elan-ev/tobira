@@ -1,4 +1,6 @@
 import { Interpolation, Theme } from "@emotion/react";
+import React from "react";
+
 import { Link } from "../router";
 import { match } from "../util";
 
@@ -11,8 +13,10 @@ type ButtonProps = JSX.IntrinsicElements["button"] & {
 };
 
 /** A styled button */
-export const Button: React.FC<ButtonProps> = ({ kind = "normal", extraCss, children, ...rest }) => (
-    <button type="button" css={css(kind, extraCss)} {...rest}>{children}</button>
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ kind = "normal", extraCss, children, ...rest }, ref) => (
+        <button ref={ref} type="button" css={css(kind, extraCss)} {...rest}>{children}</button>
+    ),
 );
 
 type LinkButtonProps = JSX.IntrinsicElements["a"] & {
