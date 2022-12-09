@@ -103,8 +103,6 @@ user:
 login-page:
   user-id: User ID
   password: Password
-  already-logged-in: You are already logged in as “{{name}}”.
-  go-to-homepage: Go to homepage.
   bad-credentials: 'Login failed: invalid credentials.'
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
 

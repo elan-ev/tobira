@@ -5,7 +5,7 @@ import type { PreloadedQuery } from "react-relay";
 
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
-import { Link } from "../router";
+import { Link, useRouter } from "../router";
 import { LoginQuery } from "./__generated__/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { Logo } from "../layout/header/Logo";
@@ -50,37 +50,44 @@ const Login: React.FC<Props> = ({ queryRef }) => {
     useNoindexTag();
     const { t } = useTranslation();
     const { currentUser } = usePreloadedQuery(query, queryRef);
+    const router = useRouter();
+    const isLoggedIn = currentUser !== null;
 
-    return <Outer>
-        <div css={{
-            height: "calc(1.7 * var(--header-height))",
-            maxHeight: "35vh",
-            padding: `${HEADER_BASE_PADDING}px 0`,
-            textAlign: "center",
-        }}><Logo /></div>
+    React.useEffect(() => {
+        if (isLoggedIn) {
+            const redirectTo = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY) ?? "/";
+            window.sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
+            router.goto(redirectTo, true);
+        }
+    });
 
-        <main css={{
-            margin: "0 auto",
-            padding: 16,
-            maxWidth: "100%",
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-        }}>
-            {currentUser !== null
-                ? <AlreadyLoggedIn displayName={currentUser.displayName} />
-                : <>
-                    <PageTitle title={t("user.login")} />
-                    <LoginBox />
-                    <div css={{ marginTop: 12, fontSize: 14, lineHeight: 1 }}>
-                        <BackButton />
-                    </div>
-                </>
-            }
-        </main>
+    return isLoggedIn
+        // Don't render anything when a redirect is triggered.
+        ? null
+        : <Outer>
+            <div css={{
+                height: "calc(1.7 * var(--header-height))",
+                maxHeight: "35vh",
+                padding: `${HEADER_BASE_PADDING}px 0`,
+                textAlign: "center",
+            }}><Logo /></div>
 
-        <Footer />
-    </Outer>;
+            <main css={{
+                margin: "0 auto",
+                padding: 16,
+                maxWidth: "100%",
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "column",
+            }}>
+                <PageTitle title={t("user.login")} />
+                <LoginBox />
+                <div css={{ marginTop: 12, fontSize: 14, lineHeight: 1 }}>
+                    <BackButton />
+                </div>
+            </main>
+            <Footer />
+        </Outer>;
 };
 
 const BackButton: React.FC = () => {
@@ -284,23 +291,4 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
             },
         }}>{children}</div>
     );
-};
-
-type AlreadyLoggedInProps = {
-    displayName: string;
-};
-
-/**
- * Shown if a logged-in user somehow ends up on the login page. We could also
- * automatically redirect, but that could always backfire. While this is not
- * optimal or particularly nice, it is surely functional.
- */
-const AlreadyLoggedIn: React.FC<AlreadyLoggedInProps> = ({ displayName }) => {
-    const { t } = useTranslation();
-
-    return <div>
-        {t("login-page.already-logged-in", { name: displayName })}
-        {" "}
-        <Link to="/">{t("login-page.go-to-homepage")}</Link>
-    </div>;
 };
