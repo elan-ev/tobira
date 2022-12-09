@@ -69,11 +69,8 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
             <Link
                 to={CONFIG.auth.loginLink ?? LOGIN_PATH}
                 onClick={() => {
-                    // If we are linking to our internal login page, store a
-                    // redirect link in session storage.
-                    if (!CONFIG.auth.loginLink) {
-                        window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
-                    }
+                    // Store a redirect link in session storage.
+                    window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
                 }}
                 htmlLink={!!CONFIG.auth.loginLink}
                 css={{

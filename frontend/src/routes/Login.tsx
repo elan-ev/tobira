@@ -55,8 +55,6 @@ const Login: React.FC<Props> = ({ queryRef }) => {
 
     React.useEffect(() => {
         if (isLoggedIn) {
-            // This isn't working - 
-            // window.sessionStorage.getItem(REDIRECT_STORAGE_KEY) is always null.
             const redirectTo = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY) ?? "/";
             window.sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
             router.goto(redirectTo, true);
