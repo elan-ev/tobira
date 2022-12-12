@@ -23,6 +23,7 @@ level = "trace"
 [auth]
 mode = "login-proxy"
 trusted_external_key = "tobira"
+pre_auth_external_links = true
 
 [auth.jwt]
 signing_algorithm = "ES256"

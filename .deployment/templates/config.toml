@@ -27,6 +27,8 @@ login_page.note.de = 'Testnutzer: "augustus", "sabine" und "admin". Passwort fü
 
 trusted_external_key = "tobira"
 
+pre_auth_external_links = true
+
 [auth.jwt]
 signing_algorithm = "ES256"
 # This is currently not created by scripts, but is expected to be generated on site manually.

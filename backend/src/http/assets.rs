@@ -86,14 +86,15 @@ impl Assets {
             "userIdLabel": config.auth.login_page.user_id_label,
             "passwordLabel": config.auth.login_page.password_label,
             "loginPageNote": config.auth.login_page.note,
+            "preAuthExternalLinks": config.auth.pre_auth_external_links,
         }).to_string());
 
         // Note the mismatch between presentation and sync node;
         // these might not be the same forever!
         variables.insert("presentation-node".into(), config.opencast.sync_node().to_string());
         variables.insert("upload-node".into(), config.opencast.upload_node().to_string());
-        variables.insert("studio-url".into(), config.opencast.studio_url());
-        variables.insert("editor-url".into(), config.opencast.editor_url());
+        variables.insert("studio-url".into(), config.opencast.studio_url().to_string());
+        variables.insert("editor-url".into(), config.opencast.editor_url().to_string());
 
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());

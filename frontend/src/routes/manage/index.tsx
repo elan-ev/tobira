@@ -1,22 +1,23 @@
-import { ReactElement, ReactNode } from "react";
+import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { FiFilm, FiUpload, FiVideo } from "react-icons/fi";
 import { HiOutlineTemplate } from "react-icons/hi";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../layout/Root";
-import {
-    manageDashboardQuery as ManageDashboardQuery,
-} from "./__generated__/manageDashboardQuery.graphql";
 import { makeRoute } from "../../rauta";
 import { loadQuery } from "../../relay";
 import { Link } from "../../router";
 import { LinkList, LinkWithIcon } from "../../ui";
 import { NotAuthorized } from "../../ui/error";
 import { useUser } from "../../User";
-import CONFIG from "../../config";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
 import { PageTitle } from "../../layout/header/ui";
+import { ExternalLink } from "../../relay/auth";
+import {
+    manageDashboardQuery as ManageDashboardQuery,
+} from "./__generated__/manageDashboardQuery.graphql";
+import { css } from "@emotion/react";
 
 
 const PATH = "/~manage";
@@ -50,9 +51,8 @@ const Manage: React.FC = () => {
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
     }
-    const returnTarget = encodeURIComponent(document.location.href);
-    const studioUrl = `${CONFIG.opencast.studioUrl}?return.target=${returnTarget}`;
 
+    const studioReturnUrl = new URL(document.location.href);
     return <>
         <Breadcrumbs path={[]} tail={t("manage.management")} />
         <PageTitle title={t("manage.dashboard.title")} />
@@ -64,67 +64,62 @@ const Manage: React.FC = () => {
             gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
             gap: 24,
         }}>
-            {user.canUpload && <GridTile link="/~upload">
+            {user.canUpload && <Link to="/~upload" css={gridTile}>
                 <FiUpload />
                 <h2>{t("upload.title")}</h2>
                 {t("manage.dashboard.upload-tile")}
-            </GridTile>}
-            {user.canUseStudio && <GridTile link={studioUrl}>
+            </Link>}
+            {user.canUseStudio && <ExternalLink
+                service={"STUDIO"}
+                params={{ "return.target": studioReturnUrl }}
+                fallback="link"
+                css={gridTile}
+            >
                 <FiVideo />
                 <h2>{t("manage.dashboard.studio-tile-title")}</h2>
                 {t("manage.dashboard.studio-tile-body")}
-            </GridTile>}
-            <GridTile link="/~manage/videos">
+            </ExternalLink>}
+            <Link to="/~manage/videos" css={gridTile}>
                 <FiFilm />
                 <h2>{t("manage.my-videos.title")}</h2>
                 {t("manage.dashboard.my-videos-tile")}
-            </GridTile>
-            <GridTile>
+            </Link>
+            <div css={gridTile}>
                 <h2>{t("manage.dashboard.manage-pages-tile-title")}</h2>
                 {t("manage.dashboard.manage-pages-tile-body")}
-            </GridTile>
+            </div>
         </div>
     </>;
 };
 
-type GridTileProps = {
-    link?: string;
-    children: ReactNode;
-};
-
-const GridTile: React.FC<GridTileProps> = ({ link, children }) => {
-    const style = {
-        borderRadius: 4,
-        border: "1px solid var(--grey92)",
-        backgroundColor: "var(--grey97)",
-        padding: "8px 16px 16px 16px",
-        fontSize: 14,
-        color: "black",
-        "&:hover": !link
-            ? {}
-            : {
-                color: "black",
-                borderColor: "var(--grey80)",
-                boxShadow: "1px 1px 5px var(--grey92)",
-            },
-        position: "relative",
-        "& > svg:first-of-type": {
-            position: "absolute",
-            top: 8,
-            right: 8,
-            color: "var(--accent-color)",
-            fontSize: 22,
+const gridTile = css({
+    borderRadius: 4,
+    border: "1px solid var(--grey92)",
+    backgroundColor: "var(--grey97)",
+    padding: "8px 16px 16px 16px",
+    fontSize: 14,
+    color: "black",
+    "&:is(button, a)": {
+        "&:hover": {
+            color: "black",
+            borderColor: "var(--grey80)",
+            boxShadow: "1px 1px 5px var(--grey92)",
+            cursor: "pointer",
         },
-        "& > h2": {
-            fontSize: 18,
-            marginBottom: 16,
-        },
-    } as const;
-
-    return link
-        ? <Link to={link} css={style}>{children}</Link>
-        : <div css={style}>{children}</div>;
-};
+    },
+    position: "relative",
+    "& > svg:first-of-type": {
+        position: "absolute",
+        top: 8,
+        right: 8,
+        color: "var(--accent-color)",
+        fontSize: 22,
+    },
+    "& > h2": {
+        fontSize: 18,
+        marginBottom: 16,
+    },
+});
 
 type ManageNavProps = {
     active?: "/~manage" | "/~manage/videos";

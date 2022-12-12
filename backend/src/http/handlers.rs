@@ -1,9 +1,10 @@
-use hyper::{Body, Method, StatusCode, http::HeaderValue, header};
+use hyper::{Body, Method, StatusCode, http::{HeaderValue, uri::{PathAndQuery}}, header, Uri};
 use juniper::http::GraphQLRequest;
 use std::{
     mem,
     sync::Arc,
     time::Instant,
+    collections::HashSet,
 };
 
 use crate::{
@@ -382,7 +383,23 @@ pub(super) trait CommonHeadersExt {
 }
 
 impl CommonHeadersExt for hyper::http::response::Builder {
-    fn with_content_security_policies(self, _config: &Config, _nonce: &str) -> Self {
+    fn with_content_security_policies(self, config: &Config, _nonce: &str) -> Self {
+        let redirect_actions = if config.auth.pre_auth_external_links {
+            [config.opencast.studio_url(), config.opencast.editor_url()]
+                .into_iter()
+                .map(|uri| {
+                    let mut parts = uri.0.into_parts();
+                    parts.path_and_query = Some(PathAndQuery::from_static("/redirect/get"));
+                    Uri::from_parts(parts).unwrap().to_string()
+                })
+                .collect::<HashSet<_>>()
+                .into_iter()
+                .collect::<Vec<_>>()
+                .join(" ")
+        } else {
+            "'none'".into()
+        };
+
         // Some comments about all relaxations:
         //
         // - `img` and `media` are loaded from Opencast. We know one URL host,
@@ -406,6 +423,8 @@ impl CommonHeadersExt for hyper::http::response::Builder {
         //   we don't know where these m3u8 files live, we have to allow
         //   everything here.
         //
+        // - `form-actions` are needed for the JWT-based pre-authentication to work.
+        //
         // TODO: check if configuring allowed hosts for `img-src`, `media-src`
         // and `font-src` is an option. Then again, admins can also
         // set/override those headers in their nginx?
@@ -418,7 +437,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             style-src 'self' 'unsafe-inline'; \
             connect-src *; \
             worker-src blob: 'self'; \
-            form-action 'none'; \
+            form-action {redirect_actions}; \
         ");
 
         self.header("Content-Security-Policy", value)

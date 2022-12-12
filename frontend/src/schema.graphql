@@ -208,6 +208,10 @@ interface Node {
   id: ID!
 }
 
+input UpdateTextBlock {
+  content: String
+}
+
 type Track {
   uri: String!
   flavor: String!
@@ -218,10 +222,6 @@ type Track {
 
 type SearchResults {
   items: [Node!]!
-}
-
-input UpdateTextBlock {
-  content: String
 }
 
 type Realm implements Node {
@@ -410,8 +410,8 @@ type Query {
   allSeries: [Series!]!
   "Returns the current user."
   currentUser: User
-  "Returns a new JWT that can be used to authenticate against Opencast for uploading videos."
-  uploadJwt: String!
+  "Returns a new JWT that can be used to authenticate against Opencast for using the given service"
+  jwt(service: JwtService!): String!
   "Retrieve a node by globally unique ID. Mostly useful for relay."
   node(id: ID!): Node
   "Returns `null` if the query is too short."
@@ -513,6 +513,13 @@ input NewRealm {
 enum SortDirection {
   ASCENDING
   DESCENDING
+}
+
+"Services a user can be pre-authenticated for using a JWT"
+enum JwtService {
+  UPLOAD
+  STUDIO
+  EDITOR
 }
 
 input NewTitleBlock {

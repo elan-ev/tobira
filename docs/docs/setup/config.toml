@@ -222,6 +222,13 @@
 # this is sent over.
 #trusted_external_key =
 
+# Determines whether or not Tobira users are getting pre-authenticated against
+# Opencast when they visit external links like the ones to Opencast Studio
+# or the Editor. If you have an SSO-solution, you don't need this.
+#
+# Default value: false
+#pre_auth_external_links = false
+
 
 # Configuration related to the built-in login page.
 [auth.login_page]

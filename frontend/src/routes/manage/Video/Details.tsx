@@ -7,11 +7,10 @@ import { Form } from "../../../ui/Form";
 import { CopyableInput, Input, TextArea } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { useUser } from "../../../User";
-import { LinkButton } from "../../../ui/Button";
-import CONFIG from "../../../config";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
+import { ExternalLink } from "../../../relay/auth";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -36,7 +35,6 @@ const Page: React.FC<Props> = ({ event }) => {
     if (user === "none" || user === "unknown") {
         return <NotAuthorized />;
     }
-    const editorUrl = `${CONFIG.opencast.editorUrl}?mediaPackageId=${event.opencastId}`;
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
@@ -49,9 +47,14 @@ const Page: React.FC<Props> = ({ event }) => {
             <UpdatedCreatedInfo event={event} />
             <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
                 {user.canUseEditor && event.canWrite && (
-                    <LinkButton to={editorUrl} css={{ marginBottom: 16 }} target="_blank">
+                    <ExternalLink
+                        service="EDITOR"
+                        params={{ mediaPackageId: event.opencastId }}
+                        fallback="button"
+                        css={{ marginBottom: 16 }}
+                    >
                         {t("manage.my-videos.details.open-in-editor")} <FiExternalLink size={16} />
-                    </LinkButton>
+                    </ExternalLink>
                 )}
                 <DirectLink event={event} />
                 <MetadataSection event={event} />

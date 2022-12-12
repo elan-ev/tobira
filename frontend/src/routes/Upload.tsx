@@ -1,9 +1,8 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useRelayEnvironment } from "react-relay";
+import { graphql } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { useForm } from "react-hook-form";
-import { Environment, fetchQuery } from "relay-runtime";
 import { FiCheckCircle, FiUpload } from "react-icons/fi";
 
 import { RootLoader } from "../layout/Root";
@@ -11,7 +10,6 @@ import { loadQuery } from "../relay";
 import { UploadQuery } from "./__generated__/UploadQuery.graphql";
 import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
-import { UploadJwtQuery } from "./__generated__/UploadJwtQuery.graphql";
 import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
 import { useNavBlocker } from "./util";
 import CONFIG from "../config";
@@ -24,6 +22,7 @@ import { currentRef, useRefState } from "../util";
 import { Card } from "../ui/Card";
 import { InputContainer, TitleLabel } from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
+import { getJwt } from "../relay/auth";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -78,7 +77,6 @@ const UploadMain: React.FC = () => {
     // the user selected a file.
 
     const { t } = useTranslation();
-    const relayEnv = useRelayEnvironment();
 
     const [files, setFiles] = useState<FileList | null>(null);
     const [uploadState, setUploadState] = useRefState<UploadState | null>(null);
@@ -111,10 +109,10 @@ const UploadMain: React.FC = () => {
             if (metadata.current === null) {
                 setUploadState({ state: "waiting-for-metadata", mediaPackage });
             } else {
-                finishUpload(relayEnv, mediaPackage, metadata.current, user, setUploadState);
+                finishUpload(mediaPackage, metadata.current, user, setUploadState);
             }
         };
-        startUpload(relayEnv, files, setUploadState, onProgressCallback, onDone);
+        startUpload(files, setUploadState, onProgressCallback, onDone);
     };
 
     if (files === null) {
@@ -146,7 +144,7 @@ const UploadMain: React.FC = () => {
             if (uploadState.current.state === "waiting-for-metadata") {
                 // The tracks have already been uploaded, so we can finish the upload now.
                 const mediaPackage = uploadState.current.mediaPackage;
-                finishUpload(relayEnv, mediaPackage, metadata, user, setUploadState);
+                finishUpload(mediaPackage, metadata, user, setUploadState);
             }
         };
         const hasUploadError = uploadState.current.state === "error";
@@ -647,11 +645,10 @@ export class JwtInvalid extends Error {
 
 /** Performs a request against Opencast, authenticated via JWT */
 const ocRequest = async (
-    relayEnv: Environment,
     path: string,
     options: RequestInit = {},
 ): Promise<string> => {
-    const jwt = await getJwt(relayEnv);
+    const jwt = await getJwt("UPLOAD");
 
     const url = ocUrl(path);
     const response = await fetch(url, {
@@ -679,44 +676,12 @@ const ocRequest = async (
         .catch(e => { throw new OcNetworkError(e); });
 };
 
-/** Fetches a new JWT for uploading to Opencast */
-const getJwt = (relayEnv: Environment): Promise<string> => new Promise((resolve, reject) => {
-    const query = graphql`
-        query UploadJwtQuery {
-            uploadJwt
-        }
-    `;
-
-    let out: string | null = null;
-
-    // Use "network-only" as we always want a fresh JWTs. `fetchQuery` should already
-    // never write any values into the cache, but better make sure.
-    fetchQuery<UploadJwtQuery>(relayEnv, query, {}, { fetchPolicy: "network-only" }).subscribe({
-        complete: () => {
-            if (out === null) {
-                bug("'complete' callback before receiving any data");
-            } else {
-                resolve(out);
-            }
-        },
-        error: (error: unknown) => reject(error),
-        next: data => {
-            if (out !== null) {
-                bug("unexpected second data when retrieving JWT");
-            } else {
-                out = data.uploadJwt;
-            }
-        },
-    });
-});
-
 
 // ==============================================================================================
 // ===== Functions to perform actions against the ingest API
 // ==============================================================================================
 
 const startUpload = async (
-    relayEnv: Environment,
     files: FileList,
     setUploadState: (state: UploadState) => void,
     onProgress: (progress: Progress) => void,
@@ -728,17 +693,17 @@ const startUpload = async (
         // Log Opencast user information. This is also a good test whether the
         // communication with OC works at all, without potentially creating an
         // empty new media package.
-        const userInfo = JSON.parse(await ocRequest(relayEnv, "/info/me.json"));
+        const userInfo = JSON.parse(await ocRequest("/info/me.json"));
         delete userInfo.org;
         // eslint-disable-next-line no-console
         console.debug("JWT user: ", userInfo);
 
         // Create a new media package to start the upload
-        let mediaPackage = await ocRequest(relayEnv, "/ingest/createMediaPackage");
+        let mediaPackage = await ocRequest("/ingest/createMediaPackage");
 
         const tracks = Array.from(files)
             .map(file => ({ file, flavor: "presentation/source" as const }));
-        mediaPackage = await uploadTracks(relayEnv, mediaPackage, tracks, onProgress);
+        mediaPackage = await uploadTracks(mediaPackage, tracks, onProgress);
         onDone(mediaPackage);
     } catch (error) {
         setUploadState({ state: "error", error });
@@ -757,7 +722,6 @@ type Track = {
  * uploaded. Returns the resulting media package returned by the last request.
  */
 const uploadTracks = async (
-    relayEnv: Environment,
     mediaPackage: string,
     tracks: Track[],
     onProgress: (progress: number) => void,
@@ -774,7 +738,7 @@ const uploadTracks = async (
         body.append("BODY", file, file.name);
 
         const url = ocUrl("/ingest/addTrack");
-        const jwt = await getJwt(relayEnv);
+        const jwt = await getJwt("UPLOAD");
         mediaPackage = await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open("POST", url);
@@ -811,7 +775,6 @@ const uploadTracks = async (
 
 /** Ingest the given metadata and finishes the ingest process */
 const finishUpload = async (
-    relayEnv: Environment,
     mediaPackage: string,
     metadata: Metadata,
     user: User,
@@ -829,7 +792,6 @@ const finishUpload = async (
             body.append("flavor", "dublincore/episode");
 
             mediaPackage = await ocRequest(
-                relayEnv,
                 "/ingest/addDCCatalog",
                 { method: "post", body },
             );
@@ -839,7 +801,7 @@ const finishUpload = async (
         {
             // Retrieve primary user role for user.
             // TODO: we could save this information from a previous request to info/me.
-            const userInfo = JSON.parse(await ocRequest(relayEnv, "/info/me.json"));
+            const userInfo = JSON.parse(await ocRequest("/info/me.json"));
             const userRole = userInfo.userRole;
             if (typeof userRole !== "string" || !userRole) {
                 throw `Field \`userRole\` from 'info/me.json' is not valid: ${userRole}`;
@@ -852,7 +814,6 @@ const finishUpload = async (
             body.append("BODY", new Blob([acl]), "acl.xml");
 
             mediaPackage = await ocRequest(
-                relayEnv,
                 "/ingest/addAttachment",
                 { method: "post", body },
             );
@@ -862,7 +823,7 @@ const finishUpload = async (
         {
             const body = new FormData();
             body.append("mediaPackage", mediaPackage);
-            await ocRequest(relayEnv, "/ingest/ingest", { method: "post", body: body });
+            await ocRequest("/ingest/ingest", { method: "post", body: body });
         }
 
         setUploadState({ state: "done" });

@@ -68,16 +68,34 @@ impl OpencastConfig {
         self.upload_node.as_ref().unwrap_or_else(|| self.unwrap_host())
     }
 
-    pub(crate) fn studio_url(&self) -> String {
-        self.studio_url.as_ref()
-            .map(|url| url.to_string())
-            .unwrap_or_else(|| format!("{}/studio", self.unwrap_host()))
+    pub(crate) fn studio_url(&self) -> ToolBaseUri {
+        self.studio_url.clone().unwrap_or_else(|| {
+            let host = self.unwrap_host();
+            let uri = Uri::builder()
+                .scheme(host.scheme.clone())
+                .authority(host.authority.clone())
+                .path_and_query("/studio")
+                .build()
+                // This is fine since scheme and host come from a trusted source
+                // and the path is known to be fine statically.
+                .unwrap();
+            ToolBaseUri(uri)
+        })
     }
 
-    pub(crate) fn editor_url(&self) -> String {
-        self.editor_url.as_ref()
-            .map(|url| url.to_string())
-            .unwrap_or_else(|| format!("{}/editor-ui/index.html", self.unwrap_host()))
+    pub(crate) fn editor_url(&self) -> ToolBaseUri {
+        self.editor_url.clone().unwrap_or_else(|| {
+            let host = self.unwrap_host();
+            let uri = Uri::builder()
+                .scheme(host.scheme.clone())
+                .authority(host.authority.clone())
+                .path_and_query("/editor-ui/index.html")
+                .build()
+                // This is fine since scheme and host come from a trusted source
+                // and the path is known to be fine statically.
+                .unwrap();
+            ToolBaseUri(uri)
+        })
     }
 
     fn unwrap_host(&self) -> &HttpHost {
@@ -85,11 +103,11 @@ impl OpencastConfig {
     }
 }
 
-/// A base URL for tools like Studio or the editor. An URI without query and
+/// A base URL for tools like Studio or the editor. A URI without query and
 /// fragment.
 #[derive(Clone, Deserialize)]
 #[serde(try_from = "String")]
-pub(crate) struct ToolBaseUri(Uri);
+pub(crate) struct ToolBaseUri(pub(crate) Uri);
 
 
 impl fmt::Display for ToolBaseUri {
