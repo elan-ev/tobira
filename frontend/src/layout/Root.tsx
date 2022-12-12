@@ -25,7 +25,7 @@ type Props = {
 
 export const Root: React.FC<Props> = ({ nav, children }) => {
     const menu = useMenu();
-    const navElements = Array.isArray(nav) ? nav : [nav] as [JSX.Element];
+    const navElements = Array.isArray(nav) ? nav : [nav] as const;
     const navExists = navElements.length > 0;
 
     return (

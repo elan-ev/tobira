@@ -1,6 +1,6 @@
 type BurgerMenuProps = {
     hide: () => void;
-    items: [] | [JSX.Element] | [JSX.Element, JSX.Element];
+    items: [] | readonly [JSX.Element] | readonly [JSX.Element, JSX.Element];
 };
 
 export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
