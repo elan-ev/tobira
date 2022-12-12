@@ -7,21 +7,16 @@ sidebar_position: 2
 This is an overview of what you need to do in order to deploy Tobira.
 
 
-## 1. Deploy binary
-
-Get the appropriate `tobira-<target>` binary for your architecture from [our releases](https://github.com/elan-ev/tobira/releases) and copy it to your server.
-You can place it anywhere you want, but we suggest creating a directory `/opt/tobira` and placing it there.
-The rest of these docs also assumes that you rename it to just `tobira`, i.e. stripping the target suffix, so that the binary is `/opt/tobira/tobira`.
-
-If you want to install Tobira from a Debian package, see [this document](debs) for more information.
-If you need to build your own binary, see [this document](../dev/build/release) for more information.
-
-
-## 2. Setup Opencast, PostgreSQL and MeiliSearch
+## 1. Setup Opencast, PostgreSQL and MeiliSearch
 
 As described in [the requirements docs](./requirements), Tobira needs a PostgreSQL DB and [MeiliSearch](https://www.meilisearch.com/).
 How to setup those things is out of scope for these docs.
 This guide also assumes Opencast is already set up accordingly.
+
+
+## 2. Install Tobira
+
+See ["Installation methods"](./install).
 
 
 ## 3. Setup reverse proxy
