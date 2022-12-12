@@ -1,6 +1,6 @@
 # Tobira: an Opencast Video Portal
 
-![CI Status](https://github.com/elan-ev/tobira/workflows/CI/badge.svg)
+![CI Status](https://github.com/elan-ev/tobira/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/github/license/elan-ev/tobira)
 ![Latest release](https://img.shields.io/github/v/release/elan-ev/tobira?label=latest%20release)
 
