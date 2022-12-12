@@ -16,7 +16,7 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
             bottom: 0,
             left: 0,
             right: 0,
-            zIndex: 100,
+            zIndex: 3017,
             backgroundColor: "#000000a0",
         }}
     >
