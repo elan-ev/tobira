@@ -254,9 +254,9 @@ manage:
     technical-details:
       title: Technische Details
       tracks: Video/Audio-Spuren
-      unknown-mimetype: Unbekannter MIME type
+      unknown-mimetype: Unbekannter MIME-Type
       opencast-id: Opencast-ID
-      other-info: Andere Informationen
+      further-info: Weitere Informationen
       synced: Synchronisiert?
       part-of: 'Teil von:'
       is-live: Live?

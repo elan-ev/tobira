@@ -47,7 +47,7 @@ const Page: React.FC<Props> = ({ event }) => {
         }}>
             <OpencastId event={event} />
             <TrackInfo event={event} />
-            <OtherInfo event={event} />
+            <FurtherInfo event={event} />
         </div>
     </>;
 };
@@ -122,7 +122,7 @@ const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => 
     );
 };
 
-const OtherInfo: React.FC<Props> = ({ event }) => {
+const FurtherInfo: React.FC<Props> = ({ event }) => {
     const { t, i18n } = useTranslation();
 
     const boolToYesNo = (v: boolean) => v ? t("general.yes") : t("general.no");
@@ -138,7 +138,7 @@ const OtherInfo: React.FC<Props> = ({ event }) => {
     };
 
     return <section>
-        <h2>{t("manage.my-videos.technical-details.other-info")}</h2>
+        <h2>{t("manage.my-videos.technical-details.further-info")}</h2>
         <ul>
             <SingleInfo label={t("manage.my-videos.technical-details.synced")}>
                 {boolToYesNo(event.syncedData !== null)}

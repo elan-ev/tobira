@@ -139,8 +139,8 @@ video:
     title: Embed video
   caption: Caption
   manage: Manage
-  start: Anfang
-  end: Ende
+  start: Start
+  end: End
 
 series:
   series: Series
@@ -243,13 +243,13 @@ manage:
     thumbnail:
       title: Thumbnail
     acl:
-      title: Manage Access
+      title: Manage access
     technical-details:
       title: Technical details
       tracks: Video/audio tracks
       unknown-mimetype: Unknown MIME type
       opencast-id: Opencast ID
-      other-info: Other information
+      further-info: Further information
       synced: Synchronized?
       part-of: 'Part of:'
       is-live: Live?
