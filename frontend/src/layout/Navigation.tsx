@@ -4,7 +4,13 @@ import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
 import { useTranslation } from "react-i18next";
-import { FOCUS_STYLE_INSET, LinkList, LinkWithIcon, SIDE_BOX_BORDER_RADIUS } from "../ui";
+import {
+    ellipsisOverflowCss,
+    FOCUS_STYLE_INSET,
+    LinkList,
+    LinkWithIcon,
+    SIDE_BOX_BORDER_RADIUS,
+} from "../ui";
 import { MissingRealmName, sortRealms } from "../routes/util";
 
 
@@ -98,13 +104,7 @@ type ItemProps = {
 
 const Item: React.FC<ItemProps> = ({ label, link }) => (
     <LinkWithIcon to={link} iconPos="right">
-        <div css={{
-            display: "-webkit-box",
-            WebkitBoxOrient: "vertical",
-            WebkitLineClamp: 3,
-            textOverflow: "ellipsis",
-            overflow: "hidden",
-        }}>{label}</div>
+        <div css={ellipsisOverflowCss(3)}>{label}</div>
         <FiChevronRight />
     </LinkWithIcon>
 );

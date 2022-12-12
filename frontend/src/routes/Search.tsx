@@ -15,6 +15,7 @@ import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
 import { BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
+import { ellipsisOverflowCss } from "../ui";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -190,7 +191,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     // link should be avoided.
     const link = hostRealms.length !== 1
         ? `/!v/${id.slice(2)}`
-        : `${hostRealms[0].path}/v/${id.slice(2)}`;
+        : `${hostRealms[0].path.replace(/^\/$/, "")}/v/${id.slice(2)}`;
 
     return (
         <Item key={id} link={link}>
@@ -212,11 +213,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
             <div css={{ color: "black" }}>
                 <h3 css={{
                     marginBottom: 6,
-                    display: "-webkit-box",
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    WebkitLineClamp: 2,
+                    ...ellipsisOverflowCss(2),
                 }}>{title}</h3>
                 <Creators creators={creators} />
                 <SmallDescription text={description} lines={3} />

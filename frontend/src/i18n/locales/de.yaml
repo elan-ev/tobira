@@ -20,6 +20,8 @@ general:
   logo-alt: Das Logo von „{{title}}“
   no-root-children: Noch keine Seiten ...
   failed-to-load-thumbnail: Konnte Vorschaubild nicht laden
+  yes: Ja
+  no: Nein
   form:
     select:
       no-options: Keine Optionen
@@ -139,6 +141,8 @@ video:
     title: Video einbetten
   caption: Untertitel
   manage: Verwalten
+  start: Anfang
+  end: Ende
 
 series:
   series: Serie
@@ -233,17 +237,28 @@ manage:
       title: Titel
       created: Erstellt
     no-description: Keine Beschreibung
-    video-details: 'Videodetails: „{{title}}“'
-    technical-details: Technische Details
-    opencast-id: Opencast-ID
-    available-resolutions: Verfügbare Auflösungen
     page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
     no-videos-found: Keine Videos gefunden.
-    share-direct-link: Via Direktlink teilen
-    open-in-editor: Im Videoeditor öffnen
-    referencing-pages: Referenzierende Seiten
-    referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
-    no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
+    details:
+      title: Videodetails
+      share-direct-link: Via Direktlink teilen
+      open-in-editor: Im Videoeditor öffnen
+      referencing-pages: Referenzierende Seiten
+      referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
+      no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
+    thumbnail:
+      title: Vorschaubild
+    acl:
+      title: Zugangsbeschränkung
+    technical-details:
+      title: Technische Details
+      tracks: Video/Audio-Spuren
+      unknown-mimetype: Unbekannter MIME-Type
+      opencast-id: Opencast-ID
+      further-info: Weitere Informationen
+      synced: Synchronisiert?
+      part-of: 'Teil von:'
+      is-live: Live?
 
   are-you-sure: Sind Sie sich sicher?
 

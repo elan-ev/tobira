@@ -25,16 +25,14 @@ type Props = {
 
 export const Root: React.FC<Props> = ({ nav, children }) => {
     const menu = useMenu();
-    const navElements = Array.isArray(nav) ? nav : [nav];
+    const navElements = Array.isArray(nav) ? nav : [nav] as const;
     const navExists = navElements.length > 0;
 
     return (
         <Outer disableScrolling={menu.state === "burger"}>
             <Header hideNavIcon={!navExists} />
             {menu.state === "burger" && navExists && (
-                <BurgerMenu hide={() => menu.close()}>
-                    {navElements.map((elem, i) => <div key={i}>{elem}</div>)}
-                </BurgerMenu>
+                <BurgerMenu items={navElements} hide={() => menu.close()} />
             )}
             <div css={{ margin: OUTER_CONTAINER_MARGIN }}>
                 <div css={{

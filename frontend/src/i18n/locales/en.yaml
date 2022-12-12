@@ -19,6 +19,8 @@ general:
   logo-alt: Logo of “{{title}}”
   no-root-children: No pages yet ...
   failed-to-load-thumbnail: Failed to load thumbnail
+  yes: "Yes"
+  no: "No"
   form:
     select:
       no-options: No options
@@ -136,6 +138,8 @@ video:
     title: Embed video
   caption: Caption
   manage: Manage
+  start: Start
+  end: End
 
 series:
   series: Series
@@ -226,17 +230,28 @@ manage:
       title: Title
       created: Created
     no-description: No description
-    video-details: 'Video Details: “{{title}}”'
-    technical-details: Technical details
-    opencast-id: Opencast ID
-    available-resolutions: Available resolutions
     page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
     no-videos-found: No videos found.
-    share-direct-link: Share via direct link
-    open-in-editor: Open in video editor
-    referencing-pages: Referencing pages
-    referencing-pages-explanation: 'This video is referenced on the following pages:'
-    no-referencing-pages: No pages reference this video.
+    details:
+      title: Video details
+      share-direct-link: Share via direct link
+      open-in-editor: Open in video editor
+      referencing-pages: Referencing pages
+      referencing-pages-explanation: 'This video is referenced on the following pages:'
+      no-referencing-pages: No pages reference this video.
+    thumbnail:
+      title: Thumbnail
+    acl:
+      title: Manage access
+    technical-details:
+      title: Technical details
+      tracks: Video/audio tracks
+      unknown-mimetype: Unknown MIME type
+      opencast-id: Opencast ID
+      further-info: Further information
+      synced: Synchronized?
+      part-of: 'Part of:'
+      is-live: Live?
 
   are-you-sure: Are you sure?
 

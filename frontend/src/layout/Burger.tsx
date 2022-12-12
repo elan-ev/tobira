@@ -1,12 +1,9 @@
-import { ReactNode } from "react";
-
-
 type BurgerMenuProps = {
     hide: () => void;
-    children: ReactNode;
+    items: [] | readonly [JSX.Element] | readonly [JSX.Element, JSX.Element];
 };
 
-export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, children }) => (
+export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
     <div
         onClick={e => {
             if (e.target === e.currentTarget) {
@@ -35,11 +32,18 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, children }) => (
             width: "clamp(260px, 75%, 450px)",
             overflowY: "auto",
             borderTop: "1px solid var(--grey80)",
+            gap: 16,
             "& > *:first-child": {
-                borderBottom: "1px solid var(--grey80)",
+                borderBottom: "1px dashed var(--grey80)",
+            },
+            "& > *:last-child": {
+                borderTop: "1px dashed var(--grey80)",
             },
         }}>
-            {children}
+            {items.length > 0 && <div>{items[0]}</div>}
+            {items.length > 1 && <>
+                <div>{items[1]}</div>
+            </>}
         </div>
     </div>
 );

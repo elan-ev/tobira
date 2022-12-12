@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { ellipsisOverflowCss } from ".";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -48,11 +49,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({ text, lines 
             ...sharedStyle,
             color: "var(--grey40)",
             maxWidth: 800,
-            display: "-webkit-box",
-            WebkitBoxOrient: "vertical",
-            textOverflow: "ellipsis",
-            WebkitLineClamp: lines,
-            overflow: "hidden",
+            ...ellipsisOverflowCss(lines),
         }}>{text}</div>;
     }
 };

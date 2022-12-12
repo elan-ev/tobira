@@ -107,6 +107,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
         "&:hover": hoverActiveStyle,
         ...active && {
             color: "var(--nav-color-darker)",
+            fontWeight: "bold",
             "&": hoverActiveStyle,
         },
     };
@@ -135,3 +136,12 @@ export const FOCUS_STYLE_INSET = {
         boxShadow: "inset 0 0 0 2px var(--accent-color)",
     },
 } as const;
+
+/** Returns CSS that makes text longer than `lines` lines to be truncated with `...`. */
+export const ellipsisOverflowCss = (lines: number): Record<string, any> => ({
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    display: "-webkit-box",
+    WebkitBoxOrient: "vertical",
+    WebkitLineClamp: lines,
+});

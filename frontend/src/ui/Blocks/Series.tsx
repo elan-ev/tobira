@@ -18,6 +18,7 @@ import { Card } from "../Card";
 import { FiPlay } from "react-icons/fi";
 import { keyframes } from "@emotion/react";
 import { Description } from "../metadata";
+import { ellipsisOverflowCss } from "..";
 
 
 type SharedProps = {
@@ -186,13 +187,9 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = ({ title, chil
                 transform: "translateY(-50%)",
                 fontSize: 19,
                 margin: "0 8px",
-
-                display: "-webkit-inline-box",
-                WebkitBoxOrient: "vertical",
-                textOverflow: "ellipsis",
-                WebkitLineClamp: 3,
-                overflow: "hidden",
                 lineHeight: 1.3,
+                ...ellipsisOverflowCss(3),
+                display: "-webkit-inline-box",
             }}>{title}</h2>
         </div>}
         {children}
@@ -266,12 +263,8 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                 }}/>}
                 <div css={{
                     fontSize: "inherit",
-                    display: "-webkit-box",
-                    WebkitBoxOrient: "vertical",
-                    textOverflow: "ellipsis",
-                    WebkitLineClamp: 2,
-                    overflow: "hidden",
                     lineHeight: 1.3,
+                    ...ellipsisOverflowCss(2),
                 }}>{event.title}</div>
             </h3>
             <div css={{

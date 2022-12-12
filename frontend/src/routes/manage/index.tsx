@@ -140,18 +140,8 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     ];
     /* eslint-enable react/jsx-key */
 
-    // TODO: we probably want a better style for active items
-    const activeStyle = {
-        fontWeight: "bold" as const,
-    };
     const items = entries.map(([path, label, icon]) => (
-        <LinkWithIcon
-            key={path}
-            to={path}
-            iconPos="left"
-            active={path === active}
-            css={path === active ? activeStyle : {}}
-        >
+        <LinkWithIcon key={path} to={path} iconPos="left" active={path === active}>
             {icon}
             {label}
         </LinkWithIcon>
