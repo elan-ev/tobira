@@ -74,6 +74,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         alignItems: "center",
         padding: "4px 10px",
         gap: 12,
+        whiteSpace: "nowrap",
         backgroundColor: "var(--grey97)",
         transition: "background-color 0.15s, border-color 0.15s",
         "& > svg": {

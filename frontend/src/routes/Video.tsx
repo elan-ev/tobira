@@ -334,7 +334,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <VideoTitle title={event.title} />
                 <VideoDate event={event} />
             </div>
-            <div css={{ display: "flex", gap: 8, whiteSpace: "nowrap" }}>
+            <div css={{ display: "flex", gap: 8 }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
                     <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
                         <FiSettings size={16} />
