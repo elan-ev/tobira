@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { WithTooltip } from "./Floating";
 
 
 type RelativeDateProps = {
@@ -61,9 +62,8 @@ export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive }) => {
 
     const preciseDate = date.toLocaleString(i18n.language);
 
-    return <time
-        dateTime={date.toISOString()}
-        title={preciseDate}
-    >{prettyDate}</time>;
+    return <WithTooltip tooltip={preciseDate} placement="bottom" distance={2}>
+        <time dateTime={date.toISOString()}>{prettyDate}</time>
+    </WithTooltip>;
 };
 
