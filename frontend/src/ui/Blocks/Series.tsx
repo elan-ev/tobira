@@ -19,6 +19,7 @@ import { FiPlay } from "react-icons/fi";
 import { keyframes } from "@emotion/react";
 import { Description } from "../metadata";
 import { ellipsisOverflowCss } from "..";
+import { WithTooltip } from "../Floating";
 
 
 type SharedProps = {
@@ -202,18 +203,20 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = ({ title, chil
     }}>
         {/* This is a way to make this fancy title. It's not perfect, but it works fine. */}
         {title && <div css={{ maxHeight: 50 }}>
-            <h2 title={title} css={{
-                backgroundColor: "var(--accent-color)",
-                color: "var(--accent-color-bw-contrast)",
-                padding: "4px 12px",
-                borderRadius: 10,
-                transform: "translateY(-50%)",
-                fontSize: 19,
-                margin: "0 8px",
-                lineHeight: 1.3,
-                ...ellipsisOverflowCss(3),
-                display: "-webkit-inline-box",
-            }}>{title}</h2>
+            <WithTooltip tooltip={title}>
+                <h2 css={{
+                    backgroundColor: "var(--accent-color)",
+                    color: "var(--accent-color-bw-contrast)",
+                    padding: "4px 12px",
+                    borderRadius: 10,
+                    transform: "translateY(-50%)",
+                    fontSize: 19,
+                    margin: "0 8px",
+                    lineHeight: 1.3,
+                    ...ellipsisOverflowCss(3),
+                    display: "-webkit-inline-box",
+                }}>{title}</h2>
+            </WithTooltip>
         </div>}
         {children}
     </div>
