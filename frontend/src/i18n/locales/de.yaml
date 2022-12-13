@@ -5,8 +5,6 @@ close: Schließen
 save: Speichern
 back: Zurück
 home: Startseite
-direction-up: Hoch
-direction-down: Runter
 navigation: Navigation
 rename: Umbenennen
 this-field-is-required: Dieses Feld ist erforderlich.
@@ -317,6 +315,8 @@ manage:
       sort-alphabetically-desc: Alphabetisch absteigend sortieren
       order-manually: Manuell ordnen (neue Unterseiten werden hinten angehangen)
       failed: Änderung fehlgeschlagen.
+      move-up: Hoch schieben
+      move-down: Runter schieben
 
     danger-zone:
       heading: Gefahrenbereich

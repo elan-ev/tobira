@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import { FiArrowDown, FiArrowUp } from "react-icons/fi";
-import { bug } from "../../../util/err";
+import { bug, unreachable } from "../../../util/err";
 import { RealmOrder } from "../../../layout/__generated__/NavigationData.graphql";
 import {
     ChildOrderEditData$data,
@@ -14,6 +14,7 @@ import { Spinner } from "../../../ui/Spinner";
 import { boxError } from "../../../ui/error";
 import { displayCommitError } from "./util";
 import { sortRealms } from "../../util";
+import { WithTooltip } from "../../../ui/Floating";
 
 
 
@@ -154,69 +155,89 @@ type ChildListProps = {
     disabled: boolean;
 };
 
-const ChildList: React.FC<ChildListProps> = ({ disabled, children, swap }) => {
+const ChildList: React.FC<ChildListProps> = ({ disabled, children, swap }) => (
+    <ol css={{
+        marginLeft: 32,
+        maxWidth: 900,
+        padding: 0,
+        ...disabled && {
+            pointerEvents: "none",
+            opacity: 0.5,
+        },
+    }}>
+        {children.map((child, i) => <ChildEntry
+            key={child.id}
+            index={i}
+            numChildren={children.length}
+            swap={swap}
+            realmName={child.name ?? unreachable("realm child without name")}
+        />)}
+    </ol>
+);
+
+type ChildEntryProps = {
+    index: number;
+    numChildren: number;
+    swap: (index: number) => void;
+    realmName: string;
+};
+
+const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChildren }) => {
     const { t } = useTranslation();
 
     return (
-        <ol css={{
-            marginLeft: 32,
-            maxWidth: 900,
-            padding: 0,
-            ...disabled && {
-                pointerEvents: "none",
-                opacity: 0.5,
-            },
+        <li css={{
+            display: "flex",
+            alignItems: "center",
+            border: "1px solid var(--grey80)",
+            margin: 4,
+            borderRadius: 4,
         }}>
-            {children.map((child, i) => (
-                <li key={child.id} css={{
+            <div css={{
+                display: "flex",
+                flexDirection: "column",
+                marginRight: 16,
+                fontSize: 20,
+                "& > div": {
+                    "&:first-child > button": {
+                        borderBottom: "1px solid var(--grey80)",
+                        borderTopLeftRadius: 4,
+                    },
+                    "&:last-child > button": {
+                        borderBottomLeftRadius: 4,
+                    },
+                },
+                "& button": {
+                    border: "none",
                     display: "flex",
                     alignItems: "center",
-                    border: "1px solid var(--grey80)",
-                    margin: 4,
-                    borderRadius: 4,
-                    overflow: "hidden",
-                }}>
-                    <div css={{
-                        display: "flex",
-                        flexDirection: "column",
-                        marginRight: 16,
-                        fontSize: 20,
-                        "& > button": {
-                            border: "none",
-                            display: "flex",
-                            alignItems: "center",
-                            borderRight: "1px solid var(--grey80)",
-                            padding: "4px 16px",
-                            backgroundColor: "inherit",
-                            "&:disabled": {
-                                color: "transparent",
-                            },
-                            "&:not([disabled])": {
-                                cursor: "pointer",
-                                "&:hover, &:focus": {
-                                    backgroundColor: "var(--grey97)",
-                                    color: "var(--accent-color)",
-                                },
-                            },
-                            "&:first-child": {
-                                borderBottom: "1px solid var(--grey80)",
-                            },
+                    borderRight: "1px solid var(--grey80)",
+                    padding: "4px 16px",
+                    backgroundColor: "inherit",
+                    "&:disabled": {
+                        color: "transparent",
+                    },
+                    "&:not([disabled])": {
+                        cursor: "pointer",
+                        "&:hover, &:focus": {
+                            backgroundColor: "var(--grey97)",
+                            color: "var(--accent-color)",
                         },
-                    }}>
-                        <button
-                            onClick={() => swap(i - 1)}
-                            title={t("direction-up")}
-                            disabled={i === 0}
-                        ><FiArrowUp /></button>
-                        <button
-                            onClick={() => swap(i)}
-                            title={t("direction-down")}
-                            disabled={i === children.length - 1}
-                        ><FiArrowDown /></button>
-                    </div>
-                    <div css={{ padding: 4 }}>{child.name}</div>
-                </li>
-            ))}
-        </ol>
+                    },
+                },
+            }}>
+                <WithTooltip tooltip={t("manage.realm.children.move-up")} placement="left">
+                    <button onClick={() => swap(index - 1)} disabled={index === 0}>
+                        <FiArrowUp />
+                    </button>
+                </WithTooltip>
+                <WithTooltip tooltip={t("manage.realm.children.move-down")} placement="left">
+                    <button onClick={() => swap(index)} disabled={index === numChildren - 1}>
+                        <FiArrowDown />
+                    </button>
+                </WithTooltip>
+            </div>
+            <div css={{ padding: 4 }}>{realmName}</div>
+        </li>
     );
 };

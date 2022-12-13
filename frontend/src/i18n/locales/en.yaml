@@ -5,8 +5,6 @@ close: Close
 save: Save
 back: Back
 home: Home
-direction-up: Up
-direction-down: Down
 navigation: Navigation
 rename: Rename
 this-field-is-required: This field is required.
@@ -308,6 +306,8 @@ manage:
       sort-alphabetically-desc: Sort alphabetically descending
       order-manually: Manually order (new subpages will be added at the end)
       failed: Changing the order failed.
+      move-up: Move up
+      move-down: Move down
 
     danger-zone:
       heading: Danger zone
