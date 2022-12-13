@@ -36,7 +36,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
     <div
         {...props}
         css={{
-            fontSide: 20,
+            fontSize: 18,
             display: "flex",
             alignItems: "center",
             border: "1px solid var(--grey80)",
