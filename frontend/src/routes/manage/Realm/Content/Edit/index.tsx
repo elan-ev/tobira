@@ -9,6 +9,7 @@ import type {
 import { Button, ButtonGroup as BaseButtonGroup } from "../util";
 import { RemoveButton } from "./RemoveButton";
 import { MoveButtons } from "./MoveButtons";
+import { WithTooltip } from "../../../../../ui/Floating";
 
 
 type Props = {
@@ -51,12 +52,11 @@ export const EditButtons: React.FC<Props> = ({
 
     return <ButtonGroup css={{ marginTop: -8 }}>
         <MoveButtons {...{ realm, index, onCommit, onCompleted }} onError={onMoveError} />
-        <Button
-            title={t("manage.realm.content.edit")}
-            onClick={onEdit}
-        >
-            <FiEdit />
-        </Button>
+        <WithTooltip tooltip={t("manage.realm.content.edit")}>
+            <Button onClick={onEdit}>
+                <FiEdit />
+            </Button>
+        </WithTooltip>
         <RemoveButton
             block={blocks[index]}
             onConfirm={onCompleted}

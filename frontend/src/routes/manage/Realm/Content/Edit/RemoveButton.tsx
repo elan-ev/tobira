@@ -11,6 +11,7 @@ import {
 import { displayCommitError } from "../../util";
 import { Button } from "../util";
 import { currentRef } from "../../../../../util";
+import { WithTooltip } from "../../../../../ui/Floating";
 
 
 type Props = {
@@ -60,26 +61,27 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
     const cannotDeleteModalRef = useRef<ModalHandle>(null);
 
     return <>
-        <Button
-            title={t("manage.realm.content.remove")}
-            css={{
-                color: "var(--danger-color)",
-                "&&:hover, &&:focus": {
-                    backgroundColor: "var(--danger-color)",
-                    color: "var(--danger-color-bw-contrast)",
-                },
-            }}
-            onClick={() => {
-                if (nameSourceBlock === block.id) {
-                    currentRef(cannotDeleteModalRef).open();
-                } else {
-                    currentRef(modalRef).open();
-                    onConfirm?.();
-                }
-            }}
-        >
-            <FiTrash />
-        </Button>
+        <WithTooltip tooltip={t("manage.realm.content.remove")}>
+            <Button
+                css={{
+                    color: "var(--danger-color)",
+                    "&&:hover, &&:focus": {
+                        backgroundColor: "var(--danger-color)",
+                        color: "var(--danger-color-bw-contrast)",
+                    },
+                }}
+                onClick={() => {
+                    if (nameSourceBlock === block.id) {
+                        currentRef(cannotDeleteModalRef).open();
+                    } else {
+                        currentRef(modalRef).open();
+                        onConfirm?.();
+                    }
+                }}
+            >
+                <FiTrash />
+            </Button>
+        </WithTooltip>
         <Modal ref={cannotDeleteModalRef} title={t("manage.realm.content.cannot-remove-block")}>
             {t("manage.realm.content.cannot-remove-name-source-block")}
         </Modal>
