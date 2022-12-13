@@ -184,6 +184,7 @@ upload:
   starting: Starte Upload...
   finishing: Schließe Upload ab...
   waiting-for-metadata: Zum Fertigstellen bitte Videoinformationen speichern
+  cancel: Upload abbrechen
   still-uploading: >
     Video lädt hoch. Bitte schließen Sie diese Seite nicht, bevor der Upload beendet ist.
   time-estimate:
@@ -210,6 +211,7 @@ upload:
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
+    upload-cancelled: Der Upload wurde abgebrochen.
 
 manage:
   management: Verwaltung

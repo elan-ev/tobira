@@ -22,6 +22,7 @@ import { currentRef, useRefState } from "../util";
 import { Card } from "../ui/Card";
 import { InputContainer, TitleLabel } from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
+import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
 
 
@@ -56,6 +57,11 @@ type Metadata = {
 
 const Upload: React.FC = () => {
     const { t } = useTranslation();
+    const router = useRouter();
+
+    router.listenAtNav(() => {
+        controller.abort();
+    });
 
     return (
         <div css={{
@@ -67,6 +73,26 @@ const Upload: React.FC = () => {
             <PageTitle title={t("upload.title")} />
             <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
             <UploadMain />
+        </div>
+    );
+};
+
+let controller = new AbortController();
+
+const CancelButton: React.FC = () => {
+    const { t } = useTranslation();
+
+    return (
+        <div css={{
+            margin: "8px",
+            display: "flex",
+            alignItems: "center",
+            flexDirection: "column",
+        }}>
+            <Button 
+                kind="danger"
+                onClick={() => controller.abort()}
+            >{t("upload.cancel")}</Button>
         </div>
     );
 };
@@ -246,6 +272,7 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
 
     const { t, i18n } = useTranslation();
     let info;
+    let failedAction = t("upload.errors.failed-to-upload");
     if (error instanceof OcNetworkError) {
         info = {
             causes: new Set([t("upload.errors.opencast-unreachable")]),
@@ -265,6 +292,13 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
+    } else if (error instanceof DOMException) {
+        info = {
+            causes: new Set([t("upload.errors.upload-cancelled")]),
+            probablyOurFault: false,
+            potentiallyInternetProblem: false,
+        };
+        failedAction = "";
     } else {
         info = errorDisplayInfo(error, i18n);
     }
@@ -273,7 +307,7 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
     return (
         <div css={{ margin: "0 auto" }}>
             <Card kind="error">
-                <ErrorDisplay info={info} failedAction={t("upload.errors.failed-to-upload")} />
+                <ErrorDisplay info={info} failedAction={failedAction} />
             </Card>
         </div>
     );
@@ -440,12 +474,15 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
             prettyTime = null;
         }
 
-        return <BarWithText state={progress}>
-            <span>{roundedPercent}%</span>
-            <span>
-                {prettyTime && t("upload.time-estimate.time-left", { time: prettyTime })}
-            </span>
-        </BarWithText>;
+        return <>
+            <BarWithText state={progress}>
+                <span>{roundedPercent}%</span>
+                <span>
+                    {prettyTime && t("upload.time-estimate.time-left", { time: prettyTime })}
+                </span>
+            </BarWithText>
+            <CancelButton/>
+        </>;
     } else if (state.state === "waiting-for-metadata") {
         return <BarWithText state="waiting">
             <span>{t("upload.waiting-for-metadata")}</span>
@@ -740,7 +777,14 @@ const uploadTracks = async (
         const url = ocUrl("/ingest/addTrack");
         const jwt = await getJwt("UPLOAD");
         mediaPackage = await new Promise((resolve, reject) => {
+            controller = new AbortController();
             const xhr = new XMLHttpRequest();
+
+            controller.signal.addEventListener("abort", () => {
+                xhr.abort();
+                reject(controller.signal.reason);
+            });
+            
             xhr.open("POST", url);
             xhr.setRequestHeader("Authorization", `Bearer ${jwt}`);
 

@@ -179,6 +179,7 @@ upload:
   starting: Starting...
   finishing: Finishing up...
   waiting-for-metadata: Please save video information to finish the upload
+  cancel: Cancel upload
   still-uploading: >
     Video is still uploading. Please do not close this page before the upload is finished.
   time-estimate:
@@ -204,6 +205,7 @@ upload:
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
+    upload-cancelled: The upload was cancelled.
 
 manage:
   management: Management
