@@ -7,7 +7,7 @@ use crate::prelude::*;
 pub(super) async fn all_table_names(db: &impl GenericClient) -> Result<Vec<String>> {
     let rows = db.query_raw(
             "select table_name from information_schema.tables \
-                where table_schema = 'public' and table_type = 'BASE TABLE'",
+                where table_type = 'BASE TABLE'",
             dbargs![],
         )
         .await?
@@ -21,7 +21,7 @@ pub(super) async fn does_table_exist(db: &impl GenericClient, table_name: &str) 
     let row = db.query_one(
         "select exists(
             select * from information_schema.tables
-                where table_schema='public' and table_name=$1
+                where table_name=$1
         )",
         &[&table_name],
     ).await?;
