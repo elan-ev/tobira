@@ -142,6 +142,13 @@
       # that goes wrong.
       ignore_errors: true
 
+    # We don't need it anymore and it takes quite a bit of storage space.
+    - name: Delete DB dump file
+      become: true
+      file:
+        path: /opt/tobira/{{ id }}/db-dump.pgc
+        state: absent
+
     - name: run database migration
       become: true
       become_user: tobira
