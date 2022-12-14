@@ -14,6 +14,7 @@ import {
     FloatingTrigger,
     WithTooltip,
 } from "../../../../ui/Floating";
+import { ProtoButton } from "../../../../ui/Button";
 
 
 type Props = {
@@ -71,8 +72,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
             <FloatingTrigger>
                 <div>
                     <WithTooltip tooltip={t("manage.realm.content.add")} placement="bottom">
-                        <div css={{
-                            cursor: "pointer",
+                        <ProtoButton css={{
                             width: BUTTON_SIZE,
                             height: BUTTON_SIZE,
                             fontSize: 24,
@@ -87,7 +87,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                             },
                         }}>
                             <FiPlus />
-                        </div>
+                        </ProtoButton>
                     </WithTooltip>
                 </div>
             </FloatingTrigger>
@@ -162,8 +162,13 @@ type AddItemProps = {
 };
 
 const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
-    <li>
-        <button
+    <li css={{
+        "&:last-child > button": {
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+        },
+    }}>
+        <ProtoButton
             onClick={() => {
                 onClick();
                 close();
@@ -176,15 +181,17 @@ const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
                 alignItems: "center",
                 gap: 16,
                 backgroundColor: "transparent",
-                cursor: "pointer",
-                border: "none",
                 "&:hover, &:focus": {
                     backgroundColor: "var(--grey97)",
+                },
+                "&:focus-visible": {
+                    outline: "2px solid var(--accent-color)",
+                    outlineOffset: -2,
                 },
             }}
         >
             {<Icon css={{ color: "var(--accent-color)", fontSize: 18 }}/>}
             {label}
-        </button>
+        </ProtoButton>
     </li>
 );

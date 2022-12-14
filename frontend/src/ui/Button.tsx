@@ -5,6 +5,20 @@ import { Link } from "../router";
 import { match } from "../util";
 
 
+/**
+ * A mostly unstyled button used to build buttons. Always use this instead of
+ * `<button>`.
+ */
+export const ProtoButton = React.forwardRef<HTMLButtonElement, JSX.IntrinsicElements["button"]>(
+    ({ children, ...rest }, ref) => <button
+        type="button"
+        ref={ref}
+        css={PROTO_CSS}
+        {...rest}
+    >{children}</button>,
+);
+
+
 type Kind = "normal" | "danger" | "happy";
 
 type ButtonProps = JSX.IntrinsicElements["button"] & {
@@ -34,6 +48,14 @@ export const LinkButton: React.FC<LinkButtonProps> = ({
 }) => (
     <Link to={to} css={css(kind, extraCss)} {...rest}>{children}</Link>
 );
+
+const PROTO_CSS = {
+    border: "none",
+    padding: 0,
+    background: "none",
+    color: "inherit",
+    cursor: "pointer",
+} as const;
 
 const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<Theme> => {
     const notDisabledStyle = match(kind, {
