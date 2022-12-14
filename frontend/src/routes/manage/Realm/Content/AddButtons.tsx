@@ -72,7 +72,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
             <FloatingTrigger>
                 <div>
                     <WithTooltip tooltip={t("manage.realm.content.add")} placement="bottom">
-                        <ProtoButton css={{
+                        <ProtoButton aria-label={t("manage.realm.content.add")} css={{
                             width: BUTTON_SIZE,
                             height: BUTTON_SIZE,
                             fontSize: 24,

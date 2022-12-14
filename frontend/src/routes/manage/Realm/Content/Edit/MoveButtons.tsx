@@ -61,12 +61,20 @@ export const MoveButtons: React.FC<Props> = ({
 
     return <>
         <WithTooltip tooltip={t("manage.realm.content.move-down")}>
-            <Button disabled={index === blocks.length - 1} onClick={() => move(1)}>
+            <Button
+                aria-label={t("manage.realm.content.move-down")}
+                disabled={index === blocks.length - 1}
+                onClick={() => move(1)}
+            >
                 <FiArrowDown />
             </Button>
         </WithTooltip>
         <WithTooltip tooltip={t("manage.realm.content.move-up")}>
-            <Button disabled={index === 0} onClick={() => move(-1)}>
+            <Button
+                aria-label={t("manage.realm.content.move-up")}
+                disabled={index === 0}
+                onClick={() => move(-1)}
+            >
                 <FiArrowUp />
             </Button>
         </WithTooltip>

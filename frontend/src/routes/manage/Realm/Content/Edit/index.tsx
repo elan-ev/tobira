@@ -53,7 +53,7 @@ export const EditButtons: React.FC<Props> = ({
     return <ButtonGroup css={{ marginTop: -8 }}>
         <MoveButtons {...{ realm, index, onCommit, onCompleted }} onError={onMoveError} />
         <WithTooltip tooltip={t("manage.realm.content.edit")}>
-            <Button onClick={onEdit}>
+            <Button aria-label={t("manage.realm.content.edit")} onClick={onEdit}>
                 <FiEdit />
             </Button>
         </WithTooltip>

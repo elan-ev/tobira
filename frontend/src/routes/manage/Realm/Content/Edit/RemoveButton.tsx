@@ -63,6 +63,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
     return <>
         <WithTooltip tooltip={t("manage.realm.content.remove")}>
             <Button
+                aria-label={t("manage.realm.content.remove")}
                 css={{
                     color: "var(--danger-color)",
                     "&&:hover, &&:focus": {
