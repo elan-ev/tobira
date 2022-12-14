@@ -26,7 +26,7 @@ import {
 } from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
-import { Button, LinkButton } from "../ui/Button";
+import { Button, LinkButton, ProtoButton } from "../ui/Button";
 import CONFIG from "../config";
 import { Link } from "../router";
 import { useUser } from "../User";
@@ -398,7 +398,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             <div css={{
                 display: "flex",
                 gap: 8,
-                "& > div": {
+                "& > button": {
                     display: "flex",
                     minWidth: 85,
                     padding: "8px 8px 4px 8px",
@@ -419,14 +419,14 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     },
                 },
             }}>
-                <div onClick={() => setState("direct-link")}>
+                <ProtoButton onClick={() => setState("direct-link")}>
                     <FiCrosshair />
                     <div>{t("video.share.direct-link")}</div>
-                </div>
-                <div onClick={() => setState("embed")}>
+                </ProtoButton>
+                <ProtoButton onClick={() => setState("embed")}>
                     <FiCode />
                     <div>{t("video.share.embed")}</div>
-                </div>
+                </ProtoButton>
             </div>
         </>,
         "direct-link": () => {

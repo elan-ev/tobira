@@ -110,6 +110,7 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
             <div css={{ position: "absolute", top: 0, right: 0 }}>
                 <WithTooltip tooltip={t("copy-to-clipboard")}>
                     <Button
+                        aria-label={t("copy-to-clipboard")}
                         kind="happy"
                         onClick={copy}
                         css={{
