@@ -105,6 +105,7 @@ const WithFloatingMenu: React.FC<{ children: ReactElement }> = ({ children }) =>
             ref={ref}
             placement="bottom"
             trigger="click"
+            ariaRole="menu"
             arrowSize={12}
             distance={0}
             viewPortMargin={12}
@@ -322,10 +323,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
     };
 
     return linkTo
-        ? <li {... { className }}>
+        ? <li role="menuitem" {... { className }}>
             <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
         </li>
-        : <li tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
+        : <li role="menuitem" tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
             {inner}
         </li>;
 };

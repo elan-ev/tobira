@@ -480,6 +480,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             ref={ref}
             placement="top"
             arrowSize={12}
+            ariaRole="dialog"
             open={state !== "closed"}
         >
             <FloatingTrigger>

@@ -12,6 +12,7 @@ import {
     useFloating,
     useHover,
     useInteractions,
+    useRole,
 } from "@floating-ui/react";
 import React, { ReactNode, ReactElement, useRef, useState, useImperativeHandle } from "react";
 import { mergeRefs } from "react-merge-refs";
@@ -81,6 +82,13 @@ type FloatingContainerProps = React.PropsWithChildren<{
     /** Number of pixels the floating element should keep clear of the viewport edges. */
     viewPortMargin?: number;
 
+    /**
+     * ARIA role of the floating element. Default: `tooltip`. Change if
+     * applicable! Note: if you use `menu` or `listbox`, the items of your
+     * floating need an appropriate ARIA role as well!
+     */
+    ariaRole?: NonNullable<Parameters<typeof useRole>[1]>["role"];
+
     className?: string;
     // TODO: inline block?
 } & (
@@ -117,6 +125,7 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
         distance = 4,
         borderRadius = 4,
         viewPortMargin = 8,
+        ariaRole = "tooltip",
         className,
         ...rest
     }, ref) => {
@@ -168,7 +177,9 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
             enabled: "trigger" in rest && rest.trigger === "click",
         });
         const dismiss = useDismiss(floatContext);
-        const { getReferenceProps, getFloatingProps } = useInteractions([hover, click, dismiss]);
+        const role = useRole(floatContext, { role: ariaRole });
+        const { getReferenceProps, getFloatingProps }
+            = useInteractions([hover, click, dismiss, role]);
 
 
         // Setup context

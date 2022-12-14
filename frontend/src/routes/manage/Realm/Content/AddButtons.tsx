@@ -66,6 +66,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
             trigger="click"
             placement="top"
             borderRadius={8}
+            ariaRole="menu"
             distance={6}
             css={{ alignSelf: "center" }}
         >
@@ -162,7 +163,7 @@ type AddItemProps = {
 };
 
 const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
-    <li css={{
+    <li role="menuitem" css={{
         "&:last-child > button": {
             borderBottomLeftRadius: 8,
             borderBottomRightRadius: 8,
