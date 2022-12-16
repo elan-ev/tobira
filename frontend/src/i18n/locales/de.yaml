@@ -178,6 +178,7 @@ upload:
   drop-to-upload: Videodateien zum Hochladen per Drag-and-drop hinzufügen
   not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   select-files: Dateien auswählen
+  reselect: Dateien erneut auswählen
   too-many-files: >
     Sie haben zu viele Dateien ausgewählt. Zurzeit werden nur einzelne Dateien unterstützt.
   not-a-file: Sie haben etwas in diesen Bereich gezogen, das keine Datei ist.
@@ -185,6 +186,7 @@ upload:
   finishing: Schließe Upload ab...
   waiting-for-metadata: Zum Fertigstellen bitte Videoinformationen speichern
   cancel: Upload abbrechen
+  upload-cancelled: Der Upload wurde abgebrochen.
   still-uploading: >
     Video lädt hoch. Bitte schließen Sie diese Seite nicht, bevor der Upload beendet ist.
   time-estimate:
@@ -211,7 +213,6 @@ upload:
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
-    upload-cancelled: Der Upload wurde abgebrochen.
 
 manage:
   management: Verwaltung

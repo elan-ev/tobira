@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useRef, useState } from "react";
+import React, { MutableRefObject, ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { keyframes } from "@emotion/react";
@@ -58,9 +58,10 @@ type Metadata = {
 const Upload: React.FC = () => {
     const { t } = useTranslation();
     const router = useRouter();
+    const controller = useRef(new AbortController());
 
     router.listenAtNav(() => {
-        controller.abort();
+        controller.current.abort();
     });
 
     return (
@@ -72,14 +73,18 @@ const Upload: React.FC = () => {
         }}>
             <PageTitle title={t("upload.title")} />
             <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
-            <UploadMain />
+            <UploadMain controller={controller} />
         </div>
     );
 };
 
-let controller = new AbortController();
 
-const CancelButton: React.FC = () => {
+type CancelProps = {
+    controller: MutableRefObject<AbortController>;
+    setFiles?: React.Dispatch<React.SetStateAction<FileList | null>>;
+};
+
+const CancelButton: React.FC<CancelProps> = ({ controller }) => {
     const { t } = useTranslation();
 
     return (
@@ -89,15 +94,15 @@ const CancelButton: React.FC = () => {
             alignItems: "center",
             flexDirection: "column",
         }}>
-            <Button 
+            <Button
                 kind="danger"
-                onClick={() => controller.abort()}
+                onClick={() => controller.current.abort()}
             >{t("upload.cancel")}</Button>
         </div>
     );
 };
 
-const UploadMain: React.FC = () => {
+const UploadMain: React.FC<CancelProps> = ({ controller }) => {
     // TODO: on first mount, send an `ocRequest` to `info/me.json` and make sure
     // that connection works. That way we can show an error very early, before
     // the user selected a file.
@@ -138,7 +143,7 @@ const UploadMain: React.FC = () => {
                 finishUpload(mediaPackage, metadata.current, user, setUploadState);
             }
         };
-        startUpload(files, setUploadState, onProgressCallback, onDone);
+        startUpload(files, setUploadState, onProgressCallback, onDone, controller);
     };
 
     if (files === null) {
@@ -185,21 +190,25 @@ const UploadMain: React.FC = () => {
                 maxWidth: 800,
                 margin: "0 auto",
             }}>
-                <UploadState state={uploadState.current} />
+                <UploadState
+                    state={uploadState.current}
+                    controller={controller}
+                    setFiles={setFiles}/>
                 <div css={{ overflowY: "auto" }}>
                     {/* TODO: Show something after saving metadata.
                         - Just saying "saved" is kind of misleading because the data is only local.
                         - Maybe just show the form, but disable all inputs?
                         - ...
                     */}
-                    {!metadata.current
-                        ? <MetaDataEdit onSave={onMetadataSave} disabled={hasUploadError} />
-                        : !hasUploadError && (
-                            <div css={{ margin: "0 auto", maxWidth: 500 }}>
-                                <Card kind="info">{t("upload.still-uploading")}</Card>
-                            </div>
-                        )
-                    }
+                    {uploadState.current.state !== "cancelled" && (
+                        !metadata.current
+                            ? <MetaDataEdit onSave={onMetadataSave} disabled={hasUploadError} />
+                            : !hasUploadError && (
+                                <div css={{ margin: "0 auto", maxWidth: 500 }}>
+                                    <Card kind="info">{t("upload.still-uploading")}</Card>
+                                </div>
+                            )
+                    )}
                 </div>
             </div>
         );
@@ -272,7 +281,6 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
 
     const { t, i18n } = useTranslation();
     let info;
-    let failedAction = t("upload.errors.failed-to-upload");
     if (error instanceof OcNetworkError) {
         info = {
             causes: new Set([t("upload.errors.opencast-unreachable")]),
@@ -292,13 +300,6 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
-    } else if (error instanceof DOMException) {
-        info = {
-            causes: new Set([t("upload.errors.upload-cancelled")]),
-            probablyOurFault: false,
-            potentiallyInternetProblem: false,
-        };
-        failedAction = "";
     } else {
         info = errorDisplayInfo(error, i18n);
     }
@@ -307,7 +308,7 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
     return (
         <div css={{ margin: "0 auto" }}>
             <Card kind="error">
-                <ErrorDisplay info={info} failedAction={failedAction} />
+                <ErrorDisplay info={info} failedAction={t("upload.errors.failed-to-upload")} />
             </Card>
         </div>
     );
@@ -431,14 +432,18 @@ type UploadState =
     | { state: "finishing" }
     // The upload is completely done
     | { state: "done" }
-    // An error occured during the upload
+    // The upload was cancelled
+    | { state: "cancelled" }
+    // An error occurred during the upload
     | { state: "error"; error: unknown };
 
 /** State of an upload that is not yet finished */
 type NonFinishedUploadState = Exclude<UploadState, { state: "done" }>;
 
 /** Shows the current state of the upload */
-const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => {
+const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
+    { state, controller, setFiles },
+) => {
     const { t, i18n } = useTranslation();
 
     if (state.state === "starting") {
@@ -481,16 +486,40 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
                     {prettyTime && t("upload.time-estimate.time-left", { time: prettyTime })}
                 </span>
             </BarWithText>
-            <CancelButton/>
+            <CancelButton controller={controller} />
         </>;
     } else if (state.state === "waiting-for-metadata") {
-        return <BarWithText state="waiting">
-            <span>{t("upload.waiting-for-metadata")}</span>
-        </BarWithText>;
+        return <>
+            <BarWithText state="waiting">
+                <span>{t("upload.waiting-for-metadata")}</span>
+            </BarWithText>
+            <CancelButton controller={controller} />
+        </>;
     } else if (state.state === "finishing") {
         return <BarWithText state="progressing">
             <span>{t("upload.finishing")}</span>
         </BarWithText>;
+    } else if (state.state === "cancelled") {
+        return <div css={{
+            marginTop: "1rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            "& > :first-child": { marginBottom: "2rem" },
+        }}>
+            <span>{t("upload.upload-cancelled")}</span>
+            <div>
+                <Button
+                    kind="happy"
+                    onClick={() => {
+                        if (setFiles) {
+                            setFiles(null);
+                        } 
+                    }}>
+                    {t("upload.reselect")}
+                </Button>
+            </div>
+        </div>;
     } else if (state.state === "error") {
         return <UploadErrorBox error={state.error} />;
     } else {
@@ -723,6 +752,7 @@ const startUpload = async (
     setUploadState: (state: UploadState) => void,
     onProgress: (progress: Progress) => void,
     onDone: (mediaPackage: string) => void,
+    controller: MutableRefObject<AbortController>,
 ) => {
     try {
         setUploadState({ state: "starting" });
@@ -740,7 +770,13 @@ const startUpload = async (
 
         const tracks = Array.from(files)
             .map(file => ({ file, flavor: "presentation/source" as const }));
-        mediaPackage = await uploadTracks(mediaPackage, tracks, onProgress);
+        mediaPackage = await uploadTracks(
+            mediaPackage,
+            tracks,
+            onProgress,
+            controller,
+            setUploadState,
+        );
         onDone(mediaPackage);
     } catch (error) {
         setUploadState({ state: "error", error });
@@ -762,6 +798,8 @@ const uploadTracks = async (
     mediaPackage: string,
     tracks: Track[],
     onProgress: (progress: number) => void,
+    controller: MutableRefObject<AbortController>,
+    setUploadState: (state: UploadState) => void,
 ): Promise<string> => {
     const totalBytes = tracks.map(t => t.file.size).reduce((a, b) => a + b, 0);
     let sizeFinishedTracks = 0;
@@ -777,12 +815,12 @@ const uploadTracks = async (
         const url = ocUrl("/ingest/addTrack");
         const jwt = await getJwt("UPLOAD");
         mediaPackage = await new Promise((resolve, reject) => {
-            controller = new AbortController();
             const xhr = new XMLHttpRequest();
 
-            controller.signal.addEventListener("abort", () => {
+            controller.current.signal.addEventListener("abort", () => {
                 xhr.abort();
-                reject(controller.signal.reason);
+                controller.current = new AbortController();
+                cancelUpload(mediaPackage, setUploadState);
             });
             
             xhr.open("POST", url);
@@ -816,6 +854,17 @@ const uploadTracks = async (
     return mediaPackage;
 };
 
+
+const cancelUpload = async (
+    mediaPackage: string,
+    setUploadState: (state: UploadState) => void,
+) => {
+    setUploadState({ state: "cancelled" });
+
+    const body = new FormData();
+    body.append("mediaPackage", mediaPackage);
+    await ocRequest("/ingest/discardMediaPackage", { method: "post", body: body });
+};
 
 /** Ingest the given metadata and finishes the ingest process */
 const finishUpload = async (
