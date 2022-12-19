@@ -7,8 +7,8 @@ type RelativeDateProps = {
     isLive: boolean;
 };
 
-/** 
- * Formats a date as something relative like "3 days ago" 
+/**
+ * Formats a date as something relative like "3 days ago"
  * or "Started 3 days ago" in case of live events.
  */
 export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive }) => {

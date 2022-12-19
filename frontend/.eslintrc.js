@@ -90,6 +90,7 @@ module.exports = {
         "space-unary-ops": "warn",
         "spaced-comment": "warn",
         "no-console": "warn",
+        "no-trailing-spaces": "warn",
     },
     overrides: [{
         files: ["./*"],

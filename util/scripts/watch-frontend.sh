@@ -16,7 +16,7 @@ mkdir -p build
     trap 'kill 0' SIGINT;
 
     # Watch for any change in source files or the GraphQL schema and run the relay
-    # compiler. We start it via explicit part as 'npx' adds about 200ms startup time.
+    # compiler. We start it without `npx` as that would add about 200ms startup time.
     watchexec \
         --watch src \
         --ignore '**/__generated__/*' \

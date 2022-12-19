@@ -244,7 +244,7 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
                 backgroundColor: "black",
                 borderRadius: 4,
                 padding: "8px 16px",
-            }}>                
+            }}>
                 <RelativeDate date={props.startTime} isLive />
             </div>
         )}
