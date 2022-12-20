@@ -1,0 +1,15 @@
+.deployment/
+.dockerignore
+.git/
+.github/
+.gitignore
+backend/.cargo/config.toml
+backend/target/
+docs/
+frontend/build/
+frontend/node_modules/
+frontend/tsconfig.tsbuildinfo
+LICENSE
+README.md
+util/
+x.sh
