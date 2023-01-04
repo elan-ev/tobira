@@ -1,0 +1,21 @@
+{
+  "name": "@tobira/authkit",
+  "version": "0.1.0",
+  "description": "Helper library to implement your own auth logic for Tobira",
+  "author": "The Opencast project",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "tsconfig.json",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "typescript": "^4.9.4"
+  }
+}
