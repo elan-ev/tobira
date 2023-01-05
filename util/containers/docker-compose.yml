@@ -14,12 +14,14 @@ services:
 
   # A simple webserver handling login requests with some dummy users.
   tobira-login-handler:
-    image: python:3
+    image: node:18
     ports:
       - "3091:3091"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
-      - ./login-handler.py:/usr/bin/login-handler.py
-    command: python -u /usr/bin/login-handler.py
+      - ../dummy-login/dist/index.js:/usr/bin/login-handler.js
+    command: node /usr/bin/login-handler.js
 
   # A reverse proxy in front of Opencast that just adds some CORS headers
   # (required for the Tobira uploader, for example).
