@@ -8,7 +8,7 @@ on:
     - "docs/docs/setup/config.toml"
     - "util/dev-config/*"
     - ".deployment/templates/config.toml"
-    - "util/containers/login-handler.py"
+    - "util/dummy-login/dist/index.js"
     - ".github/workflows/ci.yml"
     - ".github/workflows/deploy.yml"
   push:
@@ -135,4 +135,4 @@ jobs:
           util/dev-config/favicon.svg
           deploy-id
           .deployment/templates/config.toml
-          util/containers/login-handler.py
+          util/dummy-login/dist/index.js

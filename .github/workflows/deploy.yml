@@ -75,7 +75,7 @@ jobs:
         cp -v tmp_artifacts/util/dev-config/logo-large.svg .deployment/files/
         cp -v tmp_artifacts/util/dev-config/logo-small.svg .deployment/files/
         cp -v tmp_artifacts/util/dev-config/favicon.svg .deployment/files/
-        cp -v tmp_artifacts/util/containers/login-handler.py .deployment/files/
+        cp -v tmp_artifacts/util/dummy-login/dist/index.js .deployment/files/login-handler.js
 
     - name: prepare deploy key
       env:

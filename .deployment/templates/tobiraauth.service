@@ -7,7 +7,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/tobira/{{ id }}/
-ExecStart=/opt/tobira/{{ id }}/login-handler.py /opt/tobira/{{ id }}/socket/auth.sock
+ExecStart=node /opt/tobira/{{ id }}/login-handler.js {{ id }}
 Restart=always
 User=tobira
 
