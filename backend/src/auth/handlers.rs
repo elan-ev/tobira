@@ -5,7 +5,7 @@ use super::{AuthMode, SessionId, User};
 
 
 /// Handles POST requests to `/~session`.
-pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
+pub(crate) async fn handle_post_session(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
     if ctx.config.auth.mode != AuthMode::LoginProxy {
         warn!("Got POST /~session request, but due to the authentication mode, this endpoint \
             is disabled");
@@ -67,7 +67,7 @@ pub(crate) async fn handle_login(req: Request<Body>, ctx: &Context) -> Result<Re
 /// settings. That's the proper tool to remove sessions. Still:
 ///
 /// TODO: maybe notify the user about these failures?
-pub(crate) async fn handle_logout(req: Request<Body>, ctx: &Context) -> Response {
+pub(crate) async fn handle_delete_session(req: Request<Body>, ctx: &Context) -> Response {
     if ctx.config.auth.mode != AuthMode::LoginProxy {
         warn!("Got DELETE /~session request, but due to the authentication mode, this endpoint \
             is disabled");

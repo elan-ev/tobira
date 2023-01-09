@@ -56,11 +56,11 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         },
         "/~session" if method == Method::POST => {
             register_req!(HttpReqCategory::Login);
-            auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r)
+            auth::handle_post_session(req, &ctx).await.unwrap_or_else(|r| r)
         },
         "/~session" if method == Method::DELETE => {
             register_req!(HttpReqCategory::Logout);
-            auth::handle_logout(req, &ctx).await
+            auth::handle_delete_session(req, &ctx).await
         },
 
         // From this point on, we only support GET and HEAD requests. All others

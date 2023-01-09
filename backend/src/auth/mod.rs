@@ -16,7 +16,7 @@ mod jwt;
 pub(crate) use self::{
     session_id::SessionId,
     jwt::{JwtConfig, JwtContext},
-    handlers::{handle_login, handle_logout},
+    handlers::{handle_post_session, handle_delete_session},
 };
 
 
