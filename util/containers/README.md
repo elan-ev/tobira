@@ -1,6 +1,13 @@
-# Tobira development containers
+# Containers for Tobira development & production use
 
-A short overview over containers (see the compose file for more information):
+## Dockerfile for production use
+
+The `Dockerfile` is for building a container that can be used to deploy Tobira in production.
+
+
+## Development containers
+
+Most files in this directory are for setting up development environment.
 
 There is a container for a PostgreSQL DB and a container for MeiliSearch.
 These are straight forward.

@@ -17,7 +17,9 @@ pub(crate) fn build_time_utc() -> &'static str {
 
 /// Returns the commit hash this was build from.
 pub(crate) fn git_commit_hash() -> &'static str {
-    build_info::GIT_COMMIT_HASH.expect("missing git version info")
+    build_info::GIT_COMMIT_HASH
+        .or(option_env!("GIT_COMMIT_HASH"))
+        .expect("missing git version info")
 }
 
 /// Returns whether the git working directory was dirty when this was built.

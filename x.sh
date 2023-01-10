@@ -24,6 +24,9 @@ if [[ $# -lt 1 ]]; then
     >&2 echo "  - ./x.sh build-release"
     >&2 echo "        Creates a clean production build that can be deployed."
     >&2 echo
+    >&2 echo "  - ./x.sh build-container-image"
+    >&2 echo "        Creates a production container image that can be deployed."
+    >&2 echo
     >&2 echo "  - ./x.sh containers [start|stop|run]"
     >&2 echo "        Manages all dev containers. To only start/stop some of them, use"
     >&2 echo "        docker-compose manually in 'util/containers'"
@@ -106,6 +109,9 @@ case "$1" in
             exit 1
         fi
         "$basedir"/util/scripts/build-release.sh
+        ;;
+    "build-container-image")
+        "$basedir"/util/scripts/build-container-image.sh
         ;;
     "containers")
         containers "$2"
