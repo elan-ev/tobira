@@ -70,7 +70,8 @@ impl OcClient {
     }
 
     pub(crate) async fn test_harvest(&self) -> Result<()> {
-        self.send_harvest(Utc.timestamp(0, 0), 2).await
+        // `timestamp_opt(0, 0)` should only ever be `Single(...)`, so `unwrap` is fine
+        self.send_harvest(Utc.timestamp_opt(0, 0).unwrap(), 2).await
             .map(|_| ())
             .context("test harvest request failed")
     }
