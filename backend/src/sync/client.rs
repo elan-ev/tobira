@@ -6,7 +6,7 @@ use hyper::{
     client::{Client, HttpConnector},
     http::uri::{Authority, Scheme, Uri},
 };
-use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
+use hyper_rustls::HttpsConnector;
 use secrecy::{ExposeSecret, Secret};
 use tap::TapFallible;
 
@@ -32,14 +32,7 @@ impl OcClient {
     const VERSION_PATH: &'static str = "/tobira/version";
 
     pub(crate) fn new(config: &Config) -> Self {
-        // Prepare HTTP client
-        let https = HttpsConnectorBuilder::new()
-            .with_native_roots()
-            .https_or_http()
-            .enable_http1()
-            .enable_http2()
-            .build();
-        let http_client = Client::builder().build(https);
+        let http_client = crate::util::http_client();
 
         // Prepare authentication
         let credentials = format!(

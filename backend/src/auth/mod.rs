@@ -16,7 +16,7 @@ mod jwt;
 pub(crate) use self::{
     session_id::SessionId,
     jwt::{JwtConfig, JwtContext},
-    handlers::{handle_post_session, handle_delete_session},
+    handlers::{handle_post_session, handle_delete_session, handle_post_login},
 };
 
 
@@ -138,6 +138,7 @@ pub(crate) enum AuthMode {
     None,
     FullAuthProxy,
     LoginProxy,
+    Opencast,
 }
 
 /// Information about whether or not, and if so how
@@ -200,9 +201,11 @@ impl User {
         match auth_config.mode {
             AuthMode::None => Ok(None),
             AuthMode::FullAuthProxy => Ok(Self::from_auth_headers(headers, auth_config).into()),
-            AuthMode::LoginProxy => Self::from_session(headers, db, auth_config.session_duration)
-                .await
-                .map(Into::into),
+            AuthMode::LoginProxy | AuthMode::Opencast => {
+                Self::from_session(headers, db, auth_config.session_duration)
+                    .await
+                    .map(Into::into)
+            }
         }
     }
 

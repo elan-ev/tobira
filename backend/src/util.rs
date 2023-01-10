@@ -1,5 +1,6 @@
 use std::{fmt, str::FromStr, net::{Ipv6Addr, Ipv4Addr}};
-use hyper::http::uri;
+use hyper::{http::uri, client::HttpConnector, Uri};
+use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use rand::{RngCore, CryptoRng};
 use secrecy::Secret;
 use serde::Deserialize;
@@ -40,6 +41,19 @@ pub(crate) use lazy_format;
 pub(crate) struct HttpHost {
     pub(crate) scheme: hyper::http::uri::Scheme,
     pub(crate) authority: hyper::http::uri::Authority,
+}
+
+impl HttpHost {
+    /// Returns a full URI by combining `self` with the given path+query. Panics
+    /// if `pq` is malformed!
+    pub fn with_path_and_query(self, pq: &str) -> Uri {
+        Uri::builder()
+            .scheme(self.scheme)
+            .authority(self.authority)
+            .path_and_query(pq)
+            .build()
+            .expect("invalid URI path+query")
+    }
 }
 
 impl fmt::Display for HttpHost {
@@ -139,6 +153,17 @@ pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> Secret<[u8; N]> {
     }
 
     Secret::new(imp(rand::thread_rng()))
+}
+
+/// Returns an HTTP client that can also speak HTTPS. HTTPS is _not_ enforced!
+pub(crate) fn http_client() -> hyper::Client<HttpsConnector<HttpConnector>, hyper::Body> {
+    let https = HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .https_or_http()
+        .enable_http1()
+        .enable_http2()
+        .build();
+    hyper::Client::builder().build(https)
 }
 
 
