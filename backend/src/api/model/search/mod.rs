@@ -1,3 +1,6 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
+
 use meilisearch_sdk::{
     errors::{
         Error as MsError,
@@ -103,6 +106,23 @@ pub(crate) async fn perform(
     if user_query.is_empty() {
         return Ok(SearchOutcome::EmptyQuery(EmptyQuery));
     }
+
+    // Search for opencastId if applicable
+    let uuid_query = user_query.trim();
+    if looks_like_opencast_uuid(&uuid_query) {
+        let selection = search::Event::select();
+        let query = format!("select {selection} from search_events \
+            where id = (select id from events where opencast_id = $1) \
+            and (read_roles || 'ROLE_ADMIN'::text) && $2");
+        let items = context.db
+            .query_opt(&query, &[&uuid_query, &context.auth.roles_vec()])
+            .await?
+            .map(|row| search::Event::from_row_start(&row).into())
+            .into_iter()
+            .collect();
+        return Ok(SearchOutcome::Results(SearchResults { items }));
+    }
+
 
     // Prepare the event search
     let mut filter = "listed = true".to_string();
@@ -218,6 +238,14 @@ pub(crate) async fn perform(
     }
 
     Ok(SearchOutcome::Results(SearchResults { items }))
+}
+
+fn looks_like_opencast_uuid(query: &str) -> bool {
+    static RE: Lazy<Regex> = Lazy::new(|| Regex::new(
+        "(?i)^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+    ).unwrap());
+
+    RE.is_match(query)
 }
 
 
