@@ -115,7 +115,8 @@ const UploadMain: React.FC<CancelProps> = ({ controller }) => {
 
     const progressHistory = useRef<ProgressHistory>([]);
 
-    useNavBlocker(() => !!uploadState.current && uploadState.current.state !== "done");
+    useNavBlocker(() => !!uploadState.current
+        && !["done", "cancelled"].includes(uploadState.current.state));
 
     // Get user info
     const user = useUser();
