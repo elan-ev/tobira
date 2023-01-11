@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "ncc build index.ts --minify --target es2019",
-    "run": "ncc run index.ts"
+    "start": "ncc run index.ts"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

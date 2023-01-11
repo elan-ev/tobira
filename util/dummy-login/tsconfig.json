@@ -1,14 +1,6 @@
 {
+  "extends": "../authkit/tsconfig.json",
   "compilerOptions": {
-    "target": "es2019",
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-
-    "strict": true,
-    "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
+    "declaration": false,
   }
 }

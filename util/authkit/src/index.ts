@@ -84,7 +84,7 @@ export const runServer = async (options: ServerOptions): Promise<void> => (
                 });
         });
         server.on("listening", () => options.onListen?.());
-        server.on("error", e => reject(e));
+        server.on("error", reject);
         server.on("close", resolve);
         if ("socketPath" in options.listen) {
             server.listen(options.listen.socketPath);
@@ -184,8 +184,8 @@ const listener = async (
                     },
                 };
                 const client = http.request(options);
-                client.on("response", resp => resolve(resp));
-                client.on("error", e => reject(e));
+                client.on("response", resolve);
+                client.on("error", reject);
                 client.end();
             });
         } catch (e) {
@@ -209,7 +209,7 @@ const downloadBody = async (req: IncomingMessage): Promise<Buffer> => (
         const chunks: Buffer[] = [];
         req.on("data", chunk => chunks.push(chunk));
         req.on("end", () => resolve(Buffer.concat(chunks)));
-        req.on("error", e => reject(e));
+        req.on("error", reject);
     })
 );
 
