@@ -514,7 +514,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
                     onClick={() => {
                         if (setFiles) {
                             setFiles(null);
-                        } 
+                        }
                     }}>
                     {t("upload.reselect")}
                 </Button>
@@ -822,7 +822,7 @@ const uploadTracks = async (
                 controller.current = new AbortController();
                 cancelUpload(mediaPackage, setUploadState);
             });
-            
+
             xhr.open("POST", url);
             xhr.setRequestHeader("Authorization", `Bearer ${jwt}`);
 
