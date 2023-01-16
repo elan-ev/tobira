@@ -4,14 +4,10 @@ sidebar_position: 5
 
 # Setup JWT auth
 
-In some situations, users of Tobira (or rather, their browsers) need to communicate with Opencast directly.
-For example, take the video uploader:
-the best option is to upload the video file directly to Opencast and not proxy it through Tobira first.
-But for these cases, users logged into Tobira should automatically be authenticated against Opencast.
-
-This is achieved by using JWT-based authentication.
-Tobira generates short-lived JWT-tokens that are included in a user's request to Opencast.
+See [this section](../auth#cross-auth-users-against-opencast) on when JWTs are needed.
+Tobira generates short-lived JWTs that are included in a user's request to Opencast.
 Opencast checks the JWT and assigns appropriate roles.
+The "trust" in this solution comes from you telling Opencast to trust a specific public key (the one from Tobira).
 
 
 ## Setup Tobira
