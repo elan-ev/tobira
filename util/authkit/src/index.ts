@@ -32,8 +32,8 @@ export type ServerOptions = {
      */
     check: LoginCheck;
 
-    /** What the server should listen on. */
-    listen: HttpLocation,
+    /** What the server should listen on. Defaults to 127.0.0.1:3091.*/
+    listen?: HttpLocation,
 
     /**
      * How to reach Tobira. On successful logins, `POST /~session` is sent to
@@ -70,6 +70,11 @@ export type ServerOptions = {
  */
 export const runServer = async (options: ServerOptions): Promise<void> => (
     new Promise((resolve, reject) => {
+        const listen = options.listen ?? {
+            host: "127.0.0.1",
+            port: 3091,
+        };
+
         const server = http.createServer((req, res) => {
             listener(req, res, options)
                 .then(() => res.end())
@@ -88,17 +93,17 @@ export const runServer = async (options: ServerOptions): Promise<void> => (
         });
         server.on("listening", () => {
             if (options.onListen == null) {
-                console.log("Listening on: ", options.listen);
+                console.log("Listening on: ", listen);
             } else {
                 options.onListen();
             }
         });
         server.on("error", reject);
         server.on("close", resolve);
-        if ("socketPath" in options.listen) {
-            server.listen(options.listen.socketPath);
+        if ("socketPath" in listen) {
+            server.listen(listen.socketPath);
         } else {
-            server.listen(options.listen.port, options.listen.host);
+            server.listen(listen.port, listen.host);
         }
     })
 );
