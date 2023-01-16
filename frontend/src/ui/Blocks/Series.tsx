@@ -268,7 +268,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                 }}>{event.title}</div>
             </h3>
             <div css={{
-                color: "var(--grey40)",
+                color: "var(--grey20)",
                 fontSize: 14,
                 display: "flex",
                 flexWrap: "wrap",
