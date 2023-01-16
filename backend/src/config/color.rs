@@ -11,16 +11,27 @@ pub(crate) struct Color {
 }
 
 impl Color {
-    /// Returns either "black" or "white", depending on which of those has a
-    /// higher contrast to `self`.
+    /// Returns either "black" or "white", depending on which has the higher
+    /// contrast to `self`. Contrast calculation based on [WCAG2.1 Technique G18][1].
+    ///
+    /// [1]: https://www.w3.org/WAI/WCAG21/Techniques/general/G18.html
     pub(crate) fn bw_contrast(self) -> &'static str {
-        let luminance = (self.r as f32 / 255.0) * 0.299
-            + (self.g as f32 / 255.0) * 0.587
-            + (self.b as f32 / 255.0) * 0.114;
+        fn linear_value(color_component: u8) -> f32 {
+            let s_rgb = (color_component as f32) / 255.0;
+            if s_rgb <= 0.04045 {
+                s_rgb / 12.92
+            } else {
+                ((s_rgb + 0.055) / 1.055).powf(2.4)
+            }
+        }
 
-        // The threshold of 0.6 is fairly arbitrary, but works well in practice.
-        // You will find various thresholds in the internet.
-        if luminance > 0.6 {
+        let relative_luminance = 0.2126 * linear_value(self.r)
+            + 0.7152 * linear_value(self.g)
+            + 0.0722 * linear_value(self.b);
+        let contrast_with_white = 1.05 / (relative_luminance + 0.05);
+        let contrast_with_black = (relative_luminance + 0.05) / 0.05;
+
+        if contrast_with_white < contrast_with_black {
             "black"
         } else {
             "white"
@@ -112,5 +123,25 @@ impl From<Color> for Hsl {
             s,
             l,
         }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::Color;
+    #[test]
+    fn test_bw_contrast() {
+        let navigation_green = Color { r: 52, g: 120, b: 86 };
+        let accent_blue = Color { r: 0, g: 122, b: 150 };
+        let neutral_grey = Color { r: 128, g: 128, b: 128};
+        let danger_red = Color { r: 182, g: 66, b: 53 };
+        let happy_green = Color { r: 39, g: 174, b: 96 };
+
+        assert_eq!(navigation_green.bw_contrast(), "white");
+        assert_eq!(accent_blue.bw_contrast(), "white");
+        assert_eq!(neutral_grey.bw_contrast(), "black");
+        assert_eq!(danger_red.bw_contrast(), "white");
+        assert_eq!(happy_green.bw_contrast(), "black");
     }
 }
