@@ -41,7 +41,10 @@ export type ServerOptions = {
      */
     tobira?: HttpLocation;
 
-    /** Called once the server starts listening (e.g. the port is open). */
+    /**
+     * Called once the server starts listening (e.g. the port is open). If not
+     * set, a simple "Listening on: ..." message is printed.
+     */
     onListen?: () => void;
 };
 
@@ -83,7 +86,13 @@ export const runServer = async (options: ServerOptions): Promise<void> => (
                     res.end();
                 });
         });
-        server.on("listening", () => options.onListen?.());
+        server.on("listening", () => {
+            if (options.onListen == null) {
+                console.log("Listening on: ", options.listen);
+            } else {
+                options.onListen();
+            }
+        });
         server.on("error", reject);
         server.on("close", resolve);
         if ("socketPath" in options.listen) {
