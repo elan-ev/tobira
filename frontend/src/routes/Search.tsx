@@ -265,7 +265,7 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
                 margin: 16,
                 padding: 8,
                 gap: 16,
-                "&:hover": {
+                "&:hover, &:focus": {
                     backgroundColor: "var(--grey97)",
                 },
                 "& > *:first-child": {

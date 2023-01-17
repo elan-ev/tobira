@@ -100,7 +100,7 @@ const gridTile = css({
     fontSize: 14,
     color: "black",
     "&:is(button, a)": {
-        "&:hover": {
+        "&:hover, &:focus": {
             color: "black",
             borderColor: "var(--grey80)",
             boxShadow: "1px 1px 5px var(--grey92)",

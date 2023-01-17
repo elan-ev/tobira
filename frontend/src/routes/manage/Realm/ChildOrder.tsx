@@ -193,7 +193,7 @@ const ChildList: React.FC<ChildListProps> = ({ disabled, children, swap }) => {
                             },
                             "&:not([disabled])": {
                                 cursor: "pointer",
-                                "&:hover": {
+                                "&:hover, &:focus": {
                                     backgroundColor: "var(--grey97)",
                                     color: "var(--accent-color)",
                                 },

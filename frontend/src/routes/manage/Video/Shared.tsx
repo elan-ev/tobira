@@ -161,7 +161,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
     const header = (
         <div css={{ display: "flex", flexDirection: "column" }}>
             <Link to={videoLink} css={{
-                dislay: "block",
+                display: "block",
                 position: "relative",
                 width: "100%",
                 maxWidth: "calc(40vh * 16 / 9)",
@@ -175,10 +175,10 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
                     color: "white",
                     transform: "translate(-50%, -50%)",
                 },
-                "&:not(:hover) > svg": {
+                "&:not(:hover, :focus) > svg": {
                     display: "none",
                 },
-                "&:hover > div": {
+                "&:hover > div, &:focus > div": {
                     opacity: 0.7,
                 },
                 backgroundColor: "black",
