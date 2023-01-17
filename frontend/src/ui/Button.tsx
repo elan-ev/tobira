@@ -36,7 +36,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         "normal": () => ({
             border: "1px solid var(--grey65)",
             color: "black",
-            "&:hover": {
+            "&:hover, &:focus": {
                 border: "1px solid var(--grey40)",
                 backgroundColor: "var(--grey92)",
             },
@@ -45,7 +45,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         "danger": () => ({
             border: "1px solid var(--danger-color)",
             color: "var(--danger-color)",
-            "&:hover": {
+            "&:hover, &:focus": {
                 border: "1px solid var(--danger-color-darker)",
                 backgroundColor: "var(--danger-color)",
                 color: "var(--danger-color-bw-contrast)",
@@ -56,7 +56,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
             border: "1px solid var(--happy-color-dark)",
             color: "var(--happy-color-bw-contrast)",
             backgroundColor: "var(--happy-color)",
-            "&:hover": {
+            "&:hover, &:focus": {
                 border: "1px solid var(--happy-color-dark)",
                 backgroundColor: "var(--happy-color-darker)",
                 color: "var(--happy-color-bw-contrast)",

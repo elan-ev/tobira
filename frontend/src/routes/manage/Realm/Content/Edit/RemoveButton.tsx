@@ -64,7 +64,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
             title={t("manage.realm.content.remove")}
             css={{
                 color: "var(--danger-color)",
-                "&&:hover": {
+                "&&:hover, &&:focus": {
                     backgroundColor: "var(--danger-color)",
                     color: "var(--danger-color-bw-contrast)",
                 },

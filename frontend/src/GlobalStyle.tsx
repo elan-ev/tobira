@@ -101,7 +101,7 @@ const GLOBAL_STYLE = css({
     a: {
         color: "var(--nav-color)",
         textDecoration: "none",
-        "&:hover": {
+        "&:hover, &:focus": {
             color: "var(--nav-color-darker)",
         },
     },

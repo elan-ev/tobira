@@ -76,7 +76,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    "&:hover": {
+                    "&:hover, &:focus": {
                         backgroundColor: "var(--accent-color-darker)",
                     },
                 }}
@@ -171,7 +171,7 @@ const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
                 backgroundColor: "transparent",
                 cursor: "pointer",
                 border: "none",
-                "&:hover": {
+                "&:hover, &:focus": {
                     backgroundColor: "var(--grey97)",
                 },
             }}

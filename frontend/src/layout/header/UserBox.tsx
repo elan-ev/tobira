@@ -84,7 +84,7 @@ const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
                     alignItems: "center",
                     backgroundColor: "var(--nav-color)",
                     color: "var(--nav-color-bw-contrast)",
-                    "&:hover": {
+                    "&:hover, &:focus": {
                         backgroundColor: "var(--nav-color-dark)",
                         color: "var(--nav-color-bw-contrast)",
                     },
@@ -333,7 +333,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
                 strokeWidth: "inherit",
             },
         },
-        "&:hover": {
+        "&:hover, &:focus": {
             backgroundColor: "var(--grey97)",
         },
         ...FOCUS_STYLE_INSET,

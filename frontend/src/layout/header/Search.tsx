@@ -103,7 +103,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     paddingRight: 12,
                     backgroundColor: "var(--grey92)",
                     border: "2px solid white",
-                    "&:hover": {
+                    "&:hover, &:focus": {
                         backgroundColor: "var(--grey86)",
                     },
                     "&:focus": {

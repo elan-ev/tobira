@@ -175,7 +175,7 @@ const EventTable: React.FC<EventTableProps> = ({ events, vars }) => {
                 },
             },
             "& > tbody": {
-                "& > tr:hover": {
+                "& > tr:hover, tr:focus-within": {
                     backgroundColor: "var(--grey92)",
                 },
                 "& > tr:not(:first-child) > td": {
@@ -244,7 +244,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                     marginLeft: 6,
                     fontSize: 22,
                 },
-                "&:hover": {
+                "&:hover, &:focus": {
                     color: "var(--accent-color)",
                 },
             }}
@@ -372,7 +372,7 @@ const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (
                 : {
                     color: "var(--grey40)",
                     cursor: "pointer",
-                    ":hover": {
+                    ":hover, :focus": {
                         color: "black",
                     },
                 },

@@ -18,7 +18,7 @@ export const Button: React.FC<ButtonProps> = props => (
             },
             "&:not([disabled])": {
                 cursor: "pointer",
-                "&:hover": {
+                "&:hover, &:focus": {
                     color: "var(--accent-color)",
                     backgroundColor: "var(--grey97)",
                 },

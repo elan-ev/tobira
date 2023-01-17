@@ -39,7 +39,7 @@ export const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, children
                 cursor: "pointer",
                 fontSize: 28,
                 opacity: "0.75",
-                "&:hover": {
+                "&:hover, &:focus": {
                     opacity: "1",
                 },
                 [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
