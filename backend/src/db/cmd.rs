@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
+use deadpool_postgres::Transaction;
 use tokio_postgres::IsolationLevel;
 
 use secrecy::ExposeSecret;
@@ -126,8 +127,55 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
         .start()
         .await?;
 
-    log::warn!("You are about to delete all existing data, tables, types and everything in \
-        the 'public' schema of the database!");
+
+    // ### Step 1: Collect objects that we want to drop ###
+    let schema: String = tx.query_one("select current_schema()", &[])
+        .await
+        .context("failed to query current schema")?
+        .get(0);
+
+    async fn query_strings(tx: &Transaction<'_>, sql: &str) -> Result<Vec<String>> {
+        tx.query_raw(sql, dbargs![])
+            .await?
+            .map_ok(|row| row.get(0))
+            .try_collect::<Vec<_>>()
+            .await?
+            .pipe(Ok)
+    }
+
+    // List all functions in this schema that are not part of an extension
+    // (like pgcrypto). The function name alone is not enough for `drop
+    // function` as there might be multiple overloads.
+    let sql = "\
+        select pg_proc.oid::regprocedure::text \
+        from pg_proc
+        left join pg_depend on pg_depend.objid = pg_proc.oid and pg_depend.deptype = 'e'
+        where
+            pronamespace = current_schema()::regnamespace
+            and pg_depend.objid is null";
+    let functions = query_strings(&tx, sql).await.context("failed to query all functions")?;
+
+    // Sequences
+    let sql = "SELECT sequence_name FROM information_schema.sequences";
+    let sequences = query_strings(&tx, sql).await.context("failed to query all sequences")?;
+
+    let sql = "\
+        select typname \
+        from pg_type \
+        where typnamespace = current_schema()::regnamespace";
+    let types = query_strings(&tx, sql).await.context("failed to query all types")?;
+
+    // Tables
+    let tables = query::all_table_names(&*tx).await.context("failed to query all tables")?;
+
+
+    // ### Step 2: Ask the user to confirm ###
+    println!();
+    println!(
+        "You are about to irrecoverably delete all existing data, tables, types, \n\
+        functions and everything else in the current schema of the database! \n\
+        The search index is cleared as well.",
+    );
 
     // Print some data about this machine and the database
     println!();
@@ -136,10 +184,10 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
     }
     bunt::println!("Database host: {[yellow+bold+intense]}", config.db.host);
     bunt::println!("Database name: {[yellow+bold+intense]}", config.db.database);
+    bunt::println!("Schema: {[yellow+bold+intense]}", schema);
 
     println!();
-    println!("The database currently holds these tables:");
-    let tables = query::all_table_names(&*tx).await?;
+    println!("Tables to be deleted:");
     for name in &tables {
         let num_rows = tx.query_one(&*format!("select count(*) from {}", name), &[])
             .await?
@@ -156,29 +204,51 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
             println!("⚠️ ⚠️ ⚠️");
         }
         println!();
-        println!("Are you sure you want to completely remove everything in this database \
-            and clear the search index? \
-            This completely drops the 'public' schema. \
-            Please double-check the server you are running this on!\n\
-            Type 'yes' to proceed to delete the data.");
+        println!("Are you sure you want to irrecoverably remove everything mentioned above? \n\
+            Type 'yes' to confirm.");
         crate::cmd::prompt_for_yes()?;
     }
 
-    // We clear everything by dropping the 'public' schema. This is suggested
-    // here, for example: https://stackoverflow.com/a/21247009/2408867
-    tx.execute("drop schema public cascade", &[]).await?;
-    tx.execute("create schema public", &[]).await?;
-    tx.execute(&*format!("grant all on schema public to {}", config.db.user), &[]).await?;
-    tx.execute("grant all on schema public to public", &[]).await?;
-    tx.execute("comment on schema public is 'standard public schema'", &[]).await?;
+
+    // ### Step 3: Actually delete everything ###
+
+    // We delete tables with 'cascade' first. This automatically also removes
+    // their triggers, constraints, indexes, and also some trigger functions
+    // and all views dependent on them.
+    for table in tables {
+        tx.execute(&format!("drop table if exists {table} cascade"), &[]).await?;
+        trace!("Dropped table {table}");
+    }
+
+    // Next we drop all sequences as this also removes their built-in types.
+    for sequence in sequences {
+        tx.execute(&format!("drop sequence if exists {sequence}"), &[]).await?;
+        trace!("Dropped sequence {sequence}");
+    }
+
+    // Next we drop all types.
+    for ty in types {
+        tx.execute(&format!("drop type if exists {ty}"), &[]).await?;
+        trace!("Dropped type {ty}");
+    }
+
+    // Finally, we drop all functions.
+    for function in functions {
+        tx.execute(&format!("drop function if exists {function} cascade"), &[]).await?;
+        trace!("Dropped function {function}");
+    }
+
     tx.commit().await.context("failed to commit clear transaction")?;
+    info!("Dropped everything inside schema '{schema}' of the database");
 
-    info!("Dropped and recreated schema 'public'");
 
+    // ### Step 4: Also clear the search index ###
     let meili = config.meili.connect().await?;
     // We can't lock the table that we just destroyed, but this is fine, since clearing
     // the search index is something that shouldn't happen in parallel to other things anyway.
-    crate::search::clear(&MeiliWriter::without_lock(&meili)).await.context("failed to clear search index")?;
+    crate::search::clear(&MeiliWriter::without_lock(&meili))
+        .await
+        .context("failed to clear search index")?;
     info!("Cleared search index");
 
     Ok(())
