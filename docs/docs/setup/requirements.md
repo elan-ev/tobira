@@ -36,7 +36,7 @@ There are some requirements.
   (We are aware that this limitation is annoying and are investigating possible solutions.)
 
 - Opencast needs to accept JWTs created by Tobira.
-  See [this document](./jwt) for more information.
+  See [this document](./auth/jwt) for more information.
 
 - Opencast needs to allow cross origin requests from Tobira.
   Otherwise, things like the video uploader don't work.
