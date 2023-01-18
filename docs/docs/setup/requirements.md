@@ -7,14 +7,22 @@ sidebar_position: 1
 To run, Tobira requires:
 
 - A Unix system.
-- A **PostgreSQL** (≥10) database. For PostgreSQL version 12 and older, you have to manually enable the `pgcrypto` extension!
+- A **PostgreSQL** (≥10) database (see below for further requirements).
 - [**Meilisearch**](https://www.meilisearch.com/) (currently v0.28.1). For installation, see [Meili's docs](https://docs.meilisearch.com/learn/getting_started/quick_start.html#step-1-setup-and-installation).
 - An **Opencast** that satisfies certain condition. See below.
 
 
 (If you are a developer, check the `util` folder!)
 
+## Further PostgreSQL requirements
 
+These are technicalities that you likely don't need to care about if you have a dedicated and modern PostgreSQL for Tobira.
+
+- For PostgreSQL version 12 and older, you have to manually enable the `pgcrypto` extension!
+- Over the lifetime of a Tobira installation the `current_schema()` must not change.
+- Tobira assumes exclusive control over the `current_schema()`.
+  So don't let other applications use the same schema.
+  You should also not add/modify/remove any data or objects in the schema manually.
 
 ## What Tobira requires of Opencast
 
