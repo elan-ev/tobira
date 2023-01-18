@@ -357,6 +357,8 @@ type PageLinkProps = {
 const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (
     <Link
         to={varsToLink(vars)}
+        tabIndex={disabled ? -1 : 0}
+        aria-hidden={disabled}
         css={{
             background: "none",
             border: "none",
