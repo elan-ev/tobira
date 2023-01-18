@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build": "ncc build index.ts --minify --target es2019",
+    "start": "ncc run index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "@vercel/ncc": "^0.36.0",
+    "typescript": "^4.9.4"
+  }
+}

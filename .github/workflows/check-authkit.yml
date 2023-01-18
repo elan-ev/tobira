@@ -1,0 +1,35 @@
+name: Authkit & Login-Handler check
+on:
+  pull_request:
+    paths:
+    - "util/authkit/**"
+    - "util/dummy-login/**"
+    - ".github/workflows/check-authkit.yml"
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+
+      - run: npm ci
+        working-directory: util/authkit
+      - run: npm ci
+        working-directory: util/dummy-login
+
+      - name: Typecheck/build authkit
+        working-directory: util/authkit
+        run: npm run build
+
+      - name: Typecheck dummy login handler
+        working-directory: util/dummy-login
+        run: npx tsc --noEmit
+
+      - name: Make sure dummy login handler build is up to date
+        working-directory: util/dummy-login
+        run: |
+          npm run build
+          git diff --exit-code dist/index.js
+
+

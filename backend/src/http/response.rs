@@ -10,8 +10,8 @@ pub(crate) fn service_unavailable() -> Response {
         .unwrap()
 }
 
-pub(crate) fn bad_request(msg: Option<&str>) -> Response {
-    let body = match msg {
+pub(crate) fn bad_request<'a>(msg: impl Into<Option<&'a str>>) -> Response {
+    let body = match msg.into() {
         Some(s) => hyper::Body::from(s.to_owned()),
         None => hyper::Body::from("Bad request"),
     };

@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    // The oldest still supported Node version (14) completely supports all JS
+    // features up to and including ES2019.
+    "target": "es2019",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+
+    "declaration": true,
+    "outDir": "dist",
+    "strict": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+  },
+  "exclude": ["node_modules", "dist"]
+}

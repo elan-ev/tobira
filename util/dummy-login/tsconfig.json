@@ -1,0 +1,6 @@
+{
+  "extends": "../authkit/tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+  }
+}

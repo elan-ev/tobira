@@ -54,30 +54,24 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
             register_req!(HttpReqCategory::GraphQL);
             handle_api(req, &ctx).await.unwrap_or_else(|r| r)
         },
+        "/~login" if method == Method::POST => {
+            register_req!(HttpReqCategory::Login);
+            auth::handle_post_login(req, &ctx).await
+        },
         "/~session" if method == Method::POST => {
             register_req!(HttpReqCategory::Login);
-            auth::handle_login(req, &ctx).await.unwrap_or_else(|r| r)
+            auth::handle_post_session(req, &ctx).await.unwrap_or_else(|r| r)
         },
         "/~session" if method == Method::DELETE => {
             register_req!(HttpReqCategory::Logout);
-            auth::handle_logout(req, &ctx).await
+            auth::handle_delete_session(req, &ctx).await
         },
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
         _ if method != Method::GET && method != Method::HEAD => {
             register_req!(HttpReqCategory::Other);
-
-            // Do some helpful logging
-            let note = if path == "/~login" {
-                " (You have to configure your reverse proxy to handle login \
-                    requests for you! These should never arrive at Tobira. Please \
-                    see the docs about auth.)"
-            } else {
-                ""
-            };
-            debug!("Responding 405 Method not allowed to {method:?} {path} {note}");
-
+            debug!("Responding 405 Method not allowed to {method:?} {path}");
             Response::builder()
                 .status(StatusCode::METHOD_NOT_ALLOWED)
                 .header("Content-Type", "text/plain; charset=UTF-8")
