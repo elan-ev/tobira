@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "description": "Helper library to implement your own auth logic for Tobira",
   "author": "The Opencast project",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elan-ev/tobira",
+    "directory": "util/authkit"
+  },
+  "bugs": "https://github.com/elan-ev/tobira/issues",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
