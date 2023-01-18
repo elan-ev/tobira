@@ -1,4 +1,4 @@
-# `@tobira/authkit`: Helper for building your own Tobira auth handler
+# `@opencast/tobira-authkit`: Helper for building your own Tobira auth handler
 
 This library enables you to build your own login handler that can be used with Tobira.
 Useful mostly for `auth.mode = "login-proxy"`.
@@ -10,7 +10,7 @@ The API is described only very briefly here as all public functions and types ar
 The main entry point (and only non-type export) is `startServer`.
 
 ```typescript
-import { startServer, LoginCheck } from "@tobira/authkit";
+import { startServer, LoginCheck } from "@opencast/tobira-authkit";
 
 startServer({
     check: myCheckFunction,

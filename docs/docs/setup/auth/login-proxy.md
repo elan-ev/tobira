@@ -107,12 +107,12 @@ server {
 
 Make sure you have Node installed (which includes `npm`).
 Create a new folder and change into it.
-Then run `npm install --save @tobira/authkit`.
+Then run `npm install --save @opencast/tobira-authkit`.
 This should create a few files.
 Create the file `index.js` and fill it with this:
 
 ```javascript
-const { runServer } = require("@tobira/authkit");
+const { runServer } = require("@opencast/tobira-authkit");
 
 
 const check = async ({ userid, password }) => {
@@ -136,7 +136,7 @@ runServer({ check });
 ```
 
 As you can see, you have to implement your custom login logic in `check` (e.g. talk to an LDAP server).
-Everything else is handled by `@tobira/authkit`.
+Everything else is handled by `@opencast/tobira-authkit`.
 See the library's documentation for more information.
 
 Your folder should now look like this:
@@ -154,7 +154,7 @@ You can test with `curl -X POST 'localhost:3091' -d 'userid=peter&password=verys
 
 :::tip
 You can also use TypeScript to prevent several kinds of bugs alltogether.
-`@tobira/authkit` is written in TypeScript and the whole API is well typed.
+`@opencast/tobira-authkit` is written in TypeScript and the whole API is well typed.
 Unfortunately, it makes running and deploying the server a bit more involved.
 
 <details>
