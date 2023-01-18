@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 2
 ---
 
 # Mode "login-proxy"
@@ -10,7 +10,7 @@ mode = "login-proxy"
 ```
 
 This mode should be used if you want to use Tobira's session management, but you need your own login logic (e.g. to connect to an external authentication system like LDAP).
-In this mode, the [information Tobira has about a user](user#user-information-tobira-needs) does not change within one session.
+In this mode, the [information Tobira has about a user](in-depth#user-information-tobira-needs) does not change within one session.
 To update any data, the user has to log out and log in again.
 If this is not acceptable to you, you have to use [`full-auth-proxy`](full-auth-proxy) instead.
 
@@ -56,7 +56,7 @@ The following diagram shows the flow of HTTP requests of a user loading the logi
 
 ---
 
-How to configure all this can be best shown via example.
+How to configure all this can best be shown via example.
 We will assume Tobira listens on `localhost:3080` and the auth module (the Node server) listens on `localhost:3091`.
 
 :::caution

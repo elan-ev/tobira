@@ -1,18 +1,30 @@
 ---
-sidebar_position: 2
+sidebar_position: 4
 ---
 
 # Auth systems in depth
 
 This document explains the details of different parts of Tobira concerned with auth.
 You should read this if you need to configure a `*-proxy` auth mode or some other involved auth setup.
-TODO
+
+
+## User information Tobira needs
+
+Tobira requires the following information about each user:
+
+- **Username**: a unique, unchanging, URL-safe identifier for each user.
+  An alphabetic ID is preferred over a purely numeric one as it appears in the URL to the user's personal page.
+- **Display name**: the user's name in a format intended for humans; usually something like "Forename Surname".
+- **Roles**: a list of roles that are used for authorization (e.g. deciding whether a user is allowed to see a video or modify some data).
+
+In the `"opencast"` mode, this data is retrieved via `/info/me.json` from Opencast.
+In the to `"*-proxy"` modes, you have to pass this data explicitly to Tobira via so called *auth headers*.
 
 
 ## Auth headers
 
 For the `*-proxy` modes, you have to pass information about users via *auth headers* to Tobira.
-These are just designated HTTP headers, one for each kind of information described in ["User information Tobira needs"](user#user-information-tobira-needs):
+These are just designated HTTP headers, one for each kind of information described in the previous section:
 
 - `x-tobira-username`: Username
 - `x-tobira-user-display-name`: Display name
@@ -111,7 +123,7 @@ The first route is only enabled for `auth.mode = "login-proxy"`, the latter also
 
 |     | `"opencast"` | `"login-proxy"` | `"full-auth-proxy"` |
 | --- | --- | --- | --- |
-| Use case | Auth via Opencast | Own login logic, Tobira's session management | Own login logic and session management |
+| Use case | Auth via Opencast | Custom login logic, Tobira's session management | Custom login logic and session management |
 | `POST /~login` | **✔ enabled** | ✗ disabled (404) | ✗ disabled (404) |
 | `POST /~session` | ✗ disabled (404) | **✔ enabled**, trusts auth headers ⚠️ | ✗ disabled (404) |
 | `DELETE /~session` | **✔ enabled** | **✔ enabled** | ✗ disabled (404) |

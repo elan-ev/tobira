@@ -8,7 +8,7 @@ The topic of authentication and authorization comes up in the context of Tobira 
 
 - [Users authenticating themselves against Tobira](#user-login) (i.e. logging into Tobira)
 - [Tobira authenticating against Opencast](#tobira-against-opencast) (used for for syncing)
-- [Opencast authenticating against Tobira](#opencast-against-tobira) (used to change pages in the Opencast admin UI)
+- [Opencast authenticating against Tobira](#opencast-against-tobira) (used to change pages from within the Opencast admin UI)
 - [Tobira cross-authenticating its users against Opencast](#cross-auth-users-against-opencast) (used for the uploader, Studio and the editor)
 
 ---
@@ -25,13 +25,12 @@ Users logging into Tobira via the normal web UI is discussed in [this document](
 To synchronize data (about events and series), Tobira has to talk to Opencast.
 Of course, those requests need to be authenticated.
 The user login data used for those requests has to be configured in the `[sync]` section.
-Make sure that the user is able to read *all* events and series.
-Currently that basically requires the user to have `ROLE_ADMIN`.
+That user currently has to have `ROLE_ADMIN`.
 
 
 ## Authenticating Opencast against Tobira {#opencast-against-tobira}
 
-If you happen to use the integration of Tobira into the Opencast Admin-UI
+If you happen to use Tobira's integration in the Opencast Admin-UI
 to directly mount newly created series, Opencast has to authenticate
 against Tobira as well. This does not use most of the mechanisms above.
 Instead, Tobira and Opencast have to share a secret, which Opencast
@@ -50,8 +49,9 @@ by your organization ID in case you run a multitenant system).
 
 ## Authenticating Tobira users against Opencast services {#cross-auth-users-against-opencast}
 
-If a user is logged into Tobira and (their browser) has to talk directly to Opencast (e.g. for the uploader, Studio or the editor), then a problem arises:
-the user does not necessarily have a login session in Opencast, so those requests might be unauthenticated.
+Users logged into Tobira don't automatically have a login session in Opencast.
+This is a problem, when they (or rather their browser) need to talk to Opencast directly (e.g. for the uploader, Studio or the editor):
+these requests might be unauthenticated.
 As a solution, Tobira can cross-authenticate those users against Opencast.
 This basically means that Tobira tells Opencast to "trust that this user is legit" so that the human user does not have to login again.
 

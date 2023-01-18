@@ -2,7 +2,7 @@
 
 This library enables you to build your own login handler that can be used with Tobira.
 Useful mostly for `auth.mode = "login-proxy"`.
-See [this documentation](https://elan-ev.github.io/tobira/setup/auth/login-proxy) for context and more information.
+See [the documentation](https://elan-ev.github.io/tobira/setup/auth/login-proxy) for context and more information.
 
 ## API
 

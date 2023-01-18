@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 3
 ---
 
 # Mode "full-auth-proxy"
@@ -31,6 +31,8 @@ Otherwise it's extremely easy for someone to pretend to be anyone and get access
 
 
 ## Basics
+
+Example nginx config:
 
 ```nginx
 server {
@@ -73,12 +75,12 @@ See [this](https://docs.nginx.com/nginx/admin-guide/security-controls/configurin
 That external auth service could be something existing (like the shibauthorizer from Shibboleth) or your own HTTP server.
 One difficulty lies in getting the user data into the exact shape Tobira expects.
 For example, nginx offers no easy way to encode something as base64.
-So unless your existing auth service already offers base64 encoding and the exact headers you need, you have to write some own code to shuffle some data around.
+So unless your existing auth service already offers base64 encoding and the exact headers you need, you have to write some custom code to shuffle some data around.
 
 ## Shibboleth example
 
 The following is a very rough outline how one could setup authentification via Shibboleth.
-I was very hesitant to include this part in the official docs as it's far from perfect and not a recommendation!
+We were very hesitant to include this part in the official docs as it's far from perfect and not a recommendation!
 If you know how to improve upon this, please let us know.
 Please be very cautious before just copying this code!
 
@@ -86,8 +88,7 @@ You have to install Shibboleth's FastCGI apps on the machine and make sure that 
 Then, the basic idea is to use a Lua block inside nginx to convert Shibboleth's data into the form Tobira expects.
 Again, likely not ideal, especially because this solution reimplements logic of `shib_request`.
 
-<details>
-<summary>Nginx config for <code>location /</code></summary>
+Nginx config implementing that idea:
 
 ```nginx
 location / {
@@ -97,7 +98,7 @@ location / {
     #
     # Usually, you would use `shib_request` and `shib_request_set` for that.
     # However, the transformation we need to do (base64 and other logic)
-    # cannot be (easily) done in nginx itself. So instead, we use lua for
+    # cannot (easily) be done in nginx itself. So instead, we use lua for
     # all of it.
     access_by_lua_block {
         -- Send the auth subrequest. Always use GET and never forward the
@@ -154,8 +155,6 @@ location / {
     proxy_pass http://localhost:3080;
 }
 ```
-
-</details>
 
 Also add two Shibboleth specific locations:
 
