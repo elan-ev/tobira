@@ -39,6 +39,12 @@ pub(crate) async fn run(
 
     let preferred_amount = config.sync.preferred_harvest_size.into();
 
+    if daemon {
+        info!("Starting harvesting daemon");
+    } else {
+        info!("Starting to harvest all data that's available now");
+    }
+
     loop {
         let sync_status = SyncStatus::fetch(&**db).await
             .context("failed to fetch sync status from DB")?;
@@ -104,7 +110,7 @@ pub(crate) async fn run(
             }
         } else {
             if daemon {
-                debug!(
+                trace!(
                     "Harvested all available data: waiting {:?} before starting next harvest",
                     config.sync.poll_period,
                 );
@@ -254,7 +260,7 @@ async fn store_in_db(
     }
 
     if upserted_events == 0 && upserted_series == 0 && removed_events == 0 && removed_series == 0 {
-        info!("Harvest outcome: nothing changed!");
+        trace!("Harvest outcome: nothing changed!");
     } else {
         info!(
             "Harvest outcome: upserted {} events, upserted {} series, \
