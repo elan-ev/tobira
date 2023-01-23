@@ -149,6 +149,7 @@ series:
   deleted: Gelöschte Serie
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
   no-events: Diese Serie enthält keine Videos oder Sie sind nicht berechtigt, diese zu sehen.
+  upcoming-live-streams: "Anstehende Livestreams ({{count}})"
   videos:
     heading: Videos
   not-ready:

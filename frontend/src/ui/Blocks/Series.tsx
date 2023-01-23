@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { Children, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -12,7 +12,7 @@ import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
-import { isPastLiveEvent, Thumbnail } from "../Video";
+import { isPastLiveEvent, isUpcomingEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
 import { FiPlay } from "react-icons/fi";
@@ -125,25 +125,49 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     const finalTitle = title ?? (showTitle ? series.title : undefined);
 
     const events = series.events.filter(event =>
-        !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive));
+        !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)
+        && !isUpcomingEvent(event.syncedData?.startTime ?? null));
+
+    const upcomingEvents = series.events.filter(event =>
+        isUpcomingEvent(event.syncedData?.startTime ?? null));
 
     const sortedEvents = [...events];
-    sortedEvents.sort(match(order, {
-        "NEW_TO_OLD": () => compareNewToOld,
-        "OLD_TO_NEW": () => compareOldToNew,
-    }, unreachable));
+    sortedEvents
+        .sort(match(order, {
+            "NEW_TO_OLD": () => compareNewToOld,
+            "OLD_TO_NEW": () => compareOldToNew,
+        }, unreachable))
+        .sort((a, b) => +b.isLive - +a.isLive);
+
+    if (upcomingEvents.length === 1) {
+        sortedEvents.unshift(upcomingEvents[0]);
+    } else {
+        upcomingEvents.sort(compareOldToNew);
+    }
 
     const eventsUI = events.length === 0
         ? t("series.no-events")
-        : <VideoGrid>
-            {sortedEvents.map(
-                event => <GridTile
-                    key={event.id}
-                    active={event.id === activeEventId}
-                    {...{ basePath, event }}
-                />,
-            )}
-        </VideoGrid>;
+        : <>
+            {upcomingEvents.length > 1
+                && <UpcomingEventsGrid>
+                    {upcomingEvents.map(
+                        event => <GridTile
+                            key={event.id}
+                            active={event.id === activeEventId}
+                            {...{ basePath, event }}
+                        />,
+                    )}
+                </UpcomingEventsGrid>}
+            <VideoGrid>
+                {sortedEvents.map(
+                    event => <GridTile
+                        key={event.id}
+                        active={event.id === activeEventId}
+                        {...{ basePath, event }}
+                    />,
+                )}
+            </VideoGrid>
+        </>;
 
     return <>
         {showMetadata && !showTitle && <Description text={series.syncedData.description} />}
@@ -160,7 +184,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 type Event = SeriesBlockSeriesData$data["events"][0];
 
 const compareNewToOld = compareByKey((event: Event): number => (
-    new Date(event.created).getTime()
+    new Date(event.syncedData?.startTime ?? event.created).getTime()
 ));
 const compareOldToNew = swap(compareNewToOld);
 
@@ -207,6 +231,32 @@ const VideoGrid: React.FC<React.PropsWithChildren> = ({ children }) => (
         {children}
     </div>
 );
+
+const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => {
+    const { t } = useTranslation();
+
+    return <details css={{
+        backgroundColor: "var(--grey86)",
+        borderRadius: 4,
+        "> summary": {
+            color: "var(--grey20)",
+            cursor: "pointer",
+            fontSize: 14,
+            padding: "6px 12px",
+        },
+        "> hr": {
+            margin: "0 12px",
+        },
+    }}>
+        <summary>
+            {t("series.upcoming-live-streams", { count: Children.count(children) })}
+        </summary>
+        <hr />
+        <VideoGrid>
+            {children}
+        </VideoGrid>
+    </details>;
+};
 
 type GridTypeProps = {
     basePath: string;
