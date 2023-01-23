@@ -454,7 +454,9 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             }
         }, [context.activeRoute]);
 
-        return context.activeRoute.route.render();
+        return <React.Fragment key={currentIndex}>
+            {context.activeRoute.route.render()}
+        </React.Fragment>;
     };
 
     return {
