@@ -860,11 +860,16 @@ const cancelUpload = async (
     mediaPackage: string,
     setUploadState: (state: UploadState) => void,
 ) => {
-    setUploadState({ state: "cancelled" });
+    try {
+        setUploadState({ state: "cancelled" });
 
-    const body = new FormData();
-    body.append("mediaPackage", mediaPackage);
-    await ocRequest("/ingest/discardMediaPackage", { method: "post", body: body });
+        const body = new FormData();
+        body.append("mediaPackage", mediaPackage);
+        await ocRequest("/ingest/discardMediaPackage", { method: "post", body: body });
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Error cancelling: ", error);
+    }
 };
 
 /** Ingest the given metadata and finishes the ingest process */
