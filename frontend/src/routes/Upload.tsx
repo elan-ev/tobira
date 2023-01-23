@@ -58,10 +58,10 @@ type Metadata = {
 const Upload: React.FC = () => {
     const { t } = useTranslation();
     const router = useRouter();
-    const controller = useRef(new AbortController());
+    const abortController = useRef(new AbortController());
 
     router.listenAtNav(() => {
-        controller.current.abort();
+        abortController.current.abort();
     });
 
     return (
@@ -73,18 +73,18 @@ const Upload: React.FC = () => {
         }}>
             <PageTitle title={t("upload.title")} />
             <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
-            <UploadMain controller={controller} />
+            <UploadMain abortController={abortController} />
         </div>
     );
 };
 
 
 type CancelProps = {
-    controller: MutableRefObject<AbortController>;
+    abortController: MutableRefObject<AbortController>;
     setFiles?: React.Dispatch<React.SetStateAction<FileList | null>>;
 };
 
-const CancelButton: React.FC<CancelProps> = ({ controller }) => {
+const CancelButton: React.FC<CancelProps> = ({ abortController }) => {
     const { t } = useTranslation();
 
     return (
@@ -96,13 +96,13 @@ const CancelButton: React.FC<CancelProps> = ({ controller }) => {
         }}>
             <Button
                 kind="danger"
-                onClick={() => controller.current.abort()}
+                onClick={() => abortController.current.abort()}
             >{t("upload.cancel")}</Button>
         </div>
     );
 };
 
-const UploadMain: React.FC<CancelProps> = ({ controller }) => {
+const UploadMain: React.FC<CancelProps> = ({ abortController }) => {
     // TODO: on first mount, send an `ocRequest` to `info/me.json` and make sure
     // that connection works. That way we can show an error very early, before
     // the user selected a file.
@@ -144,7 +144,7 @@ const UploadMain: React.FC<CancelProps> = ({ controller }) => {
                 finishUpload(mediaPackage, metadata.current, user, setUploadState);
             }
         };
-        startUpload(files, setUploadState, onProgressCallback, onDone, controller);
+        startUpload(files, setUploadState, onProgressCallback, onDone, abortController);
     };
 
     if (files === null) {
@@ -193,7 +193,7 @@ const UploadMain: React.FC<CancelProps> = ({ controller }) => {
             }}>
                 <UploadState
                     state={uploadState.current}
-                    controller={controller}
+                    abortController={abortController}
                     setFiles={setFiles}/>
                 <div css={{ overflowY: "auto" }}>
                     {/* TODO: Show something after saving metadata.
@@ -443,7 +443,7 @@ type NonFinishedUploadState = Exclude<UploadState, { state: "done" }>;
 
 /** Shows the current state of the upload */
 const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
-    { state, controller, setFiles },
+    { state, abortController, setFiles },
 ) => {
     const { t, i18n } = useTranslation();
 
@@ -487,14 +487,14 @@ const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
                     {prettyTime && t("upload.time-estimate.time-left", { time: prettyTime })}
                 </span>
             </BarWithText>
-            <CancelButton controller={controller} />
+            <CancelButton abortController={abortController} />
         </>;
     } else if (state.state === "waiting-for-metadata") {
         return <>
             <BarWithText state="waiting">
                 <span>{t("upload.waiting-for-metadata")}</span>
             </BarWithText>
-            <CancelButton controller={controller} />
+            <CancelButton abortController={abortController} />
         </>;
     } else if (state.state === "finishing") {
         return <BarWithText state="progressing">
@@ -753,7 +753,7 @@ const startUpload = async (
     setUploadState: (state: UploadState) => void,
     onProgress: (progress: Progress) => void,
     onDone: (mediaPackage: string) => void,
-    controller: MutableRefObject<AbortController>,
+    abortController: MutableRefObject<AbortController>,
 ) => {
     try {
         setUploadState({ state: "starting" });
@@ -775,7 +775,7 @@ const startUpload = async (
             mediaPackage,
             tracks,
             onProgress,
-            controller,
+            abortController,
             setUploadState,
         );
         onDone(mediaPackage);
@@ -799,7 +799,7 @@ const uploadTracks = async (
     mediaPackage: string,
     tracks: Track[],
     onProgress: (progress: number) => void,
-    controller: MutableRefObject<AbortController>,
+    abortController: MutableRefObject<AbortController>,
     setUploadState: (state: UploadState) => void,
 ): Promise<string> => {
     const totalBytes = tracks.map(t => t.file.size).reduce((a, b) => a + b, 0);
@@ -818,9 +818,9 @@ const uploadTracks = async (
         mediaPackage = await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
 
-            controller.current.signal.addEventListener("abort", () => {
+            abortController.current.signal.addEventListener("abort", () => {
                 xhr.abort();
-                controller.current = new AbortController();
+                abortController.current = new AbortController();
                 cancelUpload(mediaPackage, setUploadState);
             });
 
