@@ -39,7 +39,10 @@ jobs:
     - name: Delete GitHub deployment status
       uses: bobheadxi/deployments@v1.4.0
       with:
-        step: delete-env
+        # We would like to `delete-env` instead, but this requires additional
+        # permissions for the GITHUB_TOKEN. Fixing that seems to be fairly
+        # involved, unfortunately.
+        step: deactivate-env
         token: ${{ secrets.GITHUB_TOKEN }}
         env: test-deployment-${{ env.DEPLOY_ID }}
 
