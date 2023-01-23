@@ -90,3 +90,5 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         ...extraCss as Record<string, unknown>,
     };
 };
+
+export const buttonStyle = css;
