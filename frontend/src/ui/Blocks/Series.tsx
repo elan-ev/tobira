@@ -219,7 +219,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
     const date = event.isLive ? event.syncedData?.startTime ?? event.created : event.created;
 
     const inner = <>
-        <div css={{ borderRadius: 8 }}>
+        <div css={{ borderRadius: 8, position: "relative" }}>
             <Thumbnail event={event} active={active} />
             <div css={{
                 position: "absolute",
