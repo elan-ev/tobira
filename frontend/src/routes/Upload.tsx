@@ -73,12 +73,11 @@ const Upload: React.FC = () => {
 };
 
 
-type CancelProps = {
+type CancelButtonProps = {
     abortController: MutableRefObject<AbortController>;
-    setFiles?: React.Dispatch<React.SetStateAction<FileList | null>>;
 };
 
-const CancelButton: React.FC<CancelProps> = ({ abortController }) => {
+const CancelButton: React.FC<CancelButtonProps> = ({ abortController }) => {
     const { t } = useTranslation();
 
     return (
@@ -135,16 +134,22 @@ const UploadMain: React.FC = () => {
             if (uploadState.current === null) {
                 return unreachable("no upload state after calling `startUpload`");
             }
-            onProgress(progress, progressHistory.current, uploadState.current, setUploadState);
+            onProgress(
+                progress,
+                progressHistory.current,
+                uploadState.current,
+                setUploadState,
+                abortController,
+            );
         };
         const onDone = (mediaPackage: string) => {
             if (metadata.current === null) {
-                setUploadState({ state: "waiting-for-metadata", mediaPackage });
+                setUploadState({ state: "waiting-for-metadata", mediaPackage, abortController });
             } else {
                 finishUpload(mediaPackage, metadata.current, user, setUploadState);
             }
         };
-        startUpload(files, setUploadState, onProgressCallback, onDone, abortController);
+        startUpload(files, setUploadState, onProgressCallback, onDone, abortController, setFiles);
     };
 
     if (files === null) {
@@ -191,10 +196,7 @@ const UploadMain: React.FC = () => {
                 maxWidth: 800,
                 margin: "0 auto",
             }}>
-                <UploadState
-                    state={uploadState.current}
-                    abortController={abortController}
-                    setFiles={setFiles}/>
+                <UploadState state={uploadState.current} />
                 <div css={{ overflowY: "auto" }}>
                     {/* TODO: Show something after saving metadata.
                         - Just saying "saved" is kind of misleading because the data is only local.
@@ -231,6 +233,7 @@ const onProgress = (
     history: ProgressHistory,
     uploadState: UploadState,
     setUploadState: (state: UploadState) => void,
+    abortController: MutableRefObject<AbortController>,
 ) => {
     const now = Date.now();
 
@@ -271,7 +274,7 @@ const onProgress = (
         || uploadState.secondsLeft !== secondsLeft
         || uploadState.progress !== progress;
     if (someChange) {
-        setUploadState({ state: "uploading-tracks", progress, secondsLeft });
+        setUploadState({ state: "uploading-tracks", progress, secondsLeft, abortController });
     }
 };
 
@@ -426,15 +429,17 @@ type UploadState =
     // Starting the upload: creating a new media package.
     { state: "starting" }
     // Uploading the actual tracks, usually takes by far the longest.
-    | { state: "uploading-tracks"; progress: Progress; secondsLeft: number | null }
+    | { state: "uploading-tracks"; progress: Progress; secondsLeft: number | null;
+        abortController: MutableRefObject<AbortController>; }
     // Tracks have been uploaded, but the user still has to save the metadata to finish the upload.
-    | { state: "waiting-for-metadata"; mediaPackage: string }
+    | { state: "waiting-for-metadata"; mediaPackage: string;
+        abortController: MutableRefObject<AbortController>; }
     // After the tracks have been uploaded, just adding metadata, ACL and then ingesting.
     | { state: "finishing" }
     // The upload is completely done
     | { state: "done" }
     // The upload was cancelled
-    | { state: "cancelled" }
+    | { state: "cancelled"; setFiles: React.Dispatch<React.SetStateAction<FileList | null>> }
     // An error occurred during the upload
     | { state: "error"; error: unknown };
 
@@ -442,9 +447,7 @@ type UploadState =
 type NonFinishedUploadState = Exclude<UploadState, { state: "done" }>;
 
 /** Shows the current state of the upload */
-const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
-    { state, abortController, setFiles },
-) => {
+const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => {
     const { t, i18n } = useTranslation();
 
     if (state.state === "starting") {
@@ -452,6 +455,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
             <span>{t("upload.starting")}</span>
         </BarWithText>;
     } else if (state.state === "uploading-tracks") {
+        const abortController = state.abortController;
         const progress = Math.min(1, state.progress);
         const roundedPercent = (progress * 100).toLocaleString(i18n.language, {
             minimumFractionDigits: 1,
@@ -490,6 +494,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
             <CancelButton abortController={abortController} />
         </>;
     } else if (state.state === "waiting-for-metadata") {
+        const abortController = state.abortController;
         return <>
             <BarWithText state="waiting">
                 <span>{t("upload.waiting-for-metadata")}</span>
@@ -501,6 +506,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
             <span>{t("upload.finishing")}</span>
         </BarWithText>;
     } else if (state.state === "cancelled") {
+        const setFiles = state.setFiles;
         return <div css={{
             marginTop: "1rem",
             display: "flex",
@@ -512,11 +518,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState } & CancelProps> = (
             <div>
                 <Button
                     kind="happy"
-                    onClick={() => {
-                        if (setFiles) {
-                            setFiles(null);
-                        }
-                    }}>
+                    onClick={() => setFiles(null)}>
                     {t("upload.reselect")}
                 </Button>
             </div>
@@ -754,6 +756,7 @@ const startUpload = async (
     onProgress: (progress: Progress) => void,
     onDone: (mediaPackage: string) => void,
     abortController: MutableRefObject<AbortController>,
+    setFiles: React.Dispatch<React.SetStateAction<FileList | null>>,
 ) => {
     try {
         setUploadState({ state: "starting" });
@@ -777,6 +780,7 @@ const startUpload = async (
             onProgress,
             abortController,
             setUploadState,
+            setFiles,
         );
         onDone(mediaPackage);
     } catch (error) {
@@ -801,6 +805,7 @@ const uploadTracks = async (
     onProgress: (progress: number) => void,
     abortController: MutableRefObject<AbortController>,
     setUploadState: (state: UploadState) => void,
+    setFiles: React.Dispatch<React.SetStateAction<FileList | null>>,
 ): Promise<string> => {
     const totalBytes = tracks.map(t => t.file.size).reduce((a, b) => a + b, 0);
     let sizeFinishedTracks = 0;
@@ -821,7 +826,7 @@ const uploadTracks = async (
             abortController.current.signal.addEventListener("abort", () => {
                 xhr.abort();
                 abortController.current = new AbortController();
-                cancelUpload(mediaPackage, setUploadState);
+                cancelUpload(mediaPackage, setUploadState, setFiles);
             });
 
             xhr.open("POST", url);
@@ -859,9 +864,10 @@ const uploadTracks = async (
 const cancelUpload = async (
     mediaPackage: string,
     setUploadState: (state: UploadState) => void,
+    setFiles: React.Dispatch<React.SetStateAction<FileList | null>>,
 ) => {
     try {
-        setUploadState({ state: "cancelled" });
+        setUploadState({ state: "cancelled", setFiles });
 
         const body = new FormData();
         body.append("mediaPackage", mediaPackage);
