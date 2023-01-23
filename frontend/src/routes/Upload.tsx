@@ -57,12 +57,6 @@ type Metadata = {
 
 const Upload: React.FC = () => {
     const { t } = useTranslation();
-    const router = useRouter();
-    const abortController = useRef(new AbortController());
-
-    router.listenAtNav(() => {
-        abortController.current.abort();
-    });
 
     return (
         <div css={{
@@ -73,7 +67,7 @@ const Upload: React.FC = () => {
         }}>
             <PageTitle title={t("upload.title")} />
             <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
-            <UploadMain abortController={abortController} />
+            <UploadMain />
         </div>
     );
 };
@@ -102,18 +96,24 @@ const CancelButton: React.FC<CancelProps> = ({ abortController }) => {
     );
 };
 
-const UploadMain: React.FC<CancelProps> = ({ abortController }) => {
+const UploadMain: React.FC = () => {
     // TODO: on first mount, send an `ocRequest` to `info/me.json` and make sure
     // that connection works. That way we can show an error very early, before
     // the user selected a file.
 
     const { t } = useTranslation();
+    const router = useRouter();
 
     const [files, setFiles] = useState<FileList | null>(null);
     const [uploadState, setUploadState] = useRefState<UploadState | null>(null);
     const [metadata, setMetadata] = useRefState<Metadata | null>(null);
 
     const progressHistory = useRef<ProgressHistory>([]);
+    const abortController = useRef(new AbortController());
+
+    router.listenAtNav(() => {
+        abortController.current.abort();
+    });
 
     useNavBlocker(() => !!uploadState.current
         && !["done", "cancelled"].includes(uploadState.current.state));
