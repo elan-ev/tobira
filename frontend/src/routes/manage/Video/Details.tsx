@@ -11,6 +11,7 @@ import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
+import { buttonStyle } from "../../../ui/Button";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -51,9 +52,13 @@ const Page: React.FC<Props> = ({ event }) => {
                         service="EDITOR"
                         params={{ mediaPackageId: event.opencastId }}
                         fallback="button"
-                        css={{ marginBottom: 16 }}
+                        css={{
+                            marginBottom: 16,
+                            ...buttonStyle("normal") as Record<string, unknown>,
+                        }}
                     >
-                        {t("manage.my-videos.details.open-in-editor")} <FiExternalLink size={16} />
+                        {t("manage.my-videos.details.open-in-editor")}
+                        <FiExternalLink size={16} />
                     </ExternalLink>
                 )}
                 <DirectLink event={event} />

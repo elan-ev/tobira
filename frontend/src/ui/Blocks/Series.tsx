@@ -215,11 +215,12 @@ type GridTypeProps = {
 };
 
 const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
-    const TRANSITION_DURATION = "0.3s";
+    const TRANSITION_IN_DURATION = "0.15s";
+    const TRANSITION_OUT_DURATION = "0.3s";
     const date = event.isLive ? event.syncedData?.startTime ?? event.created : event.created;
 
     const inner = <>
-        <div css={{ borderRadius: 8 }}>
+        <div css={{ borderRadius: 8, position: "relative" }}>
             <Thumbnail event={event} active={active} />
             <div css={{
                 position: "absolute",
@@ -231,7 +232,8 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                 <div css={{
                     background: "linear-gradient(to top, white, rgba(255, 255, 255, 0.1))",
                     height: 90,
-                    transition: `transform ${TRANSITION_DURATION}, opacity ${TRANSITION_DURATION}`,
+                    transition: `transform ${TRANSITION_OUT_DURATION}, `
+                        + `opacity ${TRANSITION_OUT_DURATION}`,
                     opacity: 0.1,
                     filter: "blur(3px)",
                     transformOrigin: "bottom right",
@@ -309,14 +311,17 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
         },
         ...!active && {
             "& > div:first-child": {
-                transition: `transform ${TRANSITION_DURATION}, box-shadow ${TRANSITION_DURATION}`,
+                transition: `transform ${TRANSITION_OUT_DURATION}, `
+                    + `box-shadow ${TRANSITION_OUT_DURATION}`,
             },
             "&:hover > div:first-child, &:focus-visible > div:first-child": {
                 boxShadow: "0 6px 10px rgb(0 0 0 / 40%)",
                 transform: "perspective(500px) rotateX(7deg) scale(1.05)",
+                transitionDuration: TRANSITION_IN_DURATION,
                 "& > div:nth-child(2) > div": {
                     opacity: 0.2,
                     transform: "rotate(30deg)",
+                    transitionDuration: TRANSITION_IN_DURATION,
                 },
             },
             "&:focus-visible": {
