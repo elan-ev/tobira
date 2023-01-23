@@ -37,7 +37,7 @@ jobs:
       if: github.event_name != 'delete'
 
     - name: Delete GitHub deployment status
-      uses: bobheadxi/deployments@v1.3.0
+      uses: bobheadxi/deployments@v1.4.0
       with:
         step: delete-env
         token: ${{ secrets.GITHUB_TOKEN }}
