@@ -86,7 +86,7 @@ impl OcClient {
         );
         let (uri, req) = self.build_req(&pq);
 
-        debug!("Sending harvest request (since = {:?}): GET {}", since, uri);
+        trace!("Sending harvest request (since = {:?}): GET {}", since, uri);
 
         let response = tokio::time::timeout(Duration::from_secs(60), self.http_client.request(req))
             .await
@@ -94,11 +94,13 @@ impl OcClient {
             .with_context(|| format!("Harvest request failed (to '{uri}')"))?;
 
         let (out, body_len) = Self::deserialize_response::<HarvestResponse>(response, &uri).await?;
-        debug!(
-            "Received {} KiB ({} items) from the harvest API (in {:.2?})",
+        log!(
+            if out.items.len() > 0 { log::Level::Debug } else { log::Level::Trace },
+            "Received {} KiB ({} items) from the harvest API (in {:.2?}, since = {:?})",
             body_len / 1024,
             out.items.len(),
             before.elapsed(),
+            since,
         );
 
         Ok(out)
