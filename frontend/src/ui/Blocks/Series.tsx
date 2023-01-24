@@ -12,7 +12,7 @@ import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
-import { isPastLiveEvent, isUpcomingEvent, Thumbnail } from "../Video";
+import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
 import { FiPlay } from "react-icons/fi";
@@ -126,10 +126,10 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 
     const events = series.events.filter(event =>
         !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)
-        && !isUpcomingEvent(event.syncedData?.startTime ?? null));
+        && !isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive));
 
-    const upcomingEvents = series.events.filter(event =>
-        isUpcomingEvent(event.syncedData?.startTime ?? null));
+    const upcomingLiveEvents = series.events.filter(event =>
+        isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive));
 
     const timeMs = (event: Event) =>
         new Date(event.syncedData?.startTime ?? event.created).getTime();
@@ -148,10 +148,10 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     });
 
     // If there is only one upcoming event, it doesn't need an extra box or ordering.
-    if (upcomingEvents.length === 1) {
-        sortedEvents.unshift(upcomingEvents[0]);
+    if (upcomingLiveEvents.length === 1) {
+        sortedEvents.unshift(upcomingLiveEvents[0]);
     } else {
-        upcomingEvents.sort((a, b) => timeMs(a) - timeMs(b));
+        upcomingLiveEvents.sort((a, b) => timeMs(a) - timeMs(b));
     }
 
     const eventsToTiles = (events: Event[]) => events.map(event =>
@@ -164,9 +164,9 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     const eventsUI = events.length === 0
         ? t("series.no-events")
         : <>
-            {upcomingEvents.length > 1
+            {upcomingLiveEvents.length > 1
                 && <UpcomingEventsGrid>
-                    {eventsToTiles(upcomingEvents)}
+                    {eventsToTiles(upcomingLiveEvents)}
                 </UpcomingEventsGrid>}
             <VideoGrid>
                 {eventsToTiles(sortedEvents)}
