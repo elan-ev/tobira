@@ -2,7 +2,7 @@ import React, { Children, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import { keyOfId, compareByKey, swap, isSynced, SyncedOpencastEntity } from "../../util";
+import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
 import { match } from "../../util";
 import { unreachable } from "../../util/err";
 import type { Fields } from "../../relay";
@@ -131,18 +131,27 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     const upcomingEvents = series.events.filter(event =>
         isUpcomingEvent(event.syncedData?.startTime ?? null));
 
-    const sortedEvents = [...events];
-    sortedEvents
-        .sort(match(order, {
-            "NEW_TO_OLD": () => compareNewToOld,
-            "OLD_TO_NEW": () => compareOldToNew,
-        }, unreachable))
-        .sort((a, b) => +b.isLive - +a.isLive);
+    const timeMs = (event: Event) =>
+        new Date(event.syncedData?.startTime ?? event.created).getTime();
 
+    const sortedEvents = [...events];
+    sortedEvents.sort((a, b) => {
+        // Sort all live events before non-live events.
+        if (a.isLive !== b.isLive) {
+            return +b.isLive - +a.isLive;
+        }
+
+        return match(order, {
+            "NEW_TO_OLD": () => timeMs(b) - timeMs(a),
+            "OLD_TO_NEW": () => timeMs(a) - timeMs(b),
+        }, unreachable);
+    });
+
+    // If there is only one upcoming event, it doesn't need an extra box or ordering.
     if (upcomingEvents.length === 1) {
         sortedEvents.unshift(upcomingEvents[0]);
     } else {
-        upcomingEvents.sort(compareOldToNew);
+        upcomingEvents.sort((a, b) => timeMs(a) - timeMs(b));
     }
 
     const eventsUI = events.length === 0
@@ -182,11 +191,6 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 };
 
 type Event = SeriesBlockSeriesData$data["events"][0];
-
-const compareNewToOld = compareByKey((event: Event): number => (
-    new Date(event.syncedData?.startTime ?? event.created).getTime()
-));
-const compareOldToNew = swap(compareNewToOld);
 
 type SeriesBlockContainerProps = {
     title?: string;
