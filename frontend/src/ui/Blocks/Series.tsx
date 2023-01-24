@@ -234,27 +234,40 @@ const VideoGrid: React.FC<React.PropsWithChildren> = ({ children }) => (
 const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => {
     const { t } = useTranslation();
 
-    return <details css={{
-        backgroundColor: "var(--grey86)",
-        borderRadius: 4,
-        "> summary": {
-            color: "var(--grey20)",
-            cursor: "pointer",
-            fontSize: 14,
-            padding: "6px 12px",
-        },
-        "> hr": {
-            margin: "0 12px",
-        },
-    }}>
-        <summary>
-            {t("series.upcoming-live-streams", { count: Children.count(children) })}
-        </summary>
-        <hr />
-        <VideoGrid>
-            {children}
-        </VideoGrid>
-    </details>;
+    return (
+        <details css={{
+            backgroundColor: "var(--grey86)",
+            borderRadius: 4,
+            marginBottom: 8,
+            "> summary": {
+                color: "var(--grey20)",
+                cursor: "pointer",
+                fontSize: 14,
+                padding: "6px 12px",
+                "> span": {
+                    marginLeft: 4,
+                },
+                ":hover, :focus-visible": {
+                    backgroundColor: "var(--grey80)",
+                    borderRadius: 4,
+                    color: "black",
+                },
+            },
+            "> hr": {
+                margin: "0 12px",
+            },
+        }}>
+            <summary>
+                <span>
+                    {t("series.upcoming-live-streams", { count: Children.count(children) })}
+                </span>
+            </summary>
+            <hr />
+            <VideoGrid>
+                {children}
+            </VideoGrid>
+        </details>
+    );
 };
 
 type GridTypeProps = {
