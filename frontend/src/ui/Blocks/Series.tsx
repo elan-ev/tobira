@@ -154,27 +154,22 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
         upcomingEvents.sort((a, b) => timeMs(a) - timeMs(b));
     }
 
+    const eventsToTiles = (events: Event[]) => events.map(event =>
+        <GridTile
+            key={event.id}
+            active={event.id === activeEventId}
+            {...{ basePath, event }}
+        />);
+
     const eventsUI = events.length === 0
         ? t("series.no-events")
         : <>
             {upcomingEvents.length > 1
                 && <UpcomingEventsGrid>
-                    {upcomingEvents.map(
-                        event => <GridTile
-                            key={event.id}
-                            active={event.id === activeEventId}
-                            {...{ basePath, event }}
-                        />,
-                    )}
+                    {eventsToTiles(upcomingEvents)}
                 </UpcomingEventsGrid>}
             <VideoGrid>
-                {sortedEvents.map(
-                    event => <GridTile
-                        key={event.id}
-                        active={event.id === activeEventId}
-                        {...{ basePath, event }}
-                    />,
-                )}
+                {eventsToTiles(sortedEvents)}
             </VideoGrid>
         </>;
 
