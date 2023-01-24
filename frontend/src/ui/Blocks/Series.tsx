@@ -271,7 +271,7 @@ type GridTypeProps = {
 const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
     const TRANSITION_IN_DURATION = "0.15s";
     const TRANSITION_OUT_DURATION = "0.3s";
-    const date = event.isLive ? event.syncedData?.startTime ?? event.created : event.created;
+    const date = event.syncedData?.startTime ?? event.created;
 
     const inner = <>
         <div css={{ borderRadius: 8, position: "relative" }}>
