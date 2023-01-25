@@ -168,6 +168,9 @@ export const formatDuration = (totalMs: number): string => {
 export const isPastLiveEvent = (endTime: string | null, isLive: boolean): boolean =>
     isLive && endTime != null && new Date(endTime) < new Date();
 
+export const isUpcomingLiveEvent = (startingTime: string | null, isLive: boolean): boolean =>
+    isLive && startingTime != null && new Date(startingTime) > new Date();
+
 const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
     const { t } = useTranslation();
     const [loadError, setLoadError] = useState(false);

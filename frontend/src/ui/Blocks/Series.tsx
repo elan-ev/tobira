@@ -1,8 +1,8 @@
-import React, { ReactNode } from "react";
+import React, { Children, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import { keyOfId, compareByKey, swap, isSynced, SyncedOpencastEntity } from "../../util";
+import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
 import { match } from "../../util";
 import { unreachable } from "../../util/err";
 import type { Fields } from "../../relay";
@@ -12,7 +12,7 @@ import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
-import { isPastLiveEvent, Thumbnail } from "../Video";
+import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
 import { FiPlay } from "react-icons/fi";
@@ -125,25 +125,53 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     const finalTitle = title ?? (showTitle ? series.title : undefined);
 
     const events = series.events.filter(event =>
-        !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive));
+        !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)
+        && !isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive));
+
+    const upcomingLiveEvents = series.events.filter(event =>
+        isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive));
+
+    const timeMs = (event: Event) =>
+        new Date(event.syncedData?.startTime ?? event.created).getTime();
 
     const sortedEvents = [...events];
-    sortedEvents.sort(match(order, {
-        "NEW_TO_OLD": () => compareNewToOld,
-        "OLD_TO_NEW": () => compareOldToNew,
-    }, unreachable));
+    sortedEvents.sort((a, b) => {
+        // Sort all live events before non-live events.
+        if (a.isLive !== b.isLive) {
+            return +b.isLive - +a.isLive;
+        }
+
+        return match(order, {
+            "NEW_TO_OLD": () => timeMs(b) - timeMs(a),
+            "OLD_TO_NEW": () => timeMs(a) - timeMs(b),
+        }, unreachable);
+    });
+
+    // If there is only one upcoming event, it doesn't need an extra box or ordering.
+    if (upcomingLiveEvents.length === 1) {
+        sortedEvents.unshift(upcomingLiveEvents[0]);
+    } else {
+        upcomingLiveEvents.sort((a, b) => timeMs(a) - timeMs(b));
+    }
+
+    const eventsToTiles = (events: Event[]) => events.map(event =>
+        <GridTile
+            key={event.id}
+            active={event.id === activeEventId}
+            {...{ basePath, event }}
+        />);
 
     const eventsUI = events.length === 0
         ? t("series.no-events")
-        : <VideoGrid>
-            {sortedEvents.map(
-                event => <GridTile
-                    key={event.id}
-                    active={event.id === activeEventId}
-                    {...{ basePath, event }}
-                />,
-            )}
-        </VideoGrid>;
+        : <>
+            {upcomingLiveEvents.length > 1
+                && <UpcomingEventsGrid>
+                    {eventsToTiles(upcomingLiveEvents)}
+                </UpcomingEventsGrid>}
+            <VideoGrid>
+                {eventsToTiles(sortedEvents)}
+            </VideoGrid>
+        </>;
 
     return <>
         {showMetadata && !showTitle && <Description text={series.syncedData.description} />}
@@ -158,11 +186,6 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 };
 
 type Event = SeriesBlockSeriesData$data["events"][0];
-
-const compareNewToOld = compareByKey((event: Event): number => (
-    new Date(event.created).getTime()
-));
-const compareOldToNew = swap(compareNewToOld);
 
 type SeriesBlockContainerProps = {
     title?: string;
@@ -208,6 +231,45 @@ const VideoGrid: React.FC<React.PropsWithChildren> = ({ children }) => (
     </div>
 );
 
+const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => {
+    const { t } = useTranslation();
+
+    return (
+        <details css={{
+            backgroundColor: "var(--grey86)",
+            borderRadius: 4,
+            marginBottom: 8,
+            "> summary": {
+                color: "var(--grey20)",
+                cursor: "pointer",
+                fontSize: 14,
+                padding: "6px 12px",
+                "> span": {
+                    marginLeft: 4,
+                },
+                ":hover, :focus-visible": {
+                    backgroundColor: "var(--grey80)",
+                    borderRadius: 4,
+                    color: "black",
+                },
+            },
+            "> hr": {
+                margin: "0 12px",
+            },
+        }}>
+            <summary>
+                <span>
+                    {t("series.upcoming-live-streams", { count: Children.count(children) })}
+                </span>
+            </summary>
+            <hr />
+            <VideoGrid>
+                {children}
+            </VideoGrid>
+        </details>
+    );
+};
+
 type GridTypeProps = {
     basePath: string;
     event: Event;
@@ -217,7 +279,7 @@ type GridTypeProps = {
 const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
     const TRANSITION_IN_DURATION = "0.15s";
     const TRANSITION_OUT_DURATION = "0.3s";
-    const date = event.isLive ? event.syncedData?.startTime ?? event.created : event.created;
+    const date = event.syncedData?.startTime ?? event.created;
 
     const inner = <>
         <div css={{ borderRadius: 8, position: "relative" }}>
