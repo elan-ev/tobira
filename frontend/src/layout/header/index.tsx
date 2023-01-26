@@ -47,6 +47,7 @@ const SearchMode: React.FC = () => {
 
     return <>
         <ActionIcon title={t("back")} onClick={() => menu.close()} >
+            {/* TODO: Adjust color. */}
             <FiArrowLeft />
         </ActionIcon>
         <SearchField variant="mobile" />
