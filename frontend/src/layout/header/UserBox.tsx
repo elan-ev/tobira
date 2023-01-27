@@ -1,5 +1,6 @@
-import React, { KeyboardEvent, ReactNode, ReactElement, useRef } from "react";
-import { useState } from "react";
+import { TFunction } from "i18next";
+import React, { MutableRefObject, KeyboardEvent, ReactNode } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle,
@@ -11,7 +12,8 @@ import { HiOutlineTranslate } from "react-icons/hi";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
-import { isRealUser, User, useUser } from "../../User";
+import { useOnOutsideClick } from "../../util";
+import { User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon } from "./ui";
 import CONFIG from "../../config";
@@ -19,7 +21,6 @@ import { Spinner } from "../../ui/Spinner";
 import { LOGIN_PATH } from "../../routes/paths";
 import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { FOCUS_STYLE_INSET } from "../../ui";
-import { Floating, FloatingContainer, FloatingHandle, FloatingTrigger } from "../../ui/Floating";
 
 
 /** User-related UI in the header. */
@@ -27,31 +28,44 @@ export const UserBox: React.FC = () => {
     const { t } = useTranslation();
     const user = useUser();
 
-    const iconCss = {
-        height: "100%",
-        margin: "0 9px",
-        fontSize: 22,
-        opacity: 0.4,
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menu = {
+        isOpen: menuOpen,
+        toggle: () => setMenuOpen(old => !old),
+        close: () => setMenuOpen(false),
     };
+
     if (user === "unknown") {
-        return <Spinner css={iconCss} />;
-    } else if (user === "error") {
-        // TODO: tooltip
-        return <FiAlertTriangle css={iconCss} />;
+        return <Spinner css={{
+            height: "100%",
+            margin: "0 9px",
+            fontSize: 22,
+            opacity: 0.4,
+        }} />;
     } else if (user === "none") {
-        return <LoggedOut />;
+        return <LoggedOut {...{ t, menu }} />;
     } else {
-        return <LoggedIn {...{ t, user }} />;
+        return <LoggedIn {...{ t, user, menu }} />;
     }
 };
 
+type Menu = {
+    isOpen: boolean;
+    toggle: () => void;
+    close: () => void;
+};
+
+type LoggedOutProps = {
+    menu: Menu;
+};
 
 /** User-related UI in header when the user is NOT logged in. */
-const LoggedOut: React.FC = () => {
+const LoggedOut: React.FC<LoggedOutProps> = ({ menu }) => {
     const { t } = useTranslation();
+    const ref = useRef(null);
 
     return (
-        <div css={{ display: "flex", padding: "8px 0" }}>
+        <div ref={ref} css={{ display: "flex", padding: "8px 0" }}>
             <Link
                 to={CONFIG.auth.loginLink ?? LOGIN_PATH}
                 onClick={() => {
@@ -61,9 +75,10 @@ const LoggedOut: React.FC = () => {
                 htmlLink={!!CONFIG.auth.loginLink}
                 css={{
                     alignSelf: "center",
-                    borderRadius: 10,
+                    borderRadius: 8,
                     cursor: "pointer",
-                    padding: "5px 14px",
+                    lineHeight: "22px",
+                    padding: "10px 24px 10px 16px",
                     marginRight: 8,
                     display: "flex",
                     gap: 8,
@@ -82,51 +97,27 @@ const LoggedOut: React.FC = () => {
                         display: "none",
                     },
                 }}
-            ><FiLogIn />{t("user.login")}</Link>
-            <WithFloatingMenu>
-                <ActionIcon title={t("user.settings")}>
-                    <FiMoreVertical css={{
-                        fontSize: 26,
-                        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
-                            fontSize: 22,
-                        },
-                    }} />
-                </ActionIcon>
-            </WithFloatingMenu>
+            ><FiLogOut size={"20px"} />{t("user.login")}</Link>
+            <UserSettingsIcon t={t} onClick={menu.toggle} />
+            {menu.isOpen && <Menu close={menu.close} container={ref} />}
         </div>
     );
 };
 
-const WithFloatingMenu: React.FC<{ children: ReactElement }> = ({ children }) => {
-    const ref = useRef<FloatingHandle>(null);
-
-    return (
-        <FloatingContainer
-            ref={ref}
-            placement="bottom"
-            trigger="click"
-            ariaRole="menu"
-            arrowSize={12}
-            distance={0}
-            viewPortMargin={12}
-        >
-            <FloatingMenu close={() => ref.current?.close()} />
-            <FloatingTrigger>{children}</FloatingTrigger>
-        </FloatingContainer>
-    );
-};
 
 type LoggedInProps = {
     user: User;
+    menu: Menu;
 };
 
 /** User-related UI in header when the user IS logged in. */
-const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
+const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
     const { t } = useTranslation();
+    const ref = useRef(null);
 
     return (
-        <WithFloatingMenu>
-            <div css={{
+        <div ref={ref} css={{ position: "relative" }}>
+            <div onClick={menu.toggle} css={{
                 height: "100%",
                 padding: "8px 0",
                 alignSelf: "center",
@@ -165,27 +156,56 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                     <FiUserCheck css={{ "& > polyline": { stroke: "var(--happy-color-dark)" } }}/>
                 </ActionIcon>
             </div>
-        </WithFloatingMenu>
+
+            {/* Show menu if it is opened */}
+            {menu.isOpen && <Menu close={menu.close} container={ref} />}
+        </div>
     );
 };
 
+
+type UserSettingsIconProps = {
+    t: TFunction;
+    onClick: () => void;
+};
+
+const UserSettingsIcon: React.FC<UserSettingsIconProps> = ({ t, onClick }) => (
+    <ActionIcon title={t("user.settings")} onClick={onClick}>
+        <FiMoreVertical css={{
+            fontSize: 26,
+            [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                fontSize: 22,
+            },
+        }} />
+    </ActionIcon>
+);
+
+
+type MenuProps = {
+    close: () => void;
+    container: MutableRefObject<Node | null>;
+};
 
 /**
  * A menu with some user-related settings/actions that floats on top of the page
  * and closes itself on click outside of it.
  */
-const FloatingMenu: React.FC<{ close: () => void }> = ({ close }) => {
+const Menu: React.FC<MenuProps> = ({ close, container }) => {
     const { t } = useTranslation();
 
     type State = "main" | "language";
     const [state, setState] = useState<State>("main");
 
-    const user = useUser();
+    const userState = useUser();
+    const user = userState === "none" || userState === "unknown" ? null : userState;
+
+    // Close menu on clicks anywhere outside of it.
+    useOnOutsideClick(container, close);
 
     const items = match(state, {
         main: () => <>
             {/* Login button if the user is NOT logged in */}
-            {user === "none" && (
+            {!user && (
                 <MenuItem
                     icon={<FiLogIn />}
                     borderBottom
@@ -200,7 +220,7 @@ const FloatingMenu: React.FC<{ close: () => void }> = ({ close }) => {
                 >{t("user.login")}</MenuItem>
             )}
 
-            {isRealUser(user) && <>
+            {user && <>
                 {user.canUpload && <MenuItem
                     icon={<FiUpload />}
                     linkTo={"/~upload"}
@@ -218,7 +238,7 @@ const FloatingMenu: React.FC<{ close: () => void }> = ({ close }) => {
             </MenuItem>
 
             {/* Logout button if the user is logged in */}
-            {isRealUser(user) && <Logout />}
+            {user && <Logout />}
         </>,
         language: () => <>
             <MenuItem icon={<FiChevronLeft />} onClick={() => setState("main")} borderBottom>
@@ -229,14 +249,22 @@ const FloatingMenu: React.FC<{ close: () => void }> = ({ close }) => {
     });
 
     return (
-        <Floating padding={0}>
-            <ul css={{
-                listStyle: "none",
-                margin: 0,
-                paddingLeft: 0,
-                minWidth: 200,
-            }}>{items}</ul>
-        </Floating>
+        <ul css={{
+            position: "absolute",
+            zIndex: 1000,
+            top: "100%",
+            right: 8,
+            marginTop: 8,
+            borderRadius: 4,
+            border: "1px solid var(--grey80)",
+            boxShadow: "1px 1px 5px var(--grey92)",
+            backgroundColor: "white",
+            minWidth: 200,
+            paddingLeft: 0,
+            margin: 0,
+            overflow: "hidden",
+            listStyle: "none",
+        }}>{items}</ul>
     );
 };
 
@@ -323,10 +351,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
     };
 
     return linkTo
-        ? <li role="menuitem" {... { className }}>
+        ? <li {... { className }}>
             <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
         </li>
-        : <li role="menuitem" tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
+        : <li tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
             {inner}
         </li>;
 };
