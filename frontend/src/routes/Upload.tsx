@@ -13,7 +13,7 @@ import { makeRoute } from "../rauta";
 import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
 import { useNavBlocker } from "./util";
 import CONFIG from "../config";
-import { Button } from "../ui/Button";
+import { Button, LinkButton } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
 import { Form } from "../ui/Form";
 import { Input, TextArea } from "../ui/Input";
@@ -149,7 +149,7 @@ const UploadMain: React.FC = () => {
                 finishUpload(mediaPackage, metadata.current, user, setUploadState);
             }
         };
-        startUpload(files, setUploadState, onProgressCallback, onDone, abortController, setFiles);
+        startUpload(files, setUploadState, onProgressCallback, onDone, abortController);
     };
 
     if (files === null) {
@@ -439,7 +439,7 @@ type UploadState =
     // The upload is completely done
     | { state: "done" }
     // The upload was cancelled
-    | { state: "cancelled"; setFiles: React.Dispatch<React.SetStateAction<FileList | null>> }
+    | { state: "cancelled" }
     // An error occurred during the upload
     | { state: "error"; error: unknown };
 
@@ -506,7 +506,6 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
             <span>{t("upload.finishing")}</span>
         </BarWithText>;
     } else if (state.state === "cancelled") {
-        const setFiles = state.setFiles;
         return <div css={{
             marginTop: "1rem",
             display: "flex",
@@ -516,11 +515,12 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
         }}>
             <span>{t("upload.upload-cancelled")}</span>
             <div>
-                <Button
+                <LinkButton
                     kind="happy"
-                    onClick={() => setFiles(null)}>
+                    to="/~upload"
+                >
                     {t("upload.reselect")}
-                </Button>
+                </LinkButton>
             </div>
         </div>;
     } else if (state.state === "error") {
@@ -756,7 +756,6 @@ const startUpload = async (
     onProgress: (progress: Progress) => void,
     onDone: (mediaPackage: string) => void,
     abortController: MutableRefObject<AbortController>,
-    setFiles: React.Dispatch<React.SetStateAction<FileList | null>>,
 ) => {
     try {
         setUploadState({ state: "starting" });
@@ -780,7 +779,6 @@ const startUpload = async (
             onProgress,
             abortController,
             setUploadState,
-            setFiles,
         );
         onDone(mediaPackage);
     } catch (error) {
@@ -805,7 +803,6 @@ const uploadTracks = async (
     onProgress: (progress: number) => void,
     abortController: MutableRefObject<AbortController>,
     setUploadState: (state: UploadState) => void,
-    setFiles: React.Dispatch<React.SetStateAction<FileList | null>>,
 ): Promise<string> => {
     const totalBytes = tracks.map(t => t.file.size).reduce((a, b) => a + b, 0);
     let sizeFinishedTracks = 0;
@@ -826,7 +823,7 @@ const uploadTracks = async (
             abortController.current.signal.addEventListener("abort", () => {
                 xhr.abort();
                 abortController.current = new AbortController();
-                cancelUpload(mediaPackage, setUploadState, setFiles);
+                cancelUpload(mediaPackage, setUploadState);
             });
 
             xhr.open("POST", url);
@@ -864,10 +861,9 @@ const uploadTracks = async (
 const cancelUpload = async (
     mediaPackage: string,
     setUploadState: (state: UploadState) => void,
-    setFiles: React.Dispatch<React.SetStateAction<FileList | null>>,
 ) => {
     try {
-        setUploadState({ state: "cancelled", setFiles });
+        setUploadState({ state: "cancelled" });
 
         const body = new FormData();
         body.append("mediaPackage", mediaPackage);
