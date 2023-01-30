@@ -175,11 +175,14 @@ upload:
   drop-to-upload: Drag and drop video files to upload
   not-authorized: You do not have the permission to upload videos.
   select-files: Select files
+  reselect: Reselect files
   too-many-files: You selected too many files. Currently, only a single file is supported.
   not-a-file: You dropped something that's not a file.
   starting: Starting...
   finishing: Finishing up...
   waiting-for-metadata: Please save video information to finish the upload
+  cancel: Cancel upload
+  upload-cancelled: The upload was cancelled.
   still-uploading: >
     Video is still uploading. Please do not close this page before the upload is finished.
   time-estimate:

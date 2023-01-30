@@ -179,12 +179,15 @@ upload:
   drop-to-upload: Videodateien zum Hochladen per Drag-and-drop hinzufügen
   not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   select-files: Dateien auswählen
+  reselect: Dateien erneut auswählen
   too-many-files: >
     Sie haben zu viele Dateien ausgewählt. Zurzeit werden nur einzelne Dateien unterstützt.
   not-a-file: Sie haben etwas in diesen Bereich gezogen, das keine Datei ist.
   starting: Starte Upload...
   finishing: Schließe Upload ab...
   waiting-for-metadata: Zum Fertigstellen bitte Videoinformationen speichern
+  cancel: Upload abbrechen
+  upload-cancelled: Der Upload wurde abgebrochen.
   still-uploading: >
     Video lädt hoch. Bitte schließen Sie diese Seite nicht, bevor der Upload beendet ist.
   time-estimate:
