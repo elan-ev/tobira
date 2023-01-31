@@ -63,9 +63,8 @@ if [[ "$(git tag -l "$tag_name")" ]]; then
 fi
 
 
-# Final prompt before changing anything.
-echo "Ready. Will now adjust 'Cargo.toml', 'Cargo.lock' and 'docs/versions.txt', commit change, create git tag, and push 'master' and the new tag. Ok?"
-echo "(Pushing to $GIT_REMOTE. Make sure you have push access.)"
+# Prompt before changing anything.
+echo "Ready. Will now adjust 'Cargo.toml', 'Cargo.lock' and 'docs/versions.txt'. Ok?"
 echo "To cancel, ctrl+c! To continue, press enter."
 read -r
 
@@ -75,8 +74,19 @@ set -e
 
 sed -i "1s/^/v$major.$minor\n/" docs/versions.txt
 sed -i -E 's/^version = "[^"]+.0"$/version = "'"$major.$minor"'.0"/' backend/Cargo.toml
-(cd backend/ && cargo update -p tobira --offline)
+sed -i \
+    '/name = "tobira"/,/^version =.*$/ s/^version =.*$/version = "'"$major.$minor"'.0"/' \
+    backend/Cargo.lock
 git add backend/Cargo.toml backend/Cargo.lock docs/versions.txt
+
+
+# Final prompt before committing and pushing.
+echo
+echo "Made and staged changes. Does everything look good?"
+echo "Will now commit change, create git tag, and push 'master' and the new tag. Ok?"
+echo "(Pushing to $GIT_REMOTE. Make sure you have push access.)"
+echo "To cancel, ctrl+c! To continue, press enter."
+read -r
 git commit -m "Bump version to $major.$minor"
 echo -e "\e[1;32m✔ Committed version bump\e[0m"
 echo
