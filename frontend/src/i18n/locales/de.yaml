@@ -101,7 +101,7 @@ user:
   login: Anmelden
   logout: Abmelden
   settings: Nutzereinstellungen
-  manage-content: Inhalte verwalten
+  manage-content: Meine Inhalte
   logged-in-as: Angemeldet als
 
 login-page:

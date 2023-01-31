@@ -98,7 +98,7 @@ user:
   login: Login
   logout: Log out
   settings: User settings
-  manage-content: Manage content
+  manage-content: My content
   logged-in-as: Logged in as
 
 login-page:
