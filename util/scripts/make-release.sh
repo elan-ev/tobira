@@ -74,7 +74,9 @@ set -e
 
 sed -i "1s/^/v$major.$minor\n/" docs/versions.txt
 sed -i -E 's/^version = "[^"]+.0"$/version = "'"$major.$minor"'.0"/' backend/Cargo.toml
-(cd backend/ && cargo update -p tobira --offline)
+sed -i \
+    '/name = "tobira"/,/^version =.*$/ s/^version =.*$/version = "'"$major.$minor"'.0"/' \
+    backend/Cargo.lock
 git add backend/Cargo.toml backend/Cargo.lock docs/versions.txt
 
 
