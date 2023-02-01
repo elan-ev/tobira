@@ -8,7 +8,7 @@ pub(crate) struct ThemeConfig {
     /// Height of the header (containing the logo, search bar, and several
     /// icons). Increasing this size only enlarges the logo, the other elements
     /// stay the same size and centered.
-    #[config(default = 100)]
+    #[config(default = 85)]
     pub(crate) header_height: u32,
 
     #[config(nested)]

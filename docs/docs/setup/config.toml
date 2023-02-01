@@ -396,8 +396,8 @@
 # icons). Increasing this size only enlarges the logo, the other elements
 # stay the same size and centered.
 #
-# Default value: 100
-#header_height = 100
+# Default value: 85
+#header_height = 85
 
 # Path to an SVG file that is used as favicon.
 #

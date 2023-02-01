@@ -34,13 +34,12 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
             {menu.state === "burger" && navExists && (
                 <BurgerMenu items={navElements} hide={() => menu.close()} />
             )}
-            <div css={{ margin: OUTER_CONTAINER_MARGIN }}>
-                <div css={{
-                    margin: "0 16px 32px 16px",
-                    height: 2,
-                    backgroundColor: "var(--grey92)",
-                }}/>
-            </div>
+            <div css={{
+                margin: 0,
+                marginBottom: 32,
+                height: 2,
+                backgroundColor: "var(--grey92)",
+            }}/>
             <Main>
                 {/* Sidebar */}
                 {navExists && <div css={{
