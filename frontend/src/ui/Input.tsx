@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { Button } from "./Button";
-import { PopOver } from "./PopOver";
+import { WithTooltip } from "./Floating";
 
 
 const style = (error: boolean) => ({
@@ -102,32 +102,27 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
         : <input disabled value={value} css={sharedStyle} />;
 
     return (
-        <div css={{ position: "relative", height: multiline ? 95 : 34 }} {...rest}>
-            <div css={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                "& > div[data-popover-marker]": {
-                    color: "var(--grey20)",
-                },
-                "&:not(:hover) > div[data-popover-marker]": {
-                    display: "none",
-                },
-            }}>
-                <PopOver pos="top" anchor="right">{t("copy-to-clipboard")}</PopOver>
-                <Button
-                    kind="happy"
-                    onClick={copy}
-                    css={{
-                        borderTopLeftRadius: 0,
-                        height: 34,
-                        ...multiline
-                            ? { borderBottomRightRadius: 0 }
-                            : { borderBottomLeftRadius: 0 },
-                    }}
-                >
-                    {wasCopied ? <FiCheck /> : <FiCopy />}
-                </Button>
+        <div css={{
+            position: "relative",
+            height: multiline ? 95 : 34,
+            maxWidth: "100%",
+        }} {...rest}>
+            <div css={{ position: "absolute", top: 0, right: 0 }}>
+                <WithTooltip tooltip={t("copy-to-clipboard")}>
+                    <Button
+                        kind="happy"
+                        onClick={copy}
+                        css={{
+                            borderTopLeftRadius: 0,
+                            height: 34,
+                            ...multiline
+                                ? { borderBottomRightRadius: 0 }
+                                : { borderBottomLeftRadius: 0 },
+                        }}
+                    >
+                        {wasCopied ? <FiCheck /> : <FiCopy />}
+                    </Button>
+                </WithTooltip>
             </div>
             {inner}
         </div>

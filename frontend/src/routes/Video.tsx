@@ -49,7 +49,7 @@ import { getEventTimeInfo } from "../util/video";
 import { Creators } from "../ui/Video";
 import { Description } from "../ui/metadata";
 import { ellipsisOverflowCss } from "../ui";
-import { PopOver } from "../ui/PopOver";
+import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui/Floating";
 import { Card } from "../ui/Card";
 
 
@@ -475,21 +475,22 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     });
 
 
-    return <div css={{ position: "relative" }} ref={ref}>
-        <Button onClick={() => setState(state => state === "closed" ? "main" : "closed")}>
-            <FiShare2 size={16} />
-            {t("general.share")}
-        </Button>
-        <PopOver
-            pos="top"
-            anchor="right"
-            visible={state !== "closed"}
+    return (
+        <FloatingContainer
+            ref={ref}
+            placement="top"
             arrowSize={12}
-            arrowDist={24}
-            anchorDist={-12}
-            padding={[8, 16, 16, 16]}
-        >{inner}</PopOver>
-    </div>;
+            open={state !== "closed"}
+        >
+            <FloatingTrigger>
+                <Button onClick={() => setState(state => state === "closed" ? "main" : "closed")}>
+                    <FiShare2 size={16} />
+                    {t("general.share")}
+                </Button>
+            </FloatingTrigger>
+            <Floating padding={[8, 16, 16, 16]}>{inner}</Floating>
+        </FloatingContainer>
+    );
 };
 
 
@@ -538,16 +539,16 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             ? updated.toLocaleString(i18n.language, fullOptions)
             : null;
 
-        inner = <>
-            {createdDate}
-            <PopOver pos="top">
-                <i>{t("video.created")}</i>: {createdFull}
-                {updatedFull && <>
-                    <br/>
-                    <i>{t("video.updated")}</i>: {updatedFull}
-                </>}
-            </PopOver>
+        const tooltip = <>
+            <i>{t("video.created")}</i>: {createdFull}
+            {updatedFull && <>
+                <br/>
+                <i>{t("video.updated")}</i>: {updatedFull}
+            </>}
         </>;
+        inner = <WithTooltip distance={0} tooltip={tooltip}>
+            <div>{createdDate}</div>
+        </WithTooltip>;
     }
 
     return (
@@ -556,9 +557,6 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             position: "relative",
             color: "var(--grey40)",
             fontSize: 14,
-            "&:not(:hover) > div[data-popover-marker]": {
-                display: "none",
-            },
         }}>{inner}</div>
     );
 };
