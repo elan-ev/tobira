@@ -10,6 +10,7 @@ import {
     useClick,
     useDismiss,
     useFloating,
+    useFocus,
     useHover,
     useInteractions,
     useRole,
@@ -173,13 +174,16 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
             enabled: "trigger" in rest && rest.trigger === "hover",
             handleClose: safePolygon(),
         });
+        const focus = useFocus(floatContext, {
+            enabled: "trigger" in rest && rest.trigger === "hover",
+        });
         const click = useClick(floatContext, {
             enabled: "trigger" in rest && rest.trigger === "click",
         });
         const dismiss = useDismiss(floatContext);
         const role = useRole(floatContext, { role: ariaRole });
         const { getReferenceProps, getFloatingProps }
-            = useInteractions([hover, click, dismiss, role]);
+            = useInteractions([hover, focus, click, dismiss, role]);
 
 
         // Setup context
