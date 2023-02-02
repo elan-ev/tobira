@@ -1,10 +1,9 @@
 import { Link } from "../router";
 import { match } from "../util";
-import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
 
 
-export const SIDE_BOX_BORDER_RADIUS = 10;
+export const SIDE_BOX_BORDER_RADIUS = 8;
 
 export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{
@@ -12,7 +11,7 @@ export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
         borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
         "&:not(:first-child)": {
-            marginTop: 32,
+            marginTop: 26,
         },
     }}>{children}</div>
 );
@@ -26,26 +25,20 @@ type LinkListProps = {
 export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
     <ul
         css={{
+            // TODO: Adjust colors and focus-style.
             listStyle: "none",
             margin: 0,
             padding: 0,
             "& a": { ...FOCUS_STYLE_INSET },
             "& > li": {
+                backgroundColor: "var(--grey95)",
                 borderBottom: "2px solid white",
                 "&:last-of-type": {
                     borderBottom: "none",
                 },
                 "& > *": {
-                    padding: "6px 10px",
+                    padding: "9px 14px 9px 16px",
                     display: "flex",
-                },
-            },
-            [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
-                "& > li:last-child > a": {
-                    borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
-                },
-                "&:first-child > li:first-child > a": {
-                    borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
                 },
             },
         }}
@@ -76,8 +69,9 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
     const TRANSITION_DURATION = "0.1s";
 
     const hoverActiveStyle = {
+        // TODO: Adjust colors and hover-style.
         transitionDuration: "0s",
-        backgroundColor: "var(--grey92)",
+        backgroundColor: "var(--grey86)",
         "& > svg": {
             transitionDuration: "0s",
             color: "var(--grey40)",
@@ -94,9 +88,8 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
         transition: `background-color ${TRANSITION_DURATION}`,
 
         "& > svg": {
-            fontSize: 22,
-            minWidth: 22,
-            color: "var(--grey65)",
+            fontSize: 20,
+            minWidth: 20,
             transition: `color ${TRANSITION_DURATION}`,
             ...match(iconPos, {
                 "left": () => ({ marginRight: 12 } as Record<string, unknown>),
@@ -107,7 +100,6 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
         "&:hover, &:focus": hoverActiveStyle,
         ...active && {
             color: "var(--nav-color-darker)",
-            fontWeight: "bold",
             "&": hoverActiveStyle,
         },
     };

@@ -1,6 +1,5 @@
 import React from "react";
-import { HiOutlineSearch } from "react-icons/hi";
-import { FiArrowLeft, FiMenu, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiMenu, FiSearch, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 
 import { useMenu } from "../MenuState";
@@ -61,7 +60,10 @@ const OpenMenuMode: React.FC = () => {
     return <>
         <Logo />
         <ButtonContainer>
-            <ActionIcon title={t("close")} onClick={() => menu.close()}>
+            <ActionIcon
+                title={t("close")}
+                onClick={() => menu.close()}
+                css={buttonOutline}>
                 <FiX />
             </ActionIcon>
         </ButtonContainer>
@@ -87,7 +89,7 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                     },
                 }}
             >
-                <HiOutlineSearch />
+                <FiSearch />
             </ActionIcon>
 
             {!hideNavIcon && (
@@ -95,6 +97,7 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                     title={t("main-menu.label")}
                     onClick={() => menu.toggleMenu("burger")}
                     css={{
+                        ...buttonOutline,
                         [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
                             display: "none",
                         },
@@ -105,4 +108,11 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
             )}
         </ButtonContainer>
     </>;
+};
+
+const buttonOutline = {
+    "> button": {
+        padding: 4,
+        border: "1px solid var(--grey80)",
+    },
 };
