@@ -12,7 +12,7 @@ import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { useOnOutsideClick } from "../../util";
-import { User, useUser } from "../../User";
+import { isRealUser, User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon } from "./ui";
 import CONFIG from "../../config";
@@ -42,20 +42,24 @@ export const UserBox: React.FC = () => {
     const userMenu = menuActions(userMenuOpen, setUserMenuOpen);
     const languageMenu = menuActions(languageMenuOpen, setLanguageMenuOpen);
 
+    const iconCss = {
+        height: "100%",
+        margin: "0 9px",
+        fontSize: 22,
+        opacity: 0.4,
+    };
 
     return (
         <>
             <LanguageSettings {...{ menu: languageMenu }} />
             {user === "unknown"
-                ? <Spinner css={{
-                    height: "100%",
-                    margin: "0 9px",
-                    fontSize: 22,
-                    opacity: 0.4,
-                }} />
-                : user === "none"
-                    ? <LoggedOut />
-                    : <LoggedIn {...{ t, user, menu: userMenu }} />
+                ? <Spinner css={iconCss} />
+                : user === "error"
+                    // TODO: tooltip
+                    ? <FiAlertTriangle css={iconCss} />
+                    : user === "none"
+                        ? <LoggedOut />
+                        : <LoggedIn {...{ t, user, menu: userMenu }} />
             }
         </>
     );
@@ -214,9 +218,7 @@ type MenuProps = {
  */
 const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
     const { t } = useTranslation();
-
-    const userState = useUser();
-    const user = userState === "none" || userState === "unknown" ? null : userState;
+    const user = useUser();
 
     // Close menu on clicks anywhere outside of it.
     useOnOutsideClick(container, close);
@@ -225,7 +227,7 @@ const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
         main: () => <>
             <ReturnButton onClick={() => close()}>{t("User features")}</ReturnButton>
             {/* Login button if the user is NOT logged in */}
-            {!user && (
+            {user === "none" && (
                 <MenuItem
                     icon={<FiLogIn />}
                     borderBottom
@@ -240,7 +242,7 @@ const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
                 >{t("user.login")}</MenuItem>
             )}
 
-            {user && <>
+            {isRealUser(user) && <>
                 <MenuItem
                     icon={<FiFolder />}
                     borderBottom
@@ -255,7 +257,7 @@ const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
             </>}
 
             {/* Logout button if the user is logged in */}
-            {user && <Logout />}
+            {isRealUser(user) && <Logout />}
         </>,
         language: () => <>
             <ReturnButton onClick={() => close()}>{t("Choose language")}</ReturnButton>
@@ -288,7 +290,7 @@ const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
                 right: 0,
                 marginTop: 6,
                 borderRadius: 8,
-                boxShadow: "0px 4px 16px var(--grey92)",
+                boxShadow: "0px 4px 16px var(--grey80)",
                 backgroundColor: "white",
                 minWidth: 200,
                 paddingLeft: 0,
@@ -438,10 +440,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
     };
 
     return linkTo
-        ? <li {... { className }}>
+        ? <li role="menuitem" {... { className }}>
             <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
         </li>
-        : <li tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
+        : <li role="menuitem" tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
             {inner}
         </li>;
 };
