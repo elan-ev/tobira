@@ -17,7 +17,7 @@ import { Button, LinkButton } from "../ui/Button";
 import { boxError, ErrorBox } from "../ui/error";
 import { Form } from "../ui/Form";
 import { Input, TextArea } from "../ui/Input";
-import { User, useUser } from "../User";
+import { isRealUser, User, useUser } from "../User";
 import { currentRef, useRefState } from "../util";
 import { Card } from "../ui/Card";
 import { InputContainer, TitleLabel } from "../ui/metadata";
@@ -119,7 +119,7 @@ const UploadMain: React.FC = () => {
 
     // Get user info
     const user = useUser();
-    if (user === "none" || user === "unknown") {
+    if (!isRealUser(user)) {
         // TODO: if not logged in, suggest doing so
         return <div css={{ textAlign: "center" }}>
             <ErrorBox>{t("upload.not-authorized")}</ErrorBox>

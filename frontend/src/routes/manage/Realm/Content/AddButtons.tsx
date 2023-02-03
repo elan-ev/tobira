@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, commitLocalUpdate, useRelayEnvironment } from "react-relay";
 import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
@@ -7,7 +7,14 @@ import { FiPlus, FiType, FiGrid, FiFilm, FiHash } from "react-icons/fi";
 import { AddButtonsRealmData$key } from "./__generated__/AddButtonsRealmData.graphql";
 import { bug } from "../../../../util/err";
 import { IconType } from "react-icons";
-import { useOnOutsideClick } from "../../../../util";
+import {
+    Floating,
+    FloatingContainer,
+    FloatingHandle,
+    FloatingTrigger,
+    WithTooltip,
+} from "../../../../ui/Floating";
+import { ProtoButton } from "../../../../ui/Button";
 
 
 type Props = {
@@ -18,9 +25,7 @@ type Props = {
 export const AddButtons: React.FC<Props> = ({ index, realm }) => {
     const { t } = useTranslation();
 
-    const outerRef = useRef(null);
-    const [opened, setOpened] = useState(false);
-    useOnOutsideClick(outerRef, () => setOpened(false));
+    const floatingRef = useRef<FloatingHandle>(null);
 
     const { id: realmId } = useFragment(graphql`
         fragment AddButtonsRealmData on Realm {
@@ -56,45 +61,48 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
     const BUTTON_SIZE = 36;
 
     return (
-        <div ref={outerRef} css={{
-            position: "relative",
-            width: BUTTON_SIZE,
-            height: BUTTON_SIZE,
-            alignSelf: "center",
-        }}>
-            <div
-                title={t("manage.realm.content.add")}
-                onClick={() => setOpened(opened => !opened)}
+        <FloatingContainer
+            ref={floatingRef}
+            trigger="click"
+            placement="top"
+            borderRadius={8}
+            ariaRole="menu"
+            distance={6}
+            css={{ alignSelf: "center" }}
+        >
+            <FloatingTrigger>
+                <div>
+                    <WithTooltip tooltip={t("manage.realm.content.add")} placement="bottom">
+                        <ProtoButton aria-label={t("manage.realm.content.add")} css={{
+                            width: BUTTON_SIZE,
+                            height: BUTTON_SIZE,
+                            fontSize: 24,
+                            borderRadius: 4,
+                            backgroundColor: "var(--accent-color)",
+                            color: "var(--accent-color-bw-contrast)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            "&:hover, &:focus": {
+                                backgroundColor: "var(--accent-color-darker)",
+                            },
+                        }}>
+                            <FiPlus />
+                        </ProtoButton>
+                    </WithTooltip>
+                </div>
+            </FloatingTrigger>
+
+            <Floating
+                padding={0}
+                borderWidth={0}
+                shadowBlur={12}
+                shadowColor="rgba(0, 0, 0, 30%)"
                 css={{
-                    cursor: "pointer",
-                    width: "100%",
-                    height: "100%",
-                    fontSize: 24,
-                    borderRadius: 4,
-                    backgroundColor: "var(--accent-color)",
-                    color: "var(--accent-color-bw-contrast)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    "&:hover, &:focus": {
-                        backgroundColor: "var(--accent-color-darker)",
-                    },
+                    backgroundColor: "white",
+                    width: 200,
                 }}
             >
-                <FiPlus />
-            </div>
-            {opened && <div css={{
-                position: "absolute",
-                bottom: BUTTON_SIZE + 12,
-                left: "50%",
-                transform: "translate(-50%)",
-                backgroundColor: "white",
-                boxShadow: "1px 1px 12px rgba(0, 0, 0, 30%)",
-                width: 200,
-                borderRadius: 8,
-                overflow: "hidden",
-                zIndex: 100,
-            }}>
                 <div css={{
                     fontSize: 14,
                     color: "var(--grey40)",
@@ -112,19 +120,19 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                     },
                 }}>
                     <AddItem
-                        close={() => setOpened(false)}
+                        close={() => floatingRef.current?.close()}
                         Icon={FiHash}
                         label={t("manage.realm.content.add-title")}
                         onClick={() => addBlock("Title")}
                     />
                     <AddItem
-                        close={() => setOpened(false)}
+                        close={() => floatingRef.current?.close()}
                         Icon={FiType}
                         label={t("manage.realm.content.add-text")}
                         onClick={() => addBlock("Text")}
                     />
                     <AddItem
-                        close={() => setOpened(false)}
+                        close={() => floatingRef.current?.close()}
                         Icon={FiGrid}
                         label={t("manage.realm.content.add-series")}
                         onClick={() => addBlock("Series", (_store, block) => {
@@ -134,7 +142,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                         })}
                     />
                     <AddItem
-                        close={() => setOpened(false)}
+                        close={() => floatingRef.current?.close()}
                         Icon={FiFilm}
                         label={t("manage.realm.content.add-video")}
                         onClick={() => addBlock("Video", (_store, block) => {
@@ -142,8 +150,8 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                         })}
                     />
                 </ul>
-            </div>}
-        </div>
+            </Floating>
+        </FloatingContainer>
     );
 };
 
@@ -155,8 +163,13 @@ type AddItemProps = {
 };
 
 const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
-    <li>
-        <button
+    <li role="menuitem" css={{
+        "&:last-child > button": {
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+        },
+    }}>
+        <ProtoButton
             onClick={() => {
                 onClick();
                 close();
@@ -169,15 +182,17 @@ const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
                 alignItems: "center",
                 gap: 16,
                 backgroundColor: "transparent",
-                cursor: "pointer",
-                border: "none",
                 "&:hover, &:focus": {
                     backgroundColor: "var(--grey97)",
+                },
+                "&:focus-visible": {
+                    outline: "2px solid var(--accent-color)",
+                    outlineOffset: -2,
                 },
             }}
         >
             {<Icon css={{ color: "var(--accent-color)", fontSize: 18 }}/>}
             {label}
-        </button>
+        </ProtoButton>
     </li>
 );

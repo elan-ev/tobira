@@ -1,6 +1,22 @@
 import { Interpolation, Theme } from "@emotion/react";
+import React from "react";
+
 import { Link } from "../router";
 import { match } from "../util";
+
+
+/**
+ * A mostly unstyled button used to build buttons. Always use this instead of
+ * `<button>`.
+ */
+export const ProtoButton = React.forwardRef<HTMLButtonElement, JSX.IntrinsicElements["button"]>(
+    ({ children, ...rest }, ref) => <button
+        type="button"
+        ref={ref}
+        css={PROTO_CSS}
+        {...rest}
+    >{children}</button>,
+);
 
 
 type Kind = "normal" | "danger" | "happy";
@@ -11,8 +27,10 @@ type ButtonProps = JSX.IntrinsicElements["button"] & {
 };
 
 /** A styled button */
-export const Button: React.FC<ButtonProps> = ({ kind = "normal", extraCss, children, ...rest }) => (
-    <button type="button" css={css(kind, extraCss)} {...rest}>{children}</button>
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ kind = "normal", extraCss, children, ...rest }, ref) => (
+        <button ref={ref} type="button" css={css(kind, extraCss)} {...rest}>{children}</button>
+    ),
 );
 
 type LinkButtonProps = JSX.IntrinsicElements["a"] & {
@@ -30,6 +48,14 @@ export const LinkButton: React.FC<LinkButtonProps> = ({
 }) => (
     <Link to={to} css={css(kind, extraCss)} {...rest}>{children}</Link>
 );
+
+const PROTO_CSS = {
+    border: "none",
+    padding: 0,
+    background: "none",
+    color: "inherit",
+    cursor: "pointer",
+} as const;
 
 const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<Theme> => {
     const notDisabledStyle = match(kind, {
@@ -70,6 +96,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         alignItems: "center",
         padding: "4px 10px",
         gap: 12,
+        whiteSpace: "nowrap",
         backgroundColor: "var(--grey97)",
         transition: "background-color 0.15s, border-color 0.15s",
         "& > svg": {

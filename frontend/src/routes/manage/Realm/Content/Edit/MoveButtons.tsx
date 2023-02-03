@@ -6,6 +6,7 @@ import { FiArrowDown, FiArrowUp } from "react-icons/fi";
 import type { MoveButtonsData$key } from "./__generated__/MoveButtonsData.graphql";
 import type { MoveButtonsMutation } from "./__generated__/MoveButtonsMutation.graphql";
 import { Button } from "../util";
+import { WithTooltip } from "../../../../../ui/Floating";
 
 
 type Props = {
@@ -59,19 +60,23 @@ export const MoveButtons: React.FC<Props> = ({
 
 
     return <>
-        <Button
-            title={t("manage.realm.content.move-down")}
-            disabled={index === blocks.length - 1}
-            onClick={() => move(1)}
-        >
-            <FiArrowDown />
-        </Button>
-        <Button
-            title={t("manage.realm.content.move-up")}
-            disabled={index === 0}
-            onClick={() => move(-1)}
-        >
-            <FiArrowUp />
-        </Button>
+        <WithTooltip tooltip={t("manage.realm.content.move-down")}>
+            <Button
+                aria-label={t("manage.realm.content.move-down")}
+                disabled={index === blocks.length - 1}
+                onClick={() => move(1)}
+            >
+                <FiArrowDown />
+            </Button>
+        </WithTooltip>
+        <WithTooltip tooltip={t("manage.realm.content.move-up")}>
+            <Button
+                aria-label={t("manage.realm.content.move-up")}
+                disabled={index === 0}
+                onClick={() => move(-1)}
+            >
+                <FiArrowUp />
+            </Button>
+        </WithTooltip>
     </>;
 };

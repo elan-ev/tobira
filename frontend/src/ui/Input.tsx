@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { Button } from "./Button";
+import { WithTooltip } from "./Floating";
 
 
 const style = (error: boolean) => ({
@@ -69,9 +70,14 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
 type CopyableInputProps = JSX.IntrinsicElements["div"] & {
     value: string;
+    multiline?: boolean;
 };
 
-export const CopyableInput: React.FC<CopyableInputProps> = ({ value, ...rest }) => {
+export const CopyableInput: React.FC<CopyableInputProps> = ({
+    value,
+    multiline = false,
+    ...rest
+}) => {
     const { t } = useTranslation();
 
     const [wasCopied, setWasCopied] = useState(false);
@@ -80,30 +86,46 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({ value, ...rest }) 
         setWasCopied(true);
     };
 
+    const buttonSize = 34;
+    const sharedStyle = {
+        ...style(false),
+        width: "100%",
+        height: "100%",
+        padding: `4px ${buttonSize + 10}px 4px 10px`,
+    };
+    const inner = multiline
+        ? <textarea disabled value={value} css={{
+            ...sharedStyle,
+            overflow: "hidden",
+            resize: "none",
+        }} />
+        : <input disabled value={value} css={sharedStyle} />;
+
     return (
-        <div css={{ display: "flex" }} {...rest}>
-            <input disabled value={value} css={{
-                ...style(false),
-                padding: "4px 10px",
-                borderTopRightRadius: 0,
-                borderBottomRightRadius: 0,
-                verticalAlign: "bottom",
-                borderRight: "none",
-                flex: "1",
-            }} />
-            {/* TODO: use BaseButton or sth once merged */}
-            <Button
-                kind="happy"
-                onClick={copy}
-                title={t("copy-to-clipboard")}
-                css={{
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
-                    height: 34,
-                }}
-            >
-                {wasCopied ? <FiCheck /> : <FiCopy />}
-            </Button>
+        <div css={{
+            position: "relative",
+            height: multiline ? 95 : 34,
+            maxWidth: "100%",
+        }} {...rest}>
+            <div css={{ position: "absolute", top: 0, right: 0 }}>
+                <WithTooltip tooltip={t("copy-to-clipboard")}>
+                    <Button
+                        aria-label={t("copy-to-clipboard")}
+                        kind="happy"
+                        onClick={copy}
+                        css={{
+                            borderTopLeftRadius: 0,
+                            height: 34,
+                            ...multiline
+                                ? { borderBottomRightRadius: 0 }
+                                : { borderBottomLeftRadius: 0 },
+                        }}
+                    >
+                        {wasCopied ? <FiCheck /> : <FiCopy />}
+                    </Button>
+                </WithTooltip>
+            </div>
+            {inner}
         </div>
     );
 };

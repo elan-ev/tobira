@@ -3,11 +3,13 @@ import React from "react";
 
 type ButtonProps = React.ComponentProps<"button">;
 
-export const Button: React.FC<ButtonProps> = props => (
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => (
     <button
+        ref={ref}
         type="button"
         css={{
             display: "flex",
+            padding: 6,
             alignItems: "center",
             border: "none",
             color: "var(--grey40)",
@@ -26,7 +28,7 @@ export const Button: React.FC<ButtonProps> = props => (
         }}
         {...props}
     />
-);
+));
 
 type ButtonGroupProps = React.ComponentProps<"div">;
 
@@ -34,18 +36,22 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
     <div
         {...props}
         css={{
-            fontSide: 20,
+            fontSize: 18,
             display: "flex",
             alignItems: "center",
             border: "1px solid var(--grey80)",
             borderRadius: 4,
-            overflow: "hidden",
             "& > *": {
                 display: "flex",
                 color: "var(--grey40)",
-                padding: 6,
                 "&:not(:last-child)": {
                     borderRight: "1px solid var(--grey80)",
+                },
+                "&:last-child > button": {
+                    borderTopRightRadius: 4,
+                },
+                "&:first-child > button": {
+                    borderBottomLeftRadius: 4,
                 },
             },
         }}

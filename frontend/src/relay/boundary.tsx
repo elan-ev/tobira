@@ -56,7 +56,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
         }
 
         // Try to retrieve user data if we have any.
-        let userData: UserProviderProps["data"] = undefined;
+        let userData: UserProviderProps["data"] = "error";
         if (error instanceof APIError) {
             // This check is not perfect, as it does not make sure the
             // currentUser has all the fields that are actually expected. But

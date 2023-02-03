@@ -20,34 +20,36 @@ type ActionIconProps = {
 };
 
 /** A single button with icon in the header. */
-export const ActionIcon: React.FC<ActionIconProps> = ({ title, onClick, children, className }) => (
-    <div {...{ className }} css={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-    }}>
-        <button
-            title={title}
-            onClick={onClick}
-            css={{
-                border: "none",
-                background: "none",
-                padding: 5,
-                margin: "0 4px",
-                borderRadius: 4,
-                lineHeight: 0,
-                cursor: "pointer",
-                fontSize: 28,
-                opacity: "0.75",
-                "&:hover, &:focus": {
-                    opacity: "1",
-                },
-                [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
-                    fontSize: 24,
-                },
-            }}
-        >{children}</button>
-    </div>
+export const ActionIcon = React.forwardRef<HTMLDivElement, ActionIconProps>(
+    ({ title, onClick, children, className }, ref) => (
+        <div ref={ref} {...{ className }} css={{
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+        }}>
+            <button
+                title={title}
+                onClick={onClick}
+                css={{
+                    border: "none",
+                    background: "none",
+                    padding: 5,
+                    margin: "0 4px",
+                    borderRadius: 4,
+                    lineHeight: 0,
+                    cursor: "pointer",
+                    fontSize: 28,
+                    opacity: "0.75",
+                    "&:hover, &:focus": {
+                        opacity: "1",
+                    },
+                    [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                        fontSize: 24,
+                    },
+                }}
+            >{children}</button>
+        </div>
+    ),
 );
 
 type PageTitleProps = {

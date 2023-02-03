@@ -81,41 +81,43 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             clearTimeout(lastTimeout.current);
             search(currentRef(ref).value);
         }}>
-            <input
-                ref={ref}
-                type="text"
-                placeholder={t("search.input-label")}
-                title={t("search.input-label")}
-                defaultValue={defaultValue}
-                autoFocus={variant === "mobile"}
-                onChange={e => {
-                    clearTimeout(lastTimeout.current);
-                    lastTimeout.current = setTimeout(() => {
-                        search(e.target.value);
-                    }, 30);
-                }}
-                css={{
-                    flex: "1 1 0px",
-                    minWidth: 50,
-                    height,
-                    borderRadius: 12,
-                    paddingLeft: 40,
-                    paddingRight: 12,
-                    backgroundColor: "var(--grey92)",
-                    border: "2px solid white",
-                    "&:hover, &:focus": {
-                        backgroundColor: "var(--grey86)",
-                    },
-                    "&:focus": {
-                        outline: "none",
-                        borderColor: "var(--accent-color)",
-                    },
-                    "&::placeholder": {
-                        color: "var(--grey40)",
-                    },
-                    ...extraCss,
-                }}
-            />
+            <label>
+                <span css={{ display: "none" }}>{t("search.input-label")}</span>
+                <input
+                    ref={ref}
+                    type="text"
+                    placeholder={t("search.input-label")}
+                    defaultValue={defaultValue}
+                    autoFocus={variant === "mobile"}
+                    onChange={e => {
+                        clearTimeout(lastTimeout.current);
+                        lastTimeout.current = setTimeout(() => {
+                            search(e.target.value);
+                        }, 30);
+                    }}
+                    css={{
+                        flex: "1 1 0px",
+                        minWidth: 50,
+                        height,
+                        borderRadius: 12,
+                        paddingLeft: 40,
+                        paddingRight: 12,
+                        backgroundColor: "var(--grey92)",
+                        border: "2px solid white",
+                        "&:hover, &:focus": {
+                            backgroundColor: "var(--grey86)",
+                        },
+                        "&:focus": {
+                            outline: "none",
+                            borderColor: "var(--accent-color)",
+                        },
+                        "&::placeholder": {
+                            color: "var(--grey40)",
+                        },
+                        ...extraCss,
+                    }}
+                />
+            </label>
         </form>
         {router.isTransitioning && isSearchActive() && <Spinner
             size={spinnerSize}
