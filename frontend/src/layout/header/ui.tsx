@@ -41,7 +41,9 @@ export const ActionIcon = React.forwardRef<HTMLDivElement, ActionIconProps>(
                     fontSize: 28,
                     opacity: "0.75",
                     "&:hover, &:focus": {
+                        outline: "none",
                         opacity: "1",
+                        boxShadow: "0 0 1px 2px var(--accent-color)",
                     },
                     [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
                         fontSize: 24,

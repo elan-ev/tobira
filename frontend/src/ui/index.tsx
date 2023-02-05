@@ -13,6 +13,9 @@ export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
         "&:not(:first-child)": {
             marginTop: 26,
         },
+        ".sub-realms > li:first-child > a": {
+            borderRadius: 0,
+        },
     }}>{children}</div>
 );
 
@@ -86,7 +89,6 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
         }),
         alignItems: "center",
         transition: `background-color ${TRANSITION_DURATION}`,
-
         "& > svg": {
             fontSize: 20,
             minWidth: 20,

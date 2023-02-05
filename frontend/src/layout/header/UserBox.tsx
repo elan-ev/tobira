@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle,
     FiArrowLeft,
-    FiCheck, FiChevronDown, FiChevronUp, FiFolder, FiLogIn, FiLogOut, FiUpload, FiUserCheck,
+    FiCheck, FiChevronDown, FiChevronUp, FiFolder, FiLogOut, FiUpload, FiUserCheck,
 } from "react-icons/fi";
 import { HiOutlineTranslate } from "react-icons/hi";
 
@@ -71,43 +71,46 @@ const LoggedOut: React.FC = () => {
     const { t } = useTranslation();
 
     return (
-        <Link
-            to={CONFIG.auth.loginLink ?? LOGIN_PATH}
-            onClick={() => {
+        <>
+            <Link
+                to={CONFIG.auth.loginLink ?? LOGIN_PATH}
+                onClick={() => {
                 // Store a redirect link in session storage.
-                window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
-            }}
-            htmlLink={!!CONFIG.auth.loginLink}
-            css={{
-                display: "flex",
-                padding: "8px 0",
-            }}>
-            <div css={{
-                alignSelf: "center",
-                borderRadius: 8,
-                cursor: "pointer",
-                lineHeight: "22px",
-                padding: "10px 24px 10px 16px",
-                marginRight: 8,
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                backgroundColor: "var(--nav-color)",
-                color: "var(--nav-color-bw-contrast)",
-                "&:hover, &:focus": {
-                    backgroundColor: "var(--nav-color-dark)",
+                    window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
+                }}
+                htmlLink={!!CONFIG.auth.loginLink}
+                css={{
+                    display: "flex",
+                    padding: "8px 0",
+                    ":hover, :focus": {
+                        outline: "none",
+                        "> div": {
+                            backgroundColor: "var(--nav-color-dark)",
+                            color: "var(--nav-color-bw-contrast)",
+                            boxShadow: "0 0 1px 2px var(--accent-color)",
+                        },
+                    },
+                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                        display: "none",
+                    },
+                }}>
+                <div css={{
+                    alignSelf: "center",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    lineHeight: "22px",
+                    padding: "10px 24px 10px 16px",
+                    marginRight: 8,
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    backgroundColor: "var(--nav-color)",
                     color: "var(--nav-color-bw-contrast)",
-                    boxShadow: "0 0 1px 2px var(--accent-color)",
-                },
-                "&:focus-visible": {
-                    outline: "none",
-                },
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    display: "none",
-                },
-            }}>
-                <FiLogOut size={"20px"} />{t("user.login")}
-            </div>
+                }}>
+                    <FiLogOut size={"20px"} />{t("user.login")}
+                </div>
+            </Link>
+            {/* Show icon on mobile devices. */}
             <ActionIcon title={t("user.login")} css={{
                 [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     display: "none",
@@ -115,7 +118,7 @@ const LoggedOut: React.FC = () => {
             }}>
                 <FiLogOut />
             </ActionIcon>
-        </Link>
+        </>
     );
 };
 
@@ -161,7 +164,6 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
                 {user.displayName}
                 {menu.isOpen ? <FiChevronUp /> : <FiChevronDown />}
             </Button>
-
             {/* Show icon on mobile devices. */}
             <ActionIcon
                 title={t("user.settings")}
@@ -175,7 +177,6 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
                     "& > polyline": { stroke: "var(--happy-color-dark)" },
                 }}/>
             </ActionIcon>
-
             {/* Show menu if it is opened */}
             {menu.isOpen && <Menu close={menu.close} container={ref} type="main" />}
         </div>
@@ -226,24 +227,13 @@ const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
     const items = match(type, {
         main: () => <>
             <ReturnButton onClick={() => close()}>{t("User features")}</ReturnButton>
-            {/* Login button if the user is NOT logged in */}
-            {user === "none" && (
-                <MenuItem
-                    icon={<FiLogIn />}
-                    borderBottom
-                    linkTo={CONFIG.auth.loginLink ?? LOGIN_PATH}
-                    htmlLink={!!CONFIG.auth.loginLink}
-                    css={{
-                        color: "var(--nav-color)",
-                        [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                            display: "none",
-                        },
-                    }}
-                >{t("user.login")}</MenuItem>
-            )}
-
             {isRealUser(user) && <>
                 <MenuItem
+                    css={{
+                        [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                            borderRadius: "8px 8px 0 0",
+                        },
+                    }}
                     icon={<FiFolder />}
                     borderBottom
                     linkTo="/~manage"
@@ -319,14 +309,20 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
     <div css={{
         borderBottom: "1px solid var(--grey80)",
         display: "flex",
-        padding: "24px 12px",
-        gap: 16,
         [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
             display: "none",
         },
     }}>
-        <div onClick={onClick} css={{
+        <div onClick={onClick} tabIndex={0} css={{
             cursor: "pointer",
+            padding: "24px 12px",
+            ":hover, :focus": {
+                backgroundColor: "var(--grey80)",
+            },
+            ":focus": {
+                outline: "none",
+                boxShadow: "inset 0 0 1px 2px var(--accent-color)",
+            },
             "> svg": {
                 position: "relative",
                 top: 1,
@@ -337,6 +333,7 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             },
             "+ span": {
                 color: "var(--grey40)",
+                padding: "24px 12px 24px 4px",
             },
         }}>
             <FiArrowLeft />
@@ -424,7 +421,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
             },
         },
         "&:hover, &:focus": {
-            backgroundColor: "var(--grey97)",
+            backgroundColor: "var(--grey92)",
+        },
+        "&:focus": {
+            boxShadow: "inset 0 0 1px 2px var(--accent-color)",
         },
         ...FOCUS_STYLE_INSET,
     } as const;
@@ -497,7 +497,12 @@ const Logout: React.FC = () => {
                 "error": () => <FiAlertTriangle />,
             })}
             borderTop
-            css={{ color: "var(--danger-color)" }}
+            css={{
+                color: "var(--danger-color)",
+                ":hover, :focus": {
+                    borderRadius: "0 0 8px 8px",
+                },
+            }}
             {...actionProps}
         >{t("user.logout")}</MenuItem>
     );

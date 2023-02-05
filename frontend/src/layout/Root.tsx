@@ -7,7 +7,7 @@ import { BREAKPOINT as NAV_BREAKPOINT, NavItems } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
 import { BurgerMenu } from "./Burger";
-import { SideBox } from "../ui";
+import { SideBox, SIDE_BOX_BORDER_RADIUS } from "../ui";
 import { OUTER_CONTAINER_MARGIN } from ".";
 import { userDataFragment, UserProvider } from "../User";
 import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
@@ -47,6 +47,12 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
                     minWidth: 240,
                     maxWidth: 360,
                     marginRight: 48,
+                    ":first-child li:first-child > a": {
+                        borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
+                    },
+                    ":first-child li:last-child > a": {
+                        borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
+                    },
                     [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                         display: "none",
                     },

@@ -35,6 +35,7 @@ export const Logo: React.FC = () => {
     return (
         <Link
             to="/"
+            className="logo"
             css={{
                 height: `calc(100% + ${HEADER_BASE_PADDING * 2}px)`,
                 flex: "0 1 auto",

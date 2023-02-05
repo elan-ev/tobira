@@ -108,7 +108,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         height,
                         paddingLeft: 42,
                         paddingRight: 12,
-                        "&:hover ,&:focus": {
+                        "&:hover, &:focus": {
+                            outline: "none",
                             boxShadow: "0 0 1px 2px var(--accent-color)",
                         },
                         "&::placeholder": {
