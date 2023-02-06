@@ -17,10 +17,12 @@ type PaellaPlayerProps = {
     tracks: readonly Track[];
     captions: readonly Caption[];
     isLive: boolean;
+    startTime: string | null;
+    endTime: string | null;
 };
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
-    tracks, title, duration, isLive, captions,
+    tracks, title, duration, isLive, captions, startTime, endTime,
 }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
@@ -47,8 +49,24 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 tracksByKind[kind].push(track);
             }
 
+            let fixedDuration = duration;
+            if (fixedDuration === 0 && startTime && endTime) {
+                const diffMs = (new Date(endTime).getTime() - new Date(startTime).getTime());
+                fixedDuration = diffMs / 1000;
+            }
+
+            // Paella just crashes if we pass a 0 duration, so... we just pass
+            // 1. It's not like Paella is using it for anything as far as I can
+            // see. The correct duration of the loaded video is used.
+            if (fixedDuration === 0) {
+                fixedDuration = 1;
+            }
+
             const manifest: Manifest = {
-                metadata: { title, duration },
+                metadata: {
+                    title,
+                    duration: fixedDuration,
+                },
                 streams: Object.entries(tracksByKind).map(([key, tracks]) => ({
                     content: key,
                     sources: tracksToPaellaSources(tracks, isLive),
@@ -99,7 +117,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             paellaSnapshot.unload();
             paella.current = undefined;
         };
-    }, [tracks, title, duration, isLive, captions, t]);
+    }, [tracks, title, duration, isLive, captions, startTime, endTime, t]);
 
     return (
         <div
