@@ -27,6 +27,8 @@ const ASSETS: Setup = assets! {
 
     "fonts.css": { hash, template },
 
+    "1x1-black.png": {},
+
     // Font files
     "fonts/cyrillic-400.woff2": { hash },
     "fonts/cyrillic-700.woff2": { hash },

@@ -63,10 +63,10 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         ? new URLSearchParams(document.location.search).get("q") ?? undefined
         : undefined;
 
+    const onSearchRoute = document.location.pathname === "/~search";
     const search = (expression: string) => {
         const newUrl = `/~search?q=${encodeURIComponent(expression)}`;
-        const replace = document.location.pathname === "/~search";
-        router.goto(newUrl, replace);
+        router.goto(newUrl, onSearchRoute);
     };
 
     return <div css={{ position: "relative", margin: "0 8px", ...extraCss }}>
@@ -87,7 +87,10 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 placeholder={t("search.input-label")}
                 title={t("search.input-label")}
                 defaultValue={defaultValue}
-                autoFocus={variant === "mobile"}
+                // The `onSearchRoute` part of this is a hacky fix to the search
+                // losing focus when transitioning from any route to the search
+                // route.
+                autoFocus={variant === "mobile" || onSearchRoute}
                 onChange={e => {
                     clearTimeout(lastTimeout.current);
                     lastTimeout.current = setTimeout(() => {
