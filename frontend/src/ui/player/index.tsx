@@ -69,12 +69,13 @@ export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange }) => 
             rerender();
             onEventStateChange?.();
         };
+
         const handles: ReturnType<typeof setTimeout>[] = [];
         if (event.isLive && hasStarted === false) {
-            handles.push(setTimeout(handler, startTime.getTime() - Date.now() + 500));
+            handles.push(setTimeout(handler, delayTill(startTime)));
         }
         if (event.isLive && hasEnded === false) {
-            handles.push(setTimeout(handler, endTime.getTime() - Date.now() + 500));
+            handles.push(setTimeout(handler, delayTill(endTime)));
         }
         return () => handles.forEach(clearTimeout);
     });
@@ -90,6 +91,16 @@ export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange }) => 
                 : <LoadPaellaPlayer {...event} {...event.syncedData} />}
         </Suspense>
     );
+};
+
+/**
+ * Returns the duration till `date` as a value suitable for putting into
+ * `setTimeout`. We have to do a special treatment as `setTimeout`
+ * immediately executes the handler if the number is bigger than 2^31.
+ */
+const delayTill = (date: Date): number => {
+    const raw = date.getTime() - Date.now() + 500;
+    return Math.min(raw, 2_147_483_647);
 };
 
 /**
