@@ -127,6 +127,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
 
 const PAELLA_CONFIG = {
     logLevel: "WARN",
+    defaultVideoPreview: "/~assets/1x1-black.png",
 
     plugins: {
         "es.upv.paella.singleVideo": {
