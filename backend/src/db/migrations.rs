@@ -332,4 +332,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     14: "event-captions",
     15: "fix-event-constraints",
     16: "master-track",
+    17: "improve-ancestor-function-estimate",
 ];
