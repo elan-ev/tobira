@@ -182,6 +182,8 @@ async fn status(meili: &Client) -> Result<()> {
     // Individual indexes
     index_status("event", &meili.event_index, meili.config.event_index_name()).await?;
     println!();
+    index_status("series", &meili.series_index, meili.config.series_index_name()).await?;
+    println!();
     index_status("realm", &meili.realm_index, meili.config.realm_index_name()).await?;
     println!();
 
