@@ -163,7 +163,7 @@ impl Client {
 
 // ===== Abstracting over search items ============================================================
 
-#[derive(Debug, Clone, Copy, FromSql, ToSql, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, FromSql, ToSql, PartialEq, Eq, Hash)]
 #[postgres(name = "search_index_item_kind")]
 pub(crate) enum IndexItemKind {
     #[postgres(name = "realm")]

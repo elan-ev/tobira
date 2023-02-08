@@ -1,8 +1,8 @@
-use std::ops::Deref;
+use std::{ops::Deref, collections::HashSet};
 use secrecy::ExposeSecret;
 use tokio_postgres::{Client, NoTls};
 
-use crate::prelude::*;
+use crate::{prelude::*, db::types::Key, search::IndexItemKind};
 use super::DbConfig;
 
 
@@ -66,6 +66,76 @@ impl TestDb {
             .context("failed to run migrations on test DB")?;
 
         Ok(out)
+    }
+
+    pub(super) async fn add_realm(
+        &self,
+        name: &str,
+        parent: Key,
+        path_segment: &str,
+    ) -> Result<Key> {
+        let row = self.query_one(
+            "insert into realms (name, parent, path_segment) values ($1, $2, $3) returning id",
+            &[&name, &parent, &path_segment],
+        ).await?;
+        Ok(row.get::<_, Key>(0))
+    }
+
+    pub(super) async fn add_event(
+        &self,
+        title: &str,
+        duration: u32,
+        opencast_id: &str,
+    ) -> Result<Key> {
+        let sql = "insert into events
+            (state, opencast_id, title, is_live, read_roles, write_roles, created,
+                updated, metadata, duration, tracks, captions)
+            values
+            ('ready', $1, $2, false, '{ROLE_ANONYMOUS}', '{ROLE_ANONYMOUS}',
+                now(), now(), '{}', $3,
+                array[row(
+                    'https://example.org/video.mp4',
+                    'presenter/preview',
+                    'video/mp4',
+                    '{1280, 720}',
+                    true
+                )]::event_track[],
+             '{}'
+            )
+            returning id";
+
+        let row = self.query_one(sql, &[&opencast_id, &title, &(duration as i32)]).await?;
+        Ok(row.get(0))
+    }
+
+    pub(super) async fn add_series(
+        &self,
+        title: &str,
+        opencast_id: &str,
+    ) -> Result<Key> {
+        let row = self.query_one(
+            "insert into series
+                (state, title, opencast_id, read_roles, write_roles, updated)
+                values
+                ('ready', $1, $2, '{}', '{}', now())
+                returning id",
+            &[&title, &opencast_id],
+        ).await?;
+        Ok(row.get::<_, Key>(0))
+    }
+
+    pub(super) async fn search_queue(&self) -> Result<HashSet<(Key, IndexItemKind)>> {
+        self.query_raw("select item_id, kind from search_index_queue", dbargs![])
+            .await?
+            .map_ok(|row| (row.get(0), row.get(1)))
+            .try_collect::<HashSet<_>>()
+            .await
+            .map_err(Into::into)
+    }
+
+    pub(super) async fn clear_search_queue(&self) -> Result<()> {
+        self.execute("truncate search_index_queue", &[]).await?;
+        Ok(())
     }
 }
 
