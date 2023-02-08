@@ -201,20 +201,17 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = ({ title, chil
         backgroundColor: "var(--grey95)",
         borderRadius: 10,
     }}>
-        {/* This is a way to make this fancy title. It's not perfect, but it works fine. */}
-        {title && <div css={{ maxHeight: 50 }}>
+        {title && <div css={{
+            display: "inline-block",
+            padding: "8px 12px",
+            marginTop: 12,
+        }}>
             <WithTooltip tooltip={title}>
                 <h2 css={{
-                    backgroundColor: "var(--accent-color)",
-                    color: "var(--accent-color-bw-contrast)",
-                    padding: "4px 12px",
-                    borderRadius: 10,
-                    transform: "translateY(-50%)",
+                    color: "var(--grey40)",
                     fontSize: 19,
-                    margin: "0 8px",
                     lineHeight: 1.3,
-                    ...ellipsisOverflowCss(3),
-                    display: "-webkit-inline-box",
+                    ...ellipsisOverflowCss(2),
                 }}>{title}</h2>
             </WithTooltip>
         </div>}
