@@ -25,13 +25,18 @@ export const InputContainer: React.FC<{ children: ReactNode }> = ({ children }) 
 type SmallDescriptionProps = {
     text: string | null;
     lines?: number;
+    className?: string;
 };
 
 /**
  * An event's or series' description in at most `lines` lines. The text is not
  * transformed at all, but emitted as is.
  */
-export const SmallDescription: React.FC<SmallDescriptionProps> = ({ text, lines = 2 }) => {
+export const SmallDescription: React.FC<SmallDescriptionProps> = ({
+    text,
+    className,
+    lines = 2,
+}) => {
     const { t } = useTranslation();
     const sharedStyle = {
         fontSize: 13,
@@ -39,13 +44,13 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({ text, lines 
     };
 
     if (text === null) {
-        return <div css={{
+        return <div {...{ className }} css={{
             ...sharedStyle,
             color: "var(--grey65)",
             fontStyle: "italic",
         }}>{t("manage.my-videos.no-description")}</div>;
     } else {
-        return <div css={{
+        return <div {...{ className }} css={{
             ...sharedStyle,
             color: "var(--grey40)",
             maxWidth: 800,
