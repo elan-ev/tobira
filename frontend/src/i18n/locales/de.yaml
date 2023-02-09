@@ -216,6 +216,9 @@ upload:
     description: Beschreibung
     required: Pflichtfeld
     save: Speichern und fertigstellen
+    note-writable-series: >
+      Sie können Videos nur in Serien hochladen, auf die Sie Schreibzugriff haben.
+      Andere Serien sind daher hier nicht auswählbar.
   errors:
     failed-to-upload: Hochladen fehlgeschlagen.
     unknown: Während des Dateiuploads ist ein unbekannter Fehler aufgetreten.

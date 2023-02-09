@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { useController, useForm } from "react-hook-form";
-import { FiCheckCircle, FiUpload } from "react-icons/fi";
+import { FiCheckCircle, FiInfo, FiUpload } from "react-icons/fi";
 
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
@@ -25,6 +25,7 @@ import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
 import { SeriesSelector } from "../ui/SearchableSelect";
+import { WithTooltip } from "../ui/Floating";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -199,7 +200,7 @@ const UploadMain: React.FC = () => {
                 margin: "0 auto",
             }}>
                 <UploadState state={uploadState.current} />
-                <div css={{ overflowY: "auto" }}>
+                <div>
                     {/* TODO: Show something after saving metadata.
                         - Just saying "saved" is kind of misleading because the data is only local.
                         - Maybe just show the form, but disable all inputs?
@@ -672,7 +673,21 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
 
             {/* Series */}
             <InputContainer>
-                <label htmlFor="series-field">{t("series.series")}</label>
+                <label htmlFor="series-field">
+                    {t("series.series")}
+                    <WithTooltip
+                        tooltip={t("upload.metadata.note-writable-series")}
+                        tooltipCss={{ width: 400 }}
+                        css={{
+                            display: "inline-block",
+                            verticalAlign: "middle",
+                            fontWeight: "normal",
+                            marginLeft: 8,
+                        }}
+                    >
+                        <span><FiInfo tabIndex={0} /></span>
+                    </WithTooltip>
+                </label>
                 <SeriesSelector
                     writableOnly
                     menuPlacement="top"
