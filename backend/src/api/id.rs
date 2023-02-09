@@ -85,6 +85,7 @@ define_kinds![
     event = b"ev",
     search_realm = b"rs",
     search_event = b"es",
+    search_series = b"ss",
 ];
 
 

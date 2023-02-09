@@ -12,7 +12,7 @@ use super::{
         realm::Realm,
         event::{AuthorizedEvent, Event},
         series::Series,
-        search::{self, SearchOutcome, EventSearchOutcome},
+        search::{self, SearchOutcome, EventSearchOutcome, SeriesSearchOutcome},
     },
     jwt::{JwtService, jwt},
 };
@@ -103,5 +103,16 @@ impl Query {
     /// moderator rights.
     async fn search_all_events(query: String, context: &Context) -> ApiResult<EventSearchOutcome> {
         search::all_events(&query, context).await
+    }
+
+    /// Searches through all series (including non-listed ones). If
+    /// `writable_only` is true, only series that the user can write are
+    /// returned. If it's false, moderator rights are required.
+    async fn search_all_series(
+        query: String,
+        writable_only: bool,
+        context: &Context,
+    ) -> ApiResult<SeriesSearchOutcome> {
+        search::all_series(&query, writable_only, context).await
     }
 }
