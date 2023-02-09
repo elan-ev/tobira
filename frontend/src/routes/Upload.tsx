@@ -635,7 +635,13 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
     });
-    const { field: seriesField } = useController({ name: "series", control });
+    const { field: seriesField } = useController({
+        name: "series",
+        control,
+        rules: {
+            required: CONFIG.upload.requireSeries ? t("upload.errors.field-required") : false,
+        },
+    });
 
     const onSubmit = handleSubmit(data => onSave(data));
 
@@ -673,6 +679,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                     onChange={data => seriesField.onChange(data?.opencastId)}
                     onBlur={seriesField.onBlur}
                 />
+                {boxError(errors.series?.message)}
             </InputContainer>
 
             {/* Submit button */}

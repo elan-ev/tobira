@@ -463,3 +463,10 @@
 #
 # Default value: "#27ae60"
 #happy = "#27ae60"
+
+
+[upload]
+# Whether specifying a series is required when uploading.
+#
+# Default value: false
+#require_series = false

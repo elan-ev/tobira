@@ -90,6 +90,9 @@ impl Assets {
             "loginPageNote": config.auth.login_page.note,
             "preAuthExternalLinks": config.auth.pre_auth_external_links,
         }).to_string());
+        variables.insert("upload".into(), json!({
+            "requireSeries": config.upload.require_series,
+        }).to_string());
 
         // Note the mismatch between presentation and sync node;
         // these might not be the same forever!
