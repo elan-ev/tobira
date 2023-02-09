@@ -31,6 +31,7 @@ export const SearchableSelect = <T, >({
         formatOptionLabel={(option: T) => format(option, t)}
         cacheOptions
         isClearable
+        defaultOptions
         theme={theme}
         loadingMessage={() => t("loading")}
         noOptionsMessage={noOptionsMessage ?? (() => t("general.form.select.no-options"))}

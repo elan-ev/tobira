@@ -118,7 +118,7 @@ type Series {
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
 }
 
-union EventSearchOutcome = SearchUnavailable | EmptyQuery | EventSearchResults
+union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
 input NewVideoBlock {
   event: ID!

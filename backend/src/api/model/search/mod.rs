@@ -265,16 +265,11 @@ fn looks_like_opencast_uuid(query: &str) -> bool {
 #[graphql(Context = Context)]
 pub(crate) enum EventSearchOutcome {
     SearchUnavailable(SearchUnavailable),
-    EmptyQuery(EmptyQuery),
     Results(SearchResults<search::Event>),
 }
 
 pub(crate) async fn all_events(user_query: &str, context: &Context) -> ApiResult<EventSearchOutcome> {
     context.require_moderator()?;
-
-    if user_query.is_empty() {
-        return Ok(EventSearchOutcome::EmptyQuery(EmptyQuery));
-    }
 
     let mut filter = String::new();
     let mut event_query = event_search_query(user_query, &mut filter, context);
