@@ -30,6 +30,26 @@ export const SearchableSelect = <T, >({
         loadOptions={loadOptions}
         formatOptionLabel={(option: T) => format(option, t)}
         cacheOptions
+        // Without this, it thinks all entries are selected if any one is.
+        isOptionSelected={() => false}
+        styles={{
+            menuList: baseStyles => ({
+                ...baseStyles,
+                padding: 0,
+            }),
+            option: (_baseStyles, state) => ({
+                padding: "6px 10px",
+                "&:hover, &:focus": {
+                    backgroundColor: "var(--grey95)",
+                },
+                ...state.isSelected && {
+                    borderLeft: "4px solid var(--accent-color)",
+                },
+                ...(state.isFocused || state.isSelected) && {
+                    backgroundColor: "var(--grey95)",
+                },
+            }),
+        }}
         isClearable
         defaultOptions
         theme={theme}
