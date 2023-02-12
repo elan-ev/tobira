@@ -167,6 +167,19 @@ series:
     text: >
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
       in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
+  settings:
+    order: Reihenfolge
+    order-label: Video Reihenfolge auswählen
+    new-to-old: Neueste zuerst
+    old-to-new: Älteste zuerst
+    view: Ansicht
+    view-label: Blockansicht ändern
+    gallery: Galerie
+    slider: Slider
+    list: Liste
+  slider:
+    scroll-left: Nach links scrollen
+    scroll-right: Nach rechts scrollen
 
 realm:
   page-settings: Seiteneinstellungen
@@ -377,10 +390,6 @@ manage:
         content: Hier können Sie Ihren Text einfügen. Sie können sogar Markdown verwenden.
 
       series:
-        order:
-          heading: Reihenfolge
-          new-to-old: Neuste zuerst
-          old-to-new: Älteste zuerst
         series:
           heading: Serie
           none: Keine Serie ausgewählt
