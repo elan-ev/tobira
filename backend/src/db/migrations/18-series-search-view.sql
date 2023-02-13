@@ -6,6 +6,11 @@ create view search_series as
         series.id, series.state, series.opencast_id,
         series.read_roles, series.write_roles,
         series.title, series.description,
+        (select count(*) > 0
+            from blocks
+            inner join events on events.id = blocks.video
+            where events.series = series.id
+        ) as listed_via_events,
         coalesce(
             array_agg((
                 -- Using a nested query here improves the overall performance
