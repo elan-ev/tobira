@@ -22,7 +22,6 @@ async fn conn(config: &super::DbConfig) -> Result<Client> {
         if let Err(e) = connection.await {
             panic!("PG connection error: {e}");
         }
-        println!("done with connection");
     });
 
     Ok(client)
@@ -86,13 +85,14 @@ impl TestDb {
         title: &str,
         duration: u32,
         opencast_id: &str,
+        series: Option<Key>,
     ) -> Result<Key> {
         let sql = "insert into events
-            (state, opencast_id, title, is_live, read_roles, write_roles, created,
+            (state, opencast_id, title, series, is_live, read_roles, write_roles, created,
                 updated, metadata, duration, tracks, captions)
             values
-            ('ready', $1, $2, false, '{ROLE_ANONYMOUS}', '{ROLE_ANONYMOUS}',
-                now(), now(), '{}', $3,
+            ('ready', $1, $2, $3, false, '{ROLE_ANONYMOUS}', '{ROLE_ANONYMOUS}',
+                now(), now(), '{}', $4,
                 array[row(
                     'https://example.org/video.mp4',
                     'presenter/preview',
@@ -104,7 +104,7 @@ impl TestDb {
             )
             returning id";
 
-        let row = self.query_one(sql, &[&opencast_id, &title, &(duration as i32)]).await?;
+        let row = self.query_one(sql, &[&opencast_id, &title, &series, &(duration as i32)]).await?;
         Ok(row.get(0))
     }
 
@@ -120,6 +120,26 @@ impl TestDb {
                 ('ready', $1, $2, '{}', '{}', now())
                 returning id",
             &[&title, &opencast_id],
+        ).await?;
+        Ok(row.get::<_, Key>(0))
+    }
+
+    pub(super) async fn add_video_block(&self, realm: Key, video: Key, index: u8) -> Result<Key> {
+        let row = self.query_one(
+            "insert into blocks (realm, index, type, video, show_title)
+                values ($1, $2, 'video', $3, true)
+                returning id",
+            &[&realm, &(index as i16), &video],
+        ).await?;
+        Ok(row.get::<_, Key>(0))
+    }
+
+    pub(super) async fn add_series_block(&self, realm: Key, series: Key, index: u8) -> Result<Key> {
+        let row = self.query_one(
+            "insert into blocks (realm, index, type, series, show_title, videolist_order)
+                values ($1, $2, 'series', $3, true, 'new_to_old')
+                returning id",
+            &[&realm, &(index as i16), &series],
         ).await?;
         Ok(row.get::<_, Key>(0))
     }
