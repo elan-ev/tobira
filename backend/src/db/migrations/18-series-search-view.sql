@@ -32,79 +32,8 @@ alter table search_index_queue
 drop type search_index_item_kind_old;
 
 
--- Add all triggers needed to automatically queue series whenever necessary.
-create function queue_series_for_reindex_on_block_change(block blocks)
-   returns void
-   language sql
-as $$
-    with listed_series as (select id from series where id = block.series)
-    insert into search_index_queue (item_id, kind)
-    select id, 'series' from listed_series
-    on conflict do nothing;
-$$;
-
-create function queue_series_on_blocks_change()
-   returns trigger
-   language plpgsql
-as $$
-begin
-    if tg_op <> 'INSERT' then
-        perform queue_series_for_reindex_on_block_change(old);
-    end if;
-    if tg_op <> 'DELETE' then
-        perform queue_series_for_reindex_on_block_change(new);
-    end if;
-    return null;
-end;
-$$;
-
-create trigger queue_series_on_blocks_change
-after insert or delete or update of series
-on blocks
-for each row
-execute procedure queue_series_on_blocks_change();
-
-
--- On some realm changes, some series have to be queued.
-create function queue_series_on_realm_change()
-   returns trigger
-   language plpgsql
-as $$
-begin
-    -- All series listed on the changed realm are queued.
-    insert into search_index_queue (item_id, kind)
-    select blocks.series, 'series'
-    from blocks
-    where type = 'series' and (blocks.realm = old.id or blocks.realm = new.id)
-    on conflict do nothing;
-
-    -- If the name of this realm has changed, we also need to queue all series
-    -- included in child realms.
-    if tg_op = 'UPDATE' and (
-        old.name is distinct from new.name or
-        old.name_from_block is distinct from new.name_from_block
-    ) then
-        -- We don't need to queue the series in the realm itself as that already
-        -- happened above, hence the '/%'.
-        insert into search_index_queue (item_id, kind)
-        select blocks.series, 'series'
-        from blocks
-        inner join realms on realms.id = blocks.realm
-        where blocks.type = 'series' and full_path like new.full_path || '/%'
-        on conflict do nothing;
-    end if;
-    return null;
-end;
-$$;
-
-create trigger queue_series_on_realm_change
-after update of id, parent, full_path, name, name_from_block
-on realms
-for each row
-execute procedure queue_series_on_realm_change();
-
-
--- And of course, if the series itself is changed, it has to be queued
+-- Add a trigger to automatically add a series to the queue whenever its changed
+-- somehow.
 create function queue_series_for_reindex(series series) returns void language sql as $$
     insert into search_index_queue (item_id, kind)
     values (series.id, 'series')
@@ -131,3 +60,8 @@ after insert or delete or update
 on series
 for each row
 execute procedure queue_touched_series_for_reindex();
+
+
+-- But wait, there's more! There are multiple other cases when a series needs to
+-- be queued for reindex. These are in the next migration, `19-fix-queue-triggers`
+-- as they can be combined with some other stuff we have to fix.
