@@ -44,6 +44,7 @@ export const SearchableSelect = <T, >({
                 padding: 0,
             }),
             option: (_baseStyles, state) => ({
+                cursor: "default",
                 padding: "6px 10px",
                 "&:hover, &:focus": {
                     backgroundColor: "var(--grey95)",
