@@ -342,7 +342,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
     const { t } = useTranslation();
     const fileInput = useRef<HTMLInputElement>(null);
 
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [dragCounter, setDragCounter] = useState(0);
     const isDragging = dragCounter > 0;
 

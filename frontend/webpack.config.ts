@@ -1,8 +1,10 @@
 import * as path from "path";
 import { CallableOption } from "webpack-cli";
+import YAML from "yaml";
 import { CleanWebpackPlugin } from "clean-webpack-plugin";
 import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
+import * as fs from "fs";
 
 const APP_PATH = path.join(__dirname, "src");
 const OUT_PATH = path.join(__dirname, "build");
@@ -58,6 +60,18 @@ const config: CallableOption = (_env, argv) => ({
 
     plugins: [
         new CleanWebpackPlugin(),
+        // Unfortunately, Typescript cannot natively load YAML files. But we
+        // want out translations to be well-typed, so we convert it to JSON
+        // here so that `typings/i18next.d.ts` works. We can't use `CopyPlugin`
+        // as that uses a hook that is executed too late in the compilation
+        // process.
+        compiler => {
+            compiler.hooks.beforeCompile.tap("ConvertTranslationsPlugin", async () => {
+                const file = fs.readFileSync(path.join(APP_PATH, "i18n/locales/en.yaml"));
+                const out = JSON.stringify(YAML.parse(file.toString()));
+                fs.writeFileSync(path.join(APP_PATH, "i18n/_generatedTranslationTypes.json"), out);
+            });
+        },
         new ForkTsCheckerWebpackPlugin({
             eslint: {
                 files: ["."],

@@ -60,7 +60,8 @@ export const EditBlock: React.FC<Props> = ({
         onCompleted?.();
     };
 
-    const onBlockError = (error: Error, action: string) => {
+    type ActionErrorKeys = `manage.realm.content.${"moving" | "saving"}-failed`;
+    const onBlockError = (error: Error, action: ActionErrorKeys) => {
         setError(displayCommitError(error, t(action)));
         onError?.(error, action, index);
     };
