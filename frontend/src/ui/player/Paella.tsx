@@ -19,10 +19,11 @@ type PaellaPlayerProps = {
     isLive: boolean;
     startTime: string | null;
     endTime: string | null;
+    previewImage: string | null;
 };
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
-    tracks, title, duration, isLive, captions, startTime, endTime,
+    tracks, title, duration, isLive, captions, startTime, endTime, previewImage,
 }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
@@ -66,6 +67,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 metadata: {
                     title,
                     duration: fixedDuration,
+                    preview: previewImage,
                 },
                 streams: Object.entries(tracksByKind).map(([key, tracks]) => ({
                     content: key,
@@ -117,7 +119,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             paellaSnapshot.unload();
             paella.current = undefined;
         };
-    }, [tracks, title, duration, isLive, captions, startTime, endTime, t]);
+    }, [tracks, title, duration, isLive, captions, startTime, endTime, previewImage, t]);
 
     return (
         <div
