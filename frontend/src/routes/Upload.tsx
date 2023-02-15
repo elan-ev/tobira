@@ -646,9 +646,11 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
 
     const onSubmit = handleSubmit(data => onSave(data));
 
-    // TODO: it might be too easy to accidentally submit the form with enter
+    // We only allow submitting the form on clicking the button below so that
+    // pressing 'enter' inside inputs doesn't lead to submit the form too
+    // early.
     return (
-        <Form noValidate onSubmit={onSubmit} css={{ margin: "32px 2px" }}>
+        <Form noValidate onSubmit={e => e.preventDefault()} css={{ margin: "32px 2px" }}>
             {/* Title */}
             <InputContainer>
                 <TitleLabel htmlFor="title-field" />
@@ -698,7 +700,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
             </InputContainer>
 
             {/* Submit button */}
-            <Button kind="happy" type="submit" disabled={disabled}>
+            <Button kind="happy" disabled={disabled} onClick={onSubmit}>
                 {t("upload.metadata.save")}
             </Button>
         </Form>
