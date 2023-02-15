@@ -302,20 +302,8 @@ pub(crate) async fn all_series(
     // If the user is not admin, build ACL filter: there has to be one user role
     // inside the event's ACL.
     let mut filter = String::new();
-    if !context.auth.is_admin() {
-        let action = if writable_only { "write_roles" } else { "read_roles" };
-        let acl_filter = context.auth.roles()
-            .iter()
-            .map(|role| format!("{} = '{}'", action, hex::encode(role)))
-            .collect::<Vec<_>>()
-            .join(" OR ");
-        write!(
-            filter,
-            "{}({})",
-            if filter.is_empty() { "" } else { " AND " },
-            acl_filter,
-        ).unwrap();
-    };
+    let action = if writable_only { "write_roles" } else { "read_roles" };
+    append_acl_filter(action, &mut filter, context);
 
     // Build search query
     let mut query = context.search.series_index.search();
@@ -331,6 +319,25 @@ pub(crate) async fn all_series(
     Ok(SeriesSearchOutcome::Results(SearchResults { items }))
 }
 
+fn append_acl_filter(action: &str, filter: &mut String, context: &Context) {
+    // If the user is admin, we just skip the filter alltogether as the admin
+    // can see anything anyway.
+    if context.auth.is_admin() {
+        return;
+    }
+
+    if !filter.is_empty() {
+        filter.push_str(" AND ");
+    }
+    filter.push_str("(");
+    for (i, role) in context.auth.roles().iter().enumerate() {
+        if i > 0 {
+            write!(filter, " OR ").unwrap();
+        }
+        write!(filter, "{} = '{}'", action, hex::encode(role)).unwrap();
+    }
+    filter.push(')');
+}
 
 /// Constructs the appropriate `Query` to search for events. Due to a bad API
 /// design of Meili, you have to pass an empty `String` as second parameter.
@@ -339,27 +346,11 @@ fn event_search_query<'a>(
     filter: &'a mut String,
     context: &'a Context,
 ) -> Query<'a> {
-    // If the user is not admin, build ACL filter: there has to be one user role
-    // inside the event's ACL.
-    if !context.auth.is_admin() {
-        let acl_filter = context.auth.roles()
-            .iter()
-            .map(|role| format!("read_roles = '{}'", hex::encode(role)))
-            .collect::<Vec<_>>()
-            .join(" OR ");
-        write!(
-            filter,
-            "{}({})",
-            if filter.is_empty() { "" } else { " AND " },
-            acl_filter,
-        ).unwrap();
-    };
-
-    // Build search query
     let mut query = context.search.event_index.search();
     query.with_query(user_query);
     query.with_limit(15);
     query.with_show_matches_position(true);
+    append_acl_filter("read_roles", filter, context);
     query.with_filter(filter);
     query
 }
