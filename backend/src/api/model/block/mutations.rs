@@ -1,7 +1,7 @@
 use juniper::{GraphQLInputObject, GraphQLObject};
 
 use crate::{
-    api::{Context, Id, err::{ApiResult, invalid_input}, model::realm::{REALM_JOINS, Realm}},
+    api::{Context, Id, err::{ApiResult, invalid_input}, model::realm::Realm},
     db::{types::Key, util::select},
     prelude::*,
 };
@@ -341,7 +341,7 @@ impl BlockValue {
                 returning realm, index\
             ) \
             select {selection} \
-            from realms {REALM_JOINS} \
+            from realms \
             where realms.id = (select realm from deleted)"
         );
         let result = db
