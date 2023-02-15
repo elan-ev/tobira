@@ -209,6 +209,9 @@ upload:
     description: Description
     required: required
     save: Save and finish
+    note-writable-series: >
+      Videos can only be uploaded into series for which you have write-access.
+      Other series are therefore not listed as selectable here.
   errors:
     failed-to-upload: Failed to upload video.
     unknown: Unknown error occurred during video upload.

@@ -141,7 +141,13 @@ export const FOCUS_STYLE_INSET = {
 export const ellipsisOverflowCss = (lines: number): Record<string, any> => ({
     overflow: "hidden",
     textOverflow: "ellipsis",
-    display: "-webkit-box",
-    WebkitBoxOrient: "vertical",
-    WebkitLineClamp: lines,
+    ...lines === 1
+        ? {
+            whiteSpace: "nowrap",
+        }
+        : {
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: lines,
+        },
 });

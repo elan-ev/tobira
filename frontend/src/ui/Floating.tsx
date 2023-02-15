@@ -1,3 +1,4 @@
+import { Interpolation } from "@emotion/react";
 import {
     arrow,
     autoUpdate,
@@ -17,6 +18,7 @@ import {
 } from "@floating-ui/react";
 import React, { ReactNode, ReactElement, useRef, useState, useImperativeHandle } from "react";
 import { mergeRefs } from "react-merge-refs";
+import { Theme } from "react-select";
 
 import { bug, unreachable } from "../util/err";
 
@@ -373,10 +375,11 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
 type WithTooltipProps = {
     children: ReactElement;
     tooltip: ReactNode;
+    tooltipCss?: Interpolation<Theme>;
 } & Partial<Omit<FloatingContainerProps, "trigger">>;
 
 export const WithTooltip = React.forwardRef<FloatingHandle, WithTooltipProps>(
-    ({ children, tooltip, ...props }, ref) => (
+    ({ children, tooltip, tooltipCss, ...props }, ref) => (
         <FloatingContainer
             ref={ref}
             {...props}
@@ -386,6 +389,8 @@ export const WithTooltip = React.forwardRef<FloatingHandle, WithTooltipProps>(
             <Floating css={{
                 color: "var(--grey20)",
                 fontSize: 14,
+                maxWidth: "100%",
+                ...tooltipCss as Record<string, unknown>,
             }}>{tooltip}</Floating>
             <FloatingTrigger>{children}</FloatingTrigger>
         </FloatingContainer>

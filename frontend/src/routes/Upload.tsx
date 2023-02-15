@@ -2,8 +2,8 @@ import React, { MutableRefObject, ReactNode, useEffect, useRef, useState } from 
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { keyframes } from "@emotion/react";
-import { useForm } from "react-hook-form";
-import { FiCheckCircle, FiUpload } from "react-icons/fi";
+import { useController, useForm } from "react-hook-form";
+import { FiCheckCircle, FiInfo, FiUpload } from "react-icons/fi";
 
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
@@ -24,6 +24,8 @@ import { InputContainer, TitleLabel } from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
+import { SeriesSelector } from "../ui/SearchableSelect";
+import { WithTooltip } from "../ui/Floating";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -53,6 +55,7 @@ const query = graphql`
 type Metadata = {
     title: string;
     description: string;
+    series?: string;
 };
 
 const Upload: React.FC = () => {
@@ -197,7 +200,7 @@ const UploadMain: React.FC = () => {
                 margin: "0 auto",
             }}>
                 <UploadState state={uploadState.current} />
-                <div css={{ overflowY: "auto" }}>
+                <div>
                     {/* TODO: Show something after saving metadata.
                         - Just saying "saved" is kind of misleading because the data is only local.
                         - Maybe just show the form, but disable all inputs?
@@ -630,15 +633,24 @@ type MetaDataEditProps = {
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { t } = useTranslation();
 
-    const { register, handleSubmit, formState: { errors } } = useForm<Metadata>({
+    const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
+    });
+    const { field: seriesField } = useController({
+        name: "series",
+        control,
+        rules: {
+            required: CONFIG.upload.requireSeries ? t("upload.errors.field-required") : false,
+        },
     });
 
     const onSubmit = handleSubmit(data => onSave(data));
 
-    // TODO: it might be too easy to accidentally submit the form with enter
+    // We only allow submitting the form on clicking the button below so that
+    // pressing 'enter' inside inputs doesn't lead to submit the form too
+    // early.
     return (
-        <Form noValidate onSubmit={onSubmit} css={{ margin: "32px 2px" }}>
+        <Form noValidate onSubmit={e => e.preventDefault()} css={{ margin: "32px 2px" }}>
             {/* Title */}
             <InputContainer>
                 <TitleLabel htmlFor="title-field" />
@@ -661,8 +673,34 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                 <TextArea id="description-field" {...register("description")} />
             </InputContainer>
 
+            {/* Series */}
+            <InputContainer>
+                <label htmlFor="series-field">
+                    {t("series.series")}
+                    <WithTooltip
+                        tooltip={t("upload.metadata.note-writable-series")}
+                        tooltipCss={{ width: 400 }}
+                        css={{
+                            display: "inline-block",
+                            verticalAlign: "middle",
+                            fontWeight: "normal",
+                            marginLeft: 8,
+                        }}
+                    >
+                        <span><FiInfo tabIndex={0} /></span>
+                    </WithTooltip>
+                </label>
+                <SeriesSelector
+                    writableOnly
+                    menuPlacement="top"
+                    onChange={data => seriesField.onChange(data?.opencastId)}
+                    onBlur={seriesField.onBlur}
+                />
+                {boxError(errors.series?.message)}
+            </InputContainer>
+
             {/* Submit button */}
-            <Button kind="happy" type="submit" disabled={disabled}>
+            <Button kind="happy" disabled={disabled} onClick={onSubmit}>
                 {t("upload.metadata.save")}
             </Button>
         </Form>
@@ -948,7 +986,7 @@ const encodeValue = (value: string): string => {
 
 /** Creates a Dublin Core Catalog in XML format that describes the given metadata. */
 const constructDcc = (metadata: Metadata, user: User): string => {
-    const tag = (tag: string, value: string): string =>
+    const tag = (tag: string, value?: string): string =>
         value ? `<${tag}>${encodeValue(value)}</${tag}>` : "";
 
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -960,6 +998,7 @@ const constructDcc = (metadata: Metadata, user: User): string => {
             </dcterms:created>
             ${tag("dcterms:title", metadata.title)}
             ${tag("dcterms:description", metadata.description)}
+            ${tag("dcterms:isPartOf", metadata.series)}
             ${tag("dcterms:creator", user.displayName)}
             ${tag("dcterms:spatial", "Tobira Upload")}
         </dublincore>

@@ -14,12 +14,14 @@ mod general;
 mod theme;
 mod translated_string;
 mod opencast;
+mod upload;
 
 pub(crate) use self::{
     color::{Color, Hsl},
     translated_string::TranslatedString,
     theme::ThemeConfig,
     opencast::OpencastConfig,
+    upload::UploadConfig,
 };
 
 
@@ -80,6 +82,9 @@ pub(crate) struct Config {
 
     #[config(nested)]
     pub(crate) theme: ThemeConfig,
+
+    #[config(nested)]
+    pub(crate) upload: UploadConfig,
 }
 
 impl Config {

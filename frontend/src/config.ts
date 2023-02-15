@@ -29,6 +29,7 @@ type Config = {
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
     logo: LogoConfig;
     plyr: PlyrConfig;
+    upload: UploadConfig;
 };
 
 type FooterLink = "about" | "graphiql" | {
@@ -72,6 +73,10 @@ type VersionInfo = {
     buildDateUtc: string;
     gitCommitHash: string;
     gitWasDirty: boolean;
+};
+
+type UploadConfig = {
+    requireSeries: boolean;
 };
 
 type MetadataLabel = "builtin:license" | "builtin:source" | TranslatedString;

@@ -21,6 +21,7 @@ pub(crate) mod cmd;
 mod event;
 mod meta;
 mod realm;
+mod series;
 pub(crate) mod writer;
 mod update;
 mod util;
@@ -30,13 +31,14 @@ pub(crate) use self::{
     event::Event,
     meta::IndexState,
     realm::Realm,
+    series::Series,
     update::{update_index, update_index_daemon},
 };
 
 
 /// The version of search index schema. Increase whenever there is a change that
 /// requires an index rebuild.
-const VERSION: u32 = 1;
+const VERSION: u32 = 2;
 
 
 // ===== Configuration ============================================================================
@@ -84,6 +86,10 @@ impl MeiliConfig {
         format!("{}{}", self.index_prefix, "events")
     }
 
+    fn series_index_name(&self) -> String {
+        format!("{}{}", self.index_prefix, "series")
+    }
+
     fn realm_index_name(&self) -> String {
         format!("{}{}", self.index_prefix, "realms")
     }
@@ -102,6 +108,7 @@ pub(crate) struct Client {
     pub(crate) client: MeiliClient,
     pub(crate) meta_index: Index,
     pub(crate) event_index: Index,
+    pub(crate) series_index: Index,
     pub(crate) realm_index: Index,
 }
 
@@ -120,9 +127,10 @@ impl Client {
         // actually exist!).
         let meta_index = client.index(&config.meta_index_name());
         let event_index = client.index(&config.event_index_name());
+        let series_index = client.index(&config.series_index_name());
         let realm_index = client.index(&config.realm_index_name());
 
-        Self { client, config, meta_index, event_index, realm_index }
+        Self { client, config, meta_index, event_index, series_index, realm_index }
     }
 
     /// Checks the connection to Meilisearch by accessing the `/health` endpoint.
@@ -155,13 +163,15 @@ impl Client {
 
 // ===== Abstracting over search items ============================================================
 
-#[derive(Debug, Clone, Copy, FromSql, ToSql, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, FromSql, ToSql, PartialEq, Eq, Hash)]
 #[postgres(name = "search_index_item_kind")]
 pub(crate) enum IndexItemKind {
     #[postgres(name = "realm")]
     Realm,
     #[postgres(name = "event")]
     Event,
+    #[postgres(name = "series")]
+    Series,
 }
 
 impl IndexItemKind {
@@ -169,6 +179,7 @@ impl IndexItemKind {
         match self {
             IndexItemKind::Realm => "realms",
             IndexItemKind::Event => "events",
+            IndexItemKind::Series => "series",
         }
     }
 }
@@ -255,6 +266,9 @@ pub(crate) async fn prepare_indexes(meili: &MeiliWriter<'_>) -> Result<()> {
     let event_index = create_index(&meili.client, &meili.config.event_index_name()).await?;
     event::prepare_index(&event_index).await?;
 
+    let series_index = create_index(&meili.client, &meili.config.series_index_name()).await?;
+    series::prepare_index(&series_index).await?;
+
     let realm_index = create_index(&meili.client, &meili.config.realm_index_name()).await?;
     realm::prepare_index(&realm_index).await?;
 
@@ -315,6 +329,7 @@ pub(crate) async fn clear(meili: &MeiliWriter<'_>) -> Result<()> {
 
     ignore_missing_index(meili.meta_index.clone().delete().await)?;
     ignore_missing_index(meili.event_index.clone().delete().await)?;
+    ignore_missing_index(meili.series_index.clone().delete().await)?;
     ignore_missing_index(meili.realm_index.clone().delete().await)?;
 
     info!("Deleted search indexes");
@@ -347,6 +362,7 @@ pub(crate) async fn index_all_data(
 
     let before = Instant::now();
     rebuild_index!("events", Event, meili.event_index);
+    rebuild_index!("series", Series, meili.series_index);
     rebuild_index!("realms", Realm, meili.realm_index);
     info!("Sent all data to Meili in {:.1?}", before.elapsed());
 

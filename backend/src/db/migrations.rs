@@ -1,8 +1,7 @@
 use chrono::{DateTime, Utc, offset::TimeZone};
-use deadpool_postgres::Transaction;
 use once_cell::sync::Lazy;
 use std::{collections::BTreeMap, time::Duration, num::NonZeroU64};
-use tokio_postgres::{IsolationLevel, error::SqlState};
+use tokio_postgres::{IsolationLevel, Transaction, error::SqlState, Client};
 
 use crate::{prelude::*, db::util::select};
 use super::Db;
@@ -30,9 +29,9 @@ impl MigrationPlan {
     /// DB is in a state that we cannot fix, `Err` is returned. Does not modify
     /// the DB.
     pub(crate) async fn build(tx: &Transaction<'_>) -> Result<Self> {
-        if !super::query::does_table_exist(&**tx, "__db_migrations").await? {
+        if !super::query::does_table_exist(&*tx, "__db_migrations").await? {
             // Check if there are any other tables in the database, which would be fishy.
-            let tables = super::query::all_table_names(&**tx).await?;
+            let tables = super::query::all_table_names(&*tx).await?;
             if !tables.is_empty() {
                 bail!(
                     "migration table '__db_migrations' does not exist, but some other \
@@ -171,7 +170,7 @@ async fn create_meta_table_if_missing(tx: &Transaction<'_>) -> Result<()> {
 ///
 /// If anything unexpected is noticed, an error is returned to notify the user
 /// they have to manually deal with it.
-pub async fn migrate(db: &mut Db) -> Result<()> {
+pub async fn migrate(db: &mut Client) -> Result<()> {
     // The whole migration process is wrapped in one serializable transaction.
     // This guarantees that only one Tobira node ever does the migrations. As
     // this only happens during startup, the potential slow down from such a
@@ -332,4 +331,7 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     14: "event-captions",
     15: "fix-event-constraints",
     16: "master-track",
+    17: "improve-ancestor-function-estimate",
+    18: "series-search-view",
+    19: "fix-queue-triggers",
 ];

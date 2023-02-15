@@ -118,7 +118,7 @@ type Series {
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
 }
 
-union EventSearchOutcome = SearchUnavailable | EmptyQuery | EventSearchResults
+union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
 input NewVideoBlock {
   event: ID!
@@ -208,8 +208,8 @@ interface Node {
   id: ID!
 }
 
-input UpdateTextBlock {
-  content: String
+type SeriesSearchResults {
+  items: [SearchSeries!]!
 }
 
 type Track {
@@ -222,6 +222,10 @@ type Track {
 
 type SearchResults {
   items: [Node!]!
+}
+
+input UpdateTextBlock {
+  content: String
 }
 
 type Realm implements Node {
@@ -292,6 +296,8 @@ type Realm implements Node {
   """
   references(id: ID!): Boolean!
 }
+
+union SeriesSearchOutcome = SearchUnavailable | SeriesSearchResults
 
 "Exactly one of `plain` or `block` has to be non-null."
 input UpdatedRealmName {
@@ -421,6 +427,12 @@ type Query {
     moderator rights.
   """
   searchAllEvents(query: String!): EventSearchOutcome!
+  """
+    Searches through all series (including non-listed ones). If
+    `writable_only` is true, only series that the user can write are
+    returned. If it's false, moderator rights are required.
+  """
+  searchAllSeries(query: String!, writableOnly: Boolean!): SeriesSearchOutcome!
 }
 
 interface RealmNameSourceBlock {
@@ -481,6 +493,14 @@ input NewSeriesBlock {
   showTitle: Boolean!
   showMetadata: Boolean!
   order: VideoListOrder!
+}
+
+type SearchSeries implements Node {
+  id: ID!
+  opencastId: String!
+  title: String!
+  description: String
+  hostRealms: [SearchRealm!]!
 }
 
 type User {

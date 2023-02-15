@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-
+use std::fmt::Write;
 use meilisearch_sdk::{
     errors::{
         Error as MsError,
@@ -24,6 +24,8 @@ use crate::{
 
 mod event;
 mod realm;
+mod series;
+
 
 /// Marker type to signal that the search functionality is unavailable for some
 /// reason.
@@ -61,6 +63,13 @@ impl SearchResults<NodeValue> {
 #[juniper::graphql_object(Context = Context, name = "EventSearchResults")]
 impl SearchResults<search::Event> {
     fn items(&self) -> &[search::Event] {
+        &self.items
+    }
+}
+
+#[juniper::graphql_object(Context = Context, name = "SeriesSearchResults")]
+impl SearchResults<search::Series> {
+    fn items(&self) -> &[search::Series] {
         &self.items
     }
 }
@@ -256,16 +265,11 @@ fn looks_like_opencast_uuid(query: &str) -> bool {
 #[graphql(Context = Context)]
 pub(crate) enum EventSearchOutcome {
     SearchUnavailable(SearchUnavailable),
-    EmptyQuery(EmptyQuery),
     Results(SearchResults<search::Event>),
 }
 
 pub(crate) async fn all_events(user_query: &str, context: &Context) -> ApiResult<EventSearchOutcome> {
     context.require_moderator()?;
-
-    if user_query.is_empty() {
-        return Ok(EventSearchOutcome::EmptyQuery(EmptyQuery));
-    }
 
     let mut filter = String::new();
     let mut event_query = event_search_query(user_query, &mut filter, context);
@@ -278,6 +282,62 @@ pub(crate) async fn all_events(user_query: &str, context: &Context) -> ApiResult
     Ok(EventSearchOutcome::Results(SearchResults { items }))
 }
 
+// See `EventSearchOutcome` for additional information.
+#[derive(juniper::GraphQLUnion)]
+#[graphql(Context = Context)]
+pub(crate) enum SeriesSearchOutcome {
+    SearchUnavailable(SearchUnavailable),
+    Results(SearchResults<search::Series>),
+}
+
+pub(crate) async fn all_series(
+    user_query: &str,
+    writable_only: bool,
+    context: &Context,
+) -> ApiResult<SeriesSearchOutcome> {
+    if !writable_only {
+        context.require_moderator()?;
+    }
+
+    // If the user is not admin, build ACL filter: there has to be one user role
+    // inside the event's ACL.
+    let mut filter = String::new();
+    let action = if writable_only { "write_roles" } else { "read_roles" };
+    append_acl_filter(action, &mut filter, context);
+
+    // Build search query
+    let mut query = context.search.series_index.search();
+    query.with_query(user_query);
+    query.with_show_matches_position(true);
+    query.with_filter(&filter);
+    query.with_limit(50);
+
+    let res = query.execute::<search::Series>().await;
+    let results = handle_search_result!(res, SeriesSearchOutcome);
+    let items = results.hits.into_iter().map(|h| h.result).collect();
+
+    Ok(SeriesSearchOutcome::Results(SearchResults { items }))
+}
+
+fn append_acl_filter(action: &str, filter: &mut String, context: &Context) {
+    // If the user is admin, we just skip the filter alltogether as the admin
+    // can see anything anyway.
+    if context.auth.is_admin() {
+        return;
+    }
+
+    if !filter.is_empty() {
+        filter.push_str(" AND ");
+    }
+    filter.push_str("(");
+    for (i, role) in context.auth.roles().iter().enumerate() {
+        if i > 0 {
+            write!(filter, " OR ").unwrap();
+        }
+        write!(filter, "{} = '{}'", action, hex::encode(role)).unwrap();
+    }
+    filter.push(')');
+}
 
 /// Constructs the appropriate `Query` to search for events. Due to a bad API
 /// design of Meili, you have to pass an empty `String` as second parameter.
@@ -286,29 +346,11 @@ fn event_search_query<'a>(
     filter: &'a mut String,
     context: &'a Context,
 ) -> Query<'a> {
-    use std::fmt::Write;
-
-    // If the user is not admin, build ACL filter: there has to be one user role
-    // inside the event's ACL.
-    if !context.auth.is_admin() {
-        let acl_filter = context.auth.roles()
-            .iter()
-            .map(|role| format!("read_roles = '{}'", hex::encode(role)))
-            .collect::<Vec<_>>()
-            .join(" OR ");
-        write!(
-            filter,
-            "{}({})",
-            if filter.is_empty() { "" } else { " AND " },
-            acl_filter,
-        ).unwrap();
-    };
-
-    // Build search query
     let mut query = context.search.event_index.search();
     query.with_query(user_query);
     query.with_limit(15);
     query.with_show_matches_position(true);
+    append_acl_filter("read_roles", filter, context);
     query.with_filter(filter);
     query
 }

@@ -25,6 +25,9 @@ mod tx;
 pub(crate) mod types;
 pub(crate) mod util;
 
+#[cfg(test)]
+mod tests;
+
 pub(crate) use self::{
     tx::Transaction,
     migrations::{migrate, MigrationPlan},
