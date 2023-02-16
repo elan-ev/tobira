@@ -101,19 +101,13 @@ pub(crate) struct Realm {
     child_order: RealmOrder,
 }
 
-/// SQL join expression that is used in almost all realm-related queries.
-pub(crate) const REALM_JOINS: &str = "\
-    left join blocks on blocks.id = name_from_block \
-    left join events on blocks.video = events.id \
-    left join series on blocks.series = series.id \
-";
-
 impl_from_db!(
     Realm,
     select: {
-        realms.{ id, parent, name, name_from_block, path_segment, full_path, index, child_order },
-        resolved_name:
-            "coalesce(${table:realms}.name, ${table:series}.title, ${table:events}.title)",
+        realms.{
+            id, parent, name, name_from_block, path_segment, full_path, index,
+            child_order, resolved_name
+        },
     },
     |row| {
         Self {
@@ -164,7 +158,7 @@ impl Realm {
         }
 
         let selection = Self::select();
-        let query = format!("select {selection} from realms {REALM_JOINS} where realms.id = $1");
+        let query = format!("select {selection} from realms where realms.id = $1");
         context.db
             .query_opt(&query, &[&key])
             .await?
@@ -189,9 +183,7 @@ impl Realm {
         }
 
         let selection = Self::select();
-        let query = format!("select {selection} \
-            from realms {REALM_JOINS} \
-            where realms.full_path = $1");
+        let query = format!("select {selection} from realms where realms.full_path = $1");
         context.db
             .query_opt(&query, &[&path])
             .await?
@@ -277,7 +269,6 @@ impl Realm {
         let query = format!(
             "select {selection} \
                 from ancestors_of_realm($1) as ancestors \
-                {REALM_JOINS} \
                 where ancestors.id <> 0",
         );
         context.db
@@ -295,7 +286,6 @@ impl Realm {
         let query = format!(
             "select {selection} \
                 from realms \
-                {REALM_JOINS} \
                 where realms.parent = $1 \
                 order by index",
         );
