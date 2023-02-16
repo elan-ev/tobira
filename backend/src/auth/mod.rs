@@ -32,17 +32,7 @@ const SESSION_COOKIE: &str = "tobira-session";
 /// Authentification and authorization
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct AuthConfig {
-    /// The mode of authentication. Compare the authentication docs! Possible values:
-    ///
-    /// - "none": Tobira never reads auth headers and thus, users cannot login
-    ///    at all. Only useful for development and as safe default.
-    /// - "full-auth-proxy": Tobira does no session handling and expects an auth
-    ///   proxy in front of every route, passing user info via auth headers.
-    /// - "login-proxy": Tobira does its own session handling and expects the auth
-    ///    system to send `POST /~session` with auth headers to create a session.
-    ///
-    /// **Important**: in either case, you HAVE to make sure to remove all auth
-    /// headers from incoming user requests before passing them on to Tobira!
+    /// The mode of authentication. See the authentication docs for more information.
     #[config(default = "none")]
     pub(crate) mode: AuthMode,
 
