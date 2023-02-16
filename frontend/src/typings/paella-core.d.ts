@@ -58,7 +58,7 @@ declare module "paella-core" {
         metadata: {
             duration: number;
             title?: string;
-            preview?: string;
+            preview?: string | null;
             // TODO: `related`
         };
 
