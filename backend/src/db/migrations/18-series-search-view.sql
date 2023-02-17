@@ -20,7 +20,7 @@ create view search_series as
                 select row(search_realms.id, name, full_path, ancestor_names)::search_realms
                 from search_realms
                 where search_realms.id = blocks.realm
-            )),
+            )) filter(where blocks.realm is not null),
             '{}'
         ) as host_realms
     from series

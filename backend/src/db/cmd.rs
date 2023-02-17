@@ -226,16 +226,16 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
         trace!("Dropped sequence {sequence}");
     }
 
-    // Next we drop all types.
-    for ty in types {
-        tx.execute(&format!("drop type if exists {ty}"), &[]).await?;
-        trace!("Dropped type {ty}");
-    }
-
     // Finally, we drop all functions.
     for function in functions {
         tx.execute(&format!("drop function if exists {function} cascade"), &[]).await?;
         trace!("Dropped function {function}");
+    }
+
+    // Next we drop all types.
+    for ty in types {
+        tx.execute(&format!("drop type if exists {ty}"), &[]).await?;
+        trace!("Dropped type {ty}");
     }
 
     tx.commit().await.context("failed to commit clear transaction")?;
