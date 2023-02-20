@@ -1,17 +1,15 @@
-import React, { MutableRefObject, KeyboardEvent, ReactNode } from "react";
+import React, { KeyboardEvent, ReactNode, ReactElement } from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    FiAlertTriangle,
-    FiArrowLeft,
-    FiCheck, FiChevronDown, FiChevronUp, FiFolder, FiLogOut, FiUpload, FiUserCheck,
+    FiAlertTriangle, FiArrowLeft, FiCheck, FiChevronDown,
+    FiFolder, FiLogOut, FiUpload, FiUserCheck,
 } from "react-icons/fi";
 import { HiOutlineTranslate } from "react-icons/hi";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
-import { useOnOutsideClick } from "../../util";
 import { isRealUser, User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon } from "./ui";
@@ -20,27 +18,14 @@ import { Spinner } from "../../ui/Spinner";
 import { LOGIN_PATH } from "../../routes/paths";
 import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { FOCUS_STYLE_INSET } from "../../ui";
-import { Button } from "../../ui/Button";
+import { ProtoButton } from "../../ui/Button";
+import { FloatingHandle, FloatingContainer, FloatingTrigger, Floating } from "../../ui/Floating";
 
 
 /** User-related UI in the header. */
 export const UserBox: React.FC = () => {
     const { t } = useTranslation();
     const user = useUser();
-
-    const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
-
-    const menuActions = (
-        state: boolean, setState: React.Dispatch<React.SetStateAction<boolean>>,
-    ): Menu => ({
-        isOpen: state,
-        toggle: () => setState(old => !old),
-        close: () => setState(false),
-    });
-
-    const userMenu = menuActions(userMenuOpen, setUserMenuOpen);
-    const languageMenu = menuActions(languageMenuOpen, setLanguageMenuOpen);
 
     const iconCss = {
         height: "100%",
@@ -49,20 +34,18 @@ export const UserBox: React.FC = () => {
         opacity: 0.4,
     };
 
-    return (
-        <>
-            <LanguageSettings {...{ menu: languageMenu }} />
-            {user === "unknown"
-                ? <Spinner css={iconCss} />
-                : user === "error"
-                    // TODO: tooltip
-                    ? <FiAlertTriangle css={iconCss} />
-                    : user === "none"
-                        ? <LoggedOut />
-                        : <LoggedIn {...{ t, user, menu: userMenu }} />
-            }
-        </>
-    );
+    return <>
+        <LanguageSettings />
+        {user === "unknown"
+            ? <Spinner css={iconCss} />
+            : user === "error"
+            // TODO: tooltip
+                ? <FiAlertTriangle css={iconCss} />
+                : user === "none"
+                    ? <LoggedOut />
+                    : <LoggedIn {...{ t, user }} />
+        }
+    </>;
 };
 
 
@@ -70,88 +53,78 @@ export const UserBox: React.FC = () => {
 const LoggedOut: React.FC = () => {
     const { t } = useTranslation();
 
-    return (
-        <>
-            <Link
-                to={CONFIG.auth.loginLink ?? LOGIN_PATH}
-                onClick={() => {
+    return <>
+        <Link
+            to={CONFIG.auth.loginLink ?? LOGIN_PATH}
+            onClick={() => {
                 // Store a redirect link in session storage.
-                    window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
-                }}
-                htmlLink={!!CONFIG.auth.loginLink}
-                css={{
-                    display: "flex",
-                    padding: "8px 0",
-                    ":hover, :focus": {
-                        outline: "none",
-                        "> div": {
-                            backgroundColor: "var(--nav-color-dark)",
-                            color: "var(--nav-color-bw-contrast)",
-                            boxShadow: "0 0 1px 2px var(--accent-color)",
-                        },
+                window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
+            }}
+            htmlLink={!!CONFIG.auth.loginLink}
+            css={{
+                display: "flex",
+                padding: "8px 0",
+                ":hover, :focus": {
+                    outline: "none",
+                    "> div": {
+                        backgroundColor: "var(--nav-color-dark)",
+                        color: "var(--nav-color-bw-contrast)",
+                        boxShadow: "0 0 1px 2px var(--accent-color)",
                     },
-                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                        display: "none",
-                    },
-                }}>
-                <div css={{
-                    alignSelf: "center",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    lineHeight: "22px",
-                    padding: "10px 24px 10px 16px",
-                    marginRight: 8,
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                    backgroundColor: "var(--nav-color)",
-                    color: "var(--nav-color-bw-contrast)",
-                }}>
-                    <FiLogOut size={"20px"} />{t("user.login")}
-                </div>
-            </Link>
-            {/* Show icon on mobile devices. */}
-            <ActionIcon title={t("user.login")} css={{
-                [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                },
+                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     display: "none",
                 },
             }}>
-                <FiLogOut />
-            </ActionIcon>
-        </>
-    );
+            <div css={{
+                alignSelf: "center",
+                borderRadius: 8,
+                cursor: "pointer",
+                lineHeight: "22px",
+                padding: "10px 24px 10px 16px",
+                marginRight: 8,
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                backgroundColor: "var(--nav-color)",
+                color: "var(--nav-color-bw-contrast)",
+            }}>
+                <FiLogOut size={"20px"} />{t("user.login")}
+            </div>
+        </Link>
+        {/* Show icon on mobile devices. */}
+        <ActionIcon title={t("user.login")} css={{
+            [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                display: "none",
+            },
+        }}>
+            <FiLogOut />
+        </ActionIcon>
+    </>;
 };
 
-
-type Menu = {
-    isOpen: boolean;
-    toggle: () => void;
-    close: () => void;
-};
 
 type LoggedInProps = {
     user: User;
-    menu: Menu;
 };
 
 /** User-related UI in header when the user IS logged in. */
-const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
+const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
     const { t } = useTranslation();
-    const ref = useRef(null);
 
-    return (
-        <div ref={ref} css={{ position: "relative" }}>
+    return <WithFloatingMenu type="main">
+        <div css={{ position: "relative" }}>
             {/* // TODO: Adjust colors and focus style. */}
-            <Button title={t("user.settings")} onClick={menu.toggle} css={{
+            <ProtoButton title={t("user.settings")} css={{
+                display: "flex",
+                alignItems: "center",
                 backgroundColor: "white",
-                border: "1px solid black",
+                border: "1px solid var(--grey65)",
+                gap: 12,
                 borderRadius: 8,
                 marginRight: 8,
                 padding: "8px 14px 8px 20px",
-                alignSelf: "center",
-                display: "flex",
                 cursor: "pointer",
-                boxShadow: `${menu.isOpen && "0 0 1px 2px var(--accent-color)"}`,
                 "&:hover, &:focus": {
                     outline: "none",
                     backgroundColor: "white",
@@ -162,67 +135,62 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user, menu }) => {
                 },
             }}>
                 {user.displayName}
-                {menu.isOpen ? <FiChevronUp /> : <FiChevronDown />}
-            </Button>
+                <FiChevronDown size={20}/>
+            </ProtoButton>
             {/* Show icon on mobile devices. */}
             <ActionIcon
                 title={t("user.settings")}
-                onClick={menu.toggle}
                 css={{
                     [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                         display: "none",
                     },
                 }}>
-                <FiUserCheck css={{
-                    "& > polyline": { stroke: "var(--happy-color-dark)" },
-                }}/>
+                <FiUserCheck css={{ polyline: { stroke: "var(--happy-color-dark)" } }}/>
             </ActionIcon>
-            {/* Show menu if it is opened */}
-            {menu.isOpen && <Menu close={menu.close} container={ref} type="main" />}
         </div>
-    );
+    </WithFloatingMenu>;
 };
 
 
-type LanguageSettingsProps = {
-    menu: Menu;
+type MenuType = "main" | "language";
+
+type WithFloatingMenuProps = {
+    children: ReactElement;
+    type: MenuType;
 };
 
-const LanguageSettings: React.FC<LanguageSettingsProps> = ({ menu }) => {
-    const { t } = useTranslation();
-    const ref = useRef(null);
+const WithFloatingMenu: React.FC<WithFloatingMenuProps> = ({ children, type }) => {
+    const ref = useRef<FloatingHandle>(null);
 
     return (
-        <div ref={ref}>
-            <ActionIcon title={t("language")} onClick={menu.toggle} css={{
-                [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    marginRight: 10,
-                },
-            }}>
-                <HiOutlineTranslate />
-            </ActionIcon>
-            {menu.isOpen && <Menu close={menu.close} container={ref} type="language" />}
-        </div>
+        <FloatingContainer
+            ref={ref}
+            placement="bottom"
+            trigger="click"
+            ariaRole="menu"
+            arrowSize={12}
+            viewPortMargin={12}
+            borderRadius={8}
+        >
+            <FloatingTrigger>{children}</FloatingTrigger>
+            <FloatingMenu close={() => ref.current?.close()} type={type} />
+        </FloatingContainer>
     );
 };
 
 
-type MenuProps = {
+type FloatingMenuProps = {
     close: () => void;
-    container: MutableRefObject<Node | null>;
-    type: "main" | "language";
+    type: MenuType;
 };
 
 /**
  * A menu with some user-related settings/actions that floats on top of the page
  * and closes itself on click outside of it.
  */
-const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
+const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
     const { t } = useTranslation();
     const user = useUser();
-
-    // Close menu on clicks anywhere outside of it.
-    useOnOutsideClick(container, close);
 
     const items = match(type, {
         main: () => <>
@@ -255,38 +223,37 @@ const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
         </>,
     });
 
-    return (
-        <div onClick={e => {
-            if (e.target === e.currentTarget) {
-                close();
-            }
-        }}
-        css={{
-            position: "relative",
-            // Grey out background on mobile devices.
-            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                position: "fixed",
-                top: "var(--header-height)",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: 1001,
-                backgroundColor: "#000000a0",
-            },
-        }}>
+    return <Floating borderWidth={0} padding={0}>
+        <div
+            onClick={e => {
+                if (e.target === e.currentTarget) {
+                    close();
+                }
+            }}
+            css={{
+                position: "relative",
+                // Grey out background on mobile devices.
+                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    position: "fixed",
+                    top: "var(--header-height)",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 1001,
+                    backgroundColor: "#000000a0",
+                },
+            }}>
             <ul css={{
-                position: "absolute",
+                borderRadius: 8,
                 zIndex: 1000,
                 right: 0,
-                marginTop: 6,
-                borderRadius: 8,
-                boxShadow: "0px 4px 16px var(--grey80)",
-                backgroundColor: "white",
+                margin: 0,
                 minWidth: 200,
                 paddingLeft: 0,
                 overflow: "hidden",
                 listStyle: "none",
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    backgroundColor: "white",
                     marginTop: 0,
                     position: "fixed",
                     left: 0,
@@ -296,7 +263,22 @@ const Menu: React.FC<MenuProps> = ({ close, container, type }) => {
                 },
             }}>{items}</ul>
         </div>
-    );
+    </Floating>;
+};
+
+
+const LanguageSettings: React.FC = () => {
+    const { t } = useTranslation();
+
+    return <WithFloatingMenu type="language">
+        <ActionIcon title={t("language")} css={{
+            [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                marginRight: 10,
+            },
+        }}>
+            <HiOutlineTranslate />
+        </ActionIcon>
+    </WithFloatingMenu>;
 };
 
 
