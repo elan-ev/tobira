@@ -192,6 +192,7 @@ upload:
   too-many-files: >
     Sie haben zu viele Dateien ausgewählt. Zurzeit werden nur einzelne Dateien unterstützt.
   not-a-file: Sie haben etwas in diesen Bereich gezogen, das keine Datei ist.
+  not-video-or-audio: Nur Video- und Audiodateien können hochgeladen werden.
   starting: Starte Upload...
   finishing: Schließe Upload ab...
   waiting-for-metadata: Zum Fertigstellen bitte Videoinformationen speichern
