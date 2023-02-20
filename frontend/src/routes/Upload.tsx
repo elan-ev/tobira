@@ -114,7 +114,10 @@ const UploadMain: React.FC = () => {
     const abortController = useRef(new AbortController());
 
     router.listenAtNav(() => {
-        abortController.current.abort();
+        const state = uploadState.current?.state;
+        if (state && !["done", "cancelled", "error"].includes(state)) {
+            abortController.current.abort();
+        }
     });
 
     useNavBlocker(() => !!uploadState.current
