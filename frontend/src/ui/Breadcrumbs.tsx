@@ -1,6 +1,7 @@
 import React, { ReactNode } from "react";
 import { FiChevronRight, FiHome } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import { BreadcrumbList, WithContext } from "schema-dts";
 
 import { Link } from "../router";
 import { FOCUS_STYLE_INSET } from ".";
@@ -17,7 +18,7 @@ export type Props = {
 
 export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
     const { t } = useTranslation();
-    const structuredData = {
+    const structuredData: WithContext<BreadcrumbList> = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: path.map(({ label, link }, index) => ({

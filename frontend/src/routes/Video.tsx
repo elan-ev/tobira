@@ -52,6 +52,7 @@ import { ellipsisOverflowCss } from "../ui";
 import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui/Floating";
 import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
+import { VideoObject, WithContext } from "schema-dts";
 
 
 // ===========================================================================================
@@ -267,12 +268,12 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     const { hasStarted, hasEnded } = getEventTimeInfo(event);
     const isCurrentlyLive = hasStarted === true && hasEnded === false;
 
-    const structuredData = {
+    const structuredData: WithContext<VideoObject> = {
         "@context": "https://schema.org",
         "@type": "VideoObject",
         name: event.title,
-        description: event.description,
-        thumbnailUrl: event.syncedData.thumbnail,
+        description: event.description ?? undefined,
+        thumbnailUrl: event.syncedData.thumbnail ?? undefined,
         uploadDate: event.created,
         duration: toIsoDuration(event.syncedData.duration),
         ...event.isLive && event.syncedData.startTime && event.syncedData.endTime && {
