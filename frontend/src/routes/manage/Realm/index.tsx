@@ -22,6 +22,7 @@ import { makeRoute } from "../../../rauta";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { pathToQuery, RealmEditLinks } from "../../Realm";
+import { realmBreadcrumbs } from "../../../util/realm";
 
 
 // Route definition
@@ -90,8 +91,7 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
         ? t("manage.realm.heading-root")
         : t("manage.realm.heading", { realm: realm.name });
 
-    const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
-        .map(({ name, path }) => ({ label: name, link: path }));
+    const breadcrumbs = realm.isRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     return (
         <RealmSettingsContainer css={{ maxWidth: 900 }}>

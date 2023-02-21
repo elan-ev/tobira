@@ -25,6 +25,7 @@ import { Card } from "../../../ui/Card";
 import { pathToQuery, ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
+import { realmBreadcrumbs } from "../../../util/realm";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -131,8 +132,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
     });
 
     const validations = realmValidations(t);
-    const breadcrumbs = (parent.isRoot ? parent.ancestors : parent.ancestors.concat(parent))
-        .map(({ name, path }) => ({ label: name, link: path }));
+    const breadcrumbs = parent.isRoot ? [] : realmBreadcrumbs(t, parent.ancestors.concat(parent));
 
     return (
         <RealmSettingsContainer>

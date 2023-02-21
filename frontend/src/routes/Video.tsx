@@ -51,6 +51,7 @@ import { Description } from "../ui/metadata";
 import { ellipsisOverflowCss } from "../ui";
 import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui/Floating";
 import { Card } from "../ui/Card";
+import { realmBreadcrumbs } from "../util/realm";
 
 
 // ===========================================================================================
@@ -261,8 +262,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
         return <WaitingPage type="video" />;
     }
 
-    const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
-        .map(({ name, path }) => ({ label: name, link: path }));
+    const breadcrumbs = realm.isRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     const { hasStarted, hasEnded } = getEventTimeInfo(event);
     const isCurrentlyLive = hasStarted === true && hasEnded === false;
