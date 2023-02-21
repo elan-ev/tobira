@@ -163,6 +163,19 @@ series:
     text: >
       The data of the requested series has not been fully transferred yet. This should
       happen automatically soon. Try again in a few minutes.
+  settings:
+    order: Order
+    order-label: Choose video order
+    new-to-old: Newest first
+    old-to-new: Oldest first
+    view: View
+    view-label: Change block view
+    gallery: Gallery
+    slider: Slider
+    list: List
+  slider:
+    scroll-left: Scroll left
+    scroll-right: Scroll right
 
 realm:
   page-settings: Page settings
@@ -366,10 +379,6 @@ manage:
         content: You can put your text content here. You can even use Markdown.
 
       series:
-        order:
-          heading: Order
-          new-to-old: Newest first
-          old-to-new: Oldest first
         series:
           heading: Series
           none: No series selected

@@ -263,6 +263,13 @@ type FloatingProps = React.PropsWithChildren<{
      */
     className?: string;
 
+    /**
+     * Whether or not the arrow tip is hidden, which
+     * might be useful for larger non-tooltip menus.
+     * Default: false.
+     */
+    hideArrowTip?: boolean;
+
     // TODO: border width?
 }>;
 
@@ -282,6 +289,7 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
         shadowBlur = 4,
         padding = [4, 8],
         className,
+        hideArrowTip = false,
     }, ref) => {
         const { open, calculated, refs, settings, ...context } = useFloatingContext();
 
@@ -330,6 +338,7 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
                 {/* The arrow tip. */}
                 <div css={{
                     position: "absolute",
+                    display: hideArrowTip ? "none" : "block",
                     ...pos === "top" || pos === "bottom"
                         ? {
                             left: 0,

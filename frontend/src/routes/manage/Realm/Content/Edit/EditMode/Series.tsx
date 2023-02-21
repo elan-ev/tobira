@@ -129,18 +129,18 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 ))}
         </Select>
 
-        <Heading>{t("manage.realm.content.series.order.heading")}</Heading>
+        <Heading>{t("series.settings.order")}</Heading>
         <NiceRadio breakpoint={0}>
             <NiceRadioOption
                 value="NEW_TO_OLD"
                 defaultChecked={order === "NEW_TO_OLD"}
                 {...form.register("order")}
-            >{t("manage.realm.content.series.order.new-to-old")}</NiceRadioOption>
+            >{t("series.settings.new-to-old")}</NiceRadioOption>
             <NiceRadioOption
                 value="OLD_TO_NEW"
                 defaultChecked={order === "OLD_TO_NEW"}
                 {...form.register("order")}
-            >{t("manage.realm.content.series.order.old-to-new")}</NiceRadioOption>
+            >{t("series.settings.old-to-new")}</NiceRadioOption>
         </NiceRadio>
 
         <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
