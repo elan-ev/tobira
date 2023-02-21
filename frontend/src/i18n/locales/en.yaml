@@ -186,6 +186,7 @@ upload:
   reselect: Reselect files
   too-many-files: You selected too many files. Currently, only a single file is supported.
   not-a-file: You dropped something that's not a file.
+  not-video-or-audio: Only video and audio can be uploaded.
   starting: Starting...
   finishing: Finishing up...
   waiting-for-metadata: Please save video information to finish the upload

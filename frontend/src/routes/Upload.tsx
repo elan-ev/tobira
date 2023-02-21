@@ -330,6 +330,9 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
 // ===== Sub-components
 // ==============================================================================================
 
+const isValidForUpload = (file: File): boolean =>
+    file.type.startsWith("video/") || file.type.startsWith("audio/");
+
 type FileSelectProps = {
     onSelect: (files: FileList) => void;
 };
@@ -343,6 +346,18 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
     const [dragCounter, setDragCounter] = useState(0);
     const isDragging = dragCounter > 0;
 
+    const onSelectRaw = (files: FileList) => {
+        if (files.length === 0) {
+            setError(t("upload.not-a-file"));
+        } else if (files.length > 1) {
+            setError(t("upload.too-many-files"));
+        } else if (!Array.from(files).every(isValidForUpload)) {
+            setError(t("upload.not-video-or-audio"));
+        } else {
+            onSelect(files);
+        }
+    };
+
     return (
         <div
             onDragEnter={e => {
@@ -352,14 +367,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
             onDragOver={e => e.preventDefault()}
             onDragLeave={() => setDragCounter(old => old - 1)}
             onDrop={e => {
-                const files = e.dataTransfer.files;
-                if (files.length === 0) {
-                    setError(t("upload.not-a-file"));
-                } else if (files.length > 1) {
-                    setError(t("upload.too-many-files"));
-                } else {
-                    onSelect(e.dataTransfer.files);
-                }
+                onSelectRaw(e.dataTransfer.files);
                 setDragCounter(0);
                 e.preventDefault();
             }}
@@ -413,7 +421,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                     ref={fileInput}
                     onChange={e => {
                         if (e.target.files) {
-                            onSelect(e.target.files);
+                            onSelectRaw(e.target.files);
                         }
                     }}
                     type="file"
