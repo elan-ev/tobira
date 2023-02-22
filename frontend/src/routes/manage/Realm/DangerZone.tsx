@@ -27,6 +27,7 @@ const fragment = graphql`
         id
         name
         isMainRoot
+        isUserRoot
         path
         numberOfDescendants
     }
@@ -105,6 +106,15 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
 
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [commit, isInFlight] = useMutation(changePathMutation);
+
+    if (realm.isUserRoot) {
+        return <>
+            <h3>{t("manage.realm.danger-zone.change-path.heading")}</h3>
+            <p css={{ fontSize: 14 }}>
+                {t("manage.realm.danger-zone.change-path.cannot-userrealm")}
+            </p>
+        </>;
+    }
 
     const onSubmit = handleSubmit(data => {
         commit({

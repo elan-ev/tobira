@@ -176,6 +176,10 @@ impl Realm {
         realm.require_write_access(context)?;
         let db = &context.db;
 
+        if realm.is_user_root() {
+            return Err(invalid_input!("cannot move or change path segment of user root realm"));
+        }
+
         let parent_key = set.parent.map(|parent| id_to_key(parent, "`parent`")).transpose()?;
 
         // We have to make sure the path is not changed to a reserved one.
