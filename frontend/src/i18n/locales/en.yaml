@@ -184,6 +184,11 @@ realm:
   edit-page-content: Edit page content
   add-sub-page: Add sub-page
   missing-name: Missing name
+  user-realm:
+    note-label: User page
+    note-body: >
+      This is a personal user page which is managed by {{user}}.
+      They are responsible for all contents.
 
 search:
   input-label: Search
@@ -335,6 +340,7 @@ manage:
         heading: Change path
         button: Change path segment
         failed: Changing the path failed.
+        cannot-userrealm: The path of your personal page cannot be changed.
         warning: >
           Important: Changing the path of this page invalidates all links to
           this page, to all direct or indirect sub-pages, and to all videos
@@ -445,6 +451,7 @@ api-remote-errors:
     not-a-moderator: You have to be a moderator to perform this action.
   realm:
     path-is-reserved: The chosen path is reserved and cannot be used for pages.
+    no-write-access: You are not allowed to modify this page.
 
 embed:
   not-supported: This page can't be embedded

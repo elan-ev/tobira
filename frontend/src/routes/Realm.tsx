@@ -3,7 +3,7 @@ import React, { ReactElement } from "react";
 import { graphql, loadQuery } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
-import { FiEdit, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
+import { FiEdit, FiInfo, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
 
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -17,6 +17,7 @@ import { characterClass, useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
 import { realmBreadcrumbs } from "../util/realm";
+import { WithTooltip } from "../ui/Floating";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -102,6 +103,7 @@ const query = graphql`
             name
             path
             isMainRoot
+            isUserRealm
             children { id }
             blocks { id }
             canCurrentUserEdit
@@ -129,7 +131,10 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
         {!realm.isMainRoot && (
             <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />
         )}
-        {title && <h1>{title}</h1>}
+        {title && <div>
+            <h1 css={{ display: "inline-block" }}>{title}</h1>
+            {realm.isUserRealm && <UserRealmNote realm={realm} />}
+        </div>}
         {realm.blocks.length === 0 && realm.isMainRoot
             ? <WelcomeMessage />
             : <Blocks realm={realm} />}
@@ -160,6 +165,32 @@ const WelcomeMessage: React.FC = () => {
                 <p>{t("welcome.body")}</p>
             </div>
         </div>
+    );
+};
+
+const UserRealmNote: React.FC<Props> = ({ realm }) => {
+    const { t } = useTranslation();
+    const displayName = realm.ancestors.concat(realm)[0].name;
+
+    return (
+        <WithTooltip
+            tooltip={t("realm.user-realm.note-body", { user: displayName })}
+            placement="bottom"
+            tooltipCss={{ width: 400 }}
+            css={{ display: "inline-block", marginLeft: 12 }}
+        >
+            <div css={{
+                fontSize: 14,
+                lineHeight: 1,
+                color: "var(--grey40)",
+                display: "flex",
+                gap: 4,
+            }}>
+                <FiInfo />
+                {t("realm.user-realm.note-label")}
+            </div>
+        </WithTooltip>
+
     );
 };
 

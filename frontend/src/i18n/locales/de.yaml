@@ -188,6 +188,11 @@ realm:
   edit-page-content: Seiteninhalt bearbeiten
   add-sub-page: Unterseite hinzufügen
   missing-name: Fehlender Name
+  user-realm:
+    note-label: Nutzerseite
+    note-body: >
+      Dies ist eine persönliche Nutzerseite, die allein von {{user}} gepflegt wird.
+      Für alle Inhalte ist {{user}} verantwortlich.
 
 search:
   input-label: Suche
@@ -346,6 +351,7 @@ manage:
         heading: Pfad ändern
         button: Pfadsegment ändern
         failed: Änderung des Pfades fehlgeschlagen.
+        cannot-userrealm: Der Pfad Ihrer persönlichen Seite kann nicht geändert werden.
         warning: >
           Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
           Links zu dieser Seite, zu allen direkten und indirekten Unterseiten, und
@@ -457,6 +463,7 @@ api-remote-errors:
     not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
   realm:
     path-is-reserved: Dieser Pfad ist reserviert und kann nicht für Seiten genutzt werden.
+    no-write-access: Sie haben nicht die Berechtigung, diese Seite zu bearbeiten.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden
