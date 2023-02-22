@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { FiChevronRight, FiChevronLeft, FiArrowLeft } from "react-icons/fi";
+import { FiChevronRight, FiChevronLeft, FiCornerLeftUp } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
@@ -57,7 +57,6 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
     return <nav>
         {hasRealmParent && <>
             <LinkWithIcon
-                className="return-button"
                 to={realm.parent.path}
                 iconPos="left"
                 css={{
@@ -68,12 +67,11 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 }}
             >
                 {/* Show arrow and hide chevron in burger menu */}
-                <FiArrowLeft css={{ display: "none" }}/>
+                <FiCornerLeftUp css={{ display: "none" }}/>
                 <FiChevronLeft />
                 {realm.parent.isRoot ? t("home") : realm.parent.name ?? <MissingRealmName />}
             </LinkWithIcon>
-            {/* // TODO: Adjust colors. */}
-            <div className="realm-name" css={{
+            <div css={{
                 padding: "8px 14px 8px 16px",
                 color: "var(--nav-color-darker)",
                 backgroundColor: "var(--grey86)",
@@ -83,7 +81,6 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
             }}>{realm.name ?? <MissingRealmName />}</div>
         </>}
         <LinkList
-            className={`${hasRealmParent && "sub-realms"}`}
             items={children.map(child => (
                 <Item
                     key={child.id}

@@ -47,7 +47,6 @@ const SearchMode: React.FC = () => {
 
     return <>
         <ActionIcon title={t("back")} onClick={() => menu.close()} >
-            {/* TODO: Adjust color. */}
             <FiArrowLeft />
         </ActionIcon>
         <SearchField variant="mobile" />
@@ -111,8 +110,8 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
 };
 
 const buttonOutline = {
-    "> button": {
-        padding: 4,
-        border: "1px solid var(--grey80)",
+    button: {
+        padding: 5,
+        outline: "1.5px solid var(--grey80)",
     },
 };

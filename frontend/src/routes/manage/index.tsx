@@ -1,6 +1,7 @@
 import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { FiClipboard, FiFilm, FiUpload, FiVideo } from "react-icons/fi";
+import { FiFilm, FiUpload, FiVideo } from "react-icons/fi";
+import { HiOutlineTemplate } from "react-icons/hi";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../layout/Root";
@@ -130,7 +131,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
 
     /* eslint-disable react/jsx-key */
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
-        ["/~manage", t("manage.nav.dashboard"), <FiClipboard />],
+        ["/~manage", t("manage.nav.dashboard"), <HiOutlineTemplate />],
         ["/~manage/videos", t("manage.nav.my-videos"), <FiFilm />],
     ];
     /* eslint-enable react/jsx-key */

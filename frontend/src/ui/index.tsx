@@ -1,5 +1,6 @@
 import { Link } from "../router";
 import { match } from "../util";
+import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
 
 
@@ -10,12 +11,7 @@ export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
         backgroundColor: "var(--grey95)",
         borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
-        "&:not(:first-child)": {
-            marginTop: 26,
-        },
-        ".sub-realms > li:first-child > a": {
-            borderRadius: 0,
-        },
+        ":not(:first-child)": { marginTop: 26 },
     }}>{children}</div>
 );
 
@@ -28,7 +24,6 @@ type LinkListProps = {
 export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
     <ul
         css={{
-            // TODO: Adjust colors and focus-style.
             listStyle: "none",
             margin: 0,
             padding: 0,
@@ -40,8 +35,16 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
                     borderBottom: "none",
                 },
                 "& > *": {
-                    padding: "9px 14px 9px 16px",
                     display: "flex",
+                    padding: "10px 16px",
+                },
+            },
+            [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+                "& > li:last-child > a": {
+                    borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
+                },
+                "&:first-child > li:first-child > a": {
+                    borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
                 },
             },
         }}
@@ -72,7 +75,6 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
     const TRANSITION_DURATION = "0.1s";
 
     const hoverActiveStyle = {
-        // TODO: Adjust colors and hover-style.
         transitionDuration: "0s",
         backgroundColor: "var(--grey86)",
         "& > svg": {

@@ -13,6 +13,9 @@ export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children })
         alignItems: "center",
         marginRight: 16,
         gap: 8,
+        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+            marginRight: 8,
+        },
     }}>
         {children}
     </div>
@@ -30,7 +33,7 @@ export const ICON_STYLE = {
     background: "none",
     padding: 5,
     margin: 0,
-    borderRadius: 4,
+    borderRadius: 6,
     lineHeight: 0,
     cursor: "pointer",
     fontSize: 28,
