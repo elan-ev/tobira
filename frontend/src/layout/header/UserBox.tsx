@@ -7,7 +7,7 @@ import {
 } from "react-icons/fi";
 import { HiOutlineTranslate } from "react-icons/hi";
 
-import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
+import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { isRealUser, User, useUser } from "../../User";
@@ -128,7 +128,6 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 border: "1px solid var(--grey65)",
                 gap: 12,
                 borderRadius: 8,
-                marginRight: 8,
                 padding: "8px 14px 8px 20px",
                 cursor: "pointer",
                 ":hover": { outline: "2px solid var(--grey80)" },
@@ -181,7 +180,6 @@ const WithFloatingMenu: React.FC<WithFloatingMenuProps> = ({ children, type }) =
     );
 };
 
-
 type FloatingMenuProps = {
     close: () => void;
     type: MenuType;
@@ -222,7 +220,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
         </>,
         language: () => <>
             <ReturnButton onClick={() => close()}>{t("Choose language")}</ReturnButton>
-            <LanguageMenu />
+            <LanguageMenu close={() => close()} />
         </>,
     });
 
@@ -274,8 +272,12 @@ const LanguageSettings: React.FC = () => {
     const { t } = useTranslation();
 
     return <WithFloatingMenu type="language">
-        <ActionIcon title={t("language")}>
-            <HiOutlineTranslate />
+        <ActionIcon title={t("language")} css={{
+            [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                button: { padding: 7 },
+            },
+        }}>
+            <HiOutlineTranslate size={24} />
         </ActionIcon>
     </WithFloatingMenu>;
 };
@@ -324,7 +326,7 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
 );
 
 /** Entries in the menu related to language. */
-const LanguageMenu: React.FC = () => {
+const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
     const { t, i18n } = useTranslation();
     const isCurrentLanguage = (language: string) => language === i18n.resolvedLanguage;
 
@@ -333,17 +335,18 @@ const LanguageMenu: React.FC = () => {
             <MenuItem
                 key={lng}
                 icon={isCurrentLanguage(lng) ? <FiCheck /> : undefined}
-                onClick={() => i18n.changeLanguage(lng)}
+                onClick={() => {
+                    if (!isCurrentLanguage(lng)) {
+                        close();
+                        i18n.changeLanguage(lng);
+                    }
+                }}
                 css={{
                     backgroundColor: "var(--grey92)",
                     borderRadius: 4,
                     margin: 8,
-                    ":hover, :focus": {
-                        backgroundColor: "var(--grey80)",
-                    },
-                    ...isCurrentLanguage(lng) && {
-                        backgroundColor: "var(--grey80)",
-                    },
+                    ":hover, :focus": { backgroundColor: "var(--grey80)" },
+                    ...isCurrentLanguage(lng) && { backgroundColor: "var(--grey80)" },
                 }}
             >{t("language-name", { lng })}</MenuItem>
         ))}

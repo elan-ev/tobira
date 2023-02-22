@@ -11,7 +11,7 @@ export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children })
         display: "flex",
         position: "relative",
         alignItems: "center",
-        marginRight: 8,
+        marginRight: 16,
         gap: 8,
     }}>
         {children}
