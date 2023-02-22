@@ -2,8 +2,8 @@ import React, { KeyboardEvent, ReactNode, ReactElement } from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    FiAlertTriangle, FiArrowLeft, FiCheck, FiChevronDown,
-    FiFolder, FiLogOut, FiUpload, FiUserCheck,
+    FiAlertTriangle, FiArrowLeft, FiCheck, FiUserCheck,
+    FiChevronDown, FiFolder, FiLogOut, FiUpload,
 } from "react-icons/fi";
 import { HiOutlineTranslate } from "react-icons/hi";
 
@@ -12,7 +12,7 @@ import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { isRealUser, User, useUser } from "../../User";
 import { match } from "../../util";
-import { ActionIcon } from "./ui";
+import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
 import { LOGIN_PATH } from "../../routes/paths";
@@ -39,7 +39,7 @@ export const UserBox: React.FC = () => {
         {user === "unknown"
             ? <Spinner css={iconCss} />
             : user === "error"
-            // TODO: tooltip
+                // TODO: tooltip
                 ? <FiAlertTriangle css={iconCss} />
                 : user === "none"
                     ? <LoggedOut />
@@ -62,44 +62,51 @@ const LoggedOut: React.FC = () => {
             }}
             htmlLink={!!CONFIG.auth.loginLink}
             css={{
-                display: "flex",
-                padding: "8px 0",
+                outline: "transparent",
                 ":hover, :focus": {
-                    outline: "none",
-                    "> div": {
+                    "> :first-child": {
                         backgroundColor: "var(--nav-color-dark)",
                         color: "var(--nav-color-bw-contrast)",
-                        boxShadow: "0 0 1px 2px var(--accent-color)",
                     },
                 },
+                ":hover > div": {
+                    opacity: 1,
+                    outline: "2px solid var(--grey80)",
+                },
+                ":focus > div": {
+                    opacity: 1,
+                    outline: "2px solid var(--accent-color)",
+                },
+            }}
+        >
+            <div css={{
+                color: "var(--nav-color-bw-contrast)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                borderRadius: 8,
+                padding: "7px 14px",
+                backgroundColor: "var(--nav-color)",
+                outlineOffset: 1,
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     display: "none",
                 },
             }}>
+                <FiLogOut size={"20px"} />
+                {t("user.login")}
+            </div>
+            {/* Show icon on mobile devices. */}
             <div css={{
-                alignSelf: "center",
-                borderRadius: 8,
-                cursor: "pointer",
-                lineHeight: "22px",
-                padding: "10px 24px 10px 16px",
-                marginRight: 8,
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                backgroundColor: "var(--nav-color)",
-                color: "var(--nav-color-bw-contrast)",
+                color: "black",
+                ...ICON_STYLE,
+                margin: 0,
+                [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    display: "none",
+                },
             }}>
-                <FiLogOut size={"20px"} />{t("user.login")}
+                <FiLogOut />
             </div>
         </Link>
-        {/* Show icon on mobile devices. */}
-        <ActionIcon title={t("user.login")} css={{
-            [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                display: "none",
-            },
-        }}>
-            <FiLogOut />
-        </ActionIcon>
     </>;
 };
 
@@ -125,11 +132,8 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 marginRight: 8,
                 padding: "8px 14px 8px 20px",
                 cursor: "pointer",
-                "&:hover, &:focus": {
-                    outline: "none",
-                    backgroundColor: "white",
-                    boxShadow: "0 0 1px 2px var(--accent-color)",
-                },
+                ":hover": { outline: "2px solid var(--grey80)" },
+                ":focus": { outline: "2px solid var(--accent-color)" },
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     display: "none",
                 },
@@ -271,11 +275,7 @@ const LanguageSettings: React.FC = () => {
     const { t } = useTranslation();
 
     return <WithFloatingMenu type="language">
-        <ActionIcon title={t("language")} css={{
-            [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                marginRight: 10,
-            },
-        }}>
+        <ActionIcon title={t("language")}>
             <HiOutlineTranslate />
         </ActionIcon>
     </WithFloatingMenu>;
@@ -303,7 +303,7 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             },
             ":focus": {
                 outline: "none",
-                boxShadow: "inset 0 0 1px 2px var(--accent-color)",
+                boxShadow: "inset 0 0 0 2px var(--accent-color)",
             },
             "> svg": {
                 position: "relative",
@@ -406,7 +406,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
             backgroundColor: "var(--grey92)",
         },
         "&:focus": {
-            boxShadow: "inset 0 0 1px 2px var(--accent-color)",
+            boxShadow: "inset 0 0 0 2px var(--accent-color)",
         },
         ...FOCUS_STYLE_INSET,
     } as const;

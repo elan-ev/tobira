@@ -34,13 +34,6 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
             alignItems: "center",
             justifyContent: "space-between",
             backgroundColor: "white",
-            "> .logo": {
-                "&:focus": {
-                    outline: "none",
-                    borderRadius: 4,
-                    boxShadow: "inset 0 0 1px 2px var(--accent-color)",
-                },
-            },
         }}>
             {content}
         </header>
