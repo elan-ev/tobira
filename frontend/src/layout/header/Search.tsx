@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { FiSearch } from "react-icons/fi";
+import { HiOutlineSearch } from "react-icons/hi";
 import { useRouter } from "../../router";
 import { isSearchActive } from "../../routes/Search";
 import { Spinner } from "../../ui/Spinner";
@@ -41,15 +41,16 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         return () => document.removeEventListener("keyup", handleShortcut);
     }, []);
 
-    const extraCss = variant === "desktop"
-        ? {
+    const extraCss = {
+        width: "100%",
+        ...variant === "desktop"
+        && {
+            maxWidth: 372,
             [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                 display: "none",
             },
-        }
-        : {
-            width: "100%",
-        };
+        },
+    };
 
     const height = 42;
     const spinnerSize = 24;
@@ -69,12 +70,11 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     };
 
     return <div css={{ position: "relative", margin: "0 8px", ...extraCss }}>
-        <FiSearch css={{
+        <HiOutlineSearch css={{
             position: "absolute",
             height: "100%",
             left: 11,
             fontSize: 23,
-            // TODO: Adjust color.
             color: "var(--grey40)",
         }} />
         <form onSubmit={() => {
@@ -102,14 +102,12 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         color: "var(--grey40)",
                         border: "1px solid var(--grey65)",
                         borderRadius: 4,
-                        marginRight: 15,
                         minWidth: 50,
-                        width: 372,
                         height,
                         paddingLeft: 42,
                         paddingRight: 12,
-                        ":focus": { outline: "2px solid var(--accent-color)" },
                         ":hover": { outline: "2px solid var(--grey80)" },
+                        ":focus": { outline: "2px solid var(--accent-color)" },
                         "&::placeholder": {
                             color: "var(--grey40)",
                             opacity: 1,
@@ -121,7 +119,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         </form>
         {router.isTransitioning && isSearchActive() && <Spinner
             size={spinnerSize}
-            css={{ position: "absolute", right: (paddingSpinner + 15), top: paddingSpinner }}
+            css={{ position: "absolute", right: paddingSpinner, top: paddingSpinner }}
         />}
     </div>;
 };

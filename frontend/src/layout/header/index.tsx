@@ -1,5 +1,6 @@
 import React from "react";
-import { FiArrowLeft, FiMenu, FiSearch, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiMenu, FiX } from "react-icons/fi";
+import { HiOutlineSearch } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
 
 import { useMenu } from "../MenuState";
@@ -63,7 +64,8 @@ const OpenMenuMode: React.FC = () => {
             <ActionIcon
                 title={t("close")}
                 onClick={() => menu.close()}
-                css={buttonOutline}>
+                css={buttonOutline}
+            >
                 <FiX />
             </ActionIcon>
         </ButtonContainer>
@@ -78,8 +80,6 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
         <Logo />
         <SearchField variant="desktop" />
         <ButtonContainer>
-            <UserBox />
-
             <ActionIcon
                 title={t("search.input-label")}
                 onClick={() => menu.toggleMenu("search")}
@@ -89,9 +89,9 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                     },
                 }}
             >
-                <FiSearch />
+                <HiOutlineSearch />
             </ActionIcon>
-
+            <UserBox />
             {!hideNavIcon && (
                 <ActionIcon
                     title={t("main-menu.label")}

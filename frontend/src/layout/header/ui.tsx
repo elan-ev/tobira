@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 
-import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../GlobalStyle";
+import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { useTitle } from "../../util";
 
 
@@ -12,9 +12,7 @@ export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children })
         position: "relative",
         alignItems: "center",
         marginRight: 8,
-        [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-            gap: 8,
-        },
+        gap: 8,
     }}>
         {children}
     </div>
@@ -31,7 +29,7 @@ export const ICON_STYLE = {
     border: "none",
     background: "none",
     padding: 5,
-    margin: "0 4px",
+    margin: 0,
     borderRadius: 4,
     lineHeight: 0,
     cursor: "pointer",

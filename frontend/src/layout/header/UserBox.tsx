@@ -99,7 +99,6 @@ const LoggedOut: React.FC = () => {
             <div css={{
                 color: "black",
                 ...ICON_STYLE,
-                margin: 0,
                 [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     display: "none",
                 },
