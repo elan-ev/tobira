@@ -15,21 +15,18 @@ impl BlockValue {
         block: NewTitleBlock,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.require_moderator()?;
-
         let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
-
         context.db
             .execute(
                 "insert into blocks (realm, index, type, text_content) \
                     values ($1, $2, 'title', $3)",
-                &[&realm, &index, &block.content],
+                &[&realm.key, &index, &block.content],
             )
             .await?;
 
-        Realm::load_by_key(realm, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+        // We can return this realm as it contains no outdated data (blocks are
+        // queried separately).
+        Ok(realm)
     }
 
     pub(crate) async fn add_text(
@@ -38,21 +35,16 @@ impl BlockValue {
         block: NewTextBlock,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.require_moderator()?;
-
         let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
-
         context.db
             .execute(
                 "insert into blocks (realm, index, type, text_content) \
                     values ($1, $2, 'text', $3)",
-                &[&realm, &index, &block.content],
+                &[&realm.key, &index, &block.content],
             )
             .await?;
 
-        Realm::load_by_key(realm, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+        Ok(realm)
     }
 
     pub(crate) async fn add_series(
@@ -61,10 +53,7 @@ impl BlockValue {
         block: NewSeriesBlock,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.require_moderator()?;
-
         let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
-
         let series = block.series.key_for(Id::SERIES_KIND)
             .ok_or_else(|| invalid_input!("`block.series` does not refer to a series"))?;
 
@@ -73,13 +62,12 @@ impl BlockValue {
                 "insert into blocks \
                     (realm, index, type, series, videolist_order, show_title, show_metadata) \
                     values ($1, $2, 'series', $3, $4, $5, $6)",
-                &[&realm, &index, &series, &block.order, &block.show_title, &block.show_metadata],
+                &[&realm.key, &index, &series,
+                    &block.order, &block.show_title, &block.show_metadata],
             )
             .await?;
 
-        Realm::load_by_key(realm, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+        Ok(realm)
     }
 
     pub(crate) async fn add_video(
@@ -88,10 +76,7 @@ impl BlockValue {
         block: NewVideoBlock,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.require_moderator()?;
-
         let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
-
         let event = block.event.key_for(Id::EVENT_KIND)
             .ok_or_else(|| invalid_input!("`block.event` does not refer to an event"))?;
 
@@ -99,33 +84,35 @@ impl BlockValue {
             .execute(
                 "insert into blocks (realm, index, type, video, show_title) \
                     values ($1, $2, 'video', $3, $4)",
-                &[&realm, &index, &event, &block.show_title],
+                &[&realm.key, &index, &event, &block.show_title],
             )
             .await?;
 
-        Realm::load_by_key(realm, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a valid realm"))
+        Ok(realm)
     }
 
-    /// For all blocks in `realm` with an index `>= index`,
-    /// increase their index by `1`.
-    /// This basically moves all the blocks after the `index`-th one aside,
-    /// so a new block can be inserted at position `index`.
-    /// It also checks the validity of the given index within the given realm,
-    /// and the validity of the realm ID, and returns the validated values
+    /// Makes sure the given realm exists, the user has write access to it and
+    /// moves blocks around such that a new one can be inserted at `index`.
+    ///
+    /// For all blocks in `realm` with an index `>= index`, increase their index
+    /// by `1`. This basically moves all the blocks after the `index`-th one
+    /// aside, so a new block can be inserted at position `index`. It also
+    /// checks the validity of the given index within the given realm, and the
+    /// validity of the realm ID, and returns the validated values.
     async fn prepare_realm_for_block(
         realm: Id,
         index: i32,
         context: &Context,
-    ) -> ApiResult<(Key, i16)> {
-        let realm = realm.key_for(Id::REALM_KIND)
-            .ok_or_else(|| invalid_input!("`realm` does not refer to a realm"))?;
+    ) -> ApiResult<(Realm, i16)> {
+        let Some(realm) = Realm::load_by_id(realm, context).await? else {
+            return Err(invalid_input!("`realm` does not refer to a realm"));
+        };
+        realm.require_write_access(context)?;
 
         let num_blocks: i64 = context.db
             .query_one(
                 "select count(*) from blocks where realm = $1",
-                &[&realm],
+                &[&realm.key],
             )
             .await?
             .get(0);
@@ -143,7 +130,7 @@ impl BlockValue {
                     set index = index + 1 \
                     where realm = $1 \
                     and index >= $2",
-                &[&realm, &index],
+                &[&realm.key, &index],
             )
             .await?;
 
@@ -156,16 +143,18 @@ impl BlockValue {
         index_b: i32,
         context: &Context,
     ) -> ApiResult<Realm> {
-        let realm_key = realm.key_for(Id::REALM_KIND)
-            .ok_or_else(|| invalid_input!("`realm` is not a valid realm id"))?;
+        let Some(realm) = Realm::load_by_id(realm, context).await? else {
+            return Err(invalid_input!("`realm` does not exist"));
+        };
+        realm.require_write_access(context)?;
 
         if index_a == index_b {
-            return Realm::load_by_key(realm_key, context)
+            return Realm::load_by_key(realm.key, context)
                 .await?
                 .ok_or_else(|| invalid_input!("`realm` is not a valid realm"));
         }
 
-        let db = context.db(context.require_moderator()?);
+        let db = &context.db;
 
         // The next query will swap two blocks' indices;
         // during the execution of that statement a moment will exist
@@ -209,7 +198,7 @@ impl BlockValue {
                         .map_err(|_| invalid_input!("`indexA` is not a valid block index"))?),
                     &(i16::try_from(index_b)
                         .map_err(|_| invalid_input!("`indexB` is not a valid block index"))?),
-                    &realm_key,
+                    &realm.key,
                 ],
             )
             .await?;
@@ -220,15 +209,10 @@ impl BlockValue {
         // We will get the block id twice for two updated rows if everything
         // goes according to plan.
         if rows_modified != 2 {
-            return Err(invalid_input!(
-                "`indexA`, `indexB` or `realm` wasn't a valid block index or realm"
-            ));
+            return Err(invalid_input!("`indexA`, `indexB` wasn't a valid block index"));
         }
 
-        Realm::load_by_key(realm_key, context)
-            .await?
-            .expect("unreachable: we just swapped two blocks of a realm that does not exist?")
-            .pipe(Ok)
+        Ok(realm)
     }
 
     pub(crate) async fn update_title(
@@ -236,6 +220,8 @@ impl BlockValue {
         set: UpdateTitleBlock,
         context: &Context,
     ) -> ApiResult<Self> {
+        Self::require_realm_write_access(id, context).await?;
+
         let selection = Self::select();
         let query = format!(
             "update blocks set \
@@ -255,6 +241,8 @@ impl BlockValue {
         set: UpdateTextBlock,
         context: &Context,
     ) -> ApiResult<Self> {
+        Self::require_realm_write_access(id, context).await?;
+
         let selection = Self::select();
         let query = format!(
             "update blocks set \
@@ -274,6 +262,8 @@ impl BlockValue {
         set: UpdateSeriesBlock,
         context: &Context,
     ) -> ApiResult<BlockValue> {
+        Self::require_realm_write_access(id, context).await?;
+
         let series_id = set.series.map(
             |series| series.key_for(Id::SERIES_KIND)
                 .ok_or_else(|| invalid_input!("`set.series` does not refer to a series"))
@@ -308,6 +298,8 @@ impl BlockValue {
         set: UpdateVideoBlock,
         context: &Context,
     ) -> ApiResult<BlockValue> {
+        Self::require_realm_write_access(id, context).await?;
+
         let video_id = set.event.map(
             |series| series.key_for(Id::EVENT_KIND)
                 .ok_or_else(|| invalid_input!("`set.event` does not refer to a event"))
@@ -329,27 +321,16 @@ impl BlockValue {
     }
 
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
-        let db = context.db(context.require_moderator()?);
+        let realm = Self::require_realm_write_access(id, context).await?;
+        let db = &context.db;
         let block_id = id.key_for(Id::BLOCK_KIND)
             .ok_or_else(|| invalid_input!("`id` does not refer to a block"))?;
 
-        let (selection, mapping) = select!(realm: Realm, index: "(select index from deleted)");
-        let query = format!(
-            "with deleted as (\
-                delete from blocks \
-                where id = $1 \
-                returning realm, index\
-            ) \
-            select {selection} \
-            from realms \
-            where realms.id = (select realm from deleted)"
-        );
-        let result = db
-            .query_one(&query, &[&block_id])
-            .await?;
+        let (selection, mapping) = select!(index);
+        let query = format!("delete from blocks where id = $1 returning {selection}");
+        let result = db.query_one(&query, &[&block_id]).await?;
 
         let index: i16 = mapping.index.of(&result);
-        let realm = Realm::from_row(&result, mapping.realm);
 
         // Fix indices after removed block
         db
@@ -368,6 +349,26 @@ impl BlockValue {
     fn key_for(id: Id) -> ApiResult<Key> {
         id.key_for(Id::BLOCK_KIND)
             .ok_or_else(|| invalid_input!("`id` does not refer to a block"))
+    }
+
+    /// Loads the realm associated with the given block and makes sure the user
+    /// has write access.
+    async fn require_realm_write_access(block_id: Id, context: &Context) -> ApiResult<Realm> {
+        let key = block_id.key_for(Id::BLOCK_KIND).ok_or_else(|| {
+            invalid_input!("id does not refer to a block")
+        })?;
+
+        let selection = Realm::select();
+        let query = format!("select {selection} from realms \
+            where realms.id = (select realm from blocks where id = $1)");
+        let realm = context.db
+            .query_opt(&query, &[&key])
+            .await?
+            .map(|row| Realm::from_row_start(&row))
+            .ok_or_else(|| invalid_input!("no block with the given ID exists"))?;
+        realm.require_write_access(context)?;
+
+        Ok(realm)
     }
 }
 

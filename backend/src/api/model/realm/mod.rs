@@ -215,7 +215,7 @@ impl Realm {
         }
     }
 
-    fn require_write_access(&self, context: &Context) -> ApiResult<()> {
+    pub(crate) fn require_write_access(&self, context: &Context) -> ApiResult<()> {
         if !self.can_current_user_edit(context) {
             if let AuthContext::User(user) = &context.auth {
                 return Err(ApiError {
