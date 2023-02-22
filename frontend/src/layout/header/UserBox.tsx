@@ -193,6 +193,12 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
     const { t } = useTranslation();
     const user = useUser();
 
+    const handleBlur = (event: React.FocusEvent<HTMLDivElement, Element>) => {
+        if (!event.currentTarget.contains(event.relatedTarget as HTMLDivElement)) {
+            close();
+        }
+    };
+
     const items = match(type, {
         main: () => <>
             <ReturnButton onClick={() => close()}>{t("User features")}</ReturnButton>
@@ -231,6 +237,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                     close();
                 }
             }}
+            onBlur={handleBlur}
             css={{
                 position: "relative",
                 // Grey out background on mobile devices.
@@ -299,9 +306,8 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
         <div onClick={onClick} tabIndex={0} css={{
             cursor: "pointer",
             padding: "24px 12px",
-            ":hover, :focus": {
-                backgroundColor: "var(--grey80)",
-            },
+            opacity: 0.75,
+            ":hover, :focus": { opacity: 1 },
             ":focus": {
                 outline: "none",
                 boxShadow: "inset 0 0 0 2px var(--accent-color)",
