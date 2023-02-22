@@ -90,7 +90,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
             fragment ContentManageRealmData on Realm {
                 name
                 path
-                isRoot
+                isMainRoot
                 ancestors { name path }
                 ... BlockRealmData
                 ... AddButtonsRealmData
@@ -102,7 +102,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
         `,
         data.realm as ContentManageRealmData$key,
     );
-    const { name, path, isRoot: realmIsRoot, blocks } = realm;
+    const { name, path, blocks } = realm;
 
 
     const [inFlight, setInFlight] = useState(false);
@@ -131,13 +131,13 @@ const ManageContent: React.FC<Props> = ({ data }) => {
     }, [hasUnsavedChanges, editedBlock]);
 
 
-    const breadcrumbs = realm.isRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
+    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     return <ContentManageQueryContext.Provider value={data}>
         <RealmSettingsContainer>
             <Breadcrumbs path={breadcrumbs} tail={<i>{t("realm.edit-page-content")}</i>} />
             <PageTitle title={
-                realmIsRoot
+                realm.isMainRoot
                     ? t("manage.realm.content.heading-root")
                     : t("manage.realm.content.heading", { realm: name })
             } />

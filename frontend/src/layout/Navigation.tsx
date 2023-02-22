@@ -38,7 +38,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 name
                 childOrder
                 children { id name path }
-                parent { isRoot name path }
+                parent { isMainRoot name path }
             }
         `,
         fragRef,
@@ -69,7 +69,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 {/* Show arrow and hide chevron in burger menu */}
                 <FiCornerLeftUp css={{ display: "none" }}/>
                 <FiChevronLeft />
-                {realm.parent.isRoot ? t("home") : realm.parent.name ?? <MissingRealmName />}
+                {realm.parent.isMainRoot ? t("home") : realm.parent.name ?? <MissingRealmName />}
             </LinkWithIcon>
             <div css={{
                 padding: "8px 14px 8px 16px",

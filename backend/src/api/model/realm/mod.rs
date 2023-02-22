@@ -2,7 +2,8 @@ use juniper::{graphql_object, GraphQLEnum, GraphQLObject, GraphQLUnion, graphql_
 use postgres_types::{FromSql, ToSql};
 
 use crate::{
-    api::{Context, Id, err::ApiResult, Node, NodeValue},
+    api::{Context, Id, err::{ApiResult, ApiError, ApiErrorKind}, Node, NodeValue},
+    auth::AuthContext,
     db::{types::Key, util::{select, impl_from_db}},
     prelude::*,
 };
@@ -177,11 +178,6 @@ impl Realm {
             return Ok(Some(Self::root(context).await?));
         }
 
-        // All non-root paths have to start with `/`.
-        if !path.starts_with('/') {
-            return Ok(None);
-        }
-
         let selection = Self::select();
         let query = format!("select {selection} from realms where realms.full_path = $1");
         context.db
@@ -189,6 +185,61 @@ impl Realm {
             .await?
             .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
+    }
+
+    pub(crate) fn is_main_root(&self) -> bool {
+        self.key.0 == 0
+    }
+
+    pub(crate) fn is_user_realm(&self) -> bool {
+        self.full_path.starts_with("/@")
+    }
+
+    pub(crate) fn is_user_root(&self) -> bool {
+        self.is_user_realm() && self.parent_key.is_none()
+    }
+
+    /// Returns the username of the user owning this realm tree IF it is a user
+    /// realm. Otherwise returns `None`.
+    pub(crate) fn owning_user(&self) -> Option<&str> {
+        self.full_path.strip_prefix("/@")?.split('/').next()
+    }
+
+    fn can_current_user_edit(&self, context: &Context) -> bool {
+        if let Some(owning_user) = self.owning_user() {
+            matches!(&context.auth, AuthContext::User(u) if u.username == owning_user)
+                || context.auth.is_admin()
+        } else {
+            // TODO: at some point, we want ACLs per realm
+            context.auth.is_moderator(&context.config.auth)
+        }
+    }
+
+    fn require_write_access(&self, context: &Context) -> ApiResult<()> {
+        if !self.can_current_user_edit(context) {
+            if let AuthContext::User(user) = &context.auth {
+                return Err(ApiError {
+                    msg: format!(
+                        "write access for page '{}' required, but '{}' is not allowed to",
+                        self.full_path,
+                        user.username,
+                    ),
+                    kind: ApiErrorKind::NotAuthorized,
+                    key: Some("realm.no-write-access"),
+                })
+            } else {
+                return Err(ApiError {
+                    msg: format!(
+                        "write access for page '{}' required, but user is not logged in",
+                        self.full_path,
+                    ),
+                    kind: ApiErrorKind::NotAuthorized,
+                    key: Some("mutation.not-logged-in"),
+                })
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -226,8 +277,19 @@ impl Realm {
         }
     }
 
-    fn is_root(&self) -> bool {
-        self.key.0 == 0
+    /// Returns `true` if this is the root of the public realm tree (with path = "/").
+    fn is_main_root(&self) -> bool {
+        self.is_main_root()
+    }
+
+    /// Returns true if this is the root of a user realm tree.
+    fn is_user_root(&self) -> bool {
+        self.is_user_root()
+    }
+
+    /// Returns `true` if this realm is managed by a user (path starting with `/@`).
+    fn is_user_realm(&self) -> bool {
+        self.is_user_realm()
     }
 
     fn index(&self) -> i32 {
@@ -241,14 +303,14 @@ impl Realm {
     }
 
     /// Returns the trailing segment of this realm's path, without any instances of `/`.
-    /// Empty for the root realm.
+    /// Empty for the main root realm.
     fn path_segment(&self) -> &str {
         &self.path_segment
     }
 
-    /// Returns the full path of this realm. `"/"` for the root realm. For
-    /// non-root realms, the path always starts with `/` and never has a
-    /// trailing `/`.
+    /// Returns the full path of this realm. `"/"` for the main root realm.
+    /// Otherwise it never has a trailing `/`. For user realms, starts with
+    /// `/@`.
     fn path(&self) -> &str {
         if self.key.0 == 0 { "/" } else { &self.full_path }
     }
@@ -323,8 +385,7 @@ impl Realm {
     }
 
     fn can_current_user_edit(&self, context: &Context) -> bool {
-        // TODO: at some point, we want ACLs per realm
-        context.auth.is_moderator(&context.config.auth)
+        self.can_current_user_edit(context)
     }
 
     /// Returns `true` if this realm somehow references the given node via

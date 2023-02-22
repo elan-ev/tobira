@@ -26,7 +26,7 @@ const fragment = graphql`
     fragment DangerZoneRealmData on Realm {
         id
         name
-        isRoot
+        isMainRoot
         path
         numberOfDescendants
     }
@@ -57,7 +57,7 @@ export const DangerZone: React.FC<Props> = ({ fragRef }) => {
 
     return <>
         <h2>{t("manage.realm.danger-zone.heading")}</h2>
-        {realm.isRoot
+        {realm.isMainRoot
             ? <p>{t("manage.realm.danger-zone.root-note")}</p>
             : (
                 <div css={{
@@ -183,7 +183,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             },
             onCompleted: response => {
                 const typedResponse = response as DangerZoneRemoveRealmMutation$data;
-                router.goto(typedResponse.removeRealm.parent.path);
+                router.goto(typedResponse.removeRealm.parent?.path ?? "/");
             },
             onError: error => {
                 const failedAction = t("manage.realm.danger-zone.delete.failed");

@@ -198,7 +198,7 @@ const realmFragment = graphql`
     fragment VideoPageRealmData on Realm {
         name
         path
-        isRoot
+        isMainRoot
         ancestors { name path }
     }
 `;
@@ -263,7 +263,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
         return <WaitingPage type="video" />;
     }
 
-    const breadcrumbs = realm.isRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
+    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     const { hasStarted, hasEnded } = getEventTimeInfo(event);
     const isCurrentlyLive = hasStarted === true && hasEnded === false;
