@@ -58,8 +58,10 @@ export const RealmRoute = makeRoute(url => {
     const urlPath = url.pathname.replace(/^\/|\/$/g, "");
     const pathSegments = urlPath.split("/").map(decodeURIComponent);
     if (urlPath !== "") {
-        for (const segment of pathSegments) {
-            if (!isValidPathSegment(segment)) {
+        for (const [i, segment] of pathSegments.entries()) {
+            const isValid = isValidPathSegment(segment)
+                || (i === 0 && segment.startsWith("@") && isValidPathSegment(segment.substring(1)));
+            if (!isValid) {
                 return null;
             }
         }
@@ -99,6 +101,7 @@ const query = graphql`
             id
             name
             path
+            isMainRoot
             children { id }
             blocks { id }
             canCurrentUserEdit
@@ -119,14 +122,15 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
     const breadcrumbs = realmBreadcrumbs(t, realm.ancestors);
 
-    const isRoot = realm.parent === null;
-    const title = isRoot ? siteTitle : realm.name;
-    useTitle(title, isRoot);
+    const title = realm.isMainRoot ? siteTitle : realm.name;
+    useTitle(title, realm.isMainRoot);
 
     return <>
-        {!isRoot && <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />}
+        {!realm.isMainRoot && (
+            <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />
+        )}
         {title && <h1>{title}</h1>}
-        {realm.blocks.length === 0 && realm.parent === null
+        {realm.blocks.length === 0 && realm.isMainRoot
             ? <WelcomeMessage />
             : <Blocks realm={realm} />}
     </>;
