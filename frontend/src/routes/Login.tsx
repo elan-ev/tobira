@@ -8,18 +8,19 @@ import { loadQuery } from "../relay";
 import { Link, useRouter } from "../router";
 import { LoginQuery } from "./__generated__/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
-import { Logo } from "../layout/header/Logo";
-import { HEADER_BASE_PADDING, PageTitle } from "../layout/header/ui";
+import { PageTitle } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
-import { Button } from "../ui/Button";
+import { ProtoButton } from "../ui/Button";
 import { boxError } from "../ui/error";
 import { match, translatedConfig, useNoindexTag } from "../util";
 import { Spinner } from "../ui/Spinner";
-import { FiCheck, FiChevronLeft } from "react-icons/fi";
+import { FiCheck, FiChevronLeft, FiLogIn } from "react-icons/fi";
 import { Card } from "../ui/Card";
 import CONFIG from "../config";
 import { LOGIN_PATH } from "./paths";
 import { makeRoute } from "../rauta";
+import { Header } from "../layout/header";
+import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 
 
 export const REDIRECT_STORAGE_KEY = "tobira-redirect-after-login";
@@ -65,13 +66,12 @@ const Login: React.FC<Props> = ({ queryRef }) => {
         // Don't render anything when a redirect is triggered.
         ? null
         : <Outer>
+            <Header loginMode />
             <div css={{
-                height: "calc(1.7 * var(--header-height))",
-                maxHeight: "35vh",
-                padding: `${HEADER_BASE_PADDING}px 0`,
-                textAlign: "center",
-            }}><Logo /></div>
-
+                margin: 0,
+                height: 2,
+                backgroundColor: "var(--grey92)",
+            }}/>
             <main css={{
                 margin: "0 auto",
                 padding: 16,
@@ -80,7 +80,15 @@ const Login: React.FC<Props> = ({ queryRef }) => {
                 display: "flex",
                 flexDirection: "column",
             }}>
-                <PageTitle title={t("user.login")} />
+                <PageTitle title={t("login-page.heading")} css={{
+                    fontSize: 36,
+                    margin: "0 auto",
+                    marginTop: 60,
+                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                        fontSize: 30,
+                        marginTop: 20,
+                    },
+                }}/>
                 <LoginBox />
                 <div css={{ marginTop: 12, fontSize: 14, lineHeight: 1 }}>
                     <BackButton />
@@ -101,9 +109,13 @@ const BackButton: React.FC = () => {
         onClick={() => window.history.back()}
         css={{
             cursor: "pointer",
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
             gap: 4,
+            padding: 4,
+            borderRadius: 4,
+            ":hover": { outline: "2px solid var(--grey80)" },
+            ":focus": { outline: "2px solid var(--accent-color)" },
         }}
     ><FiChevronLeft />{t("back")}</Link>;
 };
@@ -161,9 +173,10 @@ const LoginBox: React.FC = () => {
         <div css={{
             width: 400,
             maxWidth: "100%",
-            padding: 24,
+            marginTop: 24,
+            padding: 32,
             border: "1px solid var(--grey80)",
-            borderRadius: 4,
+            borderRadius: 8,
         }}>
             {CONFIG.auth.loginPageNote && (
                 <div css={{
@@ -217,19 +230,36 @@ const LoginBox: React.FC = () => {
                     {boxError(errors.password?.message)}
                 </div>
 
-                <Button
-                    kind="happy"
+                <ProtoButton
                     type="submit"
                     disabled={state === "pending"}
-                    extraCss={{ padding: "6px 16px" }}
+                    css={{
+                        backgroundColor: "var(--nav-color)",
+                        borderRadius: 8,
+                        color: "var(--nav-color-bw-contrast)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        margin: "0 auto",
+                        padding: "7px 14px",
+                        ":hover, :focus": {
+                            backgroundColor: "var(--nav-color-dark)",
+                            color: "var(--nav-color-bw-contrast)",
+                        },
+                        ":focus": {
+                            outlineOffset: 1,
+                            outline: "2px solid var(--accent-color)",
+                        },
+                    }}
                 >
+                    <FiLogIn size={20} />
                     {t("user.login")}
                     {match(state, {
                         "idle": () => null,
                         "pending": () => <Spinner size={20} />,
                         "success": () => <FiCheck />,
                     })}
-                </Button>
+                </ProtoButton>
 
                 {loginError && <div><Card kind="error" iconPos="top">{loginError}</Card></div>}
             </form>

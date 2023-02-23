@@ -273,7 +273,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
 };
 
 
-const LanguageSettings: React.FC = () => {
+export const LanguageSettings: React.FC = () => {
     const { t } = useTranslation();
 
     return <WithFloatingMenu type="language">
