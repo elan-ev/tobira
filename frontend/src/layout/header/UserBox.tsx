@@ -34,17 +34,21 @@ export const UserBox: React.FC = () => {
         opacity: 0.4,
     };
 
+    let boxContent;
+    if (user === "unknown") {
+        boxContent = <Spinner css={iconCss} />;
+    } else if (user === "error") {
+        // TODO: tooltip
+        boxContent = <FiAlertTriangle css={iconCss} />;
+    } else if (user === "none") {
+        boxContent = <LoggedOut />;
+    } else {
+        boxContent = <LoggedIn {...{ t, user }} />;
+    }
+
     return <>
         <LanguageSettings />
-        {user === "unknown"
-            ? <Spinner css={iconCss} />
-            : user === "error"
-                // TODO: tooltip
-                ? <FiAlertTriangle css={iconCss} />
-                : user === "none"
-                    ? <LoggedOut />
-                    : <LoggedIn {...{ t, user }} />
-        }
+        {boxContent}
     </>;
 };
 
@@ -53,7 +57,7 @@ export const UserBox: React.FC = () => {
 const LoggedOut: React.FC = () => {
     const { t } = useTranslation();
 
-    return <>
+    return (
         <Link
             to={CONFIG.auth.loginLink ?? LOGIN_PATH}
             onClick={() => {
@@ -62,51 +66,36 @@ const LoggedOut: React.FC = () => {
             }}
             htmlLink={!!CONFIG.auth.loginLink}
             css={{
-                outline: "transparent",
-                ":hover, :focus": {
-                    "> :first-child": {
+                /* Show labelled button on larger screens. */
+                [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    color: "var(--nav-color-bw-contrast)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    borderRadius: 8,
+                    padding: "7px 14px",
+                    backgroundColor: "var(--nav-color)",
+                    outlineOffset: 1,
+                    svg: { fontSize: 20 },
+                    ":hover, :focus": {
                         backgroundColor: "var(--nav-color-dark)",
                         color: "var(--nav-color-bw-contrast)",
                     },
+                    ":hover": { outline: "2px solid var(--grey80)" },
+                    ":focus": { outline: "2px solid var(--accent-color)" },
                 },
-                ":hover > div": {
-                    opacity: 1,
-                    outline: "2px solid var(--grey80)",
-                },
-                ":focus > div": {
-                    opacity: 1,
-                    outline: "2px solid var(--accent-color)",
+                /* Show only the icon on mobile devices. */
+                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    color: "black",
+                    ...ICON_STYLE,
+                    span: { display: "none" },
                 },
             }}
         >
-            <div css={{
-                color: "var(--nav-color-bw-contrast)",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                borderRadius: 8,
-                padding: "7px 14px",
-                backgroundColor: "var(--nav-color)",
-                outlineOffset: 1,
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    display: "none",
-                },
-            }}>
-                <FiLogOut size={"20px"} />
-                {t("user.login")}
-            </div>
-            {/* Show icon on mobile devices. */}
-            <div css={{
-                color: "black",
-                ...ICON_STYLE,
-                [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    display: "none",
-                },
-            }}>
-                <FiLogOut />
-            </div>
+            <FiLogOut />
+            <span>{t("user.login")}</span>
         </Link>
-    </>;
+    );
 };
 
 
@@ -120,7 +109,6 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
 
     return <WithFloatingMenu type="main">
         <div css={{ position: "relative" }}>
-            {/* // TODO: Adjust colors and focus style. */}
             <ProtoButton title={t("user.settings")} css={{
                 display: "flex",
                 alignItems: "center",
@@ -128,7 +116,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 border: "1px solid var(--grey65)",
                 gap: 12,
                 borderRadius: 8,
-                padding: "8px 14px 8px 20px",
+                padding: "8px 10px 8px 16px",
                 cursor: "pointer",
                 ":hover": { outline: "2px solid var(--grey80)" },
                 ":focus": { outline: "2px solid var(--accent-color)" },
@@ -136,7 +124,14 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                     display: "none",
                 },
             }}>
-                {user.displayName}
+                <span css={{
+                    maxWidth: "clamp(170px, 12vw, 230px)",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                }}>
+                    {user.displayName}
+                </span>
                 <FiChevronDown size={20}/>
             </ProtoButton>
             {/* Show icon on mobile devices. */}
@@ -193,16 +188,10 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
     const { t } = useTranslation();
     const user = useUser();
 
-    const handleBlur = (event: React.FocusEvent<HTMLDivElement, Element>) => {
-        if (!event.currentTarget.contains(event.relatedTarget as HTMLDivElement)) {
-            close();
-        }
-    };
-
     const items = match(type, {
         main: () => <>
-            <ReturnButton onClick={() => close()}>{t("User features")}</ReturnButton>
             {isRealUser(user) && <>
+                <ReturnButton onClick={close}>{user.displayName}</ReturnButton>
                 <MenuItem
                     css={{
                         [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
@@ -212,12 +201,12 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                     icon={<FiFolder />}
                     borderBottom
                     linkTo="/~manage"
-                    onClick={() => close()}
+                    onClick={close}
                 >{t("user.manage-content")}</MenuItem>
                 {user.canUpload && <MenuItem
                     icon={<FiUpload />}
                     linkTo={"/~upload"}
-                    onClick={() => close()}
+                    onClick={close}
                 >{t("upload.title")}</MenuItem>}
             </>}
 
@@ -225,8 +214,8 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
             {isRealUser(user) && <Logout />}
         </>,
         language: () => <>
-            <ReturnButton onClick={() => close()}>{t("Choose language")}</ReturnButton>
-            <LanguageMenu close={() => close()} />
+            <ReturnButton onClick={close}>{t("language")}</ReturnButton>
+            <LanguageMenu close={close} />
         </>,
     });
 
@@ -237,7 +226,11 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                     close();
                 }
             }}
-            onBlur={handleBlur}
+            onBlur={e => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                    close();
+                }
+            }}
             css={{
                 position: "relative",
                 // Grey out background on mobile devices.
@@ -250,10 +243,10 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                     zIndex: 1001,
                     backgroundColor: "#000000a0",
                 },
-            }}>
+            }}
+        >
             <ul css={{
                 borderRadius: 8,
-                zIndex: 1000,
                 right: 0,
                 margin: 0,
                 minWidth: 200,
@@ -266,7 +259,6 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                     position: "fixed",
                     left: 0,
                     top: 0,
-                    boxShadow: "none",
                     borderRadius: "0 0 8px 8px",
                 },
             }}>{items}</ul>
@@ -304,30 +296,29 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
         },
     }}>
         <div onClick={onClick} tabIndex={0} css={{
+            display: "flex",
+            alignItems: "center",
             cursor: "pointer",
             padding: "24px 12px",
             opacity: 0.75,
             ":hover, :focus": { opacity: 1 },
             ":focus": {
-                outline: "none",
-                boxShadow: "inset 0 0 0 2px var(--accent-color)",
+                outline: "2px solid var(--accent-color)",
+                outlineOffset: -1,
             },
             "> svg": {
-                position: "relative",
-                top: 1,
                 maxHeight: 23,
                 fontSize: 23,
                 width: 24,
                 strokeWidth: 2,
             },
-            "+ span": {
-                color: "var(--grey40)",
-                padding: "24px 12px 24px 4px",
-            },
         }}>
             <FiArrowLeft />
         </div>
-        <span>{children}</span>
+        <span css={{
+            color: "var(--grey40)",
+            padding: "24px 12px 24px 4px",
+        }}>{children}</span>
     </div>
 );
 
@@ -352,7 +343,10 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
                     borderRadius: 4,
                     margin: 8,
                     ":hover, :focus": { backgroundColor: "var(--grey80)" },
-                    ...isCurrentLanguage(lng) && { backgroundColor: "var(--grey80)" },
+                    ...isCurrentLanguage(lng) && {
+                        backgroundColor: "var(--grey80)",
+                        cursor: "default",
+                    },
                 }}
             >{t("language-name", { lng })}</MenuItem>
         ))}
@@ -386,7 +380,6 @@ const MenuItem: React.FC<MenuItemProps> = ({
         {icon ?? <svg />}
         <div>{children}</div>
     </>;
-    /* // TODO: Adjust colors and focus-style. */
     const css = {
         display: "flex",
         gap: 16,
@@ -412,9 +405,6 @@ const MenuItem: React.FC<MenuItemProps> = ({
         },
         "&:hover, &:focus": {
             backgroundColor: "var(--grey92)",
-        },
-        "&:focus": {
-            boxShadow: "inset 0 0 0 2px var(--accent-color)",
         },
         ...FOCUS_STYLE_INSET,
     } as const;
@@ -489,9 +479,7 @@ const Logout: React.FC = () => {
             borderTop
             css={{
                 color: "var(--danger-color)",
-                ":hover, :focus": {
-                    borderRadius: "0 0 8px 8px",
-                },
+                borderRadius: "0 0 8px 8px",
             }}
             {...actionProps}
         >{t("user.logout")}</MenuItem>
