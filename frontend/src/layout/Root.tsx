@@ -36,7 +36,7 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
             )}
             <div css={{
                 margin: 0,
-                marginBottom: 32,
+                marginBottom: 16,
                 height: 2,
                 backgroundColor: "var(--grey92)",
             }}/>
