@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle, FiArrowLeft, FiCheck, FiUserCheck,
-    FiChevronDown, FiFolder, FiLogOut, FiUpload,
+    FiChevronDown, FiFolder, FiLogOut, FiUpload, FiLogIn,
 } from "react-icons/fi";
 import { HiOutlineTranslate } from "react-icons/hi";
 
@@ -71,7 +71,7 @@ const LoggedOut: React.FC = () => {
                     color: "var(--nav-color-bw-contrast)",
                     display: "flex",
                     alignItems: "center",
-                    gap: 8,
+                    gap: 10,
                     borderRadius: 8,
                     padding: "7px 14px",
                     backgroundColor: "var(--nav-color)",
@@ -92,7 +92,7 @@ const LoggedOut: React.FC = () => {
                 },
             }}
         >
-            <FiLogOut />
+            <FiLogIn />
             <span>{t("user.login")}</span>
         </Link>
     );
@@ -168,6 +168,7 @@ const WithFloatingMenu: React.FC<WithFloatingMenuProps> = ({ children, type }) =
             arrowSize={12}
             viewPortMargin={12}
             borderRadius={8}
+            distance={5}
         >
             <FloatingTrigger>{children}</FloatingTrigger>
             <FloatingMenu close={() => ref.current?.close()} type={type} />
@@ -193,11 +194,6 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
             {isRealUser(user) && <>
                 <ReturnButton onClick={close}>{user.displayName}</ReturnButton>
                 <MenuItem
-                    css={{
-                        [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                            borderRadius: "8px 8px 0 0",
-                        },
-                    }}
                     icon={<FiFolder />}
                     borderBottom
                     linkTo="/~manage"
@@ -219,51 +215,61 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
         </>,
     });
 
-    return <Floating borderWidth={0} padding={0}>
-        <div
-            onClick={e => {
-                if (e.target === e.currentTarget) {
-                    close();
-                }
-            }}
-            onBlur={e => {
-                if (!e.currentTarget.contains(e.relatedTarget)) {
-                    close();
-                }
-            }}
-            css={{
-                position: "relative",
-                // Grey out background on mobile devices.
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    position: "fixed",
-                    top: "var(--header-height)",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 1001,
-                    backgroundColor: "#000000a0",
-                },
-            }}
+    return (
+        <Floating
+            borderWidth={0}
+            padding={0}
+            shadowBlur={8}
         >
-            <ul css={{
-                borderRadius: 8,
-                right: 0,
-                margin: 0,
-                minWidth: 200,
-                paddingLeft: 0,
-                overflow: "hidden",
-                listStyle: "none",
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    backgroundColor: "white",
-                    marginTop: 0,
-                    position: "fixed",
-                    left: 0,
-                    top: 0,
-                    borderRadius: "0 0 8px 8px",
-                },
-            }}>{items}</ul>
-        </div>
-    </Floating>;
+            <div
+                onClick={e => {
+                    if (e.target === e.currentTarget) {
+                        close();
+                    }
+                }}
+                onBlur={e => {
+                    if (!e.currentTarget.contains(e.relatedTarget)) {
+                        close();
+                    }
+                }}
+                css={{
+                    position: "relative",
+                    // Grey out background on mobile devices.
+                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                        position: "fixed",
+                        top: "var(--header-height)",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        zIndex: 1001,
+                        backgroundColor: "#000000a0",
+                    },
+                }}
+            >
+                <ul css={{
+                    borderRadius: 8,
+                    right: 0,
+                    margin: 0,
+                    paddingLeft: 0,
+                    overflow: "hidden",
+                    listStyle: "none",
+                    li: {
+                        ":first-of-type, :first-of-type > a": { borderRadius: "8px 8px 0 0" },
+                        ":last-of-type": { borderRadius: "0 0 8px 8px" },
+                    },
+                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                        backgroundColor: "white",
+                        borderRadius: "0 0 8px 8px",
+                        marginTop: 0,
+                        position: "fixed",
+                        left: 0,
+                        top: 0,
+                        li: { ":first-of-type, :first-of-type > a": { borderRadius: 0 } },
+                    },
+                }}>{items}</ul>
+            </div>
+        </Floating>
+    );
 };
 
 
@@ -289,7 +295,7 @@ type ReturnButtonProps = {
 
 const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
     <div css={{
-        borderBottom: "1px solid var(--grey80)",
+        borderBottom: "1px solid var(--grey65)",
         display: "flex",
         [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
             display: "none",
@@ -304,7 +310,7 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             ":hover, :focus": { opacity: 1 },
             ":focus": {
                 outline: "2px solid var(--accent-color)",
-                outlineOffset: -1,
+                outlineOffset: -2,
             },
             "> svg": {
                 maxHeight: 23,
@@ -316,6 +322,9 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             <FiArrowLeft />
         </div>
         <span css={{
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            overflow: "hidden",
             color: "var(--grey40)",
             padding: "24px 12px 24px 4px",
         }}>{children}</span>
@@ -339,14 +348,9 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
                     }
                 }}
                 css={{
-                    backgroundColor: "var(--grey92)",
-                    borderRadius: 4,
-                    margin: 8,
-                    ":hover, :focus": { backgroundColor: "var(--grey80)" },
-                    ...isCurrentLanguage(lng) && {
-                        backgroundColor: "var(--grey80)",
-                        cursor: "default",
-                    },
+                    minWidth: 160,
+                    ...isCurrentLanguage(lng) && { cursor: "default" },
+                    ":not(:last-child)": { borderBottom: "1px solid var(--grey80)" },
                 }}
             >{t("language-name", { lng })}</MenuItem>
         ))}
@@ -384,28 +388,21 @@ const MenuItem: React.FC<MenuItemProps> = ({
         display: "flex",
         gap: 16,
         alignItems: "center",
-        padding: "12px",
+        minWidth: 200,
+        padding: 12,
         cursor: "pointer",
         whiteSpace: "nowrap",
         color: "black",
-        ...borderBottom && {
-            borderBottom: "1px solid var(--grey80)",
-        },
-        ...borderTop && {
-            borderTop: "1px solid var(--grey80)",
-        },
+        ...borderBottom && { borderBottom: "1px solid var(--grey80)" },
+        ...borderTop && { borderTop: "1px solid var(--grey80)" },
         "& > svg": {
             maxHeight: 23,
             fontSize: 23,
             width: 24,
             strokeWidth: 2,
-            "& > path": {
-                strokeWidth: "inherit",
-            },
+            "& > path": { strokeWidth: "inherit" },
         },
-        "&:hover, &:focus": {
-            backgroundColor: "var(--grey92)",
-        },
+        "&:hover, &:focus": { backgroundColor: "var(--grey97)" },
         ...FOCUS_STYLE_INSET,
     } as const;
 
@@ -479,7 +476,6 @@ const Logout: React.FC = () => {
             borderTop
             css={{
                 color: "var(--danger-color)",
-                borderRadius: "0 0 8px 8px",
             }}
             {...actionProps}
         >{t("user.logout")}</MenuItem>

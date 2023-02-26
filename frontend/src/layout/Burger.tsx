@@ -32,7 +32,7 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
             width: "clamp(260px, 75%, 450px)",
             overflowY: "auto",
             borderTop: "1px solid var(--grey80)",
-            "> :last-child": { marginTop: 26 },
+            "> :nth-child(2)": { marginTop: 26 },
             li: {
                 borderRadius: 4,
                 margin: 8,
@@ -47,11 +47,11 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
                     margin: 8,
                     padding: "12px 4px",
                     borderRadius: 4,
-                    "svg:nth-of-type(1)": {
+                    "svg:first-of-type": {
                         display: "block",
                         fontSize: 24,
                     },
-                    "svg:nth-of-type(2)": { display: "none" },
+                    "svg:last-of-type": { display: "none" },
                 },
                 "> div": {
                     backgroundColor: "var(--grey86)",

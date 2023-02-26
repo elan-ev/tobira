@@ -43,8 +43,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
 
     const extraCss = {
         width: "100%",
-        ...variant === "desktop"
-        && {
+        ...variant === "desktop" && {
             maxWidth: 372,
             [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                 display: "none",
