@@ -35,7 +35,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
             <BreadcrumbsContainer>
                 <li>
                     <Link to="/" css={{ lineHeight: 1, padding: 2, ...FOCUS_STYLE_INSET }}>
-                        <FiHome title={t("home")} />
+                        <FiHome aria-label={t("home")} />
                     </Link>
                 </li>
                 {path.map((segment, i) => (
@@ -56,10 +56,8 @@ export const BreadcrumbsContainer: React.FC<React.PropsWithChildren> = ({ childr
         fontSize: 14,
         flexWrap: "wrap",
         whiteSpace: "nowrap",
-        "& svg": {
-            fontSize: 16,
-        },
-        "& > li": {
+        svg: { fontSize: 16 },
+        li: {
             display: "inline-flex",
             alignItems: "center",
         },
