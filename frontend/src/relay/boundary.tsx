@@ -67,6 +67,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                 && "canUpload" in user && typeof user.canUpload === "boolean"
                 && "canUseStudio" in user && typeof user.canUseStudio === "boolean"
                 && "canUseEditor" in user && typeof user.canUseEditor === "boolean"
+                && "canCreateUserRealm" in user && typeof user.canCreateUserRealm === "boolean"
             ) {
                 // `userData = user` unfortunately doesn't work here as the type
                 // of the `user` object is not sufficiently narrowed. Relevant
@@ -77,6 +78,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                     canUpload: user.canUpload,
                     canUseStudio: user.canUseStudio,
                     canUseEditor: user.canUseEditor,
+                    canCreateUserRealm: user.canCreateUserRealm,
                 };
             }
         }

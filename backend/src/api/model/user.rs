@@ -41,6 +41,10 @@ impl User {
         self.can_use_editor(&context.config.auth)
     }
 
+    fn can_create_user_realm(&self, context: &Context) -> bool {
+        self.can_create_user_realm(&context.config.auth)
+    }
+
     /// Returns all events that somehow "belong" to the user, i.e. that appear
     /// on the "my videos" page.
     ///
