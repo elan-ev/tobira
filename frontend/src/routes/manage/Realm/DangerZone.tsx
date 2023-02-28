@@ -191,6 +191,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             variables: {
                 id: realm.id,
             },
+            updater: store => store.delete(realm.id),
             onCompleted: response => {
                 const typedResponse = response as DangerZoneRemoveRealmMutation$data;
                 router.goto(typedResponse.removeRealm.parent?.path ?? "/");
