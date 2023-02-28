@@ -2,7 +2,7 @@ use juniper::{graphql_object, GraphQLEnum, GraphQLObject, GraphQLUnion, graphql_
 use postgres_types::{FromSql, ToSql};
 
 use crate::{
-    api::{Context, Id, err::{ApiResult, ApiError, ApiErrorKind}, Node, NodeValue},
+    api::{Context, Id, err::ApiResult, Node, NodeValue},
     auth::AuthContext,
     db::{types::Key, util::{select, impl_from_db}},
     prelude::*,
@@ -217,26 +217,10 @@ impl Realm {
 
     pub(crate) fn require_write_access(&self, context: &Context) -> ApiResult<()> {
         if !self.can_current_user_edit(context) {
-            if let AuthContext::User(user) = &context.auth {
-                return Err(ApiError {
-                    msg: format!(
-                        "write access for page '{}' required, but '{}' is not allowed to",
-                        self.full_path,
-                        user.username,
-                    ),
-                    kind: ApiErrorKind::NotAuthorized,
-                    key: Some("realm.no-write-access"),
-                })
-            } else {
-                return Err(ApiError {
-                    msg: format!(
-                        "write access for page '{}' required, but user is not logged in",
-                        self.full_path,
-                    ),
-                    kind: ApiErrorKind::NotAuthorized,
-                    key: Some("mutation.not-logged-in"),
-                })
-            }
+            return Err(context.access_error("realm.no-write-access", |user| format!(
+                "write access for page '{}' required, but '{user}' is not allowed to",
+                self.full_path,
+            )))
         }
 
         Ok(())
