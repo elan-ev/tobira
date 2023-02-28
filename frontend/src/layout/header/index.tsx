@@ -1,6 +1,6 @@
 import React from "react";
-import { HiOutlineSearch } from "react-icons/hi";
 import { FiArrowLeft, FiMenu, FiX } from "react-icons/fi";
+import { HiOutlineSearch } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
 
 import { useMenu } from "../MenuState";
@@ -31,7 +31,7 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
             margin: OUTER_CONTAINER_MARGIN,
             height: "var(--header-height)",
             display: "flex",
-            padding: `${HEADER_BASE_PADDING}px 8px`,
+            padding: `${HEADER_BASE_PADDING}px 16px`,
             alignItems: "center",
             justifyContent: "space-between",
             backgroundColor: "white",
@@ -60,7 +60,11 @@ const OpenMenuMode: React.FC = () => {
     return <>
         <Logo />
         <ButtonContainer>
-            <ActionIcon title={t("close")} onClick={() => menu.close()}>
+            <ActionIcon
+                title={t("close")}
+                onClick={() => menu.close()}
+                css={buttonOutline}
+            >
                 <FiX />
             </ActionIcon>
         </ButtonContainer>
@@ -75,8 +79,6 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
         <Logo />
         <SearchField variant="desktop" />
         <ButtonContainer>
-            <UserBox />
-
             <ActionIcon
                 title={t("search.input-label")}
                 onClick={() => menu.toggleMenu("search")}
@@ -88,12 +90,13 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
             >
                 <HiOutlineSearch />
             </ActionIcon>
-
+            <UserBox />
             {!hideNavIcon && (
                 <ActionIcon
                     title={t("main-menu.label")}
                     onClick={() => menu.toggleMenu("burger")}
                     css={{
+                        ...buttonOutline,
                         [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
                             display: "none",
                         },
@@ -104,4 +107,11 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
             )}
         </ButtonContainer>
     </>;
+};
+
+const buttonOutline = {
+    button: {
+        padding: 5,
+        outline: "1.5px solid var(--grey80)",
+    },
 };

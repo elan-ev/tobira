@@ -39,6 +39,10 @@ export const Logo: React.FC = () => {
                 height: `calc(100% + ${HEADER_BASE_PADDING * 2}px)`,
                 flex: "0 1 auto",
                 margin: `-${HEADER_BASE_PADDING}px 0`,
+                borderRadius: 4,
+                outlineOffset: -2,
+                ":hover": { outline: "2px solid var(--grey80)" },
+                ":focus": { outline: "2px solid var(--accent-color)" },
                 "& > img": {
                     height: "100%",
                     width: "auto",

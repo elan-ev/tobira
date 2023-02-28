@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
+import { FiChevronRight, FiChevronLeft, FiCornerLeftUp } from "react-icons/fi";
 import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
@@ -44,36 +44,37 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
         fragRef,
     );
 
+    const hasRealmParent = realm.parent !== null;
+
     // We expect all production instances to have more than the root realm. So
     // we print this information instead of an empty div to avoid confusion.
-    if (realm.children.length === 0 && realm.parent === null) {
+    if (realm.children.length === 0 && !hasRealmParent) {
         return <div css={{ margin: "8px 12px" }}>{t("general.no-root-children")}</div>;
     }
 
     const children = sortRealms(realm.children, realm.childOrder, i18n.language);
 
     return <nav>
-        {realm.parent !== null && <>
+        {hasRealmParent && <>
             <LinkWithIcon
                 to={realm.parent.path}
                 iconPos="left"
                 css={{
-                    padding: "6px 4px",
-                    [`@media not all and (max-width: ${BREAKPOINT}px)`]: {
-                        borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
-                    },
+                    color: "var(--grey40)",
+                    padding: "10px 14px",
+                    borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
                     ...FOCUS_STYLE_INSET,
                 }}
             >
-                <FiChevronLeft css={{ marginRight: "8px !important" }}/>
+                {/* Show arrow and hide chevron in burger menu */}
+                <FiCornerLeftUp css={{ display: "none" }}/>
+                <FiChevronLeft />
                 {realm.parent.isRoot ? t("home") : realm.parent.name ?? <MissingRealmName />}
             </LinkWithIcon>
             <div css={{
-                padding: 12,
-                paddingLeft: 4 + 22 + 8,
-                fontWeight: "bold",
-                backgroundColor: "var(--nav-color-dark)",
-                color: "var(--nav-color-bw-contrast)",
+                padding: "8px 14px 8px 16px",
+                color: "var(--nav-color-darker)",
+                backgroundColor: "var(--grey86)",
                 border: "2px solid white",
                 borderLeft: "none",
                 borderRight: "none",
@@ -87,12 +88,6 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                     link={child.path}
                 />
             ))}
-            css={{
-                "& > li > ": {
-                    paddingRight: 6,
-                    paddingLeft: realm.parent != null ? 4 + 22 + 8 : 16,
-                },
-            }}
         />
     </nav>;
 };

@@ -4,16 +4,14 @@ import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
 
 
-export const SIDE_BOX_BORDER_RADIUS = 10;
+export const SIDE_BOX_BORDER_RADIUS = 8;
 
 export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{
         backgroundColor: "var(--grey95)",
         borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
-        "&:not(:first-child)": {
-            marginTop: 32,
-        },
+        ":not(:first-child)": { marginTop: 26 },
     }}>{children}</div>
 );
 
@@ -31,13 +29,14 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             padding: 0,
             "& a": { ...FOCUS_STYLE_INSET },
             "& > li": {
+                backgroundColor: "var(--grey95)",
                 borderBottom: "2px solid white",
                 "&:last-of-type": {
                     borderBottom: "none",
                 },
                 "& > *": {
-                    padding: "6px 10px",
                     display: "flex",
+                    padding: "10px 16px",
                 },
             },
             [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
@@ -77,7 +76,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
 
     const hoverActiveStyle = {
         transitionDuration: "0s",
-        backgroundColor: "var(--grey92)",
+        backgroundColor: "var(--grey86)",
         "& > svg": {
             transitionDuration: "0s",
             color: "var(--grey40)",
@@ -92,11 +91,9 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
         }),
         alignItems: "center",
         transition: `background-color ${TRANSITION_DURATION}`,
-
         "& > svg": {
-            fontSize: 22,
-            minWidth: 22,
-            color: "var(--grey65)",
+            fontSize: 20,
+            minWidth: 20,
             transition: `color ${TRANSITION_DURATION}`,
             ...match(iconPos, {
                 "left": () => ({ marginRight: 12 } as Record<string, unknown>),
@@ -107,7 +104,6 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
         "&:hover, &:focus": hoverActiveStyle,
         ...active && {
             color: "var(--nav-color-darker)",
-            fontWeight: "bold",
             "&": hoverActiveStyle,
         },
     };

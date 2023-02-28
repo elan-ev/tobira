@@ -7,7 +7,12 @@ import { useTitle } from "../../util";
 export const HEADER_BASE_PADDING = 24;
 
 export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children }) => (
-    <div css={{ display: "flex", position: "relative", alignItems: "center" }}>
+    <div css={{
+        display: "flex",
+        position: "relative",
+        alignItems: "center",
+        gap: 8,
+    }}>
         {children}
     </div>
 );
@@ -17,6 +22,22 @@ type ActionIconProps = {
     title: string;
     className?: string;
     children: ReactNode;
+};
+
+export const ICON_STYLE = {
+    border: "none",
+    background: "none",
+    padding: 5,
+    margin: 0,
+    borderRadius: 6,
+    lineHeight: 0,
+    cursor: "pointer",
+    fontSize: 28,
+    opacity: "0.75",
+    ":hover, :focus": { opacity: 1 },
+    ":hover": { outline: "2px solid var(--grey80)" },
+    ":focus": { outline: "2px solid var(--accent-color)" },
+    [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 24 },
 };
 
 /** A single button with icon in the header. */
@@ -30,23 +51,7 @@ export const ActionIcon = React.forwardRef<HTMLDivElement, ActionIconProps>(
             <button
                 title={title}
                 onClick={onClick}
-                css={{
-                    border: "none",
-                    background: "none",
-                    padding: 5,
-                    margin: "0 4px",
-                    borderRadius: 4,
-                    lineHeight: 0,
-                    cursor: "pointer",
-                    fontSize: 28,
-                    opacity: "0.75",
-                    "&:hover, &:focus": {
-                        opacity: "1",
-                    },
-                    [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
-                        fontSize: 24,
-                    },
-                }}
+                css={ICON_STYLE}
             >{children}</button>
         </div>
     ),

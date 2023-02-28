@@ -41,19 +41,18 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         return () => document.removeEventListener("keyup", handleShortcut);
     }, []);
 
-    const extraCss = variant === "desktop"
-        ? {
-            maxWidth: 280,
+    const extraCss = {
+        width: "100%",
+        ...variant === "desktop" && {
+            maxWidth: 372,
             [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
                 display: "none",
             },
-        }
-        : {
-            width: "100%",
-        };
+        },
+    };
 
-    const height = 40;
-    const spinnerSize = 22;
+    const height = 42;
+    const spinnerSize = 24;
     const paddingSpinner = (height - spinnerSize) / 2;
 
     const lastTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -73,8 +72,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         <HiOutlineSearch css={{
             position: "absolute",
             height: "100%",
-            left: 12,
-            fontSize: 20,
+            left: 11,
+            fontSize: 23,
             color: "var(--grey40)",
         }} />
         <form onSubmit={() => {
@@ -99,23 +98,18 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         }, 30);
                     }}
                     css={{
-                        flex: "1 1 0px",
+                        color: "var(--grey40)",
+                        border: "1px solid var(--grey65)",
+                        borderRadius: 4,
                         minWidth: 50,
                         height,
-                        borderRadius: 12,
-                        paddingLeft: 40,
+                        paddingLeft: 42,
                         paddingRight: 12,
-                        backgroundColor: "var(--grey92)",
-                        border: "2px solid white",
-                        "&:hover, &:focus": {
-                            backgroundColor: "var(--grey86)",
-                        },
-                        "&:focus": {
-                            outline: "none",
-                            borderColor: "var(--accent-color)",
-                        },
+                        ":hover": { outline: "2px solid var(--grey80)" },
+                        ":focus": { outline: "2px solid var(--accent-color)" },
                         "&::placeholder": {
                             color: "var(--grey40)",
+                            opacity: 1,
                         },
                         ...extraCss,
                     }}

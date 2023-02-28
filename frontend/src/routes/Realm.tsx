@@ -1,9 +1,9 @@
-import React from "react";
+import React, { ReactElement } from "react";
 
 import { graphql, loadQuery } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
-import { FiLayout, FiPlus, FiSunrise, FiTool } from "react-icons/fi";
+import { FiEdit, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
 
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -163,22 +163,28 @@ const WelcomeMessage: React.FC = () => {
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     const { t } = useTranslation();
 
+    /* eslint-disable react/jsx-key */
+    const buttons: [string, string, ReactElement][] = [
+        ["/~manage/realm?path=", t("realm.page-settings"), <FiSettings />],
+        ["/~manage/realm/content?path=", t("realm.edit-page-content"), <FiEdit />],
+        ["/~manage/realm/add-child?parent=", t("realm.add-sub-page"), <FiPlusCircle />],
+    ];
+    /* eslint-enable react/jsx-key */
+
+    const isActive = (route: string) => document.location.href.includes(route);
+
     const encodedPath = pathToQuery(path);
 
-    const items = [
-        <LinkWithIcon key={0} to={`/~manage/realm?path=${encodedPath}`} iconPos="left">
-            <FiTool />
-            {t("realm.page-settings")}
-        </LinkWithIcon>,
-        <LinkWithIcon key={1} to={`/~manage/realm/content?path=${encodedPath}`} iconPos="left">
-            <FiLayout />
-            {t("realm.edit-page-content")}
-        </LinkWithIcon>,
-        <LinkWithIcon key={1} to={`/~manage/realm/add-child?parent=${encodedPath}`} iconPos="left">
-            <FiPlus />
-            {t("realm.add-sub-page")}
-        </LinkWithIcon>,
-    ];
+    const items = buttons.map(([route, label, icon], i) => (
+        <LinkWithIcon key={i}
+            to={`${route}${encodedPath}`}
+            iconPos="left"
+            active={isActive(route)}
+        >
+            {icon}
+            {label}
+        </LinkWithIcon>
+    ));
 
     return <LinkList items={items} />;
 };
