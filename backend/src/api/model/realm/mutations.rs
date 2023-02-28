@@ -23,17 +23,23 @@ impl Realm {
         if parent.is_main_root() && path_is_reserved {
             return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
         }
-        // TODO: validate input
 
-        let key: Key = db
-            .query_one(
-                "insert into realms (parent, name, path_segment) \
-                    values ($1, $2, $3) \
-                    returning id",
-                &[&parent.key, &realm.name, &realm.path_segment],
-            )
-            .await?
-            .get(0);
+        let res = db.query_one(
+            "insert into realms (parent, name, path_segment) \
+                values ($1, $2, $3) \
+                returning id",
+            &[&parent.key, &realm.name, &realm.path_segment],
+        ).await;
+
+        let row = map_db_err!(res, {
+            if constraint == "idx_realm_path" => invalid_input!(
+                key = "realm.path-collision",
+                "realm with that path already exists",
+            ),
+            // This logic is already checked by the frontend, so no translation key.
+            if constraint == "valid_path" => invalid_input!("path invalid"),
+        })?;
+        let key: Key = row.get(0);
 
         Self::load_by_key(key, context).await.map(Option::unwrap)
     }

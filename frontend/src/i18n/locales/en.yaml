@@ -452,6 +452,7 @@ api-remote-errors:
     not-a-moderator: You have to be a moderator to perform this action.
   realm:
     path-is-reserved: The chosen path is reserved and cannot be used for pages.
+    path-collision: A page with this path already exists.
     no-write-access: You are not allowed to modify this page.
     cannot-create-user-realm: You are not allowed to create your own page.
     user-realm-already-exists: Your own page already exists.

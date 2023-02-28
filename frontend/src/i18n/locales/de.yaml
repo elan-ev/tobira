@@ -464,6 +464,7 @@ api-remote-errors:
     not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
   realm:
     path-is-reserved: Dieser Pfad ist reserviert und kann nicht für Seiten genutzt werden.
+    path-collision: Eine Seite mit diesem Pfad existiert bereits.
     no-write-access: Sie haben nicht die Berechtigung, diese Seite zu bearbeiten.
     cannot-create-user-realm: Sie haben nicht die Berechtigung, eine persönliche Seite anzulegen.
     user-realm-already-exists: Ihre persönliche Seite existiert bereits.
