@@ -465,6 +465,12 @@ api-remote-errors:
   realm:
     path-is-reserved: Dieser Pfad ist reserviert und kann nicht für Seiten genutzt werden.
     no-write-access: Sie haben nicht die Berechtigung, diese Seite zu bearbeiten.
+    cannot-create-user-realm: Sie haben nicht die Berechtigung, eine persönliche Seite anzulegen.
+    user-realm-already-exists: Ihre persönliche Seite existiert bereits.
+    username-not-valid-as-path: >
+      Ihr Nutzername '{{username}}' enthält Zeichen, die nicht in Seitenpfaden erlaubt sind.
+      Daher können Sie sich keine persönliche Seite anlegen.
+      Kontaktieren Sie einen Systemadministrator für weitere Unterstützung.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden

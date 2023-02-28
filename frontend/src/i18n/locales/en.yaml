@@ -453,6 +453,12 @@ api-remote-errors:
   realm:
     path-is-reserved: The chosen path is reserved and cannot be used for pages.
     no-write-access: You are not allowed to modify this page.
+    cannot-create-user-realm: You are not allowed to create your own page.
+    user-realm-already-exists: Your own page already exists.
+    username-not-valid-as-path: >
+      Your username '{{username}}' contains characters that are not allowed in page paths,
+      thus you cannot create your own page. Contact a system administrator for
+      further assistance.
 
 embed:
   not-supported: This page can't be embedded

@@ -313,6 +313,8 @@ input UpdatedRealmName {
 type Mutation {
   "Adds a new realm."
   addRealm(realm: NewRealm!): Realm!
+  "Creates the current users realm. Errors if it already exists."
+  createMyUserRealm: Realm!
   """
     Sets the order of all children of a specific realm.
 

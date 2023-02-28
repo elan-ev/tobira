@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    api::{Context, Id, err::{ApiResult, invalid_input}},
+    api::{Context, Id, err::{ApiResult, invalid_input, map_db_err}},
     db::types::Key,
-    prelude::*,
+    prelude::*, auth::AuthContext,
 };
 use super::{Realm, RealmOrder};
 
@@ -34,6 +34,38 @@ impl Realm {
             )
             .await?
             .get(0);
+
+        Self::load_by_key(key, context).await.map(Option::unwrap)
+    }
+
+    pub(crate) async fn create_user_realm(context: &Context) -> ApiResult<Realm> {
+        if !context.auth.can_create_user_realm(&context.config.auth) {
+            return Err(context.access_error(
+                "realm.cannot-create-user-realm",
+                |user| format!("'{user}' is not allowed to create their user realm")
+            ));
+        }
+        let AuthContext::User(user) = &context.auth else { unreachable!() };
+        let db = &context.db;
+
+        let res = db.query_one(
+            "insert into realms (parent, name, path_segment) \
+                values (null, $1, $2) \
+                returning id",
+            &[&user.display_name, &format!("@{}", user.username)],
+        ).await;
+
+        let row = map_db_err!(res, {
+            if constraint == "idx_realm_path" => invalid_input!(
+                key = "realm.user-realm-already-exists",
+                "user realm already exists",
+            ),
+            if constraint == "valid_path" => invalid_input!(
+                key = "realm.username-not-valid-as-path",
+                "username contains invalid characters for realm path",
+            ),
+        })?;
+        let key: Key = row.get(0);
 
         Self::load_by_key(key, context).await.map(Option::unwrap)
     }

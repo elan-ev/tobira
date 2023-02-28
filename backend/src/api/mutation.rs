@@ -45,6 +45,11 @@ impl Mutation {
         Realm::add(realm, context).await
     }
 
+    /// Creates the current users realm. Errors if it already exists.
+    async fn create_my_user_realm(context: &Context) -> ApiResult<Realm> {
+        Realm::create_user_realm(context).await
+    }
+
     /// Sets the order of all children of a specific realm.
     ///
     /// `childIndices` must contain at least one element, i.e. do not call this

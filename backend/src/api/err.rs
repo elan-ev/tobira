@@ -133,3 +133,46 @@ macro_rules! not_authorized {
 pub(crate) use api_err;
 pub(crate) use invalid_input;
 pub(crate) use not_authorized;
+
+
+// ===== Helper macro to inspect DbError ==================================================
+
+/// Helps you map some special DB errors to specific API errors (instead of a
+/// generic "internal server error"). Usage:
+///
+/// ```
+/// // `result` needs to be `Result<T, tokio_postgres::error::Error>`.
+/// map_db_err!(result, {
+///     if constraint == "valid_path" => invalid_input!("bad user!"),
+///     if /* field */ == /* value */ => /* expression returning ApiError */,
+///     // ...
+/// })
+/// ```
+///
+/// The macro returns `Result<T, ApiError>`.
+macro_rules! map_db_err {
+    ($result:expr, { $(
+        if $field:ident == $value:expr => $then:expr
+    ),* $(,)? }) => {
+        match $result {
+            Ok(v) => Ok(v),
+            Err(e) => {
+                if let Some(db_error) = e.as_db_error() {
+                    let new_err: $crate::api::err::ApiError = if false { unreachable!() }
+                    $(
+                        else if db_error.$field()
+                            == $crate::api::err::map_db_err!(@wrap $field $value)
+                        { $then.into() }
+                    )*
+                    else { e.into() };
+                    Err(new_err)
+                } else {
+                    Err(e.into())
+                }
+            }
+        }
+    };
+    (@wrap constraint $value:expr) => { Some($value) };
+}
+
+pub(crate) use map_db_err;
