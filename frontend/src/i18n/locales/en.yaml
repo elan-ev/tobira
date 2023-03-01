@@ -190,6 +190,20 @@ realm:
     note-body: >
       This is a personal user page which is managed by {{user}}.
       They are responsible for all contents.
+    create:
+      currently-none: You don't currently have a personal page.
+      heading: Create your own page
+      what-you-can-do: >
+        On your personal page, you can freely arrange videos, text, and other elements.
+        This allows you to better present and share your content.
+        You can even create sub-pages to create your own small video-portal.
+      available-at: 'Your page will be available at:'
+      find-and-delete: >
+        Anyone who who has this link or knows your username can visit your page.
+        However, it will not appear anywhere in the search or main part of this video portal.
+        You can always delete your page later, should you change your mind.
+      button: Create your own page
+
 
 search:
   input-label: Search

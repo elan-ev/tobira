@@ -1,6 +1,6 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, useState } from "react";
 
-import { graphql, loadQuery } from "react-relay/hooks";
+import { graphql, loadQuery, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
 import { FiEdit, FiInfo, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
@@ -18,6 +18,13 @@ import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
 import { realmBreadcrumbs } from "../util/realm";
 import { WithTooltip } from "../ui/Floating";
+import { isRealUser, useUser } from "../User";
+import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { displayCommitError } from "./manage/Realm/util";
+import { boxError } from "../ui/error";
+import { Spinner } from "../ui/Spinner";
+import { useRouter } from "../router";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -88,7 +95,7 @@ export const RealmRoute = makeRoute(url => {
             render={data => (
                 data.realm
                     ? <RealmPage realm={data.realm} />
-                    : <NotFound kind="page" />
+                    : <NoRealm realmPath={realmPath} />
             )}
         />,
         dispose: () => queryRef.dispose(),
@@ -191,6 +198,73 @@ const UserRealmNote: React.FC<Props> = ({ realm }) => {
             </div>
         </WithTooltip>
 
+    );
+};
+
+const NoRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
+    const user = useUser();
+
+    return isRealUser(user) && `/@${user.username}` === realmPath && user.canCreateUserRealm
+        ? <CreateUserRealm realmPath={realmPath} />
+        : <NotFound kind="page" />;
+};
+
+const createUserRealmMutation = graphql`
+    mutation RealmCreateForUserMutation {
+        createMyUserRealm { id path }
+    }
+`;
+
+const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
+    const { t } = useTranslation();
+    const router = useRouter();
+
+    const [commit, isInFlight] = useMutation(createUserRealmMutation);
+    const [error, setError] = useState<JSX.Element | null>(null);
+    const onSubmit = () => {
+        commit({
+            variables: {},
+            onError: error => setError(displayCommitError(error)),
+            onCompleted: () => {
+                router.goto(`~manage/realm/content?path=${encodeURIComponent(realmPath)}`);
+            },
+            // To prevent a short flash of "no realm found"
+            updater: store => store.invalidateStore(),
+        });
+    };
+
+    return (
+        <div css={{
+            width: 500,
+            maxWidth: "100%",
+            margin: "0 auto",
+            textAlign: "center",
+            "> h1, > p": {
+                textAlign: "left",
+                margin: "16px 0",
+            },
+            code: {
+                display: "block",
+                fontSize: 14,
+                backgroundColor: "var(--grey97)",
+                borderRadius: 4,
+                padding: "4px 8px",
+            },
+        }}>
+            <Card kind="info" css={{ marginBottom: 32 }}>
+                {t("realm.user-realm.create.currently-none")}
+            </Card>
+            <h1>{t("realm.user-realm.create.heading")}</h1>
+            <p>{t("realm.user-realm.create.what-you-can-do")}</p>
+            <p>{t("realm.user-realm.create.available-at")}</p>
+            <code>{window.location.origin + realmPath}</code>
+            <p>{t("realm.user-realm.create.find-and-delete")}</p>
+            <Button kind="happy"css={{ marginTop: 32 }} onClick={onSubmit}>
+                {t("realm.user-realm.create.button")}
+            </Button>
+            {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
+            {boxError(error)}
+        </div>
     );
 };
 

@@ -194,6 +194,20 @@ realm:
     note-body: >
       Dies ist eine persönliche Nutzerseite, die allein von {{user}} gepflegt wird.
       Für alle Inhalte ist {{user}} verantwortlich.
+    create:
+      currently-none: Sie haben zurzeit keine persönliche Seite.
+      heading: Persönliche Seite erstellen
+      what-you-can-do: >
+        Auf Ihrer persönlichen Seite können Sie frei Videos, Text und andere Element anordnen,
+        um so Inhalte besser präsentieren und teilen zu können.
+        Sie können sogar Unterseiten anlegen, um ihr Ihr eigenes kleines Videoportal zu erstellen.
+      available-at: 'Ihre Seite wird unter folgendem Link verfügbar sein:'
+      find-and-delete: >
+        Alle, die diesen Link oder Ihren Benutzernamen kennen, können Ihre Seite besuchen.
+        Darüberhinaus wird Ihre Seite jedoch nicht in der Suche oder im Hauptteil dieses
+        Videoportals auftauchen.
+        Sie können Ihre Seite später jederzeit wieder löschen.
+      button: Persönliche Seite erstellen
 
 search:
   input-label: Suche
