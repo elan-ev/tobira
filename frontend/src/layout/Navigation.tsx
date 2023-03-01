@@ -6,7 +6,7 @@ import type { NavigationData$key } from "./__generated__/NavigationData.graphql"
 import { useTranslation } from "react-i18next";
 import {
     ellipsisOverflowCss,
-    FOCUS_STYLE_INSET,
+    focusStyle,
     LinkList,
     LinkWithIcon,
     SIDE_BOX_BORDER_RADIUS,
@@ -63,7 +63,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                     color: "var(--grey40)",
                     padding: "10px 14px",
                     borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
-                    ...FOCUS_STYLE_INSET,
+                    ...focusStyle({ inset: true }),
                 }}
             >
                 {/* Show arrow and hide chevron in burger menu */}

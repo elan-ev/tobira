@@ -15,7 +15,7 @@ import { boxError } from "../../../ui/error";
 import { displayCommitError } from "./util";
 import { sortRealms } from "../../util";
 import { WithTooltip } from "../../../ui/Floating";
-
+import { focusStyle } from "../../../ui";
 
 
 const fragment = graphql`
@@ -223,6 +223,7 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                             backgroundColor: "var(--grey97)",
                             color: "var(--accent-color)",
                         },
+                        ...focusStyle({}),
                     },
                 },
             }}>

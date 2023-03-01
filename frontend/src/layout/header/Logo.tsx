@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import CONFIG from "../../config";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { Link } from "../../router";
+import { focusStyle } from "../../ui";
 import { translatedConfig } from "../../util";
 import { HEADER_BASE_PADDING } from "./ui";
 
@@ -40,9 +41,8 @@ export const Logo: React.FC = () => {
                 flex: "0 1 auto",
                 margin: `-${HEADER_BASE_PADDING}px 0`,
                 borderRadius: 4,
-                outlineOffset: -2,
-                ":hover": { outline: "2px solid var(--grey80)" },
-                ":focus": { outline: "2px solid var(--accent-color)" },
+                ":hover": { outlineOffset: -2, outline: "2px solid var(--grey80)" },
+                ...focusStyle({ inset: true }),
                 "& > img": {
                     height: "100%",
                     width: "auto",

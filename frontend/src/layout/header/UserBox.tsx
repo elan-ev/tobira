@@ -17,7 +17,7 @@ import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
 import { LOGIN_PATH } from "../../routes/paths";
 import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
-import { FOCUS_STYLE_INSET } from "../../ui";
+import { focusStyle } from "../../ui";
 import { ProtoButton } from "../../ui/Button";
 import { FloatingHandle, FloatingContainer, FloatingTrigger, Floating } from "../../ui/Floating";
 
@@ -75,14 +75,12 @@ const LoggedOut: React.FC = () => {
                     borderRadius: 8,
                     padding: "7px 14px",
                     backgroundColor: "var(--nav-color)",
-                    outlineOffset: 1,
                     svg: { fontSize: 20 },
                     ":hover, :focus": {
                         backgroundColor: "var(--nav-color-dark)",
                         color: "var(--nav-color-bw-contrast)",
                     },
-                    ":hover": { outline: "2px solid var(--grey80)" },
-                    ":focus": { outline: "2px solid var(--accent-color)" },
+                    ...focusStyle({ offset: 1 }),
                 },
                 /* Show only the icon on mobile devices. */
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
@@ -118,8 +116,13 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 borderRadius: 8,
                 padding: "8px 10px 8px 16px",
                 cursor: "pointer",
-                ":hover": { outline: "2px solid var(--grey80)" },
-                ":focus": { outline: "2px solid var(--accent-color)" },
+                ":hover": {
+                    borderColor: "var(--grey80)",
+                    outline: "2.5px solid var(--grey80)",
+                    outlineOffset: -1,
+                },
+                ":focus-visible": { borderColor: "var(--accent-color)" },
+                ...focusStyle({ offset: -1 }),
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     display: "none",
                 },
@@ -301,17 +304,14 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             display: "none",
         },
     }}>
-        <div onClick={onClick} tabIndex={0} css={{
+        <ProtoButton onClick={onClick} tabIndex={0} css={{
             display: "flex",
             alignItems: "center",
             cursor: "pointer",
             padding: "24px 12px",
             opacity: 0.75,
             ":hover, :focus": { opacity: 1 },
-            ":focus": {
-                outline: "2px solid var(--accent-color)",
-                outlineOffset: -2,
-            },
+            ...focusStyle({ inset: true }),
             "> svg": {
                 maxHeight: 23,
                 fontSize: 23,
@@ -320,7 +320,7 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             },
         }}>
             <FiArrowLeft />
-        </div>
+        </ProtoButton>
         <span css={{
             whiteSpace: "nowrap",
             textOverflow: "ellipsis",
@@ -402,8 +402,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
             strokeWidth: 2,
             "& > path": { strokeWidth: "inherit" },
         },
-        "&:hover, &:focus": { backgroundColor: "var(--grey97)" },
-        ...FOCUS_STYLE_INSET,
+        ":hover, :focus": { backgroundColor: "var(--grey97)" },
+        ...focusStyle({ inset: true }),
     } as const;
 
 

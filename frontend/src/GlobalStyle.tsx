@@ -104,6 +104,7 @@ const GLOBAL_STYLE = css({
         "&:hover, &:focus": {
             color: "var(--nav-color-darker)",
         },
+        ":focus-visible": { outline: "2.5px solid var(--accent-color)" },
     },
     hr: {
         border: "none",

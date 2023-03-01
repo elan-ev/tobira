@@ -1,5 +1,6 @@
 import { Interpolation, Theme } from "@emotion/react";
 import React from "react";
+import { focusStyle } from ".";
 
 import { Link } from "../router";
 import { match } from "../util";
@@ -87,6 +88,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
                 backgroundColor: "var(--happy-color-darker)",
                 color: "var(--happy-color-bw-contrast)",
             },
+            ...focusStyle({ offset: 1 }),
         }),
     });
 
@@ -106,12 +108,9 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
             border: "1px solid var(--grey80)",
             color: "var(--grey65)",
         },
-        "&:focus-visible": {
-            boxShadow: "0 0 0 3px var(--grey65)",
-            outline: "none",
-        },
         "&:not([disabled])": {
             cursor: "pointer",
+            ...focusStyle({}),
             ...notDisabledStyle,
         },
         ...extraCss as Record<string, unknown>,

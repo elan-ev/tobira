@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { BreadcrumbList, WithContext } from "schema-dts";
 
 import { Link } from "../router";
-import { FOCUS_STYLE_INSET } from ".";
+import { focusStyle } from ".";
 
 
 export type Props = {
@@ -36,7 +36,11 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
             )}
             <BreadcrumbsContainer>
                 <li>
-                    <Link to="/" css={{ lineHeight: 1, padding: 2, ...FOCUS_STYLE_INSET }}>
+                    <Link to="/" css={{
+                        lineHeight: 1,
+                        padding: 2,
+                        ...focusStyle({ inset: true }),
+                    }}>
                         <FiHome aria-label={t("home")} />
                     </Link>
                 </li>
@@ -88,7 +92,7 @@ const Segment: React.FC<SegmentProps> = ({ target, children }) => (
         <BreadcrumbSeparator />
         {target === undefined
             ? <div css={TEXT_STYLE}>{children}</div>
-            : <Link css={[TEXT_STYLE, FOCUS_STYLE_INSET]} to={target}>{children}</Link>}
+            : <Link css={[TEXT_STYLE, focusStyle({ inset: true })]} to={target}>{children}</Link>}
     </li>
 );
 

@@ -1,6 +1,7 @@
 import React, { ReactNode } from "react";
 
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
+import { focusStyle } from "../../ui";
 import { useTitle } from "../../util";
 
 
@@ -36,7 +37,7 @@ export const ICON_STYLE = {
     opacity: "0.75",
     ":hover, :focus": { opacity: 1 },
     ":hover": { outline: "2px solid var(--grey80)" },
-    ":focus": { outline: "2px solid var(--accent-color)" },
+    ...focusStyle({}),
     [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 24 },
 };
 

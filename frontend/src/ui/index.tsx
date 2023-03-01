@@ -27,13 +27,11 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             listStyle: "none",
             margin: 0,
             padding: 0,
-            "& a": { ...FOCUS_STYLE_INSET },
+            "& a": { ...focusStyle({ inset: true }) },
             "& > li": {
                 backgroundColor: "var(--grey95)",
                 borderBottom: "2px solid white",
-                "&:last-of-type": {
-                    borderBottom: "none",
-                },
+                "&:last-of-type": { borderBottom: "none" },
                 "& > *": {
                     display: "flex",
                     padding: "10px 16px",
@@ -126,12 +124,22 @@ export const Title: React.FC<TitleProps> = ({ title, className }) => (
     <h2 className={className} css={{ margin: "16px 0" }}>{title}</h2>
 );
 
-export const FOCUS_STYLE_INSET = {
+
+/**
+ * Applies focus outline with a default width of 2.5px to elements.
+ * This should always be used instead of a custom focus property to ensure
+ * consistency throughout the design.
+ * If `({ inset: true })` is declared, the focus will be on the inside
+ * of the focused element with a negative offset equal to the outline's width.
+ * Otherwise is also possible to declare an additional offset (usually 1) for
+ * elements with a similar color to the outline to make it stand out more.
+ */
+export const focusStyle = ({ width = 2.5, inset = false, offset = 0 }) => ({
     "&:focus-visible": {
-        outline: "none",
-        boxShadow: "inset 0 0 0 2px var(--accent-color)",
+        outline: `${width}px solid var(--accent-color)`,
+        outlineOffset: `${inset ? -width : offset}px`,
     },
-} as const;
+} as const);
 
 /** Returns CSS that makes text longer than `lines` lines to be truncated with `...`. */
 export const ellipsisOverflowCss = (lines: number): Record<string, any> => ({
