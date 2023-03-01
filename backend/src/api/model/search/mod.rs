@@ -295,15 +295,23 @@ pub(crate) async fn all_series(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<SeriesSearchOutcome> {
-    if !writable_only {
-        context.require_moderator()?;
-    }
-
-    // If the user is not admin, build ACL filter: there has to be one user role
-    // inside the event's ACL.
     let mut filter = String::new();
-    let action = if writable_only { "write_roles" } else { "read_roles" };
-    append_acl_filter(action, &mut filter, context);
+    match (writable_only, context.auth.is_moderator(&context.config.auth)) {
+        // If the writable_only flag is set, we filter by that only. All users
+        // are allowed to find all series that they have write access to.
+        (true, _) => append_acl_filter("write_roles", &mut filter, context),
+
+        // If the flag is not set and the user is moderator, all series are
+        // searched.
+        (false, true) => {}
+
+        // If the user is not moderator, they may only find listed series or
+        // series they have write access to.
+        (false, false) => {
+            filter.push_str("listed = true OR ");
+            append_acl_filter("write_roles", &mut filter, context);
+        }
+    };
 
     // Build search query
     let mut query = context.search.series_index.search();
@@ -326,9 +334,6 @@ fn append_acl_filter(action: &str, filter: &mut String, context: &Context) {
         return;
     }
 
-    if !filter.is_empty() {
-        filter.push_str(" AND ");
-    }
     filter.push_str("(");
     for (i, role) in context.auth.roles().iter().enumerate() {
         if i > 0 {
@@ -350,6 +355,9 @@ fn event_search_query<'a>(
     query.with_query(user_query);
     query.with_limit(15);
     query.with_show_matches_position(true);
+    if !filter.is_empty() {
+        filter.push_str(" AND ");
+    }
     append_acl_filter("read_roles", filter, context);
     query.with_filter(filter);
     query

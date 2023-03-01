@@ -49,15 +49,6 @@ impl_from_db!(
 );
 
 impl Series {
-    pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
-        let selection = Self::select();
-        let query = format!("select {selection} from series order by title");
-        context.db(context.require_moderator()?)
-            .query_mapped(&query, dbargs![], |row| Self::from_row_start(&row))
-            .await?
-            .pipe(Ok)
-    }
-
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
         if let Some(key) = id.key_for(Id::SERIES_KIND) {
             Self::load_by_key(key, context).await

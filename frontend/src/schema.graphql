@@ -412,8 +412,6 @@ type Query {
   seriesByOpencastId(id: String!): Series
   "Returns a series by its ID."
   seriesById(id: ID!): Series
-  "Returns a list of all series."
-  allSeries: [Series!]!
   "Returns the current user."
   currentUser: User
   "Returns a new JWT that can be used to authenticate against Opencast for using the given service"
@@ -428,9 +426,12 @@ type Query {
   """
   searchAllEvents(query: String!): EventSearchOutcome!
   """
-    Searches through all series (including non-listed ones). If
-    `writable_only` is true, only series that the user can write are
-    returned. If it's false, moderator rights are required.
+    Searches through all series. If `writable_only` is true, only series
+    that the user has write access to are searched (but including
+    non-listed ones). If it's false, it depends: if the user is moderator,
+    all series are searched (including non-listed ones). If the user is not
+    moderator, series that are listed or the user has write access to are
+    searched.
   """
   searchAllSeries(query: String!, writableOnly: Boolean!): SeriesSearchOutcome!
 }

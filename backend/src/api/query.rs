@@ -64,11 +64,6 @@ impl Query {
         Series::load_by_id(id, context).await
     }
 
-    /// Returns a list of all series.
-    async fn all_series(context: &Context) -> ApiResult<Vec<Series>> {
-        Series::load_all(context).await
-    }
-
     /// Returns the current user.
     fn current_user(context: &Context) -> Option<&User> {
         match &context.auth {
@@ -105,9 +100,12 @@ impl Query {
         search::all_events(&query, context).await
     }
 
-    /// Searches through all series (including non-listed ones). If
-    /// `writable_only` is true, only series that the user can write are
-    /// returned. If it's false, moderator rights are required.
+    /// Searches through all series. If `writable_only` is true, only series
+    /// that the user has write access to are searched (but including
+    /// non-listed ones). If it's false, it depends: if the user is moderator,
+    /// all series are searched (including non-listed ones). If the user is not
+    /// moderator, series that are listed or the user has write access to are
+    /// searched.
     async fn search_all_series(
         query: String,
         writable_only: bool,
