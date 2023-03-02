@@ -353,7 +353,29 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         }
 
         Ok((value, errors)) if !errors.is_empty() => {
-            warn!("Errors during GraphQL execution -> rolling back DB transaction");
+            let error_to_msg = |e: &juniper::ExecutionError<juniper::DefaultScalarValue>| {
+                // Uh oh: `message` is a `#[doc(hidden)]` method, which usually
+                // means that the library authors only need it public for macro
+                // purposes and that its not actually part of the public API
+                // that is evolved through semver. But: lots of things in
+                // Juniper are weird, so this doesn't necessarily have any
+                // intent behind it. Also, we can always get at the same data
+                // by serializing this error as JSON and poking it out like
+                // that. Using the method is just easier. If the method is ever
+                // removed, we have to use the JSON solution. But I'm very sure
+                // it won't be removed in 0.15.x anymore.
+                format!("{} (at `{}`)", e.error().message(), e.path().join("."))
+            };
+
+            warn!(
+                "Error{} during GraphQL execution: {}",
+                if errors.len() > 1 { "s" } else { "" },
+                if errors.len() > 1 {
+                    errors.iter().map(|e| format!("\n- {}", error_to_msg(e))).collect::<String>()
+                } else {
+                    error_to_msg(&errors[0])
+                },
+            );
             log_and_rollback!();
 
             // We just return all errors as normal GraphQL errors, BUT we return
