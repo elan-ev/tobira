@@ -1,5 +1,5 @@
 use hyper::{Body, Method, StatusCode, http::{HeaderValue, uri::PathAndQuery}, header, Uri};
-use juniper::http::GraphQLResponse;
+use juniper::{http::GraphQLResponse, graphql_value};
 use std::{
     collections::HashSet,
     fmt,
@@ -352,15 +352,34 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
             return Err(bad_request(format!("bad GraphQL request: {e}").as_str()));
         }
 
-        Ok((_, errors)) if !errors.is_empty() => {
-            warn!("Errors during GraphQL execution -> rolling back DB transaction \
-                & replying with errors only");
+        Ok((value, errors)) if !errors.is_empty() => {
+            warn!("Errors during GraphQL execution -> rolling back DB transaction");
             log_and_rollback!();
 
             // We just return all errors as normal GraphQL errors, BUT we return
             // no regular data as that might contain data from the DB
-            // transaction that was rolled back.
-            GraphQLResponse::from_result(Ok((juniper::Value::Null, errors)))
+            // transaction that was rolled back. That is, with the exception of
+            // `currentUser` which contains no data from the DB at all. That's
+            // what the following code does: inspect the prepared value and
+            // extract only what we can give out.
+            let mut data = juniper::Value::Null;
+            let user = value.as_object_value()
+                .and_then(|o| o.get_field_value("currentUser"))
+                .and_then(|v| v.as_object_value());
+            if let Some(user) = user {
+                // Not even all fields are allowed. `myVideos` for example
+                // contains DB data.
+                let allowed_fields = [
+                    "username", "displayName", "roles",
+                    "canUpload", "canUseStudio", "canUseEditor",
+                ];
+                let filtered = user.clone().into_iter()
+                    .filter(|(k, _)| allowed_fields.contains(&k.as_str()))
+                    .collect::<juniper::Object<juniper::DefaultScalarValue>>();
+                data = graphql_value!({ "currentUser": filtered });
+            }
+
+            GraphQLResponse::from_result(Ok((data, errors)))
         }
 
         Ok((value, _)) => {
