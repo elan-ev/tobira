@@ -73,7 +73,6 @@ const query = graphql`
             ... NavigationData
             ... ContentManageRealmData
         }
-        ... SeriesEditModeSeriesData
     }
 `;
 

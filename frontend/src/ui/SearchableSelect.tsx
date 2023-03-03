@@ -86,7 +86,7 @@ type SeriesSelectorProps = DerivedProps<SeriesOption> & {
     onChange?: (series: SeriesOption | null) => void;
     onBlur?: () => void;
     defaultValue?: SeriesOption;
-    writableOnly: boolean;
+    writableOnly?: boolean;
 };
 
 type SeriesOption = {
@@ -97,7 +97,7 @@ type SeriesOption = {
 };
 
 export const SeriesSelector: React.FC<SeriesSelectorProps> = ({
-    writableOnly, onBlur, onChange, defaultValue, ...rest
+    writableOnly = false, onBlur, onChange, defaultValue, ...rest
 }) => {
     const { t } = useTranslation();
     const [error, setError] = useState(false);
