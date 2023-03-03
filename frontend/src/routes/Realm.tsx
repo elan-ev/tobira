@@ -16,6 +16,7 @@ import CONFIG from "../config";
 import { characterClass, useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
+import { realmBreadcrumbs } from "../util/realm";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -114,11 +115,9 @@ type Props = {
 };
 
 const RealmPage: React.FC<Props> = ({ realm }) => {
+    const { t } = useTranslation();
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
-    const breadcrumbs = realm.ancestors.map(({ name, path }) => ({
-        label: name ?? <MissingRealmName />,
-        link: path,
-    }));
+    const breadcrumbs = realmBreadcrumbs(t, realm.ancestors);
 
     const isRoot = realm.parent === null;
     const title = isRoot ? siteTitle : realm.name;

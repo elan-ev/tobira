@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
+import { FiEye } from "react-icons/fi";
 
 import { RootLoader } from "../../../../layout/Root";
 import type {
@@ -20,10 +21,10 @@ import { EditBlock } from "./Block";
 import { Breadcrumbs } from "../../../../ui/Breadcrumbs";
 import { useNavBlocker } from "../../../util";
 import { LinkButton } from "../../../../ui/Button";
-import { FiEye } from "react-icons/fi";
 import { PageTitle } from "../../../../layout/header/ui";
 import { RealmEditLinks } from "../../../Realm";
 import { bug } from "../../../../util/err";
+import { realmBreadcrumbs } from "../../../../util/realm";
 
 
 export const PATH = "/~manage/realm/content";
@@ -131,8 +132,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
     }, [hasUnsavedChanges, editedBlock]);
 
 
-    const breadcrumbs = (realm.isRoot ? realm.ancestors : realm.ancestors.concat(realm))
-        .map(({ name, path }) => ({ label: name, link: path }));
+    const breadcrumbs = realm.isRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     return <ContentManageQueryContext.Provider value={data}>
         <RealmSettingsContainer>

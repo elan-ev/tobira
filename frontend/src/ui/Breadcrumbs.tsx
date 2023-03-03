@@ -1,22 +1,24 @@
 import React, { ReactNode } from "react";
 import { FiChevronRight, FiHome } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import { BreadcrumbList, WithContext } from "schema-dts";
 
 import { Link } from "../router";
 import { FOCUS_STYLE_INSET } from ".";
 
 
-type Props = {
+export type Props = {
     path: {
-        label: ReactNode;
+        label: string;
         link: string;
+        render?: (label: string) => NonNullable<ReactNode>;
     }[];
-    tail: JSX.Element | string;
+    tail: NonNullable<JSX.Element> | string;
 };
 
 export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
     const { t } = useTranslation();
-    const structuredData = {
+    const structuredData: WithContext<BreadcrumbList> = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: path.map(({ label, link }, index) => ({
@@ -39,7 +41,9 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
                     </Link>
                 </li>
                 {path.map((segment, i) => (
-                    <Segment key={i} target={segment.link}>{segment.label}</Segment>
+                    <Segment key={i} target={segment.link}>
+                        {(segment.render ?? (l => l))(segment.label)}
+                    </Segment>
                 ))}
                 <Segment>{tail}</Segment>
             </BreadcrumbsContainer>
