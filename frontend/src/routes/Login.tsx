@@ -67,11 +67,6 @@ const Login: React.FC<Props> = ({ queryRef }) => {
         ? null
         : <Outer>
             <Header loginMode />
-            <div css={{
-                margin: 0,
-                height: 2,
-                backgroundColor: "var(--grey92)",
-            }}/>
             <main css={{
                 margin: "0 auto",
                 padding: 16,
@@ -83,7 +78,7 @@ const Login: React.FC<Props> = ({ queryRef }) => {
                 <PageTitle title={t("login-page.heading")} css={{
                     fontSize: 36,
                     margin: "0 auto",
-                    marginTop: 60,
+                    marginTop: 44,
                     [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                         fontSize: 30,
                         marginTop: 20,
@@ -114,7 +109,6 @@ const BackButton: React.FC = () => {
             gap: 4,
             padding: 4,
             borderRadius: 4,
-            ":hover": { outline: "2px solid var(--grey80)" },
             ":focus": { outline: "2px solid var(--accent-color)" },
         }}
     ><FiChevronLeft />{t("back")}</Link>;

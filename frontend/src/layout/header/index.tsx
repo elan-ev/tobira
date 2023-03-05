@@ -27,7 +27,7 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false
         "burger": () => <OpenMenuMode />,
     });
 
-    return (
+    return <>
         <header css={{
             margin: OUTER_CONTAINER_MARGIN,
             height: "var(--header-height)",
@@ -39,7 +39,8 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false
         }}>
             {loginMode ? <LoginMode /> : content}
         </header>
-    );
+        <div css={{ margin: "0 0 16px 0 ", height: 2, backgroundColor: "var(--grey92)" }} />
+    </>;
 };
 
 const LoginMode: React.FC = () => <>
