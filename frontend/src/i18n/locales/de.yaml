@@ -105,6 +105,7 @@ user:
   logged-in-as: Angemeldet als
 
 login-page:
+  heading: Anmeldung 
   user-id: Nutzerkennung
   password: Passwort
   bad-credentials: 'Anmeldung fehlgeschlagen: Falsche Anmeldedaten.'

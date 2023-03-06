@@ -102,6 +102,7 @@ user:
   logged-in-as: Logged in as
 
 login-page:
+  heading: Login 
   user-id: User ID
   password: Password
   bad-credentials: 'Login failed: invalid credentials.'

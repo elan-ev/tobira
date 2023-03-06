@@ -41,16 +41,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         return () => document.removeEventListener("keyup", handleShortcut);
     }, []);
 
-    const extraCss = {
-        width: "100%",
-        ...variant === "desktop" && {
-            maxWidth: 372,
-            [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
-                display: "none",
-            },
-        },
-    };
-
     const height = 42;
     const spinnerSize = 24;
     const paddingSpinner = (height - spinnerSize) / 2;
@@ -68,57 +58,69 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         router.goto(newUrl, onSearchRoute);
     };
 
-    return <div css={{ position: "relative", margin: "0 8px", ...extraCss }}>
-        <HiOutlineSearch css={{
-            position: "absolute",
-            height: "100%",
-            left: 11,
-            fontSize: 23,
-            color: "var(--grey40)",
-        }} />
-        <form onSubmit={() => {
-            clearTimeout(lastTimeout.current);
-            search(currentRef(ref).value);
+    return (
+        <div css={{
+            position: "relative",
+            margin: "0 8px",
+            flex: 1,
+            ...variant === "desktop" && {
+                maxWidth: 372,
+                [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
+                    display: "none",
+                },
+            },
         }}>
-            <label>
-                <span css={{ display: "none" }}>{t("search.input-label")}</span>
-                <input
-                    ref={ref}
-                    type="text"
-                    placeholder={t("search.input-label")}
-                    defaultValue={defaultValue}
-                    // The `onSearchRoute` part of this is a hacky fix to the search
-                    // losing focus when transitioning from any route to the search
-                    // route.
-                    autoFocus={variant === "mobile" || onSearchRoute}
-                    onChange={e => {
-                        clearTimeout(lastTimeout.current);
-                        lastTimeout.current = setTimeout(() => {
-                            search(e.target.value);
-                        }, 30);
-                    }}
-                    css={{
-                        color: "var(--grey40)",
-                        border: "1px solid var(--grey65)",
-                        borderRadius: 4,
-                        minWidth: 50,
-                        height,
-                        paddingLeft: 42,
-                        paddingRight: 12,
-                        ":hover": { outline: "2px solid var(--grey80)" },
-                        ":focus": { outline: "2px solid var(--accent-color)" },
-                        "&::placeholder": {
+            <HiOutlineSearch css={{
+                position: "absolute",
+                height: "100%",
+                left: 11,
+                fontSize: 23,
+                color: "var(--grey40)",
+            }} />
+            <form onSubmit={() => {
+                clearTimeout(lastTimeout.current);
+                search(currentRef(ref).value);
+            }}>
+                <label css={{ display: "flex" }}>
+                    <span css={{ display: "none" }}>{t("search.input-label")}</span>
+                    <input
+                        ref={ref}
+                        type="text"
+                        placeholder={t("search.input-label")}
+                        defaultValue={defaultValue}
+                        // The `onSearchRoute` part of this is a hacky fix to the search
+                        // losing focus when transitioning from any route to the search
+                        // route.
+                        autoFocus={variant === "mobile" || onSearchRoute}
+                        onChange={e => {
+                            clearTimeout(lastTimeout.current);
+                            lastTimeout.current = setTimeout(() => {
+                                search(e.target.value);
+                            }, 30);
+                        }}
+                        css={{
+                            flex: 1,
                             color: "var(--grey40)",
-                            opacity: 1,
-                        },
-                        ...extraCss,
-                    }}
-                />
-            </label>
-        </form>
-        {router.isTransitioning && isSearchActive() && <Spinner
-            size={spinnerSize}
-            css={{ position: "absolute", right: paddingSpinner, top: paddingSpinner }}
-        />}
-    </div>;
+                            border: "1px solid var(--grey65)",
+                            borderRadius: 4,
+                            minWidth: 50,
+                            height,
+                            paddingLeft: 42,
+                            paddingRight: 12,
+                            ":hover": { outline: "2px solid var(--grey80)" },
+                            ":focus": { outline: "2px solid var(--accent-color)" },
+                            "&::placeholder": {
+                                color: "var(--grey40)",
+                                opacity: 1,
+                            },
+                        }}
+                    />
+                </label>
+            </form>
+            {router.isTransitioning && isSearchActive() && <Spinner
+                size={spinnerSize}
+                css={{ position: "absolute", right: paddingSpinner, top: paddingSpinner }}
+            />}
+        </div>
+    );
 };

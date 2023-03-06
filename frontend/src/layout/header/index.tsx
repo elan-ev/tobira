@@ -10,14 +10,15 @@ import { OUTER_CONTAINER_MARGIN } from "..";
 import { ActionIcon, ButtonContainer, HEADER_BASE_PADDING } from "./ui";
 import { SearchField } from "./Search";
 import { Logo } from "./Logo";
-import { UserBox } from "./UserBox";
+import { LanguageSettings, UserBox } from "./UserBox";
 
 
 type Props = {
     hideNavIcon?: boolean;
+    loginMode?: boolean;
 };
 
-export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
+export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false }) => {
     const menu = useMenu();
 
     const content = match(menu.state, {
@@ -26,7 +27,7 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
         "burger": () => <OpenMenuMode />,
     });
 
-    return (
+    return <>
         <header css={{
             margin: OUTER_CONTAINER_MARGIN,
             height: "var(--header-height)",
@@ -36,10 +37,18 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false }) => {
             justifyContent: "space-between",
             backgroundColor: "white",
         }}>
-            {content}
+            {loginMode ? <LoginMode /> : content}
         </header>
-    );
+        <div css={{ margin: "0 0 16px 0 ", height: 2, backgroundColor: "var(--grey92)" }} />
+    </>;
 };
+
+const LoginMode: React.FC = () => <>
+    <Logo />
+    <ButtonContainer>
+        <LanguageSettings />
+    </ButtonContainer>
+</>;
 
 const SearchMode: React.FC = () => {
     const { t } = useTranslation();
