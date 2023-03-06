@@ -1,7 +1,7 @@
 "use strict";
 
 const path = require("path");
-const { APP_PATH } = require("./constants");
+const APP_PATH = path.join(__dirname, "src");
 
 module.exports = {
     src: APP_PATH,

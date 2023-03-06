@@ -1,12 +1,13 @@
-"use strict";
+import * as path from "path";
+import { CallableOption } from "webpack-cli";
+import { CleanWebpackPlugin } from "clean-webpack-plugin";
+import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
+import CopyPlugin from "copy-webpack-plugin";
 
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
-const path = require("path");
-const { APP_PATH, OUT_PATH, STATIC_PATH } = require("./constants");
+const APP_PATH = path.join(__dirname, "src");
+const OUT_PATH = path.join(__dirname, "build");
 
-module.exports = (_env, argv) => ({
+const config: CallableOption = (_env, argv) => ({
     entry: APP_PATH,
     context: __dirname,
 
@@ -70,10 +71,12 @@ module.exports = (_env, argv) => ({
             patterns: [
                 { from: path.join(APP_PATH, "index.html"), to: path.join(OUT_PATH) },
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
-                { from: STATIC_PATH, to: OUT_PATH },
+                { from: path.join(__dirname, "static"), to: OUT_PATH },
             ],
         }),
     ],
 
     devtool: "hidden-source-map",
 });
+
+export default config;
