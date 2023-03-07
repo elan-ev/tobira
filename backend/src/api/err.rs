@@ -53,6 +53,13 @@ impl ApiErrorKind {
 
 impl From<tokio_postgres::Error> for ApiError {
     fn from(src: tokio_postgres::Error) -> Self {
+        // Logging the error here is not ideal but probably totally fine for us.
+        // At this point, it's very very likely that the error is sent back to
+        // the user. And this is the last time we can get detailed information
+        // about it.
+        error!("DB Error when executing query: {src}");
+        debug!("Detailed error: {src:#?}");
+
         Self {
             // TODO: can this leak sensitive information?
             msg: format!("DB error: {}", src),

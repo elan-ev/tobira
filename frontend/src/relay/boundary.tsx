@@ -58,12 +58,27 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
         // Try to retrieve user data if we have any.
         let userData: UserProviderProps["data"] = "error";
         if (error instanceof APIError) {
-            // This check is not perfect, as it does not make sure the
-            // currentUser has all the fields that are actually expected. But
-            // given that this object comes from the API and the API is well
-            // defined, we just assume if there is a `currentUser`, it has the
-            // correct form.
-            userData = error.response?.data?.currentUser;
+            // Check that the returned object actually has the fields that are
+            // expected.
+            const user = error.response?.data?.currentUser as unknown;
+            if (typeof user === "object" && user
+                && "username" in user && typeof user.username === "string"
+                && "displayName" in user && typeof user.displayName === "string"
+                && "canUpload" in user && typeof user.canUpload === "boolean"
+                && "canUseStudio" in user && typeof user.canUseStudio === "boolean"
+                && "canUseEditor" in user && typeof user.canUseEditor === "boolean"
+            ) {
+                // `userData = user` unfortunately doesn't work here as the type
+                // of the `user` object is not sufficiently narrowed. Relevant
+                // issue: https://github.com/microsoft/TypeScript/issues/42384
+                userData = {
+                    username: user.username,
+                    displayName: user.displayName,
+                    canUpload: user.canUpload,
+                    canUseStudio: user.canUseStudio,
+                    canUseEditor: user.canUseEditor,
+                };
+            }
         }
 
         return (

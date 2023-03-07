@@ -1,10 +1,11 @@
-use hyper::{Body, Method, StatusCode, http::{HeaderValue, uri::{PathAndQuery}}, header, Uri};
-use juniper::http::GraphQLRequest;
+use hyper::{Body, Method, StatusCode, http::{HeaderValue, uri::PathAndQuery}, header, Uri};
+use juniper::{http::GraphQLResponse, graphql_value};
 use std::{
+    collections::HashSet,
+    fmt,
     mem,
     sync::Arc,
     time::Instant,
-    collections::HashSet,
 };
 
 use crate::{
@@ -12,6 +13,7 @@ use crate::{
     auth::{self, AuthContext},
     Config,
     db::{self, Transaction},
+    http::response::bad_request,
     metrics::HttpReqCategory,
     prelude::*,
 };
@@ -176,11 +178,50 @@ pub(super) async fn reply_404(ctx: &Context, method: &Method, path: &str) -> Res
 
 /// Handles a request to `/graphql`. Method has to be POST.
 async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
+    // TODO: With Juniper 0.16, this function can likely be simplified!
+
+    /// This is basically `juniper::http::GraphQLRequest`. We unfortunately have
+    /// to duplicate it here to get access to the fields (which are private in
+    /// Juniper 0.15).
+    #[derive(serde::Deserialize)]
+    struct GraphQLReq {
+        query: String,
+        variables: Option<juniper::InputValue>,
+        #[serde(rename = "operationName")]
+        operation_name: Option<String>,
+    }
+
+    impl GraphQLReq {
+        fn variables(&self) -> juniper::Variables {
+            self.variables
+                .as_ref()
+                .and_then(|iv| {
+                    iv.to_object_value().map(|o| {
+                        o.into_iter()
+                            .map(|(k, v)| (k.to_owned(), v.clone()))
+                            .collect()
+                    })
+                })
+                .unwrap_or_default()
+        }
+    }
+
+    impl fmt::Display for GraphQLReq {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            writeln!(f, "Query:\n{}", self.query)?;
+            writeln!(f, "Operation name: {:?}", self.operation_name)?;
+            writeln!(f, "Variables: {}", serde_json::to_string_pretty(&self.variables).unwrap())?;
+            Ok(())
+        }
+    }
+
+
     let before = Instant::now();
 
-    // Parse request into juniper structure. This is done by `juniper_hyper`
-    // too, but we do it manually to be able to inspect the request and to
-    // retry running the query below. This assumes the method is POST.
+    // Parse request into a structure that Juniper can understand. This is done
+    // by `juniper_hyper` too, but we do it manually to be able to inspect the
+    // request and to retry running the query below. This assumes the method is
+    // POST.
     let (parts, body) = req.into_parts();
 
     // Make sure the content type is correct. We do not support `application/graphql`.
@@ -197,7 +238,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     })?;
 
     // Parse body as GraphQL request.
-    let gql_request = serde_json::from_slice::<GraphQLRequest>(&raw_body).map_err(|e| {
+    let gql_request = serde_json::from_slice::<GraphQLReq>(&raw_body).map_err(|e| {
         warn!("Failed to deserialize GraphQL request: {e}");
         response::bad_request(Some("invalid GraphQL request body"))
     })?;
@@ -249,7 +290,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     // the transaction (by committing it below).
     type PgTx<'a> = deadpool_postgres::Transaction<'a>;
     #[allow(unused_variables)]
-    let connection = (); // Purposefully shadow to avoid accidentally accesing. See above.
+    let connection = (); // Purposefully shadow to avoid accidentally accessing. See above.
     let tx = unsafe {
         let static_tx = mem::transmute::<PgTx<'_>, PgTx<'static>>(tx);
         Arc::new(static_tx)
@@ -262,33 +303,16 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         jwt: ctx.jwt.clone(),
         search: ctx.search.clone(),
     });
-    let gql_response = gql_request.execute(&ctx.api_root, &api_context).await;
-
-    if !gql_response.is_ok() {
-        warn!("API response is not OK");
-        debug_graphql_req(&raw_body);
-        if log::log_enabled!(log::Level::Debug) {
-            let response = serde_json::to_string_pretty(&gql_response).unwrap();
-            debug!("Response of failed API request: {response}");
-        }
-    }
-
-    // Unfortunately, we have to convert the GQL response into an HTTP response
-    // here already as otherwise `api_context` is borrowed. I am fairly sure
-    // this is an API design error of juniper, but oh well. Not really a
-    // problem for us either.
-    //
-    // TODO: see if this can be improved with Juniper 0.16
-    let body = serde_json::to_string(&gql_response).unwrap();
-    let out = Response::builder()
-        .status(if gql_response.is_ok() { StatusCode::OK } else { StatusCode::BAD_REQUEST })
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(body.into())
-        .unwrap();
+    let gql_result = juniper::execute(
+        &gql_request.query,
+        gql_request.operation_name.as_deref(),
+        &ctx.api_root,
+        &gql_request.variables(),
+        &api_context,
+    ).await;
 
     // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();
-    let has_errored = api_context.db.has_errored();
     let username = api_context.auth.debug_log_username();
     drop(api_context);
 
@@ -301,36 +325,109 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         // since panicking only brings down the current thread, we have to
         // reach for more drastic measures.
         error!("FATAL BUG: API handler kept reference to transaction. Ending process.");
-        debug_graphql_req(&raw_body);
+        debug!("Request:\n{gql_request}");
         std::process::abort();
     });
 
-    // Check if any DB errors happened.
-    if has_errored {
-        error!("Errors have occured during API DB transaction. Rolling back transaction...");
-        debug_graphql_req(&raw_body);
-        if let Err(e) = tx.rollback().await {
-            error!("Failed to rollback transaction: {e}\nWill give up now. Transaction \
-                should be rolled back automatically since it won't be committed.");
-        }
 
-        return Ok(response::internal_server_error());
+    // Check if any errors occured.
+    macro_rules! log_and_rollback {
+        () => {
+            debug!("Failed request:\n{gql_request}");
+            debug!("Rolling back DB transaction...");
+            if let Err(e) = tx.rollback().await {
+                error!("Failed to rollback transaction: {e}\nWill give up now. Transaction \
+                    should be rolled back automatically since it won't be committed.");
+            }
+        };
     }
 
-    let out = match tx.commit().await {
-        // If the transaction succeeded we can return the generated response.
-        Ok(_) => Ok(out),
-
-        // Otherwise, we would like to retry a couple times, but for now
-        // we just immediately reply 5xx.
-        //
-        // TODO: put all of this code in a loop and retry a couple times.
+    let gql_response = match gql_result {
         Err(e) => {
-            error!("Failed to commit transaction for API request: {}", e);
-            debug_graphql_req(&raw_body);
-            Err(response::service_unavailable())
+            // This kind of error only seems to happen when there is something
+            // wrong with the request. It's unlikely that any SQL queries have
+            // been executed, but we roll back the transaction anyway.
+            warn!("GraphQL request error: {e}");
+            log_and_rollback!();
+            return Err(bad_request(format!("bad GraphQL request: {e}").as_str()));
+        }
+
+        Ok((value, errors)) if !errors.is_empty() => {
+            let error_to_msg = |e: &juniper::ExecutionError<juniper::DefaultScalarValue>| {
+                // Uh oh: `message` is a `#[doc(hidden)]` method, which usually
+                // means that the library authors only need it public for macro
+                // purposes and that its not actually part of the public API
+                // that is evolved through semver. But: lots of things in
+                // Juniper are weird, so this doesn't necessarily have any
+                // intent behind it. Also, we can always get at the same data
+                // by serializing this error as JSON and poking it out like
+                // that. Using the method is just easier. If the method is ever
+                // removed, we have to use the JSON solution. But I'm very sure
+                // it won't be removed in 0.15.x anymore.
+                format!("{} (at `{}`)", e.error().message(), e.path().join("."))
+            };
+
+            warn!(
+                "Error{} during GraphQL execution: {}",
+                if errors.len() > 1 { "s" } else { "" },
+                if errors.len() > 1 {
+                    errors.iter().map(|e| format!("\n- {}", error_to_msg(e))).collect::<String>()
+                } else {
+                    error_to_msg(&errors[0])
+                },
+            );
+            log_and_rollback!();
+
+            // We just return all errors as normal GraphQL errors, BUT we return
+            // no regular data as that might contain data from the DB
+            // transaction that was rolled back. That is, with the exception of
+            // `currentUser` which contains no data from the DB at all. That's
+            // what the following code does: inspect the prepared value and
+            // extract only what we can give out.
+            let mut data = juniper::Value::Null;
+            let user = value.as_object_value()
+                .and_then(|o| o.get_field_value("currentUser"))
+                .and_then(|v| v.as_object_value());
+            if let Some(user) = user {
+                // Not even all fields are allowed. `myVideos` for example
+                // contains DB data.
+                let allowed_fields = [
+                    "username", "displayName", "roles",
+                    "canUpload", "canUseStudio", "canUseEditor",
+                ];
+                let filtered = user.clone().into_iter()
+                    .filter(|(k, _)| allowed_fields.contains(&k.as_str()))
+                    .collect::<juniper::Object<juniper::DefaultScalarValue>>();
+                data = graphql_value!({ "currentUser": filtered });
+            }
+
+            GraphQLResponse::from_result(Ok((data, errors)))
+        }
+
+        Ok((value, _)) => {
+            // There was no error dealing with this request so we can commit the DB
+            // transaction now.
+            if let Err(e) = tx.commit().await {
+                // If commiting failed, we would like to retry a couple times, but for
+                // now we just immediately reply 5xx.
+                //
+                // TODO: put all of this code in a loop and retry a couple times.
+                error!("Failed to commit transaction for API request: {}", e);
+                debug!("Request:\n{gql_request}");
+                return Err(response::service_unavailable());
+            };
+
+            GraphQLResponse::from_result(Ok((value, vec![])))
         }
     };
+
+    // Create an appropriate HTTP response.
+    let body = serde_json::to_string(&gql_response).unwrap();
+    let out = Response::builder()
+        .status(if gql_response.is_ok() { StatusCode::OK } else { StatusCode::BAD_REQUEST })
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(body.into())
+        .unwrap();
 
     debug!(
         "Finished /graphql query with {} SQL queries in {:.2?} (user: {})",
@@ -339,35 +436,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         username,
     );
 
-    out
-}
-
-fn debug_graphql_req(raw_body: &[u8]) {
-    if log::log_enabled!(log::Level::Debug) {
-        // We want to nicely print the request here. Unfortunately,
-        // `GraphQLRequest` does not have an accessor for `query` and we don't
-        // want to use its `Debug` impl as that would result in a very
-        // unreadable `query`. So unfortunately, the best option is deserialize
-        // the body again into our own structure.
-        //
-        // TODO: with juniper 0.16, the `query` and `variables` fields are
-        // public, so use those.
-        #[derive(serde::Deserialize)]
-        struct DebugRequest {
-            query: String,
-            variables: Option<serde_json::Value>,
-        }
-
-        match serde_json::from_slice::<DebugRequest>(&raw_body) {
-            Err(e) => warn!("Failed to deserialize response body for debug output: {e}"),
-            Ok(req) => {
-                debug!("Failed request query:\n{}", req.query);
-                if let Some(vars) = req.variables {
-                    debug!("Failed request variables: {vars:#?}");
-                }
-            }
-        }
-    }
+    Ok(out)
 }
 
 /// Extension trait for response builder to add common headers.
