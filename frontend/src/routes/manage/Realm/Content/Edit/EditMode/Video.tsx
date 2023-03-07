@@ -116,7 +116,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
 
     const query = graphql`
         query VideoEditModeSearchQuery($q: String!) {
-            events: searchAllEvents(query: $q) {
+            events: searchAllEvents(query: $q, writableOnly: false) {
                 ... on EventSearchResults {
                     items {
                         id

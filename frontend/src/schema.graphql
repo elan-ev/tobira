@@ -432,7 +432,7 @@ type Query {
     Searches through all events (including non-listed ones). Requires
     moderator rights.
   """
-  searchAllEvents(query: String!): EventSearchOutcome!
+  searchAllEvents(query: String!, writableOnly: Boolean!): EventSearchOutcome!
   """
     Searches through all series. If `writable_only` is true, only series
     that the user has write access to are searched (but including

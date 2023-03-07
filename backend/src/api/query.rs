@@ -97,8 +97,12 @@ impl Query {
 
     /// Searches through all events (including non-listed ones). Requires
     /// moderator rights.
-    async fn search_all_events(query: String, context: &Context) -> ApiResult<EventSearchOutcome> {
-        search::all_events(&query, context).await
+    async fn search_all_events(
+        query: String,
+        writable_only: bool,
+        context: &Context,
+    ) -> ApiResult<EventSearchOutcome> {
+        search::all_events(&query, writable_only, context).await
     }
 
     /// Searches through all series. If `writable_only` is true, only series
