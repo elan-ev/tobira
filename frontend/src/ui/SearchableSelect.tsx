@@ -9,6 +9,7 @@ import { environment } from "../relay";
 import { Card } from "./Card";
 import { SmallDescription } from "./metadata";
 import { SearchableSelectSeriesQuery } from "./__generated__/SearchableSelectSeriesQuery.graphql";
+import { ErrorDisplay } from "../util/err";
 
 
 type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
@@ -101,7 +102,7 @@ export const SeriesSelector: React.FC<SeriesSelectorProps> = ({
     writableOnly = false, onBlur, onChange, defaultValue, ...rest
 }) => {
     const { t } = useTranslation();
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<ReactNode>(null);
 
     const query = graphql`
         query SearchableSelectSeriesQuery($q: String!, $writableOnly: Boolean!) {
@@ -118,7 +119,7 @@ export const SeriesSelector: React.FC<SeriesSelectorProps> = ({
             .subscribe({
                 next: ({ series }) => {
                     if (series.items === undefined) {
-                        setError(true);
+                        setError(t("search.unavailable"));
                         return;
                     }
 
@@ -131,16 +132,17 @@ export const SeriesSelector: React.FC<SeriesSelectorProps> = ({
                     })));
                 },
                 start: () => {},
+                error: (error: Error) => setError(<ErrorDisplay error={error} />),
             });
     };
 
     return <>
-        {error && <Card kind="error" css={{ marginBottom: 8 }}>{t("search.unavailable")}</Card>}
+        {error && <Card kind="error" css={{ marginBottom: 8 }}>{error}</Card>}
         <SearchableSelect
             loadOptions={load}
             format={formatSeriesOption}
             onChange={onChange}
-            isDisabled={error}
+            isDisabled={!!error}
             {...{ onBlur, defaultValue }}
             {...rest}
         />
