@@ -72,6 +72,7 @@ const LoggedOut: React.FC = () => {
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
+                    marginLeft: 4,
                     borderRadius: 8,
                     padding: "7px 14px",
                     backgroundColor: "var(--nav-color)",
