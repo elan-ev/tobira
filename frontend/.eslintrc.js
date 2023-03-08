@@ -98,6 +98,10 @@ module.exports = {
             node: true,
         },
     }, {
+        files: ["./webpack.config.ts"],
+        parser: "@typescript-eslint/parser",
+        extends: ["plugin:@typescript-eslint/recommended"],
+    }, {
         files: ["src/**/*.ts{,x}"],
         parser: "@typescript-eslint/parser",
         parserOptions: {

@@ -125,7 +125,7 @@ const LoginBox: React.FC = () => {
     const userid = watch("userid", "");
     const password = watch("password", "");
 
-    const validation = { required: t<string>("this-field-is-required") };
+    const validation = { required: t("this-field-is-required") };
 
     type State = "idle" | "pending" | "success";
     const [state, setState] = useState<State>("idle");

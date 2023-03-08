@@ -17,7 +17,7 @@ type Props = {
     index: number;
     onCommit?: () => void;
     onCompleted?: () => void;
-    onError?: (error: Error, action: string) => void;
+    onError?: (error: Error, action: "manage.realm.content.moving-failed") => void;
     onEdit?: () => void;
 };
 

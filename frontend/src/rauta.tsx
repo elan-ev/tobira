@@ -332,7 +332,13 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         });
         const [isPending, startTransition] = useTransition();
 
+        // Remember if there was actually any event that made the router
+        // navigate away from the current route. This is basically just to make
+        // `StrictMode` work, as with that, this component might be unmounted
+        // for reasons other than a route change.
+        const navigatedAway = useRef(false);
         const setActiveRoute = (newRoute: ActiveRoute) => {
+            navigatedAway.current = true;
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
                 listeners.current.atNav.callAll([]);
@@ -424,11 +430,11 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
         // Dispose of routes when they are no longer needed.
         useEffect(() => () => {
-            if (activeRoute.route.dispose) {
+            if (navigatedAway.current && activeRoute.route.dispose) {
                 debugLog("Disposing of route: ", activeRoute);
                 activeRoute.route.dispose();
             }
-        }, [activeRoute]);
+        }, [activeRoute, navigatedAway]);
 
         const contextData = {
             setActiveRoute,

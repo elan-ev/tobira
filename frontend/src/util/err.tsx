@@ -1,4 +1,4 @@
-import { i18n } from "i18next";
+import { i18n, TFuncKey } from "i18next";
 import React from "react";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -118,34 +118,40 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
             // Use a message fitting to the exact error key, if it is present.
             const translationKey = err.key ? `api-remote-errors.${err.key}` : null;
             if (translationKey && i18n.exists(translationKey)) {
-                causes.add(t(translationKey));
-            } else {
-                // Otherwise, derive an error message from the error kind. We
-                // use a set to make sure we only emit each kind-derived error
-                // message once.
-                if (kinds.has(err.kind)) {
+                const msg = t(translationKey as TFuncKey);
+
+                // It could still refer to an object, which would be a bug.
+                if (typeof msg === "string") {
+                    causes.add(msg);
                     continue;
                 }
+            }
 
-                kinds.add(err.kind);
+            // Otherwise, derive an error message from the error kind. We
+            // use a set to make sure we only emit each kind-derived error
+            // message once.
+            if (kinds.has(err.kind)) {
+                continue;
+            }
 
-                // The error kind should always be here. But since we are in an
-                // error handler, and something is already wrong, we are
-                // careful and handle this case, too.
-                if (!err.kind) {
-                    notOurFault = false;
-                    causes.add(t("errors.unexpected-server-error"));
-                } else {
-                    const msg = match(err.kind, {
-                        INTERNAL_SERVER_ERROR: () => {
-                            notOurFault = false;
-                            return t("errors.internal-server-error");
-                        },
-                        INVALID_INPUT: () => t("errors.invalid-input"),
-                        NOT_AUTHORIZED: () => t("errors.not-authorized"),
-                    });
-                    causes.add(msg);
-                }
+            kinds.add(err.kind);
+
+            // The error kind should always be here. But since we are in an
+            // error handler, and something is already wrong, we are
+            // careful and handle this case, too.
+            if (!err.kind) {
+                notOurFault = false;
+                causes.add(t("errors.unexpected-server-error"));
+            } else {
+                const msg = match(err.kind, {
+                    INTERNAL_SERVER_ERROR: () => {
+                        notOurFault = false;
+                        return t("errors.internal-server-error");
+                    },
+                    INVALID_INPUT: () => t("errors.invalid-input"),
+                    NOT_AUTHORIZED: () => t("errors.not-authorized"),
+                });
+                causes.add(msg);
             }
         }
 

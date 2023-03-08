@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
-import { TFunction, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
+import { TFunction } from "i18next";
 import { Theme } from "react-select";
 import AsyncSelect from "react-select/async";
 import { fetchQuery, graphql } from "react-relay";

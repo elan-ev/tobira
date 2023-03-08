@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, StrictMode } from "react";
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
@@ -18,21 +18,23 @@ type Props = {
 };
 
 export const App: React.FC<Props> = ({ initialRoute }) => (
-    <SilenceEmotionWarnings>
-        <GlobalStyle />
-        <GlobalErrorBoundary>
-            <RelayEnvironmentProvider {...{ environment }}>
-                <Router initialRoute={initialRoute}>
-                    <GraphQLErrorBoundary>
-                        <MenuProvider>
-                            <LoadingIndicator />
-                            <ActiveRoute />
-                        </MenuProvider>
-                    </GraphQLErrorBoundary>
-                </Router>
-            </RelayEnvironmentProvider>
-        </GlobalErrorBoundary>
-    </SilenceEmotionWarnings>
+    <StrictMode>
+        <SilenceEmotionWarnings>
+            <GlobalStyle />
+            <GlobalErrorBoundary>
+                <RelayEnvironmentProvider {...{ environment }}>
+                    <Router initialRoute={initialRoute}>
+                        <GraphQLErrorBoundary>
+                            <MenuProvider>
+                                <LoadingIndicator />
+                                <ActiveRoute />
+                            </MenuProvider>
+                        </GraphQLErrorBoundary>
+                    </Router>
+                </RelayEnvironmentProvider>
+            </GlobalErrorBoundary>
+        </SilenceEmotionWarnings>
+    </StrictMode>
 );
 
 /**

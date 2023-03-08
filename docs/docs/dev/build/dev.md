@@ -82,13 +82,8 @@ Next, and whenever you change the GraphQL Schema or any GraphQL queries/fragment
 npx relay-compiler
 ```
 
-Finally, and whenever you change frontend code, you need to:
-
-- Type-check with TypeScript: `npm run typecheck`
-- Lint with ESLint: `npm run lint`
-- Build a new bundle with Webpack: `npm run build:dev`
-
-However, due to our Webpack configuration, ESLint and TypeScript are already used during a normal Webpack invocation, so the last of these three commands is sufficient.
+Finally, and whenever you change frontend code, you need to run `npm run build:dev`.
+Due to our Webpack configuration, ESLint and TypeScript are already used during a normal Webpack invocation.
 
 
 #### Watching

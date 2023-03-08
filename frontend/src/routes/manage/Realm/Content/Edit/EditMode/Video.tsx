@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { fetchQuery, graphql, useFragment, useMutation } from "react-relay";
-import { TFunction, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
+import { TFunction } from "i18next";
 import { Controller, useFormContext } from "react-hook-form";
 
 import { Card } from "../../../../../../ui/Card";

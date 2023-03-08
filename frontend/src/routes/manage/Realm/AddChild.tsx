@@ -198,7 +198,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
 };
 
 type InputWithInfoProps = {
-    info: JSX.Element;
+    info: JSX.Element | string;
     children: ReactNode;
 };
 
