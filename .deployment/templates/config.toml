@@ -47,7 +47,5 @@ poll_period = "1min"
 
 [theme]
 logo.large.path = "/opt/tobira/{{ id }}/logo-large.svg"
-logo.large.resolution = [643, 217]
-logo.small.path = "/opt/tobira/{{ id }}/logo-small.svg"
-logo.small.resolution = [102, 115]
+logo.large.resolution = [85, 31]
 favicon = "/opt/tobira/{{ id }}/favicon.svg"

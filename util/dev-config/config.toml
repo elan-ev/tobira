@@ -38,8 +38,6 @@ password = "opencast"
 preferred_harvest_size = 3
 
 [theme]
-logo.large.path = "logo-large.svg"
-logo.large.resolution = [425, 182]
-logo.small.path = "logo-small.svg"
-logo.small.resolution = [212, 182]
+logo.large.path = "eth-logo-padded-fully.svg"
+logo.large.resolution = [85, 31]
 favicon = "favicon.svg"
