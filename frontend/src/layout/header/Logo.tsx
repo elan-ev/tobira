@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import CONFIG from "../../config";
+import CONFIG, { SingleLogoConfig } from "../../config";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { Link } from "../../router";
 import { focusStyle } from "../../ui";
@@ -33,6 +33,9 @@ export const Logo: React.FC = () => {
     const large = CONFIG.logo.large;
 
     const alt = t("general.logo-alt", { title: translatedConfig(CONFIG.siteTitle, i18n) });
+    const flexBasis = (logo: SingleLogoConfig) => (
+        `calc(var(--header-height) * ${ logo.resolution[0] / logo.resolution[1] })`
+    );
 
     return (
         <WithTooltip
@@ -40,22 +43,21 @@ export const Logo: React.FC = () => {
             placement="right"
             distance={-8}
             css={{
-                height: `calc(100% + ${HEADER_BASE_PADDING * 2}px)`,
-                flex: "0 1 auto",
                 margin: `-${HEADER_BASE_PADDING}px 0`,
+                flexGrow: 0,
+                flexShrink: 1,
+                flexBasis: flexBasis(large),
+                [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                    flexBasis: flexBasis(small),
+                },
             }}
         >
             <Link to="/" css={{
                 ":hover": { outlineOffset: -4, outline: "2px solid var(--grey80)" },
                 display: "block",
-                height: "100%",
                 borderRadius: 8,
                 ...focusStyle({ offset: -4 }),
-                "& > img": {
-                    height: "100%",
-                    width: "auto",
-                    maxWidth: "100%",
-                },
+                "& > img": { height: "auto", width: "100%" },
             }}>
                 <img
                     width={large.resolution[0]}
@@ -63,6 +65,7 @@ export const Logo: React.FC = () => {
                     src={large.path}
                     alt={alt}
                     css={{
+                        display: "block",
                         [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
                             display: "none",
                         },
@@ -74,6 +77,7 @@ export const Logo: React.FC = () => {
                     src={small.path}
                     alt={alt}
                     css={{
+                        display: "block",
                         [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
                             display: "none",
                         },

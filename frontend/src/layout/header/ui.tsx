@@ -5,7 +5,7 @@ import { focusStyle } from "../../ui";
 import { useTitle } from "../../util";
 
 
-export const HEADER_BASE_PADDING = 24;
+export const HEADER_BASE_PADDING = 16;
 
 export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{

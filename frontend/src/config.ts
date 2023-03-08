@@ -51,7 +51,7 @@ type LogoConfig = {
     small: SingleLogoConfig;
 };
 
-type SingleLogoConfig = {
+export type SingleLogoConfig = {
     path: string;
     resolution: number[];
 };

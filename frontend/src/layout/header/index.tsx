@@ -30,7 +30,6 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false
     return <>
         <header css={{
             margin: OUTER_CONTAINER_MARGIN,
-            height: "var(--header-height)",
             display: "flex",
             padding: `${HEADER_BASE_PADDING}px 16px`,
             paddingLeft: 0,
