@@ -106,6 +106,8 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                     onClick={() => menu.toggleMenu("burger")}
                     css={{
                         ...buttonOutline,
+                        // More margin because of the outline
+                        marginLeft: 4,
                         [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
                             display: "none",
                         },
