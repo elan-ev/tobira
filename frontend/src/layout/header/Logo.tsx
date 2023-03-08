@@ -46,11 +46,11 @@ export const Logo: React.FC = () => {
             }}
         >
             <Link to="/" css={{
-                ":hover": { outlineOffset: -2, outline: "2px solid var(--grey80)" },
+                ":hover": { outlineOffset: -4, outline: "2px solid var(--grey80)" },
                 display: "block",
                 height: "100%",
-                borderRadius: 4,
-                ...focusStyle({ inset: true }),
+                borderRadius: 8,
+                ...focusStyle({ offset: -4 }),
                 "& > img": {
                     height: "100%",
                     width: "auto",
