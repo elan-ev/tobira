@@ -33,6 +33,7 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false
             height: "var(--header-height)",
             display: "flex",
             padding: `${HEADER_BASE_PADDING}px 16px`,
+            paddingLeft: 0,
             alignItems: "center",
             justifyContent: "space-between",
             backgroundColor: "white",
@@ -55,7 +56,7 @@ const SearchMode: React.FC = () => {
     const menu = useMenu();
 
     return <>
-        <ActionIcon title={t("back")} onClick={() => menu.close()} >
+        <ActionIcon title={t("back")} onClick={() => menu.close()} css={{ marginLeft: 8 }}>
             <FiArrowLeft />
         </ActionIcon>
         <SearchField variant="mobile" />
