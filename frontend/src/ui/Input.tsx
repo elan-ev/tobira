@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiCheck, FiCopy } from "react-icons/fi";
+import { focusStyle } from ".";
 import { Button } from "./Button";
 import { WithTooltip } from "./Floating";
 
@@ -8,11 +9,8 @@ import { WithTooltip } from "./Floating";
 const style = (error: boolean) => ({
     borderRadius: 4,
     border: `1px solid ${error ? "var(--danger-color)" : "var(--grey80)"}`,
-    "&:focus": {
-        outline: "none",
-        boxShadow: "0 0 0 1px var(--accent-color)",
-        borderColor: "var(--accent-color)",
-    },
+    ":focus-visible": { borderColor: "var(--accent-color)" },
+    ...focusStyle({ offset: -1 }),
 });
 
 export type InputProps = React.ComponentPropsWithoutRef<"input"> & {

@@ -27,7 +27,7 @@ import {
 } from "react-icons/fi";
 import { keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
-import { ellipsisOverflowCss } from "..";
+import { ellipsisOverflowCss, focusStyle } from "..";
 import {
     Floating, FloatingContainer, FloatingHandle, FloatingTrigger,
 } from "../Floating";
@@ -303,12 +303,9 @@ const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>
                     height: 31,
                     padding: "0 8px",
                     whiteSpace: "nowrap",
-                    ":hover, :focus": {
-                        backgroundColor: "var(--grey92)",
-                    },
-                    ":focus-visible": {
-                        outline: "2px solid var(--accent-color)",
-                    },
+                    ":hover, :focus": { backgroundColor: "var(--grey92)" },
+                    ":focus-visible": { borderColor: "var(--accent-color)" },
+                    ...focusStyle({ offset: -1 }),
                 }}>
                     {triggerContent}
                     <FiChevronDown css={{ fontSize: 20 }} />
@@ -486,10 +483,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
                     ":hover, :focus": {
                         backgroundColor: "var(--grey92)",
                     },
-                    ":focus-visible": {
-                        outline: "2px solid var(--accent-color)",
-                        outlineOffset: -2,
-                    },
+                    ...focusStyle({ inset: true }),
                     "&[disabled]": {
                         fontWeight: "bold",
                         color: "var(--grey20)",
@@ -550,9 +544,7 @@ const SliderView: React.FC<{ children: ReactNode }> = ({ children }) => {
         ":hover, :focus": {
             backgroundColor: "var(--grey40)",
         },
-        ":focus-visible": {
-            outline: "2px solid var(--accent-color)",
-        },
+        ...focusStyle({}),
     } as const;
 
     return <div css={{ position: "relative" }}>
@@ -624,9 +616,7 @@ const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => 
                     borderRadius: 4,
                     color: "black",
                 },
-                ":focus-visible": {
-                    outline: "2px solid var(--accent-color)",
-                },
+                ...focusStyle({}),
             },
             ":is([open]) summary": {
                 borderBottom: "1px solid var(--grey80)",
@@ -765,10 +755,7 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                     transitionDuration: TRANSITION_IN_DURATION,
                 },
             },
-            "&:focus-visible": {
-                outline: "none",
-                boxShadow: "0 0 0 2px var(--accent-color)",
-            },
+            ...focusStyle({}),
         },
         // ListView styles:
         ...isList && {

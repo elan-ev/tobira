@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useRouter } from "../../router";
 import { isSearchActive } from "../../routes/Search";
+import { focusStyle } from "../../ui";
 import { Spinner } from "../../ui/Spinner";
 import { currentRef } from "../../util";
 
@@ -107,8 +108,13 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                             height,
                             paddingLeft: 42,
                             paddingRight: 12,
-                            ":hover": { outline: "2px solid var(--grey80)" },
-                            ":focus": { outline: "2px solid var(--accent-color)" },
+                            ":hover": {
+                                borderColor: "var(--grey80)",
+                                outline: "2.5px solid var(--grey80)",
+                                outlineOffset: -1,
+                            },
+                            ":focus-visible": { borderColor: "var(--accent-color)" },
+                            ...focusStyle({ offset: -1 }),
                             "&::placeholder": {
                                 color: "var(--grey40)",
                                 opacity: 1,

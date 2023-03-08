@@ -1,4 +1,5 @@
 import React from "react";
+import { focusStyle } from "../../../../ui";
 
 
 type ButtonProps = React.ComponentProps<"button">;
@@ -24,6 +25,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
                     color: "var(--accent-color)",
                     backgroundColor: "var(--grey97)",
                 },
+                ...focusStyle({}),
             },
         }}
         {...props}

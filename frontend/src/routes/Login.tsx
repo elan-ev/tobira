@@ -308,9 +308,8 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                     ...isEmpty && raisedStyle,
                 },
                 "& > input": {
-                    outline: "none",
-                    boxShadow: "0 0 0 1px var(--accent-color)",
                     borderColor: "var(--accent-color)",
+                    outline: "1px solid var(--accent-color)",
                 },
             },
         }}>{children}</div>

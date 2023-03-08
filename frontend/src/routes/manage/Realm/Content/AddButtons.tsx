@@ -15,6 +15,7 @@ import {
     WithTooltip,
 } from "../../../../ui/Floating";
 import { ProtoButton } from "../../../../ui/Button";
+import { focusStyle } from "../../../../ui";
 
 
 type Props = {
@@ -86,6 +87,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                             "&:hover, &:focus": {
                                 backgroundColor: "var(--accent-color-darker)",
                             },
+                            ...focusStyle({ offset: 1 }),
                         }}>
                             <FiPlus />
                         </ProtoButton>
@@ -185,10 +187,7 @@ const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
                 "&:hover, &:focus": {
                     backgroundColor: "var(--grey97)",
                 },
-                "&:focus-visible": {
-                    outline: "2px solid var(--accent-color)",
-                    outlineOffset: -2,
-                },
+                ...focusStyle({ inset: true }),
             }}
         >
             {<Icon css={{ color: "var(--accent-color)", fontSize: 18 }}/>}
