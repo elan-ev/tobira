@@ -35,6 +35,10 @@ import { ProtoButton } from "../Button";
 import { IconType } from "react-icons";
 
 
+// ==============================================================================================
+// ===== Data plumbing components (no UI stuff)
+// ==============================================================================================
+
 type SharedProps = {
     basePath: string;
 };
@@ -107,8 +111,6 @@ type Props = SharedFromSeriesProps & {
     series: SeriesBlockSeriesData$data;
 };
 
-const VIDEO_GRID_BREAKPOINT = 600;
-
 const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
 
@@ -136,6 +138,13 @@ const OrderContext = createContext<OrderContext>({
     setEventOrder: () => {},
 });
 
+
+// ==============================================================================================
+// ===== Main components defining UI
+// ==============================================================================================
+
+const VIDEO_GRID_BREAKPOINT = 600;
+
 const ReadySeriesBlock: React.FC<ReadyProps> = ({
     basePath,
     title,
@@ -147,9 +156,6 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 }) => {
     const { t } = useTranslation();
     const [eventOrder, setEventOrder] = useState<VideoListOrder>(order);
-
-    const finalTitle = title ?? (showTitle ? series.title : undefined);
-    const eventsNotEmpty = series.events.length > 0;
 
     const events = series.events.filter(event =>
         !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)
@@ -181,24 +187,16 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
         upcomingLiveEvents.sort((a, b) => timeMs(a) - timeMs(b));
     }
 
-    const eventsToTiles = (events: Event[]) => events.map(event =>
-        <GridTile
-            key={event.id}
-            active={event.id === activeEventId}
-            {...{ basePath, event }}
-        />);
+    const renderEvents = (events: Event[]) => (
+        <Videos
+            basePath={basePath}
+            items={events.map(event => ({ event, active: event.id === activeEventId }))}
+        />
+    );
 
-    const eventsUI = !eventsNotEmpty
-        ? t("series.no-events")
-        : <>
-            {upcomingLiveEvents.length > 1
-                && <UpcomingEventsGrid>
-                    {eventsToTiles(upcomingLiveEvents)}
-                </UpcomingEventsGrid>}
-            <VideoGrid>
-                {eventsToTiles(sortedEvents)}
-            </VideoGrid>
-        </>;
+
+    const finalTitle = title ?? (showTitle ? series.title : undefined);
+    const eventsNotEmpty = series.events.length > 0;
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder }}>
         {showMetadata && !showTitle && <Description text={series.syncedData.description} />}
@@ -207,7 +205,15 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
                 <Description text={series.syncedData.description} css={{ fontSize: 14 }} />
                 <hr css={{ margin: "20px 0" }} />
             </>}
-            {eventsUI}
+            {!eventsNotEmpty
+                ? t("series.no-events")
+                : <>
+                    {upcomingLiveEvents.length > 1 && <UpcomingEventsGrid>
+                        {renderEvents(upcomingLiveEvents)}
+                    </UpcomingEventsGrid>}
+                    {renderEvents(sortedEvents)}
+                </>
+            }
         </SeriesBlockContainer>
     </OrderContext.Provider>;
 };
@@ -276,6 +282,10 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
 };
 
 
+// ==============================================================================================
+// ===== The menus for chosing order and view mode
+// ==============================================================================================
+
 type FloatingBaseMenuProps = {
     triggerContent: ReactElement;
     list: ReactElement;
@@ -315,7 +325,6 @@ const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>
         </FloatingContainer>
     ),
 );
-
 
 const OrderMenu: React.FC = () => {
     const { t } = useTranslation();
@@ -498,7 +507,82 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
     );
 };
 
-const SliderView: React.FC<{ children: ReactNode }> = ({ children }) => {
+
+// ==============================================================================================
+// ===== Components for displaying the main part: the video items
+// ==============================================================================================
+
+type ViewProps = {
+    basePath: string;
+    items: {
+        event: Event;
+        active: boolean;
+    }[];
+};
+
+const Videos: React.FC<ViewProps> = ({ basePath, items }) => {
+    const { viewState } = useContext(ViewContext);
+    return match(viewState, {
+        slider: () => <SliderView {...{ basePath, items }} />,
+        gallery: () => <GalleryView {...{ basePath, items }} />,
+        list: () => <ListView {...{ basePath, items }} />,
+    });
+};
+
+const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
+    <div css={{
+        display: "flex",
+        flexWrap: "wrap",
+        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+            justifyContent: "center",
+        },
+    }}>
+        {items.map(({ event, active }) => (
+            <Item
+                key={event.id}
+                {...{ event, active, basePath }}
+                css={{
+                    margin: "8px 6px 28px 6px",
+                    width: 16 * 15,
+                    [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                        width: "100%",
+                        maxWidth: 360,
+                    },
+                }}
+            />
+        ))}
+    </div>
+);
+
+const ListView: React.FC<ViewProps> = ({ basePath, items }) => (
+    <div css={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+    }}>
+        {items.map(({ event, active }) => (
+            <Item
+                key={event.id}
+                {...{ event, active, basePath }}
+                showDescription
+                css={{
+                    width: "100%",
+                    margin: 6,
+                    [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                        maxWidth: 360,
+                    },
+                    [`@media not all and (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                        display: "flex",
+                        gap: 16,
+                        "> :first-child": { flex: "0 0 240px" },
+                    },
+                }}
+            />
+        ))}
+    </div>
+);
+
+const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const scrollDistance = 240;
@@ -554,15 +638,22 @@ const SliderView: React.FC<{ children: ReactNode }> = ({ children }) => {
             overflow: "auto",
             scrollBehavior: "smooth",
             scrollSnapType: "inline mandatory",
-            "> *": {
-                scrollSnapAlign: "start",
-                flex: "0 0 240px",
-            },
             ":first-child > :first-child": {
                 scrollMargin: 6,
             },
         }}>
-            {children}
+            {items.map(({ event, active }) => (
+                <Item
+                    key={event.id}
+                    {...{ event, active, basePath }}
+                    css={{
+                        scrollSnapAlign: "start",
+                        flex: "0 0 265px",
+                        margin: 6,
+                        marginBottom: 24,
+                    }}
+                />
+            ))}
             {leftVisible && <ProtoButton
                 aria-label={t("series.slider.scroll-left")}
                 onClick={() => scroll(-scrollDistance)}
@@ -577,23 +668,6 @@ const SliderView: React.FC<{ children: ReactNode }> = ({ children }) => {
     </div>;
 };
 
-const VideoGrid: React.FC<React.PropsWithChildren> = ({ children }) => {
-    const { viewState } = useContext(ViewContext);
-
-    const containerStyle = {
-        display: "flex",
-        flexWrap: "wrap",
-        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-            justifyContent: "center",
-        },
-    } as const;
-
-    return match(viewState, {
-        slider: () => <SliderView>{children}</SliderView>,
-        gallery: () => <div css={containerStyle}>{children}</div>,
-        list: () => <div css={containerStyle}>{children}</div>,
-    });
-};
 
 const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => {
     const { t } = useTranslation();
@@ -628,26 +702,30 @@ const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => 
                     {t("series.upcoming-live-streams", { count: Children.count(children) })}
                 </span>
             </summary>
-            <VideoGrid>
-                {children}
-            </VideoGrid>
+            {children}
         </details>
     );
 };
 
 
-type GridTypeProps = {
+type ItemProps = {
     basePath: string;
     event: Event;
     active: boolean;
+    showDescription?: boolean;
+    className?: string;
 };
 
-const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
+const Item: React.FC<ItemProps> = ({
+    event,
+    basePath,
+    active,
+    showDescription = false,
+    className,
+}) => {
     const TRANSITION_IN_DURATION = "0.15s";
     const TRANSITION_OUT_DURATION = "0.3s";
     const date = event.syncedData?.startTime ?? event.created;
-    const view = useContext(ViewContext);
-    const isList = view.viewState === "list";
 
     const inner = <>
         <div css={{ borderRadius: 8, position: "relative" }}>
@@ -721,22 +799,16 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                 {/* `new Date` is well defined for our ISO Date strings */}
                 <RelativeDate date={new Date(date)} isLive={event.isLive} />
             </div>
-            {isList && <SmallDescription lines={3} text={event.description} />}
+            {showDescription && <SmallDescription lines={3} text={event.description} />}
         </div>
     </>;
 
     const containerStyle = {
         position: "relative",
         display: "block",
-        margin: "8px 6px 28px 6px",
         padding: 6,
-        width: 16 * 15,
         borderRadius: 12,
         "& a": { color: "black", textDecoration: "none" },
-        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-            width: "100%",
-            maxWidth: 360,
-        },
         ...active && {
             backgroundColor: "var(--grey86)",
         },
@@ -757,22 +829,13 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
             },
             ...focusStyle({}),
         },
-        // ListView styles:
-        ...isList && {
-            [`@media not all and (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-                width: "100%",
-                display: "flex",
-                gap: 16,
-                marginBottom: 16,
-                "> :first-child": { flex: "0 0 240px" },
-            },
-        },
     } as const;
 
     return active
-        ? <div css={{ ...containerStyle, display: "inline-block" }}>{inner}</div>
+        ? <div css={containerStyle} {...{ className }}>{inner}</div>
         : <Link
             to={`${basePath}/${keyOfId(event.id)}`}
             css={containerStyle}
+            {...{ className }}
         >{inner}</Link>;
 };
