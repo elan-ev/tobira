@@ -81,7 +81,7 @@ export type RouterLib = {
      * browser navigating to that link). Instead, our router is notified of the new
      * route and renders appropriately.
      */
-    Link: (props: LinkProps) => JSX.Element;
+    Link: ReturnType<typeof React.forwardRef<HTMLAnchorElement, LinkProps>>;
 
     /**
      * Renders the currently matched route. Has to be used somewhere inside of a
@@ -265,24 +265,26 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         };
     };
 
-    const Link = ({ to, children, onClick, ...props }: LinkProps) => {
-        const router = useRouterImpl("<Link>");
+    const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
+        ({ to, children, onClick, ...props }, ref) => {
+            const router = useRouterImpl("<Link>");
 
-        const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-            // If the caller specified a handler, we will call it first.
-            onClick?.(e);
+            const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                // If the caller specified a handler, we will call it first.
+                onClick?.(e);
 
-            // We only want to react to simple mouse clicks.
-            if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.button !== 0) {
-                return;
-            }
+                // We only want to react to simple mouse clicks.
+                if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.button !== 0) {
+                    return;
+                }
 
-            e.preventDefault();
-            router.goto(to);
-        };
+                e.preventDefault();
+                router.goto(to);
+            };
 
-        return <a href={to} onClick={handleClick} {...props}>{children}</a>;
-    };
+            return <a ref={ref} href={to} onClick={handleClick} {...props}>{children}</a>;
+        },
+    );
 
     const matchRoute = (href: string): MatchedRoute => {
         const url = new URL(href);

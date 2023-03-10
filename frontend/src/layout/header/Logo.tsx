@@ -3,6 +3,7 @@ import CONFIG from "../../config";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { Link } from "../../router";
 import { focusStyle } from "../../ui";
+import { WithTooltip } from "../../ui/Floating";
 import { translatedConfig } from "../../util";
 import { HEADER_BASE_PADDING } from "./ui";
 
@@ -34,45 +35,51 @@ export const Logo: React.FC = () => {
     const alt = t("general.logo-alt", { title: translatedConfig(CONFIG.siteTitle, i18n) });
 
     return (
-        <Link
-            to="/"
+        <WithTooltip
+            tooltip={t("general.goto-homepage")}
+            placement="right"
+            distance={-8}
             css={{
                 height: `calc(100% + ${HEADER_BASE_PADDING * 2}px)`,
                 flex: "0 1 auto",
                 margin: `-${HEADER_BASE_PADDING}px 0`,
-                borderRadius: 4,
-                ":hover": { outlineOffset: -2, outline: "2px solid var(--grey80)" },
-                ...focusStyle({ inset: true }),
+            }}
+        >
+            <Link to="/" css={{
+                ":hover": { outlineOffset: -4, outline: "2px solid var(--grey80)" },
+                display: "block",
+                height: "100%",
+                borderRadius: 8,
+                ...focusStyle({ offset: -4 }),
                 "& > img": {
                     height: "100%",
                     width: "auto",
                     maxWidth: "100%",
                 },
-            }}
-        >
-            <img
-                width={large.resolution[0]}
-                height={large.resolution[1]}
-                src={large.path}
-                alt={alt}
-                css={{
-                    [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
-                        display: "none",
-                    },
-                }}
-            />
-            <img
-                width={small.resolution[0]}
-                height={small.resolution[1]}
-                src={small.path}
-                alt={alt}
-                css={{
-                    [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
-                        display: "none",
-                    },
-                }}
-            />
-
-        </Link>
+            }}>
+                <img
+                    width={large.resolution[0]}
+                    height={large.resolution[1]}
+                    src={large.path}
+                    alt={alt}
+                    css={{
+                        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                            display: "none",
+                        },
+                    }}
+                />
+                <img
+                    width={small.resolution[0]}
+                    height={small.resolution[1]}
+                    src={small.path}
+                    alt={alt}
+                    css={{
+                        [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                            display: "none",
+                        },
+                    }}
+                />
+            </Link>
+        </WithTooltip>
     );
 };

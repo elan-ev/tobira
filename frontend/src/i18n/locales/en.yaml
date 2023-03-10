@@ -13,6 +13,7 @@ version-information: Version
 
 general:
   homepage: Homepage
+  goto-homepage: Go to homepage
   leave-page-confirmation: Leave page? Changes you made may not be saved!
   logo-alt: Logo of “{{title}}”
   no-root-children: No pages yet ...

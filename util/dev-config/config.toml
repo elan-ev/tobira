@@ -39,7 +39,7 @@ preferred_harvest_size = 3
 
 [theme]
 logo.large.path = "logo-large.svg"
-logo.large.resolution = [643, 217]
+logo.large.resolution = [425, 182]
 logo.small.path = "logo-small.svg"
-logo.small.resolution = [102, 115]
+logo.small.resolution = [212, 182]
 favicon = "favicon.svg"

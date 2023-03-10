@@ -34,7 +34,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ),
 );
 
-type LinkButtonProps = JSX.IntrinsicElements["a"] & {
+type LinkButtonProps = Omit<JSX.IntrinsicElements["a"], "ref"> & {
     to: string;
     kind?: Kind;
     extraCss?: Interpolation<Theme>;

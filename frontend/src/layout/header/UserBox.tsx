@@ -7,7 +7,7 @@ import {
 } from "react-icons/fi";
 import { HiOutlineTranslate } from "react-icons/hi";
 
-import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../GlobalStyle";
+import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { isRealUser, User, useUser } from "../../User";
@@ -72,6 +72,7 @@ const LoggedOut: React.FC = () => {
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
+                    marginLeft: 4,
                     borderRadius: 8,
                     padding: "7px 14px",
                     backgroundColor: "var(--nav-color)",
@@ -280,12 +281,8 @@ export const LanguageSettings: React.FC = () => {
     const { t } = useTranslation();
 
     return <WithFloatingMenu type="language">
-        <ActionIcon title={t("language")} css={{
-            [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
-                button: { padding: 7 },
-            },
-        }}>
-            <HiOutlineTranslate size={24} />
+        <ActionIcon title={t("language")}>
+            <HiOutlineTranslate />
         </ActionIcon>
     </WithFloatingMenu>;
 };

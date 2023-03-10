@@ -16,6 +16,7 @@ import { InvalidUrlRoute } from "./routes/InvalidUrl";
 import { BlockEmbedRoute, EmbedVideoRoute } from "./routes/Embed";
 import { ManageVideoDetailsRoute } from "./routes/manage/Video/Details";
 import { ManageVideoTechnicalDetailsRoute } from "./routes/manage/Video/TechnicalDetails";
+import React from "react";
 
 
 
@@ -66,11 +67,13 @@ type LinkProps = {
     htmlLink?: boolean;
 } & Omit<React.ComponentPropsWithoutRef<"a">, "href">;
 
-const Link = ({ to, children, htmlLink = false, ...props }: LinkProps): JSX.Element => {
-    const isExternalLink
-        = new URL(to, document.baseURI).origin !== document.location.origin;
+const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
+    ({ to, children, htmlLink = false, ...props }, ref): JSX.Element => {
+        const isExternalLink
+            = new URL(to, document.baseURI).origin !== document.location.origin;
 
-    return htmlLink || isExternalLink
-        ? <a href={to} {...props}>{children}</a>
-        : <RautaLink to={to} {...props}>{children}</RautaLink>;
-};
+        return htmlLink || isExternalLink
+            ? <a ref={ref} href={to} {...props}>{children}</a>
+            : <RautaLink ref={ref} to={to} {...props}>{children}</RautaLink>;
+    },
+);

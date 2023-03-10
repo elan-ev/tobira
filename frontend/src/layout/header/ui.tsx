@@ -13,6 +13,7 @@ export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children })
         position: "relative",
         alignItems: "center",
         gap: 8,
+        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { gap: 4 },
     }}>
         {children}
     </div>

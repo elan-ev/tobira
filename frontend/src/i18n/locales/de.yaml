@@ -12,6 +12,7 @@ copy-to-clipboard: In Zwischenablage kopieren
 version-information: Version
 
 general:
+  goto-homepage: Zur Startseite
   homepage: Startseite
   leave-page-confirmation: >
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
