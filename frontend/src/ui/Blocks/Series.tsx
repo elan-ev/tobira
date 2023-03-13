@@ -529,12 +529,20 @@ const Videos: React.FC<ViewProps> = ({ basePath, items }) => {
     });
 };
 
+const ITEM_MIN_SIZE = 240;
+const ITEM_MIN_SIZE_LARGE_SCREENS = 260;
+const ITEM_MAX_SIZE = 310;
+const ITEM_MAX_SIZE_SMALL_SCREENS = 360;
+
 const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
     <div css={{
-        display: "flex",
-        flexWrap: "wrap",
-        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-            justifyContent: "center",
+        display: "grid",
+        gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE}px, 1fr))`,
+        marginTop: 6,
+        columnGap: 12,
+        rowGap: 28,
+        "@media (min-width: 1600px)": {
+            gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE_LARGE_SCREENS}px, 1fr))`,
         },
     }}>
         {items.map(({ event, active }) => (
@@ -542,11 +550,11 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
                 key={event.id}
                 {...{ event, active, basePath }}
                 css={{
-                    margin: "8px 6px 28px 6px",
-                    width: 16 * 15,
+                    margin: "0 auto",
+                    width: "100%",
+                    maxWidth: ITEM_MAX_SIZE,
                     [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-                        width: "100%",
-                        maxWidth: 360,
+                        maxWidth: ITEM_MAX_SIZE_SMALL_SCREENS,
                     },
                 }}
             />
