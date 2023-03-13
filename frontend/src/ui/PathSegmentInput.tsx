@@ -24,6 +24,8 @@ export const PathSegmentInput = React.forwardRef<HTMLInputElement, Props>(
             <span css={{ paddingLeft: 8 }}>{base + (base.endsWith("/") ? "" : "/")}</span>
             <Input
                 css={{ margin: -1, width: 160 }}
+                spellCheck={false}
+                autoCapitalize="none"
                 // TODO: I have no idea why, but this cast is necessary.
                 // Otherwise TS complaints about type mismatch. By `ref` is
                 // exactly the same type as what the `ref` attributes of
