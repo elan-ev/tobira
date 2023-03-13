@@ -425,6 +425,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                         }
                     }}
                     type="file"
+                    accept="video/*, audio/*"
                     aria-hidden="true"
                     css={{ display: "none" }}
                 />
