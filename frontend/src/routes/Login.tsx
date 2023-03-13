@@ -199,6 +199,8 @@ const LoginBox: React.FC = () => {
                         <input
                             id="userid"
                             autoComplete="username email"
+                            spellCheck={false}
+                            autoCapitalize="none"
                             required
                             autoFocus
                             {...register("userid", validation)}
