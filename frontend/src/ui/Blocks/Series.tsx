@@ -1,7 +1,6 @@
 import React, {
-    Children, createContext,
     ReactElement, ReactNode,
-    useContext, useEffect, useRef, useState,
+    createContext, useContext, useEffect, useRef, useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -208,9 +207,11 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
             {!eventsNotEmpty
                 ? t("series.no-events")
                 : <>
-                    {upcomingLiveEvents.length > 1 && <UpcomingEventsGrid>
-                        {renderEvents(upcomingLiveEvents)}
-                    </UpcomingEventsGrid>}
+                    {upcomingLiveEvents.length > 1 && (
+                        <UpcomingEventsGrid count={upcomingLiveEvents.length}>
+                            {renderEvents(upcomingLiveEvents)}
+                        </UpcomingEventsGrid>
+                    )}
                     {renderEvents(sortedEvents)}
                 </>
             }
@@ -677,7 +678,11 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
 };
 
 
-const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => {
+type UpcomingEventsGridProps = React.PropsWithChildren<{
+    count: number;
+}>;
+
+const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children }) => {
     const { t } = useTranslation();
 
     return (
@@ -707,7 +712,7 @@ const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => 
         }}>
             <summary>
                 <span>
-                    {t("series.upcoming-live-streams", { count: Children.count(children) })}
+                    {t("series.upcoming-live-streams", { count })}
                 </span>
             </summary>
             {children}
