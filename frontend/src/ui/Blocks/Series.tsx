@@ -532,10 +532,72 @@ const Videos: React.FC<ViewProps> = ({ basePath, items }) => {
 
 const ITEM_MIN_SIZE = 240;
 const ITEM_MIN_SIZE_LARGE_SCREENS = 260;
-const ITEM_MAX_SIZE = 310;
+const ITEM_MAX_SIZE = 315;
 const ITEM_MAX_SIZE_SMALL_SCREENS = 360;
 
 const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
+    // The following is not exactly what we want, but CSS does not allow us to
+    // do what we want. Let me elaborate. For the sake of this explanation,
+    // let's assume we want the items to be at least 240px and at most 300px
+    // wide.
+    //
+    // What we want is the `repeat(auto-fill)` behavior of the grid. It's nice,
+    // but has one crucial limitation: it is not possible to properly specify a
+    // max-width for items. That's what we want: Fit as many items as possible
+    // given a min item width. With the remaining space, try to grow each item
+    // by the same amount. If you already grew each item as much as possible
+    // (according to a max item width), then align all items in the center of
+    // the container (as if the remaining space was padding-left/right of the
+    // container).
+    //
+    // As you can see below we use `minmax(240px, 1fr)`: a fixed minimum and 1fr
+    // as maximum. The minimum works well, but `1fr` as maximum means that the
+    // track always takes 1fr of the container width, even if thats more than
+    // the `max-width` of the items below. In that case, the `justifySelf`
+    // below gets active and aligns the `Item` inside the track.
+    //
+    // Using `justifySelf: center` means that the remaining space is added
+    // around each item, effectively growing the gap between the items. That
+    // doesn't look that great.
+    //
+    // The obvious idea is to use `minmax(240px, 300px)` right? Except that
+    // doesn't work. I'm still not sure if its intended by the spec or if
+    // browser just implement it incorrectly. But with that, browsers always
+    // make the tracks max (300px) wide.
+    //
+    // One promising solution is to use `minmax(240px, max-content)`. We do need
+    // to add a `<div style="width: 300px" />` as child of the grid item to
+    // explicitly state that the max-content is 300px (otherwise videos without
+    // thumbnails break). But the larger problem is that the virtual items that
+    // are imagined by `auto-fill` take the width 240px as they don't have a
+    // defined max-content. At least that's the case if there are not enough
+    // items to completely fill one line. So then the real and virtual items
+    // have different widths, leading to weird alignment problems. These are
+    // particularly apparent if two series blocks are right next to each other
+    // and one of those has few enough videos to not fill a line. So I have not
+    // been able to make this approach work.
+    //
+    // A few other ideas I tried and failed to make work:
+    // - Add left and right padding to the container which we manually
+    //   calculate. Can't get it to work because CSS does not yet offer modulo
+    //   operations. I haven't found a way to polyfill `mod()` as there isn't
+    //   even a way to floor/round a number.
+    // - Add `margin: 0 auto` to the container and/or put it into a flexbox,
+    //   both with `inline-grid`. It seems like `auto-fill` just doesn't work
+    //   with `inline-grid`. And without `inline-grid`, the container always
+    //   fill the whole container.
+    //
+    // What I ended up doing now is just putting a band-aid over the biggest
+    // ugliness, which is the large gap in the worst screen width when not
+    // quite fitting 3 items in a row. That happens inside the  screen width
+    // range 650px to 1150px. In that range, we `justifySelf: right` every odd
+    // item(i.e. the left one in a 2 item line). With this alternating
+    // alignment (the default is `left`), it looks as if both items in a line
+    // are centered. Crucially, inside this range, there is never a
+    // non-2-item-line where the alignment matters (i.e. the space is always
+    // filled completely by the items). So this doesn't break anything. There
+    // is still a slightly enlarged gap for a small range of screens sizes with
+    // 3 items per line. But that's not too bad.
     <div css={{
         display: "grid",
         gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE}px, 1fr))`,
@@ -551,11 +613,18 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
                 key={event.id}
                 {...{ event, active, basePath }}
                 css={{
-                    margin: "0 auto",
                     width: "100%",
                     maxWidth: ITEM_MAX_SIZE,
+
+                    // See long comment above.
+                    "@media (min-width: 650px) and (max-width: 1150px)": {
+                        ":nth-child(odd)": {
+                            justifySelf: "right",
+                        },
+                    },
                     [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
                         maxWidth: ITEM_MAX_SIZE_SMALL_SCREENS,
+                        justifySelf: "center",
                     },
                 }}
             />
