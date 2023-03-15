@@ -170,6 +170,8 @@ series:
     order-label: Choose video order
     new-to-old: Newest first
     old-to-new: Oldest first
+    a-z: A to Z
+    z-a: Z to A
     view: View
     view-label: Change block view
     gallery: Gallery
