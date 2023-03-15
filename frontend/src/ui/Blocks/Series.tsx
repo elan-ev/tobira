@@ -1,7 +1,6 @@
 import React, {
-    Children, createContext,
     ReactElement, ReactNode,
-    useContext, useEffect, useRef, useState,
+    createContext, useContext, useEffect, useRef, useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -34,6 +33,10 @@ import {
 import { ProtoButton } from "../Button";
 import { IconType } from "react-icons";
 
+
+// ==============================================================================================
+// ===== Data plumbing components (no UI stuff)
+// ==============================================================================================
 
 type SharedProps = {
     basePath: string;
@@ -107,8 +110,6 @@ type Props = SharedFromSeriesProps & {
     series: SeriesBlockSeriesData$data;
 };
 
-const VIDEO_GRID_BREAKPOINT = 600;
-
 const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
 
@@ -136,6 +137,13 @@ const OrderContext = createContext<OrderContext>({
     setEventOrder: () => {},
 });
 
+
+// ==============================================================================================
+// ===== Main components defining UI
+// ==============================================================================================
+
+const VIDEO_GRID_BREAKPOINT = 600;
+
 const ReadySeriesBlock: React.FC<ReadyProps> = ({
     basePath,
     title,
@@ -147,9 +155,6 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
 }) => {
     const { t } = useTranslation();
     const [eventOrder, setEventOrder] = useState<VideoListOrder>(order);
-
-    const finalTitle = title ?? (showTitle ? series.title : undefined);
-    const eventsNotEmpty = series.events.length > 0;
 
     const events = series.events.filter(event =>
         !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)
@@ -181,24 +186,16 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
         upcomingLiveEvents.sort((a, b) => timeMs(a) - timeMs(b));
     }
 
-    const eventsToTiles = (events: Event[]) => events.map(event =>
-        <GridTile
-            key={event.id}
-            active={event.id === activeEventId}
-            {...{ basePath, event }}
-        />);
+    const renderEvents = (events: Event[]) => (
+        <Videos
+            basePath={basePath}
+            items={events.map(event => ({ event, active: event.id === activeEventId }))}
+        />
+    );
 
-    const eventsUI = !eventsNotEmpty
-        ? t("series.no-events")
-        : <>
-            {upcomingLiveEvents.length > 1
-                && <UpcomingEventsGrid>
-                    {eventsToTiles(upcomingLiveEvents)}
-                </UpcomingEventsGrid>}
-            <VideoGrid>
-                {eventsToTiles(sortedEvents)}
-            </VideoGrid>
-        </>;
+
+    const finalTitle = title ?? (showTitle ? series.title : undefined);
+    const eventsNotEmpty = series.events.length > 0;
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder }}>
         {showMetadata && !showTitle && <Description text={series.syncedData.description} />}
@@ -207,7 +204,17 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
                 <Description text={series.syncedData.description} css={{ fontSize: 14 }} />
                 <hr css={{ margin: "20px 0" }} />
             </>}
-            {eventsUI}
+            {!eventsNotEmpty
+                ? t("series.no-events")
+                : <>
+                    {upcomingLiveEvents.length > 1 && (
+                        <UpcomingEventsGrid count={upcomingLiveEvents.length}>
+                            {renderEvents(upcomingLiveEvents)}
+                        </UpcomingEventsGrid>
+                    )}
+                    {renderEvents(sortedEvents)}
+                </>
+            }
         </SeriesBlockContainer>
     </OrderContext.Provider>;
 };
@@ -276,6 +283,10 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
 };
 
 
+// ==============================================================================================
+// ===== The menus for chosing order and view mode
+// ==============================================================================================
+
 type FloatingBaseMenuProps = {
     triggerContent: ReactElement;
     list: ReactElement;
@@ -315,7 +326,6 @@ const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>
         </FloatingContainer>
     ),
 );
-
 
 const OrderMenu: React.FC = () => {
     const { t } = useTranslation();
@@ -498,7 +508,159 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
     );
 };
 
-const SliderView: React.FC<{ children: ReactNode }> = ({ children }) => {
+
+// ==============================================================================================
+// ===== Components for displaying the main part: the video items
+// ==============================================================================================
+
+type ViewProps = {
+    basePath: string;
+    items: {
+        event: Event;
+        active: boolean;
+    }[];
+};
+
+const Videos: React.FC<ViewProps> = ({ basePath, items }) => {
+    const { viewState } = useContext(ViewContext);
+    return match(viewState, {
+        slider: () => <SliderView {...{ basePath, items }} />,
+        gallery: () => <GalleryView {...{ basePath, items }} />,
+        list: () => <ListView {...{ basePath, items }} />,
+    });
+};
+
+const ITEM_MIN_SIZE = 240;
+const ITEM_MIN_SIZE_LARGE_SCREENS = 260;
+const ITEM_MAX_SIZE = 315;
+const ITEM_MAX_SIZE_SMALL_SCREENS = 360;
+
+const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
+    // The following is not exactly what we want, but CSS does not allow us to
+    // do what we want. Let me elaborate. For the sake of this explanation,
+    // let's assume we want the items to be at least 240px and at most 300px
+    // wide.
+    //
+    // What we want is the `repeat(auto-fill)` behavior of the grid. It's nice,
+    // but has one crucial limitation: it is not possible to properly specify a
+    // max-width for items. That's what we want: Fit as many items as possible
+    // given a min item width. With the remaining space, try to grow each item
+    // by the same amount. If you already grew each item as much as possible
+    // (according to a max item width), then align all items in the center of
+    // the container (as if the remaining space was padding-left/right of the
+    // container).
+    //
+    // As you can see below we use `minmax(240px, 1fr)`: a fixed minimum and 1fr
+    // as maximum. The minimum works well, but `1fr` as maximum means that the
+    // track always takes 1fr of the container width, even if thats more than
+    // the `max-width` of the items below. In that case, the `justifySelf`
+    // below gets active and aligns the `Item` inside the track.
+    //
+    // Using `justifySelf: center` means that the remaining space is added
+    // around each item, effectively growing the gap between the items. That
+    // doesn't look that great.
+    //
+    // The obvious idea is to use `minmax(240px, 300px)` right? Except that
+    // doesn't work. I'm still not sure if its intended by the spec or if
+    // browser just implement it incorrectly. But with that, browsers always
+    // make the tracks max (300px) wide.
+    //
+    // One promising solution is to use `minmax(240px, max-content)`. We do need
+    // to add a `<div style="width: 300px" />` as child of the grid item to
+    // explicitly state that the max-content is 300px (otherwise videos without
+    // thumbnails break). But the larger problem is that the virtual items that
+    // are imagined by `auto-fill` take the width 240px as they don't have a
+    // defined max-content. At least that's the case if there are not enough
+    // items to completely fill one line. So then the real and virtual items
+    // have different widths, leading to weird alignment problems. These are
+    // particularly apparent if two series blocks are right next to each other
+    // and one of those has few enough videos to not fill a line. So I have not
+    // been able to make this approach work.
+    //
+    // A few other ideas I tried and failed to make work:
+    // - Add left and right padding to the container which we manually
+    //   calculate. Can't get it to work because CSS does not yet offer modulo
+    //   operations. I haven't found a way to polyfill `mod()` as there isn't
+    //   even a way to floor/round a number.
+    // - Add `margin: 0 auto` to the container and/or put it into a flexbox,
+    //   both with `inline-grid`. It seems like `auto-fill` just doesn't work
+    //   with `inline-grid`. And without `inline-grid`, the container always
+    //   fill the whole container.
+    //
+    // What I ended up doing now is just putting a band-aid over the biggest
+    // ugliness, which is the large gap in the worst screen width when not
+    // quite fitting 3 items in a row. That happens inside the  screen width
+    // range 650px to 1150px. In that range, we `justifySelf: right` every odd
+    // item(i.e. the left one in a 2 item line). With this alternating
+    // alignment (the default is `left`), it looks as if both items in a line
+    // are centered. Crucially, inside this range, there is never a
+    // non-2-item-line where the alignment matters (i.e. the space is always
+    // filled completely by the items). So this doesn't break anything. There
+    // is still a slightly enlarged gap for a small range of screens sizes with
+    // 3 items per line. But that's not too bad.
+    <div css={{
+        display: "grid",
+        gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE}px, 1fr))`,
+        marginTop: 6,
+        columnGap: 12,
+        rowGap: 28,
+        "@media (min-width: 1600px)": {
+            gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE_LARGE_SCREENS}px, 1fr))`,
+        },
+    }}>
+        {items.map(({ event, active }) => (
+            <Item
+                key={event.id}
+                {...{ event, active, basePath }}
+                css={{
+                    width: "100%",
+                    maxWidth: ITEM_MAX_SIZE,
+
+                    // See long comment above.
+                    "@media (min-width: 650px) and (max-width: 1150px)": {
+                        ":nth-child(odd)": {
+                            justifySelf: "right",
+                        },
+                    },
+                    [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                        maxWidth: ITEM_MAX_SIZE_SMALL_SCREENS,
+                        justifySelf: "center",
+                    },
+                }}
+            />
+        ))}
+    </div>
+);
+
+const ListView: React.FC<ViewProps> = ({ basePath, items }) => (
+    <div css={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+    }}>
+        {items.map(({ event, active }) => (
+            <Item
+                key={event.id}
+                {...{ event, active, basePath }}
+                showDescription
+                css={{
+                    width: "100%",
+                    margin: 6,
+                    [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                        maxWidth: 360,
+                    },
+                    [`@media not all and (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                        display: "flex",
+                        gap: 16,
+                        "> :first-child": { flex: "0 0 240px" },
+                    },
+                }}
+            />
+        ))}
+    </div>
+);
+
+const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const scrollDistance = 240;
@@ -554,15 +716,22 @@ const SliderView: React.FC<{ children: ReactNode }> = ({ children }) => {
             overflow: "auto",
             scrollBehavior: "smooth",
             scrollSnapType: "inline mandatory",
-            "> *": {
-                scrollSnapAlign: "start",
-                flex: "0 0 240px",
-            },
             ":first-child > :first-child": {
                 scrollMargin: 6,
             },
         }}>
-            {children}
+            {items.map(({ event, active }) => (
+                <Item
+                    key={event.id}
+                    {...{ event, active, basePath }}
+                    css={{
+                        scrollSnapAlign: "start",
+                        flex: "0 0 265px",
+                        margin: 6,
+                        marginBottom: 24,
+                    }}
+                />
+            ))}
             {leftVisible && <ProtoButton
                 aria-label={t("series.slider.scroll-left")}
                 onClick={() => scroll(-scrollDistance)}
@@ -577,25 +746,12 @@ const SliderView: React.FC<{ children: ReactNode }> = ({ children }) => {
     </div>;
 };
 
-const VideoGrid: React.FC<React.PropsWithChildren> = ({ children }) => {
-    const { viewState } = useContext(ViewContext);
 
-    const containerStyle = {
-        display: "flex",
-        flexWrap: "wrap",
-        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-            justifyContent: "center",
-        },
-    } as const;
+type UpcomingEventsGridProps = React.PropsWithChildren<{
+    count: number;
+}>;
 
-    return match(viewState, {
-        slider: () => <SliderView>{children}</SliderView>,
-        gallery: () => <div css={containerStyle}>{children}</div>,
-        list: () => <div css={containerStyle}>{children}</div>,
-    });
-};
-
-const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => {
+const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children }) => {
     const { t } = useTranslation();
 
     return (
@@ -625,29 +781,33 @@ const UpcomingEventsGrid: React.FC<React.PropsWithChildren> = ({ children }) => 
         }}>
             <summary>
                 <span>
-                    {t("series.upcoming-live-streams", { count: Children.count(children) })}
+                    {t("series.upcoming-live-streams", { count })}
                 </span>
             </summary>
-            <VideoGrid>
-                {children}
-            </VideoGrid>
+            {children}
         </details>
     );
 };
 
 
-type GridTypeProps = {
+type ItemProps = {
     basePath: string;
     event: Event;
     active: boolean;
+    showDescription?: boolean;
+    className?: string;
 };
 
-const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
+const Item: React.FC<ItemProps> = ({
+    event,
+    basePath,
+    active,
+    showDescription = false,
+    className,
+}) => {
     const TRANSITION_IN_DURATION = "0.15s";
     const TRANSITION_OUT_DURATION = "0.3s";
     const date = event.syncedData?.startTime ?? event.created;
-    const view = useContext(ViewContext);
-    const isList = view.viewState === "list";
 
     const inner = <>
         <div css={{ borderRadius: 8, position: "relative" }}>
@@ -721,22 +881,16 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
                 {/* `new Date` is well defined for our ISO Date strings */}
                 <RelativeDate date={new Date(date)} isLive={event.isLive} />
             </div>
-            {isList && <SmallDescription lines={3} text={event.description} />}
+            {showDescription && <SmallDescription lines={3} text={event.description} />}
         </div>
     </>;
 
     const containerStyle = {
         position: "relative",
         display: "block",
-        margin: "8px 6px 28px 6px",
         padding: 6,
-        width: 16 * 15,
         borderRadius: 12,
         "& a": { color: "black", textDecoration: "none" },
-        [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-            width: "100%",
-            maxWidth: 360,
-        },
         ...active && {
             backgroundColor: "var(--grey86)",
         },
@@ -757,22 +911,13 @@ const GridTile: React.FC<GridTypeProps> = ({ event, basePath, active }) => {
             },
             ...focusStyle({}),
         },
-        // ListView styles:
-        ...isList && {
-            [`@media not all and (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
-                width: "100%",
-                display: "flex",
-                gap: 16,
-                marginBottom: 16,
-                "> :first-child": { flex: "0 0 240px" },
-            },
-        },
     } as const;
 
     return active
-        ? <div css={{ ...containerStyle, display: "inline-block" }}>{inner}</div>
+        ? <div css={containerStyle} {...{ className }}>{inner}</div>
         : <Link
             to={`${basePath}/${keyOfId(event.id)}`}
             css={containerStyle}
+            {...{ className }}
         >{inner}</Link>;
 };
