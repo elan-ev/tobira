@@ -199,8 +199,8 @@ realm:
         You can even create sub-pages to create your own small video-portal.
       available-at: 'Your page will be available at:'
       find-and-delete: >
-        Anyone who who has this link or knows your username can visit your page.
-        However, it will not appear anywhere in the search or main part of this video portal.
+        Anyone who has this link or knows your username can visit your page.
+        However, it will not appear anywhere in main navigation of this video portal.
         You can always delete your page later, should you change your mind.
       button: Create your own page
 

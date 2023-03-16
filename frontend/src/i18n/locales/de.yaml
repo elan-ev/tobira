@@ -204,8 +204,7 @@ realm:
       available-at: 'Ihre Seite wird unter folgendem Link verfügbar sein:'
       find-and-delete: >
         Alle, die diesen Link oder Ihren Benutzernamen kennen, können Ihre Seite besuchen.
-        Darüberhinaus wird Ihre Seite jedoch nicht in der Suche oder im Hauptteil dieses
-        Videoportals auftauchen.
+        Ihre Seite wird jedoch nicht in der Hauptnavigation dieses Videoportals auftauchen.
         Sie können Ihre Seite später jederzeit wieder löschen.
       button: Persönliche Seite erstellen
 
