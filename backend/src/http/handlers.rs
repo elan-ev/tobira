@@ -429,7 +429,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
         .body(body.into())
         .unwrap();
 
-    debug!(
+    trace!(
         "Finished /graphql query with {} SQL queries in {:.2?} (user: {})",
         num_queries,
         before.elapsed(),
