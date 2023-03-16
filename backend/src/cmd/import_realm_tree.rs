@@ -4,7 +4,7 @@
 use serde::Deserialize;
 use tokio_postgres::GenericClient;
 use std::{fs::File, future::Future, path::PathBuf, pin::Pin, collections::HashMap};
-use rand::{thread_rng, Rng};
+use rand::{thread_rng, Rng, distributions::WeightedIndex, prelude::*};
 
 use crate::{
     config::Config,
@@ -75,55 +75,50 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     Ok(())
 }
 
-fn for_all_realms(realm: &mut Realm, mut f: impl FnMut(&mut Realm)) {
-    fn add_blocks(realm: &mut Realm, f: &mut impl FnMut(&mut Realm)) {
-        f(realm);
-
+/// Visits all empty realms in the given tree recursively and calls `f` for each realm.
+fn for_all_empty_realms(realm: &mut Realm, mut f: impl FnMut(&mut Realm)) {
+    fn for_all_realms_rec(realm: &mut Realm, f: &mut impl FnMut(&mut Realm)) {
+        if realm.blocks.is_empty() {
+            f(realm);
+        }
+            
         for child in &mut realm.children {
-            add_blocks(child, f);
+            for_all_realms_rec(child, f);
         }
     }
-
-    add_blocks(realm, &mut f);
+    
+    for_all_realms_rec(realm, &mut f);
 }
 
+/// Adds different kinds of blocks to empty realms.
 async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<()> {
-    // Get relevant series fields.
+    let mut rng = thread_rng();
+
+    // Load all series from the DB and store them in a hashmap that maps from
+    // series title to a list of series UUIDS with that title. We need this data
+    // structure below.
     let series_rows = db.query("select title, opencast_id from series", &[]).await?;
     let mut series = <HashMap<_, Vec<_>>>::new();
 
-    // Store fields in hashmap and make a copy of that.
     for row in series_rows {
         let Some(title) = row.get::<_, Option<String>>("title") else {
             continue;
         };
         let oc_id = row.get::<_, String>("opencast_id");
-
         series.entry(title).or_default().push(oc_id);
     }
-    let mut series_copy = series.clone();
 
-    // Get relevant event fields. `part_of` is used to match events to their series.
-    let event_rows = db.query("select id, part_of from events", &[]).await?;
-    let mut events = <HashMap<_, Vec<_>>>::new();
+    // Load the IDs of all events to randomly select from them below.
+    let event_rows = db.query("select id from events", &[]).await?;
+    let events = event_rows.into_iter()
+        .map(|row| row.get::<_,i64>("id"))
+        .collect::<Vec<_>>();
 
-    // Store fields in hashmap and make a copy.
-    for row in event_rows {
-        let id = row.get::<_, i64>("id");
-        let part_of = row.get::<_, Option<String>>("part_of");
-        events.entry(part_of).or_default().push(id);
-    }
-
-    // Recursive functions to populate realms and children realms:
-    // Insert text blocks
-    for_all_realms(root, |realm|
-        if !realm.blocks.iter().any(|block| matches!(block, Block::Text(_))) {
-            realm.blocks.push(Block::Text(dummy_text(&realm.name)));
-        }
-    );
-    
-    // Insert series blocks
-    for_all_realms(root, |realm|
+    // Insert series blocks into realms where a series with the same name as the
+    // realm can be found. Those (used) series are removed from the hashmap.
+    for_all_empty_realms(root, |realm| {
+        // TODO: derive realm name from series block
+        // TODO: Don't show title, but do show description
         if let Some(uuids) = series.get_mut(&realm.name) {
             // We can `unwrap` here because in the lines below,
             // we make sure that there are no empty vectors in the hashmap.
@@ -133,78 +128,55 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
             }
             realm.blocks.push(Block::Series(SeriesBlock::ByUuid(series_uuid)));
         }
-    );
+    });
 
-    // Insert remaining series
-    for_all_realms(root, |realm|
-        if !realm.blocks.iter().any(|block| matches!(block, Block::Series(_))) {
-            if let Some((title, uuids)) = series.iter_mut().next() {
-                let uuid = uuids.pop().unwrap();
-                let copy = title.clone();
-                if uuids.is_empty() {
-                    series.remove(&copy);
-                }
-                // Only insert series if it is not empty,
-                // i.e. `events` map contains a `part_of` key for that series.
-                if events.contains_key(&Some(uuid.clone())) {
-                    realm.blocks.push(Block::Series(SeriesBlock::ByUuid(uuid)));
-                }
-            }
-        }
-    );
+    // Determine number of remaining realms.
+    let mut number_of_remaining_realms = 0;
+    for_all_empty_realms(root, |_| {
+        number_of_remaining_realms += 1;
+    });
 
-    // Insert video blocks
-    for_all_realms(root, |realm|
-        if let Some(uuids) = series_copy.get_mut(&realm.name) {
-            let series_uuid = uuids.pop().unwrap();
-            let copy = series_uuid.clone();
-            if uuids.is_empty() {
-                series_copy.remove(&realm.name);
-            }
+    // Store all remaining series IDs in a vector as this makes it easier
+    // to randomly select one below.
+    let series = series.into_values().flatten().collect::<Vec<_>>();
+    let series_probability = (series.len() as f32 / number_of_remaining_realms as f32).min(0.95);
     
-            // Look for events that are `part_of` series with `series_uuid`
-            if let Some(event_ids) = events.get_mut(&Some(series_uuid)) {
-                // Insert a random number of these
-                let num = if event_ids.len() < 4 {
-                    thread_rng().gen_range(0..=event_ids.len())
-                } else {
-                    thread_rng().gen_range(0..4)
-                };
-                for event_id in event_ids.drain(..num) {
-                    realm.blocks.push(Block::Video(event_id));
-                }
-                if event_ids.is_empty() {
-                    events.remove(&Some(copy));
-                }
-            }
-        }
-    );
+    // Insert blocks into remaining realms.
+    for_all_empty_realms(root, |realm| {
+        // Text blocks:
+        let num_text_blocks = {
+            let choices = [0, 1, 2];
+            let weights = [3, 6, 1];
+            let dist = WeightedIndex::new(&weights).unwrap();
+            choices[dist.sample(&mut rng)]
+        };
+        let text_block = Block::Text(dummy_text(&realm.name));
+        // Add a number of text blocks according to the above distribution.
+        realm.blocks.extend(std::iter::repeat(text_block).take(num_text_blocks));
 
-    // Insert remaining videos
-    for_all_realms(root, |realm|
-        // See if realm already has at least one video block.
-        // If not: insert one that hasn't been inserted yet.
-        if !realm.blocks.iter().any(|block| matches!(block, Block::Video(_))) {
-            if !events.is_empty() {
-                // Get a random key.
-                let key = events.keys().next().unwrap().to_owned();
-                // Insert a random number of events with that key.
-                if let Some(event_ids) = events.get_mut(&key) {
-                    let num = if event_ids.len() < 4 {
-                        thread_rng().gen_range(0..=event_ids.len())
-                    } else {
-                        thread_rng().gen_range(0..4)
-                    };
-                    for event_id in event_ids.drain(..num) {
-                        realm.blocks.push(Block::Video(event_id));
-                    }
-                    if event_ids.is_empty() {
-                        events.remove(&key);
-                    }
-                }
-            }
+        // Series blocks:
+        if rand::random::<f32>() < series_probability {
+            let uuid = series.choose(&mut rng);
+            realm.blocks.extend(
+                uuid.map(|uuid| Block::Series(SeriesBlock::ByUuid(uuid.to_owned())))
+            );
         }
-    );
+        // Video blocks:
+        let num_video_blocks = {
+            let choices = [0, 1, 2, 3];
+            let weights = [30, 50, 15, 5];
+            let dist = WeightedIndex::new(&weights).unwrap();
+            choices[dist.sample(&mut rng)]
+        };
+        // Add between 0 and 3 video blocks according to above distribution.
+        for _ in 0..num_video_blocks {
+            let id = events.choose(&mut rng);
+            realm.blocks.extend(id.map(|id| Block::Video(*id)));
+        }
+
+        // Shuffle blocks.
+        realm.blocks.shuffle(&mut rng);
+    });
 
     Ok(())
 }
@@ -315,24 +287,11 @@ fn dummy_text(title: &str) -> String {
         minima est nihil fugit quo nemo similique. Et omnis sequi hic aliquid ipsa eos \
         deleniti harum id obcaecati deserunt et omnis architecto non eligendi necessitatibus \
         sit similique ipsum.";
-    // Split `DUMMY_TEXT` into sentences. We could also split this into words
-    // and print a random amount of these, though the formatting would get a little
-    // more tricky with that. Or we could use a library to generate the lorem text.
-
-    // let sentences: Vec<_> = DUMMY_TEXT.split_inclusive(". ").collect();
-    // let num = thread_rng().gen_range(1..sentences.len());
 
     let num_sentences = DUMMY_TEXT.chars().filter(|c| c == &'.').count();
     let num = thread_rng().gen_range(1..num_sentences);
     let end_index = DUMMY_TEXT.char_indices().filter(|(_, c)| c == &'.').nth(num).unwrap().0;
     let text = &DUMMY_TEXT[..=end_index];
-
-    // // Build a string with a random number of lorem sentences.
-    // let mut text = String::new();
-    // for i in 1..=num {
-    //     text.push_str(sentences[i])
-    // }
-    // let text = sentences.iter().take(num).collect::<String>();
     
     format!("\
         What you are seeing here is __{title}__, a collection of videos about potentially \
