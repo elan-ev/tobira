@@ -69,6 +69,7 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     let conn = db.get().await?;
 
     if args.dummy_blocks {
+        info!("Generating dummy blocks...");
         add_dummy_blocks(&mut root, &**conn).await?;
     }
     
@@ -308,6 +309,7 @@ fn dummy_text(title: &str) -> String {
     let end_index = DUMMY_TEXT.char_indices().filter(|(_, c)| c == &'.').nth(num).unwrap().0;
     let text = &DUMMY_TEXT[..=end_index];
     
+    let num = num + 1; // 0-based to 1-based
     format!("\
         What you are seeing here is __{title}__, a collection of videos about potentially \
         very cool and interesting topics. \n\
