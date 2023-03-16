@@ -17,7 +17,9 @@ blocks:
       testing.
 
   - series:
-      by_title: Cats
+      series: { by_title: "Cats" }
+      show_title: true
+      show_description: false
 
 children:
   - path: campus
@@ -25,7 +27,9 @@ children:
     blocks:
       - text: Videos about life on the campus, the canteen and more.
       - series:
-          by_title: SciFi Chicken
+          series: { by_title: "SciFi Chicken" }
+          show_title: true
+          show_description: false
 
   - path: library
     name: Library

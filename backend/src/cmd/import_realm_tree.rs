@@ -41,13 +41,17 @@ struct Realm {
 enum Block {
     Title(String),
     Text(String),
-    Series(SeriesBlock),
+    Series {
+        series: Series,
+        show_title: bool,
+        show_description: bool,
+    },
     Video(i64),
 }
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
-enum SeriesBlock {
+enum Series {
     ByUuid(String),
     ByTitle(String),
 }
@@ -126,7 +130,11 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
             if uuids.is_empty() {
                 series.remove(&realm.name);
             }
-            realm.blocks.push(Block::Series(SeriesBlock::ByUuid(series_uuid)));
+            realm.blocks.push(Block::Series {
+                series: Series::ByUuid(series_uuid),
+                show_title: false,
+                show_description: true,
+            });
         }
     });
 
@@ -158,7 +166,11 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
         if rand::random::<f32>() < series_probability {
             let uuid = series.choose(&mut rng);
             realm.blocks.extend(
-                uuid.map(|uuid| Block::Series(SeriesBlock::ByUuid(uuid.to_owned())))
+                uuid.map(|uuid| Block::Series {
+                    series: Series::ByUuid(uuid.to_owned()),
+                    show_title: true,
+                    show_description: rand::random(),
+                })
             );
         }
         // Video blocks:
@@ -235,10 +247,10 @@ impl Block {
                 ";
                 db.execute(query, &[&realm_id, &(index as i16), &event_id]).await?;
             }
-            Block::Series(series) => {
+            Block::Series { series, show_title, show_description } => {
                 // Obtain the series ID
                 let series_id = match series {
-                    SeriesBlock::ByTitle(title) => {
+                    Series::ByTitle(title) => {
                         let rows = db
                             .query("select id from series where title = $1", &[title])
                             .await?;
@@ -248,7 +260,7 @@ impl Block {
                         }
                         rows[0].get::<_, i64>(0)
                     }
-                    SeriesBlock::ByUuid(uuid) => {
+                    Series::ByUuid(uuid) => {
                         let rows = db
                             .query("select id from series where opencast_id = $1", &[uuid])
                             .await?;
@@ -263,10 +275,13 @@ impl Block {
                 // Insert block
                 let query = "
                     insert into blocks
-                    (realm, type, index, series, videolist_order, show_title)
-                    values ($1, 'series', $2, $3, 'new_to_old', true)
+                    (realm, type, index, series, videolist_order, show_title, show_metadata)
+                    values ($1, 'series', $2, $3, 'new_to_old', $4, $5)
                 ";
-                db.execute(query, &[&realm_id, &(index as i16), &series_id]).await?;
+                db.execute(
+                    query,
+                    &[&realm_id, &(index as i16), &series_id, &show_title, &show_description],
+                ).await?;
             }
         }
 
