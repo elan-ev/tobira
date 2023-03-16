@@ -78,7 +78,7 @@ impl_from_db!(
             end_time: row.end_time(),
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
-            listed: !host_realms.is_empty(),
+            listed: host_realms.iter().any(|realm| !realm.is_user_realm()),
             host_realms,
         }
     }

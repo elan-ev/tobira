@@ -6,10 +6,11 @@ create view search_series as
         series.id, series.state, series.opencast_id,
         series.read_roles, series.write_roles,
         series.title, series.description,
-        (select count(*) > 0
+        exists (select
             from blocks
             inner join events on events.id = blocks.video
-            where events.series = series.id
+            inner join realms on realms.id = blocks.realm
+            where events.series = series.id and realms.full_path not like '/@%'
         ) as listed_via_events,
         coalesce(
             array_agg((

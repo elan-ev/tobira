@@ -60,6 +60,10 @@ impl Realm {
         let rows = db.query_raw(&query, dbargs![]);
         collect_rows_mapped(rows, |row| Self::from_row_start(&row)).await.map_err(Into::into)
     }
+
+    pub(crate) fn is_user_realm(&self) -> bool {
+        self.full_path.starts_with("/@")
+    }
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
