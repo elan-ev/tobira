@@ -41,7 +41,10 @@ impl Realm {
         })?;
         let key: Key = row.get(0);
 
-        Self::load_by_key(key, context).await.map(Option::unwrap)
+        Self::load_by_key(key, context).await.map(Option::unwrap).inspect_(|realm| {
+            let Self { key, full_path, resolved_name, .. } = realm;
+            info!("Realm added: {key:?} '{full_path}' {resolved_name:?}");
+        })
     }
 
     pub(crate) async fn create_user_realm(context: &Context) -> ApiResult<Realm> {
@@ -73,7 +76,13 @@ impl Realm {
         })?;
         let key: Key = row.get(0);
 
-        Self::load_by_key(key, context).await.map(Option::unwrap)
+        Self::load_by_key(key, context).await.map(Option::unwrap).inspect_(|_| {
+            info!(
+                "Root user realm added for user '{}' ({}): {key:?}",
+                user.username,
+                user.display_name,
+            );
+        })
     }
 
     pub(crate) async fn set_child_order(
@@ -202,7 +211,15 @@ impl Realm {
             ";
         db.execute(stmt, &[&realm.key, &name.plain, &block]).await?;
 
-        Self::load_by_key(realm.key, context).await.map(Option::unwrap)
+        Self::load_by_key(realm.key, context).await.map(Option::unwrap).inspect_(|new| {
+            info!(
+                "Renamed realm {:?} ({}) from '{:?}' to '{:?}'",
+                realm.key,
+                realm.full_path,
+                realm.resolved_name,
+                new.resolved_name,
+            );
+        })
     }
 
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
@@ -256,7 +273,9 @@ impl Realm {
             .await?;
 
         // Load realm with new data.
-        Self::load_by_key(realm.key, context).await.map(Option::unwrap)
+        Self::load_by_key(realm.key, context).await.map(Option::unwrap).inspect_(|_| {
+            info!("Updated realm {:?} ({}): {:?}", realm.key, realm.full_path, set);
+        })
     }
 
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedRealm> {
@@ -277,6 +296,7 @@ impl Realm {
             None => None,
         };
 
+        info!("Removed realm {id:?} ({})", realm.full_path);
         Ok(RemovedRealm { parent })
     }
 }
@@ -293,7 +313,7 @@ pub(crate) struct ChildIndex {
     index: i32,
 }
 
-#[derive(juniper::GraphQLInputObject)]
+#[derive(Debug, juniper::GraphQLInputObject)]
 pub(crate) struct UpdateRealm {
     parent: Option<Id>,
     path_segment: Option<String>,
