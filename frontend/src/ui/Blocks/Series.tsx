@@ -219,7 +219,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
                 <hr css={{ margin: "20px 0" }} />
             </>}
             {!eventsNotEmpty
-                ? t("series.no-events")
+                ? <div css={{ padding: 14 }}>{t("series.no-events")}</div>
                 : <>
                     {upcomingLiveEvents.length > 1 && (
                         <UpcomingEventsGrid count={upcomingLiveEvents.length}>
