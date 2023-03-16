@@ -111,10 +111,11 @@ const query = graphql`
             path
             isMainRoot
             isUserRealm
+            ownerDisplayName
             children { id }
             blocks { id }
             canCurrentUserEdit
-            ancestors { name path }
+            ancestors { name path ownerDisplayName }
             parent { id }
             ... BlocksData
             ... NavigationData
@@ -177,7 +178,7 @@ const WelcomeMessage: React.FC = () => {
 
 const UserRealmNote: React.FC<Props> = ({ realm }) => {
     const { t } = useTranslation();
-    const displayName = realm.ancestors.concat(realm)[0].name;
+    const displayName = realm.ancestors.concat(realm)[0].ownerDisplayName;
 
     return (
         <WithTooltip

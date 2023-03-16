@@ -265,6 +265,12 @@ type Realm implements Node {
     `/@`.
   """
   path: String!
+  """
+    This is only returns a value for root user realms, in which case it is
+    the display name of the user who owns this realm. For all other realms,
+    `null` is returned.
+  """
+  ownerDisplayName: String
   "Returns the immediate parent of this realm."
   parent: Realm
   """

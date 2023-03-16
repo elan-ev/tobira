@@ -100,6 +100,7 @@ pub(crate) struct Realm {
     full_path: String,
     index: i32,
     child_order: RealmOrder,
+    owner_display_name: Option<String>,
 }
 
 impl_from_db!(
@@ -107,7 +108,7 @@ impl_from_db!(
     select: {
         realms.{
             id, parent, name, name_from_block, path_segment, full_path, index,
-            child_order, resolved_name
+            child_order, resolved_name, owner_display_name,
         },
     },
     |row| {
@@ -121,6 +122,7 @@ impl_from_db!(
             full_path: row.full_path(),
             index: row.index(),
             child_order: row.child_order(),
+            owner_display_name: row.owner_display_name(),
         }
     }
 );
@@ -142,6 +144,7 @@ impl Realm {
             full_path: String::new(),
             index: 0,
             child_order: mapping.child_order.of(&row),
+            owner_display_name: None,
         })
     }
 
@@ -297,6 +300,13 @@ impl Realm {
     /// `/@`.
     fn path(&self) -> &str {
         if self.key.0 == 0 { "/" } else { &self.full_path }
+    }
+
+    /// This is only returns a value for root user realms, in which case it is
+    /// the display name of the user who owns this realm. For all other realms,
+    /// `null` is returned.
+    fn owner_display_name(&self) -> Option<&str> {
+        self.owner_display_name.as_deref()
     }
 
     /// Returns the immediate parent of this realm.

@@ -55,8 +55,8 @@ impl Realm {
         let db = &context.db;
 
         let res = db.query_one(
-            "insert into realms (parent, name, path_segment) \
-                values (null, $1, $2) \
+            "insert into realms (parent, name, path_segment, owner_display_name) \
+                values (null, $1, $2, $1) \
                 returning id",
             &[&user.display_name, &format!("@{}", user.username)],
         ).await;

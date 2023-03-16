@@ -13,6 +13,14 @@
 alter table realms
     -- Constraint `root_no_path` is still fine.
 
+    -- We want to be able to show the name of the user that owns a user realm.
+    -- Since the root user realm can be renamed, we have to add a separate
+    -- column for that. It's only set for root user realms.
+    add column owner_display_name text,
+    add constraint owner_set check (
+        (parent is null and full_path ~ '^/@') = (owner_display_name is not null)
+    ),
+
     -- There can be more root realms now.
     drop constraint has_parent,
 
