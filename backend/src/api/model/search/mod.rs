@@ -146,6 +146,7 @@ pub(crate) async fn perform(
         let mut query = context.search.realm_index.search();
         query.with_query(user_query);
         query.with_limit(10);
+        query.with_filter("is_user_realm = false");
         query.with_show_matches_position(true);
         query
     };
