@@ -127,9 +127,11 @@ type ReadyProps = SharedFromSeriesProps & {
     series: SyncedOpencastEntity<SeriesBlockSeriesData$data>;
 };
 
+type ExtendedVideoListOrder = VideoListOrder | "A-Z" | "Z-A";
+
 type OrderContext = {
-    eventOrder: VideoListOrder;
-    setEventOrder: (newOrder: VideoListOrder) => void;
+    eventOrder: ExtendedVideoListOrder;
+    setEventOrder: (newOrder: ExtendedVideoListOrder) => void;
 };
 
 const OrderContext = createContext<OrderContext>({
@@ -153,8 +155,9 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     showTitle = true,
     showMetadata,
 }) => {
-    const { t } = useTranslation();
-    const [eventOrder, setEventOrder] = useState<VideoListOrder>(order);
+    const { t, i18n } = useTranslation();
+    const collator = new Intl.Collator(i18n.language);
+    const [eventOrder, setEventOrder] = useState<ExtendedVideoListOrder>(order);
 
     const events = series.events.filter(event =>
         !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)
@@ -166,6 +169,14 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     const timeMs = (event: Event) =>
         new Date(event.syncedData?.startTime ?? event.created).getTime();
 
+    const compareEvents = (a: Event, b: Event, reverseTime = false) =>
+        match(eventOrder, {
+            "NEW_TO_OLD": () => reverseTime ? timeMs(a) - timeMs(b) : timeMs(b) - timeMs(a),
+            "OLD_TO_NEW": () => reverseTime ? timeMs(b) - timeMs(a) : timeMs(a) - timeMs(b),
+            "A-Z": () => collator.compare(a.title, b.title),
+            "Z-A": () => collator.compare(b.title, a.title),
+        }, unreachable);
+
     const sortedEvents = [...events];
     sortedEvents.sort((a, b) => {
         // Sort all live events before non-live events.
@@ -173,17 +184,14 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
             return +b.isLive - +a.isLive;
         }
 
-        return match(eventOrder, {
-            "NEW_TO_OLD": () => timeMs(b) - timeMs(a),
-            "OLD_TO_NEW": () => timeMs(a) - timeMs(b),
-        }, unreachable);
+        return compareEvents(a, b);
     });
 
     // If there is only one upcoming event, it doesn't need an extra box or ordering.
     if (upcomingLiveEvents.length === 1) {
         sortedEvents.unshift(upcomingLiveEvents[0]);
     } else {
-        upcomingLiveEvents.sort((a, b) => timeMs(a) - timeMs(b));
+        upcomingLiveEvents.sort((a, b) => compareEvents(a, b, true));
     }
 
     const renderEvents = (events: Event[]) => (
@@ -284,7 +292,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
 
 
 // ==============================================================================================
-// ===== The menus for chosing order and view mode
+// ===== The menus for choosing order and view mode
 // ==============================================================================================
 
 type FloatingBaseMenuProps = {
@@ -335,6 +343,8 @@ const OrderMenu: React.FC = () => {
     const triggerContent = match(order.eventOrder, {
         "NEW_TO_OLD": () => t("series.settings.new-to-old"),
         "OLD_TO_NEW": () => t("series.settings.old-to-new"),
+        "A-Z": () => t("series.settings.a-z"),
+        "Z-A": () => t("series.settings.z-a"),
         "%future added value": () => unreachable(),
     });
 
@@ -427,7 +437,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
                     onClick={() => setViewState("list")}
                     close={close}
                     Icon={FiList}
-                    label= {t("series.settings.list")}
+                    label={t("series.settings.list")}
                 />
             </ul>
         </>,
@@ -438,13 +448,25 @@ const List: React.FC<ListProps> = ({ type, close }) => {
                     disabled={eventOrder === "NEW_TO_OLD"}
                     onClick={() => setEventOrder("NEW_TO_OLD")}
                     close={close}
-                    label= {t("series.settings.new-to-old")}
+                    label={t("series.settings.new-to-old")}
                 />
                 <MenuItem
                     disabled={eventOrder === "OLD_TO_NEW"}
                     onClick={() => setEventOrder("OLD_TO_NEW")}
                     close={close}
-                    label= {t("series.settings.old-to-new")}
+                    label={t("series.settings.old-to-new")}
+                />
+                <MenuItem
+                    disabled={eventOrder === "A-Z"}
+                    onClick={() => setEventOrder("A-Z")}
+                    close={close}
+                    label={t("series.settings.a-z")}
+                />
+                <MenuItem
+                    disabled={eventOrder === "Z-A"}
+                    onClick={() => setEventOrder("Z-A")}
+                    close={close}
+                    label={t("series.settings.z-a")}
                 />
             </ul>
         </>,
