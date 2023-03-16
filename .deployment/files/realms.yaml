@@ -20,14 +20,19 @@ blocks:
   - series:
       series: { by_uuid: 94ecfeed-aa7d-4a5c-912b-58b5891543f4 }
       show_title: true
-      show_description: false
+      show_description: true
   - series:
-      series: { by_uuid: 089944f4-e69c-4eb6-81fd-44b8b9924f0b }
+      series: { by_uuid: 8a430c59-7e04-4e4b-b532-b2fcad8de8d4 }
       show_title: true
       show_description: false
+  - title: Opencast Summit 2021
+  - text: |
+      The virtual Opencast Summit 2021, which took place in April of that year.
+      Of course, there have been Opencast summits every year after this one, but
+      you have to look for recordings of those elsewhere, sorry!
   - series:
       series: { by_uuid: ec912549-5bac-4f97-b72a-ace807047aca }
-      show_title: true
+      show_title: false
       show_description: false
 children:
   - path: 'campus'
@@ -5047,6 +5052,13 @@ children:
   - { path: 'documents', name: 'Support' }
   - path: 'live'
     name: 'Live'
+    blocks:
+      - text: |
+          Here are some never ending live streams!
+      - series:
+          series: { by_uuid: 089944f4-e69c-4eb6-81fd-44b8b9924f0b }
+          show_title: true
+          show_description: false
     children:
       - path: 'events'
         name: 'Events'
