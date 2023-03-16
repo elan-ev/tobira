@@ -29,6 +29,10 @@ struct Realm {
     path: String,
     name: String,
 
+    // Block index that should be used as name source.
+    #[serde(default)]
+    name_from_block: Option<u32>,
+
     #[serde(default)]
     blocks: Vec<Block>,
 
@@ -136,6 +140,7 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
                 show_title: false,
                 show_description: true,
             });
+            realm.name_from_block = Some(0);
         }
     });
 
@@ -203,8 +208,26 @@ fn insert_realm<'a>(
 ) -> Pin<Box<dyn 'a + Future<Output = Result<()>>>> {
     Box::pin(async move {
         // Insert all blocks
+        let mut name_source_block_id = None;
         for (i, block) in realm.blocks.iter().enumerate() {
-            block.insert(id, i, db).await?;
+            let block_id = block.insert(id, i, db).await?;
+            if realm.name_from_block == Some(i as u32) {
+                name_source_block_id = Some(block_id);
+            }
+        }
+
+        match name_source_block_id {
+            Some(block_id) => {
+                let query = "update realms \
+                    set name = null, name_from_block = $1 \
+                    where id = $2
+                ";
+                db.execute(query, &[&block_id, &id]).await?;
+            }
+            None if realm.name_from_block.is_some() => {
+                warn!("name_from_block did not refer to an existing block");
+            }
+            _ => {}
         }
 
         // Insert all children and recurse
@@ -224,29 +247,32 @@ fn insert_realm<'a>(
 
 
 impl Block {
-    async fn insert(&self, realm_id: i64, index: usize, db: &impl GenericClient) -> Result<()> {
-        match self {
+    async fn insert(&self, realm_id: i64, index: usize, db: &impl GenericClient) -> Result<i64> {
+        let id = match self {
             Block::Title(title) => {
                 let query = "
                     insert into blocks (realm, type, index, text_content)
                     values ($1, 'title', $2, $3)
+                    returning id
                 ";
-                db.execute(query, &[&realm_id, &(index as i16), title]).await?;
+                db.query_one(query, &[&realm_id, &(index as i16), title]).await?.get(0)
             }
             Block::Text(text) => {
                 let query = "
                     insert into blocks (realm, type, index, text_content)
                     values ($1, 'text', $2, $3)
+                    returning id
                 ";
-                db.execute(query, &[&realm_id, &(index as i16), text]).await?;
+                db.query_one(query, &[&realm_id, &(index as i16), text]).await?.get(0)
             }
             Block::Video(event_id) => {
                 let query = "
                     insert into blocks
                     (realm, type, index, video)
                     values ($1, 'video', $2, $3)
+                    returning id
                 ";
-                db.execute(query, &[&realm_id, &(index as i16), &event_id]).await?;
+                db.query_one(query, &[&realm_id, &(index as i16), &event_id]).await?.get(0)
             }
             Block::Series { series, show_title, show_description } => {
                 // Obtain the series ID
@@ -256,8 +282,7 @@ impl Block {
                             .query("select id from series where title = $1", &[title])
                             .await?;
                         if rows.is_empty() {
-                            warn!("Series with title '{}' not found! Skipping.", title);
-                            return Ok(());
+                            anyhow::bail!("Series with title '{}' not found!", title);
                         }
                         rows[0].get::<_, i64>(0)
                     }
@@ -266,8 +291,7 @@ impl Block {
                             .query("select id from series where opencast_id = $1", &[uuid])
                             .await?;
                         if rows.is_empty() {
-                            warn!("Series with UUID '{}' not found! Skipping.", uuid);
-                            return Ok(());
+                            anyhow::bail!("Series with UUID '{}' not found!", uuid);
                         }
                         rows[0].get::<_, i64>(0)
                     }
@@ -278,15 +302,16 @@ impl Block {
                     insert into blocks
                     (realm, type, index, series, videolist_order, show_title, show_metadata)
                     values ($1, 'series', $2, $3, 'new_to_old', $4, $5)
+                    returning id
                 ";
-                db.execute(
+                db.query_one(
                     query,
                     &[&realm_id, &(index as i16), &series_id, &show_title, &show_description],
-                ).await?;
+                ).await?.get(0)
             }
-        }
+        };
 
-        Ok(())
+        Ok(id)
     }
 }
 
