@@ -15,6 +15,8 @@ pub(crate) struct Realm {
     pub(crate) id: SearchId,
     pub(crate) name: Option<String>,
     pub(crate) full_path: String,
+    pub(crate) is_user_realm: bool,
+    pub(crate) is_root: bool,
 
     /// Includes the names of all ancestors, excluding the root and this realm
     /// itself. It starts with a direct child of the root and ends with the
@@ -32,7 +34,7 @@ impl IndexItem for Realm {
 impl_from_db!(
     Realm,
     select: {
-        search_realms.{ id, name, full_path, ancestor_names },
+        search_realms.{ id, name, full_path, ancestor_names, is_root, is_user_realm },
     },
     |row| {
         Self {
@@ -40,6 +42,8 @@ impl_from_db!(
             name: row.name(),
             full_path: row.full_path(),
             ancestor_names: row.ancestor_names(),
+            is_root: row.is_root(),
+            is_user_realm: row.is_user_realm(),
         }
     }
 );
@@ -67,5 +71,10 @@ impl Realm {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(index, "realm", &["name"], &[]).await
+    util::lazy_set_special_attributes(
+        index,
+        "realm",
+        &["name"],
+        &["is_root", "is_user_realm"],
+    ).await
 }

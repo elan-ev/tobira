@@ -18,7 +18,7 @@ create view search_series as
                 -- for the main use case: 'where id = any(...)'. If we would
                 -- use a join instead, the runtime would be the same with or
                 -- without the 'where id' (roughly 300ms on my machine).
-                select row(search_realms.id, name, full_path, ancestor_names)::search_realms
+                select row(search_realms.*)::search_realms
                 from search_realms
                 where search_realms.id = blocks.realm
             )) filter(where blocks.realm is not null),
