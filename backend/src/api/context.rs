@@ -30,19 +30,30 @@ impl Context {
 
     pub(crate) fn require_moderator(&self) -> ApiResult<AuthToken> {
         self.auth.require_moderator(&self.config.auth).ok_or_else(|| {
-            if let AuthContext::User(user) = &self.auth {
-                ApiError {
-                    msg: format!("moderator required, but '{}' is not a moderator", user.username),
-                    kind: ApiErrorKind::NotAuthorized,
-                    key: Some("mutation.not-a-moderator"),
-                }
-            } else {
-                ApiError {
-                    msg: "moderator required, but user is not logged in".into(),
-                    kind: ApiErrorKind::NotAuthorized,
-                    key: Some("mutation.not-logged-in"),
-                }
-            }
+            self.access_error(
+                "mutation.not-a-moderator",
+                |user| format!("moderator required, but '{user}' is not a moderator"),
+            )
         })
+    }
+
+    pub(crate) fn access_error(
+        &self,
+        translation_key: &'static str,
+        msg: impl FnOnce(&str) -> String,
+    ) -> ApiError {
+        if let AuthContext::User(user) = &self.auth {
+            ApiError {
+                msg: msg(&user.username),
+                kind: ApiErrorKind::NotAuthorized,
+                key: Some(translation_key),
+            }
+        } else {
+            ApiError {
+                msg: "user is not logged in".into(),
+                kind: ApiErrorKind::NotAuthorized,
+                key: Some("mutation.not-logged-in"),
+            }
+        }
     }
 }

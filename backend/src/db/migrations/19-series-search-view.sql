@@ -6,10 +6,11 @@ create view search_series as
         series.id, series.state, series.opencast_id,
         series.read_roles, series.write_roles,
         series.title, series.description,
-        (select count(*) > 0
+        exists (select
             from blocks
             inner join events on events.id = blocks.video
-            where events.series = series.id
+            inner join realms on realms.id = blocks.realm
+            where events.series = series.id and realms.full_path not like '/@%'
         ) as listed_via_events,
         coalesce(
             array_agg((
@@ -17,7 +18,7 @@ create view search_series as
                 -- for the main use case: 'where id = any(...)'. If we would
                 -- use a join instead, the runtime would be the same with or
                 -- without the 'where id' (roughly 300ms on my machine).
-                select row(search_realms.id, name, full_path, ancestor_names)::search_realms
+                select row(search_realms.*)::search_realms
                 from search_realms
                 where search_realms.id = blocks.realm
             )) filter(where blocks.realm is not null),

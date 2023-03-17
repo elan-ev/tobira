@@ -3,6 +3,7 @@ use postgres_types::{FromSql, ToSql};
 
 use crate::{
     api::{Context, Id, err::ApiResult, Node, NodeValue},
+    auth::AuthContext,
     db::{types::Key, util::{select, impl_from_db}},
     prelude::*,
 };
@@ -99,6 +100,7 @@ pub(crate) struct Realm {
     full_path: String,
     index: i32,
     child_order: RealmOrder,
+    owner_display_name: Option<String>,
 }
 
 impl_from_db!(
@@ -106,7 +108,7 @@ impl_from_db!(
     select: {
         realms.{
             id, parent, name, name_from_block, path_segment, full_path, index,
-            child_order, resolved_name
+            child_order, resolved_name, owner_display_name,
         },
     },
     |row| {
@@ -120,6 +122,7 @@ impl_from_db!(
             full_path: row.full_path(),
             index: row.index(),
             child_order: row.child_order(),
+            owner_display_name: row.owner_display_name(),
         }
     }
 );
@@ -141,6 +144,7 @@ impl Realm {
             full_path: String::new(),
             index: 0,
             child_order: mapping.child_order.of(&row),
+            owner_display_name: None,
         })
     }
 
@@ -177,11 +181,6 @@ impl Realm {
             return Ok(Some(Self::root(context).await?));
         }
 
-        // All non-root paths have to start with `/`.
-        if !path.starts_with('/') {
-            return Ok(None);
-        }
-
         let selection = Self::select();
         let query = format!("select {selection} from realms where realms.full_path = $1");
         context.db
@@ -189,6 +188,45 @@ impl Realm {
             .await?
             .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
+    }
+
+    pub(crate) fn is_main_root(&self) -> bool {
+        self.key.0 == 0
+    }
+
+    pub(crate) fn is_user_realm(&self) -> bool {
+        self.full_path.starts_with("/@")
+    }
+
+    pub(crate) fn is_user_root(&self) -> bool {
+        self.is_user_realm() && self.parent_key.is_none()
+    }
+
+    /// Returns the username of the user owning this realm tree IF it is a user
+    /// realm. Otherwise returns `None`.
+    pub(crate) fn owning_user(&self) -> Option<&str> {
+        self.full_path.strip_prefix("/@")?.split('/').next()
+    }
+
+    fn can_current_user_edit(&self, context: &Context) -> bool {
+        if let Some(owning_user) = self.owning_user() {
+            matches!(&context.auth, AuthContext::User(u) if u.username == owning_user)
+                || context.auth.is_admin()
+        } else {
+            // TODO: at some point, we want ACLs per realm
+            context.auth.is_moderator(&context.config.auth)
+        }
+    }
+
+    pub(crate) fn require_write_access(&self, context: &Context) -> ApiResult<()> {
+        if !self.can_current_user_edit(context) {
+            return Err(context.access_error("realm.no-write-access", |user| format!(
+                "write access for page '{}' required, but '{user}' is not allowed to",
+                self.full_path,
+            )))
+        }
+
+        Ok(())
     }
 }
 
@@ -226,8 +264,19 @@ impl Realm {
         }
     }
 
-    fn is_root(&self) -> bool {
-        self.key.0 == 0
+    /// Returns `true` if this is the root of the public realm tree (with path = "/").
+    fn is_main_root(&self) -> bool {
+        self.is_main_root()
+    }
+
+    /// Returns true if this is the root of a user realm tree.
+    fn is_user_root(&self) -> bool {
+        self.is_user_root()
+    }
+
+    /// Returns `true` if this realm is managed by a user (path starting with `/@`).
+    fn is_user_realm(&self) -> bool {
+        self.is_user_realm()
     }
 
     fn index(&self) -> i32 {
@@ -241,16 +290,23 @@ impl Realm {
     }
 
     /// Returns the trailing segment of this realm's path, without any instances of `/`.
-    /// Empty for the root realm.
+    /// Empty for the main root realm.
     fn path_segment(&self) -> &str {
         &self.path_segment
     }
 
-    /// Returns the full path of this realm. `"/"` for the root realm. For
-    /// non-root realms, the path always starts with `/` and never has a
-    /// trailing `/`.
+    /// Returns the full path of this realm. `"/"` for the main root realm.
+    /// Otherwise it never has a trailing `/`. For user realms, starts with
+    /// `/@`.
     fn path(&self) -> &str {
         if self.key.0 == 0 { "/" } else { &self.full_path }
+    }
+
+    /// This is only returns a value for root user realms, in which case it is
+    /// the display name of the user who owns this realm. For all other realms,
+    /// `null` is returned.
+    fn owner_display_name(&self) -> Option<&str> {
+        self.owner_display_name.as_deref()
     }
 
     /// Returns the immediate parent of this realm.
@@ -323,8 +379,7 @@ impl Realm {
     }
 
     fn can_current_user_edit(&self, context: &Context) -> bool {
-        // TODO: at some point, we want ACLs per realm
-        context.auth.is_moderator(&context.config.auth)
+        self.can_current_user_edit(context)
     }
 
     /// Returns `true` if this realm somehow references the given node via

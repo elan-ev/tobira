@@ -74,7 +74,7 @@ const query = graphql`
         parent: realmByPath(path: $parent) {
             id
             name
-            isRoot
+            isMainRoot
             path
             canCurrentUserEdit
             ancestors { name path }
@@ -132,7 +132,9 @@ const AddChild: React.FC<Props> = ({ parent }) => {
     });
 
     const validations = realmValidations(t);
-    const breadcrumbs = parent.isRoot ? [] : realmBreadcrumbs(t, parent.ancestors.concat(parent));
+    const breadcrumbs = parent.isMainRoot
+        ? []
+        : realmBreadcrumbs(t, parent.ancestors.concat(parent));
 
     return (
         <RealmSettingsContainer>
@@ -140,7 +142,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
             <PageTitle title={t("manage.add-child.heading")} />
             <p>
                 {
-                    parent.isRoot
+                    parent.isMainRoot
                         ? t("manage.add-child.below-root")
                         : <Trans i18nKey="manage.add-child.below-this-parent">
                             {{ parent: parent.name }}

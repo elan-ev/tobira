@@ -57,7 +57,7 @@ scalar Cursor
 union SearchOutcome = SearchUnavailable | EmptyQuery | SearchResults
 
 type RemovedRealm {
-  parent: Realm!
+  parent: Realm
 }
 
 type SearchEvent implements Node {
@@ -242,7 +242,12 @@ type Realm implements Node {
     root realm, non-null for all other realms.
   """
   nameSource: RealmNameSource
-  isRoot: Boolean!
+  "Returns `true` if this is the root of the public realm tree (with path = \"/\")."
+  isMainRoot: Boolean!
+  "Returns true if this is the root of a user realm tree."
+  isUserRoot: Boolean!
+  "Returns `true` if this realm is managed by a user (path starting with `/@`)."
+  isUserRealm: Boolean!
   index: Int!
   """
     Specifies how the children of this realm should be ordered (e.g. in the
@@ -251,15 +256,21 @@ type Realm implements Node {
   childOrder: RealmOrder!
   """
     Returns the trailing segment of this realm's path, without any instances of `/`.
-    Empty for the root realm.
+    Empty for the main root realm.
   """
   pathSegment: String!
   """
-    Returns the full path of this realm. `"/"` for the root realm. For
-    non-root realms, the path always starts with `/` and never has a
-    trailing `/`.
+    Returns the full path of this realm. `"/"` for the main root realm.
+    Otherwise it never has a trailing `/`. For user realms, starts with
+    `/@`.
   """
   path: String!
+  """
+    This is only returns a value for root user realms, in which case it is
+    the display name of the user who owns this realm. For all other realms,
+    `null` is returned.
+  """
+  ownerDisplayName: String
   "Returns the immediate parent of this realm."
   parent: Realm
   """
@@ -308,6 +319,8 @@ input UpdatedRealmName {
 type Mutation {
   "Adds a new realm."
   addRealm(realm: NewRealm!): Realm!
+  "Creates the current users realm. Errors if it already exists."
+  createMyUserRealm: Realm!
   """
     Sets the order of all children of a specific realm.
 
@@ -388,7 +401,7 @@ type RemovedBlock {
 }
 
 type Query {
-  "Returns the root realm."
+  "Returns the main root realm."
   rootRealm: Realm!
   """
     Returns the realm with the specific ID or `None` if the ID does not
@@ -396,12 +409,13 @@ type Query {
   """
   realmById(id: ID!): Realm
   """
-    Returns the realm with the given path or `None` if the path does not
+    Returns the realm with the given path or `null` if the path does not
     refer to a realm.
 
     Paths with and without trailing slash are accepted and treated equally.
     The paths `""` and `"/"` refer to the root realm. All other paths have
-    to start with `"/"`.
+    to start with `"/"`. Paths starting with `"/@"` are considered user
+    root realms.
   """
   realmByPath(path: String!): Realm
   "Returns an event by its Opencast ID."
@@ -424,7 +438,7 @@ type Query {
     Searches through all events (including non-listed ones). Requires
     moderator rights.
   """
-  searchAllEvents(query: String!): EventSearchOutcome!
+  searchAllEvents(query: String!, writableOnly: Boolean!): EventSearchOutcome!
   """
     Searches through all series. If `writable_only` is true, only series
     that the user has write access to are searched (but including
@@ -516,6 +530,7 @@ type User {
   canUseStudio: Boolean!
   "`True` if the user has the permission to use Opencast Studio."
   canUseEditor: Boolean!
+  canCreateUserRealm: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page.

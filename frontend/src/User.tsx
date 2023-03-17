@@ -23,6 +23,7 @@ export type User = {
     canUpload: boolean;
     canUseStudio: boolean;
     canUseEditor: boolean;
+    canCreateUserRealm: boolean;
 };
 
 export const isRealUser = (state: UserState): state is User => (
@@ -55,6 +56,7 @@ export const userDataFragment = graphql`
             canUpload
             canUseStudio
             canUseEditor
+            canCreateUserRealm
         }
     }
 `;

@@ -1,13 +1,10 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::fmt::Write;
-use meilisearch_sdk::{
-    errors::{
-        Error as MsError,
-        MeilisearchError as MsRespError,
-        ErrorCode as MsErrorCode,
-    },
-    search::Query,
+use std::{fmt, borrow::Cow};
+use meilisearch_sdk::errors::{
+    Error as MsError,
+    MeilisearchError as MsRespError,
+    ErrorCode as MsErrorCode,
 };
 
 use crate::{
@@ -134,8 +131,17 @@ pub(crate) async fn perform(
 
 
     // Prepare the event search
-    let mut filter = "listed = true".to_string();
-    let event_query = event_search_query(user_query, &mut filter, context);
+    let filter = Filter::And(
+        std::iter::once(Filter::Leaf("listed = true".into()))
+            .chain(acl_filter("read_roles", context))
+            .collect()
+    ).to_string();
+    let mut event_query = context.search.event_index.search();
+    event_query.with_query(user_query);
+    event_query.with_limit(15);
+    event_query.with_show_matches_position(true);
+    event_query.with_filter(&filter);
+
 
 
     // Prepare the realm search
@@ -143,6 +149,7 @@ pub(crate) async fn perform(
         let mut query = context.search.realm_index.search();
         query.with_query(user_query);
         query.with_limit(10);
+        query.with_filter("is_user_realm = false");
         query.with_show_matches_position(true);
         query
     };
@@ -268,14 +275,19 @@ pub(crate) enum EventSearchOutcome {
     Results(SearchResults<search::Event>),
 }
 
-pub(crate) async fn all_events(user_query: &str, context: &Context) -> ApiResult<EventSearchOutcome> {
-    context.require_moderator()?;
-
-    let mut filter = String::new();
-    let mut event_query = event_search_query(user_query, &mut filter, context);
-    event_query.with_limit(50);
-
-    let res = event_query.execute::<search::Event>().await;
+pub(crate) async fn all_events(
+    user_query: &str,
+    writable_only: bool,
+    context: &Context,
+) -> ApiResult<EventSearchOutcome> {
+    let filter = make_filter(writable_only, context);
+    let res = context.search.event_index.search()
+        .with_query(user_query)
+        .with_limit(50)
+        .with_show_matches_position(true)
+        .with_filter(&filter)
+        .execute::<search::Event>()
+        .await;
     let results = handle_search_result!(res, EventSearchOutcome);
     let items = results.hits.into_iter().map(|h| h.result).collect();
 
@@ -295,71 +307,83 @@ pub(crate) async fn all_series(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<SeriesSearchOutcome> {
-    let mut filter = String::new();
-    match (writable_only, context.auth.is_moderator(&context.config.auth)) {
-        // If the writable_only flag is set, we filter by that only. All users
-        // are allowed to find all series that they have write access to.
-        (true, _) => append_acl_filter("write_roles", &mut filter, context),
-
-        // If the flag is not set and the user is moderator, all series are
-        // searched.
-        (false, true) => {}
-
-        // If the user is not moderator, they may only find listed series or
-        // series they have write access to.
-        (false, false) => {
-            filter.push_str("listed = true OR ");
-            append_acl_filter("write_roles", &mut filter, context);
-        }
-    };
-
-    // Build search query
-    let mut query = context.search.series_index.search();
-    query.with_query(user_query);
-    query.with_show_matches_position(true);
-    query.with_filter(&filter);
-    query.with_limit(50);
-
-    let res = query.execute::<search::Series>().await;
+    let filter = make_filter(writable_only, context);
+    let res = context.search.series_index.search()
+        .with_query(user_query)
+        .with_show_matches_position(true)
+        .with_filter(&filter)
+        .with_limit(50)
+        .execute::<search::Series>()
+        .await;
     let results = handle_search_result!(res, SeriesSearchOutcome);
     let items = results.hits.into_iter().map(|h| h.result).collect();
 
     Ok(SeriesSearchOutcome::Results(SearchResults { items }))
 }
 
-fn append_acl_filter(action: &str, filter: &mut String, context: &Context) {
+/// Creates the filter string depending on whether the user is moderator and
+/// whether `writableOnly` was set. All users can find all events/series they
+/// have write access to. Moderators can find any events/series.
+fn make_filter(writable_only: bool, context: &Context) -> String {
+    match (writable_only, context.auth.is_moderator(&context.config.auth)) {
+        // If the writable_only flag is set, we filter by that only. All users
+        // are allowed to find all series that they have write access to.
+        (true, _) => acl_filter("write_roles", context)
+            .map(|f| f.to_string())
+            .unwrap_or(String::new()),
+
+        // If the flag is not set and the user is moderator, all series are
+        // searched.
+        (false, true) => String::new(),
+
+        // If the user is not moderator, they may only find listed series or
+        // series they have write access to.
+        (false, false) => {
+            Filter::Or(
+                std::iter::once(Filter::Leaf("listed = true".into()))
+                    .chain(acl_filter("write_roles", context))
+                    .collect()
+            ).to_string()
+        }
+    }
+}
+
+fn acl_filter(action: &str, context: &Context) -> Option<Filter> {
     // If the user is admin, we just skip the filter alltogether as the admin
     // can see anything anyway.
     if context.auth.is_admin() {
-        return;
+        return None;
     }
 
-    filter.push_str("(");
-    for (i, role) in context.auth.roles().iter().enumerate() {
-        if i > 0 {
-            write!(filter, " OR ").unwrap();
+    let operands = context.auth.roles().iter()
+        .map(|role| Filter::Leaf(format!("{} = '{}'", action, hex::encode(role)).into()))
+        .collect();
+    Some(Filter::Or(operands))
+}
+
+enum Filter {
+    And(Vec<Filter>),
+    Or(Vec<Filter>),
+    Leaf(Cow<'static, str>),
+}
+
+impl fmt::Display for Filter {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fn join(f: &mut fmt::Formatter, operands: &[Filter], sep: &str) -> fmt::Result {
+            write!(f, "(")?;
+            for (i, operand) in operands.iter().enumerate() {
+                if i > 0 {
+                    write!(f, " {} ", sep)?;
+                }
+                write!(f, "{}", operand)?;
+            }
+            write!(f, ")")
         }
-        write!(filter, "{} = '{}'", action, hex::encode(role)).unwrap();
-    }
-    filter.push(')');
-}
 
-/// Constructs the appropriate `Query` to search for events. Due to a bad API
-/// design of Meili, you have to pass an empty `String` as second parameter.
-fn event_search_query<'a>(
-    user_query: &'a str,
-    filter: &'a mut String,
-    context: &'a Context,
-) -> Query<'a> {
-    let mut query = context.search.event_index.search();
-    query.with_query(user_query);
-    query.with_limit(15);
-    query.with_show_matches_position(true);
-    if !filter.is_empty() {
-        filter.push_str(" AND ");
+        match self {
+            Self::And(operands) => join(f, operands, "AND"),
+            Self::Or(operands) =>  join(f, operands, "OR"),
+            Self::Leaf(s) => write!(f, "{s}"),
+        }
     }
-    append_acl_filter("read_roles", filter, context);
-    query.with_filter(filter);
-    query
 }
-

@@ -45,6 +45,8 @@ impl_from_db!(
     },
     |row| {
         let host_realms = row.host_realms::<Vec<Realm>>();
+        let listed = host_realms.iter().any(|realm| !realm.is_user_realm())
+            || row.listed_via_events();
         Self {
             id: row.id(),
             opencast_id: row.opencast_id(),
@@ -52,7 +54,7 @@ impl_from_db!(
             description: row.description(),
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
-            listed: !host_realms.is_empty() || row.listed_via_events(),
+            listed,
             host_realms,
         }
     }

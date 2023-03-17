@@ -93,7 +93,7 @@ const query = graphql`
                     opencastId
                     ...SeriesBlockSeriesData
                 }
-                hostRealms { id isRoot name path }
+                hostRealms { id isMainRoot name path }
             }
         }
     }

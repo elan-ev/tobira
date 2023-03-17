@@ -63,7 +63,7 @@ const query = graphql`
         ... UserData
         realm: realmByPath(path: $path) {
             name
-            isRoot
+            isMainRoot
             path
             canCurrentUserEdit
             numberOfDescendants
@@ -87,11 +87,11 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
         return <NotAuthorized />;
     }
 
-    const heading = realm.isRoot
+    const heading = realm.isMainRoot
         ? t("manage.realm.heading-root")
         : t("manage.realm.heading", { realm: realm.name });
 
-    const breadcrumbs = realm.isRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
+    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     return (
         <RealmSettingsContainer css={{ maxWidth: 900 }}>

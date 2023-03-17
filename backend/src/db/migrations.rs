@@ -332,6 +332,7 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     15: "fix-event-constraints",
     16: "master-track",
     17: "improve-ancestor-function-estimate",
-    18: "series-search-view",
-    19: "fix-queue-triggers",
+    18: "user-realms",
+    19: "series-search-view",
+    20: "fix-queue-triggers",
 ];

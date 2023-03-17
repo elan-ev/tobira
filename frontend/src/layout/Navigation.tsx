@@ -37,14 +37,22 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 id
                 name
                 childOrder
+                isUserRoot
                 children { id name path }
-                parent { isRoot name path }
+                parent { isMainRoot name path }
             }
         `,
         fragRef,
     );
 
-    const hasRealmParent = realm.parent !== null;
+    const parent = realm.isUserRoot
+        ? {
+            path: "/",
+            name: t("home"),
+            isMainRoot: true,
+        }
+        : realm.parent;
+    const hasRealmParent = parent !== null;
 
     // We expect all production instances to have more than the root realm. So
     // we print this information instead of an empty div to avoid confusion.
@@ -57,7 +65,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
     return <nav>
         {hasRealmParent && <>
             <LinkWithIcon
-                to={realm.parent.path}
+                to={parent.path}
                 iconPos="left"
                 css={{
                     color: "var(--grey40)",
@@ -69,7 +77,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 {/* Show arrow and hide chevron in burger menu */}
                 <FiCornerLeftUp css={{ display: "none" }}/>
                 <FiChevronLeft />
-                {realm.parent.isRoot ? t("home") : realm.parent.name ?? <MissingRealmName />}
+                {parent.isMainRoot ? t("home") : parent.name ?? <MissingRealmName />}
             </LinkWithIcon>
             <div css={{
                 padding: "8px 14px 8px 16px",

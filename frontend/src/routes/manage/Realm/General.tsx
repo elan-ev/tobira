@@ -41,7 +41,7 @@ const fragment = graphql`
                 }
             }
         }
-        isRoot
+        isMainRoot
     }
 `;
 
@@ -66,7 +66,7 @@ export const General: React.FC<Props> = ({ fragRef }) => {
     const realm = useFragment(fragment, fragRef);
 
     // We do not allow changing the name of the root realm.
-    if (realm.isRoot) {
+    if (realm.isMainRoot) {
         return <p>{t("manage.realm.general.no-rename-root")}</p>;
     }
 

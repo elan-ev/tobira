@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import { fetchQuery, graphql, useFragment, useMutation } from "react-relay";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
@@ -18,6 +18,7 @@ import { Creators, Thumbnail } from "../../../../../../ui/Video";
 import { environment } from "../../../../../../relay";
 import { VideoEditModeSearchQuery } from "./__generated__/VideoEditModeSearchQuery.graphql";
 import { MovingTruck } from "../../../../../../ui/Waiting";
+import { ErrorDisplay } from "../../../../../../util/err";
 
 
 type VideoFormData = {
@@ -111,11 +112,11 @@ type EventSelectorProps = {
 
 const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, defaultValue }) => {
     const { t } = useTranslation();
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<ReactNode>(null);
 
     const query = graphql`
         query VideoEditModeSearchQuery($q: String!) {
-            events: searchAllEvents(query: $q) {
+            events: searchAllEvents(query: $q, writableOnly: false) {
                 ... on EventSearchResults {
                     items {
                         id
@@ -138,7 +139,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
         fetchQuery<VideoEditModeSearchQuery>(environment, query, { q: input }).subscribe({
             next: ({ events }) => {
                 if (events.items === undefined) {
-                    setError(true);
+                    setError(t("search.unavailable"));
                     return;
                 }
 
@@ -153,16 +154,17 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                 })));
             },
             start: () => {},
+            error: (error: Error) => setError(<ErrorDisplay error={error} />),
         });
     };
 
     return <>
-        {error && <Card kind="error" css={{ marginBottom: 8 }}>{t("search.unavailable")}</Card>}
+        {error && <Card kind="error" css={{ marginBottom: 8 }}>{error}</Card>}
         <SearchableSelect
             loadOptions={loadEvents}
             format={formatOption}
             onChange={data => onChange(data?.id)}
-            isDisabled={error}
+            isDisabled={!!error}
             {...{ onBlur, defaultValue }}
         />
     </>;

@@ -23,7 +23,7 @@ pub(crate) struct Query;
 
 #[graphql_object(Context = Context)]
 impl Query {
-    /// Returns the root realm.
+    /// Returns the main root realm.
     async fn root_realm(context: &Context) -> ApiResult<Realm> {
         Realm::root(context).await
     }
@@ -34,12 +34,13 @@ impl Query {
         Realm::load_by_id(id, context).await
     }
 
-    /// Returns the realm with the given path or `None` if the path does not
+    /// Returns the realm with the given path or `null` if the path does not
     /// refer to a realm.
     ///
     /// Paths with and without trailing slash are accepted and treated equally.
     /// The paths `""` and `"/"` refer to the root realm. All other paths have
-    /// to start with `"/"`.
+    /// to start with `"/"`. Paths starting with `"/@"` are considered user
+    /// root realms.
     async fn realm_by_path(path: String, context: &Context) -> ApiResult<Option<Realm>> {
         Realm::load_by_path(path, context).await
     }
@@ -96,8 +97,12 @@ impl Query {
 
     /// Searches through all events (including non-listed ones). Requires
     /// moderator rights.
-    async fn search_all_events(query: String, context: &Context) -> ApiResult<EventSearchOutcome> {
-        search::all_events(&query, context).await
+    async fn search_all_events(
+        query: String,
+        writable_only: bool,
+        context: &Context,
+    ) -> ApiResult<EventSearchOutcome> {
+        search::all_events(&query, writable_only, context).await
     }
 
     /// Searches through all series. If `writable_only` is true, only series

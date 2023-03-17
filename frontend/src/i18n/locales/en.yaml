@@ -186,6 +186,26 @@ realm:
   edit-page-content: Edit page content
   add-sub-page: Add sub-page
   missing-name: Missing name
+  user-realm:
+    your-page: Your page
+    note-label: User page
+    note-body: >
+      This is a personal user page which is managed by {{user}}.
+      They are responsible for all contents.
+    create:
+      currently-none: You don't currently have a personal page.
+      heading: Create your own page
+      what-you-can-do: >
+        On your personal page, you can freely arrange videos, text, and other elements.
+        This allows you to better present and share your content.
+        You can even create sub-pages to create your own small video-portal.
+      available-at: 'Your page will be available at:'
+      find-and-delete: >
+        Anyone who has this link or knows your username can visit your page.
+        However, it will not appear anywhere in main navigation of this video portal.
+        You can always delete your page later, should you change your mind.
+      button: Create your own page
+
 
 search:
   input-label: Search
@@ -337,6 +357,7 @@ manage:
         heading: Change path
         button: Change path segment
         failed: Changing the path failed.
+        cannot-userrealm: The path of your personal page cannot be changed.
         warning: >
           Important: Changing the path of this page invalidates all links to
           this page, to all direct or indirect sub-pages, and to all videos
@@ -447,6 +468,14 @@ api-remote-errors:
     not-a-moderator: You have to be a moderator to perform this action.
   realm:
     path-is-reserved: The chosen path is reserved and cannot be used for pages.
+    path-collision: A page with this path already exists.
+    no-write-access: You are not allowed to modify this page.
+    cannot-create-user-realm: You are not allowed to create your own page.
+    user-realm-already-exists: Your own page already exists.
+    username-not-valid-as-path: >
+      Your username '{{username}}' contains characters that are not allowed in page paths,
+      thus you cannot create your own page. Contact a system administrator for
+      further assistance.
 
 embed:
   not-supported: This page can't be embedded

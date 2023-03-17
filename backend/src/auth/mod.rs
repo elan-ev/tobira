@@ -78,6 +78,10 @@ pub(crate) struct AuthConfig {
     #[config(default = "ROLE_TOBIRA_EDITOR")]
     pub(crate) editor_role: String,
 
+    /// If a user has this role, they are allowed to create their own "user realm".
+    #[config(default = "ROLE_USER")]
+    pub(crate) user_realm_role: String,
+
     /// Duration of a Tobira-managed login session.
     /// Note: This is only relevant if `auth.mode` is `login-proxy`.
     #[config(default = "30d", deserialize_with = crate::config::deserialize_duration)]
@@ -348,6 +352,10 @@ pub(crate) trait HasRoles {
 
     fn can_use_editor(&self, auth_config: &AuthConfig) -> bool {
         self.is_moderator(auth_config) || self.roles().contains(&auth_config.editor_role)
+    }
+
+    fn can_create_user_realm(&self, auth_config: &AuthConfig) -> bool {
+        self.roles().contains(&auth_config.user_realm_role)
     }
 
     /// Returns `true` if the user is a global Opencast administrator and can do

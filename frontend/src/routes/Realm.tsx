@@ -1,9 +1,9 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, useState } from "react";
 
-import { graphql, loadQuery } from "react-relay/hooks";
+import { graphql, loadQuery, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
-import { FiEdit, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
+import { FiEdit, FiInfo, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
 
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -17,6 +17,14 @@ import { characterClass, useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
 import { realmBreadcrumbs } from "../util/realm";
+import { WithTooltip } from "../ui/Floating";
+import { isRealUser, useUser } from "../User";
+import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { displayCommitError } from "./manage/Realm/util";
+import { boxError } from "../ui/error";
+import { Spinner } from "../ui/Spinner";
+import { useRouter } from "../router";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -54,15 +62,22 @@ export const checkPathSegment = (segment: string): PathSegmentValidity => {
 export const isValidPathSegment = (segment: string): boolean =>
     checkPathSegment(segment) === "valid";
 
+export const isValidRealmPath = (path: string[]): boolean => {
+    if (path.length === 1 && path[0] === "") {
+        return true;
+    }
+
+    return path.every((segment, i) => (
+        isValidPathSegment(segment)
+           || (i === 0 && segment.startsWith("@") && isValidPathSegment(segment.substring(1)))
+    ));
+};
+
 export const RealmRoute = makeRoute(url => {
     const urlPath = url.pathname.replace(/^\/|\/$/g, "");
     const pathSegments = urlPath.split("/").map(decodeURIComponent);
-    if (urlPath !== "") {
-        for (const segment of pathSegments) {
-            if (!isValidPathSegment(segment)) {
-                return null;
-            }
-        }
+    if (!isValidRealmPath(pathSegments)) {
+        return null;
     }
 
     const realmPath = "/" + pathSegments.join("/");
@@ -85,7 +100,7 @@ export const RealmRoute = makeRoute(url => {
             render={data => (
                 data.realm
                     ? <RealmPage realm={data.realm} />
-                    : <NotFound kind="page" />
+                    : <NoRealm realmPath={realmPath} />
             )}
         />,
         dispose: () => queryRef.dispose(),
@@ -99,10 +114,13 @@ const query = graphql`
             id
             name
             path
+            isMainRoot
+            isUserRealm
+            ownerDisplayName
             children { id }
             blocks { id }
             canCurrentUserEdit
-            ancestors { name path }
+            ancestors { name path ownerDisplayName }
             parent { id }
             ... BlocksData
             ... NavigationData
@@ -119,14 +137,18 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
     const breadcrumbs = realmBreadcrumbs(t, realm.ancestors);
 
-    const isRoot = realm.parent === null;
-    const title = isRoot ? siteTitle : realm.name;
-    useTitle(title, isRoot);
+    const title = realm.isMainRoot ? siteTitle : realm.name;
+    useTitle(title, realm.isMainRoot);
 
     return <>
-        {!isRoot && <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />}
-        {title && <h1>{title}</h1>}
-        {realm.blocks.length === 0 && realm.parent === null
+        {!realm.isMainRoot && (
+            <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />
+        )}
+        {title && <div>
+            <h1 css={{ display: "inline-block" }}>{title}</h1>
+            {realm.isUserRealm && <UserRealmNote realm={realm} />}
+        </div>}
+        {realm.blocks.length === 0 && realm.isMainRoot
             ? <WelcomeMessage />
             : <Blocks realm={realm} />}
     </>;
@@ -155,6 +177,99 @@ const WelcomeMessage: React.FC = () => {
                 </h2>
                 <p>{t("welcome.body")}</p>
             </div>
+        </div>
+    );
+};
+
+const UserRealmNote: React.FC<Props> = ({ realm }) => {
+    const { t } = useTranslation();
+    const displayName = realm.ancestors.concat(realm)[0].ownerDisplayName;
+
+    return (
+        <WithTooltip
+            tooltip={t("realm.user-realm.note-body", { user: displayName })}
+            placement="bottom"
+            tooltipCss={{ width: 400 }}
+            css={{ display: "inline-block", marginLeft: 12 }}
+        >
+            <div css={{
+                fontSize: 14,
+                lineHeight: 1,
+                color: "var(--grey40)",
+                display: "flex",
+                gap: 4,
+            }}>
+                <FiInfo />
+                {t("realm.user-realm.note-label")}
+            </div>
+        </WithTooltip>
+
+    );
+};
+
+const NoRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
+    const user = useUser();
+
+    return isRealUser(user) && `/@${user.username}` === realmPath && user.canCreateUserRealm
+        ? <CreateUserRealm realmPath={realmPath} />
+        : <NotFound kind="page" />;
+};
+
+const createUserRealmMutation = graphql`
+    mutation RealmCreateForUserMutation {
+        createMyUserRealm { id path }
+    }
+`;
+
+const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
+    const { t } = useTranslation();
+    const router = useRouter();
+
+    const [commit, isInFlight] = useMutation(createUserRealmMutation);
+    const [error, setError] = useState<JSX.Element | null>(null);
+    const onSubmit = () => {
+        commit({
+            variables: {},
+            onError: error => setError(displayCommitError(error)),
+            onCompleted: () => {
+                router.goto(`~manage/realm/content?path=${encodeURIComponent(realmPath)}`);
+            },
+            // To prevent a short flash of "no realm found"
+            updater: store => store.invalidateStore(),
+        });
+    };
+
+    return (
+        <div css={{
+            width: 500,
+            maxWidth: "100%",
+            margin: "0 auto",
+            textAlign: "center",
+            "> h1, > p": {
+                textAlign: "left",
+                margin: "16px 0",
+            },
+            code: {
+                display: "block",
+                fontSize: 14,
+                backgroundColor: "var(--grey97)",
+                borderRadius: 4,
+                padding: "4px 8px",
+            },
+        }}>
+            <Card kind="info" css={{ marginBottom: 32 }}>
+                {t("realm.user-realm.create.currently-none")}
+            </Card>
+            <h1>{t("realm.user-realm.create.heading")}</h1>
+            <p>{t("realm.user-realm.create.what-you-can-do")}</p>
+            <p>{t("realm.user-realm.create.available-at")}</p>
+            <code>{window.location.origin + realmPath}</code>
+            <p>{t("realm.user-realm.create.find-and-delete")}</p>
+            <Button kind="happy"css={{ marginTop: 32 }} onClick={onSubmit}>
+                {t("realm.user-realm.create.button")}
+            </Button>
+            {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
+            {boxError(error)}
         </div>
     );
 };

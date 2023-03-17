@@ -26,7 +26,8 @@ const fragment = graphql`
     fragment DangerZoneRealmData on Realm {
         id
         name
-        isRoot
+        isMainRoot
+        isUserRoot
         path
         numberOfDescendants
     }
@@ -57,7 +58,7 @@ export const DangerZone: React.FC<Props> = ({ fragRef }) => {
 
     return <>
         <h2>{t("manage.realm.danger-zone.heading")}</h2>
-        {realm.isRoot
+        {realm.isMainRoot
             ? <p>{t("manage.realm.danger-zone.root-note")}</p>
             : (
                 <div css={{
@@ -105,6 +106,15 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
 
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [commit, isInFlight] = useMutation(changePathMutation);
+
+    if (realm.isUserRoot) {
+        return <>
+            <h3>{t("manage.realm.danger-zone.change-path.heading")}</h3>
+            <p css={{ fontSize: 14 }}>
+                {t("manage.realm.danger-zone.change-path.cannot-userrealm")}
+            </p>
+        </>;
+    }
 
     const onSubmit = handleSubmit(data => {
         commit({
@@ -181,9 +191,10 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             variables: {
                 id: realm.id,
             },
+            updater: store => store.delete(realm.id),
             onCompleted: response => {
                 const typedResponse = response as DangerZoneRemoveRealmMutation$data;
-                router.goto(typedResponse.removeRealm.parent.path);
+                router.goto(typedResponse.removeRealm.parent?.path ?? "/");
             },
             onError: error => {
                 const failedAction = t("manage.realm.danger-zone.delete.failed");

@@ -1,6 +1,6 @@
 -- This migration does two things:
 -- * it fixes several bugs in '10-search-index-queue'
--- * it adds triggers that were missing/omitted in `18-series-search-view`
+-- * it adds triggers that were missing/omitted in `19-series-search-view`
 --
 -- Both things are done in this one migration because this saves us some code
 -- and results in fewer total triggers.

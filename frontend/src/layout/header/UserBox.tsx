@@ -5,7 +5,7 @@ import {
     FiAlertTriangle, FiArrowLeft, FiCheck, FiUserCheck,
     FiChevronDown, FiFolder, FiLogOut, FiUpload, FiLogIn,
 } from "react-icons/fi";
-import { HiOutlineTranslate } from "react-icons/hi";
+import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
@@ -203,6 +203,12 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                     linkTo="/~manage"
                     onClick={close}
                 >{t("user.manage-content")}</MenuItem>
+                {user.canCreateUserRealm && <MenuItem
+                    icon={<HiOutlineFire />}
+                    borderBottom
+                    linkTo={`/@${user.username}`}
+                    onClick={close}
+                >{t("realm.user-realm.your-page")}</MenuItem>}
                 {user.canUpload && <MenuItem
                     icon={<FiUpload />}
                     linkTo={"/~upload"}

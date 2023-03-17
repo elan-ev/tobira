@@ -12,7 +12,7 @@ import { WaitingPage } from "../ui/Waiting";
 import { getPlayerAspectRatio, InlinePlayer } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
-import { isValidPathSegment } from "./Realm";
+import { isValidRealmPath } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
 import {
@@ -75,10 +75,8 @@ export const VideoRoute = makeRoute(url => {
     }
 
     const realmPathParts = parts.slice(0, parts.length - 2);
-    for (const segment of realmPathParts) {
-        if (!isValidPathSegment(segment)) {
-            return null;
-        }
+    if (!isValidRealmPath(realmPathParts)) {
+        return null;
     }
 
     const query = graphql`
@@ -198,7 +196,7 @@ const realmFragment = graphql`
     fragment VideoPageRealmData on Realm {
         name
         path
-        isRoot
+        isMainRoot
         ancestors { name path }
     }
 `;
@@ -263,7 +261,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
         return <WaitingPage type="video" />;
     }
 
-    const breadcrumbs = realm.isRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
+    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     const { hasStarted, hasEnded } = getEventTimeInfo(event);
     const isCurrentlyLive = hasStarted === true && hasEnded === false;

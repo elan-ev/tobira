@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    api::{Context, Id, err::{ApiResult, invalid_input}},
+    api::{Context, Id, err::{ApiResult, invalid_input, map_db_err}},
     db::types::Key,
-    prelude::*,
+    prelude::*, auth::AuthContext,
 };
 use super::{Realm, RealmOrder};
 
@@ -11,28 +11,67 @@ use super::{Realm, RealmOrder};
 
 impl Realm {
     pub(crate) async fn add(realm: NewRealm, context: &Context) -> ApiResult<Realm> {
-        let db = context.db(context.require_moderator()?);
-
-        let parent_key = id_to_key(realm.parent, "`parent`")?;
+        let Some(parent) = Self::load_by_id(realm.parent, context).await? else {
+            return Err(invalid_input!("`parent` realm does not exist"));
+        };
+        parent.require_write_access(context)?;
+        let db = &context.db;
 
         // Check if the path is a reserved one.
-        let is_top_level_realm = parent_key.0 == 0;
         let path_is_reserved = context.config.general.reserved_paths()
             .any(|r| realm.path_segment == r);
-        if is_top_level_realm && path_is_reserved {
+        if parent.is_main_root() && path_is_reserved {
             return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
         }
-        // TODO: validate input
 
-        let key: Key = db
-            .query_one(
-                "insert into realms (parent, name, path_segment) \
-                    values ($1, $2, $3) \
-                    returning id",
-                &[&parent_key, &realm.name, &realm.path_segment],
-            )
-            .await?
-            .get(0);
+        let res = db.query_one(
+            "insert into realms (parent, name, path_segment) \
+                values ($1, $2, $3) \
+                returning id",
+            &[&parent.key, &realm.name, &realm.path_segment],
+        ).await;
+
+        let row = map_db_err!(res, {
+            if constraint == "idx_realm_path" => invalid_input!(
+                key = "realm.path-collision",
+                "realm with that path already exists",
+            ),
+            // This logic is already checked by the frontend, so no translation key.
+            if constraint == "valid_path" => invalid_input!("path invalid"),
+        })?;
+        let key: Key = row.get(0);
+
+        Self::load_by_key(key, context).await.map(Option::unwrap)
+    }
+
+    pub(crate) async fn create_user_realm(context: &Context) -> ApiResult<Realm> {
+        if !context.auth.can_create_user_realm(&context.config.auth) {
+            return Err(context.access_error(
+                "realm.cannot-create-user-realm",
+                |user| format!("'{user}' is not allowed to create their user realm")
+            ));
+        }
+        let AuthContext::User(user) = &context.auth else { unreachable!() };
+        let db = &context.db;
+
+        let res = db.query_one(
+            "insert into realms (parent, name, path_segment, owner_display_name) \
+                values (null, $1, $2, $1) \
+                returning id",
+            &[&user.display_name, &format!("@{}", user.username)],
+        ).await;
+
+        let row = map_db_err!(res, {
+            if constraint == "idx_realm_path" => invalid_input!(
+                key = "realm.user-realm-already-exists",
+                "user realm already exists",
+            ),
+            if constraint == "valid_path" => invalid_input!(
+                key = "realm.username-not-valid-as-path",
+                "username contains invalid characters for realm path",
+            ),
+        })?;
+        let key: Key = row.get(0);
 
         Self::load_by_key(key, context).await.map(Option::unwrap)
     }
@@ -49,10 +88,13 @@ impl Realm {
         // frontend error or the DB has changed since the user opened the
         // page. TODO: The latter case we should communicate to the user somehow.
 
-        let db = context.db(context.require_moderator()?);
-
-        // Verify and convert arguments.
-        let parent_key = id_to_key(parent, "`parent`")?;
+        let Some(parent) = Self::load_by_id(parent, context).await? else {
+            // TODO: this is likely caused by a realm being removed while a user
+            // is on the settings page. Maybe we want to give a hint.
+            return Err(invalid_input!("`parent` realm does not exist (for `setChildOrder`)"));
+        };
+        parent.require_write_access(context)?;
+        let db = &context.db;
 
         if let Some(child_indices) = child_indices {
             if child_order != RealmOrder::ByIndex {
@@ -81,7 +123,7 @@ impl Realm {
 
             // Retrieve the current children of the given realm
             let current_children: Vec<(_, i32)> = db
-                .query_raw("select id, index from realms where parent = $1", [parent_key])
+                .query_raw("select id, index from realms where parent = $1", [parent.key])
                 .await?
                 .map_ok(|row| (row.get(0), row.get(1)))
                 .try_collect()
@@ -96,9 +138,9 @@ impl Realm {
             for (key, _) in &current_children {
                 if !child_indices.contains_key(key) {
                     return Err(invalid_input!(
-                        "child {} of realm {} is missing in children given to `setChildOrder`",
+                        "child {} of realm '{}' is missing in children given to `setChildOrder`",
                         Id::realm(*key),
-                        parent,
+                        parent.full_path,
                     ));
                 }
             }
@@ -117,7 +159,7 @@ impl Realm {
             db
                 .execute(
                     "update realms set index = default where parent = $1",
-                    &[&parent_key],
+                    &[&parent.key],
                 )
                 .await?;
         }
@@ -125,25 +167,22 @@ impl Realm {
         // Write the order to DB
         db.execute(
             "update realms set child_order = $1 where id = $2",
-            &[&child_order, &parent_key],
+            &[&child_order, &parent.key],
         ).await?;
-        debug!("Set 'child_order' of realm {} to {:?}", parent, child_order);
+        debug!("Set 'child_order' of realm '{}' to {:?}", parent.full_path, child_order);
 
 
-        // Load the updated realm. If the realm does not exist, we either
-        // noticed the error above or the above queries did not change
-        // anything.
-        Realm::load_by_key(parent_key, &context)
-            .await
-            .and_then(|realm| realm.ok_or_else(|| {
-                // TODO: tell user the realm was removed
-                invalid_input!("`parent` realm does not exist (for `setChildOrder`)")
-            }))
+        // Load the updated realm. We already know it exists, so we can unwrap.
+        Realm::load_by_key(parent.key, &context).await.map(Option::unwrap)
     }
 
     pub(crate) async fn rename(id: Id, name: UpdatedRealmName, context: &Context) -> ApiResult<Realm> {
-        let db = context.db(context.require_moderator()?);
-        let key = id_to_key(id, "`id`")?;
+        let Some(realm) = Self::load_by_id(id, context).await? else {
+            return Err(invalid_input!("`id` does not refer to an existing realm"));
+        };
+        realm.require_write_access(context)?;
+
+        let db = &context.db;
         if name.plain.is_some() == name.block.is_some() {
             return Err(invalid_input!("exactly one of name.block and name.plain has to be set"));
         }
@@ -152,27 +191,33 @@ impl Realm {
                 .ok_or_else(|| invalid_input!("name.block does not refer to a block")))
             .transpose()?;
 
+        // TODO: the DB will already check that the block has a fitting type and
+        // that it belongs to the realm, but those errors should result in
+        // an "invalid input" error.
         let stmt = "
             update realms set \
                 name = $2, \
                 name_from_block = $3 \
                 where id = $1
             ";
-        let affected_rows = db.execute(stmt, &[&key, &name.plain, &block]).await?;
+        db.execute(stmt, &[&realm.key, &name.plain, &block]).await?;
 
-        if affected_rows != 1 {
-            return Err(invalid_input!("`id` does not refer to an existing realm"));
-        }
-
-        Self::load_by_key(key, context).await.map(Option::unwrap)
+        Self::load_by_key(realm.key, context).await.map(Option::unwrap)
     }
 
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
         // TODO: validate input
 
-        let db = context.db(context.require_moderator()?);
+        let Some(realm) = Self::load_by_id(id, context).await? else {
+            return Err(invalid_input!("`id` does not refer to an existing realm"));
+        };
+        realm.require_write_access(context)?;
+        let db = &context.db;
 
-        let key = id_to_key(id, "`id`")?;
+        if realm.is_user_root() {
+            return Err(invalid_input!("cannot move or change path segment of user root realm"));
+        }
+
         let parent_key = set.parent.map(|parent| id_to_key(parent, "`parent`")).transpose()?;
 
         // We have to make sure the path is not changed to a reserved one.
@@ -188,7 +233,7 @@ impl Realm {
                     // check the DB whether this realm is a top-level one.
                     None => {
                         let real_parent = db
-                            .query_one("select parent from realms where id = $1", &[&key])
+                            .query_one("select parent from realms where id = $1", &[&realm.key])
                             .await?
                             .get::<_, Key>(0);
 
@@ -200,40 +245,37 @@ impl Realm {
             }
         }
 
-        let affected_rows = db
+        db
             .execute(
                 "update realms set \
                     parent = coalesce($2, parent), \
                     path_segment = coalesce($3, path_segment) \
                     where id = $1",
-                &[&key, &parent_key, &set.path_segment],
+                &[&realm.key, &parent_key, &set.path_segment],
             )
             .await?;
 
-        if affected_rows != 1 {
-            return Err(invalid_input!("`id` does not refer to an existing realm"));
-        }
-
-        Self::load_by_key(key, context).await.map(Option::unwrap)
+        // Load realm with new data.
+        Self::load_by_key(realm.key, context).await.map(Option::unwrap)
     }
 
     pub(crate) async fn remove(id: Id, context: &Context) -> ApiResult<RemovedRealm> {
-        let db = context.db(context.require_moderator()?);
+        let Some(realm) = Self::load_by_id(id, context).await? else {
+            return Err(invalid_input!("`id` does not refer to an existing realm"));
+        };
+        realm.require_write_access(context)?;
+        let db = &context.db;
 
-        let key = id_to_key(id, "`id`")?;
-        if key.0 == 0 {
+        if realm.is_main_root() {
             return Err(invalid_input!("Cannot remove the root realm"));
         }
 
-        let realm = Self::load_by_key(key, context).await?
-            .ok_or_else(|| invalid_input!("`id` does not refer to an existing realm"))?;
+        db.execute("delete from realms where id = $1", &[&realm.key]).await?;
 
-        db.execute("delete from realms where id = $1", &[&key]).await?;
-
-        // We checked above that `realm` is not the root realm, so we can unwrap.
-        let parent = Self::load_by_key(realm.parent_key.expect("missing parent"), context)
-            .await?
-            .expect("realm has no parent");
+        let parent = match realm.parent_key {
+            Some(parent) => Self::load_by_key(parent, context).await?,
+            None => None,
+        };
 
         Ok(RemovedRealm { parent })
     }
@@ -289,5 +331,5 @@ pub(crate) struct RealmSpecifier {
 #[derive(juniper::GraphQLObject)]
 #[graphql(Context = Context)]
 pub(crate) struct RemovedRealm {
-    parent: Realm,
+    parent: Option<Realm>,
 }

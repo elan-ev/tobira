@@ -190,6 +190,25 @@ realm:
   edit-page-content: Seiteninhalt bearbeiten
   add-sub-page: Unterseite hinzufügen
   missing-name: Fehlender Name
+  user-realm:
+    your-page: Persönliche Seite
+    note-label: Nutzerseite
+    note-body: >
+      Dies ist eine persönliche Nutzerseite, die allein von {{user}} gepflegt wird.
+      Für alle Inhalte ist {{user}} verantwortlich.
+    create:
+      currently-none: Sie haben zurzeit keine persönliche Seite.
+      heading: Persönliche Seite erstellen
+      what-you-can-do: >
+        Auf Ihrer persönlichen Seite können Sie frei Videos, Text und andere Element anordnen,
+        um so Inhalte besser präsentieren und teilen zu können.
+        Sie können sogar Unterseiten anlegen, um Ihr eigenes kleines Videoportal zu erstellen.
+      available-at: 'Ihre Seite wird unter folgendem Link verfügbar sein:'
+      find-and-delete: >
+        Alle, die diesen Link oder Ihren Benutzernamen kennen, können Ihre Seite besuchen.
+        Ihre Seite wird jedoch nicht in der Hauptnavigation dieses Videoportals auftauchen.
+        Sie können Ihre Seite später jederzeit wieder löschen.
+      button: Persönliche Seite erstellen
 
 search:
   input-label: Suche
@@ -348,6 +367,7 @@ manage:
         heading: Pfad ändern
         button: Pfadsegment ändern
         failed: Änderung des Pfades fehlgeschlagen.
+        cannot-userrealm: Der Pfad Ihrer persönlichen Seite kann nicht geändert werden.
         warning: >
           Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
           Links zu dieser Seite, zu allen direkten und indirekten Unterseiten, und
@@ -459,6 +479,14 @@ api-remote-errors:
     not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
   realm:
     path-is-reserved: Dieser Pfad ist reserviert und kann nicht für Seiten genutzt werden.
+    path-collision: Eine Seite mit diesem Pfad existiert bereits.
+    no-write-access: Sie haben nicht die Berechtigung, diese Seite zu bearbeiten.
+    cannot-create-user-realm: Sie haben nicht die Berechtigung, eine persönliche Seite anzulegen.
+    user-realm-already-exists: Ihre persönliche Seite existiert bereits.
+    username-not-valid-as-path: >
+      Ihr Nutzername '{{username}}' enthält Zeichen, die nicht in Seitenpfaden erlaubt sind.
+      Daher können Sie sich keine persönliche Seite anlegen.
+      Kontaktieren Sie einen Systemadministrator für weitere Unterstützung.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden

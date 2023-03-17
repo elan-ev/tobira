@@ -198,6 +198,11 @@
 # Default value: "ROLE_TOBIRA_EDITOR"
 #editor_role = "ROLE_TOBIRA_EDITOR"
 
+# If a user has this role, they are allowed to create their own "user realm".
+#
+# Default value: "ROLE_USER"
+#user_realm_role = "ROLE_USER"
+
 # Duration of a Tobira-managed login session.
 # Note: This is only relevant if `auth.mode` is `login-proxy`.
 #
