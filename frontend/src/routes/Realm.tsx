@@ -62,17 +62,22 @@ export const checkPathSegment = (segment: string): PathSegmentValidity => {
 export const isValidPathSegment = (segment: string): boolean =>
     checkPathSegment(segment) === "valid";
 
+export const isValidRealmPath = (path: string[]): boolean => {
+    if (path.length === 1 && path[0] === "") {
+        return true;
+    }
+
+    return path.every((segment, i) => (
+        isValidPathSegment(segment)
+           || (i === 0 && segment.startsWith("@") && isValidPathSegment(segment.substring(1)))
+    ));
+};
+
 export const RealmRoute = makeRoute(url => {
     const urlPath = url.pathname.replace(/^\/|\/$/g, "");
     const pathSegments = urlPath.split("/").map(decodeURIComponent);
-    if (urlPath !== "") {
-        for (const [i, segment] of pathSegments.entries()) {
-            const isValid = isValidPathSegment(segment)
-                || (i === 0 && segment.startsWith("@") && isValidPathSegment(segment.substring(1)));
-            if (!isValid) {
-                return null;
-            }
-        }
+    if (!isValidRealmPath(pathSegments)) {
+        return null;
     }
 
     const realmPath = "/" + pathSegments.join("/");
