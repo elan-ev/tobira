@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::fmt::Write;
+use std::{fmt, borrow::Cow};
 use meilisearch_sdk::errors::{
     Error as MsError,
     MeilisearchError as MsRespError,
@@ -131,8 +131,11 @@ pub(crate) async fn perform(
 
 
     // Prepare the event search
-    let mut filter = "listed = true AND ".to_string();
-    append_acl_filter("read_roles", &mut filter, context);
+    let filter = Filter::And(
+        std::iter::once(Filter::Leaf("listed = true".into()))
+            .chain(acl_filter("read_roles", context))
+            .collect()
+    ).to_string();
     let mut event_query = context.search.event_index.search();
     event_query.with_query(user_query);
     event_query.with_limit(15);
@@ -322,40 +325,65 @@ pub(crate) async fn all_series(
 /// whether `writableOnly` was set. All users can find all events/series they
 /// have write access to. Moderators can find any events/series.
 fn make_filter(writable_only: bool, context: &Context) -> String {
-    let mut filter = String::new();
     match (writable_only, context.auth.is_moderator(&context.config.auth)) {
         // If the writable_only flag is set, we filter by that only. All users
         // are allowed to find all series that they have write access to.
-        (true, _) => append_acl_filter("write_roles", &mut filter, context),
+        (true, _) => acl_filter("write_roles", context)
+            .map(|f| f.to_string())
+            .unwrap_or(String::new()),
 
         // If the flag is not set and the user is moderator, all series are
         // searched.
-        (false, true) => {}
+        (false, true) => String::new(),
 
         // If the user is not moderator, they may only find listed series or
         // series they have write access to.
         (false, false) => {
-            filter.push_str("listed = true OR ");
-            append_acl_filter("write_roles", &mut filter, context);
+            Filter::Or(
+                std::iter::once(Filter::Leaf("listed = true".into()))
+                    .chain(acl_filter("write_roles", context))
+                    .collect()
+            ).to_string()
         }
-    };
-
-    filter
+    }
 }
 
-fn append_acl_filter(action: &str, filter: &mut String, context: &Context) {
+fn acl_filter(action: &str, context: &Context) -> Option<Filter> {
     // If the user is admin, we just skip the filter alltogether as the admin
     // can see anything anyway.
     if context.auth.is_admin() {
-        return;
+        return None;
     }
 
-    filter.push_str("(");
-    for (i, role) in context.auth.roles().iter().enumerate() {
-        if i > 0 {
-            write!(filter, " OR ").unwrap();
+    let operands = context.auth.roles().iter()
+        .map(|role| Filter::Leaf(format!("{} = '{}'", action, hex::encode(role)).into()))
+        .collect();
+    Some(Filter::Or(operands))
+}
+
+enum Filter {
+    And(Vec<Filter>),
+    Or(Vec<Filter>),
+    Leaf(Cow<'static, str>),
+}
+
+impl fmt::Display for Filter {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fn join(f: &mut fmt::Formatter, operands: &[Filter], sep: &str) -> fmt::Result {
+            write!(f, "(")?;
+            for (i, operand) in operands.iter().enumerate() {
+                if i > 0 {
+                    write!(f, " {} ", sep)?;
+                }
+                write!(f, "{}", operand)?;
+            }
+            write!(f, ")")
         }
-        write!(filter, "{} = '{}'", action, hex::encode(role)).unwrap();
+
+        match self {
+            Self::And(operands) => join(f, operands, "AND"),
+            Self::Or(operands) =>  join(f, operands, "OR"),
+            Self::Leaf(s) => write!(f, "{s}"),
+        }
     }
-    filter.push(')');
 }
