@@ -206,14 +206,20 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     const eventsNotEmpty = series.events.length > 0;
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder }}>
-        {showMetadata && !showTitle && <Description text={series.syncedData.description} />}
+        {showMetadata && !showTitle && <Description
+            text={series.syncedData.description}
+            css={{ maxWidth: "85ch" }}
+        />}
         <SeriesBlockContainer showViewOptions={eventsNotEmpty} title={finalTitle}>
             {showMetadata && showTitle && series.syncedData.description && <>
-                <Description text={series.syncedData.description} css={{ fontSize: 14 }} />
+                <Description
+                    text={series.syncedData.description}
+                    css={{ fontSize: 14, padding: "14px 14px 0 14px", maxWidth: "85ch" }}
+                />
                 <hr css={{ margin: "20px 0" }} />
             </>}
             {!eventsNotEmpty
-                ? t("series.no-events")
+                ? <div css={{ padding: 14 }}>{t("series.no-events")}</div>
                 : <>
                     {upcomingLiveEvents.length > 1 && (
                         <UpcomingEventsGrid count={upcomingLiveEvents.length}>
