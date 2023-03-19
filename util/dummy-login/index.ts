@@ -54,7 +54,7 @@ const check: LoginCheck = async ({ userid, password }) => {
         ? {
             username: userid,
             displayName: user.displayName,
-            roles: user.roles,
+            roles: user.roles.concat(["ROLE_ANONYMOUS", "ROLE_USER"]),
         }
         : "forbidden";
 };
@@ -63,15 +63,23 @@ const DUMMY_PASSWORD = "tobira";
 const DUMMY_USERS: Record<string, { displayName: string; roles: string[] }> = {
     "admin": {
         displayName: "Administrator",
-        roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_ANONYMOUS", "ROLE_USER", "ROLE_SUDO"],
+        roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO"],
     },
     "sabine": {
         displayName: "Sabine Rudolfs",
-        roles: ["ROLE_USER_SABINE", "ROLE_ANONYMOUS", "ROLE_USER", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
+        roles: ["ROLE_USER_SABINE", "ROLE_STUDENT", "ROLE_TOBIRA_MODERATOR"],
     },
-    "augustus": {
-        displayName: "Augustus Pagenkämper",
-        roles: ["ROLE_USER_AUGUSTUS", "ROLE_ANONYMOUS", "ROLE_USER", "ROLE_STUDENT"],
+    "björk": {
+        displayName: "Prof. Björk Guðmundsdóttir",
+        roles: ["ROLE_USER_BJÖRK", "ROLE_EXTERNAL", "ROLE_TOBIRA_MODERATOR"],
+    },
+    "morgan": {
+        displayName: "Morgan Yu",
+        roles: ["ROLE_USER_MORGAN", "ROLE_STUDENT", "ROLE_TOBIRA_UPLOAD"],
+    },
+    "jose": {
+        displayName: "José Carreño Quiñones",
+        roles: ["ROLE_USER_JOSE", "ROLE_STUDENT"],
     },
 };
 
