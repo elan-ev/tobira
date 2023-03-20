@@ -2,7 +2,8 @@
 //! store it in the DB.
 
 use serde::Deserialize;
-use tokio_postgres::GenericClient;
+use tokio_postgres::IsolationLevel;
+use deadpool_postgres::GenericClient;
 use std::{fs::File, future::Future, path::PathBuf, pin::Pin, collections::HashMap};
 use rand::{thread_rng, Rng, distributions::WeightedIndex, prelude::*};
 
@@ -70,15 +71,17 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
         .context("failed to create database connection pool (database not running?)")?;
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
-    let conn = db.get().await?;
+    let mut conn = db.get().await?;
+    let tx = conn.build_transaction().isolation_level(IsolationLevel::Serializable).start().await?;
 
     if args.dummy_blocks {
         info!("Generating dummy blocks...");
-        add_dummy_blocks(&mut root, &**conn).await?;
+        add_dummy_blocks(&mut root, &tx).await?;
     }
     
     info!("Starting to insert realms into the DB...");
-    insert_realm(&**conn, &root, 0).await?;
+    insert_realm(&tx, &root, 0).await?;
+    tx.commit().await?;
     info!("Done inserting realms");
 
     Ok(())
