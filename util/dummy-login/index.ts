@@ -67,7 +67,7 @@ const DUMMY_USERS: Record<string, { displayName: string; roles: string[] }> = {
     },
     "sabine": {
         displayName: "Sabine Rudolfs",
-        roles: ["ROLE_USER_SABINE", "ROLE_STUDENT", "ROLE_TOBIRA_MODERATOR"],
+        roles: ["ROLE_USER_SABINE", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
     },
     "björk": {
         displayName: "Prof. Björk Guðmundsdóttir",
