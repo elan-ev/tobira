@@ -93,16 +93,21 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
         height: "100%",
         padding: `4px ${buttonSize + 10}px 4px 10px`,
     };
+    const sharedProps = {
+        disabled: true,
+        value: value,
+        "aria-labelledby": context,
+    };
     const inner = multiline
-        ? <textarea disabled value={value} css={{
+        ? <textarea {...sharedProps} css={{
             ...sharedStyle,
             overflow: "hidden",
             resize: "none",
         }} />
-        : <input disabled value={value} css={sharedStyle} />;
+        : <input {...sharedProps} css={sharedStyle} />;
 
     return (
-        <div css={{
+        <div id={context} css={{
             position: "relative",
             height: multiline ? 95 : 34,
             maxWidth: "100%",
