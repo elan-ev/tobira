@@ -8,7 +8,9 @@ home: Home
 navigation: Navigation
 rename: Rename
 this-field-is-required: This field is required.
-copy-to-clipboard: Copy to clipboard
+copy-direct-link-to-clipboard: Copy video link to clipboard
+copy-embed-code-to-clipboard: Copy embed code to clipboard
+copy-oc-id-to-clipboard: Copy Opencast-ID to clipboard
 version-information: Version
 
 general:

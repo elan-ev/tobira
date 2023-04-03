@@ -81,6 +81,7 @@ const DirectLink: React.FC<Props> = ({ event }) => {
                 {t("manage.my-videos.details.share-direct-link") + ":"}
             </div>
             <CopyableInput
+                context="direct-link"
                 value={url.href}
                 css={{ width: "100%", fontFamily: "monospace", fontSize: 14 }}
             />

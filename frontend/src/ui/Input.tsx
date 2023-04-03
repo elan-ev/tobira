@@ -68,11 +68,13 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
 type CopyableInputProps = JSX.IntrinsicElements["div"] & {
     value: string;
+    context: "direct-link" | "embed-code" | "oc-id";
     multiline?: boolean;
 };
 
 export const CopyableInput: React.FC<CopyableInputProps> = ({
     value,
+    context,
     multiline = false,
     ...rest
 }) => {
@@ -106,9 +108,9 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
             maxWidth: "100%",
         }} {...rest}>
             <div css={{ position: "absolute", top: 0, right: 0 }}>
-                <WithTooltip tooltip={t("copy-to-clipboard")}>
+                <WithTooltip tooltip={t(`copy-${context}-to-clipboard`)}>
                     <Button
-                        aria-label={t("copy-to-clipboard")}
+                        aria-label={t(`copy-${context}-to-clipboard`)}
                         kind="happy"
                         onClick={copy}
                         css={{
