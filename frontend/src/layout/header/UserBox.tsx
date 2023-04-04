@@ -176,7 +176,13 @@ const WithFloatingMenu: React.FC<WithFloatingMenuProps> = ({ children, type }) =
             distance={5}
         >
             <FloatingTrigger>{children}</FloatingTrigger>
-            <FloatingMenu close={() => ref.current?.close()} type={type} />
+            <FloatingMenu
+                close={() => {
+                    ref.current?.close();
+                    // TODO : `if (type === "language")` set focus on trigger,
+                    // so the newly selected language gets announced
+                }}
+                type={type} />
         </FloatingContainer>
     );
 };
@@ -308,7 +314,7 @@ export const LanguageSettings: React.FC = () => {
     const { t } = useTranslation();
 
     return <WithFloatingMenu type="language">
-        <ActionIcon title={t("language")}>
+        <ActionIcon title={t("language-selection")}>
             <HiOutlineTranslate />
         </ActionIcon>
     </WithFloatingMenu>;
@@ -363,6 +369,8 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
     return <>
         {Object.keys(languages).map(lng => (
             <MenuItem
+                isLanguageItem
+                selected={isCurrentLanguage(lng)}
                 key={lng}
                 icon={isCurrentLanguage(lng) ? <FiCheck /> : undefined}
                 onClick={() => {
@@ -393,6 +401,8 @@ type MenuItemProps = {
     indent?: boolean;
     externalLinkProps?: ExternalLinkProps;
     children: ReactNode;
+    isLanguageItem?: boolean;
+    selected?: boolean;
 };
 
 /** A single item in the user menu. */
@@ -407,6 +417,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
     borderTop = false,
     indent = false,
     externalLinkProps,
+    isLanguageItem = false,
+    selected = false,
 }) => {
     const inner = <>
         {icon ?? <svg />}
@@ -445,13 +457,18 @@ const MenuItem: React.FC<MenuItemProps> = ({
         }
     };
 
+    const additionalProps = !isLanguageItem ? { role: "menuitem" } : {
+        role: "checkbox",
+        "aria-checked": selected,
+    };
+
     let menuItem;
     if (linkTo) {
-        menuItem = <li role="menuitem" {... { className }}>
+        menuItem = <li {...additionalProps} {... { className }}>
             <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
         </li>;
     } else if (externalLinkProps) {
-        menuItem = <li role="menuitem">
+        menuItem = <li {...additionalProps}>
             <ExternalLink
                 {...externalLinkProps}
                 css={{
@@ -465,7 +482,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
     } else {
         menuItem = (
             <li
-                role="menuitem"
+                {...additionalProps}
                 tabIndex={0}
                 css={css}
                 {...{ onClick, className, onKeyDown }}
