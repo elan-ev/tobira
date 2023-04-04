@@ -1,5 +1,7 @@
 language-name: English
 language: Language
+language-selection: Language selection
+selected-language: 'Selection: English'
 loading: Loading...
 close: Close
 save: Save

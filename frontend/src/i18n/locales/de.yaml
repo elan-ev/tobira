@@ -1,5 +1,7 @@
 language-name: Deutsch
 language: Sprache
+language-selection: Sprachauswahl
+selected-language: 'Auswahl: Deutsch'
 loading: Lade...
 close: Schließen
 save: Speichern

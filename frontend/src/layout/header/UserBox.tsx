@@ -282,15 +282,28 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
     );
 };
 
+// Use this for text elements that exist exclusively for screen reader purposes
+export const visuallyHidden = {
+    clipPath: "inset(50%)",
+    height: 1,
+    width: 1,
+    overflow: "hidden",
+    position: "absolute",
+    whiteSpace: "nowrap",
+} as const;
+
 
 export const LanguageSettings: React.FC = () => {
     const { t } = useTranslation();
 
-    return <WithFloatingMenu type="language">
-        <ActionIcon title={t("language")}>
-            <HiOutlineTranslate />
-        </ActionIcon>
-    </WithFloatingMenu>;
+    return <>
+        <div css={visuallyHidden} aria-live="polite">{t("selected-language")}</div>
+        <WithFloatingMenu type="language">
+            <ActionIcon title={t("language-selection")}>
+                <HiOutlineTranslate />
+            </ActionIcon>
+        </WithFloatingMenu>
+    </>;
 };
 
 
@@ -342,6 +355,8 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
     return <>
         {Object.keys(languages).map(lng => (
             <MenuItem
+                isLanguageItem
+                selected={isCurrentLanguage(lng)}
                 key={lng}
                 icon={isCurrentLanguage(lng) ? <FiCheck /> : undefined}
                 onClick={() => {
@@ -370,6 +385,8 @@ type MenuItemProps = {
     borderBottom?: boolean;
     borderTop?: boolean;
     children: ReactNode;
+    isLanguageItem?: boolean;
+    selected?: boolean;
 };
 
 /** A single item in the user menu. */
@@ -382,6 +399,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
     htmlLink = false,
     borderBottom = false,
     borderTop = false,
+    isLanguageItem = false,
+    selected = false,
 }) => {
     const inner = <>
         {icon ?? <svg />}
@@ -419,11 +438,16 @@ const MenuItem: React.FC<MenuItemProps> = ({
         }
     };
 
+    const additionalProps = !isLanguageItem ? { role: "menuitem" } : {
+        role: "checkbox",
+        "aria-checked": selected,
+    };
+
     return linkTo
-        ? <li role="menuitem" {... { className }}>
+        ? <li {...additionalProps} {... { className }}>
             <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
         </li>
-        : <li role="menuitem" tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
+        : <li {...additionalProps} tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
             {inner}
         </li>;
 };
