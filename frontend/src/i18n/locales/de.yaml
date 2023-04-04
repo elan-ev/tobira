@@ -114,6 +114,7 @@ login-page:
 
 video:
   video: Video
+  video-page: 'Video Seite: „{{video}}“'
   deleted: Gelöschtes Video
   created: Erstellt
   updated: Zuletzt angepasst
