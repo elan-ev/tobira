@@ -67,6 +67,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
                 border: "1px solid var(--grey40)",
                 backgroundColor: "var(--grey92)",
             },
+            ...focusStyle({ offset: -1 }),
         }),
 
         "danger": () => ({
@@ -77,6 +78,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
                 backgroundColor: "var(--danger-color)",
                 color: "var(--danger-color-bw-contrast)",
             },
+            ...focusStyle({ offset: 1 }),
         }),
 
         "happy": () => ({
@@ -110,7 +112,6 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         },
         "&:not([disabled])": {
             cursor: "pointer",
-            ...focusStyle({}),
             ...notDisabledStyle,
         },
         ...extraCss as Record<string, unknown>,

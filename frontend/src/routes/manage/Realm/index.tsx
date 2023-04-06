@@ -12,7 +12,7 @@ import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
 import { DangerZone } from "./DangerZone";
 import { LinkButton } from "../../../ui/Button";
-import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
+import { FiArrowRightCircle, FiPlusCircle } from "react-icons/fi";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
@@ -92,6 +92,12 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
         : t("manage.realm.heading", { realm: realm.name });
 
     const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
+    const buttonStyle = {
+        backgroundColor: "transparent",
+        padding: "8px 16px",
+        borderRadius: 8,
+        gap: 9,
+    };
 
     return (
         <RealmSettingsContainer css={{ maxWidth: 900 }}>
@@ -104,13 +110,16 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
                 flexWrap: "wrap",
                 gap: 16,
             }}>
-                <LinkButton to={realm.path}>
-                    <FiArrowRightCircle />
+                <LinkButton to={realm.path} css={buttonStyle}>
                     {t("manage.realm.view-page")}
+                    <FiArrowRightCircle />
                 </LinkButton>
-                <LinkButton to={`/~manage/realm/add-child?parent=${pathToQuery(realm.path)}`}>
-                    <FiPlus />
+                <LinkButton
+                    to={`/~manage/realm/add-child?parent=${pathToQuery(realm.path)}`}
+                    css={buttonStyle}
+                >
                     {t("realm.add-sub-page")}
+                    <FiPlusCircle />
                 </LinkButton>
             </div>
             <section><General fragRef={realm} /></section>
