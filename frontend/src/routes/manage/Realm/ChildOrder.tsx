@@ -140,13 +140,7 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
             </ChildList>
 
             <div css={{ display: "flex", alignItems: "center" }}>
-                <Button
-                    onClick={save}
-                    disabled={!anyChange}
-                    css={{ borderRadius: 8, padding: "8px 16px" }}
-                >
-                    {t("save")}
-                </Button>
+                <Button onClick={save} disabled={!anyChange}>{t("save")}</Button>
                 {isInFlight && <Spinner size={20} css={{ marginLeft: 16 }} />}
             </div>
             {boxError(commitError)}

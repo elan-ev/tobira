@@ -92,12 +92,6 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
         : t("manage.realm.heading", { realm: realm.name });
 
     const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
-    const buttonStyle = {
-        backgroundColor: "transparent",
-        padding: "8px 16px",
-        borderRadius: 8,
-        gap: 9,
-    };
 
     return (
         <RealmSettingsContainer css={{ maxWidth: 900 }}>
@@ -110,14 +104,11 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
                 flexWrap: "wrap",
                 gap: 16,
             }}>
-                <LinkButton to={realm.path} css={buttonStyle}>
+                <LinkButton to={realm.path}>
                     {t("manage.realm.view-page")}
                     <FiArrowRightCircle />
                 </LinkButton>
-                <LinkButton
-                    to={`/~manage/realm/add-child?parent=${pathToQuery(realm.path)}`}
-                    css={buttonStyle}
-                >
+                <LinkButton to={`/~manage/realm/add-child?parent=${pathToQuery(realm.path)}`}>
                     {t("realm.add-sub-page")}
                     <FiPlusCircle />
                 </LinkButton>
