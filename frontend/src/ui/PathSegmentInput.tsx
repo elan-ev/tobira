@@ -21,18 +21,14 @@ export const PathSegmentInput = React.forwardRef<HTMLInputElement, Props>(
             gap: 8,
             backgroundColor: "var(--grey97)",
         }}>
-            <span css={{ paddingLeft: 8 }}>{base + (base.endsWith("/") ? "" : "/")}</span>
+            <span css={{ paddingLeft: 8, overflow: "auto" }}>
+                {base.split("/").join("\u200b/") + (base.endsWith("/") ? "" : "/")}
+            </span>
             <Input
                 css={{ margin: -1, width: 160 }}
                 spellCheck={false}
                 autoCapitalize="none"
-                // TODO: I have no idea why, but this cast is necessary.
-                // Otherwise TS complaints about type mismatch. By `ref` is
-                // exactly the same type as what the `ref` attributes of
-                // `Input` expects. Even taking the exact type of the error
-                // messages "cannot be assigned to $ty" and saying `ref={ref as $ty}`
-                // here does NOT fix it. Super weird.
-                ref={ref as any}
+                ref={ref}
                 {...rest}
             />
             {spinner && <Spinner size={20} css={{ position: "absolute", right: 6 }}/>}

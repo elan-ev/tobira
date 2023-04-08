@@ -154,18 +154,21 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                 css={{
                     margin: "32px 0",
                     "& > div": { marginBottom: 32 },
+                    "label + div": { display: "flex" },
+                    input: { height: 42, flexGrow: 1 },
                 }}
             >
                 <InputWithInfo info={t("manage.add-child.page-name-info")}>
                     <label htmlFor="name-field">{t("manage.realm.general.page-name")}</label>
-                    <Input
-                        id="name-field"
-                        css={{ width: 350, maxWidth: "100%" }}
-                        placeholder={t("manage.realm.general.page-name")}
-                        error={!!errors.name}
-                        autoFocus
-                        {...register("name", validations.name)}
-                    />
+                    <div>
+                        <Input
+                            id="name-field"
+                            placeholder={t("manage.realm.general.page-name")}
+                            error={!!errors.name}
+                            autoFocus
+                            {...register("name", validations.name)}
+                        />
+                    </div>
                     {boxError(errors.name?.message)}
                 </InputWithInfo>
 
@@ -211,6 +214,7 @@ const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
         rowGap: 16,
         "@media (max-width: 1300px)": {
             flexDirection: "column",
+            div: { maxWidth: 500 },
         },
         "& code": {
             whiteSpace: "nowrap",
@@ -219,7 +223,7 @@ const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
             padding: "2px 4px",
         },
     }}>
-        <div css={{ minWidth: "min(100%, 450px)" }}>{children}</div>
-        <Card kind="info" css={{ maxWidth: 600, minSize: 100, fontSize: 14 }}>{info}</Card>
+        <div css={{ width: "min(100%, 500px)" }}>{children}</div>
+        <Card kind="info" css={{ maxWidth: 500, fontSize: 14 }}>{info}</Card>
     </div>
 );
