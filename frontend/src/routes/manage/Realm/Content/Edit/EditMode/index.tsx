@@ -13,6 +13,7 @@ import { EditTitleBlock } from "./Title";
 import { EditTextBlock } from "./Text";
 import { EditSeriesBlock } from "./Series";
 import { EditVideoBlock } from "./Video";
+import FocusTrap from "focus-trap-react";
 
 
 type EditModeProps = {
@@ -129,10 +130,12 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
 
 
     return <FormProvider<FormData> {...form}>
-        <form onSubmit={onSubmit}>
-            {children}
-            <EditModeButtons onCancel={onCancel} />
-        </form>
+        <FocusTrap>
+            <form onSubmit={onSubmit}>
+                {children}
+                <EditModeButtons onCancel={onCancel} />
+            </form>
+        </FocusTrap>
     </FormProvider>;
 };
 

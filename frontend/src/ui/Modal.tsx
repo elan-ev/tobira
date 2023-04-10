@@ -11,12 +11,14 @@ import {
 import ReactDOM from "react-dom";
 import { FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import FocusTrap from "focus-trap-react";
 
-import { Button } from "./Button";
+import { Button, ProtoButton } from "./Button";
 import { Spinner } from "./Spinner";
 import { boxError } from "./error";
 import { bug } from "../util/err";
 import { currentRef } from "../util";
+import { focusStyle } from ".";
 
 
 type ModalProps = {
@@ -71,27 +73,36 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                 zIndex: 2000,
             }}
         >
-            <div css={{
-                backgroundColor: "white",
-                borderRadius: 4,
-                width: 400,
-                maxWidth: "100%",
-                margin: 16,
-            }}>
+            <FocusTrap>
                 <div css={{
-                    padding: "12px 16px",
-                    borderBottom: "1px solid var(--grey80)",
-                    display: "flex",
-                    alignItems: "center",
+                    backgroundColor: "white",
+                    borderRadius: 4,
+                    width: 400,
+                    maxWidth: "100%",
+                    margin: 16,
                 }}>
-                    <h2 css={{ flex: "1" }}>{title}</h2>
-                    {closable && <div
-                        onClick={() => setOpen(false)}
-                        css={{ fontSize: 32, cursor: "pointer", display: "inline-flex" }}
-                    ><FiX /></div>}
+                    <div css={{
+                        padding: "12px 16px",
+                        borderBottom: "1px solid var(--grey80)",
+                        display: "flex",
+                        alignItems: "center",
+                    }}>
+                        <h2 css={{ flex: 1 }}>{title}</h2>
+                        {closable && <ProtoButton
+                            tabIndex={0}
+                            onClick={() => setOpen(false)}
+                            css={{
+                                fontSize: 32,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                borderRadius: 4,
+                                ...focusStyle({}),
+                            }}
+                        ><FiX /></ProtoButton>}
+                    </div>
+                    <div css={{ padding: 16 }}>{children}</div>
                 </div>
-                <div css={{ padding: 16 }}>{children}</div>
-            </div>
+            </FocusTrap>
         </div>,
         document.body,
     );
