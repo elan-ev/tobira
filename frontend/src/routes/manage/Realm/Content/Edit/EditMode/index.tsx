@@ -149,9 +149,10 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
     const { formState: { isDirty } } = useFormContext();
 
     return <div css={{
-        marginTop: 24,
+        marginTop: 12,
         display: "flex",
-        justifyContent: "space-between",
+        justifyContent: "flex-end",
+        gap: 12,
     }}>
         <Button
             kind="danger"

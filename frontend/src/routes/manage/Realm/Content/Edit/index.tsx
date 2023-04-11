@@ -50,7 +50,7 @@ export const EditButtons: React.FC<Props> = ({
         onError?.(error, "manage.realm.content.moving-failed");
     };
 
-    return <ButtonGroup css={{ marginTop: -8 }}>
+    return <ButtonGroup>
         <MoveButtons {...{ realm, index, onCommit, onCompleted }} onError={onMoveError} />
         <WithTooltip tooltip={t("manage.realm.content.edit")}>
             <Button aria-label={t("manage.realm.content.edit")} onClick={onEdit}>
@@ -75,7 +75,8 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
         borderTopLeftRadius: 0,
         borderTopRightRadius: 0,
         borderBottomRightRadius: 0,
-        marginRight: -8,
+        marginTop: -12,
+        marginRight: -12,
     }} {...props} />
 );
 

@@ -65,7 +65,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
         <FloatingContainer
             ref={floatingRef}
             trigger="click"
-            placement="top"
+            placement="right"
             borderRadius={8}
             ariaRole="menu"
             distance={6}
@@ -73,7 +73,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
         >
             <FloatingTrigger>
                 <div>
-                    <WithTooltip tooltip={t("manage.realm.content.add")} placement="bottom">
+                    <WithTooltip tooltip={t("manage.realm.content.add")} placement="top">
                         <ProtoButton aria-label={t("manage.realm.content.add")} css={{
                             width: BUTTON_SIZE,
                             height: BUTTON_SIZE,
@@ -100,6 +100,8 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                 borderWidth={0}
                 shadowBlur={12}
                 shadowColor="rgba(0, 0, 0, 30%)"
+                customArrowPosition={12.5}
+                alignWithTrigger="top"
                 css={{
                     backgroundColor: "white",
                     width: 200,

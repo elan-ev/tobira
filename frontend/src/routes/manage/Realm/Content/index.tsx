@@ -143,8 +143,8 @@ const ManageContent: React.FC<Props> = ({ data }) => {
             } />
 
             <LinkButton to={path}>
-                <FiEye />
                 {t("manage.realm.content.view-page")}
+                <FiEye />
             </LinkButton>
 
             <div css={{

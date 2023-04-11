@@ -108,7 +108,7 @@ export const EditBlock: React.FC<Props> = ({
             alignSelf: "stretch",
             border: "1px solid var(--grey80)",
             borderRadius: 4,
-            padding: 8,
+            padding: 12,
             ...editMode && {
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 20%)",
             },

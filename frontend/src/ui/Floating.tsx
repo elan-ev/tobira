@@ -21,6 +21,7 @@ import { mergeRefs } from "react-merge-refs";
 import { Theme } from "react-select";
 
 import { bug, unreachable } from "../util/err";
+import { match } from "../util";
 
 
 // ===== The floating context ====================================================================
@@ -264,11 +265,27 @@ type FloatingProps = React.PropsWithChildren<{
     className?: string;
 
     /**
+     * Whether or not this floating element should be aligned with the top,
+     * bottom, left or right of its `<FloatingTrigger>`.
+     * This must conform to the placement of the `<FloatingContainer>` parent,
+     * i.e. only use "top" or "bottom" here if that placement is "right" or "left"
+     * and vice versa.
+     * The arrow tip position will likely also need to be adjusted.
+     */
+    alignWithTrigger?: Side;
+
+    /**
      * Whether or not the arrow tip is hidden, which
      * might be useful for larger non-tooltip menus.
      * Default: false.
      */
     hideArrowTip?: boolean;
+
+    /**
+     * Use this if the arrow tip needs a fixed, non-centered position
+     * on the `<FloatingTrigger>` facing side of this floating element.
+     */
+    customArrowPosition?: number;
 
     // TODO: border width?
 }>;
@@ -290,6 +307,8 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
         padding = [4, 8],
         className,
         hideArrowTip = false,
+        customArrowPosition,
+        alignWithTrigger,
     }, ref) => {
         const { open, calculated, refs, settings, ...context } = useFloatingContext();
 
@@ -300,6 +319,12 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
 
         const pos = sideOfPlacement(calculated.placement);
         const arrowSideLen = Math.SQRT2 * settings.arrowSize;
+        const alignment = (pos === "top" || pos === "bottom") ? "horizontal" : "vertical";
+        // Only allow custom alignments if they conform with the `FloatingTrigger` position
+        const allowCustomAlignment = (alignWithTrigger === "right" || alignWithTrigger === "left")
+            && alignment === "horizontal"
+            || (alignWithTrigger === "top" || alignWithTrigger === "bottom")
+            && alignment === "vertical";
 
         const mergedRefs = mergeRefs([ref, refs.floating]);
         return (
@@ -315,6 +340,13 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
                 ...calculated.x != null && calculated.y != null
                     ? { left: calculated.x, top: calculated.y }
                     : { [invSide(pos)]: "100%" },
+                // Overwrite calculated top position if allowed and necessary
+                ...allowCustomAlignment && match(alignWithTrigger, {
+                    "left": () => ({ left: 0 }),
+                    "right": () => ({ right: 0, left: "auto" }),
+                    "top": () => ({ top: 0 }),
+                    "bottom": () => ({ bottom: 0, top: "auto" } as Record<string, unknown>),
+                }),
                 width: "max-content",
                 maxWidth: `calc(100vw - ${2 * settings.viewPortMargin}px)`,
                 zIndex: 10000,
@@ -360,6 +392,13 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
                         left: calculated.arrow?.x,
                         top: calculated.arrow?.y,
                         [pos]: -arrowSideLen / 2,
+                        // Overwrite calculated top or left positioning if necessary
+                        ...customArrowPosition && match(alignment, {
+                            "horizontal": () => ({ left: customArrowPosition }),
+                            "vertical": () => ({
+                                top: customArrowPosition,
+                            } as Record<string, number>),
+                        }),
                         height: arrowSideLen,
                         width: arrowSideLen,
                         transform: "rotate(45deg)",
