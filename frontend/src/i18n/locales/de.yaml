@@ -379,6 +379,7 @@ manage:
         button: Diese Seite und <strong>{{numSubPages}}</strong> Unterseiten löschen
         button-single: Seite löschen
         cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
+        confirm: Seite löschen?
         failed: Löschung fehlgeschlagen.
         warning: >
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
@@ -401,6 +402,7 @@ manage:
       move-up: Block nach oben verschieben
       edit: Block bearbeiten
       remove: Block entfernen
+      confirm: Block entfernen?
 
       cannot-remove-block: Block nicht entfernbar
       cannot-remove-name-source-block: >
@@ -441,6 +443,7 @@ manage:
 
       save: Speichern
       cancel: Verwerfen
+      confirm-cancel: Änderungen verwerfen?
 
       cancel-warning: Ihre Änderungen wurden noch nicht gespeichert!
 

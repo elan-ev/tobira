@@ -175,6 +175,7 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
             {t("manage.realm.content.save")}
         </Button>
         <ConfirmationModal
+            title={t("manage.realm.content.confirm-cancel")}
             buttonContent={t("manage.realm.content.cancel")}
             onSubmit={onCancel}
             ref={modalRef}

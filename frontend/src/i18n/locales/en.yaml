@@ -368,6 +368,7 @@ manage:
         button: Delete this page and <strong>{{numSubPages}}</strong> sub-pages
         button-single: Delete page
         cannot-be-undone: This action <strong>cannot</strong> be undone!
+        confirm: Delete page?
         failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
@@ -390,6 +391,7 @@ manage:
       move-up: Move block up
       edit: Edit block
       remove: Remove block
+      confirm: Remove block?
 
       cannot-remove-block: Cannot remove block
       cannot-remove-name-source-block: >
@@ -430,6 +432,7 @@ manage:
 
       save: Save
       cancel: Discard
+      confirm-cancel: Discard changes?
 
       cancel-warning: Your changes have not yet been saved!
 
