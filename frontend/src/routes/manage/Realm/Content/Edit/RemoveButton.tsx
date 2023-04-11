@@ -87,7 +87,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
             {t("manage.realm.content.cannot-remove-name-source-block")}
         </Modal>
         <ConfirmationModal
-            title={t("manage.realm.content.confirm")}
+            title={t("manage.realm.content.confirm-removal")}
             buttonContent={t("manage.realm.content.remove")}
             onSubmit={remove}
             ref={modalRef}

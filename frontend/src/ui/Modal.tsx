@@ -36,6 +36,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
     closable = true,
     children,
 }, ref) => {
+    const { t } = useTranslation();
     const [isOpen, setOpen] = useState(false);
 
     useImperativeHandle(ref, () => ({
@@ -77,8 +78,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                 <div css={{
                     backgroundColor: "white",
                     borderRadius: 4,
-                    width: 400,
-                    maxWidth: "100%",
+                    minWidth: "clamp(300px, 90%, 400px)",
                     margin: 16,
                 }}>
                     <div css={{
@@ -89,6 +89,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                     }}>
                         <h2 css={{ flex: 1 }}>{title}</h2>
                         {closable && <ProtoButton
+                            aria-label={t("close")}
                             tabIndex={0}
                             onClick={() => setOpen(false)}
                             css={{
@@ -163,10 +164,24 @@ export const ConfirmationModal
 
             return <Modal title={title} closable={!inFlight} ref={modalRef}>
                 {children}
-                <form onSubmit={onSubmitWrapper} css={{ marginTop: 32, textAlign: "center" }}>
-                    <Button disabled={inFlight} type="submit" kind="danger">
-                        {buttonContent}
-                    </Button>
+                <form onSubmit={onSubmitWrapper} css={{ marginTop: 32 }}>
+                    <div css={{
+                        display: "flex",
+                        gap: 12,
+                        justifyContent: "center",
+                        flexWrap: "wrap",
+                    }}>
+                        <Button disabled={inFlight} onClick={
+                            () => currentRef(modalRef).close?.()
+                        }>
+                            {t("cancel")}
+                        </Button>
+                        <Button disabled={inFlight} type="submit" kind="danger" css={{
+                            whiteSpace: "normal",
+                        }}>
+                            {buttonContent}
+                        </Button>
+                    </div>
                     {inFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
                 </form>
                 {boxError(error)}
