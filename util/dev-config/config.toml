@@ -18,7 +18,7 @@ tls_mode = "off"
 key = "tobira"
 
 [log]
-level = "trace"
+level = "debug"
 
 [auth]
 mode = "login-proxy"

@@ -166,6 +166,30 @@ pub(crate) fn http_client() -> hyper::Client<HttpsConnector<HttpConnector>, hype
     hyper::Client::builder().build(https)
 }
 
+/// This just adds a stable version of `Result::inspect` and `Option::inspect`.
+/// This can be removed once the std methods were stabilized.
+pub(crate) trait InspectExt<T> {
+    fn inspect_(self, f: impl FnOnce(&T)) -> Self;
+}
+
+impl<T> InspectExt<T> for Option<T> {
+    fn inspect_(self, f: impl FnOnce(&T)) -> Self {
+        self.map(|t| {
+            f(&t);
+            t
+        })
+    }
+}
+
+impl<T, E> InspectExt<T> for Result<T, E> {
+    fn inspect_(self, f: impl FnOnce(&T)) -> Self {
+        self.map(|t| {
+            f(&t);
+            t
+        })
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
