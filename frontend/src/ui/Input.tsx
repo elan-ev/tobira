@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
+import React, { useId, useState } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { focusStyle } from ".";
 import { Button } from "./Button";
@@ -68,24 +67,23 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
 type CopyableInputProps = JSX.IntrinsicElements["div"] & {
     value: string;
-    context: "direct-link" | "embed-code" | "oc-id";
+    label: string;
     multiline?: boolean;
 };
 
 export const CopyableInput: React.FC<CopyableInputProps> = ({
     value,
-    context,
+    label,
     multiline = false,
     ...rest
 }) => {
-    const { t } = useTranslation();
-
     const [wasCopied, setWasCopied] = useState(false);
     const copy = async () => {
         await navigator.clipboard.writeText(value);
         setWasCopied(true);
     };
 
+    const copyableInputId = useId();
     const buttonSize = 34;
     const sharedStyle = {
         ...style(false),
@@ -95,8 +93,8 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
     };
     const sharedProps = {
         disabled: true,
-        value: value,
-        "aria-labelledby": context,
+        value,
+        "aria-labelledby": label,
     };
     const inner = multiline
         ? <textarea {...sharedProps} css={{
@@ -107,15 +105,15 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
         : <input {...sharedProps} css={sharedStyle} />;
 
     return (
-        <div id={context} css={{
+        <div id={copyableInputId} css={{
             position: "relative",
             height: multiline ? 95 : 34,
             maxWidth: "100%",
         }} {...rest}>
             <div css={{ position: "absolute", top: 0, right: 0 }}>
-                <WithTooltip tooltip={t(`copy-${context}-to-clipboard`)}>
+                <WithTooltip tooltip={label}>
                     <Button
-                        aria-label={t(`copy-${context}-to-clipboard`)}
+                        aria-label={label}
                         kind="happy"
                         onClick={copy}
                         css={{

@@ -8,9 +8,6 @@ home: Startseite
 navigation: Navigation
 rename: Umbenennen
 this-field-is-required: Dieses Feld ist erforderlich.
-copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
-copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
-copy-oc-id-to-clipboard: Opencast-ID in Zwischenablage kopieren
 version-information: Version
 
 general:
@@ -142,6 +139,7 @@ video:
   embed:
     button: Einbetten
     title: Video einbetten
+    copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
   caption: Untertitel
   manage: Verwalten
   start: Anfang
@@ -297,6 +295,7 @@ manage:
     details:
       title: Videodetails
       share-direct-link: Via Direktlink teilen
+      copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
       open-in-editor: Im Videoeditor öffnen
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
@@ -310,6 +309,7 @@ manage:
       tracks: Video/Audio-Spuren
       unknown-mimetype: Unbekannter MIME-Type
       opencast-id: Opencast-ID
+      copy-oc-id-to-clipboard: Opencast-ID in Zwischenablage kopieren
       further-info: Weitere Informationen
       synced: Synchronisiert?
       part-of: 'Teil von:'

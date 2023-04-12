@@ -8,9 +8,6 @@ home: Home
 navigation: Navigation
 rename: Rename
 this-field-is-required: This field is required.
-copy-direct-link-to-clipboard: Copy video link to clipboard
-copy-embed-code-to-clipboard: Copy embed code to clipboard
-copy-oc-id-to-clipboard: Copy Opencast-ID to clipboard
 version-information: Version
 
 general:
@@ -139,6 +136,7 @@ video:
   embed:
     button: Embed
     title: Embed video
+    copy-embed-code-to-clipboard: Copy embed code to clipboard
   caption: Caption
   manage: Manage
   start: Start
@@ -290,6 +288,7 @@ manage:
     details:
       title: Video details
       share-direct-link: Share via direct link
+      copy-direct-link-to-clipboard: Copy video link to clipboard
       open-in-editor: Open in video editor
       referencing-pages: Referencing pages
       referencing-pages-explanation: 'This video is referenced on the following pages:'
@@ -303,6 +302,7 @@ manage:
       tracks: Video/audio tracks
       unknown-mimetype: Unknown MIME type
       opencast-id: Opencast ID
+      copy-oc-id-to-clipboard: Copy Opencast-ID to clipboard
       further-info: Further information
       synced: Synchronized?
       part-of: 'Part of:'
