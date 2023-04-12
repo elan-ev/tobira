@@ -58,6 +58,7 @@ const OpencastId: React.FC<Props> = ({ event }) => {
     return <section>
         <h2>{t("manage.my-videos.technical-details.opencast-id")}</h2>
         <CopyableInput
+            label={t("manage.my-videos.technical-details.copy-oc-id-to-clipboard")}
             value={event.opencastId}
             css={{ width: 400, fontFamily: "monospace", fontSize: 14 }}
         />

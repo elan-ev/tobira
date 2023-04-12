@@ -390,6 +390,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         "main": () => <>
             <Heading>{t("video.share.share-video")}</Heading>
             <CopyableInput
+                label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                 css={{ fontSize: 14, margin: "16px 0", width: 400 }}
                 // TODO
                 value={window.location.href}
@@ -438,6 +439,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     {t("video.share.direct-link-info")}
                 </Card>
                 <CopyableInput
+                    label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                     css={{ fontSize: 14, marginTop: 16, width: 400 }}
                     value={target.toString()}
                 />
@@ -465,6 +467,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             return <>
                 <Heading>{t("video.share.embed")}</Heading>
                 <CopyableInput
+                    label={t("video.embed.copy-embed-code-to-clipboard")}
                     value={embedCode}
                     multiline
                     css={{ fontSize: 14, width: 400 }}
