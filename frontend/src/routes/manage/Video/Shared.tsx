@@ -160,7 +160,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
 
     const header = (
         <div css={{ display: "flex", flexDirection: "column" }}>
-            <Link to={videoLink} css={{
+            <Link aria-label={t("video.video-page", { video: event.title })} to={videoLink} css={{
                 display: "block",
                 position: "relative",
                 width: "100%",
