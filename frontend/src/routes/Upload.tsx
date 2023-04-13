@@ -26,6 +26,8 @@ import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
 import { SeriesSelector } from "../ui/SearchableSelect";
 import { WithTooltip } from "../ui/Floating";
+import { Breadcrumbs } from "../ui/Breadcrumbs";
+import { ManageNav } from "./manage";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -38,7 +40,7 @@ export const UploadRoute = makeRoute(url => {
         render: () => <RootLoader
             {...{ query, queryRef }}
             noindex
-            nav={() => []}
+            nav={() => <ManageNav active={UPLOAD_PATH} />}
             render={() => <Upload />}
         />,
         dispose: () => queryRef.dispose(),
@@ -68,6 +70,10 @@ const Upload: React.FC = () => {
             display: "flex",
             flexDirection: "column",
         }}>
+            <Breadcrumbs
+                path={[{ label: t("manage.management"), link: "/~manage" }]}
+                tail={t("upload.title")}
+            />
             <PageTitle title={t("upload.title")} />
             <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
             <UploadMain />
@@ -374,7 +380,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
             css={{
                 width: "100%",
                 height: "100%",
-                border: "3px dashed",
+                border: "2.5px dashed",
                 borderRadius: 10,
                 display: "flex",
                 padding: 8,

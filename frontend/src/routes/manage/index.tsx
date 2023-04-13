@@ -33,7 +33,7 @@ export const ManageRoute = makeRoute(url => {
         render: () => <RootLoader
             {...{ query, queryRef }}
             noindex
-            nav={() => <ManageNav key={1} active={PATH} />}
+            nav={() => <ManageNav active={PATH} />}
             render={() => <Manage />}
         />,
         dispose: () => queryRef.dispose(),
@@ -123,7 +123,7 @@ const gridTile = css({
 });
 
 type ManageNavProps = {
-    active?: "/~manage" | "/~manage/videos";
+    active?: "/~manage" | "/~manage/videos" | "/~upload";
 };
 
 export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
@@ -133,6 +133,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
         ["/~manage", t("manage.nav.dashboard"), <HiOutlineTemplate />],
         ["/~manage/videos", t("manage.nav.my-videos"), <FiFilm />],
+        ["/~upload", t("upload.title"), <FiUpload />],
     ];
     /* eslint-enable react/jsx-key */
 

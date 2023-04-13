@@ -40,7 +40,7 @@ export const ManageVideosRoute = makeRoute(url => {
         render: () => <RootLoader
             {...{ query, queryRef }}
             noindex
-            nav={() => <ManageNav key={1} active={PATH} />}
+            nav={() => <ManageNav active={PATH} />}
             render={data => !data.currentUser
                 ? <NotAuthorized />
                 : <ManageVideos vars={vars} connection={data.currentUser.myVideos} />
@@ -99,7 +99,7 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
     } else {
         inner = <>
             <PageNavigation {...{ vars, connection }} />
-            <div css={{ flex: "1 0 0" }}>
+            <div css={{ flex: "1 0 0", margin: "16px 0" }}>
                 <EventTable events={connection.items} vars={vars} />
             </div>
             <PageNavigation {...{ vars, connection }} />
@@ -113,13 +113,12 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
             display: "flex",
             flexDirection: "column",
             height: "100%",
-            gap: 16,
         }}>
             <Breadcrumbs
                 path={[{ label: t("manage.management"), link: "/~manage" }]}
                 tail={title}
             />
-            <PageTitle title={title} />
+            <PageTitle title={title} css={{ marginBottom: 32 }}/>
             {inner}
         </div>
     );
