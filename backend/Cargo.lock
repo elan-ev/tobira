@@ -2401,7 +2401,7 @@ version = "1.7.0"
 dependencies = [
  "anyhow",
  "atty",
- "base64 0.13.1",
+ "base64 0.21.0",
  "bincode",
  "bstr",
  "built",

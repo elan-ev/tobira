@@ -1,5 +1,6 @@
 use std::fmt;
 
+use base64::Engine;
 use bstr::ByteSlice;
 use cookie::Cookie;
 use hyper::{HeaderMap, header};
@@ -47,7 +48,7 @@ impl SessionId {
                 }
 
                 let mut bytes = [0; LENGTH];
-                base64::decode_config_slice(v, base64::URL_SAFE, &mut bytes).ok()?;
+                base64::engine::general_purpose::URL_SAFE.decode_slice(v, &mut bytes).ok()?;
                 Some(Self(Secret::new(bytes)))
             })
     }

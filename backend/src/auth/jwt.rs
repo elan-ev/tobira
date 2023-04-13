@@ -103,18 +103,23 @@ impl JwtContext {
 
         let mut jwt = String::new();
 
+        let encode = |data: &[u8], buf: &mut String| {
+            use base64::Engine;
+            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode_string(data, buf);
+        };
+
         // Encode header and payload
         let header_json = serde_json::to_string(&header).expect("failed to serialize JWT header");
         let payload_json = serde_json::to_string(payload).expect("failed to serialize JWT payload");
-        base64::encode_config_buf(&header_json, base64::URL_SAFE_NO_PAD, &mut jwt);
+        encode(header_json.as_bytes(), &mut jwt);
         jwt.push('.');
-        base64::encode_config_buf(&payload_json, base64::URL_SAFE_NO_PAD, &mut jwt);
+        encode(payload_json.as_bytes(), &mut jwt);
 
         // Sign and and append signature
         let mut signature = Vec::new();
         self.auth.signer.sign(&self.rng, jwt.as_bytes(), &mut signature);
         jwt.push('.');
-        base64::encode_config_buf(&signature, base64::URL_SAFE_NO_PAD, &mut jwt);
+        encode(&signature, &mut jwt);
 
         jwt
     }

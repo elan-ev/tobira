@@ -1,5 +1,6 @@
 use std::time::{Duration, Instant};
 
+use base64::Engine;
 use chrono::{DateTime, Utc, TimeZone};
 use hyper::{
     Body, Request, Response, StatusCode,
@@ -40,7 +41,8 @@ impl OcClient {
             config.sync.user,
             config.sync.password.expose_secret(),
         );
-        let auth_header = format!("Basic {}", base64::encode(credentials));
+        let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
+        let auth_header = format!("Basic {}", encoded_credentials);
 
         Self {
             http_client,

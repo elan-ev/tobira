@@ -1,5 +1,6 @@
 use std::{borrow::Cow, time::Duration, collections::HashSet};
 
+use base64::Engine;
 use deadpool_postgres::Client;
 use hyper::HeaderMap;
 use once_cell::sync::Lazy;
@@ -303,11 +304,11 @@ impl AuthToken {
 
 // Our base64 decoding with the URL safe character set.
 fn base64decode(input: impl AsRef<[u8]>) -> Result<Vec<u8>, base64::DecodeError> {
-    base64::decode_config(input, base64::URL_SAFE)
+    base64::engine::general_purpose::URL_SAFE.decode(input)
 }
 
 fn base64encode(input: impl AsRef<[u8]>) -> String {
-    base64::encode_config(input, base64::URL_SAFE)
+    base64::engine::general_purpose::URL_SAFE.encode(input)
 }
 
 pub(crate) trait HasRoles {
