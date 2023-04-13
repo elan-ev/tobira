@@ -222,6 +222,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             </Button>
         </div>
         <ConfirmationModal
+            title={t("manage.realm.danger-zone.delete.confirm-removal")}
             {...{ buttonContent }}
             onSubmit={remove}
             ref={modalRef}
