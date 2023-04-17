@@ -10,6 +10,7 @@ import { AboutQuery } from "./__generated__/AboutQuery.graphql";
 import { ABOUT_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { PageTitle } from "../layout/header/ui";
+import { Breadcrumbs } from "../ui/Breadcrumbs";
 
 
 export const AboutRoute = makeRoute(url => {
@@ -41,7 +42,8 @@ const About: React.FC = () => {
     const { t } = useTranslation();
     const version = CONFIG.version;
 
-    return (
+    return <>
+        <Breadcrumbs path={[]} tail={t("about-tobira.title")}/>
         <div css={{ margin: "0 auto", maxWidth: 600 }}>
             <PageTitle title={t("about-tobira.title")} />
             <p css={{ margin: "16px 0" }}>
@@ -63,5 +65,5 @@ const About: React.FC = () => {
             <br />
             Built: {version.buildDateUtc}
         </div>
-    );
+    </>;
 };

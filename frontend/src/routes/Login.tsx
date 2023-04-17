@@ -21,6 +21,8 @@ import { LOGIN_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { Header } from "../layout/header";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
+import { Breadcrumbs } from "../ui/Breadcrumbs";
+import { OUTER_CONTAINER_MARGIN } from "../layout";
 
 
 export const REDIRECT_STORAGE_KEY = "tobira-redirect-after-login";
@@ -68,25 +70,32 @@ const Login: React.FC<Props> = ({ queryRef }) => {
         : <Outer>
             <Header loginMode />
             <main css={{
-                margin: "0 auto",
                 padding: 16,
-                maxWidth: "100%",
                 flexGrow: 1,
-                display: "flex",
-                flexDirection: "column",
+                margin: OUTER_CONTAINER_MARGIN,
             }}>
-                <PageTitle title={t("login-page.heading")} css={{
-                    fontSize: 36,
-                    margin: "0 auto",
-                    marginTop: 44,
-                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                        fontSize: 30,
-                        marginTop: 20,
-                    },
-                }}/>
-                <LoginBox />
-                <div css={{ marginTop: 12, fontSize: 14, lineHeight: 1 }}>
-                    <BackButton />
+                <div css={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                }}>
+                    <div css={{ alignSelf: "flex-start" }}>
+                        <Breadcrumbs path={[]} tail={t("login-page.heading")} />
+                    </div>
+                    <div css={{ maxWidth: "100%" }}>
+                        <PageTitle title={t("login-page.heading")} css={{
+                            fontSize: 36,
+                            marginTop: 3,
+                            textAlign: "center",
+                            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                                fontSize: 30,
+                            },
+                        }}/>
+                        <LoginBox />
+                        <div css={{ marginTop: 12, fontSize: 14, lineHeight: 1 }}>
+                            <BackButton />
+                        </div>
+                    </div>
                 </div>
             </main>
             <Footer />

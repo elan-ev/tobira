@@ -9,6 +9,7 @@ import { NotFoundQuery } from "./__generated__/NotFoundQuery.graphql";
 import { FiFrown } from "react-icons/fi";
 import { PageTitle } from "../layout/header/ui";
 import { CenteredContent } from "../ui";
+import { Breadcrumbs } from "../ui/Breadcrumbs";
 
 
 export const NotFoundRoute = {
@@ -50,6 +51,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
     useNoindexTag();
 
     return <>
+        <Breadcrumbs path={[]} tail={<i>{title}</i>} />
         <FiFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
         <PageTitle
             title={title}

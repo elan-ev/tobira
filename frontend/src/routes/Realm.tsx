@@ -239,7 +239,8 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
         });
     };
 
-    return (
+    return <>
+        <Breadcrumbs path={[]} tail={<i>{t("realm.user-realm.create.heading")}</i>} />
         <div css={{
             width: 500,
             maxWidth: "100%",
@@ -271,7 +272,7 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
             {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
             {boxError(error)}
         </div>
-    );
+    </>;
 };
 
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {

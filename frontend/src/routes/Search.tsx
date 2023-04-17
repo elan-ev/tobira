@@ -13,7 +13,7 @@ import { unreachable } from "../util/err";
 import { SmallDescription } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
-import { BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
+import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss } from "../ui";
 
@@ -93,10 +93,13 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
         return unreachable("unknown search outcome");
     }
 
-    return <div css={{ maxWidth: 950, margin: "0 auto" }}>
-        <PageTitle title={t("search.title", { query: q })} />
-        {body}
-    </div>;
+    return <>
+        <Breadcrumbs path={[]} tail={t("search.title", { query: q })} />
+        <div css={{ maxWidth: 950, margin: "0 auto" }}>
+            <PageTitle title={t("search.title", { query: q })} />
+            {body}
+        </div>
+    </>;
 };
 
 const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
