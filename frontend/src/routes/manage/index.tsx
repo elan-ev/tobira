@@ -64,7 +64,7 @@ const Manage: React.FC = () => {
             gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
             gap: 24,
         }}>
-            {user.canUpload && <Link to="/~upload" css={gridTile}>
+            {user.canUpload && <Link to="/~manage/upload" css={gridTile}>
                 <FiUpload />
                 <h2>{t("upload.title")}</h2>
                 {t("manage.dashboard.upload-tile")}
@@ -123,7 +123,7 @@ const gridTile = css({
 });
 
 type ManageNavProps = {
-    active?: "/~manage" | "/~manage/videos" | "/~upload";
+    active?: "/~manage" | "/~manage/videos" | "/~manage/upload";
 };
 
 export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
@@ -133,7 +133,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
         ["/~manage", t("manage.nav.dashboard"), <HiOutlineTemplate />],
         ["/~manage/videos", t("manage.nav.my-videos"), <FiFilm />],
-        ["/~upload", t("upload.title"), <FiUpload />],
+        ["/~manage/upload", t("upload.title"), <FiUpload />],
     ];
     /* eslint-enable react/jsx-key */
 

@@ -538,7 +538,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
             <div>
                 <LinkButton
                     kind="happy"
-                    to="/~upload"
+                    to="/~manage/upload"
                 >
                     {t("upload.reselect")}
                 </LinkButton>
