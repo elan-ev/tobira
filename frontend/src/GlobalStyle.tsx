@@ -81,7 +81,7 @@ const GLOBAL_STYLE = css({
     h1: {
         fontSize: 30,
         lineHeight: 1.3,
-        marginBottom: 16,
+        marginBottom: 20,
         [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
             fontSize: 26,
         },
