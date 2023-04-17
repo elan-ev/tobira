@@ -49,7 +49,9 @@ pub(crate) struct Cursor(String);
 
 impl Cursor {
     pub(crate) fn new(data: impl Serialize) -> Self {
-        let mut b64writer = base64::write::EncoderStringWriter::new(base64::URL_SAFE_NO_PAD);
+        let mut b64writer = base64::write::EncoderStringWriter::new(
+            &base64::engine::general_purpose::URL_SAFE_NO_PAD,
+        );
         bincode::DefaultOptions::new().serialize_into(&mut b64writer, &data)
             .unwrap_or_else(|e| unreachable!("bincode serialize failed without size limit: {}", e));
         Self(b64writer.into_inner())
@@ -60,7 +62,10 @@ impl Cursor {
         for<'de> T: Deserialize<'de>,
     {
         let mut bytes = self.0.as_bytes();
-        let b64reader = base64::read::DecoderReader::new(&mut bytes, base64::URL_SAFE_NO_PAD);
+        let b64reader = base64::read::DecoderReader::new(
+            &mut bytes,
+            &base64::engine::general_purpose::URL_SAFE_NO_PAD,
+        );
         bincode::DefaultOptions::new()
             .deserialize_from(b64reader)
             .map_err(|e| err::invalid_input!("given cursor is invalid: {}", e))

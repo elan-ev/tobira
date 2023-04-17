@@ -3,9 +3,8 @@
 use deadpool_postgres::{Config as PoolConfig, Pool, Runtime};
 use secrecy::{ExposeSecret, Secret};
 use rustls::{
-    Error,
+    Error, DigitallySignedStruct,
     client::{ServerCertVerifier, ServerCertVerified, HandshakeSignatureValid},
-    internal::msgs::handshake::DigitallySignedStruct,
 };
 use std::{
     fs,

@@ -1,3 +1,4 @@
+use base64::Engine;
 use hyper::{Body, StatusCode};
 use serde::Deserialize;
 
@@ -171,7 +172,9 @@ async fn check_opencast_login(
     // Send request. We use basic auth here: our configuration checks already
     // assert that we use HTTPS or Opencast is running on the same machine
     // (or the admin has explicitly opted out of this check).
-    let auth_header = format!("Basic {}", base64::encode(&format!("{userid}:{password}")));
+    let credentials = base64::engine::general_purpose::STANDARD
+        .encode(&format!("{userid}:{password}"));
+    let auth_header = format!("Basic {}", credentials);
     let req = Request::builder()
         .uri(config.sync_node().clone().with_path_and_query("/info/me.json"))
         .header(hyper::header::AUTHORIZATION, auth_header)
