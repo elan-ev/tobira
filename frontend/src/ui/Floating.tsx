@@ -21,7 +21,6 @@ import { mergeRefs } from "react-merge-refs";
 import { Theme } from "react-select";
 
 import { bug, unreachable } from "../util/err";
-import { match } from "../util";
 
 
 // ===== The floating context ====================================================================
@@ -30,6 +29,7 @@ import { match } from "../util";
 
 type Context = {
     open: boolean;
+    setOpen: null | ((v: boolean) => void);
     settings: Required<Pick<
         FloatingContainerProps,
         "arrowSize" | "distance" | "borderRadius" | "viewPortMargin"
@@ -176,6 +176,7 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
         const hover = useHover(floatContext, {
             enabled: "trigger" in rest && rest.trigger === "hover",
             handleClose: safePolygon(),
+            move: false,
         });
         const focus = useFocus(floatContext, {
             enabled: "trigger" in rest && rest.trigger === "hover",
@@ -183,7 +184,9 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
         const click = useClick(floatContext, {
             enabled: "trigger" in rest && rest.trigger === "click",
         });
-        const dismiss = useDismiss(floatContext);
+        const dismiss = useDismiss(floatContext, {
+            referencePress: ariaRole === "tooltip",
+        });
         const role = useRole(floatContext, { role: ariaRole });
         const { getReferenceProps, getFloatingProps }
             = useInteractions([hover, focus, click, dismiss, role]);
@@ -192,6 +195,7 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
         // Setup context
         const context: Context = {
             open: actualOpen,
+            setOpen: ariaRole === "tooltip" ? setOpen : null,
             settings: { arrowSize, distance, borderRadius, viewPortMargin },
             calculated: { x, y, placement, arrow: middlewareData.arrow },
             refs: { reference, floating, arrowRef },
@@ -227,7 +231,11 @@ export const FloatingTrigger: React.FC<FloatingTriggerProps> = ({ children }) =>
 
     return React.cloneElement(children, {
         "data-floating-state": context.open ? "open" : "closed",
-        ...context.getReferenceProps({ ref: context.refs.reference, ...children.props }),
+        ...context.getReferenceProps({
+            ref: context.refs.reference,
+            onClick: () => context.setOpen?.(false),
+            ...children.props,
+        }),
     });
 };
 
@@ -265,27 +273,11 @@ type FloatingProps = React.PropsWithChildren<{
     className?: string;
 
     /**
-     * Whether or not this floating element should be aligned with the top,
-     * bottom, left or right of its `<FloatingTrigger>`.
-     * This must conform to the placement of the `<FloatingContainer>` parent,
-     * i.e. only use "top" or "bottom" here if that placement is "right" or "left"
-     * and vice versa.
-     * The arrow tip position will likely also need to be adjusted.
-     */
-    alignWithTrigger?: Side;
-
-    /**
      * Whether or not the arrow tip is hidden, which
      * might be useful for larger non-tooltip menus.
      * Default: false.
      */
     hideArrowTip?: boolean;
-
-    /**
-     * Use this if the arrow tip needs a fixed, non-centered position
-     * on the `<FloatingTrigger>` facing side of this floating element.
-     */
-    customArrowPosition?: number;
 
     // TODO: border width?
 }>;
@@ -307,8 +299,6 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
         padding = [4, 8],
         className,
         hideArrowTip = false,
-        customArrowPosition,
-        alignWithTrigger,
     }, ref) => {
         const { open, calculated, refs, settings, ...context } = useFloatingContext();
 
@@ -319,12 +309,6 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
 
         const pos = sideOfPlacement(calculated.placement);
         const arrowSideLen = Math.SQRT2 * settings.arrowSize;
-        const alignment = (pos === "top" || pos === "bottom") ? "horizontal" : "vertical";
-        // Only allow custom alignments if they conform with the `FloatingTrigger` position
-        const allowCustomAlignment = (alignWithTrigger === "right" || alignWithTrigger === "left")
-            && alignment === "horizontal"
-            || (alignWithTrigger === "top" || alignWithTrigger === "bottom")
-            && alignment === "vertical";
 
         const mergedRefs = mergeRefs([ref, refs.floating]);
         return (
@@ -340,13 +324,6 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
                 ...calculated.x != null && calculated.y != null
                     ? { left: calculated.x, top: calculated.y }
                     : { [invSide(pos)]: "100%" },
-                // Overwrite calculated top position if allowed and necessary
-                ...allowCustomAlignment && match(alignWithTrigger, {
-                    "left": () => ({ left: 0 }),
-                    "right": () => ({ right: 0, left: "auto" }),
-                    "top": () => ({ top: 0 }),
-                    "bottom": () => ({ bottom: 0, top: "auto" } as Record<string, unknown>),
-                }),
                 width: "max-content",
                 maxWidth: `calc(100vw - ${2 * settings.viewPortMargin}px)`,
                 zIndex: 10000,
@@ -392,13 +369,6 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
                         left: calculated.arrow?.x,
                         top: calculated.arrow?.y,
                         [pos]: -arrowSideLen / 2,
-                        // Overwrite calculated top or left positioning if necessary
-                        ...customArrowPosition && match(alignment, {
-                            "horizontal": () => ({ left: customArrowPosition }),
-                            "vertical": () => ({
-                                top: customArrowPosition,
-                            } as Record<string, number>),
-                        }),
                         height: arrowSideLen,
                         width: arrowSideLen,
                         transform: "rotate(45deg)",
