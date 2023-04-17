@@ -51,7 +51,7 @@ paste = "1"
 pem-rfc7468 = { version = "0.7.0", features = ["std"] }
 percent-encoding = "2.1.0"
 postgres-types = { version = "0.2.2", features = ["derive", "array-impls"] }
-prometheus-client = "0.18.0"
+prometheus-client = "0.20.0"
 rand = "0.8.4"
 regex = "1.7.1"
 reinda = "0.2"

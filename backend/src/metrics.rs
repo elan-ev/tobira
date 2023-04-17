@@ -1,10 +1,10 @@
-use std::time::Duration;
+use std::{time::Duration, fmt::Write};
 
 use deadpool_postgres::Pool;
 use prometheus_client::{
     metrics::{gauge::Gauge, counter::Counter, family::Family, histogram::Histogram},
-    registry::{Registry, Unit},
-    encoding::text::{encode, Encode, SendSyncEncodeMetric},
+    registry::{Registry, Unit, Metric},
+    encoding::{text::encode, EncodeLabelSet, LabelSetEncoder},
 };
 
 
@@ -81,11 +81,11 @@ impl Metrics {
         self.response_times.get_or_create(&category).observe(duration.as_secs_f64());
     }
 
-    pub(crate) async fn gather_and_encode(&self, db_pool: &Pool) -> Vec<u8> {
+    pub(crate) async fn gather_and_encode(&self, db_pool: &Pool) -> String {
         let mut reg = <Registry>::default();
 
-        add_any(&mut reg, HTTP_REQUESTS, Box::new(self.http_requests.clone()));
-        add_any(&mut reg, RESPONSE_TIMES, Box::new(self.response_times.clone()));
+        add_any(&mut reg, HTTP_REQUESTS, self.http_requests.clone());
+        add_any(&mut reg, RESPONSE_TIMES, self.response_times.clone());
 
         // Add build information
         let info = <Family<Vec<(String, String)>, Gauge>>::default();
@@ -94,7 +94,7 @@ impl Metrics {
             ("build_time_utc".into(), crate::version::build_time_utc().into()),
             ("git_commit_hash".into(), crate::version::git_commit_hash().into()),
         ]).set(1);
-        add_any(&mut reg, BUILD_INFO, Box::new(info));
+        add_any(&mut reg, BUILD_INFO, info);
 
         // Information from the DB.
         // TODO: Do all of that in parallel?
@@ -103,17 +103,17 @@ impl Metrics {
             let sql = "select extract(epoch from now() at time zone 'UTC' \
                 - harvested_until)::double precision from sync_status";
             if let Ok(row) = db.query_one(sql, &[]).await {
-                add_gauge(&mut reg, SYNC_LAG, row.get::<_, f64>(0) as u64);
+                add_gauge(&mut reg, SYNC_LAG, row.get::<_, f64>(0) as i64);
             }
 
             // Search index queue length
             if let Ok(row) = db.query_one("select count(*) from search_index_queue", &[]).await {
-                add_gauge(&mut reg, SEARCH_INDEX_QUEUE_LEN, row.get::<_, i64>(0) as u64);
+                add_gauge(&mut reg, SEARCH_INDEX_QUEUE_LEN, row.get::<_, i64>(0));
             }
 
             // Number user sessions
             if let Ok(row) = db.query_one("select count(*) from user_sessions", &[]).await {
-                add_gauge(&mut reg, NUM_USER_SESSIONS, row.get::<_, i64>(0) as u64);
+                add_gauge(&mut reg, NUM_USER_SESSIONS, row.get::<_, i64>(0));
             }
 
             // Number of important entities in DB
@@ -127,33 +127,33 @@ impl Metrics {
             for (kind, table) in items {
                 let query = format!("select count(*) from {table}");
                 if let Ok(row) = db.query_one(&query, &[]).await {
-                    item_count.get_or_create(&kind).set(row.get::<_, i64>(0) as u64);
+                    item_count.get_or_create(&kind).set(row.get::<_, i64>(0));
                 }
             }
-            add_any(&mut reg, NUM_ITEMS, Box::new(item_count));
+            add_any(&mut reg, NUM_ITEMS, item_count);
         }
 
         // Process memory information.
         if let Some(info) = MemInfo::gather() {
             let memory = <Family<MemoryKind, Gauge>>::default();
-            memory.get_or_create(&MemoryKind::Pss).set(info.proportional);
-            memory.get_or_create(&MemoryKind::Uss).set(info.unique);
-            memory.get_or_create(&MemoryKind::Rss).set(info.resident);
-            memory.get_or_create(&MemoryKind::Shared).set(info.shared);
-            add_any(&mut reg, PROCESS_MEMORY, Box::new(memory));
+            memory.get_or_create(&MemoryKind::Pss).set(info.proportional as i64);
+            memory.get_or_create(&MemoryKind::Uss).set(info.unique as i64);
+            memory.get_or_create(&MemoryKind::Rss).set(info.resident as i64);
+            memory.get_or_create(&MemoryKind::Shared).set(info.shared as i64);
+            add_any(&mut reg, PROCESS_MEMORY, memory);
         }
 
 
         // We use `expect` here as I think `encode` only returns `Result`
         // because it takes a generic `Write`. But `Vec`'s `Write` impl never
         // fails.
-        let mut out = Vec::new();
+        let mut out = String::new();
         encode(&mut out, &reg).expect("failed to encode Prometheus metrics");
         out
     }
 }
 
-fn add_any(reg: &mut Registry, metric: MetricDesc, value: Box<dyn SendSyncEncodeMetric>) {
+fn add_any(reg: &mut Registry, metric: MetricDesc, value: impl Metric) {
     let name = format!("tobira_{}", metric.name);
     match metric.unit {
         Some(unit) => reg.register_with_unit(name, metric.help, unit, value),
@@ -161,10 +161,10 @@ fn add_any(reg: &mut Registry, metric: MetricDesc, value: Box<dyn SendSyncEncode
     }
 }
 
-fn add_gauge(reg: &mut Registry, metric: MetricDesc, value: u64) {
+fn add_gauge(reg: &mut Registry, metric: MetricDesc, value: i64) {
     let gauge = <Gauge>::default();
     gauge.set(value);
-    add_any(reg, metric, Box::new(gauge));
+    add_any(reg, metric, gauge);
 }
 
 
@@ -228,20 +228,23 @@ pub(crate) enum HttpReqCategory {
     Other,
 }
 
-impl Encode for HttpReqCategory {
-    fn encode(&self, writer: &mut dyn std::io::Write) -> Result<(), std::io::Error> {
+impl EncodeLabelSet for HttpReqCategory {
+    fn encode(&self, mut encoder: LabelSetEncoder) -> Result<(), std::fmt::Error> {
         let s = match self {
-            HttpReqCategory::GraphQL => b"graphql" as &[_],
-            HttpReqCategory::Login => b"login",
-            HttpReqCategory::Logout => b"logout",
-            HttpReqCategory::Assets => b"assets",
-            HttpReqCategory::Metrics => b"metrics",
-            HttpReqCategory::App => b"app",
-            HttpReqCategory::Other => b"other",
+            HttpReqCategory::GraphQL => "graphql",
+            HttpReqCategory::Login => "login",
+            HttpReqCategory::Logout => "logout",
+            HttpReqCategory::Assets => "assets",
+            HttpReqCategory::Metrics => "metrics",
+            HttpReqCategory::App => "app",
+            HttpReqCategory::Other => "other",
         };
-        writer.write_all(b"category=\"")?;
-        writer.write_all(s)?;
-        writer.write_all(b"\"")?;
+
+        let mut tmp = encoder.encode_label();
+        let mut writer = tmp.encode_label_key()?;
+        writer.write_str("category=\"")?;
+        writer.write_str(s)?;
+        writer.write_str("\"")?;
         Ok(())
     }
 }
@@ -254,17 +257,20 @@ pub(crate) enum ItemKind {
     Blocks,
 }
 
-impl Encode for ItemKind {
-    fn encode(&self, writer: &mut dyn std::io::Write) -> Result<(), std::io::Error> {
+impl EncodeLabelSet for ItemKind {
+    fn encode(&self, mut encoder: LabelSetEncoder) -> Result<(), std::fmt::Error> {
         let s = match self {
-            ItemKind::Realms => b"realms" as &[_],
-            ItemKind::Events => b"events",
-            ItemKind::Series => b"series",
-            ItemKind::Blocks => b"blocks",
+            ItemKind::Realms => "realms",
+            ItemKind::Events => "events",
+            ItemKind::Series => "series",
+            ItemKind::Blocks => "blocks",
         };
-        writer.write_all(b"item=\"")?;
-        writer.write_all(s)?;
-        writer.write_all(b"\"")?;
+
+        let mut tmp = encoder.encode_label();
+        let mut writer = tmp.encode_label_key()?;
+        writer.write_str("item=\"")?;
+        writer.write_str(s)?;
+        writer.write_str("\"")?;
         Ok(())
     }
 }
@@ -277,17 +283,20 @@ pub(crate) enum MemoryKind {
     Shared,
 }
 
-impl Encode for MemoryKind {
-    fn encode(&self, writer: &mut dyn std::io::Write) -> Result<(), std::io::Error> {
+impl EncodeLabelSet for MemoryKind {
+    fn encode(&self, mut encoder: LabelSetEncoder) -> Result<(), std::fmt::Error> {
         let s = match self {
-            MemoryKind::Pss => b"pss" as &[_],
-            MemoryKind::Uss => b"uss",
-            MemoryKind::Rss => b"rss",
-            MemoryKind::Shared => b"shared",
+            MemoryKind::Pss => "pss",
+            MemoryKind::Uss => "uss",
+            MemoryKind::Rss => "rss",
+            MemoryKind::Shared => "shared",
         };
-        writer.write_all(b"kind=\"")?;
-        writer.write_all(s)?;
-        writer.write_all(b"\"")?;
+
+        let mut tmp = encoder.encode_label();
+        let mut writer = tmp.encode_label_key()?;
+        writer.write_str("kind=\"")?;
+        writer.write_str(s)?;
+        writer.write_str("\"")?;
         Ok(())
     }
 }
