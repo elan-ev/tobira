@@ -29,6 +29,7 @@ import { bug, unreachable } from "../util/err";
 
 type Context = {
     open: boolean;
+    setOpen: null | ((v: boolean) => void);
     settings: Required<Pick<
         FloatingContainerProps,
         "arrowSize" | "distance" | "borderRadius" | "viewPortMargin"
@@ -175,6 +176,7 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
         const hover = useHover(floatContext, {
             enabled: "trigger" in rest && rest.trigger === "hover",
             handleClose: safePolygon(),
+            move: false,
         });
         const focus = useFocus(floatContext, {
             enabled: "trigger" in rest && rest.trigger === "hover",
@@ -182,7 +184,9 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
         const click = useClick(floatContext, {
             enabled: "trigger" in rest && rest.trigger === "click",
         });
-        const dismiss = useDismiss(floatContext);
+        const dismiss = useDismiss(floatContext, {
+            referencePress: ariaRole === "tooltip",
+        });
         const role = useRole(floatContext, { role: ariaRole });
         const { getReferenceProps, getFloatingProps }
             = useInteractions([hover, focus, click, dismiss, role]);
@@ -191,6 +195,7 @@ export const FloatingContainer = React.forwardRef<FloatingHandle, FloatingContai
         // Setup context
         const context: Context = {
             open: actualOpen,
+            setOpen: ariaRole === "tooltip" ? setOpen : null,
             settings: { arrowSize, distance, borderRadius, viewPortMargin },
             calculated: { x, y, placement, arrow: middlewareData.arrow },
             refs: { reference, floating, arrowRef },
@@ -226,7 +231,11 @@ export const FloatingTrigger: React.FC<FloatingTriggerProps> = ({ children }) =>
 
     return React.cloneElement(children, {
         "data-floating-state": context.open ? "open" : "closed",
-        ...context.getReferenceProps({ ref: context.refs.reference, ...children.props }),
+        ...context.getReferenceProps({
+            ref: context.refs.reference,
+            onClick: () => context.setOpen?.(false),
+            ...children.props,
+        }),
     });
 };
 

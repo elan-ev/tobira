@@ -180,6 +180,7 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
                             cursor: "pointer",
                             "& > input[type=radio]": {
                                 width: 16,
+                                height: 16,
                                 margin: 0,
                             },
                         },

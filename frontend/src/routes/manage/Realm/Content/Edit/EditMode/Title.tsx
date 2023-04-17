@@ -59,7 +59,7 @@ export const EditTitleBlock: React.FC<EditTitleBlockProps> = ({ block: blockRef 
         <h3><Input
             placeholder={t("manage.realm.content.title.content")}
             defaultValue={content}
-            css={{ display: "block" }}
+            css={{ display: "block", width: "100%" }}
             {...form.register("content")}
         /></h3>
     </EditModeForm>;

@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 
 
 export const Heading: React.FC<{ children: ReactNode }> = ({ children }) => <h3 css={{
-    marginTop: 12,
+    ":not(:first-of-type)": { marginTop: 12 },
     marginBottom: 8,
     fontSize: 18,
 }}>
@@ -31,7 +31,6 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
                 border: "1px solid var(--grey65)",
                 padding: "6px 12px",
                 cursor: "pointer",
-                height: "100%",
                 backgroundColor: "white",
             },
             "& > input:checked + div": {
@@ -40,8 +39,14 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
                 outlineOffset: -2,
                 position: "relative", // Needed so that the outline is over sibling divs
             },
+            // The attribute selector increases specificity
+            ":focus-within div[role='button']": {
+                backgroundColor: "var(--grey86)",
+                outline: "3px solid var(--accent-color)",
+            },
             "& > input": {
-                display: "none",
+                position: "absolute",
+                opacity: 0, // Needed for the radio input to work for keyboard-only users
             },
             [`@media (max-width: ${breakpoint}px)`]: {
                 "&:first-child > div": {
@@ -77,7 +82,7 @@ export const NiceRadioOption = React.forwardRef<HTMLInputElement, NiceRadioOptio
     ({ children, ...rest }, ref) => (
         <label>
             <input type="radio" ref={ref} {...rest} />
-            <div>{children}</div>
+            <div role="button">{children}</div>
         </label>
     ),
 );

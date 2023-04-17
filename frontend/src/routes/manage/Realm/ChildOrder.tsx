@@ -57,13 +57,13 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
     const { t, i18n } = useTranslation();
     const realm = useFragment(fragment, fragRef);
 
-    const intialSortOrder = realm.childOrder === "%future added value"
+    const initialSortOrder = realm.childOrder === "%future added value"
         // This is not optimal. The only useful thing we could do in the future
         // is to disable the whole form just to be save, whenever we encounter
         // a sort order we don't know.
         ? bug("unknown realm sort order")
         : realm.childOrder;
-    const [sortOrder, setSortOrder] = useState<SortOrder>(intialSortOrder);
+    const [sortOrder, setSortOrder] = useState<SortOrder>(initialSortOrder);
     const [children, setChildren] = useState(realm.children);
 
     // Swaps `index` with `index + 1`.
@@ -77,7 +77,7 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
     };
 
     // Check if anything has changed
-    const anyChange = intialSortOrder !== sortOrder
+    const anyChange = initialSortOrder !== sortOrder
         || children.some((c, i) => c.id !== realm.children[i].id);
 
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
@@ -105,12 +105,12 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
 
     const SortOrderOption: React.FC<SortOrderOptionProps> = ({ label, order }) => (
         <div css={{ margin: 6 }}>
-            <label>
+            <label css={{ display: "flex" }}>
                 <input
                     type="radio"
                     checked={order === sortOrder}
                     onChange={() => setSortOrder(order)}
-                    css={{ marginRight: 16 }}
+                    css={{ alignSelf: "center", marginRight: 14, height: 16, width: 16 }}
                 />
                 {label}
             </label>
@@ -157,7 +157,6 @@ type ChildListProps = {
 
 const ChildList: React.FC<ChildListProps> = ({ disabled, children, swap }) => (
     <ol css={{
-        marginLeft: 32,
         maxWidth: 900,
         padding: 0,
         ...disabled && {
@@ -190,14 +189,15 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
             display: "flex",
             alignItems: "center",
             border: "1px solid var(--grey80)",
-            margin: 4,
+            margin: "4px 0",
             borderRadius: 4,
         }}>
             <div css={{
                 display: "flex",
                 flexDirection: "column",
                 marginRight: 16,
-                fontSize: 20,
+                fontSize: 18,
+                borderRight: "1px solid var(--grey80)",
                 "& > div": {
                     "&:first-child > button": {
                         borderBottom: "1px solid var(--grey80)",
@@ -211,8 +211,7 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                     border: "none",
                     display: "flex",
                     alignItems: "center",
-                    borderRight: "1px solid var(--grey80)",
-                    padding: "4px 16px",
+                    padding: "5px 12px",
                     backgroundColor: "inherit",
                     "&:disabled": {
                         color: "transparent",
@@ -223,7 +222,7 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                             backgroundColor: "var(--grey97)",
                             color: "var(--accent-color)",
                         },
-                        ...focusStyle({}),
+                        ...focusStyle({ offset: -1.5 }),
                     },
                 },
             }}>

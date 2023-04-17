@@ -12,7 +12,7 @@ import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
 import { DangerZone } from "./DangerZone";
 import { LinkButton } from "../../../ui/Button";
-import { FiArrowRightCircle, FiPlus } from "react-icons/fi";
+import { FiArrowRightCircle, FiPlusCircle } from "react-icons/fi";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
@@ -105,12 +105,12 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
                 gap: 16,
             }}>
                 <LinkButton to={realm.path}>
-                    <FiArrowRightCircle />
                     {t("manage.realm.view-page")}
+                    <FiArrowRightCircle />
                 </LinkButton>
                 <LinkButton to={`/~manage/realm/add-child?parent=${pathToQuery(realm.path)}`}>
-                    <FiPlus />
                     {t("realm.add-sub-page")}
+                    <FiPlusCircle />
                 </LinkButton>
             </div>
             <section><General fragRef={realm} /></section>

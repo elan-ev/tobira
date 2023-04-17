@@ -117,6 +117,7 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
                         kind="happy"
                         onClick={copy}
                         css={{
+                            borderRadius: 4,
                             borderTopLeftRadius: 0,
                             height: 34,
                             ...multiline

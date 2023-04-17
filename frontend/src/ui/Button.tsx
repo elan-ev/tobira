@@ -67,6 +67,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
                 border: "1px solid var(--grey40)",
                 backgroundColor: "var(--grey92)",
             },
+            ...focusStyle({ offset: -1 }),
         }),
 
         "danger": () => ({
@@ -77,6 +78,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
                 backgroundColor: "var(--danger-color)",
                 color: "var(--danger-color-bw-contrast)",
             },
+            ...focusStyle({ offset: 1 }),
         }),
 
         "happy": () => ({
@@ -93,10 +95,10 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
     });
 
     return {
-        borderRadius: 4,
+        borderRadius: 8,
         display: "inline-flex",
         alignItems: "center",
-        padding: "4px 10px",
+        padding: "7px 14px",
         gap: 12,
         whiteSpace: "nowrap",
         backgroundColor: "var(--grey97)",
@@ -110,7 +112,6 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         },
         "&:not([disabled])": {
             cursor: "pointer",
-            ...focusStyle({}),
             ...notDisabledStyle,
         },
         ...extraCss as Record<string, unknown>,

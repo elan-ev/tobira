@@ -43,6 +43,11 @@ const CSS_RESETS = css({
 
         // A reset to a sensible value.
         lineHeight: 1.5,
+
+        // Accent color for generated UI control `<input>` elements
+        // where type="checkbox", "radio" or "range",
+        // as well as `<progress>` elements.
+        accentColor: "var(--accent-color)",
     },
 
     // This improves the readability of underlines in links.

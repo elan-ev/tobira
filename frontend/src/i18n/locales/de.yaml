@@ -396,7 +396,7 @@ manage:
       view-page: Seite ansehen
 
       add: Hier einen neuen Block einfügen
-      add-popup-title: Hier einfügen
+      add-popup-title: Neu hinzufügen
       add-title: Titel
       add-text: Text
       add-series: Serie
@@ -430,7 +430,7 @@ manage:
           heading: Layout
           videos-only: Nur Videos
           title-and-videos: Titel und Videos
-          description-and-videos: Bescheibung und Videos
+          description-and-videos: Beschreibung und Videos
           everything: Titel, Beschreibung und Videos
 
       event:

@@ -98,7 +98,12 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
 
         <Heading>{t("manage.realm.content.titled.title")}</Heading>
         <label>
-            <input type="checkbox" defaultChecked={showTitle} {...form.register("showTitle")} />
+            <input
+                type="checkbox"
+                defaultChecked={showTitle}
+                {...form.register("showTitle")}
+                css={{ marginRight: 6 }}
+            />
             {t("manage.realm.content.titled.show-title")}
         </label>
     </EditModeForm>;
