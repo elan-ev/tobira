@@ -1,6 +1,6 @@
 //! The Tobira backend server.
 
-use clap::{FromArgMatches, IntoApp};
+use clap::{FromArgMatches, CommandFactory};
 use deadpool_postgres::Pool;
 use util::Never;
 use std::env;
@@ -68,7 +68,7 @@ async fn run() -> Result<()> {
     // using some runtime code.
     let args = Args::from_arg_matches(
         &Args::command()
-            .version(&*version::full())
+            .version(version::full())
             .get_matches(),
     )?;
 
