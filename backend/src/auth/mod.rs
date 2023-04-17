@@ -251,7 +251,7 @@ impl User {
         let query = format!(
             "select {selection} from user_sessions \
                 where id = $1 \
-                and extract(epoch from now() - created) < $2"
+                and extract(epoch from now() - created) < $2::double precision"
         );
         let row = match db.query_opt(&query, &[&session_id, &session_duration.as_secs_f64()]).await? {
             None => return Ok(None),

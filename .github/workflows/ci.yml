@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       postgres:
-        image: postgres:10
+        image: postgres:11
         env:
           POSTGRES_USER: tobira
           POSTGRES_PASSWORD: tobira
@@ -112,7 +112,7 @@ jobs:
           --clean \
           --create \
           --if-exists \
-          < db-dump
+          < db-dump || true
     - name: Run migrations
       run: ./tobira db migrate --config util/dev-config/config.toml
 
