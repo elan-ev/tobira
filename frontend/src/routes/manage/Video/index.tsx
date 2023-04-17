@@ -99,7 +99,7 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
     } else {
         inner = <>
             <PageNavigation {...{ vars, connection }} />
-            <div css={{ flex: "1 0 0" }}>
+            <div css={{ flex: "1 0 0", margin: "16px 0" }}>
                 <EventTable events={connection.items} vars={vars} />
             </div>
             <PageNavigation {...{ vars, connection }} />
@@ -113,7 +113,6 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
             display: "flex",
             flexDirection: "column",
             height: "100%",
-            gap: 16,
         }}>
             <Breadcrumbs
                 path={[{ label: t("manage.management"), link: "/~manage" }]}
