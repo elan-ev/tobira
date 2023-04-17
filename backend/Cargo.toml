@@ -48,7 +48,7 @@ once_cell = "1.5"
 p256 = { version = "0.13.2", features = ["jwk"] }
 p384 = { version = "0.13.0", features = ["jwk"] }
 paste = "1"
-pem = "1"
+pem-rfc7468 = { version = "0.7.0", features = ["std"] }
 percent-encoding = "2.1.0"
 postgres-types = { version = "0.2.2", features = ["derive", "array-impls"] }
 prometheus-client = "0.18.0"

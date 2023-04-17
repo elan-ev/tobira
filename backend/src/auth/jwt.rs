@@ -129,11 +129,11 @@ impl JwtConfig {
     fn load_auth(&self) -> Result<JwtAuth> {
         let pem_encoded = std::fs::read(&self.secret_key)
             .context("could not load secret key file")?;
-        let pem = pem::parse(pem_encoded)
+        let (_label, bytes) = pem_rfc7468::decode_vec(&pem_encoded)
             .context("secret key file is not a valid PEM encoded key")?;
 
         match self.signing_algorithm {
-            algo @ (Algorithm::ES256 | Algorithm::ES384) => JwtAuth::load_es(algo, &pem.contents),
+            algo @ (Algorithm::ES256 | Algorithm::ES384) => JwtAuth::load_es(algo, &bytes),
         }
     }
 }
