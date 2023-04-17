@@ -2468,7 +2468,6 @@ dependencies = [
  "tokio",
  "tokio-postgres",
  "tokio-postgres-rustls",
- "toml",
 ]
 
 [[package]]
