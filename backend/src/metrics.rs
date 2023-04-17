@@ -190,13 +190,14 @@ impl MemInfo {
             shared: 0,
         };
 
-        for (_, map_info) in smaps {
-            out.resident += map_info.map.get("Rss").copied().unwrap_or(0);
-            out.proportional += map_info.map.get("Pss").copied().unwrap_or(0);
-            out.unique += map_info.map.get("Private_Clean").copied().unwrap_or(0);
-            out.unique += map_info.map.get("Private_Dirty").copied().unwrap_or(0);
-            out.shared += map_info.map.get("Shared_Clean").copied().unwrap_or(0);
-            out.shared += map_info.map.get("Shared_Dirty").copied().unwrap_or(0);
+        for mm in smaps {
+            let map_info = &mm.extension.map;
+            out.resident += map_info.get("Rss").copied().unwrap_or(0);
+            out.proportional += map_info.get("Pss").copied().unwrap_or(0);
+            out.unique += map_info.get("Private_Clean").copied().unwrap_or(0);
+            out.unique += map_info.get("Private_Dirty").copied().unwrap_or(0);
+            out.shared += map_info.get("Shared_Clean").copied().unwrap_or(0);
+            out.shared += map_info.get("Shared_Dirty").copied().unwrap_or(0);
         }
 
         Some(out)
