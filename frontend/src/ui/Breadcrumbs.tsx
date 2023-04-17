@@ -30,7 +30,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
     };
 
     return (
-        <nav aria-label="breadcrumbs" css={{ overflowX: "auto", marginBottom: 16 }}>
+        <nav aria-label="breadcrumbs" css={{ overflowX: "auto", marginBottom: 16, flexShrink: 0 }}>
             {path.length > 0 && (
                 <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
             )}

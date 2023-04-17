@@ -211,7 +211,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                 >{t("realm.user-realm.your-page")}</MenuItem>}
                 {user.canUpload && <MenuItem
                     icon={<FiUpload />}
-                    linkTo={"/~upload"}
+                    linkTo={"/~manage/upload"}
                     onClick={close}
                 >{t("upload.title")}</MenuItem>}
             </>}
