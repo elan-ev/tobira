@@ -47,7 +47,13 @@ pub(crate) fn init(config: &LogConfig, args: &Args) -> Result<()> {
     };
 
     let file = config.file.as_ref()
-        .map(|path| OpenOptions::new().append(true).create(true).open(path))
+        .map(|path| {
+            OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(path)
+                .with_context(|| format!("failed to open/create log file '{}'", path.display()))
+        })
         .transpose()?
         .map(Mutex::new);
 
