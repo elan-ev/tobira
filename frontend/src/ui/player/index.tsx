@@ -112,7 +112,9 @@ const delayTill = (date: Date): number => {
  * You probably want this one.
  */
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
-    const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
+    // Sorting this makes sure the aspect ratio of this container will always
+    // be >= 1 to allow portrait videos to use the available vertical container space.
+    const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks).slice().sort((a, b) => b - a);
 
     return (
         <div className={className} css={{
