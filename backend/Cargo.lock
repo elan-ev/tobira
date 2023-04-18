@@ -411,6 +411,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "520fbf3c07483f94e3e3ca9d0cfd913d7718ef2483d2cfd91c0d9e91474ab913"
 
 [[package]]
+name = "convert_case"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec182b0ca2f35d8fc196cf3404988fd8b8c739a4d270ff118a398feb0cbec1ca"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "cookie"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -652,6 +661,9 @@ name = "either"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "elliptic-curve"
@@ -1424,20 +1436,36 @@ dependencies = [
 ]
 
 [[package]]
-name = "meilisearch-sdk"
-version = "0.18.1"
+name = "meilisearch-index-setting-macro"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09b26bc51d2f7c789fd75cb329b7ca7edba0f4c964892787f8f1103c50705756"
+checksum = "782a5c1a79ec476d9bdc8fd5eeeea0a6abd7b9968db716b44bf5b5fb563a3481"
+dependencies = [
+ "convert_case",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "meilisearch-sdk"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91918ad10dee774486b1af57fdf7e683a8eef674715ff35362cd3df03a97449b"
 dependencies = [
  "async-trait",
+ "either",
  "futures",
+ "futures-io",
  "isahc",
  "iso8601-duration",
  "js-sys",
  "jsonwebtoken",
  "log",
+ "meilisearch-index-setting-macro",
  "serde",
  "serde_json",
+ "thiserror",
  "time",
  "uuid",
  "wasm-bindgen",

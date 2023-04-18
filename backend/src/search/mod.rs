@@ -120,7 +120,7 @@ impl Client {
         // Create client (this does not connect to Meili).
         let client = MeiliClient::new(
             &config.host.to_string(),
-            config.key.expose_secret(),
+            Some(config.key.expose_secret()),
         );
 
         // Store some references to the indices (without checking whether they
