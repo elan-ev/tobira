@@ -2,8 +2,8 @@ import React, { KeyboardEvent, ReactNode, ReactElement } from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    FiAlertTriangle, FiArrowLeft, FiCheck, FiUserCheck,
-    FiChevronDown, FiFolder, FiLogOut, FiUpload, FiLogIn,
+    FiAlertTriangle, FiArrowLeft, FiCheck, FiUserCheck, FiChevronDown,
+    FiFolder, FiLogOut, FiUpload, FiLogIn, FiFilm, FiVideo,
 } from "react-icons/fi";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 
@@ -20,6 +20,7 @@ import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { focusStyle } from "../../ui";
 import { ProtoButton } from "../../ui/Button";
 import { FloatingHandle, FloatingContainer, FloatingTrigger, Floating } from "../../ui/Floating";
+import { ExternalLink, ExternalLinkProps } from "../../relay/auth";
 
 
 /** User-related UI in the header. */
@@ -206,14 +207,34 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                 {user.canCreateUserRealm && <MenuItem
                     icon={<HiOutlineFire />}
                     borderBottom
+                    indent
                     linkTo={`/@${user.username}`}
                     onClick={close}
                 >{t("realm.user-realm.your-page")}</MenuItem>}
+                {<MenuItem
+                    icon={<FiFilm />}
+                    borderBottom
+                    indent
+                    linkTo={"/~manage/videos"}
+                    onClick={close}
+                >{t("manage.my-videos.title")}</MenuItem>}
                 {user.canUpload && <MenuItem
                     icon={<FiUpload />}
+                    borderBottom
+                    indent
                     linkTo={"/~manage/upload"}
                     onClick={close}
                 >{t("upload.title")}</MenuItem>}
+                {user.canUseStudio && <MenuItem
+                    icon={<FiVideo />}
+                    indent
+                    onClick={close}
+                    externalLinkProps={{
+                        service: "STUDIO",
+                        params: { "return.target": new URL(document.location.href) },
+                        fallback: "link",
+                    }}
+                >{t("manage.dashboard.studio-tile-title")}</MenuItem>}
             </>}
 
             {/* Logout button if the user is logged in */}
@@ -369,6 +390,8 @@ type MenuItemProps = {
     htmlLink?: boolean;
     borderBottom?: boolean;
     borderTop?: boolean;
+    indent?: boolean;
+    externalLinkProps?: ExternalLinkProps;
     children: ReactNode;
 };
 
@@ -382,6 +405,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
     htmlLink = false,
     borderBottom = false,
     borderTop = false,
+    indent = false,
+    externalLinkProps,
 }) => {
     const inner = <>
         {icon ?? <svg />}
@@ -393,6 +418,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
         alignItems: "center",
         minWidth: 200,
         padding: 12,
+        ...indent && { paddingLeft: 30 },
         cursor: "pointer",
         whiteSpace: "nowrap",
         color: "black",
@@ -419,13 +445,35 @@ const MenuItem: React.FC<MenuItemProps> = ({
         }
     };
 
-    return linkTo
-        ? <li role="menuitem" {... { className }}>
+    let menuItem;
+    if (linkTo) {
+        menuItem = <li role="menuitem" {... { className }}>
             <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
-        </li>
-        : <li role="menuitem" tabIndex={0} css={css} {...{ onClick, className, onKeyDown }}>
-            {inner}
         </li>;
+    } else if (externalLinkProps) {
+        menuItem = <li role="menuitem">
+            <ExternalLink
+                {...externalLinkProps}
+                css={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    ...css,
+                    minWidth: "100%",
+                }}
+            >{inner}</ExternalLink>
+        </li>;
+    } else {
+        menuItem = (
+            <li
+                role="menuitem"
+                tabIndex={0}
+                css={css}
+                {...{ onClick, className, onKeyDown }}
+            >{inner}</li>
+        );
+    }
+
+    return menuItem;
 };
 
 

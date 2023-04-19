@@ -18,7 +18,7 @@ const serviceUrl = (service: JwtLinkedService): URL => new URL(match(service, {
     STUDIO: () => CONFIG.opencast.studioUrl,
 }));
 
-type ExternalLinkProps = PropsWithChildren<{
+export type ExternalLinkProps = PropsWithChildren<{
     className?: string;
     fallback: "link" | "button";
 } & ({

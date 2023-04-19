@@ -1,7 +1,7 @@
 import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { FiFilm, FiUpload, FiVideo } from "react-icons/fi";
-import { HiOutlineTemplate } from "react-icons/hi";
+import { HiOutlineFire, HiOutlineTemplate } from "react-icons/hi";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../layout/Root";
@@ -84,6 +84,11 @@ const Manage: React.FC = () => {
                 <h2>{t("manage.my-videos.title")}</h2>
                 {t("manage.dashboard.my-videos-tile")}
             </Link>
+            {user.canCreateUserRealm && <Link to={`/@${user.username}`} css={gridTile}>
+                <HiOutlineFire />
+                <h2>{t("realm.user-realm.your-page")}</h2>
+                {t("manage.dashboard.user-realm-tile")}
+            </Link>}
             <div css={gridTile}>
                 <h2>{t("manage.dashboard.manage-pages-tile-title")}</h2>
                 {t("manage.dashboard.manage-pages-tile-body")}
