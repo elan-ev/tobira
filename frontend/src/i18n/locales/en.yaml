@@ -99,7 +99,7 @@ user:
   login: Login
   logout: Log out
   settings: User settings
-  manage-content: My content
+  manage-content: Manage
   logged-in-as: Logged in as
 
 login-page:

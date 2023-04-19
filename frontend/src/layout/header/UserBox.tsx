@@ -207,18 +207,21 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                 {user.canCreateUserRealm && <MenuItem
                     icon={<HiOutlineFire />}
                     borderBottom
+                    indent
                     linkTo={`/@${user.username}`}
                     onClick={close}
                 >{t("realm.user-realm.your-page")}</MenuItem>}
                 {<MenuItem
                     icon={<FiFilm />}
                     borderBottom
+                    indent
                     linkTo={"/~manage/videos"}
                     onClick={close}
                 >{t("manage.my-videos.title")}</MenuItem>}
                 {user.canUseStudio && <MenuItem
                     icon={<FiVideo />}
                     borderBottom
+                    indent
                     onClick={close}
                     externalLinkProps={{
                         service: "STUDIO",
@@ -228,6 +231,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                 >{t("manage.dashboard.studio-tile-title")}</MenuItem>}
                 {user.canUpload && <MenuItem
                     icon={<FiUpload />}
+                    indent
                     linkTo={"/~manage/upload"}
                     onClick={close}
                 >{t("upload.title")}</MenuItem>}
@@ -386,6 +390,7 @@ type MenuItemProps = {
     htmlLink?: boolean;
     borderBottom?: boolean;
     borderTop?: boolean;
+    indent?: boolean;
     externalLinkProps?: ExternalLinkProps;
     children: ReactNode;
 };
@@ -400,6 +405,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
     htmlLink = false,
     borderBottom = false,
     borderTop = false,
+    indent = false,
     externalLinkProps,
 }) => {
     const inner = <>
@@ -412,6 +418,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
         alignItems: "center",
         minWidth: 200,
         padding: 12,
+        ...indent && { paddingLeft: 30 },
         cursor: "pointer",
         whiteSpace: "nowrap",
         color: "black",
