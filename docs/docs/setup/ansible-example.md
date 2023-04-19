@@ -35,8 +35,8 @@ tobira_trusted_external_key: "{{ vault_tobira_trusted_external_key }}"
 
 tobira_release_url: "https://github.com/elan-ev/tobira/releases/download/v1.2/tobira-x86_64-unknown-linux-gnu"
 tobira_release_checksum: "sha256:c173c60bc35e8fa922324910a4968557903c9382a5d46d67cc99a15df262e245"
-meili_release_url: "https://github.com/meilisearch/meilisearch/releases/download/v0.28.1/meilisearch-linux-amd64"
-meili_release_checksum: "sha256:d394626b43c71acba0516336016285a963046b5ccf6f2c5ea6d5ef17085a3b40"
+meili_release_url: "https://github.com/meilisearch/meilisearch/releases/download/v1.1.1/meilisearch-linux-amd64"
+meili_release_checksum: "sha256:dfc945fe521511af43dab0264193b154d639d91292e1899f553157836ec53acd"
 ```
 
 ## Services
@@ -57,6 +57,7 @@ meili_release_checksum: "sha256:d394626b43c71acba0516336016285a963046b5ccf6f2c5e
     mode: '0755'
     checksum: '{{ meili_release_checksum }}'
   # TODO: this does not handle rebuilding the search index when doing a major meili update!
+  # In that case, delete `/opt/meili/data.ms` and restart the tobira worker.
   notify: restart meili
 
 - name: install MeiliSearch service file
