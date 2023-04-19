@@ -274,6 +274,8 @@ manage:
       Here you can easily create a new video by recording your microphone, screen and/or
       webcam.
     my-videos-tile: Here you can view and edit all your videos.
+    user-realm-tile: >
+      On your personal page, you can freely arrange videos, text, and other elements.
     manage-pages-tile-title: Manage pages?
     manage-pages-tile-body: >
       To rename, modify, and delete pages, navigate to the page in question. If you

@@ -218,9 +218,15 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                     linkTo={"/~manage/videos"}
                     onClick={close}
                 >{t("manage.my-videos.title")}</MenuItem>}
+                {user.canUpload && <MenuItem
+                    icon={<FiUpload />}
+                    borderBottom
+                    indent
+                    linkTo={"/~manage/upload"}
+                    onClick={close}
+                >{t("upload.title")}</MenuItem>}
                 {user.canUseStudio && <MenuItem
                     icon={<FiVideo />}
-                    borderBottom
                     indent
                     onClick={close}
                     externalLinkProps={{
@@ -229,12 +235,6 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                         fallback: "link",
                     }}
                 >{t("manage.dashboard.studio-tile-title")}</MenuItem>}
-                {user.canUpload && <MenuItem
-                    icon={<FiUpload />}
-                    indent
-                    linkTo={"/~manage/upload"}
-                    onClick={close}
-                >{t("upload.title")}</MenuItem>}
             </>}
 
             {/* Logout button if the user is logged in */}

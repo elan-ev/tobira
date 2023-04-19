@@ -280,6 +280,8 @@ manage:
       Hier können Sie sehr einfach ein neues Video erstellen, indem Sie Ihr Mikrofon, Ihren Bildschirm
       und/oder Ihre Webcam aufzeichnen.
     my-videos-tile: Hier finden Sie alle Ihre Videos und können diese z.B. bearbeiten.
+    user-realm-tile: >
+      Auf Ihrer persönlichen Seite können Sie frei Videos, Text und andere Element anordnen.
     manage-pages-tile-title: Seiten verwalten?
     manage-pages-tile-body: >
       Um Seiten zu bearbeiten, umzubenennen und zu löschen, navigieren Sie zu der gewünschten
