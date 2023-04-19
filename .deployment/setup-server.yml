@@ -28,11 +28,11 @@
     - name: install MeiliSearch
       become: true
       get_url:
-        url: https://github.com/meilisearch/meilisearch/releases/download/v0.28.1/meilisearch-linux-amd64
+        url: https://github.com/meilisearch/meilisearch/releases/download/v1.1.1/meilisearch-linux-amd64
         dest: /opt/meili/meilisearch
         mode: '0755'
-        checksum: sha256:d394626b43c71acba0516336016285a963046b5ccf6f2c5ea6d5ef17085a3b40
-      register: meili_changed
+        checksum: sha256:dfc945fe521511af43dab0264193b154d639d91292e1899f553157836ec53acd
+      register: meili_updated
 
     - name: install MeiliSearch service file
       become: true
@@ -51,13 +51,20 @@
         state: started
         enabled: yes
 
+    - name: remove Meili indexes
+      become: true
+      file:
+        path: /opt/meili/data.ms
+        state: absent
+      when: meili_updated.changed
+
     - name: restart Meili
       become: true
       service:
         name: meili
         state: restarted
         enabled: yes
-      when: meili_changed.changed
+      when: meili_changed.changed or meili_updated.changed
 
 
     # DATABASE
