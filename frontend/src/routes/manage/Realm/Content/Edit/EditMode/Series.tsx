@@ -88,6 +88,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
     const form = useFormContext<SeriesFormData>();
     const { formState: { errors }, control } = form;
     const { field: seriesField } = useController({
+        defaultValue: series?.id,
         name: "series",
         control,
         rules: { required: true },
