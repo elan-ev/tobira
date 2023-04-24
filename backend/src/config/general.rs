@@ -10,6 +10,10 @@ pub(crate) struct GeneralConfig {
     // TODO: fix automatically generated `site_title =` template output.
     pub(crate) site_title: TranslatedString,
 
+    /// Whether or not to show a download button on the video page.
+    #[config(default = true)]
+    pub show_download_button: bool,
+
     /// Links that are shown in the footer.
     ///
     /// By overwriting this default value, you can remove the default links and

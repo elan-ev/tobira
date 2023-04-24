@@ -344,7 +344,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                         {t("video.manage")}
                     </LinkButton>
                 )}
-                <DownloadButton event={event} />
+                {CONFIG.showDownloadButton && <DownloadButton event={event} />}
                 <ShareButton event={event} />
             </div>
         </div>

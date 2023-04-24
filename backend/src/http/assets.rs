@@ -103,6 +103,7 @@ impl Assets {
 
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());
+        variables.insert("show-download-button".into(), json!(config.general.show_download_button).to_string());
         variables.insert("footer-links".into(), json!(config.general.footer_links).to_string());
         variables.insert("metadata-labels".into(), json!(config.general.metadata).to_string());
         variables.insert(
