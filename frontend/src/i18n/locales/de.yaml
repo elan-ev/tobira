@@ -148,6 +148,13 @@ video:
     title: Video einbetten
     copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
   caption: Untertitel
+  download:
+    title: Download
+    presenter: Kamera
+    slides: Präsentation
+    info: >
+      Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen 
+      (Rechtsklick - Speichern unter).
   manage: Verwalten
   start: Anfang
   end: Ende

@@ -145,6 +145,12 @@ video:
     title: Embed video
     copy-embed-code-to-clipboard: Copy embed code to clipboard
   caption: Caption
+  download:
+    title: Download
+    presenter: Presenter
+    slides: Presentation
+    info: > 
+      Here you can download the video(s) in different formats/qualities (Right click - Save as).
   manage: Manage
   start: Start
   end: End

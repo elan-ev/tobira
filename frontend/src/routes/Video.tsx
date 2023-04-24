@@ -2,7 +2,7 @@ import React, { ReactNode, useRef, useState } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
-import { FiCode, FiSettings, FiCrosshair, FiShare2 } from "react-icons/fi";
+import { FiCode, FiSettings, FiCrosshair, FiShare2, FiDownload } from "react-icons/fi";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -53,6 +53,7 @@ import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui
 import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
 import { VideoObject, WithContext } from "schema-dts";
+import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 
 
@@ -336,22 +337,14 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <VideoDate event={event} />
             </div>
             {/* Buttons */}
-            <div css={{
-                display: "flex",
-                gap: 8,
-                [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
-                    button: {
-                        height: 40,
-                        span: { display: "none" },
-                    },
-                },
-            }}>
+            <div css={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
                     <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
                         <FiSettings size={16} />
                         {t("video.manage")}
                     </LinkButton>
                 )}
+                <DownloadButton event={event} />
                 <ShareButton event={event} />
             </div>
         </div>
@@ -381,6 +374,42 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     </>;
 };
 
+
+const PopoverHeading: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <strong css={{ fontSize: 18, display: "block", marginBottom: 16 }}>
+        {children}
+    </strong>
+);
+
+const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
+    const { t } = useTranslation();
+    const ref = useRef(null);
+
+    return (
+        <FloatingContainer
+            ref={ref}
+            placement="top"
+            arrowSize={12}
+            ariaRole="dialog"
+            trigger="click"
+        >
+            <FloatingTrigger>
+                <Button>
+                    <FiDownload size={16}/>
+                    {t("video.download.title")}
+                </Button>
+            </FloatingTrigger>
+            <Floating padding={[8, 16, 16, 16]}>
+                <PopoverHeading>{t("video.download.title")}</PopoverHeading>
+                <Card kind="info" iconPos="left" css={{ maxWidth: 400, fontSize: 14 }}>
+                    {t("video.download.info")}
+                </Card>
+                <TrackInfo event={event} translateFlavors css={{ h2: { display: "none" } }} />
+            </Floating>
+        </FloatingContainer>
+    );
+};
+
 const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     type State = "closed" | "main" | "direct-link" | "embed";
 
@@ -391,17 +420,10 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 
     const id = event.id.substring(2);
 
-    // TODO: maybe move out of this
-    const Heading: React.FC<React.PropsWithChildren> = ({ children }) => (
-        <strong css={{ fontSize: 18, display: "block", marginBottom: 16 }}>
-            {children}
-        </strong>
-    );
-
     const inner = match(state, {
         "closed": () => null,
         "main": () => <>
-            <Heading>{t("video.share.share-video")}</Heading>
+            <PopoverHeading>{t("video.share.share-video")}</PopoverHeading>
             <CopyableInput
                 label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                 css={{ fontSize: 14, margin: "16px 0", width: 400 }}
@@ -447,7 +469,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             target.pathname = `/!v/${id}`;
 
             return <>
-                <Heading>{t("video.share.direct-link")}</Heading>
+                <PopoverHeading>{t("video.share.direct-link")}</PopoverHeading>
                 <Card kind="info" iconPos="top" css={{ maxWidth: 400, fontSize: 14 }}>
                     {t("video.share.direct-link-info")}
                 </Card>
@@ -478,7 +500,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             ].join(" ")}></iframe>`;
 
             return <>
-                <Heading>{t("video.share.embed")}</Heading>
+                <PopoverHeading>{t("video.share.embed")}</PopoverHeading>
                 <CopyableInput
                     label={t("video.embed.copy-embed-code-to-clipboard")}
                     value={embedCode}
