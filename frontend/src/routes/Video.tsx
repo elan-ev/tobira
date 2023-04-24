@@ -324,6 +324,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             alignItems: "center",
             justifyContent: "space-between",
             marginTop: 24,
+            marginBottom: 16,
             gap: 8,
             [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                 flexDirection: "column",
@@ -334,7 +335,17 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <VideoTitle title={event.title} />
                 <VideoDate event={event} />
             </div>
-            <div css={{ display: "flex", gap: 8 }}>
+            {/* Buttons */}
+            <div css={{
+                display: "flex",
+                gap: 8,
+                [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                    button: {
+                        height: 40,
+                        span: { display: "none" },
+                    },
+                },
+            }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
                     <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
                         <FiSettings size={16} />
@@ -344,26 +355,27 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <ShareButton event={event} />
             </div>
         </div>
-        <hr />
         <div css={{
             display: "grid",
             gridTemplate: "1fr / 1fr fit-content(30%)",
-            columnGap: 48,
-            rowGap: 24,
+            gap: 16,
             [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                 gridTemplate: "auto auto / 1fr",
             },
+            "> div": {
+                backgroundColor: "var(--grey95)",
+                padding: 8,
+                borderRadius: 8,
+            },
         }}>
-            <div css={{ maxWidth: 700 }}>
+            <div>
                 <Creators creators={event.creators} css={{ fontWeight: "bold" }} />
                 <Description
                     text={event.description}
                     css={{ color: COLORS.grey7, fontSize: 14 }}
                 />
             </div>
-            <div css={{ paddingTop: 8 }}>
-                <MetadataTable event={event} />
-            </div>
+            <div><MetadataTable event={event} /></div>
         </div>
 
     </>;
@@ -582,6 +594,22 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
         ]);
     }
 
+    if (event.syncedData?.updated) {
+        const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
+        const { created, updated } = getEventTimeInfo(event as SyncedEvent);
+
+        const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
+            ? updated.toLocaleString(i18n.language, fullOptions)
+            : null;
+
+        if (updatedFull != null) {
+            pairs.push([
+                t("video.updated"),
+                updatedFull,
+            ]);
+        }
+    }
+
     for (const [namespace, fields] of Object.entries(CONFIG.metadataLabels)) {
         const metadataNs = event.metadata[namespace];
         if (metadataNs === undefined) {
@@ -610,6 +638,7 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
     return (
         <dl css={{
             display: "grid",
+            minWidth: 300,
             columnGap: 16,
             rowGap: 6,
             fontSize: 14,
