@@ -46,7 +46,7 @@ import {
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
 import { getEventTimeInfo } from "../util/video";
-import { Creators } from "../ui/Video";
+import { Creators, formatDuration } from "../ui/Video";
 import { Description } from "../ui/metadata";
 import { ellipsisOverflowCss } from "../ui";
 import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui/Floating";
@@ -616,20 +616,14 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
         ]);
     }
 
-    if (event.syncedData?.updated) {
-        const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
-        const { created, updated } = getEventTimeInfo(event as SyncedEvent);
+    if (event.metadata.dcterms.language) {
+        const languageNames = new Intl.DisplayNames(i18n.resolvedLanguage, { type: "language" });
+        const languages = event.metadata.dcterms.language.map(lng => languageNames.of(lng) ?? lng);
 
-        const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
-            ? updated.toLocaleString(i18n.language, fullOptions)
-            : null;
-
-        if (updatedFull != null) {
-            pairs.push([
-                t("video.updated"),
-                updatedFull,
-            ]);
-        }
+        pairs.push([
+            t("video.language", { count: languages.length }),
+            languages.join(", "),
+        ]);
     }
 
     for (const [namespace, fields] of Object.entries(CONFIG.metadataLabels)) {
@@ -655,6 +649,13 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
                 pairs.push([translatedLabel, values]);
             }
         }
+    }
+
+    if (event.syncedData?.duration) {
+        pairs.push([
+            t("video.duration"),
+            formatDuration(event.syncedData.duration),
+        ]);
     }
 
     return (

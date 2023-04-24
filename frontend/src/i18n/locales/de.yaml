@@ -123,6 +123,9 @@ video:
   deleted: Gelöschtes Video
   created: Erstellt
   updated: Zuletzt angepasst
+  duration: Abspielzeit
+  language_one: Sprache
+  language_other: Sprachen
   part-of-series: Teil von Serie
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.

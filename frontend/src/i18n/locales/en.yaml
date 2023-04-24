@@ -120,6 +120,9 @@ video:
   deleted: Deleted video
   created: Created
   updated: Last updated
+  duration: Duration
+  language_one: Language
+  language_other: Languages
   part-of-series: Part of series
   more-from-series: More from “{{series}}”
   deleted-video-block: The video referenced here was deleted.
