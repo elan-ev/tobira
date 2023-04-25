@@ -349,28 +349,29 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             </div>
         </div>
         <div css={{
-            display: "grid",
-            gridTemplate: "1fr / 1fr fit-content(30%)",
+            display: "flex",
+            flexWrap: "wrap",
             gap: 16,
-            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                gridTemplate: "auto auto / 1fr",
-            },
             "> div": {
                 backgroundColor: "var(--grey95)",
-                padding: 8,
+                padding: "12px 16px",
                 borderRadius: 8,
             },
         }}>
-            <div>
-                <Creators creators={event.creators} css={{ fontWeight: "bold" }} />
+            <div css={{ flex: event.description ? "4 400px" : "1 200px" }}>
+                <Creators creators={event.creators} css={{
+                    fontWeight: "bold",
+                    marginBottom: 12,
+                }} />
                 <Description
                     text={event.description}
-                    css={{ color: COLORS.grey7, fontSize: 14 }}
+                    css={{ color: COLORS.grey7, fontSize: 14, maxWidth: "90ch" }}
                 />
             </div>
-            <div><MetadataTable event={event} /></div>
+            <div css={{ flex: "2 180px" }}>
+                <MetadataTable event={event} />
+            </div>
         </div>
-
     </>;
 };
 
@@ -662,7 +663,6 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
         <dl css={{
             display: "flex",
             flexDirection: "column",
-            columnGap: 16,
             rowGap: 6,
             fontSize: 14,
             lineHeight: 1.3,
