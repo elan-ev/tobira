@@ -660,18 +660,18 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
 
     return (
         <dl css={{
-            display: "grid",
-            minWidth: 300,
+            display: "flex",
+            flexDirection: "column",
             columnGap: 16,
             rowGap: 6,
             fontSize: 14,
             lineHeight: 1.3,
-            gridTemplateColumns: "max-content 1fr",
             "& > dt::after": {
                 content: "':'",
             },
             "& > dd": {
                 color: COLORS.grey6,
+                marginLeft: "4ch",
             },
         }}>
             {pairs.map(([label, value], i) => <React.Fragment key={i}>
