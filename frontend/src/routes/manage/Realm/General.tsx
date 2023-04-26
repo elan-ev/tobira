@@ -15,6 +15,7 @@ import { displayCommitError } from "./util";
 import { useState } from "react";
 import { bug } from "../../../util/err";
 import { match } from "../../../util";
+import { COLORS } from "../../../color";
 
 
 const fragment = graphql`
@@ -165,11 +166,11 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
             <div
                 css={{
                     marginBottom: 16,
-                    border: "1px solid var(--grey80)",
+                    border: `1px solid ${COLORS.grey4}`,
                     borderRadius: 4,
                     "& > div": {
                         "&:not(:first-child)": {
-                            borderTop: "1px solid var(--grey80)",
+                            borderTop: `1px solid ${COLORS.grey4}`,
                         },
                         "& > label": {
                             padding: 12,

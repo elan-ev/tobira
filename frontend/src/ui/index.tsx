@@ -2,13 +2,14 @@ import { Link } from "../router";
 import { match } from "../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
+import { COLORS } from "../color";
 
 
 export const SIDE_BOX_BORDER_RADIUS = 8;
 
 export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{
-        backgroundColor: "var(--grey95)",
+        backgroundColor: COLORS.grey1,
         borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
         ":not(:first-child)": { marginTop: 26 },
@@ -29,7 +30,7 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             padding: 0,
             "& a": { ...focusStyle({ inset: true }) },
             "& > li": {
-                backgroundColor: "var(--grey95)",
+                backgroundColor: COLORS.grey1,
                 borderBottom: "2px solid white",
                 "&:last-of-type": { borderBottom: "none" },
                 "& > *": {
@@ -74,10 +75,10 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
 
     const hoverActiveStyle = {
         transitionDuration: "0s",
-        backgroundColor: "var(--grey86)",
+        backgroundColor: COLORS.grey3,
         "& > svg": {
             transitionDuration: "0s",
-            color: "var(--grey40)",
+            color: COLORS.grey6,
         },
     };
 
@@ -101,7 +102,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
 
         "&:hover, &:focus": hoverActiveStyle,
         ...active && {
-            color: "var(--nav-color-darker)",
+            color: COLORS.primary2,
             "&": hoverActiveStyle,
         },
     };
@@ -136,7 +137,7 @@ export const Title: React.FC<TitleProps> = ({ title, className }) => (
  */
 export const focusStyle = ({ width = 2.5, inset = false, offset = 0 }) => ({
     "&:focus-visible": {
-        outline: `${width}px solid var(--accent-color)`,
+        outline: `${width}px solid ${COLORS.focus}`,
         outlineOffset: `${inset ? -width : offset}px`,
     },
 } as const);

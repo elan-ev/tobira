@@ -11,6 +11,7 @@ import { ActionIcon, ButtonContainer, HEADER_BASE_PADDING } from "./ui";
 import { SearchField } from "./Search";
 import { Logo } from "./Logo";
 import { LanguageSettings, UserBox } from "./UserBox";
+import { COLORS } from "../../color";
 
 
 type Props = {
@@ -40,7 +41,7 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false
         }}>
             {loginMode ? <LoginMode /> : content}
         </header>
-        <div css={{ margin: "0 0 16px 0 ", height: 2, backgroundColor: "var(--grey92)" }} />
+        <div css={{ margin: "0 0 16px 0 ", height: 2, backgroundColor: COLORS.grey2 }} />
     </>;
 };
 
@@ -124,6 +125,6 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
 const buttonOutline = {
     button: {
         padding: 5,
-        outline: "1.5px solid var(--grey80)",
+        outline: `1.5px solid ${COLORS.grey4}`,
     },
 };

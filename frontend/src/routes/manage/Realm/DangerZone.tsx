@@ -20,6 +20,7 @@ import {
 import { useRouter } from "../../../router";
 import { useState } from "react";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
+import { COLORS } from "../../../color";
 
 
 const fragment = graphql`
@@ -48,7 +49,7 @@ export const DangerZone: React.FC<Props> = ({ fragRef }) => {
         <div css={{
             padding: "16px 16px",
             "&:not(:last-child)": {
-                borderBottom: "1px solid var(--danger-color)",
+                borderBottom: `1px solid ${COLORS.danger0}`,
             },
             "& > h3": {
                 marginBottom: 16,
@@ -62,7 +63,7 @@ export const DangerZone: React.FC<Props> = ({ fragRef }) => {
             ? <p>{t("manage.realm.danger-zone.root-note")}</p>
             : (
                 <div css={{
-                    border: "2px solid var(--danger-color)",
+                    border: `2px solid ${COLORS.danger0}`,
                     borderRadius: 4,
                     margin: 8,
                     marginBottom: 96,

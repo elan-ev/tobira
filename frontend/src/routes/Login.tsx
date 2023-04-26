@@ -23,6 +23,8 @@ import { Header } from "../layout/header";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { OUTER_CONTAINER_MARGIN } from "../layout";
+import { COLORS } from "../color";
+import { focusStyle } from "../ui";
 
 
 export const REDIRECT_STORAGE_KEY = "tobira-redirect-after-login";
@@ -118,7 +120,6 @@ const BackButton: React.FC = () => {
             gap: 4,
             padding: 4,
             borderRadius: 4,
-            ":focus": { outline: "2px solid var(--accent-color)" },
         }}
     ><FiChevronLeft />{t("back")}</Link>;
 };
@@ -178,12 +179,12 @@ const LoginBox: React.FC = () => {
             maxWidth: "100%",
             marginTop: 24,
             padding: 32,
-            border: "1px solid var(--grey80)",
+            border: `1px solid ${COLORS.grey4}`,
             borderRadius: 8,
         }}>
             {CONFIG.auth.loginPageNote && (
                 <div css={{
-                    backgroundColor: "var(--grey97)",
+                    backgroundColor: COLORS.grey0,
                     marginBottom: 32,
                     borderRadius: 4,
                     padding: "8px 16px",
@@ -239,22 +240,19 @@ const LoginBox: React.FC = () => {
                     type="submit"
                     disabled={state === "pending"}
                     css={{
-                        backgroundColor: "var(--nav-color)",
+                        backgroundColor: COLORS.primary0,
                         borderRadius: 8,
-                        color: "var(--nav-color-bw-contrast)",
+                        color: COLORS.primary0BwInverted,
                         display: "flex",
                         alignItems: "center",
                         gap: 10,
                         margin: "0 auto",
                         padding: "7px 14px",
                         ":hover, :focus": {
-                            backgroundColor: "var(--nav-color-dark)",
-                            color: "var(--nav-color-bw-contrast)",
+                            backgroundColor: COLORS.primary1,
+                            color: COLORS.primary1BwInverted,
                         },
-                        ":focus": {
-                            outlineOffset: 1,
-                            outline: "2px solid var(--accent-color)",
-                        },
+                        ...focusStyle({ offset: 1 }),
                     }}
                 >
                     <FiLogIn size={20} />
@@ -292,7 +290,7 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                 position: "absolute",
                 top: "50%",
                 left: 16,
-                color: "var(--grey40)",
+                color: COLORS.grey6,
                 transform: "translateY(-50%)",
                 transition: "top 150ms, left 150ms, font-size 150ms, color 150ms",
                 lineHeight: 1,
@@ -310,17 +308,17 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                 width: "100%",
                 height: 50,
                 padding: "16px 16px",
-                border: "1px solid var(--grey80)",
+                border: `1px solid ${COLORS.grey4}`,
                 borderRadius: 4,
             },
             "&:focus-within": {
                 "& > label": {
-                    color: "var(--accent-color-darker)",
+                    color: COLORS.primary1,
                     ...isEmpty && raisedStyle,
                 },
                 "& > input": {
-                    borderColor: "var(--accent-color)",
-                    outline: "1px solid var(--accent-color)",
+                    borderColor: COLORS.primary0,
+                    outline: `1px solid ${COLORS.primary0}`,
                 },
             },
         }}>{children}</div>

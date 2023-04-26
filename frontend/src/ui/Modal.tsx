@@ -19,6 +19,7 @@ import { boxError } from "./error";
 import { bug } from "../util/err";
 import { currentRef } from "../util";
 import { focusStyle } from ".";
+import { COLORS } from "../color";
 
 
 type ModalProps = {
@@ -83,7 +84,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                 }}>
                     <div css={{
                         padding: "12px 16px",
-                        borderBottom: "1px solid var(--grey80)",
+                        borderBottom: `1px solid ${COLORS.grey4}`,
                         display: "flex",
                         alignItems: "center",
                     }}>

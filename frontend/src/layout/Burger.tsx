@@ -1,3 +1,5 @@
+import { COLORS } from "../color";
+
 type BurgerMenuProps = {
     hide: () => void;
     items: [] | readonly [JSX.Element] | readonly [JSX.Element, JSX.Element];
@@ -31,7 +33,7 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
             height: "100%",
             width: "clamp(260px, 75%, 450px)",
             overflowY: "auto",
-            borderTop: "1px solid var(--grey80)",
+            borderTop: `1px solid ${COLORS.grey4}`,
             "> :nth-child(2)": { marginTop: 26 },
             li: {
                 borderRadius: 4,
@@ -54,10 +56,10 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
                     "svg:last-of-type": { display: "none" },
                 },
                 "> div": {
-                    backgroundColor: "var(--grey86)",
+                    backgroundColor: COLORS.grey3,
                     borderRadius: 4,
                     border: "none",
-                    color: "var(--nav-color-darker)",
+                    color: COLORS.primary2,
                     padding: 16,
                     margin: "0 8px",
                     "~ ul": { marginLeft: 26 },

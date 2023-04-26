@@ -28,6 +28,7 @@ import { SeriesSelector } from "../ui/SearchableSelect";
 import { WithTooltip } from "../ui/Floating";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
+import { COLORS } from "../color";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -180,7 +181,7 @@ const UploadMain: React.FC = () => {
             marginTop: "max(16px, 10vh - 50px)",
             gap: 32,
         }}>
-            <FiCheckCircle css={{ fontSize: 64, color: "var(--happy-color-lighter)" }} />
+            <FiCheckCircle css={{ fontSize: 64, color: COLORS.happy0 }} />
             {t("upload.finished")}
         </div>;
     } else {
@@ -388,8 +389,8 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                 gap: 16,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: isDragging ? "var(--grey97)" : "none",
-                borderColor: isDragging ? "var(--accent-color)" : "var(--grey80)",
+                backgroundColor: isDragging ? COLORS.grey0 : "none",
+                borderColor: isDragging ? COLORS.primary0 : COLORS.grey4,
                 "--transition-length": "80ms",
                 transition: "background-color var(--transition-length), "
                     + "border-color var(--transition-length)",
@@ -400,7 +401,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                 position: "relative",
                 lineHeight: 1,
                 fontSize: 64,
-                color: "var(--grey40)",
+                color: COLORS.grey6,
             }}>
                 {/* This depends on the SVG elements used in the icon. Technically, the icon pack
                     does not guarantee that and could change it at any time. But we decided it's
@@ -595,10 +596,10 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
         return {
             background: "repeating-linear-gradient("
                 + `${angle}deg,`
-                + `var(${color0}),`
-                + `var(${color0}) ${realSize * amountColor0}px,`
-                + `var(${color1}) ${realSize * amountColor0}px,`
-                + `var(${color1}) ${realSize}px)`,
+                + `${color0},`
+                + `${color0} ${realSize * amountColor0}px,`
+                + `${color1} ${realSize * amountColor0}px,`
+                + `${color1} ${realSize}px)`,
             backgroundSize: `calc(100% + ${size}px) 100%`,
             animation: `${duration}s linear infinite none ${keyframes({
                 "0%": { backgroundPositionX: -30 },
@@ -617,24 +618,24 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
     if (state === "progressing") {
         return <div css={{
             ...shared,
-            ...animatedStripes(-45, "--happy-color", "--happy-color-lighter", 1.5),
+            ...animatedStripes(-45, COLORS.happy2, COLORS.happy0, 1.5),
         }} />;
     } else if (state === "waiting") {
         return <div css={{
             ...shared,
-            ...animatedStripes(45, "--accent-color-darker", "--accent-color", 4),
+            ...animatedStripes(45, COLORS.grey6, COLORS.grey5, 4),
         }} />;
     } else {
         return (
             <div css={{
                 ...shared,
-                backgroundColor: "var(--grey92)",
+                backgroundColor: COLORS.grey2,
             }}>
                 <div css={{
                     height: "100%",
                     transition: "width 200ms",
                     width: `${state * 100}%`,
-                    backgroundColor: "var(--happy-color-lighter)",
+                    backgroundColor: COLORS.happy0,
                 }} />
             </div>
         );

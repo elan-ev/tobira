@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import type { Options } from "react-markdown";
 
 import { TextBlockData$key } from "./__generated__/TextBlockData.graphql";
+import { COLORS } from "../../color";
 
 
 const fragment = graphql`
@@ -34,7 +35,7 @@ const ALLOWED_MARKDOWN_TAGS = [
     "p", "blockquote", "pre", "ul", "ol", "li", "a", "em", "strong", "code", "hr", "img",
 ];
 
-const CODE_BACKGROUND_COLOR = "var(--grey97)";
+const CODE_BACKGROUND_COLOR = COLORS.grey0;
 
 // We override some components emitted by the Markdown parser to add CSS.
 const MARKDOWN_COMPONENTS: Options["components"] = {
@@ -47,7 +48,7 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
     />,
     blockquote: ({ node, ...props }) => <blockquote
         css={{
-            borderLeft: "4px solid var(--grey80)",
+            borderLeft: `4px solid ${COLORS.grey4}`,
             padding: "2px 8px",
             "& > *:first-of-type": { marginTop: 0 },
             "& > *:last-of-type": { marginBottom: 0 },

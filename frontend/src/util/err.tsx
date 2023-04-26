@@ -248,8 +248,8 @@ export class GlobalErrorBoundary
                     fontFamily: "var(--main-font), sans-serif",
                 }}>
                     <div css={{
-                        backgroundColor: "var(--danger-color, #b64235)",
-                        color: "var(--danger-color-bw-contrast, white)",
+                        backgroundColor: "var(--color-danger0, #b64235)",
+                        color: "var(--color-danger0-bw-inverted, white)",
                         borderRadius: 4,
                         padding: 16,
                     }}>
@@ -276,7 +276,7 @@ export class GlobalErrorBoundary
             return <div css={{
                 fontFamily: "var(--main-font), sans-serif",
                 height: "100%",
-                backgroundColor: "var(--grey20, #333333)",
+                backgroundColor: "var(--color-grey0, #333333)",
                 color: "white",
                 padding: 8,
                 display: "flex",

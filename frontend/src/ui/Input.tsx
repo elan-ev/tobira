@@ -3,12 +3,13 @@ import { FiCheck, FiCopy } from "react-icons/fi";
 import { focusStyle } from ".";
 import { Button } from "./Button";
 import { WithTooltip } from "./Floating";
+import { COLORS } from "../color";
 
 
 const style = (error: boolean) => ({
     borderRadius: 4,
-    border: `1px solid ${error ? "var(--danger-color)" : "var(--grey80)"}`,
-    ":focus-visible": { borderColor: "var(--accent-color)" },
+    border: `1px solid ${error ? COLORS.danger0 : COLORS.grey4}`,
+    ":focus-visible": { borderColor: COLORS.focus },
     ...focusStyle({ offset: -1 }),
 });
 

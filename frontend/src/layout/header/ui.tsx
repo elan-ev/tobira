@@ -3,6 +3,7 @@ import React, { ReactNode } from "react";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { focusStyle } from "../../ui";
 import { useTitle } from "../../util";
+import { COLORS } from "../../color";
 
 
 export const HEADER_BASE_PADDING = 24;
@@ -37,7 +38,7 @@ export const ICON_STYLE = {
     fontSize: 28,
     opacity: "0.75",
     ":hover, :focus": { opacity: 1 },
-    ":hover": { outline: "2px solid var(--grey80)" },
+    ":hover": { outline: `2px solid ${COLORS.grey4}` },
     ...focusStyle({}),
     [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 24 },
 };

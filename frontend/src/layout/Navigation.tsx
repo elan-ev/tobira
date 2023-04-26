@@ -12,6 +12,7 @@ import {
     SIDE_BOX_BORDER_RADIUS,
 } from "../ui";
 import { MissingRealmName, sortRealms } from "../routes/util";
+import { COLORS } from "../color";
 
 
 /** The breakpoint, in pixels, where mobile/desktop navigations are swapped. */
@@ -68,7 +69,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 to={parent.path}
                 iconPos="left"
                 css={{
-                    color: "var(--grey40)",
+                    color: COLORS.grey6,
                     padding: "10px 14px",
                     borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
                     ...focusStyle({ inset: true }),
@@ -81,8 +82,8 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
             </LinkWithIcon>
             <div css={{
                 padding: "8px 14px 8px 16px",
-                color: "var(--nav-color-darker)",
-                backgroundColor: "var(--grey86)",
+                color: COLORS.primary2,
+                backgroundColor: COLORS.grey3,
                 border: "2px solid white",
                 borderLeft: "none",
                 borderRight: "none",

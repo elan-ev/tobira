@@ -21,6 +21,7 @@ import { focusStyle } from "../../ui";
 import { ProtoButton } from "../../ui/Button";
 import { FloatingHandle, FloatingContainer, FloatingTrigger, Floating } from "../../ui/Floating";
 import { ExternalLink, ExternalLinkProps } from "../../relay/auth";
+import { COLORS } from "../../color";
 
 
 /** User-related UI in the header. */
@@ -69,18 +70,18 @@ const LoggedOut: React.FC = () => {
             css={{
                 /* Show labelled button on larger screens. */
                 [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    color: "var(--nav-color-bw-contrast)",
+                    color: COLORS.primary0BwInverted,
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
                     marginLeft: 4,
                     borderRadius: 8,
                     padding: "7px 14px",
-                    backgroundColor: "var(--nav-color)",
+                    backgroundColor: COLORS.primary0,
                     svg: { fontSize: 20 },
                     ":hover, :focus": {
-                        backgroundColor: "var(--nav-color-dark)",
-                        color: "var(--nav-color-bw-contrast)",
+                        backgroundColor: COLORS.primary1,
+                        color: COLORS.primary1BwInverted,
                     },
                     ...focusStyle({ offset: 1 }),
                 },
@@ -113,17 +114,17 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 display: "flex",
                 alignItems: "center",
                 backgroundColor: "white",
-                border: "1px solid var(--grey65)",
+                border: `1px solid ${COLORS.grey5}`,
                 gap: 12,
                 borderRadius: 8,
                 padding: "8px 10px 8px 16px",
                 cursor: "pointer",
                 ":hover": {
-                    borderColor: "var(--grey80)",
-                    outline: "2.5px solid var(--grey80)",
+                    borderColor: COLORS.grey4,
+                    outline: `2.5px solid ${COLORS.grey4}`,
                     outlineOffset: -1,
                 },
-                ":focus-visible": { borderColor: "var(--accent-color)" },
+                ":focus-visible": { borderColor: COLORS.focus },
                 ...focusStyle({ offset: -1 }),
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     display: "none",
@@ -147,7 +148,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                         display: "none",
                     },
                 }}>
-                <FiUserCheck css={{ polyline: { stroke: "var(--happy-color-dark)" } }}/>
+                <FiUserCheck css={{ polyline: { stroke: COLORS.happy1 } }}/>
             </ActionIcon>
         </div>
     </WithFloatingMenu>;
@@ -322,7 +323,7 @@ type ReturnButtonProps = {
 
 const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
     <div css={{
-        borderBottom: "1px solid var(--grey65)",
+        borderBottom: `1px solid ${COLORS.grey5}`,
         display: "flex",
         [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
             display: "none",
@@ -349,7 +350,7 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             whiteSpace: "nowrap",
             textOverflow: "ellipsis",
             overflow: "hidden",
-            color: "var(--grey40)",
+            color: COLORS.grey6,
             padding: "24px 12px 24px 4px",
         }}>{children}</span>
     </div>
@@ -374,7 +375,7 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
                 css={{
                     minWidth: 160,
                     ...isCurrentLanguage(lng) && { cursor: "default" },
-                    ":not(:last-child)": { borderBottom: "1px solid var(--grey80)" },
+                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.grey4}` },
                 }}
             >{t("language-name", { lng })}</MenuItem>
         ))}
@@ -422,8 +423,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
         cursor: "pointer",
         whiteSpace: "nowrap",
         color: "black",
-        ...borderBottom && { borderBottom: "1px solid var(--grey80)" },
-        ...borderTop && { borderTop: "1px solid var(--grey80)" },
+        ...borderBottom && { borderBottom: `1px solid ${COLORS.grey4}` },
+        ...borderTop && { borderTop: `1px solid ${COLORS.grey4}` },
         "& > svg": {
             maxHeight: 23,
             fontSize: 23,
@@ -431,7 +432,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
             strokeWidth: 2,
             "& > path": { strokeWidth: "inherit" },
         },
-        ":hover, :focus": { backgroundColor: "var(--grey97)" },
+        ":hover, :focus": { backgroundColor: COLORS.grey0 },
         ...focusStyle({ inset: true }),
     } as const;
 
@@ -526,7 +527,7 @@ const Logout: React.FC = () => {
             })}
             borderTop
             css={{
-                color: "var(--danger-color)",
+                color: COLORS.danger0,
             }}
             {...actionProps}
         >{t("user.logout")}</MenuItem>

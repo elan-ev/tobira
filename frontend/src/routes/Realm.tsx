@@ -25,6 +25,7 @@ import { displayCommitError } from "./manage/Realm/util";
 import { boxError } from "../ui/error";
 import { Spinner } from "../ui/Spinner";
 import { useRouter } from "../router";
+import { COLORS } from "../color";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -167,8 +168,8 @@ const WelcomeMessage: React.FC = () => {
             padding: "8px 16px",
             gap: 16,
             alignItems: "center",
-            backgroundColor: "var(--grey97)",
-            border: "2px dashed var(--happy-color)",
+            backgroundColor: COLORS.grey0,
+            border: `2px dashed ${COLORS.happy0}`,
         }}>
             <FiSunrise css={{ marginTop: 8, fontSize: 32, minWidth: 32 }} />
             <div>
@@ -195,7 +196,7 @@ const UserRealmNote: React.FC<Props> = ({ realm }) => {
             <div css={{
                 fontSize: 14,
                 lineHeight: 1,
-                color: "var(--grey40)",
+                color: COLORS.grey6,
                 display: "flex",
                 gap: 4,
             }}>
@@ -253,7 +254,7 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
             code: {
                 display: "block",
                 fontSize: 14,
-                backgroundColor: "var(--grey97)",
+                backgroundColor: COLORS.grey0,
                 borderRadius: 4,
                 padding: "4px 8px",
             },

@@ -11,6 +11,7 @@ import { displayCommitError } from "../util";
 import { Block } from "../../../../ui/Blocks";
 import { EditButtons } from "./Edit";
 import { EditMode } from "./Edit/EditMode";
+import { COLORS } from "../../../../color";
 
 
 type Props = {
@@ -106,7 +107,7 @@ export const EditBlock: React.FC<Props> = ({
 
         <div css={{
             alignSelf: "stretch",
-            border: "1px solid var(--grey80)",
+            border: `1px solid ${COLORS.grey4}`,
             borderRadius: 4,
             padding: 12,
             ...editMode && {

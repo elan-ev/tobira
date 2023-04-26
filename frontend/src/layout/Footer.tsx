@@ -3,6 +3,7 @@ import CONFIG from "../config";
 import { Link } from "../router";
 import { ABOUT_PATH } from "../routes/paths";
 import { translatedConfig } from "../util";
+import { COLORS } from "../color";
 
 
 export const Footer: React.FC = () => {
@@ -10,7 +11,7 @@ export const Footer: React.FC = () => {
 
     return (
         <footer css={{
-            backgroundColor: "var(--grey95)",
+            backgroundColor: COLORS.grey1,
             padding: 16,
             fontSize: 14,
             textAlign: "center",
@@ -23,7 +24,7 @@ export const Footer: React.FC = () => {
                     display: "inline",
                     "&:not(:first-child):before": {
                         content: "\"•\"",
-                        color: "var(--grey40)",
+                        color: COLORS.grey6,
                         margin: "0 12px",
                     },
                 },
