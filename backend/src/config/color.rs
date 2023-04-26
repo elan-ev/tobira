@@ -2,7 +2,39 @@ use std::fmt;
 
 use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken};
 
-use super::theme::ColorConfig;
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct ColorConfig {
+    /// The primary color used for many different purposes.
+    ///
+    /// Should have a perceived brightness (L in LCH color space) of 35-55. It
+    /// should have a good contrast against a white background. Tobira will
+    /// automatically create darker variants of this color.
+    #[config(default = "#007A96")]
+    pub(crate) primary: Color,
+
+    /// A color used to indicate errors, potentially destructive actions, and
+    /// the like. Use a reddish color here as that's expected by users.
+    #[config(default = "#b64235")]
+    pub(crate) danger: Color,
+
+    /// Grey tone. This is configurable in case you want to have a slightly
+    /// colored grey, e.g. slightly warm.
+    ///
+    /// Only hue and saturation (or more precisely, hue and chroma in the LCH
+    /// color space) are used from this. The brightness of the configured color
+    /// is ignored. Still try using a color with roughly 50% perceived
+    /// brightness to reduce rounding errors.
+    #[config(default = "#777777")]
+    pub(crate) grey50: Color,
+
+    /// A color for positive things or some "call to action" buttons, like the
+    /// login button. Typically green. Only specify this color if your primary
+    /// color is reddish! By default (this color being unspecified), the
+    /// primary color is used for all these purposes. This works well, except
+    /// for cases where your primary color is red.
+    pub(crate) happy: Option<Color>,
+}
 
 
 /// A simple sRGB color.

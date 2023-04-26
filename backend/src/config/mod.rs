@@ -17,7 +17,6 @@ mod opencast;
 mod upload;
 
 pub(crate) use self::{
-    color::Color,
     translated_string::TranslatedString,
     theme::ThemeConfig,
     opencast::OpencastConfig,
