@@ -2,6 +2,8 @@ use std::fmt;
 
 use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken};
 
+use crate::prelude::*;
+
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ColorConfig {
@@ -86,6 +88,57 @@ impl TryFrom<String> for Color {
 type Vars = Vec<(String, String)>;
 
 impl ColorConfig {
+    pub(crate) fn validate(&self) -> Result<()> {
+        // Make sure the primary color is in a good range.
+        //
+        // Regarding the minimum of 35: We have two variations, with one being
+        // having 24 less brightness. So with 35 starting brightness, that only
+        // leaves 11, which is quite dim. The color should still be noticable
+        // there.
+        //
+        // Regarding the maximum: The WCAG contrast between this color and white
+        // only depends on the lightness. And with a lightness of 49, a 4.5:1
+        // contrast is barely reached (minimum for normal text). We round up to
+        // 50 as the WCAG contrast algorithm is not perfect, and 50 might be
+        // fine.
+        let primary = Lch::from_color(self.primary.0.into_format::<f32>());
+        if primary.l < 35.0 || primary.l > 50.0 {
+            warn!(
+                "`theme.color.primary` is too {}! It should have a perceived \
+                    lightness of 35 - 50, but has {:.1}. See the documentation.",
+                if primary.l < 35.0 { "dark" } else { "bright" },
+                primary.l,
+            );
+        }
+
+        // Check danger color with the same reasoning as for `primary`. Except we only create one darker version of it.
+        let danger = Lch::from_color(self.danger.0.into_format::<f32>());
+        if danger.l < 23.0 || danger.l > 50.0 {
+            warn!(
+                "`theme.color.danger` is too {}! It should have a perceived \
+                    lightness of 23 - 50, but has {:.1}. See the documentation.",
+                if danger.l < 35.0 { "dark" } else { "bright" },
+                danger.l,
+            );
+        }
+
+        // Check happy color if it's set. Just the minimum is checked as it's
+        // never used as text color, but otherwise the logic as for `primary`.
+        if let Some(happy) = self.happy {
+            let happy = Lch::from_color(happy.0.into_format::<f32>());
+            if happy.l < 35.0 {
+                warn!(
+                    "`theme.color.happy` is too dark! It should have a perceived \
+                        lightness at least 35, but has {:.1}. See the documentation.",
+                    happy.l,
+                );
+            }
+        }
+
+
+        Ok(())
+    }
+
     pub(super) fn css_vars(&self) -> Vars {
         let mut vars = vec![];
 

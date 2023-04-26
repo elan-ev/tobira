@@ -124,10 +124,11 @@ impl Config {
 
     /// Performs some validation of the configuration to find some
     /// illegal or conflicting values.
-    fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         debug!("Validating configuration...");
         self.opencast.validate()?;
         self.db.validate()?;
+        self.theme.validate()?;
 
         Ok(())
     }
