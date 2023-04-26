@@ -240,17 +240,17 @@ const LoginBox: React.FC = () => {
                     type="submit"
                     disabled={state === "pending"}
                     css={{
-                        backgroundColor: COLORS.primary0,
+                        backgroundColor: COLORS.happy0,
                         borderRadius: 8,
-                        color: COLORS.primary0BwInverted,
+                        color: COLORS.happy0BwInverted,
                         display: "flex",
                         alignItems: "center",
                         gap: 10,
                         margin: "0 auto",
                         padding: "7px 14px",
                         ":hover, :focus": {
-                            backgroundColor: COLORS.primary1,
-                            color: COLORS.primary1BwInverted,
+                            backgroundColor: COLORS.happy1,
+                            color: COLORS.happy1BwInverted,
                         },
                         ...focusStyle({ offset: 1 }),
                     }}
