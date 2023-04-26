@@ -1,43 +1,14 @@
 use std::fmt;
 
+use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken};
 
-/// A simple RGB color.
+use super::theme::ColorConfig;
+
+
+/// A simple sRGB color.
 #[derive(Clone, Copy, serde::Deserialize, serde::Serialize)]
 #[serde(try_from = "String", into = "String")]
-pub(crate) struct Color {
-    pub(crate) r: u8,
-    pub(crate) g: u8,
-    pub(crate) b: u8,
-}
-
-impl Color {
-    /// Returns either "black" or "white", depending on which has the higher
-    /// contrast to `self`. Contrast calculation based on [WCAG2.1 Technique G18][1].
-    ///
-    /// [1]: https://www.w3.org/WAI/WCAG21/Techniques/general/G18.html
-    pub(crate) fn bw_contrast(self) -> &'static str {
-        fn linear_value(color_component: u8) -> f32 {
-            let s_rgb = (color_component as f32) / 255.0;
-            if s_rgb <= 0.04045 {
-                s_rgb / 12.92
-            } else {
-                ((s_rgb + 0.055) / 1.055).powf(2.4)
-            }
-        }
-
-        let relative_luminance = 0.2126 * linear_value(self.r)
-            + 0.7152 * linear_value(self.g)
-            + 0.0722 * linear_value(self.b);
-        let contrast_with_white = 1.05 / (relative_luminance + 0.05);
-        let contrast_with_black = (relative_luminance + 0.05) / 0.05;
-
-        if contrast_with_white < contrast_with_black {
-            "black"
-        } else {
-            "white"
-        }
-    }
-}
+pub(crate) struct Color(Srgb<u8>);
 
 impl fmt::Debug for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -47,7 +18,7 @@ impl fmt::Debug for Color {
 
 impl Into<String> for Color {
     fn into(self) -> String {
-        format!("#{:02x}{:02x}{:02x}", self.r, self.g, self.b)
+        format!("#{:02x}{:02x}{:02x}", self.0.red, self.0.green, self.0.blue)
     }
 }
 
@@ -76,72 +47,118 @@ impl TryFrom<String> for Color {
         let g = 16 * digit(s[3])? + digit(s[4])?;
         let b = 16 * digit(s[5])? + digit(s[6])?;
 
-        Ok(Self { r, g, b })
+        Ok(Self(Srgb::new(r, g, b)))
     }
 }
 
-/// A color represented as HSL triple.
-#[derive(Clone, Copy)]
-pub(crate) struct Hsl {
-    /// Hue in range 0..=360.
-    pub(crate) h: f32,
+type Vars = Vec<(String, String)>;
 
-    /// Saturation in range 0..=1.
-    pub(crate) s: f32,
+impl ColorConfig {
+    pub(super) fn css_vars(&self) -> Vars {
+        let mut vars = vec![];
 
-    /// Lightness in range 0..=1.
-    pub(crate) l: f32,
-}
 
-impl From<Color> for Hsl {
-    fn from(Color { r, g, b }: Color) -> Self {
-        let [r, g, b] = [r, g, b].map(|x| x as f32 / 255.0);
+        fn add(vars: &mut Vars, name: &str, color: Lch) {
+            // We have to calculate the closest sRGB value to the given LCH
+            // value. This is not trivial and there is not actually a "best"
+            // solution. See [this article][1] for more information.
+            // Unfortunately, `palette` does not offer any good way to do that.
+            // Its `FromColor` trait just clamps each RGB channel individually
+            // which can cause bad distortions. One of the most used and also
+            // easiest methods is to keep the lightness and keep the hue, just
+            // reduce the chroma (saturation). Ideally this should be done by
+            // some math to immediately arrive at the best answer, BUT since we
+            // only need to do this for very few colors AND because this whole
+            // code can be thrown away once LCH browser support is better, we
+            // will just use an dumb iterative approach. One could improve this
+            // with binary search, but again, not worth it!
+            //
+            //
+            // TODO: Once `lch` is more widely supported in browsers, we should
+            // not break this down to sRGB, but rather emit the `lch()`
+            // definition directly.
+            //
+            // [1]: https://bottosson.github.io/posts/gamutclipping/
+            let mut muted = color;
+            let srgb;
+            loop {
+                if let Ok(valid_srgb) = Srgb::try_from_color(muted) {
+                    srgb = valid_srgb.into_format::<u8>();
+                    break;
+                } else {
+                    muted.chroma -= 0.2;
+                }
+            }
 
-        let max = r.max(g).max(b);
-        let min = r.min(g).min(b);
-        let range = (max - min) as f32;
-
-        let l = (max + min) as f32 / 2.0;
-        let s = if range == 0.0 {
-            0.0
-        } else {
-            range / (1.0 - (2.0 * l - 1.0).abs())
-        };
-
-        let h = if r == g && g == b {
-            0.0
-        } else if r > g && r > b {
-            (g - b) as f32 / range + (if g < b { 6.0 } else { 0.0 })
-        } else if g > b {
-            (b - r) as f32 / range + 2.0
-        } else {
-            (r - g) as f32 / range + 4.0
-        };
-
-        Self {
-            h: h / 6.0 * 360.0,
-            s,
-            l,
+            let hex = format!("#{:02x}{:02x}{:02x}", srgb.red, srgb.green, srgb.blue);
+            vars.push((format!("--color-{name}"), hex));
         }
-    }
-}
+
+        fn add_with_bw(vars: &mut Vars, name: &str, color: Lch) {
+            add(vars, name, color);
+
+            // Here we calculate the color with the maximum contrast to `color`
+            // (which is either black or white). As there are multiple
+            // definitions for "contrast", there are multiple way to do this.
+            // We could say we want to maximize the WCAG contrast, but:
+            // - This is a bit more involved.
+            // - The WCAG contrast defintion is likely changing soon to address
+            //   new research in perceived contrast.
+            // - In fact, the current WCAG contrast formula is not based
+            //   on "perceived lightness" of a color. See [1].
+            // - The L channel of our color exactly represents the perceived
+            //   lightness. So we can simply check that. This is super close to
+            //   the WCAG contrast anyway.
+            //
+            // Of course, we need to consider the actually used color `srgb`
+            // instead of the ideal `color`. However, as the above algorithm
+            // only changes chrome, the L channel stays the same and we can
+            // just use `color.l`.
+            //
+            // [1]: https://stackoverflow.com/q/76103459/2408867
+            let bw = if color.l > 50.0 { "black" } else { "white" };
+            vars.push((format!("--color-{name}-bw-inverted"), bw.into()));
+        }
 
 
-#[cfg(test)]
-mod tests {
-    use super::Color;
-    #[test]
-    fn test_bw_contrast() {
-        let navigation_green = Color { r: 52, g: 120, b: 86 };
-        let accent_blue = Color { r: 0, g: 122, b: 150 };
-        let neutral_grey = Color { r: 128, g: 128, b: 128};
-        let danger_red = Color { r: 182, g: 66, b: 53 };
-        let happy_green = Color { r: 39, g: 174, b: 96 };
+        // Primary color
+        let primary = Lch::from_color(self.primary.0.into_format::<f32>());
+        add_with_bw(&mut vars, "primary0", primary);
+        add_with_bw(&mut vars, "primary1", primary.darken_fixed(0.12));
+        add_with_bw(&mut vars, "primary2", primary.darken_fixed(0.24));
 
-        assert_eq!(navigation_green.bw_contrast(), "white");
-        assert_eq!(accent_blue.bw_contrast(), "white");
-        assert_eq!(neutral_grey.bw_contrast(), "black");
-        assert_eq!(danger_red.bw_contrast(), "white");
-        assert_eq!(happy_green.bw_contrast(), "black");
+        // Danger color
+        let danger = Lch::from_color(self.danger.0.into_format::<f32>());
+        add_with_bw(&mut vars, "danger0", danger);
+        add_with_bw(&mut vars, "danger1", danger.darken_fixed(0.12));
+
+        // Happy color
+        if let Some(happy) = self.happy {
+            let happy = Lch::from_color(happy.0.into_format::<f32>());
+            add_with_bw(&mut vars, "happy0", happy);
+            add_with_bw(&mut vars, "happy1", happy.darken_fixed(0.12));
+            add_with_bw(&mut vars, "happy2", happy.darken_fixed(0.24));
+        } else {
+            for i in 0..=2 {
+                vars.push((format!("--color-happy{i}"), format!("var(--color-primary{i})")));
+                vars.push((
+                    format!("--color-happy{i}-bw-inverted"),
+                    format!("var(--color-primary{i}-bw-inverted)"),
+                ));
+            }
+        }
+
+        // Grey
+        let grey = Lch::from_color(self.grey50.0.into_format::<f32>());
+        add(&mut vars, "grey0", Lch { l: 97.3, ..grey });
+        add(&mut vars, "grey1", Lch { l: 95.6, ..grey });
+        add(&mut vars, "grey2", Lch { l: 92.9, ..grey });
+        add(&mut vars, "grey3", Lch { l: 87.5, ..grey });
+        add(&mut vars, "grey4", Lch { l: 82.0, ..grey });
+        add(&mut vars, "grey5", Lch { l: 68.0, ..grey });
+        add(&mut vars, "grey6", Lch { l: 43.2, ..grey });
+        add(&mut vars, "grey7", Lch { l: 21.2, ..grey });
+
+        vars
     }
 }
