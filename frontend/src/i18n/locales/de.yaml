@@ -144,7 +144,9 @@ video:
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
+  started-generic: Gestartet
   started: Gestartet {{duration}}
+  starts: Startet 
   starts-in: Startet {{duration}}
   embed:
     button: Einbetten
@@ -161,10 +163,14 @@ video:
   manage: Verwalten
   start: Anfang
   end: Ende
+  ends: Endet
   share:
+    title: $t(video.share.{{title}})
     share-video: Video teilen
     direct-link: Direktlink
+    main: Link
     embed: Einbetten
+    rss: RSS
     direct-link-info: >
       Hiermit wird das Video direkt verlinkt, also ohne seine Position im
       Videoportal (die Seite, auf der es inkludiert ist). Das heißt, dass der

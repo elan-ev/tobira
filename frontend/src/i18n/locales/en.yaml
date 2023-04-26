@@ -141,7 +141,9 @@ video:
   source: Source
   stream-ended: This stream has ended.
   stream-not-started-yet: This stream has not started yet.
+  started-generic: Started
   started: Started {{duration}}
+  starts: Starts
   starts-in: Starts {{duration}}
   embed:
     button: Embed
@@ -157,10 +159,14 @@ video:
   manage: Manage
   start: Start
   end: End
+  ends: Ends
   share:
+    title: $t(video.share.{{title}})
     share-video: Share video
     direct-link: Direct link
+    main: Link
     embed: Embed
+    rss: RSS
     direct-link-info: >
       This links to the video only, without including its location in this video portal
       (the page it is included in). That means the link will continue to work as long as

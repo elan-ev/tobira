@@ -55,6 +55,7 @@ import { realmBreadcrumbs } from "../util/realm";
 import { VideoObject, WithContext } from "schema-dts";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
+import { RelativeDate } from "../ui/time";
 
 
 // ===========================================================================================
@@ -560,34 +561,65 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
     const { created, updated, startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
 
     const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
+    const createdFull = created.toLocaleString(i18n.language, fullOptions);
+    const startFull = startTime?.toLocaleString(i18n.language, fullOptions);
+    const endFull = endTime?.toLocaleString(i18n.language, fullOptions);
+    const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
+        ? updated.toLocaleString(i18n.language, fullOptions)
+        : null;
+
     let inner;
+    let tooltip;
     if (event.isLive && hasEnded) {
         inner = <>
             {t("video.ended") + ": "}
-            {endTime.toLocaleString(i18n.language, fullOptions)}
+            {endFull}
         </>;
-    } else if (event.isLive && hasStarted === false) {
-        inner = <>
-            {t("video.upcoming") + ": "}
-            {startTime.toLocaleString(i18n.language, fullOptions)}
-        </>;
-    } else {
-        const createdDate = created.toLocaleDateString(i18n.language, { dateStyle: "long" });
-        const createdFull = created.toLocaleString(i18n.language, fullOptions);
-        const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
-            ? updated.toLocaleString(i18n.language, fullOptions)
-            : null;
-
-        const tooltip = <>
-            <i>{t("video.created")}</i>: {createdFull}
+    } else if (event.isLive) {
+        tooltip = <>
+            <i>{hasStarted
+                ? t("video.started-generic")
+                : t("video.starts")
+            }
+            </i>: {startFull}
+            {endTime && <>
+                <br />
+                <i>{t("video.ends")}</i>: {endFull}
+            </>
+            }
             {updatedFull && <>
                 <br/>
                 <i>{t("video.updated")}</i>: {updatedFull}
             </>}
         </>;
-        inner = <WithTooltip distance={0} tooltip={tooltip}>
-            <div>{createdDate}</div>
-        </WithTooltip>;
+
+        inner = hasStarted
+            ? <div>
+                <RelativeDate date={startTime} isLive noTooltip />
+            </div>
+            : <div>
+                {t("video.upcoming") + ": "}
+                {startFull}
+            </div>;
+    } else {
+        const createdDate = created.toLocaleDateString(i18n.language, { dateStyle: "long" });
+        const startedDate = startTime
+            ? startTime !== endTime
+                && startTime?.toLocaleDateString(i18n.language, { dateStyle: "long" })
+            : null;
+
+        tooltip = <>
+            {startedDate
+                ? <><i>{t("video.started-generic")}</i>: {startFull}</>
+                : <><i>{t("video.created")}</i>: {createdFull}</>
+            }
+            {updatedFull && <>
+                <br/>
+                <i>{t("video.updated")}</i>: {updatedFull}
+            </>}
+        </>;
+
+        inner = <div>{startedDate ?? createdDate}</div>;
     }
 
     return (
@@ -596,7 +628,11 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             position: "relative",
             color: COLORS.grey6,
             fontSize: 14,
-        }}>{inner}</div>
+        }}>
+            <WithTooltip distance={0} tooltip={tooltip}>
+                {inner}
+            </WithTooltip>
+        </div>
     );
 };
 
