@@ -37,7 +37,7 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false
             paddingLeft: 0,
             alignItems: "center",
             justifyContent: "space-between",
-            backgroundColor: "white",
+            backgroundColor: COLORS.background,
         }}>
             {loginMode ? <LoginMode /> : content}
         </header>

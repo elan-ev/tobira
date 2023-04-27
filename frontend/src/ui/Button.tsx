@@ -63,7 +63,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
     const notDisabledStyle = match(kind, {
         "normal": () => ({
             border: `1px solid ${COLORS.grey5}`,
-            color: "black",
+            color: COLORS.foreground,
             "&:hover, &:focus": {
                 border: `1px solid ${COLORS.grey6}`,
                 backgroundColor: COLORS.grey2,

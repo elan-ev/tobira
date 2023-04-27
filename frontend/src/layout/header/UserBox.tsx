@@ -87,7 +87,7 @@ const LoggedOut: React.FC = () => {
                 },
                 /* Show only the icon on mobile devices. */
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    color: "black",
+                    color: COLORS.foreground,
                     ...ICON_STYLE,
                     span: { display: "none" },
                 },
@@ -113,7 +113,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             <ProtoButton title={t("user.settings")} css={{
                 display: "flex",
                 alignItems: "center",
-                backgroundColor: "white",
+                backgroundColor: COLORS.background,
                 border: `1px solid ${COLORS.grey5}`,
                 gap: 12,
                 borderRadius: 8,
@@ -290,7 +290,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                         ":last-of-type": { borderRadius: "0 0 8px 8px" },
                     },
                     [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                        backgroundColor: "white",
+                        backgroundColor: COLORS.background,
                         borderRadius: "0 0 8px 8px",
                         marginTop: 0,
                         position: "fixed",
@@ -422,7 +422,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
         ...indent && { paddingLeft: 30 },
         cursor: "pointer",
         whiteSpace: "nowrap",
-        color: "black",
+        color: COLORS.foreground,
         ...borderBottom && { borderBottom: `1px solid ${COLORS.grey4}` },
         ...borderTop && { borderTop: `1px solid ${COLORS.grey4}` },
         "& > svg": {

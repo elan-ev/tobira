@@ -292,7 +292,7 @@ type FloatingProps = React.PropsWithChildren<{
 export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
     ({
         children,
-        backgroundColor = "white",
+        backgroundColor = COLORS.background,
         borderColor = COLORS.grey5,
         borderWidth = 1,
         shadowColor = "rgba(0, 0, 0, 20%)",

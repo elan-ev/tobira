@@ -29,7 +29,7 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
             justifyContent: "space-between",
             top: 0,
             right: 0,
-            backgroundColor: "white",
+            backgroundColor: COLORS.background,
             height: "100%",
             width: "clamp(260px, 75%, 450px)",
             overflowY: "auto",

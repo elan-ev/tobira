@@ -103,7 +103,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                 shadowBlur={12}
                 shadowColor="rgba(0, 0, 0, 30%)"
                 css={{
-                    backgroundColor: "white",
+                    backgroundColor: COLORS.background,
                     width: 200,
                 }}
             >

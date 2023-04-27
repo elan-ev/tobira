@@ -104,11 +104,11 @@ const gridTile = css({
     backgroundColor: COLORS.grey0,
     padding: "8px 16px 16px 16px",
     fontSize: 14,
-    color: "black",
+    color: COLORS.foreground,
     textAlign: "left",
     "&:is(button, a)": {
         "&:hover, &:focus": {
-            color: "black",
+            color: COLORS.foreground,
             borderColor: COLORS.grey4,
             boxShadow: `1px 1px 5px ${COLORS.grey2}`,
             cursor: "pointer",

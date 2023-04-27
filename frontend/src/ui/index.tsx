@@ -31,7 +31,7 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             "& a": { ...focusStyle({ inset: true }) },
             "& > li": {
                 backgroundColor: COLORS.grey1,
-                borderBottom: "2px solid white",
+                borderBottom: `2px solid ${COLORS.background}`,
                 "&:last-of-type": { borderBottom: "none" },
                 "& > *": {
                     display: "flex",

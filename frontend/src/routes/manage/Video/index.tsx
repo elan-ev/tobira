@@ -163,7 +163,7 @@ const EventTable: React.FC<EventTableProps> = ({ events, vars }) => {
                 position: "sticky",
                 top: 0,
                 zIndex: 10,
-                backgroundColor: "white",
+                backgroundColor: COLORS.background,
                 "&  > tr > th": {
                     borderBottom: `1px solid ${COLORS.grey4}`,
                     textAlign: "left",
@@ -372,7 +372,7 @@ const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (
                     color: COLORS.grey6,
                     cursor: "pointer",
                     ":hover, :focus": {
-                        color: "black",
+                        color: COLORS.foreground,
                     },
                 },
         }}

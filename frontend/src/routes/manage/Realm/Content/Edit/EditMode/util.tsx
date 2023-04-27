@@ -32,7 +32,7 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
                 border: `1px solid ${COLORS.grey5}`,
                 padding: "6px 12px",
                 cursor: "pointer",
-                backgroundColor: "white",
+                backgroundColor: COLORS.background,
             },
             "& > input:checked + div": {
                 backgroundColor: COLORS.grey1,

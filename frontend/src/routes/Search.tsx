@@ -214,7 +214,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                 }}
                 css={{ width: "100%" }}
             />
-            <div css={{ color: "black" }}>
+            <div css={{ color: COLORS.foreground }}>
                 <h3 css={{
                     marginBottom: 6,
                     ...ellipsisOverflowCss(2),

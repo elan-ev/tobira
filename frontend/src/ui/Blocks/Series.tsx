@@ -799,7 +799,7 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
                 ":hover, :focus-visible": {
                     backgroundColor: COLORS.grey4,
                     borderRadius: 4,
-                    color: "black",
+                    color: COLORS.foreground,
                 },
                 ...focusStyle({}),
             },
@@ -863,7 +863,7 @@ const Item: React.FC<ItemProps> = ({
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
-            color: "black",
+            color: COLORS.foreground,
         }}>
             <h3 css={{
                 display: "flex",
@@ -918,7 +918,7 @@ const Item: React.FC<ItemProps> = ({
         display: "block",
         padding: 6,
         borderRadius: 12,
-        "& a": { color: "black", textDecoration: "none" },
+        "& a": { color: COLORS.foreground, textDecoration: "none" },
         ...active && {
             backgroundColor: COLORS.grey3,
         },

@@ -77,7 +77,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
         >
             <FocusTrap>
                 <div css={{
-                    backgroundColor: "white",
+                    backgroundColor: COLORS.background,
                     borderRadius: 4,
                     minWidth: "clamp(300px, 90%, 400px)",
                     margin: 16,

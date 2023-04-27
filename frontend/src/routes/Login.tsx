@@ -296,7 +296,7 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                 lineHeight: 1,
                 borderRadius: 4,
                 padding: "0 4px",
-                backgroundColor: "white",
+                backgroundColor: COLORS.background,
                 pointerEvents: "none",
                 "&:valid": {
                     border: "1px solid blue",

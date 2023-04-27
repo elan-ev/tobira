@@ -84,7 +84,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 padding: "8px 14px 8px 16px",
                 color: COLORS.primary2,
                 backgroundColor: COLORS.grey3,
-                border: "2px solid white",
+                border: `2px solid ${COLORS.background}`,
                 borderLeft: "none",
                 borderRight: "none",
             }}>{realm.name ?? <MissingRealmName />}</div>
