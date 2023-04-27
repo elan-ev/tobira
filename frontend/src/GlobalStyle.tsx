@@ -69,6 +69,7 @@ const GLOBAL_STYLE = css({
         "--min-page-width": "320px",
     },
     body: {
+        backgroundColor: COLORS.background,
         fontFamily: "var(--main-font), sans-serif",
         fontWeight: 400,
 
