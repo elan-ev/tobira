@@ -68,28 +68,40 @@ impl ThemeConfig {
     /// Returns a string containing CSS that sets lots of variables on the
     /// `:root` element.
     pub(crate) fn to_css(&self) -> String {
-        let mut out = String::from(":root {\n");
+        let mut out = String::new();
 
         // Helper macros
         use std::fmt::Write;
-        macro_rules! add {
-            ($key:expr => $value:expr) => {{
-                out.push_str("        ");
-                writeln!(out, "{}: {};", $key, $value).unwrap();
+        macro_rules! w {
+            ($fmt:literal $($t:tt)*) => {{
+                writeln!(out, concat!("      ", $fmt) $($t)*).unwrap();
             }}
         }
 
 
         // Header and logo sizes.
-        add!("--header-height" => format_args!("{}px", self.header_height));
+        out.push_str(":root {\n");
+        w!("  --header-height: {}px;", self.header_height);
+        w!("}}");
+
 
         // Colors
-        for (key, value) in self.color.css_vars() {
-            add!(key => value);
+        let (light, dark) = self.color.css_vars();
+        w!("html[data-color-scheme=\"light\"], html:not([data-color-scheme]) {{");
+        for (key, value) in light {
+            w!("  {}: {};", key, value);
         }
+        w!("  color-scheme: light;");
+        w!("}}");
+
+        w!("html[data-color-scheme=\"dark\"] {{");
+        for (key, value) in dark {
+            w!("  {}: {};", key, value);
+        }
+        w!("  color-scheme: dark;");
+        w!("}}");
 
 
-        out.push_str("      }");
         out
     }
 }

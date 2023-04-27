@@ -1,6 +1,6 @@
 use std::fmt;
 
-use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken};
+use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken, Lighten};
 
 use crate::prelude::*;
 
@@ -139,8 +139,10 @@ impl ColorConfig {
         Ok(())
     }
 
-    pub(super) fn css_vars(&self) -> Vars {
-        let mut vars = vec![];
+    /// Returns the CSS variables for light and dark themes, respectively.
+    pub(super) fn css_vars(&self) -> (Vars, Vars) {
+        let mut light = vec![];
+        let mut dark = vec![];
 
 
         fn add(vars: &mut Vars, name: &str, color: Lch) {
@@ -206,44 +208,87 @@ impl ColorConfig {
         }
 
 
+        fn dark_color(light: Lch) -> Lch {
+            // Inverting the lightness is not enough as the background color in
+            // dark mode is not pure black. To achieve the same contrast, we
+            // make it so that the dark color has the same lightness difference
+            // from the dark background, as the light color has from white.
+            // `100 - light.l` is the difference in light mode and `7` is the
+            // lightness of the dark background.
+            Lch { l: 7.0 + 100.0 - light.l, ..light }
+        }
+
         // Primary color
         let primary = Lch::from_color(self.primary.0.into_format::<f32>());
-        add_with_bw(&mut vars, "primary0", primary);
-        add_with_bw(&mut vars, "primary1", primary.darken_fixed(0.12));
-        add_with_bw(&mut vars, "primary2", primary.darken_fixed(0.24));
+        add_with_bw(&mut light, "primary0", primary);
+        add_with_bw(&mut light, "primary1", primary.darken_fixed(0.12));
+        add_with_bw(&mut light, "primary2", primary.darken_fixed(0.24));
+        let primary_dark = dark_color(primary);
+        add_with_bw(&mut dark, "primary0", primary_dark);
+        add_with_bw(&mut dark, "primary1", primary_dark.lighten_fixed(0.12));
+        add_with_bw(&mut dark, "primary2", primary_dark.lighten_fixed(0.24));
 
         // Danger color
         let danger = Lch::from_color(self.danger.0.into_format::<f32>());
-        add_with_bw(&mut vars, "danger0", danger);
-        add_with_bw(&mut vars, "danger1", danger.darken_fixed(0.12));
+        add_with_bw(&mut light, "danger0", danger);
+        add_with_bw(&mut light, "danger1", danger.darken_fixed(0.12));
+        let danger_dark = dark_color(danger);
+        add_with_bw(&mut dark, "danger0", danger_dark);
+        add_with_bw(&mut dark, "danger1", danger_dark.lighten_fixed(0.12));
 
         // Happy color
         if let Some(happy) = self.happy {
             let happy = Lch::from_color(happy.0.into_format::<f32>());
-            add_with_bw(&mut vars, "happy0", happy);
-            add_with_bw(&mut vars, "happy1", happy.darken_fixed(0.12));
-            add_with_bw(&mut vars, "happy2", happy.darken_fixed(0.24));
+            add_with_bw(&mut light, "happy0", happy);
+            add_with_bw(&mut light, "happy1", happy.darken_fixed(0.12));
+            add_with_bw(&mut light, "happy2", happy.darken_fixed(0.24));
+            let happy_dark = dark_color(happy);
+            add_with_bw(&mut dark, "happy0", happy_dark);
+            add_with_bw(&mut dark, "happy1", happy_dark.lighten_fixed(0.12));
+            add_with_bw(&mut dark, "happy2", happy_dark.lighten_fixed(0.24));
         } else {
             for i in 0..=2 {
-                vars.push((format!("--color-happy{i}"), format!("var(--color-primary{i})")));
-                vars.push((
-                    format!("--color-happy{i}-bw-inverted"),
-                    format!("var(--color-primary{i}-bw-inverted)"),
-                ));
+                for vars in [&mut light, &mut dark] {
+                    vars.push((
+                        format!("--color-happy{i}"),
+                        format!("var(--color-primary{i})"),
+                    ));
+                    vars.push((
+                        format!("--color-happy{i}-bw-inverted"),
+                        format!("var(--color-primary{i}-bw-inverted)"),
+                    ));
+                }
             }
         }
 
-        // Grey
-        let grey = Lch::from_color(self.grey50.0.into_format::<f32>());
-        add(&mut vars, "grey0", Lch { l: 97.3, ..grey });
-        add(&mut vars, "grey1", Lch { l: 95.6, ..grey });
-        add(&mut vars, "grey2", Lch { l: 92.9, ..grey });
-        add(&mut vars, "grey3", Lch { l: 87.5, ..grey });
-        add(&mut vars, "grey4", Lch { l: 82.0, ..grey });
-        add(&mut vars, "grey5", Lch { l: 68.0, ..grey });
-        add(&mut vars, "grey6", Lch { l: 43.2, ..grey });
-        add(&mut vars, "grey7", Lch { l: 21.2, ..grey });
 
-        vars
+        // Grey
+        let base_grey = Lch::from_color(self.grey50.0.into_format::<f32>());
+        add(&mut light, "grey0", Lch { l: 97.3, ..base_grey });
+        add(&mut light, "grey1", Lch { l: 95.6, ..base_grey });
+        add(&mut light, "grey2", Lch { l: 92.9, ..base_grey });
+        add(&mut light, "grey3", Lch { l: 87.5, ..base_grey });
+        add(&mut light, "grey4", Lch { l: 82.0, ..base_grey });
+        add(&mut light, "grey5", Lch { l: 68.0, ..base_grey });
+        add(&mut light, "grey6", Lch { l: 43.2, ..base_grey });
+        add(&mut light, "grey7", Lch { l: 21.2, ..base_grey });
+
+        add(&mut dark, "grey0", Lch { l: 9.5, ..base_grey });
+        add(&mut dark, "grey1", Lch { l: 11.2, ..base_grey });
+        add(&mut dark, "grey2", Lch { l: 13.9, ..base_grey });
+        add(&mut dark, "grey3", Lch { l: 17.5, ..base_grey });
+        add(&mut dark, "grey4", Lch { l: 24.0, ..base_grey });
+        add(&mut dark, "grey5", Lch { l: 36.0, ..base_grey });
+        add(&mut dark, "grey6", Lch { l: 60.0, ..base_grey });
+        add(&mut dark, "grey7", Lch { l: 80.0, ..base_grey });
+
+
+        // Foreground & background
+        add(&mut light, "background", Lch::new(100.0, 0.0, 0.0));
+        add(&mut light, "foreground", Lch::new(0.0, 0.0, 0.0));
+        add(&mut dark, "background", Lch { l: 7.0, ..base_grey });
+        add(&mut dark, "foreground", Lch::new(100.0, 0.0, 0.0));
+
+        (light, dark)
     }
 }

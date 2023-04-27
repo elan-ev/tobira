@@ -28,8 +28,8 @@ export const COLORS = {
     grey6: "var(--color-grey6)",
     grey7: "var(--color-grey7)",
 
-    background: "white",
-    foreground: "black",
+    background: "var(--color-background)",
+    foreground: "var(--color-foreground)",
 
     // Additional aliases for colors set by the backend.
     focus: "var(--color-primary1)",
