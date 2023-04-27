@@ -94,6 +94,11 @@ main-menu:
   label: Menu
   settings: Settings
   about: About
+  color-scheme:
+    label: Color scheme
+    auto: Auto
+    light: Light
+    dark: Dark
 
 user:
   login: Login

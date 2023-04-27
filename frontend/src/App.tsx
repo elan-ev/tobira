@@ -11,6 +11,7 @@ import { MatchedRoute } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
+import { ColorSchemeProvider } from "./color";
 
 
 type Props = {
@@ -20,19 +21,21 @@ type Props = {
 export const App: React.FC<Props> = ({ initialRoute }) => (
     <StrictMode>
         <SilenceEmotionWarnings>
-            <GlobalStyle />
-            <GlobalErrorBoundary>
-                <RelayEnvironmentProvider {...{ environment }}>
-                    <Router initialRoute={initialRoute}>
-                        <GraphQLErrorBoundary>
-                            <MenuProvider>
-                                <LoadingIndicator />
-                                <ActiveRoute />
-                            </MenuProvider>
-                        </GraphQLErrorBoundary>
-                    </Router>
-                </RelayEnvironmentProvider>
-            </GlobalErrorBoundary>
+            <ColorSchemeProvider>
+                <GlobalStyle />
+                <GlobalErrorBoundary>
+                    <RelayEnvironmentProvider {...{ environment }}>
+                        <Router initialRoute={initialRoute}>
+                            <GraphQLErrorBoundary>
+                                <MenuProvider>
+                                    <LoadingIndicator />
+                                    <ActiveRoute />
+                                </MenuProvider>
+                            </GraphQLErrorBoundary>
+                        </Router>
+                    </RelayEnvironmentProvider>
+                </GlobalErrorBoundary>
+            </ColorSchemeProvider>
         </SilenceEmotionWarnings>
     </StrictMode>
 );

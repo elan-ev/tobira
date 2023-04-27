@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle, FiArrowLeft, FiCheck, FiUserCheck, FiChevronDown,
-    FiFolder, FiLogOut, FiUpload, FiLogIn, FiFilm, FiVideo,
+    FiFolder, FiLogOut, FiUpload, FiLogIn, FiFilm, FiVideo, FiMoon, FiSun,
 } from "react-icons/fi";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 
@@ -21,7 +21,7 @@ import { focusStyle } from "../../ui";
 import { ProtoButton } from "../../ui/Button";
 import { FloatingHandle, FloatingContainer, FloatingTrigger, Floating } from "../../ui/Floating";
 import { ExternalLink, ExternalLinkProps } from "../../relay/auth";
-import { COLORS } from "../../color";
+import { COLORS, useColorScheme } from "../../color";
 
 
 /** User-related UI in the header. */
@@ -50,6 +50,7 @@ export const UserBox: React.FC = () => {
 
     return <>
         <LanguageSettings />
+        <ColorSchemeSettings />
         {boxContent}
     </>;
 };
@@ -155,7 +156,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
 };
 
 
-type MenuType = "main" | "language";
+type MenuType = "main" | "language" | "color-scheme";
 
 type WithFloatingMenuProps = {
     children: ReactElement;
@@ -245,6 +246,10 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
             <ReturnButton onClick={close}>{t("language")}</ReturnButton>
             <LanguageMenu close={close} />
         </>,
+        "color-scheme": () => <>
+            <ReturnButton onClick={close}>{t("language")}</ReturnButton>
+            <ColorSchemeMenu close={close} />
+        </>,
     });
 
     return (
@@ -315,6 +320,17 @@ export const LanguageSettings: React.FC = () => {
     </WithFloatingMenu>;
 };
 
+export const ColorSchemeSettings: React.FC = () => {
+    const { t } = useTranslation();
+    const { scheme } = useColorScheme();
+
+    return <WithFloatingMenu type="color-scheme">
+        <ActionIcon title={t("main-menu.color-scheme.label")}>
+            {scheme === "light" ? <FiMoon /> : <FiSun />}
+        </ActionIcon>
+    </WithFloatingMenu>;
+};
+
 
 type ReturnButtonProps = {
     onClick: () => void;
@@ -381,6 +397,33 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
         ))}
     </>;
 
+};
+
+/** Entries in the menu related to language. */
+const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
+    const { t } = useTranslation();
+    const { scheme, isAuto, update } = useColorScheme();
+    const currentPref = isAuto ? "auto" : scheme;
+
+    const choices = ["auto", "light", "dark"] as const;
+
+    return <>
+        {choices.map(choice => (
+            <MenuItem
+                key={choice}
+                icon={currentPref === choice ? <FiCheck /> : undefined}
+                onClick={() => {
+                    update(choice);
+                    close();
+                }}
+                css={{
+                    minWidth: 160,
+                    ...currentPref === choice && { cursor: "default" },
+                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.grey4}` },
+                }}
+            >{t(`main-menu.color-scheme.${choice}`)}</MenuItem>
+        ))}
+    </>;
 };
 
 type MenuItemProps = {
