@@ -205,3 +205,7 @@ export const toIsoDuration = (milliseconds: number): string => {
 
     return `PT${hours}H${minutes}M${seconds}S`;
 };
+
+export const isExperimentalFlagSet = () => (
+    window.localStorage.getItem("tobiraExperimentalFeatures") === "true"
+);

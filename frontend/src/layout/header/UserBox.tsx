@@ -11,7 +11,7 @@ import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { isRealUser, User, useUser } from "../../User";
-import { match } from "../../util";
+import { isExperimentalFlagSet, match } from "../../util";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
@@ -50,7 +50,7 @@ export const UserBox: React.FC = () => {
 
     return <>
         <LanguageSettings />
-        <ColorSchemeSettings />
+        {isExperimentalFlagSet() && <ColorSchemeSettings />}
         {boxContent}
     </>;
 };
