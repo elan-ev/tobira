@@ -30,6 +30,7 @@ type ModalProps = {
 export type ModalHandle = {
     open: () => void;
     close?: () => void;
+    isOpen?: () => boolean;
 };
 
 export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
@@ -41,9 +42,10 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
     const [isOpen, setOpen] = useState(false);
 
     useImperativeHandle(ref, () => ({
+        isOpen: () => isOpen,
         open: () => setOpen(true),
         close: closable ? (() => setOpen(false)) : undefined,
-    }));
+    }), [isOpen, closable]);
 
     useEffect(() => {
         const handleEscape = (event: KeyboardEvent) => {
@@ -72,7 +74,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                zIndex: 2000,
+                zIndex: 10001,
             }}
         >
             <FocusTrap>
