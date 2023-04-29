@@ -25,6 +25,7 @@ import { COLORS } from "../color";
 type ModalProps = {
     title: string;
     closable?: boolean;
+    className?: string;
 };
 
 export type ModalHandle = {
@@ -37,6 +38,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
     title,
     closable = true,
     children,
+    className,
 }, ref) => {
     const { t } = useTranslation();
     const [isOpen, setOpen] = useState(false);
@@ -78,7 +80,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
             }}
         >
             <FocusTrap>
-                <div css={{
+                <div {...{ className }} css={{
                     backgroundColor: COLORS.background,
                     borderRadius: 4,
                     minWidth: "clamp(300px, 90%, 400px)",
