@@ -167,6 +167,7 @@ video:
     main: Link
     embed: Embed
     rss: RSS
+    show-qr-code: Show QR code
     direct-link-info: >
       This links to the video only, without including its location in this video portal
       (the page it is included in). That means the link will continue to work as long as

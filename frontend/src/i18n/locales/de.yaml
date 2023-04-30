@@ -171,6 +171,7 @@ video:
     main: Link
     embed: Einbetten
     rss: RSS
+    show-qr-code: QR Code anzeigen
     direct-link-info: >
       Hiermit wird das Video direkt verlinkt, also ohne seine Position im
       Videoportal (die Seite, auf der es inkludiert ist). Das heißt, dass der

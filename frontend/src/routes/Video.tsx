@@ -6,6 +6,8 @@ import {
     FiCode, FiSettings, FiShare2, FiDownload,
 } from "react-icons/fi";
 import { HiLink } from "react-icons/hi";
+import { HiOutlineQrCode } from "react-icons/hi2";
+import { QRCodeCanvas } from "qrcode.react";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -26,6 +28,7 @@ import {
     translatedConfig,
     match,
     useOnOutsideClick,
+    currentRef,
 } from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
@@ -59,6 +62,7 @@ import { VideoObject, WithContext } from "schema-dts";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
+import { Modal, ModalHandle } from "../ui/Modal";
 
 
 // ===========================================================================================
@@ -428,7 +432,8 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const { t } = useTranslation();
     const [state, setState] = useState<State>("closed");
     const ref = useRef(null);
-    useOnOutsideClick(ref, () => setState("closed"));
+    const qrModalRef = useRef<ModalHandle>(null);
+    useOnOutsideClick(ref, () => !qrModalRef.current?.isOpen?.() && setState("closed"));
 
     const isActive = (label: State) => label === state;
 
@@ -456,7 +461,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         },
         "&[disabled]": {
             cursor: "default",
-            backgroundColor: "white",
+            backgroundColor: COLORS.background,
             borderBottom: "none",
             svg: { color: COLORS.primary0 },
         },
@@ -497,6 +502,24 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         ))}
     </div>;
 
+    const ShowQRCodeButton: React.FC<{ target: string; label: State }> = ({ target, label }) => <>
+        <Button
+            onClick={() => currentRef(qrModalRef).open()}
+            css={{ width: "max-content" }}
+        >
+            <HiOutlineQrCode />
+            {t("video.share.show-qr-code")}
+        </Button>
+        <Modal ref={qrModalRef}
+            title={t("video.share.title", { title: label })}
+            css={{ minWidth: "max-content" }}
+        >
+            <div css={{ display: "flex", justifyContent: "center" }}>
+                <QRCodeCanvas value={target} size={250} css={{ margin: 16 }}/>
+            </div>
+        </Modal>
+    </>;
+
     const inner = match(state, {
         "closed": () => null,
         "main": () => <>
@@ -507,6 +530,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 // TODO
                 value={window.location.href}
             />
+            <ShowQRCodeButton target={window.location.href} label={state} />
         </>,
         "embed": () => {
             const ar = event.syncedData == null
@@ -535,6 +559,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     multiline
                     css={{ fontSize: 14, width: 400 }}
                 />
+                <ShowQRCodeButton target={embedCode} label={state} />
             </>;
         },
         "rss": () => {
