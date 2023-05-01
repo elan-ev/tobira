@@ -148,6 +148,9 @@ video:
   started: Gestartet {{duration}}
   starts: Startet 
   starts-in: Startet {{duration}}
+  description:
+    show-more: Mehr anzeigen
+    show-less: Weniger anzeigen
   embed:
     button: Einbetten
     title: Video einbetten

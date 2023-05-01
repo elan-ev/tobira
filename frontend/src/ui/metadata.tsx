@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ellipsisOverflowCss } from ".";
 import { COLORS } from "../color";
@@ -70,37 +70,39 @@ type DescriptionProps = {
  * Display an event's or series' description. The text is transformed slightly
  * into proper paragraphs.
  */
-export const Description: React.FC<DescriptionProps> = ({ text, className }) => {
-    const { t } = useTranslation();
+export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
+    ({ text, className }, ref) => {
+        const { t } = useTranslation();
 
-    const stripped = text?.trim();
-    if (!stripped) {
-        return <div {...{ className }} css={{ fontStyle: "italic" }}>
-            {t("manage.my-videos.no-description")}
-        </div>;
-    }
+        const stripped = text?.trim();
+        if (!stripped) {
+            return <div {...{ className }} css={{ fontStyle: "italic" }}>
+                {t("manage.my-videos.no-description")}
+            </div>;
+        }
 
-    // We split the whole description by empty lines (two or more consecutive
-    // newlines). That's the typical "make paragraphs from text" algorithm also
-    // used by Markdown. However, we capture those newlines to be able to
-    // output any extra (in addition to two) newlines. If a user typed many
-    // newlines in their description, they probably want to have more space
-    // there. The newlines between and within the paragraphs are then displayed
-    // via `white-space: pre-line` below.
-    const paragraphs = stripped.split(/(\n{2,})/);
+        // We split the whole description by empty lines (two or more consecutive
+        // newlines). That's the typical "make paragraphs from text" algorithm also
+        // used by Markdown. However, we capture those newlines to be able to
+        // output any extra (in addition to two) newlines. If a user typed many
+        // newlines in their description, they probably want to have more space
+        // there. The newlines between and within the paragraphs are then displayed
+        // via `white-space: pre-line` below.
+        const paragraphs = stripped.split(/(\n{2,})/);
 
-    // TODO: auto link URL-like things?
-    return (
-        <div {...{ className }} css={{
-            lineHeight: "1.43em",
-            whiteSpace: "pre-line",
-            "& > p:not(:first-child)": {
-                marginTop: 8,
-            },
-        }}>
-            {paragraphs.map((s, i) => i % 2 === 0
-                ? <p key={i}>{s}</p>
-                : s.slice(2))}
-        </div>
-    );
-};
+        // TODO: auto link URL-like things?
+        return (
+            <div ref ={ref} {...{ className }} css={{
+                lineHeight: "1.43em",
+                whiteSpace: "pre-line",
+                "& > p:not(:first-child)": {
+                    marginTop: 8,
+                },
+            }}>
+                {paragraphs.map((s, i) => i % 2 === 0
+                    ? <p key={i}>{s}</p>
+                    : s.slice(2))}
+            </div>
+        );
+    },
+);
