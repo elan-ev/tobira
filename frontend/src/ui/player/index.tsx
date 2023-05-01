@@ -117,6 +117,8 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
 
     return (
         <div className={className} css={{
+            display: "flex",
+            flexDirection: "column",
             // We want to be able to see the full header, the video title and some metadata.
             // So: full height minus header, minus separation line (18px), minus main
             // padding (16px), minus breadcrumbs (roughly 42px), minus the amount of space
