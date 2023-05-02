@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ellipsisOverflowCss } from ".";
+import { COLORS } from "../color";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -46,13 +47,13 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
     if (text === null) {
         return <div {...{ className }} css={{
             ...sharedStyle,
-            color: "var(--grey65)",
+            color: COLORS.grey5,
             fontStyle: "italic",
         }}>{t("manage.my-videos.no-description")}</div>;
     } else {
         return <div {...{ className }} css={{
             ...sharedStyle,
-            color: "var(--grey40)",
+            color: COLORS.grey6,
             maxWidth: 800,
             ...ellipsisOverflowCss(lines),
         }}>{text}</div>;

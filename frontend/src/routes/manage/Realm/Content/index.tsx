@@ -25,6 +25,7 @@ import { PageTitle } from "../../../../layout/header/ui";
 import { RealmEditLinks } from "../../../Realm";
 import { bug } from "../../../../util/err";
 import { realmBreadcrumbs } from "../../../../util/realm";
+import { COLORS } from "../../../../color";
 
 
 export const PATH = "/~manage/realm/content";
@@ -185,7 +186,8 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: "rgba(255, 255, 255, 0.75)",
+                    backgroundColor: COLORS.background,
+                    opacity: 0.75,
                     position: "absolute",
                     width: "100%",
                     height: "100%",

@@ -10,6 +10,7 @@ import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
 import { RelativeDate } from "../time";
 import PaellaPlayer from "./Paella";
+import { COLORS } from "../../color";
 
 
 export type PlayerProps = {
@@ -206,7 +207,7 @@ export const isHlsTrack = (t: Track) =>
 export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => (
     <div css={{
         height: "100%",
-        backgroundColor: "var(--grey20)",
+        backgroundColor: COLORS.grey7,
         color: "white",
         padding: 8,
         display: "flex",

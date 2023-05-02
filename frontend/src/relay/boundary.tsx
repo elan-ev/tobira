@@ -8,6 +8,7 @@ import { Card } from "../ui/Card";
 import { ErrorDisplay, NetworkError } from "../util/err";
 import { RouterControl } from "../rauta";
 import { UserProvider, Props as UserProviderProps } from "../User";
+import { COLORS } from "../color";
 
 
 type Props = {
@@ -92,7 +93,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                                 <Card kind="error"><ErrorDisplay error={error} /></Card>
                             </div>
                             <details css={{
-                                border: "1px solid var(--grey65)",
+                                border: `1px solid ${COLORS.grey5}`,
                                 borderRadius: 4,
                                 padding: "6px 8px",
                                 marginTop: "min(150px, 12vh)",
@@ -102,7 +103,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                                     {t("errors.detailed-error-info")}
                                 </summary>
                                 <pre css={{
-                                    backgroundColor: "var(--grey97)",
+                                    backgroundColor: COLORS.grey0,
                                     borderRadius: 4,
                                     padding: "12px 16px",
                                     fontSize: 14,

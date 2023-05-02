@@ -12,6 +12,7 @@ import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
 import { buttonStyle } from "../../../ui/Button";
+import { COLORS } from "../../../color";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -112,7 +113,7 @@ type DateValueProps = {
 
 const DateValue: React.FC<DateValueProps> = ({ label, value }) => (
     <span css={{ "&:not(:last-child):after": { content: "'•'", margin: "0 12px" } }}>
-        <span css={{ color: "var(--grey40)", lineHeight: 1 }}>{label + ":"}</span>
+        <span css={{ color: COLORS.grey6, lineHeight: 1 }}>{label + ":"}</span>
         <span css={{ marginLeft: 6, marginTop: 4 }}>{value}</span>
     </span>
 );

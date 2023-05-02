@@ -97,6 +97,11 @@ main-menu:
   label: Menü
   settings: Einstellungen
   about: Info
+  color-scheme:
+    label: Farbschema
+    auto: Auto
+    light: Hell
+    dark: Dunkel
 
 user:
   login: Anmelden

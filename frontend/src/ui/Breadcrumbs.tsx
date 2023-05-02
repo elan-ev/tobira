@@ -5,6 +5,7 @@ import { BreadcrumbList, WithContext } from "schema-dts";
 
 import { Link } from "../router";
 import { focusStyle } from ".";
+import { COLORS } from "../color";
 
 
 export type Props = {
@@ -97,5 +98,5 @@ const Segment: React.FC<SegmentProps> = ({ target, children }) => (
 );
 
 export const BreadcrumbSeparator: React.FC = () => (
-    <FiChevronRight css={{ margin: "0 3px", flexShrink: 0, color: "var(--grey65)" }} />
+    <FiChevronRight css={{ margin: "0 3px", flexShrink: 0, color: COLORS.grey5 }} />
 );

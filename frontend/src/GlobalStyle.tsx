@@ -1,5 +1,6 @@
 import { css, Global } from "@emotion/react";
 import React from "react";
+import { COLORS } from "./color";
 
 
 export const GlobalStyle: React.FC = () => <>
@@ -47,7 +48,7 @@ const CSS_RESETS = css({
         // Accent color for generated UI control `<input>` elements
         // where type="checkbox", "radio" or "range",
         // as well as `<progress>` elements.
-        accentColor: "var(--accent-color)",
+        accentColor: COLORS.primary0,
     },
 
     // This improves the readability of underlines in links.
@@ -68,6 +69,7 @@ const GLOBAL_STYLE = css({
         "--min-page-width": "320px",
     },
     body: {
+        backgroundColor: COLORS.background,
         fontFamily: "var(--main-font), sans-serif",
         fontWeight: 400,
 
@@ -104,15 +106,15 @@ const GLOBAL_STYLE = css({
         },
     },
     a: {
-        color: "var(--nav-color)",
+        color: COLORS.primary0,
         textDecoration: "none",
         "&:hover, &:focus": {
-            color: "var(--nav-color-darker)",
+            color: COLORS.primary1,
         },
-        ":focus-visible": { outline: "2.5px solid var(--accent-color)" },
+        ":focus-visible": { outline: `2.5px solid ${COLORS.focus}` },
     },
     hr: {
         border: "none",
-        borderTop: "1px solid var(--grey80)",
+        borderTop: `1px solid ${COLORS.grey4}`,
     },
 });

@@ -16,6 +16,7 @@ import {
 } from "../../../../ui/Floating";
 import { ProtoButton } from "../../../../ui/Button";
 import { focusStyle } from "../../../../ui";
+import { COLORS } from "../../../../color";
 
 
 type Props = {
@@ -79,13 +80,14 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                             height: BUTTON_SIZE,
                             fontSize: 24,
                             borderRadius: 4,
-                            backgroundColor: "var(--accent-color)",
-                            color: "var(--accent-color-bw-contrast)",
+                            backgroundColor: COLORS.primary0,
+                            color: COLORS.primary0BwInverted,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             "&:hover, &:focus": {
-                                backgroundColor: "var(--accent-color-darker)",
+                                backgroundColor: COLORS.primary1,
+                                color: COLORS.primary1BwInverted,
                             },
                             ...focusStyle({ offset: 1 }),
                         }}>
@@ -101,13 +103,13 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                 shadowBlur={12}
                 shadowColor="rgba(0, 0, 0, 30%)"
                 css={{
-                    backgroundColor: "white",
+                    backgroundColor: COLORS.background,
                     width: 200,
                 }}
             >
                 <div css={{
                     fontSize: 14,
-                    color: "var(--grey40)",
+                    color: COLORS.grey6,
                     padding: "8px 16px",
                     cursor: "default",
                 }}>{t("manage.realm.content.add-popup-title")}</div>
@@ -117,7 +119,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                     padding: 0,
                     "& > li": {
                         "&:not(:last-child)": {
-                            borderBottom: "1px solid var(--grey92)",
+                            borderBottom: `1px solid ${COLORS.grey2}`,
                         },
                     },
                 }}>
@@ -185,12 +187,12 @@ const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
                 gap: 16,
                 backgroundColor: "transparent",
                 "&:hover, &:focus": {
-                    backgroundColor: "var(--grey97)",
+                    backgroundColor: COLORS.grey0,
                 },
                 ...focusStyle({ inset: true }),
             }}
         >
-            {<Icon css={{ color: "var(--accent-color)", fontSize: 18 }}/>}
+            {<Icon css={{ color: COLORS.primary0, fontSize: 18 }}/>}
             {label}
         </ProtoButton>
     </li>

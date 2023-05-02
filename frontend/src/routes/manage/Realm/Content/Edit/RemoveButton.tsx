@@ -12,6 +12,7 @@ import { displayCommitError } from "../../util";
 import { Button } from "../util";
 import { currentRef } from "../../../../../util";
 import { WithTooltip } from "../../../../../ui/Floating";
+import { COLORS } from "../../../../../color";
 
 
 type Props = {
@@ -65,10 +66,10 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
             <Button
                 aria-label={t("manage.realm.content.remove")}
                 css={{
-                    color: "var(--danger-color)",
+                    color: COLORS.danger0,
                     "&&:hover, &&:focus": {
-                        backgroundColor: "var(--danger-color)",
-                        color: "var(--danger-color-bw-contrast)",
+                        backgroundColor: COLORS.danger0,
+                        color: COLORS.danger0BwInverted,
                     },
                 }}
                 onClick={() => {

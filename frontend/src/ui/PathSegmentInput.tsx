@@ -1,6 +1,7 @@
 import React from "react";
 import { Input, InputProps } from "./Input";
 import { Spinner } from "./Spinner";
+import { COLORS } from "../color";
 
 
 type Props = InputProps & {
@@ -16,10 +17,10 @@ export const PathSegmentInput = React.forwardRef<HTMLInputElement, Props>(
             position: "relative",
             alignItems: "center",
             justifyContent: "center",
-            border: "1px solid var(--grey92)",
+            border: `1px solid ${COLORS.grey2}`,
             borderRadius: 4,
             gap: 8,
-            backgroundColor: "var(--grey97)",
+            backgroundColor: COLORS.grey0,
         }}>
             <span css={{ paddingLeft: 8, overflow: "auto" }}>
                 {base.split("/").join("\u200b/") + (base.endsWith("/") ? "" : "/")}

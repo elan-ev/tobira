@@ -10,6 +10,7 @@ import { Card } from "./Card";
 import { SmallDescription } from "./metadata";
 import { SearchableSelectSeriesQuery } from "./__generated__/SearchableSelectSeriesQuery.graphql";
 import { ErrorDisplay } from "../util/err";
+import { COLORS } from "../color";
 
 
 type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
@@ -49,13 +50,13 @@ export const SearchableSelect = <T, >({
                 cursor: "default",
                 padding: "6px 10px",
                 "&:hover, &:focus": {
-                    backgroundColor: "var(--grey95)",
+                    backgroundColor: COLORS.grey1,
                 },
                 ...state.isSelected && {
-                    borderLeft: "4px solid var(--accent-color)",
+                    borderLeft: `4px solid ${COLORS.focus}`,
                 },
                 ...(state.isFocused || state.isSelected) && {
-                    backgroundColor: "var(--grey95)",
+                    backgroundColor: COLORS.grey1,
                 },
             }),
         }}
@@ -73,12 +74,8 @@ const theme = (theme: Theme) => ({
     ...theme,
     colors: {
         ...theme.colors,
-        danger: "var(--danger-color)",
-        dangerLight: "hsla(var(--danger-hue), var(--danger-sat), var(--danger-lightness), 0.25)",
-        primary: "var(--accent-color)",
-        primary75: "hsla(var(--accent-hue), var(--accent-sat), var(--accent-lightness), 0.75)",
-        primary50: "hsla(var(--accent-hue), var(--accent-sat), var(--accent-lightness), 0.50)",
-        primary25: "hsla(var(--accent-hue), var(--accent-sat), var(--accent-lightness), 0.25)",
+        danger: COLORS.danger0,
+        primary: COLORS.primary0,
     },
 });
 

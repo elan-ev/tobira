@@ -446,7 +446,7 @@ pub(super) trait CommonHeadersExt {
 }
 
 impl CommonHeadersExt for hyper::http::response::Builder {
-    fn with_content_security_policies(self, config: &Config, _nonce: &str) -> Self {
+    fn with_content_security_policies(self, config: &Config, nonce: &str) -> Self {
         let redirect_actions = if config.auth.pre_auth_external_links {
             [config.opencast.studio_url(), config.opencast.editor_url()]
                 .into_iter()
@@ -496,7 +496,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             img-src *; \
             media-src * blob:; \
             font-src *; \
-            script-src 'self'; \
+            script-src 'self' 'nonce-{nonce}'; \
             style-src 'self' 'unsafe-inline'; \
             connect-src *; \
             worker-src blob: 'self'; \

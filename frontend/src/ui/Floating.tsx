@@ -21,6 +21,7 @@ import { mergeRefs } from "react-merge-refs";
 import { Theme } from "react-select";
 
 import { bug, unreachable } from "../util/err";
+import { COLORS } from "../color";
 
 
 // ===== The floating context ====================================================================
@@ -291,8 +292,8 @@ type FloatingProps = React.PropsWithChildren<{
 export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
     ({
         children,
-        backgroundColor = "white",
-        borderColor = "var(--grey65)",
+        backgroundColor = COLORS.background,
+        borderColor = COLORS.grey5,
         borderWidth = 1,
         shadowColor = "rgba(0, 0, 0, 20%)",
         shadowBlur = 4,
@@ -405,7 +406,7 @@ export const WithTooltip = React.forwardRef<FloatingHandle, WithTooltipProps>(
             placement={props.placement ?? "top"}
         >
             <Floating css={{
-                color: "var(--grey20)",
+                color: COLORS.grey7,
                 fontSize: 14,
                 maxWidth: "100%",
                 ...tooltipCss as Record<string, unknown>,

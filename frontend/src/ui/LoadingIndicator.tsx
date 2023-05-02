@@ -3,6 +3,7 @@ import { Transition } from "react-transition-group";
 import { useRouter } from "../router";
 import { isSearchActive } from "../routes/Search";
 import { match } from "../util";
+import { COLORS } from "../color";
 
 
 /** A thin colored line at the top of the page indicating a page load */
@@ -26,7 +27,7 @@ export const LoadingIndicator: React.FC = () => {
             left: 0,
             top: 0,
             height: 4,
-            backgroundColor: "var(--accent-color)",
+            backgroundColor: COLORS.primary0,
             ...match(state, {
                 "entering": () => ({
                     width: "70%",

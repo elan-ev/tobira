@@ -26,6 +26,7 @@ import { pathToQuery, ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../.
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { realmBreadcrumbs } from "../../../util/realm";
+import { COLORS } from "../../../color";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -219,7 +220,7 @@ const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
         "& code": {
             whiteSpace: "nowrap",
             borderRadius: 4,
-            backgroundColor: "var(--grey92)",
+            backgroundColor: COLORS.grey2,
             padding: "2px 4px",
         },
     }}>

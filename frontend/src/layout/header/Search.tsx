@@ -8,6 +8,7 @@ import { Spinner } from "../../ui/Spinner";
 import { currentRef } from "../../util";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
+import { COLORS } from "../../color";
 
 type SearchFieldProps = {
     variant: "desktop" | "mobile";
@@ -76,7 +77,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 height: "100%",
                 left: 11,
                 fontSize: 23,
-                color: "var(--grey40)",
+                color: COLORS.grey6,
             }} />
             <form onSubmit={() => {
                 clearTimeout(lastTimeout.current);
@@ -101,22 +102,22 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         }}
                         css={{
                             flex: 1,
-                            color: "var(--grey40)",
-                            border: "1px solid var(--grey65)",
+                            color: COLORS.grey6,
+                            border: `1px solid ${COLORS.grey5}`,
                             borderRadius: 4,
                             minWidth: 50,
                             height,
                             paddingLeft: 42,
                             paddingRight: 12,
                             ":hover": {
-                                borderColor: "var(--grey80)",
-                                outline: "2.5px solid var(--grey80)",
+                                borderColor: COLORS.grey4,
+                                outline: `2.5px solid ${COLORS.grey4}`,
                                 outlineOffset: -1,
                             },
-                            ":focus-visible": { borderColor: "var(--accent-color)" },
+                            ":focus-visible": { borderColor: COLORS.focus },
                             ...focusStyle({ offset: -1 }),
                             "&::placeholder": {
-                                color: "var(--grey40)",
+                                color: COLORS.grey6,
                                 opacity: 1,
                             },
                         }}

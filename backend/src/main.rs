@@ -168,6 +168,9 @@ fn load_config_and_init_logger(shared: &args::Shared, args: &Args) -> Result<Con
     logger::init(&config.log, args)?;
     info!("Loaded config from '{}'", path.display());
 
+    // Call validate again, as some of the checks will only print warnings.
+    config.validate()?;
+
     Ok(config)
 }
 

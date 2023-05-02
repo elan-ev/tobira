@@ -6,6 +6,7 @@ import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { CopyableInput } from "../../../ui/Input";
+import { COLORS } from "../../../color";
 
 
 export const ManageVideoTechnicalDetailsRoute = makeManageVideoRoute(
@@ -113,7 +114,7 @@ const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => 
                     ? <i>{t("manage.my-videos.technical-details.unknown-mimetype")}</i>
                     : <code>{mimetype}</code>}
                 {resolution && <span css={{
-                    backgroundColor: "var(--grey95)",
+                    backgroundColor: COLORS.grey1,
                     marginLeft: 8,
                     padding: "2px 4px",
                     borderRadius: 4,
@@ -164,7 +165,7 @@ const FurtherInfo: React.FC<Props> = ({ event }) => {
 
 const SingleInfo: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
     <li>
-        <span css={{ color: "var(--grey40)", marginRight: 16 }}>{label}</span>
+        <span css={{ color: COLORS.grey6, marginRight: 16 }}>{label}</span>
         {children}
     </li>
 );

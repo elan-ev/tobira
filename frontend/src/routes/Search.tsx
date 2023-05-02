@@ -16,6 +16,7 @@ import { PageTitle } from "../layout/header/ui";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss } from "../ui";
+import { COLORS } from "../color";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -213,7 +214,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                 }}
                 css={{ width: "100%" }}
             />
-            <div css={{ color: "black" }}>
+            <div css={{ color: COLORS.foreground }}>
                 <h3 css={{
                     marginBottom: 6,
                     ...ellipsisOverflowCss(2),
@@ -269,7 +270,7 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
                 padding: 8,
                 gap: 16,
                 "&:hover, &:focus": {
-                    backgroundColor: "var(--grey97)",
+                    backgroundColor: COLORS.grey0,
                 },
                 "& > *:first-child": {
                     minWidth: 200,

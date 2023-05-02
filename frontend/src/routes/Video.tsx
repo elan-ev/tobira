@@ -53,6 +53,7 @@ import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui
 import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
 import { VideoObject, WithContext } from "schema-dts";
+import { COLORS } from "../color";
 
 
 // ===========================================================================================
@@ -357,7 +358,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <Creators creators={event.creators} css={{ fontWeight: "bold" }} />
                 <Description
                     text={event.description}
-                    css={{ color: "var(--grey20)", fontSize: 14 }}
+                    css={{ color: COLORS.grey7, fontSize: 14 }}
                 />
             </div>
             <div css={{ paddingTop: 8 }}>
@@ -409,13 +410,13 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     "& > svg": {
                         width: 48,
                         height: 48,
-                        backgroundColor: "var(--accent-color)",
-                        color: "var(--accent-color-bw-contrast)",
+                        backgroundColor: COLORS.primary0,
+                        color: COLORS.primary0BwInverted,
                         borderRadius: 24,
                         padding: 12,
                     },
                     "&:hover": {
-                        backgroundColor: "var(--grey92)",
+                        backgroundColor: COLORS.grey2,
                     },
                 },
             }}>
@@ -558,7 +559,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         <div css={{
             display: "inline-block",
             position: "relative",
-            color: "var(--grey40)",
+            color: COLORS.grey6,
             fontSize: 14,
         }}>{inner}</div>
     );
@@ -618,7 +619,7 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
                 content: "':'",
             },
             "& > dd": {
-                color: "var(--grey40)",
+                color: COLORS.grey6,
             },
         }}>
             {pairs.map(([label, value], i) => <React.Fragment key={i}>

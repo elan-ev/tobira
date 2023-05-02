@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     FiAlertTriangle, FiArrowLeft, FiCheck, FiUserCheck, FiChevronDown,
-    FiFolder, FiLogOut, FiUpload, FiLogIn, FiFilm, FiVideo,
+    FiFolder, FiLogOut, FiUpload, FiLogIn, FiFilm, FiVideo, FiMoon, FiSun,
 } from "react-icons/fi";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 
@@ -11,7 +11,7 @@ import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { isRealUser, User, useUser } from "../../User";
-import { match } from "../../util";
+import { isExperimentalFlagSet, match } from "../../util";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
@@ -21,6 +21,7 @@ import { focusStyle } from "../../ui";
 import { ProtoButton } from "../../ui/Button";
 import { FloatingHandle, FloatingContainer, FloatingTrigger, Floating } from "../../ui/Floating";
 import { ExternalLink, ExternalLinkProps } from "../../relay/auth";
+import { COLORS, useColorScheme } from "../../color";
 
 
 /** User-related UI in the header. */
@@ -49,6 +50,7 @@ export const UserBox: React.FC = () => {
 
     return <>
         <LanguageSettings />
+        {isExperimentalFlagSet() && <ColorSchemeSettings />}
         {boxContent}
     </>;
 };
@@ -69,24 +71,24 @@ const LoggedOut: React.FC = () => {
             css={{
                 /* Show labelled button on larger screens. */
                 [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    color: "var(--nav-color-bw-contrast)",
+                    color: COLORS.primary0BwInverted,
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
                     marginLeft: 4,
                     borderRadius: 8,
                     padding: "7px 14px",
-                    backgroundColor: "var(--nav-color)",
+                    backgroundColor: COLORS.primary0,
                     svg: { fontSize: 20 },
                     ":hover, :focus": {
-                        backgroundColor: "var(--nav-color-dark)",
-                        color: "var(--nav-color-bw-contrast)",
+                        backgroundColor: COLORS.primary1,
+                        color: COLORS.primary1BwInverted,
                     },
                     ...focusStyle({ offset: 1 }),
                 },
                 /* Show only the icon on mobile devices. */
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    color: "black",
+                    color: COLORS.foreground,
                     ...ICON_STYLE,
                     span: { display: "none" },
                 },
@@ -112,18 +114,18 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             <ProtoButton title={t("user.settings")} css={{
                 display: "flex",
                 alignItems: "center",
-                backgroundColor: "white",
-                border: "1px solid var(--grey65)",
+                backgroundColor: COLORS.background,
+                border: `1px solid ${COLORS.grey5}`,
                 gap: 12,
                 borderRadius: 8,
                 padding: "8px 10px 8px 16px",
                 cursor: "pointer",
                 ":hover": {
-                    borderColor: "var(--grey80)",
-                    outline: "2.5px solid var(--grey80)",
+                    borderColor: COLORS.grey4,
+                    outline: `2.5px solid ${COLORS.grey4}`,
                     outlineOffset: -1,
                 },
-                ":focus-visible": { borderColor: "var(--accent-color)" },
+                ":focus-visible": { borderColor: COLORS.focus },
                 ...focusStyle({ offset: -1 }),
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     display: "none",
@@ -147,14 +149,14 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                         display: "none",
                     },
                 }}>
-                <FiUserCheck css={{ polyline: { stroke: "var(--happy-color-dark)" } }}/>
+                <FiUserCheck css={{ polyline: { stroke: COLORS.happy1 } }}/>
             </ActionIcon>
         </div>
     </WithFloatingMenu>;
 };
 
 
-type MenuType = "main" | "language";
+type MenuType = "main" | "language" | "color-scheme";
 
 type WithFloatingMenuProps = {
     children: ReactElement;
@@ -244,6 +246,10 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
             <ReturnButton onClick={close}>{t("language")}</ReturnButton>
             <LanguageMenu close={close} />
         </>,
+        "color-scheme": () => <>
+            <ReturnButton onClick={close}>{t("main-menu.color-scheme.label")}</ReturnButton>
+            <ColorSchemeMenu close={close} />
+        </>,
     });
 
     return (
@@ -289,7 +295,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                         ":last-of-type": { borderRadius: "0 0 8px 8px" },
                     },
                     [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                        backgroundColor: "white",
+                        backgroundColor: COLORS.background,
                         borderRadius: "0 0 8px 8px",
                         marginTop: 0,
                         position: "fixed",
@@ -314,6 +320,17 @@ export const LanguageSettings: React.FC = () => {
     </WithFloatingMenu>;
 };
 
+export const ColorSchemeSettings: React.FC = () => {
+    const { t } = useTranslation();
+    const { scheme } = useColorScheme();
+
+    return <WithFloatingMenu type="color-scheme">
+        <ActionIcon title={t("main-menu.color-scheme.label")}>
+            {scheme === "light" ? <FiMoon /> : <FiSun />}
+        </ActionIcon>
+    </WithFloatingMenu>;
+};
+
 
 type ReturnButtonProps = {
     onClick: () => void;
@@ -322,7 +339,7 @@ type ReturnButtonProps = {
 
 const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
     <div css={{
-        borderBottom: "1px solid var(--grey65)",
+        borderBottom: `1px solid ${COLORS.grey5}`,
         display: "flex",
         [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
             display: "none",
@@ -349,7 +366,7 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             whiteSpace: "nowrap",
             textOverflow: "ellipsis",
             overflow: "hidden",
-            color: "var(--grey40)",
+            color: COLORS.grey6,
             padding: "24px 12px 24px 4px",
         }}>{children}</span>
     </div>
@@ -374,12 +391,39 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
                 css={{
                     minWidth: 160,
                     ...isCurrentLanguage(lng) && { cursor: "default" },
-                    ":not(:last-child)": { borderBottom: "1px solid var(--grey80)" },
+                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.grey4}` },
                 }}
             >{t("language-name", { lng })}</MenuItem>
         ))}
     </>;
 
+};
+
+/** Entries in the menu related to the color scheme. */
+const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
+    const { t } = useTranslation();
+    const { scheme, isAuto, update } = useColorScheme();
+    const currentPref = isAuto ? "auto" : scheme;
+
+    const choices = ["auto", "light", "dark"] as const;
+
+    return <>
+        {choices.map(choice => (
+            <MenuItem
+                key={choice}
+                icon={currentPref === choice ? <FiCheck /> : undefined}
+                onClick={() => {
+                    update(choice);
+                    close();
+                }}
+                css={{
+                    minWidth: 160,
+                    ...currentPref === choice && { cursor: "default" },
+                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.grey4}` },
+                }}
+            >{t(`main-menu.color-scheme.${choice}`)}</MenuItem>
+        ))}
+    </>;
 };
 
 type MenuItemProps = {
@@ -421,9 +465,9 @@ const MenuItem: React.FC<MenuItemProps> = ({
         ...indent && { paddingLeft: 30 },
         cursor: "pointer",
         whiteSpace: "nowrap",
-        color: "black",
-        ...borderBottom && { borderBottom: "1px solid var(--grey80)" },
-        ...borderTop && { borderTop: "1px solid var(--grey80)" },
+        color: COLORS.foreground,
+        ...borderBottom && { borderBottom: `1px solid ${COLORS.grey4}` },
+        ...borderTop && { borderTop: `1px solid ${COLORS.grey4}` },
         "& > svg": {
             maxHeight: 23,
             fontSize: 23,
@@ -431,7 +475,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
             strokeWidth: 2,
             "& > path": { strokeWidth: "inherit" },
         },
-        ":hover, :focus": { backgroundColor: "var(--grey97)" },
+        ":hover, :focus": { backgroundColor: COLORS.grey0 },
         ...focusStyle({ inset: true }),
     } as const;
 
@@ -526,7 +570,7 @@ const Logout: React.FC = () => {
             })}
             borderTop
             css={{
-                color: "var(--danger-color)",
+                color: COLORS.danger0,
             }}
             {...actionProps}
         >{t("user.logout")}</MenuItem>

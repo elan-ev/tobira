@@ -4,6 +4,7 @@ import { focusStyle } from ".";
 
 import { Link } from "../router";
 import { match } from "../util";
+import { COLORS } from "../color";
 
 
 /**
@@ -61,34 +62,34 @@ const PROTO_CSS = {
 const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<Theme> => {
     const notDisabledStyle = match(kind, {
         "normal": () => ({
-            border: "1px solid var(--grey65)",
-            color: "black",
+            border: `1px solid ${COLORS.grey5}`,
+            color: COLORS.foreground,
             "&:hover, &:focus": {
-                border: "1px solid var(--grey40)",
-                backgroundColor: "var(--grey92)",
+                border: `1px solid ${COLORS.grey6}`,
+                backgroundColor: COLORS.grey2,
             },
             ...focusStyle({ offset: -1 }),
         }),
 
         "danger": () => ({
-            border: "1px solid var(--danger-color)",
-            color: "var(--danger-color)",
+            border: `1px solid ${COLORS.danger0}`,
+            color: COLORS.danger0,
             "&:hover, &:focus": {
-                border: "1px solid var(--danger-color-darker)",
-                backgroundColor: "var(--danger-color)",
-                color: "var(--danger-color-bw-contrast)",
+                border: `1px solid ${COLORS.danger1}`,
+                backgroundColor: COLORS.danger0,
+                color: COLORS.danger0BwInverted,
             },
             ...focusStyle({ offset: 1 }),
         }),
 
         "happy": () => ({
-            border: "1px solid var(--happy-color-dark)",
-            color: "var(--happy-color-bw-contrast)",
-            backgroundColor: "var(--happy-color)",
+            border: `1px solid ${COLORS.happy1}`,
+            color: COLORS.happy0BwInverted,
+            backgroundColor: COLORS.happy0,
             "&:hover, &:focus": {
-                border: "1px solid var(--happy-color-dark)",
-                backgroundColor: "var(--happy-color-darker)",
-                color: "var(--happy-color-bw-contrast)",
+                border: `1px solid ${COLORS.happy2}`,
+                backgroundColor: COLORS.happy1,
+                color: COLORS.happy1BwInverted,
             },
             ...focusStyle({ offset: 1 }),
         }),
@@ -101,14 +102,14 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         padding: "7px 14px",
         gap: 12,
         whiteSpace: "nowrap",
-        backgroundColor: "var(--grey97)",
+        backgroundColor: COLORS.grey0,
         transition: "background-color 0.15s, border-color 0.15s",
         "& > svg": {
             fontSize: 20,
         },
         "&:disabled": {
-            border: "1px solid var(--grey80)",
-            color: "var(--grey65)",
+            border: `1px solid ${COLORS.grey4}`,
+            color: COLORS.grey5,
         },
         "&:not([disabled])": {
             cursor: "pointer",

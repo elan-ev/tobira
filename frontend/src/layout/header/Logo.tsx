@@ -5,6 +5,7 @@ import { Link } from "../../router";
 import { focusStyle } from "../../ui";
 import { translatedConfig } from "../../util";
 import { HEADER_BASE_PADDING } from "./ui";
+import { COLORS } from "../../color";
 
 
 export const Logo: React.FC = () => {
@@ -38,7 +39,7 @@ export const Logo: React.FC = () => {
             height: `calc(100% + ${HEADER_BASE_PADDING * 2}px)`,
             flex: "0 1 auto",
             margin: `-${HEADER_BASE_PADDING}px 0`,
-            ":hover": { outlineOffset: -4, outline: "2px solid var(--grey80)" },
+            ":hover": { outlineOffset: -4, outline: `2px solid ${COLORS.grey4}` },
             display: "block",
             borderRadius: 8,
             ...focusStyle({ offset: -4 }),

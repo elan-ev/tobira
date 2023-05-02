@@ -1,4 +1,5 @@
 import React, { ReactNode } from "react";
+import { COLORS } from "../../../../../../color";
 
 
 export const Heading: React.FC<{ children: ReactNode }> = ({ children }) => <h3 css={{
@@ -28,21 +29,21 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
 
         "& > label": {
             "& > div": {
-                border: "1px solid var(--grey65)",
+                border: `1px solid ${COLORS.grey5}`,
                 padding: "6px 12px",
                 cursor: "pointer",
-                backgroundColor: "white",
+                backgroundColor: COLORS.background,
             },
             "& > input:checked + div": {
-                backgroundColor: "var(--grey95)",
-                outline: "2px solid var(--accent-color)",
+                backgroundColor: COLORS.grey1,
+                outline: `2px solid ${COLORS.primary0}`,
                 outlineOffset: -2,
                 position: "relative", // Needed so that the outline is over sibling divs
             },
             // The attribute selector increases specificity
             ":focus-within div[role='button']": {
-                backgroundColor: "var(--grey86)",
-                outline: "3px solid var(--accent-color)",
+                backgroundColor: COLORS.grey3,
+                outline: `3px solid ${COLORS.primary0}`,
             },
             "& > input": {
                 position: "absolute",

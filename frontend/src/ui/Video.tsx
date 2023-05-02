@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiAlertTriangle, FiFilm, FiRadio, FiVolume2 } from "react-icons/fi";
 import { HiOutlineUserCircle } from "react-icons/hi";
+import { COLORS } from "../color";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
@@ -65,7 +66,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
                 background: "linear-gradient(135deg, #33333380 50%, transparent 0),"
                     + "linear-gradient(-135deg, #33333380 50%, transparent 0)",
                 backgroundSize: "17px 17px",
-                color: "var(--grey86)",
+                color: COLORS.grey3,
                 backgroundColor: "#292929",
             }}>{icon}</div>
         );
@@ -177,7 +178,7 @@ const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
 
     return loadError
         ? <div css={{
-            backgroundColor: "var(--grey40)",
+            backgroundColor: COLORS.grey6,
             aspectRatio: "16 / 9",
             width: "100%",
             display: "flex",
@@ -185,11 +186,11 @@ const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
             gap: 8,
             justifyContent: "center",
             alignItems: "center",
-            color: "var(--grey92)",
+            color: COLORS.grey2,
             fontSize: 14,
             "& > svg": {
                 fontSize: 32,
-                color: "var(--grey80)",
+                color: COLORS.grey4,
                 strokeWidth: 1.5,
             },
         }}>
@@ -234,7 +235,7 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
             {...{ className }}
         >
             <HiOutlineUserCircle css={{
-                color: "var(--grey40)",
+                color: COLORS.grey6,
                 fontSize: 16,
                 flexShrink: 0,
             }} />
@@ -247,7 +248,7 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
                 "& > li:not(:last-child)::after": {
                     content: "'•'",
                     padding: "0 6px",
-                    color: "var(--grey65)",
+                    color: COLORS.grey5,
                 },
             }}>
                 {creators.map((c, i) => <li key={i}>{c}</li>)}

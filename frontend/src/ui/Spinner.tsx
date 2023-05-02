@@ -1,4 +1,5 @@
 import { keyframes } from "@emotion/react";
+import { COLORS } from "../color";
 
 
 type Props = JSX.IntrinsicElements["svg"] & {
@@ -17,7 +18,7 @@ export const Spinner: React.FC<Props> = ({ size = "1em", ...rest }) => (
             })}`,
             "& > circle": {
                 fill: "none",
-                stroke: "black",
+                stroke: COLORS.foreground,
                 strokeWidth: 4,
                 strokeDasharray: 83, // 2/3 of circumference
                 strokeLinecap: "round",

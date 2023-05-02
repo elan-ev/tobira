@@ -18,6 +18,7 @@ import {
     manageDashboardQuery as ManageDashboardQuery,
 } from "./__generated__/manageDashboardQuery.graphql";
 import { css } from "@emotion/react";
+import { COLORS } from "../../color";
 
 
 const PATH = "/~manage";
@@ -99,17 +100,17 @@ const Manage: React.FC = () => {
 
 const gridTile = css({
     borderRadius: 4,
-    border: "1px solid var(--grey92)",
-    backgroundColor: "var(--grey97)",
+    border: `1px solid ${COLORS.grey2}`,
+    backgroundColor: COLORS.grey0,
     padding: "8px 16px 16px 16px",
     fontSize: 14,
-    color: "black",
+    color: COLORS.foreground,
     textAlign: "left",
     "&:is(button, a)": {
         "&:hover, &:focus": {
-            color: "black",
-            borderColor: "var(--grey80)",
-            boxShadow: "1px 1px 5px var(--grey92)",
+            color: COLORS.foreground,
+            borderColor: COLORS.grey4,
+            boxShadow: `1px 1px 5px ${COLORS.grey2}`,
             cursor: "pointer",
         },
     },
@@ -118,7 +119,7 @@ const gridTile = css({
         position: "absolute",
         top: 8,
         right: 8,
-        color: "var(--accent-color)",
+        color: COLORS.primary0,
         fontSize: 22,
     },
     "& > h2": {

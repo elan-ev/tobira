@@ -16,6 +16,7 @@ import { displayCommitError } from "./util";
 import { sortRealms } from "../../util";
 import { WithTooltip } from "../../../ui/Floating";
 import { focusStyle } from "../../../ui";
+import { COLORS } from "../../../color";
 
 
 const fragment = graphql`
@@ -188,7 +189,7 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
         <li css={{
             display: "flex",
             alignItems: "center",
-            border: "1px solid var(--grey80)",
+            border: `1px solid ${COLORS.grey4}`,
             margin: "4px 0",
             borderRadius: 4,
         }}>
@@ -197,10 +198,10 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                 flexDirection: "column",
                 marginRight: 16,
                 fontSize: 18,
-                borderRight: "1px solid var(--grey80)",
+                borderRight: `1px solid ${COLORS.grey4}`,
                 "& > div": {
                     "&:first-child > button": {
-                        borderBottom: "1px solid var(--grey80)",
+                        borderBottom: `1px solid ${COLORS.grey4}`,
                         borderTopLeftRadius: 4,
                     },
                     "&:last-child > button": {
@@ -219,8 +220,7 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                     "&:not([disabled])": {
                         cursor: "pointer",
                         "&:hover, &:focus": {
-                            backgroundColor: "var(--grey97)",
-                            color: "var(--accent-color)",
+                            backgroundColor: COLORS.grey0,
                         },
                         ...focusStyle({ offset: -1.5 }),
                     },
