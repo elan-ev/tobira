@@ -12,7 +12,7 @@ pub(crate) struct ColorConfig {
     /// Should have a perceived brightness (L in LCH color space) of 35-55. It
     /// should have a good contrast against a white background. Tobira will
     /// automatically create darker variants of this color.
-    #[config(default = "#007A96")]
+    #[config(default = "#01758f")]
     pub(crate) primary: Color,
 
     /// A color used to indicate errors, potentially destructive actions, and
@@ -96,27 +96,29 @@ impl ColorConfig {
         // leaves 11, which is quite dim. The color should still be noticable
         // there.
         //
-        // Regarding the maximum: The WCAG contrast between this color and white
-        // only depends on the lightness. And with a lightness of 49, a 4.5:1
-        // contrast is barely reached (minimum for normal text). We round up to
-        // 50 as the WCAG contrast algorithm is not perfect, and 50 might be
-        // fine.
+        // Regarding the maximum: We want to place this color on our grey1
+        // background, which has 95.6% brightness. The WCAG contrast between
+        // two colors only depend on the `l` channel, i.e. the perceived
+        // lightness (well, there are differences and rounding errors, but it's
+        // not relevant here). For a contrast ratio of 4.5:1 to the grey1
+        // background, a brightness of at most 46.5 is required.
         let primary = Lch::from_color(self.primary.0.into_format::<f32>());
-        if primary.l < 35.0 || primary.l > 50.0 {
+        if primary.l < 35.0 || primary.l > 46.5 {
             warn!(
                 "`theme.color.primary` is too {}! It should have a perceived \
-                    lightness of 35 - 50, but has {:.1}. See the documentation.",
+                    lightness of 35 - 46.5, but has {:.1}. See the documentation.",
                 if primary.l < 35.0 { "dark" } else { "bright" },
                 primary.l,
             );
         }
 
-        // Check danger color with the same reasoning as for `primary`. Except we only create one darker version of it.
+        // Check danger color with the same reasoning as for `primary`. Except
+        // we only create one darker version of it.
         let danger = Lch::from_color(self.danger.0.into_format::<f32>());
-        if danger.l < 23.0 || danger.l > 50.0 {
+        if danger.l < 23.0 || danger.l > 46.5 {
             warn!(
                 "`theme.color.danger` is too {}! It should have a perceived \
-                    lightness of 23 - 50, but has {:.1}. See the documentation.",
+                    lightness of 23 - 46.5, but has {:.1}. See the documentation.",
                 if danger.l < 35.0 { "dark" } else { "bright" },
                 danger.l,
             );

@@ -438,8 +438,8 @@
 # should have a good contrast against a white background. Tobira will
 # automatically create darker variants of this color.
 #
-# Default value: "#007A96"
-#primary = "#007A96"
+# Default value: "#01758f"
+#primary = "#01758f"
 
 # A color used to indicate errors, potentially destructive actions, and
 # the like. Use a reddish color here as that's expected by users.
