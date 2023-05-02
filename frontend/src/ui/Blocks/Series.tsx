@@ -272,13 +272,13 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
                     flexWrap: "wrap",
                 },
             }}>
-                <h2 css={{
+                {title && <h2 css={{
                     display: "inline-block",
                     padding: "8px 12px",
                     color: COLORS.grey7,
                     fontSize: 20,
                     lineHeight: 1.3,
-                }}>{title}</h2>
+                }}>{title}</h2>}
                 {showViewOptions && <div css={{
                     display: "flex",
                     alignItems: "center",
