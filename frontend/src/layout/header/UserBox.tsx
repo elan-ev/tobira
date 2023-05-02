@@ -247,7 +247,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
             <LanguageMenu close={close} />
         </>,
         "color-scheme": () => <>
-            <ReturnButton onClick={close}>{t("language")}</ReturnButton>
+            <ReturnButton onClick={close}>{t("main-menu.color-scheme.label")}</ReturnButton>
             <ColorSchemeMenu close={close} />
         </>,
     });
@@ -399,7 +399,7 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
 
 };
 
-/** Entries in the menu related to language. */
+/** Entries in the menu related to the color scheme. */
 const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
     const { t } = useTranslation();
     const { scheme, isAuto, update } = useColorScheme();

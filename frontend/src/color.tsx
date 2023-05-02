@@ -2,7 +2,10 @@ import React, { useContext, useState } from "react";
 import { bug } from "./util/err";
 
 
-/** All colors used throughout Tobira. Higher numbers mean darker colors. */
+/**
+ * All colors used throughout Tobira. Higher numbers mean darker colors in light
+ * mode and lighter colors in dark mode.
+ */
 export const COLORS = {
     primary0: "var(--color-primary0)",
     primary0BwInverted: "var(--color-primary0-bw-inverted)",
