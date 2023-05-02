@@ -88,9 +88,9 @@ declare module "paella-core" {
         text?: string;
     }
 
-    // https://github.com/polimediaupv/paella-core/blob/main/doc/mp4-video-plugin.md
-    // https://github.com/polimediaupv/paella-core/blob/main/doc/hls-video-plugin.md
-    // https://github.com/polimediaupv/paella-core/blob/main/doc/hls-live-video-plugin.md
+    // https://github.com/polimediaupv/paella-core/blob/main/doc/mp4_video_plugin.md
+    // https://github.com/polimediaupv/paella-core/blob/main/doc/hls_video_plugin.md
+    // https://github.com/polimediaupv/paella-core/blob/main/doc/hls_live_video_plugin.md
     export interface Source {
         src: string;
         // Currently unused...

@@ -8,9 +8,6 @@ import { SPEEDS } from "./consts";
 import { useTranslation } from "react-i18next";
 
 
-// Paella currently can't handle audio tracks
-type VideoTrack = Track & { resolution: NonNullable<Track["resolution"]> };
-
 type PaellaPlayerProps = {
     title: string;
     duration: number;
@@ -40,9 +37,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
         // do that now and set the initialized instance to `ref.current.paella`.
         if (!paella.current) {
             // Video/event specific information we have to give to Paella.
-            const tracksByKind: Record<string, VideoTrack[]> = {};
-            const videoTracks = tracks.filter((t): t is VideoTrack => !!t.resolution);
-            for (const track of videoTracks) {
+            const tracksByKind: Record<string, Track[]> = {};
+            for (const track of tracks) {
                 const kind = track.flavor.split("/")[0];
                 if (!(kind in tracksByKind)) {
                     tracksByKind[kind] = [];
@@ -91,7 +87,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             // at random.
             if (manifest.streams.length > 1 && !("presenter" in tracksByKind)) {
                 // eslint-disable-next-line no-console
-                console.warn("Picking first stream as main audio source. Tracks: ", videoTracks);
+                console.warn("Picking first stream as main audio source. Tracks: ", tracks);
                 manifest.streams[0].role = "mainAudio";
             }
 
@@ -275,9 +271,9 @@ const PAELLA_CONFIG = {
     },
 };
 
-const tracksToPaellaSources = (tracks: VideoTrack[], isLive: boolean): Stream["sources"] => {
-    const trackToSource = (t: VideoTrack): Source => {
-        const [w, h] = t.resolution;
+const tracksToPaellaSources = (tracks: Track[], isLive: boolean): Stream["sources"] => {
+    const trackToSource = (t: Track): Source => {
+        const [w, h] = t.resolution ?? [0, 0];
         return {
             src: t.uri,
             // TODO: what to do if `t.mimetype` is not mp4 or not specified?
