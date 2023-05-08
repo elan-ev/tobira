@@ -657,13 +657,18 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     {t("general.share")}
                 </Button>
             </FloatingTrigger>
-            <Floating padding={0}>
+            <Floating padding={0} css={{
+                height: 240,
+                display: "flex",
+                flexDirection: "column",
+            }}>
                 {header}
                 <div css={{
                     margin: 16,
+                    flexGrow: 1,
                     display: "flex",
                     flexDirection: "column",
-                    gap: 12,
+                    justifyContent: "space-between",
                 }}>{inner}</div>
             </Floating>
         </FloatingContainer>
