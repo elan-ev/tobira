@@ -1,8 +1,11 @@
-import React, { ReactNode, useRef, useState } from "react";
+import React, { ReactElement, ReactNode, useRef, useState } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
-import { FiCode, FiSettings, FiCrosshair, FiShare2, FiDownload } from "react-icons/fi";
+import {
+    FiCode, FiSettings, FiShare2, FiDownload,
+} from "react-icons/fi";
+import { HiLink } from "react-icons/hi";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -48,7 +51,7 @@ import { NavigationData$key } from "../layout/__generated__/NavigationData.graph
 import { getEventTimeInfo } from "../util/video";
 import { Creators, formatDuration } from "../ui/Video";
 import { Description } from "../ui/metadata";
-import { ellipsisOverflowCss } from "../ui";
+import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui/Floating";
 import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
@@ -354,7 +357,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             flexWrap: "wrap",
             gap: 16,
             "> div": {
-                backgroundColor: "var(--grey95)",
+                backgroundColor: COLORS.grey1,
                 padding: "12px 16px",
                 borderRadius: 8,
             },
@@ -413,14 +416,86 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 };
 
 const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
-    type State = "closed" | "main" | "direct-link" | "embed";
+    type State = "closed" | "main" | "embed" | "rss";
+    /* eslint-disable react/jsx-key */
+    const entries: [Exclude<State, "closed">, ReactElement][] = [
+        ["main", <HiLink />],
+        ["embed", <FiCode />],
+        // ["rss", <FiRss />],
+    ];
+    /* eslint-enable react/jsx-key */
 
     const { t } = useTranslation();
     const [state, setState] = useState<State>("closed");
     const ref = useRef(null);
     useOnOutsideClick(ref, () => setState("closed"));
 
-    const id = event.id.substring(2);
+    const isActive = (label: State) => label === state;
+
+    const tabStyle = {
+        display: "flex",
+        flexDirection: "column",
+        flex: `1 calc(100% / ${entries.length})`,
+        backgroundColor: COLORS.grey3,
+        paddingBottom: 4,
+        cursor: "pointer",
+        alignItems: "center",
+        borderRight: `1px solid ${COLORS.grey5}`,
+        borderTop: "none",
+        borderBottom: `1px solid ${COLORS.grey5}`,
+        ":is(:first-child)": { borderTopLeftRadius: 4 },
+        ":is(:last-child)": {
+            borderRight: "none",
+            borderTopRightRadius: 4,
+        },
+        "& > svg": {
+            width: 32,
+            height: 32,
+            color: COLORS.primary1,
+            padding: "8px 4px 4px",
+        },
+        "&[disabled]": {
+            cursor: "default",
+            backgroundColor: "white",
+            borderBottom: "none",
+            svg: { color: COLORS.primary0 },
+        },
+        ":not([disabled])": {
+            "&:hover": { backgroundColor: COLORS.grey2 },
+        },
+        ...focusStyle({ inset: true }),
+
+        // By using the `has()` selector, these styles only get applied
+        // to non-firefox browsers. Once firefox supports that selector,
+        // this border radius stuff should get refactored.
+        ":has(svg)": {
+            "&[disabled]": {
+                borderRight: "none",
+                "+ button": {
+                    borderLeft: `1px solid ${COLORS.grey5}`,
+                    borderBottomLeftRadius: 4,
+                },
+            },
+            ":not([disabled]):has(+ button[disabled])": {
+                borderBottomRightRadius: 4,
+                borderLeft: "none",
+            },
+        },
+    } as const;
+
+    const header = <div css={{ display: "flex" }}>
+        {entries.map(([label, icon]) => (
+            <ProtoButton
+                disabled={isActive(label)}
+                key={label}
+                onClick={() => setState(label)}
+                css={tabStyle}
+            >
+                {icon}
+                {t(`video.share.${label}`)}
+            </ProtoButton>
+        ))}
+    </div>;
 
     const inner = match(state, {
         "closed": () => null,
@@ -428,60 +503,11 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             <PopoverHeading>{t("video.share.share-video")}</PopoverHeading>
             <CopyableInput
                 label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
-                css={{ fontSize: 14, margin: "16px 0", width: 400 }}
+                css={{ fontSize: 14, width: 400 }}
                 // TODO
                 value={window.location.href}
             />
-            <div css={{
-                display: "flex",
-                gap: 8,
-                "& > button": {
-                    display: "flex",
-                    minWidth: 85,
-                    padding: "8px 8px 4px 8px",
-                    cursor: "pointer",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    borderRadius: 4,
-                    "& > svg": {
-                        width: 48,
-                        height: 48,
-                        backgroundColor: COLORS.primary0,
-                        color: COLORS.primary0BwInverted,
-                        borderRadius: 24,
-                        padding: 12,
-                    },
-                    "&:hover": {
-                        backgroundColor: COLORS.grey2,
-                    },
-                },
-            }}>
-                <ProtoButton onClick={() => setState("direct-link")}>
-                    <FiCrosshair />
-                    <div>{t("video.share.direct-link")}</div>
-                </ProtoButton>
-                <ProtoButton onClick={() => setState("embed")}>
-                    <FiCode />
-                    <div>{t("video.share.embed")}</div>
-                </ProtoButton>
-            </div>
         </>,
-        "direct-link": () => {
-            const target = new URL(window.location.href);
-            target.pathname = `/!v/${id}`;
-
-            return <>
-                <PopoverHeading>{t("video.share.direct-link")}</PopoverHeading>
-                <Card kind="info" iconPos="top" css={{ maxWidth: 400, fontSize: 14 }}>
-                    {t("video.share.direct-link-info")}
-                </Card>
-                <CopyableInput
-                    label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
-                    css={{ fontSize: 14, marginTop: 16, width: 400 }}
-                    value={target.toString()}
-                />
-            </>;
-        },
         "embed": () => {
             const ar = event.syncedData == null
                 ? [16, 9]
@@ -511,6 +537,11 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 />
             </>;
         },
+        "rss": () => {
+            // TODO
+            const dummy = "Implement me!";
+            return <>{dummy}</>;
+        },
     });
 
 
@@ -521,6 +552,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             arrowSize={12}
             ariaRole="dialog"
             open={state !== "closed"}
+            viewPortMargin={12}
         >
             <FloatingTrigger>
                 <Button onClick={() => setState(state => state === "closed" ? "main" : "closed")}>
@@ -528,7 +560,15 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     {t("general.share")}
                 </Button>
             </FloatingTrigger>
-            <Floating padding={[8, 16, 16, 16]}>{inner}</Floating>
+            <Floating padding={0}>
+                {header}
+                <div css={{
+                    margin: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                }}>{inner}</div>
+            </Floating>
         </FloatingContainer>
     );
 };
