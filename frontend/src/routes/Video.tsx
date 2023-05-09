@@ -424,7 +424,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 borderRadius: 8,
             },
         }}>
-            <div css={{ flex: event.description ? "4 400px" : "1 200px" }}>
+            <div css={{ flex: event.description ? "1 400px" : "1 200px" }}>
                 <Creators creators={event.creators} css={{
                     fontWeight: "bold",
                     marginBottom: 12,
@@ -448,7 +448,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                     contentExpanded={contentExpanded}
                 />}
             </div>
-            <div css={{ flex: "2 180px" }}>
+            <div css={{ flex: "1 200px" }}>
                 <MetadataTable ref={metadataContainer} event={event} />
             </div>
         </div>
@@ -849,8 +849,9 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
 
     return <>
         <dl ref={ref} css={{
-            display: "flex",
-            flexDirection: "column",
+            display: "grid",
+            gridTemplateColumns: "max-content 1fr",
+            columnGap: 8,
             rowGap: 6,
             fontSize: 14,
             lineHeight: 1.3,
@@ -859,7 +860,6 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
             },
             "& > dd": {
                 color: COLORS.grey6,
-                marginLeft: "4ch",
             },
         }}>
             {pairs.slice(0, itemLimit).map(([label, value], i) => <React.Fragment key={i}>
