@@ -314,31 +314,6 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     </>;
 };
 
-type ExpandButtonProps = {
-    onClick: () => void;
-    contentExpanded: boolean;
-};
-
-const ExpandButton: React.FC<ExpandButtonProps> = ({ onClick, contentExpanded }) =>{
-    const { t } = useTranslation();
-
-    return <div css={{ display: "flex", justifyContent: "end" }}>
-        <ProtoButton onClick={onClick} css={{
-            fontSize: 12,
-            padding: "0 4px",
-            borderRadius: 4,
-            ":hover, :focus-visible": {
-                backgroundColor: COLORS.grey3,
-            },
-            ...focusStyle({}),
-        }}>
-            {contentExpanded
-                ? t("video.description.show-less")
-                : t("video.description.show-more")
-            }
-        </ProtoButton>
-    </div>;
-};
 
 type Event = Extract<NonNullable<VideoPageEventData$data>, { __typename: "AuthorizedEvent" }>;
 type SyncedEvent = SyncedOpencastEntity<Event>;
@@ -352,51 +327,54 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const { t } = useTranslation();
     const user = useUser();
 
-    const metadataContainer = useRef<HTMLDListElement>(null);
-    const textContainer = useRef<HTMLDivElement>(null);
+    const descriptionRef = useRef<HTMLDivElement>(null);
+    const descriptionContainerRef = useRef<HTMLDivElement>(null);
 
-    const [metadataHeight, setMetadataHeight] = useState(metadataContainer.current?.scrollHeight);
-    const [buttonVisible, setButtonVisible] = useState(false);
-    const [contentExpanded, setContentExpanded] = useState(false);
-    const [linesToShow, setLinesToShow] = useState(5);
-
-    useEffect(() => {
-        if (metadataContainer.current) {
-            resizeObserver.observe(metadataContainer.current);
-        }
-    });
+    const [expanded, setExpanded] = useState(false);
+    const [showButton, setShowButton] = useState(false);
 
     const resizeObserver = new ResizeObserver(() => {
-        // On larger screens, the number of lines to show should depend
-        // on the height of the metadata container. I.e. if there is more
-        // metadata, we can show more lines of the description.
-        if (metadataContainer.current && textContainer.current) {
-            // The creator line with margin takes 33px.
-            setMetadataHeight(metadataContainer.current.scrollHeight - 33);
-            if (metadataHeight) {
-                // One line of text is about 20px.
-                setLinesToShow(Math.max(5, Math.floor((metadataHeight) / 20)));
-                // If the text is overflowing OR if it has been expanded, the button is shown.
-                setButtonVisible(
-                    textContainer.current.scrollHeight > textContainer.current.clientHeight
-                    || contentExpanded,
-                );
-            }
+        if (descriptionRef.current && descriptionContainerRef.current) {
+            setShowButton(
+                descriptionRef.current.scrollHeight > descriptionContainerRef.current.offsetHeight
+                || expanded,
+            );
         }
     });
+
+    useEffect(() => {
+        if (descriptionRef.current) {
+            resizeObserver.observe(descriptionRef.current);
+        }
+
+        return () => resizeObserver.disconnect();
+    });
+
+    const InnerDescription: React.FC<({ truncated?: boolean })> = ({ truncated = false }) => <>
+        <Creators creators={event.creators} css={{
+            fontWeight: "bold",
+            marginBottom: 12,
+        }} />
+        <Description
+            text={event.description}
+            css={{
+                color: COLORS.grey7,
+                fontSize: 14,
+                maxWidth: "90ch",
+                ...truncated && ellipsisOverflowCss(6),
+            }}
+        />
+    </>;
 
     return <>
         <div css={{
             display: "flex",
             alignItems: "center",
+            flexWrap: "wrap",
             justifyContent: "space-between",
             marginTop: 24,
             marginBottom: 16,
             gap: 8,
-            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                flexDirection: "column",
-                alignItems: "flex-start",
-            },
         }}>
             <div>
                 <VideoTitle title={event.title} />
@@ -420,36 +398,59 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             gap: 16,
             "> div": {
                 backgroundColor: COLORS.grey1,
-                padding: "12px 16px",
                 borderRadius: 8,
+                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    overflowWrap: "anywhere",
+                },
             },
         }}>
-            <div css={{ flex: event.description ? "1 400px" : "1 200px" }}>
-                <Creators creators={event.creators} css={{
-                    fontWeight: "bold",
-                    marginBottom: 12,
-                }} />
-                <Description
-                    ref={textContainer}
-                    text={event.description}
-                    css={{
-                        color: COLORS.grey7,
-                        fontSize: 14,
-                        maxWidth: "90ch",
-                        ...!contentExpanded && ellipsisOverflowCss(linesToShow),
-                        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
-                            // On small screens we use a fixed limit.
-                            ...!contentExpanded && ellipsisOverflowCss(5),
-                        },
-                    }}
-                />
-                {buttonVisible && <ExpandButton
-                    onClick={() => setContentExpanded(!contentExpanded)}
-                    contentExpanded={contentExpanded}
-                />}
+            <div ref={descriptionContainerRef} css={{
+                flex: event.description ? "1 400px" : "1 200px",
+                position: "relative",
+                overflow: "hidden",
+            }}>
+                <div ref={descriptionRef} css={{
+                    position: expanded ? "initial" : "absolute",
+                    top: 0,
+                    left: 0,
+                    padding: "12px 16px",
+                    paddingBottom: 26,
+                }}><InnerDescription /></div>
+                <div css={{
+                    visibility: "hidden",
+                    padding: "12px 16px",
+                    paddingBottom: 26,
+                    ...expanded && { display: "none" },
+                }}><InnerDescription truncated /></div>
+                <div css={{
+                    ...!showButton && { display: "none" },
+                    ...!expanded && {
+                        background: `linear-gradient(transparent, ${COLORS.grey1} 40%)`,
+                    },
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    paddingTop: 30,
+                }}>
+                    <ProtoButton onClick={() => setExpanded(b => !b)} css={{
+                        textAlign: "center",
+                        width: "100%",
+                        fontSize: 12,
+                        padding: "4px 0",
+                        borderRadius: "0 0 8px 8px",
+                        ":hover, :focus-visible": { backgroundColor: COLORS.grey2 },
+                        ...focusStyle({ inset: true }),
+                    }}>
+                        {expanded
+                            ? t("video.description.show-less")
+                            : t("video.description.show-more")
+                        }
+                    </ProtoButton>
+                </div>
             </div>
-            <div css={{ flex: "1 200px" }}>
-                <MetadataTable ref={metadataContainer} event={event} />
+            <div css={{ flex: "1 200px", padding: "12px 16px" }}>
+                <MetadataTable event={event} />
             </div>
         </div>
     </>;
@@ -595,7 +596,6 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const inner = match(state, {
         "closed": () => null,
         "main": () => <>
-            <PopoverHeading>{t("video.share.share-video")}</PopoverHeading>
             <CopyableInput
                 label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                 css={{ fontSize: 14, width: 400 }}
@@ -624,7 +624,6 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             ].join(" ")}></iframe>`;
 
             return <>
-                <PopoverHeading>{t("video.share.embed")}</PopoverHeading>
                 <CopyableInput
                     label={t("video.embed.copy-embed-code-to-clipboard")}
                     value={embedCode}
@@ -685,6 +684,7 @@ const VideoTitle: React.FC<VideoTitleProps> = ({ title }) => (
     <PageTitle title={title} css={{
         marginBottom: 4,
         fontSize: 22,
+        maxWidth: "80ch",
         [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: { fontSize: 20 },
         [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 18 },
         lineHeight: 1.2,
@@ -784,12 +784,6 @@ type MetadataTableProps = {
 
 const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ event }, ref) => {
     const { t, i18n } = useTranslation();
-
-    const minItemLimit = 4;
-    const [itemLimit, setItemLimit] = useState(minItemLimit);
-    const [contentExpanded, setContentExpanded] = useState(false);
-    const [buttonVisible, setButtonVisible] = useState(false);
-
     const pairs: [string, ReactNode][] = [];
 
     if (event.series !== null) {
@@ -842,12 +836,7 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
         ]);
     }
 
-    useEffect(() => {
-        setButtonVisible(pairs.length > minItemLimit);
-        setItemLimit(contentExpanded ? pairs.length : minItemLimit);
-    }, [pairs.length, contentExpanded]);
-
-    return <>
+    return (
         <dl ref={ref} css={{
             display: "grid",
             gridTemplateColumns: "max-content 1fr",
@@ -862,16 +851,12 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
                 color: COLORS.grey6,
             },
         }}>
-            {pairs.slice(0, itemLimit).map(([label, value], i) => <React.Fragment key={i}>
+            {pairs.map(([label, value], i) => <React.Fragment key={i}>
                 <dt>{label}</dt>
                 <dd>{value}</dd>
             </React.Fragment>)}
         </dl>
-        {buttonVisible && <ExpandButton
-            onClick={() => setContentExpanded(!contentExpanded)}
-            contentExpanded={contentExpanded}
-        />}
-    </>;
+    );
 });
 
 const isValidLink = (s: string): boolean => {
