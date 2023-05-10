@@ -123,6 +123,9 @@ video:
   deleted: Gelöschtes Video
   created: Erstellt
   updated: Zuletzt angepasst
+  duration: Abspielzeit
+  language_one: Sprache
+  language_other: Sprachen
   part-of-series: Teil von Serie
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
@@ -141,20 +144,37 @@ video:
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
+  started-generic: Gestartet
   started: Gestartet {{duration}}
+  starts: Startet 
   starts-in: Startet {{duration}}
+  description:
+    show-more: Mehr anzeigen
+    show-less: Weniger anzeigen
   embed:
     button: Einbetten
     title: Video einbetten
     copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
   caption: Untertitel
+  download:
+    title: Download
+    presenter: Kamera
+    slides: Präsentation
+    info: >
+      Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen 
+      (Rechtsklick - Speichern unter).
   manage: Verwalten
   start: Anfang
   end: Ende
+  ends: Endet
   share:
+    title: $t(video.share.{{title}})
     share-video: Video teilen
     direct-link: Direktlink
+    main: Link
     embed: Einbetten
+    rss: RSS
+    show-qr-code: QR Code anzeigen
     direct-link-info: >
       Hiermit wird das Video direkt verlinkt, also ohne seine Position im
       Videoportal (die Seite, auf der es inkludiert ist). Das heißt, dass der

@@ -333,7 +333,7 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
                 backgroundColor: "var(--floating-background-color)",
                 borderRadius: settings.borderRadius,
                 boxShadow: "0 0 var(--floating-shadow-blur) var(--floating-shadow-color)",
-                border: "var(--floating-border-width) solid var(--floating-border-color)",
+                outline: "var(--floating-border-width) solid var(--floating-border-color)",
             }}>
                 {/* The content. We wrap it in another div to prevent overflow. */}
                 <div {...{ className }} css={{
@@ -380,7 +380,7 @@ export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
                             + "var(--floating-shadow-blur) "
                             + `${shadowBlur / 12}px `
                             + "var(--floating-shadow-color)",
-                        border: "var(--floating-border-width) solid var(--floating-border-color)",
+                        outline: "var(--floating-border-width) solid var(--floating-border-color)",
                     }} />
                 </div>
             </div>

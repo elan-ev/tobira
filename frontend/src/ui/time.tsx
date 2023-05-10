@@ -6,13 +6,14 @@ import { WithTooltip } from "./Floating";
 type RelativeDateProps = {
     date: Date;
     isLive: boolean;
+    noTooltip?: boolean;
 };
 
 /**
  * Formats a date as something relative like "3 days ago"
  * or "Started 3 days ago" in case of live events.
  */
-export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive }) => {
+export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive, noTooltip = false }) => {
     const { i18n } = useTranslation();
     const [now, setNow] = useState(Date.now());
     const secsAgo = Math.floor((now - date.getTime()) / 1000);
@@ -62,8 +63,10 @@ export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive }) => {
 
     const preciseDate = date.toLocaleString(i18n.language);
 
-    return <WithTooltip tooltip={preciseDate} placement="bottom" distance={2}>
-        <time dateTime={date.toISOString()}>{prettyDate}</time>
-    </WithTooltip>;
+    return noTooltip
+        ? <time dateTime={date.toISOString()}>{prettyDate}</time>
+        : <WithTooltip tooltip={preciseDate} placement="bottom" distance={2}>
+            <time dateTime={date.toISOString()}>{prettyDate}</time>
+        </WithTooltip>;
 };
 

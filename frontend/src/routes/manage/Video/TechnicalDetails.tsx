@@ -19,6 +19,16 @@ type Props = {
     event: AuthorizedEvent;
 };
 
+type TrackInfoProps = {
+    event: {
+        syncedData: null | {
+            tracks: NonNullable<AuthorizedEvent["syncedData"]>["tracks"];
+        };
+    };
+    className?: string;
+    translateFlavors?: boolean;
+};
+
 const Page: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
@@ -72,12 +82,24 @@ type SingleTrackInfo = {
     uri: string;
 };
 
-const TrackInfo: React.FC<Props> = ({ event }) => {
+export const TrackInfo: React.FC<TrackInfoProps> = (
+    { event, className, translateFlavors = false },
+) => {
     const { t } = useTranslation();
 
     if (event.syncedData == null) {
         return null;
     }
+
+    const flavorTranslation = (flavor: string) => {
+        if (flavor.startsWith("presenter")) {
+            return t("video.download.presenter");
+        }
+        if (flavor.startsWith("presentation")) {
+            return t("video.download.slides");
+        }
+        return flavor;
+    };
 
     const flavors: Map<string, SingleTrackInfo[]> = new Map();
     for (const { flavor, resolution, mimetype, uri } of event.syncedData.tracks) {
@@ -90,11 +112,11 @@ const TrackInfo: React.FC<Props> = ({ event }) => {
         tracks.push({ resolution, mimetype, uri });
     }
 
-    return <section>
+    return <section css={className}>
         <h2>{t("manage.my-videos.technical-details.tracks")}</h2>
         <ul css={{ fontSize: 15, marginTop: 8, paddingLeft: 24 }}>
             {Array.from(flavors, ([flavor, tracks]) => <li key={flavor}>
-                <code>{flavor}</code>
+                {translateFlavors ? flavorTranslation(flavor) : <code>{flavor}</code>}
                 <ul>{tracks
                     .sort((a, b) => (a.resolution?.[0] ?? 0) - (b.resolution?.[0] ?? 0))
                     .map((track, i) => <TrackItem key={i} {...track} />)

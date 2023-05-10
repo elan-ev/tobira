@@ -117,22 +117,22 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
 
     return (
         <div className={className} css={{
-            // We want to make sure that the player does not take up all the
-            // vertical and horizontal page, as this could make scrolling hard.
-            // And if users want that, there is a fullscreen mode for a reason.
-            // So here we just say: there should be always 10% + 80px of
-            // vertical space left (not taken up by the player). The height of
-            // the players is actually best controlled by setting the width.
-            "--ideal-max-width": `calc((90vh - 80px) * ${aspectRatio[0] / aspectRatio[1]})`,
-            maxWidth: "min(100%, var(--ideal-max-width))",
-            minWidth: "320px",
+            display: "flex",
+            flexDirection: "column",
+            // We want to be able to see the full header, the video title and some metadata.
+            // So: full height minus header, minus separation line (18px), minus main
+            // padding (16px), minus breadcrumbs (roughly 42px), minus the amount of space
+            // we want to see below the video (roughly 120px).
+            maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 42px - 120px)",
+            minHeight: 180,
+            width: "100%",
             aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
 
             // If the player gets too small, the controls are pretty crammed, so
             // we use all available width.
             "@media (max-width: 380px)": {
                 margin: `0 -${MAIN_PADDING}px`,
-                maxWidth: `min(100% + ${2 * MAIN_PADDING}px, var(--ideal-max-width))`,
+                width: `calc(100% + ${2 * MAIN_PADDING}px)`,
             },
         }}>
             <Player {...{ event, ...playerProps }} />

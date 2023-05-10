@@ -53,7 +53,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     return <>
         {showTitle && <Title title={event.title} />}
         {isSynced(event)
-            ? <InlinePlayer event={event} css={{ width: 800 }} />
+            ? <InlinePlayer event={event} css={{ maxWidth: 800 }} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
     </>;
 };

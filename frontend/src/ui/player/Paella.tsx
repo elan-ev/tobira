@@ -130,7 +130,6 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             css={{
                 height: "100%",
                 overflow: "hidden",
-                margin: "auto",
 
                 // Override stuff that Paella applies
                 left: "unset",

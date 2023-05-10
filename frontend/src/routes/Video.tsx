@@ -1,8 +1,13 @@
-import React, { ReactNode, useRef, useState } from "react";
+import React, { ReactElement, ReactNode, useEffect, useRef, useState } from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
-import { FiCode, FiSettings, FiCrosshair, FiShare2 } from "react-icons/fi";
+import {
+    FiCode, FiSettings, FiShare2, FiDownload,
+} from "react-icons/fi";
+import { HiLink } from "react-icons/hi";
+import { HiOutlineQrCode } from "react-icons/hi2";
+import { QRCodeCanvas } from "qrcode.react";
 
 import { loadQuery } from "../relay";
 import { RootLoader } from "../layout/Root";
@@ -23,6 +28,7 @@ import {
     translatedConfig,
     match,
     useOnOutsideClick,
+    currentRef,
 } from "../util";
 import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
@@ -46,14 +52,17 @@ import {
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
 import { getEventTimeInfo } from "../util/video";
-import { Creators } from "../ui/Video";
+import { Creators, formatDuration } from "../ui/Video";
 import { Description } from "../ui/metadata";
-import { ellipsisOverflowCss } from "../ui";
+import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui/Floating";
 import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
 import { VideoObject, WithContext } from "schema-dts";
+import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
+import { RelativeDate } from "../ui/time";
+import { Modal, ModalHandle } from "../ui/Modal";
 
 
 // ===========================================================================================
@@ -318,134 +327,293 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const { t } = useTranslation();
     const user = useUser();
 
+    const shrinkOnMobile = {
+        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+            padding: "5px 10px",
+            gap: 10,
+        },
+    };
+
+    const descriptionRef = useRef<HTMLDivElement>(null);
+    const descriptionContainerRef = useRef<HTMLDivElement>(null);
+
+    const [expanded, setExpanded] = useState(false);
+    const [showButton, setShowButton] = useState(false);
+
+    const resizeObserver = new ResizeObserver(() => {
+        if (descriptionRef.current && descriptionContainerRef.current) {
+            setShowButton(
+                descriptionRef.current.scrollHeight > descriptionContainerRef.current.offsetHeight
+                || expanded,
+            );
+        }
+    });
+
+    useEffect(() => {
+        if (descriptionRef.current) {
+            resizeObserver.observe(descriptionRef.current);
+        }
+
+        return () => resizeObserver.disconnect();
+    });
+
+    const InnerDescription: React.FC<({ truncated?: boolean })> = ({ truncated = false }) => <>
+        <Creators creators={event.creators} css={{
+            fontWeight: "bold",
+            marginBottom: 12,
+        }} />
+        <Description
+            text={event.description}
+            css={{
+                color: COLORS.grey7,
+                fontSize: 14,
+                maxWidth: "90ch",
+                ...truncated && ellipsisOverflowCss(6),
+            }}
+        />
+    </>;
+
     return <>
         <div css={{
             display: "flex",
             alignItems: "center",
+            flexWrap: "wrap",
             justifyContent: "space-between",
             marginTop: 24,
+            marginBottom: 16,
             gap: 8,
-            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                flexDirection: "column",
-                alignItems: "flex-start",
-            },
         }}>
             <div>
                 <VideoTitle title={event.title} />
                 <VideoDate event={event} />
             </div>
-            <div css={{ display: "flex", gap: 8 }}>
+            {/* Buttons */}
+            <div css={{ display: "flex", gap: 8, flexWrap: "wrap", button: { ...shrinkOnMobile } }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
-                    <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
+                    <LinkButton to={`/~manage/videos/${id.slice(2)}`} css={{
+                        "&:not([disabled])": { color: COLORS.primary0 },
+                        ...shrinkOnMobile,
+                    }}>
                         <FiSettings size={16} />
                         {t("video.manage")}
                     </LinkButton>
                 )}
+                {CONFIG.showDownloadButton && <DownloadButton event={event} />}
                 <ShareButton event={event} />
             </div>
         </div>
-        <hr />
         <div css={{
-            display: "grid",
-            gridTemplate: "1fr / 1fr fit-content(30%)",
-            columnGap: 48,
-            rowGap: 24,
-            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                gridTemplate: "auto auto / 1fr",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 16,
+            "> div": {
+                backgroundColor: COLORS.grey1,
+                borderRadius: 8,
+                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    overflowWrap: "anywhere",
+                },
             },
         }}>
-            <div css={{ maxWidth: 700 }}>
-                <Creators creators={event.creators} css={{ fontWeight: "bold" }} />
-                <Description
-                    text={event.description}
-                    css={{ color: COLORS.grey7, fontSize: 14 }}
-                />
+            <div ref={descriptionContainerRef} css={{
+                flex: event.description ? "1 400px" : "1 200px",
+                position: "relative",
+                overflow: "hidden",
+            }}>
+                <div ref={descriptionRef} css={{
+                    position: expanded ? "initial" : "absolute",
+                    top: 0,
+                    left: 0,
+                    padding: "12px 16px",
+                    paddingBottom: 26,
+                }}><InnerDescription /></div>
+                <div css={{
+                    visibility: "hidden",
+                    padding: "12px 16px",
+                    paddingBottom: 26,
+                    ...expanded && { display: "none" },
+                }}><InnerDescription truncated /></div>
+                <div css={{
+                    ...!showButton && { display: "none" },
+                    ...!expanded && {
+                        background: `linear-gradient(transparent, ${COLORS.grey1} 40%)`,
+                    },
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    paddingTop: 30,
+                }}>
+                    <ProtoButton onClick={() => setExpanded(b => !b)} css={{
+                        textAlign: "center",
+                        width: "100%",
+                        fontSize: 12,
+                        padding: "4px 0",
+                        borderRadius: "0 0 8px 8px",
+                        ":hover, :focus-visible": { backgroundColor: COLORS.grey2 },
+                        ...focusStyle({ inset: true }),
+                    }}>
+                        {expanded
+                            ? t("video.description.show-less")
+                            : t("video.description.show-more")
+                        }
+                    </ProtoButton>
+                </div>
             </div>
-            <div css={{ paddingTop: 8 }}>
+            <div css={{ flex: "1 200px", padding: "12px 16px" }}>
                 <MetadataTable event={event} />
             </div>
         </div>
-
     </>;
 };
 
+
+const PopoverHeading: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <strong css={{ fontSize: 18, display: "block", marginBottom: 16 }}>
+        {children}
+    </strong>
+);
+
+const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
+    const { t } = useTranslation();
+    const ref = useRef(null);
+
+    return (
+        <FloatingContainer
+            ref={ref}
+            placement="top"
+            arrowSize={12}
+            ariaRole="dialog"
+            trigger="click"
+        >
+            <FloatingTrigger>
+                <Button>
+                    <FiDownload size={16}/>
+                    {t("video.download.title")}
+                </Button>
+            </FloatingTrigger>
+            <Floating padding={[8, 16, 16, 16]}>
+                <PopoverHeading>{t("video.download.title")}</PopoverHeading>
+                <Card kind="info" iconPos="left" css={{ maxWidth: 400, fontSize: 14 }}>
+                    {t("video.download.info")}
+                </Card>
+                <TrackInfo event={event} translateFlavors css={{ h2: { display: "none" } }} />
+            </Floating>
+        </FloatingContainer>
+    );
+};
+
 const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
-    type State = "closed" | "main" | "direct-link" | "embed";
+    type State = "closed" | "main" | "embed" | "rss";
+    /* eslint-disable react/jsx-key */
+    const entries: [Exclude<State, "closed">, ReactElement][] = [
+        ["main", <HiLink />],
+        ["embed", <FiCode />],
+        // ["rss", <FiRss />],
+    ];
+    /* eslint-enable react/jsx-key */
 
     const { t } = useTranslation();
     const [state, setState] = useState<State>("closed");
     const ref = useRef(null);
-    useOnOutsideClick(ref, () => setState("closed"));
+    const qrModalRef = useRef<ModalHandle>(null);
+    useOnOutsideClick(ref, () => !qrModalRef.current?.isOpen?.() && setState("closed"));
 
-    const id = event.id.substring(2);
+    const isActive = (label: State) => label === state;
 
-    // TODO: maybe move out of this
-    const Heading: React.FC<React.PropsWithChildren> = ({ children }) => (
-        <strong css={{ fontSize: 18, display: "block", marginBottom: 16 }}>
-            {children}
-        </strong>
-    );
+    const tabStyle = {
+        display: "flex",
+        flexDirection: "column",
+        flex: `1 calc(100% / ${entries.length})`,
+        backgroundColor: COLORS.grey3,
+        paddingBottom: 4,
+        cursor: "pointer",
+        alignItems: "center",
+        borderRight: `1px solid ${COLORS.grey5}`,
+        borderTop: "none",
+        borderBottom: `1px solid ${COLORS.grey5}`,
+        ":is(:first-child)": { borderTopLeftRadius: 4 },
+        ":is(:last-child)": {
+            borderRight: "none",
+            borderTopRightRadius: 4,
+        },
+        "& > svg": {
+            width: 32,
+            height: 32,
+            color: COLORS.primary1,
+            padding: "8px 4px 4px",
+        },
+        "&[disabled]": {
+            cursor: "default",
+            backgroundColor: COLORS.background,
+            borderBottom: "none",
+            svg: { color: COLORS.primary0 },
+        },
+        ":not([disabled])": {
+            "&:hover": { backgroundColor: COLORS.grey2 },
+        },
+        ...focusStyle({ inset: true }),
+
+        // By using the `has()` selector, these styles only get applied
+        // to non-firefox browsers. Once firefox supports that selector,
+        // this border radius stuff should get refactored.
+        ":has(svg)": {
+            "&[disabled]": {
+                borderRight: "none",
+                "+ button": {
+                    borderLeft: `1px solid ${COLORS.grey5}`,
+                    borderBottomLeftRadius: 4,
+                },
+            },
+            ":not([disabled]):has(+ button[disabled])": {
+                borderBottomRightRadius: 4,
+                borderLeft: "none",
+            },
+        },
+    } as const;
+
+    const header = <div css={{ display: "flex" }}>
+        {entries.map(([label, icon]) => (
+            <ProtoButton
+                disabled={isActive(label)}
+                key={label}
+                onClick={() => setState(label)}
+                css={tabStyle}
+            >
+                {icon}
+                {t(`video.share.${label}`)}
+            </ProtoButton>
+        ))}
+    </div>;
+
+    const ShowQRCodeButton: React.FC<{ target: string; label: State }> = ({ target, label }) => <>
+        <Button
+            onClick={() => currentRef(qrModalRef).open()}
+            css={{ width: "max-content" }}
+        >
+            <HiOutlineQrCode />
+            {t("video.share.show-qr-code")}
+        </Button>
+        <Modal ref={qrModalRef}
+            title={t("video.share.title", { title: label })}
+            css={{ minWidth: "max-content" }}
+        >
+            <div css={{ display: "flex", justifyContent: "center" }}>
+                <QRCodeCanvas value={target} size={250} css={{ margin: 16 }}/>
+            </div>
+        </Modal>
+    </>;
 
     const inner = match(state, {
         "closed": () => null,
         "main": () => <>
-            <Heading>{t("video.share.share-video")}</Heading>
             <CopyableInput
                 label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
-                css={{ fontSize: 14, margin: "16px 0", width: 400 }}
+                css={{ fontSize: 14, width: 400 }}
                 // TODO
                 value={window.location.href}
             />
-            <div css={{
-                display: "flex",
-                gap: 8,
-                "& > button": {
-                    display: "flex",
-                    minWidth: 85,
-                    padding: "8px 8px 4px 8px",
-                    cursor: "pointer",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    borderRadius: 4,
-                    "& > svg": {
-                        width: 48,
-                        height: 48,
-                        backgroundColor: COLORS.primary0,
-                        color: COLORS.primary0BwInverted,
-                        borderRadius: 24,
-                        padding: 12,
-                    },
-                    "&:hover": {
-                        backgroundColor: COLORS.grey2,
-                    },
-                },
-            }}>
-                <ProtoButton onClick={() => setState("direct-link")}>
-                    <FiCrosshair />
-                    <div>{t("video.share.direct-link")}</div>
-                </ProtoButton>
-                <ProtoButton onClick={() => setState("embed")}>
-                    <FiCode />
-                    <div>{t("video.share.embed")}</div>
-                </ProtoButton>
-            </div>
+            <ShowQRCodeButton target={window.location.href} label={state} />
         </>,
-        "direct-link": () => {
-            const target = new URL(window.location.href);
-            target.pathname = `/!v/${id}`;
-
-            return <>
-                <Heading>{t("video.share.direct-link")}</Heading>
-                <Card kind="info" iconPos="top" css={{ maxWidth: 400, fontSize: 14 }}>
-                    {t("video.share.direct-link-info")}
-                </Card>
-                <CopyableInput
-                    label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
-                    css={{ fontSize: 14, marginTop: 16, width: 400 }}
-                    value={target.toString()}
-                />
-            </>;
-        },
         "embed": () => {
             const ar = event.syncedData == null
                 ? [16, 9]
@@ -466,14 +634,19 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             ].join(" ")}></iframe>`;
 
             return <>
-                <Heading>{t("video.share.embed")}</Heading>
                 <CopyableInput
                     label={t("video.embed.copy-embed-code-to-clipboard")}
                     value={embedCode}
                     multiline
                     css={{ fontSize: 14, width: 400 }}
                 />
+                <ShowQRCodeButton target={embedCode} label={state} />
             </>;
+        },
+        "rss": () => {
+            // TODO
+            const dummy = "Implement me!";
+            return <>{dummy}</>;
         },
     });
 
@@ -485,6 +658,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             arrowSize={12}
             ariaRole="dialog"
             open={state !== "closed"}
+            viewPortMargin={12}
         >
             <FloatingTrigger>
                 <Button onClick={() => setState(state => state === "closed" ? "main" : "closed")}>
@@ -492,7 +666,20 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     {t("general.share")}
                 </Button>
             </FloatingTrigger>
-            <Floating padding={[8, 16, 16, 16]}>{inner}</Floating>
+            <Floating padding={0} css={{
+                height: 240,
+                display: "flex",
+                flexDirection: "column",
+            }}>
+                {header}
+                <div css={{
+                    margin: 16,
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                }}>{inner}</div>
+            </Floating>
         </FloatingContainer>
     );
 };
@@ -507,6 +694,7 @@ const VideoTitle: React.FC<VideoTitleProps> = ({ title }) => (
     <PageTitle title={title} css={{
         marginBottom: 4,
         fontSize: 22,
+        maxWidth: "80ch",
         [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: { fontSize: 20 },
         [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 18 },
         lineHeight: 1.2,
@@ -525,34 +713,65 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
     const { created, updated, startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
 
     const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
+    const createdFull = created.toLocaleString(i18n.language, fullOptions);
+    const startFull = startTime?.toLocaleString(i18n.language, fullOptions);
+    const endFull = endTime?.toLocaleString(i18n.language, fullOptions);
+    const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
+        ? updated.toLocaleString(i18n.language, fullOptions)
+        : null;
+
     let inner;
+    let tooltip;
     if (event.isLive && hasEnded) {
         inner = <>
             {t("video.ended") + ": "}
-            {endTime.toLocaleString(i18n.language, fullOptions)}
+            {endFull}
         </>;
-    } else if (event.isLive && hasStarted === false) {
-        inner = <>
-            {t("video.upcoming") + ": "}
-            {startTime.toLocaleString(i18n.language, fullOptions)}
-        </>;
-    } else {
-        const createdDate = created.toLocaleDateString(i18n.language, { dateStyle: "long" });
-        const createdFull = created.toLocaleString(i18n.language, fullOptions);
-        const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
-            ? updated.toLocaleString(i18n.language, fullOptions)
-            : null;
-
-        const tooltip = <>
-            <i>{t("video.created")}</i>: {createdFull}
+    } else if (event.isLive) {
+        tooltip = <>
+            <i>{hasStarted
+                ? t("video.started-generic")
+                : t("video.starts")
+            }
+            </i>: {startFull}
+            {endTime && <>
+                <br />
+                <i>{t("video.ends")}</i>: {endFull}
+            </>
+            }
             {updatedFull && <>
                 <br/>
                 <i>{t("video.updated")}</i>: {updatedFull}
             </>}
         </>;
-        inner = <WithTooltip distance={0} tooltip={tooltip}>
-            <div>{createdDate}</div>
-        </WithTooltip>;
+
+        inner = hasStarted
+            ? <div>
+                <RelativeDate date={startTime} isLive noTooltip />
+            </div>
+            : <div>
+                {t("video.upcoming") + ": "}
+                {startFull}
+            </div>;
+    } else {
+        const createdDate = created.toLocaleDateString(i18n.language, { dateStyle: "long" });
+        const startedDate = startTime
+            ? startTime !== endTime
+                && startTime?.toLocaleDateString(i18n.language, { dateStyle: "long" })
+            : null;
+
+        tooltip = <>
+            {startedDate
+                ? <><i>{t("video.started-generic")}</i>: {startFull}</>
+                : <><i>{t("video.created")}</i>: {createdFull}</>
+            }
+            {updatedFull && <>
+                <br/>
+                <i>{t("video.updated")}</i>: {updatedFull}
+            </>}
+        </>;
+
+        inner = <div>{startedDate ?? createdDate}</div>;
     }
 
     return (
@@ -561,7 +780,11 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             position: "relative",
             color: COLORS.grey6,
             fontSize: 14,
-        }}>{inner}</div>
+        }}>
+            <WithTooltip distance={0} tooltip={tooltip}>
+                {inner}
+            </WithTooltip>
+        </div>
     );
 };
 
@@ -569,9 +792,8 @@ type MetadataTableProps = {
     event: Event;
 };
 
-const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
+const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ event }, ref) => {
     const { t, i18n } = useTranslation();
-
     const pairs: [string, ReactNode][] = [];
 
     if (event.series !== null) {
@@ -579,6 +801,16 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
             t("video.part-of-series"),
             // eslint-disable-next-line react/jsx-key
             <Link to={`/!s/${event.series.id.slice(2)}`}>{event.series.title}</Link>,
+        ]);
+    }
+
+    if (event.metadata.dcterms.language) {
+        const languageNames = new Intl.DisplayNames(i18n.resolvedLanguage, { type: "language" });
+        const languages = event.metadata.dcterms.language.map(lng => languageNames.of(lng) ?? lng);
+
+        pairs.push([
+            t("video.language", { count: languages.length }),
+            languages.join(", "),
         ]);
     }
 
@@ -607,14 +839,21 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
         }
     }
 
+    if (event.syncedData?.duration) {
+        pairs.push([
+            t("video.duration"),
+            formatDuration(event.syncedData.duration),
+        ]);
+    }
+
     return (
-        <dl css={{
+        <dl ref={ref} css={{
             display: "grid",
-            columnGap: 16,
+            gridTemplateColumns: "max-content 1fr",
+            columnGap: 8,
             rowGap: 6,
             fontSize: 14,
             lineHeight: 1.3,
-            gridTemplateColumns: "max-content 1fr",
             "& > dt::after": {
                 content: "':'",
             },
@@ -628,7 +867,7 @@ const MetadataTable: React.FC<MetadataTableProps> = ({ event }) => {
             </React.Fragment>)}
         </dl>
     );
-};
+});
 
 const isValidLink = (s: string): boolean => {
     const trimmed = s.trim();
