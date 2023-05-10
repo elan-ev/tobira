@@ -327,6 +327,13 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const { t } = useTranslation();
     const user = useUser();
 
+    const shrinkOnMobile = {
+        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+            padding: "5px 10px",
+            gap: 10,
+        },
+    };
+
     const descriptionRef = useRef<HTMLDivElement>(null);
     const descriptionContainerRef = useRef<HTMLDivElement>(null);
 
@@ -381,9 +388,12 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <VideoDate event={event} />
             </div>
             {/* Buttons */}
-            <div css={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div css={{ display: "flex", gap: 8, flexWrap: "wrap", button: { ...shrinkOnMobile } }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
-                    <LinkButton to={`/~manage/videos/${id.slice(2)}`}>
+                    <LinkButton to={`/~manage/videos/${id.slice(2)}`} css={{
+                        "&:not([disabled])": { color: COLORS.primary0 },
+                        ...shrinkOnMobile,
+                    }}>
                         <FiSettings size={16} />
                         {t("video.manage")}
                     </LinkButton>
