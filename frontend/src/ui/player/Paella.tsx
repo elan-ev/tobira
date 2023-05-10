@@ -215,23 +215,26 @@ const PAELLA_CONFIG = {
         "es.upv.paella.mp4VideoFormat": {
             enabled: true,
             order: 1,
+            crossOrigin: false,
         },
         "es.upv.paella.hlsVideoFormat": {
-            "enabled": true,
-            "order": 0,
-            "corsConfig": {
-                "withCredentials": false,
-                "requestHeaders": {
+            enabled: true,
+            order: 0,
+            crossOrigin: false,
+            corsConfig: {
+                withCredentials: false,
+                requestHeaders: {
                     "Access-Control-Allow-Credentials": false,
                 },
             },
         },
         "es.upv.paella.hlsLiveVideoFormat": {
-            "enabled": true,
-            "order": 0,
-            "corsConfig": {
-                "withCredentials": false,
-                "requestHeaders": {
+            enabled: true,
+            order: 0,
+            crossOrigin: false,
+            corsConfig: {
+                withCredentials: false,
+                requestHeaders: {
                     "Access-Control-Allow-Credentials": false,
                 },
             },
