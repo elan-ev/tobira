@@ -120,6 +120,7 @@ const BackButton: React.FC = () => {
             gap: 4,
             padding: 4,
             borderRadius: 4,
+            textDecoration: "none",
         }}
     ><FiChevronLeft />{t("back")}</Link>;
 };

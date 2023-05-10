@@ -918,6 +918,7 @@ const Item: React.FC<ItemProps> = ({
         display: "block",
         padding: 6,
         borderRadius: 12,
+        textDecoration: "none",
         "& a": { color: COLORS.foreground, textDecoration: "none" },
         ...active && {
             backgroundColor: COLORS.grey3,

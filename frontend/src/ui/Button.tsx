@@ -104,6 +104,7 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         whiteSpace: "nowrap",
         backgroundColor: COLORS.grey0,
         transition: "background-color 0.15s, border-color 0.15s",
+        textDecoration: "none",
         "& > svg": {
             fontSize: 20,
         },

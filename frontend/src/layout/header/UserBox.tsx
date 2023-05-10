@@ -79,6 +79,7 @@ const LoggedOut: React.FC = () => {
                     borderRadius: 8,
                     padding: "7px 14px",
                     backgroundColor: COLORS.primary0,
+                    textDecoration: "none",
                     svg: { fontSize: 20 },
                     ":hover, :focus": {
                         backgroundColor: COLORS.primary1,
@@ -462,6 +463,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
         alignItems: "center",
         minWidth: 200,
         padding: 12,
+        textDecoration: "none",
         ...indent && { paddingLeft: 30 },
         cursor: "pointer",
         whiteSpace: "nowrap",

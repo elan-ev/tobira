@@ -107,8 +107,8 @@ const GLOBAL_STYLE = css({
     },
     a: {
         color: COLORS.primary0,
-        textDecoration: "none",
         "&:hover, &:focus": {
+            textDecoration: "none",
             color: COLORS.primary1,
         },
         ":focus-visible": { outline: `2.5px solid ${COLORS.focus}` },

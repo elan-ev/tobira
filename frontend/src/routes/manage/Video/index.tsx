@@ -240,6 +240,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                 alignItems: "center",
                 cursor: "pointer",
                 transition: "color 70ms",
+                textDecoration: "none",
                 "& > svg": {
                     marginLeft: 6,
                     fontSize: 22,
@@ -279,7 +280,7 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
                         whiteSpace: "nowrap",
                         textOverflow: "ellipsis",
                         overflow: "hidden",
-                    }}><Link to={link}>{event.title}</Link></div>
+                    }}><Link to={link} css={{ textDecoration: "none" }}>{event.title}</Link></div>
                     {!event.syncedData && <span css={{
                         padding: "0 8px",
                         fontSize: "small",
