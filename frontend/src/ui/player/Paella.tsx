@@ -19,12 +19,17 @@ type PaellaPlayerProps = {
     previewImage: string | null;
 };
 
+type PaellaState = {
+    player: Paella;
+    loadPromise: Promise<void>;
+};
+
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
     tracks, title, duration, isLive, captions, startTime, endTime, previewImage,
 }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
-    const paella = useRef<Paella>();
+    const paella = useRef<PaellaState>();
 
     useEffect(() => {
         // If the ref is not set yet (which should not usually happen), we do
@@ -33,7 +38,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             return;
         }
 
-        // Otherwise we check weather Paella is already initialized. If not, we
+        // Otherwise we check whether Paella is already initialized. If not, we
         // do that now and set the initialized instance to `ref.current.paella`.
         if (!paella.current) {
             // Video/event specific information we have to give to Paella.
@@ -91,7 +96,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 manifest.streams[0].role = "mainAudio";
             }
 
-            paella.current = new Paella(ref.current, {
+            const player = new Paella(ref.current, {
                 // Paella has a weird API unfortunately. It by default loads two
                 // files via `fetch`. But we can provide that data immediately
                 // since we just derive it from our GraphQL data. So we
@@ -107,13 +112,17 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                     getZoomPluginContext(),
                 ],
             });
-            paella.current.loadManifest();
+            const loadPromise = player.loadManifest();
+            paella.current = { player, loadPromise };
+
         }
 
         const paellaSnapshot = paella.current;
         return () => {
-            paellaSnapshot.unload();
             paella.current = undefined;
+            paellaSnapshot.loadPromise.then(() => {
+                paellaSnapshot.player.unload();
+            });
         };
     }, [tracks, title, duration, isLive, captions, startTime, endTime, previewImage, t]);
 
