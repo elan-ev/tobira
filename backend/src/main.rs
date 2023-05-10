@@ -47,6 +47,10 @@ async fn main() {
             eprintln!("‣ {cause}");
         }
 
+        eprintln!();
+        bunt::eprintln!("{$red+italic}Backtrace:{/$}");
+        eprintln!("{}", e.backtrace());
+
         std::process::exit(1);
     }
 }
