@@ -19,6 +19,8 @@ It's a great starting point to configure your Tobira.
 You can generate it with `./tobira write-config`, but that file is also attached to [each release](https://github.com/elan-ev/tobira/releases) as `config.toml`.
 Or you can just copy it from below.
 
+For configuring the `[theme]` section, see [the next chapter](./theme).
+
 ## All configuration options
 
 This is the the configuration template described above:

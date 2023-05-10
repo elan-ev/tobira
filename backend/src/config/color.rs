@@ -7,16 +7,13 @@ use crate::prelude::*;
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ColorConfig {
-    /// The primary color used for many different purposes.
-    ///
-    /// Should have a perceived brightness (L in LCH color space) of 35-55. It
-    /// should have a good contrast against a white background. Tobira will
-    /// automatically create darker variants of this color.
+    /// The primary color used for most colored UI elements. Should have a
+    /// perceived brightness (L in LCH color space) of 35-55.
     #[config(default = "#01758f")]
     pub(crate) primary: Color,
 
-    /// A color used to indicate errors, potentially destructive actions, and
-    /// the like. Use a reddish color here as that's expected by users.
+    /// A color used to indicate errors and potentially destructive actions.
+    /// Should be red.
     #[config(default = "#b64235")]
     pub(crate) danger: Color,
 
@@ -30,11 +27,8 @@ pub(crate) struct ColorConfig {
     #[config(default = "#777777")]
     pub(crate) grey50: Color,
 
-    /// A color for positive things or some "call to action" buttons, like the
-    /// login button. Typically green. Only specify this color if your primary
-    /// color is reddish! By default (this color being unspecified), the
-    /// primary color is used for all these purposes. This works well, except
-    /// for cases where your primary color is red.
+    /// A color for positive things and "call to action" elements. Only specify
+    /// this color if your primary color is reddish!
     pub(crate) happy: Option<Color>,
 }
 

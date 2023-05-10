@@ -396,10 +396,10 @@
 #update_interval = "5s"
 
 
+# See the relevant chapter in our documentation on how to configure this section.
 [theme]
-# Height of the header (containing the logo, search bar, and several
-# icons). Increasing this size only enlarges the logo, the other elements
-# stay the same size and centered.
+# Height of the header. Increasing this size only enlarges the logo, the
+# other elements stay the same size and centered.
 #
 # Default value: 85
 #header_height = 85
@@ -410,6 +410,7 @@
 #favicon =
 
 
+# Logo used in the top left corner of the page. Using SVG logos is recommended.
 [theme.logo]
 # The normal, usually wide logo that is shown on desktop screens. The
 # value is a map with a `path` and `resolution` key:
@@ -423,26 +424,20 @@
 # Required! This value must be specified.
 #large =
 
-# A smaller logo (usually close to square) used for small screens, mostly
-# on mobile phones. Also a map like the large logo. This is optional, we
-# highly recommend that you configure a separate logo for small screens.
-# Otherwise the large logo is used for all screen sizes.
+# A less wide logo used for narrow screens.
 #small =
 
 
 # Colors used in the UI. Specified in sRGB.
 [theme.color]
-# The primary color used for many different purposes.
-#
-# Should have a perceived brightness (L in LCH color space) of 35-55. It
-# should have a good contrast against a white background. Tobira will
-# automatically create darker variants of this color.
+# The primary color used for most colored UI elements. Should have a
+# perceived brightness (L in LCH color space) of 35-55.
 #
 # Default value: "#01758f"
 #primary = "#01758f"
 
-# A color used to indicate errors, potentially destructive actions, and
-# the like. Use a reddish color here as that's expected by users.
+# A color used to indicate errors and potentially destructive actions.
+# Should be red.
 #
 # Default value: "#b64235"
 #danger = "#b64235"
@@ -458,11 +453,8 @@
 # Default value: "#777777"
 #grey50 = "#777777"
 
-# A color for positive things or some "call to action" buttons, like the
-# login button. Typically green. Only specify this color if your primary
-# color is reddish! By default (this color being unspecified), the
-# primary color is used for all these purposes. This works well, except
-# for cases where your primary color is red.
+# A color for positive things and "call to action" elements. Only specify
+# this color if your primary color is reddish!
 #happy =
 
 

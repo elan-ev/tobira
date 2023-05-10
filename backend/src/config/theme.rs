@@ -6,12 +6,12 @@ use super::color::ColorConfig;
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct ThemeConfig {
-    /// Height of the header (containing the logo, search bar, and several
-    /// icons). Increasing this size only enlarges the logo, the other elements
-    /// stay the same size and centered.
+    /// Height of the header. Increasing this size only enlarges the logo, the
+    /// other elements stay the same size and centered.
     #[config(default = 85)]
     pub(crate) header_height: u32,
 
+    /// Logo used in the top left corner of the page. Using SVG logos is recommended.
     #[config(nested)]
     pub(crate) logo: LogoConfig,
 
@@ -24,7 +24,6 @@ pub(crate) struct ThemeConfig {
 }
 
 
-/// Logo used in the top left corner of the page. Using SVG logos is recommended.
 #[derive(Debug, confique::Config)]
 pub(crate) struct LogoConfig {
     /// The normal, usually wide logo that is shown on desktop screens. The
@@ -37,10 +36,7 @@ pub(crate) struct LogoConfig {
     /// before the browser loaded the file.
     pub(crate) large: LogoDef,
 
-    /// A smaller logo (usually close to square) used for small screens, mostly
-    /// on mobile phones. Also a map like the large logo. This is optional, we
-    /// highly recommend that you configure a separate logo for small screens.
-    /// Otherwise the large logo is used for all screen sizes.
+    /// A less wide logo used for narrow screens.
     pub(crate) small: Option<LogoDef>,
 }
 
