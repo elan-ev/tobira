@@ -79,6 +79,7 @@ pub(crate) struct Config {
     #[config(nested)]
     pub(crate) meili: crate::search::MeiliConfig,
 
+    /// See the relevant chapter in our documentation on how to configure this section.
     #[config(nested)]
     pub(crate) theme: ThemeConfig,
 
