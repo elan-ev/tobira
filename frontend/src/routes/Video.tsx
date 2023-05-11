@@ -10,7 +10,7 @@ import { HiOutlineQrCode } from "react-icons/hi2";
 import { QRCodeCanvas } from "qrcode.react";
 
 import { loadQuery } from "../relay";
-import { RootLoader } from "../layout/Root";
+import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
@@ -34,7 +34,7 @@ import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton, ProtoButton } from "../ui/Button";
 import CONFIG from "../config";
-import { Link } from "../router";
+import { Link, useRouter } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
@@ -108,17 +108,31 @@ export const VideoRoute = makeRoute(url => {
         render: () => <RootLoader
             {... { query, queryRef }}
             nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-            render={({ event, realm }) => !event || !realm || !realm.referencesVideo
-                ? <NotFound kind="video" />
-                : <VideoPage
+            render={({ event, realm }) => {
+                if (!event) {
+                    return <NotFound kind="video" />;
+                }
+
+                if (!realm || !realm.referencesVideo) {
+                    return <ForwardToDirectRoute videoId={videoId} />;
+                }
+
+                return <VideoPage
                     eventRef={event}
                     realmRef={realm}
                     basePath={realmPath.replace(/\/$/u, "") + "/v"}
-                />}
+                />;
+            }}
         />,
         dispose: () => queryRef.dispose(),
     };
 });
+
+const ForwardToDirectRoute: React.FC<{ videoId: string }> = ({ videoId }) => {
+    const router = useRouter();
+    useEffect(() => router.goto(`/!v/${videoId}`));
+    return <InitialLoading />;
+};
 
 /** Direct link to video with our ID: `/!v/<videoid>` */
 export const DirectVideoRoute = makeRoute(url => {
