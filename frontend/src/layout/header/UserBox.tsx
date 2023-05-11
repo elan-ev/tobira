@@ -212,7 +212,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                     indent
                     linkTo={`/@${user.username}`}
                     onClick={close}
-                >{t("realm.user-realm.your-page")}</MenuItem>}
+                >{t("realm.user-realm.my-page")}</MenuItem>}
                 {<MenuItem
                     icon={<FiFilm />}
                     borderBottom

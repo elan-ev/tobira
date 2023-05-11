@@ -87,7 +87,7 @@ const Manage: React.FC = () => {
             </Link>
             {user.canCreateUserRealm && <Link to={`/@${user.username}`} css={gridTile}>
                 <HiOutlineFire />
-                <h2>{t("realm.user-realm.your-page")}</h2>
+                <h2>{t("realm.user-realm.my-page")}</h2>
                 {t("manage.dashboard.user-realm-tile")}
             </Link>}
             <div css={gridTile}>
