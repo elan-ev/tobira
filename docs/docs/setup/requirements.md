@@ -7,7 +7,7 @@ sidebar_position: 1
 To run, Tobira requires:
 
 - A Unix system.
-- A **PostgreSQL** (≥10) database (see below for further requirements).
+- A **PostgreSQL** (≥11) database (see below for further requirements).
 - [**Meilisearch**](https://www.meilisearch.com/) (≥ v1.1). For installation, see [Meili's docs](https://docs.meilisearch.com/learn/getting_started/quick_start.html#step-1-setup-and-installation).
 - An **Opencast** that satisfies certain condition. See below.
 
