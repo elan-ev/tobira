@@ -12,7 +12,15 @@ The "trust" in this solution comes from you telling Opencast to trust a specific
 
 ## Setup Tobira
 
-For Tobira, you only need to configure some values in `auth.jwt`, for example:
+For Tobira, you don't necessarily need to configure anything.
+By default, a suitable signing algorithm is selected and a secret key is generated whenever Tobira is started.
+That's sufficient for most use cases.
+If you run multiple Tobira instances (for redundency), you need to specify a key manually as otherwise, each instance has a different key.
+
+The algorithm and private key can be specified in `[auth.jwt]`.
+
+<details>
+<summary>Specifying key manually</summary>
 
 ```toml
 [auth.jwt]
@@ -21,7 +29,7 @@ secret_key = "jwt-key.pem"
 ```
 
 The secret key has to be a key matching the algorithm.
-For `ES256`, that's an EC key encoded as PKCS#8.
+For `ES*`, that's an EC key encoded as PKCS#8.
 To generate such a key, you can run these commands (you can replace `secp256r1` with other supported values like `secp384r1`):
 
 ```
@@ -31,13 +39,17 @@ openssl pkcs8 -topk8 -nocrypt -in sec1.pem -out private-key.pem
 
 Here, the `sec1.pem` is encoded as SEC1 instead of PKCS#8. The second command converts the key.
 
-**Important**: the expiration time for the JWT should be chosen to be fairly short to reduce the security risk posed by a stolen JWT.
+</details>
+
+:::caution
+The expiration time for the JWT should be chosen to be fairly short to reduce the security risk posed by a stolen JWT.
 Tobira generates a new JWT right before every request it sends to Opencast.
 So you should only need to account for network delay and clock skew.
 The default of 30 seconds should be fine for most installations,
 but you can try to be more conservative if you want.
 We strongly recommend against going higher, though. If you need that for some reason,
 you should probably rather try to mitigate the underlying problem.
+:::
 
 
 ## Setup Opencast

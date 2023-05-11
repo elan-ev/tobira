@@ -11,27 +11,16 @@ use super::User;
 
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct JwtConfig {
-    /// Signing algorithm for JWTs. Prefer `ES` style algorithms over others.
-    /// The algorithm choice has to be configured in Opencast as well.
+    /// Signing algorithm for JWTs.
     ///
     /// Valid values: "ES256", "ES384"
+    #[config(default = "ES384")]
     signing_algorithm: Algorithm,
 
-    /// Path to the secret signing key. The key has to be PEM encoded.
-    ///
-    /// # For `ES*` algorithms
-    ///
-    /// Has to be an EC key encoded as PKCS#8. To generate such a key, you can
-    /// run the following commands. You can replace `secp256r1` with other
-    /// supported values like `secp384r1`.
-    ///
-    ///     openssl ecparam -name secp256r1 -genkey -noout -out sec1.pem
-    ///     openssl pkcs8 -topk8 -nocrypt -in sec1.pem -out private-key.pem
-    ///
-    /// Here, the `sec1.pem` is encoded as SEC1 instead of PKCS#8. The second
-    /// command converts the key.
-    pub(crate) secret_key: PathBuf,
-
+    /// Path to the secret signing key. The key has to be PEM encoded. If not
+    /// specified, a key is generated everytime Tobira is started. The randomly
+    /// generated key is fine for most use cases.
+    pub(crate) secret_key: Option<PathBuf>,
 
     /// The duration for which a JWT is valid. JWTs are just used as temporary
     /// ways to authenticate against Opencast, so they just have to be valid
@@ -127,13 +116,27 @@ impl JwtContext {
 
 impl JwtConfig {
     fn load_auth(&self) -> Result<JwtAuth> {
-        let pem_encoded = std::fs::read(&self.secret_key)
-            .context("could not load secret key file")?;
-        let (_label, bytes) = pem_rfc7468::decode_vec(&pem_encoded)
-            .context("secret key file is not a valid PEM encoded key")?;
+        if let Some(secret_key_path) = &self.secret_key {
+            let pem_encoded = std::fs::read(secret_key_path)
+                .context("could not load secret key file")?;
+            let (_label, pkcs8_bytes) = pem_rfc7468::decode_vec(&pem_encoded)
+                .context("secret key file is not a valid PEM encoded key")?;
+            JwtAuth::load_es(self.signing_algorithm, &pkcs8_bytes)
+        } else {
+            let ring_algo = match self.signing_algorithm {
+                Algorithm::ES256 => &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+                Algorithm::ES384 => &ring::signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+            };
 
-        match self.signing_algorithm {
-            algo @ (Algorithm::ES256 | Algorithm::ES384) => JwtAuth::load_es(algo, &bytes),
+            info!(
+                "No JWT key specified, generating key for algorithm {}",
+                self.signing_algorithm.to_str(),
+            );
+            let rng = ring::rand::SystemRandom::new();
+            let pkcs8_bytes = ring::signature::EcdsaKeyPair::generate_pkcs8(ring_algo, &rng)
+                .context("failed to generate JWT ECDSA key")?;
+
+            JwtAuth::load_es(self.signing_algorithm, pkcs8_bytes.as_ref())
         }
     }
 }

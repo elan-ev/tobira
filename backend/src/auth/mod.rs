@@ -100,9 +100,7 @@ pub(crate) struct AuthConfig {
     #[config(nested)]
     pub(crate) login_page: LoginPageConfig,
 
-    /// JWT configuration. JWTs are only used to automatically authenticate
-    /// users against Opencast with short-lived tokens. They are not used for
-    /// user sessions.
+    /// JWT configuration. See documentation for more information.
     #[config(nested)]
     pub(crate) jwt: JwtConfig,
 

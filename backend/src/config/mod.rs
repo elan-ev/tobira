@@ -161,7 +161,9 @@ impl Config {
             fix_path(&base, &mut logo.path);
         }
         fix_path(&base, &mut self.theme.favicon);
-        fix_path(&base, &mut self.auth.jwt.secret_key);
+        if let Some(jwt_key) = &mut self.auth.jwt.secret_key {
+            fix_path(&base, jwt_key);
+        }
 
         Ok(())
     }

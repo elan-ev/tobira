@@ -34,7 +34,6 @@ A few additional notes and tips about that:
 
 - Most values are optional and don't need to be adjusted for most use cases.
 - Don't touch any `auth.*` values for now. Authentication is handled in the next step.
-    - Except for `auth.jwt.*`: See [Setup JWT auth](./auth/jwt) for that.
 - You can check the configuration file and all connections by running `tobira check`.
 
 
