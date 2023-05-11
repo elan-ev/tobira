@@ -106,6 +106,7 @@ const gridTile = css({
     fontSize: 14,
     color: COLORS.foreground,
     textAlign: "left",
+    textDecoration: "none",
     "&:is(button, a)": {
         "&:hover, &:focus": {
             color: COLORS.foreground,

@@ -88,6 +88,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
             "left": () => "flex-start",
             "right": () => "space-between",
         }),
+        textDecoration: "none",
         alignItems: "center",
         transition: `background-color ${TRANSITION_DURATION}`,
         "& > svg": {

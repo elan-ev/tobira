@@ -83,6 +83,7 @@ const TEXT_STYLE = {
     textOverflow: "ellipsis" as const,
     overflow: "hidden" as const,
     padding: 2,
+    textDecoration: "none",
 };
 
 const Segment: React.FC<SegmentProps> = ({ target, children }) => (
