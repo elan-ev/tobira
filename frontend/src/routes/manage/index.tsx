@@ -65,6 +65,16 @@ const Manage: React.FC = () => {
             gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
             gap: 24,
         }}>
+            {user.canCreateUserRealm && <Link to={`/@${user.username}`} css={gridTile}>
+                <HiOutlineFire />
+                <h2>{t("realm.user-realm.my-page")}</h2>
+                {t("manage.dashboard.user-realm-tile")}
+            </Link>}
+            <Link to="/~manage/videos" css={gridTile}>
+                <FiFilm />
+                <h2>{t("manage.my-videos.title")}</h2>
+                {t("manage.dashboard.my-videos-tile")}
+            </Link>
             {user.canUpload && <Link to="/~manage/upload" css={gridTile}>
                 <FiUpload />
                 <h2>{t("upload.title")}</h2>
@@ -80,20 +90,10 @@ const Manage: React.FC = () => {
                 <h2>{t("manage.dashboard.studio-tile-title")}</h2>
                 {t("manage.dashboard.studio-tile-body")}
             </ExternalLink>}
-            <Link to="/~manage/videos" css={gridTile}>
-                <FiFilm />
-                <h2>{t("manage.my-videos.title")}</h2>
-                {t("manage.dashboard.my-videos-tile")}
-            </Link>
-            {user.canCreateUserRealm && <Link to={`/@${user.username}`} css={gridTile}>
-                <HiOutlineFire />
-                <h2>{t("realm.user-realm.my-page")}</h2>
-                {t("manage.dashboard.user-realm-tile")}
-            </Link>}
-            <div css={gridTile}>
-                <h2>{t("manage.dashboard.manage-pages-tile-title")}</h2>
-                {t("manage.dashboard.manage-pages-tile-body")}
-            </div>
+        </div>
+        <div css={{ maxWidth: "80ch", fontSize: 14, h2: { marginBottom: 8, fontSize: 18 } }}>
+            <h2>{t("manage.dashboard.manage-pages-tile-title")}</h2>
+            {t("manage.dashboard.manage-pages-tile-body")}
         </div>
     </>;
 };
