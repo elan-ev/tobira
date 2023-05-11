@@ -213,7 +213,7 @@ realm:
   add-sub-page: Add sub-page
   missing-name: Missing name
   user-realm:
-    your-page: Your page
+    my-page: My page
     note-label: User page
     note-body: >
       This is a personal user page which is managed by {{user}}.

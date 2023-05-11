@@ -218,7 +218,7 @@ realm:
   add-sub-page: Unterseite hinzufügen
   missing-name: Fehlender Name
   user-realm:
-    your-page: Persönliche Seite
+    my-page: Meine Seite
     note-label: Nutzerseite
     note-body: >
       Dies ist eine persönliche Nutzerseite, die allein von {{user}} gepflegt wird.
