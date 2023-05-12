@@ -176,7 +176,6 @@ Also not shown here: **setup regular database backups!**
     - logo-large.svg
     - logo-small.svg
     - favicon.svg
-    - jwt-key.pem
   notify: restart tobira
 
 - name: Deploy configuration
@@ -220,7 +219,6 @@ The scripts assume the following files to exist:
     - `logo-large.svg`
     - `logo-small.svg`
     - `favicon.svg`
-    - `jwt-key.pem`
   - `templates/`
     - `config.toml` (see [Configuration docs](./config))
 

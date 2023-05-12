@@ -243,33 +243,18 @@
 #note =
 
 
-# JWT configuration. JWTs are only used to automatically authenticate
-# users against Opencast with short-lived tokens. They are not used for
-# user sessions.
+# JWT configuration. See documentation for more information.
 [auth.jwt]
-# Signing algorithm for JWTs. Prefer `ES` style algorithms over others.
-# The algorithm choice has to be configured in Opencast as well.
+# Signing algorithm for JWTs.
 #
 # Valid values: "ES256", "ES384"
 #
-# Required! This value must be specified.
-#signing_algorithm =
+# Default value: "ES384"
+#signing_algorithm = "ES384"
 
-# Path to the secret signing key. The key has to be PEM encoded.
-#
-# # For `ES*` algorithms
-#
-# Has to be an EC key encoded as PKCS#8. To generate such a key, you can
-# run the following commands. You can replace `secp256r1` with other
-# supported values like `secp384r1`.
-#
-#     openssl ecparam -name secp256r1 -genkey -noout -out sec1.pem
-#     openssl pkcs8 -topk8 -nocrypt -in sec1.pem -out private-key.pem
-#
-# Here, the `sec1.pem` is encoded as SEC1 instead of PKCS#8. The second
-# command converts the key.
-#
-# Required! This value must be specified.
+# Path to the secret signing key. The key has to be PEM encoded. If not
+# specified, a key is generated everytime Tobira is started. The randomly
+# generated key is fine for most use cases.
 #secret_key =
 
 # The duration for which a JWT is valid. JWTs are just used as temporary
