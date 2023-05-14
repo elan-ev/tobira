@@ -34,7 +34,7 @@
     "babel-loader": "^9.1.2",
     "babel-plugin-relay": "^15.0.0",
     "clean-webpack-plugin": "^4.0.0",
-    "copy-webpack-plugin": "^10.2.4",
+    "copy-webpack-plugin": "^11.0.0",
     "focus-trap-react": "^10.1.2",
     "graphql": "^16.6.0",
     "hls.js": "^1.4.3",
