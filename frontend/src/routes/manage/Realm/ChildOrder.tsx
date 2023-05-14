@@ -60,12 +60,19 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
 
     const initialSortOrder = realm.childOrder === "%future added value"
         // This is not optimal. The only useful thing we could do in the future
-        // is to disable the whole form just to be save, whenever we encounter
+        // is to disable the whole form just to be safe, whenever we encounter
         // a sort order we don't know.
         ? bug("unknown realm sort order")
         : realm.childOrder;
     const [sortOrder, setSortOrder] = useState<SortOrder>(initialSortOrder);
     const [children, setChildren] = useState(realm.children);
+
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commit, isInFlight] = useMutation(mutation);
+
+    if (children.length < 2) {
+        return null;
+    }
 
     // Swaps `index` with `index + 1`.
     const swap = (index: number) => {
@@ -81,8 +88,6 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
     const anyChange = initialSortOrder !== sortOrder
         || children.some((c, i) => c.id !== realm.children[i].id);
 
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
-    const [commit, isInFlight] = useMutation(mutation);
     const save = async () => {
         commit({
             variables: {
