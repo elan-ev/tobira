@@ -29,7 +29,7 @@
     "@babel/preset-typescript": "^7.21.5",
     "@emotion/cache": "^11.11.0",
     "@emotion/react": "^11.11.0",
-    "@floating-ui/react": "^0.19.2",
+    "@floating-ui/react": "^0.23.1",
     "@svgr/webpack": "^6.5.1",
     "babel-loader": "^8.3.0",
     "babel-plugin-relay": "^14.1.0",
