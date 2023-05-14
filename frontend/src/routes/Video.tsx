@@ -402,7 +402,12 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <VideoDate event={event} />
             </div>
             {/* Buttons */}
-            <div css={{ display: "flex", gap: 8, flexWrap: "wrap", button: { ...shrinkOnMobile } }}>
+            <div css={{
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+                "> button": { ...shrinkOnMobile },
+            }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
                     <LinkButton to={`/~manage/videos/${id.slice(2)}`} css={{
                         "&:not([disabled])": { color: COLORS.primary0 },
