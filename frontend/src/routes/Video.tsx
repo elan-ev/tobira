@@ -498,6 +498,7 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             arrowSize={12}
             ariaRole="dialog"
             trigger="click"
+            viewPortMargin={12}
         >
             <FloatingTrigger>
                 <Button>
