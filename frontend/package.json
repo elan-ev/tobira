@@ -53,7 +53,7 @@
     "react-icons": "^4.8.0",
     "react-markdown": "^8.0.7",
     "react-merge-refs": "^2.0.2",
-    "react-relay": "^14.1.0",
+    "react-relay": "^15.0.0",
     "react-select": "^5.7.3",
     "react-transition-group": "^4.4.5",
     "relay-compiler": "^14.1.0",
