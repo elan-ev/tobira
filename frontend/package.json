@@ -31,7 +31,7 @@
     "@emotion/react": "^11.11.0",
     "@floating-ui/react": "^0.23.1",
     "@svgr/webpack": "^8.0.1",
-    "babel-loader": "^8.3.0",
+    "babel-loader": "^9.1.2",
     "babel-plugin-relay": "^14.1.0",
     "clean-webpack-plugin": "^4.0.0",
     "copy-webpack-plugin": "^10.2.4",
