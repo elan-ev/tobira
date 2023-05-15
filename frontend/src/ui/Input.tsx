@@ -85,12 +85,11 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
     };
 
     const copyableInputId = useId();
-    const buttonSize = 34;
     const sharedStyle = {
         ...style(false),
         width: "100%",
         height: "100%",
-        padding: `4px ${buttonSize + 10}px 4px 10px`,
+        padding: "4px 50px 4px 10px",
     };
     const sharedProps = {
         disabled: true,
@@ -111,13 +110,15 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
             height: multiline ? 95 : 34,
             maxWidth: "100%",
         }} {...rest}>
-            <div css={{ position: "absolute", top: 0, right: 0 }}>
+            <div css={{ position: "absolute", top: 0, right: 0, zIndex: 10 }}>
                 <WithTooltip tooltip={label}>
                     <Button
                         aria-label={label}
                         kind="happy"
                         onClick={copy}
                         css={{
+                            paddingLeft: 10,
+                            paddingRight: 10,
                             borderRadius: 4,
                             borderTopLeftRadius: 0,
                             height: 34,
