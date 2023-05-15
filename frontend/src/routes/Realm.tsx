@@ -145,10 +145,19 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
         {!realm.isMainRoot && (
             <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />
         )}
-        {title && <div>
-            <h1 css={{ display: "inline-block" }}>{title}</h1>
-            {realm.isUserRealm && <UserRealmNote realm={realm} />}
-        </div>}
+        {title && (
+            <div css={{
+                marginBottom: 20,
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "baseline",
+                columnGap: 12,
+                rowGap: 6,
+            }}>
+                <h1 css={{ display: "inline-block", marginBottom: 0 }}>{title}</h1>
+                {realm.isUserRealm && <UserRealmNote realm={realm} />}
+            </div>
+        )}
         {realm.blocks.length === 0 && realm.isMainRoot
             ? <WelcomeMessage />
             : <Blocks realm={realm} />}
@@ -191,7 +200,7 @@ const UserRealmNote: React.FC<Props> = ({ realm }) => {
             tooltip={t("realm.user-realm.note-body", { user: displayName })}
             placement="bottom"
             tooltipCss={{ width: 400 }}
-            css={{ display: "inline-block", marginLeft: 12 }}
+            css={{ display: "inline-block" }}
         >
             <div css={{
                 fontSize: 14,
