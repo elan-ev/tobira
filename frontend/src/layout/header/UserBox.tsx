@@ -236,6 +236,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                 >{t("upload.title")}</MenuItem>}
                 {user.canUseStudio && <MenuItem
                     icon={<FiVideo />}
+                    borderBottom
                     indent
                     onClick={close}
                     externalLinkProps={{
@@ -587,7 +588,6 @@ const Logout: React.FC = () => {
                 "pending": () => <Spinner />,
                 "error": () => <FiAlertTriangle />,
             })}
-            borderTop
             css={{
                 color: COLORS.danger0,
             }}
