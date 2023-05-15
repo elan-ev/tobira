@@ -110,7 +110,7 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
             height: multiline ? 95 : 34,
             maxWidth: "100%",
         }} {...rest}>
-            <div css={{ position: "absolute", top: 0, right: 0 }}>
+            <div css={{ position: "absolute", top: 0, right: 0, zIndex: 10 }}>
                 <WithTooltip tooltip={label}>
                     <Button
                         aria-label={label}
