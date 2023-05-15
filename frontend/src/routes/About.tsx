@@ -59,7 +59,10 @@ const About: React.FC = () => {
             <br />
             {"Git info: "}
             <a href={`https://github.com/elan-ev/tobira/commit/${version.gitCommitHash}`}>
-                <code css={{ fontSize: 14 }}>{version.gitCommitHash}</code>
+                <code css={{
+                    fontSize: 14,
+                    overflowWrap: "anywhere",
+                }}>{version.gitCommitHash}</code>
             </a>
             {version.gitWasDirty && ", dirty"}
             <br />
