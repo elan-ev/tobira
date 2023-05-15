@@ -234,7 +234,7 @@ export const FloatingTrigger: React.FC<FloatingTriggerProps> = ({ children }) =>
         "data-floating-state": context.open ? "open" : "closed",
         ...context.getReferenceProps({
             ref: context.refs.reference,
-            onClick: () => context.setOpen?.(false),
+            onClick: () => context.open && context.setOpen?.(false),
             ...children.props,
         }),
     });
