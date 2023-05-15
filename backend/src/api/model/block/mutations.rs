@@ -230,7 +230,7 @@ impl BlockValue {
                 and type = 'title' \
                 returning {selection}",
         );
-        context.db(context.require_moderator()?)
+        context.db
             .query_one(&query, &[&Self::key_for(id)?, &set.content])
             .await?
             .pipe(|row| Ok(Self::from_row_start(&row)))
@@ -251,7 +251,7 @@ impl BlockValue {
                 and type = 'text' \
                 returning {selection}",
         );
-        context.db(context.require_moderator()?)
+        context.db
             .query_one(&query, &[&Self::key_for(id)?, &set.content])
             .await?
             .pipe(|row| Ok(Self::from_row_start(&row)))
@@ -287,7 +287,7 @@ impl BlockValue {
             &set.show_title,
             &set.show_metadata,
         ];
-        context.db(context.require_moderator()?)
+        context.db
             .query_one(&query, &args)
             .await?
             .pipe(|row| Ok(Self::from_row_start(&row)))
@@ -314,7 +314,7 @@ impl BlockValue {
                 and type = 'video' \
                 returning {selection}",
         );
-        context.db(context.require_moderator()?)
+        context.db
             .query_one(&query, &[&Self::key_for(id)?, &video_id, &set.show_title])
             .await?
             .pipe(|row| Ok(Self::from_row_start(&row)))
