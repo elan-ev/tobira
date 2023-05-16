@@ -387,6 +387,11 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
         />
     </>;
 
+    const sharedStyle = {
+        padding: "20px 22px",
+        ...showButton && { paddingBottom: 26 },
+    };
+
     return <>
         <div css={{
             display: "flex",
@@ -435,6 +440,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
         }}>
             <div ref={descriptionContainerRef} css={{
                 flex: event.description ? "1 400px" : "1 200px",
+                alignSelf: "flex-start",
                 position: "relative",
                 overflow: "hidden",
             }}>
@@ -442,19 +448,17 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                     position: expanded ? "initial" : "absolute",
                     top: 0,
                     left: 0,
-                    padding: "12px 16px",
-                    paddingBottom: 26,
+                    ...sharedStyle,
                 }}><InnerDescription /></div>
                 <div css={{
                     visibility: "hidden",
-                    padding: "12px 16px",
-                    paddingBottom: 26,
+                    ...sharedStyle,
                     ...expanded && { display: "none" },
                 }}><InnerDescription truncated /></div>
                 <div css={{
                     ...!showButton && { display: "none" },
                     ...!expanded && {
-                        background: `linear-gradient(transparent, ${COLORS.grey1} 40%)`,
+                        background: `linear-gradient(transparent, ${COLORS.grey1} 60%)`,
                     },
                     position: "absolute",
                     bottom: 0,
@@ -478,7 +482,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                     </ProtoButton>
                 </div>
             </div>
-            <div css={{ flex: "1 200px", padding: "12px 16px" }}>
+            <div css={{ flex: "1 200px", alignSelf: "flex-start", padding: "20px 22px" }}>
                 <MetadataTable event={event} />
             </div>
         </div>
