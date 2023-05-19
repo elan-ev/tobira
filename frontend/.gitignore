@@ -3,3 +3,6 @@
 /src/**/__generated__/
 /tsconfig.tsbuildinfo
 /.eslintcache
+/test-results/
+/playwright-report/
+/playwright/.cache/
