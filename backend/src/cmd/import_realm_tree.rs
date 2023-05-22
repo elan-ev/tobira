@@ -35,6 +35,7 @@ struct Realm {
     name_from_block: Option<u32>,
 
     #[serde(default)]
+    #[serde(with = "serde_yaml::with::singleton_map_recursive")]
     blocks: Vec<Block>,
 
     #[serde(default)]
