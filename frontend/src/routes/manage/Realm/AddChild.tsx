@@ -121,6 +121,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                     pathSegment: data.pathSegment,
                 },
             },
+            updater: store => store.invalidateStore(),
             onCompleted: response => {
                 const typedResponse = response as AddChildMutation$data;
                 const path = pathToQuery(typedResponse.addRealm.path);
