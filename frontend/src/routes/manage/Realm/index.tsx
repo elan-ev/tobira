@@ -48,7 +48,7 @@ export const ManageRealmRoute = makeRoute(url => {
             nav={data => data.realm
                 ? [
                     <Nav key="main-nav" fragRef={data.realm} />,
-                    <RealmEditLinks key="edit-buttons" path={path} />,
+                    <RealmEditLinks key="edit-buttons" path={data.realm.path} />,
                 ]
                 : []}
             render={data => data.realm ? <SettingsPage realm={data.realm} /> : <PathInvalid />}
