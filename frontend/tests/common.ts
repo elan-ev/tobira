@@ -117,12 +117,13 @@ export type Block = typeof blocks[number];
 export const insertBlock = async (page: Page, block: Block) => {
     const addButton = page.locator("_react=AddButtons").first();
     const saveButton = page.getByRole("button", { name: "Save" });
+
     await addButton.click();
     await page.getByRole("button", { name: block }).first().click();
 
     if (block === "Title") {
         await test.step("Title block", async () => {
-            await page.getByPlaceholder("You can put your title here.").fill("Title");
+            await page.getByRole("textbox").nth(1).fill("Title");
             await saveButton.click();
 
             await expect(page.getByRole("heading", { name: "Title" })).toBeVisible();
@@ -131,9 +132,7 @@ export const insertBlock = async (page: Page, block: Block) => {
     if (block === "Text") {
         await test.step("Text block", async () => {
             const pangram = "The quick brown fox jumps over the lazy dog.";
-            await page
-                .getByPlaceholder("You can put your text content here. You can even use Markdown.")
-                .fill(pangram);
+            await page.getByRole("textbox").nth(1).fill(pangram);
             await saveButton.click();
 
             await expect(page.getByText(pangram)).toBeVisible();
