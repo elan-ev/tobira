@@ -6,11 +6,10 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
     testDir: "./tests",
-    retries: 2,
     workers: 1,
+    retries: 1,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: "html",
-    timeout: 60 * 1000,
     expect: { timeout: 10 * 1000 },
     /**
      * Shared settings for all the projects below.
@@ -18,7 +17,7 @@ export default defineConfig({
      */
     use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-        baseURL: "http://localhost:8030/",
+        baseURL: process.env.CI ? "http://localhost:3090" : "http://localhost:8030",
         headless: true,
         screenshot: "only-on-failure",
         locale: "en",
@@ -28,7 +27,6 @@ export default defineConfig({
          * See https://playwright.dev/docs/trace-viewer
          */
         trace: "retain-on-failure",
-        video: "retain-on-failure",
     },
 
     /* Configure projects for major browsers */
@@ -60,9 +58,10 @@ export default defineConfig({
     ],
 
     /* Run your local dev server before starting the tests */
-    // webServer: {
-    //   command: 'npm run start',
-    //   url: 'http://127.0.0.1:3000',
-    //   reuseExistingServer: !process.env.CI,
-    // },
+    webServer: {
+        command: "cargo run --manifest-path=../backend/Cargo.toml -- serve",
+        url: "http://localhost:3090",
+        timeout: 120 * 1000,
+        reuseExistingServer: true,
+    },
 });

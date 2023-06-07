@@ -75,6 +75,9 @@ jobs:
     - name: Lint frontend
       working-directory: frontend
       run: npx eslint --max-warnings 0 .
+    - name: Install Playwright browsers
+      working-directory: frontend
+      run: npx playwright install --with-deps
     - name: Build frontend
       working-directory: frontend
       run: npx webpack --mode=${{ env.ci_webpack_flags }}
@@ -116,6 +119,29 @@ jobs:
     - name: Run migrations
       run: ./tobira db migrate --config util/dev-config/config.toml
 
+    # UI tests
+    - name: Start docker containers
+      working-directory: util/containers
+      run: |
+        docker-compose -f docker-compose.yml up -d \
+          tobira-auth-proxy \
+          tobira-login-handler \
+          tobira-meilisearch
+
+    - name: Rebuild search index
+      working-directory: backend
+      run: echo yes | cargo run -- search-index update
+
+    - name: Run playwright tests
+      working-directory: frontend
+      run: npx playwright test
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: playwright-report
+        path: frontend/playwright-report/
+        retention-days: 7
 
     # Prepare the ID (used in the subdomain) for deployment. This has to be done
     # here because in the `deploy` workflow, we don't have access to the correct
