@@ -164,7 +164,7 @@ export const currentRef = <T>(ref: React.RefObject<T>): T => (
 
 
 // Some utilities to handle the different lifecycle stages of events and series
-type OpencastEntity = { syncedData: any };
+type OpencastEntity = { syncedData: unknown };
 export type SyncedOpencastEntity<T extends OpencastEntity> = T & {
     syncedData: NonNullable<T["syncedData"]>;
 };

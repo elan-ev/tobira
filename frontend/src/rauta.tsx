@@ -94,7 +94,7 @@ export type RouterLib = {
 };
 
 /** Helper class: a list of listeners */
-class Listeners<F extends (...args: any) => any> {
+class Listeners<F extends (...args: unknown[]) => unknown> {
     private list: { listener: F }[] = [];
 
     /** Pass through the iterable protocol to the inner list */
@@ -174,7 +174,7 @@ export interface RouterControl {
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     // Helper to log debug messages if `config.debug` is true.
-    const debugLog = (...args: any[]) => {
+    const debugLog = (...args: unknown[]) => {
         if (config.debug) {
             // eslint-disable-next-line no-console
             console.debug("[rauta] ", ...args);

@@ -68,9 +68,11 @@ export class APIError extends Error {
         this.response = response;
         this.errors = this.response.errors.map(e => ({
             message: e.message,
+            /* eslint-disable @typescript-eslint/no-explicit-any */
             path: (e as any).path,
             kind: (e as any).extensions.kind,
             key: (e as any).extensions.key,
+            /* eslint-enable @typescript-eslint/no-explicit-any */
         }));
         this.message = (() => {
             let out = "";

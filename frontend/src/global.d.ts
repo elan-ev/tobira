@@ -1,5 +1,5 @@
 declare module "*.yaml" {
-    const value: any;
+    const value: unknown;
     export default value;
 }
 
