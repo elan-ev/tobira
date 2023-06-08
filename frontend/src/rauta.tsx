@@ -257,7 +257,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 // When navigating to new routes, the scroll position always
                 // starts as 0 (i.e. the very top).
                 context.setActiveRoute({ route: newRoute, initialScroll: 0 });
-                replaceEntry ? replace(href) : push(href);
+                (replaceEntry ? replace : push)(href);
 
                 debugLog(`Setting active route for '${href}' (index ${currentIndex}) `
                     + "to: ", newRoute);
