@@ -70,8 +70,9 @@ module.exports = {
     ],
 
     ignorePatterns: [
-        "node_modules",
         "/build",
+        "node_modules",
+        "playwright-report",
         "/src/**/__generated__",
         "!.*",
     ],
