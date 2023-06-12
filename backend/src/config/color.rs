@@ -283,7 +283,7 @@ impl ColorConfig {
         add(&mut light, "background", Lch::new(100.0, 0.0, 0.0));
         add(&mut light, "foreground", Lch::new(0.0, 0.0, 0.0));
         add(&mut dark, "background", Lch { l: 7.0, ..base_grey });
-        add(&mut dark, "foreground", Lch::new(100.0, 0.0, 0.0));
+        add(&mut dark, "foreground", Lch::new(87.0, 0.0, 0.0));
 
         (light, dark)
     }

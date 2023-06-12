@@ -70,6 +70,7 @@ const GLOBAL_STYLE = css({
     },
     body: {
         backgroundColor: COLORS.background,
+        color: COLORS.foreground,
         fontFamily: "var(--main-font), sans-serif",
         fontWeight: 400,
 
