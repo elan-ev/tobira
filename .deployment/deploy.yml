@@ -94,6 +94,7 @@
       with_items:
         - logo-small.svg
         - logo-large.svg
+        - logo-large-dark.svg
         - favicon.svg
       notify: restart tobira
 

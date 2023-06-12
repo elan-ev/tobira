@@ -104,6 +104,8 @@ async fn check_referenced_files(config: &Config) -> Result<()> {
         &config.theme.logo.large.path,
     ];
     files.extend(config.theme.logo.small.as_ref().map(|l| &l.path));
+    files.extend(config.theme.logo.large_dark.as_ref().map(|l| &l.path));
+    files.extend(config.theme.logo.small_dark.as_ref().map(|l| &l.path));
     files.extend(config.auth.jwt.secret_key.as_ref());
 
     for path in files {

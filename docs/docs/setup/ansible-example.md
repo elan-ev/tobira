@@ -175,6 +175,8 @@ Also not shown here: **setup regular database backups!**
   loop:
     - logo-large.svg
     - logo-small.svg
+    - logo-large-dark.svg
+    - logo-small-dark.svg
     - favicon.svg
   notify: restart tobira
 

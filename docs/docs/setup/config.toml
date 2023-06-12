@@ -417,6 +417,14 @@
 # A less wide logo used for narrow screens.
 #small =
 
+# Optional large logo for dark mode usage. Falls back to the regular
+# large logo if not specified.
+#large_dark =
+
+# Optional small logo for dark mode usage. Falls back to the large dark
+# logo or the regular large logo if no dark logos are specified.
+#small_dark =
+
 
 # Colors used in the UI. Specified in sRGB.
 [theme.color]
