@@ -9,13 +9,13 @@ Various useful information for coding on Tobira.
 
 ## Experimental features
 
-Some features in Tobira are not yet finished but already included in the released versions.
+Some features in Tobira might not be finished yet but already included in the released versions.
 These are disabled by default but can be enabled by adding an entry in your local storage (for the domain Tobira is running on):
 
 | `tobiraExperimentalFeatures` | `true` |
 | --- | --- |
 
-As of writing this, only the dark mode is such an unstable feature, but this will obviously change in the future and this document will not be kept up to date.
+Currently, there are no experimental features.
 
 
 ## Using colors in the frontend
@@ -25,7 +25,7 @@ How to pick a color:
 
 - When coloring something that has to do with focus (e.g. an outline), use `focus`.
 - For errors or potentially destructive actions, use the `danger*` colors.
-- For call-to-action elements and elements with positive conotation, use the `happy*` colors.
+- For call-to-action elements and elements with positive connotation, use the `happy*` colors.
   Of course, `happy` is often the same as `primary`, but you should still specify `happy`, pretending they are different.
 - For all other things that should be colored (i.e. not grey), use `primary*`
 - For all greys, well, use `grey*`.
