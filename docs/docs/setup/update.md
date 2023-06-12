@@ -39,13 +39,20 @@ Of course, database backups are already created automatically regularly, right?
       it makes sure the config file stays as close to the upstream one as possible, making future updates easier.
     - *Note*: Tobira does not watch nor automatically reload the config file on change.
       Thus, you can change the file in place: it only takes effect once you restart the process.
-    - This is best done via *3-way merge*. For example, when updating from v1.3 to v1.4:
-        - "base" is the original `config.toml` for v1.3 (attached to the release).
-        - "left" is the original `config.toml` for v1.4 (attached to the release).
-        - "right" is your current `config.toml` that's deployed on the server.
-        - There are mutliple 3-way merge tools you can use.
 - *Conditional*: if required, update other files referenced by `config.toml`.
 - *Conditional*: if there were breaking Tobira CLI changes, update service files, scripts and other places as required.
+
+<details>
+<summary>Best way to update <code>config.toml</code>: <i>3-way merge</i></summary>
+
+There are multiple 3-way merge tools you can use.
+For example, when updating from v1.3 to v1.4:
+
+- "base" is the original `config.toml` for v1.3 (attached to the release).
+- "left" is the original `config.toml` for v1.4 (attached to the release).
+- "right" is your current `config.toml` that's deployed on the server.
+
+</details>
 
 ## *Conditional*: Update MeiliSearch
 
@@ -53,12 +60,14 @@ If Tobira requires a new MeiliSearch version, update that.
 
 *Note*: when stopping the MeiliSearch process, Tobira's search functionality immediately ceases to work.
 How to best proceed depends on whether the old Tobira also works with the new MeiliSearch:
-- If it does work: perform the Meili update before restarting Tobira to reduce search down-time.
+- If it does work (e.g. updating MeiliSearch `1.x` to `1.y`): perform the Meili update before restarting Tobira to reduce search down-time.
 - If it does *not* work: you can chose whether to update Meili before or after Tobira – you will have search down-time in any case, unfortunately.
 
 :::info
 All data in MeiliSearch can be rebuild quickly from the database.
 Thus, exporting an index dump, as described in the official Meili docs, is not worth it.
+`tobira worker` will automatically (re)build the search index on startup if necessary.
+It can also manually be done via `tobira search-index rebuild`.
 :::
 
 To update Meili:
@@ -67,7 +76,6 @@ To update Meili:
 1. Remove the Meili data directory (e.g. `/opt/meili/data.ms` or `/var/lib/meilisearch/data.ms`).
     - Assuming your Meili only contains Tobira data!
 1. Start the new Meili version.
-1. Once you updated Tobira, run `tobira search-index rebuild`.
 
 ## Restart
 
@@ -87,5 +95,4 @@ If you encounter a problem only when restarting the processes and you think it s
 
 ## Afterwards
 
-- *Conditional*: if necessary, run `tobira search-index rebuild` (see above).
 - *Conditional*: if necessary, run a [resync](./resync).
