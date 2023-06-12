@@ -39,13 +39,20 @@ Of course, database backups are already created automatically regularly, right?
       it makes sure the config file stays as close to the upstream one as possible, making future updates easier.
     - *Note*: Tobira does not watch nor automatically reload the config file on change.
       Thus, you can change the file in place: it only takes effect once you restart the process.
-    - This is best done via *3-way merge*. For example, when updating from v1.3 to v1.4:
-        - "base" is the original `config.toml` for v1.3 (attached to the release).
-        - "left" is the original `config.toml` for v1.4 (attached to the release).
-        - "right" is your current `config.toml` that's deployed on the server.
-        - There are mutliple 3-way merge tools you can use.
 - *Conditional*: if required, update other files referenced by `config.toml`.
 - *Conditional*: if there were breaking Tobira CLI changes, update service files, scripts and other places as required.
+
+<details>
+<summary>Best way to update <code>config.toml</code>: <i>3-way merge</i></summary>
+
+There are multiple 3-way merge tools you can use.
+For example, when updating from v1.3 to v1.4:
+
+- "base" is the original `config.toml` for v1.3 (attached to the release).
+- "left" is the original `config.toml` for v1.4 (attached to the release).
+- "right" is your current `config.toml` that's deployed on the server.
+
+</details>
 
 ## *Conditional*: Update MeiliSearch
 
