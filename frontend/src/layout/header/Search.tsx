@@ -103,6 +103,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         css={{
                             flex: 1,
                             color: COLORS.grey6,
+                            backgroundColor: COLORS.background,
                             border: `1px solid ${COLORS.grey5}`,
                             borderRadius: 4,
                             minWidth: 50,
