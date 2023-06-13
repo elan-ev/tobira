@@ -398,6 +398,7 @@ type ListProps = {
 
 const List: React.FC<ListProps> = ({ type, close }) => {
     const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
     const { viewState, setViewState } = useContext(ViewContext);
     const { eventOrder, setEventOrder } = useContext(OrderContext);
 
@@ -480,7 +481,13 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         </>,
     });
 
-    return <Floating hideArrowTip padding={0} borderWidth={0} css={listStyle}>
+    return <Floating
+        backgroundColor={isDark ? COLORS.grey3 : COLORS.background}
+        hideArrowTip
+        padding={0}
+        borderWidth={isDark ? 1 : 0}
+        css={listStyle}
+    >
         {list}
     </Floating>;
 };
@@ -495,11 +502,12 @@ type MenuItemProps = {
 
 const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabled }) => {
     const ref = useRef<HTMLButtonElement>(null);
+    const isDark = useColorScheme().scheme === "dark";
 
     return (
         <li css={{
             ":not(:last-child)": {
-                borderBottom: `1px solid ${COLORS.grey3}`,
+                borderBottom: `1px solid ${isDark ? COLORS.grey5 : COLORS.grey3}`,
             },
             ":last-child button": {
                 borderRadius: "0 0 8px 8px",

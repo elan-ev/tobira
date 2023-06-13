@@ -202,6 +202,7 @@ type FloatingMenuProps = {
 const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
     const { t } = useTranslation();
     const user = useUser();
+    const isDark = useColorScheme().scheme === "dark";
 
     const items = match(type, {
         main: () => <>
@@ -262,7 +263,8 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
 
     return (
         <Floating
-            borderWidth={0}
+            backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+            borderWidth={isDark ? 1 : 0}
             padding={0}
             shadowBlur={8}
         >
