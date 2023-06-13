@@ -66,7 +66,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
                 background: "linear-gradient(135deg, #33333380 50%, transparent 0),"
                     + "linear-gradient(-135deg, #33333380 50%, transparent 0)",
                 backgroundSize: "17px 17px",
-                color: COLORS.grey3,
+                color: "#dbdbdb",
                 backgroundColor: "#292929",
             }}>{icon}</div>
         );
