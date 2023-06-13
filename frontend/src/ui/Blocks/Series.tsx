@@ -26,13 +26,13 @@ import {
 } from "react-icons/fi";
 import { keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
-import { ellipsisOverflowCss, focusStyle } from "..";
+import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import {
     Floating, FloatingContainer, FloatingHandle, FloatingTrigger,
 } from "../Floating";
 import { ProtoButton } from "../Button";
 import { IconType } from "react-icons";
-import { COLORS } from "../../color";
+import { COLORS, useColorScheme } from "../../color";
 
 
 // ==============================================================================================
@@ -265,6 +265,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
             padding: 12,
             backgroundColor: COLORS.grey1,
             borderRadius: 10,
+            ...useColorScheme().scheme === "dark" && darkModeBoxShadow,
         }}>
             <div css={{
                 display: "flex",

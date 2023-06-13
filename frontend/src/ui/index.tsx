@@ -2,8 +2,8 @@ import { Link } from "../router";
 import { match } from "../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
-import { COLORS } from "../color";
 import { CSSObject } from "@emotion/react";
+import { COLORS, useColorScheme } from "../color";
 
 
 export const SIDE_BOX_BORDER_RADIUS = 8;
@@ -14,6 +14,7 @@ export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
         borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
         ":not(:first-child)": { marginTop: 26 },
+        ...useColorScheme().scheme === "dark" && darkModeBoxShadow,
     }}>{children}</div>
 );
 
@@ -158,3 +159,6 @@ export const ellipsisOverflowCss = (lines: number): CSSObject => ({
             WebkitLineClamp: lines,
         },
 });
+
+/** Box shadow used on multiple elements in dark mode */
+export const darkModeBoxShadow = { boxShadow: "0 0 5px rgba(0, 0, 0, .2)" };

@@ -19,7 +19,7 @@ import { boxError } from "./error";
 import { bug } from "../util/err";
 import { currentRef } from "../util";
 import { focusStyle } from ".";
-import { COLORS } from "../color";
+import { COLORS, useColorScheme } from "../color";
 
 
 type ModalProps = {
@@ -42,6 +42,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
 }, ref) => {
     const { t } = useTranslation();
     const [isOpen, setOpen] = useState(false);
+    const isDark = useColorScheme().scheme === "dark";
 
     useImperativeHandle(ref, () => ({
         isOpen: () => isOpen,
@@ -85,6 +86,9 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                     borderRadius: 4,
                     minWidth: "clamp(300px, 90%, 400px)",
                     margin: 16,
+                    ...isDark && {
+                        border: `1px solid ${COLORS.grey4}`,
+                    },
                 }}>
                     <div css={{
                         padding: "12px 16px",

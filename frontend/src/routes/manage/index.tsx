@@ -8,7 +8,7 @@ import { RootLoader } from "../../layout/Root";
 import { makeRoute } from "../../rauta";
 import { loadQuery } from "../../relay";
 import { Link } from "../../router";
-import { LinkList, LinkWithIcon } from "../../ui";
+import { LinkList, LinkWithIcon, darkModeBoxShadow } from "../../ui";
 import { NotAuthorized } from "../../ui/error";
 import { isRealUser, useUser } from "../../User";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
@@ -18,7 +18,7 @@ import {
     manageDashboardQuery as ManageDashboardQuery,
 } from "./__generated__/manageDashboardQuery.graphql";
 import { css } from "@emotion/react";
-import { COLORS } from "../../color";
+import { COLORS, useColorScheme } from "../../color";
 
 
 const PATH = "/~manage";
@@ -48,10 +48,43 @@ const query = graphql`
 
 const Manage: React.FC = () => {
     const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     if (!isRealUser(user)) {
         return <NotAuthorized />;
     }
+
+    const gridTile = css({
+        borderRadius: 4,
+        border: `1px solid ${COLORS.grey2}`,
+        backgroundColor: COLORS.grey0,
+        padding: "8px 16px 16px 16px",
+        fontSize: 14,
+        color: COLORS.foreground,
+        textAlign: "left",
+        textDecoration: "none",
+        "&:is(button, a)": {
+            "&:hover, &:focus": {
+                color: COLORS.foreground,
+                borderColor: COLORS.grey4,
+                boxShadow: `1px 1px 5px ${COLORS.grey2}`,
+                cursor: "pointer",
+            },
+        },
+        position: "relative",
+        "& > svg:first-of-type": {
+            position: "absolute",
+            top: 8,
+            right: 8,
+            color: COLORS.primary0,
+            fontSize: 22,
+        },
+        "& > h2": {
+            fontSize: 18,
+            marginBottom: 16,
+        },
+        ...isDark && darkModeBoxShadow,
+    });
 
     const studioReturnUrl = new URL(document.location.href);
     return <>
@@ -98,36 +131,6 @@ const Manage: React.FC = () => {
     </>;
 };
 
-const gridTile = css({
-    borderRadius: 4,
-    border: `1px solid ${COLORS.grey2}`,
-    backgroundColor: COLORS.grey0,
-    padding: "8px 16px 16px 16px",
-    fontSize: 14,
-    color: COLORS.foreground,
-    textAlign: "left",
-    textDecoration: "none",
-    "&:is(button, a)": {
-        "&:hover, &:focus": {
-            color: COLORS.foreground,
-            borderColor: COLORS.grey4,
-            boxShadow: `1px 1px 5px ${COLORS.grey2}`,
-            cursor: "pointer",
-        },
-    },
-    position: "relative",
-    "& > svg:first-of-type": {
-        position: "absolute",
-        top: 8,
-        right: 8,
-        color: COLORS.primary0,
-        fontSize: 22,
-    },
-    "& > h2": {
-        fontSize: 18,
-        marginBottom: 16,
-    },
-});
 
 type ManageNavProps = {
     active?: "/~manage" | "/~manage/videos" | "/~manage/upload";
