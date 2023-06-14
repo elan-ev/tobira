@@ -627,7 +627,14 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             css={{ minWidth: "max-content" }}
         >
             <div css={{ display: "flex", justifyContent: "center" }}>
-                <QRCodeCanvas value={target} size={250} css={{ margin: 16 }}/>
+                <QRCodeCanvas
+                    value={target}
+                    size={250}
+                    css={{
+                        margin: 16,
+                        outline: "8px solid #FFFFFF",
+                    }}
+                />
             </div>
         </Modal>
     </>;
