@@ -23,6 +23,15 @@ env:
   RUSTFLAGS: --deny warnings
 
 jobs:
+  check_basic_hygiene:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: LukasKalbertodt/check-basic-style@v0.1
+      with:
+        files: |
+          **/!(*svg|*.md|*.sql|*.json)
+
   main:
     runs-on: ubuntu-20.04
     services:
