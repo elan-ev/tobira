@@ -856,6 +856,7 @@ const Item: React.FC<ItemProps> = ({
                 height: "100%",
                 width: "100%",
                 overflow: "hidden",
+                borderRadius: 8,
             }}>
                 <div css={{
                     background: "linear-gradient(to top, white, rgba(255, 255, 255, 0.1))",
