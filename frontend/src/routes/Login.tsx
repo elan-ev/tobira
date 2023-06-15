@@ -314,6 +314,10 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                 padding: "16px 16px",
                 border: `1px solid ${COLORS.grey4}`,
                 borderRadius: 4,
+                // The `autofill` thing overrides Firefox's default yellow and
+                // uses Chrome's blue instead, which is easier on the eyes.
+                // This should work better for most if not all color configurations.
+                ":autofill": { background: isDark ? "#2f3644" : "#e7f0fe" },
                 ...isDark && { backgroundColor: COLORS.grey1 },
             },
             "&:focus-within": {
