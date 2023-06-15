@@ -10,7 +10,7 @@ import { OUTER_CONTAINER_MARGIN } from "..";
 import { ActionIcon, ButtonContainer, HEADER_BASE_PADDING } from "./ui";
 import { SearchField } from "./Search";
 import { Logo } from "./Logo";
-import { LanguageSettings, UserBox } from "./UserBox";
+import { ColorSchemeSettings, LanguageSettings, UserBox } from "./UserBox";
 import { COLORS } from "../../color";
 
 
@@ -49,6 +49,7 @@ const LoginMode: React.FC = () => <>
     <Logo />
     <ButtonContainer>
         <LanguageSettings />
+        <ColorSchemeSettings />
     </ButtonContainer>
 </>;
 

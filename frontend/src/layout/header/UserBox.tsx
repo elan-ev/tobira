@@ -412,7 +412,7 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
 };
 
 /** Entries in the menu related to the color scheme. */
-const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
+export const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
     const { t } = useTranslation();
     const { scheme, isAuto, update } = useColorScheme();
     const currentPref = isAuto ? "auto" : scheme;

@@ -23,7 +23,7 @@ import { Header } from "../layout/header";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { OUTER_CONTAINER_MARGIN } from "../layout";
-import { COLORS } from "../color";
+import { COLORS, useColorScheme } from "../color";
 import { focusStyle } from "../ui";
 
 
@@ -132,6 +132,7 @@ type FormData = {
 
 const LoginBox: React.FC = () => {
     const { t, i18n } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
     const userid = watch("userid", "");
     const password = watch("password", "");
@@ -182,6 +183,7 @@ const LoginBox: React.FC = () => {
             padding: 32,
             border: `1px solid ${COLORS.grey4}`,
             borderRadius: 8,
+            ...isDark && { backgroundColor: COLORS.grey1 },
         }}>
             {CONFIG.auth.loginPageNote && (
                 <div css={{
@@ -278,6 +280,7 @@ type FieldProps = {
 };
 
 const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
+    const isDark = useColorScheme().scheme === "dark";
     const raisedStyle = {
         top: 0,
         left: 8,
@@ -297,7 +300,7 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                 lineHeight: 1,
                 borderRadius: 4,
                 padding: "0 4px",
-                backgroundColor: COLORS.background,
+                backgroundColor: isDark ? COLORS.grey1 : COLORS.background,
                 pointerEvents: "none",
                 "&:valid": {
                     border: "1px solid blue",
@@ -311,6 +314,7 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                 padding: "16px 16px",
                 border: `1px solid ${COLORS.grey4}`,
                 borderRadius: 4,
+                ...isDark && { backgroundColor: COLORS.grey1 },
             },
             "&:focus-within": {
                 "& > label": {
