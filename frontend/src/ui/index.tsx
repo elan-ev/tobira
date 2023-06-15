@@ -3,6 +3,7 @@ import { match } from "../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
 import { COLORS } from "../color";
+import { CSSObject } from "@emotion/react";
 
 
 export const SIDE_BOX_BORDER_RADIUS = 8;
@@ -144,7 +145,7 @@ export const focusStyle = ({ width = 2.5, inset = false, offset = 0 }) => ({
 } as const);
 
 /** Returns CSS that makes text longer than `lines` lines to be truncated with `...`. */
-export const ellipsisOverflowCss = (lines: number): Record<string, any> => ({
+export const ellipsisOverflowCss = (lines: number): CSSObject => ({
     overflow: "hidden",
     textOverflow: "ellipsis",
     ...lines === 1

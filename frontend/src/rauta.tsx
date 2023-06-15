@@ -94,7 +94,7 @@ export type RouterLib = {
 };
 
 /** Helper class: a list of listeners */
-class Listeners<F extends (...args: any) => any> {
+class Listeners<F extends (...args: unknown[]) => unknown> {
     private list: { listener: F }[] = [];
 
     /** Pass through the iterable protocol to the inner list */
@@ -174,7 +174,7 @@ export interface RouterControl {
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     // Helper to log debug messages if `config.debug` is true.
-    const debugLog = (...args: any[]) => {
+    const debugLog = (...args: unknown[]) => {
         if (config.debug) {
             // eslint-disable-next-line no-console
             console.debug("[rauta] ", ...args);
@@ -257,7 +257,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 // When navigating to new routes, the scroll position always
                 // starts as 0 (i.e. the very top).
                 context.setActiveRoute({ route: newRoute, initialScroll: 0 });
-                replaceEntry ? replace(href) : push(href);
+                (replaceEntry ? replace : push)(href);
 
                 debugLog(`Setting active route for '${href}' (index ${currentIndex}) `
                     + "to: ", newRoute);
