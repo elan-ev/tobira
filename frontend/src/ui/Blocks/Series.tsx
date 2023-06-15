@@ -482,7 +482,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
     });
 
     return <Floating
-        backgroundColor={isDark ? COLORS.grey3 : COLORS.background}
+        backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
         hideArrowTip
         padding={0}
         borderWidth={isDark ? 1 : 0}
