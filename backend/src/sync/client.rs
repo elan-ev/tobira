@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc, TimeZone};
 use hyper::{
     Body, Request, Response, StatusCode,
     client::{Client, HttpConnector},
-    http::uri::{Authority, Scheme, Uri},
+    http::{uri::{Authority, Scheme, Uri}, request, self},
 };
 use hyper_rustls::HttpsConnector;
 use secrecy::{ExposeSecret, Secret};
@@ -31,6 +31,7 @@ pub(crate) struct OcClient {
 impl OcClient {
     const HARVEST_PATH: &'static str = "/tobira/harvest";
     const VERSION_PATH: &'static str = "/tobira/version";
+    const STATS_PATH: &'static str = "/tobira/stats";
 
     pub(crate) fn new(config: &Config) -> Self {
         let http_client = crate::util::http_client();
@@ -108,7 +109,31 @@ impl OcClient {
         Ok(out)
     }
 
+    /// Sends the given serialized JSON to the `/stats` endpoint in Opencast.
+    pub async fn send_stats(&self, stats: String) -> Result<()> {
+        let req = self.req_builder(Self::STATS_PATH)
+            .method(http::Method::POST)
+            .header(http::header::CONTENT_TYPE, "application/json")
+            .body(stats.into())
+            .expect("failed to build request");
+
+        let res = self.http_client.request(req).await?;
+        if !res.status().is_success() {
+            bail!("Unexpected non 2xx status returned by Opencast. Response: {res:#?}");
+        }
+
+        Ok(())
+    }
+
     fn build_req(&self, path_and_query: &str) -> (Uri, Request<Body>) {
+        let req = self.req_builder(path_and_query)
+            .body(Body::empty())
+            .expect("bug: failed to build request");
+
+        (req.uri().clone(), req)
+    }
+
+    fn req_builder(&self, path_and_query: &str) -> request::Builder {
         let uri = Uri::builder()
             .scheme(self.scheme.clone())
             .authority(self.authority.clone())
@@ -116,13 +141,9 @@ impl OcClient {
             .build()
             .expect("bug: failed build URI");
 
-        let req = Request::builder()
+        Request::builder()
             .uri(&uri)
             .header("Authorization", self.auth_header.expose_secret())
-            .body(Body::empty())
-            .expect("bug: failed to build request");
-
-        (uri, req)
     }
 
     async fn deserialize_response<T: for<'de> serde::Deserialize<'de>>(

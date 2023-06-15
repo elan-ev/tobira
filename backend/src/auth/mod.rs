@@ -134,6 +134,19 @@ pub(crate) enum AuthMode {
     Opencast,
 }
 
+impl AuthMode {
+    /// Returns the string that has to be specified in the config file to select
+    /// this mode.
+    pub fn label(&self) -> &'static str {
+        match self {
+            AuthMode::None => "none",
+            AuthMode::FullAuthProxy => "full-auth-proxy",
+            AuthMode::LoginProxy => "login-proxy",
+            AuthMode::Opencast => "opencast",
+        }
+    }
+}
+
 /// Information about whether or not, and if so how
 /// someone or something talking to Tobira is authenticated
 #[derive(PartialEq, Eq)]

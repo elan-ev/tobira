@@ -141,6 +141,7 @@ async fn start_worker(config: Config) -> Result<Never> {
     let mut search_conn = db.get().await?;
     let sync_conn = db.get().await?;
     let db_maintenance_conn = db.get().await?;
+    let stats_conn = db.get().await?;
     let auth_config = config.auth.clone();
 
     tokio::select! {
@@ -151,6 +152,7 @@ async fn start_worker(config: Config) -> Result<Never> {
             res.map(|()| unreachable!("sync task unexpectedly stopped"))
                 .context("error synchronizing with Opencast")
         }
+        never = sync::stats::run_daemon(stats_conn, &config) => { never }
         never = auth::db_maintenance(&db_maintenance_conn, &auth_config) => { never }
     }
 }

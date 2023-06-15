@@ -7,6 +7,7 @@ use crate::{config::Config, db::DbConnection, prelude::*};
 
 pub(crate) mod cmd;
 pub(crate) mod harvest;
+pub(crate) mod stats;
 mod client;
 mod status;
 
