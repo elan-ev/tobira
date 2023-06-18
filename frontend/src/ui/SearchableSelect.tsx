@@ -48,6 +48,10 @@ export const SearchableSelect = <T, >({
                 backgroundColor: COLORS.background,
                 borderColor: state.isFocused ? COLORS.primary0 : COLORS.grey5,
             }),
+            input: baseStyles => ({
+                ...baseStyles,
+                ...isDark && { color: COLORS.grey7 },
+            }),
             placeholder: baseStyles => ({
                 ...baseStyles,
                 color: COLORS.grey6,
@@ -72,8 +76,16 @@ export const SearchableSelect = <T, >({
                     borderLeft: `4px solid ${COLORS.focus}`,
                 },
                 ...(state.isFocused || state.isSelected) && {
-                    backgroundColor: isDark ? COLORS.grey3 : COLORS.grey1,
+                    backgroundColor: isDark ? COLORS.grey4 : COLORS.grey1,
                 },
+            }),
+            noOptionsMessage: baseStyles => ({
+                ...baseStyles,
+                ...isDark && { backgroundColor: COLORS.grey1 },
+            }),
+            loadingMessage: baseStyles => ({
+                ...baseStyles,
+                ...isDark && { backgroundColor: COLORS.grey1 },
             }),
         }}
         isClearable

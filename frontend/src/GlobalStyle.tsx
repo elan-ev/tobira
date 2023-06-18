@@ -119,4 +119,5 @@ const GLOBAL_STYLE = css({
         borderTop: `1px solid ${COLORS.grey4}`,
     },
     "p, label": { color: COLORS.grey7 },
+    input: { color: COLORS.foreground },
 });

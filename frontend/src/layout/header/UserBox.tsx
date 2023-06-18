@@ -492,7 +492,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
             strokeWidth: 2,
             "& > path": { strokeWidth: "inherit" },
         },
-        ":hover, :focus": { backgroundColor: COLORS.grey0 },
+        ":hover, :focus": {
+            backgroundColor: COLORS.grey0,
+            color: "inherit",
+        },
         ...focusStyle({ inset: true }),
     } as const;
 
@@ -592,6 +595,9 @@ const Logout: React.FC = () => {
             })}
             css={{
                 color: COLORS.danger0,
+                ":hover, :focus": {
+                    color: COLORS.danger0,
+                },
             }}
             {...actionProps}
         >{t("user.logout")}</MenuItem>

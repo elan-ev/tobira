@@ -10,7 +10,7 @@ import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
 import { RelativeDate } from "../time";
 import PaellaPlayer from "./Paella";
-import { COLORS } from "../../color";
+import { COLORS, useColorScheme } from "../../color";
 
 
 export type PlayerProps = {
@@ -204,10 +204,11 @@ export const isHlsTrack = (t: Track) =>
     t.mimetype === "application/x-mpegURL" || t.uri.endsWith(".m3u8");
 
 
-export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => (
-    <div css={{
+export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => {
+    const isDark = useColorScheme().scheme === "dark";
+    return <div css={{
         height: "100%",
-        backgroundColor: COLORS.grey7,
+        backgroundColor: isDark ? COLORS.grey2 : COLORS.grey7,
         color: "white",
         padding: 8,
         display: "flex",
@@ -220,6 +221,10 @@ export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => 
             fontSize: 40,
             margin: "16px 0",
             strokeWidth: 1.5,
+            ...isDark && { color: COLORS.grey7 },
+        },
+        div: {
+            ...isDark && { color: COLORS.grey7 },
         },
         [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
             "& > *": {
@@ -228,8 +233,8 @@ export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => 
         },
     }}>
         {children}
-    </div>
-);
+    </div>;
+};
 
 type LiveEventPlaceholderProps =
     | { mode: "pending"; startTime: Date }

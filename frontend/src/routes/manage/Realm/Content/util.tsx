@@ -1,6 +1,6 @@
 import React from "react";
 import { focusStyle } from "../../../../ui";
-import { COLORS } from "../../../../color";
+import { COLORS, useColorScheme } from "../../../../color";
 
 
 type ButtonProps = React.ComponentProps<"button">;
@@ -24,6 +24,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
                 cursor: "pointer",
                 "&:hover, &:focus": {
                     backgroundColor: COLORS.grey0,
+                    ...useColorScheme().scheme === "dark" && {
+                        backgroundColor: COLORS.grey2,
+                        color: COLORS.grey7,
+                    },
                 },
                 ...focusStyle({}),
             },

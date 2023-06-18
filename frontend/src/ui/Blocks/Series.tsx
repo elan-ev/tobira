@@ -530,13 +530,14 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
                     width: "100%",
                     svg: { fontSize: 16 },
                     ":hover, :focus": {
-                        backgroundColor: COLORS.grey2,
+                        backgroundColor: isDark ? COLORS.grey0 : COLORS.grey2,
                     },
                     ...focusStyle({ inset: true }),
                     "&[disabled]": {
                         fontWeight: "bold",
                         color: COLORS.grey7,
                         pointerEvents: "none",
+                        ...isDark && { backgroundColor: COLORS.grey0 },
                     },
                 }}
             >

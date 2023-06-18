@@ -30,7 +30,10 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             listStyle: "none",
             margin: 0,
             padding: 0,
-            "& a": { ...focusStyle({ inset: true }) },
+            "& a": {
+                ...focusStyle({ inset: true }),
+                ...useColorScheme().scheme === "dark" && { color: COLORS.primary1 },
+            },
             "& > li": {
                 backgroundColor: COLORS.grey1,
                 borderBottom: `2px solid ${COLORS.background}`,
@@ -73,15 +76,13 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
     active = false,
     ...rest
 }) => {
+    const isDark = useColorScheme().scheme === "dark";
     const TRANSITION_DURATION = "0.1s";
 
     const hoverActiveStyle = {
         transitionDuration: "0s",
         backgroundColor: COLORS.grey3,
-        "& > svg": {
-            transitionDuration: "0s",
-            color: COLORS.grey6,
-        },
+        ...isDark && { color: COLORS.primary2 },
     };
 
     const style = {

@@ -57,7 +57,7 @@ const Manage: React.FC = () => {
     const gridTile = css({
         borderRadius: 4,
         border: `1px solid ${COLORS.grey2}`,
-        backgroundColor: COLORS.grey0,
+        backgroundColor: isDark ? COLORS.grey1 : COLORS.grey0,
         padding: "8px 16px 16px 16px",
         fontSize: 14,
         color: COLORS.foreground,
@@ -67,7 +67,7 @@ const Manage: React.FC = () => {
             "&:hover, &:focus": {
                 color: COLORS.foreground,
                 borderColor: COLORS.grey4,
-                boxShadow: `1px 1px 5px ${COLORS.grey2}`,
+                ...!isDark && { boxShadow: `1px 1px 5px ${COLORS.grey2}` },
                 cursor: "pointer",
             },
         },
