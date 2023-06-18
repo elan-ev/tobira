@@ -114,9 +114,14 @@ const delayTill = (date: Date): number => {
  */
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
     const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
+    const isDark = useColorScheme().scheme === "dark";
 
     return (
         <div className={className} css={{
+            "--video-container-background-color": isDark ? COLORS.grey0 : "inherit",
+            "div.loader-container": {
+                backgroundColor: isDark ? COLORS.grey3 : "inherit",
+            },
             display: "flex",
             flexDirection: "column",
             // We want to be able to see the full header, the video title and some metadata.
