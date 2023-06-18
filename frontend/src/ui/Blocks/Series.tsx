@@ -258,6 +258,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
     { title, children, showViewOptions },
 ) => {
     const [viewState, setViewState] = useState<View>("gallery");
+    const isDark = useColorScheme().scheme === "dark";
 
     return <ViewContext.Provider value={{ viewState, setViewState }}>
         <div css={{
@@ -276,7 +277,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
                 {title && <h2 css={{
                     display: "inline-block",
                     padding: "8px 12px",
-                    color: COLORS.grey7,
+                    color: isDark ? COLORS.foreground : COLORS.grey7,
                     fontSize: 20,
                     lineHeight: 1.3,
                 }}>{title}</h2>}

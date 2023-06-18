@@ -16,7 +16,7 @@ import { displayCommitError } from "./util";
 import { sortRealms } from "../../util";
 import { WithTooltip } from "../../../ui/Floating";
 import { focusStyle } from "../../../ui";
-import { COLORS } from "../../../color";
+import { COLORS, useColorScheme } from "../../../color";
 
 
 const fragment = graphql`
@@ -184,6 +184,7 @@ type ChildEntryProps = {
 
 const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChildren }) => {
     const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
 
     return (
         <li css={{
@@ -214,6 +215,7 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                     alignItems: "center",
                     padding: "5px 12px",
                     backgroundColor: "inherit",
+                    ...isDark && { color: COLORS.grey6 },
                     "&:disabled": {
                         color: "transparent",
                     },
@@ -221,6 +223,10 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                         cursor: "pointer",
                         "&:hover, &:focus": {
                             backgroundColor: COLORS.grey0,
+                            ...isDark && {
+                                backgroundColor: COLORS.grey2,
+                                color: COLORS.grey7,
+                            },
                         },
                         ...focusStyle({ offset: -1.5 }),
                     },

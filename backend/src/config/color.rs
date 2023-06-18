@@ -269,21 +269,21 @@ impl ColorConfig {
         add(&mut light, "grey6", Lch { l: 43.2, ..base_grey });
         add(&mut light, "grey7", Lch { l: 21.2, ..base_grey });
 
-        add(&mut dark, "grey0", Lch { l: 9.5, ..base_grey });
-        add(&mut dark, "grey1", Lch { l: 11.2, ..base_grey });
-        add(&mut dark, "grey2", Lch { l: 13.9, ..base_grey });
-        add(&mut dark, "grey3", Lch { l: 17.5, ..base_grey });
+        add(&mut dark, "grey0", Lch { l: 10.7, ..base_grey });
+        add(&mut dark, "grey1", Lch { l: 12.5, ..base_grey });
+        add(&mut dark, "grey2", Lch { l: 15.0, ..base_grey });
+        add(&mut dark, "grey3", Lch { l: 18.2, ..base_grey });
         add(&mut dark, "grey4", Lch { l: 24.0, ..base_grey });
         add(&mut dark, "grey5", Lch { l: 36.0, ..base_grey });
         add(&mut dark, "grey6", Lch { l: 60.0, ..base_grey });
-        add(&mut dark, "grey7", Lch { l: 80.0, ..base_grey });
+        add(&mut dark, "grey7", Lch { l: 68.0, ..base_grey });
 
 
         // Foreground & background
         add(&mut light, "background", Lch::new(100.0, 0.0, 0.0));
         add(&mut light, "foreground", Lch::new(0.0, 0.0, 0.0));
-        add(&mut dark, "background", Lch { l: 7.0, ..base_grey });
-        add(&mut dark, "foreground", Lch::new(87.0, 0.0, 0.0));
+        add(&mut dark, "background", Lch { l: 7.7, ..base_grey });
+        add(&mut dark, "foreground", Lch::new(79.0, 0.0, 0.0));
 
         (light, dark)
     }
