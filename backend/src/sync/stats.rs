@@ -44,7 +44,6 @@ async fn send_stats(client: &OcClient, db: &DbConnection, config: &Config) -> Re
 
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 struct Stats {
     num_realms: u32,
     num_blocks: u32,
@@ -53,7 +52,6 @@ struct Stats {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 struct VersionStats {
     identifier: String,
     build_time_utc: &'static str,
@@ -62,7 +60,6 @@ struct VersionStats {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 struct ConfigStats {
     /// Value of `general.show_download_button`.
     download_button_shown: bool,
