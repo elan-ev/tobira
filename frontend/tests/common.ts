@@ -1,12 +1,16 @@
 import { Page, expect, test } from "@playwright/test";
 
 
-type User = "admin" | "björk" | "jose" | "morgan" | "sabine";
+export type User = { login: "admin"; displayName: "Administrator" }
+    | { login: "björk"; displayName: "Prof. Björk Guðmundsdóttir" }
+    | { login: "jose"; displayName: "José Carreño Quiñones" }
+    | { login: "morgan"; displayName: "Morgan Yu" }
+    | { login: "sabine"; displayName: "Sabine Rudolfs" };
 
-export const login = async (page: Page, user: User) => {
+export const login = async (page: Page, userLogin: string) => {
     await expect(async () => {
         await navigateTo("~login", page);
-        await page.getByLabel("User ID").fill(user);
+        await page.getByLabel("User ID").fill(userLogin);
         await page.getByLabel("Password").fill("tobira");
         await page.getByRole("button", { name: "Login" }).click();
         await page.waitForURL("/");
@@ -53,10 +57,10 @@ export const deleteRealm = async (page: Page) => {
 export const realms = ["User", "Regular"] as const;
 export type Realm = typeof realms[number];
 
-export const realmSetup = async (page: Page, realm: Realm) => {
+export const realmSetup = async (page: Page, realm: Realm, user: User, index: number) => {
     if (realm === "User") {
-        await navigateTo("@admin", page);
-        await page.waitForURL("@admin");
+        await navigateTo(`@${user.login}`, page);
+        await page.waitForURL(`@${user.login}`);
     } else {
         await navigateTo("/", page);
     }
@@ -71,17 +75,18 @@ export const realmSetup = async (page: Page, realm: Realm) => {
                 await expect(async () => {
                     await deleteRealm(page);
                     await page.waitForURL("/");
-                    await navigateTo("@admin", page);
+                    await navigateTo(`@${user.login}`, page);
                     await expect(createRealmButton).toBeVisible();
                 }).toPass();
             }
             await createRealmButton.click();
-            await expect(page.getByText("Edit page “Administrator”")).toBeVisible();
+            await expect(page.getByText(`Edit page “${user.displayName}”`)).toBeVisible();
         }
 
         if (realm === "Regular") {
             await page.waitForSelector("nav");
-            for (const name of ["Chicken", "Funky Realm", "E2E Test Realm"]) {
+            const realms = [`Chicken ${index}`, `Funky Realm ${index}`, `E2E Test Realm ${index}`];
+            for (const name of realms) {
                 const realmLink = page.locator("nav").getByRole("link", { name: name });
                 if (await realmLink.isVisible()) {
                     await realmLink.click();
@@ -89,9 +94,9 @@ export const realmSetup = async (page: Page, realm: Realm) => {
                 }
             }
 
-            await addSubPage(page, "E2E Test Realm");
-            await expect(page.getByRole("link", { name: "E2E Test Realm" })).toBeVisible();
-            await page.waitForURL("~manage/realm/content?path=/e2e-test-realm");
+            await addSubPage(page, `E2E Test Realm ${index}`);
+            await expect(page.getByRole("link", { name: `E2E Test Realm ${index}` })).toBeVisible();
+            await page.waitForURL(`~manage/realm/content?path=/e2e-test-realm-${index}`);
         }
     });
 };

@@ -5,8 +5,16 @@ import { Block, blocks, deleteRealm, insertBlock, login, realmSetup, realms } fr
 for (const realm of realms) {
     test(`${realm} realm blocks`, async ({ page, browserName }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
+        const user: User = browserName === "chromium"
+            ? { login: "morgan", displayName: "Morgan Yu" }
+            : { login: "jose", displayName: "José Carreño Quiñones" };
+        const realmIndex = browserName === "chromium" ? 0 : 1;
+
         await test.step("Setup", async () => {
-            await login(page, "admin");
+            if (realm === "User") {
+                await login(page, user.login);
+            } else {
+                await login(page, "admin");
             await realmSetup(page, realm);
         });
 

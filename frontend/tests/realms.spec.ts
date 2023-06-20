@@ -13,19 +13,25 @@ import {
 for (const realm of realms) {
     test(`${realm} realm editing`, async ({ page, browserName }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
+
+        const user: User = browserName === "chromium"
+            ? { login: "admin", displayName: "Administrator" }
+            : { login: "sabine", displayName: "Sabine Rudolfs" };
+        const realmIndex = browserName === "chromium" ? 2 : 3;
+
         const settingsLink = page.getByRole("link", { name: "Page settings" });
         const saveButton = page.getByRole("button", { name: "Save" });
         const subPages = ["Alchemy", "Barnacles", "Cheese"];
         const nav = page.locator("nav").first().getByRole("listitem");
 
         await test.step("Setup", async () => {
-            await login(page, "admin");
-            await realmSetup(page, realm);
+            await login(page, user.login);
+            await realmSetup(page, realm, user, realmIndex);
             await insertBlock(page, "Video");
         });
 
         await test.step("Sub-pages can be added", async () => {
-            const target = realm === "User" ? "@admin" : "e2e-test-realm";
+            const target = realm === "User" ? `@${user.login}` : `e2e-test-realm-${realmIndex}`;
             for (const subPage of subPages) {
                 await expect(async () => {
                     await navigateTo(target, page);
@@ -88,16 +94,20 @@ for (const realm of realms) {
 
             await test.step("Custom name", async () => {
                 await page.locator("label:has-text('Name directly')").click();
-                await page.locator("#rename-field").fill("Funky realm");
+                await page.locator("#rename-field").fill(`Funky Realm ${realmIndex}`);
                 await saveButton.first().click();
 
                 await expect(
-                    page.getByRole("heading", { name: "Settings of page “Funky realm”" }),
+                    page.getByRole(
+                        "heading", { name: `Settings of page “Funky Realm ${realmIndex}”` }
+                    ),
                 ).toBeVisible();
 
-                await page.locator("#rename-field").fill("E2E Test realm");
+                await page.locator("#rename-field").fill(`E2E Test Realm ${realmIndex}`);
                 await saveButton.first().click();
-                await expect(page.getByRole("heading", { name: "E2E Test realm" })).toBeVisible();
+                await expect(
+                    page.getByRole("heading", { name: `E2E Test Realm ${realmIndex}` })
+                ).toBeVisible();
             });
         });
 
@@ -105,17 +115,17 @@ for (const realm of realms) {
             await test.step("Path changing", async () => {
                 await test.step("Path can be changed", async () => {
                     const pathInput = page.locator("input[name='pathSegment']");
-                    await pathInput.fill("chicken");
+                    await pathInput.fill(`chicken-${realmIndex}`);
                     await page.getByRole("button", { name: "Change path segment" }).click();
 
-                    await expect(page).toHaveURL("~manage/realm?path=/chicken");
+                    await expect(page).toHaveURL(`~manage/realm?path=/chicken-${realmIndex}`);
                 });
 
                 await test.step("Links are updated", async () => {
                     const links = [
                         ["Go to page", "E2E Test Realm"],
-                        ["Page settings", "Settings of page “E2E Test Realm”"],
-                        ["Edit page content", "Edit page “E2E Test Realm”"],
+                        ["Page settings", `Settings of page “E2E Test Realm ${realmIndex}”`],
+                        ["Edit page content", `Edit page “E2E Test Realm ${realmIndex}”`],
                         ["Add sub-page", "Add page"],
                         ["Barnacles", "Barnacles"],
                         ["E2E Test Realm", "E2E Test Realm"],
@@ -138,12 +148,14 @@ for (const realm of realms) {
             await deleteRealm(page);
 
             if (realm === "User") {
-                await navigateTo("@admin", page);
+                await navigateTo(`@${user.login}`, page);
                 await expect(
                     page.locator("_react=CreateUserRealm").nth(1).getByRole("button"),
                 ).toBeVisible();
             } else {
-                await expect(page.getByRole("link", { name: "E2E Test realm" })).not.toBeVisible();
+                await expect(
+                    page.getByRole("link", { name: `E2E Test realm ${realmIndex}` })
+                ).not.toBeVisible();
             }
         });
     });
