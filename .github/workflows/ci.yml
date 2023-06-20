@@ -75,9 +75,6 @@ jobs:
     - name: Lint frontend
       working-directory: frontend
       run: npx eslint --max-warnings 0 .
-    - name: Install Playwright browsers
-      working-directory: frontend
-      run: npx playwright install --with-deps
     - name: Build frontend
       working-directory: frontend
       run: npx webpack --mode=${{ env.ci_webpack_flags }}
@@ -130,12 +127,18 @@ jobs:
 
     - name: Rebuild search index
       working-directory: backend
-      run: echo yes | cargo run -- search-index update
+      run: cargo run -- search-index update
 
+    - name: Install Playwright browsers
+      working-directory: frontend
+      run: npx playwright install --with-deps
     - name: Run playwright tests
       working-directory: frontend
       run: npx playwright test
     - name: Upload test results
+      # A test might need a retry to succeed or run longer than expected.
+      # In these cases the results should also be saved, since they might
+      # indicate what went wrong. Hence `always()` instead of on `failure()`.
       if: always()
       uses: actions/upload-artifact@v3
       with:
