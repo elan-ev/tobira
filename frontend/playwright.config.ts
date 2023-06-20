@@ -41,20 +41,11 @@ export default defineConfig({
             use: { ...devices["Desktop Firefox"] },
         },
 
-        // {
-        //     name: "webkit",
-        //     use: { ...devices["Desktop Safari"] },
-        // },
-
-        /* Test against mobile viewports. */
-        // {
-        //   name: 'Mobile Chrome',
-        //   use: { ...devices['Pixel 5'] },
-        // },
-        // {
-        //   name: 'Mobile Safari',
-        //   use: { ...devices['iPhone 12'] },
-        // },
+        // Safari doesn't allow http logins, so we can't test everything there.
+        {
+            name: "webkit",
+            use: { ...devices["Desktop Safari"] },
+        },
     ],
 
     /* Run your local dev server before starting the tests */

@@ -11,7 +11,8 @@ import {
 
 
 for (const realm of realms) {
-    test(`${realm} realm editing`, async ({ page }) => {
+    test(`${realm} realm editing`, async ({ page, browserName }) => {
+        test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
         const settingsLink = page.getByRole("link", { name: "Page settings" });
         const saveButton = page.getByRole("button", { name: "Save" });
         const subPages = ["Alchemy", "Barnacles", "Cheese"];

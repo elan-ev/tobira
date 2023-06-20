@@ -3,7 +3,8 @@ import { Block, blocks, deleteRealm, insertBlock, login, realmSetup, realms } fr
 
 
 for (const realm of realms) {
-    test(`${realm} realm blocks`, async ({ page }) => {
+    test(`${realm} realm blocks`, async ({ page, browserName }) => {
+        test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
         await test.step("Setup", async () => {
             await login(page, "admin");
             await realmSetup(page, realm);
