@@ -1,5 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
-import { Block, blocks, deleteRealm, insertBlock, login, realmSetup, realms } from "./common";
+import { Block, User, blocks, deleteRealm, insertBlock, login, realmSetup, realms } from "./common";
 
 
 for (const realm of realms) {
@@ -15,7 +15,8 @@ for (const realm of realms) {
                 await login(page, user.login);
             } else {
                 await login(page, "admin");
-            await realmSetup(page, realm);
+            }
+            await realmSetup(page, realm, user, realmIndex);
         });
 
         await test.step("Editing", async () => {
@@ -36,7 +37,7 @@ for (const realm of realms) {
                     await removeBlock(page);
                 }
 
-                await expect(page.locator("_react=EditBlock")).toHaveCount(0);
+                await expect(page.getByRole("button", { name: "Move block down" })).toHaveCount(0);
             });
         });
 
@@ -63,11 +64,11 @@ const editBlock = async (page: Page, block: Block, index: number) => {
 
     if (block === "Series") {
         await test.step("Series can be changed", async () => {
-            const input = page.locator("_react=SeriesSelector");
+            const input = editBlock.getByText("The best open cat videos");
             const query = "Mixed Test Series";
             await input.type("mixed test");
             await page.getByText(query).click();
-            await input.press("Enter");
+            await page.keyboard.press("Enter");
 
             await expect(page.getByRole("heading", { name: query })).toBeVisible();
         });
@@ -130,10 +131,10 @@ const editBlock = async (page: Page, block: Block, index: number) => {
     }
     if (block === "Video") {
         await test.step("Video can be changed", async () => {
-            const input = page.locator("_react=EventSelector");
+            const input = editBlock.getByText("Chicken");
             await input.type("belemmi");
             await page.getByText("Series: The best open cat videos").click();
-            await input.press("Enter");
+            await page.keyboard.press("Enter");
 
             await expect(page
                 .getByRole("heading", { name: "Video Of A Tabby Cat" })
@@ -163,6 +164,6 @@ const editBlock = async (page: Page, block: Block, index: number) => {
 
 const removeBlock = async (page: Page) => {
     const block = page.locator("_react=EditBlock").first();
-    await block.locator("_react=RemoveButton").click();
+    await block.getByRole("button", { name: "Remove block" }).click();
     await page.getByText("Remove block", { exact: true }).click();
 };

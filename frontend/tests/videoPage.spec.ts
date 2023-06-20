@@ -2,15 +2,10 @@ import { test, expect } from "@playwright/test";
 import { navigateTo } from "./common";
 
 
-// Ideally this would get a semi-random event from the database that is
-// (1) part of a series and (2) we know is included as a video in tobira.
-// Though this also comes with the caveat that I don't know if there is a way to
-// match an event to it's path in tobira.
-
 test("Video page", async ({ page }) => {
     const seriesBlock = page.locator("_react=SeriesBlockContainer");
     const metadatumLocator = (datum: "duration" | "part of series") =>
-        page.locator("_react=Metadata").locator(`dd:right-of(dt:has-text("${datum}"))`).first();
+        page.locator(`dd:right-of(dt:has-text("${datum}"))`).first();
 
     await test.step("Setup", async () => {
         await navigateTo("/", page);

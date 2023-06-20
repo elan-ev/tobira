@@ -3,8 +3,6 @@ import { navigateTo } from "./common";
 
 test("Language selection", async ({ page }) => {
     const html = page.locator("html");
-    const languageMenu = page.locator("_react=WithFloatingMenu");
-    const trigger = languageMenu.locator("_react=FloatingTrigger");
     const english = page.getByRole("checkbox", { name: "English" });
     const german = page.getByRole("checkbox", { name: "Deutsch" });
 
@@ -12,8 +10,9 @@ test("Language selection", async ({ page }) => {
     await page.waitForSelector("nav");
 
     await test.step("Language button is present and opens menu", async () => {
-        await trigger.click();
-        await expect(languageMenu.locator("_react=FloatingMenu")).toBeVisible();
+        await page.getByRole("button", { name: "Language selection" }).click();
+        await expect(english).toBeVisible();
+        await expect(german).toBeVisible();
     });
 
     await test.step("Language can be changed", async () => {
@@ -22,16 +21,16 @@ test("Language selection", async ({ page }) => {
         await expect(english).toBeChecked();
         await expect(html).toHaveAttribute("lang", "en");
 
-        await test.step("To german", async () => {
+        await test.step("to german", async () => {
             await expect(german).toBeVisible();
             await german.dispatchEvent("click");
 
-            await trigger.click();
+            await page.getByRole("button", { name: "Sprachauswahl" }).click();
             await expect(german).toBeChecked();
             await expect(html).toHaveAttribute("lang", "de");
         });
 
-        await test.step("To english", async () => {
+        await test.step("to english", async () => {
             await english.dispatchEvent("click");
             await expect(html).toHaveAttribute("lang", "en");
         });

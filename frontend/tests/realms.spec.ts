@@ -7,6 +7,7 @@ import {
     navigateTo,
     realmSetup,
     realms,
+    User,
 } from "./common";
 
 
@@ -150,7 +151,7 @@ for (const realm of realms) {
             if (realm === "User") {
                 await navigateTo(`@${user.login}`, page);
                 await expect(
-                    page.locator("_react=CreateUserRealm").nth(1).getByRole("button"),
+                    page.getByRole("button", { name: "Create your own page" }),
                 ).toBeVisible();
             } else {
                 await expect(

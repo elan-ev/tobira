@@ -5,7 +5,7 @@ import { navigateTo } from "./common";
 test("Search", async ({ page }) => {
     await navigateTo("/", page);
     await page.waitForSelector("nav");
-    const searchField = page.locator("_react=SearchField").locator("input");
+    const searchField = page.getByPlaceholder("Search");
 
     await test.step("Should be focusable by keyboard shortcut", async () => {
         await page.keyboard.press("s");
@@ -20,7 +20,10 @@ test("Search", async ({ page }) => {
     });
 
     await test.step("Should show search results", async () => {
-        const results = page.locator("_react=SearchResults");
+        const results = page
+            .locator("div")
+            .filter({ has: page.getByText("Search results for “Video”") })
+            .nth(4);
         await expect(results).toBeVisible();
         expect(await results.getByRole("link").count()).toBeGreaterThan(0);
     });
