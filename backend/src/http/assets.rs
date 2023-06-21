@@ -73,7 +73,10 @@ impl Assets {
         let mut path_overrides = HashMap::new();
         let small_logo = config.theme.logo.small.as_ref().unwrap_or(&config.theme.logo.large);
         let large_logo_dark = config.theme.logo.large_dark.as_ref().unwrap_or(&config.theme.logo.large);
-        let small_logo_dark = config.theme.logo.small_dark.as_ref().unwrap_or(&large_logo_dark);
+        let small_logo_dark = config.theme.logo.small_dark.as_ref()
+            .or(config.theme.logo.large_dark.as_ref())
+            .or(config.theme.logo.small.as_ref())
+            .unwrap_or(&config.theme.logo.large);
         path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.path.clone());
         path_overrides.insert("logo-large-dark.svg".into(), large_logo_dark.path.clone());
         path_overrides.insert("logo-small.svg".into(), small_logo.path.clone());
@@ -81,6 +84,11 @@ impl Assets {
         path_overrides.insert("favicon.svg".into(), config.theme.favicon.clone());
 
         let mut variables = <HashMap<String, String>>::new();
+        let invert_large_dark_logo = config.theme.logo.large_dark.is_none();
+        let invert_small_dark_logo = config.theme.logo.small_dark.is_none()
+            && invert_large_dark_logo;
+        variables.insert("invertLargeDarkLogo".into(), invert_large_dark_logo.to_string());
+        variables.insert("invertSmallDarkLogo".into(), invert_small_dark_logo.to_string());
         variables.insert("version".into(), json!({
             "identifier": crate::version::identifier(),
             "buildDateUtc": crate::version::build_time_utc(),

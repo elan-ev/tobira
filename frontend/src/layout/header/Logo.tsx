@@ -33,6 +33,9 @@ export const Logo: React.FC = () => {
     const { small, large, smallDark, largeDark } = CONFIG.logo;
 
     const alt = t("general.logo-alt", { title: translatedConfig(CONFIG.siteTitle, i18n) });
+    const invertCss = {
+        filter: "invert(100%) hue-rotate(180deg)",
+    };
 
     return (
         <Link to="/" css={{
@@ -47,9 +50,6 @@ export const Logo: React.FC = () => {
                 height: "100%",
                 width: "auto",
                 maxWidth: "100%",
-                // ...isDark && {
-                //     filter: "invert(100%) hue-rotate(180deg)",
-                // },
             },
         }}>
             <img
@@ -58,6 +58,7 @@ export const Logo: React.FC = () => {
                 src={(isDark ? largeDark : large).path}
                 alt={alt}
                 css={{
+                    ...isDark && largeDark.invert && invertCss,
                     [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
                         display: "none",
                     },
@@ -69,6 +70,7 @@ export const Logo: React.FC = () => {
                 src={(isDark ? smallDark : small).path}
                 alt={alt}
                 css={{
+                    ...isDark && smallDark.invert && invertCss,
                     [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
                         display: "none",
                     },

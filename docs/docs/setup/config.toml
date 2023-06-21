@@ -401,6 +401,7 @@
 
 
 # Logo used in the top left corner of the page. Using SVG logos is recommended.
+# See the documentation on theming/logos for more info!
 [theme.logo]
 # The normal, usually wide logo that is shown on desktop screens. The
 # value is a map with a `path` and `resolution` key:
@@ -417,12 +418,10 @@
 # A less wide logo used for narrow screens.
 #small =
 
-# Optional large logo for dark mode usage. Falls back to the regular
-# large logo if not specified.
+# Large logo for dark mode usage.
 #large_dark =
 
-# Optional small logo for dark mode usage. Falls back to the large dark
-# logo or the regular large logo if no dark logos are specified.
+# Small logo for dark mode usage.
 #small_dark =
 
 

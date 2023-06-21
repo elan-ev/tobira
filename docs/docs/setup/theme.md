@@ -25,7 +25,11 @@ You can also configure a second logo file as `logo.small` which is used for narr
 This is usually roughly square.
 We strongly recommend setting this smaller logo, as otherwise, the main logo (especially if it is very wide) might get shrunk on narrow screens in order to still show the other elements in the header.
 
-If your logo doesn't work well against a dark background, you can either choose to have its colors inverted by setting the `invert_logo_for_dark_mode` flag to true, or configure dedicated dark mode logos as `logo.large_dark` and `logo.small_dark`.
+You should also test if the logo is  properly configured for dark mode:
+- To use a different image for dark mode, set `logo.large_dark` and `logo.small_dark` appropriately.
+- If your normal logo already works well for dark mode, set `logo.large_dark` and `logo.small_dark` to the same values as `large` and `small`, respectively.
+- If `logo.large_dark` and `logo.small_dark` are not set, `large` and `small` are used, but with all colors inverted. This might work for you in special cases, e.g. if your logo is fully black or transparent.
+
 
 ## Favicon
 
