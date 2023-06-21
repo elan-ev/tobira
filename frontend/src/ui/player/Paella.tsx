@@ -154,7 +154,7 @@ const PAELLA_CONFIG = {
     defaultVideoPreview: "/~assets/1x1-black.png",
 
     plugins: {
-        "es.upv.paella.singleVideo": {
+        "es.upv.paella.singleVideoDynamic": {
             enabled: true,
             validContent: [
                 {
