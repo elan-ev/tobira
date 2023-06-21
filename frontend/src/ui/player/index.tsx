@@ -122,6 +122,9 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             "div.loader-container": {
                 backgroundColor: isDark ? COLORS.grey3 : "inherit",
             },
+            "div.preview-container": {
+                backgroundColor: `${COLORS.grey2} !important`,
+            },
             display: "flex",
             flexDirection: "column",
             // We want to be able to see the full header, the video title and some metadata.
