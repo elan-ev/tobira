@@ -938,7 +938,8 @@ const Item: React.FC<ItemProps> = ({
         ...!active && {
             "& > div:first-child": {
                 transition: `transform ${TRANSITION_OUT_DURATION}, `
-                    + `box-shadow ${TRANSITION_OUT_DURATION}`,
+                    + `box-shadow ${TRANSITION_OUT_DURATION},`
+                    + `filter ${TRANSITION_OUT_DURATION}`,
             },
             "&:hover > div:first-child, &:focus-visible > div:first-child": {
                 boxShadow: "0 6px 10px rgb(0 0 0 / 40%)",
@@ -949,6 +950,9 @@ const Item: React.FC<ItemProps> = ({
                     transform: "rotate(30deg)",
                     transitionDuration: TRANSITION_IN_DURATION,
                 },
+            },
+            "&:hover img, &:focus-visible img": {
+                filter: "brightness(100%)",
             },
             ...focusStyle({}),
         },

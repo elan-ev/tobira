@@ -135,7 +135,12 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             height: "fit-content",
             borderRadius: 8,
             aspectRatio: "16 / 9",
-            ...isDark && { filter: "brightness(90%)" },
+            ...isDark && {
+                img: {
+                    filter: "brightness(90%)",
+                    transition: "0.1s filter",
+                },
+            },
         }} {...rest}>
             {inner}
             {active && <ActiveIndicator />}
