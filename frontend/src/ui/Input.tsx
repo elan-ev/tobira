@@ -87,6 +87,7 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
     const copyableInputId = useId();
     const sharedStyle = {
         ...style(false),
+        fontFamily: "monospace",
         width: "100%",
         height: "100%",
         padding: "4px 50px 4px 10px",
@@ -111,7 +112,7 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
             maxWidth: "100%",
         }} {...rest}>
             <div css={{ position: "absolute", top: 0, right: 0, zIndex: 10 }}>
-                <WithTooltip tooltip={label}>
+                <WithTooltip tooltip={label} css={{ fontFamily: "var(--main-font), sans-serif" }}>
                     <Button
                         aria-label={label}
                         kind="happy"
