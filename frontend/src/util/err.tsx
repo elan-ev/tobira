@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { APIError, NotJson, ServerError } from "../relay";
 import { match } from ".";
+import { COLORS } from "../color";
 
 /**
  * Make sure that the parameter is `never`. This is particularly useful for
@@ -189,9 +190,10 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ failedAction, ...pro
     const { t, i18n } = useTranslation();
     const info = "info" in props ? props.info : errorDisplayInfo(props.error, i18n);
     const causes = Array.from(info.causes);
+    const textColor = { color: COLORS.background };
 
     return <>
-        <p>
+        <p css={textColor}>
             {failedAction && failedAction + " "}
             {causes.length === 1
                 ? causes[0] + " "
@@ -199,7 +201,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ failedAction, ...pro
             }
             {info.potentiallyInternetProblem && t("errors.are-you-connected-to-internet")}
         </p>
-        {info.probablyOurFault && <p css={{ marginTop: 16, fontSize: 14 }}>
+        {info.probablyOurFault && <p css={{ marginTop: 16, fontSize: 14, ...textColor }}>
             {t("errors.not-your-fault")}
         </p>}
     </>;

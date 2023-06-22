@@ -12,6 +12,7 @@ pub(crate) struct ThemeConfig {
     pub(crate) header_height: u32,
 
     /// Logo used in the top left corner of the page. Using SVG logos is recommended.
+    /// See the documentation on theming/logos for more info!
     #[config(nested)]
     pub(crate) logo: LogoConfig,
 
@@ -38,6 +39,12 @@ pub(crate) struct LogoConfig {
 
     /// A less wide logo used for narrow screens.
     pub(crate) small: Option<LogoDef>,
+    
+    /// Large logo for dark mode usage.
+    pub(crate) large_dark: Option<LogoDef>,
+
+    /// Small logo for dark mode usage.
+    pub(crate) small_dark: Option<LogoDef>,
 }
 
 #[derive(Debug, serde::Deserialize)]

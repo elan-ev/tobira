@@ -10,7 +10,7 @@ import { Card } from "./Card";
 import { SmallDescription } from "./metadata";
 import { SearchableSelectSeriesQuery } from "./__generated__/SearchableSelectSeriesQuery.graphql";
 import { ErrorDisplay } from "../util/err";
-import { COLORS } from "../color";
+import { COLORS, useColorScheme } from "../color";
 
 
 type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
@@ -34,6 +34,7 @@ export const SearchableSelect = <T, >({
     ...props
 }: SearchableSelectProps<T>) => {
     const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
 
     return <AsyncSelect
         loadOptions={loadOptions}
@@ -42,22 +43,49 @@ export const SearchableSelect = <T, >({
         // Without this, it thinks all entries are selected if any one is.
         isOptionSelected={() => false}
         styles={{
+            control: (baseStyles, state) => ({
+                ...baseStyles,
+                backgroundColor: COLORS.background,
+                borderColor: state.isFocused ? COLORS.primary0 : COLORS.grey5,
+            }),
+            input: baseStyles => ({
+                ...baseStyles,
+                ...isDark && { color: COLORS.grey7 },
+            }),
+            placeholder: baseStyles => ({
+                ...baseStyles,
+                color: COLORS.grey6,
+            }),
+            singleValue: baseStyles => ({
+                ...baseStyles,
+                color: COLORS.foreground,
+            }),
             menuList: baseStyles => ({
                 ...baseStyles,
                 padding: 0,
             }),
+            menu: baseStyles => ({
+                ...baseStyles,
+                ...isDark && { outline: `1px solid ${COLORS.grey3}` },
+            }),
             option: (_baseStyles, state) => ({
                 cursor: "default",
                 padding: "6px 10px",
-                "&:hover, &:focus": {
-                    backgroundColor: COLORS.grey1,
-                },
+                backgroundColor: isDark ? COLORS.grey1 : COLORS.background,
                 ...state.isSelected && {
                     borderLeft: `4px solid ${COLORS.focus}`,
                 },
                 ...(state.isFocused || state.isSelected) && {
-                    backgroundColor: COLORS.grey1,
+                    backgroundColor: isDark ? COLORS.grey4 : COLORS.grey1,
                 },
+            }),
+            noOptionsMessage: baseStyles => ({
+                ...baseStyles,
+                ...isDark && { backgroundColor: COLORS.grey1 },
+            }),
+            loadingMessage: baseStyles => ({
+                ...baseStyles,
+                ...isDark && { backgroundColor: COLORS.grey1 },
             }),
         }}
         isClearable

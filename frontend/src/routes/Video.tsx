@@ -60,7 +60,7 @@ import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
 import { VideoObject, WithContext } from "schema-dts";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
-import { COLORS } from "../color";
+import { COLORS, useColorScheme } from "../color";
 import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
 
@@ -499,6 +499,7 @@ const PopoverHeading: React.FC<React.PropsWithChildren> = ({ children }) => (
 const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const { t } = useTranslation();
     const ref = useRef(null);
+    const isDark = useColorScheme().scheme === "dark";
 
     return (
         <FloatingContainer
@@ -515,7 +516,10 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     {t("video.download.title")}
                 </Button>
             </FloatingTrigger>
-            <Floating padding={[8, 16, 16, 16]}>
+            <Floating
+                backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+                padding={[8, 16, 16, 16]}
+            >
                 <PopoverHeading>{t("video.download.title")}</PopoverHeading>
                 <Card kind="info" iconPos="left" css={{ maxWidth: 400, fontSize: 14 }}>
                     {t("video.download.info")}
@@ -538,6 +542,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 
     const { t } = useTranslation();
     const [state, setState] = useState<State>("closed");
+    const isDark = useColorScheme().scheme === "dark";
     const ref = useRef(null);
     const qrModalRef = useRef<ModalHandle>(null);
     useOnOutsideClick(ref, () => !qrModalRef.current?.isOpen?.() && setState("closed"));
@@ -568,7 +573,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         },
         "&[disabled]": {
             cursor: "default",
-            backgroundColor: COLORS.background,
+            backgroundColor: isDark ? COLORS.grey2 : COLORS.background,
             borderBottom: "none",
             svg: { color: COLORS.primary0 },
         },
@@ -622,7 +627,14 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             css={{ minWidth: "max-content" }}
         >
             <div css={{ display: "flex", justifyContent: "center" }}>
-                <QRCodeCanvas value={target} size={250} css={{ margin: 16 }}/>
+                <QRCodeCanvas
+                    value={target}
+                    size={250}
+                    css={{
+                        margin: 16,
+                        outline: "8px solid #FFFFFF",
+                    }}
+                />
             </div>
         </Modal>
     </>;
@@ -690,11 +702,15 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     {t("general.share")}
                 </Button>
             </FloatingTrigger>
-            <Floating padding={0} css={{
-                height: 240,
-                display: "flex",
-                flexDirection: "column",
-            }}>
+            <Floating
+                padding={0}
+                backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+                css={{
+                    height: 240,
+                    display: "flex",
+                    flexDirection: "column",
+                }}
+            >
                 {header}
                 <div css={{
                     margin: 16,

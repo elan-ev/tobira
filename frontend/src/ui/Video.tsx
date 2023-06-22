@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiAlertTriangle, FiFilm, FiRadio, FiVolume2 } from "react-icons/fi";
 import { HiOutlineUserCircle } from "react-icons/hi";
-import { COLORS } from "../color";
+import { COLORS, useColorScheme } from "../color";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
@@ -35,6 +35,8 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     ...rest
 }) => {
     const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+    const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
     const audioOnly = event.syncedData
         ? (
             "audioOnly" in event.syncedData
@@ -66,8 +68,16 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
                 background: "linear-gradient(135deg, #33333380 50%, transparent 0),"
                     + "linear-gradient(-135deg, #33333380 50%, transparent 0)",
                 backgroundSize: "17px 17px",
-                color: COLORS.grey3,
+                color: "#dbdbdb",
                 backgroundColor: "#292929",
+                ...isDark && {
+                    backgroundColor: isUpcoming ? "#3c3b3b" : "#313131",
+                    background: isUpcoming
+                        ? "linear-gradient(135deg, #48484880 50%, transparent 0),"
+                            + "linear-gradient(-135deg, #48484880 50%, transparent 0)"
+                        : "linear-gradient(135deg, #3e3e3e80 50%, transparent 0),"
+                            + "linear-gradient(-135deg, #3e3e3e80 50%, transparent 0)",
+                },
             }}>{icon}</div>
         );
     }
@@ -124,8 +134,13 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             overflow: "hidden",
             height: "fit-content",
             borderRadius: 8,
-            // TODO: Not supported by Safari 14.1. Maybe used padding trick instead!
             aspectRatio: "16 / 9",
+            ...isDark && {
+                img: {
+                    filter: "brightness(90%)",
+                    transition: "0.1s filter",
+                },
+            },
         }} {...rest}>
             {inner}
             {active && <ActiveIndicator />}

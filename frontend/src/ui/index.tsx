@@ -2,8 +2,8 @@ import { Link } from "../router";
 import { match } from "../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
-import { COLORS } from "../color";
 import { CSSObject } from "@emotion/react";
+import { COLORS, useColorScheme } from "../color";
 
 
 export const SIDE_BOX_BORDER_RADIUS = 8;
@@ -14,6 +14,7 @@ export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
         borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
         ":not(:first-child)": { marginTop: 26 },
+        ...useColorScheme().scheme === "dark" && darkModeBoxShadow,
     }}>{children}</div>
 );
 
@@ -29,7 +30,10 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
             listStyle: "none",
             margin: 0,
             padding: 0,
-            "& a": { ...focusStyle({ inset: true }) },
+            "& a": {
+                ...focusStyle({ inset: true }),
+                ...useColorScheme().scheme === "dark" && { color: COLORS.primary1 },
+            },
             "& > li": {
                 backgroundColor: COLORS.grey1,
                 borderBottom: `2px solid ${COLORS.background}`,
@@ -72,15 +76,13 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
     active = false,
     ...rest
 }) => {
+    const isDark = useColorScheme().scheme === "dark";
     const TRANSITION_DURATION = "0.1s";
 
     const hoverActiveStyle = {
         transitionDuration: "0s",
         backgroundColor: COLORS.grey3,
-        "& > svg": {
-            transitionDuration: "0s",
-            color: COLORS.grey6,
-        },
+        ...isDark && { color: COLORS.primary2 },
     };
 
     const style = {
@@ -158,3 +160,6 @@ export const ellipsisOverflowCss = (lines: number): CSSObject => ({
             WebkitLineClamp: lines,
         },
 });
+
+/** Box shadow used on multiple elements in dark mode */
+export const darkModeBoxShadow = { boxShadow: "0 0 5px rgba(0, 0, 0, .2)" };

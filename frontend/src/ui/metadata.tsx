@@ -42,18 +42,17 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
     const sharedStyle = {
         fontSize: 13,
         marginTop: 4,
+        color: COLORS.grey6,
     };
 
     if (text === null) {
         return <div {...{ className }} css={{
             ...sharedStyle,
-            color: COLORS.grey5,
             fontStyle: "italic",
         }}>{t("manage.my-videos.no-description")}</div>;
     } else {
         return <div {...{ className }} css={{
             ...sharedStyle,
-            color: COLORS.grey6,
             maxWidth: 800,
             ...ellipsisOverflowCss(lines),
         }}>{text}</div>;

@@ -5,11 +5,12 @@ import { Link } from "../../router";
 import { focusStyle } from "../../ui";
 import { translatedConfig } from "../../util";
 import { HEADER_BASE_PADDING } from "./ui";
-import { COLORS } from "../../color";
+import { COLORS, useColorScheme } from "../../color";
 
 
 export const Logo: React.FC = () => {
     const { t, i18n } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
 
     // This is a bit tricky: we want to specify the `width` and `height`
     // attributes on the `img` elements in order to avoid layout shift. That
@@ -29,10 +30,12 @@ export const Logo: React.FC = () => {
     // The solution is to calculate the correct `flex-basis` for the `<a>`
     // element manually.
 
-    const small = CONFIG.logo.small;
-    const large = CONFIG.logo.large;
+    const { small, large, smallDark, largeDark } = CONFIG.logo;
 
     const alt = t("general.logo-alt", { title: translatedConfig(CONFIG.siteTitle, i18n) });
+    const invertCss = {
+        filter: "invert(100%) hue-rotate(180deg)",
+    };
 
     return (
         <Link to="/" css={{
@@ -50,22 +53,24 @@ export const Logo: React.FC = () => {
             },
         }}>
             <img
-                width={large.resolution[0]}
-                height={large.resolution[1]}
-                src={large.path}
+                width={(isDark ? largeDark : large).resolution[0]}
+                height={(isDark ? largeDark : large).resolution[1]}
+                src={(isDark ? largeDark : large).path}
                 alt={alt}
                 css={{
+                    ...isDark && largeDark.invert && invertCss,
                     [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
                         display: "none",
                     },
                 }}
             />
             <img
-                width={small.resolution[0]}
-                height={small.resolution[1]}
-                src={small.path}
+                width={(isDark ? smallDark : small).resolution[0]}
+                height={(isDark ? smallDark : small).resolution[1]}
+                src={(isDark ? smallDark : small).path}
                 alt={alt}
                 css={{
+                    ...isDark && smallDark.invert && invertCss,
                     [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
                         display: "none",
                     },

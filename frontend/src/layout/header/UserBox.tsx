@@ -11,7 +11,7 @@ import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { isRealUser, User, useUser } from "../../User";
-import { isExperimentalFlagSet, match } from "../../util";
+import { match } from "../../util";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
@@ -50,7 +50,7 @@ export const UserBox: React.FC = () => {
 
     return <>
         <LanguageSettings />
-        {isExperimentalFlagSet() && <ColorSchemeSettings />}
+        <ColorSchemeSettings />
         {boxContent}
     </>;
 };
@@ -202,6 +202,7 @@ type FloatingMenuProps = {
 const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
     const { t } = useTranslation();
     const user = useUser();
+    const isDark = useColorScheme().scheme === "dark";
 
     const items = match(type, {
         main: () => <>
@@ -262,7 +263,8 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
 
     return (
         <Floating
-            borderWidth={0}
+            backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+            borderWidth={isDark ? 1 : 0}
             padding={0}
             shadowBlur={8}
         >
@@ -410,7 +412,7 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
 };
 
 /** Entries in the menu related to the color scheme. */
-const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
+export const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
     const { t } = useTranslation();
     const { scheme, isAuto, update } = useColorScheme();
     const currentPref = isAuto ? "auto" : scheme;
@@ -490,7 +492,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
             strokeWidth: 2,
             "& > path": { strokeWidth: "inherit" },
         },
-        ":hover, :focus": { backgroundColor: COLORS.grey0 },
+        ":hover, :focus": {
+            backgroundColor: COLORS.grey0,
+            color: "inherit",
+        },
         ...focusStyle({ inset: true }),
     } as const;
 
@@ -590,6 +595,9 @@ const Logout: React.FC = () => {
             })}
             css={{
                 color: COLORS.danger0,
+                ":hover, :focus": {
+                    color: COLORS.danger0,
+                },
             }}
             {...actionProps}
         >{t("user.logout")}</MenuItem>

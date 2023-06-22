@@ -31,19 +31,27 @@
           "small": {
             "path": "/~assets/{{: path:logo-small.svg :}}",
             "resolution": {{: var:small-logo-resolution :}}
+          },
+          "largeDark": {
+            "path": "/~assets/{{: path:logo-large-dark.svg :}}",
+            "resolution": {{: var:large-dark-logo-resolution :}},
+            "invert": {{: var:invertLargeDarkLogo :}}
+          },
+          "smallDark": {
+            "path": "/~assets/{{: path:logo-small-dark.svg :}}",
+            "resolution": {{: var:small-dark-logo-resolution :}},
+            "invert": {{: var:invertSmallDarkLogo :}}
           }
         }
       }
     </script>
     <script nonce="{{ nonce }}">
-      if (window.localStorage.getItem("tobiraExperimentalFeatures") === "true") {
-        // Read dark mode preference. This code is inlined here to run it as soon
-        // as possible.
-        const scheme = window.localStorage.getItem("tobiraColorScheme");
-        document.documentElement.dataset.colorScheme = (scheme === "dark" || scheme === "light")
-          ? scheme
-          : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      }
+      // Read dark mode preference. This code is inlined here to run it as soon
+      // as possible.
+      const scheme = window.localStorage.getItem("tobiraColorScheme");
+      document.documentElement.dataset.colorScheme = (scheme === "dark" || scheme === "light")
+        ? scheme
+        : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     </script>
   </head>
   <body>

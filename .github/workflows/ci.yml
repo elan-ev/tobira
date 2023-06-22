@@ -132,6 +132,7 @@ jobs:
           tobira
           util/dev-config/logo-large.svg
           util/dev-config/logo-small.svg
+          util/dev-config/logo-large-dark.svg
           util/dev-config/favicon.svg
           deploy-id
           .deployment/templates/config.toml

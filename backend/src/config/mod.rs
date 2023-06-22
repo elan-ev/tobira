@@ -160,6 +160,12 @@ impl Config {
         if let Some(logo) = &mut self.theme.logo.small {
             fix_path(&base, &mut logo.path);
         }
+        if let Some(logo) = &mut self.theme.logo.large_dark {
+            fix_path(&base, &mut logo.path);
+        }
+        if let Some(logo) = &mut self.theme.logo.small_dark {
+            fix_path(&base, &mut logo.path);
+        }
         fix_path(&base, &mut self.theme.favicon);
         if let Some(jwt_key) = &mut self.auth.jwt.secret_key {
             fix_path(&base, jwt_key);

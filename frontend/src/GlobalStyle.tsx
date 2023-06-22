@@ -69,6 +69,7 @@ const GLOBAL_STYLE = css({
         "--min-page-width": "320px",
     },
     body: {
+        color: COLORS.foreground,
         backgroundColor: COLORS.background,
         fontFamily: "var(--main-font), sans-serif",
         fontWeight: 400,
@@ -117,4 +118,6 @@ const GLOBAL_STYLE = css({
         border: "none",
         borderTop: `1px solid ${COLORS.grey4}`,
     },
+    "p, label": { color: COLORS.grey7 },
+    input: { color: COLORS.foreground },
 });

@@ -16,7 +16,7 @@ import {
 } from "../../../../ui/Floating";
 import { ProtoButton } from "../../../../ui/Button";
 import { focusStyle } from "../../../../ui";
-import { COLORS } from "../../../../color";
+import { COLORS, useColorScheme } from "../../../../color";
 
 
 type Props = {
@@ -26,6 +26,7 @@ type Props = {
 
 export const AddButtons: React.FC<Props> = ({ index, realm }) => {
     const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
 
     const floatingRef = useRef<FloatingHandle>(null);
 
@@ -106,13 +107,11 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
 
             <Floating
                 padding={0}
-                borderWidth={0}
+                borderWidth={isDark ? 1 : 0}
+                backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
                 shadowBlur={12}
                 shadowColor="rgba(0, 0, 0, 30%)"
-                css={{
-                    backgroundColor: COLORS.background,
-                    width: 200,
-                }}
+                css={{ width: 200 }}
             >
                 <div css={{
                     fontSize: 14,
@@ -126,7 +125,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                     padding: 0,
                     "& > li": {
                         "&:not(:last-child)": {
-                            borderBottom: `1px solid ${COLORS.grey2}`,
+                            borderBottom: `1px solid ${isDark ? COLORS.grey4 : COLORS.grey2}`,
                         },
                     },
                 }}>

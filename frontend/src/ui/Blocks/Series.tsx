@@ -26,13 +26,13 @@ import {
 } from "react-icons/fi";
 import { keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
-import { ellipsisOverflowCss, focusStyle } from "..";
+import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import {
     Floating, FloatingContainer, FloatingHandle, FloatingTrigger,
 } from "../Floating";
 import { ProtoButton } from "../Button";
 import { IconType } from "react-icons";
-import { COLORS } from "../../color";
+import { COLORS, useColorScheme } from "../../color";
 
 
 // ==============================================================================================
@@ -258,6 +258,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
     { title, children, showViewOptions },
 ) => {
     const [viewState, setViewState] = useState<View>("gallery");
+    const isDark = useColorScheme().scheme === "dark";
 
     return <ViewContext.Provider value={{ viewState, setViewState }}>
         <div css={{
@@ -265,6 +266,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
             padding: 12,
             backgroundColor: COLORS.grey1,
             borderRadius: 10,
+            ...useColorScheme().scheme === "dark" && darkModeBoxShadow,
         }}>
             <div css={{
                 display: "flex",
@@ -275,7 +277,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
                 {title && <h2 css={{
                     display: "inline-block",
                     padding: "8px 12px",
-                    color: COLORS.grey7,
+                    color: isDark ? COLORS.foreground : COLORS.grey7,
                     fontSize: 20,
                     lineHeight: 1.3,
                 }}>{title}</h2>}
@@ -397,6 +399,7 @@ type ListProps = {
 
 const List: React.FC<ListProps> = ({ type, close }) => {
     const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
     const { viewState, setViewState } = useContext(ViewContext);
     const { eventOrder, setEventOrder } = useContext(OrderContext);
 
@@ -479,7 +482,13 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         </>,
     });
 
-    return <Floating hideArrowTip padding={0} borderWidth={0} css={listStyle}>
+    return <Floating
+        backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+        hideArrowTip
+        padding={0}
+        borderWidth={isDark ? 1 : 0}
+        css={listStyle}
+    >
         {list}
     </Floating>;
 };
@@ -494,11 +503,12 @@ type MenuItemProps = {
 
 const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabled }) => {
     const ref = useRef<HTMLButtonElement>(null);
+    const isDark = useColorScheme().scheme === "dark";
 
     return (
         <li css={{
             ":not(:last-child)": {
-                borderBottom: `1px solid ${COLORS.grey3}`,
+                borderBottom: `1px solid ${isDark ? COLORS.grey5 : COLORS.grey3}`,
             },
             ":last-child button": {
                 borderRadius: "0 0 8px 8px",
@@ -520,13 +530,14 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
                     width: "100%",
                     svg: { fontSize: 16 },
                     ":hover, :focus": {
-                        backgroundColor: COLORS.grey2,
+                        backgroundColor: isDark ? COLORS.grey0 : COLORS.grey2,
                     },
                     ...focusStyle({ inset: true }),
                     "&[disabled]": {
                         fontWeight: "bold",
                         color: COLORS.grey7,
                         pointerEvents: "none",
+                        ...isDark && { backgroundColor: COLORS.grey0 },
                     },
                 }}
             >
@@ -847,6 +858,7 @@ const Item: React.FC<ItemProps> = ({
                 height: "100%",
                 width: "100%",
                 overflow: "hidden",
+                borderRadius: 8,
             }}>
                 <div css={{
                     background: "linear-gradient(to top, white, rgba(255, 255, 255, 0.1))",
@@ -926,7 +938,8 @@ const Item: React.FC<ItemProps> = ({
         ...!active && {
             "& > div:first-child": {
                 transition: `transform ${TRANSITION_OUT_DURATION}, `
-                    + `box-shadow ${TRANSITION_OUT_DURATION}`,
+                    + `box-shadow ${TRANSITION_OUT_DURATION},`
+                    + `filter ${TRANSITION_OUT_DURATION}`,
             },
             "&:hover > div:first-child, &:focus-visible > div:first-child": {
                 boxShadow: "0 6px 10px rgb(0 0 0 / 40%)",
@@ -937,6 +950,9 @@ const Item: React.FC<ItemProps> = ({
                     transform: "rotate(30deg)",
                     transitionDuration: TRANSITION_IN_DURATION,
                 },
+            },
+            "&:hover img, &:focus-visible img": {
+                filter: "brightness(100%)",
             },
             ...focusStyle({}),
         },

@@ -10,7 +10,7 @@ import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
 import { RelativeDate } from "../time";
 import PaellaPlayer from "./Paella";
-import { COLORS } from "../../color";
+import { COLORS, useColorScheme } from "../../color";
 
 
 export type PlayerProps = {
@@ -114,9 +114,18 @@ const delayTill = (date: Date): number => {
  */
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
     const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
+    const isDark = useColorScheme().scheme === "dark";
 
     return (
         <div className={className} css={{
+            "--video-container-background-color": COLORS.grey0,
+            "--base-video-rect-background-color": COLORS.grey0,
+            "div.loader-container": {
+                backgroundColor: isDark ? COLORS.grey3 : "inherit",
+            },
+            "div.preview-container": {
+                backgroundColor: `${COLORS.grey2} !important`,
+            },
             display: "flex",
             flexDirection: "column",
             // We want to be able to see the full header, the video title and some metadata.
@@ -204,10 +213,11 @@ export const isHlsTrack = (t: Track) =>
     t.mimetype === "application/x-mpegURL" || t.uri.endsWith(".m3u8");
 
 
-export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => (
-    <div css={{
+export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => {
+    const isDark = useColorScheme().scheme === "dark";
+    return <div css={{
         height: "100%",
-        backgroundColor: COLORS.grey7,
+        backgroundColor: isDark ? COLORS.grey2 : COLORS.grey7,
         color: "white",
         padding: 8,
         display: "flex",
@@ -220,6 +230,10 @@ export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => 
             fontSize: 40,
             margin: "16px 0",
             strokeWidth: 1.5,
+            ...isDark && { color: COLORS.grey7 },
+        },
+        div: {
+            ...isDark && { color: COLORS.grey7 },
         },
         [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
             "& > *": {
@@ -228,8 +242,8 @@ export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => 
         },
     }}>
         {children}
-    </div>
-);
+    </div>;
+};
 
 type LiveEventPlaceholderProps =
     | { mode: "pending"; startTime: Date }
