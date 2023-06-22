@@ -244,10 +244,10 @@ search:
 upload:
   title: Upload video
   public-note: 'Note: videos uploaded here will be public, i.e. everyone will be able to watch it.'
-  drop-to-upload: Drag and drop video files to upload
+  drop-to-upload: Drag and drop video file to upload
   not-authorized: You do not have the permission to upload videos.
-  select-files: Select files
-  reselect: Reselect files
+  select-files: Select file
+  reselect: Reselect file
   too-many-files: You selected too many files. Currently, only a single file is supported.
   not-a-file: You dropped something that's not a file.
   not-video-or-audio: Only video and audio can be uploaded.
