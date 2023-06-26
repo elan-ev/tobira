@@ -280,7 +280,7 @@ upload:
   errors:
     failed-to-upload: Failed to upload video.
     unknown: Unknown error occurred during video upload.
-    field-required: This field is required (cannot be empty)
+    field-required: This field is required (cannot be empty).
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'

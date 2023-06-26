@@ -287,7 +287,7 @@ upload:
   errors:
     failed-to-upload: Hochladen fehlgeschlagen.
     unknown: Während des Dateiuploads ist ein unbekannter Fehler aufgetreten.
-    field-required: Dieses Feld darf nicht leer sein
+    field-required: Dieses Feld darf nicht leer sein.
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'

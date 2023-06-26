@@ -9,13 +9,19 @@ export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
     return (
         <label htmlFor={htmlFor}>
             {t("upload.metadata.title")}
-            <span css={{ fontWeight: "normal" }}>
-                {" ("}
-                <em>{t("upload.metadata.required")}</em>
-                {")"}
-            </span>
+            <FieldIsRequiredNote />
         </label>
     );
+};
+
+export const FieldIsRequiredNote: React.FC = () => {
+    const { t } = useTranslation();
+
+    return <span css={{ fontWeight: "normal" }}>
+        {" ("}
+        <em>{t("upload.metadata.required")}</em>
+        {")"}
+    </span>;
 };
 
 /** Separates different inputs in the metadata form */

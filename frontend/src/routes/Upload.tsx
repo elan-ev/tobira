@@ -20,7 +20,7 @@ import { Input, TextArea } from "../ui/Input";
 import { isRealUser, User, useUser } from "../User";
 import { currentRef, useRefState } from "../util";
 import { Card } from "../ui/Card";
-import { InputContainer, TitleLabel } from "../ui/metadata";
+import { FieldIsRequiredNote, InputContainer, TitleLabel } from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
@@ -696,6 +696,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
             <InputContainer>
                 <label htmlFor="series-field">
                     {t("series.series")}
+                    {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
                     <WithTooltip
                         tooltip={t("upload.metadata.note-writable-series")}
                         tooltipCss={{ width: 400 }}
@@ -714,6 +715,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                     menuPlacement="top"
                     onChange={data => seriesField.onChange(data?.opencastId)}
                     onBlur={seriesField.onBlur}
+                    required={CONFIG.upload.requireSeries}
                 />
                 {boxError(errors.series?.message)}
             </InputContainer>
