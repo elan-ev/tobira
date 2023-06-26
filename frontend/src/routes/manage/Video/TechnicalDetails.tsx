@@ -71,7 +71,7 @@ const OpencastId: React.FC<Props> = ({ event }) => {
         <CopyableInput
             label={t("manage.my-videos.technical-details.copy-oc-id-to-clipboard")}
             value={event.opencastId}
-            css={{ width: 400, fontFamily: "monospace", fontSize: 14 }}
+            css={{ width: 400, fontSize: 14 }}
         />
     </section>;
 };

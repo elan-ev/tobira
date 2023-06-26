@@ -84,7 +84,7 @@ const DirectLink: React.FC<Props> = ({ event }) => {
             <CopyableInput
                 label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                 value={url.href}
-                css={{ width: "100%", fontFamily: "monospace", fontSize: 14 }}
+                css={{ width: "100%", fontSize: 14 }}
             />
         </div>
     );
