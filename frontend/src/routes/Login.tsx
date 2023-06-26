@@ -5,7 +5,7 @@ import type { PreloadedQuery } from "react-relay";
 
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
-import { Link, useRouter } from "../router";
+import { Link } from "../router";
 import { LoginQuery } from "./__generated__/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { PageTitle } from "../layout/header/ui";
@@ -55,21 +55,10 @@ const Login: React.FC<Props> = ({ queryRef }) => {
     useNoindexTag();
     const { t } = useTranslation();
     const { currentUser } = usePreloadedQuery(query, queryRef);
-    const router = useRouter();
     const isLoggedIn = currentUser !== null;
 
-    React.useEffect(() => {
-        if (isLoggedIn) {
-            const redirectTo = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY) ?? "/";
-            window.sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
-            router.goto(redirectTo, true);
-        }
-    });
-
-    return isLoggedIn
-        // Don't render anything when a redirect is triggered.
-        ? null
-        : <Outer>
+    return (
+        <Outer>
             <Header loginMode />
             <main css={{
                 padding: 16,
@@ -93,7 +82,9 @@ const Login: React.FC<Props> = ({ queryRef }) => {
                                 fontSize: 30,
                             },
                         }}/>
-                        <LoginBox />
+                        {isLoggedIn
+                            ? <Card kind="info">{t("login-page.already-logged-in")}</Card>
+                            : <LoginBox />}
                         <div css={{ marginTop: 12, fontSize: 14, lineHeight: 1 }}>
                             <BackButton />
                         </div>
@@ -101,7 +92,8 @@ const Login: React.FC<Props> = ({ queryRef }) => {
                 </div>
             </main>
             <Footer />
-        </Outer>;
+        </Outer>
+    );
 };
 
 const BackButton: React.FC = () => {

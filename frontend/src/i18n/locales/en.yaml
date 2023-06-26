@@ -114,6 +114,7 @@ login-page:
   password: Password
   bad-credentials: 'Login failed: invalid credentials.'
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
+  already-logged-in: You are already logged in.
 
 video:
   video: Video
