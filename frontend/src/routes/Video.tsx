@@ -622,9 +622,11 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             <HiOutlineQrCode />
             {t("video.share.show-qr-code")}
         </Button>
-        <Modal ref={qrModalRef}
+        <Modal
+            ref={qrModalRef}
             title={t("video.share.title", { title: label })}
             css={{ minWidth: "max-content" }}
+            closeOnOutsideClick
         >
             <div css={{ display: "flex", justifyContent: "center" }}>
                 <QRCodeCanvas

@@ -26,6 +26,7 @@ type ModalProps = {
     title: string;
     closable?: boolean;
     className?: string;
+    closeOnOutsideClick?: boolean;
 };
 
 export type ModalHandle = {
@@ -39,6 +40,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
     closable = true,
     children,
     className,
+    closeOnOutsideClick = false,
 }, ref) => {
     const { t } = useTranslation();
     const [isOpen, setOpen] = useState(false);
@@ -61,26 +63,26 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
     }, [closable]);
 
     return ReactDOM.createPortal(
-        isOpen && <div
-            {...(closable && { onClick: e => {
-                if (e.target === e.currentTarget) {
-                    setOpen(false);
-                }
-            } })}
-            css={{
-                position: "fixed",
-                top: 0,
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: "rgba(0, 0, 0, 0.8)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                zIndex: 10001,
-            }}
-        >
-            <FocusTrap>
+        isOpen && <FocusTrap>
+            <div
+                {...(closable && closeOnOutsideClick && { onClick: e => {
+                    if (e.target === e.currentTarget) {
+                        setOpen(false);
+                    }
+                } })}
+                css={{
+                    position: "fixed",
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 10001,
+                }}
+            >
                 <div {...{ className }} css={{
                     backgroundColor: COLORS.background,
                     borderRadius: 4,
@@ -112,8 +114,8 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                     </div>
                     <div css={{ padding: 16 }}>{children}</div>
                 </div>
-            </FocusTrap>
-        </div>,
+            </div>
+        </FocusTrap>,
         document.body,
     );
 });
