@@ -117,6 +117,7 @@ login-page:
   password: Passwort
   bad-credentials: 'Anmeldung fehlgeschlagen: Falsche Anmeldedaten.'
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
+  already-logged-in: Sie sind bereits angemeldet.
 
 video:
   video: Video
