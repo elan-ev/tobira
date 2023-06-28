@@ -159,10 +159,13 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
     let sql = "SELECT sequence_name FROM information_schema.sequences";
     let sequences = query_strings(&tx, sql).await.context("failed to query all sequences")?;
 
+    // With `typsubscript = 0` we make sure to not query automatically-created
+    // array types. Attempting to destroy those will fail.
     let sql = "\
         select typname \
         from pg_type \
-        where typnamespace = current_schema()::regnamespace";
+        where typnamespace = current_schema()::regnamespace \
+        and typsubscript = 0";
     let types = query_strings(&tx, sql).await.context("failed to query all types")?;
 
     // Tables
