@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { FiFilm, FiUpload, FiVideo } from "react-icons/fi";
 import { HiOutlineFire, HiOutlineTemplate } from "react-icons/hi";
 import { graphql } from "react-relay";
+import { useColorScheme } from "@opencast/appkit";
 
 import { RootLoader } from "../../layout/Root";
 import { makeRoute } from "../../rauta";
@@ -18,7 +19,7 @@ import {
     manageDashboardQuery as ManageDashboardQuery,
 } from "./__generated__/manageDashboardQuery.graphql";
 import { css } from "@emotion/react";
-import { COLORS, useColorScheme } from "../../color";
+import { COLORS } from "../../color";
 
 
 const PATH = "/~manage";

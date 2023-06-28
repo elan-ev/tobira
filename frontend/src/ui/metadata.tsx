@@ -1,7 +1,9 @@
 import { ReactNode, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useColorScheme } from "@opencast/appkit";
+
 import { ellipsisOverflowCss } from ".";
-import { COLORS, useColorScheme } from "../color";
+import { COLORS } from "../color";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {

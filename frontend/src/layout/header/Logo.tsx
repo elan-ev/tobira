@@ -1,11 +1,13 @@
 import { useTranslation } from "react-i18next";
+import { useColorScheme } from "@opencast/appkit";
+
 import CONFIG from "../../config";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { Link } from "../../router";
 import { focusStyle } from "../../ui";
 import { translatedConfig } from "../../util";
 import { HEADER_BASE_PADDING } from "./ui";
-import { COLORS, useColorScheme } from "../../color";
+import { COLORS } from "../../color";
 
 
 export const Logo: React.FC = () => {

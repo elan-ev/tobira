@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { HiSortAscending, HiSortDescending } from "react-icons/hi";
 import { graphql, VariablesOf } from "react-relay";
+import { useColorScheme } from "@opencast/appkit";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
@@ -24,7 +25,7 @@ import { Card } from "../../../ui/Card";
 import { SmallDescription } from "../../../ui/metadata";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
-import { COLORS, useColorScheme } from "../../../color";
+import { COLORS } from "../../../color";
 
 
 export const PATH = "/~manage/videos";

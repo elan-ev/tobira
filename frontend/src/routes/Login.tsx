@@ -2,6 +2,7 @@ import React, { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
+import { useColorScheme } from "@opencast/appkit";
 
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
@@ -23,7 +24,7 @@ import { Header } from "../layout/header";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { OUTER_CONTAINER_MARGIN } from "../layout";
-import { COLORS, useColorScheme } from "../color";
+import { COLORS } from "../color";
 import { focusStyle } from "../ui";
 
 

@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiAlertTriangle, FiFilm, FiRadio, FiVolume2 } from "react-icons/fi";
 import { HiOutlineUserCircle } from "react-icons/hi";
-import { COLORS, useColorScheme } from "../color";
+import { useColorScheme } from "@opencast/appkit";
+
+import { COLORS } from "../color";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {

@@ -12,6 +12,7 @@ import ReactDOM from "react-dom";
 import { FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import FocusTrap from "focus-trap-react";
+import { useColorScheme } from "@opencast/appkit";
 
 import { Button, ProtoButton } from "./Button";
 import { Spinner } from "./Spinner";
@@ -19,7 +20,7 @@ import { boxError } from "./error";
 import { bug } from "../util/err";
 import { currentRef } from "../util";
 import { focusStyle } from ".";
-import { COLORS, useColorScheme } from "../color";
+import { COLORS } from "../color";
 
 
 type ModalProps = {

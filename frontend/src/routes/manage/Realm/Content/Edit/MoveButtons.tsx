@@ -2,11 +2,11 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, graphql, useMutation } from "react-relay";
 import { FiArrowDown, FiArrowUp } from "react-icons/fi";
+import { WithTooltip } from "@opencast/appkit";
 
 import type { MoveButtonsData$key } from "./__generated__/MoveButtonsData.graphql";
 import type { MoveButtonsMutation } from "./__generated__/MoveButtonsMutation.graphql";
 import { Button } from "../util";
-import { WithTooltip } from "../../../../../ui/Floating";
 
 
 type Props = {

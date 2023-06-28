@@ -1,6 +1,8 @@
 import React from "react";
+import { useColorScheme } from "@opencast/appkit";
+
 import { focusStyle } from "../../../../ui";
-import { COLORS, useColorScheme } from "../../../../color";
+import { COLORS } from "../../../../color";
 
 
 type ButtonProps = React.ComponentProps<"button">;

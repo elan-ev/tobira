@@ -4,6 +4,9 @@ import React, {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
+import {
+    useColorScheme, Floating, FloatingContainer, FloatingHandle, FloatingTrigger,
+} from "@opencast/appkit";
 
 import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
 import { match } from "../../util";
@@ -27,12 +30,9 @@ import {
 import { keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
-import {
-    Floating, FloatingContainer, FloatingHandle, FloatingTrigger,
-} from "../Floating";
 import { ProtoButton } from "../Button";
 import { IconType } from "react-icons";
-import { COLORS, useColorScheme } from "../../color";
+import { COLORS } from "../../color";
 
 
 // ==============================================================================================

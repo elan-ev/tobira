@@ -11,7 +11,7 @@ import { MatchedRoute } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
-import { ColorSchemeProvider } from "./color";
+import { ColorSchemeProvider } from "@opencast/appkit";
 
 
 type Props = {

@@ -4,6 +4,7 @@ import { graphql } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { useController, useForm } from "react-hook-form";
 import { FiCheckCircle, FiInfo, FiUpload } from "react-icons/fi";
+import { WithTooltip } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
@@ -25,7 +26,6 @@ import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
 import { SeriesSelector } from "../ui/SearchableSelect";
-import { WithTooltip } from "../ui/Floating";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";

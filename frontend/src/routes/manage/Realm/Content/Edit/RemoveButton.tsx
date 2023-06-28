@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { useFragment, graphql, useMutation } from "react-relay";
 import { FiTrash } from "react-icons/fi";
+import { WithTooltip } from "@opencast/appkit";
 
 import type { RemoveButtonData$key } from "./__generated__/RemoveButtonData.graphql";
 import type { RemoveButtonMutation } from "./__generated__/RemoveButtonMutation.graphql";
@@ -11,7 +12,6 @@ import {
 import { displayCommitError } from "../../util";
 import { Button } from "../util";
 import { currentRef } from "../../../../../util";
-import { WithTooltip } from "../../../../../ui/Floating";
 import { COLORS } from "../../../../../color";
 
 

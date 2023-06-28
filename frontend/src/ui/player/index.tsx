@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { FiClock } from "react-icons/fi";
 import { HiOutlineStatusOffline } from "react-icons/hi";
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
+import { useColorScheme } from "@opencast/appkit";
 
 import { MAIN_PADDING } from "../../layout/Root";
 import { match, useForceRerender } from "../../util";
@@ -10,7 +11,7 @@ import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
 import { RelativeDate } from "../time";
 import PaellaPlayer from "./Paella";
-import { COLORS, useColorScheme } from "../../color";
+import { COLORS } from "../../color";
 
 
 export type PlayerProps = {

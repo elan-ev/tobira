@@ -4,13 +4,14 @@ import { TFunction } from "i18next";
 import { Theme } from "react-select";
 import AsyncSelect from "react-select/async";
 import { fetchQuery, graphql } from "react-relay";
+import { useColorScheme } from "@opencast/appkit";
 
 import { environment } from "../relay";
 import { Card } from "./Card";
 import { SmallDescription } from "./metadata";
 import { SearchableSelectSeriesQuery } from "./__generated__/SearchableSelectSeriesQuery.graphql";
 import { ErrorDisplay } from "../util/err";
-import { COLORS, useColorScheme } from "../color";
+import { COLORS } from "../color";
 
 
 type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],

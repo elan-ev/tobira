@@ -4,6 +4,7 @@ import { graphql, loadQuery, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
 import { FiEdit, FiInfo, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
+import { WithTooltip } from "@opencast/appkit";
 
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -17,7 +18,6 @@ import { characterClass, useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
 import { realmBreadcrumbs } from "../util/realm";
-import { WithTooltip } from "../ui/Floating";
 import { isRealUser, useUser } from "../User";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";

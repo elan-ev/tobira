@@ -8,6 +8,9 @@ import {
 import { HiLink } from "react-icons/hi";
 import { HiOutlineQrCode } from "react-icons/hi2";
 import { QRCodeCanvas } from "qrcode.react";
+import {
+    useColorScheme, Floating, FloatingContainer, FloatingTrigger, WithTooltip,
+} from "@opencast/appkit";
 
 import { loadQuery } from "../relay";
 import { InitialLoading, RootLoader } from "../layout/Root";
@@ -54,12 +57,11 @@ import { getEventTimeInfo } from "../util/video";
 import { Creators, formatDuration } from "../ui/Video";
 import { Description } from "../ui/metadata";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
-import { Floating, FloatingContainer, FloatingTrigger, WithTooltip } from "../ui/Floating";
 import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
 import { VideoObject, WithContext } from "schema-dts";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
-import { COLORS, useColorScheme } from "../color";
+import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
 

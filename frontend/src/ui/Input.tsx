@@ -1,8 +1,9 @@
 import React, { useId, useState } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
+import { WithTooltip } from "@opencast/appkit";
+
 import { focusStyle } from ".";
 import { Button } from "./Button";
-import { WithTooltip } from "./Floating";
 import { COLORS } from "../color";
 
 
