@@ -77,7 +77,14 @@ export const ExternalLink: React.FC<ExternalLinkProps> = ({
         <input type="hidden" name="target" value={target.toString()} />
         <input type="hidden" name="jwt" />
 
-        <button className={className}>{children}</button>
+        <button
+            className={className}
+            css={{
+                backgroundColor: "transparent",
+                border: "none",
+                minWidth: "100%",
+            }}
+        >{children}</button>
     </form>;
 };
 

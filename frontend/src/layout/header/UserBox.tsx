@@ -1,16 +1,18 @@
-import React, { KeyboardEvent, ReactNode, ReactElement } from "react";
-import { useRef, useState } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    FiAlertTriangle, FiArrowLeft, FiCheck, FiUserCheck, FiChevronDown,
+    FiAlertTriangle, FiUserCheck, FiChevronDown,
     FiFolder, FiLogOut, FiUpload, FiLogIn, FiFilm, FiVideo, FiMoon, FiSun,
 } from "react-icons/fi";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
+import {
+    HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
+} from "@opencast/appkit";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
-import { isRealUser, User, useUser } from "../../User";
+import { User, useUser } from "../../User";
 import { match } from "../../util";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
@@ -19,9 +21,8 @@ import { LOGIN_PATH } from "../../routes/paths";
 import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { focusStyle } from "../../ui";
 import { ProtoButton } from "../../ui/Button";
-import { FloatingHandle, FloatingContainer, FloatingTrigger, Floating } from "../../ui/Floating";
-import { ExternalLink, ExternalLinkProps } from "../../relay/auth";
-import { COLORS, useColorScheme } from "../../color";
+import { ExternalLink } from "../../relay/auth";
+import { COLORS } from "../../color";
 
 
 /** User-related UI in the header. */
@@ -101,6 +102,65 @@ const LoggedOut: React.FC = () => {
     );
 };
 
+/** Header button and associated floating menu to choose between color schemes */
+export const ColorSchemeSettings: React.FC = () => {
+    const { t } = useTranslation();
+    const { scheme, isAuto, update } = useColorScheme();
+
+    const currentPref = isAuto ? "auto" : scheme;
+    const choices = ["auto", "light", "dark"] as const;
+    const menuItems: HeaderMenuItemDef[] = choices.map(choice => checkboxMenuItem({
+        checked: currentPref === choice,
+        children: <>{t(`main-menu.color-scheme.${choice}`)}</>,
+        onClick: () => update(choice),
+    }));
+
+    return (
+        <WithHeaderMenu
+            menu={{
+                label: t("main-menu.color-scheme.label"),
+                items: menuItems,
+                breakpoint: BREAKPOINT_MEDIUM,
+            }}
+        >
+            <ActionIcon title={t("main-menu.color-scheme.label")}>
+                {scheme === "light" ? <FiMoon /> : <FiSun />}
+            </ActionIcon>
+        </WithHeaderMenu>
+    );
+};
+
+/** Header button and associated floating menu to choose between languages */
+export const LanguageSettings: React.FC = () => {
+    const { t, i18n } = useTranslation();
+    const isCurrentLanguage = (language: string) => language === i18n.resolvedLanguage;
+
+    const menuItems = Object.keys(languages).map(lng => checkboxMenuItem({
+        checked: isCurrentLanguage(lng),
+        children: <>{t("language-name", { lng })}</>,
+        onClick: () => {
+            if (!isCurrentLanguage(lng)) {
+                i18n.changeLanguage(lng);
+            }
+        },
+    }));
+
+    const label = t("language");
+    return (
+        <WithHeaderMenu
+            menu={{
+                label,
+                items: menuItems,
+                breakpoint: BREAKPOINT_MEDIUM,
+            }}
+        >
+            <ActionIcon title={t("language-selection")}>
+                <HiOutlineTranslate />
+            </ActionIcon>
+        </WithHeaderMenu>
+    );
+};
+
 
 type LoggedInProps = {
     user: User;
@@ -110,7 +170,102 @@ type LoggedInProps = {
 const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
     const { t } = useTranslation();
 
-    return <WithFloatingMenu type="main">
+    type LogoutState = "idle" | "pending" | "error";
+    const [logoutState, setLogoutState] = useState<LogoutState>("idle");
+
+    const indent = { paddingLeft: 30 };
+    const items: HeaderMenuProps["items"] = [
+        {
+            icon: <FiFolder />,
+            wrapper: <Link to="/~manage" />,
+            children: t("user.manage-content"),
+            css: { minWidth: 200 },
+        },
+        ...user.canCreateUserRealm ? [{
+            icon: <HiOutlineFire />,
+            wrapper: <Link to={`/@${user.username}`} />,
+            children: t("realm.user-realm.my-page"),
+            css: indent,
+        }] : [],
+        {
+            icon: <FiFilm />,
+            wrapper: <Link to="/~manage/videos" />,
+            children: t("manage.my-videos.title"),
+            css: indent,
+        },
+        ...user.canUpload ? [{
+            icon: <FiUpload />,
+            wrapper: <Link to="/~manage/upload" />,
+            children: t("upload.title"),
+            css: indent,
+        }] : [],
+        ...user.canUseStudio ? [{
+            icon: <FiVideo />,
+            wrapper: <ExternalLink
+                service="STUDIO"
+                params={{ "return.target": new URL(document.location.href) }}
+                fallback="link"
+            />,
+            keepOpenAfterClick: true,
+            children: t("manage.dashboard.studio-tile-title"),
+            css: indent,
+        }] : [],
+
+        // Logout button
+        {
+            icon: match(logoutState, {
+                "idle": () => <FiLogOut />,
+                "pending": () => <Spinner />,
+                "error": () => <FiAlertTriangle />,
+            }),
+            children: t("user.logout"),
+            css: {
+                color: COLORS.danger0,
+                ":hover, :focus": {
+                    color: COLORS.danger0,
+                },
+            },
+            ...CONFIG.auth.logoutLink !== null
+                ? {
+                    wrapper: <Link to={CONFIG.auth.logoutLink} htmlLink />,
+                }
+                : {
+                    keepOpenAfterClick: true,
+                    onClick: () => {
+                        // We don't do anything if a request is already pending.
+                        if (logoutState === "pending") {
+                            return;
+                        }
+
+                        setLogoutState("pending");
+                        fetch("/~session", { method: "DELETE" })
+                            .then(() => {
+                                // We deliberately ignore the `status`. See `handle_logout`
+                                // for more information.
+                                //
+                                // We hard forward to the home page to get rid of any stale state.
+                                window.location.href = "/";
+                            })
+                            .catch(error => {
+                                // TODO: this is not great. It should happen only
+                                // extremely rarely, but still, just showing a triangle
+                                // is not very great for the user.
+                                // eslint-disable-next-line no-console
+                                console.error("Error during logout: ", error);
+                                setLogoutState("error");
+                            });
+                    },
+                },
+        },
+    ];
+
+    const menuProps = {
+        label: user.displayName,
+        breakpoint: BREAKPOINT_MEDIUM,
+        items,
+    };
+
+    return <WithHeaderMenu menu={menuProps}>
         <div css={{ position: "relative" }}>
             <ProtoButton title={t("user.settings")} css={{
                 display: "flex",
@@ -153,453 +308,5 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 <FiUserCheck css={{ polyline: { stroke: COLORS.happy1 } }}/>
             </ActionIcon>
         </div>
-    </WithFloatingMenu>;
-};
-
-
-type MenuType = "main" | "language" | "color-scheme";
-
-type WithFloatingMenuProps = {
-    children: ReactElement;
-    type: MenuType;
-};
-
-const WithFloatingMenu: React.FC<WithFloatingMenuProps> = ({ children, type }) => {
-    const ref = useRef<FloatingHandle>(null);
-
-    return (
-        <FloatingContainer
-            ref={ref}
-            placement="bottom"
-            trigger="click"
-            ariaRole="menu"
-            arrowSize={12}
-            viewPortMargin={12}
-            borderRadius={8}
-            distance={5}
-        >
-            <FloatingTrigger>{children}</FloatingTrigger>
-            <FloatingMenu
-                close={() => {
-                    ref.current?.close();
-                    // TODO : `if (type === "language")` set focus on trigger,
-                    // so the newly selected language gets announced
-                }}
-                type={type} />
-        </FloatingContainer>
-    );
-};
-
-type FloatingMenuProps = {
-    close: () => void;
-    type: MenuType;
-};
-
-/**
- * A menu with some user-related settings/actions that floats on top of the page
- * and closes itself on click outside of it.
- */
-const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
-    const { t } = useTranslation();
-    const user = useUser();
-    const isDark = useColorScheme().scheme === "dark";
-
-    const items = match(type, {
-        main: () => <>
-            {isRealUser(user) && <>
-                <ReturnButton onClick={close}>{user.displayName}</ReturnButton>
-                <MenuItem
-                    icon={<FiFolder />}
-                    borderBottom
-                    linkTo="/~manage"
-                    onClick={close}
-                >{t("user.manage-content")}</MenuItem>
-                {user.canCreateUserRealm && <MenuItem
-                    icon={<HiOutlineFire />}
-                    borderBottom
-                    indent
-                    linkTo={`/@${user.username}`}
-                    onClick={close}
-                >{t("realm.user-realm.my-page")}</MenuItem>}
-                {<MenuItem
-                    icon={<FiFilm />}
-                    borderBottom
-                    indent
-                    linkTo={"/~manage/videos"}
-                    onClick={close}
-                >{t("manage.my-videos.title")}</MenuItem>}
-                {user.canUpload && <MenuItem
-                    icon={<FiUpload />}
-                    borderBottom
-                    indent
-                    linkTo={"/~manage/upload"}
-                    onClick={close}
-                >{t("upload.title")}</MenuItem>}
-                {user.canUseStudio && <MenuItem
-                    icon={<FiVideo />}
-                    borderBottom
-                    indent
-                    onClick={close}
-                    externalLinkProps={{
-                        service: "STUDIO",
-                        params: { "return.target": new URL(document.location.href) },
-                        fallback: "link",
-                    }}
-                >{t("manage.dashboard.studio-tile-title")}</MenuItem>}
-            </>}
-
-            {/* Logout button if the user is logged in */}
-            {isRealUser(user) && <Logout />}
-        </>,
-        language: () => <>
-            <ReturnButton onClick={close}>{t("language")}</ReturnButton>
-            <LanguageMenu close={close} />
-        </>,
-        "color-scheme": () => <>
-            <ReturnButton onClick={close}>{t("main-menu.color-scheme.label")}</ReturnButton>
-            <ColorSchemeMenu close={close} />
-        </>,
-    });
-
-    return (
-        <Floating
-            backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
-            borderWidth={isDark ? 1 : 0}
-            padding={0}
-            shadowBlur={8}
-        >
-            <div
-                onClick={e => {
-                    if (e.target === e.currentTarget) {
-                        close();
-                    }
-                }}
-                onBlur={e => {
-                    if (!e.currentTarget.contains(e.relatedTarget)) {
-                        close();
-                    }
-                }}
-                css={{
-                    position: "relative",
-                    // Grey out background on mobile devices.
-                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                        position: "fixed",
-                        top: "var(--header-height)",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        zIndex: 1001,
-                        backgroundColor: "#000000a0",
-                    },
-                }}
-            >
-                <ul css={{
-                    borderRadius: 8,
-                    right: 0,
-                    margin: 0,
-                    paddingLeft: 0,
-                    overflow: "hidden",
-                    listStyle: "none",
-                    li: {
-                        ":first-of-type, :first-of-type > a": { borderRadius: "8px 8px 0 0" },
-                        ":last-of-type": { borderRadius: "0 0 8px 8px" },
-                    },
-                    [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                        backgroundColor: COLORS.neutral05,
-                        borderRadius: "0 0 8px 8px",
-                        marginTop: 0,
-                        position: "fixed",
-                        left: 0,
-                        top: 0,
-                        li: { ":first-of-type, :first-of-type > a": { borderRadius: 0 } },
-                    },
-                }}>{items}</ul>
-            </div>
-        </Floating>
-    );
-};
-
-
-export const LanguageSettings: React.FC = () => {
-    const { t } = useTranslation();
-
-    return <WithFloatingMenu type="language">
-        <ActionIcon title={t("language-selection")}>
-            <HiOutlineTranslate />
-        </ActionIcon>
-    </WithFloatingMenu>;
-};
-
-export const ColorSchemeSettings: React.FC = () => {
-    const { t } = useTranslation();
-    const { scheme } = useColorScheme();
-
-    return <WithFloatingMenu type="color-scheme">
-        <ActionIcon title={t("main-menu.color-scheme.label")}>
-            {scheme === "light" ? <FiMoon /> : <FiSun />}
-        </ActionIcon>
-    </WithFloatingMenu>;
-};
-
-
-type ReturnButtonProps = {
-    onClick: () => void;
-    children: ReactNode;
-};
-
-const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
-    <div css={{
-        borderBottom: `1px solid ${COLORS.neutral40}`,
-        display: "flex",
-        [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-            display: "none",
-        },
-    }}>
-        <ProtoButton onClick={onClick} tabIndex={0} css={{
-            display: "flex",
-            alignItems: "center",
-            cursor: "pointer",
-            padding: "24px 12px",
-            opacity: 0.75,
-            ":hover, :focus": { opacity: 1 },
-            ...focusStyle({ inset: true }),
-            "> svg": {
-                maxHeight: 23,
-                fontSize: 23,
-                width: 24,
-                strokeWidth: 2,
-            },
-        }}>
-            <FiArrowLeft />
-        </ProtoButton>
-        <span css={{
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            overflow: "hidden",
-            color: COLORS.neutral60,
-            padding: "24px 12px 24px 4px",
-        }}>{children}</span>
-    </div>
-);
-
-/** Entries in the menu related to language. */
-const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
-    const { t, i18n } = useTranslation();
-    const isCurrentLanguage = (language: string) => language === i18n.resolvedLanguage;
-
-    return <>
-        {Object.keys(languages).map(lng => (
-            <MenuItem
-                isLanguageItem
-                selected={isCurrentLanguage(lng)}
-                key={lng}
-                icon={isCurrentLanguage(lng) ? <FiCheck /> : undefined}
-                onClick={() => {
-                    if (!isCurrentLanguage(lng)) {
-                        close();
-                        i18n.changeLanguage(lng);
-                    }
-                }}
-                css={{
-                    minWidth: 160,
-                    ...isCurrentLanguage(lng) && { cursor: "default" },
-                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.neutral25}` },
-                }}
-            >{t("language-name", { lng })}</MenuItem>
-        ))}
-    </>;
-
-};
-
-/** Entries in the menu related to the color scheme. */
-export const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
-    const { t } = useTranslation();
-    const { scheme, isAuto, update } = useColorScheme();
-    const currentPref = isAuto ? "auto" : scheme;
-
-    const choices = ["auto", "light", "dark"] as const;
-
-    return <>
-        {choices.map(choice => (
-            <MenuItem
-                key={choice}
-                icon={currentPref === choice ? <FiCheck /> : undefined}
-                onClick={() => {
-                    update(choice);
-                    close();
-                }}
-                css={{
-                    minWidth: 160,
-                    ...currentPref === choice && { cursor: "default" },
-                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.neutral25}` },
-                }}
-            >{t(`main-menu.color-scheme.${choice}`)}</MenuItem>
-        ))}
-    </>;
-};
-
-type MenuItemProps = {
-    icon?: JSX.Element;
-    onClick?: () => void;
-    linkTo?: string;
-    className?: string;
-    htmlLink?: boolean;
-    borderBottom?: boolean;
-    borderTop?: boolean;
-    indent?: boolean;
-    externalLinkProps?: ExternalLinkProps;
-    children: ReactNode;
-    isLanguageItem?: boolean;
-    selected?: boolean;
-};
-
-/** A single item in the user menu. */
-const MenuItem: React.FC<MenuItemProps> = ({
-    icon,
-    children,
-    linkTo,
-    onClick = () => {},
-    className,
-    htmlLink = false,
-    borderBottom = false,
-    borderTop = false,
-    indent = false,
-    externalLinkProps,
-    isLanguageItem = false,
-    selected = false,
-}) => {
-    const inner = <>
-        {icon ?? <svg />}
-        <div>{children}</div>
-    </>;
-    const css = {
-        display: "flex",
-        gap: 16,
-        alignItems: "center",
-        minWidth: 200,
-        padding: 12,
-        textDecoration: "none",
-        ...indent && { paddingLeft: 30 },
-        cursor: "pointer",
-        whiteSpace: "nowrap",
-        color: COLORS.neutral90,
-        ...borderBottom && { borderBottom: `1px solid ${COLORS.neutral25}` },
-        ...borderTop && { borderTop: `1px solid ${COLORS.neutral25}` },
-        "& > svg": {
-            maxHeight: 23,
-            fontSize: 23,
-            width: 24,
-            strokeWidth: 2,
-            "& > path": { strokeWidth: "inherit" },
-        },
-        ":hover, :focus": {
-            backgroundColor: COLORS.neutral10,
-            color: "inherit",
-        },
-        ...focusStyle({ inset: true }),
-    } as const;
-
-
-    // One should be able to use the menu with keyboard only. So if the item is
-    // focussed, pressing enter should have the same effect as clicking it.
-    // Thats already true automatically for links.
-    const onKeyDown = (e: KeyboardEvent<HTMLLIElement>) => {
-        if (document.activeElement === e.currentTarget && e.key === "Enter") {
-            onClick();
-        }
-    };
-
-    const additionalProps = !isLanguageItem ? { role: "menuitem" } : {
-        role: "checkbox",
-        "aria-checked": selected,
-    };
-
-    let menuItem;
-    if (linkTo) {
-        menuItem = <li {...additionalProps} {... { className }}>
-            <Link to={linkTo} css={css} {...{ htmlLink, onClick, className }}>{inner}</Link>
-        </li>;
-    } else if (externalLinkProps) {
-        menuItem = <li {...additionalProps}>
-            <ExternalLink
-                {...externalLinkProps}
-                css={{
-                    backgroundColor: "transparent",
-                    border: "none",
-                    ...css,
-                    minWidth: "100%",
-                }}
-            >{inner}</ExternalLink>
-        </li>;
-    } else {
-        menuItem = (
-            <li
-                {...additionalProps}
-                tabIndex={0}
-                css={css}
-                {...{ onClick, className, onKeyDown }}
-            >{inner}</li>
-        );
-    }
-
-    return menuItem;
-};
-
-
-const Logout: React.FC = () => {
-    const { t } = useTranslation();
-
-    type State = "idle" | "pending" | "error";
-    const [state, setState] = useState<State>("idle");
-
-    const actionProps = CONFIG.auth.logoutLink !== null
-        // Just a normal link to the specified URL
-        ? {
-            htmlLink: true,
-            linkTo: CONFIG.auth.logoutLink,
-        }
-        // Our own internal link
-        : {
-            onClick: () => {
-                // We don't do anything if a request is already pending.
-                if (state === "pending") {
-                    return;
-                }
-
-                setState("pending");
-                fetch("/~session", { method: "DELETE" })
-                    .then(() => {
-                        // We deliberately ignore the `status`. See `handle_logout`
-                        // for more information.
-                        //
-                        // We hard forward to the home page to get rid of any stale state.
-                        window.location.href = "/";
-                    })
-                    .catch(error => {
-                        // TODO: this is not great. It should happen only
-                        // extremely rarely, but still, just showing a triangle
-                        // is not very great for the user.
-                        // eslint-disable-next-line no-console
-                        console.error("Error during logout: ", error);
-                        setState("error");
-                    });
-            },
-        };
-
-    return (
-        <MenuItem
-            icon={match(state, {
-                "idle": () => <FiLogOut />,
-                "pending": () => <Spinner />,
-                "error": () => <FiAlertTriangle />,
-            })}
-            css={{
-                color: COLORS.danger0,
-                ":hover, :focus": {
-                    color: COLORS.danger0,
-                },
-            }}
-            {...actionProps}
-        >{t("user.logout")}</MenuItem>
-    );
+    </WithHeaderMenu>;
 };
