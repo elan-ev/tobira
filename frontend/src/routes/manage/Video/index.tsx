@@ -117,7 +117,7 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
             height: "100%",
         }}>
             <Breadcrumbs
-                path={[{ label: t("manage.management"), link: "/~manage" }]}
+                path={[{ label: t("user.manage-content"), link: "/~manage" }]}
                 tail={title}
             />
             <PageTitle title={title} css={{ marginBottom: 32 }}/>

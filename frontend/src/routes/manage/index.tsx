@@ -90,7 +90,7 @@ const Manage: React.FC = () => {
 
     const studioReturnUrl = new URL(document.location.href);
     return <>
-        <Breadcrumbs path={[]} tail={t("manage.management")} />
+        <Breadcrumbs path={[]} tail={t("user.manage-content")} />
         <PageTitle title={t("manage.dashboard.title")} />
         <div css={{
             display: "grid",
@@ -126,10 +126,10 @@ const Manage: React.FC = () => {
                 {t("manage.dashboard.studio-tile-body")}
             </ExternalLink>}
         </div>
-        <div css={{ maxWidth: "80ch", fontSize: 14, h2: { marginBottom: 8, fontSize: 18 } }}>
+        {/* <div css={{ maxWidth: "80ch", fontSize: 14, h2: { marginBottom: 8, fontSize: 18 } }}>
             <h2>{t("manage.dashboard.manage-pages-tile-title")}</h2>
             {t("manage.dashboard.manage-pages-tile-body")}
-        </div>
+        </div> */}
     </>;
 };
 

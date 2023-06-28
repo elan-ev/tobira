@@ -229,7 +229,7 @@ realm:
       currently-none: Sie haben zurzeit keine persönliche Seite.
       heading: Persönliche Seite erstellen
       what-you-can-do: >
-        Auf Ihrer persönlichen Seite können Sie frei Videos, Text und andere Element anordnen,
+        Auf Ihrer persönlichen Seite können Sie frei Videos, Text und andere Elemente anordnen,
         um so Inhalte besser präsentieren und teilen zu können.
         Sie können sogar Unterseiten anlegen, um Ihr eigenes kleines Videoportal zu erstellen.
       available-at: 'Ihre Seite wird unter folgendem Link verfügbar sein:'
@@ -294,22 +294,21 @@ upload:
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
 
 manage:
-  management: Verwaltung
   nav:
     dashboard: Übersicht
     my-videos: Meine Videos
 
   dashboard:
     title: Dashboard
-    upload-tile: Hier können Sie einfach Videos von Ihrem Computer hochladen.
+    upload-tile: Hier können Sie Videos von Ihrem Computer hochladen.
     studio-tile-title: Video aufnehmen
     studio-tile-body: >
-      Hier können Sie sehr einfach ein neues Video erstellen, indem Sie Ihr Mikrofon, Ihren Bildschirm
-      und/oder Ihre Webcam aufzeichnen.
-    my-videos-tile: Hier finden Sie alle Ihre Videos und können diese z.B. bearbeiten.
+      Erstellen Sie Videos, indem Sie Ihren Bildschirm, Ihre Webcam
+      und Ihr Mikrofonsignal aufzeichnen.
+    my-videos-tile: Hier finden Sie Ihre Videos und können diese verwalten und bearbeiten.
     user-realm-tile: >
-      Auf Ihrer persönlichen Seite können Sie frei Videos, Text und andere Element anordnen.
-    manage-pages-tile-title: Seiten verwalten?
+      Auf ihren persönlichen Seiten können Sie Videos, Text und andere Elemente anordnen.
+    manage-pages-tile-title: Seiten verwalten
     manage-pages-tile-body: >
       Um Seiten zu bearbeiten, umzubenennen und zu löschen, navigieren Sie zu der gewünschten
       Seite. Solange Sie angemeldet sind und die benötigten Rechte haben, gibt es dort entsprechende
