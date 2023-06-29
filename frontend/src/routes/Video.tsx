@@ -378,7 +378,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
         <Description
             text={event.description}
             css={{
-                color: COLORS.grey7,
+                color: COLORS.neutral80,
                 fontSize: 14,
                 maxWidth: "90ch",
                 ...truncated && ellipsisOverflowCss(6),
@@ -430,7 +430,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             flexWrap: "wrap",
             gap: 16,
             "> div": {
-                backgroundColor: COLORS.grey1,
+                backgroundColor: COLORS.neutral15,
                 borderRadius: 8,
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
                     overflowWrap: "anywhere",
@@ -457,7 +457,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 <div css={{
                     ...!showButton && { display: "none" },
                     ...!expanded && {
-                        background: `linear-gradient(transparent, ${COLORS.grey1} 60%)`,
+                        background: `linear-gradient(transparent, ${COLORS.neutral15} 60%)`,
                     },
                     position: "absolute",
                     bottom: 0,
@@ -471,7 +471,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                         fontSize: 12,
                         padding: "4px 0",
                         borderRadius: "0 0 8px 8px",
-                        ":hover, :focus-visible": { backgroundColor: COLORS.grey2 },
+                        ":hover, :focus-visible": { backgroundColor: COLORS.neutral20 },
                         ...focusStyle({ inset: true }),
                     }}>
                         {expanded
@@ -516,7 +516,7 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 </Button>
             </FloatingTrigger>
             <Floating
-                backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+                backgroundColor={isDark ? COLORS.neutral20 : COLORS.neutral05}
                 padding={[8, 16, 16, 16]}
             >
                 <PopoverHeading>{t("video.download.title")}</PopoverHeading>
@@ -551,13 +551,13 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         display: "flex",
         flexDirection: "column",
         flex: `1 calc(100% / ${entries.length})`,
-        backgroundColor: COLORS.grey3,
+        backgroundColor: COLORS.neutral25,
         paddingBottom: 4,
         cursor: "pointer",
         alignItems: "center",
-        borderRight: `1px solid ${COLORS.grey5}`,
+        borderRight: `1px solid ${COLORS.neutral40}`,
         borderTop: "none",
-        borderBottom: `1px solid ${COLORS.grey5}`,
+        borderBottom: `1px solid ${COLORS.neutral40}`,
         ":is(:first-child)": { borderTopLeftRadius: 4 },
         ":is(:last-child)": {
             borderRight: "none",
@@ -571,12 +571,12 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         },
         "&[disabled]": {
             cursor: "default",
-            backgroundColor: isDark ? COLORS.grey2 : COLORS.background,
+            backgroundColor: isDark ? COLORS.neutral20 : COLORS.neutral05,
             borderBottom: "none",
             svg: { color: COLORS.primary0 },
         },
         ":not([disabled])": {
-            "&:hover": { backgroundColor: COLORS.grey2 },
+            "&:hover": { backgroundColor: COLORS.neutral20 },
         },
         ...focusStyle({ inset: true }),
 
@@ -587,7 +587,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             "&[disabled]": {
                 borderRight: "none",
                 "+ button": {
-                    borderLeft: `1px solid ${COLORS.grey5}`,
+                    borderLeft: `1px solid ${COLORS.neutral40}`,
                     borderBottomLeftRadius: 4,
                 },
             },
@@ -705,7 +705,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             </FloatingTrigger>
             <Floating
                 padding={0}
-                backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+                backgroundColor={isDark ? COLORS.neutral20 : COLORS.neutral05}
                 css={{
                     height: 240,
                     display: "flex",
@@ -819,7 +819,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         <div css={{
             display: "inline-block",
             position: "relative",
-            color: COLORS.grey6,
+            color: COLORS.neutral60,
             fontSize: 14,
         }}>
             <WithTooltip distance={0} tooltip={tooltip}>
@@ -899,7 +899,7 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
                 content: "':'",
             },
             "& > dd": {
-                color: COLORS.grey6,
+                color: COLORS.neutral60,
             },
         }}>
             {pairs.map(([label, value], i) => <React.Fragment key={i}>

@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
 
     return (
         <footer css={{
-            backgroundColor: COLORS.grey1,
+            backgroundColor: COLORS.neutral15,
             padding: 16,
             fontSize: 14,
             textAlign: "center",
@@ -24,7 +24,7 @@ export const Footer: React.FC = () => {
                     display: "inline",
                     "&:not(:first-child):before": {
                         content: "\"•\"",
-                        color: COLORS.grey6,
+                        color: COLORS.neutral60,
                         margin: "0 12px",
                     },
                 },

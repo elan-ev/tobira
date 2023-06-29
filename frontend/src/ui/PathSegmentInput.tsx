@@ -17,10 +17,10 @@ export const PathSegmentInput = React.forwardRef<HTMLInputElement, Props>(
             position: "relative",
             alignItems: "center",
             justifyContent: "center",
-            border: `1px solid ${COLORS.grey2}`,
+            border: `1px solid ${COLORS.neutral20}`,
             borderRadius: 4,
             gap: 8,
-            backgroundColor: COLORS.grey0,
+            backgroundColor: COLORS.neutral10,
         }}>
             <span css={{ paddingLeft: 8, overflow: "auto" }}>
                 {base.split("/").join("\u200b/") + (base.endsWith("/") ? "" : "/")}

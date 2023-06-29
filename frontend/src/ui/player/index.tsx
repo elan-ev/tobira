@@ -118,13 +118,13 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
 
     return (
         <div className={className} css={{
-            "--video-container-background-color": COLORS.grey0,
-            "--base-video-rect-background-color": COLORS.grey0,
+            "--video-container-background-color": COLORS.neutral10,
+            "--base-video-rect-background-color": COLORS.neutral10,
             "div.loader-container": {
-                backgroundColor: isDark ? COLORS.grey3 : "inherit",
+                backgroundColor: isDark ? COLORS.neutral25 : "inherit",
             },
             "div.preview-container": {
-                backgroundColor: `${COLORS.grey2} !important`,
+                backgroundColor: `${COLORS.neutral20} !important`,
             },
             display: "flex",
             flexDirection: "column",
@@ -217,7 +217,7 @@ export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => 
     const isDark = useColorScheme().scheme === "dark";
     return <div css={{
         height: "100%",
-        backgroundColor: isDark ? COLORS.grey2 : COLORS.grey7,
+        backgroundColor: isDark ? COLORS.neutral20 : COLORS.neutral80,
         color: "white",
         padding: 8,
         display: "flex",
@@ -230,10 +230,10 @@ export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => 
             fontSize: 40,
             margin: "16px 0",
             strokeWidth: 1.5,
-            ...isDark && { color: COLORS.grey7 },
+            ...isDark && { color: COLORS.neutral80 },
         },
         div: {
-            ...isDark && { color: COLORS.grey7 },
+            ...isDark && { color: COLORS.neutral80 },
         },
         [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
             "& > *": {

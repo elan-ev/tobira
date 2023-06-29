@@ -69,7 +69,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 to={parent.path}
                 iconPos="left"
                 css={{
-                    color: COLORS.grey6,
+                    color: COLORS.neutral60,
                     padding: "10px 14px",
                     borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
                     ...focusStyle({ inset: true }),
@@ -83,8 +83,8 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
             <div css={{
                 padding: "8px 14px 8px 16px",
                 color: COLORS.primary2,
-                backgroundColor: COLORS.grey3,
-                border: `2px solid ${COLORS.background}`,
+                backgroundColor: COLORS.neutral25,
+                border: `2px solid ${COLORS.neutral05}`,
                 borderLeft: "none",
                 borderRight: "none",
             }}>{realm.name ?? <MissingRealmName />}</div>

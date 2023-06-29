@@ -173,13 +173,13 @@ const LoginBox: React.FC = () => {
             maxWidth: "100%",
             marginTop: 24,
             padding: 32,
-            border: `1px solid ${COLORS.grey4}`,
+            border: `1px solid ${COLORS.neutral35}`,
             borderRadius: 8,
-            ...isDark && { backgroundColor: COLORS.grey1 },
+            ...isDark && { backgroundColor: COLORS.neutral15 },
         }}>
             {CONFIG.auth.loginPageNote && (
                 <div css={{
-                    backgroundColor: COLORS.grey0,
+                    backgroundColor: COLORS.neutral10,
                     marginBottom: 32,
                     borderRadius: 4,
                     padding: "8px 16px",
@@ -286,13 +286,13 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                 position: "absolute",
                 top: "50%",
                 left: 16,
-                color: COLORS.grey6,
+                color: COLORS.neutral60,
                 transform: "translateY(-50%)",
                 transition: "top 150ms, left 150ms, font-size 150ms, color 150ms",
                 lineHeight: 1,
                 borderRadius: 4,
                 padding: "0 4px",
-                backgroundColor: isDark ? COLORS.grey1 : COLORS.background,
+                backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral05,
                 pointerEvents: "none",
                 "&:valid": {
                     border: "1px solid blue",
@@ -304,13 +304,13 @@ const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
                 width: "100%",
                 height: 50,
                 padding: "16px 16px",
-                border: `1px solid ${COLORS.grey4}`,
+                border: `1px solid ${COLORS.neutral35}`,
                 borderRadius: 4,
                 // The `autofill` thing overrides Firefox's default yellow and
                 // uses Chrome's blue instead, which is easier on the eyes.
                 // This should work better for most if not all color configurations.
                 ":autofill": { background: isDark ? "#2f3644" : "#e7f0fe" },
-                ...isDark && { backgroundColor: COLORS.grey1 },
+                ...isDark && { backgroundColor: COLORS.neutral15 },
             },
             "&:focus-within": {
                 "& > label": {

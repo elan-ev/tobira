@@ -89,7 +89,7 @@ const LoggedOut: React.FC = () => {
                 },
                 /* Show only the icon on mobile devices. */
                 [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                    color: COLORS.foreground,
+                    color: COLORS.neutral90,
                     ...ICON_STYLE,
                     span: { display: "none" },
                 },
@@ -115,15 +115,15 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             <ProtoButton title={t("user.settings")} css={{
                 display: "flex",
                 alignItems: "center",
-                backgroundColor: COLORS.background,
-                border: `1px solid ${COLORS.grey5}`,
+                backgroundColor: COLORS.neutral05,
+                border: `1px solid ${COLORS.neutral40}`,
                 gap: 12,
                 borderRadius: 8,
                 padding: "8px 10px 8px 16px",
                 cursor: "pointer",
                 ":hover": {
-                    borderColor: COLORS.grey4,
-                    outline: `2.5px solid ${COLORS.grey4}`,
+                    borderColor: COLORS.neutral35,
+                    outline: `2.5px solid ${COLORS.neutral35}`,
                     outlineOffset: -1,
                 },
                 ":focus-visible": { borderColor: COLORS.focus },
@@ -263,7 +263,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
 
     return (
         <Floating
-            backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+            backgroundColor={isDark ? COLORS.neutral20 : COLORS.neutral05}
             borderWidth={isDark ? 1 : 0}
             padding={0}
             shadowBlur={8}
@@ -305,7 +305,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ close, type }) => {
                         ":last-of-type": { borderRadius: "0 0 8px 8px" },
                     },
                     [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
-                        backgroundColor: COLORS.background,
+                        backgroundColor: COLORS.neutral05,
                         borderRadius: "0 0 8px 8px",
                         marginTop: 0,
                         position: "fixed",
@@ -349,7 +349,7 @@ type ReturnButtonProps = {
 
 const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
     <div css={{
-        borderBottom: `1px solid ${COLORS.grey5}`,
+        borderBottom: `1px solid ${COLORS.neutral40}`,
         display: "flex",
         [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
             display: "none",
@@ -376,7 +376,7 @@ const ReturnButton: React.FC<ReturnButtonProps> = ({ onClick, children }) => (
             whiteSpace: "nowrap",
             textOverflow: "ellipsis",
             overflow: "hidden",
-            color: COLORS.grey6,
+            color: COLORS.neutral60,
             padding: "24px 12px 24px 4px",
         }}>{children}</span>
     </div>
@@ -403,7 +403,9 @@ const LanguageMenu: React.FC<{ close: () => void }> = ({ close }) => {
                 css={{
                     minWidth: 160,
                     ...isCurrentLanguage(lng) && { cursor: "default" },
-                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.grey4}` },
+                    ":not(:last-child)": {
+                        borderBottom: `1px solid ${COLORS.neutral35}`,
+                    },
                 }}
             >{t("language-name", { lng })}</MenuItem>
         ))}
@@ -431,7 +433,7 @@ export const ColorSchemeMenu: React.FC<{ close: () => void }> = ({ close }) => {
                 css={{
                     minWidth: 160,
                     ...currentPref === choice && { cursor: "default" },
-                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.grey4}` },
+                    ":not(:last-child)": { borderBottom: `1px solid ${COLORS.neutral35}` },
                 }}
             >{t(`main-menu.color-scheme.${choice}`)}</MenuItem>
         ))}
@@ -482,9 +484,9 @@ const MenuItem: React.FC<MenuItemProps> = ({
         ...indent && { paddingLeft: 30 },
         cursor: "pointer",
         whiteSpace: "nowrap",
-        color: COLORS.foreground,
-        ...borderBottom && { borderBottom: `1px solid ${COLORS.grey4}` },
-        ...borderTop && { borderTop: `1px solid ${COLORS.grey4}` },
+        color: COLORS.neutral90,
+        ...borderBottom && { borderBottom: `1px solid ${COLORS.neutral35}` },
+        ...borderTop && { borderTop: `1px solid ${COLORS.neutral35}` },
         "& > svg": {
             maxHeight: 23,
             fontSize: 23,
@@ -493,7 +495,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
             "& > path": { strokeWidth: "inherit" },
         },
         ":hover, :focus": {
-            backgroundColor: COLORS.grey0,
+            backgroundColor: COLORS.neutral10,
             color: "inherit",
         },
         ...focusStyle({ inset: true }),

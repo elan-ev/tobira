@@ -166,11 +166,11 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
             <div
                 css={{
                     marginBottom: 16,
-                    border: `1px solid ${COLORS.grey4}`,
+                    border: `1px solid ${COLORS.neutral35}`,
                     borderRadius: 4,
                     "& > div": {
                         "&:not(:first-child)": {
-                            borderTop: `1px solid ${COLORS.grey4}`,
+                            borderTop: `1px solid ${COLORS.neutral35}`,
                         },
                         "& > label": {
                             padding: 12,

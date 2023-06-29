@@ -307,8 +307,8 @@ type FloatingProps = React.PropsWithChildren<{
 export const Floating = React.forwardRef<HTMLDivElement, FloatingProps>(
     ({
         children,
-        backgroundColor = COLORS.background,
-        borderColor = COLORS.grey5,
+        backgroundColor = COLORS.neutral05,
+        borderColor = COLORS.neutral40,
         borderWidth = 1,
         shadowColor = "rgba(0, 0, 0, 20%)",
         shadowBlur = 4,
@@ -421,7 +421,7 @@ export const WithTooltip = React.forwardRef<FloatingHandle, WithTooltipProps>(
             placement={props.placement ?? "top"}
         >
             <Floating css={{
-                color: COLORS.grey7,
+                color: COLORS.neutral80,
                 fontSize: 14,
                 maxWidth: "100%",
                 ...tooltipCss as Record<string, unknown>,

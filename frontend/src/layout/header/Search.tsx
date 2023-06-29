@@ -77,7 +77,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 height: "100%",
                 left: 11,
                 fontSize: 23,
-                color: COLORS.grey6,
+                color: COLORS.neutral60,
             }} />
             <form onSubmit={() => {
                 clearTimeout(lastTimeout.current);
@@ -102,23 +102,23 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         }}
                         css={{
                             flex: 1,
-                            color: COLORS.grey6,
-                            backgroundColor: COLORS.background,
-                            border: `1px solid ${COLORS.grey5}`,
+                            color: COLORS.neutral60,
+                            backgroundColor: COLORS.neutral05,
+                            border: `1px solid ${COLORS.neutral40}`,
                             borderRadius: 4,
                             minWidth: 50,
                             height,
                             paddingLeft: 42,
                             paddingRight: 12,
                             ":hover": {
-                                borderColor: COLORS.grey4,
-                                outline: `2.5px solid ${COLORS.grey4}`,
+                                borderColor: COLORS.neutral35,
+                                outline: `2.5px solid ${COLORS.neutral35}`,
                                 outlineOffset: -1,
                             },
                             ":focus-visible": { borderColor: COLORS.focus },
                             ...focusStyle({ offset: -1 }),
                             "&::placeholder": {
-                                color: COLORS.grey6,
+                                color: COLORS.neutral60,
                                 opacity: 1,
                             },
                         }}

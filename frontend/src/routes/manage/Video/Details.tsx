@@ -113,7 +113,7 @@ type DateValueProps = {
 
 const DateValue: React.FC<DateValueProps> = ({ label, value }) => (
     <span css={{ "&:not(:last-child):after": { content: "'•'", margin: "0 12px" } }}>
-        <span css={{ color: COLORS.grey6, lineHeight: 1 }}>{label + ":"}</span>
+        <span css={{ color: COLORS.neutral60, lineHeight: 1 }}>{label + ":"}</span>
         <span css={{ marginLeft: 6, marginTop: 4 }}>{value}</span>
     </span>
 );

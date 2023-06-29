@@ -87,14 +87,14 @@ impl ColorConfig {
         //
         // Regarding the minimum of 35: We have two variations, with one being
         // having 24 less brightness. So with 35 starting brightness, that only
-        // leaves 11, which is quite dim. The color should still be noticable
+        // leaves 11, which is quite dim. The color should still be noticeable
         // there.
         //
-        // Regarding the maximum: We want to place this color on our grey1
-        // background, which has 95.6% brightness. The WCAG contrast between
+        // Regarding the maximum: We want to place this color on our neutral15
+        // background, which has 94.3% brightness. The WCAG contrast between
         // two colors only depend on the `l` channel, i.e. the perceived
         // lightness (well, there are differences and rounding errors, but it's
-        // not relevant here). For a contrast ratio of 4.5:1 to the grey1
+        // not relevant here). For a contrast ratio of 4.5:1 to the neutral15
         // background, a brightness of at most 46.5 is required.
         let primary = Lch::from_color(self.primary.0.into_format::<f32>());
         if primary.l < 35.0 || primary.l > 46.5 {
@@ -185,7 +185,7 @@ impl ColorConfig {
             // definitions for "contrast", there are multiple way to do this.
             // We could say we want to maximize the WCAG contrast, but:
             // - This is a bit more involved.
-            // - The WCAG contrast defintion is likely changing soon to address
+            // - The WCAG contrast definition is likely changing soon to address
             //   new research in perceived contrast.
             // - In fact, the current WCAG contrast formula is not based
             //   on "perceived lightness" of a color. See [1].
@@ -258,32 +258,35 @@ impl ColorConfig {
         }
 
 
-        // Grey
+        // Neutral colors (05 = background, 90 = foreground)
         let base_grey = Lch::from_color(self.grey50.0.into_format::<f32>());
-        add(&mut light, "grey0", Lch { l: 97.3, ..base_grey });
-        add(&mut light, "grey1", Lch { l: 95.6, ..base_grey });
-        add(&mut light, "grey2", Lch { l: 92.9, ..base_grey });
-        add(&mut light, "grey3", Lch { l: 87.5, ..base_grey });
-        add(&mut light, "grey4", Lch { l: 82.0, ..base_grey });
-        add(&mut light, "grey5", Lch { l: 68.0, ..base_grey });
-        add(&mut light, "grey6", Lch { l: 43.2, ..base_grey });
-        add(&mut light, "grey7", Lch { l: 21.2, ..base_grey });
+        add(&mut light, "neutral05", Lch { l: 99.7, ..base_grey });
+        add(&mut light, "neutral10", Lch { l: 97.0, ..base_grey });
+        add(&mut light, "neutral15", Lch { l: 94.3, ..base_grey });
+        add(&mut light, "neutral20", Lch { l: 91.5, ..base_grey });
+        add(&mut light, "neutral25", Lch { l: 88.3, ..base_grey }); 
+        add(&mut light, "neutral30", Lch { l: 85.0, ..base_grey }); 
+        add(&mut light, "neutral35", Lch { l: 78.0, ..base_grey }); 
+        add(&mut light, "neutral40", Lch { l: 67.0, ..base_grey }); 
+        add(&mut light, "neutral50", Lch { l: 50.0, ..base_grey }); 
+        add(&mut light, "neutral60", Lch { l: 37.0, ..base_grey }); 
+        add(&mut light, "neutral70", Lch { l: 27.0, ..base_grey }); 
+        add(&mut light, "neutral80", Lch { l: 17.0, ..base_grey }); 
+        add(&mut light, "neutral90", Lch { l: 8.0, ..base_grey }); 
 
-        add(&mut dark, "grey0", Lch { l: 10.7, ..base_grey });
-        add(&mut dark, "grey1", Lch { l: 12.5, ..base_grey });
-        add(&mut dark, "grey2", Lch { l: 15.0, ..base_grey });
-        add(&mut dark, "grey3", Lch { l: 18.2, ..base_grey });
-        add(&mut dark, "grey4", Lch { l: 24.0, ..base_grey });
-        add(&mut dark, "grey5", Lch { l: 36.0, ..base_grey });
-        add(&mut dark, "grey6", Lch { l: 60.0, ..base_grey });
-        add(&mut dark, "grey7", Lch { l: 68.0, ..base_grey });
-
-
-        // Foreground & background
-        add(&mut light, "background", Lch::new(100.0, 0.0, 0.0));
-        add(&mut light, "foreground", Lch::new(0.0, 0.0, 0.0));
-        add(&mut dark, "background", Lch { l: 7.7, ..base_grey });
-        add(&mut dark, "foreground", Lch::new(79.0, 0.0, 0.0));
+        add(&mut dark, "neutral05", Lch { l: 7.7, ..base_grey });
+        add(&mut dark, "neutral10", Lch { l: 10.7, ..base_grey });
+        add(&mut dark, "neutral15", Lch { l: 12.5, ..base_grey });
+        add(&mut dark, "neutral20", Lch { l: 15.0, ..base_grey });
+        add(&mut dark, "neutral25", Lch { l: 18.2, ..base_grey });
+        add(&mut dark, "neutral30", Lch { l: 20.0, ..base_grey });
+        add(&mut dark, "neutral35", Lch { l: 24.0, ..base_grey });
+        add(&mut dark, "neutral40", Lch { l: 36.0, ..base_grey });
+        add(&mut dark, "neutral50", Lch { l: 44.0, ..base_grey });
+        add(&mut dark, "neutral60", Lch { l: 60.0, ..base_grey });
+        add(&mut dark, "neutral70", Lch { l: 64.0, ..base_grey });
+        add(&mut dark, "neutral80", Lch { l: 68.0, ..base_grey });
+        add(&mut dark, "neutral90", Lch { l: 79.0, ..base_grey });
 
         (light, dark)
     }

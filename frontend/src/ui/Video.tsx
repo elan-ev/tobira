@@ -193,7 +193,7 @@ const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
 
     return loadError
         ? <div css={{
-            backgroundColor: COLORS.grey6,
+            backgroundColor: COLORS.neutral60,
             aspectRatio: "16 / 9",
             width: "100%",
             display: "flex",
@@ -201,11 +201,11 @@ const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
             gap: 8,
             justifyContent: "center",
             alignItems: "center",
-            color: COLORS.grey2,
+            color: COLORS.neutral20,
             fontSize: 14,
             "& > svg": {
                 fontSize: 32,
-                color: COLORS.grey4,
+                color: COLORS.neutral35,
                 strokeWidth: 1.5,
             },
         }}>
@@ -250,7 +250,7 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
             {...{ className }}
         >
             <HiOutlineUserCircle css={{
-                color: COLORS.grey6,
+                color: COLORS.neutral60,
                 fontSize: 16,
                 flexShrink: 0,
             }} />
@@ -263,7 +263,7 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
                 "& > li:not(:last-child)::after": {
                     content: "'•'",
                     padding: "0 6px",
-                    color: COLORS.grey5,
+                    color: COLORS.neutral40,
                 },
             }}>
                 {creators.map((c, i) => <li key={i}>{c}</li>)}

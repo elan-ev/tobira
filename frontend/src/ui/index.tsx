@@ -10,7 +10,7 @@ export const SIDE_BOX_BORDER_RADIUS = 8;
 
 export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
     <div css={{
-        backgroundColor: COLORS.grey1,
+        backgroundColor: COLORS.neutral15,
         borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
         ":not(:first-child)": { marginTop: 26 },
@@ -35,8 +35,8 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
                 ...useColorScheme().scheme === "dark" && { color: COLORS.primary1 },
             },
             "& > li": {
-                backgroundColor: COLORS.grey1,
-                borderBottom: `2px solid ${COLORS.background}`,
+                backgroundColor: COLORS.neutral15,
+                borderBottom: `2px solid ${COLORS.neutral05}`,
                 "&:last-of-type": { borderBottom: "none" },
                 "& > *": {
                     display: "flex",
@@ -81,7 +81,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
 
     const hoverActiveStyle = {
         transitionDuration: "0s",
-        backgroundColor: COLORS.grey3,
+        backgroundColor: COLORS.neutral25,
         ...isDark && { color: COLORS.primary2 },
     };
 

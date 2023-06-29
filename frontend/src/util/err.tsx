@@ -277,7 +277,7 @@ export class GlobalErrorBoundary
             return <div css={{
                 fontFamily: "var(--main-font), sans-serif",
                 height: "100%",
-                backgroundColor: "var(--color-grey0, #333333)",
+                backgroundColor: "var(--color-grey00, #333333)",
                 color: "white",
                 padding: 8,
                 display: "flex",

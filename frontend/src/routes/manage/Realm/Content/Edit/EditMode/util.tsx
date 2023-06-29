@@ -29,20 +29,20 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
 
         "& > label": {
             "& > div": {
-                border: `1px solid ${COLORS.grey5}`,
+                border: `1px solid ${COLORS.neutral40}`,
                 padding: "6px 12px",
                 cursor: "pointer",
-                backgroundColor: COLORS.background,
+                backgroundColor: COLORS.neutral05,
             },
             "& > input:checked + div": {
-                backgroundColor: COLORS.grey1,
+                backgroundColor: COLORS.neutral15,
                 outline: `2px solid ${COLORS.primary0}`,
                 outlineOffset: -2,
                 position: "relative", // Needed so that the outline is over sibling divs
             },
             // The attribute selector increases specificity
             ":focus-within div[role='button']": {
-                backgroundColor: COLORS.grey3,
+                backgroundColor: COLORS.neutral25,
                 outline: `3px solid ${COLORS.primary0}`,
             },
             "& > input": {

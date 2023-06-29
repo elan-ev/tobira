@@ -62,11 +62,11 @@ const PROTO_CSS = {
 const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<Theme> => {
     const notDisabledStyle = match(kind, {
         "normal": () => ({
-            border: `1px solid ${COLORS.grey5}`,
-            color: COLORS.foreground,
+            border: `1px solid ${COLORS.neutral40}`,
+            color: COLORS.neutral90,
             "&:hover, &:focus-visible": {
-                border: `1px solid ${COLORS.grey6}`,
-                backgroundColor: COLORS.grey2,
+                border: `1px solid ${COLORS.neutral60}`,
+                backgroundColor: COLORS.neutral20,
             },
             ...focusStyle({ offset: -1 }),
         }),
@@ -102,15 +102,15 @@ const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<The
         padding: "7px 14px",
         gap: 12,
         whiteSpace: "nowrap",
-        backgroundColor: COLORS.grey0,
+        backgroundColor: COLORS.neutral10,
         transition: "background-color 0.15s, border-color 0.15s",
         textDecoration: "none",
         "& > svg": {
             fontSize: 20,
         },
         "&:disabled": {
-            border: `1px solid ${COLORS.grey4}`,
-            color: COLORS.grey5,
+            border: `1px solid ${COLORS.neutral35}`,
+            color: COLORS.neutral40,
         },
         "&:not([disabled])": {
             cursor: "pointer",

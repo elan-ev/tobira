@@ -221,7 +221,7 @@ const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
         "& code": {
             whiteSpace: "nowrap",
             borderRadius: 4,
-            backgroundColor: COLORS.grey2,
+            backgroundColor: COLORS.neutral20,
             padding: "2px 4px",
         },
     }}>

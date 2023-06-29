@@ -18,7 +18,7 @@ export const Spinner: React.FC<Props> = ({ size = "1em", ...rest }) => (
             })}`,
             "& > circle": {
                 fill: "none",
-                stroke: COLORS.foreground,
+                stroke: COLORS.neutral90,
                 strokeWidth: 4,
                 strokeDasharray: 83, // 2/3 of circumference
                 strokeLinecap: "round",

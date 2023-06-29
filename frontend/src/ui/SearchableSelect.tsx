@@ -45,20 +45,20 @@ export const SearchableSelect = <T, >({
         styles={{
             control: (baseStyles, state) => ({
                 ...baseStyles,
-                backgroundColor: COLORS.background,
-                borderColor: state.isFocused ? COLORS.primary0 : COLORS.grey5,
+                backgroundColor: COLORS.neutral05,
+                borderColor: state.isFocused ? COLORS.primary0 : COLORS.neutral40,
             }),
             input: baseStyles => ({
                 ...baseStyles,
-                ...isDark && { color: COLORS.grey7 },
+                ...isDark && { color: COLORS.neutral80 },
             }),
             placeholder: baseStyles => ({
                 ...baseStyles,
-                color: COLORS.grey6,
+                color: COLORS.neutral60,
             }),
             singleValue: baseStyles => ({
                 ...baseStyles,
-                color: COLORS.foreground,
+                color: COLORS.neutral90,
             }),
             menuList: baseStyles => ({
                 ...baseStyles,
@@ -66,26 +66,26 @@ export const SearchableSelect = <T, >({
             }),
             menu: baseStyles => ({
                 ...baseStyles,
-                ...isDark && { outline: `1px solid ${COLORS.grey3}` },
+                ...isDark && { outline: `1px solid ${COLORS.neutral25}` },
             }),
             option: (_baseStyles, state) => ({
                 cursor: "default",
                 padding: "6px 10px",
-                backgroundColor: isDark ? COLORS.grey1 : COLORS.background,
+                backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral05,
                 ...state.isSelected && {
                     borderLeft: `4px solid ${COLORS.focus}`,
                 },
                 ...(state.isFocused || state.isSelected) && {
-                    backgroundColor: isDark ? COLORS.grey4 : COLORS.grey1,
+                    backgroundColor: isDark ? COLORS.neutral35 : COLORS.neutral15,
                 },
             }),
             noOptionsMessage: baseStyles => ({
                 ...baseStyles,
-                ...isDark && { backgroundColor: COLORS.grey1 },
+                ...isDark && { backgroundColor: COLORS.neutral15 },
             }),
             loadingMessage: baseStyles => ({
                 ...baseStyles,
-                ...isDark && { backgroundColor: COLORS.grey1 },
+                ...isDark && { backgroundColor: COLORS.neutral15 },
             }),
         }}
         isClearable

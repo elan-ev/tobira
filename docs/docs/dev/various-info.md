@@ -36,6 +36,6 @@ The `*BwInverted` fields are either black or white, depending on what has the gr
 
 Check for sufficient contrast!
 
-- `primary0` or `danger0` text should be only used on top of `background`, `grey0` and `grey1`, and not on anything darker.
+- `primary0` or `danger0` text should be only used on top of `background`, `grey00` and `grey10`, and not on anything darker.
 - `happy*` colors currently have no enforced max brightness so shouldn't be used as text color at all.
   (If there is a good reason to use it as text color, we will have to see...)
