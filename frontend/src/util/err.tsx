@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 
 import { APIError, NotJson, ServerError } from "../relay";
 import { match } from ".";
-import { COLORS } from "../color";
 
 /**
  * Make sure that the parameter is `never`. This is particularly useful for
@@ -190,7 +189,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ failedAction, ...pro
     const { t, i18n } = useTranslation();
     const info = "info" in props ? props.info : errorDisplayInfo(props.error, i18n);
     const causes = Array.from(info.causes);
-    const textColor = { color: COLORS.background };
+    const textColor = { color: "var(--color-danger0-bw-inverted, white)" };
 
     return <>
         <p css={textColor}>
@@ -256,8 +255,8 @@ export class GlobalErrorBoundary
                         padding: 16,
                     }}>
                         <h1 css={{ marginTop: 0, fontSize: 28 }}>Critical Error</h1>
-                        <p>
-                            A critical error has occured!
+                        <p css={{ color: "var(--color-danger0-bw-inverted, white)" }}>
+                            A critical error has occurred!
                             The application cannot resume in this state.
                             Please try refreshing the page.
                             If that does not work, please contact your system administrator.
