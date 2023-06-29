@@ -27,7 +27,6 @@ import {
     useForceRerender,
     translatedConfig,
     match,
-    useOnOutsideClick,
     currentRef,
 } from "../util";
 import { unreachable } from "../util/err";
@@ -545,7 +544,6 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef(null);
     const qrModalRef = useRef<ModalHandle>(null);
-    useOnOutsideClick(ref, () => !qrModalRef.current?.isOpen?.() && setState("closed"));
 
     const isActive = (label: State) => label === state;
 
@@ -696,6 +694,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             arrowSize={12}
             ariaRole="dialog"
             open={state !== "closed"}
+            onClose={() => setState("closed")}
             viewPortMargin={12}
         >
             <FloatingTrigger>
