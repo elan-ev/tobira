@@ -5,7 +5,7 @@ import { useForm, useFormContext, FormProvider } from "react-hook-form";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
 import { Button } from "../../../../../../ui/Button";
-import { currentRef, match } from "../../../../../../util";
+import { currentRef, match, useOnOutsideClick } from "../../../../../../util";
 import { bug } from "../../../../../../util/err";
 import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
 import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
@@ -91,6 +91,20 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
     const { realm: realmRef, index, onSave, onCancel, onCompleted, onError }
         = useContext(EditModeFormContext) ?? bug("missing context provider");
 
+    const { t } = useTranslation();
+    const { formState: { isDirty } } = useFormContext();
+    const modalRef = useRef<ConfirmationModalHandle>(null);
+    const ref = useRef<HTMLFormElement>(null);
+
+    const handleOnCancel = () => {
+        if (isDirty) {
+            currentRef(modalRef).open();
+        } else {
+            onCancel?.();
+        }
+    };
+
+    useOnOutsideClick(ref, () => handleOnCancel());
 
     const { id: realm, blocks } = useFragment(graphql`
         fragment EditModeFormRealmData on Realm {
@@ -131,25 +145,29 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
 
     return <FormProvider<FormData> {...form}>
         <FocusTrap>
-            <form onSubmit={onSubmit}>
+            <form ref={ref} onSubmit={onSubmit}>
                 {children}
-                <EditModeButtons onCancel={onCancel} />
+                <EditModeButtons onCancel={handleOnCancel} />
             </form>
         </FocusTrap>
+        <ConfirmationModal
+            title={t("manage.realm.content.confirm-cancel")}
+            buttonContent={t("manage.realm.content.cancel")}
+            onSubmit={onCancel}
+            ref={modalRef}
+        >
+            <p>{t("manage.realm.content.cancel-warning")}</p>
+        </ConfirmationModal>
     </FormProvider>;
 };
 
 
 type EditModeButtonsProps = {
-    onCancel?: () => void;
+    onCancel: () => void;
 };
 
 const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
     const { t } = useTranslation();
-
-    const modalRef = useRef<ConfirmationModalHandle>(null);
-
-    const { formState: { isDirty } } = useFormContext();
 
     return <div css={{
         marginTop: 12,
@@ -159,13 +177,7 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
     }}>
         <Button
             kind="danger"
-            onClick={() => {
-                if (isDirty) {
-                    currentRef(modalRef).open();
-                } else {
-                    onCancel?.();
-                }
-            }}
+            onClick={onCancel}
         >
             {t("manage.realm.content.cancel")}
         </Button>
@@ -175,13 +187,5 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
         >
             {t("manage.realm.content.save")}
         </Button>
-        <ConfirmationModal
-            title={t("manage.realm.content.confirm-cancel")}
-            buttonContent={t("manage.realm.content.cancel")}
-            onSubmit={onCancel}
-            ref={modalRef}
-        >
-            <p>{t("manage.realm.content.cancel-warning")}</p>
-        </ConfirmationModal>
     </div>;
 };
