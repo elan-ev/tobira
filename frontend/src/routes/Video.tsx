@@ -27,7 +27,6 @@ import {
     useForceRerender,
     translatedConfig,
     match,
-    useOnOutsideClick,
     currentRef,
 } from "../util";
 import { unreachable } from "../util/err";
@@ -545,7 +544,6 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef(null);
     const qrModalRef = useRef<ModalHandle>(null);
-    useOnOutsideClick(ref, () => !qrModalRef.current?.isOpen?.() && setState("closed"));
 
     const isActive = (label: State) => label === state;
 
@@ -622,9 +620,11 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             <HiOutlineQrCode />
             {t("video.share.show-qr-code")}
         </Button>
-        <Modal ref={qrModalRef}
+        <Modal
+            ref={qrModalRef}
             title={t("video.share.title", { title: label })}
             css={{ minWidth: "max-content" }}
+            closeOnOutsideClick
         >
             <div css={{ display: "flex", justifyContent: "center" }}>
                 <QRCodeCanvas
@@ -694,6 +694,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             arrowSize={12}
             ariaRole="dialog"
             open={state !== "closed"}
+            onClose={() => setState("closed")}
             viewPortMargin={12}
         >
             <FloatingTrigger>
