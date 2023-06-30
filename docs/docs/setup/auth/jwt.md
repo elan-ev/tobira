@@ -74,7 +74,7 @@ A few points and suggestions regarding the configuration:
   ```xml
   <property name="usernameMapping" value="['username'].asString()" />
   <property name="nameMapping" value="['name'].asString()" />
-  <property name="emailMapping" value="['username'].asString() + '@tobira.invalid'" />
+  <property name="emailMapping" value="['email'].asString()" />
   ```
   *Note*: this way, the Tobira username (which is given by its login provider) is trusted in Opencast.
 You should think about the consequences this might have for the security of your installation!

@@ -45,7 +45,7 @@ server {
         proxy_set_header x-tobira-username $username;
         proxy_set_header x-tobira-user-display-name $display_names;
         proxy_set_header x-tobira-user-roles $roles;
-
+        proxy_set_header x-tobira-user-email $email;
         proxy_pass http://localhost:3080;
     }
 
@@ -57,6 +57,7 @@ server {
         proxy_set_header x-tobira-username "";
         proxy_set_header x-tobira-user-display-name "";
         proxy_set_header x-tobira-user-roles "";
+        proxy_set_header x-tobira-user-email "";
         proxy_pass http://localhost:3080;
     }
 }
@@ -125,11 +126,13 @@ location / {
         local unique_id = res.header["Variable-uniqueID"]
         local surname = res.header["Variable-surname"]
         local given_name = res.header["Variable-givenName"]
+        local email = res.header["Variable-mail"]
         -- TODO: retrieve more info, according to your Shibboleth.
 
         local all_fields_set = unique_id ~= nil
             and surname ~= nil
             and given_name ~= nil
+            and email ~= nil
 
         if res.status == 200 and all_fields_set then
             local display_name = given_name .. " " .. surname
@@ -142,10 +145,12 @@ location / {
             ngx.req.set_header("x-tobira-username", ngx.encode_base64(unique_id))
             ngx.req.set_header("x-tobira-user-display-name", ngx.encode_base64(display_name))
             ngx.req.set_header("x-tobira-user-roles", ngx.encode_base64(table.concat(roles, ",")))
+            ngx.req.set_header("x-tobira-user-email", ngx.encode_base64(email))
         else
             ngx.req.clear_header("x-tobira-username");
             ngx.req.clear_header("x-tobira-user-display-name");
             ngx.req.clear_header("x-tobira-user-roles");
+            ngx.req.clear_header("x-tobira-user-email");
         end
     }
 

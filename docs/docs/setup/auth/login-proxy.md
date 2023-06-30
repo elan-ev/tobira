@@ -76,6 +76,7 @@ server {
         proxy_set_header x-tobira-username "";
         proxy_set_header x-tobira-user-display-name "";
         proxy_set_header x-tobira-user-roles "";
+        proxy_set_header x-tobira-user-email "";
         proxy_pass http://localhost:3080;
     }
 
@@ -92,6 +93,7 @@ server {
         proxy_set_header x-tobira-username "";
         proxy_set_header x-tobira-user-display-name "";
         proxy_set_header x-tobira-user-roles "";
+        proxy_set_header x-tobira-user-email "";
         proxy_pass http://localhost:3080;
     }
 
@@ -129,6 +131,7 @@ const check = async ({ userid, password }) => {
         username: user.id,
         displayName: user.name,
         roles: user.roles,
+        email: user.email,
     };
 };
 
