@@ -55,31 +55,37 @@ const check: LoginCheck = async ({ userid, password }) => {
             username: userid,
             displayName: user.displayName,
             roles: user.roles.concat(["ROLE_ANONYMOUS", "ROLE_USER"]),
+            email: user.email,
         }
         : "forbidden";
 };
 
 const DUMMY_PASSWORD = "tobira";
-const DUMMY_USERS: Record<string, { displayName: string; roles: string[] }> = {
+const DUMMY_USERS: Record<string, { displayName: string; roles: string[]; email: string; }> = {
     "admin": {
         displayName: "Administrator",
         roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO"],
+        email: "admin@example.org",
     },
     "sabine": {
         displayName: "Sabine Rudolfs",
         roles: ["ROLE_USER_SABINE", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
+        email: "sabine@example.org",
     },
     "björk": {
         displayName: "Prof. Björk Guðmundsdóttir",
         roles: ["ROLE_USER_BJÖRK", "ROLE_EXTERNAL", "ROLE_TOBIRA_MODERATOR"],
+        email: "björk@example.org",
     },
     "morgan": {
         displayName: "Morgan Yu",
         roles: ["ROLE_USER_MORGAN", "ROLE_STUDENT", "ROLE_TOBIRA_UPLOAD"],
+        email: "morgan@example.org",
     },
     "jose": {
         displayName: "José Carreño Quiñones",
         roles: ["ROLE_USER_JOSE", "ROLE_STUDENT"],
+        email: "jose@example.org",
     },
 };
 

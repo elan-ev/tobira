@@ -17,6 +17,10 @@ impl User {
         &self.username
     }
 
+    fn email(&self) -> &str {
+        &self.email
+    }
+
     fn roles(&self) -> Vec<&str> {
         self.roles.iter().map(AsRef::as_ref).collect()
     }

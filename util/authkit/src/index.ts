@@ -8,6 +8,7 @@ export type LoginOutcome = "forbidden" | {
     username: string;
     displayName: string;
     roles: string[];
+    email: string;
 };
 
 /** What the login check gets passed: the data from the login form. */
@@ -181,7 +182,7 @@ const listener = async (
     if (outcome === "forbidden") {
         res.writeHead(StatusCode.FORBIDDEN);
     } else {
-        const { username, displayName, roles } = outcome;
+        const { username, displayName, roles, email } = outcome;
         const b64encode = (s: string) => Buffer.from(s).toString("base64");
 
         let response: http.IncomingMessage;
@@ -195,6 +196,7 @@ const listener = async (
                         "x-tobira-username": b64encode(username),
                         "x-tobira-user-display-name": b64encode(displayName),
                         "x-tobira-user-roles": b64encode(roles.join(",")),
+                        "x-tobira-user-email": b64encode(email),
                     },
                 };
                 const client = http.request(options);

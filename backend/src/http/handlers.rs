@@ -392,7 +392,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
                 // Not even all fields are allowed. `myVideos` for example
                 // contains DB data.
                 let allowed_fields = [
-                    "username", "displayName", "roles",
+                    "username", "displayName", "roles", "email",
                     "canUpload", "canUseStudio", "canUseEditor",
                 ];
                 let filtered = user.clone().into_iter()
