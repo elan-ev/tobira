@@ -258,32 +258,33 @@ impl ColorConfig {
         }
 
 
-        // Grey
+        // Neutral colors (05 = background, 90 = foreground)
         let base_grey = Lch::from_color(self.grey50.0.into_format::<f32>());
-        add(&mut light, "grey0", Lch { l: 97.3, ..base_grey });
-        add(&mut light, "grey1", Lch { l: 95.6, ..base_grey });
-        add(&mut light, "grey2", Lch { l: 92.9, ..base_grey });
-        add(&mut light, "grey3", Lch { l: 87.5, ..base_grey });
-        add(&mut light, "grey4", Lch { l: 82.0, ..base_grey });
-        add(&mut light, "grey5", Lch { l: 68.0, ..base_grey });
-        add(&mut light, "grey6", Lch { l: 43.2, ..base_grey });
-        add(&mut light, "grey7", Lch { l: 21.2, ..base_grey });
+        add(&mut light, "neutral05", Lch { l: 99.7, ..base_grey });
+        add(&mut light, "neutral10", Lch { l: 95.9, ..base_grey });
+        add(&mut light, "neutral20", Lch { l: 92.0, ..base_grey });
+        add(&mut light, "neutral25", Lch { l: 88.0, ..base_grey });
+        add(&mut light, "neutral30", Lch { l: 83.9, ..base_grey });
+        add(&mut light, "neutral35", Lch { l: 78.0, ..base_grey });
+        add(&mut light, "neutral40", Lch { l: 67.0, ..base_grey });
+        add(&mut light, "neutral50", Lch { l: 50.0, ..base_grey });
+        add(&mut light, "neutral60", Lch { l: 37.0, ..base_grey });
+        add(&mut light, "neutral70", Lch { l: 27.0, ..base_grey });
+        add(&mut light, "neutral80", Lch { l: 17.0, ..base_grey });
+        add(&mut light, "neutral90", Lch { l: 8.0, ..base_grey });
 
-        add(&mut dark, "grey0", Lch { l: 10.7, ..base_grey });
-        add(&mut dark, "grey1", Lch { l: 12.5, ..base_grey });
-        add(&mut dark, "grey2", Lch { l: 15.0, ..base_grey });
-        add(&mut dark, "grey3", Lch { l: 18.2, ..base_grey });
-        add(&mut dark, "grey4", Lch { l: 24.0, ..base_grey });
-        add(&mut dark, "grey5", Lch { l: 36.0, ..base_grey });
-        add(&mut dark, "grey6", Lch { l: 60.0, ..base_grey });
-        add(&mut dark, "grey7", Lch { l: 68.0, ..base_grey });
-
-
-        // Foreground & background
-        add(&mut light, "background", Lch::new(100.0, 0.0, 0.0));
-        add(&mut light, "foreground", Lch::new(0.0, 0.0, 0.0));
-        add(&mut dark, "background", Lch { l: 7.7, ..base_grey });
-        add(&mut dark, "foreground", Lch::new(79.0, 0.0, 0.0));
+        add(&mut dark, "neutral05", Lch { l: 7.7, ..base_grey });
+        add(&mut dark, "neutral10", Lch { l: 11.5, ..base_grey });
+        add(&mut dark, "neutral20", Lch { l: 15.3, ..base_grey });
+        add(&mut dark, "neutral25", Lch { l: 19.1, ..base_grey });
+        add(&mut dark, "neutral30", Lch { l: 22.9, ..base_grey });
+        add(&mut dark, "neutral35", Lch { l: 26.7, ..base_grey });
+        add(&mut dark, "neutral40", Lch { l: 32.7, ..base_grey });
+        add(&mut dark, "neutral50", Lch { l: 43.4, ..base_grey });
+        add(&mut dark, "neutral60", Lch { l: 56.0, ..base_grey });
+        add(&mut dark, "neutral70", Lch { l: 62.0, ..base_grey });
+        add(&mut dark, "neutral80", Lch { l: 68.0, ..base_grey });
+        add(&mut dark, "neutral90", Lch { l: 79.0, ..base_grey });
 
         (light, dark)
     }
