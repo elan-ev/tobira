@@ -87,14 +87,14 @@ impl ColorConfig {
         //
         // Regarding the minimum of 35: We have two variations, with one being
         // having 24 less brightness. So with 35 starting brightness, that only
-        // leaves 11, which is quite dim. The color should still be noticable
+        // leaves 11, which is quite dim. The color should still be noticeable
         // there.
         //
-        // Regarding the maximum: We want to place this color on our grey1
-        // background, which has 95.6% brightness. The WCAG contrast between
+        // Regarding the maximum: We want to place this color on our neutral15
+        // background, which has 94.3% brightness. The WCAG contrast between
         // two colors only depend on the `l` channel, i.e. the perceived
         // lightness (well, there are differences and rounding errors, but it's
-        // not relevant here). For a contrast ratio of 4.5:1 to the grey1
+        // not relevant here). For a contrast ratio of 4.5:1 to the neutral15
         // background, a brightness of at most 46.5 is required.
         let primary = Lch::from_color(self.primary.0.into_format::<f32>());
         if primary.l < 35.0 || primary.l > 46.5 {
@@ -185,7 +185,7 @@ impl ColorConfig {
             // definitions for "contrast", there are multiple way to do this.
             // We could say we want to maximize the WCAG contrast, but:
             // - This is a bit more involved.
-            // - The WCAG contrast defintion is likely changing soon to address
+            // - The WCAG contrast definition is likely changing soon to address
             //   new research in perceived contrast.
             // - In fact, the current WCAG contrast formula is not based
             //   on "perceived lightness" of a color. See [1].
