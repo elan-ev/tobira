@@ -28,14 +28,15 @@ How to pick a color:
 - For call-to-action elements and elements with positive connotation, use the `happy*` colors.
   Of course, `happy` is often the same as `primary`, but you should still specify `happy`, pretending they are different.
 - For all other things that should be colored (i.e. not grey), use `primary*`
-- For all greys, well, use `grey*`.
+- For all greys, well, use `neutral*`.
 
 Each color has a number, with smaller numbers being brighter, larger number being darker.
+(In dark mode, this is reversed.)
 For `primary`, `danger` and `happy`, try to always use the `0` variant first.
 The `*BwInverted` fields are either black or white, depending on what has the greater contrast to the specified color.
 
 Check for sufficient contrast!
 
-- `primary0` or `danger0` text should be only used on top of `background`, `grey0` and `grey1`, and not on anything darker.
+- `primary0` or `danger0` text should be only used on top of `background`, `neutral05` and `neutral10`, and not on anything darker.
 - `happy*` colors currently have no enforced max brightness so shouldn't be used as text color at all.
   (If there is a good reason to use it as text color, we will have to see...)

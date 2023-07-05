@@ -190,7 +190,7 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
         <li css={{
             display: "flex",
             alignItems: "center",
-            border: `1px solid ${COLORS.grey4}`,
+            border: `1px solid ${COLORS.neutral25}`,
             margin: "4px 0",
             borderRadius: 4,
         }}>
@@ -199,10 +199,10 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                 flexDirection: "column",
                 marginRight: 16,
                 fontSize: 18,
-                borderRight: `1px solid ${COLORS.grey4}`,
+                borderRight: `1px solid ${COLORS.neutral25}`,
                 "& > div": {
                     "&:first-child > button": {
-                        borderBottom: `1px solid ${COLORS.grey4}`,
+                        borderBottom: `1px solid ${COLORS.neutral25}`,
                         borderTopLeftRadius: 4,
                     },
                     "&:last-child > button": {
@@ -215,17 +215,17 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                     alignItems: "center",
                     padding: "5px 12px",
                     backgroundColor: "inherit",
-                    ...isDark && { color: COLORS.grey6 },
+                    ...isDark && { color: COLORS.neutral60 },
                     "&:disabled": {
                         color: "transparent",
                     },
                     "&:not([disabled])": {
                         cursor: "pointer",
                         "&:hover, &:focus": {
-                            backgroundColor: COLORS.grey0,
+                            backgroundColor: COLORS.neutral10,
                             ...isDark && {
-                                backgroundColor: COLORS.grey2,
-                                color: COLORS.grey7,
+                                backgroundColor: COLORS.neutral15,
+                                color: COLORS.neutral80,
                             },
                         },
                         ...focusStyle({ offset: -1.5 }),

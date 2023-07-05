@@ -29,7 +29,7 @@ export const Card: React.FC<Props> = ({ kind, iconPos = "left", children, ...res
                     color: COLORS.danger0BwInverted,
                 }) as Record<string, string>,
                 "info": () => ({
-                    backgroundColor: COLORS.grey0,
+                    backgroundColor: COLORS.neutral10,
                 }),
             }),
         }}
@@ -37,7 +37,7 @@ export const Card: React.FC<Props> = ({ kind, iconPos = "left", children, ...res
     >
         {match(kind, {
             "error": () => <FiAlertTriangle />,
-            "info": () => <FiInfo css={{ color: COLORS.grey6 }} />,
+            "info": () => <FiInfo css={{ color: COLORS.neutral60 }} />,
         })}
         <div>{children}</div>
     </div>

@@ -389,8 +389,8 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                 gap: 16,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: isDragging ? COLORS.grey0 : "none",
-                borderColor: isDragging ? COLORS.primary0 : COLORS.grey4,
+                backgroundColor: isDragging ? COLORS.neutral10 : "none",
+                borderColor: isDragging ? COLORS.primary0 : COLORS.neutral25,
                 "--transition-length": "80ms",
                 transition: "background-color var(--transition-length), "
                     + "border-color var(--transition-length)",
@@ -401,7 +401,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                 position: "relative",
                 lineHeight: 1,
                 fontSize: 64,
-                color: COLORS.grey6,
+                color: COLORS.neutral60,
             }}>
                 {/* This depends on the SVG elements used in the icon. Technically, the icon pack
                     does not guarantee that and could change it at any time. But we decided it's
@@ -623,13 +623,13 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
     } else if (state === "waiting") {
         return <div css={{
             ...shared,
-            ...animatedStripes(45, COLORS.grey6, COLORS.grey5, 4),
+            ...animatedStripes(45, COLORS.neutral60, COLORS.neutral40, 4),
         }} />;
     } else {
         return (
             <div css={{
                 ...shared,
-                backgroundColor: COLORS.grey2,
+                backgroundColor: COLORS.neutral15,
             }}>
                 <div css={{
                     height: "100%",

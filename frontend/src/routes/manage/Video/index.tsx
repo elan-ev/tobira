@@ -24,7 +24,7 @@ import { Card } from "../../../ui/Card";
 import { SmallDescription } from "../../../ui/metadata";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
-import { COLORS } from "../../../color";
+import { COLORS, useColorScheme } from "../../../color";
 
 
 export const PATH = "/~manage/videos";
@@ -163,9 +163,9 @@ const EventTable: React.FC<EventTableProps> = ({ events, vars }) => {
                 position: "sticky",
                 top: 0,
                 zIndex: 10,
-                backgroundColor: COLORS.background,
+                backgroundColor: COLORS.neutral05,
                 "&  > tr > th": {
-                    borderBottom: `1px solid ${COLORS.grey4}`,
+                    borderBottom: `1px solid ${COLORS.neutral25}`,
                     textAlign: "left",
                     padding: "8px 12px",
                 },
@@ -176,10 +176,10 @@ const EventTable: React.FC<EventTableProps> = ({ events, vars }) => {
             },
             "& > tbody": {
                 "& > tr:hover, tr:focus-within": {
-                    backgroundColor: COLORS.grey2,
+                    backgroundColor: COLORS.neutral15,
                 },
                 "& > tr:not(:first-child) > td": {
-                    borderTop: `1px solid ${COLORS.grey4}`,
+                    borderTop: `1px solid ${COLORS.neutral25}`,
                 },
                 "& td": {
                     padding: 6,
@@ -259,6 +259,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
 );
 
 const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
+    const isDark = useColorScheme().scheme === "dark";
     const created = new Date(event.created);
     const link = `${PATH}/${keyOfId(event.id)}`;
     const { t, i18n } = useTranslation();
@@ -285,7 +286,7 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
                         padding: "0 8px",
                         fontSize: "small",
                         borderRadius: 10,
-                        backgroundColor: COLORS.grey1,
+                        backgroundColor: COLORS.neutral10,
                     }}>{t("video.not-ready.label")}</span>}
                 </div>
                 <SmallDescription text={event.description} />
@@ -293,7 +294,7 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
             <td css={{ fontSize: 14 }}>
                 {created.toLocaleDateString(i18n.language)}
                 <br />
-                <span css={{ color: COLORS.grey6 }}>
+                <span css={{ color: isDark ? COLORS.neutral60 : COLORS.neutral50 }}>
                     {created.toLocaleTimeString(i18n.language)}
                 </span>
             </td>
@@ -366,14 +367,14 @@ const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (
             lineHeight: 0,
             ...disabled
                 ? {
-                    color: COLORS.grey4,
+                    color: COLORS.neutral25,
                     pointerEvents: "none",
                 }
                 : {
-                    color: COLORS.grey6,
+                    color: COLORS.neutral60,
                     cursor: "pointer",
                     ":hover, :focus": {
-                        color: COLORS.foreground,
+                        color: COLORS.neutral90,
                     },
                 },
         }}

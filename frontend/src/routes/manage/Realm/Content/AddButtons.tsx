@@ -108,14 +108,14 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
             <Floating
                 padding={0}
                 borderWidth={isDark ? 1 : 0}
-                backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+                backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
                 shadowBlur={12}
                 shadowColor="rgba(0, 0, 0, 30%)"
                 css={{ width: 200 }}
             >
                 <div css={{
                     fontSize: 14,
-                    color: COLORS.grey6,
+                    color: COLORS.neutral60,
                     padding: "8px 16px",
                     cursor: "default",
                 }}>{t("manage.realm.content.add-popup-title")}</div>
@@ -123,10 +123,8 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                     listStyle: "none",
                     margin: 0,
                     padding: 0,
-                    "& > li": {
-                        "&:not(:last-child)": {
-                            borderBottom: `1px solid ${isDark ? COLORS.grey4 : COLORS.grey2}`,
-                        },
+                    "& > li:not(:last-child)": {
+                        borderBottom: `1px solid ${isDark ? COLORS.neutral25 : COLORS.neutral15}`,
                     },
                 }}>
                     <AddItem
@@ -193,7 +191,7 @@ const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
                 gap: 16,
                 backgroundColor: "transparent",
                 "&:hover, &:focus": {
-                    backgroundColor: COLORS.grey0,
+                    backgroundColor: COLORS.neutral10,
                 },
                 ...focusStyle({ inset: true }),
             }}

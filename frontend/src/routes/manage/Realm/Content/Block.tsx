@@ -107,7 +107,7 @@ export const EditBlock: React.FC<Props> = ({
 
         <div css={{
             alignSelf: "stretch",
-            border: `1px solid ${COLORS.grey4}`,
+            border: `1px solid ${COLORS.neutral25}`,
             borderRadius: 4,
             padding: 12,
             ...editMode && {

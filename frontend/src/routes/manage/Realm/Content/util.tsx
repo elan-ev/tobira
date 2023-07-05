@@ -14,19 +14,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
             padding: 6,
             alignItems: "center",
             border: "none",
-            color: COLORS.grey6,
+            color: COLORS.neutral60,
             backgroundColor: "inherit",
             transition: "background-color 0.15s, color 0.15s",
             "&[disabled]": {
-                color: COLORS.grey4,
+                color: COLORS.neutral25,
             },
             "&:not([disabled])": {
                 cursor: "pointer",
                 "&:hover, &:focus": {
-                    backgroundColor: COLORS.grey0,
+                    backgroundColor: COLORS.neutral10,
                     ...useColorScheme().scheme === "dark" && {
-                        backgroundColor: COLORS.grey2,
-                        color: COLORS.grey7,
+                        backgroundColor: COLORS.neutral15,
+                        color: COLORS.neutral80,
                     },
                 },
                 ...focusStyle({}),
@@ -45,13 +45,13 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
             fontSize: 18,
             display: "flex",
             alignItems: "center",
-            border: `1px solid ${COLORS.grey4}`,
+            border: `1px solid ${COLORS.neutral25}`,
             borderRadius: 4,
             "& > *": {
                 display: "flex",
-                color: COLORS.grey6,
+                color: COLORS.neutral60,
                 "&:not(:last-child)": {
-                    borderRight: `1px solid ${COLORS.grey4}`,
+                    borderRight: `1px solid ${COLORS.neutral25}`,
                 },
                 "&:last-child > button": {
                     borderTopRightRadius: 4,

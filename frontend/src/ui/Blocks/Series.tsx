@@ -264,9 +264,9 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
         <div css={{
             marginTop: 24,
             padding: 12,
-            backgroundColor: COLORS.grey1,
+            backgroundColor: COLORS.neutral10,
             borderRadius: 10,
-            ...useColorScheme().scheme === "dark" && darkModeBoxShadow,
+            ...isDark && darkModeBoxShadow,
         }}>
             <div css={{
                 display: "flex",
@@ -277,7 +277,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
                 {title && <h2 css={{
                     display: "inline-block",
                     padding: "8px 12px",
-                    color: isDark ? COLORS.foreground : COLORS.grey7,
+                    color: isDark ? COLORS.neutral90 : COLORS.neutral80,
                     fontSize: 20,
                     lineHeight: 1.3,
                 }}>{title}</h2>}
@@ -325,13 +325,13 @@ const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>
                 <ProtoButton aria-label={label} css={{
                     display: "flex",
                     alignItems: "center",
-                    border: `1px solid ${COLORS.grey5}`,
+                    border: `1px solid ${COLORS.neutral40}`,
                     borderRadius: 4,
                     gap: 8,
                     height: 31,
                     padding: "0 8px",
                     whiteSpace: "nowrap",
-                    ":hover, :focus": { backgroundColor: COLORS.grey2 },
+                    ":hover, :focus": { backgroundColor: COLORS.neutral15 },
                     ":focus-visible": { borderColor: COLORS.focus },
                     ...focusStyle({ offset: -1 }),
                 }}>
@@ -380,7 +380,7 @@ const ViewMenu: React.FC = () => {
         <div css={{
             display: "flex",
             alignItems: "center",
-            svg: { fontSize: 22, color: COLORS.grey6 },
+            svg: { fontSize: 22, color: COLORS.neutral60 },
         }}>{icon}</div>
     );
 
@@ -409,7 +409,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
             cursor: "default",
             fontSize: 12,
             padding: "8px 14px 4px 14px",
-            color: COLORS.grey6,
+            color: COLORS.neutral60,
         },
         ul: {
             listStyle: "none",
@@ -483,7 +483,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
     });
 
     return <Floating
-        backgroundColor={isDark ? COLORS.grey2 : COLORS.background}
+        backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
         hideArrowTip
         padding={0}
         borderWidth={isDark ? 1 : 0}
@@ -508,7 +508,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
     return (
         <li css={{
             ":not(:last-child)": {
-                borderBottom: `1px solid ${isDark ? COLORS.grey5 : COLORS.grey3}`,
+                borderBottom: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
             },
             ":last-child button": {
                 borderRadius: "0 0 8px 8px",
@@ -530,14 +530,14 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
                     width: "100%",
                     svg: { fontSize: 16 },
                     ":hover, :focus": {
-                        backgroundColor: isDark ? COLORS.grey0 : COLORS.grey2,
+                        backgroundColor: isDark ? COLORS.neutral10 : COLORS.neutral15,
                     },
                     ...focusStyle({ inset: true }),
                     "&[disabled]": {
                         fontWeight: "bold",
-                        color: COLORS.grey7,
+                        color: COLORS.neutral80,
                         pointerEvents: "none",
-                        ...isDark && { backgroundColor: COLORS.grey0 },
+                        ...isDark && { backgroundColor: COLORS.neutral10 },
                     },
                 }}
             >
@@ -734,7 +734,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
     const buttonCss = {
         position: "absolute",
         alignSelf: "center",
-        backgroundColor: COLORS.grey5,
+        backgroundColor: COLORS.neutral40,
         borderRadius: 24,
         padding: 11,
         transition: "background-color .05s",
@@ -744,7 +744,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
             fontSize: 26,
         },
         ":hover, :focus": {
-            backgroundColor: COLORS.grey6,
+            backgroundColor: COLORS.neutral60,
         },
         ...focusStyle({}),
     } as const;
@@ -796,31 +796,27 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
 
     return (
         <details css={{
-            backgroundColor: COLORS.grey3,
+            backgroundColor: COLORS.neutral20,
             borderRadius: 4,
             margin: "8px 0",
-            summary: {
-                color: COLORS.grey7,
-                cursor: "pointer",
-                fontSize: 14,
-                padding: "6px 12px",
-                span: {
-                    marginLeft: 4,
-                },
-                ":hover, :focus-visible": {
-                    backgroundColor: COLORS.grey4,
-                    borderRadius: 4,
-                    color: COLORS.foreground,
-                },
-                ...focusStyle({}),
-            },
             ":is([open]) summary": {
-                borderBottom: `1px solid ${COLORS.grey4}`,
+                borderBottom: `1px solid ${COLORS.neutral25}`,
                 borderRadius: "4px 4px 0 0",
             },
         }}>
-            <summary>
-                <span>
+            <summary css={{
+                color: COLORS.neutral80,
+                cursor: "pointer",
+                fontSize: 14,
+                padding: "6px 12px",
+                ":hover, :focus-visible": {
+                    backgroundColor: COLORS.neutral25,
+                    borderRadius: 4,
+                    color: COLORS.neutral90,
+                },
+                ...focusStyle({}),
+            }}>
+                <span css={{ marginLeft: 4 }}>
                     {t("series.upcoming-live-streams", { count })}
                 </span>
             </summary>
@@ -875,7 +871,7 @@ const Item: React.FC<ItemProps> = ({
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
-            color: COLORS.foreground,
+            color: COLORS.neutral90,
         }}>
             <h3 css={{
                 display: "flex",
@@ -900,7 +896,7 @@ const Item: React.FC<ItemProps> = ({
                 }}>{event.title}</div>
             </h3>
             <div css={{
-                color: COLORS.grey7,
+                color: COLORS.neutral80,
                 fontSize: 14,
                 display: "flex",
                 flexWrap: "wrap",
@@ -931,10 +927,8 @@ const Item: React.FC<ItemProps> = ({
         padding: 6,
         borderRadius: 12,
         textDecoration: "none",
-        "& a": { color: COLORS.foreground, textDecoration: "none" },
-        ...active && {
-            backgroundColor: COLORS.grey3,
-        },
+        "& a": { color: COLORS.neutral90, textDecoration: "none" },
+        ...active && { backgroundColor: COLORS.neutral20 },
         ...!active && {
             "& > div:first-child": {
                 transition: `transform ${TRANSITION_OUT_DURATION}, `
