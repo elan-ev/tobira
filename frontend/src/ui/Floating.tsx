@@ -261,7 +261,7 @@ export const FloatingTrigger: React.FC<FloatingTriggerProps> = ({ children }) =>
 type FloatingProps = React.PropsWithChildren<{
     backgroundColor?: string;
 
-    /** Border color. Default: `--grey65`. */
+    /** Border color. Default: `neutral40`. */
     borderColor?: string;
 
     borderWidth?: number;
