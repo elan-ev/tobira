@@ -123,10 +123,8 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                     listStyle: "none",
                     margin: 0,
                     padding: 0,
-                    "& > li": {
-                        "&:not(:last-child)": {
-                            borderBottom: `1px solid ${isDark ? COLORS.neutral25 : COLORS.neutral15}`,
-                        },
+                    "& > li:not(:last-child)": {
+                        borderBottom: `1px solid ${isDark ? COLORS.neutral25 : COLORS.neutral15}`,
                     },
                 }}>
                     <AddItem
