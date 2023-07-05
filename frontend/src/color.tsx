@@ -31,8 +31,11 @@ export const COLORS = {
     neutral15: "var(--color-neutral15)",
     neutral20: "var(--color-neutral20)",
     neutral25: "var(--color-neutral25)",
+    neutral30: "var(--color-neutral30)",
     neutral40: "var(--color-neutral40)",
+    neutral50: "var(--color-neutral50)",
     neutral60: "var(--color-neutral60)",
+    neutral70: "var(--color-neutral70)",
     neutral80: "var(--color-neutral80)",
     neutral90: "var(--color-neutral90)",
 
