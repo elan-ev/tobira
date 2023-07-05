@@ -28,9 +28,9 @@ export const COLORS = {
 
     grey0: "var(--color-neutral10)",
     grey1: "var(--color-neutral10)",
-    grey2: "var(--color-neutral20)",
-    grey3: "var(--color-neutral25)",
-    grey4: "var(--color-neutral30)",
+    grey2: "var(--color-neutral15)",
+    grey3: "var(--color-neutral20)",
+    grey4: "var(--color-neutral25)",
     grey5: "var(--color-neutral40)",
     grey6: "var(--color-neutral60)",
     grey7: "var(--color-neutral80)",

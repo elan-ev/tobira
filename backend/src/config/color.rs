@@ -262,10 +262,10 @@ impl ColorConfig {
         let base_grey = Lch::from_color(self.grey50.0.into_format::<f32>());
         add(&mut light, "neutral05", Lch { l: 99.7, ..base_grey });
         add(&mut light, "neutral10", Lch { l: 95.9, ..base_grey });
-        add(&mut light, "neutral20", Lch { l: 92.0, ..base_grey });
-        add(&mut light, "neutral25", Lch { l: 88.0, ..base_grey });
-        add(&mut light, "neutral30", Lch { l: 83.9, ..base_grey });
-        add(&mut light, "neutral35", Lch { l: 78.0, ..base_grey });
+        add(&mut light, "neutral15", Lch { l: 92.0, ..base_grey });
+        add(&mut light, "neutral20", Lch { l: 88.0, ..base_grey });
+        add(&mut light, "neutral25", Lch { l: 83.9, ..base_grey });
+        add(&mut light, "neutral30", Lch { l: 78.0, ..base_grey });
         add(&mut light, "neutral40", Lch { l: 67.0, ..base_grey });
         add(&mut light, "neutral50", Lch { l: 50.0, ..base_grey });
         add(&mut light, "neutral60", Lch { l: 37.0, ..base_grey });
@@ -275,10 +275,10 @@ impl ColorConfig {
 
         add(&mut dark, "neutral05", Lch { l: 7.7, ..base_grey });
         add(&mut dark, "neutral10", Lch { l: 11.5, ..base_grey });
-        add(&mut dark, "neutral20", Lch { l: 15.3, ..base_grey });
-        add(&mut dark, "neutral25", Lch { l: 19.1, ..base_grey });
-        add(&mut dark, "neutral30", Lch { l: 22.9, ..base_grey });
-        add(&mut dark, "neutral35", Lch { l: 26.7, ..base_grey });
+        add(&mut dark, "neutral15", Lch { l: 15.3, ..base_grey });
+        add(&mut dark, "neutral20", Lch { l: 19.1, ..base_grey });
+        add(&mut dark, "neutral25", Lch { l: 22.9, ..base_grey });
+        add(&mut dark, "neutral30", Lch { l: 26.7, ..base_grey });
         add(&mut dark, "neutral40", Lch { l: 32.7, ..base_grey });
         add(&mut dark, "neutral50", Lch { l: 43.4, ..base_grey });
         add(&mut dark, "neutral60", Lch { l: 56.0, ..base_grey });
