@@ -266,7 +266,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
             padding: 12,
             backgroundColor: COLORS.neutral10,
             borderRadius: 10,
-            ...useColorScheme().scheme === "dark" && darkModeBoxShadow,
+            ...isDark && darkModeBoxShadow,
         }}>
             <div css={{
                 display: "flex",
@@ -799,28 +799,24 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
             backgroundColor: COLORS.neutral20,
             borderRadius: 4,
             margin: "8px 0",
-            summary: {
+            ":is([open]) summary": {
+                borderBottom: `1px solid ${COLORS.neutral25}`,
+                borderRadius: "4px 4px 0 0",
+            },
+        }}>
+            <summary css={{
                 color: COLORS.neutral80,
                 cursor: "pointer",
                 fontSize: 14,
                 padding: "6px 12px",
-                span: {
-                    marginLeft: 4,
-                },
                 ":hover, :focus-visible": {
                     backgroundColor: COLORS.neutral25,
                     borderRadius: 4,
                     color: COLORS.neutral90,
                 },
                 ...focusStyle({}),
-            },
-            ":is([open]) summary": {
-                borderBottom: `1px solid ${COLORS.neutral25}`,
-                borderRadius: "4px 4px 0 0",
-            },
-        }}>
-            <summary>
-                <span>
+            }}>
+                <span css={{ marginLeft: 4 }}>
                     {t("series.upcoming-live-streams", { count })}
                 </span>
             </summary>
@@ -932,9 +928,7 @@ const Item: React.FC<ItemProps> = ({
         borderRadius: 12,
         textDecoration: "none",
         "& a": { color: COLORS.neutral90, textDecoration: "none" },
-        ...active && {
-            backgroundColor: COLORS.neutral20,
-        },
+        ...active && { backgroundColor: COLORS.neutral20 },
         ...!active && {
             "& > div:first-child": {
                 transition: `transform ${TRANSITION_OUT_DURATION}, `
