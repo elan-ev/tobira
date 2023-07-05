@@ -24,7 +24,7 @@ import { Card } from "../../../ui/Card";
 import { SmallDescription } from "../../../ui/metadata";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
-import { COLORS } from "../../../color";
+import { COLORS, useColorScheme } from "../../../color";
 
 
 export const PATH = "/~manage/videos";
@@ -259,6 +259,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
 );
 
 const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
+    const isDark = useColorScheme().scheme === "dark";
     const created = new Date(event.created);
     const link = `${PATH}/${keyOfId(event.id)}`;
     const { t, i18n } = useTranslation();
@@ -293,7 +294,7 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
             <td css={{ fontSize: 14 }}>
                 {created.toLocaleDateString(i18n.language)}
                 <br />
-                <span css={{ color: COLORS.neutral60 }}>
+                <span css={{ color: isDark ? COLORS.neutral60 : COLORS.neutral50 }}>
                     {created.toLocaleTimeString(i18n.language)}
                 </span>
             </td>

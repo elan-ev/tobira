@@ -1,7 +1,7 @@
 import { ReactNode, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ellipsisOverflowCss } from ".";
-import { COLORS } from "../color";
+import { COLORS, useColorScheme } from "../color";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -45,6 +45,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
     lines = 2,
 }) => {
     const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
     const sharedStyle = {
         fontSize: 13,
         marginTop: 4,
@@ -55,11 +56,13 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
         return <div {...{ className }} css={{
             ...sharedStyle,
             fontStyle: "italic",
+            color: isDark ? COLORS.neutral60 : COLORS.neutral50,
         }}>{t("manage.my-videos.no-description")}</div>;
     } else {
         return <div {...{ className }} css={{
             ...sharedStyle,
             maxWidth: 800,
+            color: isDark ? COLORS.neutral70 : COLORS.neutral60,
             ...ellipsisOverflowCss(lines),
         }}>{text}</div>;
     }
