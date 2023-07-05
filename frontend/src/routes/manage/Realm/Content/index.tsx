@@ -186,7 +186,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: COLORS.background,
+                    backgroundColor: COLORS.neutral05,
                     opacity: 0.75,
                     position: "absolute",
                     width: "100%",

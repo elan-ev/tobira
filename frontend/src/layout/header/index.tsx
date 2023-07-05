@@ -37,11 +37,11 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false
             paddingLeft: 0,
             alignItems: "center",
             justifyContent: "space-between",
-            backgroundColor: COLORS.background,
+            backgroundColor: COLORS.neutral05,
         }}>
             {loginMode ? <LoginMode /> : content}
         </header>
-        <div css={{ margin: "0 0 16px 0 ", height: 2, backgroundColor: COLORS.grey2 }} />
+        <div css={{ margin: "0 0 16px 0 ", height: 2, backgroundColor: COLORS.neutral15 }} />
     </>;
 };
 
@@ -126,6 +126,6 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
 const buttonOutline = {
     button: {
         padding: 5,
-        outline: `1.5px solid ${COLORS.grey4}`,
+        outline: `1.5px solid ${COLORS.neutral25}`,
     },
 };

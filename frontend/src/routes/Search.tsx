@@ -214,7 +214,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                 }}
                 css={{ width: "100%" }}
             />
-            <div css={{ color: COLORS.foreground }}>
+            <div css={{ color: COLORS.neutral90 }}>
                 <h3 css={{
                     marginBottom: 6,
                     ...ellipsisOverflowCss(2),
@@ -271,7 +271,7 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
                 gap: 16,
                 textDecoration: "none",
                 "&:hover, &:focus": {
-                    backgroundColor: COLORS.grey0,
+                    backgroundColor: COLORS.neutral10,
                 },
                 "& > *:first-child": {
                     minWidth: 200,

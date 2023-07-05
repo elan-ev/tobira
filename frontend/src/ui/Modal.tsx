@@ -84,17 +84,17 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                 }}
             >
                 <div {...{ className }} css={{
-                    backgroundColor: COLORS.background,
+                    backgroundColor: COLORS.neutral05,
                     borderRadius: 4,
                     minWidth: "clamp(300px, 90%, 400px)",
                     margin: 16,
                     ...isDark && {
-                        border: `1px solid ${COLORS.grey4}`,
+                        border: `1px solid ${COLORS.neutral25}`,
                     },
                 }}>
                     <div css={{
                         padding: "12px 16px",
-                        borderBottom: `1px solid ${COLORS.grey4}`,
+                        borderBottom: `1px solid ${COLORS.neutral25}`,
                         display: "flex",
                         alignItems: "center",
                     }}>

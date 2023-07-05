@@ -99,5 +99,5 @@ const Segment: React.FC<SegmentProps> = ({ target, children }) => (
 );
 
 export const BreadcrumbSeparator: React.FC = () => (
-    <FiChevronRight css={{ margin: "0 3px", flexShrink: 0, color: COLORS.grey5 }} />
+    <FiChevronRight css={{ margin: "0 3px", flexShrink: 0, color: COLORS.neutral40 }} />
 );

@@ -136,7 +136,7 @@ const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => 
                     ? <i>{t("manage.my-videos.technical-details.unknown-mimetype")}</i>
                     : <code>{mimetype}</code>}
                 {resolution && <span css={{
-                    backgroundColor: COLORS.grey1,
+                    backgroundColor: COLORS.neutral10,
                     marginLeft: 8,
                     padding: "2px 4px",
                     borderRadius: 4,
@@ -187,7 +187,7 @@ const FurtherInfo: React.FC<Props> = ({ event }) => {
 
 const SingleInfo: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
     <li>
-        <span css={{ color: COLORS.grey6, marginRight: 16 }}>{label}</span>
+        <span css={{ color: COLORS.neutral60, marginRight: 16 }}>{label}</span>
         {children}
     </li>
 );

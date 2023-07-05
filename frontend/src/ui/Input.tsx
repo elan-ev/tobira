@@ -8,7 +8,7 @@ import { COLORS } from "../color";
 
 const style = (error: boolean) => ({
     borderRadius: 4,
-    border: `1px solid ${error ? COLORS.danger0 : COLORS.grey4}`,
+    border: `1px solid ${error ? COLORS.danger0 : COLORS.neutral25}`,
     ":focus-visible": { borderColor: COLORS.focus },
     ...focusStyle({ offset: -1 }),
 });

@@ -177,7 +177,7 @@ const WelcomeMessage: React.FC = () => {
             padding: "8px 16px",
             gap: 16,
             alignItems: "center",
-            backgroundColor: COLORS.grey0,
+            backgroundColor: COLORS.neutral10,
             border: `2px dashed ${COLORS.happy0}`,
         }}>
             <FiSunrise css={{ marginTop: 8, fontSize: 32, minWidth: 32 }} />
@@ -205,7 +205,7 @@ const UserRealmNote: React.FC<Props> = ({ realm }) => {
             <div css={{
                 fontSize: 14,
                 lineHeight: 1,
-                color: COLORS.grey6,
+                color: COLORS.neutral60,
                 display: "flex",
                 gap: 4,
             }}>
@@ -263,7 +263,7 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
             code: {
                 display: "block",
                 fontSize: 14,
-                backgroundColor: COLORS.grey0,
+                backgroundColor: COLORS.neutral10,
                 borderRadius: 4,
                 padding: "4px 8px",
             },

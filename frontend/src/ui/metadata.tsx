@@ -48,7 +48,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
     const sharedStyle = {
         fontSize: 13,
         marginTop: 4,
-        color: COLORS.grey6,
+        color: COLORS.neutral60,
     };
 
     if (text === null) {

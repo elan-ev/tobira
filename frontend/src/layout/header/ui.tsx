@@ -13,7 +13,7 @@ export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children })
         display: "flex",
         position: "relative",
         alignItems: "center",
-        button: { color: COLORS.foreground },
+        button: { color: COLORS.neutral90 },
         gap: 8,
         [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { gap: 4 },
     }}>
@@ -39,7 +39,7 @@ export const ICON_STYLE = {
     fontSize: 28,
     opacity: "0.75",
     ":hover, :focus": { opacity: 1 },
-    ":hover": { outline: `2px solid ${COLORS.grey4}` },
+    ":hover": { outline: `2px solid ${COLORS.neutral25}` },
     ...focusStyle({}),
     [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 24 },
 };

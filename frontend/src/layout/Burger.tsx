@@ -29,11 +29,11 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
             justifyContent: "space-between",
             top: 0,
             right: 0,
-            backgroundColor: COLORS.background,
+            backgroundColor: COLORS.neutral05,
             height: "100%",
             width: "clamp(260px, 75%, 450px)",
             overflowY: "auto",
-            borderTop: `1px solid ${COLORS.grey4}`,
+            borderTop: `1px solid ${COLORS.neutral25}`,
             "> :nth-child(2)": { marginTop: 26 },
             li: {
                 borderRadius: 4,
@@ -56,7 +56,7 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
                     "svg:last-of-type": { display: "none" },
                 },
                 "> div": {
-                    backgroundColor: COLORS.grey3,
+                    backgroundColor: COLORS.neutral20,
                     borderRadius: 4,
                     border: "none",
                     color: COLORS.primary2,

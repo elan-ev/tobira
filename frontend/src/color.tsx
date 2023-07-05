@@ -26,17 +26,15 @@ export const COLORS = {
     happy2: "var(--color-happy2)",
     happy2BwInverted: "var(--color-happy2-bw-inverted)",
 
-    grey0: "var(--color-neutral10)",
-    grey1: "var(--color-neutral10)",
-    grey2: "var(--color-neutral15)",
-    grey3: "var(--color-neutral20)",
-    grey4: "var(--color-neutral25)",
-    grey5: "var(--color-neutral40)",
-    grey6: "var(--color-neutral60)",
-    grey7: "var(--color-neutral80)",
-
-    background: "var(--color-neutral05)",
-    foreground: "var(--color-neutral90)",
+    neutral05: "var(--color-neutral05)",
+    neutral10: "var(--color-neutral10)",
+    neutral15: "var(--color-neutral15)",
+    neutral20: "var(--color-neutral20)",
+    neutral25: "var(--color-neutral25)",
+    neutral40: "var(--color-neutral40)",
+    neutral60: "var(--color-neutral60)",
+    neutral80: "var(--color-neutral80)",
+    neutral90: "var(--color-neutral90)",
 
     // Additional aliases for colors set by the backend.
     focus: "var(--color-primary1)",

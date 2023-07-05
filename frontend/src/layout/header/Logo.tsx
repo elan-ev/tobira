@@ -42,7 +42,7 @@ export const Logo: React.FC = () => {
             height: `calc(100% + ${HEADER_BASE_PADDING * 2}px)`,
             flex: "0 1 auto",
             margin: `-${HEADER_BASE_PADDING}px 0`,
-            ":hover": { outlineOffset: -4, outline: `2px solid ${COLORS.grey4}` },
+            ":hover": { outlineOffset: -4, outline: `2px solid ${COLORS.neutral25}` },
             display: "block",
             borderRadius: 8,
             ...focusStyle({ offset: -4 }),
