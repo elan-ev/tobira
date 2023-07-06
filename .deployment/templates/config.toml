@@ -52,4 +52,6 @@ logo.large_dark.path = "/opt/tobira/{{ id }}/logo-large-dark.svg"
 logo.large_dark.resolution = [643, 217]
 logo.small.path = "/opt/tobira/{{ id }}/logo-small.svg"
 logo.small.resolution = [102, 115]
+logo.small_dark.path = "/opt/tobira/{{ id }}/logo-small.svg"
+logo.small_dark.resolution = [212, 182]
 favicon = "/opt/tobira/{{ id }}/favicon.svg"
