@@ -152,7 +152,7 @@ pub(crate) enum AuthContext {
 pub(crate) struct User {
     pub(crate) username: String,
     pub(crate) display_name: String,
-    pub(crate) email: String,
+    pub(crate) email: Option<String>,
     pub(crate) roles: HashSet<String>,
 }
 
@@ -226,7 +226,7 @@ impl User {
         // if there is no user session.
         let username = get_header(&auth_config.username_header)?;
         let display_name = get_header(&auth_config.display_name_header)?;
-        let email = get_header(&auth_config.email_header)?;
+        let email = get_header(&auth_config.email_header);
 
         // Get roles from the user. If the header is not set, the user simply has no extra roles.
         let mut roles = HashSet::from([ROLE_ANONYMOUS.to_string()]);

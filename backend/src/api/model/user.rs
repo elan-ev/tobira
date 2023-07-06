@@ -17,7 +17,7 @@ impl User {
         &self.username
     }
 
-    fn email(&self) -> &str {
+    fn email(&self) -> &Option<String> {
         &self.email
     }
 

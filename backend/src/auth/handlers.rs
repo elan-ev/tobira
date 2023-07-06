@@ -200,7 +200,7 @@ async fn check_opencast_login(
     struct InfoMeUserResponse {
         name: String,
         username: String,
-        email: String,
+        email: Option<String>,
     }
 
     let body = hyper::body::to_bytes(response.into_body()).await?;

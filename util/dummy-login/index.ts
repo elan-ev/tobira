@@ -61,7 +61,7 @@ const check: LoginCheck = async ({ userid, password }) => {
 };
 
 const DUMMY_PASSWORD = "tobira";
-const DUMMY_USERS: Record<string, { displayName: string; roles: string[]; email: string; }> = {
+const DUMMY_USERS: Record<string, { displayName: string; roles: string[]; email?: string; }> = {
     "admin": {
         displayName: "Administrator",
         roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO"],
@@ -75,7 +75,7 @@ const DUMMY_USERS: Record<string, { displayName: string; roles: string[]; email:
     "björk": {
         displayName: "Prof. Björk Guðmundsdóttir",
         roles: ["ROLE_USER_BJÖRK", "ROLE_EXTERNAL", "ROLE_TOBIRA_MODERATOR"],
-        email: "björk@example.org",
+        email: "bjoerk@example.org",
     },
     "morgan": {
         displayName: "Morgan Yu",
@@ -85,7 +85,6 @@ const DUMMY_USERS: Record<string, { displayName: string; roles: string[]; email:
     "jose": {
         displayName: "José Carreño Quiñones",
         roles: ["ROLE_USER_JOSE", "ROLE_STUDENT"],
-        email: "jose@example.org",
     },
 };
 
