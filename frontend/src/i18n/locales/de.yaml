@@ -295,7 +295,7 @@ upload:
 
 manage:
   nav:
-    dashboard: Übersicht
+    dashboard: Dashboard
     my-videos: Meine Videos
 
   dashboard:
