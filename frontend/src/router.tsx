@@ -17,6 +17,7 @@ import { BlockEmbedRoute, EmbedVideoRoute } from "./routes/Embed";
 import { ManageVideoDetailsRoute } from "./routes/manage/Video/Details";
 import { ManageVideoTechnicalDetailsRoute } from "./routes/manage/Video/TechnicalDetails";
 import React from "react";
+import { ManageVideoAccessRoute } from "./routes/manage/Video/Access";
 
 
 
@@ -43,6 +44,7 @@ const {
         DirectSeriesOCRoute,
         ManageRoute,
         ManageVideosRoute,
+        ManageVideoAccessRoute,
         ManageVideoDetailsRoute,
         ManageVideoTechnicalDetailsRoute,
         ManageRealmRoute,
