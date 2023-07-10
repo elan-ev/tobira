@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FiCornerLeftUp, FiEdit3, FiInfo, FiPlay } from "react-icons/fi";
+import { FiCornerLeftUp, FiEdit3, FiInfo, FiPlay, FiShield } from "react-icons/fi";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
@@ -21,7 +21,7 @@ export type QueryResponse = SharedVideoManageQuery["response"];
 export type Event = QueryResponse["event"];
 export type AuthorizedEvent = Extract<Event, { __typename: "AuthorizedEvent" }>;
 
-type ManageVideoSubPageType = "details" | "technical-details";
+type ManageVideoSubPageType = "details" | "technical-details" | "acl";
 
 /** Helper around `makeRoute` for manage single video subpages. */
 export const makeManageVideoRoute = (
@@ -137,11 +137,11 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
             page: "details",
             body: <><FiEdit3 />{t("manage.my-videos.details.title")}</>,
         },
-        // {
-        //     url: `/~manage/videos/${id}/access`,
-        //     page: "acl",
-        //     body: <><FiShield />{t("manage.my-videos.acl.title")}</>,
-        // },
+        {
+            url: `/~manage/videos/${id}/access`,
+            page: "acl",
+            body: <><FiShield />{t("manage.my-videos.acl.title")}</>,
+        },
         {
             url: `/~manage/videos/${id}/technical-details`,
             page: "technical-details",
