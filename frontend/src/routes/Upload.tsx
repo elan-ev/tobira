@@ -132,7 +132,7 @@ const UploadMain: React.FC = () => {
 
     // Get user info
     const user = useUser();
-    if (!isRealUser(user)) {
+    if (!isRealUser(user) || !user.canUpload) {
         // TODO: if not logged in, suggest doing so
         return <div css={{ textAlign: "center" }}>
             <ErrorBox>{t("upload.not-authorized")}</ErrorBox>

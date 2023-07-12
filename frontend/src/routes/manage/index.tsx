@@ -138,13 +138,16 @@ type ManageNavProps = {
 
 export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     const { t } = useTranslation();
+    const user = useUser();
 
     /* eslint-disable react/jsx-key */
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
         ["/~manage", t("manage.nav.dashboard"), <HiOutlineTemplate />],
         ["/~manage/videos", t("manage.nav.my-videos"), <FiFilm />],
-        ["/~manage/upload", t("upload.title"), <FiUpload />],
     ];
+    if (isRealUser(user) && user.canUpload) {
+        entries.push(["/~manage/upload", t("upload.title"), <FiUpload />]);
+    }
     /* eslint-enable react/jsx-key */
 
     const items = entries.map(([path, label, icon]) => (
