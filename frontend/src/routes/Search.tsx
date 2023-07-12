@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { FiFolder } from "react-icons/fi";
 import { ReactNode } from "react";
-import { unreachable } from "@opencast/appkit";
+import { screenWidthAtMost, unreachable } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
@@ -17,6 +17,7 @@ import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Br
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss } from "../ui";
 import { COLORS } from "../color";
+import { BREAKPOINT_SMALL } from "../GlobalStyle";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -277,7 +278,7 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
                     minWidth: 200,
                     width: 200,
                 },
-                "@media(max-width: 480px)": {
+                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                     flexDirection: "column",
                     gap: 12,
                     "& > *:first-child": {

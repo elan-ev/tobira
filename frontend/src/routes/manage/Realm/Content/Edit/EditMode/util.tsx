@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
 import { COLORS } from "../../../../../../color";
+import { screenWidthAbove, screenWidthAtMost } from "@opencast/appkit";
 
 
 export const Heading: React.FC<{ children: ReactNode }> = ({ children }) => <h3 css={{
@@ -23,7 +24,7 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
     // Getting this styled with CSS is quite fiddly mainly due to border radius.
     <div css={{
         display: "inline-flex",
-        [`@media (max-width: ${breakpoint}px)`]: {
+        [screenWidthAtMost(breakpoint)]: {
             flexDirection: "column",
         },
 
@@ -49,7 +50,7 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
                 position: "absolute",
                 opacity: 0, // Needed for the radio input to work for keyboard-only users
             },
-            [`@media (max-width: ${breakpoint}px)`]: {
+            [screenWidthAtMost(breakpoint)]: {
                 "&:first-child > div": {
                     borderRadius: "8px 8px 0 0",
                 },
@@ -60,7 +61,7 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
                     marginTop: -1,
                 },
             },
-            [`@media not all and (max-width: ${breakpoint}px)`]: {
+            [screenWidthAbove(breakpoint)]: {
                 ":first-child > div": {
                     borderRadius: "8px 0 0 8px",
                 },

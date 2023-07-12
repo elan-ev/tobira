@@ -27,6 +27,7 @@ import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { realmBreadcrumbs } from "../../../util/realm";
 import { COLORS } from "../../../color";
+import { screenWidthAtMost } from "@opencast/appkit";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -214,7 +215,7 @@ const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
         display: "flex",
         columnGap: 32,
         rowGap: 16,
-        "@media (max-width: 1300px)": {
+        [screenWidthAtMost(1300)]: {
             flexDirection: "column",
             div: { maxWidth: 500 },
         },

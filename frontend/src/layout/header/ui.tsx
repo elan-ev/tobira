@@ -4,6 +4,7 @@ import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { focusStyle } from "../../ui";
 import { useTitle } from "../../util";
 import { COLORS } from "../../color";
+import { screenWidthAtMost } from "@opencast/appkit";
 
 
 export const HEADER_BASE_PADDING = 24;
@@ -15,7 +16,7 @@ export const ButtonContainer: React.FC<{ children: ReactNode }> = ({ children })
         alignItems: "center",
         button: { color: COLORS.neutral90 },
         gap: 8,
-        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { gap: 4 },
+        [screenWidthAtMost(BREAKPOINT_SMALL)]: { gap: 4 },
     }}>
         {children}
     </div>
@@ -41,7 +42,7 @@ export const ICON_STYLE = {
     ":hover, :focus": { opacity: 1 },
     ":hover": { outline: `2px solid ${COLORS.neutral25}` },
     ...focusStyle({}),
-    [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 24 },
+    [screenWidthAtMost(BREAKPOINT_SMALL)]: { fontSize: 24 },
 };
 
 /** A single button with icon in the header. */

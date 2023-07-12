@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
-import { match, ProtoButton, useColorScheme } from "@opencast/appkit";
+import { match, ProtoButton, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
 
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
@@ -78,7 +78,7 @@ const Login: React.FC<Props> = ({ queryRef }) => {
                             fontSize: 36,
                             marginTop: 3,
                             textAlign: "center",
-                            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                                 fontSize: 30,
                             },
                         }}/>

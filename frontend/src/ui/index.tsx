@@ -1,4 +1,4 @@
-import { useColorScheme } from "@opencast/appkit";
+import { screenWidthAbove, useColorScheme } from "@opencast/appkit";
 import { match } from "@opencast/appkit";
 
 import { Link } from "../router";
@@ -45,7 +45,7 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
                     padding: "10px 16px",
                 },
             },
-            [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+            [screenWidthAbove(NAV_BREAKPOINT)]: {
                 "& > li:last-child > a": {
                     borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
                 },

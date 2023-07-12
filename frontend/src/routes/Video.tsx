@@ -10,7 +10,7 @@ import { HiOutlineQrCode } from "react-icons/hi2";
 import { QRCodeCanvas } from "qrcode.react";
 import {
     match, unreachable, ProtoButton,
-    useColorScheme, Floating, FloatingContainer, FloatingTrigger, WithTooltip,
+    useColorScheme, Floating, FloatingContainer, FloatingTrigger, WithTooltip, screenWidthAtMost,
 } from "@opencast/appkit";
 
 import { loadQuery } from "../relay";
@@ -342,7 +342,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
     const user = useUser();
 
     const shrinkOnMobile = {
-        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+        [screenWidthAtMost(BREAKPOINT_SMALL)]: {
             padding: "5px 10px",
             gap: 10,
         },
@@ -433,7 +433,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             "> div": {
                 backgroundColor: COLORS.neutral10,
                 borderRadius: 8,
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                     overflowWrap: "anywhere",
                 },
             },
@@ -737,8 +737,8 @@ const VideoTitle: React.FC<VideoTitleProps> = ({ title }) => (
         marginBottom: 4,
         fontSize: 22,
         maxWidth: "80ch",
-        [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: { fontSize: 20 },
-        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: { fontSize: 18 },
+        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: { fontSize: 20 },
+        [screenWidthAtMost(BREAKPOINT_SMALL)]: { fontSize: 18 },
         lineHeight: 1.2,
         ...ellipsisOverflowCss(2),
     }} />

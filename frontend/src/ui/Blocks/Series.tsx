@@ -5,7 +5,7 @@ import React, {
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import {
-    match, unreachable, ProtoButton,
+    match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
     useColorScheme, Floating, FloatingContainer, FloatingHandle, FloatingTrigger,
 } from "@opencast/appkit";
 
@@ -268,7 +268,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
         }}>
             <div css={{
                 display: "flex",
-                [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
                     flexWrap: "wrap",
                 },
             }}>
@@ -642,7 +642,7 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
         marginTop: 6,
         columnGap: 12,
         rowGap: 28,
-        "@media (min-width: 1600px)": {
+        [screenWidthAtMost(1600)]: {
             gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE_LARGE_SCREENS}px, 1fr))`,
         },
     }}>
@@ -660,7 +660,7 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
                             justifySelf: "right",
                         },
                     },
-                    [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                    [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
                         maxWidth: ITEM_MAX_SIZE_SMALL_SCREENS,
                         justifySelf: "center",
                     },
@@ -684,10 +684,10 @@ const ListView: React.FC<ViewProps> = ({ basePath, items }) => (
                 css={{
                     width: "100%",
                     margin: 6,
-                    [`@media (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                    [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
                         maxWidth: 360,
                     },
-                    [`@media not all and (max-width: ${VIDEO_GRID_BREAKPOINT}px)`]: {
+                    [screenWidthAbove(VIDEO_GRID_BREAKPOINT)]: {
                         display: "flex",
                         gap: 16,
                         "> :first-child": { flex: "0 0 240px" },

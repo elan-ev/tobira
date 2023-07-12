@@ -6,7 +6,7 @@ import {
 } from "react-icons/fi";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
-    match, ProtoButton,
+    match, ProtoButton, screenWidthAbove, screenWidthAtMost,
     HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
 } from "@opencast/appkit";
 
@@ -70,7 +70,7 @@ const LoggedOut: React.FC = () => {
             htmlLink={!!CONFIG.auth.loginLink}
             css={{
                 /* Show labelled button on larger screens. */
-                [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
                     color: COLORS.primary0BwInverted,
                     display: "flex",
                     alignItems: "center",
@@ -88,7 +88,7 @@ const LoggedOut: React.FC = () => {
                     ...focusStyle({ offset: 1 }),
                 },
                 /* Show only the icon on mobile devices. */
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                     color: COLORS.neutral90,
                     ...ICON_STYLE,
                     span: { display: "none" },
@@ -282,7 +282,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 },
                 ":focus-visible": { borderColor: COLORS.focus },
                 ...focusStyle({ offset: -1 }),
-                [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                     display: "none",
                 },
             }}>
@@ -300,7 +300,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             <ActionIcon
                 title={t("user.settings")}
                 css={{
-                    [`@media not all and (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                    [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
                         display: "none",
                     },
                 }}>
