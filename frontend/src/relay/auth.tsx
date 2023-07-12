@@ -81,7 +81,6 @@ export const ExternalLink: React.FC<ExternalLinkProps> = ({
             css={{
                 backgroundColor: "transparent",
                 border: "none",
-                minWidth: "100%",
             }}
         >{children}</button>
     </form>;
