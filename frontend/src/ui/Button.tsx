@@ -1,24 +1,11 @@
 import { Interpolation, Theme } from "@emotion/react";
 import React from "react";
 import { focusStyle } from ".";
+import { match } from "@opencast/appkit";
 
 import { Link } from "../router";
-import { match } from "../util";
 import { COLORS } from "../color";
 
-
-/**
- * A mostly unstyled button used to build buttons. Always use this instead of
- * `<button>`.
- */
-export const ProtoButton = React.forwardRef<HTMLButtonElement, JSX.IntrinsicElements["button"]>(
-    ({ children, ...rest }, ref) => <button
-        type="button"
-        ref={ref}
-        css={PROTO_CSS}
-        {...rest}
-    >{children}</button>,
-);
 
 
 type Kind = "normal" | "danger" | "happy";
@@ -50,14 +37,6 @@ export const LinkButton: React.FC<LinkButtonProps> = ({
 }) => (
     <Link to={to} css={css(kind, extraCss)} {...rest}>{children}</Link>
 );
-
-const PROTO_CSS = {
-    border: "none",
-    padding: 0,
-    background: "none",
-    color: "inherit",
-    cursor: "pointer",
-} as const;
 
 const css = (kind: Kind, extraCss: Interpolation<Theme> = {}): Interpolation<Theme> => {
     const notDisabledStyle = match(kind, {

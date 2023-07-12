@@ -5,12 +5,11 @@ import React, {
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import {
+    match, unreachable, ProtoButton,
     useColorScheme, Floating, FloatingContainer, FloatingHandle, FloatingTrigger,
 } from "@opencast/appkit";
 
 import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
-import { match } from "../../util";
-import { unreachable } from "../../util/err";
 import type { Fields } from "../../relay";
 import { Link } from "../../router";
 import {
@@ -30,7 +29,6 @@ import {
 import { keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
-import { ProtoButton } from "../Button";
 import { IconType } from "react-icons";
 import { COLORS } from "../../color";
 

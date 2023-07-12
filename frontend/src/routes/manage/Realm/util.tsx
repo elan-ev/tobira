@@ -1,6 +1,6 @@
 import { TFunction } from "i18next";
 import { RegisterOptions } from "react-hook-form";
-import { match } from "../../../util";
+import { match } from "@opencast/appkit";
 
 import { ErrorDisplay } from "../../../util/err";
 import { checkPathSegment, ILLEGAL_CHARS, RESERVED_CHARS } from "../../Realm";

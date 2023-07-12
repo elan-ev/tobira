@@ -1,4 +1,4 @@
-import { bug } from "./util/err";
+import { bug } from "@opencast/appkit";
 
 
 /** The ID of the HTML element containing our configuration. */

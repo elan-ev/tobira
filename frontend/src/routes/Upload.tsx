@@ -4,14 +4,14 @@ import { graphql } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { useController, useForm } from "react-hook-form";
 import { FiCheckCircle, FiInfo, FiUpload } from "react-icons/fi";
-import { WithTooltip } from "@opencast/appkit";
+import { WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
 import { UploadQuery } from "./__generated__/UploadQuery.graphql";
 import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
-import { assertNever, bug, ErrorDisplay, errorDisplayInfo, unreachable } from "../util/err";
+import { ErrorDisplay, errorDisplayInfo } from "../util/err";
 import { useNavBlocker } from "./util";
 import CONFIG from "../config";
 import { Button, LinkButton } from "../ui/Button";

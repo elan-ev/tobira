@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { useColorScheme, WithTooltip } from "@opencast/appkit";
+import { bug, unreachable, useColorScheme, WithTooltip } from "@opencast/appkit";
 
 import { FiArrowDown, FiArrowUp } from "react-icons/fi";
-import { bug, unreachable } from "../../../util/err";
 import { RealmOrder } from "../../../layout/__generated__/NavigationData.graphql";
 import {
     ChildOrderEditData$data,

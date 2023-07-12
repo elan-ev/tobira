@@ -1,11 +1,11 @@
 import { graphql, useFragment } from "react-relay";
+import { unreachable } from "@opencast/appkit";
 
 import { InlinePlayer } from "../player";
 import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
-import { unreachable } from "../../util/err";
 import { isSynced } from "../../util";
 
 

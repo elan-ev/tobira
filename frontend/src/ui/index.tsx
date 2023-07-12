@@ -1,7 +1,7 @@
 import { useColorScheme } from "@opencast/appkit";
+import { match } from "@opencast/appkit";
 
 import { Link } from "../router";
-import { match } from "../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
 import { CSSObject } from "@emotion/react";

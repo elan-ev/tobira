@@ -4,13 +4,12 @@ import { graphql, useFragment, commitLocalUpdate, useRelayEnvironment } from "re
 import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
 import { FiPlus, FiType, FiGrid, FiFilm, FiHash } from "react-icons/fi";
 import {
-    useColorScheme, Floating, FloatingContainer, FloatingHandle, FloatingTrigger, WithTooltip,
+    ProtoButton, bug, useColorScheme,
+    Floating, FloatingContainer, FloatingHandle, FloatingTrigger, WithTooltip,
 } from "@opencast/appkit";
 
 import { AddButtonsRealmData$key } from "./__generated__/AddButtonsRealmData.graphql";
-import { bug } from "../../../../util/err";
 import { IconType } from "react-icons";
-import { ProtoButton } from "../../../../ui/Button";
 import { focusStyle } from "../../../../ui";
 import { COLORS } from "../../../../color";
 

@@ -9,6 +9,7 @@ import { HiLink } from "react-icons/hi";
 import { HiOutlineQrCode } from "react-icons/hi2";
 import { QRCodeCanvas } from "qrcode.react";
 import {
+    match, unreachable, ProtoButton,
     useColorScheme, Floating, FloatingContainer, FloatingTrigger, WithTooltip,
 } from "@opencast/appkit";
 
@@ -29,12 +30,10 @@ import {
     toIsoDuration,
     useForceRerender,
     translatedConfig,
-    match,
     currentRef,
 } from "../util";
-import { unreachable } from "../util/err";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
-import { Button, LinkButton, ProtoButton } from "../ui/Button";
+import { Button, LinkButton } from "../ui/Button";
 import CONFIG from "../config";
 import { Link, useRouter } from "../router";
 import { useUser } from "../User";

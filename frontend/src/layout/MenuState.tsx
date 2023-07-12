@@ -1,6 +1,6 @@
 import React, { ReactNode, useContext, useState } from "react";
 
-import { bug } from "../util/err";
+import { bug } from "@opencast/appkit";
 
 
 type MenuState = "closed" | "burger" | "search";

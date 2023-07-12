@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, graphql, useRelayEnvironment, commitLocalUpdate } from "react-relay";
 import type { RecordSourceProxy } from "relay-runtime";
+import { bug } from "@opencast/appkit";
 
 import type { BlockRealmData$key } from "./__generated__/BlockRealmData.graphql";
 import { useRouter } from "../../../../router";
-import { bug } from "../../../../util/err";
 import { Card } from "../../../../ui/Card";
 import { displayCommitError } from "../util";
 import { Block } from "../../../../ui/Blocks";

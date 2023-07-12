@@ -1,9 +1,10 @@
 import { Trans, useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
+import { match } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { Link } from "../router";
-import { match, useNoindexTag } from "../util";
+import { useNoindexTag } from "../util";
 import { loadQuery } from "../relay";
 import { NotFoundQuery } from "./__generated__/NotFoundQuery.graphql";
 import { FiFrown } from "react-icons/fi";

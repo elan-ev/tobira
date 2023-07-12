@@ -2,11 +2,11 @@ import React, { useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useForm, useFormContext, FormProvider } from "react-hook-form";
+import { bug, match } from "@opencast/appkit";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
 import { Button } from "../../../../../../ui/Button";
-import { currentRef, match, useOnOutsideClick } from "../../../../../../util";
-import { bug } from "../../../../../../util/err";
+import { currentRef, useOnOutsideClick } from "../../../../../../util";
 import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
 import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
 import { EditTitleBlock } from "./Title";

@@ -2,10 +2,10 @@ import React from "react";
 import { FiArrowLeft, FiMenu, FiX } from "react-icons/fi";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
+import { match } from "@opencast/appkit";
 
 import { useMenu } from "../MenuState";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
-import { match } from "../../util";
 import { OUTER_CONTAINER_MARGIN } from "..";
 import { ActionIcon, ButtonContainer, HEADER_BASE_PADDING } from "./ui";
 import { SearchField } from "./Search";

@@ -2,12 +2,12 @@ import { ReactNode, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useForm } from "react-hook-form";
+import { bug } from "@opencast/appkit";
 
 import type {
     DangerZoneRealmData$data,
     DangerZoneRealmData$key,
 } from "./__generated__/DangerZoneRealmData.graphql";
-import { bug } from "../../../util/err";
 import { currentRef } from "../../../util";
 import { Button } from "../../../ui/Button";
 import { Card } from "../../../ui/Card";

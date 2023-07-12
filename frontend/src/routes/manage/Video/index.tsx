@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { HiSortAscending, HiSortDescending } from "react-icons/hi";
 import { graphql, VariablesOf } from "react-relay";
-import { useColorScheme } from "@opencast/appkit";
+import { match, useColorScheme } from "@opencast/appkit";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
@@ -18,7 +18,7 @@ import { loadQuery } from "../../../relay";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Thumbnail } from "../../../ui/Video";
-import { keyOfId, match } from "../../../util";
+import { keyOfId } from "../../../util";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { Card } from "../../../ui/Card";

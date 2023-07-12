@@ -1,7 +1,6 @@
 import { fetchQuery, graphql } from "react-relay";
+import { bug, match } from "@opencast/appkit";
 
-import { match } from "../util";
-import { bug } from "../util/err";
 import CONFIG from "../config";
 import { environment } from ".";
 import { authJwtQuery, JwtService } from "./__generated__/authJwtQuery.graphql";

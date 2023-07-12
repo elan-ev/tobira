@@ -6,6 +6,7 @@ import {
 } from "react-icons/fi";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
+    match, ProtoButton,
     HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
 } from "@opencast/appkit";
 
@@ -13,14 +14,12 @@ import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { languages } from "../../i18n";
 import { Link } from "../../router";
 import { User, useUser } from "../../User";
-import { match } from "../../util";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
 import { LOGIN_PATH } from "../../routes/paths";
 import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { focusStyle } from "../../ui";
-import { ProtoButton } from "../../ui/Button";
 import { ExternalLink } from "../../relay/auth";
 import { COLORS } from "../../color";
 
