@@ -66,9 +66,9 @@ struct ConfigStats {
     /// Value of `auth.mode`
     auth_mode: &'static str,
     /// Whether `auth.login_link` is set or not.
-    login_link_overwritten: bool,
+    login_link_overridden: bool,
     /// Whether `auth.logout_link` is set or not.
-    logout_link_overwritten: bool,
+    logout_link_overridden: bool,
     /// Value of `auth.pre_auth_external_links`.
     uses_pre_auth: bool,
     /// Whether `theme.logo.small` is set.
@@ -97,8 +97,8 @@ impl Stats {
             config: ConfigStats {
                 download_button_shown: config.general.show_download_button,
                 auth_mode: config.auth.mode.label(),
-                login_link_overwritten: config.auth.login_link.is_some(),
-                logout_link_overwritten: config.auth.logout_link.is_some(),
+                login_link_overridden: config.auth.login_link.is_some(),
+                logout_link_overridden: config.auth.logout_link.is_some(),
                 uses_pre_auth: config.auth.pre_auth_external_links,
                 has_narrow_logo: config.theme.logo.small.is_some(),
             },
