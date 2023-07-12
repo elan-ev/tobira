@@ -29,6 +29,7 @@ These are just designated HTTP headers, one for each kind of information describ
 - `x-tobira-username`: Username
 - `x-tobira-user-display-name`: Display name
 - `x-tobira-user-roles`: List of roles, comma separated
+- `x-tobira-user-email`: User email address
 
 All these header values have to be a **base64-encoded UTF-8** string!
 
@@ -47,9 +48,10 @@ For example:
 x-tobira-username: YXVndXN0dXM=
 x-tobira-user-display-name: QXVndXN0dXMgUGFnZW5rw6RtcGVy
 x-tobira-user-roles: Uk9MRV9VU0VSX0FVR1VTVFVTLFJPTEVfQU5PTllNT1VTLFJPTEVfVVNFUixST0xFX1NUVURFTlQ=
+x-tobira-user-email: YXVndXN0dXNAZXhhbXBsZS5vcmc=
 ```
 
-Base64 decoding those values results in `augustus`, `Augustus Pagenkämper` and `ROLE_USER_AUGUSTUS,ROLE_ANONYMOUS,ROLE_USER,ROLE_STUDENT`.
+Base64 decoding those values results in `augustus`, `Augustus Pagenkämper`, `ROLE_USER_AUGUSTUS,ROLE_ANONYMOUS,ROLE_USER,ROLE_STUDENT` and `augustus@example.org`.
 
 :::danger
 **Important**: you have to make sure that your reverse proxy removes any of these header values that the user might have sent!

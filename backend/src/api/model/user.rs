@@ -17,6 +17,10 @@ impl User {
         &self.username
     }
 
+    fn email(&self) -> Option<&str> {
+        self.email.as_deref()
+    }
+
     fn roles(&self) -> Vec<&str> {
         self.roles.iter().map(AsRef::as_ref).collect()
     }

@@ -521,6 +521,7 @@ type SearchSeries implements Node {
 type User {
   "The username, a unique string identifying the user."
   username: String!
+  email: String
   roles: [String!]!
   "The name of the user intended to be read by humans."
   displayName: String!

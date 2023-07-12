@@ -54,6 +54,10 @@ pub(crate) struct AuthConfig {
     #[config(default = "x-tobira-user-display-name")]
     pub(crate) display_name_header: String,
 
+    /// The header containing the email address of the current user.
+    #[config(default = "x-tobira-user-email")]
+    pub(crate) email_header: String,    
+
     /// The header containing a comma-separated list of roles of the current user.
     #[config(default = "x-tobira-user-roles")]
     pub(crate) roles_header: String,
@@ -161,6 +165,7 @@ pub(crate) enum AuthContext {
 pub(crate) struct User {
     pub(crate) username: String,
     pub(crate) display_name: String,
+    pub(crate) email: Option<String>,
     pub(crate) roles: HashSet<String>,
 }
 
@@ -234,6 +239,7 @@ impl User {
         // if there is no user session.
         let username = get_header(&auth_config.username_header)?;
         let display_name = get_header(&auth_config.display_name_header)?;
+        let email = get_header(&auth_config.email_header);
 
         // Get roles from the user. If the header is not set, the user simply has no extra roles.
         let mut roles = HashSet::from([ROLE_ANONYMOUS.to_string()]);
@@ -241,7 +247,7 @@ impl User {
             roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
         };
 
-        Some(Self { username, display_name, roles })
+        Some(Self { username, display_name, email, roles })
     }
 
     /// Tries to load user data from a DB session referred to in a session
@@ -258,7 +264,7 @@ impl User {
         };
 
         // Check if such a session exists in the DB.
-        let (selection, mapping) = select!(username, display_name, roles);
+        let (selection, mapping) = select!(username, display_name, roles, email);
         let query = format!(
             "select {selection} from user_sessions \
                 where id = $1 \
@@ -272,6 +278,7 @@ impl User {
         Ok(Some(Self {
             username: mapping.username.of(&row),
             display_name: mapping.display_name.of(&row),
+            email: mapping.email.of(&row),
             roles: mapping.roles.of::<Vec<String>>(&row).into_iter().collect(),
         }))
     }
@@ -288,9 +295,9 @@ impl User {
         let roles = self.roles.iter().collect::<Vec<_>>();
         db.execute_raw(
             "insert into \
-                user_sessions (id, username, display_name, roles) \
-                values ($1, $2, $3, $4)",
-            dbargs![&session_id, &self.username, &self.display_name, &roles],
+                user_sessions (id, username, display_name, roles, email) \
+                values ($1, $2, $3, $4, $5)",
+            dbargs![&session_id, &self.username, &self.display_name, &roles, &self.email],
         ).await?;
 
         Ok(session_id)

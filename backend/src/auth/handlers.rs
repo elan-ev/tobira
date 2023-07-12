@@ -200,6 +200,7 @@ async fn check_opencast_login(
     struct InfoMeUserResponse {
         name: String,
         username: String,
+        email: Option<String>,
     }
 
     let body = hyper::body::to_bytes(response.into_body()).await?;
@@ -215,6 +216,7 @@ async fn check_opencast_login(
     Ok(Some(User {
         username: info.user.username,
         display_name: info.user.name,
+        email: info.user.email,
         // Sometimes, Opencast does not include `ROLE_ANONYMOUS` in the
         // response, so we just add it here to be sure.
         roles: info.roles.into_iter().chain([ROLE_ANONYMOUS.to_owned()]).collect(),

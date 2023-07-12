@@ -77,6 +77,7 @@ impl JwtContext {
         let payload = json!({
             "name": user.display_name,
             "username": user.username,
+            "email": user.email,
             "exp": exp.timestamp(),
         });
 

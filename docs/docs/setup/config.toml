@@ -173,6 +173,11 @@
 # Default value: "x-tobira-user-display-name"
 #display_name_header = "x-tobira-user-display-name"
 
+# The header containing the email address of the current user.
+#
+# Default value: "x-tobira-user-email"
+#email_header = "x-tobira-user-email"
+
 # The header containing a comma-separated list of roles of the current user.
 #
 # Default value: "x-tobira-user-roles"
