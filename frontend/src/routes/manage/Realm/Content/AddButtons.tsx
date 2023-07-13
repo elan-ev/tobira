@@ -3,20 +3,15 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, commitLocalUpdate, useRelayEnvironment } from "react-relay";
 import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
 import { FiPlus, FiType, FiGrid, FiFilm, FiHash } from "react-icons/fi";
+import {
+    ProtoButton, bug, useColorScheme,
+    Floating, FloatingContainer, FloatingHandle, FloatingTrigger, WithTooltip,
+} from "@opencast/appkit";
 
 import { AddButtonsRealmData$key } from "./__generated__/AddButtonsRealmData.graphql";
-import { bug } from "../../../../util/err";
 import { IconType } from "react-icons";
-import {
-    Floating,
-    FloatingContainer,
-    FloatingHandle,
-    FloatingTrigger,
-    WithTooltip,
-} from "../../../../ui/Floating";
-import { ProtoButton } from "../../../../ui/Button";
 import { focusStyle } from "../../../../ui";
-import { COLORS, useColorScheme } from "../../../../color";
+import { COLORS } from "../../../../color";
 
 
 type Props = {

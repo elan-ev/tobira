@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { FiEye } from "react-icons/fi";
+import { bug } from "@opencast/appkit";
 
 import { RootLoader } from "../../../../layout/Root";
 import type {
@@ -23,7 +24,6 @@ import { useNavBlocker } from "../../../util";
 import { LinkButton } from "../../../../ui/Button";
 import { PageTitle } from "../../../../layout/header/ui";
 import { RealmEditLinks } from "../../../Realm";
-import { bug } from "../../../../util/err";
 import { realmBreadcrumbs } from "../../../../util/realm";
 import { COLORS } from "../../../../color";
 

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
+import { bug, unreachable, useColorScheme, WithTooltip } from "@opencast/appkit";
 
 import { FiArrowDown, FiArrowUp } from "react-icons/fi";
-import { bug, unreachable } from "../../../util/err";
 import { RealmOrder } from "../../../layout/__generated__/NavigationData.graphql";
 import {
     ChildOrderEditData$data,
@@ -14,9 +14,8 @@ import { Spinner } from "../../../ui/Spinner";
 import { boxError } from "../../../ui/error";
 import { displayCommitError } from "./util";
 import { sortRealms } from "../../util";
-import { WithTooltip } from "../../../ui/Floating";
 import { focusStyle } from "../../../ui";
-import { COLORS, useColorScheme } from "../../../color";
+import { COLORS } from "../../../color";
 
 
 const fragment = graphql`

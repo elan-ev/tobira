@@ -1,11 +1,13 @@
 import { useTranslation } from "react-i18next";
+import { screenWidthAbove, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
+
 import CONFIG from "../../config";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { Link } from "../../router";
 import { focusStyle } from "../../ui";
 import { translatedConfig } from "../../util";
 import { HEADER_BASE_PADDING } from "./ui";
-import { COLORS, useColorScheme } from "../../color";
+import { COLORS } from "../../color";
 
 
 export const Logo: React.FC = () => {
@@ -59,7 +61,7 @@ export const Logo: React.FC = () => {
                 alt={alt}
                 css={{
                     ...isDark && largeDark.invert && invertCss,
-                    [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                         display: "none",
                     },
                 }}
@@ -71,7 +73,7 @@ export const Logo: React.FC = () => {
                 alt={alt}
                 css={{
                     ...isDark && smallDark.invert && invertCss,
-                    [`@media not all and (max-width: ${BREAKPOINT_SMALL}px)`]: {
+                    [screenWidthAbove(BREAKPOINT_SMALL)]: {
                         display: "none",
                     },
                 }}

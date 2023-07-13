@@ -1,5 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
+import { useState } from "react";
+import { bug, match } from "@opencast/appkit";
+
 import type {
     GeneralRealmData$data,
     GeneralRealmData$key,
@@ -12,9 +15,6 @@ import { Spinner } from "../../../ui/Spinner";
 import { Form } from "../../../ui/Form";
 import { boxError } from "../../../ui/error";
 import { displayCommitError } from "./util";
-import { useState } from "react";
-import { bug } from "../../../util/err";
-import { match } from "../../../util";
 import { COLORS } from "../../../color";
 
 

@@ -2,10 +2,10 @@ import React from "react";
 import { FiArrowLeft, FiMenu, FiX } from "react-icons/fi";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
+import { match, screenWidthAbove } from "@opencast/appkit";
 
 import { useMenu } from "../MenuState";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
-import { match } from "../../util";
 import { OUTER_CONTAINER_MARGIN } from "..";
 import { ActionIcon, ButtonContainer, HEADER_BASE_PADDING } from "./ui";
 import { SearchField } from "./Search";
@@ -95,7 +95,7 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                 title={t("search.input-label")}
                 onClick={() => menu.toggleMenu("search")}
                 css={{
-                    [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+                    [screenWidthAbove(NAV_BREAKPOINT)]: {
                         display: "none",
                     },
                 }}
@@ -111,7 +111,7 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                         ...buttonOutline,
                         // More margin because of the outline
                         marginLeft: 4,
-                        [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+                        [screenWidthAbove(NAV_BREAKPOINT)]: {
                             display: "none",
                         },
                     }}

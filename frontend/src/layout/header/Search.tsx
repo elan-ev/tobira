@@ -9,6 +9,7 @@ import { currentRef } from "../../util";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
+import { screenWidthAtMost } from "@opencast/appkit";
 
 type SearchFieldProps = {
     variant: "desktop" | "mobile";
@@ -67,7 +68,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             flex: 1,
             ...variant === "desktop" && {
                 maxWidth: 372,
-                [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
+                [screenWidthAtMost(NAV_BREAKPOINT)]: {
                     display: "none",
                 },
             },

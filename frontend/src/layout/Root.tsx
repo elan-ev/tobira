@@ -14,6 +14,7 @@ import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } fro
 import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { useNoindexTag } from "../util";
+import { screenWidthAtMost } from "@opencast/appkit";
 
 
 export const MAIN_PADDING = 16;
@@ -41,7 +42,7 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
                     minWidth: 240,
                     maxWidth: 360,
                     marginRight: 48,
-                    [`@media (max-width: ${NAV_BREAKPOINT}px)`]: {
+                    [screenWidthAtMost(NAV_BREAKPOINT)]: {
                         display: "none",
                     },
                 }}>

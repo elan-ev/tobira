@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { FiEdit } from "react-icons/fi";
+import { WithTooltip } from "@opencast/appkit";
 
 import type {
     EditButtonsRealmData$key,
@@ -9,7 +10,6 @@ import type {
 import { Button, ButtonGroup as BaseButtonGroup } from "../util";
 import { RemoveButton } from "./RemoveButton";
 import { MoveButtons } from "./MoveButtons";
-import { WithTooltip } from "../../../../../ui/Floating";
 
 
 type Props = {

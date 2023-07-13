@@ -1,5 +1,6 @@
 import { FiAlertTriangle, FiInfo } from "react-icons/fi";
-import { match } from "../util";
+import { match } from "@opencast/appkit";
+
 import { COLORS } from "../color";
 
 

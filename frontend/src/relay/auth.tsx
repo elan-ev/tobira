@@ -1,7 +1,6 @@
 import { fetchQuery, graphql } from "react-relay";
+import { bug, match } from "@opencast/appkit";
 
-import { match } from "../util";
-import { bug } from "../util/err";
 import CONFIG from "../config";
 import { environment } from ".";
 import { authJwtQuery, JwtService } from "./__generated__/authJwtQuery.graphql";
@@ -77,7 +76,13 @@ export const ExternalLink: React.FC<ExternalLinkProps> = ({
         <input type="hidden" name="target" value={target.toString()} />
         <input type="hidden" name="jwt" />
 
-        <button className={className}>{children}</button>
+        <button
+            className={className}
+            css={{
+                backgroundColor: "transparent",
+                border: "none",
+            }}
+        >{children}</button>
     </form>;
 };
 

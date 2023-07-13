@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { useTranslation } from "react-i18next";
+import { match } from "@opencast/appkit";
 
-import { match } from "../util";
 import { useRouter } from "../router";
 
 

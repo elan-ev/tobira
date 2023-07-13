@@ -1,6 +1,7 @@
 import { css, Global } from "@emotion/react";
 import React from "react";
 import { COLORS } from "./color";
+import { screenWidthAtMost } from "@opencast/appkit";
 
 
 export const GlobalStyle: React.FC = () => <>
@@ -90,19 +91,19 @@ const GLOBAL_STYLE = css({
         fontSize: 30,
         lineHeight: 1.3,
         marginBottom: 20,
-        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+        [screenWidthAtMost(BREAKPOINT_SMALL)]: {
             fontSize: 26,
         },
     },
     h2: {
         fontSize: 23,
-        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+        [screenWidthAtMost(BREAKPOINT_SMALL)]: {
             fontSize: 20,
         },
     },
     h3: {
         fontSize: 19,
-        [`@media (max-width: ${BREAKPOINT_SMALL}px)`]: {
+        [screenWidthAtMost(BREAKPOINT_SMALL)]: {
             fontSize: 18,
         },
     },

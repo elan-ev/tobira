@@ -2,8 +2,8 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useController, useFormContext, UseFormReturn } from "react-hook-form";
+import { match } from "@opencast/appkit";
 
-import { match } from "../../../../../../util";
 import { Card } from "../../../../../../ui/Card";
 import { EditModeForm } from ".";
 import { Heading, NiceRadio, NiceRadioOption } from "./util";

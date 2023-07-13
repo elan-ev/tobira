@@ -29,6 +29,12 @@ const config: CallableOption = (_env, argv) => ({
 
     resolve: {
         extensions: [".ts", ".tsx", ".js", ".json"],
+        // For local appkit development, see this for more details:
+        // https://gist.github.com/LukasKalbertodt/382cb53a85fcf6e7d1f5235625c6f4fb
+        alias: {
+            "react": path.join(__dirname, "node_modules/react"),
+            "@emotion/react": path.join(__dirname, "node_modules/@emotion/react"),
+        },
     },
 
     module: {

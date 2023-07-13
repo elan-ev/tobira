@@ -1,9 +1,11 @@
+import { screenWidthAbove, useColorScheme } from "@opencast/appkit";
+import { match } from "@opencast/appkit";
+
 import { Link } from "../router";
-import { match } from "../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import { ReactNode } from "react";
 import { CSSObject } from "@emotion/react";
-import { COLORS, useColorScheme } from "../color";
+import { COLORS } from "../color";
 
 
 export const SIDE_BOX_BORDER_RADIUS = 8;
@@ -43,7 +45,7 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
                     padding: "10px 16px",
                 },
             },
-            [`@media not all and (max-width: ${NAV_BREAKPOINT}px)`]: {
+            [screenWidthAbove(NAV_BREAKPOINT)]: {
                 "& > li:last-child > a": {
                     borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
                 },

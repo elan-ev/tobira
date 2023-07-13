@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { FiFolder } from "react-icons/fi";
 import { ReactNode } from "react";
+import { screenWidthAtMost, unreachable } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
@@ -9,7 +10,6 @@ import { makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link } from "../router";
 import { Creators, isPastLiveEvent, Thumbnail } from "../ui/Video";
-import { unreachable } from "../util/err";
 import { SmallDescription } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { PageTitle } from "../layout/header/ui";
@@ -17,6 +17,7 @@ import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Br
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss } from "../ui";
 import { COLORS } from "../color";
+import { BREAKPOINT_SMALL } from "../GlobalStyle";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -277,7 +278,7 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
                     minWidth: 200,
                     width: 200,
                 },
-                "@media(max-width: 480px)": {
+                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                     flexDirection: "column",
                     gap: 12,
                     "& > *:first-child": {

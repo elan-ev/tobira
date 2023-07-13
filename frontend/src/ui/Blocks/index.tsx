@@ -1,10 +1,10 @@
 import React from "react";
 import { graphql, useFragment } from "react-relay/hooks";
+import { match } from "@opencast/appkit";
 
 import { BlocksData$key } from "./__generated__/BlocksData.graphql";
 import { BlocksRealmData$key } from "./__generated__/BlocksRealmData.graphql";
 import { BlocksBlockData$key } from "./__generated__/BlocksBlockData.graphql";
-import { match } from "../../util";
 import { TitleBlock } from "./Title";
 import { TextBlockByQuery } from "./Text";
 import { SeriesBlockFromBlock } from "./Series";

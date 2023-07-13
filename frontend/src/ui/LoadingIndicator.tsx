@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { Transition } from "react-transition-group";
+import { match } from "@opencast/appkit";
+
 import { useRouter } from "../router";
 import { isSearchActive } from "../routes/Search";
-import { match } from "../util";
 import { COLORS } from "../color";
 
 

@@ -2,6 +2,7 @@ import React, { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
+import { match, ProtoButton, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
 
 import { Outer } from "../layout/Root";
 import { loadQuery } from "../relay";
@@ -10,9 +11,8 @@ import { LoginQuery } from "./__generated__/LoginQuery.graphql";
 import { Footer } from "../layout/Footer";
 import { PageTitle } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
-import { ProtoButton } from "../ui/Button";
 import { boxError } from "../ui/error";
-import { match, translatedConfig, useNoindexTag } from "../util";
+import { translatedConfig, useNoindexTag } from "../util";
 import { Spinner } from "../ui/Spinner";
 import { FiCheck, FiChevronLeft, FiLogIn } from "react-icons/fi";
 import { Card } from "../ui/Card";
@@ -23,7 +23,7 @@ import { Header } from "../layout/header";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { OUTER_CONTAINER_MARGIN } from "../layout";
-import { COLORS, useColorScheme } from "../color";
+import { COLORS } from "../color";
 import { focusStyle } from "../ui";
 
 
@@ -78,7 +78,7 @@ const Login: React.FC<Props> = ({ queryRef }) => {
                             fontSize: 36,
                             marginTop: 3,
                             textAlign: "center",
-                            [`@media (max-width: ${BREAKPOINT_MEDIUM}px)`]: {
+                            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                                 fontSize: 30,
                             },
                         }}/>

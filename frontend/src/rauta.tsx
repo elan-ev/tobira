@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useTransition } from "react";
-
-import { bug } from "./util/err";
+import { bug } from "@opencast/appkit";
 
 
 /** A single route. You probably want to use `makeRoute` to create this. */
