@@ -17,7 +17,6 @@ import { ExternalLink } from "../../relay/auth";
 import {
     manageDashboardQuery as ManageDashboardQuery,
 } from "./__generated__/manageDashboardQuery.graphql";
-import { css } from "@emotion/react";
 import { COLORS } from "../../color";
 import { useMenu } from "../../layout/MenuState";
 
