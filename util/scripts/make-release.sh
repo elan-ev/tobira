@@ -72,9 +72,9 @@ read -r
 # For the rest of the script, stop on error
 set -e
 
-sed -i "1s/^/v$major.$minor\n/" docs/versions.txt
-sed -i -E 's/^version = "[^"]+.0"$/version = "'"$major.$minor"'.0"/' backend/Cargo.toml
-sed -i \
+sed -i "" "1s/^/v$major.$minor\n/" docs/versions.txt
+sed -i "" -E 's/^version = "[^"]+.0"$/version = "'"$major.$minor"'.0"/' backend/Cargo.toml
+sed -i "" \
     '/name = "tobira"/,/^version =.*$/ s/^version =.*$/version = "'"$major.$minor"'.0"/' \
     backend/Cargo.lock
 git add backend/Cargo.toml backend/Cargo.lock docs/versions.txt
