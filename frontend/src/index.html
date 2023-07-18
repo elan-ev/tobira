@@ -48,7 +48,7 @@
     <script nonce="{{ nonce }}">
       // Read dark mode preference. This code is inlined here to run it as soon
       // as possible.
-      const scheme = window.localStorage.getItem("tobiraColorScheme");
+      const scheme = window.localStorage.getItem("colorScheme");
       document.documentElement.dataset.colorScheme = (scheme === "dark" || scheme === "light")
         ? scheme
         : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
