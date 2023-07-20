@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
-import { Theme } from "react-select";
+import { CSSObjectWithLabel, Theme } from "react-select";
 import AsyncSelect from "react-select/async";
 import { fetchQuery, graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
@@ -26,6 +26,55 @@ export type SearchableSelectProps<T> = DerivedProps<T> & {
     format: (option: T, t: TFunction) => ReactNode;
 };
 
+export const searchableSelectStyles = (isDark: boolean) => ({
+    control: (baseStyles: CSSObjectWithLabel, state: { isFocused: boolean }) => ({
+        ...baseStyles,
+        backgroundColor: COLORS.neutral05,
+        borderColor: state.isFocused ? COLORS.primary0 : COLORS.neutral40,
+    }),
+    input: (baseStyles: CSSObjectWithLabel) => ({
+        ...baseStyles,
+        ...isDark && { color: COLORS.neutral80 },
+    }),
+    placeholder: (baseStyles: CSSObjectWithLabel) => ({
+        ...baseStyles,
+        color: COLORS.neutral60,
+    }),
+    singleValue: (baseStyles: CSSObjectWithLabel) => ({
+        ...baseStyles,
+        color: COLORS.neutral90,
+    }),
+    menuList: (baseStyles: CSSObjectWithLabel) => ({
+        ...baseStyles,
+        padding: 0,
+    }),
+    menu: (baseStyles: CSSObjectWithLabel) => ({
+        ...baseStyles,
+        ...isDark && { outline: `1px solid ${COLORS.neutral20}` },
+    }),
+    option: (_baseStyles: CSSObjectWithLabel, state: {
+        isSelected: boolean; isFocused: boolean;
+    }) => ({
+        cursor: "default",
+        padding: "6px 10px",
+        backgroundColor: isDark ? COLORS.neutral10 : COLORS.neutral05,
+        ...state.isSelected && {
+            borderLeft: `4px solid ${COLORS.focus}`,
+        },
+        ...(state.isFocused || state.isSelected) && {
+            backgroundColor: isDark ? COLORS.neutral25 : COLORS.neutral10,
+        },
+    }),
+    noOptionsMessage: (baseStyles: CSSObjectWithLabel) => ({
+        ...baseStyles,
+        ...isDark && { backgroundColor: COLORS.neutral10 },
+    }),
+    loadingMessage: (baseStyles: CSSObjectWithLabel) => ({
+        ...baseStyles,
+        ...isDark && { backgroundColor: COLORS.neutral10 },
+    }),
+});
+
 /** A select input that can be searched. Basically a styled `react-select`. */
 export const SearchableSelect = <T, >({
     loadOptions,
@@ -43,52 +92,7 @@ export const SearchableSelect = <T, >({
         cacheOptions
         // Without this, it thinks all entries are selected if any one is.
         isOptionSelected={() => false}
-        styles={{
-            control: (baseStyles, state) => ({
-                ...baseStyles,
-                backgroundColor: COLORS.neutral05,
-                borderColor: state.isFocused ? COLORS.primary0 : COLORS.neutral40,
-            }),
-            input: baseStyles => ({
-                ...baseStyles,
-                ...isDark && { color: COLORS.neutral80 },
-            }),
-            placeholder: baseStyles => ({
-                ...baseStyles,
-                color: COLORS.neutral60,
-            }),
-            singleValue: baseStyles => ({
-                ...baseStyles,
-                color: COLORS.neutral90,
-            }),
-            menuList: baseStyles => ({
-                ...baseStyles,
-                padding: 0,
-            }),
-            menu: baseStyles => ({
-                ...baseStyles,
-                ...isDark && { outline: `1px solid ${COLORS.neutral20}` },
-            }),
-            option: (_baseStyles, state) => ({
-                cursor: "default",
-                padding: "6px 10px",
-                backgroundColor: isDark ? COLORS.neutral10 : COLORS.neutral05,
-                ...state.isSelected && {
-                    borderLeft: `4px solid ${COLORS.focus}`,
-                },
-                ...(state.isFocused || state.isSelected) && {
-                    backgroundColor: isDark ? COLORS.neutral25 : COLORS.neutral10,
-                },
-            }),
-            noOptionsMessage: baseStyles => ({
-                ...baseStyles,
-                ...isDark && { backgroundColor: COLORS.neutral10 },
-            }),
-            loadingMessage: baseStyles => ({
-                ...baseStyles,
-                ...isDark && { backgroundColor: COLORS.neutral10 },
-            }),
-        }}
+        styles={searchableSelectStyles(isDark)}
         isClearable
         defaultOptions
         theme={theme}
@@ -99,7 +103,7 @@ export const SearchableSelect = <T, >({
     />;
 };
 
-const theme = (theme: Theme) => ({
+export const theme = (theme: Theme) => ({
     ...theme,
     colors: {
         ...theme.colors,

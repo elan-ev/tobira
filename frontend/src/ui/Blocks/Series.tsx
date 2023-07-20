@@ -309,7 +309,7 @@ type FloatingBaseMenuProps = {
 };
 
 // TODO: Make menus work with arrow keys.
-const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>(
+export const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>(
     ({ triggerContent, list, label }, ref) => (
         <FloatingContainer
             ref={ref}
@@ -499,7 +499,7 @@ type MenuItemProps = {
     disabled?: boolean;
 };
 
-const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabled }) => {
+export const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabled }) => {
     const ref = useRef<HTMLButtonElement>(null);
     const isDark = useColorScheme().scheme === "dark";
 
