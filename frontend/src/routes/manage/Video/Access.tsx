@@ -14,6 +14,7 @@ import {
     Floating,
     FloatingHandle,
     ProtoButton,
+    WithTooltip,
     match,
     useColorScheme,
 } from "@opencast/appkit";
@@ -227,6 +228,11 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             reset: () => setSelections(currentSelections),
         }));
 
+        const tooltip = (subsets: Option[]) =>
+            `This selection is already included in the following
+            group(s): ${subsets.map(set => set.label).join(", ")}.
+            Allowing other actions here will override the ones previously chosen.`;
+
         return <div css={{
             flex: "1 1 320px",
             display: "flex",
@@ -280,9 +286,28 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                     </tr>
                 </thead>
                 <tbody>
-                    {selections.map(item => <tr key={item.label}>
+                    {selections.map(item => <tr
+                        key={item.label}
+                        css={{
+                            ...subsets(item, selections).length > 0 && {
+                                color: COLORS.neutral60,
+                            },
+                        }}
+                    >
                         <td>
-                            {item.label}
+                            <span css={{ display: "flex" }}>
+                                {item.label}
+                                {subsets(item, selections).length > 0
+                                    && <WithTooltip
+                                        tooltip={tooltip(subsets(item, selections))}
+                                        tooltipCss={{ width: 300 }}
+                                    >
+                                        <span css={{ marginLeft: 6 }}>
+                                            <FiAlertTriangle css={{ color: COLORS.danger0 }} />
+                                        </span>
+                                    </WithTooltip>
+                                }
+                            </span>
                         </td>
                         <td><ActionsMenu updateSelection={setSelections} item={item} /></td>
                         <td>
@@ -427,6 +452,24 @@ const DUMMY_GROUPS: ItemType = {
     },
 };
 
+
+const subsets = (selection: Option, selectedGroups: MultiValue<Option>) => {
+    // Selection is user: return every group that is selected and has at least one role
+    // in common with the user and also the same read/write access level.
+    // TODO
+
+    // Selection is Group: return every other group that is selected and includes every role of
+    // the selection and also has the same read/write access level.
+    const superSets = selectedGroups.filter(
+        item => selection.value.roles.every(
+            role => selection.value.roles !== item.value.roles
+                // && selection.value.actions === item.value.actions
+                && item.value.roles.includes(role)
+        )
+    );
+
+    return superSets;
+};
 
 
 const getDisplayName = (
