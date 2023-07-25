@@ -2,7 +2,8 @@ import { useTranslation } from "react-i18next";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
-import Select, { MultiValue } from "react-select";
+import { MultiValue } from "react-select";
+import CreatableSelect from "react-select/creatable";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { COLORS } from "../../../color";
 import { FiAlertTriangle, FiX } from "react-icons/fi";
@@ -61,7 +62,8 @@ type ACL = {
     writeRoles: string[];
 };
 
-type Action = "read" | "write" | "readWrite"
+// TODO: custom actions
+type Action = "read" | "write";
 
 type Option = {
     value: {
@@ -83,6 +85,8 @@ const AccessUI: React.FC = () => {
             "ROLE_USER_SABINE",
             "ROLE_STUDENT",
             "ROLE_TOBIRA_MODERATOR",
+            "ROLE_USER_FRITZ",
+            "WACKY_UNKNOWN_ROLE",
         ],
         writeRoles: ["ROLE_USER_ADMIN", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
     };
@@ -102,14 +106,14 @@ const AccessUI: React.FC = () => {
 
 
     const getSelections = (): ACL => {
-        const groupRoles = groupsRef.current?.getSelection();
-        const userRoles = usersRef.current?.getSelection();
+        const selectedGroups = groupsRef.current?.getSelection();
+        const selectedUsers = usersRef.current?.getSelection();
 
-        assertUndefined(groupRoles);
-        assertUndefined(userRoles);
+        assertUndefined(selectedGroups);
+        assertUndefined(selectedUsers);
 
         // Filter out non user roles from user entries.
-        const userRoleEntries = userRoles.map(user => ({
+        const userRoleEntries = selectedUsers.map(user => ({
             value: {
                 roles: user.value.roles.filter(role => /^ROLE_USER\w+/.test(role)),
                 actions: user.value.actions,
@@ -117,14 +121,15 @@ const AccessUI: React.FC = () => {
             label: user.label,
         }));
 
-        const combinedRoles = groupRoles.concat(userRoleEntries);
+        const combinedRoles = selectedGroups.concat(userRoleEntries);
         const readRoles = combinedRoles
-            .filter(entry => entry.value.actions === "read" || entry.value.actions === "readWrite")
+            .filter(entry => entry.value.actions === "read")
             .map(entry => entry.value.roles);
         const writeRoles = combinedRoles
-            .filter(entry => entry.value.actions === "write" || entry.value.actions === "readWrite")
+            .filter(entry => entry.value.actions === "write")
             .map(entry => entry.value.roles);
 
+        // TODO: somehow get roles of current user to show warning if not included in ACL.
         return {
             readRoles: [...new Set(readRoles.flat())],
             writeRoles: [...new Set(writeRoles.flat())],
@@ -157,10 +162,7 @@ const AccessUI: React.FC = () => {
                     initialOptions={userOptions}
                 />
             </div>
-            <div css={{
-                alignSelf: "flex-start",
-                marginTop: 40,
-            }}>
+            <div css={{ alignSelf: "flex-start", marginTop: 40 }}>
                 <Button
                     kind="danger"
                     css={{ marginRight: 8 }}
@@ -195,8 +197,12 @@ type ACLSelectHandle = {
 
 const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
     ({ currentACL, initialOptions, kind }, ref) => {
+        // TODO: add custom roles?
         const isDark = useColorScheme().scheme === "dark";
-        const label = kind.toLocaleLowerCase() + "s";
+        const label = match(kind, {
+            "Group": () => "groups",
+            "User": () => "users",
+        });
 
         const compareRolesByLength = (a: Option, b: Option) =>
             b.value.roles.length - a.value.roles.length;
@@ -223,6 +229,28 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 .some(option => entry.value.roles === option.value.roles)));
         };
 
+        const handleCreate = (inputValue: string) => {
+            if (!inputValue.startsWith("ROLE_")) {
+                return;
+            }
+            const newRole: Option = {
+                value: {
+                    roles: [inputValue],
+                    actions: "read",
+                },
+                label: inputValue,
+            };
+            setOptions(prev => [...prev, newRole]);
+        };
+
+        const handleChange = (choice: MultiValue<Option>) => {
+            setSelections(prev => {
+                const newItem = choice.filter(option => !prev.includes(option));
+                newItem[0].value.actions = "read";
+                return [...choice].sort(compareRolesByLength);
+            });
+        };
+
         useImperativeHandle(ref, () => ({
             getSelection: () => selections,
             reset: () => setSelections(currentSelections),
@@ -233,6 +261,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             group(s): ${subsets.map(set => set.label).join(", ")}.
             Allowing other actions here will override the ones previously chosen.`;
 
+
         return <div css={{
             flex: "1 1 320px",
             display: "flex",
@@ -240,7 +269,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             maxWidth: 500,
         }}>
             <h4>{`Authorized ${label}`}</h4>
-            <Select
+            <CreatableSelect
                 controlShouldRenderValue={false}
                 isClearable={false}
                 isMulti
@@ -248,13 +277,8 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 placeholder={`Select ${label}`}
                 value={selections}
                 options={options}
-                onChange={choice => {
-                    setSelections(prev => {
-                        const newItem = choice.filter(option => !prev.includes(option));
-                        newItem[0].value.actions = "read";
-                        return [...choice].sort(compareRolesByLength);
-                    });
-                }}
+                onCreateOption={handleCreate}
+                onChange={handleChange}
                 styles={searchableSelectStyles(isDark)}
                 theme={theme}
                 css={{ marginTop: 6 }}
@@ -270,65 +294,58 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                     textAlign: "left",
                     padding: "6px 12px",
                 },
-                "thead tr": {
-                    borderBottom: `2px solid ${COLORS.neutral05}`,
-                },
-                "tbody tr": {
-                    borderBottom: `1px solid ${COLORS.neutral05}`,
-                    ":last-child": { border: "none" },
-                },
             }}>
                 <thead>
-                    <tr>
+                    <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
                         <th css={{ width: "40%" }}>{kind}</th>
                         <th css={{ width: "min-content", textAlign: "center" }}>Actions</th>
                         <th css={{ width: 30 }}></th>
                     </tr>
                 </thead>
                 <tbody>
-                    {selections.map(item => <tr
-                        key={item.label}
-                        css={{
+                    {selections.map(item =>
+                        <tr key={item.label} css={{
                             ...subsets(item, selections).length > 0 && {
                                 color: COLORS.neutral60,
                             },
-                        }}
-                    >
-                        <td>
-                            <span css={{ display: "flex" }}>
-                                {item.label}
-                                {subsets(item, selections).length > 0
-                                    && <WithTooltip
-                                        tooltip={tooltip(subsets(item, selections))}
-                                        tooltipCss={{ width: 300 }}
-                                    >
-                                        <span css={{ marginLeft: 6 }}>
-                                            <FiAlertTriangle css={{ color: COLORS.danger0 }} />
-                                        </span>
-                                    </WithTooltip>
-                                }
-                            </span>
-                        </td>
-                        <td><ActionsMenu updateSelection={setSelections} item={item} /></td>
-                        <td>
-                            <ProtoButton
-                                onClick={() => remove(item)}
-                                css={{
-                                    margin: "auto",
-                                    display: "flex",
-                                    color: COLORS.neutral70,
-                                    border: `1px solid ${COLORS.neutral40}`,
-                                    borderRadius: 4,
-                                    padding: 4,
-                                    ":hover, :focus": { backgroundColor: COLORS.neutral15 },
-                                    ":focus-visible": { borderColor: COLORS.focus },
-                                    ...focusStyle({ offset: -1 }),
-                                }}
-                            >
-                                <FiX size={20} />
-                            </ProtoButton>
-                        </td>
-                    </tr>)}
+                            borderBottom: `1px solid ${COLORS.neutral05}`,
+                            ":last-child": { border: "none" },
+                        }}>
+                            <td>
+                                <span css={{ display: "flex" }}>
+                                    {item.label}
+                                    {subsets(item, selections).length > 0
+                                        && <WithTooltip
+                                            tooltip={tooltip(subsets(item, selections))}
+                                            tooltipCss={{ width: 300 }}
+                                        >
+                                            <span css={{ marginLeft: 6 }}>
+                                                <FiAlertTriangle css={{ color: COLORS.danger0 }} />
+                                            </span>
+                                        </WithTooltip>
+                                    }
+                                </span>
+                            </td>
+                            <td><ActionsMenu updateSelection={setSelections} item={item} /></td>
+                            <td>
+                                <ProtoButton
+                                    onClick={() => remove(item)}
+                                    disabled={item.value.roles.includes("ROLE_ADMIN")}
+                                    css={{
+                                        margin: "auto",
+                                        display: "flex",
+                                        color: COLORS.neutral70,
+                                        border: `1px solid ${COLORS.neutral40}`,
+                                        borderRadius: 4,
+                                        padding: 4,
+                                        ":hover, :focus": { backgroundColor: COLORS.neutral15 },
+                                        ":focus-visible": { borderColor: COLORS.focus },
+                                        ...focusStyle({ offset: -1 }),
+                                        ":disabled": { display: "none" },
+                                    }}
+                                ><FiX size={20} /></ProtoButton>
+                            </td>
+                        </tr>)}
                 </tbody>
             </table>
         </div>;
@@ -346,18 +363,18 @@ const ActionsMenu: React.FC<ActionsMenuProps> = ({ item, updateSelection }) => {
     const ref = useRef<FloatingHandle>(null);
     const isDark = useColorScheme().scheme === "dark";
 
-    const actions: Action[] = ["read", "write", "readWrite"];
+    const actions: Action[] = ["read", "write"];
     const [action, setAction] = useState<Action>(item.value.actions);
 
     const translation = (label: Action) => match(label, {
-        "read": () => "Read only",
-        "write": () => "Write only",
-        "readWrite": () => "Read/Write",
+        "read": () => "Read",
+        "write": () => "Read/Write",
     });
 
 
-    return (
-        <FloatingBaseMenu
+    return item.value.roles.includes("ROLE_ADMIN")
+        ? <div>Read/Write</div>
+        : <FloatingBaseMenu
             ref={ref}
             label={"acl actions"}
             triggerContent={<>{translation(action)}</>}
@@ -394,77 +411,76 @@ const ActionsMenu: React.FC<ActionsMenuProps> = ({ item, updateSelection }) => {
                     </ul>
                 </Floating>
             }
-        />
-    );
+        />;
 };
 
 
-type ItemType = Record<string, { displayName: string; roles: string[] }>
+type ACLRecord = Record<string, { label: string; roles: string[] }>
 
 
-const DUMMY_USERS: ItemType = {
+const DUMMY_USERS: ACLRecord = {
     "admin": {
-        displayName: "Administrator",
+        label: "Administrator",
         roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO"],
     },
     "sabine": {
-        displayName: "Sabine Rudolfs",
+        label: "Sabine Rudolfs",
         roles: ["ROLE_USER_SABINE", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
     },
     "björk": {
-        displayName: "Prof. Björk Guðmundsdóttir",
+        label: "Prof. Björk Guðmundsdóttir",
         roles: ["ROLE_USER_BJÖRK", "ROLE_EXTERNAL", "ROLE_TOBIRA_MODERATOR"],
     },
     "morgan": {
-        displayName: "Morgan Yu",
+        label: "Morgan Yu",
         roles: ["ROLE_USER_MORGAN", "ROLE_STUDENT", "ROLE_TOBIRA_UPLOAD"],
     },
     "jose": {
-        displayName: "José Carreño Quiñones",
+        label: "José Carreño Quiñones",
         roles: ["ROLE_USER_JOSE", "ROLE_STUDENT"],
     },
 };
 
-const DUMMY_GROUPS: ItemType = {
-    // "all": {
-    //     label: "Everyone",
-    //     roles: [],
-    // },
+const DUMMY_GROUPS: ACLRecord = {
+    // TODO: list all possible groups (also from Opencast?).
+    // TODO: custom groups??
+    // TODO: only one role per group, make another object or sth for subset relations.
+    "all": {
+        label: "Everyone",
+        roles: ["ROLE_ANONYMOUS"],
+    },
     "mods": {
-        displayName: "Moderators",
+        label: "Moderators",
         roles: ["ROLE_TOBIRA_MODERATOR"],
     },
     "special": {
-        displayName: "Mods+Instr",
+        label: "Mods+Instr",
         roles: ["ROLE_TOBIRA_MODERATOR", "ROLE_INSTRUCTOR"],
     },
     "loggedIn": {
-        displayName: "Logged in users",
-        roles: ["ROLE_USER_"],
+        label: "Logged in users",
+        roles: ["ROLE_USER"],
     },
     "students": {
-        displayName: "Students",
+        label: "Students",
         roles: ["ROLE_STUDENT"],
     },
     "funky": {
-        displayName: "Mods+Stud",
+        label: "Mods+Stud",
         roles: ["ROLE_TOBIRA_MODERATOR", "ROLE_STUDENT"],
     },
 };
 
 
 const subsets = (selection: Option, selectedGroups: MultiValue<Option>) => {
-    // Selection is user: return every group that is selected and has at least one role
-    // in common with the user and also the same read/write access level.
-    // TODO
-
-    // Selection is Group: return every other group that is selected and includes every role of
+    // Return every other group that is selected and includes every role of
     // the selection and also has the same read/write access level.
+    // TODO: change when subsets are defined differently. duh.
     const superSets = selectedGroups.filter(
-        item => selection.value.roles.every(
-            role => selection.value.roles !== item.value.roles
+        group => selection.value.roles.every(
+            role => selection.value.roles !== group.value.roles
                 // && selection.value.actions === item.value.actions
-                && item.value.roles.includes(role)
+                && group.value.roles.includes(role)
         )
     );
 
@@ -473,37 +489,48 @@ const subsets = (selection: Option, selectedGroups: MultiValue<Option>) => {
 
 
 const getDisplayName = (
-    users: ItemType,
+    users: ACLRecord,
     role: string,
 ) => {
     const name = Object.values(users).filter(item => item.roles.includes(role));
 
     return name.length === 1
-        ? name[0].displayName
-        : role;
+        ? name[0].label
+        : formatUnknownUserRole(role);
+};
+
+const formatUnknownUserRole = (role: string) => {
+    if (role.startsWith("ROLE_USER_")) {
+        const name = role.replace("ROLE_USER_", "").toLowerCase();
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    return role;
 };
 
 const getActions = (acl: ACL, role: string): Action => {
     if (acl.readRoles.includes(role) && acl.writeRoles.includes(role)) {
-        return "readWrite";
-    }
-    if (acl.writeRoles.includes(role)) {
         return "write";
     }
     return "read";
 };
 
 const makeUserSelection = (
-    users: ItemType,
+    users: ACLRecord,
     acl: ACL
 ): Option[] => {
+    const user = useUser();
     const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
     return aclArray.map(role => {
-        const roles = Object.values(users).find(user => user.roles.includes(role));
-        assertUndefined(roles);
+        const roles = Object.values(users).find(user => user.roles.includes(role))?.roles ?? [role];
+
+        if (roles.includes("ROLE_ADMIN") && isRealUser(user)) {
+            // TODO: find out how to check roles of user to conditionally show or hide entry.
+        }
+
         return {
             value: {
-                roles: roles.roles,
+                roles: roles,
                 actions: getActions(acl, role),
             },
             label: getDisplayName(users, role),
@@ -512,7 +539,7 @@ const makeUserSelection = (
 };
 
 const makeGroupSelection = (
-    groupList: ItemType,
+    groupList: ACLRecord,
     acl: ACL,
 ): Option[] => {
     const groups = Object.values(groupList);
@@ -524,9 +551,9 @@ const makeGroupSelection = (
             current.push({
                 value: {
                     roles: group.roles,
-                    actions: "readWrite",
+                    actions: "write",
                 },
-                label: group.displayName,
+                label: group.label,
             });
         } else if (group.roles.every(role => acl.readRoles.includes(role))) {
             current.push({
@@ -534,15 +561,7 @@ const makeGroupSelection = (
                     roles: group.roles,
                     actions: "read",
                 },
-                label: group.displayName,
-            });
-        } else if (group.roles.every(role => acl.writeRoles.includes(role))) {
-            current.push({
-                value: {
-                    roles: group.roles,
-                    actions: "write",
-                },
-                label: group.displayName,
+                label: group.label,
             });
         }
     }
@@ -560,13 +579,13 @@ const splitAcl = (roleList: string[]) => {
 };
 
 
-const buildOptions = (items: ItemType): Option[] =>
+const buildOptions = (items: ACLRecord): Option[] =>
     Object.values(items).map(item => ({
         value: {
             roles: item.roles,
             actions: "read",
         },
-        label: item.displayName,
+        label: item.label,
     }));
 
 
