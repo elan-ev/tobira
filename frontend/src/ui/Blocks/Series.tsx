@@ -26,7 +26,7 @@ import {
     FiChevronDown, FiChevronLeft, FiChevronRight,
     FiColumns, FiGrid, FiList, FiPlay,
 } from "react-icons/fi";
-import { keyframes } from "@emotion/react";
+import { CSSObject, keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { IconType } from "react-icons";
@@ -306,11 +306,12 @@ type FloatingBaseMenuProps = {
     triggerContent: ReactElement;
     list: ReactElement;
     label: string;
+    triggerStyles?: CSSObject;
 };
 
 // TODO: Make menus work with arrow keys.
 export const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>(
-    ({ triggerContent, list, label }, ref) => (
+    ({ triggerContent, list, label, triggerStyles }, ref) => (
         <FloatingContainer
             ref={ref}
             placement="bottom"
@@ -332,9 +333,10 @@ export const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMen
                     ":hover, :focus": { backgroundColor: COLORS.neutral15 },
                     ":focus-visible": { borderColor: COLORS.focus },
                     ...focusStyle({ offset: -1 }),
+                    ...triggerStyles,
                 }}>
                     {triggerContent}
-                    <FiChevronDown css={{ fontSize: 20 }} />
+                    <FiChevronDown css={{ fontSize: 20, flexShrink: 0 }} />
                 </ProtoButton>
             </FloatingTrigger>
             {list}
