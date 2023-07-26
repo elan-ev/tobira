@@ -50,9 +50,7 @@ const ACLPage: React.FC<Props> = ({ event }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
-        <div css={{ maxWidth: 850 }}>
-            <AccessUI />
-        </div>
+        <AccessUI />
     </>;
 };
 
@@ -87,6 +85,7 @@ const AccessUI: React.FC = () => {
             "ROLE_TOBIRA_MODERATOR",
             "ROLE_USER_FRITZ",
             "WACKY_UNKNOWN_ROLE",
+            "ROLE_USER_BJÖRK",
         ],
         writeRoles: ["ROLE_USER_ADMIN", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
     };
@@ -122,65 +121,65 @@ const AccessUI: React.FC = () => {
         }));
 
         const combinedRoles = selectedGroups.concat(userRoleEntries);
-        const readRoles = combinedRoles
-            .filter(entry => entry.value.actions === "read")
-            .map(entry => entry.value.roles);
+        const readRoles = combinedRoles.map(entry => entry.value.roles);
         const writeRoles = combinedRoles
             .filter(entry => entry.value.actions === "write")
             .map(entry => entry.value.roles);
 
-        // TODO: somehow get roles of current user to show warning if not included in ACL.
         return {
             readRoles: [...new Set(readRoles.flat())],
             writeRoles: [...new Set(writeRoles.flat())],
         };
     };
 
-    return <>
-        <div css={{
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-        }}>
+    return (
+        <div css={{ maxWidth: 1040 }}>
             <div css={{
                 display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 24,
+                flexDirection: "column",
+                width: "100%",
             }}>
-                <ACLSelect
-                    ref={groupsRef}
-                    kind="Group"
-                    currentACL={currentGroupACL}
-                    initialOptions={groupOptions}
-                />
-                <ACLSelect
-                    ref={usersRef}
-                    kind="User"
-                    currentACL={currentUserACL}
-                    initialOptions={userOptions}
-                />
-            </div>
-            <div css={{ alignSelf: "flex-start", marginTop: 40 }}>
-                <Button
-                    kind="danger"
-                    css={{ marginRight: 8 }}
-                    onClick={() => {
-                        groupsRef.current?.reset();
-                        usersRef.current?.reset();
-                    }}
-                >Reset</Button>
-                <Button
-                    kind="happy"
-                    onClick={() => {
-                        const newACL = getSelections();
-                        console.log(newACL);
-                    }}
-                >Save</Button>
+                <div css={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: 24,
+                }}>
+                    <ACLSelect
+                        ref={groupsRef}
+                        kind="Group"
+                        currentACL={currentGroupACL}
+                        initialOptions={groupOptions}
+                    />
+                    <ACLSelect
+                        ref={usersRef}
+                        kind="User"
+                        currentACL={currentUserACL}
+                        initialOptions={userOptions}
+                    />
+                </div>
+                <div css={{ alignSelf: "flex-start", marginTop: 40 }}>
+                    <Button
+                        kind="danger"
+                        css={{ marginRight: 8 }}
+                        onClick={() => {
+                            groupsRef.current?.reset();
+                            usersRef.current?.reset();
+                        }}
+                    >Reset</Button>
+                    <Button
+                        kind="happy"
+                        onClick={() => {
+                            const newACL = getSelections();
+                            // TODO: show warning modal if current user is not included in ACL.
+                            console.log(newACL);
+                        }}
+                    >Save</Button>
+                </div>
             </div>
         </div>
-    </>;
+    );
 };
 
 
@@ -198,6 +197,7 @@ type ACLSelectHandle = {
 const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
     ({ currentACL, initialOptions, kind }, ref) => {
         // TODO: add custom roles?
+        const user = useUser();
         const isDark = useColorScheme().scheme === "dark";
         const label = match(kind, {
             "Group": () => "groups",
@@ -322,6 +322,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                             return;
                         }
                         return <tr key={item.label} css={{
+                            height: 44,
                             ":hover, :focus-within": {
                                 backgroundColor: COLORS.neutral15,
                             },
@@ -385,18 +386,19 @@ type ActionsMenuProps = {
 const ActionsMenu: React.FC<ActionsMenuProps> = ({ item, updateSelection }) => {
     const ref = useRef<FloatingHandle>(null);
     const isDark = useColorScheme().scheme === "dark";
+    const { t } = useTranslation();
 
     const actions: Action[] = ["read", "write"];
     const [action, setAction] = useState<Action>(item.value.actions);
 
     const translation = (label: Action) => match(label, {
-        "read": () => "Read",
-        "write": () => "Read/Write",
+        "read": () => t("manage.access.read"),
+        "write": () => t("manage.access.write"),
     });
 
 
     return item.value.roles.includes("ROLE_ADMIN")
-        ? <div css={{ height: 31 }}>{t("manage.access.write")}</div>
+        ? <span css={{ marginLeft: 8 }}>{t("manage.access.write")}</span>
         : <FloatingBaseMenu
             ref={ref}
             label={"acl actions"}
@@ -509,10 +511,12 @@ const subsets = (selection: Option, selectedGroups: MultiValue<Option>) => {
     // Return every other group that is selected and includes every role of
     // the selection and also has the same read/write access level.
     // TODO: change when subsets are defined differently. duh.
+
+    // TODO: also check actions (might need to do some state stuff for this to update).
     const superSets = selectedGroups.filter(
         group => selection.value.roles.every(
             role => selection.value.roles !== group.value.roles
-                // && selection.value.actions === item.value.actions
+                // && selection.value.actions === group.value.actions
                 && group.value.roles.includes(role)
         )
     );
@@ -552,14 +556,9 @@ const makeUserSelection = (
     users: ACLRecord,
     acl: ACL
 ): Option[] => {
-    const user = useUser();
     const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
     return aclArray.map(role => {
         const roles = Object.values(users).find(user => user.roles.includes(role))?.roles ?? [role];
-
-        if (roles.includes("ROLE_ADMIN") && isRealUser(user)) {
-            // TODO: find out how to check roles of user to conditionally show or hide entry.
-        }
 
         return {
             value: {
@@ -604,7 +603,7 @@ const makeGroupSelection = (
 
 
 const splitAcl = (roleList: string[]) => {
-    const regEx = /^ROLE_USER\w+/;
+    const regEx = /^ROLE_USER_\w+/;
     const groupAcl = roleList.filter(role => !regEx.test(role));
     const userAcl = roleList.filter(role => regEx.test(role));
 
