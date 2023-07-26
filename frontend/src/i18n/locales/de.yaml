@@ -278,6 +278,10 @@ upload:
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
 
 manage:
+  access:
+    read: Anschauen
+    write: Editieren
+
   dashboard:
     title: Dashboard
     upload-tile: Hier können Sie Videos von Ihrem Computer hochladen.

@@ -273,6 +273,10 @@ upload:
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
 
 manage:
+  access:
+    read: Watch
+    write: Edit
+
   dashboard:
     title: Dashboard
     upload-tile: Here you can upload a new video from your computer.
