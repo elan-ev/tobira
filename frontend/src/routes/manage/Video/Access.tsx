@@ -282,9 +282,13 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 isMulti
                 isSearchable
                 placeholder={`Select ${label}`}
+                formatCreateLabel={input => /^ROLE_\w+/.test(input) && `Create ${input}`}
                 value={selections}
                 options={options}
                 onCreateOption={handleCreate}
+                filterOption={(option, inputValue) =>
+                    !!option.label && option.label.toLowerCase().includes(inputValue.toLowerCase())
+                }
                 onChange={handleChange}
                 styles={searchableSelectStyles(isDark)}
                 theme={theme}
