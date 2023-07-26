@@ -296,11 +296,12 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             />
             <table css={{
                 marginTop: 20,
-                tableLayout: "fixed",
+                tableLayout: "auto",
                 width: "100%",
                 borderRadius: 4,
                 borderCollapse: "collapse",
                 backgroundColor: COLORS.neutral10,
+                overflow: "hidden",
                 "th, td": {
                     textAlign: "left",
                     padding: "6px 12px",
@@ -308,14 +309,22 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             }}>
                 <thead>
                     <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
-                        <th css={{ width: "40%" }}>{kind}</th>
-                        <th css={{ width: "min-content", textAlign: "center" }}>Actions</th>
-                        <th css={{ width: 30 }}></th>
+                        <th>{kind}</th>
+                        <th>Actions</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    {selections.map(item =>
-                        <tr key={item.label} css={{
+                    {selections.map(item => {
+                        if (item.value.roles.includes("ROLE_ADMIN")
+                            && isRealUser(user)
+                            && !user.roles.includes("ROLE_ADMIN")) {
+                            return;
+                        }
+                        return <tr key={item.label} css={{
+                            ":hover, :focus-within": {
+                                backgroundColor: COLORS.neutral15,
+                            },
                             ...subsets(item, selections).length > 0 && {
                                 color: COLORS.neutral60,
                             },
@@ -329,9 +338,13 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                                         && <WithTooltip
                                             tooltip={tooltip(subsets(item, selections))}
                                             tooltipCss={{ width: 300 }}
+                                            css={{ display: "flex" }}
                                         >
-                                            <span css={{ marginLeft: 6 }}>
-                                                <FiAlertTriangle css={{ color: COLORS.danger0 }} />
+                                            <span css={{ marginLeft: 6, display: "flex" }}>
+                                                <FiAlertTriangle css={{
+                                                    color: COLORS.danger0,
+                                                    alignSelf: "center",
+                                                }} />
                                             </span>
                                         </WithTooltip>
                                     }
@@ -345,18 +358,17 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                                     css={{
                                         margin: "auto",
                                         display: "flex",
-                                        color: COLORS.neutral70,
-                                        border: `1px solid ${COLORS.neutral40}`,
+                                        color: COLORS.neutral60,
                                         borderRadius: 4,
                                         padding: 4,
-                                        ":hover, :focus": { backgroundColor: COLORS.neutral15 },
-                                        ":focus-visible": { borderColor: COLORS.focus },
-                                        ...focusStyle({ offset: -1 }),
+                                        ":hover, :focus-visible": { color: COLORS.danger0 },
                                         ":disabled": { display: "none" },
+                                        ...focusStyle({ offset: -1 }),
                                     }}
                                 ><FiX size={20} /></ProtoButton>
                             </td>
-                        </tr>)}
+                        </tr>;
+                    })}
                 </tbody>
             </table>
         </div>;
@@ -384,11 +396,21 @@ const ActionsMenu: React.FC<ActionsMenuProps> = ({ item, updateSelection }) => {
 
 
     return item.value.roles.includes("ROLE_ADMIN")
-        ? <div>Read/Write</div>
+        ? <div css={{ height: 31 }}>{t("manage.access.write")}</div>
         : <FloatingBaseMenu
             ref={ref}
             label={"acl actions"}
             triggerContent={<>{translation(action)}</>}
+            triggerStyles={{
+                width: 120,
+                gap: 0,
+                padding: "0 4px 0 8px",
+                justifyContent: "space-between",
+                ":hover, :focus-visible": {
+                    backgroundColor: COLORS.neutral20,
+                },
+                svg: { marginTop: 2, color: COLORS.neutral60 },
+            }}
             list={
                 <Floating
                     backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
