@@ -224,9 +224,12 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 option => option.value !== item.value
             ));
 
-            setOptions(initialOptions.filter(entry => !selections
-                .filter(option => option.value !== item.value)
-                .some(option => entry.value.roles === option.value.roles)));
+            setOptions(prev => initialOptions
+                .some(option => option.value.roles === item.value.roles)
+                ? initialOptions.filter(entry => !selections
+                    .filter(option => option.value !== item.value)
+                    .some(option => entry.value.roles === option.value.roles))
+                : [...prev, item]);
         };
 
         const handleCreate = (inputValue: string) => {
@@ -240,7 +243,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 },
                 label: inputValue,
             };
-            setOptions(prev => [...prev, newRole]);
+            setSelections(prev => [...prev, newRole]);
         };
 
         const handleChange = (choice: MultiValue<Option>) => {
@@ -249,6 +252,10 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 newItem[0].value.actions = "read";
                 return [...choice].sort(compareRolesByLength);
             });
+
+            setOptions(prev => prev.filter(
+                option => !choice.some(opt => opt.value.roles === option.value.roles)
+            ));
         };
 
         useImperativeHandle(ref, () => ({
