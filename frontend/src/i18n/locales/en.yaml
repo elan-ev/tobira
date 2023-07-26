@@ -291,6 +291,10 @@ manage:
     dashboard: Dashboard
     my-videos: My videos
 
+  access:
+    read: Watch
+    write: Edit
+
   dashboard:
     title: Dashboard
     upload-tile: Here you can upload a new video from your computer.

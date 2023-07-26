@@ -298,6 +298,10 @@ manage:
     dashboard: Dashboard
     my-videos: Meine Videos
 
+  access:
+    read: Anschauen
+    write: Editieren
+
   dashboard:
     title: Dashboard
     upload-tile: Hier können Sie Videos von Ihrem Computer hochladen.
