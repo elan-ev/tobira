@@ -83,11 +83,21 @@ const AccessUI: React.FC = () => {
             "ROLE_USER_SABINE",
             "ROLE_STUDENT",
             "ROLE_TOBIRA_MODERATOR",
+            "ROLE_INSTRUCTOR",
             "ROLE_USER_FRITZ",
             "WACKY_UNKNOWN_ROLE",
             "ROLE_USER_BJÖRK",
+            "ROLE_ANONYMOUS",
+            "ROLE_TOBIRA_GURU",
+            "ROLE_TOBIRA_STUDIO",
         ],
-        writeRoles: ["ROLE_USER_ADMIN", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
+        writeRoles: [
+            "ROLE_TOBIRA_STUDIO",
+            "ROLE_USER_ADMIN",
+            "ROLE_INSTRUCTOR",
+            "ROLE_TOBIRA_MODERATOR",
+            "ROLE_TOBIRA_GURU",
+        ],
     };
 
     const currentGroupACL: ACL = {
@@ -204,13 +214,15 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             "User": () => "users",
         });
 
-        const compareRolesByLength = (a: Option, b: Option) =>
-            b.value.roles.length - a.value.roles.length;
+        const compareRoles = (a: Option, b: Option) =>
+            Number(subsetRelations.some(set => set.superset === b.value.roles[0]))
+                - Number(subsetRelations.some(set => set.superset === a.value.roles[0]));
+
 
         const currentSelections: Option[] = (kind === "User"
             ? makeUserSelection(DUMMY_USERS, currentACL)
             : makeGroupSelection(DUMMY_GROUPS, currentACL))
-            .sort(compareRolesByLength);
+            .sort((compareRoles));
 
         const filteredOptions = initialOptions.filter(
             item => !currentSelections.some(elem => elem.value.roles === item.value.roles)
@@ -250,7 +262,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             setSelections(prev => {
                 const newItem = choice.filter(option => !prev.includes(option));
                 newItem[0].value.actions = "read";
-                return [...choice].sort(compareRolesByLength);
+                return [...choice].sort(compareRoles);
             });
 
             setOptions(prev => prev.filter(
@@ -260,13 +272,21 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
 
         useImperativeHandle(ref, () => ({
             getSelection: () => selections,
-            reset: () => setSelections(currentSelections),
+            reset: () => {
+                setSelections(currentSelections);
+                setOptions(filteredOptions);
+            },
         }));
 
-        const tooltip = (subsets: Option[]) =>
-            `This selection is already included in the following
-            group(s): ${subsets.map(set => set.label).join(", ")}.
+        const tooltip = (subsets: SubsetList[]) => {
+            const labels = subsets.map(set =>
+                Object.values(DUMMY_GROUPS)
+                    .find(group => group.roles[0] === set.superset)?.label);
+
+            return `This selection is already included in the following
+            group(s): ${labels.join(", ")}.
             Allowing other actions here will override the ones previously chosen.`;
+        };
 
 
         return <div css={{
@@ -456,30 +476,47 @@ type ACLRecord = Record<string, { label: string; roles: string[] }>
 const DUMMY_USERS: ACLRecord = {
     "admin": {
         label: "Administrator",
-        roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO"],
+        roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO", "ROLE_USER", "ROLE_ANONYMOUS"],
     },
     "sabine": {
         label: "Sabine Rudolfs",
-        roles: ["ROLE_USER_SABINE", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
+        roles: [
+            "ROLE_USER_SABINE",
+            "ROLE_INSTRUCTOR",
+            "ROLE_TOBIRA_MODERATOR",
+            "ROLE_USER",
+            "ROLE_ANONYMOUS",
+        ],
     },
     "björk": {
         label: "Prof. Björk Guðmundsdóttir",
-        roles: ["ROLE_USER_BJÖRK", "ROLE_EXTERNAL", "ROLE_TOBIRA_MODERATOR"],
+        roles: [
+            "ROLE_USER_BJÖRK",
+            "ROLE_EXTERNAL",
+            "ROLE_TOBIRA_MODERATOR",
+            "ROLE_USER",
+            "ROLE_ANONYMOUS",
+        ],
     },
     "morgan": {
         label: "Morgan Yu",
-        roles: ["ROLE_USER_MORGAN", "ROLE_STUDENT", "ROLE_TOBIRA_UPLOAD"],
+        roles: [
+            "ROLE_USER_MORGAN",
+            "ROLE_STUDENT",
+            "ROLE_TOBIRA_UPLOAD",
+            "ROLE_USER",
+            "ROLE_ANONYMOUS",
+        ],
     },
     "jose": {
         label: "José Carreño Quiñones",
-        roles: ["ROLE_USER_JOSE", "ROLE_STUDENT"],
+        roles: ["ROLE_USER_JOSE", "ROLE_STUDENT", "ROLE_USER", "ROLE_ANONYMOUS"],
     },
 };
 
 const DUMMY_GROUPS: ACLRecord = {
-    // TODO: list all possible groups (also from Opencast?).
+    // TODO: get all possible groups (also from Opencast?).
     // TODO: custom groups??
-    // TODO: only one role per group, make another object or sth for subset relations.
     "all": {
         label: "Everyone",
         roles: ["ROLE_ANONYMOUS"],
@@ -488,9 +525,9 @@ const DUMMY_GROUPS: ACLRecord = {
         label: "Moderators",
         roles: ["ROLE_TOBIRA_MODERATOR"],
     },
-    "special": {
-        label: "Mods+Instr",
-        roles: ["ROLE_TOBIRA_MODERATOR", "ROLE_INSTRUCTOR"],
+    "instructors": {
+        label: "Instructors",
+        roles: ["ROLE_INSTRUCTOR"],
     },
     "loggedIn": {
         label: "Logged in users",
@@ -500,28 +537,57 @@ const DUMMY_GROUPS: ACLRecord = {
         label: "Students",
         roles: ["ROLE_STUDENT"],
     },
-    "funky": {
-        label: "Mods+Stud",
-        roles: ["ROLE_TOBIRA_MODERATOR", "ROLE_STUDENT"],
+    "studio": {
+        label: "Studio users",
+        roles: ["ROLE_TOBIRA_STUDIO"],
+    },
+    "upload": {
+        label: "Editors",
+        roles: ["ROLE_TOBIRA_EDITOR"],
+    },
+    "opencast": {
+        label: "Opencast gurus",
+        roles: ["ROLE_TOBIRA_GURU"],
     },
 };
+
+type SubsetList = {
+    superset: string;
+    subsets: string[];
+}
+
+const subsetRelations: SubsetList[] = [
+    {
+        superset: "ROLE_ANONYMOUS",
+        subsets: [
+            "ROLE_TOBIRA_MODERATOR",
+            "ROLE_INSTRUCTOR",
+            "ROLE_USER",
+            "ROLE_STUDENT",
+            "ROLE_TOBIRA_STUDIO",
+            "ROLE_TOBIRA_EDITOR",
+        ],
+    },
+    {
+        superset: "ROLE_TOBIRA_GURU",
+        subsets: ["ROLE_TOBIRA_STUDIO", "ROLE_TOBIRA_EDITOR"],
+    },
+];
 
 
 const subsets = (selection: Option, selectedGroups: MultiValue<Option>) => {
     // Return every other group that is selected and includes every role of
     // the selection and also has the same read/write access level.
-    // TODO: change when subsets are defined differently. duh.
-
     // TODO: also check actions (might need to do some state stuff for this to update).
-    const superSets = selectedGroups.filter(
-        group => selection.value.roles.every(
-            role => selection.value.roles !== group.value.roles
-                // && selection.value.actions === group.value.actions
-                && group.value.roles.includes(role)
-        )
-    );
 
-    return superSets;
+    const roleToCheck = selection.value.roles[0];
+
+    // TODO: this is backwards. Better filter `selectedGroups` and directly return associated labels
+    const supersets = subsetRelations.filter(set =>
+        selectedGroups.some(group => group.value.roles[0] === set.superset)
+            && set.subsets.includes(roleToCheck));
+
+    return supersets;
 };
 
 
