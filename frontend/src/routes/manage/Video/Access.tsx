@@ -19,10 +19,11 @@ import {
     match,
     useColorScheme,
 } from "@opencast/appkit";
-import { FloatingBaseMenu, MenuItem } from "../../../ui/Blocks/Series";
+import { FloatingBaseMenu } from "../../../ui/Blocks/Series";
 import { focusStyle } from "../../../ui";
 import { ConfirmationModal, ConfirmationModalHandle, Modal } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
+import i18n from "../../../i18n";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -382,7 +383,6 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 borderRadius: 4,
                 borderCollapse: "collapse",
                 backgroundColor: COLORS.neutral10,
-                overflow: "hidden",
                 "th, td": {
                     textAlign: "left",
                     padding: "6px 12px",
@@ -521,24 +521,30 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
     const actions: Actions[] = ["read", "write"];
     const [action, setAction] = useState<Actions>(item.value.actions);
 
-    const translation = (label: Actions) => match(label, {
+    const actionLabel = (label: Actions) => match(label, {
         "read": () => t("manage.access.actions.read"),
         "write": () => t("manage.access.actions.write"),
+    });
+
+    const actionDescription = (label: Actions) => match(label, {
+        "read": () => t("manage.access.actions.read-explanation"),
+        "write": () => t("manage.access.actions.write-explanation"),
     });
 
     useEffect(() => {
         updateStates();
     }, [action]);
 
+    const language = i18n.resolvedLanguage;
 
     return item.value.roles.includes("ROLE_ADMIN")
         ? <span css={{ marginLeft: 8 }}>{t("manage.access.actions.write")}</span>
         : <FloatingBaseMenu
             ref={ref}
             label={"acl actions"}
-            triggerContent={<>{translation(action)}</>}
+            triggerContent={<>{actionLabel(action)}</>}
             triggerStyles={{
-                width: 120,
+                width: language === "en" ? 80 : 115,
                 gap: 0,
                 padding: "0 4px 0 8px",
                 justifyContent: "space-between",
@@ -563,7 +569,8 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
                         {actions.map(actionItem => <MenuItem
                             key={actionItem}
                             disabled={actionItem === action}
-                            label={translation(actionItem)}
+                            label={actionLabel(actionItem)}
+                            description={actionDescription(actionItem)}
                             onClick={() => {
                                 setAction(actionItem);
                                 updateSelection(prev => {
@@ -582,6 +589,68 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
                 </Floating>
             }
         />;
+};
+
+type MenuItemProps = {
+    label: string;
+    description: string;
+    onClick: () => void;
+    close: () => void;
+    disabled?: boolean;
+};
+
+const MenuItem: React.FC<MenuItemProps> = ({ label, description, onClick, close, disabled }) => {
+    const ref = useRef<HTMLButtonElement>(null);
+    const isDark = useColorScheme().scheme === "dark";
+
+    return (
+        <li css={{
+            ":not(:last-child)": {
+                borderBottom: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
+            },
+            ":last-child button": {
+                borderRadius: "0 0 8px 8px",
+            },
+        }}>
+            <ProtoButton
+                ref={ref}
+                disabled={disabled}
+                role="menuitem"
+                onClick={() => {
+                    onClick();
+                    close();
+                }}
+                css={{
+                    width: 200,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    svg: { fontSize: 16 },
+                    ":hover, :focus": {
+                        backgroundColor: isDark ? COLORS.neutral10 : COLORS.neutral15,
+                    },
+                    ...focusStyle({ inset: true }),
+                    "&[disabled] span": {
+                        fontWeight: "bold",
+                        color: COLORS.neutral80,
+                        pointerEvents: "none",
+                        ...isDark && { backgroundColor: COLORS.neutral10 },
+                    },
+                }}
+            >
+                <div css={{
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "8px 14px",
+                    gap: 6,
+                    textAlign: "left",
+                }}>
+                    <span>{label}</span>
+                    <p css={{ fontSize: 14 }}>{description}</p>
+                </div>
+            </ProtoButton>
+        </li>
+    );
 };
 
 
