@@ -4,7 +4,7 @@ import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { COLORS } from "../../../color";
 import { FiAlertTriangle, FiX } from "react-icons/fi";
 import { Button } from "../../../ui/Button";
@@ -61,12 +61,12 @@ type ACL = {
 };
 
 // TODO: custom actions
-type Action = "read" | "write";
+type Actions = "read" | "write";
 
 type Option = {
     value: {
         roles: string[];
-        actions: Action;
+        actions: Actions;
     };
     label: string;
 }
@@ -206,8 +206,6 @@ type ACLSelectHandle = {
 
 const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
     ({ currentACL, initialOptions, kind }, ref) => {
-        // TODO: add custom roles?
-        const user = useUser();
         const isDark = useColorScheme().scheme === "dark";
         const label = match(kind, {
             "Group": () => "groups",
@@ -232,14 +230,14 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
         const [options, setOptions] = useState<MultiValue<Option>>(filteredOptions);
 
         const remove = (item: Option) => {
-            setSelections(prev => prev.filter(
+            const filterItem = (items: MultiValue<Option>) => items.filter(
                 option => option.value !== item.value
-            ));
+            );
 
+            setSelections(prev => filterItem(prev));
             setOptions(prev => initialOptions
                 .some(option => option.value.roles === item.value.roles)
-                ? initialOptions.filter(entry => !selections
-                    .filter(option => option.value !== item.value)
+                ? initialOptions.filter(entry => !filterItem(selections)
                     .some(option => entry.value.roles === option.value.roles))
                 : [...prev, item]);
         };
@@ -277,16 +275,6 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 setOptions(filteredOptions);
             },
         }));
-
-        const tooltip = (subsets: SubsetList[]) => {
-            const labels = subsets.map(set =>
-                Object.values(DUMMY_GROUPS)
-                    .find(group => group.roles[0] === set.superset)?.label);
-
-            return `This selection is already included in the following
-            group(s): ${labels.join(", ")}.
-            Allowing other actions here will override the ones previously chosen.`;
-        };
 
 
         return <div css={{
@@ -335,86 +323,139 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                     </tr>
                 </thead>
                 <tbody>
-                    {selections.map(item => {
-                        if (item.value.roles.includes("ROLE_ADMIN")
-                            && isRealUser(user)
-                            && !user.roles.includes("ROLE_ADMIN")) {
-                            return;
-                        }
-                        return <tr key={item.label} css={{
-                            height: 44,
-                            ":hover, :focus-within": {
-                                backgroundColor: COLORS.neutral15,
-                            },
-                            ...subsets(item, selections).length > 0 && {
-                                color: COLORS.neutral60,
-                            },
-                            borderBottom: `1px solid ${COLORS.neutral05}`,
-                            ":last-child": { border: "none" },
-                        }}>
-                            <td>
-                                <span css={{ display: "flex" }}>
-                                    {item.label}
-                                    {subsets(item, selections).length > 0
-                                        && <WithTooltip
-                                            tooltip={tooltip(subsets(item, selections))}
-                                            tooltipCss={{ width: 300 }}
-                                            css={{ display: "flex" }}
-                                        >
-                                            <span css={{ marginLeft: 6, display: "flex" }}>
-                                                <FiAlertTriangle css={{
-                                                    color: COLORS.danger0,
-                                                    alignSelf: "center",
-                                                }} />
-                                            </span>
-                                        </WithTooltip>
-                                    }
-                                </span>
-                            </td>
-                            <td><ActionsMenu updateSelection={setSelections} item={item} /></td>
-                            <td>
-                                <ProtoButton
-                                    onClick={() => remove(item)}
-                                    disabled={item.value.roles.includes("ROLE_ADMIN")}
-                                    css={{
-                                        margin: "auto",
-                                        display: "flex",
-                                        color: COLORS.neutral60,
-                                        borderRadius: 4,
-                                        padding: 4,
-                                        ":hover, :focus-visible": { color: COLORS.danger0 },
-                                        ":disabled": { display: "none" },
-                                        ...focusStyle({ offset: -1 }),
-                                    }}
-                                ><FiX size={20} /></ProtoButton>
-                            </td>
-                        </tr>;
-                    })}
+                    {selections.map(item =>
+                        <ListEntry
+                            key={item.label}
+                            item={item}
+                            selections={selections}
+                            setSelections={setSelections}
+                            remove={remove}
+                        />)
+                    }
                 </tbody>
             </table>
         </div>;
     }
 );
 
+type ListEntryProps = {
+    item: Option;
+    selections: MultiValue<Option>;
+    setSelections: React.Dispatch<React.SetStateAction<MultiValue<Option>>>;
+    remove: (item: Option) => void;
+}
+
+const ListEntry: React.FC<ListEntryProps> = (
+    { item, selections, setSelections, remove }
+) => {
+    const user = useUser();
+    const [isSubset, setIsSubset] = useState<boolean>(
+        supersetList(item, selections).length > 0
+    );
+
+    const [supersets, setSupersets] = useState(
+        supersetList(item, selections).map(set => set.label)
+    );
+
+    const updateStates = () => {
+        setIsSubset(supersetList(item, selections).length > 0);
+        setSupersets(supersetList(item, selections).map(set => set.label));
+    };
+
+    useEffect(() => {
+        updateStates();
+    }, [selections]);
+
+
+    const tooltip = (supersets: string[]) =>
+        `This selection is already included in the following
+        group(s): ${supersets.join(", ")}. Allowing other actions
+        here will override the ones previously chosen.`;
+
+    if (item.value.roles.includes("ROLE_ADMIN")
+            && isRealUser(user)
+            && !user.roles.includes("ROLE_ADMIN")) {
+        return null;
+    }
+    return <tr key={item.label} css={{
+        height: 44,
+        ":hover, :focus-within": {
+            backgroundColor: COLORS.neutral15,
+        },
+        ...isSubset && {
+            color: COLORS.neutral60,
+        },
+        borderBottom: `1px solid ${COLORS.neutral05}`,
+        ":last-child": { border: "none" },
+    }}>
+        <td>
+            <span css={{ display: "flex" }}>
+                {item.label}
+                {isSubset && <WithTooltip
+                    tooltip={tooltip(supersets)}
+                    tooltipCss={{ width: 300 }}
+                    css={{ display: "flex" }}
+                >
+                    <span css={{ marginLeft: 6, display: "flex" }}>
+                        <FiAlertTriangle css={{
+                            color: COLORS.danger0,
+                            alignSelf: "center",
+                        }} />
+                    </span>
+                </WithTooltip>
+                }
+            </span>
+        </td>
+        <td><ActionsMenu
+            updateSelection={setSelections}
+            item={item}
+            updateStates={updateStates}
+        /></td>
+        <td>
+            <ProtoButton
+                onClick={() => remove(item)}
+                disabled={item.value.roles.includes("ROLE_ADMIN")}
+                css={{
+                    margin: "auto",
+                    display: "flex",
+                    color: COLORS.neutral60,
+                    borderRadius: 4,
+                    padding: 4,
+                    ":hover, :focus-visible": { color: COLORS.danger0 },
+                    ":disabled": { display: "none" },
+                    ...focusStyle({ offset: -1 }),
+                }}
+            ><FiX size={20} /></ProtoButton>
+        </td>
+    </tr>;
+};
+
 
 type ActionsMenuProps = {
     item: Option;
     updateSelection: React.Dispatch<React.SetStateAction<MultiValue<Option>>>;
+    updateStates: () => void;
 }
 
 
-const ActionsMenu: React.FC<ActionsMenuProps> = ({ item, updateSelection }) => {
+const ActionsMenu: React.FC<ActionsMenuProps> = (
+    { item, updateSelection, updateStates }
+) => {
     const ref = useRef<FloatingHandle>(null);
     const isDark = useColorScheme().scheme === "dark";
     const { t } = useTranslation();
 
-    const actions: Action[] = ["read", "write"];
-    const [action, setAction] = useState<Action>(item.value.actions);
+    const actions: Actions[] = ["read", "write"];
+    const [action, setAction] = useState<Actions>(item.value.actions);
 
-    const translation = (label: Action) => match(label, {
+    const translation = (label: Actions) => match(label, {
         "read": () => t("manage.access.read"),
         "write": () => t("manage.access.write"),
     });
+
+    useEffect(() => {
+        updateStates();
+    }, [action]);
 
 
     return item.value.roles.includes("ROLE_ADMIN")
@@ -460,6 +501,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = ({ item, updateSelection }) => {
                                     prev[index].value.actions = actionItem;
                                     return prev;
                                 });
+                                updateStates();
                             }}
                             close={() => ref.current?.close()}
                         />)}
@@ -471,7 +513,6 @@ const ActionsMenu: React.FC<ActionsMenuProps> = ({ item, updateSelection }) => {
 
 
 type ACLRecord = Record<string, { label: string; roles: string[] }>
-
 
 const DUMMY_USERS: ACLRecord = {
     "admin": {
@@ -521,6 +562,14 @@ const DUMMY_GROUPS: ACLRecord = {
         label: "Everyone",
         roles: ["ROLE_ANONYMOUS"],
     },
+    "loggedIn": {
+        label: "Logged in users",
+        roles: ["ROLE_USER"],
+    },
+    "opencast": {
+        label: "Opencast gurus",
+        roles: ["ROLE_TOBIRA_GURU"],
+    },
     "mods": {
         label: "Moderators",
         roles: ["ROLE_TOBIRA_MODERATOR"],
@@ -528,10 +577,6 @@ const DUMMY_GROUPS: ACLRecord = {
     "instructors": {
         label: "Instructors",
         roles: ["ROLE_INSTRUCTOR"],
-    },
-    "loggedIn": {
-        label: "Logged in users",
-        roles: ["ROLE_USER"],
     },
     "students": {
         label: "Students",
@@ -544,10 +589,6 @@ const DUMMY_GROUPS: ACLRecord = {
     "upload": {
         label: "Editors",
         roles: ["ROLE_TOBIRA_EDITOR"],
-    },
-    "opencast": {
-        label: "Opencast gurus",
-        roles: ["ROLE_TOBIRA_GURU"],
     },
 };
 
@@ -566,6 +607,17 @@ const subsetRelations: SubsetList[] = [
             "ROLE_STUDENT",
             "ROLE_TOBIRA_STUDIO",
             "ROLE_TOBIRA_EDITOR",
+            "ROLE_TOBIRA_GURU",
+        ],
+    },
+    {
+        superset: "ROLE_USER",
+        subsets: [
+            "ROLE_TOBIRA_MODERATOR",
+            "ROLE_INSTRUCTOR",
+            "ROLE_STUDENT",
+            "ROLE_TOBIRA_STUDIO",
+            "ROLE_TOBIRA_EDITOR",
         ],
     },
     {
@@ -575,17 +627,17 @@ const subsetRelations: SubsetList[] = [
 ];
 
 
-const subsets = (selection: Option, selectedGroups: MultiValue<Option>) => {
-    // Return every other group that is selected and includes every role of
-    // the selection and also has the same read/write access level.
-    // TODO: also check actions (might need to do some state stuff for this to update).
 
+const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => {
+    // Return every other group that is selected and whose subset includes the role of
+    // the selection and also has the same read/write (or a subset of write) access level.
+    // TODO: check actions
     const roleToCheck = selection.value.roles[0];
 
-    // TODO: this is backwards. Better filter `selectedGroups` and directly return associated labels
-    const supersets = subsetRelations.filter(set =>
-        selectedGroups.some(group => group.value.roles[0] === set.superset)
-            && set.subsets.includes(roleToCheck));
+    const supersets = selectedGroups
+        .filter(group => subsetRelations.some(set => set.superset === group.value.roles[0]
+            && set.subsets.includes(roleToCheck))
+            && (group.value.actions === selection.value.actions));
 
     return supersets;
 };
@@ -611,7 +663,7 @@ const formatUnknownUserRole = (role: string) => {
     return role;
 };
 
-const getActions = (acl: ACL, role: string): Action => {
+const getActions = (acl: ACL, role: string): Actions => {
     if (acl.readRoles.includes(role) && acl.writeRoles.includes(role)) {
         return "write";
     }
