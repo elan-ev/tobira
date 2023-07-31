@@ -501,7 +501,7 @@ type MenuItemProps = {
     disabled?: boolean;
 };
 
-export const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabled }) => {
+const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabled }) => {
     const ref = useRef<HTMLButtonElement>(null);
     const isDark = useColorScheme().scheme === "dark";
 
