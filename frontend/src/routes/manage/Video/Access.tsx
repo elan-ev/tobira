@@ -6,7 +6,7 @@ import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { COLORS } from "../../../color";
-import { FiAlertTriangle, FiX } from "react-icons/fi";
+import { FiAlertTriangle, FiInfo, FiX } from "react-icons/fi";
 import { Button } from "../../../ui/Button";
 import { searchableSelectStyles, theme } from "../../../ui/SearchableSelect";
 import { isRealUser, useUser } from "../../../User";
@@ -50,8 +50,36 @@ const ACLPage: React.FC<Props> = ({ event }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
+        <UnlistedNote event={event} />
         <AccessUI />
     </>;
+};
+
+
+const UnlistedNote: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
+    const { t } = useTranslation();
+
+    // TODO: Only show if event is unlisted.
+
+    return (
+        <WithTooltip
+            tooltip={"It can only be found by sharing its direct link."}
+            placement="bottom"
+            css={{ display: "inline-block" }}
+        >
+            <div css={{
+                fontSize: 14,
+                lineHeight: 1,
+                color: COLORS.neutral60,
+                display: "flex",
+                gap: 4,
+                marginBottom: 16,
+            }}>
+                <FiInfo />
+                This video is unlisted.
+            </div>
+        </WithTooltip>
+    );
 };
 
 
