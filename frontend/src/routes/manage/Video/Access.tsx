@@ -21,6 +21,8 @@ import {
 } from "@opencast/appkit";
 import { FloatingBaseMenu, MenuItem } from "../../../ui/Blocks/Series";
 import { focusStyle } from "../../../ui";
+import { ConfirmationModal, ConfirmationModalHandle, Modal } from "../../../ui/Modal";
+import { currentRef } from "../../../util";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -88,7 +90,7 @@ type ACL = {
     writeRoles: string[];
 };
 
-// TODO: custom actions
+// TODO: Handle custom actions.
 type Actions = "read" | "write";
 
 type Option = {
@@ -100,10 +102,15 @@ type Option = {
 }
 
 const AccessUI: React.FC = () => {
+    const { t } = useTranslation();
+    const user = useUser();
     const groupsRef = useRef<ACLSelectHandle>(null);
     const usersRef = useRef<ACLSelectHandle>(null);
 
-    // This is the data structure I expect from an ACL. Right now this isn't real world data.
+    const saveModalRef = useRef<ConfirmationModalHandle>(null);
+    const resetModalRef = useRef<ConfirmationModalHandle>(null);
+
+    // This is the ACL structure I expect from an event. Right now this isn't real world data.
     const currentACL: ACL = {
         readRoles: [
             "ROLE_USER_ADMIN",
@@ -149,7 +156,6 @@ const AccessUI: React.FC = () => {
         assertUndefined(selectedGroups);
         assertUndefined(selectedUsers);
 
-        // Filter out non user roles from user entries.
         const userRoleEntries = selectedUsers.map(user => ({
             value: {
                 roles: user.value.roles.filter(role => /^ROLE_USER\w+/.test(role)),
@@ -168,6 +174,18 @@ const AccessUI: React.FC = () => {
             readRoles: [...new Set(readRoles.flat())],
             writeRoles: [...new Set(writeRoles.flat())],
         };
+    };
+
+
+    const containsUser = (acl: ACL) => {
+        const userRole = isRealUser(user) && user.roles.find(role => /^ROLE_USER\w+/.test(role));
+
+        return userRole && acl.writeRoles.includes(userRole);
+    };
+
+    const submit = (acl: ACL) => {
+        // TODO: Actually save new ACL.
+        console.log(acl);
     };
 
     return (
@@ -201,19 +219,46 @@ const AccessUI: React.FC = () => {
                     <Button
                         kind="danger"
                         css={{ marginRight: 8 }}
-                        onClick={() => {
-                            groupsRef.current?.reset();
-                            usersRef.current?.reset();
-                        }}
-                    >Reset</Button>
+                        onClick={() => currentRef(resetModalRef).open()}
+                    >{t("manage.access.reset-modal.label")}</Button>
+                    <Modal ref={resetModalRef} title={t("manage.access.reset-modal.title")}>
+                        <p>{t("manage.access.reset-modal.body")}</p>
+                        <div css={{
+                            display: "flex",
+                            gap: 12,
+                            justifyContent: "center",
+                            flexWrap: "wrap",
+                            marginTop: 32,
+                        }}>
+                            <Button onClick={() => currentRef(resetModalRef).close?.()}
+                            >{t("cancel")}</Button>
+                            <Button kind="danger" onClick={() => {
+                                groupsRef.current?.reset();
+                                usersRef.current?.reset();
+                                currentRef(resetModalRef).close?.();
+                            }}
+                            >{t("manage.access.reset-modal.label")}</Button>
+                        </div>
+                    </Modal>
                     <Button
                         kind="happy"
                         onClick={() => {
                             const newACL = getSelections();
-                            // TODO: show warning modal if current user is not included in ACL.
-                            console.log(newACL);
+                            if (!containsUser(newACL)) {
+                                currentRef(saveModalRef).open();
+                            } else {
+                                submit(newACL);
+                            }
                         }}
-                    >Save</Button>
+                    >{t("save")}</Button>
+                    <ConfirmationModal
+                        title={t("manage.access.save-modal.title")}
+                        buttonContent={t("manage.access.save-modal.confirm")}
+                        ref={saveModalRef}
+                        onSubmit={() => submit(getSelections())}
+                    >
+                        <p>{t("manage.access.save-modal.body")}</p>
+                    </ConfirmationModal>
                 </div>
             </div>
         </div>
@@ -477,8 +522,8 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
     const [action, setAction] = useState<Actions>(item.value.actions);
 
     const translation = (label: Actions) => match(label, {
-        "read": () => t("manage.access.read"),
-        "write": () => t("manage.access.write"),
+        "read": () => t("manage.access.actions.read"),
+        "write": () => t("manage.access.actions.write"),
     });
 
     useEffect(() => {
@@ -487,7 +532,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
 
 
     return item.value.roles.includes("ROLE_ADMIN")
-        ? <span css={{ marginLeft: 8 }}>{t("manage.access.write")}</span>
+        ? <span css={{ marginLeft: 8 }}>{t("manage.access.actions.write")}</span>
         : <FloatingBaseMenu
             ref={ref}
             label={"acl actions"}

@@ -292,8 +292,22 @@ manage:
     my-videos: My videos
 
   access:
-    read: Watch
-    write: Edit
+    actions:
+      read: Read
+      read-explanation: Users with read access are able to watch the video.
+      write: Write
+      write-explanation: >
+        Users with write-access are able to both watch the video and edit certain video details.
+    reset-modal:
+      label: Reset
+      title: Reset changes
+      body: The changes you have made will be reset.
+    save-modal:
+      title: Remove own access?
+      body: The current selection will remove your write-access.
+            Without this, you will lose the ability to make any further edits.
+      confirm: Confirm
+      
 
   dashboard:
     title: Dashboard
