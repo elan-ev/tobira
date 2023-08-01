@@ -402,37 +402,39 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                     css={{ marginTop: 6 }}
                 />
             </div>
-            <table css={{
-                marginTop: 20,
-                tableLayout: "auto",
-                width: "100%",
-                borderRadius: 4,
-                borderCollapse: "collapse",
-                backgroundColor: COLORS.neutral10,
-                "th, td": {
-                    textAlign: "left",
-                    padding: "6px 12px",
-                },
-            }}>
-                <thead>
-                    <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
-                        <th>{kind}</th>
-                        <th>Actions</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {selections.map(item =>
-                        <ListEntry
-                            key={item.label}
-                            item={item}
-                            selections={selections}
-                            setSelections={setSelections}
-                            remove={remove}
-                        />)
-                    }
-                </tbody>
-            </table>
+            <div>
+                <table css={{
+                    marginTop: 20,
+                    tableLayout: "auto",
+                    width: "100%",
+                    borderRadius: 4,
+                    borderCollapse: "collapse",
+                    backgroundColor: COLORS.neutral10,
+                    "th, td": {
+                        textAlign: "left",
+                        padding: "6px 12px",
+                    },
+                }}>
+                    <thead>
+                        <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
+                            <th>{kind}</th>
+                            <th>Actions</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {selections.map(item =>
+                            <ListEntry
+                                key={item.label}
+                                item={item}
+                                selections={selections}
+                                setSelections={setSelections}
+                                remove={remove}
+                            />)
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>;
     }
 );
@@ -480,13 +482,19 @@ const ListEntry: React.FC<ListEntryProps> = (
     return <tr key={item.label} css={{
         height: 44,
         ":hover, :focus-within": {
-            backgroundColor: COLORS.neutral15,
+            td: { backgroundColor: COLORS.neutral15 },
         },
         ...isSubset && {
             color: COLORS.neutral60,
         },
         borderBottom: `1px solid ${COLORS.neutral05}`,
-        ":last-child": { border: "none" },
+        ":last-child": {
+            border: "none",
+            td: {
+                ":first-child": { borderBottomLeftRadius: 4 },
+                ":last-child": { borderBottomRightRadius: 4 },
+            },
+        },
     }}>
         <td>
             <span css={{ display: "flex" }}>
