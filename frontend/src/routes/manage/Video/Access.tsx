@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
-import { MultiValue } from "react-select";
+import { MultiValue, Props as SelectProps } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { COLORS } from "../../../color";
@@ -206,14 +206,14 @@ const AccessUI: React.FC = () => {
                     <ACLSelect
                         ref={groupsRef}
                         kind="Group"
-                        currentACL={currentGroupACL}
-                        initialOptions={groupOptions}
+                        initialACL={currentGroupACL}
+                        allOptions={groupOptions}
                     />
                     <ACLSelect
                         ref={usersRef}
                         kind="User"
-                        currentACL={currentUserACL}
-                        initialOptions={userOptions}
+                        initialACL={currentUserACL}
+                        allOptions={userOptions}
                     />
                 </div>
                 <div css={{ alignSelf: "flex-start", marginTop: 40 }}>
@@ -267,9 +267,9 @@ const AccessUI: React.FC = () => {
 };
 
 
-type ACLSelectProps = {
-    currentACL: ACL;
-    initialOptions: Option[];
+type ACLSelectProps = SelectProps & {
+    initialACL: ACL;
+    allOptions: Option[];
     kind: "Group" | "User";
 };
 
@@ -279,29 +279,39 @@ type ACLSelectHandle = {
 };
 
 const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
-    ({ currentACL, initialOptions, kind }, ref) => {
+    ({ initialACL, allOptions, kind }, ref) => {
+        const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
         const isDark = useColorScheme().scheme === "dark";
+
         const label = match(kind, {
             "Group": () => "groups",
             "User": () => "users",
         });
 
-        const compareRoles = (a: Option, b: Option) =>
+        const roleComparator = (a: Option, b: Option) =>
             Number(subsetRelations.some(set => set.superset === b.value.roles[0]))
                 - Number(subsetRelations.some(set => set.superset === a.value.roles[0]));
 
+        const initialSelections: Option[] = (kind === "User"
+            ? makeUserSelection(DUMMY_USERS, initialACL)
+            : makeGroupSelection(DUMMY_GROUPS, initialACL))
+            .sort((roleComparator));
 
-        const currentSelections: Option[] = (kind === "User"
-            ? makeUserSelection(DUMMY_USERS, currentACL)
-            : makeGroupSelection(DUMMY_GROUPS, currentACL))
-            .sort((compareRoles));
-
-        const filteredOptions = initialOptions.filter(
-            item => !currentSelections.some(elem => elem.value.roles === item.value.roles)
+        const initialOptions = allOptions.filter(
+            item => !initialSelections.some(elem => elem.value.roles === item.value.roles)
         );
 
-        const [selections, setSelections] = useState<MultiValue<Option>>(currentSelections);
-        const [options, setOptions] = useState<MultiValue<Option>>(filteredOptions);
+        const [selections, setSelections] = useState<MultiValue<Option>>(initialSelections);
+        const [options, setOptions] = useState<MultiValue<Option>>(initialOptions);
+
+        useImperativeHandle(ref, () => ({
+            getSelection: () => selections,
+            reset: () => {
+                setSelections(initialSelections);
+                setOptions(initialOptions);
+            },
+        }));
+
 
         const remove = (item: Option) => {
             const filterItem = (items: MultiValue<Option>) => items.filter(
@@ -309,9 +319,9 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             );
 
             setSelections(prev => filterItem(prev));
-            setOptions(prev => initialOptions
+            setOptions(prev => allOptions
                 .some(option => option.value.roles === item.value.roles)
-                ? initialOptions.filter(entry => !filterItem(selections)
+                ? allOptions.filter(entry => !filterItem(selections)
                     .some(option => entry.value.roles === option.value.roles))
                 : [...prev, item]);
         };
@@ -334,7 +344,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             setSelections(prev => {
                 const newItem = choice.filter(option => !prev.includes(option));
                 newItem[0].value.actions = "read";
-                return [...choice].sort(compareRoles);
+                return [...choice].sort(roleComparator);
             });
 
             setOptions(prev => prev.filter(
@@ -342,13 +352,23 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             ));
         };
 
-        useImperativeHandle(ref, () => ({
-            getSelection: () => selections,
-            reset: () => {
-                setSelections(currentSelections);
-                setOptions(filteredOptions);
-            },
-        }));
+        const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+            event.preventDefault();
+
+            if (kind === "User") {
+                const clipboardData = event.clipboardData.getData("Text");
+                const names = clipboardData.split("\n").map(name => name.trim());
+
+                const optionsToAdd: Option[] = names
+                    .map(name => options.filter(option => option.label === name)[0])
+                    .filter(option => option !== undefined);
+
+                if (optionsToAdd.length > 0) {
+                    handleChange([...selections, ...optionsToAdd]);
+                    setMenuIsOpen(false);
+                }
+            }
+        };
 
 
         return <div css={{
@@ -358,24 +378,30 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             maxWidth: 500,
         }}>
             <h4>{`Authorized ${label}`}</h4>
-            <CreatableSelect
-                controlShouldRenderValue={false}
-                isClearable={false}
-                isMulti
-                isSearchable
-                placeholder={`Select ${label}`}
-                formatCreateLabel={input => /^ROLE_\w+/.test(input) && `Create ${input}`}
-                value={selections}
-                options={options}
-                onCreateOption={handleCreate}
-                filterOption={(option, inputValue) =>
-                    !!option.label && option.label.toLowerCase().includes(inputValue.toLowerCase())
-                }
-                onChange={handleChange}
-                styles={searchableSelectStyles(isDark)}
-                theme={theme}
-                css={{ marginTop: 6 }}
-            />
+            <div onPaste={handlePaste}>
+                <CreatableSelect
+                    onMenuOpen={() => setMenuIsOpen(true)}
+                    onMenuClose={() => setMenuIsOpen(false)}
+                    menuIsOpen={menuIsOpen}
+                    controlShouldRenderValue={false}
+                    isClearable={false}
+                    isMulti
+                    isSearchable
+                    placeholder={`Select ${label}`}
+                    formatCreateLabel={input => /^ROLE_\w+/.test(input) && `Create ${input}`}
+                    value={selections}
+                    options={options}
+                    onCreateOption={handleCreate}
+                    filterOption={(option, inputValue) => !!option.label
+                        && option.label.toLowerCase().includes(inputValue.toLowerCase())
+                    }
+                    backspaceRemovesValue={false}
+                    onChange={handleChange}
+                    styles={searchableSelectStyles(isDark)}
+                    theme={theme}
+                    css={{ marginTop: 6 }}
+                />
+            </div>
             <table css={{
                 marginTop: 20,
                 tableLayout: "auto",
@@ -410,6 +436,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
         </div>;
     }
 );
+
 
 type ListEntryProps = {
     item: Option;
