@@ -304,6 +304,10 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
         const [selections, setSelections] = useState<MultiValue<Option>>(initialSelections);
         const [options, setOptions] = useState<MultiValue<Option>>(initialOptions);
 
+        const [_supersets, setSupersets] = useState<MultiValue<Option>>(
+            selections.filter(selection => supersetList(selection, selections).length > 0)
+        );
+
         useImperativeHandle(ref, () => ({
             getSelection: () => selections,
             reset: () => {
@@ -430,6 +434,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                                 selections={selections}
                                 setSelections={setSelections}
                                 remove={remove}
+                                setSupersets={setSupersets}
                             />)
                         }
                     </tbody>
@@ -444,34 +449,26 @@ type ListEntryProps = {
     item: Option;
     selections: MultiValue<Option>;
     setSelections: React.Dispatch<React.SetStateAction<MultiValue<Option>>>;
+    setSupersets: React.Dispatch<React.SetStateAction<MultiValue<Option>>>;
     remove: (item: Option) => void;
 }
 
 const ListEntry: React.FC<ListEntryProps> = (
-    { item, selections, setSelections, remove }
+    { item, selections, setSelections, remove, setSupersets }
 ) => {
     const user = useUser();
-    const [isSubset, setIsSubset] = useState<boolean>(
-        supersetList(item, selections).length > 0
-    );
-
-    const [supersets, setSupersets] = useState(
-        supersetList(item, selections).map(set => set.label)
-    );
+    const isSubset = supersetList(item, selections).length > 0;
 
     const updateStates = () => {
-        setIsSubset(supersetList(item, selections).length > 0);
-        setSupersets(supersetList(item, selections).map(set => set.label));
+        setSupersets(
+            selections.filter(selection => supersetList(selection, selections).length > 0)
+        );
     };
 
-    useEffect(() => {
-        updateStates();
-    }, [selections]);
 
-
-    const tooltip = (supersets: string[]) =>
+    const tooltip = (setNames: string[]) =>
         `This selection is already included in the following
-        group(s): ${supersets.join(", ")}. Allowing other actions
+        group(s): ${setNames.join(", ")}. Allowing other actions
         here will override the ones previously chosen.`;
 
     if (item.value.roles.includes("ROLE_ADMIN")
@@ -500,7 +497,7 @@ const ListEntry: React.FC<ListEntryProps> = (
             <span css={{ display: "flex" }}>
                 {item.label}
                 {isSubset && <WithTooltip
-                    tooltip={tooltip(supersets)}
+                    tooltip={tooltip(supersetList(item, selections).map(set => set.label))}
                     tooltipCss={{ width: 300 }}
                     css={{ display: "flex" }}
                 >
@@ -808,13 +805,15 @@ const subsetRelations: SubsetList[] = [
 const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => {
     // Return every other group that is selected and whose subset includes the role of
     // the selection and also has the same read/write (or a subset of write) access level.
-    // TODO: check actions
     const roleToCheck = selection.value.roles[0];
 
     const supersets = selectedGroups
-        .filter(group => subsetRelations.some(set => set.superset === group.value.roles[0]
-            && set.subsets.includes(roleToCheck))
-            && (group.value.actions === selection.value.actions));
+        .filter(group =>
+            subsetRelations.some(
+                set => set.superset === group.value.roles[0] && set.subsets.includes(roleToCheck)
+            ) && (
+                group.value.actions === selection.value.actions || group.value.actions === "write"
+            ));
 
     return supersets;
 };
