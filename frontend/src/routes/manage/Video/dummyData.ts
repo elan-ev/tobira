@@ -1,5 +1,3 @@
-import { useTranslation } from "react-i18next";
-
 export type ACLRecord = Record<string, { label: string; roles: string[] }>
 
 export const dummyUsers: ACLRecord = {
@@ -43,44 +41,41 @@ export const dummyUsers: ACLRecord = {
     },
 };
 
-export const dummyGroups = (): ACLRecord => {
+export const dummyGroups: ACLRecord = {
     // TODO: get all possible groups (also from Opencast?).
     // TODO: read mappings from config. Maybe also make this an actual map instead of a record?
-    const { t } = useTranslation();
-    return {
-        "all": {
-            label: t("manage.access.groups.all"),
-            roles: ["ROLE_ANONYMOUS"],
-        },
-        "loggedIn": {
-            label: t("manage.access.groups.logged-in"),
-            roles: ["ROLE_USER"],
-        },
-        "opencast": {
-            label: "Opencast gurus",
-            roles: ["ROLE_TOBIRA_GURU"],
-        },
-        "mods": {
-            label: t("manage.access.groups.moderators"),
-            roles: ["ROLE_TOBIRA_MODERATOR"],
-        },
-        "instructors": {
-            label: t("manage.access.groups.instructors"),
-            roles: ["ROLE_INSTRUCTOR"],
-        },
-        "students": {
-            label: t("manage.access.groups.students"),
-            roles: ["ROLE_STUDENT"],
-        },
-        "studio": {
-            label: "Studio users",
-            roles: ["ROLE_TOBIRA_STUDIO"],
-        },
-        "upload": {
-            label: "Editor users",
-            roles: ["ROLE_TOBIRA_EDITOR"],
-        },
-    };
+    "all": {
+        label: "Everyone",
+        roles: ["ROLE_ANONYMOUS"],
+    },
+    "loggedIn": {
+        label: "Logged in users",
+        roles: ["ROLE_USER"],
+    },
+    "opencast": {
+        label: "Opencast gurus",
+        roles: ["ROLE_TOBIRA_GURU"],
+    },
+    "mods": {
+        label: "Moderators",
+        roles: ["ROLE_TOBIRA_MODERATOR"],
+    },
+    "instructors": {
+        label: "Instructors",
+        roles: ["ROLE_INSTRUCTOR"],
+    },
+    "students": {
+        label: "Students",
+        roles: ["ROLE_STUDENT"],
+    },
+    "studio": {
+        label: "Studio users",
+        roles: ["ROLE_TOBIRA_STUDIO"],
+    },
+    "editor": {
+        label: "Editors",
+        roles: ["ROLE_TOBIRA_EDITOR"],
+    },
 };
 
 type SubsetList = {
@@ -133,7 +128,6 @@ export const currentACL: ACL = {
         "ROLE_TOBIRA_MODERATOR",
         "ROLE_INSTRUCTOR",
         "ROLE_USER_FRITZ",
-        "WACKY_UNKNOWN_ROLE",
         "ROLE_USER_BJÖRK",
         "ROLE_ANONYMOUS",
         "ROLE_TOBIRA_GURU",
