@@ -24,6 +24,9 @@ import { focusStyle } from "../../../ui";
 import { ConfirmationModal, ConfirmationModalHandle, Modal } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import i18n from "../../../i18n";
+import {
+    DUMMY_GROUPS, DUMMY_USERS, subsetRelations, ACLRecord, ACL, currentACL
+} from "./dummy_data";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -53,16 +56,15 @@ const ACLPage: React.FC<Props> = ({ event }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
-        <UnlistedNote event={event} />
-        <AccessUI />
+        {/* TODO: Check actual unlisted status of event. */}
+        {event.hostRealms.length < 1 && <UnlistedNote event={event} />}
+        <AccessUI currentACL={currentACL} event={event} />
     </>;
 };
 
 
 const UnlistedNote: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
     const { t } = useTranslation();
-
-    // TODO: Only show if event is unlisted.
 
     return (
         <WithTooltip
@@ -86,11 +88,6 @@ const UnlistedNote: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
 };
 
 
-type ACL = {
-    readRoles: string[];
-    writeRoles: string[];
-};
-
 // TODO: Handle custom actions.
 type Actions = "read" | "write";
 
@@ -102,7 +99,13 @@ type Option = {
     label: string;
 }
 
-const AccessUI: React.FC = () => {
+type AccessUIProps = {
+    currentACL: ACL;
+    event?: AuthorizedEvent;
+}
+
+const AccessUI: React.FC<AccessUIProps> = ({ currentACL }) => {
+    // TODO: read ACL from event.
     const { t } = useTranslation();
     const user = useUser();
     const groupsRef = useRef<ACLSelectHandle>(null);
@@ -110,31 +113,6 @@ const AccessUI: React.FC = () => {
 
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const resetModalRef = useRef<ConfirmationModalHandle>(null);
-
-    // This is the ACL structure I expect from an event. Right now this isn't real world data.
-    const currentACL: ACL = {
-        readRoles: [
-            "ROLE_USER_ADMIN",
-            "ROLE_INSTRUCTOR",
-            "ROLE_USER_SABINE",
-            "ROLE_STUDENT",
-            "ROLE_TOBIRA_MODERATOR",
-            "ROLE_INSTRUCTOR",
-            "ROLE_USER_FRITZ",
-            "WACKY_UNKNOWN_ROLE",
-            "ROLE_USER_BJÖRK",
-            "ROLE_ANONYMOUS",
-            "ROLE_TOBIRA_GURU",
-            "ROLE_TOBIRA_STUDIO",
-        ],
-        writeRoles: [
-            "ROLE_TOBIRA_STUDIO",
-            "ROLE_USER_ADMIN",
-            "ROLE_INSTRUCTOR",
-            "ROLE_TOBIRA_MODERATOR",
-            "ROLE_TOBIRA_GURU",
-        ],
-    };
 
     const currentGroupACL: ACL = {
         readRoles: splitAcl(currentACL.readRoles)[0],
@@ -542,7 +520,6 @@ type ActionsMenuProps = {
     updateStates: () => void;
 }
 
-
 const ActionsMenu: React.FC<ActionsMenuProps> = (
     { item, updateSelection, updateStates }
 ) => {
@@ -684,122 +661,6 @@ const MenuItem: React.FC<MenuItemProps> = ({ label, description, onClick, close,
         </li>
     );
 };
-
-
-type ACLRecord = Record<string, { label: string; roles: string[] }>
-
-const DUMMY_USERS: ACLRecord = {
-    "admin": {
-        label: "Administrator",
-        roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO", "ROLE_USER", "ROLE_ANONYMOUS"],
-    },
-    "sabine": {
-        label: "Sabine Rudolfs",
-        roles: [
-            "ROLE_USER_SABINE",
-            "ROLE_INSTRUCTOR",
-            "ROLE_TOBIRA_MODERATOR",
-            "ROLE_USER",
-            "ROLE_ANONYMOUS",
-        ],
-    },
-    "björk": {
-        label: "Prof. Björk Guðmundsdóttir",
-        roles: [
-            "ROLE_USER_BJÖRK",
-            "ROLE_EXTERNAL",
-            "ROLE_TOBIRA_MODERATOR",
-            "ROLE_USER",
-            "ROLE_ANONYMOUS",
-        ],
-    },
-    "morgan": {
-        label: "Morgan Yu",
-        roles: [
-            "ROLE_USER_MORGAN",
-            "ROLE_STUDENT",
-            "ROLE_TOBIRA_UPLOAD",
-            "ROLE_USER",
-            "ROLE_ANONYMOUS",
-        ],
-    },
-    "jose": {
-        label: "José Carreño Quiñones",
-        roles: ["ROLE_USER_JOSE", "ROLE_STUDENT", "ROLE_USER", "ROLE_ANONYMOUS"],
-    },
-};
-
-const DUMMY_GROUPS: ACLRecord = {
-    // TODO: get all possible groups (also from Opencast?).
-    // TODO: custom groups??
-    "all": {
-        label: "Everyone",
-        roles: ["ROLE_ANONYMOUS"],
-    },
-    "loggedIn": {
-        label: "Logged in users",
-        roles: ["ROLE_USER"],
-    },
-    "opencast": {
-        label: "Opencast gurus",
-        roles: ["ROLE_TOBIRA_GURU"],
-    },
-    "mods": {
-        label: "Moderators",
-        roles: ["ROLE_TOBIRA_MODERATOR"],
-    },
-    "instructors": {
-        label: "Instructors",
-        roles: ["ROLE_INSTRUCTOR"],
-    },
-    "students": {
-        label: "Students",
-        roles: ["ROLE_STUDENT"],
-    },
-    "studio": {
-        label: "Studio users",
-        roles: ["ROLE_TOBIRA_STUDIO"],
-    },
-    "upload": {
-        label: "Editors",
-        roles: ["ROLE_TOBIRA_EDITOR"],
-    },
-};
-
-type SubsetList = {
-    superset: string;
-    subsets: string[];
-}
-
-const subsetRelations: SubsetList[] = [
-    {
-        superset: "ROLE_ANONYMOUS",
-        subsets: [
-            "ROLE_TOBIRA_MODERATOR",
-            "ROLE_INSTRUCTOR",
-            "ROLE_USER",
-            "ROLE_STUDENT",
-            "ROLE_TOBIRA_STUDIO",
-            "ROLE_TOBIRA_EDITOR",
-            "ROLE_TOBIRA_GURU",
-        ],
-    },
-    {
-        superset: "ROLE_USER",
-        subsets: [
-            "ROLE_TOBIRA_MODERATOR",
-            "ROLE_INSTRUCTOR",
-            "ROLE_STUDENT",
-            "ROLE_TOBIRA_STUDIO",
-            "ROLE_TOBIRA_EDITOR",
-        ],
-    },
-    {
-        superset: "ROLE_TOBIRA_GURU",
-        subsets: ["ROLE_TOBIRA_STUDIO", "ROLE_TOBIRA_EDITOR"],
-    },
-];
-
 
 
 const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => {
