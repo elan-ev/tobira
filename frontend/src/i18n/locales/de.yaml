@@ -279,12 +279,29 @@ upload:
 
 manage:
   access:
-    actions:
-      read: Lesen
-      read-explanation: Nutzer mit Lesezugriff können das Video anschauen.
-      write: Schreiben
-      write-explanation: >
-        Nutzer mit Schreibzugriff können das Video anschauen und bestimmte Videodetails editieren.
+    authorized-groups: Authorisierte Gruppen
+    authorized-users: Authorisierte Personen
+    select:
+      groups: Gruppen wählen
+      users: Personen wählen
+      create: '{{item}} erstellen'
+    table:
+      group: Gruppe
+      user: Person
+      subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
+      actions:
+        title: Berechtigung
+        read: Lesen
+        read-description: Nutzer mit Lesezugriff können das Video anschauen.
+        write: Schreiben
+        large-group-warning: Sie geben einer großen Gruppe Schreibzugriff. Ist das beabsichtigt?
+        write-description: >
+          Nutzer mit Schreibzugriff können das Video anschauen und bestimmte Videodetails editieren.
+    unlisted:
+        note: Dieses Video ist nicht öffentlich verfügbar.
+        explanation: >
+          Nicht öffentliche Videos sind nur mit ihrem direkten Link aufrufbar.
+          Dies ist equivalent zu einem Passwortschutz.
     reset-modal:
       label: Zurücksetzen
       title: Änderungen zurücksetzen
@@ -294,6 +311,13 @@ manage:
       body: Die aktuelle Auswahl wird ihren Schreibzugriff entfernen.
             Ohne diesen werden sie keine weiteren Änderungen vornehmen können.
       confirm: Bestätigen
+    groups:
+      all: Alle Personen
+      logged-in: Eingeloggte Personen
+      moderators: Moderierende
+      students: Studierende
+      instructors: Lehrende
+
 
   dashboard:
     title: Dashboard

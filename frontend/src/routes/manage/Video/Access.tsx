@@ -25,7 +25,7 @@ import { ConfirmationModal, ConfirmationModalHandle, Modal } from "../../../ui/M
 import { currentRef } from "../../../util";
 import i18n from "../../../i18n";
 import {
-    DUMMY_GROUPS, DUMMY_USERS, subsetRelations, ACLRecord, ACL, currentACL, largeGroups,
+    dummyGroups, dummyUsers, subsetRelations, ACLRecord, ACL, currentACL, largeGroups,
 } from "./dummy_data";
 
 
@@ -57,19 +57,20 @@ const ACLPage: React.FC<Props> = ({ event }) => {
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
         {/* TODO: Check actual unlisted status of event. */}
-        {event.hostRealms.length < 1 && <UnlistedNote event={event} />}
+        {event.hostRealms.length < 1 && <UnlistedNote />}
         <AccessUI currentACL={currentACL} event={event} />
     </>;
 };
 
 
-const UnlistedNote: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
+const UnlistedNote: React.FC = () => {
     const { t } = useTranslation();
 
     return (
         <WithTooltip
-            tooltip={"It can only be found by sharing its direct link."}
+            tooltip={t("manage.access.unlisted.explanation")}
             placement="bottom"
+            tooltipCss={{ width: 400 }}
             css={{ display: "inline-block" }}
         >
             <div css={{
@@ -81,7 +82,7 @@ const UnlistedNote: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
                 marginBottom: 16,
             }}>
                 <FiInfo />
-                This video is unlisted.
+                {t("manage.access.unlisted.note")}
             </div>
         </WithTooltip>
     );
@@ -124,8 +125,8 @@ const AccessUI: React.FC<AccessUIProps> = ({ currentACL }) => {
         writeRoles: splitAcl(currentACL.writeRoles)[1],
     };
 
-    const groupOptions = buildOptions(DUMMY_GROUPS);
-    const userOptions = buildOptions(DUMMY_USERS);
+    const groupOptions = buildOptions(dummyGroups());
+    const userOptions = buildOptions(dummyUsers);
 
 
     const getSelections = (): ACL => {
@@ -164,6 +165,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ currentACL }) => {
 
     const submit = (acl: ACL) => {
         // TODO: Actually save new ACL.
+        // eslint-disable-next-line no-console
         console.log(acl);
     };
 
@@ -260,19 +262,28 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
     ({ initialACL, allOptions, kind }, ref) => {
         const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
         const isDark = useColorScheme().scheme === "dark";
+        const { t } = useTranslation();
 
-        const label = match(kind, {
-            "Group": () => "groups",
-            "User": () => "users",
+        const translations = match(kind, {
+            "Group": () => ({
+                heading: t("manage.access.authorized-groups"),
+                placeholder: t("manage.access.select.groups"),
+                columnHeader: t("manage.access.table.group"),
+            }),
+            "User": () => ({
+                heading: t("manage.access.authorized-users"),
+                placeholder: t("manage.access.select.users"),
+                columnHeader: t("manage.access.table.user"),
+            }),
         });
 
         const roleComparator = (a: Option, b: Option) =>
             Number(subsetRelations.some(set => set.superset === b.value.roles[0]))
                 - Number(subsetRelations.some(set => set.superset === a.value.roles[0]));
 
-        const initialSelections: Option[] = (kind === "User"
-            ? makeUserSelection(DUMMY_USERS, initialACL)
-            : makeGroupSelection(DUMMY_GROUPS, initialACL))
+        const initialSelections: Option[] = (kind === "Group"
+            ? makeGroupSelection(dummyGroups(), initialACL)
+            : makeUserSelection(dummyUsers, initialACL))
             .sort((roleComparator));
 
         const initialOptions = allOptions.filter(
@@ -359,7 +370,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
             flexDirection: "column",
             maxWidth: 500,
         }}>
-            <h4>{`Authorized ${label}`}</h4>
+            <h4>{translations.heading}</h4>
             <div onPaste={handlePaste}>
                 <CreatableSelect
                     onMenuOpen={() => setMenuIsOpen(true)}
@@ -369,8 +380,10 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                     isClearable={false}
                     isMulti
                     isSearchable
-                    placeholder={`Select ${label}`}
-                    formatCreateLabel={input => /^ROLE_\w+/.test(input) && `Create ${input}`}
+                    placeholder={translations.placeholder}
+                    formatCreateLabel={input =>
+                        /^ROLE_\w+/.test(input) && t("manage.access.select.create", { item: input })
+                    }
                     value={selections}
                     options={options}
                     onCreateOption={handleCreate}
@@ -399,8 +412,8 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelectProps>(
                 }}>
                     <thead>
                         <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
-                            <th>{kind}</th>
-                            <th>Actions</th>
+                            <th>{translations.columnHeader}</th>
+                            <th>{t("manage.access.table.actions.title")}</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -434,8 +447,10 @@ type ListEntryProps = {
 const ListEntry: React.FC<ListEntryProps> = (
     { item, selections, setSelections, remove, setSupersets }
 ) => {
+    const { t } = useTranslation();
     const user = useUser();
     const isSubset = supersetList(item, selections).length > 0;
+    const supersets = supersetList(item, selections).map(set => set.label).join(", ");
 
     const updateStates = () => {
         setSupersets(
@@ -443,70 +458,68 @@ const ListEntry: React.FC<ListEntryProps> = (
         );
     };
 
-
-    const subsetTooltip = (setNames: Option[]) =>
-        `This selection is already included in the following
-        group(s): ${setNames.map(set => set.label).join(", ")}.`;
-
-    if (item.value.roles.includes("ROLE_ADMIN")
+    return item.value.roles.includes("ROLE_ADMIN")
             && isRealUser(user)
-            && !user.roles.includes("ROLE_ADMIN")) {
-        return null;
-    }
-    return <tr key={item.label} css={{
-        height: 44,
-        ":hover, :focus-within": {
-            td: { backgroundColor: COLORS.neutral15 },
-        },
-        ...isSubset && {
-            color: COLORS.neutral60,
-        },
-        borderBottom: `1px solid ${COLORS.neutral05}`,
-        ":last-child": {
-            border: "none",
-            td: {
-                ":first-child": { borderBottomLeftRadius: 4 },
-                ":last-child": { borderBottomRightRadius: 4 },
+            && !user.roles.includes("ROLE_ADMIN")
+        ? null
+        : <tr key={item.label} css={{
+            height: 44,
+            ":hover, :focus-within": {
+                td: { backgroundColor: COLORS.neutral15 },
             },
-        },
-    }}>
-        <td>
-            <span css={{ display: "flex" }}>
-                {item.label}
-                {isSubset && <Warning tooltip={subsetTooltip(supersetList(item, selections))} />}
-            </span>
-        </td>
-        <td>
-            <span css={{ display: "flex" }}>
-                <ActionsMenu
-                    updateSelection={setSelections}
-                    item={item}
-                    updateStates={updateStates}
-                />
-                {largeGroups.includes(item.value.roles[0]) && item.value.actions === "write"
-                    && <Warning tooltip={
-                        "You are giving write access to a large group. Is this intentional?"
-                    } />
-                }
-            </span>
-        </td>
-        <td>
-            <ProtoButton
-                onClick={() => remove(item)}
-                disabled={item.value.roles.includes("ROLE_ADMIN")}
-                css={{
-                    margin: "auto",
-                    display: "flex",
-                    color: COLORS.neutral60,
-                    borderRadius: 4,
-                    padding: 4,
-                    ":hover, :focus-visible": { color: COLORS.danger0 },
-                    ":disabled": { display: "none" },
-                    ...focusStyle({ offset: -1 }),
-                }}
-            ><FiX size={20} /></ProtoButton>
-        </td>
-    </tr>;
+            ...isSubset && {
+                color: COLORS.neutral60,
+            },
+            borderBottom: `1px solid ${COLORS.neutral05}`,
+            ":last-child": {
+                border: "none",
+                td: {
+                    ":first-child": { borderBottomLeftRadius: 4 },
+                    ":last-child": { borderBottomRightRadius: 4 },
+                },
+            },
+        }}>
+            <td>
+                <span css={{ display: "flex" }}>
+                    {item.label}
+                    {isSubset
+                        ? <Warning tooltip={
+                            t("manage.access.table.subset-warning", { groups: supersets })
+                        } />
+                        : <div css={{ width: 22 }} />
+                    }
+                </span>
+            </td>
+            <td>
+                <span css={{ display: "flex" }}>
+                    <ActionsMenu
+                        updateSelection={setSelections}
+                        item={item}
+                        updateStates={updateStates}
+                    />
+                    {largeGroups.includes(item.value.roles[0]) && item.value.actions === "write"
+                        ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
+                        : <div css={{ width: 22 }} />
+                    }
+                </span>
+            </td>
+            <td>
+                <ProtoButton
+                    onClick={() => remove(item)}
+                    disabled={item.value.roles.includes("ROLE_ADMIN")}
+                    css={{
+                        margin: "auto",
+                        display: "flex",
+                        color: COLORS.neutral60,
+                        borderRadius: 4,
+                        padding: 4,
+                        ":hover, :focus-visible": { color: COLORS.danger0 },
+                        ":disabled": { display: "none" },
+                        ...focusStyle({ offset: -1 }),
+                    }}
+                ><FiX size={20} /></ProtoButton>
+            </td>
+        </tr>;
 };
 
 type Warning = {
@@ -514,18 +527,20 @@ type Warning = {
     tooltipStyle?: CSSObjectWithLabel;
 }
 
-const Warning: React.FC<Warning> = ({ tooltip, tooltipStyle }) => <WithTooltip
-    tooltip={tooltip}
-    tooltipCss={tooltipStyle}
-    css={{ display: "flex" }}
->
-    <span css={{ marginLeft: 6, display: "flex" }}>
-        <FiAlertTriangle css={{
-            color: COLORS.danger0,
-            alignSelf: "center",
-        }} />
-    </span>
-</WithTooltip>;
+const Warning: React.FC<Warning> = ({ tooltip, tooltipStyle }) => (
+    <WithTooltip
+        tooltip={tooltip}
+        tooltipCss={tooltipStyle}
+        css={{ display: "flex" }}
+    >
+        <span css={{ marginLeft: 6, display: "flex" }}>
+            <FiAlertTriangle css={{
+                color: COLORS.danger0,
+                alignSelf: "center",
+            }} />
+        </span>
+    </WithTooltip>
+);
 
 
 type ActionsMenuProps = {
@@ -544,14 +559,15 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
     const actions: Actions[] = ["read", "write"];
     const [action, setAction] = useState<Actions>(item.value.actions);
 
-    const actionLabel = (label: Actions) => match(label, {
-        "read": () => t("manage.access.actions.read"),
-        "write": () => t("manage.access.actions.write"),
-    });
-
-    const actionDescription = (label: Actions) => match(label, {
-        "read": () => t("manage.access.actions.read-explanation"),
-        "write": () => t("manage.access.actions.write-explanation"),
+    const translations = (actionType: Actions) => match(actionType, {
+        "read": () => ({
+            label: t("manage.access.table.actions.read"),
+            description: t("manage.access.table.actions.read-description"),
+        }),
+        "write": () => ({
+            label: t("manage.access.table.actions.write"),
+            description: t("manage.access.table.actions.write-description"),
+        }),
     });
 
     useEffect(() => {
@@ -561,11 +577,11 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
     const language = i18n.resolvedLanguage;
 
     return item.value.roles.includes("ROLE_ADMIN")
-        ? <span css={{ marginLeft: 8 }}>{t("manage.access.actions.write")}</span>
+        ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
         : <FloatingBaseMenu
             ref={ref}
             label={"acl actions"}
-            triggerContent={<>{actionLabel(action)}</>}
+            triggerContent={<>{translations(action).label}</>}
             triggerStyles={{
                 width: language === "en" ? 80 : 115,
                 gap: 0,
@@ -589,19 +605,19 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
                         margin: 0,
                         padding: 0,
                     }}>
-                        {actions.map(actionItem => <MenuItem
-                            key={actionItem}
-                            disabled={actionItem === action}
-                            label={actionLabel(actionItem)}
-                            description={actionDescription(actionItem)}
+                        {actions.map(actionType => <MenuItem
+                            key={actionType}
+                            disabled={actionType === action}
+                            label={translations(actionType).label}
+                            description={translations(actionType).description}
                             onClick={() => {
-                                setAction(actionItem);
+                                setAction(actionType);
                                 updateSelection(prev => {
                                     const index = prev.findIndex(
                                         entry => entry.value === item.value
                                     );
 
-                                    prev[index].value.actions = actionItem;
+                                    prev[index].value.actions = actionType;
                                     return prev;
                                 });
                                 updateStates();
@@ -619,7 +635,7 @@ type MenuItemProps = {
     description: string;
     onClick: () => void;
     close: () => void;
-    disabled?: boolean;
+    disabled: boolean;
 };
 
 const MenuItem: React.FC<MenuItemProps> = ({ label, description, onClick, close, disabled }) => {
@@ -649,15 +665,18 @@ const MenuItem: React.FC<MenuItemProps> = ({ label, description, onClick, close,
                     alignItems: "center",
                     gap: 8,
                     svg: { fontSize: 16 },
-                    ":hover, :focus": {
+                    ":hover:enabled, :focus:enabled ": {
                         backgroundColor: isDark ? COLORS.neutral10 : COLORS.neutral15,
                     },
                     ...focusStyle({ inset: true }),
-                    "&[disabled] span": {
-                        fontWeight: "bold",
-                        color: COLORS.neutral80,
-                        pointerEvents: "none",
-                        ...isDark && { backgroundColor: COLORS.neutral10 },
+                    "&[disabled]": {
+                        cursor: "default",
+                        span: {
+                            fontWeight: "bold",
+                            color: COLORS.neutral80,
+                            pointerEvents: "none",
+                            ...isDark && { backgroundColor: COLORS.neutral10 },
+                        },
                     },
                 }}
             >
@@ -676,6 +695,10 @@ const MenuItem: React.FC<MenuItemProps> = ({ label, description, onClick, close,
     );
 };
 
+
+// ==============================================================================================
+// ===== Helper functions
+// ==============================================================================================
 
 const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => {
     // Return every other group that is selected and whose subset includes the role of
