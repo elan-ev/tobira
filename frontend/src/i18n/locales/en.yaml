@@ -305,9 +305,9 @@ manage:
       actions:
         title: Actions
         read: Read
-        read-description: Users with read access are able to watch the video.
+        read-description: Users with read-access are able to watch the video.
         write: Write
-        large-group-warning: You are giving write access to a large group. Is this intentional?
+        large-group-warning: You are giving write-access to a large group. Is this intentional?
         write-description: >
           Users with write-access are able to both watch the video and edit certain video details.
     unlisted:
