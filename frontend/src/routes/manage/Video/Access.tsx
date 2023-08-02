@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
-import { MultiValue, Props as SelectProps } from "react-select";
+import { CSSObjectWithLabel, MultiValue, Props as SelectProps } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { COLORS } from "../../../color";
@@ -25,7 +25,7 @@ import { ConfirmationModal, ConfirmationModalHandle, Modal } from "../../../ui/M
 import { currentRef } from "../../../util";
 import i18n from "../../../i18n";
 import {
-    DUMMY_GROUPS, DUMMY_USERS, subsetRelations, ACLRecord, ACL, currentACL
+    DUMMY_GROUPS, DUMMY_USERS, subsetRelations, ACLRecord, ACL, currentACL, largeGroups,
 } from "./dummy_data";
 
 
@@ -444,10 +444,9 @@ const ListEntry: React.FC<ListEntryProps> = (
     };
 
 
-    const tooltip = (setNames: string[]) =>
+    const subsetTooltip = (setNames: Option[]) =>
         `This selection is already included in the following
-        group(s): ${setNames.join(", ")}. Allowing other actions
-        here will override the ones previously chosen.`;
+        group(s): ${setNames.map(set => set.label).join(", ")}.`;
 
     if (item.value.roles.includes("ROLE_ADMIN")
             && isRealUser(user)
@@ -474,26 +473,23 @@ const ListEntry: React.FC<ListEntryProps> = (
         <td>
             <span css={{ display: "flex" }}>
                 {item.label}
-                {isSubset && <WithTooltip
-                    tooltip={tooltip(supersetList(item, selections).map(set => set.label))}
-                    tooltipCss={{ width: 300 }}
-                    css={{ display: "flex" }}
-                >
-                    <span css={{ marginLeft: 6, display: "flex" }}>
-                        <FiAlertTriangle css={{
-                            color: COLORS.danger0,
-                            alignSelf: "center",
-                        }} />
-                    </span>
-                </WithTooltip>
+                {isSubset && <Warning tooltip={subsetTooltip(supersetList(item, selections))} />}
+            </span>
+        </td>
+        <td>
+            <span css={{ display: "flex" }}>
+                <ActionsMenu
+                    updateSelection={setSelections}
+                    item={item}
+                    updateStates={updateStates}
+                />
+                {largeGroups.includes(item.value.roles[0]) && item.value.actions === "write"
+                    && <Warning tooltip={
+                        "You are giving write access to a large group. Is this intentional?"
+                    } />
                 }
             </span>
         </td>
-        <td><ActionsMenu
-            updateSelection={setSelections}
-            item={item}
-            updateStates={updateStates}
-        /></td>
         <td>
             <ProtoButton
                 onClick={() => remove(item)}
@@ -512,6 +508,24 @@ const ListEntry: React.FC<ListEntryProps> = (
         </td>
     </tr>;
 };
+
+type Warning = {
+    tooltip: string;
+    tooltipStyle?: CSSObjectWithLabel;
+}
+
+const Warning: React.FC<Warning> = ({ tooltip, tooltipStyle }) => <WithTooltip
+    tooltip={tooltip}
+    tooltipCss={tooltipStyle}
+    css={{ display: "flex" }}
+>
+    <span css={{ marginLeft: 6, display: "flex" }}>
+        <FiAlertTriangle css={{
+            color: COLORS.danger0,
+            alignSelf: "center",
+        }} />
+    </span>
+</WithTooltip>;
 
 
 type ActionsMenuProps = {

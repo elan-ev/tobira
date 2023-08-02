@@ -143,3 +143,6 @@ export const currentACL: ACL = {
     ],
 };
 
+
+export const largeGroups = ["ROLE_ANONYMOUS", "ROLE_USER"];
+
