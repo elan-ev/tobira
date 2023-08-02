@@ -292,12 +292,28 @@ manage:
     my-videos: My videos
 
   access:
-    actions:
-      read: Read
-      read-explanation: Users with read access are able to watch the video.
-      write: Write
-      write-explanation: >
-        Users with write-access are able to both watch the video and edit certain video details.
+    authorized-groups: Authorized groups
+    authorized-users: Authorized users
+    select:
+      groups: Select groups
+      users: Select users
+      create: 'Create {{item}}'
+    table:
+      group: Group
+      user: User
+      subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
+      actions:
+        title: Actions
+        read: Read
+        read-description: Users with read access are able to watch the video.
+        write: Write
+        large-group-warning: You are giving write access to a large group. Is this intentional?
+        write-description: >
+          Users with write-access are able to both watch the video and edit certain video details.
+    unlisted:
+      note: This video is unlisted.
+      explanation: >
+        Unlisted videos can only be found by sharing its direct link. This is equivalent to a password protection.
     reset-modal:
       label: Reset
       title: Reset changes
@@ -307,7 +323,12 @@ manage:
       body: The current selection will remove your write-access.
             Without this, you will lose the ability to make any further edits.
       confirm: Confirm
-      
+    groups:
+      all: Everyone
+      logged-in: Logged in users
+      moderators: Moderators
+      students: Students
+      instructors: Instructors
 
   dashboard:
     title: Dashboard

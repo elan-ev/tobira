@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
+
 export type ACLRecord = Record<string, { label: string; roles: string[] }>
 
-export const DUMMY_USERS: ACLRecord = {
+export const dummyUsers: ACLRecord = {
     "admin": {
         label: "Administrator",
         roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO", "ROLE_USER", "ROLE_ANONYMOUS"],
@@ -41,41 +43,44 @@ export const DUMMY_USERS: ACLRecord = {
     },
 };
 
-export const DUMMY_GROUPS: ACLRecord = {
+export const dummyGroups = (): ACLRecord => {
     // TODO: get all possible groups (also from Opencast?).
     // TODO: read mappings from config. Maybe also make this an actual map instead of a record?
-    "all": {
-        label: "Everyone",
-        roles: ["ROLE_ANONYMOUS"],
-    },
-    "loggedIn": {
-        label: "Logged in users",
-        roles: ["ROLE_USER"],
-    },
-    "opencast": {
-        label: "Opencast gurus",
-        roles: ["ROLE_TOBIRA_GURU"],
-    },
-    "mods": {
-        label: "Moderators",
-        roles: ["ROLE_TOBIRA_MODERATOR"],
-    },
-    "instructors": {
-        label: "Instructors",
-        roles: ["ROLE_INSTRUCTOR"],
-    },
-    "students": {
-        label: "Students",
-        roles: ["ROLE_STUDENT"],
-    },
-    "studio": {
-        label: "Studio users",
-        roles: ["ROLE_TOBIRA_STUDIO"],
-    },
-    "upload": {
-        label: "Editors",
-        roles: ["ROLE_TOBIRA_EDITOR"],
-    },
+    const { t } = useTranslation();
+    return {
+        "all": {
+            label: t("manage.access.groups.all"),
+            roles: ["ROLE_ANONYMOUS"],
+        },
+        "loggedIn": {
+            label: t("manage.access.groups.logged-in"),
+            roles: ["ROLE_USER"],
+        },
+        "opencast": {
+            label: "Opencast gurus",
+            roles: ["ROLE_TOBIRA_GURU"],
+        },
+        "mods": {
+            label: t("manage.access.groups.moderators"),
+            roles: ["ROLE_TOBIRA_MODERATOR"],
+        },
+        "instructors": {
+            label: t("manage.access.groups.instructors"),
+            roles: ["ROLE_INSTRUCTOR"],
+        },
+        "students": {
+            label: t("manage.access.groups.students"),
+            roles: ["ROLE_STUDENT"],
+        },
+        "studio": {
+            label: "Studio users",
+            roles: ["ROLE_TOBIRA_STUDIO"],
+        },
+        "upload": {
+            label: "Editor users",
+            roles: ["ROLE_TOBIRA_EDITOR"],
+        },
+    };
 };
 
 type SubsetList = {
