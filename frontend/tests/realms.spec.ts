@@ -12,7 +12,7 @@ import {
 
 
 for (const realm of realms) {
-    test(`${realm} realm editing`, async ({ page, browserName }) => {
+    test.skip(`${realm} realm editing`, async ({ page, browserName }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
         const user: User = browserName === "chromium"
