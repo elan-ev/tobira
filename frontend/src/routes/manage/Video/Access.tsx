@@ -56,7 +56,6 @@ const ACLPage: React.FC<ACLPage> = ({ event }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
-        {/* TODO: Check actual unlisted status of event. */}
         {event.hostRealms.length < 1 && <UnlistedNote />}
         <AccessUI currentACL={currentACL} event={event} />
     </>;
