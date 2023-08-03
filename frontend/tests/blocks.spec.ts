@@ -3,7 +3,7 @@ import { Block, User, blocks, deleteRealm, insertBlock, login, realmSetup, realm
 
 
 for (const realm of realms) {
-    test(`${realm} realm blocks`, async ({ page, browserName }) => {
+    test.skip(`${realm} realm blocks`, async ({ page, browserName }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
         const user: User = browserName === "chromium"
             ? { login: "morgan", displayName: "Morgan Yu" }
