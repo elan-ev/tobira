@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use hyper::StatusCode;
 use serde::Serialize;
 use tokio_postgres::Row;
 
@@ -33,12 +34,21 @@ pub(crate) async fn run_daemon(db: DbConnection, config: &Config) -> ! {
 async fn send_stats(client: &OcClient, db: &DbConnection, config: &Config) -> Result<()> {
     let stats = Stats::gather(db, config).await.context("failed to gather stats")?;
     let json = serde_json::to_string(&stats).context("failed to serialize stats")?;
-    client.send_stats(json).await?;
+    let res = client.send_stats(json).await?;
+
+    if res.status() == StatusCode::NOT_FOUND {
+        warn!("Tobira `/stats` endpoint returned 404 -> no stats were sent \
+            (your Opencast probably just does not support this endpoint yet)");
+        return Ok(());
+    }
+    if !res.status().is_success() {
+        bail!("Unexpected non 2xx status returned by Opencast. Response: {res:#?}");
+    }
+
     debug!(
         "Sent statistics to Opencast (only used for adopter registration, if opted-in). {:#?}",
         stats,
     );
-
     Ok(())
 }
 
