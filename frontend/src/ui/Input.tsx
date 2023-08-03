@@ -101,8 +101,9 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
     const inner = multiline
         ? <textarea {...sharedProps} css={{
             ...sharedStyle,
-            overflow: "hidden",
+            overflow: "auto",
             resize: "none",
+            color: COLORS.neutral90,
         }} />
         : <input {...sharedProps} css={sharedStyle} />;
 
