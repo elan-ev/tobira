@@ -126,6 +126,14 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             },
             "div.preview-container": {
                 backgroundColor: `${COLORS.neutral15} !important`,
+                "div, div img": {
+                    height: "inherit",
+                },
+                "div img": {
+                    display: "block",
+                    margin: "0 auto",
+                    width: "unset !important",
+                },
             },
             display: "flex",
             flexDirection: "column",
