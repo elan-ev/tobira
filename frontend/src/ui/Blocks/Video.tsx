@@ -6,7 +6,8 @@ import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
-import { isSynced } from "../../util";
+import { isSynced, keyOfId } from "../../util";
+import { Link } from "../../router";
 
 
 type Props = {
@@ -21,6 +22,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
                 __typename
                 ... on NotAllowed { dummy } # workaround
                 ... on AuthorizedEvent {
+                    id
                     title
                     isLive
                     created
@@ -55,5 +57,8 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
         {isSynced(event)
             ? <InlinePlayer event={event} css={{ maxWidth: 800 }} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
+        <Link
+            to={`/!v/${keyOfId(event.id)}`}
+        >{t("video.link")}</Link>
     </>;
 };
