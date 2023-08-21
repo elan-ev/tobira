@@ -3,18 +3,18 @@ import { navigateTo } from "./common";
 
 
 test("Video page", async ({ page }) => {
-    const seriesBlock = page.locator("_react=SeriesBlockContainer");
     const metadatumLocator = (datum: "duration" | "part of series") =>
         page.locator(`dd:right-of(dt:has-text("${datum}"))`).first();
 
     await test.step("Setup", async () => {
         await navigateTo("/", page);
-        await seriesBlock.getByRole("link").first().click();
+        // Click first non-live video.
+        await page.getByRole("link", { name: "Thumbnail" }).first().click();
         await page.waitForSelector("nav");
     });
 
     await test.step("Video player", async () => {
-        const player = page.locator("_react=PaellaPlayer");
+        const player = page.locator(".preview-container");
 
         await test.step("Player is present", async () => {
             await expect(player).toBeVisible();
@@ -28,7 +28,7 @@ test("Video page", async ({ page }) => {
     });
 
     await test.step("Share button", async () => {
-        const shareButton = page.locator("_react=ShareButton");
+        const shareButton = page.getByRole("button", { name: "Share" });
 
         await test.step("Button is present", async () => {
             await expect(shareButton).toBeVisible();
@@ -37,9 +37,7 @@ test("Video page", async ({ page }) => {
         await test.step("Button opens share menu", async () => {
             await shareButton.click();
 
-            await expect(
-                shareButton.getByRole("button").first(),
-            ).toHaveAttribute("aria-expanded", "true");
+            await expect(shareButton).toHaveAttribute("aria-expanded", "true");
         });
     });
 
@@ -54,16 +52,14 @@ test("Video page", async ({ page }) => {
         const series = await metadatumLocator("part of series").textContent();
 
         await test.step("Block is present", async () => {
-            await expect(seriesBlock).toBeVisible();
-        });
-
-        await test.step("Block has the correct tile", async () => {
-            const blockTitle = page.getByRole("heading", { name: `More from “${series}”` });
-            await expect(seriesBlock.locator(blockTitle)).toBeVisible();
+            await expect(
+                page.getByRole("heading", { name: `More from “${series}”` })
+            ).toBeVisible();
         });
 
         // Only do this step if block contains at least one other event.
-        const siblingEvent = seriesBlock.getByRole("link").first();
+        const siblingEvent = page.getByRole("link", { name: "Thumbnail" }).first();
+
         if (await siblingEvent.isVisible()) {
             await test.step("Block contains sibling event tile", async () => {
                 await test.step("Tile links to event", async () => {
