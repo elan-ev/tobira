@@ -33,4 +33,6 @@ export default i18n;
 
 // Set the HTML `lang` attribute correctly
 i18n.on("languageChanged", lng => document.documentElement.setAttribute("lang", lng));
-document.documentElement.setAttribute("lang", i18n.resolvedLanguage);
+if (i18n.resolvedLanguage) {
+    document.documentElement.setAttribute("lang", i18n.resolvedLanguage);
+}
