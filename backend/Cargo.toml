@@ -82,7 +82,7 @@ built = { version = "0.6", features = ["chrono", "git2"] }
 # Codegen options
 
 [profile.release]
-debug = 1
+debug = "line-tables-only"
 codegen-units = 1
 lto = "thin"
 
