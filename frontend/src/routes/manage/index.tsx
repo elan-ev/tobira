@@ -20,6 +20,7 @@ import {
 } from "./__generated__/manageDashboardQuery.graphql";
 import { css } from "@emotion/react";
 import { COLORS } from "../../color";
+import { useMenu } from "../../layout/MenuState";
 
 
 const PATH = "/~manage";
@@ -140,6 +141,7 @@ type ManageNavProps = {
 export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     const { t } = useTranslation();
     const user = useUser();
+    const menu = useMenu();
 
     /* eslint-disable react/jsx-key */
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
@@ -152,7 +154,13 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     /* eslint-enable react/jsx-key */
 
     const items = entries.map(([path, label, icon]) => (
-        <LinkWithIcon key={path} to={path} iconPos="left" active={path === active}>
+        <LinkWithIcon
+            key={path}
+            to={path}
+            iconPos="left"
+            active={path === active}
+            close={() => menu.state === "burger" && menu.close()}
+        >
             {icon}
             {label}
         </LinkWithIcon>

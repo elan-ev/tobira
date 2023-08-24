@@ -68,6 +68,7 @@ type LinkWithIconProps = {
     active?: boolean;
     className?: string;
     children: ReactNode;
+    close?: () => void;
 };
 
 /** A link designed for `LinkList`. Has an icon on the left or right side. */
@@ -76,6 +77,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
     iconPos,
     children,
     active = false,
+    close,
     ...rest
 }) => {
     const isDark = useColorScheme().scheme === "dark";
@@ -115,7 +117,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
 
     return active
         ? <span css={style} aria-current="page" {...rest}>{children}</span>
-        : <Link to={to} css={style} {...rest}>{children}</Link>;
+        : <Link to={to} css={style} onClick={close} {...rest}>{children}</Link>;
 };
 
 export const CenteredContent: React.FC<{ children: ReactNode }> = ({ children }) => (

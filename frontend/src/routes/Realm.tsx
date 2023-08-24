@@ -26,6 +26,7 @@ import { boxError } from "../ui/error";
 import { Spinner } from "../ui/Spinner";
 import { useRouter } from "../router";
 import { COLORS } from "../color";
+import { useMenu } from "../layout/MenuState";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -287,6 +288,7 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
 
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     const { t } = useTranslation();
+    const menu = useMenu();
 
     /* eslint-disable react/jsx-key */
     const buttons: [string, string, ReactElement][] = [
@@ -305,6 +307,7 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
             to={`${route}${encodedPath}`}
             iconPos="left"
             active={isActive(route)}
+            close={() => menu.state === "burger" && menu.close()}
         >
             {icon}
             {label}
