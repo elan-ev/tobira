@@ -207,7 +207,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             />,
             keepOpenAfterClick: true,
             children: t("manage.dashboard.studio-tile-title"),
-            css: indent,
+            css: { ...indent, width: "100%" },
         }] : [],
 
         // Logout button

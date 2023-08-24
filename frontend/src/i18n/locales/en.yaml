@@ -287,22 +287,20 @@ upload:
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
 
 manage:
-  management: Management
   nav:
     dashboard: Dashboard
     my-videos: My videos
 
   dashboard:
-    title: Management Dashboard
+    title: Dashboard
     upload-tile: Here you can upload a new video from your computer.
     studio-tile-title: Record video
     studio-tile-body: >
-      Here you can easily create a new video by recording your microphone, screen and/or
-      webcam.
-    my-videos-tile: Here you can view and edit all your videos.
+      Create videos by recording your screen, webcam and microphone.
+    my-videos-tile: Here you can view and edit your videos.
     user-realm-tile: >
-      On your personal page, you can freely arrange videos, text, and other elements.
-    manage-pages-tile-title: Manage pages?
+      On your personal pages, you can freely arrange videos, text, and other elements.
+    manage-pages-tile-title: Manage pages
     manage-pages-tile-body: >
       To rename, modify, and delete pages, navigate to the page in question. If you
       are logged in and have the necessary permissions, page management buttons will appear.

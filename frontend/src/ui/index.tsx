@@ -26,28 +26,31 @@ type LinkListProps = {
 };
 
 /** A box with light grey background containing a list of items */
-export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
-    <ul
+export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => {
+    const itemStyle = {
+        backgroundColor: COLORS.neutral10,
+        borderBottom: `2px solid ${COLORS.neutral05}`,
+        "&:last-of-type": { borderBottom: "none" },
+        "& > a, & > span, & > form > button": {
+            display: "flex",
+            padding: "10px 16px",
+        },
+    };
+
+    return <ul
         css={{
             listStyle: "none",
             margin: 0,
             padding: 0,
-            "& a": {
+            "& a, & form button": {
                 ...focusStyle({ inset: true }),
                 ...useColorScheme().scheme === "dark" && { color: COLORS.primary1 },
             },
-            "& > li": {
-                backgroundColor: COLORS.neutral10,
-                borderBottom: `2px solid ${COLORS.neutral05}`,
-                "&:last-of-type": { borderBottom: "none" },
-                "& > *": {
-                    display: "flex",
-                    padding: "10px 16px",
-                },
-            },
             [screenWidthAbove(NAV_BREAKPOINT)]: {
-                "& > li:last-child > a": {
-                    borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
+                "& > li:last-child": {
+                    "> a, > form button": {
+                        borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
+                    },
                 },
                 "&:first-child > li:first-child > a": {
                     borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
@@ -56,40 +59,20 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => (
         }}
         {...rest}
     >
-        {items.map((child, i) => <li key={i}>{child}</li>)}
-    </ul>
-);
-
-
-
-type LinkWithIconProps = {
-    to: string;
-    iconPos: "left" | "right";
-    active?: boolean;
-    className?: string;
-    children: ReactNode;
-    close?: () => void;
+        {items.map((child, i) => <li css={itemStyle} key={i}>{child}</li>)}
+    </ul>;
 };
 
-/** A link designed for `LinkList`. Has an icon on the left or right side. */
-export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
-    to,
-    iconPos,
-    children,
-    active = false,
-    close,
-    ...rest
-}) => {
-    const isDark = useColorScheme().scheme === "dark";
-    const TRANSITION_DURATION = "0.1s";
 
+export const linkWithIconStyle = (isDark: boolean, iconPos: "left" | "right", active?: boolean) => {
+    const TRANSITION_DURATION = "0.1s";
     const hoverActiveStyle = {
         transitionDuration: "0s",
         backgroundColor: COLORS.neutral20,
         ...isDark && { color: COLORS.primary2 },
     };
 
-    const style = {
+    return {
         display: "flex",
         justifyContent: match(iconPos, {
             "left": () => "flex-start",
@@ -114,6 +97,28 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
             "&": hoverActiveStyle,
         },
     };
+};
+
+type LinkWithIconProps = {
+    to: string;
+    iconPos: "left" | "right";
+    active?: boolean;
+    className?: string;
+    children: ReactNode;
+    close?: () => void;
+};
+
+/** A link designed for `LinkList`. Has an icon on the left or right side. */
+export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
+    to,
+    iconPos,
+    children,
+    active = false,
+    close,
+    ...rest
+}) => {
+    const isDark = useColorScheme().scheme === "dark";
+    const style = linkWithIconStyle(isDark, iconPos, active);
 
     return active
         ? <span css={style} aria-current="page" {...rest}>{children}</span>

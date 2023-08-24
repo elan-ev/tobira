@@ -33,7 +33,7 @@ const Page: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
     const breadcrumbs = [
-        { label: t("manage.management"), link: "/~manage" },
+        { label: t("user.manage-content"), link: "/~manage" },
         { label: t("manage.my-videos.title"), link: "/~manage/videos" },
         { label: event.title, link: `/~manage/videos/${event.id.substring(2)}` },
     ];

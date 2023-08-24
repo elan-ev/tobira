@@ -39,7 +39,7 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
                 borderRadius: 4,
                 margin: 8,
                 borderBottom: "none",
-                "a, span": {
+                "a, span, button": {
                     padding: 16,
                     borderRadius: 4,
                 },

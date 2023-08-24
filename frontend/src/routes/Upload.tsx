@@ -72,7 +72,7 @@ const Upload: React.FC = () => {
             flexDirection: "column",
         }}>
             <Breadcrumbs
-                path={[{ label: t("manage.management"), link: "/~manage" }]}
+                path={[{ label: t("user.manage-content"), link: "/~manage" }]}
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
