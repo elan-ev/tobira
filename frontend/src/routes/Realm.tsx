@@ -4,7 +4,7 @@ import { graphql, loadQuery, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
 import { FiEdit, FiInfo, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
-import { WithTooltip } from "@opencast/appkit";
+import { WithTooltip, screenWidthAtMost } from "@opencast/appkit";
 
 import { environment as relayEnv } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -27,6 +27,8 @@ import { Spinner } from "../ui/Spinner";
 import { useRouter } from "../router";
 import { COLORS } from "../color";
 import { useMenu } from "../layout/MenuState";
+import { ManageNav } from "./manage";
+import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -91,7 +93,7 @@ export const RealmRoute = makeRoute(url => {
             {...{ query, queryRef }}
             nav={data => {
                 if (!data.realm) {
-                    return [];
+                    return <ManageNav active={realmPath as `/@${string}`} />;
                 }
 
                 const mainNav = <Nav key="nav" fragRef={data.realm} />;
@@ -253,10 +255,11 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
     return <>
         <Breadcrumbs path={[]} tail={<i>{t("realm.user-realm.create.heading")}</i>} />
         <div css={{
-            width: 500,
+            width: "80ch",
             maxWidth: "100%",
-            margin: "0 auto",
-            textAlign: "center",
+            [screenWidthAtMost(NAV_BREAKPOINT)]: {
+                textAlign: "center",
+            },
             "> h1, > p": {
                 textAlign: "left",
                 margin: "16px 0",
@@ -275,7 +278,7 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
             <h1>{t("realm.user-realm.create.heading")}</h1>
             <p>{t("realm.user-realm.create.what-you-can-do")}</p>
             <p>{t("realm.user-realm.create.available-at")}</p>
-            <code>{window.location.origin + realmPath}</code>
+            <code css={{ textAlign: "center" }}>{window.location.origin + realmPath}</code>
             <p>{t("realm.user-realm.create.find-and-delete")}</p>
             <Button kind="happy"css={{ marginTop: 32 }} onClick={onSubmit}>
                 {t("realm.user-realm.create.button")}
