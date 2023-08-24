@@ -104,6 +104,8 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
             overflow: "auto",
             resize: "none",
             color: COLORS.neutral90,
+            "::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
         }} />
         : <input {...sharedProps} css={sharedStyle} />;
 
