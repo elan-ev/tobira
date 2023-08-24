@@ -120,7 +120,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
             >
                 <FiVideo />
                 {t("manage.dashboard.studio-tile-title")}
-                <FiExternalLink size={18} css={{ marginLeft: 4 }}/>
+                <FiExternalLink size={18} css={{ marginLeft: 4 }} />
             </ExternalLink>
         );
     }
