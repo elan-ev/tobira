@@ -63,7 +63,7 @@ export const useTranslatedConfig = (s: TranslatedString): string => {
 
 /** Extracts the string corresponding to `i18n.resolvedLanguage` from a translated config string. */
 export const translatedConfig = (s: TranslatedString, i18n: i18n): string => {
-    const lang = i18n.resolvedLanguage;
+    const lang = i18n.resolvedLanguage ?? "en";
     return (lang in s ? s[lang as keyof TranslatedString] : undefined) ?? s.en;
 };
 
