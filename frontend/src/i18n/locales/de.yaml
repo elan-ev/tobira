@@ -470,10 +470,7 @@ manage:
           no-read-access-to-current: >
             Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
 
-      titled:
-        title: Titel
-        show-title: Titel anzeigen
-      
+      show-title: Titel anzeigen
       show-link: Link anzeigen
 
       save: Speichern

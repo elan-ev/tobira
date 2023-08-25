@@ -457,10 +457,7 @@ manage:
           no-read-access-to-current: >
             You do not have read access to the video that is currently referenced here.
 
-      titled:
-        title: Title
-        show-title: Show title
-
+      show-title: Show title
       show-link: Show link
 
       save: Save

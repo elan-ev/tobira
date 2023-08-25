@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from "react";
 import { fetchQuery, graphql, useFragment, useMutation } from "react-relay";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, UseFormReturn, useFormContext } from "react-hook-form";
 
 import { Card } from "../../../../../../ui/Card";
 import { EditModeForm } from ".";
@@ -81,6 +81,11 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         ? { ...event, ...event.syncedData, seriesTitle: event.series?.title }
         : undefined;
 
+    const optionProps: ["showTitle" | "showLink", boolean, string][] = [
+        ["showTitle", showTitle, t("manage.realm.content.show-title")],
+        ["showLink", showLink, t("manage.realm.content.show-link")],
+    ];
+
     return <EditModeForm create={create} save={save} map={(data: VideoFormData) => data}>
         <Heading>{t("manage.realm.content.event.event.heading")}</Heading>
         {"event" in errors && <div css={{ margin: "8px 0" }}>
@@ -98,27 +103,33 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
             )}
         />
 
-        <Heading>{t("manage.realm.content.titled.title")}</Heading>
-        <label>
-            <input
-                type="checkbox"
-                defaultChecked={showTitle}
-                {...form.register("showTitle")}
-                css={{ marginRight: 6 }}
-            />
-            {t("manage.realm.content.titled.show-title")}
-        </label>
-        <label>
-            <input
-                type="checkbox"
-                defaultChecked={showLink}
-                {...form.register("showLink")}
-                css={{ marginRight: 6 }}
-            />
-            {t("manage.realm.content.show-link")}
-        </label>
+        <div css={{ display: "flex", flexDirection: "row", gap: 16, marginTop: 8 }}>
+            {optionProps.map(([option, checked, title]) =>
+                // eslint-disable-next-line react/jsx-key
+                <DisplayOption form={form} option={option} checked={checked} title={title} />)
+            }
+        </div>
     </EditModeForm>;
 };
+
+type DisplayOption = {
+    form: UseFormReturn<VideoFormData>;
+    option: "showTitle" | "showLink";
+    checked: boolean;
+    title: string;
+}
+
+const DisplayOption: React.FC<DisplayOption> = (
+    { form, option, checked, title }
+) => <label>
+    <input
+        type="checkbox"
+        defaultChecked={checked}
+        {...form.register(option)}
+        css={{ marginRight: 6 }}
+    />
+    {title}
+</label>;
 
 type EventSelectorProps = {
     onChange: (eventId?: string) => void;
