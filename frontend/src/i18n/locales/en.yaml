@@ -461,6 +461,8 @@ manage:
         title: Title
         show-title: Show title
 
+      show-link: Show link
+
       save: Save
       cancel: Discard
       confirm-cancel: Discard changes?

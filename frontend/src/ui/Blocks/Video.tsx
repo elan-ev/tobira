@@ -16,7 +16,7 @@ type Props = {
 
 export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
     const { t } = useTranslation();
-    const { event, showTitle } = useFragment(graphql`
+    const { event, showTitle, showLink } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
                 __typename
@@ -38,6 +38,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
                 }
             }
             showTitle
+            showLink
         }
     `, fragRef);
 
@@ -57,8 +58,8 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
         {isSynced(event)
             ? <InlinePlayer event={event} css={{ maxWidth: 800 }} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
-        <Link
+        {showLink && <Link
             to={`/!v/${keyOfId(event.id)}`}
-        >{t("video.link")}</Link>
+        >{t("video.link")}</Link>}
     </>;
 };

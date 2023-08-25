@@ -24,6 +24,7 @@ import { ErrorDisplay } from "../../../../../../util/err";
 type VideoFormData = {
     event: string;
     showTitle: boolean;
+    showLink: boolean;
 };
 
 type EditVideoBlockProps = {
@@ -31,7 +32,7 @@ type EditVideoBlockProps = {
 };
 
 export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef }) => {
-    const { event, showTitle } = useFragment(graphql`
+    const { event, showTitle, showLink } = useFragment(graphql`
         fragment VideoEditModeBlockData on VideoBlock {
             event {
                 __typename,
@@ -47,6 +48,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                 }
             }
             showTitle
+            showLink
         }
     `, blockRef);
 
@@ -105,6 +107,15 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                 css={{ marginRight: 6 }}
             />
             {t("manage.realm.content.titled.show-title")}
+        </label>
+        <label>
+            <input
+                type="checkbox"
+                defaultChecked={showLink}
+                {...form.register("showLink")}
+                css={{ marginRight: 6 }}
+            />
+            {t("manage.realm.content.show-link")}
         </label>
     </EditModeForm>;
 };

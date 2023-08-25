@@ -207,6 +207,7 @@ pub(crate) struct VideoBlock {
     // Is `None` if the video was removed from the DB.
     pub(crate) event: Option<Id>,
     pub(crate) show_title: bool,
+    pub(crate) show_link: bool,
 }
 
 impl Block for VideoBlock {
@@ -228,6 +229,10 @@ impl VideoBlock {
 
     fn show_title(&self) -> bool {
         self.show_title
+    }
+
+    fn show_link(&self) -> bool {
+        self.show_link
     }
 
     fn id(&self) -> Id {
@@ -255,6 +260,7 @@ impl_from_db!(
             videolist_order,
             video,
             show_title,
+            show_link,
             show_metadata,
             realm,
         },
@@ -290,6 +296,7 @@ impl_from_db!(
                 shared,
                 event: row.video::<Option<Key>>().map(Id::event),
                 show_title: unwrap_type_dep(row.show_title(), "event", "show_title"),
+                show_link: unwrap_type_dep(row.show_link(), "event", "show_link"),
             }.into(),
         }
     }

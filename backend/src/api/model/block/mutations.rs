@@ -82,9 +82,9 @@ impl BlockValue {
 
         context.db
             .execute(
-                "insert into blocks (realm, index, type, video, show_title) \
-                    values ($1, $2, 'video', $3, $4)",
-                &[&realm.key, &index, &event, &block.show_title],
+                "insert into blocks (realm, index, type, video, show_title, show_link) \
+                    values ($1, $2, 'video', $3, $4, $5)",
+                &[&realm.key, &index, &event, &block.show_title, &block.show_link],
             )
             .await?;
 
@@ -309,13 +309,14 @@ impl BlockValue {
         let query = format!(
             "update blocks set \
                 video = coalesce($2, video), \
-                show_title = coalesce($3, show_title) \
+                show_title = coalesce($3, show_title), \
+                show_link = coalesce($4, show_link) \
                 where id = $1 \
                 and type = 'video' \
                 returning {selection}",
         );
         context.db
-            .query_one(&query, &[&Self::key_for(id)?, &video_id, &set.show_title])
+            .query_one(&query, &[&Self::key_for(id)?, &video_id, &set.show_title, &set.show_link])
             .await?
             .pipe(|row| Ok(Self::from_row_start(&row)))
     }
@@ -395,6 +396,7 @@ pub(crate) struct NewSeriesBlock {
 pub(crate) struct NewVideoBlock {
     event: Id,
     show_title: bool,
+    show_link: bool,
 }
 
 
@@ -420,6 +422,7 @@ pub(crate) struct UpdateSeriesBlock {
 pub(crate) struct UpdateVideoBlock {
     event: Option<Id>,
     show_title: Option<bool>,
+    show_link: Option<bool>,
 }
 
 

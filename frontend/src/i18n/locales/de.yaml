@@ -473,6 +473,8 @@ manage:
       titled:
         title: Titel
         show-title: Titel anzeigen
+      
+      show-link: Link anzeigen
 
       save: Speichern
       cancel: Verwerfen
