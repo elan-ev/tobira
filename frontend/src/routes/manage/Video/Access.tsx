@@ -149,7 +149,9 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
     const containsUser = (acl: ACL) => {
         const userRole = isRealUser(user) && user.roles.find(role => /^ROLE_USER\w+/.test(role));
 
-        return userRole && acl.writeRoles.includes(userRole);
+        return userRole && acl.writeRoles.includes(userRole)
+            || acl.writeRoles.includes("ROLE_ANONYMOUS")
+            || acl.writeRoles.includes("ROLE_USER");
     };
 
     const submit = (acl: ACL) => {
@@ -452,7 +454,7 @@ const ListEntry: React.FC<ListEntryProps> = (
         );
     };
 
-    return item.value.roles.includes("ROLE_ADMIN")
+    return (item.value.roles.includes("ROLE_ADMIN") || item.value.roles.includes("ROLE_USER_ADMIN"))
             && isRealUser(user)
             && !user.roles.includes("ROLE_ADMIN")
         ? null
@@ -461,9 +463,7 @@ const ListEntry: React.FC<ListEntryProps> = (
             ":hover, :focus-within": {
                 td: { backgroundColor: COLORS.neutral15 },
             },
-            ...isSubset && {
-                color: COLORS.neutral60,
-            },
+            ...isSubset && { color: COLORS.neutral60 },
             borderBottom: `1px solid ${COLORS.neutral05}`,
             ":last-child": {
                 border: "none",
