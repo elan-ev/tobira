@@ -147,6 +147,12 @@ impl AuthorizedEvent {
     fn metadata(&self) -> &ExtraMetadata {
         &self.metadata
     }
+    fn read_roles(&self) -> &Vec<String> {
+        &self.read_roles
+    }
+    fn write_roles(&self) -> &Vec<String> {
+        &self.write_roles
+    }
 
     fn synced_data(&self) -> &Option<SyncedEventData> {
         &self.synced_data

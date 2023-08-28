@@ -182,6 +182,8 @@ type AuthorizedEvent implements Node {
   created: DateTimeUtc!
   creators: [String!]!
   metadata: ExtraMetadata!
+  readRoles: [String!]!
+  writeRoles: [String!]!
   syncedData: SyncedEventData
   "Whether the current user has write access to this event."
   canWrite: Boolean!

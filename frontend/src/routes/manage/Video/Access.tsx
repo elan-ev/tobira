@@ -25,7 +25,7 @@ import { ConfirmationModal, ConfirmationModalHandle, Modal } from "../../../ui/M
 import { currentRef } from "../../../util";
 import i18n from "../../../i18n";
 import {
-    dummyGroups, dummyUsers, subsetRelations, ACLRecord, ACL, currentACL, largeGroups,
+    dummyGroups, dummyUsers, subsetRelations, ACLRecord, ACL, largeGroups,
 } from "./dummyData";
 
 
@@ -57,7 +57,7 @@ const ACLPage: React.FC<ACLPage> = ({ event }) => {
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
         {event.hostRealms.length < 1 && <UnlistedNote />}
-        <AccessUI currentACL={currentACL} event={event} />
+        <AccessUI event={event} />
     </>;
 };
 
@@ -100,12 +100,10 @@ type Option = {
 }
 
 type AccessUIProps = {
-    currentACL: ACL;
-    event?: AuthorizedEvent;
+    event: AuthorizedEvent;
 }
 
-const AccessUI: React.FC<AccessUIProps> = ({ currentACL }) => {
-    // TODO: read ACL from event.
+const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
     const { t } = useTranslation();
     const user = useUser();
     const groupsRef = useRef<ACLSelectHandle>(null);
@@ -114,15 +112,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ currentACL }) => {
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const resetModalRef = useRef<ConfirmationModalHandle>(null);
 
-    const currentGroupACL: ACL = {
-        readRoles: splitAcl(currentACL.readRoles)[0],
-        writeRoles: splitAcl(currentACL.writeRoles)[0],
-    };
-
-    const currentUserACL: ACL = {
-        readRoles: splitAcl(currentACL.readRoles)[1],
-        writeRoles: splitAcl(currentACL.writeRoles)[1],
-    };
+    const [currentGroupACL, currentUserACL] = splitAcl(event);
 
     const groupOptions = buildOptions(dummyGroups);
     const userOptions = buildOptions(dummyUsers);
@@ -764,10 +754,16 @@ const makeSelection = (
     });
 };
 
-const splitAcl = (roleList: string[]) => {
+const splitAcl = (event: AuthorizedEvent) => {
     const regEx = /^ROLE_USER_\w+/;
-    const groupAcl = roleList.filter(role => !regEx.test(role));
-    const userAcl = roleList.filter(role => regEx.test(role));
+    const groupAcl: ACL = {
+        readRoles: event.readRoles.filter(role => !regEx.test(role)),
+        writeRoles: event.writeRoles.filter(role => !regEx.test(role)),
+    };
+    const userAcl: ACL = {
+        readRoles: event.readRoles.filter(role => regEx.test(role)),
+        writeRoles: event.writeRoles.filter(role => regEx.test(role)),
+    };
 
     return [groupAcl, userAcl];
 };

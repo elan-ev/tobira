@@ -80,6 +80,8 @@ const query = graphql`
                 created
                 canWrite
                 isLive
+                readRoles
+                writeRoles
                 syncedData {
                     duration
                     thumbnail
