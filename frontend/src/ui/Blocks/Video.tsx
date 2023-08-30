@@ -8,13 +8,15 @@ import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
 import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
+import { FiArrowRightCircle } from "react-icons/fi";
 
 
 type Props = {
     fragRef: VideoBlockData$key;
+    basePath: string;
 };
 
-export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
+export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     const { t } = useTranslation();
     const { event, showTitle, showLink } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
@@ -58,8 +60,10 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
         {isSynced(event)
             ? <InlinePlayer event={event} css={{ maxWidth: 800 }} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
-        {showLink && <Link
-            to={`/!v/${keyOfId(event.id)}`}
-        >{t("video.link")}</Link>}
+        {showLink && <Link to={`${basePath}/${keyOfId(event.id)}`}
+        >
+            {t("video.link")}
+            <FiArrowRightCircle />
+        </Link>}
     </>;
 };
