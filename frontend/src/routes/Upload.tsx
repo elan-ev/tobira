@@ -772,7 +772,7 @@ export class JwtInvalid extends Error {
 }
 
 /** Performs a request against Opencast, authenticated via JWT */
-const ocRequest = async (
+export const ocRequest = async (
     path: string,
     options: RequestInit = {},
 ): Promise<string> => {

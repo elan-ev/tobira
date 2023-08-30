@@ -27,6 +27,7 @@ import i18n from "../../../i18n";
 import {
     dummyGroups, dummyUsers, subsetRelations, ACLRecord, ACL, largeGroups,
 } from "./dummyData";
+import { ocRequest } from "../../Upload";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -139,25 +140,66 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
             .filter(entry => entry.value.action === "write")
             .map(entry => entry.value.roles);
 
-        return {
+        const acl = {
             readRoles: [...new Set(readRoles.flat())],
             writeRoles: [...new Set(writeRoles.flat())],
         };
-    };
 
+        return acl;
+    };
 
     const containsUser = (acl: ACL) => {
         const userRole = isRealUser(user) && user.roles.find(role => /^ROLE_USER\w+/.test(role));
+        const isAdmin = isRealUser(user) && user.roles.includes("ROLE_ADMIN");
 
-        return userRole && acl.writeRoles.includes(userRole)
+        return isAdmin
+            || userRole && acl.writeRoles.includes(userRole)
             || acl.writeRoles.includes("ROLE_ANONYMOUS")
             || acl.writeRoles.includes("ROLE_USER");
     };
 
-    const submit = (acl: ACL) => {
+    const ocAcl = (selections: ACL) => {
+        type ocACL = {
+            allow: true;
+            action: Action;
+            role: string;
+        }
+
+        const newACL: ocACL[] = [];
+
+        selections.readRoles.forEach(role => newACL.push(
+            {
+                allow: true,
+                role: role,
+                action: "read",
+            }
+        ));
+
+        selections.writeRoles.forEach(role => newACL.push(
+            {
+                allow: true,
+                role: role,
+                action: "write",
+            }
+        ));
+
+        return newACL;
+    };
+
+    const submit = async (acl: ACL) => {
         // TODO: Actually save new ACL.
         // eslint-disable-next-line no-console
         console.log(acl);
+
+        const body = new FormData();
+        body.append("acl", JSON.stringify(ocAcl(acl)));
+
+        const url = (`/api/events/${event.opencastId}/acl`);
+
+        await ocRequest(url, {
+            method: "put",
+            body: body,
+        });
     };
 
     return (
@@ -784,4 +826,3 @@ const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value 
         throw new Error(`${value} is undefined.`);
     }
 };
-
