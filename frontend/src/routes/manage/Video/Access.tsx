@@ -25,9 +25,8 @@ import { ConfirmationModal, ConfirmationModalHandle, Modal } from "../../../ui/M
 import { currentRef } from "../../../util";
 import i18n from "../../../i18n";
 import {
-    dummyGroups, dummyUsers, subsetRelations, ACLRecord, ACL, largeGroups,
+    DUMMY_GROUPS, DUMMY_USERS, subsetRelations, ACLRecord, ACL, largeGroups,
 } from "./dummyData";
-import { ocRequest } from "../../Upload";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -130,16 +129,6 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
         // TODO: Actually save new ACL.
         // eslint-disable-next-line no-console
         console.log(acl);
-
-        // const body = new FormData();
-        // body.append("acl", JSON.stringify(ocAcl(acl)));
-
-        // const url = (`/api/events/${event.opencastId}/acl`);
-
-        // await ocRequest(url, {
-        //     method: "put",
-        //     body: body,
-        // });
     };
 
     return (
@@ -220,8 +209,8 @@ export const ACLSelectWrapper = forwardRef<ACLWrapperHandle, ACLSelectWrapper>(
         const groupsRef = useRef<ACLSelectHandle>(null);
         const usersRef = useRef<ACLSelectHandle>(null);
 
-        const groupOptions = buildOptions(dummyGroups);
-        const userOptions = buildOptions(dummyUsers);
+        const groupOptions = makeOptions(DUMMY_GROUPS);
+        const userOptions = makeOptions(DUMMY_USERS);
 
         const [initialGroupACL, initialUserACL] = splitAcl(initialACL);
 
@@ -292,7 +281,7 @@ export const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                 - Number(subsetRelations.some(set => set.superset === a.value.roles[0]));
 
         const initialSelections: Option[] = makeSelection(
-            kind === "Group" ? dummyGroups : dummyUsers, initialACL as ACL
+            kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialACL
         ).sort((roleComparator));
 
         const initialOptions = allOptions.filter(
@@ -749,10 +738,9 @@ const getAction = (acl: ACL, role: string): Action => {
     return "read";
 };
 
-const makeSelection = (
-    record: ACLRecord,
-    acl: ACL
-): Option[] => {
+// Takes an initial ACL and formats it as options for react-select
+// that are already selected with their respective action.
+const makeSelection = (record: ACLRecord, acl: ACL): Option[] => {
     const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
     return aclArray.map(role => {
         const roles = Object.values(record)
@@ -769,6 +757,17 @@ const makeSelection = (
     });
 };
 
+// Takes a record of all possible roles and formats them as options for react-select
+// with the default "write" action.
+const makeOptions = (record: ACLRecord): Option[] =>
+    Object.values(record).map(record => ({
+        value: {
+            roles: record.roles,
+            action: "read",
+        },
+        label: record.label,
+    }));
+
 const splitAcl = (initialACL: ACL) => {
     const regEx = /^ROLE_USER_\w+/;
     const groupAcl: ACL = {
@@ -784,17 +783,7 @@ const splitAcl = (initialACL: ACL) => {
 };
 
 
-export const buildOptions = (record: ACLRecord): Option[] =>
-    Object.values(record).map(record => ({
-        value: {
-            roles: record.roles,
-            action: "read",
-        },
-        label: record.label,
-    }));
-
-
-export const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
+const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
     if (typeof value === undefined || value === null) {
         throw new Error(`${value} is undefined.`);
     }
@@ -834,30 +823,3 @@ const getSelections = ({ groupsRef, usersRef }: Selections): ACL => {
     return acl;
 };
 
-const ocAcl = (selections: ACL) => {
-    type ocACL = {
-        allow: true;
-        action: Action;
-        role: string;
-    }
-
-    const newACL: ocACL[] = [];
-
-    selections.readRoles.forEach(role => newACL.push(
-        {
-            allow: true,
-            role: role,
-            action: "read",
-        }
-    ));
-
-    selections.writeRoles.forEach(role => newACL.push(
-        {
-            allow: true,
-            role: role,
-            action: "write",
-        }
-    ));
-
-    return newACL;
-};
