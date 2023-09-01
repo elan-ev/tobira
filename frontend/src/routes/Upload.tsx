@@ -2,7 +2,7 @@ import React, { MutableRefObject, ReactNode, useEffect, useRef, useState } from 
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { keyframes } from "@emotion/react";
-import { useController, useForm } from "react-hook-form";
+import { Controller, useController, useForm } from "react-hook-form";
 import { FiCheckCircle, FiInfo, FiUpload } from "react-icons/fi";
 import { WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
 
@@ -29,6 +29,8 @@ import { SeriesSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
+import { ACLSelectWrapper, ACLWrapperHandle } from "./manage/Video/Access";
+import { ACL } from "./manage/Video/dummyData";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -59,6 +61,7 @@ type Metadata = {
     title: string;
     description: string;
     series?: string;
+    acl: ACL;
 };
 
 const Upload: React.FC = () => {
@@ -651,8 +654,18 @@ type MetaDataEditProps = {
 /** Form that lets the user set metadata about the video */
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { t } = useTranslation();
+    const aclSelectRef = useRef<ACLWrapperHandle>(null);
 
-    const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
+    const user = useUser();
+    const userRole = (isRealUser(user)
+        && user.roles.find(role => /^ROLE_USER\w+/.test(role))) as string;
+
+    const defaultACL: ACL = {
+        readRoles: ["ROLE_ANONYMOUS", userRole],
+        writeRoles: [userRole],
+    };
+
+    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
     });
     const { field: seriesField } = useController({
@@ -720,8 +733,24 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                 {boxError(errors.series?.message)}
             </InputContainer>
 
+            {/* ACL */}
+            <InputContainer>
+                <label htmlFor="acl-field">
+                    <Controller
+                        name="acl"
+                        control={control}
+                        render={() =>
+                            <ACLSelectWrapper ref={aclSelectRef} initialACL={defaultACL} />
+                        }
+                    />
+                </label>
+            </InputContainer>
+
             {/* Submit button */}
-            <Button kind="happy" disabled={disabled} onClick={onSubmit}>
+            <Button kind="happy" disabled={disabled} onClick={() => {
+                setValue("acl", currentRef(aclSelectRef).selections());
+                onSubmit();
+            }}>
                 {t("upload.metadata.save")}
             </Button>
         </Form>
@@ -967,7 +996,8 @@ const finishUpload = async (
                 throw `Field \`userRole\` from 'info/me.json' is not valid: ${userRole}`;
             }
 
-            const acl = constructAcl(["ROLE_ANONYMOUS", userRole], [userRole]);
+            const { readRoles, writeRoles } = metadata.acl;
+            const acl = constructAcl(readRoles, writeRoles);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
             body.append("mediaPackage", mediaPackage);
