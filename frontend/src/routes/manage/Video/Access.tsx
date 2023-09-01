@@ -4,7 +4,7 @@ import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
 import { MultiValue, Props as SelectProps } from "react-select";
 import CreatableSelect from "react-select/creatable";
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { RefObject, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { COLORS } from "../../../color";
 import { FiAlertTriangle, FiInfo, FiX } from "react-icons/fi";
 import { Button } from "../../../ui/Button";
@@ -89,7 +89,6 @@ const UnlistedNote: React.FC = () => {
 };
 
 
-// TODO: Handle custom actions.
 type Action = "read" | "write";
 
 type Option = {
@@ -107,45 +106,14 @@ type AccessUIProps = {
 const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
     const { t } = useTranslation();
     const user = useUser();
-    const groupsRef = useRef<ACLSelectHandle>(null);
-    const usersRef = useRef<ACLSelectHandle>(null);
 
+    const aclSelectRef = useRef<ACLWrapperHandle>(null);
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const resetModalRef = useRef<ConfirmationModalHandle>(null);
 
-    const [currentGroupACL, currentUserACL] = splitAcl(event);
-
-    const groupOptions = buildOptions(dummyGroups);
-    const userOptions = buildOptions(dummyUsers);
-
-
-    const getSelections = (): ACL => {
-        const selectedGroups = groupsRef.current?.getSelection();
-        const selectedUsers = usersRef.current?.getSelection();
-
-        assertUndefined(selectedGroups);
-        assertUndefined(selectedUsers);
-
-        const userRoleEntries = selectedUsers.map(user => ({
-            value: {
-                roles: user.value.roles.filter(role => /^ROLE_USER\w+/.test(role)),
-                action: user.value.action,
-            },
-            label: user.label,
-        }));
-
-        const combinedRoles = selectedGroups.concat(userRoleEntries);
-        const readRoles = combinedRoles.map(entry => entry.value.roles);
-        const writeRoles = combinedRoles
-            .filter(entry => entry.value.action === "write")
-            .map(entry => entry.value.roles);
-
-        const acl = {
-            readRoles: [...new Set(readRoles.flat())],
-            writeRoles: [...new Set(writeRoles.flat())],
-        };
-
-        return acl;
+    const initialACL: ACL = {
+        readRoles: event.readRoles as string[],
+        writeRoles: event.writeRoles as string[],
     };
 
     const containsUser = (acl: ACL) => {
@@ -158,48 +126,20 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
             || acl.writeRoles.includes("ROLE_USER");
     };
 
-    const ocAcl = (selections: ACL) => {
-        type ocACL = {
-            allow: true;
-            action: Action;
-            role: string;
-        }
-
-        const newACL: ocACL[] = [];
-
-        selections.readRoles.forEach(role => newACL.push(
-            {
-                allow: true,
-                role: role,
-                action: "read",
-            }
-        ));
-
-        selections.writeRoles.forEach(role => newACL.push(
-            {
-                allow: true,
-                role: role,
-                action: "write",
-            }
-        ));
-
-        return newACL;
-    };
-
     const submit = async (acl: ACL) => {
         // TODO: Actually save new ACL.
         // eslint-disable-next-line no-console
         console.log(acl);
 
-        const body = new FormData();
-        body.append("acl", JSON.stringify(ocAcl(acl)));
+        // const body = new FormData();
+        // body.append("acl", JSON.stringify(ocAcl(acl)));
 
-        const url = (`/api/events/${event.opencastId}/acl`);
+        // const url = (`/api/events/${event.opencastId}/acl`);
 
-        await ocRequest(url, {
-            method: "put",
-            body: body,
-        });
+        // await ocRequest(url, {
+        //     method: "put",
+        //     body: body,
+        // });
     };
 
     return (
@@ -209,26 +149,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                 flexDirection: "column",
                 width: "100%",
             }}>
-                <div css={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    gap: 24,
-                }}>
-                    <ACLSelect
-                        ref={groupsRef}
-                        kind="Group"
-                        initialACL={currentGroupACL}
-                        allOptions={groupOptions}
-                    />
-                    <ACLSelect
-                        ref={usersRef}
-                        kind="User"
-                        initialACL={currentUserACL}
-                        allOptions={userOptions}
-                    />
-                </div>
+                <ACLSelectWrapper ref={aclSelectRef} initialACL={initialACL} />
                 <div css={{ alignSelf: "flex-start", marginTop: 40 }}>
                     <Button
                         kind="danger"
@@ -250,8 +171,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                                 {t("cancel")}
                             </Button>
                             <Button kind="danger" onClick={() => {
-                                groupsRef.current?.reset();
-                                usersRef.current?.reset();
+                                aclSelectRef.current?.reset?.();
                                 currentRef(resetModalRef).close?.();
                             }}>
                                 {t("manage.access.reset-modal.label")}
@@ -261,7 +181,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                     <Button
                         kind="happy"
                         onClick={() => {
-                            const newACL = getSelections();
+                            const newACL = currentRef(aclSelectRef).selections();
                             if (!containsUser(newACL)) {
                                 currentRef(saveModalRef).open();
                             } else {
@@ -275,7 +195,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                         title={t("manage.access.save-modal.title")}
                         buttonContent={t("manage.access.save-modal.confirm")}
                         ref={saveModalRef}
-                        onSubmit={() => submit(getSelections())}
+                        onSubmit={() => submit(currentRef(aclSelectRef).selections())}
                     >
                         <p>{t("manage.access.save-modal.body")}</p>
                     </ConfirmationModal>
@@ -284,6 +204,57 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
         </div>
     );
 };
+
+type ACLSelectWrapper = {
+    initialACL: ACL;
+}
+
+type ACLWrapperHandle = {
+    selections: () => ACL;
+    reset?: () => void;
+};
+
+
+export const ACLSelectWrapper = forwardRef<ACLWrapperHandle, ACLSelectWrapper>(
+    ({ initialACL }, ref) => {
+        const groupsRef = useRef<ACLSelectHandle>(null);
+        const usersRef = useRef<ACLSelectHandle>(null);
+
+        const groupOptions = buildOptions(dummyGroups);
+        const userOptions = buildOptions(dummyUsers);
+
+        const [initialGroupACL, initialUserACL] = splitAcl(initialACL);
+
+        useImperativeHandle(ref, () => ({
+            selections: () => getSelections({ groupsRef, usersRef }),
+            reset: () => {
+                groupsRef.current?.reset();
+                usersRef.current?.reset();
+            },
+        }));
+
+        return <div css={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 24,
+        }}>
+            <ACLSelect
+                ref={groupsRef}
+                kind="Group"
+                initialACL={initialGroupACL}
+                allOptions={groupOptions}
+            />
+            <ACLSelect
+                ref={usersRef}
+                kind="User"
+                initialACL={initialUserACL}
+                allOptions={userOptions}
+            />
+        </div>;
+    }
+);
 
 
 type ACLSelect = SelectProps & {
@@ -297,7 +268,7 @@ type ACLSelectHandle = {
     reset: () => void;
 };
 
-const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
+export const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
     ({ initialACL, allOptions, kind }, ref) => {
         const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
         const isDark = useColorScheme().scheme === "dark";
@@ -321,7 +292,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                 - Number(subsetRelations.some(set => set.superset === a.value.roles[0]));
 
         const initialSelections: Option[] = makeSelection(
-            kind === "Group" ? dummyGroups : dummyUsers, initialACL
+            kind === "Group" ? dummyGroups : dummyUsers, initialACL as ACL
         ).sort((roleComparator));
 
         const initialOptions = allOptions.filter(
@@ -733,9 +704,9 @@ const MenuItem: React.FC<MenuItemProps> = ({ label, description, onClick, close,
 // ===== Helper functions
 // ==============================================================================================
 
+// Returns every other group that is selected and whose subset includes the role of
+// the selection and also has the same read/write (or a subset of write) access level.
 const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => {
-    // Return every other group that is selected and whose subset includes the role of
-    // the selection and also has the same read/write (or a subset of write) access level.
     const roleToCheck = selection.value.roles[0];
 
     const supersets = selectedGroups
@@ -762,6 +733,7 @@ const getDisplayName = (
 };
 
 const formatUnknownRole = (role: string) => {
+    // TODO: handle unknown groups.
     if (role.startsWith("ROLE_USER_")) {
         const name = role.replace("ROLE_USER_", "").toLowerCase();
         return name.charAt(0).toUpperCase() + name.slice(1);
@@ -784,7 +756,8 @@ const makeSelection = (
     const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
     return aclArray.map(role => {
         const roles = Object.values(record)
-            .find(entry => entry.roles.includes(role))?.roles ?? [role];
+            .find(entry => entry.roles.includes(role))
+            ?.roles ?? [role];
 
         return {
             value: {
@@ -796,22 +769,22 @@ const makeSelection = (
     });
 };
 
-const splitAcl = (event: AuthorizedEvent) => {
+const splitAcl = (initialACL: ACL) => {
     const regEx = /^ROLE_USER_\w+/;
     const groupAcl: ACL = {
-        readRoles: event.readRoles.filter(role => !regEx.test(role)),
-        writeRoles: event.writeRoles.filter(role => !regEx.test(role)),
+        readRoles: initialACL.readRoles.filter(role => !regEx.test(role)),
+        writeRoles: initialACL.writeRoles.filter(role => !regEx.test(role)),
     };
     const userAcl: ACL = {
-        readRoles: event.readRoles.filter(role => regEx.test(role)),
-        writeRoles: event.writeRoles.filter(role => regEx.test(role)),
+        readRoles: initialACL.readRoles.filter(role => regEx.test(role)),
+        writeRoles: initialACL.writeRoles.filter(role => regEx.test(role)),
     };
 
     return [groupAcl, userAcl];
 };
 
 
-const buildOptions = (record: ACLRecord): Option[] =>
+export const buildOptions = (record: ACLRecord): Option[] =>
     Object.values(record).map(record => ({
         value: {
             roles: record.roles,
@@ -821,8 +794,70 @@ const buildOptions = (record: ACLRecord): Option[] =>
     }));
 
 
-const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
+export const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
     if (typeof value === undefined || value === null) {
         throw new Error(`${value} is undefined.`);
     }
+};
+
+type Selections = {
+    groupsRef: RefObject<ACLSelectHandle>;
+    usersRef: RefObject<ACLSelectHandle>;
+}
+
+const getSelections = ({ groupsRef, usersRef }: Selections): ACL => {
+    const selectedGroups = groupsRef.current?.getSelection();
+    const selectedUsers = usersRef.current?.getSelection();
+
+    assertUndefined(selectedGroups);
+    assertUndefined(selectedUsers);
+
+    const userRoleEntries = selectedUsers.map(user => ({
+        value: {
+            roles: user.value.roles.filter(role => /^ROLE_USER\w+/.test(role)),
+            action: user.value.action,
+        },
+        label: user.label,
+    }));
+
+    const combinedRoles = selectedGroups.concat(userRoleEntries);
+    const readRoles = combinedRoles.map(entry => entry.value.roles);
+    const writeRoles = combinedRoles
+        .filter(entry => entry.value.action === "write")
+        .map(entry => entry.value.roles);
+
+    const acl = {
+        readRoles: [...new Set(readRoles.flat())],
+        writeRoles: [...new Set(writeRoles.flat())],
+    };
+
+    return acl;
+};
+
+const ocAcl = (selections: ACL) => {
+    type ocACL = {
+        allow: true;
+        action: Action;
+        role: string;
+    }
+
+    const newACL: ocACL[] = [];
+
+    selections.readRoles.forEach(role => newACL.push(
+        {
+            allow: true,
+            role: role,
+            action: "read",
+        }
+    ));
+
+    selections.writeRoles.forEach(role => newACL.push(
+        {
+            allow: true,
+            role: role,
+            action: "write",
+        }
+    ));
+
+    return newACL;
 };
