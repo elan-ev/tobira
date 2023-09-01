@@ -21,7 +21,7 @@ import {
 } from "@opencast/appkit";
 import { FloatingBaseMenu } from "../../../ui/Blocks/Series";
 import { focusStyle } from "../../../ui";
-import { ConfirmationModal, ConfirmationModalHandle, Modal } from "../../../ui/Modal";
+import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import i18n from "../../../i18n";
 import {
@@ -107,8 +107,8 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
     const user = useUser();
 
     const aclSelectRef = useRef<ACLWrapperHandle>(null);
-    const saveModalRef = useRef<ConfirmationModalHandle>(null);
-    const resetModalRef = useRef<ConfirmationModalHandle>(null);
+    const saveModalRef = useRef<ModalHandle>(null);
+    const resetModalRef = useRef<ModalHandle>(null);
 
     const initialACL: ACL = {
         readRoles: event.readRoles as string[],
@@ -140,6 +140,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
             }}>
                 <ACLSelectWrapper ref={aclSelectRef} initialACL={initialACL} />
                 <div css={{ alignSelf: "flex-start", marginTop: 40 }}>
+                    {/* Reset button */}
                     <Button
                         kind="danger"
                         css={{ marginRight: 8 }}
@@ -167,6 +168,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                             </Button>
                         </div>
                     </Modal>
+                    {/* Save button */}
                     <Button
                         kind="happy"
                         onClick={() => {
@@ -180,14 +182,26 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                     >
                         {t("save")}
                     </Button>
-                    <ConfirmationModal
-                        title={t("manage.access.save-modal.title")}
-                        buttonContent={t("manage.access.save-modal.confirm")}
-                        ref={saveModalRef}
-                        onSubmit={() => submit(currentRef(aclSelectRef).selections())}
-                    >
+                    <Modal ref={saveModalRef} title={t("manage.access.save-modal.title")}>
                         <p>{t("manage.access.save-modal.body")}</p>
-                    </ConfirmationModal>
+                        <div css={{
+                            display: "flex",
+                            gap: 12,
+                            justifyContent: "center",
+                            flexWrap: "wrap",
+                            marginTop: 32,
+                        }}>
+                            <Button onClick={() => currentRef(saveModalRef).close?.()}>
+                                {t("cancel")}
+                            </Button>
+                            <Button kind="danger" onClick={() => {
+                                submit(currentRef(aclSelectRef).selections());
+                                currentRef(saveModalRef).close?.();
+                            }}>
+                                {t("manage.access.save-modal.confirm")}
+                            </Button>
+                        </div>
+                    </Modal>
                 </div>
             </div>
         </div>
@@ -198,7 +212,7 @@ type ACLSelectWrapper = {
     initialACL: ACL;
 }
 
-type ACLWrapperHandle = {
+export type ACLWrapperHandle = {
     selections: () => ACL;
     reset?: () => void;
 };
@@ -257,7 +271,7 @@ type ACLSelectHandle = {
     reset: () => void;
 };
 
-export const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
+const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
     ({ initialACL, allOptions, kind }, ref) => {
         const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
         const isDark = useColorScheme().scheme === "dark";
@@ -783,12 +797,6 @@ const splitAcl = (initialACL: ACL) => {
 };
 
 
-const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
-    if (typeof value === undefined || value === null) {
-        throw new Error(`${value} is undefined.`);
-    }
-};
-
 type Selections = {
     groupsRef: RefObject<ACLSelectHandle>;
     usersRef: RefObject<ACLSelectHandle>;
@@ -821,5 +829,12 @@ const getSelections = ({ groupsRef, usersRef }: Selections): ACL => {
     };
 
     return acl;
+};
+
+
+export const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
+    if (typeof value === undefined || value === null) {
+        throw new Error(`${value} is undefined.`);
+    }
 };
 
