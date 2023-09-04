@@ -735,15 +735,13 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
 
             {/* ACL */}
             <InputContainer>
-                <label htmlFor="acl-field">
-                    <Controller
-                        name="acl"
-                        control={control}
-                        render={() =>
-                            <ACLSelectWrapper ref={aclSelectRef} initialACL={defaultACL} />
-                        }
-                    />
-                </label>
+                <Controller
+                    name="acl"
+                    control={control}
+                    render={() =>
+                        <ACLSelectWrapper ref={aclSelectRef} initialACL={defaultACL} />
+                    }
+                />
             </InputContainer>
 
             {/* Submit button */}

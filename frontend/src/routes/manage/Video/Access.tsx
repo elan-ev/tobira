@@ -290,6 +290,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
             }),
         });
 
+        // Sorts ACL entries by their scope, i.e. supersets will be shown before subsets.
         const roleComparator = (a: Option, b: Option) =>
             Number(subsetRelations.some(set => set.superset === b.value.roles[0]))
                 - Number(subsetRelations.some(set => set.superset === a.value.roles[0]));
@@ -301,6 +302,20 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
         const initialOptions = allOptions.filter(
             item => !initialSelections.some(elem => elem.value.roles === item.value.roles)
         );
+
+        // The ACL might not explicitly include admin, but since we still want to show
+        // the admin entry when logged in as admin, the item needs to be added manually.
+        if (kind === "User" && !initialSelections.find(
+            selection => selection.label === "Administrator"
+        )) {
+            initialSelections.splice(0, 0, {
+                value: {
+                    roles: DUMMY_USERS.admin.roles,
+                    action: "write",
+                },
+                label: DUMMY_USERS.admin.label,
+            });
+        }
 
         const [selections, setSelections] = useState<MultiValue<Option>>(initialSelections);
         const [options, setOptions] = useState<MultiValue<Option>>(initialOptions);
@@ -463,6 +478,8 @@ const ListEntry: React.FC<ListEntryProps> = (
     const user = useUser();
     const isSubset = supersetList(item, selections).length > 0;
     const supersets = supersetList(item, selections).map(set => set.label).join(", ");
+    const isAdminItem = item.value.roles.includes("ROLE_ADMIN")
+        || item.value.roles.includes("ROLE_USER_ADMIN");
 
     const updateStates = () => {
         setSupersets(
@@ -470,9 +487,7 @@ const ListEntry: React.FC<ListEntryProps> = (
         );
     };
 
-    return (item.value.roles.includes("ROLE_ADMIN") || item.value.roles.includes("ROLE_USER_ADMIN"))
-            && isRealUser(user)
-            && !user.roles.includes("ROLE_ADMIN")
+    return isAdminItem && isRealUser(user) && !user.roles.includes("ROLE_ADMIN")
         ? null
         : <tr key={item.label} css={{
             height: 44,
@@ -516,7 +531,7 @@ const ListEntry: React.FC<ListEntryProps> = (
             <td>
                 <ProtoButton
                     onClick={() => remove(item)}
-                    disabled={item.value.roles.includes("ROLE_ADMIN")}
+                    disabled={isAdminItem}
                     css={{
                         margin: "auto",
                         display: "flex",
@@ -774,12 +789,12 @@ const makeSelection = (record: ACLRecord, acl: ACL): Option[] => {
 // Takes a record of all possible roles and formats them as options for react-select
 // with the default "write" action.
 const makeOptions = (record: ACLRecord): Option[] =>
-    Object.values(record).map(record => ({
+    Object.values(record).filter(entry => entry.label !== "Administrator").map(entry => ({
         value: {
-            roles: record.roles,
+            roles: entry.roles,
             action: "read",
         },
-        label: record.label,
+        label: entry.label,
     }));
 
 const splitAcl = (initialACL: ACL) => {
