@@ -29,7 +29,7 @@ import { SeriesSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
-import { ACLSelectWrapper, ACLWrapperHandle } from "./manage/Video/Access";
+import { ACLSelectWrapper, ACLWrapperHandle, getUserRole } from "./manage/Video/Access";
 import { ACL } from "./manage/Video/dummyData";
 
 
@@ -654,16 +654,8 @@ type MetaDataEditProps = {
 /** Form that lets the user set metadata about the video */
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { t } = useTranslation();
-    const aclSelectRef = useRef<ACLWrapperHandle>(null);
-
     const user = useUser();
-    const userRole = (isRealUser(user)
-        && user.roles.find(role => /^ROLE_USER\w+/.test(role))) as string;
-
-    const defaultACL: ACL = {
-        readRoles: ["ROLE_ANONYMOUS", userRole],
-        writeRoles: [userRole],
-    };
+    const aclSelectRef = useRef<ACLWrapperHandle>(null);
 
     const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
@@ -675,6 +667,12 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
             required: CONFIG.upload.requireSeries ? t("upload.errors.field-required") : false,
         },
     });
+
+    const userRole = getUserRole(user);
+    const defaultACL: ACL = {
+        readRoles: ["ROLE_ANONYMOUS", userRole],
+        writeRoles: [userRole],
+    };
 
     const onSubmit = handleSubmit(data => onSave(data));
 
@@ -738,9 +736,11 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                 <Controller
                     name="acl"
                     control={control}
-                    render={() =>
-                        <ACLSelectWrapper ref={aclSelectRef} initialACL={defaultACL} />
-                    }
+                    render={() => <ACLSelectWrapper
+                        userRequired
+                        ref={aclSelectRef}
+                        initialACL={defaultACL}
+                    />}
                 />
             </InputContainer>
 
