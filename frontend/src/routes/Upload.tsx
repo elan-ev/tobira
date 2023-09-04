@@ -663,6 +663,12 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
         },
     });
 
+    const userRole = getUserRole(user);
+    const defaultACL: ACL = {
+        readRoles: ["ROLE_ANONYMOUS", userRole],
+        writeRoles: [userRole],
+    };
+
     const onSubmit = handleSubmit(data => onSave(data));
 
     // We only allow submitting the form on clicking the button below so that

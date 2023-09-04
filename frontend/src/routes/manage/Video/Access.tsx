@@ -4,12 +4,21 @@ import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
 import { MultiValue, Props as SelectProps } from "react-select";
 import CreatableSelect from "react-select/creatable";
-import { RefObject, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import {
+    RefObject,
+    createContext,
+    forwardRef,
+    useContext,
+    useEffect,
+    useImperativeHandle,
+    useRef,
+    useState,
+} from "react";
 import { COLORS } from "../../../color";
 import { FiAlertTriangle, FiInfo, FiX } from "react-icons/fi";
 import { Button } from "../../../ui/Button";
 import { searchableSelectStyles, theme } from "../../../ui/SearchableSelect";
-import { isRealUser, useUser } from "../../../User";
+import { UserState, isRealUser, useUser } from "../../../User";
 import { NotAuthorized } from "../../../ui/error";
 import {
     Floating,
@@ -116,11 +125,10 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
     };
 
     const containsUser = (acl: ACL) => {
-        const userRole = isRealUser(user) && user.roles.find(role => /^ROLE_USER\w+/.test(role));
         const isAdmin = isRealUser(user) && user.roles.includes("ROLE_ADMIN");
 
         return isAdmin
-            || userRole && acl.writeRoles.includes(userRole)
+            || acl.writeRoles.includes(getUserRole(user))
             || acl.writeRoles.includes("ROLE_ANONYMOUS")
             || acl.writeRoles.includes("ROLE_USER");
     };
@@ -210,6 +218,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
 
 type ACLSelectWrapper = {
     initialACL: ACL;
+    userRequired?: boolean;
 }
 
 export type ACLWrapperHandle = {
@@ -217,9 +226,10 @@ export type ACLWrapperHandle = {
     reset?: () => void;
 };
 
+const UserRequiredContext = createContext<boolean>(false);
 
 export const ACLSelectWrapper = forwardRef<ACLWrapperHandle, ACLSelectWrapper>(
-    ({ initialACL }, ref) => {
+    ({ initialACL, userRequired = false }, ref) => {
         const groupsRef = useRef<ACLSelectHandle>(null);
         const usersRef = useRef<ACLSelectHandle>(null);
 
@@ -249,12 +259,14 @@ export const ACLSelectWrapper = forwardRef<ACLWrapperHandle, ACLSelectWrapper>(
                 initialACL={initialGroupACL}
                 allOptions={groupOptions}
             />
-            <ACLSelect
-                ref={usersRef}
-                kind="User"
-                initialACL={initialUserACL}
-                allOptions={userOptions}
-            />
+            <UserRequiredContext.Provider value={userRequired}>
+                <ACLSelect
+                    ref={usersRef}
+                    kind="User"
+                    initialACL={initialUserACL}
+                    allOptions={userOptions}
+                />
+            </UserRequiredContext.Provider>
         </div>;
     }
 );
@@ -476,6 +488,7 @@ const ListEntry: React.FC<ListEntryProps> = (
 ) => {
     const { t } = useTranslation();
     const user = useUser();
+    const userIsRequired = useContext(UserRequiredContext);
     const isSubset = supersetList(item, selections).length > 0;
     const supersets = supersetList(item, selections).map(set => set.label).join(", ");
     const isAdminItem = item.value.roles.includes("ROLE_ADMIN")
@@ -518,8 +531,8 @@ const ListEntry: React.FC<ListEntryProps> = (
             <td>
                 <span css={{ display: "flex" }}>
                     <ActionsMenu
-                        updateSelection={setSelections}
                         item={item}
+                        updateSelection={setSelections}
                         updateStates={updateStates}
                     />
                     {largeGroups.includes(item.value.roles[0]) && item.value.action === "write"
@@ -531,7 +544,9 @@ const ListEntry: React.FC<ListEntryProps> = (
             <td>
                 <ProtoButton
                     onClick={() => remove(item)}
-                    disabled={isAdminItem}
+                    disabled={isAdminItem
+                        || userIsRequired && item.value.roles.includes(getUserRole(user))
+                    }
                     css={{
                         margin: "auto",
                         display: "flex",
@@ -577,6 +592,8 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
     const ref = useRef<FloatingHandle>(null);
     const isDark = useColorScheme().scheme === "dark";
     const { t } = useTranslation();
+    const userIsRequired = useContext(UserRequiredContext);
+    const user = useUser();
 
     const actions: Action[] = ["read", "write"];
     const [action, setAction] = useState<Action>(item.value.action);
@@ -599,6 +616,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
     const language = i18n.resolvedLanguage;
 
     return item.value.roles.includes("ROLE_ADMIN")
+            || userIsRequired && item.value.roles.includes(getUserRole(user))
         ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
         : <FloatingBaseMenu
             ref={ref}
@@ -847,9 +865,13 @@ const getSelections = ({ groupsRef, usersRef }: Selections): ACL => {
 };
 
 
-export const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
+export const getUserRole = (user: UserState) => {
+    const userRole = isRealUser(user) && user.roles.find(role => /^ROLE_USER\w+/.test(role));
+    return typeof userRole !== "string" ? "unknown" : userRole;
+};
+
+const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
     if (typeof value === undefined || value === null) {
         throw new Error(`${value} is undefined.`);
     }
 };
-
