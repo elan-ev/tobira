@@ -304,12 +304,12 @@ manage:
           Dies ist equivalent zu einem Passwortschutz.
     reset-modal:
       label: Zurücksetzen
-      title: Änderungen zurücksetzen
+      title: Änderungen zurücksetzen?
       body: Von ihnen getätigte Änderungen werden zurückgesetzt.
     save-modal:
       title: Eigenen Zugriff entfernen?
       body: Die aktuelle Auswahl wird ihren Schreibzugriff entfernen.
-            Ohne diesen werden sie keine weiteren Änderungen vornehmen können.
+            Ohne diesen werden Sie keine weiteren Änderungen vornehmen können.
       confirm: Bestätigen
     groups:
       all: Alle Personen

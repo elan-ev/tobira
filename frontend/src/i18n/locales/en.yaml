@@ -298,7 +298,7 @@ manage:
         Unlisted videos can only be found by sharing its direct link. This is equivalent to a password protection.
     reset-modal:
       label: Reset
-      title: Reset changes
+      title: Reset changes?
       body: The changes you have made will be reset.
     save-modal:
       title: Remove own access?
