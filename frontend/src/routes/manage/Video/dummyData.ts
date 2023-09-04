@@ -52,10 +52,6 @@ export const DUMMY_GROUPS: ACLRecord = {
         label: "Logged in users",
         roles: ["ROLE_USER"],
     },
-    "opencast": {
-        label: "Opencast gurus",
-        roles: ["ROLE_TOBIRA_GURU"],
-    },
     "mods": {
         label: "Moderators",
         roles: ["ROLE_TOBIRA_MODERATOR"],
@@ -93,7 +89,6 @@ export const subsetRelations: SubsetList[] = [
             "ROLE_STUDENT",
             "ROLE_TOBIRA_STUDIO",
             "ROLE_TOBIRA_EDITOR",
-            "ROLE_TOBIRA_GURU",
         ],
     },
     {
@@ -105,10 +100,6 @@ export const subsetRelations: SubsetList[] = [
             "ROLE_TOBIRA_STUDIO",
             "ROLE_TOBIRA_EDITOR",
         ],
-    },
-    {
-        superset: "ROLE_TOBIRA_GURU",
-        subsets: ["ROLE_TOBIRA_STUDIO", "ROLE_TOBIRA_EDITOR"],
     },
 ];
 
@@ -130,7 +121,6 @@ export const currentACL: ACL = {
         "ROLE_USER_FRITZ",
         "ROLE_USER_BJÖRK",
         "ROLE_ANONYMOUS",
-        "ROLE_TOBIRA_GURU",
         "ROLE_TOBIRA_STUDIO",
     ],
     writeRoles: [
@@ -138,7 +128,6 @@ export const currentACL: ACL = {
         "ROLE_USER_ADMIN",
         "ROLE_INSTRUCTOR",
         "ROLE_TOBIRA_MODERATOR",
-        "ROLE_TOBIRA_GURU",
     ],
 };
 
