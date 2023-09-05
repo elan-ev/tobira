@@ -154,38 +154,10 @@ const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
             || acl.writeRoles.includes("ROLE_USER");
     };
 
-    const ocAcl = (selections: ACL) => {
-        type ocACL = {
-            allow: true;
-            action: Action;
-            role: string;
-        }
-
-        const ocACL: ocACL[] = [];
-
-        selections.readRoles.forEach(role => ocACL.push(
-            {
-                allow: true,
-                action: "read",
-                role: role,
-            }
-        ));
-
-        selections.writeRoles.forEach(role => ocACL.push(
-            {
-                allow: true,
-                action: "write",
-                role: role,
-            }
-        ));
-
-        return ocACL;
-    };
-
     const submit = async (acl: ACL) => {
         // TODO: Actually save new ACL.
         // eslint-disable-next-line no-console
-        console.log(acl);
+        console.log(ocAcl(acl));
     };
 
     return <div css={{ display: "flex", gap: 8, alignSelf: "flex-start", marginTop: 40 }}>
@@ -903,6 +875,36 @@ const getSelections = ({ groupsRef, usersRef }: Selections): ACL => {
     };
 
     return acl;
+};
+
+// Formats a selection of read- and write roles
+// into the ACL format needed for the Opencast API.
+const ocAcl = (selection: ACL) => {
+    type ocACL = {
+        allow: true;
+        action: Action;
+        role: string;
+    }
+
+    const ocACL: ocACL[] = [];
+
+    selection.readRoles.forEach(role => ocACL.push(
+        {
+            allow: true,
+            action: "read",
+            role: role,
+        }
+    ));
+
+    selection.writeRoles.forEach(role => ocACL.push(
+        {
+            allow: true,
+            action: "write",
+            role: role,
+        }
+    ));
+
+    return ocACL;
 };
 
 
