@@ -5,7 +5,9 @@ import { PageTitle } from "../../../layout/header/ui";
 import { MultiValue, Props as SelectProps } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import {
+    Dispatch,
     RefObject,
+    SetStateAction,
     createContext,
     forwardRef,
     useContext,
@@ -34,7 +36,7 @@ import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import i18n from "../../../i18n";
 import {
-    DUMMY_GROUPS, DUMMY_USERS, subsetRelations, ACLRecord, ACL, largeGroups,
+    DUMMY_GROUPS, DUMMY_USERS, SUBSET_RELATIONS, ACLRecord, ACL, LARGE_GROUPS,
 } from "./dummyData";
 
 
@@ -296,6 +298,26 @@ type ACLSelectHandle = {
     reset: () => void;
 };
 
+type SelectionContext = {
+    selection: MultiValue<Option>;
+    setSelection: Dispatch<SetStateAction<MultiValue<Option>>>;
+    item: Option;
+};
+
+const defaultDummyOption: Option = {
+    value: {
+        roles: ["ROLE_ADMIN"],
+        action: "write",
+    },
+    label: "Administrator",
+};
+
+const SelectionContext = createContext<SelectionContext>({
+    selection: [defaultDummyOption],
+    setSelection: () => {},
+    item: defaultDummyOption,
+});
+
 const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
     ({ initialACL, allOptions, kind }, ref) => {
         const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
@@ -317,8 +339,8 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
 
         // Sorts ACL entries by their scope, i.e. supersets will be shown before subsets.
         const roleComparator = (a: Option, b: Option) =>
-            Number(subsetRelations.some(set => set.superset === b.value.roles[0]))
-                - Number(subsetRelations.some(set => set.superset === a.value.roles[0]));
+            Number(SUBSET_RELATIONS.some(set => set.superset === b.value.roles[0]))
+                - Number(SUBSET_RELATIONS.some(set => set.superset === a.value.roles[0]));
 
         const initialSelections: Option[] = makeSelection(
             kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialACL
@@ -342,17 +364,17 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
             });
         }
 
-        const [selections, setSelections] = useState<MultiValue<Option>>(initialSelections);
+        const [selection, setSelection] = useState<MultiValue<Option>>(initialSelections);
         const [options, setOptions] = useState<MultiValue<Option>>(initialOptions);
 
         const [_supersets, setSupersets] = useState<MultiValue<Option>>(
-            selections.filter(selection => supersetList(selection, selections).length > 0)
+            selection.filter(item => supersetList(item, selection).length > 0)
         );
 
         useImperativeHandle(ref, () => ({
-            getSelection: () => selections,
+            getSelection: () => selection,
             reset: () => {
-                setSelections(initialSelections);
+                setSelection(initialSelections);
                 setOptions(initialOptions);
             },
         }));
@@ -363,10 +385,9 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                 option => option.value !== item.value
             );
 
-            setSelections(prev => filterItem(prev));
-            setOptions(prev => allOptions
-                .some(option => option.value.roles === item.value.roles)
-                ? allOptions.filter(entry => !filterItem(selections)
+            setSelection(prev => filterItem(prev));
+            setOptions(prev => allOptions.some(option => option.value.roles === item.value.roles)
+                ? allOptions.filter(entry => !filterItem(selection)
                     .some(option => entry.value.roles === option.value.roles))
                 : [...prev, item]);
         };
@@ -382,11 +403,11 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                 },
                 label: inputValue,
             };
-            setSelections(prev => [...prev, newRole]);
+            setSelection(prev => [...prev, newRole]);
         };
 
         const handleChange = (choice: MultiValue<Option>) => {
-            setSelections(prev => {
+            setSelection(prev => {
                 const newItem = choice.filter(option => !prev.includes(option));
                 newItem[0].value.action = "read";
                 return [...choice].sort(roleComparator);
@@ -409,7 +430,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                     .filter(option => option !== undefined);
 
                 if (optionsToAdd.length > 0) {
-                    handleChange([...selections, ...optionsToAdd]);
+                    handleChange([...selection, ...optionsToAdd]);
                     setMenuIsOpen(false);
                 }
             }
@@ -436,7 +457,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                     formatCreateLabel={input =>
                         /^ROLE_\w+/.test(input) && t("manage.access.select.create", { item: input })
                     }
-                    value={selections}
+                    value={selection}
                     options={options}
                     onCreateOption={handleCreate}
                     filterOption={(option, inputValue) => !!option.label
@@ -470,15 +491,16 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                         </tr>
                     </thead>
                     <tbody>
-                        {selections.map(item =>
-                            <ListEntry
+                        {selection.map(item =>
+                            <SelectionContext.Provider
+                                value={{ selection, setSelection, item }}
                                 key={item.label}
-                                item={item}
-                                selections={selections}
-                                setSelections={setSelections}
-                                remove={remove}
-                                setSupersets={setSupersets}
-                            />)
+                            >
+                                <ListEntry
+                                    remove={remove}
+                                    setSupersets={setSupersets}
+                                />
+                            </SelectionContext.Provider>)
                         }
                     </tbody>
                 </table>
@@ -489,29 +511,21 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
 
 
 type ListEntryProps = {
-    item: Option;
-    selections: MultiValue<Option>;
-    setSelections: React.Dispatch<React.SetStateAction<MultiValue<Option>>>;
-    setSupersets: React.Dispatch<React.SetStateAction<MultiValue<Option>>>;
+    setSupersets: Dispatch<SetStateAction<MultiValue<Option>>>;
     remove: (item: Option) => void;
 }
 
 const ListEntry: React.FC<ListEntryProps> = (
-    { item, selections, setSelections, remove, setSupersets }
+    { remove, setSupersets }
 ) => {
     const { t } = useTranslation();
     const user = useUser();
+    const { selection, item } = useContext(SelectionContext);
     const userIsRequired = useContext(UserRequiredContext);
-    const isSubset = supersetList(item, selections).length > 0;
-    const supersets = supersetList(item, selections).map(set => set.label).join(", ");
+    const isSubset = supersetList(item, selection).length > 0;
+    const supersets = supersetList(item, selection).map(set => set.label).join(", ");
     const isAdminItem = item.value.roles.includes("ROLE_ADMIN")
         || item.value.roles.includes("ROLE_USER_ADMIN");
-
-    const updateStates = () => {
-        setSupersets(
-            selections.filter(selection => supersetList(selection, selections).length > 0)
-        );
-    };
 
     return isAdminItem && isRealUser(user) && !user.roles.includes("ROLE_ADMIN")
         ? null
@@ -544,11 +558,11 @@ const ListEntry: React.FC<ListEntryProps> = (
             <td>
                 <span css={{ display: "flex" }}>
                     <ActionsMenu
-                        item={item}
-                        updateSelection={setSelections}
-                        updateStates={updateStates}
+                        updateStates={() => setSupersets(selection.filter(item =>
+                            supersetList(item, selection).length > 0))
+                        }
                     />
-                    {largeGroups.includes(item.value.roles[0]) && item.value.action === "write"
+                    {LARGE_GROUPS.includes(item.value.roles[0]) && item.value.action === "write"
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
                     }
@@ -594,18 +608,17 @@ const Warning: React.FC<Warning> = ({ tooltip }) => (
 
 
 type ActionsMenuProps = {
-    item: Option;
-    updateSelection: React.Dispatch<React.SetStateAction<MultiValue<Option>>>;
     updateStates: () => void;
 }
 
 const ActionsMenu: React.FC<ActionsMenuProps> = (
-    { item, updateSelection, updateStates }
+    { updateStates }
 ) => {
     const ref = useRef<FloatingHandle>(null);
     const isDark = useColorScheme().scheme === "dark";
     const { t } = useTranslation();
     const userIsRequired = useContext(UserRequiredContext);
+    const { setSelection, item } = useContext(SelectionContext);
     const user = useUser();
 
     const actions: Action[] = ["read", "write"];
@@ -665,7 +678,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
                             description={translations(actionType).description}
                             onClick={() => {
                                 setAction(actionType);
-                                updateSelection(prev => {
+                                setSelection(prev => {
                                     const index = prev.findIndex(
                                         entry => entry.value === item.value
                                     );
@@ -760,7 +773,7 @@ const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => 
 
     const supersets = selectedGroups
         .filter(group =>
-            subsetRelations.some(
+            SUBSET_RELATIONS.some(
                 set => set.superset === group.value.roles[0] && set.subsets.includes(roleToCheck)
             ) && (
                 group.value.action === selection.value.action || group.value.action === "write"

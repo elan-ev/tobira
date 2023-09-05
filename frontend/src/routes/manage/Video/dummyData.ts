@@ -79,7 +79,7 @@ type SubsetList = {
     subsets: string[];
 }
 
-export const subsetRelations: SubsetList[] = [
+export const SUBSET_RELATIONS: SubsetList[] = [
     {
         superset: "ROLE_ANONYMOUS",
         subsets: [
@@ -103,34 +103,10 @@ export const subsetRelations: SubsetList[] = [
     },
 ];
 
-
 export type ACL = {
     readRoles: string[];
     writeRoles: string[];
 };
 
-// This is the ACL structure I expect from an event. Right now this isn't real world data.
-export const currentACL: ACL = {
-    readRoles: [
-        "ROLE_USER_ADMIN",
-        "ROLE_INSTRUCTOR",
-        "ROLE_USER_SABINE",
-        "ROLE_STUDENT",
-        "ROLE_TOBIRA_MODERATOR",
-        "ROLE_INSTRUCTOR",
-        "ROLE_USER_FRITZ",
-        "ROLE_USER_BJÖRK",
-        "ROLE_ANONYMOUS",
-        "ROLE_TOBIRA_STUDIO",
-    ],
-    writeRoles: [
-        "ROLE_TOBIRA_STUDIO",
-        "ROLE_USER_ADMIN",
-        "ROLE_INSTRUCTOR",
-        "ROLE_TOBIRA_MODERATOR",
-    ],
-};
-
-
-export const largeGroups = ["ROLE_ANONYMOUS", "ROLE_USER"];
+export const LARGE_GROUPS = ["ROLE_ANONYMOUS", "ROLE_USER"];
 
