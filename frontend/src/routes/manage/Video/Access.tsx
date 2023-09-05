@@ -16,7 +16,7 @@ import {
 } from "react";
 import { COLORS } from "../../../color";
 import { FiAlertTriangle, FiInfo, FiX } from "react-icons/fi";
-import { Button } from "../../../ui/Button";
+import { Button, Kind as ButtonKind } from "../../../ui/Button";
 import { searchableSelectStyles, theme } from "../../../ui/SearchableSelect";
 import { UserState, isRealUser, useUser } from "../../../User";
 import { NotAuthorized } from "../../../ui/error";
@@ -112,17 +112,36 @@ type AccessUIProps = {
 }
 
 const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
-    const { t } = useTranslation();
-    const user = useUser();
-
     const aclSelectRef = useRef<ACLWrapperHandle>(null);
-    const saveModalRef = useRef<ModalHandle>(null);
-    const resetModalRef = useRef<ModalHandle>(null);
 
     const initialACL: ACL = {
         readRoles: event.readRoles as string[],
         writeRoles: event.writeRoles as string[],
     };
+
+    return (
+        <div css={{ maxWidth: 1040 }}>
+            <div css={{
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+            }}>
+                <ACLSelectWrapper ref={aclSelectRef} {...{ initialACL }} />
+                <ButtonWrapper {...{ aclSelectRef }} />
+            </div>
+        </div>
+    );
+};
+
+type ButtonWrapper = {
+    aclSelectRef: RefObject<ACLWrapperHandle>;
+}
+
+const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
+    const { t } = useTranslation();
+    const user = useUser();
+    const saveModalRef = useRef<ModalHandle>(null);
+    const resetModalRef = useRef<ModalHandle>(null);
 
     const containsUser = (acl: ACL) => {
         const isAdmin = isRealUser(user) && user.roles.includes("ROLE_ADMIN");
@@ -139,81 +158,75 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
         console.log(acl);
     };
 
-    return (
-        <div css={{ maxWidth: 1040 }}>
+    return <div css={{ display: "flex", gap: 8, alignSelf: "flex-start", marginTop: 40 }}>
+        {/* Reset button */}
+        <ButtonWithModal
+            buttonKind="danger"
+            modalRef={resetModalRef}
+            label={t("manage.access.reset-modal.label")}
+            title={t("manage.access.reset-modal.title")}
+            body={t("manage.access.reset-modal.body")}
+            confirmationLabel={t("manage.access.reset-modal.label")}
+            handleClick={() => currentRef(resetModalRef).open()}
+            onConfirm={() => aclSelectRef.current?.reset?.()
+            }
+        />
+        {/* Save button */}
+        <ButtonWithModal
+            buttonKind="happy"
+            modalRef={saveModalRef}
+            label={t("save")}
+            title={t("manage.access.save-modal.title")}
+            body={t("manage.access.save-modal.body")}
+            confirmationLabel={t("manage.access.save-modal.confirm")}
+            handleClick={() => {
+                const newACL = currentRef(aclSelectRef).selections();
+                return !containsUser(newACL) ? currentRef(saveModalRef).open() : submit(newACL);
+            }}
+            onConfirm={() => submit(currentRef(aclSelectRef).selections())}
+        />
+    </div>;
+};
+
+type ButtonWithModal = {
+    buttonKind: ButtonKind;
+    modalRef: RefObject<ModalHandle>;
+    label: string;
+    title: string;
+    body: string;
+    confirmationLabel: string;
+    handleClick: () => void;
+    onConfirm: () => void;
+}
+
+const ButtonWithModal: React.FC<ButtonWithModal> = ({ ...props }) => {
+    const { t } = useTranslation();
+    return <>
+        <Button
+            kind={props.buttonKind}
+            onClick={props.handleClick}
+        >{props.label}</Button>
+        <Modal ref={props.modalRef} title={props.title}>
+            <p>{props.body}</p>
             <div css={{
                 display: "flex",
-                flexDirection: "column",
-                width: "100%",
+                gap: 12,
+                justifyContent: "center",
+                flexWrap: "wrap",
+                marginTop: 32,
             }}>
-                <ACLSelectWrapper ref={aclSelectRef} initialACL={initialACL} />
-                <div css={{ alignSelf: "flex-start", marginTop: 40 }}>
-                    {/* Reset button */}
-                    <Button
-                        kind="danger"
-                        css={{ marginRight: 8 }}
-                        onClick={() => currentRef(resetModalRef).open()}
-                    >
-                        {t("manage.access.reset-modal.label")}
-                    </Button>
-                    <Modal ref={resetModalRef} title={t("manage.access.reset-modal.title")}>
-                        <p>{t("manage.access.reset-modal.body")}</p>
-                        <div css={{
-                            display: "flex",
-                            gap: 12,
-                            justifyContent: "center",
-                            flexWrap: "wrap",
-                            marginTop: 32,
-                        }}>
-                            <Button onClick={() => currentRef(resetModalRef).close?.()}>
-                                {t("cancel")}
-                            </Button>
-                            <Button kind="danger" onClick={() => {
-                                aclSelectRef.current?.reset?.();
-                                currentRef(resetModalRef).close?.();
-                            }}>
-                                {t("manage.access.reset-modal.label")}
-                            </Button>
-                        </div>
-                    </Modal>
-                    {/* Save button */}
-                    <Button
-                        kind="happy"
-                        onClick={() => {
-                            const newACL = currentRef(aclSelectRef).selections();
-                            if (!containsUser(newACL)) {
-                                currentRef(saveModalRef).open();
-                            } else {
-                                submit(newACL);
-                            }
-                        }}
-                    >
-                        {t("save")}
-                    </Button>
-                    <Modal ref={saveModalRef} title={t("manage.access.save-modal.title")}>
-                        <p>{t("manage.access.save-modal.body")}</p>
-                        <div css={{
-                            display: "flex",
-                            gap: 12,
-                            justifyContent: "center",
-                            flexWrap: "wrap",
-                            marginTop: 32,
-                        }}>
-                            <Button onClick={() => currentRef(saveModalRef).close?.()}>
-                                {t("cancel")}
-                            </Button>
-                            <Button kind="danger" onClick={() => {
-                                submit(currentRef(aclSelectRef).selections());
-                                currentRef(saveModalRef).close?.();
-                            }}>
-                                {t("manage.access.save-modal.confirm")}
-                            </Button>
-                        </div>
-                    </Modal>
-                </div>
+                <Button onClick={() => currentRef(props.modalRef).close?.()}>
+                    {t("cancel")}
+                </Button>
+                <Button kind="danger" onClick={() => {
+                    props.onConfirm();
+                    currentRef(props.modalRef).close?.();
+                }}>
+                    {props.confirmationLabel}
+                </Button>
             </div>
-        </div>
-    );
+        </Modal>
+    </>;
 };
 
 type ACLSelectWrapper = {
