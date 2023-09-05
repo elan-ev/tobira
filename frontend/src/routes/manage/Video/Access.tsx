@@ -68,7 +68,7 @@ const ACLPage: React.FC<ACLPage> = ({ event }) => {
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
         {event.hostRealms.length < 1 && <UnlistedNote />}
-        <AccessUI event={event} />
+        <AccessUI {...{ event }} />
     </>;
 };
 
@@ -170,8 +170,7 @@ const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
             body={t("manage.access.reset-modal.body")}
             confirmationLabel={t("manage.access.reset-modal.label")}
             handleClick={() => currentRef(resetModalRef).open()}
-            onConfirm={() => aclSelectRef.current?.reset?.()
-            }
+            onConfirm={() => aclSelectRef.current?.reset?.()}
         />
         {/* Save button */}
         <ButtonWithModal
@@ -223,9 +222,7 @@ const ButtonWithModal: React.FC<ButtonWithModal> = ({ ...props }) => {
                 <Button kind="danger" onClick={() => {
                     props.onConfirm();
                     currentRef(props.modalRef).close?.();
-                }}>
-                    {props.confirmationLabel}
-                </Button>
+                }}>{props.confirmationLabel}</Button>
             </div>
         </Modal>
     </>;
@@ -352,16 +349,10 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
 
         // The ACL might not explicitly include admin, but since we still want to show
         // the admin entry when logged in as admin, the item needs to be added manually.
-        if (kind === "User" && !initialSelections.find(
+        if (kind === "User" && !initialSelections.some(
             selection => selection.label === "Administrator"
         )) {
-            initialSelections.splice(0, 0, {
-                value: {
-                    roles: DUMMY_USERS.admin.roles,
-                    action: "write",
-                },
-                label: DUMMY_USERS.admin.label,
-            });
+            initialSelections.splice(0, 0, defaultDummyOption);
         }
 
         const [selection, setSelection] = useState<MultiValue<Option>>(initialSelections);
@@ -448,7 +439,6 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                 <CreatableSelect
                     onMenuOpen={() => setMenuIsOpen(true)}
                     onMenuClose={() => setMenuIsOpen(false)}
-                    menuIsOpen={menuIsOpen}
                     controlShouldRenderValue={false}
                     isClearable={false}
                     isMulti
@@ -458,7 +448,6 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                         /^ROLE_\w+/.test(input) && t("manage.access.select.create", { item: input })
                     }
                     value={selection}
-                    options={options}
                     onCreateOption={handleCreate}
                     filterOption={(option, inputValue) => !!option.label
                         && option.label.toLowerCase().includes(inputValue.toLowerCase())
@@ -466,8 +455,8 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                     backspaceRemovesValue={false}
                     onChange={handleChange}
                     styles={searchableSelectStyles(isDark)}
-                    theme={theme}
                     css={{ marginTop: 6 }}
+                    {...{ theme, menuIsOpen, options }}
                 />
             </div>
             <div>
@@ -496,10 +485,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                                 value={{ selection, setSelection, item }}
                                 key={item.label}
                             >
-                                <ListEntry
-                                    remove={remove}
-                                    setSupersets={setSupersets}
-                                />
+                                <ListEntry {...{ remove, setSupersets }} />
                             </SelectionContext.Provider>)
                         }
                     </tbody>
@@ -597,7 +583,7 @@ type Warning = {
 
 const Warning: React.FC<Warning> = ({ tooltip }) => (
     <WithTooltip
-        tooltip={tooltip}
+        {...{ tooltip }}
         css={{ display: "flex" }}
     >
         <span css={{ marginLeft: 6, display: "flex" }}>
@@ -718,8 +704,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ label, description, onClick, close,
             },
         }}>
             <ProtoButton
-                ref={ref}
-                disabled={disabled}
+                {...{ ref, disabled }}
                 role="menuitem"
                 onClick={() => {
                     onClick();
@@ -877,14 +862,14 @@ const getSelections = ({ groupsRef, usersRef }: Selections): ACL => {
     }));
 
     const combinedRoles = selectedGroups.concat(userRoleEntries);
-    const readRoles = combinedRoles.map(entry => entry.value.roles);
+    const readRoles = combinedRoles.flatMap(entry => entry.value.roles);
     const writeRoles = combinedRoles
         .filter(entry => entry.value.action === "write")
-        .map(entry => entry.value.roles);
+        .flatMap(entry => entry.value.roles);
 
     const acl = {
-        readRoles: [...new Set(readRoles.flat())],
-        writeRoles: [...new Set(writeRoles.flat())],
+        readRoles: [...new Set(readRoles)],
+        writeRoles: [...new Set(writeRoles)],
     };
 
     return acl;
