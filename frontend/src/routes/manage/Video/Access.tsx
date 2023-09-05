@@ -768,7 +768,7 @@ const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => 
 };
 
 
-const getDisplayName = (
+const getLabel = (
     record: ACLRecord,
     role: string,
 ) => {
@@ -780,10 +780,11 @@ const getDisplayName = (
 };
 
 const formatUnknownRole = (role: string) => {
-    // TODO: handle unknown groups.
-    if (role.startsWith("ROLE_USER_")) {
-        const name = role.replace("ROLE_USER_", "").toLowerCase();
-        return name.charAt(0).toUpperCase() + name.slice(1);
+    for (const prefix of ["ROLE_USER_", "ROLE_GROUP_", "ROLE_"]) {
+        if (role.startsWith(prefix)) {
+            const name = role.replace(prefix, "").toLowerCase();
+            return name.charAt(0).toUpperCase() + name.slice(1);
+        }
     }
 
     return role;
@@ -810,7 +811,7 @@ const makeSelection = (record: ACLRecord, acl: ACL): Option[] => {
                 roles: roles,
                 action: getAction(acl, role),
             },
-            label: getDisplayName(record, role),
+            label: getLabel(record, role),
         };
     });
 };
@@ -846,6 +847,7 @@ type Selections = {
     usersRef: RefObject<ACLSelectHandle>;
 }
 
+// Collects group and user selections and prepares them for submittal.
 const getSelections = ({ groupsRef, usersRef }: Selections): ACL => {
     const selectedGroups = groupsRef.current?.getSelection();
     const selectedUsers = usersRef.current?.getSelection();
