@@ -8,7 +8,7 @@ import { COLORS } from "../color";
 
 
 
-type Kind = "normal" | "danger" | "happy";
+export type Kind = "normal" | "danger" | "happy";
 
 type ButtonProps = JSX.IntrinsicElements["button"] & {
     kind?: Kind;
