@@ -23,7 +23,8 @@ export type ExternalLinkProps = PropsWithChildren<{
 } & ({
     service: "STUDIO";
     params: {
-        "return.target": URL;
+        "return.target": string;
+        "return.label": string;
     };
 } | {
     service: "EDITOR";
