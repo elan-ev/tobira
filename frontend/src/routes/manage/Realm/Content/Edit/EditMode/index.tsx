@@ -185,7 +185,7 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
             kind="happy"
             type="submit"
         >
-            {t("manage.realm.content.save")}
+            {t("general.action.save")}
         </Button>
     </div>;
 };

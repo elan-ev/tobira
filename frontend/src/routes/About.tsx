@@ -52,7 +52,7 @@ const About: React.FC = () => {
                     <a href="https://github.com/elan-ev/tobira">GitHub repo</a>
                 </Trans>
             </p>
-            <h2>{t("version-information")}</h2>
+            <h2>{t("general.version-information")}</h2>
             <a href={`https://github.com/elan-ev/tobira/releases/tag/${version.identifier}`}>
                 Tobira <strong>{version.identifier}</strong>
             </a>

@@ -1,28 +1,30 @@
-language-name: English
-language: Language
-language-selection: Language selection, English selected
-loading: Loading...
-close: Close
-cancel: Cancel
-save: Save
-back: Back
-home: Home
-navigation: Navigation
-rename: Rename
-this-field-is-required: This field is required.
-version-information: Version
-
 general:
+  language:
+    language_one: Language
+    language_other: Languages
+    name: English
+    selection: Language selection, English selected
+  loading: Loading...
+  home: Home
   homepage: Homepage
-  goto-homepage: Go to homepage
+  navigation: Navigation
   leave-page-confirmation: Leave page? Changes you made may not be saved!
+  action:
+    close: Close
+    cancel: Cancel
+    save: Save
+    back: Back
+    rename: Rename
+    goto-homepage: Go to homepage
+    share: Share
+  version-information: Version
   logo-alt: Logo of “{{title}}”
   no-root-children: No pages yet ...
-  failed-to-load-thumbnail: Failed to load thumbnail
+  failed-to-load-thumbnail: Failed to load thumbnail.
   yes: "Yes"
   no: "No"
-  share: Share
   form:
+    this-field-is-required: This field is required.
     select:
       no-options: No options
       select-option: Select option...
@@ -48,7 +50,7 @@ errors:
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
   detailed-error-info: Detailed error information for developers
-  embedded: An error occurred in the embedded application
+  embedded: An error occurred in the embedded application.
 
 not-found:
   page-not-found: Page not found
@@ -123,17 +125,15 @@ video:
   created: Created
   updated: Last updated
   duration: Duration
-  language_one: Language
-  language_other: Languages
   link: Go to video page
   part-of-series: Part of series
   more-from-series: More from “{{series}}”
   deleted-video-block: The video referenced here was deleted.
   not-allowed-video-block: You are not allowed to view the video embedded here.
   not-ready:
-    title: Video not processed, yet
+    title: Video not processed yet
     text: >
-      This video hasn't been processed, yet. This should
+      This video hasn't been processed yet. This should
       happen automatically soon. Try again in a few minutes.
     label: unprocessed
   thumbnail-for: Thumbnail for “{{video}}”
@@ -144,15 +144,14 @@ video:
   source: Source
   stream-ended: This stream has ended.
   stream-not-started-yet: This stream has not started yet.
-  started-generic: Started
-  started: Started {{duration}}
+  started: Started
+  started-when: Started {{duration}}
   starts: Starts
   starts-in: Starts {{duration}}
   description:
     show-more: Show more
     show-less: Show less
   embed:
-    button: Embed
     title: Embed video
     copy-embed-code-to-clipboard: Copy embed code to clipboard
   caption: Caption
@@ -288,10 +287,6 @@ upload:
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
 
 manage:
-  nav:
-    dashboard: Dashboard
-    my-videos: My videos
-
   dashboard:
     title: Dashboard
     upload-tile: Here you can upload a new video from your computer.
@@ -460,10 +455,8 @@ manage:
       show-title: Show title
       show-link: Show link to video page
 
-      save: Save
       cancel: Discard
       confirm-cancel: Discard changes?
-
       cancel-warning: Your changes have not yet been saved!
 
       removing-failed: Removing failed.
@@ -511,4 +504,4 @@ api-remote-errors:
       further assistance.
 
 embed:
-  not-supported: This page can't be embedded
+  not-supported: This page can't be embedded.
