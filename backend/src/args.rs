@@ -1,6 +1,6 @@
 //! This module defines the command line arguments Tobira accepts.
 
-use std::path::PathBuf;
+use std::{path::PathBuf, io::IsTerminal};
 
 use termcolor::ColorChoice;
 
@@ -127,10 +127,10 @@ fn parse_color_choice(s: &str) -> Result<ColorChoice, &'static str> {
 
 impl Args {
     pub(crate) fn stdout_color(&self) -> ColorChoice {
-        if atty::is(atty::Stream::Stdout) { self.color } else { ColorChoice::Never }
+        if std::io::stdout().is_terminal() { self.color } else { ColorChoice::Never }
     }
 
     pub(crate) fn stderr_color(&self) -> ColorChoice {
-        if atty::is(atty::Stream::Stderr) { self.color } else { ColorChoice::Never }
+        if std::io::stderr().is_terminal() { self.color } else { ColorChoice::Never }
     }
 }
