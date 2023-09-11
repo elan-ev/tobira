@@ -11,7 +11,7 @@ import {
 } from "@opencast/appkit";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
-import { languages } from "../../i18n";
+import i18n, { languages } from "../../i18n";
 import { Link } from "../../router";
 import { User, useUser } from "../../User";
 import { ActionIcon, ICON_STYLE } from "./ui";
@@ -22,6 +22,7 @@ import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { focusStyle } from "../../ui";
 import { ExternalLink } from "../../relay/auth";
 import { COLORS } from "../../color";
+import { translatedConfig } from "../../util";
 
 
 /** User-related UI in the header. */
@@ -202,7 +203,10 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             icon: <FiVideo />,
             wrapper: <ExternalLink
                 service="STUDIO"
-                params={{ "return.target": new URL(document.location.href) }}
+                params={{
+                    "return.target": document.location.href,
+                    "return.label": translatedConfig(CONFIG.siteTitle, i18n),
+                }}
                 fallback="link"
             />,
             keepOpenAfterClick: true,

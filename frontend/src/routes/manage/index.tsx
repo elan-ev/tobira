@@ -19,6 +19,9 @@ import {
 } from "./__generated__/manageDashboardQuery.graphql";
 import { COLORS } from "../../color";
 import { useMenu } from "../../layout/MenuState";
+import CONFIG from "../../config";
+import { translatedConfig } from "../../util";
+import i18n from "../../i18n";
 
 
 const PATH = "/~manage";
@@ -106,7 +109,10 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
         items.push(
             <ExternalLink
                 service="STUDIO"
-                params={{ "return.target": new URL(document.location.href) }}
+                params={{
+                    "return.target": document.location.href,
+                    "return.label": translatedConfig(CONFIG.siteTitle, i18n),
+                }}
                 fallback="link"
                 css={{
                     backgroundColor: "inherit",
