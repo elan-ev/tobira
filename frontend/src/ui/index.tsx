@@ -91,7 +91,7 @@ export const linkWithIconStyle = (isDark: boolean, iconPos: "left" | "right", ac
             }),
         },
 
-        "&:hover, &:focus": hoverActiveStyle,
+        "&:hover, &:focus-visible": hoverActiveStyle,
         ...active && {
             color: COLORS.primary2,
             "&": hoverActiveStyle,
