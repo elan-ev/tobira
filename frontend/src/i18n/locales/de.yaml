@@ -7,7 +7,6 @@ general:
   loading: Lade...
   home: Startseite
   homepage: Startseite
-  navigation: Navigation
   leave-page-confirmation: >
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
   action:
@@ -15,13 +14,12 @@ general:
     cancel: Abbrechen
     save: Speichern
     back: Zurück
-    rename: Umbenennen
     goto-homepage: Zur Startseite
     share: Teilen
   version-information: Version
   logo-alt: Das Logo von „{{title}}“
   no-root-children: Noch keine Seiten ...
-  failed-to-load-thumbnail: Vorschaubild konnte nicht geladen werden.
+  failed-to-load-thumbnail: Konnte Vorschaubild nicht laden
   yes: Ja
   no: Nein
   form:
@@ -93,12 +91,9 @@ about-tobira:
 
 footer:
   about-tobira: Über Tobira
-  legal-notice: Impressum
 
 main-menu:
   label: Menü
-  settings: Einstellungen
-  about: Info
   color-scheme:
     label: Farbschema
     auto: Auto
@@ -110,7 +105,6 @@ user:
   logout: Abmelden
   settings: Nutzereinstellungen
   manage-content: Verwalten
-  logged-in-as: Angemeldet als
 
 login-page:
   heading: Anmeldung 
@@ -123,7 +117,6 @@ login-page:
 video:
   video: Video
   video-page: 'Video Seite: „{{video}}“'
-  deleted: Gelöschtes Video
   created: Erstellt
   updated: Zuletzt angepasst
   duration: Abspielzeit
@@ -154,7 +147,6 @@ video:
     show-more: Mehr anzeigen
     show-less: Weniger anzeigen
   embed:
-    title: Video einbetten
     copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
   caption: Untertitel
   download:
@@ -176,12 +168,6 @@ video:
     embed: Einbetten
     rss: RSS
     show-qr-code: QR Code anzeigen
-    direct-link-info: >
-      Hiermit wird das Video direkt verlinkt, also ohne seine Position im
-      Videoportal (die Seite, auf der es inkludiert ist). Das heißt, dass der
-      Link weiterhin funktioniert, auch wenn die Seite gelöscht oder verschoben
-      wird. Allerdings werden Empfänger des Links nicht die gleiche Navigation
-      sehen.
 
 series:
   series: Serie
@@ -192,7 +178,6 @@ series:
   videos:
     heading: Videos
   not-ready:
-    name: Ausstehende Serie
     title: Serie noch nicht synchronisiert
     text: >
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
@@ -325,8 +310,6 @@ manage:
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
-    thumbnail:
-      title: Vorschaubild
     acl:
       title: Zugangsbeschränkung
     technical-details:
@@ -359,8 +342,6 @@ manage:
       Pfadsegment darf nicht folgende Zeichen enthalten: {{illegalChars}}
     reserved-char-in-path: >
       Pfadsegment darf nicht mit den folgenden Zeichen beginnen: {{reservedChars}}
-
-    no-path: Pfad fehlt! Den Link, den Sie aufgerufen haben, ist ungültig.
 
     general:
       page-name: Seitenname
@@ -446,9 +427,7 @@ manage:
       series:
         series:
           heading: Serie
-          none: Keine Serie ausgewählt
           invalid: Bitte eine Serie auswählen
-          waiting: Nicht synchronisierte Serie
         layout:
           heading: Layout
           videos-only: Nur Videos
@@ -459,7 +438,6 @@ manage:
       event:
         event:
           heading: Video
-          none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
           no-read-access-to-current: >
             Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
