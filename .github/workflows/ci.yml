@@ -101,7 +101,7 @@ jobs:
 
     # Test DB migrations
     - name: Download latest DB dump
-      run: curl --silent --output db-dump.xz https://s3.opencast-niedersachsen.de/tobira/db-dump-latest.xz
+      run: curl --silent --output db-dump.xz -L https://github.com/elan-ev/tobira/raw/db-dumps/db-dump-latest.xz
     - name: Decompress DB dump
       run: xz -d db-dump.xz
     # We need to use the same version as the DB, so we use 'docker exec'

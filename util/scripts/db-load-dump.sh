@@ -16,7 +16,7 @@ fi
 # Download dump
 TMP_DIR=$(mktemp -d)
 echo "Downloading DB dump"
-curl --output "$TMP_DIR/db-dump.xz" https://s3.opencast-niedersachsen.de/tobira/db-dump-latest.xz
+curl --output "$TMP_DIR/db-dump.xz" -L https://github.com/elan-ev/tobira/raw/db-dumps/db-dump-latest.xz
 xz -d "$TMP_DIR/db-dump.xz"
 
 # Prompt to notify that the current DB is deleted.

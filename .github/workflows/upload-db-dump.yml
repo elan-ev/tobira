@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: '0' # We need to do a full clone to be able to switch the branch later
 
       - name: Download Tobira binary
         run: curl --location --output tobira 'https://github.com/elan-ev/tobira/releases/download/${{github.ref_name}}/tobira-x86_64-unknown-linux-gnu'
@@ -64,20 +66,17 @@ jobs:
         run: xz --best db-dump
 
 
-      # Upload
-      - name: Install s3cmd
+      # Upload to GitHub. We store it twice so that we have an archive of all
+      # dumps but also can easily access the latest dump. Finding out the
+      # latest dump URL in other ways is really tricky actually. And given that
+      # the dump is 2MB, this "waste" of storage and bandwidth is miniscule.
+      - name: Commit & push
         run: |
-          sudo apt update
-          sudo apt install s3cmd --yes
-
-      - name: Setup s3cfg
-        run: echo "${{ secrets.S3_CONFIG }}" > ~/.s3cfg
-
-      # We upload it twice so that we have an archive of all dumps but also can
-      # easily access the latest dump. Finding out the latest dump URL in other
-      # ways is really tricky actually. And given that the dump is 2MB,
-      # this "waste" of storage and bandwidth is miniscule.
-      - name: Upload DB dump
-        run: |
-          s3cmd put db-dump.xz s3://tobira/db-dump-${{github.ref_name}}.xz
-          s3cmd put db-dump.xz s3://tobira/db-dump-latest.xz
+          git checkout db-dumps
+          cp db-dump.xz db-dump-latest.xz
+          mv db-dump.xz db-dump-${{github.ref_name}}.xz
+          git add db-dump-latest.xz db-dump-${{github.ref_name}}.xz
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'noreply@github.com'
+          git commit -m "Add DB dump for ${{github.ref_name}}"
+          git push origin db-dumps
