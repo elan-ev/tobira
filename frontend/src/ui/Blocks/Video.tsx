@@ -55,15 +55,25 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         return unreachable();
     }
 
-    return <>
+    return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
         {isSynced(event)
             ? <InlinePlayer event={event} css={{ maxWidth: 800 }} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
-        {showLink && <Link to={`${basePath}/${keyOfId(event.id)}`}
+        {showLink && <Link
+            to={`${basePath}/${keyOfId(event.id)}`}
+            css={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 8,
+                marginLeft: "auto",
+                width: "fit-content",
+            }}
         >
             {t("video.link")}
-            <FiArrowRightCircle />
-        </Link>}
-    </>;
+            <FiArrowRightCircle size={18} css={{ marginTop: 1 }} />
+        </Link>
+        }
+    </div>;
 };
