@@ -103,10 +103,10 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
             )}
         />
 
-        <div css={{ display: "flex", flexDirection: "row", gap: 16, marginTop: 8 }}>
+        <div css={{ display: "flex", flexDirection: "column", marginTop: 8 }}>
             {optionProps.map(([option, checked, title]) =>
                 // eslint-disable-next-line react/jsx-key
-                <DisplayOption form={form} option={option} checked={checked} title={title} />)
+                <DisplayOption {...{ form, option, checked, title }} />)
             }
         </div>
     </EditModeForm>;
