@@ -111,7 +111,7 @@
     - name: Download latest DB dump
       become: true
       get_url:
-        url: 'https://s3.opencast-niedersachsen.de/tobira/db-dump-latest.xz'
+        url: 'https://github.com/elan-ev/tobira/raw/db-dumps/db-dump-latest.xz'
         dest: /opt/tobira/{{ id }}/db-dump.pgc.xz
         owner: root
         group: root
