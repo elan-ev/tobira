@@ -701,7 +701,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             <FloatingTrigger>
                 <Button onClick={() => setState(state => state === "closed" ? "main" : "closed")}>
                     <FiShare2 size={16} />
-                    {t("general.share")}
+                    {t("general.action.share")}
                 </Button>
             </FloatingTrigger>
             <Floating
@@ -772,7 +772,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
     } else if (event.isLive) {
         tooltip = <>
             <i>{hasStarted
-                ? t("video.started-generic")
+                ? t("video.started")
                 : t("video.starts")
             }
             </i>: {startFull}
@@ -804,7 +804,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
 
         tooltip = <>
             {startedDate
-                ? <><i>{t("video.started-generic")}</i>: {startFull}</>
+                ? <><i>{t("video.started")}</i>: {startFull}</>
                 : <><i>{t("video.created")}</i>: {createdFull}</>
             }
             {updatedFull && <>
@@ -851,7 +851,7 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
         const languages = event.metadata.dcterms.language.map(lng => languageNames.of(lng) ?? lng);
 
         pairs.push([
-            t("video.language", { count: languages.length }),
+            t("general.language.language", { count: languages.length }),
             languages.join(", "),
         ]);
     }

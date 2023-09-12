@@ -56,7 +56,7 @@ export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive, noTool
             timeAndUnit = [secsAgo / YEAR, "year"];
         }
         const [time, unit] = timeAndUnit;
-        const prefix = time < 0 ? "video.starts-in" : "video.started";
+        const prefix = time < 0 ? "video.starts-in" : "video.started-when";
         const relative = intl.format(Math.round(-time), unit);
         return isLive ? t(prefix, { duration: relative }) : relative;
     })();

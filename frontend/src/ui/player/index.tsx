@@ -212,7 +212,7 @@ const PlayerFallback: React.FC<{ image: string | null }> = ({ image }) => {
                 },
             }}>
                 <Spinner size={32} />
-                <div css={{ marginTop: 8 }}>{t("loading")}</div>
+                <div css={{ marginTop: 8 }}>{t("general.loading")}</div>
             </div>
         </div>
     );

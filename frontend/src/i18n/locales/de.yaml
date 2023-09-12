@@ -1,33 +1,32 @@
-language-name: Deutsch
-language: Sprache
-language-selection: Sprachauswahl, Deutsch ausgewählt
-loading: Lade...
-close: Schließen
-cancel: Abbrechen
-save: Speichern
-back: Zurück
-home: Startseite
-navigation: Navigation
-rename: Umbenennen
-this-field-is-required: Dieses Feld ist erforderlich.
-version-information: Version
-
 general:
-  goto-homepage: Zur Startseite
+  language:
+    language_one: Sprache
+    language_other: Sprachen
+    name: Deutsch
+    selection: Sprachauswahl, Deutsch ausgewählt
+  loading: Lade...
+  home: Startseite
   homepage: Startseite
   leave-page-confirmation: >
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
+  action:
+    close: Schließen
+    cancel: Abbrechen
+    save: Speichern
+    back: Zurück
+    goto-homepage: Zur Startseite
+    share: Teilen
+  version-information: Version
   logo-alt: Das Logo von „{{title}}“
   no-root-children: Noch keine Seiten ...
   failed-to-load-thumbnail: Konnte Vorschaubild nicht laden
   yes: Ja
   no: Nein
-  share: Teilen
   form:
+    this-field-is-required: Dieses Feld ist erforderlich.
     select:
       no-options: Keine Optionen
       select-option: Option auswählen...
-
 
 welcome:
   title: Willkommen zu Tobira!
@@ -50,7 +49,7 @@ errors:
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
   unknown: Unbekannter Fehler.
   detailed-error-info: Detaillierte Fehlerinformationen für Entwickler
-  embedded: In der eingebetteten Anwendung ist ein Fehler aufgetreten
+  embedded: In der eingebetteten Anwendung ist ein Fehler aufgetreten.
 
 not-found:
   page-not-found: Seite nicht gefunden
@@ -92,12 +91,9 @@ about-tobira:
 
 footer:
   about-tobira: Über Tobira
-  legal-notice: Impressum
 
 main-menu:
   label: Menü
-  settings: Einstellungen
-  about: Info
   color-scheme:
     label: Farbschema
     auto: Auto
@@ -109,7 +105,6 @@ user:
   logout: Abmelden
   settings: Nutzereinstellungen
   manage-content: Verwalten
-  logged-in-as: Angemeldet als
 
 login-page:
   heading: Anmeldung 
@@ -122,12 +117,9 @@ login-page:
 video:
   video: Video
   video-page: 'Video Seite: „{{video}}“'
-  deleted: Gelöschtes Video
   created: Erstellt
   updated: Zuletzt angepasst
   duration: Abspielzeit
-  language_one: Sprache
-  language_other: Sprachen
   link: Zur Videoseite
   part-of-series: Teil von Serie
   more-from-series: Mehr von „{{series}}“
@@ -147,16 +139,14 @@ video:
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
-  started-generic: Gestartet
-  started: Gestartet {{duration}}
+  started: Gestartet
+  started-when: Gestartet {{duration}}
   starts: Startet 
   starts-in: Startet {{duration}}
   description:
     show-more: Mehr anzeigen
     show-less: Weniger anzeigen
   embed:
-    button: Einbetten
-    title: Video einbetten
     copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
   caption: Untertitel
   download:
@@ -178,12 +168,6 @@ video:
     embed: Einbetten
     rss: RSS
     show-qr-code: QR Code anzeigen
-    direct-link-info: >
-      Hiermit wird das Video direkt verlinkt, also ohne seine Position im
-      Videoportal (die Seite, auf der es inkludiert ist). Das heißt, dass der
-      Link weiterhin funktioniert, auch wenn die Seite gelöscht oder verschoben
-      wird. Allerdings werden Empfänger des Links nicht die gleiche Navigation
-      sehen.
 
 series:
   series: Serie
@@ -194,7 +178,6 @@ series:
   videos:
     heading: Videos
   not-ready:
-    name: Ausstehende Serie
     title: Serie noch nicht synchronisiert
     text: >
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
@@ -295,10 +278,6 @@ upload:
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
 
 manage:
-  nav:
-    dashboard: Dashboard
-    my-videos: Meine Videos
-
   dashboard:
     title: Dashboard
     upload-tile: Hier können Sie Videos von Ihrem Computer hochladen.
@@ -331,8 +310,6 @@ manage:
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
-    thumbnail:
-      title: Vorschaubild
     acl:
       title: Zugangsbeschränkung
     technical-details:
@@ -365,8 +342,6 @@ manage:
       Pfadsegment darf nicht folgende Zeichen enthalten: {{illegalChars}}
     reserved-char-in-path: >
       Pfadsegment darf nicht mit den folgenden Zeichen beginnen: {{reservedChars}}
-
-    no-path: Pfad fehlt! Den Link, den Sie aufgerufen haben, ist ungültig.
 
     general:
       page-name: Seitenname
@@ -452,9 +427,7 @@ manage:
       series:
         series:
           heading: Serie
-          none: Keine Serie ausgewählt
           invalid: Bitte eine Serie auswählen
-          waiting: Nicht synchronisierte Serie
         layout:
           heading: Layout
           videos-only: Nur Videos
@@ -465,7 +438,6 @@ manage:
       event:
         event:
           heading: Video
-          none: Kein Video ausgewählt
           invalid: Bitte ein Video auswählen
           no-read-access-to-current: >
             Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
@@ -473,10 +445,8 @@ manage:
       show-title: Titel anzeigen
       show-link: Link zur Videoseite anzeigen
 
-      save: Speichern
       cancel: Verwerfen
       confirm-cancel: Änderungen verwerfen?
-
       cancel-warning: Ihre Änderungen wurden noch nicht gespeichert!
 
       removing-failed: Entfernen ist fehlgeschlagen.
@@ -524,4 +494,4 @@ api-remote-errors:
       Kontaktieren Sie einen Systemadministrator für weitere Unterstützung.
 
 embed:
-  not-supported: Diese Seite kann nicht eingebettet werden
+  not-supported: Diese Seite kann nicht eingebettet werden.

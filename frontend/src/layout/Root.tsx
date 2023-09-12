@@ -105,7 +105,7 @@ export const InitialLoading: React.FC = () => {
                         marginTop: 32,
                         animation: `${pulsing} 1.2s infinite`,
                         fontSize: 20,
-                    }}>{t("loading")}</div>
+                    }}>{t("general.loading")}</div>
                 </div>
             </Main>
             <Footer />

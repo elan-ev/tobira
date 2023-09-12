@@ -79,8 +79,8 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
 
     /* eslint-disable react/jsx-key */
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
-        ["/~manage", t("manage.nav.dashboard"), <HiOutlineTemplate />],
-        ["/~manage/videos", t("manage.nav.my-videos"), <FiFilm />],
+        ["/~manage", t("manage.dashboard.title"), <HiOutlineTemplate />],
+        ["/~manage/videos", t("manage.my-videos.title"), <FiFilm />],
     ];
     if (isRealUser(user) && user.canCreateUserRealm) {
         entries.splice(

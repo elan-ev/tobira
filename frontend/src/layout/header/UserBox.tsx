@@ -137,7 +137,7 @@ export const LanguageSettings: React.FC = () => {
 
     const menuItems = Object.keys(languages).map(lng => checkboxMenuItem({
         checked: isCurrentLanguage(lng),
-        children: <>{t("language-name", { lng })}</>,
+        children: <>{t("general.language.name", { lng })}</>,
         onClick: () => {
             if (!isCurrentLanguage(lng)) {
                 i18n.changeLanguage(lng);
@@ -145,7 +145,7 @@ export const LanguageSettings: React.FC = () => {
         },
     }));
 
-    const label = t("language");
+    const label = t("general.language.language_one");
     return (
         <WithHeaderMenu
             menu={{
@@ -154,7 +154,7 @@ export const LanguageSettings: React.FC = () => {
                 breakpoint: BREAKPOINT_MEDIUM,
             }}
         >
-            <ActionIcon title={t("language-selection")}>
+            <ActionIcon title={t("general.language.selection")}>
                 <HiOutlineTranslate />
             </ActionIcon>
         </WithHeaderMenu>

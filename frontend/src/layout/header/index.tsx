@@ -58,7 +58,11 @@ const SearchMode: React.FC = () => {
     const menu = useMenu();
 
     return <>
-        <ActionIcon title={t("back")} onClick={() => menu.close()} css={{ marginLeft: 8 }}>
+        <ActionIcon
+            title={t("general.action.back")}
+            onClick={() => menu.close()}
+            css={{ marginLeft: 8 }}
+        >
             <FiArrowLeft />
         </ActionIcon>
         <SearchField variant="mobile" />
@@ -73,7 +77,7 @@ const OpenMenuMode: React.FC = () => {
         <Logo />
         <ButtonContainer>
             <ActionIcon
-                title={t("close")}
+                title={t("general.action.close")}
                 onClick={() => menu.close()}
                 css={buttonOutline}
             >

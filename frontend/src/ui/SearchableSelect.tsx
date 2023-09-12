@@ -92,7 +92,7 @@ export const SearchableSelect = <T, >({
         isClearable
         defaultOptions
         theme={theme}
-        loadingMessage={() => t("loading")}
+        loadingMessage={() => t("general.loading")}
         noOptionsMessage={noOptionsMessage ?? (() => t("general.form.select.no-options"))}
         placeholder={placeholder ?? t("general.form.select.select-option")}
         {...props}

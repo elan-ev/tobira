@@ -49,7 +49,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
     const parent = realm.isUserRoot
         ? {
             path: "/",
-            name: t("home"),
+            name: t("general.home"),
             isMainRoot: true,
         }
         : realm.parent;
@@ -78,7 +78,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 {/* Show arrow and hide chevron in burger menu */}
                 <FiCornerLeftUp css={{ display: "none" }}/>
                 <FiChevronLeft />
-                {parent.isMainRoot ? t("home") : parent.name ?? <MissingRealmName />}
+                {parent.isMainRoot ? t("general.home") : parent.name ?? <MissingRealmName />}
             </LinkWithIcon>
             <div css={{
                 padding: "8px 14px 8px 16px",

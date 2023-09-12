@@ -42,7 +42,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
                         padding: 2,
                         ...focusStyle({ inset: true }),
                     }}>
-                        <FiHome aria-label={t("home")} />
+                        <FiHome aria-label={t("general.home")} />
                     </Link>
                 </li>
                 {path.map((segment, i) => (

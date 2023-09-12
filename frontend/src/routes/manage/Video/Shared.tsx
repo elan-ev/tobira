@@ -106,7 +106,7 @@ const BackLink: React.FC = () => {
     const items = [
         <LinkWithIcon key={MANAGE_VIDEOS_PATH} to={MANAGE_VIDEOS_PATH} iconPos="left">
             <FiCornerLeftUp />
-            {t("manage.nav.my-videos")}
+            {t("manage.my-videos.title")}
         </LinkWithIcon>,
     ];
 

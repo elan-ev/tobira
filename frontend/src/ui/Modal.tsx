@@ -100,7 +100,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                     }}>
                         <h2 css={{ flex: 1 }}>{title}</h2>
                         {closable && <ProtoButton
-                            aria-label={t("close")}
+                            aria-label={t("general.action.close")}
                             tabIndex={0}
                             onClick={() => setOpen(false)}
                             css={{
@@ -185,7 +185,7 @@ export const ConfirmationModal
                         <Button disabled={inFlight} onClick={
                             () => currentRef(modalRef).close?.()
                         }>
-                            {t("cancel")}
+                            {t("general.action.cancel")}
                         </Button>
                         <Button disabled={inFlight} type="submit" kind="danger" css={{
                             whiteSpace: "normal",
