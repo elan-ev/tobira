@@ -1,4 +1,4 @@
-import { i18n, TFuncKey } from "i18next";
+import { i18n, ParseKeys } from "i18next";
 import React from "react";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -73,13 +73,9 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
             // Use a message fitting to the exact error key, if it is present.
             const translationKey = err.key ? `api-remote-errors.${err.key}` : null;
             if (translationKey && i18n.exists(translationKey)) {
-                const msg = t(translationKey as TFuncKey);
-
-                // It could still refer to an object, which would be a bug.
-                if (typeof msg === "string") {
-                    causes.add(msg);
-                    continue;
-                }
+                const msg = t(translationKey as ParseKeys);
+                causes.add(msg);
+                continue;
             }
 
             // Otherwise, derive an error message from the error kind. We
