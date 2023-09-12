@@ -128,6 +128,7 @@ video:
   duration: Abspielzeit
   language_one: Sprache
   language_other: Sprachen
+  link: Zur Videoseite
   part-of-series: Teil von Serie
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
@@ -469,9 +470,8 @@ manage:
           no-read-access-to-current: >
             Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
 
-      titled:
-        title: Titel
-        show-title: Titel anzeigen
+      show-title: Titel anzeigen
+      show-link: Link zur Videoseite anzeigen
 
       save: Speichern
       cancel: Verwerfen

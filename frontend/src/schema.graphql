@@ -123,6 +123,7 @@ union EventSearchOutcome = SearchUnavailable | EventSearchResults
 input NewVideoBlock {
   event: ID!
   showTitle: Boolean!
+  showLink: Boolean!
 }
 
 type SyncedEventData {
@@ -154,12 +155,14 @@ type NotAllowed {
 input UpdateVideoBlock {
   event: ID
   showTitle: Boolean
+  showLink: Boolean
 }
 
 "A block for presenting a single Opencast event"
 type VideoBlock implements Block & RealmNameSourceBlock {
   event: Event
   showTitle: Boolean!
+  showLink: Boolean!
   id: ID!
   index: Int!
   realm: Realm!

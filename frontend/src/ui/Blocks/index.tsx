@@ -70,7 +70,7 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
             "TitleBlock": () => <TitleBlock fragRef={block} />,
             "TextBlock": () => <TextBlockByQuery fragRef={block} />,
             "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} basePath={basePath} />,
-            "VideoBlock": () => <VideoBlock fragRef={block} />,
+            "VideoBlock": () => <VideoBlock fragRef={block} basePath={basePath} />,
         })}
     </div>;
 };

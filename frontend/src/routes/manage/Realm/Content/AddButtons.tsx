@@ -150,6 +150,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                         label={t("manage.realm.content.add-video")}
                         onClick={() => addBlock("Video", (_store, block) => {
                             block.setValue(true, "showTitle");
+                            block.setValue(true, "showLink");
                         })}
                     />
                 </ul>

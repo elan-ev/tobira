@@ -6,21 +6,25 @@ import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
-import { isSynced } from "../../util";
+import { isSynced, keyOfId } from "../../util";
+import { Link } from "../../router";
+import { FiArrowRightCircle } from "react-icons/fi";
 
 
 type Props = {
     fragRef: VideoBlockData$key;
+    basePath: string;
 };
 
-export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
+export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     const { t } = useTranslation();
-    const { event, showTitle } = useFragment(graphql`
+    const { event, showTitle, showLink } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
                 __typename
                 ... on NotAllowed { dummy } # workaround
                 ... on AuthorizedEvent {
+                    id
                     title
                     isLive
                     created
@@ -36,6 +40,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
                 }
             }
             showTitle
+            showLink
         }
     `, fragRef);
 
@@ -50,10 +55,25 @@ export const VideoBlock: React.FC<Props> = ({ fragRef }) => {
         return unreachable();
     }
 
-    return <>
+    return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
         {isSynced(event)
             ? <InlinePlayer event={event} css={{ maxWidth: 800 }} />
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
-    </>;
+        {showLink && <Link
+            to={`${basePath}/${keyOfId(event.id)}`}
+            css={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 8,
+                marginLeft: "auto",
+                width: "fit-content",
+            }}
+        >
+            {t("video.link")}
+            <FiArrowRightCircle size={18} css={{ marginTop: 1 }} />
+        </Link>
+        }
+    </div>;
 };
