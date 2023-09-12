@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc, TimeZone};
 use tokio_postgres::GenericClient;
 
 use crate::prelude::*;
@@ -16,7 +16,7 @@ impl SyncStatus {
         let row = db.query_one("select harvested_until from sync_status", &[]).await?;
 
         Ok(Self {
-            harvested_until: DateTime::from_utc(row.get::<_, NaiveDateTime>(0), Utc),
+            harvested_until: Utc.from_utc_datetime(&row.get::<_, NaiveDateTime>(0)),
         })
     }
 
