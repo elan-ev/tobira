@@ -1,4 +1,4 @@
-export type AclRecord = Record<string, { label: string; roles: string[] }>
+import { AclRecord } from "../../../ui/Access";
 
 export const DUMMY_USERS: AclRecord = {
     "admin": {

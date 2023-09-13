@@ -29,8 +29,8 @@ import { SeriesSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
-import { AclSelector, AclSelectorHandle, Acl, getUserRole } from "./manage/Video/Access";
 import { COMMON_ROLES } from "../util/roles";
+import { Acl, AclSelectorHandle, getUserRole, AclSelector } from "../ui/Access";
 
 
 export const UploadRoute = makeRoute(url => {

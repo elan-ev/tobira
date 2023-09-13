@@ -53,7 +53,8 @@ export const searchableSelectStyles = (isDark: boolean) => ({
         ...isDark && { outline: `1px solid ${COLORS.neutral20}` },
     }),
     option: (_baseStyles: CSSObjectWithLabel, state: {
-        isSelected: boolean; isFocused: boolean;
+        isSelected: boolean;
+        isFocused: boolean;
     }) => ({
         cursor: "default",
         padding: "6px 10px",
