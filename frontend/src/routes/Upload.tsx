@@ -30,6 +30,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
 import { AclSelector, AclSelectorHandle, Acl, getUserRole } from "./manage/Video/Access";
+import { COMMON_ROLES } from "../util/roles";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -669,7 +670,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
 
     const userRole = getUserRole(user);
     const defaultAcl: Acl = {
-        readRoles: ["ROLE_ANONYMOUS", userRole],
+        readRoles: [COMMON_ROLES.ROLE_ANONYMOUS, userRole],
         writeRoles: [userRole],
     };
 

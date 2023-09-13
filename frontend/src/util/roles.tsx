@@ -1,0 +1,6 @@
+export const COMMON_ROLES = {
+    ROLE_ANONYMOUS: "ROLE_ANONYMOUS",
+    ROLE_ADMIN: "ROLE_ADMIN",
+    ROLE_USER: "ROLE_USER",
+};
+

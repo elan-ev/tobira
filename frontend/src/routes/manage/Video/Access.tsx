@@ -38,6 +38,7 @@ import i18n from "../../../i18n";
 import {
     DUMMY_GROUPS, DUMMY_USERS, SUBSET_RELATIONS, AclRecord, LARGE_GROUPS,
 } from "./dummyData";
+import { COMMON_ROLES } from "../../../util/roles";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -150,12 +151,12 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef }) => {
     const resetModalRef = useRef<ModalHandle>(null);
 
     const containsUser = (acl: Acl) => {
-        const isAdmin = isRealUser(user) && user.roles.includes("ROLE_ADMIN");
+        const isAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ROLE_ADMIN);
 
         return isAdmin
             || acl.writeRoles.includes(getUserRole(user))
-            || acl.writeRoles.includes("ROLE_ANONYMOUS")
-            || acl.writeRoles.includes("ROLE_USER");
+            || acl.writeRoles.includes(COMMON_ROLES.ROLE_ANONYMOUS)
+            || acl.writeRoles.includes(COMMON_ROLES.ROLE_USER);
     };
 
     const submit = async (acl: Acl) => {
@@ -311,7 +312,7 @@ type SelectionContext = {
 
 const defaultDummyOption: Option = {
     value: {
-        roles: ["ROLE_ADMIN"],
+        roles: [COMMON_ROLES.ROLE_ADMIN],
         action: "write",
     },
     label: "Administrator",
@@ -518,10 +519,10 @@ const ListEntry: React.FC<ListEntryProps> = (
     const userIsRequired = useContext(UserRequiredContext);
     const isSubset = supersetList(item, selection).length > 0;
     const supersets = supersetList(item, selection).map(set => set.label).join(", ");
-    const isAdminItem = item.value.roles.includes("ROLE_ADMIN")
+    const isAdminItem = item.value.roles.includes(COMMON_ROLES.ROLE_ADMIN)
         || item.value.roles.includes("ROLE_USER_ADMIN");
 
-    return isAdminItem && isRealUser(user) && !user.roles.includes("ROLE_ADMIN")
+    return isAdminItem && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ROLE_ADMIN)
         ? null
         : <tr key={item.label} css={{
             height: 44,
@@ -635,7 +636,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
 
     const language = i18n.resolvedLanguage;
 
-    return item.value.roles.includes("ROLE_ADMIN")
+    return item.value.roles.includes(COMMON_ROLES.ROLE_ADMIN)
             || userIsRequired && item.value.roles.includes(getUserRole(user))
         ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
         : <FloatingBaseMenu
@@ -896,3 +897,4 @@ const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value 
         throw new Error(`${value} is undefined.`);
     }
 };
+
