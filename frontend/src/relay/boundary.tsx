@@ -62,7 +62,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
             // Check that the returned object actually has the fields that are
             // expected.
             const isStringArray = (array: unknown): array is readonly string[] =>
-                Array.isArray(array) && array.every(role => typeof role === "string");
+                Array.isArray(array) && array.every(element => typeof element === "string");
 
             const user = error.response?.data?.currentUser as unknown;
             if (typeof user === "object" && user
