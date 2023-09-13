@@ -732,6 +732,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
 
             {/* ACL */}
             <InputContainer>
+                <label>{t("manage.my-videos.acl.title")}</label>
                 <Controller
                     name="acl"
                     control={control}
@@ -744,10 +745,14 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
             </InputContainer>
 
             {/* Submit button */}
-            <Button kind="happy" disabled={disabled} onClick={() => {
-                setValue("acl", currentRef(aclSelectRef).selections());
-                onSubmit();
-            }}>
+            <Button
+                kind="happy"
+                disabled={disabled}
+                css={{ marginTop: 32, marginBottom: 160 }}
+                onClick={() => {
+                    setValue("acl", currentRef(aclSelectRef).selections());
+                    onSubmit();
+                }}>
                 {t("upload.metadata.save")}
             </Button>
         </Form>
