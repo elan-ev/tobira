@@ -29,8 +29,7 @@ import { SeriesSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
-import { ACLSelectWrapper, ACLWrapperHandle, getUserRole } from "./manage/Video/Access";
-import { ACL } from "./manage/Video/dummyData";
+import { AclSelector, AclSelectorHandle, Acl, getUserRole } from "./manage/Video/Access";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -61,7 +60,7 @@ type Metadata = {
     title: string;
     description: string;
     series?: string;
-    acl: ACL;
+    acl: Acl;
 };
 
 const Upload: React.FC = () => {
@@ -655,7 +654,7 @@ type MetaDataEditProps = {
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { t } = useTranslation();
     const user = useUser();
-    const aclSelectRef = useRef<ACLWrapperHandle>(null);
+    const aclSelectRef = useRef<AclSelectorHandle>(null);
 
     const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
@@ -669,7 +668,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     });
 
     const userRole = getUserRole(user);
-    const defaultACL: ACL = {
+    const defaultAcl: Acl = {
         readRoles: ["ROLE_ANONYMOUS", userRole],
         writeRoles: [userRole],
     };
@@ -736,10 +735,10 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                 <Controller
                     name="acl"
                     control={control}
-                    render={() => <ACLSelectWrapper
+                    render={() => <AclSelector
                         userRequired
                         ref={aclSelectRef}
-                        initialACL={defaultACL}
+                        initialAcl={defaultAcl}
                     />}
                 />
             </InputContainer>

@@ -1,6 +1,6 @@
-export type ACLRecord = Record<string, { label: string; roles: string[] }>
+export type AclRecord = Record<string, { label: string; roles: string[] }>
 
-export const DUMMY_USERS: ACLRecord = {
+export const DUMMY_USERS: AclRecord = {
     "admin": {
         label: "Administrator",
         roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO", "ROLE_USER", "ROLE_ANONYMOUS"],
@@ -41,7 +41,7 @@ export const DUMMY_USERS: ACLRecord = {
     },
 };
 
-export const DUMMY_GROUPS: ACLRecord = {
+export const DUMMY_GROUPS: AclRecord = {
     // TODO: get all possible groups (also from Opencast?).
     // TODO: read mappings from config. Maybe also make this an actual map instead of a record?
     "all": {
@@ -102,11 +102,6 @@ export const SUBSET_RELATIONS: SubsetList[] = [
         ],
     },
 ];
-
-export type ACL = {
-    readRoles: string[];
-    writeRoles: string[];
-};
 
 export const LARGE_GROUPS = ["ROLE_ANONYMOUS", "ROLE_USER"];
 

@@ -36,21 +36,21 @@ import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import i18n from "../../../i18n";
 import {
-    DUMMY_GROUPS, DUMMY_USERS, SUBSET_RELATIONS, ACLRecord, ACL, LARGE_GROUPS,
+    DUMMY_GROUPS, DUMMY_USERS, SUBSET_RELATIONS, AclRecord, LARGE_GROUPS,
 } from "./dummyData";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
     "acl",
     "/access",
-    event => <ACLPage event={event} />,
+    event => <AclPage event={event} />,
 );
 
-type ACLPage = {
+type AclPage = {
     event: AuthorizedEvent;
 };
 
-const ACLPage: React.FC<ACLPage> = ({ event }) => {
+const AclPage: React.FC<AclPage> = ({ event }) => {
     const { t } = useTranslation();
     const user = useUser();
 
@@ -98,6 +98,10 @@ const UnlistedNote: React.FC = () => {
     );
 };
 
+export type Acl = {
+    readRoles: string[];
+    writeRoles: string[];
+};
 
 type Action = "read" | "write";
 
@@ -114,9 +118,9 @@ type AccessUIProps = {
 }
 
 const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
-    const aclSelectRef = useRef<ACLWrapperHandle>(null);
+    const aclSelectRef = useRef<AclSelectorHandle>(null);
 
-    const initialACL: ACL = {
+    const initialAcl: Acl = {
         readRoles: event.readRoles as string[],
         writeRoles: event.writeRoles as string[],
     };
@@ -128,7 +132,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                 flexDirection: "column",
                 width: "100%",
             }}>
-                <ACLSelectWrapper ref={aclSelectRef} {...{ initialACL }} />
+                <AclSelector ref={aclSelectRef} {...{ initialAcl }} />
                 <ButtonWrapper {...{ aclSelectRef }} />
             </div>
         </div>
@@ -136,7 +140,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
 };
 
 type ButtonWrapper = {
-    aclSelectRef: RefObject<ACLWrapperHandle>;
+    aclSelectRef: RefObject<AclSelectorHandle>;
 }
 
 const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
@@ -145,7 +149,7 @@ const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
     const saveModalRef = useRef<ModalHandle>(null);
     const resetModalRef = useRef<ModalHandle>(null);
 
-    const containsUser = (acl: ACL) => {
+    const containsUser = (acl: Acl) => {
         const isAdmin = isRealUser(user) && user.roles.includes("ROLE_ADMIN");
 
         return isAdmin
@@ -154,7 +158,7 @@ const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
             || acl.writeRoles.includes("ROLE_USER");
     };
 
-    const submit = async (acl: ACL) => {
+    const submit = async (acl: Acl) => {
         // TODO: Actually save new ACL.
         // eslint-disable-next-line no-console
         console.log(acl);
@@ -181,8 +185,8 @@ const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
             body={t("manage.access.save-modal.body")}
             confirmationLabel={t("manage.access.save-modal.confirm")}
             handleClick={() => {
-                const newACL = currentRef(aclSelectRef).selections();
-                return !containsUser(newACL) ? currentRef(saveModalRef).open() : submit(newACL);
+                const newAcl = currentRef(aclSelectRef).selections();
+                return !containsUser(newAcl) ? currentRef(saveModalRef).open() : submit(newAcl);
             }}
             onConfirm={() => submit(currentRef(aclSelectRef).selections())}
         />
@@ -228,27 +232,27 @@ const ButtonWithModal: React.FC<ButtonWithModal> = ({ ...props }) => {
     </>;
 };
 
-type ACLSelectWrapper = {
-    initialACL: ACL;
+type AclSelectorProps = {
+    initialAcl: Acl;
     userRequired?: boolean;
 }
 
-export type ACLWrapperHandle = {
-    selections: () => ACL;
+export type AclSelectorHandle = {
+    selections: () => Acl;
     reset?: () => void;
 };
 
 const UserRequiredContext = createContext<boolean>(false);
 
-export const ACLSelectWrapper = forwardRef<ACLWrapperHandle, ACLSelectWrapper>(
-    ({ initialACL, userRequired = false }, ref) => {
-        const groupsRef = useRef<ACLSelectHandle>(null);
-        const usersRef = useRef<ACLSelectHandle>(null);
+export const AclSelector = forwardRef<AclSelectorHandle, AclSelectorProps>(
+    ({ initialAcl, userRequired = false }, ref) => {
+        const groupsRef = useRef<AclSelectHandle>(null);
+        const usersRef = useRef<AclSelectHandle>(null);
 
         const groupOptions = makeOptions(DUMMY_GROUPS);
         const userOptions = makeOptions(DUMMY_USERS);
 
-        const [initialGroupACL, initialUserACL] = splitAcl(initialACL);
+        const [initialGroupAcl, initialUserAcl] = splitAcl(initialAcl);
 
         useImperativeHandle(ref, () => ({
             selections: () => getSelections({ groupsRef, usersRef }),
@@ -265,17 +269,17 @@ export const ACLSelectWrapper = forwardRef<ACLWrapperHandle, ACLSelectWrapper>(
             flexWrap: "wrap",
             gap: 24,
         }}>
-            <ACLSelect
+            <AclSelect
                 ref={groupsRef}
                 kind="Group"
-                initialACL={initialGroupACL}
+                initialAcl={initialGroupAcl}
                 allOptions={groupOptions}
             />
             <UserRequiredContext.Provider value={userRequired}>
-                <ACLSelect
+                <AclSelect
                     ref={usersRef}
                     kind="User"
-                    initialACL={initialUserACL}
+                    initialAcl={initialUserAcl}
                     allOptions={userOptions}
                 />
             </UserRequiredContext.Provider>
@@ -284,13 +288,13 @@ export const ACLSelectWrapper = forwardRef<ACLWrapperHandle, ACLSelectWrapper>(
 );
 
 
-type ACLSelect = SelectProps & {
-    initialACL: ACL;
+type AclSelect = SelectProps & {
+    initialAcl: Acl;
     allOptions: Option[];
     kind: "Group" | "User";
 };
 
-type ACLSelectHandle = {
+type AclSelectHandle = {
     getSelection: () => MultiValue<Option>;
     reset: () => void;
 };
@@ -315,8 +319,8 @@ const SelectionContext = createContext<SelectionContext>({
     item: defaultDummyOption,
 });
 
-const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
-    ({ initialACL, allOptions, kind }, ref) => {
+const AclSelect = forwardRef<AclSelectHandle, AclSelect>(
+    ({ initialAcl, allOptions, kind }, ref) => {
         const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
         const isDark = useColorScheme().scheme === "dark";
         const { t } = useTranslation();
@@ -340,7 +344,7 @@ const ACLSelect = forwardRef<ACLSelectHandle, ACLSelect>(
                 - Number(SUBSET_RELATIONS.some(set => set.superset === a.value.roles[0]));
 
         const initialSelections: Option[] = makeSelection(
-            kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialACL
+            kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialAcl
         ).sort((roleComparator));
 
         const initialOptions = allOptions.filter(
@@ -769,7 +773,7 @@ const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => 
 
 
 const getLabel = (
-    record: ACLRecord,
+    record: AclRecord,
     role: string,
 ) => {
     const name = Object.values(record).filter(entry => entry.roles.includes(role));
@@ -790,7 +794,7 @@ const formatUnknownRole = (role: string) => {
     return role;
 };
 
-const getAction = (acl: ACL, role: string): Action => {
+const getAction = (acl: Acl, role: string): Action => {
     if (acl.readRoles.includes(role) && acl.writeRoles.includes(role)) {
         return "write";
     }
@@ -799,7 +803,7 @@ const getAction = (acl: ACL, role: string): Action => {
 
 // Takes an initial ACL and formats it as options for react-select
 // that are already selected with their respective action.
-const makeSelection = (record: ACLRecord, acl: ACL): Option[] => {
+const makeSelection = (record: AclRecord, acl: Acl): Option[] => {
     const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
     return aclArray.map(role => {
         const roles = Object.values(record)
@@ -818,7 +822,7 @@ const makeSelection = (record: ACLRecord, acl: ACL): Option[] => {
 
 // Takes a record of all possible roles and formats them as options for react-select
 // with the default "write" action.
-const makeOptions = (record: ACLRecord): Option[] =>
+const makeOptions = (record: AclRecord): Option[] =>
     Object.values(record).filter(entry => entry.label !== "Administrator").map(entry => ({
         value: {
             roles: entry.roles,
@@ -827,15 +831,15 @@ const makeOptions = (record: ACLRecord): Option[] =>
         label: entry.label,
     }));
 
-const splitAcl = (initialACL: ACL) => {
+const splitAcl = (initialAcl: Acl) => {
     const regEx = /^ROLE_USER_\w+/;
-    const groupAcl: ACL = {
-        readRoles: initialACL.readRoles.filter(role => !regEx.test(role)),
-        writeRoles: initialACL.writeRoles.filter(role => !regEx.test(role)),
+    const groupAcl: Acl = {
+        readRoles: initialAcl.readRoles.filter(role => !regEx.test(role)),
+        writeRoles: initialAcl.writeRoles.filter(role => !regEx.test(role)),
     };
-    const userAcl: ACL = {
-        readRoles: initialACL.readRoles.filter(role => regEx.test(role)),
-        writeRoles: initialACL.writeRoles.filter(role => regEx.test(role)),
+    const userAcl: Acl = {
+        readRoles: initialAcl.readRoles.filter(role => regEx.test(role)),
+        writeRoles: initialAcl.writeRoles.filter(role => regEx.test(role)),
     };
 
     return [groupAcl, userAcl];
@@ -843,12 +847,12 @@ const splitAcl = (initialACL: ACL) => {
 
 
 type Selections = {
-    groupsRef: RefObject<ACLSelectHandle>;
-    usersRef: RefObject<ACLSelectHandle>;
+    groupsRef: RefObject<AclSelectHandle>;
+    usersRef: RefObject<AclSelectHandle>;
 }
 
 // Collects group and user selections and prepares them for submittal.
-const getSelections = ({ groupsRef, usersRef }: Selections): ACL => {
+const getSelections = ({ groupsRef, usersRef }: Selections): Acl => {
     const selectedGroups = groupsRef.current?.getSelection();
     const selectedUsers = usersRef.current?.getSelection();
 
