@@ -612,7 +612,7 @@ const getLabel = (
 };
 
 const formatUnknownRole = (role: string) => {
-    for (const prefix in (["ROLE_USER_", "ROLE_GROUP_"])) {
+    for (const prefix of ["ROLE_USER_", "ROLE_GROUP_"]) {
         if (role.startsWith(prefix)) {
             const name = role.replace(prefix, "").toLowerCase();
             return name.charAt(0).toUpperCase() + name.slice(1);
