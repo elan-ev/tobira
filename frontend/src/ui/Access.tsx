@@ -129,6 +129,7 @@ type SelectionContext = {
     selection: MultiValue<Option>;
     setSelection: Dispatch<SetStateAction<MultiValue<Option>>>;
     item: Option;
+    kind: "User" | "Group";
 };
 
 const defaultDummyOption: Option = {
@@ -143,6 +144,7 @@ const SelectionContext = createContext<SelectionContext>({
     selection: [defaultDummyOption],
     setSelection: () => {},
     item: defaultDummyOption,
+    kind: "User",
 });
 
 const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
@@ -312,10 +314,10 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
                     <tbody>
                         {selection.map(item =>
                             <SelectionContext.Provider
-                                value={{ selection, setSelection, item }}
+                                value={{ selection, setSelection, item, kind }}
                                 key={item.label}
                             >
-                                <ListEntry {...{ remove, setSupersets }} />
+                                <ListEntry {...{ remove, setSupersets, kind }} />
                             </SelectionContext.Provider>)
                         }
                     </tbody>
@@ -435,20 +437,20 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
     const isDark = useColorScheme().scheme === "dark";
     const { t } = useTranslation();
     const userIsRequired = useContext(UserRequiredContext);
-    const { setSelection, item } = useContext(SelectionContext);
+    const { setSelection, item, kind } = useContext(SelectionContext);
     const user = useUser();
-
     const actions: Action[] = ["read", "write"];
     const [action, setAction] = useState<Action>(item.value.action);
 
+    const count = kind === "User" ? 1 : 2;
     const translations = (actionType: Action) => match(actionType, {
         "read": () => ({
             label: t("manage.access.table.actions.read"),
-            description: t("manage.access.table.actions.read-description"),
+            description: t("manage.access.table.actions.read-description", { ...{ count } }),
         }),
         "write": () => ({
             label: t("manage.access.table.actions.write"),
-            description: t("manage.access.table.actions.write-description"),
+            description: t("manage.access.table.actions.write-description", { ...{ count } }),
         }),
     });
 
@@ -466,7 +468,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
             label={t("manage.access.table.actions.title")}
             triggerContent={<>{translations(action).label}</>}
             triggerStyles={{
-                width: language === "en" ? 80 : 115,
+                width: language === "en" ? 150 : 190,
                 gap: 0,
                 padding: "0 4px 0 8px",
                 justifyContent: "space-between",
@@ -545,7 +547,7 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
                     close();
                 }}
                 css={{
-                    width: 200,
+                    width: 300,
                     display: "flex",
                     alignItems: "center",
                     gap: 8,

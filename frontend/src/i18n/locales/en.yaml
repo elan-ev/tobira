@@ -288,11 +288,12 @@ manage:
       actions:
         title: Actions
         read: Read
-        read-description: Users with read-access are able to watch the video.
-        write: Write
+        read-description_one: Can watch the video and view metadata.
+        read-description_other: Can watch the video and view metadata.
+        write: Read & write
         large-group-warning: You are giving write-access to a large group. Is this intentional?
-        write-description: >
-          Users with write-access are able to both watch the video and edit certain video details.
+        write-description_one: Can also edit the video, metadata and other details.
+        write-description_other: Can also edit the video, metadata and other details.
     unlisted:
       note: This video is unlisted.
       explanation: >
