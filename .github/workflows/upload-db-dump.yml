@@ -72,6 +72,7 @@ jobs:
       # the dump is 2MB, this "waste" of storage and bandwidth is miniscule.
       - name: Commit & push
         run: |
+          git reset --hard HEAD
           git checkout db-dumps
           cp db-dump.xz db-dump-latest.xz
           mv db-dump.xz db-dump-${{github.ref_name}}.xz
