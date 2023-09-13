@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiAlertTriangle, FiFilm, FiRadio, FiVolume2 } from "react-icons/fi";
-import { HiOutlineUserCircle } from "react-icons/hi";
+import { LuUserCircle } from "react-icons/lu";
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
@@ -251,7 +251,7 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
             }}
             {...{ className }}
         >
-            <HiOutlineUserCircle css={{
+            <LuUserCircle css={{
                 color: COLORS.neutral60,
                 fontSize: 16,
                 flexShrink: 0,
