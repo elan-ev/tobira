@@ -352,7 +352,7 @@ manage:
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
     acl:
-      title: Zugangsbeschränkung
+      title: Zugriffsrechte
     technical-details:
       title: Technische Details
       tracks: Video/Audio-Spuren

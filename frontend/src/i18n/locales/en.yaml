@@ -343,7 +343,7 @@ manage:
       referencing-pages-explanation: 'This video is referenced on the following pages:'
       no-referencing-pages: No pages reference this video.
     acl:
-      title: Manage access
+      title: Access policy
     technical-details:
       title: Technical details
       tracks: Video/audio tracks
