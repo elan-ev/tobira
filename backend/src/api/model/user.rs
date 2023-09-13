@@ -21,6 +21,9 @@ impl User {
         self.email.as_deref()
     }
 
+    /// Roles of the user. Note: the frontend should not do any role matching itself,
+    /// but should rely on Boolean API endpoints like `canUpload` or `event.canWrite`.
+    /// This endpoint is only for debugging and for special cases like the ACL selector.
     fn roles(&self) -> Vec<&str> {
         self.roles.iter().map(AsRef::as_ref).collect()
     }

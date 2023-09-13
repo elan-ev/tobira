@@ -147,10 +147,11 @@ impl AuthorizedEvent {
     fn metadata(&self) -> &ExtraMetadata {
         &self.metadata
     }
-    fn read_roles(&self) -> &Vec<String> {
+    fn read_roles(&self) -> &[String] {
         &self.read_roles
     }
-    fn write_roles(&self) -> &Vec<String> {
+    /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
+    fn write_roles(&self) -> &[String] {
         &self.write_roles
     }
 
