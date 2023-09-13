@@ -79,7 +79,6 @@ const Upload: React.FC = () => {
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
-            <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
             <UploadMain />
         </div>
     );
