@@ -283,6 +283,7 @@ manage:
     table:
       group: Group
       user: User
+      yourself: Yourself
       subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
       actions:
         title: Actions
@@ -305,12 +306,6 @@ manage:
       body: The current selection will remove your write-access.
             Without this, you will lose the ability to make any further edits.
       confirm: Confirm
-    groups:
-      all: Everyone
-      logged-in: Logged in users
-      moderators: Moderators
-      students: Students
-      instructors: Instructors
 
   dashboard:
     title: Dashboard

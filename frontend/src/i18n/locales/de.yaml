@@ -288,6 +288,7 @@ manage:
     table:
       group: Gruppe
       user: Person
+      yourself: Sie
       subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
       actions:
         title: Berechtigung

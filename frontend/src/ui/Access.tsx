@@ -133,7 +133,7 @@ type SelectionContext = {
 
 const defaultDummyOption: Option = {
     value: {
-        roles: [COMMON_ROLES.ROLE_ADMIN],
+        roles: [COMMON_ROLES.ROLE_ADMIN, "ROLE_USER_ADMIN"],
         action: "write",
     },
     label: "Administrator",
@@ -340,8 +340,8 @@ const ListEntry: React.FC<ListEntryProps> = (
     const userIsRequired = useContext(UserRequiredContext);
     const isSubset = supersetList(item, selection).length > 0;
     const supersets = supersetList(item, selection).map(set => set.label).join(", ");
-    const isAdminItem = item.value.roles.includes(COMMON_ROLES.ROLE_ADMIN)
-        || item.value.roles.includes("ROLE_USER_ADMIN");
+    const isAdminItem = item.value.roles.includes(COMMON_ROLES.ROLE_ADMIN);
+    const isUser = item.value.roles.includes(getUserRole(user));
 
     return isAdminItem && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ROLE_ADMIN)
         ? null
@@ -362,7 +362,10 @@ const ListEntry: React.FC<ListEntryProps> = (
         }}>
             <td>
                 <span css={{ display: "flex" }}>
-                    {item.label}
+                    {isUser
+                        ? <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>
+                        : <>{item.label}</>
+                    }
                     {isSubset
                         ? <Warning tooltip={
                             t("manage.access.table.subset-warning", { groups: supersets })
@@ -387,9 +390,7 @@ const ListEntry: React.FC<ListEntryProps> = (
             <td>
                 <ProtoButton
                     onClick={() => remove(item)}
-                    disabled={isAdminItem
-                        || userIsRequired && item.value.roles.includes(getUserRole(user))
-                    }
+                    disabled={isAdminItem || userIsRequired && isUser}
                     css={{
                         marginLeft: "auto",
                         display: "flex",
