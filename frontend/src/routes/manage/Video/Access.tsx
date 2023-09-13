@@ -234,6 +234,10 @@ const ButtonWithModal: React.FC<ButtonWithModal> = ({ ...props }) => {
 
 type AclSelectorProps = {
     initialAcl: Acl;
+    /**
+     * If `true`, the current user is included by default with `write` access and can't be removed.
+     * This is necessary for the acl-selection in the uploader.
+     */
     userRequired?: boolean;
 }
 
