@@ -279,8 +279,8 @@ upload:
 
 manage:
   access:
-    authorized-groups: Authorisierte Gruppen
-    authorized-users: Authorisierte Personen
+    authorized-groups: Autorisierte Gruppen
+    authorized-users: Autorisierte Personen
     select:
       groups: Gruppen wählen
       users: Personen wählen
@@ -305,7 +305,7 @@ manage:
     reset-modal:
       label: Zurücksetzen
       title: Änderungen zurücksetzen?
-      body: Von ihnen getätigte Änderungen werden zurückgesetzt.
+      body: Von Ihnen getätigte Änderungen werden zurückgesetzt.
     save-modal:
       title: Eigenen Zugriff entfernen?
       body: Die aktuelle Auswahl wird ihren Schreibzugriff entfernen.
