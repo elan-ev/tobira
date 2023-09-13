@@ -262,7 +262,7 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
             flex: "1 1 320px",
             display: "flex",
             flexDirection: "column",
-            maxWidth: 500,
+            maxWidth: 900,
         }}>
             <h4>{translations.heading}</h4>
             <div onPaste={handlePaste}>
@@ -391,7 +391,7 @@ const ListEntry: React.FC<ListEntryProps> = (
                         || userIsRequired && item.value.roles.includes(getUserRole(user))
                     }
                     css={{
-                        margin: "auto",
+                        marginLeft: "auto",
                         display: "flex",
                         color: COLORS.neutral60,
                         borderRadius: 4,
