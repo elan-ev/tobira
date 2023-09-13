@@ -535,6 +535,7 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
             ":last-child button": {
                 borderRadius: "0 0 8px 8px",
             },
+            ...disabled && { backgroundColor: COLORS.neutral10 },
         }}>
             <ProtoButton
                 {...{ ref, disabled }}
@@ -559,7 +560,6 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
                             fontWeight: "bold",
                             color: COLORS.neutral80,
                             pointerEvents: "none",
-                            ...isDark && { backgroundColor: COLORS.neutral10 },
                         },
                     },
                 }}
