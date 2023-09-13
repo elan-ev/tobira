@@ -12,7 +12,7 @@ import { WithTooltip } from "@opencast/appkit";
 import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
-import { AclSelectorHandle, Acl, AclSelector, getUserRole } from "../../../ui/Access";
+import { AclSelectorHandle, Acl, AclSelector } from "../../../ui/Access";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -110,12 +110,12 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef }) => {
     const resetModalRef = useRef<ModalHandle>(null);
 
     const containsUser = (acl: Acl) => {
-        const isAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ROLE_ADMIN);
+        if (!isRealUser(user)) {
+            return false;
+        }
 
-        return isAdmin
-            || acl.writeRoles.includes(getUserRole(user))
-            || acl.writeRoles.includes(COMMON_ROLES.ROLE_ANONYMOUS)
-            || acl.writeRoles.includes(COMMON_ROLES.ROLE_USER);
+        return user.roles.includes(COMMON_ROLES.ROLE_ADMIN)
+            || acl.writeRoles.some(role => user.roles.includes(role));
     };
 
     const submit = async (acl: Acl) => {
