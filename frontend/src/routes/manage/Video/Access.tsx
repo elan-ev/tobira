@@ -46,11 +46,11 @@ export const ManageVideoAccessRoute = makeManageVideoRoute(
     event => <AclPage event={event} />,
 );
 
-type AclPage = {
+type AclPageProps = {
     event: AuthorizedEvent;
 };
 
-const AclPage: React.FC<AclPage> = ({ event }) => {
+const AclPage: React.FC<AclPageProps> = ({ event }) => {
     const { t } = useTranslation();
     const user = useUser();
 
@@ -139,11 +139,11 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
     );
 };
 
-type ButtonWrapper = {
+type ButtonWrapperProps = {
     aclSelectRef: RefObject<AclSelectorHandle>;
 }
 
-const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
+const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef }) => {
     const { t } = useTranslation();
     const user = useUser();
     const saveModalRef = useRef<ModalHandle>(null);
@@ -193,7 +193,7 @@ const ButtonWrapper: React.FC<ButtonWrapper> = ({ aclSelectRef }) => {
     </div>;
 };
 
-type ButtonWithModal = {
+type ButtonWithModalProps = {
     buttonKind: ButtonKind;
     modalRef: RefObject<ModalHandle>;
     label: string;
@@ -204,7 +204,7 @@ type ButtonWithModal = {
     onConfirm: () => void;
 }
 
-const ButtonWithModal: React.FC<ButtonWithModal> = ({ ...props }) => {
+const ButtonWithModal: React.FC<ButtonWithModalProps> = ({ ...props }) => {
     const { t } = useTranslation();
     return <>
         <Button
@@ -292,7 +292,7 @@ export const AclSelector = forwardRef<AclSelectorHandle, AclSelectorProps>(
 );
 
 
-type AclSelect = SelectProps & {
+type AclSelectProps = SelectProps & {
     initialAcl: Acl;
     allOptions: Option[];
     kind: "Group" | "User";
@@ -323,7 +323,7 @@ const SelectionContext = createContext<SelectionContext>({
     item: defaultDummyOption,
 });
 
-const AclSelect = forwardRef<AclSelectHandle, AclSelect>(
+const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
     ({ initialAcl, allOptions, kind }, ref) => {
         const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
         const isDark = useColorScheme().scheme === "dark";
@@ -585,11 +585,11 @@ const ListEntry: React.FC<ListEntryProps> = (
         </tr>;
 };
 
-type Warning = {
+type WarningProps = {
     tooltip: string;
 }
 
-const Warning: React.FC<Warning> = ({ tooltip }) => (
+const Warning: React.FC<WarningProps> = ({ tooltip }) => (
     <WithTooltip
         {...{ tooltip }}
         css={{ display: "flex" }}
@@ -850,13 +850,13 @@ const splitAcl = (initialAcl: Acl) => {
 };
 
 
-type Selections = {
+type SelectionsProps = {
     groupsRef: RefObject<AclSelectHandle>;
     usersRef: RefObject<AclSelectHandle>;
 }
 
 // Collects group and user selections and prepares them for submittal.
-const getSelections = ({ groupsRef, usersRef }: Selections): Acl => {
+const getSelections = ({ groupsRef, usersRef }: SelectionsProps): Acl => {
     const selectedGroups = groupsRef.current?.getSelection();
     const selectedUsers = usersRef.current?.getSelection();
 
