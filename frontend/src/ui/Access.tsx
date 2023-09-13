@@ -33,9 +33,9 @@ import {
     LARGE_GROUPS,
 } from "../routes/manage/Video/dummyData";
 import { COMMON_ROLES } from "../util/roles";
-import { FloatingBaseMenu } from "./Blocks/Series";
 import { SelectProps } from "./Input";
 import { searchableSelectStyles, theme } from "./SearchableSelect";
+import { FloatingBaseMenu } from "./FloatingBaseMenu";
 
 export type Acl = {
     readRoles: string[];
@@ -487,7 +487,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
                         margin: 0,
                         padding: 0,
                     }}>
-                        {actions.map(actionType => <MenuItem
+                        {actions.map(actionType => <ActionMenuItem
                             key={actionType}
                             disabled={actionType === action}
                             label={translations(actionType).label}
@@ -512,7 +512,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
         />;
 };
 
-type MenuItemProps = {
+type ActionMenuItemProps = {
     label: string;
     description: string;
     onClick: () => void;
@@ -520,7 +520,9 @@ type MenuItemProps = {
     disabled: boolean;
 };
 
-const MenuItem: React.FC<MenuItemProps> = ({ label, description, onClick, close, disabled }) => {
+const ActionMenuItem: React.FC<ActionMenuItemProps> = (
+    { label, description, onClick, close, disabled }
+) => {
     const ref = useRef<HTMLButtonElement>(null);
     const isDark = useColorScheme().scheme === "dark";
 

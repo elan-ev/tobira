@@ -1,12 +1,16 @@
 import React, {
-    ReactElement, ReactNode,
-    createContext, useContext, useEffect, useRef, useState,
+    ReactNode,
+    createContext,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
-    useColorScheme, Floating, FloatingContainer, FloatingHandle, FloatingTrigger,
+    useColorScheme, Floating, FloatingHandle,
 } from "@opencast/appkit";
 
 import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
@@ -23,14 +27,19 @@ import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
 import {
-    FiChevronDown, FiChevronLeft, FiChevronRight,
-    FiColumns, FiGrid, FiList, FiPlay,
+    FiChevronLeft,
+    FiChevronRight,
+    FiColumns,
+    FiGrid,
+    FiList,
+    FiPlay,
 } from "react-icons/fi";
-import { CSSObject, keyframes } from "@emotion/react";
+import { keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { IconType } from "react-icons";
 import { COLORS } from "../../color";
+import { FloatingBaseMenu } from "../FloatingBaseMenu";
 
 
 // ==============================================================================================
@@ -301,48 +310,6 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
 // ==============================================================================================
 // ===== The menus for choosing order and view mode
 // ==============================================================================================
-
-type FloatingBaseMenuProps = {
-    triggerContent: ReactElement;
-    list: ReactElement;
-    label: string;
-    triggerStyles?: CSSObject;
-};
-
-// TODO: Make menus work with arrow keys.
-export const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>(
-    ({ triggerContent, list, label, triggerStyles }, ref) => (
-        <FloatingContainer
-            ref={ref}
-            placement="bottom"
-            trigger="click"
-            ariaRole="menu"
-            distance={0}
-            borderRadius={8}
-        >
-            <FloatingTrigger>
-                <ProtoButton aria-label={label} css={{
-                    display: "flex",
-                    alignItems: "center",
-                    border: `1px solid ${COLORS.neutral40}`,
-                    borderRadius: 4,
-                    gap: 8,
-                    height: 31,
-                    padding: "0 8px",
-                    whiteSpace: "nowrap",
-                    ":hover, :focus": { backgroundColor: COLORS.neutral15 },
-                    ":focus-visible": { borderColor: COLORS.focus },
-                    ...focusStyle({ offset: -1 }),
-                    ...triggerStyles,
-                }}>
-                    {triggerContent}
-                    <FiChevronDown css={{ fontSize: 20, flexShrink: 0 }} />
-                </ProtoButton>
-            </FloatingTrigger>
-            {list}
-        </FloatingContainer>
-    ),
-);
 
 const OrderMenu: React.FC = () => {
     const { t } = useTranslation();
