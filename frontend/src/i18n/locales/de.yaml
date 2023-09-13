@@ -282,8 +282,8 @@ manage:
     authorized-groups: Autorisierte Gruppen
     authorized-users: Autorisierte Personen
     select:
-      groups: Gruppen wählen
-      users: Personen wählen
+      groups: Gruppen hinzufügen
+      users: Personen hinzufügen
       create: '{{item}} erstellen'
     table:
       group: Gruppe

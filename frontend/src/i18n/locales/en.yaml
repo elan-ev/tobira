@@ -277,8 +277,8 @@ manage:
     authorized-groups: Authorized groups
     authorized-users: Authorized users
     select:
-      groups: Select groups
-      users: Select users
+      groups: Add groups
+      users: Add users
       create: 'Create {{item}}'
     table:
       group: Group
