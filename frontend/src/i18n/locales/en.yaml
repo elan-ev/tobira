@@ -230,7 +230,6 @@ search:
 
 upload:
   title: Upload video
-  public-note: 'Note: videos uploaded here will be public, i.e. everyone will be able to watch it.'
   drop-to-upload: Drag and drop video file to upload
   not-authorized: You do not have the permission to upload videos.
   select-files: Select file
@@ -283,17 +282,15 @@ manage:
     table:
       group: Group
       user: User
-      yourself: Yourself
+      yourself: You
       subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
       actions:
         title: Actions
         read: Read
-        read-description_one: Can watch the video and view metadata.
-        read-description_other: Can watch the video and view metadata.
+        read-description: Can watch the video and view metadata.
         write: Read & write
         large-group-warning: You are giving write-access to a large group. Is this intentional?
-        write-description_one: Can also edit the video, metadata and other details.
-        write-description_other: Can also edit the video, metadata and other details.
+        write-description: Can also edit the video, metadata and other details.
     unlisted:
       note: This video is unlisted.
       explanation: >
