@@ -48,7 +48,7 @@ type Action = "read" | "write";
 
 type Option = {
     value: {
-        roles: string[];
+        role: string;
         action: Action;
     };
     label: string;
@@ -134,7 +134,7 @@ type SelectionContext = {
 
 const defaultDummyOption: Option = {
     value: {
-        roles: [COMMON_ROLES.ROLE_ADMIN, "ROLE_USER_ADMIN"],
+        role: "ROLE_USER_ADMIN",
         action: "write",
     },
     label: "Administrator",
@@ -168,15 +168,15 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
 
         // Sorts ACL entries by their scope, i.e. supersets will be shown before subsets.
         const roleComparator = (a: Option, b: Option) =>
-            Number(SUBSET_RELATIONS.some(set => set.superset === b.value.roles[0]))
-                - Number(SUBSET_RELATIONS.some(set => set.superset === a.value.roles[0]));
+            Number(SUBSET_RELATIONS.some(set => set.superset === b.value.role))
+                - Number(SUBSET_RELATIONS.some(set => set.superset === a.value.role));
 
         const initialSelections: Option[] = makeSelection(
             kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialAcl
         ).sort((roleComparator));
 
         const initialOptions = allOptions.filter(
-            item => !initialSelections.some(elem => elem.value.roles === item.value.roles)
+            item => !initialSelections.some(elem => elem.value.role === item.value.role)
         );
 
         // The ACL might not explicitly include admin, but since we still want to show
@@ -209,9 +209,9 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
             );
 
             setSelection(prev => filterItem(prev));
-            setOptions(prev => allOptions.some(option => option.value.roles === item.value.roles)
+            setOptions(prev => allOptions.some(option => option.value.role === item.value.role)
                 ? allOptions.filter(entry => !filterItem(selection)
-                    .some(option => entry.value.roles === option.value.roles))
+                    .some(option => entry.value.role === option.value.role))
                 : [...prev, item]);
         };
 
@@ -221,10 +221,10 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
             }
             const newRole: Option = {
                 value: {
-                    roles: [inputValue],
+                    role: inputValue,
                     action: "read",
                 },
-                label: inputValue,
+                label: formatUnknownRole(inputValue),
             };
             setSelection(prev => [...prev, newRole]);
         };
@@ -237,7 +237,7 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
             });
 
             setOptions(prev => prev.filter(
-                option => !choice.some(opt => opt.value.roles === option.value.roles)
+                option => !choice.some(opt => opt.value.role === option.value.role)
             ));
         };
 
@@ -342,8 +342,9 @@ const ListEntry: React.FC<ListEntryProps> = (
     const userIsRequired = useContext(UserRequiredContext);
     const isSubset = supersetList(item, selection).length > 0;
     const supersets = supersetList(item, selection).map(set => set.label).join(", ");
-    const isAdminItem = item.value.roles.includes(COMMON_ROLES.ROLE_ADMIN);
-    const isUser = item.value.roles.includes(getUserRole(user));
+    const isAdminItem = item.value.role === COMMON_ROLES.ROLE_ADMIN
+        || item.value.role === "ROLE_USER_ADMIN";
+    const isUser = item.value.role === getUserRole(user);
 
     return isAdminItem && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ROLE_ADMIN)
         ? null
@@ -383,7 +384,7 @@ const ListEntry: React.FC<ListEntryProps> = (
                             supersetList(item, selection).length > 0))
                         }
                     />
-                    {LARGE_GROUPS.includes(item.value.roles[0]) && item.value.action === "write"
+                    {LARGE_GROUPS.includes(item.value.role) && item.value.action === "write"
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
                     }
@@ -460,8 +461,9 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
 
     const language = i18n.resolvedLanguage;
 
-    return item.value.roles.includes(COMMON_ROLES.ROLE_ADMIN)
-            || userIsRequired && item.value.roles.includes(getUserRole(user))
+    return item.value.role === COMMON_ROLES.ROLE_ADMIN
+            || item.value.role === "ROLE_USER_ADMINISTRATOR"
+            || userIsRequired && item.value.role === getUserRole(user)
         ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
         : <FloatingBaseMenu
             ref={ref}
@@ -589,12 +591,12 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
 // Returns every other group that is selected and whose subset includes the role of
 // the selection and also has the same read/write (or a subset of write) access level.
 const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => {
-    const roleToCheck = selection.value.roles[0];
+    const roleToCheck = selection.value.role;
 
     const supersets = selectedGroups
         .filter(group =>
             SUBSET_RELATIONS.some(
-                set => set.superset === group.value.roles[0] && set.subsets.includes(roleToCheck)
+                set => set.superset === group.value.role && set.subsets.includes(roleToCheck)
             ) && (
                 group.value.action === selection.value.action || group.value.action === "write"
             ));
@@ -637,13 +639,13 @@ const getAction = (acl: Acl, role: string): Action => {
 const makeSelection = (record: AclRecord, acl: Acl): Option[] => {
     const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
     return aclArray.map(role => {
-        const roles = Object.values(record)
+        const selectedRole = Object.values(record)
             .find(entry => entry.roles.includes(role))
-            ?.roles ?? [role];
+            ?.roles[0] ?? role;
 
         return {
             value: {
-                roles: roles,
+                role: selectedRole,
                 action: getAction(acl, role),
             },
             label: getLabel(record, role),
@@ -656,7 +658,9 @@ const makeSelection = (record: AclRecord, acl: Acl): Option[] => {
 const makeOptions = (record: AclRecord): Option[] =>
     Object.values(record).filter(entry => entry.label !== "Administrator").map(entry => ({
         value: {
-            roles: entry.roles,
+            role: entry.roles.length > 1
+                ? entry.roles.find(role => /^ROLE_USER\w+/.test(role)) ?? "Unknown"
+                : entry.roles[0],
             action: "read",
         },
         label: entry.label,
@@ -692,17 +696,17 @@ const getSelections = ({ groupsRef, usersRef }: SelectionsProps): Acl => {
 
     const userRoleEntries = selectedUsers.map(user => ({
         value: {
-            roles: user.value.roles.filter(role => /^ROLE_USER\w+/.test(role)),
+            role: user.value.role,
             action: user.value.action,
         },
         label: user.label,
     }));
 
     const combinedRoles = selectedGroups.concat(userRoleEntries);
-    const readRoles = combinedRoles.flatMap(entry => entry.value.roles);
+    const readRoles = combinedRoles.flatMap(entry => entry.value.role);
     const writeRoles = combinedRoles
         .filter(entry => entry.value.action === "write")
-        .flatMap(entry => entry.value.roles);
+        .flatMap(entry => entry.value.role);
 
     const acl = {
         readRoles: [...new Set(readRoles)],
