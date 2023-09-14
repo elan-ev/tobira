@@ -147,6 +147,7 @@ impl AuthorizedEvent {
     fn metadata(&self) -> &ExtraMetadata {
         &self.metadata
     }
+    /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
     fn read_roles(&self) -> &[String] {
         &self.read_roles
     }

@@ -185,6 +185,7 @@ type AuthorizedEvent implements Node {
   created: DateTimeUtc!
   creators: [String!]!
   metadata: ExtraMetadata!
+  "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
   readRoles: [String!]!
   "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
   writeRoles: [String!]!
