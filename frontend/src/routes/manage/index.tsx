@@ -1,7 +1,8 @@
 import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { FiExternalLink, FiFilm, FiUpload, FiVideo } from "react-icons/fi";
-import { HiOutlineFire, HiOutlineTemplate } from "react-icons/hi";
+import { HiOutlineFire } from "react-icons/hi";
+import { LuLayoutTemplate } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
 
@@ -79,7 +80,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
 
     /* eslint-disable react/jsx-key */
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
-        ["/~manage", t("manage.dashboard.title"), <HiOutlineTemplate />],
+        ["/~manage", t("manage.dashboard.title"), <LuLayoutTemplate />],
         ["/~manage/videos", t("manage.my-videos.title"), <FiFilm />],
     ];
     if (isRealUser(user) && user.canCreateUserRealm) {

@@ -5,8 +5,7 @@ import { OperationType } from "relay-runtime";
 import {
     FiCode, FiSettings, FiShare2, FiDownload,
 } from "react-icons/fi";
-import { HiLink } from "react-icons/hi";
-import { HiOutlineQrCode } from "react-icons/hi2";
+import { LuLink, LuQrCode } from "react-icons/lu";
 import { QRCodeCanvas } from "qrcode.react";
 import {
     match, unreachable, ProtoButton,
@@ -534,7 +533,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     type State = "closed" | "main" | "embed" | "rss";
     /* eslint-disable react/jsx-key */
     const entries: [Exclude<State, "closed">, ReactElement][] = [
-        ["main", <HiLink />],
+        ["main", <LuLink />],
         ["embed", <FiCode />],
         // ["rss", <FiRss />],
     ];
@@ -618,7 +617,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             onClick={() => currentRef(qrModalRef).open()}
             css={{ width: "max-content" }}
         >
-            <HiOutlineQrCode />
+            <LuQrCode />
             {t("video.share.show-qr-code")}
         </Button>
         <Modal
