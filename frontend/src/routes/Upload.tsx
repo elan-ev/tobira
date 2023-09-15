@@ -669,7 +669,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
 
     const userRole = getUserRole(user);
     const defaultAcl: Acl = {
-        readRoles: [COMMON_ROLES.ROLE_ANONYMOUS, userRole],
+        readRoles: [COMMON_ROLES.ANONYMOUS, userRole],
         writeRoles: [userRole],
     };
 

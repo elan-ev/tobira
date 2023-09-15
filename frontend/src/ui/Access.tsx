@@ -86,12 +86,12 @@ export const AclSelector = forwardRef<AclSelectorHandle, AclSelectorProps>(
     ({ initialAcl, userIsRequired = false, children }, ref) => {
         const groupsRef = useRef<AclSelectHandle>(null);
         const usersRef = useRef<AclSelectHandle>(null);
+        const [roleSelections, setRoleSelections] = useState(initialAcl);
 
         const groupOptions = makeOptions(DUMMY_GROUPS);
         const userOptions = makeOptions(DUMMY_USERS);
 
         const [initialGroupAcl, initialUserAcl] = splitAcl(initialAcl);
-        const [roleSelections, setRoleSelections] = useState(initialAcl);
 
         useImperativeHandle(ref, () => ({
             selections: roleSelections,
@@ -146,7 +146,7 @@ type SelectContext = {
 };
 
 const defaultDummyOption: Option = {
-    value: COMMON_ROLES.ROLE_ADMIN,
+    value: COMMON_ROLES.ADMIN,
     label: "Administrator",
 };
 
@@ -157,10 +157,11 @@ const SelectContext = createContext<SelectContext>({
 
 const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
     ({ initialAcl, allOptions, kind }, ref) => {
-        const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
         const isDark = useColorScheme().scheme === "dark";
+        const user = useUser();
         const { t } = useTranslation();
         const { roleSelections, setRoleSelections } = useContext(AclContext);
+        const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
 
         const translations = match(kind, {
             "Group": () => ({
@@ -175,10 +176,23 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
             }),
         });
 
-        // Sorts ACL entries by their scope, i.e. supersets will be shown before subsets.
-        const roleComparator = (a: Option, b: Option) =>
-            Number(SUBSET_RELATIONS.some(set => set.superset === b.value))
-                - Number(SUBSET_RELATIONS.some(set => set.superset === a.value));
+        const roleComparator = (a: Option, b: Option) => {
+            if (kind === "Group") {
+                // Sort ACL group entries by their scope,
+                // so that supersets will be shown before subsets.
+                return Number(SUBSET_RELATIONS.some(set => set.superset === b.value))
+                    - Number(SUBSET_RELATIONS.some(set => set.superset === a.value));
+            } else {
+                // Sort ACL user entries alphabetically, but always show the user first.
+                if (a.value === getUserRole(user)) {
+                    return -1;
+                }
+                if (b.value === getUserRole(user)) {
+                    return 1;
+                }
+                return a.value < b.value ? -1 : 1;
+            }
+        };
 
         const initialSelections: Option[] = makeSelection(
             kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialAcl
@@ -348,16 +362,17 @@ type ListEntryProps = {
 }
 
 const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
-    const { t } = useTranslation();
     const user = useUser();
+    const { t } = useTranslation();
     const { item } = useContext(SelectContext);
     const { userIsRequired, roleSelections } = useContext(AclContext);
+
     const supersets = supersetList(item.value, roleSelections);
     const isSubset = supersets.length > 0;
-    const isAdminItem = item.value === COMMON_ROLES.ROLE_ADMIN;
+    const isAdmin = [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value);
     const isUser = item.value === getUserRole(user);
 
-    return isAdminItem && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ROLE_ADMIN)
+    return isAdmin && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ADMIN)
         ? null
         : <tr key={item.label} css={{
             height: 44,
@@ -376,7 +391,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
         }}>
             <td>
                 <span css={{ display: "flex" }}>
-                    {isUser || isAdminItem
+                    {isUser || isAdmin
                         ? <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>
                         : <>{item.label}</>
                     }
@@ -400,7 +415,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
             <td>
                 <ProtoButton
                     onClick={() => remove(item)}
-                    disabled={isAdminItem || userIsRequired && isUser}
+                    disabled={isAdmin || userIsRequired && isUser}
                     css={{
                         marginLeft: "auto",
                         display: "flex",
@@ -432,15 +447,17 @@ const Warning: React.FC<WarningProps> = ({ tooltip }) => (
 
 
 const ActionsMenu: React.FC = () => {
-    const ref = useRef<FloatingHandle>(null);
     const isDark = useColorScheme().scheme === "dark";
+    const ref = useRef<FloatingHandle>(null);
+    const user = useUser();
     const { t } = useTranslation();
     const { userIsRequired, roleSelections, setRoleSelections } = useContext(AclContext);
     const { item, kind } = useContext(SelectContext);
-    const user = useUser();
+    const [action, setAction] = useState<Action>(
+        roleSelections.writeRoles.includes(item.value) ? "write" : "read"
+    );
+
     const actions: Action[] = ["read", "write"];
-    const initialAction = roleSelections.writeRoles.includes(item.value) ? "write" : "read";
-    const [action, setAction] = useState<Action>(initialAction);
 
     const count = kind === "User" ? 1 : 2;
     const translations = (actionType: Action) => match(actionType, {
@@ -455,7 +472,7 @@ const ActionsMenu: React.FC = () => {
     });
 
 
-    return item.value === COMMON_ROLES.ROLE_ADMIN
+    return [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value)
             || userIsRequired && item.value === getUserRole(user)
         ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
         : <FloatingBaseMenu
@@ -578,12 +595,14 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
 // ===== Helper functions
 // ==============================================================================================
 
-// Returns every other group that is selected and whose subset includes the role of
-// the selection and also has the same read/write (or a subset of write) access level.
+/**
+ * Returns every other group that is selected and whose subset includes the role of the selection
+ * and also has the same read/write (or a subset of write) access level.
+ */
 const supersetList = (role: string, selections: Acl) => SUBSET_RELATIONS
-    // Role is valid subset
+    // Role is valid subset.
     .filter(relation => relation.subsets.includes(role))
-    // Potential superset is also selected
+    // Potential superset is also selected.
     .filter(relation => selections.readRoles.includes(relation.superset)
             || selections.writeRoles.includes(relation.superset))
     // Either sub- and superset both have `write` role
@@ -594,15 +613,11 @@ const supersetList = (role: string, selections: Acl) => SUBSET_RELATIONS
     .map(relation => getLabel(DUMMY_GROUPS, relation.superset));
 
 
-const getLabel = (
-    record: AclRecord,
-    role: string,
-) => {
+/** Returns a label for the role, if known to Tobira. */
+const getLabel = (record: AclRecord, role: string) => {
     const name = Object.values(record).filter(entry => entry.roles.includes(role));
 
-    return name.length === 1
-        ? name[0].label
-        : formatUnknownRole(role);
+    return name.length === 1 ? name[0].label : formatUnknownRole(role);
 };
 
 const formatUnknownRole = (role: string) => {
@@ -616,8 +631,7 @@ const formatUnknownRole = (role: string) => {
     return role;
 };
 
-// Takes an initial ACL and formats it as options for react-select
-// that are already selected with their respective action.
+/** Takes an initial ACL and formats it as options for react-select that are already selected. */
 const makeSelection = (record: AclRecord, acl: Acl): Option[] => {
     const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
 
@@ -627,16 +641,18 @@ const makeSelection = (record: AclRecord, acl: Acl): Option[] => {
     }));
 };
 
-// Takes a record of all possible roles and formats them as options for react-select
-// with the default "write" action.
+/** Takes a record of all possible roles and formats them as options for react-select. */
 const makeOptions = (record: AclRecord): Option[] =>
     Object.values(record).filter(entry => entry.label !== "Administrator").map(entry => ({
         value: entry.roles.length > 1
-            ? entry.roles.find(role => /^ROLE_USER\w+/.test(role)) ?? "Unknown"
+            // User role. If the array does not contain a user role, return the first role instead.
+            ? entry.roles.find(role => /^ROLE_USER\w+/.test(role)) ?? entry.roles[0]
+            // Group role.
             : entry.roles[0],
         label: entry.label,
     }));
 
+/** Splits initial ACL into group and user roles. */
 const splitAcl = (initialAcl: Acl) => {
     const regEx = /^ROLE_USER_\w+/;
     const groupAcl: Acl = {

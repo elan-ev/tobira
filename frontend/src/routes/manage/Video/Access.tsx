@@ -117,7 +117,7 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl 
             return false;
         }
 
-        return user.roles.includes(COMMON_ROLES.ROLE_ADMIN)
+        return user.roles.includes(COMMON_ROLES.ADMIN)
             || acl.writeRoles.some(role => user.roles.includes(role));
     };
 
