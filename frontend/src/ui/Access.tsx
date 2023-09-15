@@ -11,8 +11,6 @@ import {
     forwardRef,
     useRef,
     useImperativeHandle,
-    Dispatch,
-    SetStateAction,
     useState,
     useContext,
     ReactNode,
@@ -145,9 +143,7 @@ type AclSelectHandle = {
     reset: () => void;
 };
 
-type SelectionContext = {
-    selection: MultiValue<Option>;
-    setSelection: Dispatch<SetStateAction<MultiValue<Option>>>;
+type SelectContext = {
     item: Option;
     kind: "User" | "Group";
 };
@@ -160,9 +156,7 @@ const defaultDummyOption: Option = {
     label: "Administrator",
 };
 
-const SelectionContext = createContext<SelectionContext>({
-    selection: [defaultDummyOption],
-    setSelection: () => {},
+const SelectContext = createContext<SelectContext>({
     item: defaultDummyOption,
     kind: "User",
 });
@@ -343,12 +337,12 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
                     </thead>
                     <tbody>
                         {selection.map(item =>
-                            <SelectionContext.Provider
-                                value={{ selection, setSelection, item, kind }}
+                            <SelectContext.Provider
+                                value={{ item, kind }}
                                 key={item.label}
                             >
                                 <ListEntry {...{ remove, kind }} />
-                            </SelectionContext.Provider>)
+                            </SelectContext.Provider>)
                         }
                     </tbody>
                 </table>
@@ -365,10 +359,10 @@ type ListEntryProps = {
 const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
     const { t } = useTranslation();
     const user = useUser();
-    const { selection, item } = useContext(SelectionContext);
-    const { userIsRequired } = useContext(AclContext);
-    const isSubset = supersetList(item, selection).length > 0;
-    const supersets = supersetList(item, selection).map(set => set.label).join(", ");
+    const { item } = useContext(SelectContext);
+    const { userIsRequired, roleSelections } = useContext(AclContext);
+    const supersets = supersetList(item.value.role, roleSelections);
+    const isSubset = supersets.length > 0;
     const isAdminItem = item.value.role === COMMON_ROLES.ROLE_ADMIN;
     const isUser = item.value.role === getUserRole(user);
 
@@ -396,9 +390,8 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
                         : <>{item.label}</>
                     }
                     {isSubset
-                        ? <Warning tooltip={
-                            t("manage.access.table.subset-warning", { groups: supersets })
-                        } />
+                        ? <Warning tooltip={t("manage.access.table.subset-warning",
+                            { groups: supersets.join(", ") })} />
                         : <div css={{ width: 22 }} />
                     }
                 </span>
@@ -406,7 +399,8 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
             <td>
                 <span css={{ display: "flex" }}>
                     <ActionsMenu />
-                    {LARGE_GROUPS.includes(item.value.role) && item.value.action === "write"
+                    {LARGE_GROUPS.includes(item.value.role)
+                        && roleSelections.writeRoles.includes(item.value.role)
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
                     }
@@ -454,7 +448,7 @@ const ActionsMenu: React.FC = () => {
     const isDark = useColorScheme().scheme === "dark";
     const { t } = useTranslation();
     const { userIsRequired, roleSelections, setRoleSelections } = useContext(AclContext);
-    const { setSelection, item, kind } = useContext(SelectionContext);
+    const { item, kind } = useContext(SelectContext);
     const user = useUser();
     const actions: Action[] = ["read", "write"];
     const [action, setAction] = useState<Action>(item.value.action);
@@ -507,14 +501,6 @@ const ActionsMenu: React.FC = () => {
                             description={translations(actionType).description}
                             onClick={() => {
                                 setAction(actionType);
-                                setSelection(prev => {
-                                    const index = prev.findIndex(
-                                        entry => entry.value === item.value
-                                    );
-
-                                    prev[index].value.action = actionType;
-                                    return prev;
-                                });
                                 setRoleSelections({
                                     ...roleSelections,
                                     writeRoles: actionType === "write"
@@ -605,19 +591,18 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
 
 // Returns every other group that is selected and whose subset includes the role of
 // the selection and also has the same read/write (or a subset of write) access level.
-const supersetList = (selection: Option, selectedGroups: MultiValue<Option>) => {
-    const roleToCheck = selection.value.role;
-
-    const supersets = selectedGroups
-        .filter(group =>
-            SUBSET_RELATIONS.some(
-                set => set.superset === group.value.role && set.subsets.includes(roleToCheck)
-            ) && (
-                group.value.action === selection.value.action || group.value.action === "write"
-            ));
-
-    return supersets;
-};
+const supersetList = (role: string, selections: Acl) => SUBSET_RELATIONS
+    // Role is valid subset
+    .filter(relation => relation.subsets.includes(role))
+    // Potential superset is also selected
+    .filter(relation => selections.readRoles.includes(relation.superset)
+            || selections.writeRoles.includes(relation.superset))
+    // Either sub- and superset both have `write` role
+    // or subset has`read` role only.
+    .filter(relation => selections.writeRoles.includes(role)
+            && selections.writeRoles.includes(relation.superset)
+            || selections.readRoles.includes(role) && !selections.writeRoles.includes(role))
+    .map(relation => getLabel(DUMMY_GROUPS, relation.superset));
 
 
 const getLabel = (
