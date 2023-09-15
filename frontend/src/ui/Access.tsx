@@ -44,10 +44,7 @@ export type AclRecord = Record<string, { label: string; roles: string[] }>
 type Action = "read" | "write";
 
 type Option = {
-    value: {
-        role: string;
-        action: Action;
-    };
+    value: string;
     label: string;
 }
 
@@ -149,10 +146,7 @@ type SelectContext = {
 };
 
 const defaultDummyOption: Option = {
-    value: {
-        role: COMMON_ROLES.ROLE_ADMIN,
-        action: "write",
-    },
+    value: COMMON_ROLES.ROLE_ADMIN,
     label: "Administrator",
 };
 
@@ -183,15 +177,15 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
 
         // Sorts ACL entries by their scope, i.e. supersets will be shown before subsets.
         const roleComparator = (a: Option, b: Option) =>
-            Number(SUBSET_RELATIONS.some(set => set.superset === b.value.role))
-                - Number(SUBSET_RELATIONS.some(set => set.superset === a.value.role));
+            Number(SUBSET_RELATIONS.some(set => set.superset === b.value))
+                - Number(SUBSET_RELATIONS.some(set => set.superset === a.value));
 
         const initialSelections: Option[] = makeSelection(
             kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialAcl
         ).sort((roleComparator));
 
         const initialOptions = allOptions.filter(
-            item => !initialSelections.some(elem => elem.value.role === item.value.role)
+            item => !initialSelections.some(elem => elem.value === item.value)
         );
 
         // The ACL might not explicitly include admin, but since we still want to show
@@ -220,14 +214,14 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
             );
 
             setSelection(prev => filterItem(prev));
-            setOptions(prev => allOptions.some(option => option.value.role === item.value.role)
+            setOptions(prev => allOptions.some(option => option.value === item.value)
                 ? allOptions.filter(entry => !filterItem(selection)
-                    .some(option => entry.value.role === option.value.role))
+                    .some(option => entry.value === option.value))
                 : [...prev, item]);
 
             setRoleSelections({
-                readRoles: roleSelections.readRoles.filter(role => item.value.role !== role),
-                writeRoles: roleSelections.writeRoles.filter(role => item.value.role !== role),
+                readRoles: roleSelections.readRoles.filter(role => item.value !== role),
+                writeRoles: roleSelections.writeRoles.filter(role => item.value !== role),
             });
         };
 
@@ -236,10 +230,7 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
                 return;
             }
             const newRole: Option = {
-                value: {
-                    role: inputValue,
-                    action: "read",
-                },
+                value: inputValue,
                 label: formatUnknownRole(inputValue),
             };
             setSelection(prev => [...prev, newRole]);
@@ -251,17 +242,17 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
         };
 
         const handleChange = (choice: MultiValue<Option>) => {
-            const newItem = choice.filter(option => !selection.includes(option));
-            newItem[0].value.action = "read";
+            const newRoles = choice
+                .filter(option => !selection.includes(option))
+                .map(option => option.label);
+
             setSelection([...choice].sort(roleComparator));
-
             setOptions(prev => prev.filter(
-                option => !choice.some(opt => opt.value.role === option.value.role)
+                option => !choice.some(opt => opt.value === option.value)
             ));
-
             setRoleSelections({
                 ...roleSelections,
-                readRoles: [...roleSelections.readRoles, newItem[0].value.role],
+                readRoles: [...roleSelections.readRoles, ...newRoles],
             });
         };
 
@@ -361,10 +352,10 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
     const user = useUser();
     const { item } = useContext(SelectContext);
     const { userIsRequired, roleSelections } = useContext(AclContext);
-    const supersets = supersetList(item.value.role, roleSelections);
+    const supersets = supersetList(item.value, roleSelections);
     const isSubset = supersets.length > 0;
-    const isAdminItem = item.value.role === COMMON_ROLES.ROLE_ADMIN;
-    const isUser = item.value.role === getUserRole(user);
+    const isAdminItem = item.value === COMMON_ROLES.ROLE_ADMIN;
+    const isUser = item.value === getUserRole(user);
 
     return isAdminItem && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ROLE_ADMIN)
         ? null
@@ -399,8 +390,8 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
             <td>
                 <span css={{ display: "flex" }}>
                     <ActionsMenu />
-                    {LARGE_GROUPS.includes(item.value.role)
-                        && roleSelections.writeRoles.includes(item.value.role)
+                    {LARGE_GROUPS.includes(item.value)
+                        && roleSelections.writeRoles.includes(item.value)
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
                     }
@@ -432,10 +423,7 @@ type WarningProps = {
 }
 
 const Warning: React.FC<WarningProps> = ({ tooltip }) => (
-    <WithTooltip
-        {...{ tooltip }}
-        css={{ display: "flex" }}
-    >
+    <WithTooltip {...{ tooltip }} css={{ display: "flex" }}>
         <span css={{ marginLeft: 6, display: "flex" }}>
             <FiAlertTriangle css={{ color: COLORS.danger0, alignSelf: "center" }} />
         </span>
@@ -451,7 +439,8 @@ const ActionsMenu: React.FC = () => {
     const { item, kind } = useContext(SelectContext);
     const user = useUser();
     const actions: Action[] = ["read", "write"];
-    const [action, setAction] = useState<Action>(item.value.action);
+    const initialAction = roleSelections.writeRoles.includes(item.value) ? "write" : "read";
+    const [action, setAction] = useState<Action>(initialAction);
 
     const count = kind === "User" ? 1 : 2;
     const translations = (actionType: Action) => match(actionType, {
@@ -466,8 +455,8 @@ const ActionsMenu: React.FC = () => {
     });
 
 
-    return item.value.role === COMMON_ROLES.ROLE_ADMIN
-            || userIsRequired && item.value.role === getUserRole(user)
+    return item.value === COMMON_ROLES.ROLE_ADMIN
+            || userIsRequired && item.value === getUserRole(user)
         ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
         : <FloatingBaseMenu
             ref={ref}
@@ -504,9 +493,9 @@ const ActionsMenu: React.FC = () => {
                                 setRoleSelections({
                                     ...roleSelections,
                                     writeRoles: actionType === "write"
-                                        ? [...roleSelections.writeRoles, item.value.role]
+                                        ? [...roleSelections.writeRoles, item.value]
                                         : roleSelections.writeRoles.filter(
-                                            role => role !== item.value.role
+                                            role => role !== item.value
                                         ),
                                 });
                             }}
@@ -627,42 +616,24 @@ const formatUnknownRole = (role: string) => {
     return role;
 };
 
-const getAction = (acl: Acl, role: string): Action => {
-    if (acl.readRoles.includes(role) && acl.writeRoles.includes(role)) {
-        return "write";
-    }
-    return "read";
-};
-
 // Takes an initial ACL and formats it as options for react-select
 // that are already selected with their respective action.
 const makeSelection = (record: AclRecord, acl: Acl): Option[] => {
     const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
-    return aclArray.map(role => {
-        const selectedRole = Object.values(record)
-            .find(entry => entry.roles.includes(role))
-            ?.roles[0] ?? role;
 
-        return {
-            value: {
-                role: selectedRole,
-                action: getAction(acl, role),
-            },
-            label: getLabel(record, role),
-        };
-    });
+    return aclArray.map(role => ({
+        value: role,
+        label: getLabel(record, role),
+    }));
 };
 
 // Takes a record of all possible roles and formats them as options for react-select
 // with the default "write" action.
 const makeOptions = (record: AclRecord): Option[] =>
     Object.values(record).filter(entry => entry.label !== "Administrator").map(entry => ({
-        value: {
-            role: entry.roles.length > 1
-                ? entry.roles.find(role => /^ROLE_USER\w+/.test(role)) ?? "Unknown"
-                : entry.roles[0],
-            action: "read",
-        },
+        value: entry.roles.length > 1
+            ? entry.roles.find(role => /^ROLE_USER\w+/.test(role)) ?? "Unknown"
+            : entry.roles[0],
         label: entry.label,
     }));
 
@@ -683,6 +654,6 @@ const splitAcl = (initialAcl: Acl) => {
 
 export const getUserRole = (user: UserState) => {
     const userRole = isRealUser(user) && user.roles.find(role => /^ROLE_USER\w+/.test(role));
-    return typeof userRole !== "string" ? "unknown" : userRole;
+    return typeof userRole !== "string" ? "Unknown" : userRole;
 };
 
