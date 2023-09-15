@@ -737,7 +737,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                     name="acl"
                     control={control}
                     render={() => <AclSelector
-                        userRequired
+                        userIsRequired
                         ref={aclSelectRef}
                         initialAcl={defaultAcl}
                     />}
@@ -750,7 +750,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                 disabled={disabled}
                 css={{ marginTop: 32, marginBottom: 160 }}
                 onClick={() => {
-                    setValue("acl", currentRef(aclSelectRef).selections());
+                    setValue("acl", currentRef(aclSelectRef).selections);
                     onSubmit();
                 }}>
                 {t("upload.metadata.save")}

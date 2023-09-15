@@ -15,8 +15,7 @@ import {
     SetStateAction,
     useState,
     useContext,
-    useEffect,
-    RefObject,
+    ReactNode,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { FiX, FiAlertTriangle } from "react-icons/fi";
@@ -54,24 +53,42 @@ type Option = {
     label: string;
 }
 
+type AclContext = {
+    userIsRequired: boolean;
+    roleSelections: Acl;
+    setRoleSelections: (newAcl: Acl) => void;
+}
+
+export const AclContext = createContext<AclContext>({
+    userIsRequired: false,
+    roleSelections: {
+        readRoles: [],
+        writeRoles: [],
+    },
+    setRoleSelections: () => {},
+});
+
 type AclSelectorProps = {
     initialAcl: Acl;
     /**
      * If `true`, the current user is included by default with `write` access and can't be removed.
      * This is necessary for the acl-selection in the uploader.
      */
-    userRequired?: boolean;
+    userIsRequired?: boolean;
+    /**
+     * Can be used to add some controls, i.e. save or reset
+     * buttons that have access to the selections.
+     */
+    children?: ReactNode;
 }
 
 export type AclSelectorHandle = {
-    selections: () => Acl;
+    selections: Acl;
     reset?: () => void;
 };
 
-const UserRequiredContext = createContext<boolean>(false);
-
 export const AclSelector = forwardRef<AclSelectorHandle, AclSelectorProps>(
-    ({ initialAcl, userRequired = false }, ref) => {
+    ({ initialAcl, userIsRequired = false, children }, ref) => {
         const groupsRef = useRef<AclSelectHandle>(null);
         const usersRef = useRef<AclSelectHandle>(null);
 
@@ -79,37 +96,40 @@ export const AclSelector = forwardRef<AclSelectorHandle, AclSelectorProps>(
         const userOptions = makeOptions(DUMMY_USERS);
 
         const [initialGroupAcl, initialUserAcl] = splitAcl(initialAcl);
+        const [roleSelections, setRoleSelections] = useState(initialAcl);
 
         useImperativeHandle(ref, () => ({
-            selections: () => getSelections({ groupsRef, usersRef }),
+            selections: roleSelections,
             reset: () => {
                 groupsRef.current?.reset();
                 usersRef.current?.reset();
+                setRoleSelections(initialAcl);
             },
         }));
 
-        return <div css={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 24,
-        }}>
-            <AclSelect
-                ref={groupsRef}
-                kind="Group"
-                initialAcl={initialGroupAcl}
-                allOptions={groupOptions}
-            />
-            <UserRequiredContext.Provider value={userRequired}>
+        return <AclContext.Provider value={{ userIsRequired, roleSelections, setRoleSelections }}>
+            <div css={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 24,
+            }}>
+                <AclSelect
+                    ref={groupsRef}
+                    kind="Group"
+                    initialAcl={initialGroupAcl}
+                    allOptions={groupOptions}
+                />
                 <AclSelect
                     ref={usersRef}
                     kind="User"
                     initialAcl={initialUserAcl}
                     allOptions={userOptions}
                 />
-            </UserRequiredContext.Provider>
-        </div>;
+            </div>
+            {children}
+        </AclContext.Provider>;
     }
 );
 
@@ -134,7 +154,7 @@ type SelectionContext = {
 
 const defaultDummyOption: Option = {
     value: {
-        role: "ROLE_USER_ADMIN",
+        role: COMMON_ROLES.ROLE_ADMIN,
         action: "write",
     },
     label: "Administrator",
@@ -152,6 +172,7 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
         const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
         const isDark = useColorScheme().scheme === "dark";
         const { t } = useTranslation();
+        const { roleSelections, setRoleSelections } = useContext(AclContext);
 
         const translations = match(kind, {
             "Group": () => ({
@@ -190,10 +211,6 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
         const [selection, setSelection] = useState<MultiValue<Option>>(initialSelections);
         const [options, setOptions] = useState<MultiValue<Option>>(initialOptions);
 
-        const [_supersets, setSupersets] = useState<MultiValue<Option>>(
-            selection.filter(item => supersetList(item, selection).length > 0)
-        );
-
         useImperativeHandle(ref, () => ({
             getSelection: () => selection,
             reset: () => {
@@ -213,6 +230,11 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
                 ? allOptions.filter(entry => !filterItem(selection)
                     .some(option => entry.value.role === option.value.role))
                 : [...prev, item]);
+
+            setRoleSelections({
+                readRoles: roleSelections.readRoles.filter(role => item.value.role !== role),
+                writeRoles: roleSelections.writeRoles.filter(role => item.value.role !== role),
+            });
         };
 
         const handleCreate = (inputValue: string) => {
@@ -227,18 +249,26 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
                 label: formatUnknownRole(inputValue),
             };
             setSelection(prev => [...prev, newRole]);
+
+            setRoleSelections({
+                ...roleSelections,
+                readRoles: [...roleSelections.readRoles, inputValue],
+            });
         };
 
         const handleChange = (choice: MultiValue<Option>) => {
-            setSelection(prev => {
-                const newItem = choice.filter(option => !prev.includes(option));
-                newItem[0].value.action = "read";
-                return [...choice].sort(roleComparator);
-            });
+            const newItem = choice.filter(option => !selection.includes(option));
+            newItem[0].value.action = "read";
+            setSelection([...choice].sort(roleComparator));
 
             setOptions(prev => prev.filter(
                 option => !choice.some(opt => opt.value.role === option.value.role)
             ));
+
+            setRoleSelections({
+                ...roleSelections,
+                readRoles: [...roleSelections.readRoles, newItem[0].value.role],
+            });
         };
 
         const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
@@ -317,7 +347,7 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
                                 value={{ selection, setSelection, item, kind }}
                                 key={item.label}
                             >
-                                <ListEntry {...{ remove, setSupersets, kind }} />
+                                <ListEntry {...{ remove, kind }} />
                             </SelectionContext.Provider>)
                         }
                     </tbody>
@@ -329,21 +359,17 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
 
 
 type ListEntryProps = {
-    setSupersets: Dispatch<SetStateAction<MultiValue<Option>>>;
     remove: (item: Option) => void;
 }
 
-const ListEntry: React.FC<ListEntryProps> = (
-    { remove, setSupersets }
-) => {
+const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
     const { t } = useTranslation();
     const user = useUser();
     const { selection, item } = useContext(SelectionContext);
-    const userIsRequired = useContext(UserRequiredContext);
+    const { userIsRequired } = useContext(AclContext);
     const isSubset = supersetList(item, selection).length > 0;
     const supersets = supersetList(item, selection).map(set => set.label).join(", ");
-    const isAdminItem = item.value.role === COMMON_ROLES.ROLE_ADMIN
-        || item.value.role === "ROLE_USER_ADMIN";
+    const isAdminItem = item.value.role === COMMON_ROLES.ROLE_ADMIN;
     const isUser = item.value.role === getUserRole(user);
 
     return isAdminItem && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ROLE_ADMIN)
@@ -365,7 +391,7 @@ const ListEntry: React.FC<ListEntryProps> = (
         }}>
             <td>
                 <span css={{ display: "flex" }}>
-                    {isUser
+                    {isUser || isAdminItem
                         ? <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>
                         : <>{item.label}</>
                     }
@@ -379,11 +405,7 @@ const ListEntry: React.FC<ListEntryProps> = (
             </td>
             <td>
                 <span css={{ display: "flex" }}>
-                    <ActionsMenu
-                        updateStates={() => setSupersets(selection.filter(item =>
-                            supersetList(item, selection).length > 0))
-                        }
-                    />
+                    <ActionsMenu />
                     {LARGE_GROUPS.includes(item.value.role) && item.value.action === "write"
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
@@ -427,17 +449,11 @@ const Warning: React.FC<WarningProps> = ({ tooltip }) => (
 );
 
 
-type ActionsMenuProps = {
-    updateStates: () => void;
-}
-
-const ActionsMenu: React.FC<ActionsMenuProps> = (
-    { updateStates }
-) => {
+const ActionsMenu: React.FC = () => {
     const ref = useRef<FloatingHandle>(null);
     const isDark = useColorScheme().scheme === "dark";
     const { t } = useTranslation();
-    const userIsRequired = useContext(UserRequiredContext);
+    const { userIsRequired, roleSelections, setRoleSelections } = useContext(AclContext);
     const { setSelection, item, kind } = useContext(SelectionContext);
     const user = useUser();
     const actions: Action[] = ["read", "write"];
@@ -455,14 +471,8 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
         }),
     });
 
-    useEffect(() => {
-        updateStates();
-    }, [action]);
-
-    const language = i18n.resolvedLanguage;
 
     return item.value.role === COMMON_ROLES.ROLE_ADMIN
-            || item.value.role === "ROLE_USER_ADMINISTRATOR"
             || userIsRequired && item.value.role === getUserRole(user)
         ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
         : <FloatingBaseMenu
@@ -470,13 +480,11 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
             label={t("manage.access.table.actions.title")}
             triggerContent={<>{translations(action).label}</>}
             triggerStyles={{
-                width: language === "en" ? 150 : 190,
+                width: i18n.resolvedLanguage === "en" ? 150 : 190,
                 gap: 0,
                 padding: "0 4px 0 8px",
                 justifyContent: "space-between",
-                ":hover, :focus-visible": {
-                    backgroundColor: COLORS.neutral20,
-                },
+                ":hover, :focus-visible": { backgroundColor: COLORS.neutral20 },
                 svg: { marginTop: 2, color: COLORS.neutral60 },
             }}
             list={
@@ -507,7 +515,14 @@ const ActionsMenu: React.FC<ActionsMenuProps> = (
                                     prev[index].value.action = actionType;
                                     return prev;
                                 });
-                                updateStates();
+                                setRoleSelections({
+                                    ...roleSelections,
+                                    writeRoles: actionType === "write"
+                                        ? [...roleSelections.writeRoles, item.value.role]
+                                        : roleSelections.writeRoles.filter(
+                                            role => role !== item.value.role
+                                        ),
+                                });
                             }}
                             close={() => ref.current?.close()}
                         />)}
@@ -617,7 +632,7 @@ const getLabel = (
 };
 
 const formatUnknownRole = (role: string) => {
-    for (const prefix of ["ROLE_USER_", "ROLE_GROUP_"]) {
+    for (const prefix of ["ROLE_USER_", "ROLE_GROUP_", "ROLE_"]) {
         if (role.startsWith(prefix)) {
             const name = role.replace(prefix, "").toLowerCase();
             return name.charAt(0).toUpperCase() + name.slice(1);
@@ -681,50 +696,8 @@ const splitAcl = (initialAcl: Acl) => {
 };
 
 
-type SelectionsProps = {
-    groupsRef: RefObject<AclSelectHandle>;
-    usersRef: RefObject<AclSelectHandle>;
-}
-
-// Collects group and user selections and prepares them for submittal.
-const getSelections = ({ groupsRef, usersRef }: SelectionsProps): Acl => {
-    const selectedGroups = groupsRef.current?.getSelection();
-    const selectedUsers = usersRef.current?.getSelection();
-
-    assertUndefined(selectedGroups);
-    assertUndefined(selectedUsers);
-
-    const userRoleEntries = selectedUsers.map(user => ({
-        value: {
-            role: user.value.role,
-            action: user.value.action,
-        },
-        label: user.label,
-    }));
-
-    const combinedRoles = selectedGroups.concat(userRoleEntries);
-    const readRoles = combinedRoles.flatMap(entry => entry.value.role);
-    const writeRoles = combinedRoles
-        .filter(entry => entry.value.action === "write")
-        .flatMap(entry => entry.value.role);
-
-    const acl = {
-        readRoles: [...new Set(readRoles)],
-        writeRoles: [...new Set(writeRoles)],
-    };
-
-    return acl;
-};
-
-
 export const getUserRole = (user: UserState) => {
     const userRole = isRealUser(user) && user.roles.find(role => /^ROLE_USER\w+/.test(role));
     return typeof userRole !== "string" ? "unknown" : userRole;
-};
-
-const assertUndefined: <T>(value: T) => asserts value is NonNullable<T> = value => {
-    if (typeof value === undefined || value === null) {
-        throw new Error(`${value} is undefined.`);
-    }
 };
 

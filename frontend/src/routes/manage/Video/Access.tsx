@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
-import { RefObject, useRef } from "react";
+import { RefObject, useContext, useRef } from "react";
 import { COLORS } from "../../../color";
 import { FiInfo } from "react-icons/fi";
 import { Button, Kind as ButtonKind } from "../../../ui/Button";
@@ -12,7 +12,7 @@ import { WithTooltip } from "@opencast/appkit";
 import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
-import { AclSelectorHandle, Acl, AclSelector } from "../../../ui/Access";
+import { AclSelectorHandle, Acl, AclSelector, AclContext } from "../../../ui/Access";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -92,8 +92,9 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                 flexDirection: "column",
                 width: "100%",
             }}>
-                <AclSelector ref={aclSelectRef} {...{ initialAcl }} />
-                <ButtonWrapper {...{ aclSelectRef }} />
+                <AclSelector ref={aclSelectRef} {...{ initialAcl }}>
+                    <ButtonWrapper {...{ aclSelectRef, initialAcl }} />
+                </AclSelector>
             </div>
         </div>
     );
@@ -101,10 +102,12 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
 
 type ButtonWrapperProps = {
     aclSelectRef: RefObject<AclSelectorHandle>;
+    initialAcl: Acl;
 }
 
-const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef }) => {
+const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl }) => {
     const { t } = useTranslation();
+    const { roleSelections } = useContext(AclContext);
     const user = useUser();
     const saveModalRef = useRef<ModalHandle>(null);
     const resetModalRef = useRef<ModalHandle>(null);
@@ -145,10 +148,11 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef }) => {
             body={t("manage.access.save-modal.body")}
             confirmationLabel={t("manage.access.save-modal.confirm")}
             handleClick={() => {
-                const newAcl = currentRef(aclSelectRef).selections();
+                const newAcl = currentRef(aclSelectRef).selections;
                 return !containsUser(newAcl) ? currentRef(saveModalRef).open() : submit(newAcl);
             }}
-            onConfirm={() => submit(currentRef(aclSelectRef).selections())}
+            onConfirm={() => submit(currentRef(aclSelectRef).selections)}
+            disabled={JSON.stringify(initialAcl) === JSON.stringify(roleSelections)}
         />
     </div>;
 };
@@ -162,6 +166,7 @@ type ButtonWithModalProps = {
     confirmationLabel: string;
     handleClick: () => void;
     onConfirm: () => void;
+    disabled?: boolean;
 }
 
 const ButtonWithModal: React.FC<ButtonWithModalProps> = ({ ...props }) => {
@@ -170,6 +175,7 @@ const ButtonWithModal: React.FC<ButtonWithModalProps> = ({ ...props }) => {
         <Button
             kind={props.buttonKind}
             onClick={props.handleClick}
+            disabled={props.disabled}
         >{props.label}</Button>
         <Modal ref={props.modalRef} title={props.title}>
             <p>{props.body}</p>
