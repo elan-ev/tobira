@@ -291,14 +291,14 @@ manage:
       actions:
         title: Berechtigung
         read: Lesen
-        read-description_one: Nutzer kann das Video anschauen und Metadaten sehen.
-        read-description_other: Nutzer können das Video anschauen und Metadaten sehen.
-        write: Lesen & schreiben
+        read-description_one: Kann das Video anschauen und Metadaten sehen.
+        read-description_other: Können das Video anschauen und Metadaten sehen.
+        write: Lesen und schreiben
         large-group-warning: Sie geben einer großen Gruppe Schreibzugriff. Ist das beabsichtigt?
         write-description_one: >
-          Nutzer kann außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
+          Kann außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
         write-description_other: >
-          Nutzer können außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
+          Können außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
     unlisted:
         note: Dieses Video ist nicht öffentlich verfügbar.
         explanation: >

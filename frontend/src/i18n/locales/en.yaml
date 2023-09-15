@@ -288,7 +288,7 @@ manage:
         title: Actions
         read: Read
         read-description: Can watch the video and view metadata.
-        write: Read & write
+        write: Read and write
         large-group-warning: You are giving write-access to a large group. Is this intentional?
         write-description: Can also edit the video, metadata and other details.
     unlisted:
