@@ -13,6 +13,7 @@ import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
 import { AclSelectorHandle, Acl, AclSelector, AclContext } from "../../../ui/Access";
+import { useNavBlocker } from "../../util";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -130,6 +131,8 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl 
         // eslint-disable-next-line no-console
         console.log(acl);
     };
+
+    useNavBlocker(!selectionIsInitial);
 
     return <div css={{ display: "flex", gap: 8, alignSelf: "flex-start", marginTop: 40 }}>
         {/* Reset button */}
