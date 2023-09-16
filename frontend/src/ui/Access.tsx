@@ -258,7 +258,7 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
         const handleChange = (choice: MultiValue<Option>) => {
             const newRoles = choice
                 .filter(option => !selection.includes(option))
-                .map(option => option.label);
+                .map(option => option.value);
 
             setSelection([...choice].sort(roleComparator));
             setOptions(prev => prev.filter(
@@ -364,10 +364,10 @@ type ListEntryProps = {
 const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
     const user = useUser();
     const { t } = useTranslation();
-    const { item } = useContext(SelectContext);
+    const { item, kind } = useContext(SelectContext);
     const { userIsRequired, roleSelections } = useContext(AclContext);
 
-    const supersets = supersetList(item.value, roleSelections);
+    const supersets = kind === "Group" ? supersetList(item.value, roleSelections) : [];
     const isSubset = supersets.length > 0;
     const isAdmin = [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value);
     const isUser = item.value === getUserRole(user);
@@ -596,21 +596,25 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
 // ==============================================================================================
 
 /**
- * Returns every other group that is selected and whose subset includes the role of the selection
- * and also has the same read/write (or a subset of write) access level.
+ * Returns the labels of every other selected group whose subset includes the role
+ * of the selection and also has the same read/write (or a subset of write) access level.
  */
-const supersetList = (role: string, selections: Acl) => SUBSET_RELATIONS
-    // Role is valid subset.
-    .filter(relation => relation.subsets.includes(role))
-    // Potential superset is also selected.
-    .filter(relation => selections.readRoles.includes(relation.superset)
-            || selections.writeRoles.includes(relation.superset))
-    // Either sub- and superset both have `write` role
-    // or subset has`read` role only.
-    .filter(relation => selections.writeRoles.includes(role)
-            && selections.writeRoles.includes(relation.superset)
-            || selections.readRoles.includes(role) && !selections.writeRoles.includes(role))
-    .map(relation => getLabel(DUMMY_GROUPS, relation.superset));
+const supersetList = (subsetRole: string, selections: Acl) => {
+    const hasReadOnly = (role: string) => selections.readRoles.includes(role)
+        && !selections.writeRoles.includes(role);
+    const hasReadOrWrite = (role: string) => selections.readRoles.includes(role)
+        || selections.writeRoles.includes(role);
+
+    return SUBSET_RELATIONS
+        // Role is valid subset.
+        .filter(relation => relation.subsets.includes(subsetRole))
+        .filter(relation =>
+            // Superset has write access and the subset has read or write access, or...
+            (selections.writeRoles.includes(relation.superset) && hasReadOrWrite(subsetRole))
+            // Superset has read or write access and subset has read access only.
+            || (hasReadOrWrite(relation.superset) && hasReadOnly(subsetRole)))
+        .map(relation => getLabel(DUMMY_GROUPS, relation.superset));
+};
 
 
 /** Returns a label for the role, if known to Tobira. */
