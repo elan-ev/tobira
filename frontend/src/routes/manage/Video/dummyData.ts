@@ -42,8 +42,8 @@ export const DUMMY_USERS: AclRecord = {
 };
 
 export const DUMMY_GROUPS: AclRecord = {
-    // TODO: get all possible groups (also from Opencast?).
-    // TODO: read mappings from config. Maybe also make this an actual map instead of a record?
+    // TODO: list all possible groups (also from Opencast?).
+    // TODO: read mappings from config.
     "all": {
         label: "Everyone",
         roles: ["ROLE_ANONYMOUS"],
@@ -96,6 +96,23 @@ export const SUBSET_RELATIONS: SubsetList[] = [
         subsets: [
             "ROLE_TOBIRA_MODERATOR",
             "ROLE_INSTRUCTOR",
+            "ROLE_STUDENT",
+            "ROLE_TOBIRA_STUDIO",
+            "ROLE_TOBIRA_EDITOR",
+        ],
+    },
+    {
+        superset: "ROLE_TOBIRA_MODERATOR",
+        subsets: [
+            "ROLE_INSTRUCTOR",
+            "ROLE_STUDENT",
+            "ROLE_TOBIRA_STUDIO",
+            "ROLE_TOBIRA_EDITOR",
+        ],
+    },
+    {
+        superset: "ROLE_INSTRUCTOR",
+        subsets: [
             "ROLE_STUDENT",
             "ROLE_TOBIRA_STUDIO",
             "ROLE_TOBIRA_EDITOR",

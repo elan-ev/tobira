@@ -176,21 +176,40 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
             }),
         });
 
+        const isSubset = (role: string, potentialSuperset: string): boolean => {
+            const relation = SUBSET_RELATIONS.find(entry => entry.superset === potentialSuperset);
+            if (relation) {
+                return relation.subsets.includes(role)
+                    || relation.subsets.some(subset => isSubset(role, subset));
+            }
+            return false;
+        };
+
         const roleComparator = (a: Option, b: Option) => {
             if (kind === "Group") {
                 // Sort ACL group entries by their scope,
                 // so that supersets will be shown before subsets.
-                return Number(SUBSET_RELATIONS.some(set => set.superset === b.value))
-                    - Number(SUBSET_RELATIONS.some(set => set.superset === a.value));
+
+                // A is a subset of b, so b should come first.
+                if (isSubset(a.value, b.value)) {
+                    return 1;
+                }
+                // B is a subset of a, so a should come first.
+                if (isSubset(b.value, a.value)) {
+                    return -1;
+                }
+                // Neither is a subset of the other, don't sort.
+                return 0;
             } else {
-                // Sort ACL user entries alphabetically, but always show the user first.
+                // Always show the current user first, if included.
                 if (a.value === getUserRole(user)) {
                     return -1;
                 }
                 if (b.value === getUserRole(user)) {
                     return 1;
                 }
-                return a.value < b.value ? -1 : 1;
+                // Otherwise show entries in order of addition.
+                return 0;
             }
         };
 
