@@ -121,6 +121,10 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl 
             || acl.writeRoles.some(role => user.roles.includes(role));
     };
 
+    const selectionIsInitial = roleSelections.readRoles.every(
+        role => initialAcl.readRoles.includes(role)
+    ) && roleSelections.writeRoles.every(role => initialAcl.writeRoles.includes(role));
+
     const submit = async (acl: Acl) => {
         // TODO: Actually save new ACL.
         // eslint-disable-next-line no-console
@@ -138,6 +142,7 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl 
             confirmationLabel={t("manage.access.reset-modal.label")}
             handleClick={() => currentRef(resetModalRef).open()}
             onConfirm={() => aclSelectRef.current?.reset?.()}
+            disabled={selectionIsInitial}
         />
         {/* Save button */}
         <ButtonWithModal
@@ -152,7 +157,7 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl 
                 return !containsUser(newAcl) ? currentRef(saveModalRef).open() : submit(newAcl);
             }}
             onConfirm={() => submit(currentRef(aclSelectRef).selections)}
-            disabled={JSON.stringify(initialAcl) === JSON.stringify(roleSelections)}
+            disabled={selectionIsInitial}
         />
     </div>;
 };
