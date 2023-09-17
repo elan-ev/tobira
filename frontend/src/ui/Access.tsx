@@ -512,7 +512,7 @@ const ActionsMenu: React.FC = () => {
                     hideArrowTip
                     padding={0}
                     borderWidth={isDark ? 1 : 0}
-                    css={{ minWidth: 125 }}
+                    css={{ minWidth: 125, lineHeight: 1.4 }}
                 >
                     <ul css={{
                         listStyle: "none",
