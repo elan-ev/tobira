@@ -247,10 +247,10 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
     };
 
     const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-        event.preventDefault();
+        const clipboardData = event.clipboardData.getData("Text");
 
-        if (kind === "User") {
-            const clipboardData = event.clipboardData.getData("Text");
+        if (kind === "User" && clipboardData.includes("\n")) {
+            event.preventDefault();
             const names = clipboardData.split("\n").map(name => name.trim());
 
             const optionsToAdd: Option[] = names
