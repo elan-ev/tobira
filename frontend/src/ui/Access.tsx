@@ -281,8 +281,9 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
                 isMulti
                 isSearchable
                 placeholder={translations.placeholder}
-                formatCreateLabel={input =>
-                    /^ROLE_\w+/.test(input) && t("manage.access.select.create", { item: input })
+                formatCreateLabel={input => kind === "Group"
+                    && /^ROLE_\w+/.test(input)
+                    && t("manage.access.select.create", { item: input })
                 }
                 value={selection}
                 onCreateOption={handleCreate}
