@@ -60,6 +60,30 @@ const ASSETS: Setup = assets! {
     "fonts/vietnamese-700.woff2": { hash },
     "fonts/vietnamese-i400.woff2": { hash },
     "fonts/vietnamese-i700.woff2": { hash },
+
+    // Paella
+    "paella/icons/backward.svg": {},
+    "paella/icons/captions-icon.svg": {},
+    "paella/icons/close.svg": {},
+    "paella/icons/forward.svg": {},
+    "paella/icons/fullscreen-exit.svg": {},
+    "paella/icons/fullscreen-icon.svg": {},
+    "paella/icons/maximize.svg": {},
+    "paella/icons/minimize.svg": {},
+    "paella/icons/play.svg": {},
+    "paella/icons/slide-next-icon.svg": {},
+    "paella/icons/slide-prev-icon.svg": {},
+    "paella/icons/slides-icon.svg": {},
+    "paella/icons/view-mode.svg": {},
+    "paella/icons/volume-high.svg": {},
+    "paella/icons/volume-low.svg": {},
+    "paella/icons/volume-mid.svg": {},
+    "paella/icons/volume-mute-cross.svg": {},
+    "paella/icons/volume-mute.svg": {},
+    "paella/Roboto-Regular.ttf": {},
+    "paella/theme.css": {},
+    "paella/theme.json": {},
+
 };
 
 const INDEX_FILE: &str = "index.html";
