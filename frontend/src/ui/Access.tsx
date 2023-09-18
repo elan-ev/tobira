@@ -128,11 +128,12 @@ export const AclSelector = forwardRef<AclSelectorHandle, AclSelectorProps>(
     }
 );
 
+type AclKind = "Group" | "User";
 
 type AclSelectProps = SelectProps & {
     initialAcl: Acl;
     allOptions: Option[];
-    kind: "Group" | "User";
+    kind: AclKind;
 };
 
 type AclSelectHandle = {
@@ -140,20 +141,10 @@ type AclSelectHandle = {
     reset: () => void;
 };
 
-type SelectContext = {
-    item: Option;
-    kind: "User" | "Group";
-};
-
 const defaultDummyOption: Option = {
     value: COMMON_ROLES.ADMIN,
     label: "Administrator",
 };
-
-const SelectContext = createContext<SelectContext>({
-    item: defaultDummyOption,
-    kind: "User",
-});
 
 const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
     ({ initialAcl, allOptions, kind }, ref) => {
@@ -361,12 +352,7 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
                     </thead>
                     <tbody>
                         {selection.map(item =>
-                            <SelectContext.Provider
-                                value={{ item, kind }}
-                                key={item.label}
-                            >
-                                <ListEntry {...{ remove, kind }} />
-                            </SelectContext.Provider>)
+                            <ListEntry key={item.label} {...{ remove, item, kind }} />)
                         }
                     </tbody>
                 </table>
@@ -375,15 +361,18 @@ const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
     }
 );
 
+type ItemProps = {
+    item: Option;
+    kind: AclKind;
+}
 
-type ListEntryProps = {
+type ListEntryProps = ItemProps & {
     remove: (item: Option) => void;
 }
 
-const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
+const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const user = useUser();
     const { t } = useTranslation();
-    const { item, kind } = useContext(SelectContext);
     const { userIsRequired, roleSelections } = useContext(AclContext);
 
     const supersets = kind === "Group" ? supersetList(item.value, roleSelections) : [];
@@ -423,7 +412,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove }) => {
             </td>
             <td>
                 <span css={{ display: "flex" }}>
-                    <ActionsMenu />
+                    <ActionsMenu {...{ item, kind }} />
                     {LARGE_GROUPS.includes(item.value)
                         && roleSelections.writeRoles.includes(item.value)
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
@@ -465,13 +454,12 @@ const Warning: React.FC<WarningProps> = ({ tooltip }) => (
 );
 
 
-const ActionsMenu: React.FC = () => {
+const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<FloatingHandle>(null);
     const user = useUser();
     const { t } = useTranslation();
     const { userIsRequired, roleSelections, setRoleSelections } = useContext(AclContext);
-    const { item, kind } = useContext(SelectContext);
     const [action, setAction] = useState<Action>(
         roleSelections.writeRoles.includes(item.value) ? "write" : "read"
     );
