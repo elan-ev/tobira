@@ -300,9 +300,9 @@ manage:
         write-description_other: >
           Können außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
     unlisted:
-        note: Dieses Video ist nicht öffentlich verfügbar.
+        note: Dieses Video ist ungelistet.
         explanation: >
-          Nicht öffentliche Videos sind nur mit ihrem direkten Link aufrufbar.
+          Ungelistete Videos sind nur über ihrem direkten Link aufrufbar.
           Dies ist equivalent zu einem Passwortschutz.
     reset-modal:
       label: Zurücksetzen
