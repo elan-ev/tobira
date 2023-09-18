@@ -8,12 +8,12 @@ import {
 } from "@opencast/appkit";
 import {
     createContext,
-    forwardRef,
     useRef,
-    useImperativeHandle,
     useState,
     useContext,
-    ReactNode,
+    Dispatch,
+    SetStateAction,
+    useEffect,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { FiX, FiAlertTriangle } from "react-icons/fi";
@@ -50,83 +50,58 @@ type Option = {
 
 type AclContext = {
     userIsRequired: boolean;
-    roleSelections: Acl;
-    setRoleSelections: (newAcl: Acl) => void;
+    acl: Acl;
+    onChange: Dispatch<SetStateAction<Acl>>;
 }
 
 export const AclContext = createContext<AclContext>({
     userIsRequired: false,
-    roleSelections: {
+    acl: {
         readRoles: [],
         writeRoles: [],
     },
-    setRoleSelections: () => {},
+    onChange: () => {},
 });
 
 type AclSelectorProps = {
-    initialAcl: Acl;
+    acl: Acl;
     /**
      * If `true`, the current user is included by default with `write` access and can't be removed.
      * This is necessary for the acl-selection in the uploader.
      */
     userIsRequired?: boolean;
-    /**
-     * Can be used to add some controls, i.e. save or reset
-     * buttons that have access to the selections.
-     */
-    children?: ReactNode;
+    onChange: Dispatch<SetStateAction<Acl>>;
 }
 
-export type AclSelectorHandle = {
-    selections: Acl;
-    reset?: () => void;
+export const AclSelector: React.FC<AclSelectorProps> = (
+    { acl, userIsRequired = false, onChange }
+) => {
+    const groupOptions = makeOptions(DUMMY_GROUPS);
+    const userOptions = makeOptions(DUMMY_USERS);
+
+    const [groupAcl, userAcl] = splitAcl(acl);
+
+    return <AclContext.Provider value={{ userIsRequired, acl, onChange }}>
+        <div css={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 24,
+        }}>
+            <AclSelect
+                kind="Group"
+                initialAcl={groupAcl}
+                allOptions={groupOptions}
+            />
+            <AclSelect
+                kind="User"
+                initialAcl={userAcl}
+                allOptions={userOptions}
+            />
+        </div>
+    </AclContext.Provider>;
 };
-
-export const AclSelector = forwardRef<AclSelectorHandle, AclSelectorProps>(
-    ({ initialAcl, userIsRequired = false, children }, ref) => {
-        const groupsRef = useRef<AclSelectHandle>(null);
-        const usersRef = useRef<AclSelectHandle>(null);
-        const [roleSelections, setRoleSelections] = useState(initialAcl);
-
-        const groupOptions = makeOptions(DUMMY_GROUPS);
-        const userOptions = makeOptions(DUMMY_USERS);
-
-        const [initialGroupAcl, initialUserAcl] = splitAcl(initialAcl);
-
-        useImperativeHandle(ref, () => ({
-            selections: roleSelections,
-            reset: () => {
-                groupsRef.current?.reset();
-                usersRef.current?.reset();
-                setRoleSelections(initialAcl);
-            },
-        }));
-
-        return <AclContext.Provider value={{ userIsRequired, roleSelections, setRoleSelections }}>
-            <div css={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 24,
-            }}>
-                <AclSelect
-                    ref={groupsRef}
-                    kind="Group"
-                    initialAcl={initialGroupAcl}
-                    allOptions={groupOptions}
-                />
-                <AclSelect
-                    ref={usersRef}
-                    kind="User"
-                    initialAcl={initialUserAcl}
-                    allOptions={userOptions}
-                />
-            </div>
-            {children}
-        </AclContext.Provider>;
-    }
-);
 
 type AclKind = "Group" | "User";
 
@@ -136,230 +111,219 @@ type AclSelectProps = SelectProps & {
     kind: AclKind;
 };
 
-type AclSelectHandle = {
-    getSelection: () => MultiValue<Option>;
-    reset: () => void;
-};
-
 const defaultDummyOption: Option = {
     value: COMMON_ROLES.ADMIN,
     label: "Administrator",
 };
 
-const AclSelect = forwardRef<AclSelectHandle, AclSelectProps>(
-    ({ initialAcl, allOptions, kind }, ref) => {
-        const isDark = useColorScheme().scheme === "dark";
-        const user = useUser();
-        const { t } = useTranslation();
-        const { roleSelections, setRoleSelections } = useContext(AclContext);
-        const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
+const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) => {
+    const isDark = useColorScheme().scheme === "dark";
+    const user = useUser();
+    const { t } = useTranslation();
+    const { acl, onChange } = useContext(AclContext);
+    const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
 
-        const translations = match(kind, {
-            "Group": () => ({
-                heading: t("manage.access.authorized-groups"),
-                placeholder: t("manage.access.select.groups"),
-                columnHeader: t("manage.access.table.group"),
-            }),
-            "User": () => ({
-                heading: t("manage.access.authorized-users"),
-                placeholder: t("manage.access.select.users"),
-                columnHeader: t("manage.access.table.user"),
-            }),
-        });
+    const translations = match(kind, {
+        "Group": () => ({
+            heading: t("manage.access.authorized-groups"),
+            placeholder: t("manage.access.select.groups"),
+            columnHeader: t("manage.access.table.group"),
+        }),
+        "User": () => ({
+            heading: t("manage.access.authorized-users"),
+            placeholder: t("manage.access.select.users"),
+            columnHeader: t("manage.access.table.user"),
+        }),
+    });
 
-        const isSubset = (role: string, potentialSuperset: string): boolean => {
-            const relation = SUBSET_RELATIONS.find(entry => entry.superset === potentialSuperset);
-            if (relation) {
-                return relation.subsets.includes(role)
+    const isSubset = (role: string, potentialSuperset: string): boolean => {
+        const relation = SUBSET_RELATIONS.find(entry => entry.superset === potentialSuperset);
+        if (relation) {
+            return relation.subsets.includes(role)
                     || relation.subsets.some(subset => isSubset(role, subset));
+        }
+        return false;
+    };
+
+    const roleComparator = (a: Option, b: Option) => {
+        if (kind === "Group") {
+            // Sort ACL group entries by their scope,
+            // so that supersets will be shown before subsets.
+
+            // A is a subset of b, so b should come first.
+            if (isSubset(a.value, b.value)) {
+                return 1;
             }
-            return false;
-        };
-
-        const roleComparator = (a: Option, b: Option) => {
-            if (kind === "Group") {
-                // Sort ACL group entries by their scope,
-                // so that supersets will be shown before subsets.
-
-                // A is a subset of b, so b should come first.
-                if (isSubset(a.value, b.value)) {
-                    return 1;
-                }
-                // B is a subset of a, so a should come first.
-                if (isSubset(b.value, a.value)) {
-                    return -1;
-                }
-                // Neither is a subset of the other, don't sort.
-                return 0;
-            } else {
-                // Always show the current user first, if included.
-                if (a.value === getUserRole(user)) {
-                    return -1;
-                }
-                if (b.value === getUserRole(user)) {
-                    return 1;
-                }
-                // Otherwise show entries in order of addition.
-                return 0;
+            // B is a subset of a, so a should come first.
+            if (isSubset(b.value, a.value)) {
+                return -1;
             }
-        };
+            // Neither is a subset of the other, don't sort.
+            return 0;
+        } else {
+            // Always show the current user first, if included.
+            if (a.value === getUserRole(user)) {
+                return -1;
+            }
+            if (b.value === getUserRole(user)) {
+                return 1;
+            }
+            // Otherwise show entries in order of addition.
+            return 0;
+        }
+    };
 
-        const initialSelections: Option[] = makeSelection(
-            kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialAcl
-        ).sort((roleComparator));
+    const initialSelections: Option[] = makeSelection(
+        kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialAcl
+    ).sort((roleComparator));
 
-        const initialOptions = allOptions.filter(
-            item => !initialSelections.some(elem => elem.value === item.value)
+    const initialOptions = allOptions.filter(
+        item => !initialSelections.some(elem => elem.value === item.value)
+    );
+
+    // The ACL might not explicitly include admin, but since we still want to show
+    // the admin entry when logged in as admin, the item needs to be added manually.
+    if (kind === "User" && !initialSelections.some(
+        selection => selection.label === "Administrator"
+    )) {
+        initialSelections.splice(0, 0, defaultDummyOption);
+    }
+
+    const [selection, setSelection] = useState<MultiValue<Option>>(initialSelections);
+    const [options, setOptions] = useState<MultiValue<Option>>(initialOptions);
+
+    useEffect(() => {
+        setSelection(initialSelections);
+        setOptions(initialOptions);
+    }, [acl]);
+
+    const remove = (item: Option) => {
+        const filterItem = (items: MultiValue<Option>) => items.filter(
+            option => option.value !== item.value
         );
 
-        // The ACL might not explicitly include admin, but since we still want to show
-        // the admin entry when logged in as admin, the item needs to be added manually.
-        if (kind === "User" && !initialSelections.some(
-            selection => selection.label === "Administrator"
-        )) {
-            initialSelections.splice(0, 0, defaultDummyOption);
+        setSelection(prev => filterItem(prev));
+        setOptions(prev => allOptions.some(option => option.value === item.value)
+            ? allOptions.filter(entry => !filterItem(selection)
+                .some(option => entry.value === option.value))
+            : [...prev, item]);
+
+        onChange({
+            readRoles: acl.readRoles.filter(role => item.value !== role),
+            writeRoles: acl.writeRoles.filter(role => item.value !== role),
+        });
+    };
+
+    const handleCreate = (inputValue: string) => {
+        if (!inputValue.startsWith("ROLE_")) {
+            return;
         }
-
-        const [selection, setSelection] = useState<MultiValue<Option>>(initialSelections);
-        const [options, setOptions] = useState<MultiValue<Option>>(initialOptions);
-
-        useImperativeHandle(ref, () => ({
-            getSelection: () => selection,
-            reset: () => {
-                setSelection(initialSelections);
-                setOptions(initialOptions);
-            },
-        }));
-
-
-        const remove = (item: Option) => {
-            const filterItem = (items: MultiValue<Option>) => items.filter(
-                option => option.value !== item.value
-            );
-
-            setSelection(prev => filterItem(prev));
-            setOptions(prev => allOptions.some(option => option.value === item.value)
-                ? allOptions.filter(entry => !filterItem(selection)
-                    .some(option => entry.value === option.value))
-                : [...prev, item]);
-
-            setRoleSelections({
-                readRoles: roleSelections.readRoles.filter(role => item.value !== role),
-                writeRoles: roleSelections.writeRoles.filter(role => item.value !== role),
-            });
+        const newRole: Option = {
+            value: inputValue,
+            label: formatUnknownRole(inputValue),
         };
+        setSelection(prev => [...prev, newRole]);
 
-        const handleCreate = (inputValue: string) => {
-            if (!inputValue.startsWith("ROLE_")) {
-                return;
+        onChange({
+            ...acl,
+            readRoles: [...acl.readRoles, inputValue],
+        });
+    };
+
+    const handleChange = (choice: MultiValue<Option>) => {
+        const newRoles = choice
+            .filter(option => !selection.includes(option))
+            .map(option => option.value);
+
+        setSelection([...choice].sort(roleComparator));
+        setOptions(prev => prev.filter(
+            option => !choice.some(opt => opt.value === option.value)
+        ));
+        onChange({
+            ...acl,
+            readRoles: [...acl.readRoles, ...newRoles],
+        });
+    };
+
+    const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+        event.preventDefault();
+
+        if (kind === "User") {
+            const clipboardData = event.clipboardData.getData("Text");
+            const names = clipboardData.split("\n").map(name => name.trim());
+
+            const optionsToAdd: Option[] = names
+                .map(name => options.filter(option => option.label === name)[0])
+                .filter(option => option !== undefined);
+
+            if (optionsToAdd.length > 0) {
+                handleChange([...selection, ...optionsToAdd]);
+                setMenuIsOpen(false);
             }
-            const newRole: Option = {
-                value: inputValue,
-                label: formatUnknownRole(inputValue),
-            };
-            setSelection(prev => [...prev, newRole]);
+        }
+    };
 
-            setRoleSelections({
-                ...roleSelections,
-                readRoles: [...roleSelections.readRoles, inputValue],
-            });
-        };
 
-        const handleChange = (choice: MultiValue<Option>) => {
-            const newRoles = choice
-                .filter(option => !selection.includes(option))
-                .map(option => option.value);
-
-            setSelection([...choice].sort(roleComparator));
-            setOptions(prev => prev.filter(
-                option => !choice.some(opt => opt.value === option.value)
-            ));
-            setRoleSelections({
-                ...roleSelections,
-                readRoles: [...roleSelections.readRoles, ...newRoles],
-            });
-        };
-
-        const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-            event.preventDefault();
-
-            if (kind === "User") {
-                const clipboardData = event.clipboardData.getData("Text");
-                const names = clipboardData.split("\n").map(name => name.trim());
-
-                const optionsToAdd: Option[] = names
-                    .map(name => options.filter(option => option.label === name)[0])
-                    .filter(option => option !== undefined);
-
-                if (optionsToAdd.length > 0) {
-                    handleChange([...selection, ...optionsToAdd]);
-                    setMenuIsOpen(false);
+    return <div css={{
+        flex: "1 1 320px",
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: 900,
+    }}>
+        <h4>{translations.heading}</h4>
+        <div onPaste={handlePaste}>
+            <CreatableSelect
+                onMenuOpen={() => setMenuIsOpen(true)}
+                onMenuClose={() => setMenuIsOpen(false)}
+                controlShouldRenderValue={false}
+                isClearable={false}
+                isMulti
+                isSearchable
+                placeholder={translations.placeholder}
+                formatCreateLabel={input =>
+                    /^ROLE_\w+/.test(input) && t("manage.access.select.create", { item: input })
                 }
-            }
-        };
-
-
-        return <div css={{
-            flex: "1 1 320px",
-            display: "flex",
-            flexDirection: "column",
-            maxWidth: 900,
-        }}>
-            <h4>{translations.heading}</h4>
-            <div onPaste={handlePaste}>
-                <CreatableSelect
-                    onMenuOpen={() => setMenuIsOpen(true)}
-                    onMenuClose={() => setMenuIsOpen(false)}
-                    controlShouldRenderValue={false}
-                    isClearable={false}
-                    isMulti
-                    isSearchable
-                    placeholder={translations.placeholder}
-                    formatCreateLabel={input =>
-                        /^ROLE_\w+/.test(input) && t("manage.access.select.create", { item: input })
-                    }
-                    value={selection}
-                    onCreateOption={handleCreate}
-                    filterOption={(option, inputValue) => !!option.label
+                value={selection}
+                onCreateOption={handleCreate}
+                filterOption={(option, inputValue) => !!option.label
                         && option.label.toLowerCase().includes(inputValue.toLowerCase())
+                }
+                backspaceRemovesValue={false}
+                onChange={handleChange}
+                styles={searchableSelectStyles(isDark)}
+                css={{ marginTop: 6 }}
+                {...{ theme, menuIsOpen, options }}
+            />
+        </div>
+        <div>
+            <table css={{
+                marginTop: 20,
+                tableLayout: "auto",
+                width: "100%",
+                borderRadius: 4,
+                borderCollapse: "collapse",
+                backgroundColor: COLORS.neutral10,
+                "th, td": {
+                    textAlign: "left",
+                    padding: "6px 12px",
+                },
+            }}>
+                <thead>
+                    <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
+                        <th>{translations.columnHeader}</th>
+                        <th>{t("manage.access.table.actions.title")}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {selection.map(item =>
+                        <ListEntry key={item.label} {...{ remove, item, kind }} />)
                     }
-                    backspaceRemovesValue={false}
-                    onChange={handleChange}
-                    styles={searchableSelectStyles(isDark)}
-                    css={{ marginTop: 6 }}
-                    {...{ theme, menuIsOpen, options }}
-                />
-            </div>
-            <div>
-                <table css={{
-                    marginTop: 20,
-                    tableLayout: "auto",
-                    width: "100%",
-                    borderRadius: 4,
-                    borderCollapse: "collapse",
-                    backgroundColor: COLORS.neutral10,
-                    "th, td": {
-                        textAlign: "left",
-                        padding: "6px 12px",
-                    },
-                }}>
-                    <thead>
-                        <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
-                            <th>{translations.columnHeader}</th>
-                            <th>{t("manage.access.table.actions.title")}</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {selection.map(item =>
-                            <ListEntry key={item.label} {...{ remove, item, kind }} />)
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>;
-    }
-);
+                </tbody>
+            </table>
+        </div>
+    </div>;
+};
 
 type ItemProps = {
     item: Option;
@@ -373,9 +337,9 @@ type ListEntryProps = ItemProps & {
 const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const user = useUser();
     const { t } = useTranslation();
-    const { userIsRequired, roleSelections } = useContext(AclContext);
+    const { userIsRequired, acl } = useContext(AclContext);
 
-    const supersets = kind === "Group" ? supersetList(item.value, roleSelections) : [];
+    const supersets = kind === "Group" ? supersetList(item.value, acl) : [];
     const isSubset = supersets.length > 0;
     const isAdmin = [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value);
     const isUser = item.value === getUserRole(user);
@@ -414,7 +378,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
                 <span css={{ display: "flex" }}>
                     <ActionsMenu {...{ item, kind }} />
                     {LARGE_GROUPS.includes(item.value)
-                        && roleSelections.writeRoles.includes(item.value)
+                        && acl.writeRoles.includes(item.value)
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
                     }
@@ -459,9 +423,9 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const ref = useRef<FloatingHandle>(null);
     const user = useUser();
     const { t } = useTranslation();
-    const { userIsRequired, roleSelections, setRoleSelections } = useContext(AclContext);
+    const { userIsRequired, acl, onChange } = useContext(AclContext);
     const [action, setAction] = useState<Action>(
-        roleSelections.writeRoles.includes(item.value) ? "write" : "read"
+        acl.writeRoles.includes(item.value) ? "write" : "read"
     );
 
     const actions: Action[] = ["read", "write"];
@@ -514,11 +478,11 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                             description={translations(actionType).description}
                             onClick={() => {
                                 setAction(actionType);
-                                setRoleSelections({
-                                    ...roleSelections,
+                                onChange({
+                                    ...acl,
                                     writeRoles: actionType === "write"
-                                        ? [...roleSelections.writeRoles, item.value]
-                                        : roleSelections.writeRoles.filter(
+                                        ? [...acl.writeRoles, item.value]
+                                        : acl.writeRoles.filter(
                                             role => role !== item.value
                                         ),
                                 });

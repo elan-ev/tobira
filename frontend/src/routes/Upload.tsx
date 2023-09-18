@@ -30,7 +30,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
-import { Acl, AclSelectorHandle, getUserRole, AclSelector } from "../ui/Access";
+import { Acl, getUserRole, AclSelector } from "../ui/Access";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -654,10 +654,15 @@ type MetaDataEditProps = {
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { t } = useTranslation();
     const user = useUser();
-    const aclSelectRef = useRef<AclSelectorHandle>(null);
+    const userRole = getUserRole(user);
+    const defaultAcl: Acl = {
+        readRoles: [COMMON_ROLES.ANONYMOUS, userRole],
+        writeRoles: [userRole],
+    };
 
-    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<Metadata>({
+    const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
+        defaultValues: { acl: defaultAcl },
     });
     const { field: seriesField } = useController({
         name: "series",
@@ -666,12 +671,6 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
             required: CONFIG.upload.requireSeries ? t("upload.errors.field-required") : false,
         },
     });
-
-    const userRole = getUserRole(user);
-    const defaultAcl: Acl = {
-        readRoles: [COMMON_ROLES.ANONYMOUS, userRole],
-        writeRoles: [userRole],
-    };
 
     const onSubmit = handleSubmit(data => onSave(data));
 
@@ -736,10 +735,10 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                 <Controller
                     name="acl"
                     control={control}
-                    render={() => <AclSelector
+                    render={({ field }) => <AclSelector
                         userIsRequired
-                        ref={aclSelectRef}
-                        initialAcl={defaultAcl}
+                        onChange={field.onChange}
+                        acl={field.value}
                     />}
                 />
             </InputContainer>
@@ -749,10 +748,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                 kind="happy"
                 disabled={disabled}
                 css={{ marginTop: 32, marginBottom: 160 }}
-                onClick={() => {
-                    setValue("acl", currentRef(aclSelectRef).selections);
-                    onSubmit();
-                }}>
+                onClick={onSubmit}>
                 {t("upload.metadata.save")}
             </Button>
         </Form>

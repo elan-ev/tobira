@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
-import { RefObject, useContext, useRef } from "react";
+import { Dispatch, RefObject, SetStateAction, useRef, useState } from "react";
 import { COLORS } from "../../../color";
 import { FiInfo } from "react-icons/fi";
 import { Button, Kind as ButtonKind } from "../../../ui/Button";
@@ -12,7 +12,7 @@ import { WithTooltip } from "@opencast/appkit";
 import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
-import { AclSelectorHandle, Acl, AclSelector, AclContext } from "../../../ui/Access";
+import { Acl, AclSelector } from "../../../ui/Access";
 import { useNavBlocker } from "../../util";
 
 
@@ -79,12 +79,13 @@ type AccessUIProps = {
 }
 
 const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
-    const aclSelectRef = useRef<AclSelectorHandle>(null);
 
     const initialAcl: Acl = {
         readRoles: event.readRoles as string[],
         writeRoles: event.writeRoles as string[],
     };
+
+    const [selections, setSelections] = useState(initialAcl);
 
     return (
         <div css={{ maxWidth: 1040 }}>
@@ -93,22 +94,21 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                 flexDirection: "column",
                 width: "100%",
             }}>
-                <AclSelector ref={aclSelectRef} {...{ initialAcl }}>
-                    <ButtonWrapper {...{ aclSelectRef, initialAcl }} />
-                </AclSelector>
+                <AclSelector acl={selections} onChange={setSelections} />
+                <ButtonWrapper {...{ selections, setSelections, initialAcl }} />
             </div>
         </div>
     );
 };
 
 type ButtonWrapperProps = {
-    aclSelectRef: RefObject<AclSelectorHandle>;
+    selections: Acl;
+    setSelections: Dispatch<SetStateAction<Acl>>;
     initialAcl: Acl;
 }
 
-const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl }) => {
+const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ selections, setSelections, initialAcl }) => {
     const { t } = useTranslation();
-    const { roleSelections } = useContext(AclContext);
     const user = useUser();
     const saveModalRef = useRef<ModalHandle>(null);
     const resetModalRef = useRef<ModalHandle>(null);
@@ -122,9 +122,9 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl 
             || acl.writeRoles.some(role => user.roles.includes(role));
     };
 
-    const selectionIsInitial = roleSelections.readRoles.every(
+    const selectionIsInitial = selections.readRoles.every(
         role => initialAcl.readRoles.includes(role)
-    ) && roleSelections.writeRoles.every(role => initialAcl.writeRoles.includes(role));
+    ) && selections.writeRoles.every(role => initialAcl.writeRoles.includes(role));
 
     const submit = async (acl: Acl) => {
         // TODO: Actually save new ACL.
@@ -144,7 +144,7 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl 
             body={t("manage.access.reset-modal.body")}
             confirmationLabel={t("manage.access.reset-modal.label")}
             handleClick={() => currentRef(resetModalRef).open()}
-            onConfirm={() => aclSelectRef.current?.reset?.()}
+            onConfirm={() => setSelections(initialAcl)}
             disabled={selectionIsInitial}
         />
         {/* Save button */}
@@ -155,11 +155,10 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ aclSelectRef, initialAcl 
             title={t("manage.access.save-modal.title")}
             body={t("manage.access.save-modal.body")}
             confirmationLabel={t("manage.access.save-modal.confirm")}
-            handleClick={() => {
-                const newAcl = currentRef(aclSelectRef).selections;
-                return !containsUser(newAcl) ? currentRef(saveModalRef).open() : submit(newAcl);
-            }}
-            onConfirm={() => submit(currentRef(aclSelectRef).selections)}
+            handleClick={() => !containsUser(selections)
+                ? currentRef(saveModalRef).open()
+                : submit(selections)}
+            onConfirm={() => submit(selections)}
             disabled={selectionIsInitial}
         />
     </div>;
