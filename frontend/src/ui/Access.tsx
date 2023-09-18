@@ -54,14 +54,15 @@ type AclContext = {
     onChange: Dispatch<SetStateAction<Acl>>;
 }
 
-export const AclContext = createContext<AclContext>({
-    userIsRequired: false,
-    acl: {
-        readRoles: [],
-        writeRoles: [],
-    },
-    onChange: () => {},
-});
+const AclContext = createContext<AclContext | null>(null);
+
+const useAclContext = () => {
+    const aclContext = useContext(AclContext);
+    if (!aclContext) {
+        throw new Error("Error: Acl context is not initialized!");
+    }
+    return aclContext;
+};
 
 type AclSelectorProps = {
     acl: Acl;
@@ -120,7 +121,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t } = useTranslation();
-    const { acl, onChange } = useContext(AclContext);
+    const { acl, onChange } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
 
     const translations = match(kind, {
@@ -337,7 +338,7 @@ type ListEntryProps = ItemProps & {
 const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const user = useUser();
     const { t } = useTranslation();
-    const { userIsRequired, acl } = useContext(AclContext);
+    const { userIsRequired, acl } = useAclContext();
 
     const supersets = kind === "Group" ? supersetList(item.value, acl) : [];
     const isSubset = supersets.length > 0;
@@ -423,7 +424,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const ref = useRef<FloatingHandle>(null);
     const user = useUser();
     const { t } = useTranslation();
-    const { userIsRequired, acl, onChange } = useContext(AclContext);
+    const { userIsRequired, acl, onChange } = useAclContext();
     const [action, setAction] = useState<Action>(
         acl.writeRoles.includes(item.value) ? "write" : "read"
     );
