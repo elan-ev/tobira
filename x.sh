@@ -24,6 +24,9 @@ if [[ $# -lt 1 ]]; then
     >&2 echo "  - ./x.sh build-release"
     >&2 echo "        Creates a clean production build that can be deployed."
     >&2 echo
+    >&2 echo "  - ./x.sh build-release --musl"
+    >&2 echo "        Creates a clean statically linked production build with musl."
+    >&2 echo
     >&2 echo "  - ./x.sh build-container-image"
     >&2 echo "        Creates a production container image that can be deployed."
     >&2 echo
@@ -108,7 +111,7 @@ case "$1" in
             >&2 echo "Your system is missing some tools. Run './x.sh check-system' to repeat this check."
             exit 1
         fi
-        "$basedir"/util/scripts/build-release.sh
+        "$basedir"/util/scripts/build-release.sh "$2"
         ;;
     "build-container-image")
         "$basedir"/util/scripts/build-container-image.sh
