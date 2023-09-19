@@ -33,6 +33,7 @@ import { COMMON_ROLES } from "../util/roles";
 import { SelectProps } from "./Input";
 import { searchableSelectStyles, theme } from "./SearchableSelect";
 import { FloatingBaseMenu } from "./FloatingBaseMenu";
+import { localeContains } from "../util";
 
 export type Acl = {
     readRoles: Set<string>;
@@ -299,9 +300,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
                 }
                 value={selection}
                 onCreateOption={handleCreate}
-                filterOption={(option, inputValue) => !!option.label
-                        && option.label.toLowerCase().includes(inputValue.toLowerCase())
-                }
+                filterOption={(option, inputValue) => localeContains(option.label, inputValue)}
                 backspaceRemovesValue={false}
                 onChange={handleChange}
                 styles={searchableSelectStyles(isDark)}

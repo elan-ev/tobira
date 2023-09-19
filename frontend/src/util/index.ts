@@ -37,6 +37,27 @@ export function characterClass(characters: string): string {
     return `[${characters}]`;
 }
 
+/** Checks whether or not a given string is contained in another string */
+export const localeContains = (mainString: string, stringToCheck: string) => {
+    if (stringToCheck === "") {
+        return true;
+    }
+    if (!stringToCheck || !mainString.length) {
+        return false;
+    }
+
+    stringToCheck = "" + stringToCheck;
+
+    if (stringToCheck.length > mainString.length) {
+        return false;
+    }
+
+    const normalize = (str: string) =>
+        str.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+    return normalize(mainString).includes(normalize(stringToCheck));
+};
+
 /**
  * Sets the HTML title to the given string (plus base title) on mount, resets
  * it on unmount. If the given title is `null`, does not do anything on mount.
