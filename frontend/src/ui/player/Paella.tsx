@@ -164,6 +164,10 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 "--main-bg-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
                 "--secondary-bg-color-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
 
+                "& .playback-bar": {
+                    transition: "background 0.08s",
+                },
+
                 '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
                     marginTop: "-4px !important",
                     "svg text": {
