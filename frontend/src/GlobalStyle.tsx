@@ -120,5 +120,12 @@ const GLOBAL_STYLE = css({
         borderTop: `1px solid ${COLORS.neutral25}`,
     },
     "p, label": { color: COLORS.neutral80 },
-    input: { color: COLORS.neutral90 },
+    "input, textarea": {
+        backgroundColor: COLORS.neutral05,
+        color: COLORS.neutral90,
+        ":disabled": {
+            backgroundColor: COLORS.neutral10,
+            color: COLORS.neutral70,
+        },
+    },
 });
