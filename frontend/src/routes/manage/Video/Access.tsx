@@ -81,11 +81,11 @@ type AccessUIProps = {
 const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
 
     const initialAcl: Acl = {
-        readRoles: event.readRoles as string[],
-        writeRoles: event.writeRoles as string[],
+        readRoles: new Set(event.readRoles),
+        writeRoles: new Set(event.writeRoles),
     };
 
-    const [selections, setSelections] = useState(initialAcl);
+    const [selections, setSelections] = useState<Acl>(initialAcl);
 
     return (
         <div css={{ maxWidth: 1040 }}>
@@ -118,13 +118,15 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ selections, setSelections
             return false;
         }
 
+        const writeRoles = [...acl.writeRoles];
+
         return user.roles.includes(COMMON_ROLES.ADMIN)
-            || acl.writeRoles.some(role => user.roles.includes(role));
+            || writeRoles.some(role => user.roles.includes(role));
     };
 
-    const selectionIsInitial = selections.readRoles.every(
-        role => initialAcl.readRoles.includes(role)
-    ) && selections.writeRoles.every(role => initialAcl.writeRoles.includes(role));
+    const selectionIsInitial = [...selections.readRoles].every(
+        role => initialAcl.readRoles.has(role)
+    ) && [...selections.writeRoles].every(role => initialAcl.writeRoles.has(role));
 
     const submit = async (acl: Acl) => {
         // TODO: Actually save new ACL.

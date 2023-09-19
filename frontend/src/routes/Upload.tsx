@@ -655,15 +655,17 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { t } = useTranslation();
     const user = useUser();
     const userRole = getUserRole(user);
+
     const defaultAcl: Acl = {
-        readRoles: [COMMON_ROLES.ANONYMOUS, userRole],
-        writeRoles: [userRole],
+        readRoles: new Set([COMMON_ROLES.ANONYMOUS, userRole]),
+        writeRoles: new Set([userRole]),
     };
 
     const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
         defaultValues: { acl: defaultAcl },
     });
+
     const { field: seriesField } = useController({
         name: "series",
         control,
@@ -737,7 +739,11 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                     control={control}
                     render={({ field }) => <AclSelector
                         userIsRequired
-                        onChange={field.onChange}
+                        onChange={setState => {
+                            // Why tho...¯\(°_o)/¯
+                            field.onChange(setState);
+                            field.onChange(field.value);
+                        }}
                         acl={field.value}
                     />}
                 />
@@ -995,7 +1001,7 @@ const finishUpload = async (
             }
 
             const { readRoles, writeRoles } = metadata.acl;
-            const acl = constructAcl(readRoles, writeRoles);
+            const acl = constructAcl([...readRoles], [...writeRoles]);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
             body.append("mediaPackage", mediaPackage);

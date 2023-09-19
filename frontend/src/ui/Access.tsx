@@ -35,8 +35,8 @@ import { searchableSelectStyles, theme } from "./SearchableSelect";
 import { FloatingBaseMenu } from "./FloatingBaseMenu";
 
 export type Acl = {
-    readRoles: string[];
-    writeRoles: string[];
+    readRoles: Set<string>;
+    writeRoles: Set<string>;
 };
 
 export type AclRecord = Record<string, { label: string; roles: string[] }>
@@ -209,9 +209,13 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
                 .some(option => entry.value === option.value))
             : [...prev, item]);
 
-        onChange({
-            readRoles: acl.readRoles.filter(role => item.value !== role),
-            writeRoles: acl.writeRoles.filter(role => item.value !== role),
+        onChange(prev => {
+            prev.readRoles.delete(item.value);
+            prev.writeRoles.delete(item.value);
+            return {
+                readRoles: new Set(prev.readRoles),
+                writeRoles: new Set(prev.writeRoles),
+            };
         });
     };
 
@@ -225,9 +229,12 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
         };
         setSelection(prev => [...prev, newRole]);
 
-        onChange({
-            ...acl,
-            readRoles: [...acl.readRoles, inputValue],
+        onChange(prev => {
+            prev.readRoles.add(inputValue);
+            return {
+                ...prev,
+                readRoles: new Set(prev.readRoles),
+            };
         });
     };
 
@@ -240,9 +247,14 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
         setOptions(prev => prev.filter(
             option => !choice.some(opt => opt.value === option.value)
         ));
-        onChange({
-            ...acl,
-            readRoles: [...acl.readRoles, ...newRoles],
+        onChange(prev => {
+            for (const role of newRoles) {
+                prev.readRoles.add(role);
+            }
+            return {
+                ...prev,
+                readRoles: new Set(prev.readRoles),
+            };
         });
     };
 
@@ -380,7 +392,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
                 <span css={{ display: "flex" }}>
                     <ActionsMenu {...{ item, kind }} />
                     {LARGE_GROUPS.includes(item.value)
-                        && acl.writeRoles.includes(item.value)
+                        && acl.writeRoles.has(item.value)
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
                     }
@@ -427,7 +439,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const { t } = useTranslation();
     const { userIsRequired, acl, onChange } = useAclContext();
     const [action, setAction] = useState<Action>(
-        acl.writeRoles.includes(item.value) ? "write" : "read"
+        acl.writeRoles.has(item.value) ? "write" : "read"
     );
 
     const actions: Action[] = ["read", "write"];
@@ -480,13 +492,16 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                             description={translations(actionType).description}
                             onClick={() => {
                                 setAction(actionType);
-                                onChange({
-                                    ...acl,
-                                    writeRoles: actionType === "write"
-                                        ? [...acl.writeRoles, item.value]
-                                        : acl.writeRoles.filter(
-                                            role => role !== item.value
-                                        ),
+                                onChange(prev => {
+                                    if (actionType === "write") {
+                                        prev.writeRoles.add(item.value);
+                                    } else {
+                                        prev.writeRoles.delete(item.value);
+                                    }
+                                    return {
+                                        ...prev,
+                                        writeRoles: new Set(prev.writeRoles),
+                                    };
                                 });
                             }}
                             close={() => ref.current?.close()}
@@ -573,17 +588,17 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
  * of the selection and also has the same read/write (or a subset of write) access level.
  */
 const supersetList = (subsetRole: string, selections: Acl) => {
-    const hasReadOnly = (role: string) => selections.readRoles.includes(role)
-        && !selections.writeRoles.includes(role);
-    const hasReadOrWrite = (role: string) => selections.readRoles.includes(role)
-        || selections.writeRoles.includes(role);
+    const hasReadOnly = (role: string) => selections.readRoles.has(role)
+        && !selections.writeRoles.has(role);
+    const hasReadOrWrite = (role: string) => selections.readRoles.has(role)
+        || selections.writeRoles.has(role);
 
     return SUBSET_RELATIONS
         // Role is valid subset.
         .filter(relation => relation.subsets.includes(subsetRole))
         .filter(relation =>
             // Superset has write access and the subset has read or write access, or...
-            (selections.writeRoles.includes(relation.superset) && hasReadOrWrite(subsetRole))
+            (selections.writeRoles.has(relation.superset) && hasReadOrWrite(subsetRole))
             // Superset has read or write access and subset has read access only.
             || (hasReadOrWrite(relation.superset) && hasReadOnly(subsetRole)))
         .map(relation => getLabel(DUMMY_GROUPS, relation.superset));
@@ -610,7 +625,7 @@ const formatUnknownRole = (role: string) => {
 
 /** Takes an initial ACL and formats it as options for react-select that are already selected. */
 const makeSelection = (record: AclRecord, acl: Acl): Option[] => {
-    const aclArray = [...new Set(acl.readRoles.concat(acl.writeRoles))];
+    const aclArray = [...new Set([...acl.readRoles, ...acl.writeRoles])];
 
     return aclArray.map(role => ({
         value: role,
@@ -633,12 +648,12 @@ const makeOptions = (record: AclRecord): Option[] =>
 const splitAcl = (initialAcl: Acl) => {
     const regEx = /^ROLE_USER_\w+/;
     const groupAcl: Acl = {
-        readRoles: initialAcl.readRoles.filter(role => !regEx.test(role)),
-        writeRoles: initialAcl.writeRoles.filter(role => !regEx.test(role)),
+        readRoles: new Set([...initialAcl.readRoles].filter(role => !regEx.test(role))),
+        writeRoles: new Set([...initialAcl.writeRoles].filter(role => !regEx.test(role))),
     };
     const userAcl: Acl = {
-        readRoles: initialAcl.readRoles.filter(role => regEx.test(role)),
-        writeRoles: initialAcl.writeRoles.filter(role => regEx.test(role)),
+        readRoles: new Set([...initialAcl.readRoles].filter(role => regEx.test(role))),
+        writeRoles: new Set([...initialAcl.writeRoles].filter(role => regEx.test(role))),
     };
 
     return [groupAcl, userAcl];
