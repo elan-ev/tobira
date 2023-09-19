@@ -161,9 +161,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 fontFamily: "unset",
 
                 "--main-bg-color": toolbarBg,
-                "--main-bg-gradient": `color-mix(in srgb, ${toolbarBg} 85%, transparent)`,
-                "--secondary-bg-color-hover": toolbarBg,
-                // "--highlight-bg-color-hover": COLORS.primary0, // TODO
+                "--main-bg-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
+                "--secondary-bg-color-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
 
                 '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
                     marginTop: "-4px !important",
