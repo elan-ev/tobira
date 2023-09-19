@@ -28,6 +28,17 @@ Every release mentions all potentially breaking changes in its release notes.
 
 ---
 
+## Provided release binaries
+
+We currently provide pre-built binaries for `x86_64-unknown-linux-gnu` and `x86_64-unknown-linux-musl`.
+Both are supported and should work fine.
+
+The `-gnu` build relies on dynamically linked libraries on your system.
+We create that build on the oldest supported Ubuntu runner of GitHub actions, which is currently `20.04`.
+Our release binary could require a glibc version up to the one on that runner, which is currently `2.31`.
+In general, the dynamic library version requirements could change with any release.
+If your server doesn't have those libraries, consider using the `-musl` build or [compiling Tobira yourself](./dev/build/release).
+
 ## Breaking and non-breaking changes
 
 Our definition of these terms for Tobira. Defines what we guarantee and what we don't.
