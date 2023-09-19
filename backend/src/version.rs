@@ -28,13 +28,18 @@ pub(crate) fn git_was_dirty() -> bool {
     build_info::GIT_DIRTY == Some(true)
 }
 
+pub(crate) fn target() -> &'static str {
+    build_info::TARGET
+}
+
 /// Returns a string containing all version-related information.
 pub(crate) fn full() -> String {
     format!(
-        "{} ({}{}), built {}",
+        "{} ({}{}), built {} ({})",
         identifier(),
         git_commit_hash(),
         if git_was_dirty() { ", dirty" } else { "" },
         build_time_utc(),
+        target(),
     )
 }

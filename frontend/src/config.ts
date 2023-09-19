@@ -76,6 +76,7 @@ type VersionInfo = {
     buildDateUtc: string;
     gitCommitHash: string;
     gitWasDirty: boolean;
+    target: string;
 };
 
 type UploadConfig = {

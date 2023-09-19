@@ -11,6 +11,7 @@ import { ABOUT_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { PageTitle } from "../layout/header/ui";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
+import { COLORS } from "../color";
 
 
 export const AboutRoute = makeRoute(url => {
@@ -56,6 +57,10 @@ const About: React.FC = () => {
             <a href={`https://github.com/elan-ev/tobira/releases/tag/${version.identifier}`}>
                 Tobira <strong>{version.identifier}</strong>
             </a>
+            {" "}
+            <span css={{ color: COLORS.neutral80, paddingLeft: 8 }}>
+                (<code css={{ fontSize: 13 }}>{version.target}</code>)
+            </span>
             <br />
             {"Git info: "}
             <a href={`https://github.com/elan-ev/tobira/commit/${version.gitCommitHash}`}>

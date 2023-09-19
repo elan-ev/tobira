@@ -94,6 +94,7 @@ impl Assets {
             "buildDateUtc": crate::version::build_time_utc(),
             "gitCommitHash": crate::version::git_commit_hash(),
             "gitWasDirty": crate::version::git_was_dirty(),
+            "target": crate::version::target(),
         }).to_string());
         variables.insert("global-style".into(), config.theme.to_css());
         variables.insert("auth".into(), json!({
