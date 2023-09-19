@@ -1,5 +1,9 @@
 //! The Tobira backend server.
 
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
 use clap::{FromArgMatches, CommandFactory};
 use deadpool_postgres::Pool;
 use util::Never;
