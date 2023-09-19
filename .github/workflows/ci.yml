@@ -39,9 +39,35 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    # Figure out build mode
+    - name: Determine build mode
+      run: |
+        target_dir="target"
+        if (( "$(date +%w)" % 2 == 0 )); then
+          sudo apt install -y musl-dev musl-tools
+          rustup target add x86_64-unknown-linux-musl
+          echo "ci_cargo_target=--target=x86_64-unknown-linux-musl" >> $GITHUB_ENV
+          echo "rust_cache_key=musl" >> $GITHUB_ENV
+          target_dir="${target_dir}/x86_64-unknown-linux-musl"
+        else
+          echo "ci_cargo_target=" >> $GITHUB_ENV
+          echo "rust_cache_key=gnu" >> $GITHUB_ENV
+        fi
+
+        if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
+          echo "ci_cargo_flags=--release" >> $GITHUB_ENV
+          echo "ci_targetdir=${target_dir}/release" >> $GITHUB_ENV
+          echo "ci_webpack_flags=production" >> $GITHUB_ENV
+        else
+          echo "ci_cargo_flags=--features=embed-in-debug" >> $GITHUB_ENV
+          echo "ci_targetdir=${target_dir}/debug" >> $GITHUB_ENV
+          echo "ci_webpack_flags=development" >> $GITHUB_ENV
+        fi
+
     - name: Restore backend cache
       uses: Swatinem/rust-cache@v2
       with:
+        key: ${{ env.rust_cache_key }}
         workspaces: backend
 
     # Frontend cache: only the NPM folder is cached, not the node_modules, as
@@ -52,18 +78,6 @@ jobs:
         path: ~/.npm
         key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
 
-    # Figure out build mode
-    - name: Determine build mode
-      run: |
-        if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
-          echo "ci_cargo_flags=--release" >> $GITHUB_ENV
-          echo "ci_targetdir=target/release" >> $GITHUB_ENV
-          echo "ci_webpack_flags=production" >> $GITHUB_ENV
-        else
-          echo "ci_cargo_flags=--features=embed-in-debug" >> $GITHUB_ENV
-          echo "ci_targetdir=target/debug" >> $GITHUB_ENV
-          echo "ci_webpack_flags=development" >> $GITHUB_ENV
-        fi
 
     # The actual building and testing!
     - name: Installing frontend dependencies (npm ci)
@@ -84,10 +98,10 @@ jobs:
 
     - name: Build backend
       working-directory: backend
-      run: cargo build ${{ env.ci_cargo_flags }}
+      run: cargo build ${{ env.ci_cargo_flags }} ${{ env.ci_cargo_target }}
     - name: Test backend
       working-directory: backend
-      run: cargo test
+      run: cargo test ${{ env.ci_cargo_target }}
 
     - name: Move Tobira binary
       run: mv backend/${{ env.ci_targetdir }}/tobira tobira
