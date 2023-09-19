@@ -124,9 +124,11 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ selections, setSelections
             || writeRoles.some(role => user.roles.includes(role));
     };
 
-    const selectionIsInitial = [...selections.readRoles].every(
-        role => initialAcl.readRoles.has(role)
-    ) && [...selections.writeRoles].every(role => initialAcl.writeRoles.has(role));
+    const compareSets = (a: Set<string>, b: Set<string>) =>
+        a.size === b.size && [...a].every((str => b.has(str)));
+
+    const selectionIsInitial = compareSets(selections.readRoles, initialAcl.readRoles)
+        && compareSets(selections.writeRoles, initialAcl.writeRoles);
 
     const submit = async (acl: Acl) => {
         // TODO: Actually save new ACL.
