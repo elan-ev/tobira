@@ -165,3 +165,13 @@ export const toIsoDuration = (milliseconds: number): string => {
 export const isExperimentalFlagSet = () => (
     window.localStorage.getItem("tobiraExperimentalFeatures") === "true"
 );
+
+export const timeStringToSeconds = (timeString: string): number => {
+    const timeSplit = /((\d+)h)?((\d+)m)?((\d+)s)?/.exec(timeString);
+    const hours = timeSplit && timeSplit[2] ? parseInt(timeSplit[2]) * 60 * 60 : 0;
+    const minutes = timeSplit && timeSplit[4] ? parseInt(timeSplit[4]) * 60 : 0;
+    const seconds = timeSplit && timeSplit[6] ? parseInt(timeSplit[6]) : 0;
+
+    return hours + minutes + seconds;
+};
+

@@ -6,6 +6,7 @@ import getZoomPluginContext from "paella-zoom-plugin";
 import { Caption, isHlsTrack, Track } from ".";
 import { SPEEDS } from "./consts";
 import { useTranslation } from "react-i18next";
+import { timeStringToSeconds } from "../../util";
 
 
 type PaellaPlayerProps = {
@@ -112,9 +113,16 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                     getZoomPluginContext(),
                 ],
             });
+
+            const time = new URL(window.location.href).searchParams.get("t");
+            if (time) {
+                player.bindEvent("paella:playerLoaded", () => {
+                    player.videoContainer.setCurrentTime(timeStringToSeconds(time));
+                });
+            }
+
             const loadPromise = player.loadManifest();
             paella.current = { player, loadPromise };
-
         }
 
         const paellaSnapshot = paella.current;
