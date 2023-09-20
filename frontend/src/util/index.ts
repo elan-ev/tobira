@@ -38,25 +38,6 @@ export function characterClass(characters: string): string {
 }
 
 /**
- * Like `string.includes` but treating some character variations as equal,
- * similar to `localeCompare`.
- */
-export const localeContains = (haystack: string, needle: string) => {
-    if (needle === "") {
-        return true;
-    }
-
-    if (needle.length > haystack.length) {
-        return false;
-    }
-
-    const normalize = (str: string) =>
-        str.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-    return normalize(haystack).includes(normalize(needle));
-};
-
-/**
  * Sets the HTML title to the given string (plus base title) on mount, resets
  * it on unmount. If the given title is `null`, does not do anything on mount.
  */

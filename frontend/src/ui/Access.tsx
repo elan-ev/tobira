@@ -34,7 +34,6 @@ import { COMMON_ROLES } from "../util/roles";
 import { SelectProps } from "./Input";
 import { searchableSelectStyles, theme } from "./SearchableSelect";
 import { FloatingBaseMenu } from "./FloatingBaseMenu";
-import { localeContains } from "../util";
 
 export type Acl = {
     readRoles: Set<string>;
@@ -289,13 +288,11 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
                 isMulti
                 isSearchable
                 placeholder={translations.placeholder}
-                formatCreateLabel={input => kind === "Group"
-                    && /^ROLE_\w+/.test(input)
-                    && t("manage.access.select.create", { item: input })
-                }
+                isValidNewOption={input => kind === "Group" && /^ROLE_\w+/.test(input)}
+                formatCreateLabel={input => t("manage.access.select.create", { item: input })}
+                noOptionsMessage={() => t("general.form.select.no-options")}
                 value={selection}
                 onCreateOption={handleCreate}
-                filterOption={(option, inputValue) => localeContains(option.label, inputValue)}
                 backspaceRemovesValue={false}
                 onChange={handleChange}
                 styles={searchableSelectStyles(isDark)}
