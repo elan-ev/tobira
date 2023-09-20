@@ -37,11 +37,11 @@ npx webpack --progress --mode=production
 cd ../backend || exit 1
 CFLAGS="-fdebug-prefix-map=$HOME/.cargo/registry/src/github.com-1ecc6299db9ec823/=__dep__" \
     RUSTFLAGS="--remap-path-prefix=$(pwd)=<src> --remap-path-prefix=$HOME/.cargo/registry/src/github.com-1ecc6299db9ec823/=<dep>" \
-    cargo build --release
+    cargo build --release $([ "$1" == "--musl" ] && echo "--target=x86_64-unknown-linux-musl")
 
 cd .. || exit 1
 
 mkdir -p deploy
-cp backend/target/release/tobira deploy
+cp "backend/target$([ "$1" == "--musl" ] && echo "/x86_64-unknown-linux-musl")/release/tobira" deploy
 objcopy --compress-debug-sections deploy/tobira
 deploy/tobira write-config deploy/config.toml

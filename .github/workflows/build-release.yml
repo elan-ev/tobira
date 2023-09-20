@@ -45,3 +45,31 @@ jobs:
           draft: true
           fail_on_unmatched_files: true
           generate_release_notes: true
+
+  build-musl:
+    name: Build musl release
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install musl requisites
+        run: sudo apt install -y musl-dev musl-tools
+
+      - name: Install musl target
+        run: rustup target add x86_64-unknown-linux-musl
+
+      - name: Create release build
+        run: ./x.sh build-release --musl
+
+      - name: Rename binary to include target information
+        run: mv deploy/tobira deploy/tobira-x86_64-unknown-linux-musl
+
+      - name: create new release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            deploy/tobira-x86_64-unknown-linux-musl
+          draft: true
+          fail_on_unmatched_files: true
+          generate_release_notes: true

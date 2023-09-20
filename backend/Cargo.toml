@@ -74,6 +74,9 @@ tokio-postgres-rustls = "0.10.0"
 [target.'cfg(target_os = "linux")'.dependencies]
 procfs = "0.15.1"
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator = "0.5"
+
 [build-dependencies]
 built = { version = "0.7", features = ["chrono", "git2"] }
 
