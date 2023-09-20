@@ -6,6 +6,7 @@ import {
     FloatingHandle,
     Floating,
     bug,
+    notNullish,
 } from "@opencast/appkit";
 import {
     createContext,
@@ -25,7 +26,6 @@ import { focusStyle } from ".";
 import { useUser, isRealUser, UserState } from "../User";
 import { COLORS } from "../color";
 import {
-    SUBSET_RELATIONS,
     LARGE_GROUPS,
 } from "../routes/manage/Video/dummyData";
 import { COMMON_ROLES } from "../util/roles";
@@ -93,6 +93,7 @@ type AclSelectProps = SelectProps & {
     kind: RoleKind;
 };
 
+/** One of the two columns for either users or groups. */
 const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
@@ -120,44 +121,21 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         }),
     });
 
-    const isSubset = (role: string, potentialSuperset: string): boolean => {
-        const relation = SUBSET_RELATIONS.find(entry => entry.superset === potentialSuperset);
-        if (relation) {
-            return relation.subsets.includes(role)
-                    || relation.subsets.some(subset => isSubset(role, subset));
-        }
-        return false;
-    };
 
-    const roleComparator = (a: Option, b: Option) => {
-        if (kind === "Group") {
-            // Sort ACL group entries by their scope,
-            // so that supersets will be shown before subsets.
-
-            // A is a subset of b, so b should come first.
-            if (isSubset(a.value, b.value)) {
-                return 1;
-            }
-            // B is a subset of a, so a should come first.
-            if (isSubset(b.value, a.value)) {
-                return -1;
-            }
-            // Neither is a subset of the other, don't sort.
-            return 0;
-        } else {
-            // Always show the current user first, if included.
-            if (a.value === getUserRole(user)) {
-                return -1;
-            }
-            if (b.value === getUserRole(user)) {
-                return 1;
-            }
-            // Otherwise show entries in order of addition.
-            return 0;
-        }
-    };
-
-    const selection: Option[] = makeSelection(acl, kind, i18n).sort((roleComparator));
+    let selection: Option[] = makeSelection(acl, kind, i18n);
+    if (kind === "Group") {
+        // Sort large groups to the top.
+        selection = groupDAG().sort(selection);
+    } else {
+        // Always show the current user first, if included. Otherwise show
+        // entries in order of addition.
+        const currentUserRole = getUserRole(user);
+        selection.sort((a, b) => {
+            const an = a.value === currentUserRole ? 0 : 1;
+            const bn = b.value === currentUserRole ? 0 : 1;
+            return an - bn;
+        });
+    }
 
     // The ACL might not explicitly include admin, but since we still want to show
     // the admin entry when logged in as admin, the item needs to be added manually.
@@ -531,21 +509,12 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
  * Returns the labels of every other selected group whose subset includes the role
  * of the selection and also has the same read/write (or a subset of write) access level.
  */
-const supersetList = (subsetRole: string, selections: Acl, i18n: i18n) => {
-    const hasReadOnly = (role: string) => selections.readRoles.has(role)
-        && !selections.writeRoles.has(role);
-    const hasReadOrWrite = (role: string) => selections.readRoles.has(role)
-        || selections.writeRoles.has(role);
-
-    return SUBSET_RELATIONS
-        // Role is valid subset.
-        .filter(relation => relation.subsets.includes(subsetRole))
-        .filter(relation =>
-            // Superset has write access and the subset has read or write access, or...
-            (selections.writeRoles.has(relation.superset) && hasReadOrWrite(subsetRole))
-            // Superset has read or write access and subset has read access only.
-            || (hasReadOrWrite(relation.superset) && hasReadOnly(subsetRole)))
-        .map(relation => getLabel(relation.superset, "Group", i18n));
+const supersetList = (subsetRole: string, { readRoles, writeRoles }: Acl, i18n: i18n) => {
+    const isReadOnly = !writeRoles.has(subsetRole);
+    return groupDAG()
+        .supersetsOf(subsetRole)
+        .filter(superset => readRoles.has(superset) && (isReadOnly || writeRoles.has(superset)))
+        .map(superset => getLabel(superset, "Group", i18n));
 };
 
 
@@ -631,3 +600,130 @@ const knownRoles = (kind: RoleKind) => match(kind, {
     Group: () => KNOWN_GROUPS,
     User: () => KNOWN_USERS,
 });
+
+
+/**
+ * DAG to represent superset/subset relationships of available groups. Lazily
+ * initialized.
+ */
+interface GroupDag {
+    /** Returns all groups that include the given one, i.e. are supersets of it. */
+    supersetsOf(groupRole: string): string[];
+
+    /**
+     * Topologically sorts the given groups such that large groups are first,
+     * smaller ones last.
+     */
+    sort(groups: Option[]): Option[];
+}
+
+const groupDAG: () => GroupDag = (() => {
+    let instance: GroupDag | null = null;
+    return () => {
+        if (!instance) {
+            instance = buildDag();
+        }
+
+        return instance;
+    };
+})();
+
+const buildDag = (): GroupDag => {
+    const vertices = new Map<string, Set<string>>();
+
+    for (const groupRole of Object.keys(KNOWN_GROUPS)) {
+        let supersets: Set<string>;
+
+        if (groupRole === COMMON_ROLES.ANONYMOUS) {
+            supersets = new Set();
+        } else if (groupRole === COMMON_ROLES.USER) {
+            supersets = new Set([COMMON_ROLES.ANONYMOUS]);
+        } else {
+            // TODO: add configurable relationships
+            supersets = new Set([COMMON_ROLES.USER]);
+        }
+
+        vertices.set(groupRole, supersets);
+    }
+
+    return {
+        supersetsOf(start) {
+            // If we don't know this group, we also have no idea about subset
+            // relations except that it's a subset of ROLE_USER and ROLE_ANONYMOUS.
+            // For the special admin role however, we never return supersets as
+            // it's not useful to show a warning next to that.
+            if (!vertices.has(start)) {
+                return start === COMMON_ROLES.ADMIN
+                    ? []
+                    : [COMMON_ROLES.ANONYMOUS, COMMON_ROLES.USER];
+            }
+
+            const supersets = new Set<string>();
+            const stack = [start];
+
+            while (stack.length > 0) {
+                const v = notNullish(stack.pop());
+                if (supersets.has(v)) {
+                    continue;
+                }
+                const directSupersets = vertices.get(v) ?? bug(`group ${v} not found in DAG`);
+                for (const s of directSupersets) {
+                    stack.push(s);
+                }
+                if (v !== start) {
+                    supersets.add(v);
+                }
+            }
+
+            return [...supersets];
+        },
+
+        sort(options) {
+            const visited = new Set<string>();
+            const out = [];
+
+            // Mapping from node to its subsets.
+            const inverseVertices = new Map<string, Set<string>>();
+            vertices.forEach((_, role) => inverseVertices.set(role, new Set()));
+            for (const [role, supersets] of vertices) {
+                for (const s of supersets) {
+                    inverseVertices.get(s)?.add(role);
+                }
+            }
+
+
+            // We can always start with ROLE_ANONYMOUS as that's a supserset of
+            // everything.
+            const candidates = [COMMON_ROLES.ANONYMOUS];
+            while (candidates.length > 0) {
+                const candidate = notNullish(candidates.pop());
+
+                const option = options.find(o => o.value === candidate);
+                if (option) {
+                    out.push(option);
+                }
+
+                visited.add(candidate);
+                for (const subset of inverseVertices.get(candidate) ?? []) {
+                    const supersets = vertices.get(subset) ?? bug("DAG inconsistent");
+
+                    // If we already visited all supersets of this, it can now
+                    // itself be visited. In other words: now we've done our
+                    // deed and added all options that have to come before.
+                    if ([...supersets].every(s => visited.has(s))) {
+                        candidates.push(subset);
+                    }
+                }
+            }
+
+            // Add remaining inputs, i.e. unknown roles.
+            for (const option of options) {
+                if (!visited.has(option.value)) {
+                    out.push(option);
+                }
+            }
+
+            return out;
+        },
+    };
+};
