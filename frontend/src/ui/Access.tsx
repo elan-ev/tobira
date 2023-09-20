@@ -14,7 +14,6 @@ import {
     useContext,
     Dispatch,
     SetStateAction,
-    useEffect,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { FiX, FiAlertTriangle } from "react-icons/fi";
@@ -116,7 +115,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t } = useTranslation();
-    const { acl, onChange } = useAclContext();
+    const { onChange } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
 
     const translations = match(kind, {
@@ -169,41 +168,24 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
         }
     };
 
-    const initialSelections: Option[] = makeSelection(
+    const selection: Option[] = makeSelection(
         kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialAcl
     ).sort((roleComparator));
 
-    const initialOptions = allOptions.filter(
-        item => !initialSelections.some(elem => elem.value === item.value)
+    const options = allOptions.filter(
+        item => !selection.some(elem => elem.value === item.value)
     );
 
     // The ACL might not explicitly include admin, but since we still want to show
     // the admin entry when logged in as admin, the item needs to be added manually.
-    if (kind === "User" && !initialSelections.some(
+    if (kind === "User" && !selection.some(
         selection => selection.label === "Administrator"
     )) {
-        initialSelections.splice(0, 0, defaultDummyOption);
+        selection.splice(0, 0, defaultDummyOption);
     }
 
-    const [selection, setSelection] = useState<MultiValue<Option>>(initialSelections);
-    const [options, setOptions] = useState<MultiValue<Option>>(initialOptions);
-
-    useEffect(() => {
-        setSelection(initialSelections);
-        setOptions(initialOptions);
-    }, [acl]);
 
     const remove = (item: Option) => {
-        const filterItem = (items: MultiValue<Option>) => items.filter(
-            option => option.value !== item.value
-        );
-
-        setSelection(prev => filterItem(prev));
-        setOptions(prev => allOptions.some(option => option.value === item.value)
-            ? allOptions.filter(entry => !filterItem(selection)
-                .some(option => entry.value === option.value))
-            : [...prev, item]);
-
         onChange(prev => {
             prev.readRoles.delete(item.value);
             prev.writeRoles.delete(item.value);
@@ -215,15 +197,6 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
     };
 
     const handleCreate = (inputValue: string) => {
-        if (!inputValue.startsWith("ROLE_")) {
-            return;
-        }
-        const newRole: Option = {
-            value: inputValue,
-            label: formatUnknownRole(inputValue),
-        };
-        setSelection(prev => [...prev, newRole]);
-
         onChange(prev => {
             prev.readRoles.add(inputValue);
             return {
@@ -238,10 +211,6 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
             .filter(option => !selection.includes(option))
             .map(option => option.value);
 
-        setSelection([...choice].sort(roleComparator));
-        setOptions(prev => prev.filter(
-            option => !choice.some(opt => opt.value === option.value)
-        ));
         onChange(prev => {
             for (const role of newRoles) {
                 prev.readRoles.add(role);
