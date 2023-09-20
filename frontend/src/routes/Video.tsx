@@ -546,6 +546,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef(null);
     const qrModalRef = useRef<ModalHandle>(null);
+    const timeStringPattern = /\?t=(\d+h)?(\d+m)?(\d+s)?/;
 
     const isActive = (label: State) => label === state;
 
@@ -644,16 +645,14 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const inner = match(state, {
         "closed": () => null,
         "main": () => {
-            let url = window.location.href;
-            if (timestamp) {
-                url = url + `?t=${timestamp}`;
-            }
+            let url = window.location.href.replace(timeStringPattern, "");
+            url += timestamp ? `?t=${timestamp}` : "";
+
             return <>
                 <div>
                     <CopyableInput
                         label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                         css={{ fontSize: 14, width: 400 }}
-                        // TODO
                         value={url}
                     />
                     <TimePicker {...{ setTimestamp }} />
@@ -666,10 +665,8 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 ? [16, 9]
                 : getPlayerAspectRatio(event.syncedData.tracks);
 
-            let url = new URL(location.href);
-            if (timestamp) {
-                url = new URL(url + `?t=${timestamp}`);
-            }
+            const url = new URL(location.href.replace(timeStringPattern, ""));
+            url.search = timestamp ? `?t=${timestamp}` : "";
             url.pathname = `/~embed/!v/${event.id.slice(2)}`;
 
             const embedCode = `<iframe ${[
