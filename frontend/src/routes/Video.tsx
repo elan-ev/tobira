@@ -62,6 +62,7 @@ import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
+import { TimePicker } from "./manage/Video/Details";
 
 
 // ===========================================================================================
@@ -541,6 +542,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 
     const { t } = useTranslation();
     const [state, setState] = useState<State>("closed");
+    const [timestamp, setTimestamp] = useState<string>("");
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef(null);
     const qrModalRef = useRef<ModalHandle>(null);
@@ -641,26 +643,38 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 
     const inner = match(state, {
         "closed": () => null,
-        "main": () => <>
-            <CopyableInput
-                label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
-                css={{ fontSize: 14, width: 400 }}
-                // TODO
-                value={window.location.href}
-            />
-            <ShowQRCodeButton target={window.location.href} label={state} />
-        </>,
+        "main": () => {
+            let url = window.location.href;
+            if (timestamp) {
+                url = url + `?t=${timestamp}`;
+            }
+            return <>
+                <div>
+                    <CopyableInput
+                        label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
+                        css={{ fontSize: 14, width: 400 }}
+                        // TODO
+                        value={url}
+                    />
+                    <TimePicker {...{ setTimestamp }} />
+                </div>
+                <ShowQRCodeButton target={window.location.href} label={state} />
+            </>;
+        },
         "embed": () => {
             const ar = event.syncedData == null
                 ? [16, 9]
                 : getPlayerAspectRatio(event.syncedData.tracks);
 
-            const target = new URL(location.href);
-            target.pathname = `/~embed/!v/${event.id.slice(2)}`;
+            let url = new URL(location.href);
+            if (timestamp) {
+                url = new URL(url + `?t=${timestamp}`);
+            }
+            url.pathname = `/~embed/!v/${event.id.slice(2)}`;
 
             const embedCode = `<iframe ${[
                 'name="Tobira Player"',
-                `src="${target}"`,
+                `src="${url}"`,
                 "allow=fullscreen",
                 `style="${[
                     "border: none;",
@@ -670,12 +684,15 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             ].join(" ")}></iframe>`;
 
             return <>
-                <CopyableInput
-                    label={t("video.embed.copy-embed-code-to-clipboard")}
-                    value={embedCode}
-                    multiline
-                    css={{ fontSize: 14, width: 400 }}
-                />
+                <div>
+                    <CopyableInput
+                        label={t("video.embed.copy-embed-code-to-clipboard")}
+                        value={embedCode}
+                        multiline
+                        css={{ fontSize: 14, width: 400 }}
+                    />
+                    <TimePicker {...{ setTimestamp }} />
+                </div>
                 <ShowQRCodeButton target={embedCode} label={state} />
             </>;
         },
