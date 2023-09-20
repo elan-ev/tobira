@@ -37,25 +37,23 @@ export function characterClass(characters: string): string {
     return `[${characters}]`;
 }
 
-/** Checks whether or not a given string is contained in another string */
-export const localeContains = (mainString: string, stringToCheck: string) => {
-    if (stringToCheck === "") {
+/**
+ * Like `string.includes` but treating some character variations as equal,
+ * similar to `localeCompare`.
+ */
+export const localeContains = (haystack: string, needle: string) => {
+    if (needle === "") {
         return true;
     }
-    if (!stringToCheck || !mainString.length) {
-        return false;
-    }
 
-    stringToCheck = "" + stringToCheck;
-
-    if (stringToCheck.length > mainString.length) {
+    if (needle.length > haystack.length) {
         return false;
     }
 
     const normalize = (str: string) =>
         str.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-    return normalize(mainString).includes(normalize(stringToCheck));
+    return normalize(haystack).includes(normalize(needle));
 };
 
 /**

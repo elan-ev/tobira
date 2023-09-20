@@ -5,6 +5,7 @@ import {
     WithTooltip,
     FloatingHandle,
     Floating,
+    bug,
 } from "@opencast/appkit";
 import {
     createContext,
@@ -57,13 +58,7 @@ type AclContext = {
 
 const AclContext = createContext<AclContext | null>(null);
 
-const useAclContext = () => {
-    const aclContext = useContext(AclContext);
-    if (!aclContext) {
-        throw new Error("Error: Acl context is not initialized!");
-    }
-    return aclContext;
-};
+const useAclContext = () => useContext(AclContext) ?? bug("Acl context is not initialized!");
 
 type AclSelectorProps = {
     acl: Acl;

@@ -113,16 +113,8 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ selections, setSelections
     const saveModalRef = useRef<ModalHandle>(null);
     const resetModalRef = useRef<ModalHandle>(null);
 
-    const containsUser = (acl: Acl) => {
-        if (!isRealUser(user)) {
-            return false;
-        }
-
-        const writeRoles = [...acl.writeRoles];
-
-        return user.roles.includes(COMMON_ROLES.ADMIN)
-            || writeRoles.some(role => user.roles.includes(role));
-    };
+    const containsUser = (acl: Acl) => isRealUser(user)
+        && user.roles.some(r => r === COMMON_ROLES.ADMIN || acl.writeRoles.has(r));
 
     const compareSets = (a: Set<string>, b: Set<string>) =>
         a.size === b.size && [...a].every((str => b.has(str)));
