@@ -121,7 +121,7 @@ const GLOBAL_STYLE = css({
     },
     "p, label": { color: COLORS.neutral80 },
     "input, textarea": {
-        backgroundColor: COLORS.neutral05,
+        backgroundColor: COLORS.neutral00,
         color: COLORS.neutral90,
         ":disabled": {
             backgroundColor: COLORS.neutral10,

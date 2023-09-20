@@ -22,6 +22,7 @@ export const COLORS = {
     happy2: "var(--color-happy2)",
     happy2BwInverted: "var(--color-happy2-bw-inverted)",
 
+    neutral00: "var(--color-neutral00)",
     neutral05: "var(--color-neutral05)",
     neutral10: "var(--color-neutral10)",
     neutral15: "var(--color-neutral15)",

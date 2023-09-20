@@ -260,6 +260,7 @@ impl ColorConfig {
 
         // Neutral colors (05 = background, 90 = foreground)
         let base_grey = Lch::from_color(self.grey50.0.into_format::<f32>());
+        add(&mut light, "neutral00", Lch { l: 100.0, ..base_grey });
         add(&mut light, "neutral05", Lch { l: 99.7, ..base_grey });
         add(&mut light, "neutral10", Lch { l: 95.9, ..base_grey });
         add(&mut light, "neutral15", Lch { l: 92.0, ..base_grey });
@@ -273,6 +274,7 @@ impl ColorConfig {
         add(&mut light, "neutral80", Lch { l: 17.0, ..base_grey });
         add(&mut light, "neutral90", Lch { l: 8.0, ..base_grey });
 
+        add(&mut dark, "neutral00", Lch { l: 5.0, ..base_grey });
         add(&mut dark, "neutral05", Lch { l: 7.7, ..base_grey });
         add(&mut dark, "neutral10", Lch { l: 11.5, ..base_grey });
         add(&mut dark, "neutral15", Lch { l: 15.3, ..base_grey });
