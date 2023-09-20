@@ -19,13 +19,12 @@ import { useTranslation } from "react-i18next";
 import { FiX, FiAlertTriangle } from "react-icons/fi";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
+import { i18n } from "i18next";
+
 import { focusStyle } from ".";
 import { useUser, isRealUser, UserState } from "../User";
 import { COLORS } from "../color";
-import i18n from "../i18n";
 import {
-    DUMMY_GROUPS,
-    DUMMY_USERS,
     SUBSET_RELATIONS,
     LARGE_GROUPS,
 } from "../routes/manage/Video/dummyData";
@@ -34,12 +33,12 @@ import { SelectProps } from "./Input";
 import { searchableSelectStyles, theme } from "./SearchableSelect";
 import { FloatingBaseMenu } from "./FloatingBaseMenu";
 
+
+
 export type Acl = {
     readRoles: Set<string>;
     writeRoles: Set<string>;
 };
-
-export type AclRecord = Record<string, { label: string; roles: string[] }>
 
 type Action = "read" | "write";
 
@@ -71,9 +70,6 @@ type AclSelectorProps = {
 export const AclSelector: React.FC<AclSelectorProps> = (
     { acl, userIsRequired = false, onChange }
 ) => {
-    const groupOptions = makeOptions(DUMMY_GROUPS);
-    const userOptions = makeOptions(DUMMY_USERS);
-
     const [groupAcl, userAcl] = splitAcl(acl);
 
     return <AclContext.Provider value={{ userIsRequired, acl, onChange }}>
@@ -84,39 +80,32 @@ export const AclSelector: React.FC<AclSelectorProps> = (
             flexWrap: "wrap",
             gap: 24,
         }}>
-            <AclSelect
-                kind="Group"
-                initialAcl={groupAcl}
-                allOptions={groupOptions}
-            />
-            <AclSelect
-                kind="User"
-                initialAcl={userAcl}
-                allOptions={userOptions}
-            />
+            <AclSelect kind="Group" acl={groupAcl} />
+            <AclSelect kind="User" acl={userAcl} />
         </div>
     </AclContext.Provider>;
 };
 
-type AclKind = "Group" | "User";
+type RoleKind = "Group" | "User";
 
 type AclSelectProps = SelectProps & {
-    initialAcl: Acl;
-    allOptions: Option[];
-    kind: AclKind;
+    acl: Acl;
+    kind: RoleKind;
 };
 
-const defaultDummyOption: Option = {
-    value: COMMON_ROLES.ADMIN,
-    label: "Administrator",
-};
-
-const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) => {
+const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { onChange } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
+
+    // Turn known roles into selectable options that react-select understands.
+    const options = Object.entries(knownRoles(kind))
+        .map(([role, label]) => ({
+            value: role,
+            label: label(i18n),
+        }));
 
     const translations = match(kind, {
         "Group": () => ({
@@ -168,20 +157,15 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
         }
     };
 
-    const selection: Option[] = makeSelection(
-        kind === "Group" ? DUMMY_GROUPS : DUMMY_USERS, initialAcl
-    ).sort((roleComparator));
-
-    const options = allOptions.filter(
-        item => !selection.some(elem => elem.value === item.value)
-    );
+    const selection: Option[] = makeSelection(acl, kind, i18n).sort((roleComparator));
 
     // The ACL might not explicitly include admin, but since we still want to show
     // the admin entry when logged in as admin, the item needs to be added manually.
-    if (kind === "User" && !selection.some(
-        selection => selection.label === "Administrator"
-    )) {
-        selection.splice(0, 0, defaultDummyOption);
+    if (kind === "Group" && !selection.some(s => s.value === COMMON_ROLES.ADMIN)) {
+        selection.push({
+            label: t("acl.groups.admins"),
+            value: COMMON_ROLES.ADMIN,
+        });
     }
 
 
@@ -301,7 +285,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ initialAcl, allOptions, kind }) =
 
 type ItemProps = {
     item: Option;
-    kind: AclKind;
+    kind: RoleKind;
 }
 
 type ListEntryProps = ItemProps & {
@@ -310,10 +294,10 @@ type ListEntryProps = ItemProps & {
 
 const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const user = useUser();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { userIsRequired, acl } = useAclContext();
 
-    const supersets = kind === "Group" ? supersetList(item.value, acl) : [];
+    const supersets = kind === "Group" ? supersetList(item.value, acl, i18n) : [];
     const isSubset = supersets.length > 0;
     const isAdmin = [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value);
     const isUser = item.value === getUserRole(user);
@@ -337,7 +321,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         }}>
             <td>
                 <span css={{ display: "flex" }}>
-                    {isUser || isAdmin
+                    {isUser || item.value === COMMON_ROLES.USER_ADMIN
                         ? <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>
                         : <>{item.label}</>
                     }
@@ -396,7 +380,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<FloatingHandle>(null);
     const user = useUser();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { userIsRequired, acl, onChange } = useAclContext();
     const [action, setAction] = useState<Action>(
         acl.writeRoles.has(item.value) ? "write" : "read"
@@ -547,7 +531,7 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
  * Returns the labels of every other selected group whose subset includes the role
  * of the selection and also has the same read/write (or a subset of write) access level.
  */
-const supersetList = (subsetRole: string, selections: Acl) => {
+const supersetList = (subsetRole: string, selections: Acl, i18n: i18n) => {
     const hasReadOnly = (role: string) => selections.readRoles.has(role)
         && !selections.writeRoles.has(role);
     const hasReadOrWrite = (role: string) => selections.readRoles.has(role)
@@ -561,48 +545,38 @@ const supersetList = (subsetRole: string, selections: Acl) => {
             (selections.writeRoles.has(relation.superset) && hasReadOrWrite(subsetRole))
             // Superset has read or write access and subset has read access only.
             || (hasReadOrWrite(relation.superset) && hasReadOnly(subsetRole)))
-        .map(relation => getLabel(DUMMY_GROUPS, relation.superset));
+        .map(relation => getLabel(relation.superset, "Group", i18n));
 };
 
 
 /** Returns a label for the role, if known to Tobira. */
-const getLabel = (record: AclRecord, role: string) => {
-    const name = Object.values(record).filter(entry => entry.roles.includes(role));
+const getLabel = (role: string, kind: RoleKind, i18n: i18n) => {
+    // First try whether we know about the role.
+    const known = knownRoles(kind);
+    if (role in known) {
+        return known[role](i18n);
+    }
 
-    return name.length === 1 ? name[0].label : formatUnknownRole(role);
-};
-
-const formatUnknownRole = (role: string) => {
-    for (const prefix of ["ROLE_USER_", "ROLE_GROUP_", "ROLE_"]) {
-        if (role.startsWith(prefix)) {
-            const name = role.replace(prefix, "").toLowerCase();
-            return name.charAt(0).toUpperCase() + name.slice(1);
-        }
+    // If it's a user role, we strip the `ROLE_USER_` and format it kind of
+    // nicely.
+    if (kind === "User" && role.startsWith("ROLE_USER_")) {
+        const name = role.slice("ROLE_USER_".length).toLowerCase();
+        return name.charAt(0).toUpperCase() + name.slice(1);
     }
 
     return role;
 };
 
 /** Takes an initial ACL and formats it as options for react-select that are already selected. */
-const makeSelection = (record: AclRecord, acl: Acl): Option[] => {
+const makeSelection = (acl: Acl, kind: RoleKind, i18n: i18n): Option[] => {
     const aclArray = [...new Set([...acl.readRoles, ...acl.writeRoles])];
 
     return aclArray.map(role => ({
         value: role,
-        label: getLabel(record, role),
+        label: getLabel(role, kind, i18n),
     }));
 };
 
-/** Takes a record of all possible roles and formats them as options for react-select. */
-const makeOptions = (record: AclRecord): Option[] =>
-    Object.values(record).filter(entry => entry.label !== "Administrator").map(entry => ({
-        value: entry.roles.length > 1
-            // User role. If the array does not contain a user role, return the first role instead.
-            ? entry.roles.find(role => /^ROLE_USER\w+/.test(role)) ?? entry.roles[0]
-            // Group role.
-            : entry.roles[0],
-        label: entry.label,
-    }));
 
 /** Splits initial ACL into group and user roles. */
 const splitAcl = (initialAcl: Acl) => {
@@ -625,3 +599,35 @@ export const getUserRole = (user: UserState) => {
     return typeof userRole !== "string" ? "Unknown" : userRole;
 };
 
+
+
+// ==============================================================================================
+// ===== Known groups & users
+// ==============================================================================================
+
+type KnownRoles = Record<string, (i18n: i18n) => string>;
+
+const BUILTIN_GROUPS: KnownRoles = {
+    // TODO: list all possible groups (also from Opencast?).
+    // TODO: read mappings from config.
+    ROLE_ANONYMOUS: (i18n: i18n) => i18n.t("acl.groups.everyone"),
+    ROLE_USER: (i18n: i18n) => i18n.t("acl.groups.logged-in-users"),
+    ROLE_TOBIRA_MODERATOR: (i18n: i18n) => i18n.t("acl.groups.moderators"),
+    ROLE_TOBIRA_STUDIO: (i18n: i18n) => i18n.t("acl.groups.studio-users"),
+    ROLE_TOBIRA_EDITOR: (i18n: i18n) => i18n.t("acl.groups.editors"),
+};
+
+const DUMMY_USERS: KnownRoles = {
+    ROLE_USER_SABINE: () => "Sabine Rudolfs",
+    ROLE_USER_BJÖRK: () => "Prof. Björk Guðmundsdóttir",
+    ROLE_USER_MORGAN: () => "Morgan Yu",
+    ROLE_USER_JOSE: () => "José Carreño Quiñones",
+};
+
+const KNOWN_GROUPS: KnownRoles = BUILTIN_GROUPS;
+const KNOWN_USERS: KnownRoles = DUMMY_USERS;
+
+const knownRoles = (kind: RoleKind) => match(kind, {
+    Group: () => KNOWN_GROUPS,
+    User: () => KNOWN_USERS,
+});

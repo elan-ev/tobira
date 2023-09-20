@@ -271,6 +271,15 @@ upload:
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
 
+acl:
+  groups:
+    admins: Administrators
+    everyone: Everyone
+    logged-in-users: Logged in users
+    moderators: Moderators
+    studio-users: Studio users
+    editors: Editors
+
 manage:
   access:
     authorized-groups: Authorized groups

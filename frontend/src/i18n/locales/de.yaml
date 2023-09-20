@@ -275,6 +275,15 @@ upload:
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
 
+acl:
+  groups:
+    admins: Administratoren
+    everyone: Alle
+    logged-in-users: Eingeloggte Nutzer
+    moderators: Moderatoren
+    studio-users: Studio-Nutzer
+    editors: Videoeditoren
+
 manage:
   access:
     authorized-groups: Autorisierte Gruppen
