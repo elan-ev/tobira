@@ -302,7 +302,7 @@ manage:
     unlisted:
         note: Dieses Video ist ungelistet.
         explanation: >
-          Ungelistete Videos sind nur über ihrem direkten Link aufrufbar.
+          Ungelistete Videos sind nur über ihren direkten Link aufrufbar.
           Dies ist equivalent zu einem Passwortschutz.
     reset-modal:
       label: Zurücksetzen
