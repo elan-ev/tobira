@@ -67,6 +67,7 @@ struct VersionStats {
     build_time_utc: &'static str,
     git_commit_hash: &'static str,
     git_was_dirty: bool,
+    target: &'static str,
 }
 
 #[derive(Debug, Serialize)]
@@ -103,6 +104,7 @@ impl Stats {
                 build_time_utc: crate::version::build_time_utc(),
                 git_commit_hash: crate::version::git_commit_hash(),
                 git_was_dirty: crate::version::git_was_dirty(),
+                target: crate::version::target(),
             },
             config: ConfigStats {
                 download_button_shown: config.general.show_download_button,
