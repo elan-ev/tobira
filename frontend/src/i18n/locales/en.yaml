@@ -298,6 +298,7 @@ manage:
     details:
       title: Video details
       share-direct-link: Share via direct link
+      set-time: 'Start at: '
       copy-direct-link-to-clipboard: Copy video link to clipboard
       open-in-editor: Open in video editor
       referencing-pages: Referencing pages

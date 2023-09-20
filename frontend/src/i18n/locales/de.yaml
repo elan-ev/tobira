@@ -305,6 +305,7 @@ manage:
     details:
       title: Videodetails
       share-direct-link: Via Direktlink teilen
+      set-time: 'Starten bei: '
       copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
       open-in-editor: Im Videoeditor öffnen
       referencing-pages: Referenzierende Seiten

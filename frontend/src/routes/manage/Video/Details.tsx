@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { FiExternalLink } from "react-icons/fi";
 
+import { useEffect, useState } from "react";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
@@ -72,9 +73,63 @@ const Page: React.FC<Props> = ({ event }) => {
     </>;
 };
 
+type TimePickerProps = {
+    setTimestamp: (newTime: string) => void;
+}
+
+export const TimePicker: React.FC<TimePickerProps> = ({ setTimestamp }) => {
+    const { t } = useTranslation();
+    const [time, setTime] = useState<string>("00:00:00");
+
+    const formatTime = (timeValue: string): string => {
+        const [hours, minutes, seconds] = timeValue.split(":");
+        let formattedTime = "";
+        if (hours && hours !== "00") {
+            formattedTime += hours + "h";
+        }
+        if (minutes && minutes !== "00") {
+            formattedTime += minutes + "m";
+        }
+        if (seconds && seconds !== "00") {
+            formattedTime += seconds + "s";
+        }
+
+        return formattedTime;
+    };
+
+    useEffect(() => {
+        setTimestamp(formatTime(time));
+    }, [time]);
+
+    return <div css={{ paddingLeft: 2 }}>
+        <label css={{ color: COLORS.neutral90, fontSize: 14 }}>
+            {t("manage.my-videos.details.set-time")}
+        </label>
+        <input
+            value={time}
+            type="time"
+            step="1"
+            onChange={e => setTime(e.target.value)}
+            css={{
+                border: 0,
+                backgroundColor: "transparent",
+                fontSize: 14,
+                "::-webkit-calendar-picker-indicator": {
+                    display: "none",
+                },
+            }}
+        />
+    </div>;
+};
+
 const DirectLink: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
-    const url = new URL(`/!v/${event.id.slice(2)}`, document.baseURI);
+    const [timestamp, setTimestamp] = useState<string>("");
+
+    let url = new URL(`/!v/${event.id.slice(2)}`, document.baseURI);
+    if (timestamp) {
+        url = new URL(url + `?t=${timestamp}`);
+    }
 
     return (
         <div css={{ marginBottom: 40 }}>
@@ -86,6 +141,7 @@ const DirectLink: React.FC<Props> = ({ event }) => {
                 value={url.href}
                 css={{ width: "100%", fontSize: 14 }}
             />
+            <TimePicker {...{ setTimestamp }} />
         </div>
     );
 };
