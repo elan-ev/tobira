@@ -1,3 +1,0 @@
-
-export const LARGE_GROUPS = ["ROLE_ANONYMOUS", "ROLE_USER"];
-

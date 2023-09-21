@@ -25,9 +25,6 @@ import { i18n } from "i18next";
 import { focusStyle } from ".";
 import { useUser, isRealUser, UserState } from "../User";
 import { COLORS } from "../color";
-import {
-    LARGE_GROUPS,
-} from "../routes/manage/Video/dummyData";
 import { COMMON_ROLES } from "../util/roles";
 import { SelectProps } from "./Input";
 import { searchableSelectStyles, theme } from "./SearchableSelect";
@@ -595,6 +592,8 @@ const DUMMY_USERS: KnownRoles = {
 
 const KNOWN_GROUPS: KnownRoles = BUILTIN_GROUPS;
 const KNOWN_USERS: KnownRoles = DUMMY_USERS;
+
+const LARGE_GROUPS = [COMMON_ROLES.USER, COMMON_ROLES.ANONYMOUS];
 
 const knownRoles = (kind: RoleKind) => match(kind, {
     Group: () => KNOWN_GROUPS,
