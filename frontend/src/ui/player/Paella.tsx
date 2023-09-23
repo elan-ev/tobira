@@ -7,6 +7,7 @@ import { Caption, isHlsTrack, Track } from ".";
 import { SPEEDS } from "./consts";
 import { useTranslation } from "react-i18next";
 import { timeStringToSeconds } from "../../util";
+import { usePlayerContext } from "./PlayerContext";
 
 
 type PaellaPlayerProps = {
@@ -20,7 +21,7 @@ type PaellaPlayerProps = {
     previewImage: string | null;
 };
 
-type PaellaState = {
+export type PaellaState = {
     player: Paella;
     loadPromise: Promise<void>;
 };
@@ -30,7 +31,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
 }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
-    const paella = useRef<PaellaState>();
+    const { paella, setPlayerIsLoaded } = usePlayerContext();
 
     useEffect(() => {
         // If the ref is not set yet (which should not usually happen), we do
@@ -115,11 +116,12 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             });
 
             const time = new URL(window.location.href).searchParams.get("t");
-            if (time) {
-                player.bindEvent("paella:playerLoaded", () => {
+            player.bindEvent("paella:playerLoaded", () => {
+                setPlayerIsLoaded(true);
+                if (time) {
                     player.videoContainer.setCurrentTime(timeStringToSeconds(time));
-                });
-            }
+                }
+            });
 
             const loadPromise = player.loadManifest();
             paella.current = { player, loadPromise };
