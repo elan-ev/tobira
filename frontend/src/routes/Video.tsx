@@ -30,6 +30,7 @@ import {
     useForceRerender,
     translatedConfig,
     currentRef,
+    secondsToTimeString,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
@@ -63,6 +64,7 @@ import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
 import { TimePicker } from "./manage/Video/Details";
+import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 
 
 // ===========================================================================================
@@ -533,9 +535,9 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 };
 
 const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
-    type State = "closed" | "main" | "embed" | "rss";
+    type MenuState = "closed" | "main" | "embed" | "rss";
     /* eslint-disable react/jsx-key */
-    const entries: [Exclude<State, "closed">, ReactElement][] = [
+    const entries: [Exclude<MenuState, "closed">, ReactElement][] = [
         ["main", <LuLink />],
         ["embed", <FiCode />],
         // ["rss", <FiRss />],
@@ -543,14 +545,29 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     /* eslint-enable react/jsx-key */
 
     const { t } = useTranslation();
-    const [state, setState] = useState<State>("closed");
-    const [timestamp, setTimestamp] = useState<string>("");
+    const [menuState, setMenuState] = useState<MenuState>("closed");
+    const prevMenuState = useRef<MenuState>(menuState);
+    const [timestamp, setTimestamp] = useState<string>("0m0s");
+    const [addLinkTimestamp, setAddLinkTimestamp] = useState(false);
+    const [addEmbedTimestamp, setAddEmbedTimestamp] = useState(false);
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef(null);
     const qrModalRef = useRef<ModalHandle>(null);
+    const { paella, playerIsLoaded } = usePlayerContext();
+
     const timeStringPattern = /\?t=(\d+h)?(\d+m)?(\d+s)?/;
 
-    const isActive = (label: State) => label === state;
+
+    useEffect(() => {
+        if (prevMenuState.current === "closed" && playerIsLoaded) {
+            paella.current?.player.videoContainer.currentTime().then(res => {
+                setTimestamp(secondsToTimeString(res));
+            });
+        }
+        prevMenuState.current = menuState;
+    }, [menuState]);
+
+    const isActive = (label: MenuState) => label === menuState;
 
     const tabStyle = {
         display: "flex",
@@ -608,7 +625,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             <ProtoButton
                 disabled={isActive(label)}
                 key={label}
-                onClick={() => setState(label)}
+                onClick={() => setMenuState(label)}
                 css={tabStyle}
             >
                 {icon}
@@ -617,7 +634,9 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         ))}
     </div>;
 
-    const ShowQRCodeButton: React.FC<{ target: string; label: State }> = ({ target, label }) => <>
+    const ShowQRCodeButton: React.FC<{ target: string; label: MenuState }> = (
+        { target, label }
+    ) => <>
         <Button
             onClick={() => currentRef(qrModalRef).open()}
             css={{ width: "max-content" }}
@@ -644,11 +663,11 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         </Modal>
     </>;
 
-    const inner = match(state, {
+    const inner = match(menuState, {
         "closed": () => null,
         "main": () => {
             let url = window.location.href.replace(timeStringPattern, "");
-            url += timestamp ? `?t=${timestamp}` : "";
+            url += addLinkTimestamp && timestamp ? `?t=${timestamp}` : "";
 
             return <>
                 <div>
@@ -657,9 +676,13 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         css={{ fontSize: 14, width: 400 }}
                         value={url}
                     />
-                    <TimePicker {...{ setTimestamp }} />
+                    <TimePicker
+                        {...{ timestamp, setTimestamp }}
+                        checkboxChecked={addLinkTimestamp}
+                        setCheckboxChecked={setAddLinkTimestamp}
+                    />
                 </div>
-                <ShowQRCodeButton target={window.location.href} label={state} />
+                <ShowQRCodeButton target={window.location.href} label={menuState} />
             </>;
         },
         "embed": () => {
@@ -668,7 +691,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 : getPlayerAspectRatio(event.syncedData.tracks);
 
             const url = new URL(location.href.replace(timeStringPattern, ""));
-            url.search = timestamp ? `?t=${timestamp}` : "";
+            url.search = addEmbedTimestamp && timestamp ? `?t=${timestamp}` : "";
             url.pathname = `/~embed/!v/${event.id.slice(2)}`;
 
             const embedCode = `<iframe ${[
@@ -688,11 +711,15 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         label={t("video.embed.copy-embed-code-to-clipboard")}
                         value={embedCode}
                         multiline
-                        css={{ fontSize: 14, width: 400 }}
+                        css={{ fontSize: 14, width: 400, height: 75 }}
                     />
-                    <TimePicker {...{ setTimestamp }} />
+                    <TimePicker
+                        {...{ timestamp, setTimestamp }}
+                        checkboxChecked={addEmbedTimestamp}
+                        setCheckboxChecked={setAddEmbedTimestamp}
+                    />
                 </div>
-                <ShowQRCodeButton target={embedCode} label={state} />
+                <ShowQRCodeButton target={embedCode} label={menuState} />
             </>;
         },
         "rss": () => {
@@ -709,12 +736,14 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             placement="top"
             arrowSize={12}
             ariaRole="dialog"
-            open={state !== "closed"}
-            onClose={() => setState("closed")}
+            open={menuState !== "closed"}
+            onClose={() => setMenuState("closed")}
             viewPortMargin={12}
         >
             <FloatingTrigger>
-                <Button onClick={() => setState(state => state === "closed" ? "main" : "closed")}>
+                <Button onClick={() =>
+                    setMenuState(state => state === "closed" ? "main" : "closed")}
+                >
                     <FiShare2 size={16} />
                     {t("general.action.share")}
                 </Button>

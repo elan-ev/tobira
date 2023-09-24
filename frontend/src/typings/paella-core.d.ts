@@ -22,8 +22,6 @@ declare module "paella-core" {
             unregisterOnUnload?: boolean
         ): () => void;
 
-        public setCurrentTime: (t: number) => Promise<void>;
-
         public unload(): Promise<void>;
     }
 
@@ -58,6 +56,7 @@ declare module "paella-core" {
 
     export interface VideoContainer {
         setCurrentTime: (t: number) => Promise<void>;
+        currentTime: () => Promise<number>;
     }
 
     export type PluginConfig = Record<string, unknown> & {

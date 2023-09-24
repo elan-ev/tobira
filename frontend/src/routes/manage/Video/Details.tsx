@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { FiExternalLink } from "react-icons/fi";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
@@ -74,60 +74,47 @@ const Page: React.FC<Props> = ({ event }) => {
 };
 
 type TimePickerProps = {
+    timestamp: string;
     setTimestamp: (newTime: string) => void;
+    checkboxChecked: boolean;
+    setCheckboxChecked: (newValue: boolean) => void;
 }
 
-export const TimePicker: React.FC<TimePickerProps> = ({ setTimestamp }) => {
+export const TimePicker: React.FC<TimePickerProps> = (
+    { timestamp, setTimestamp, checkboxChecked, setCheckboxChecked }
+) => {
     const { t } = useTranslation();
-    const [time, setTime] = useState<string>("00:00:00");
 
-    const formatTime = (timeValue: string): string => {
-        const [hours, minutes, seconds] = timeValue.split(":");
-        let formattedTime = "";
-        if (hours && hours !== "00") {
-            formattedTime += hours + "h";
-        }
-        if (minutes && minutes !== "00") {
-            formattedTime += minutes + "m";
-        }
-        if (seconds && seconds !== "00") {
-            formattedTime += seconds + "s";
-        }
-
-        return formattedTime;
-    };
-
-    useEffect(() => {
-        setTimestamp(formatTime(time));
-    }, [time]);
-
-    return <div css={{ paddingLeft: 2 }}>
+    return <>
+        <input
+            type="checkbox"
+            checked={checkboxChecked}
+            onChange={() => setCheckboxChecked(!checkboxChecked)}
+            css={{ margin: "0 4px" }}
+        />
         <label css={{ color: COLORS.neutral90, fontSize: 14 }}>
             {t("manage.my-videos.details.set-time")}
         </label>
         <input
-            value={time}
-            type="time"
-            step="1"
-            onChange={e => setTime(e.target.value)}
+            disabled={!checkboxChecked}
+            value={timestamp}
+            onChange={e => setTimestamp(e.target.value)}
             css={{
                 border: 0,
                 backgroundColor: "transparent",
                 fontSize: 14,
-                "::-webkit-calendar-picker-indicator": {
-                    display: "none",
-                },
             }}
         />
-    </div>;
+    </>;
 };
 
 const DirectLink: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
-    const [timestamp, setTimestamp] = useState<string>("");
+    const [timestamp, setTimestamp] = useState<string>("0m0s");
+    const [checkboxChecked, setCheckboxChecked] = useState(false);
 
     let url = new URL(`/!v/${event.id.slice(2)}`, document.baseURI);
-    if (timestamp) {
+    if (timestamp && checkboxChecked) {
         url = new URL(url + `?t=${timestamp}`);
     }
 
@@ -141,7 +128,12 @@ const DirectLink: React.FC<Props> = ({ event }) => {
                 value={url.href}
                 css={{ width: "100%", fontSize: 14 }}
             />
-            <TimePicker {...{ setTimestamp }} />
+            <TimePicker {...{
+                timestamp,
+                setTimestamp,
+                checkboxChecked,
+                setCheckboxChecked,
+            }} />
         </div>
     );
 };
