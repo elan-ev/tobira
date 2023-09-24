@@ -1,4 +1,4 @@
-import React, { useId, useState } from "react";
+import React, { Fragment, ReactNode, useId, useState } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { WithTooltip } from "@opencast/appkit";
 
@@ -49,6 +49,93 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
         />
     ),
 );
+
+type InputWithCheckboxProps = {
+    checkboxChecked: boolean;
+    setCheckboxChecked: (newValue: boolean) => void;
+    label: string;
+    input: ReactNode;
+}
+
+/** Checkbox with a label to enable/disable an adjacent input */
+export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = (
+    { checkboxChecked, setCheckboxChecked, label, input }
+) => <div css={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+    <input
+        type="checkbox"
+        checked={checkboxChecked}
+        onChange={() => setCheckboxChecked(!checkboxChecked)}
+        css={{ margin: "0 4px" }}
+    />
+    <label css={{ color: COLORS.neutral90, fontSize: 14 }}>
+        {label}
+    </label>
+    {input}
+</div>;
+
+type TimeInputProps = {
+    timestamp: string;
+    setTimestamp: (newTime: string) => void;
+    disabled: boolean;
+}
+
+/** A custom three-part input for time inputs split into hours, minutes and seconds */
+export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, disabled }) => {
+    const timeParts = (/(\d+h)?(\d+m)?(\d+s)?/).exec(timestamp)?.slice(1) ?? [];
+    const [hours, minutes, seconds] = timeParts
+        .map(part => part ? parseInt(part.replace(/\D/g, "")) : 0);
+
+    const handleTimeChange = (newValue: number, type: TimeUnit) => {
+        if (isNaN(newValue)) {
+            return;
+        }
+
+        const cappedValue = Math.min(newValue, 59);
+        const newTimestamp = `${type === "h" ? cappedValue : hours}h`
+            + `${type === "m" ? cappedValue : minutes}m`
+            + `${type === "s" ? cappedValue : seconds}s`;
+
+        setTimestamp(newTimestamp);
+    };
+
+    type TimeUnit = "h" | "m" | "s";
+    const entries: [number, TimeUnit][] = [
+        [hours, "h"],
+        [minutes, "m"],
+        [seconds, "s"],
+    ];
+
+    return (
+        <div css={{ color: disabled ? COLORS.neutral70 : COLORS.neutral90 }}>
+            {entries.map(([time, unit]) => <Fragment key={`${unit}-input`}>
+                <input
+                    {...{ disabled }}
+                    value={time}
+                    maxLength={2}
+                    onChange={e => handleTimeChange(Number(e.target.value), unit)}
+                    css={{
+                        width: time > 9 ? 24 : "2ch",
+                        lineHeight: 1,
+                        padding: 0,
+                        border: 0,
+                        textAlign: "center",
+                        borderRadius: 4,
+                        outline: `1px solid ${COLORS.neutral20}`,
+                        outlineOffset: "-2px",
+                        userSelect: "all",
+                        ...focusStyle({ inset: true }),
+                        ":disabled": {
+                            textAlign: "right",
+                            backgroundColor: "transparent",
+                            outline: "none",
+                        },
+                    }}
+                />
+                <span>{unit}</span>
+            </Fragment>)}
+        </div>
+    );
+};
 
 export type SelectProps = React.ComponentPropsWithoutRef<"select"> & {
     error?: boolean;

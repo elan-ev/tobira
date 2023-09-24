@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
-import { CopyableInput, Input, TextArea } from "../../../ui/Input";
+import { CopyableInput, Input, InputWithCheckbox, TextArea, TimeInput } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { isRealUser, useUser } from "../../../User";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
@@ -73,41 +73,6 @@ const Page: React.FC<Props> = ({ event }) => {
     </>;
 };
 
-type TimePickerProps = {
-    timestamp: string;
-    setTimestamp: (newTime: string) => void;
-    checkboxChecked: boolean;
-    setCheckboxChecked: (newValue: boolean) => void;
-}
-
-export const TimePicker: React.FC<TimePickerProps> = (
-    { timestamp, setTimestamp, checkboxChecked, setCheckboxChecked }
-) => {
-    const { t } = useTranslation();
-
-    return <>
-        <input
-            type="checkbox"
-            checked={checkboxChecked}
-            onChange={() => setCheckboxChecked(!checkboxChecked)}
-            css={{ margin: "0 4px" }}
-        />
-        <label css={{ color: COLORS.neutral90, fontSize: 14 }}>
-            {t("manage.my-videos.details.set-time")}
-        </label>
-        <input
-            disabled={!checkboxChecked}
-            value={timestamp}
-            onChange={e => setTimestamp(e.target.value)}
-            css={{
-                border: 0,
-                backgroundColor: "transparent",
-                fontSize: 14,
-            }}
-        />
-    </>;
-};
-
 const DirectLink: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
     const [timestamp, setTimestamp] = useState<string>("0m0s");
@@ -128,12 +93,11 @@ const DirectLink: React.FC<Props> = ({ event }) => {
                 value={url.href}
                 css={{ width: "100%", fontSize: 14 }}
             />
-            <TimePicker {...{
-                timestamp,
-                setTimestamp,
-                checkboxChecked,
-                setCheckboxChecked,
-            }} />
+            <InputWithCheckbox
+                {...{ checkboxChecked, setCheckboxChecked }}
+                label={t("manage.my-videos.details.set-time")}
+                input={<TimeInput {...{ timestamp, setTimestamp }} disabled={!checkboxChecked} />}
+            />
         </div>
     );
 };

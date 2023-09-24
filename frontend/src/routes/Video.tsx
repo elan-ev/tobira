@@ -39,7 +39,7 @@ import { Link, useRouter } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
-import { CopyableInput } from "../ui/Input";
+import { CopyableInput, InputWithCheckbox, TimeInput } from "../ui/Input";
 import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
 import {
     VideoPageEventData$data,
@@ -63,7 +63,6 @@ import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
-import { TimePicker } from "./manage/Video/Details";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 
 
@@ -676,10 +675,14 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         css={{ fontSize: 14, width: 400 }}
                         value={url}
                     />
-                    <TimePicker
-                        {...{ timestamp, setTimestamp }}
+                    <InputWithCheckbox
                         checkboxChecked={addLinkTimestamp}
                         setCheckboxChecked={setAddLinkTimestamp}
+                        label={t("manage.my-videos.details.set-time")}
+                        input={<TimeInput
+                            {...{ timestamp, setTimestamp }}
+                            disabled={!addLinkTimestamp}
+                        />}
                     />
                 </div>
                 <ShowQRCodeButton target={window.location.href} label={menuState} />
@@ -713,10 +716,14 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         multiline
                         css={{ fontSize: 14, width: 400, height: 75 }}
                     />
-                    <TimePicker
-                        {...{ timestamp, setTimestamp }}
+                    <InputWithCheckbox
                         checkboxChecked={addEmbedTimestamp}
                         setCheckboxChecked={setAddEmbedTimestamp}
+                        label={t("manage.my-videos.details.set-time")}
+                        input={<TimeInput
+                            {...{ timestamp, setTimestamp }}
+                            disabled={!addEmbedTimestamp}
+                        />}
                     />
                 </div>
                 <ShowQRCodeButton target={embedCode} label={menuState} />
