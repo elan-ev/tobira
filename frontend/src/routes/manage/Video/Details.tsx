@@ -14,6 +14,7 @@ import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
 import { buttonStyle } from "../../../ui/Button";
 import { COLORS } from "../../../color";
+import { secondsToTimeString } from "../../../util";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -75,12 +76,12 @@ const Page: React.FC<Props> = ({ event }) => {
 
 const DirectLink: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
-    const [timestamp, setTimestamp] = useState<string>("0m0s");
+    const [timestamp, setTimestamp] = useState<number>(0);
     const [checkboxChecked, setCheckboxChecked] = useState(false);
 
     let url = new URL(`/!v/${event.id.slice(2)}`, document.baseURI);
     if (timestamp && checkboxChecked) {
-        url = new URL(url + `?t=${timestamp}`);
+        url = new URL(url + `?t=${secondsToTimeString(timestamp)}`);
     }
 
     return (

@@ -74,14 +74,16 @@ export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = (
 </div>;
 
 type TimeInputProps = {
-    timestamp: string;
-    setTimestamp: (newTime: string) => void;
+    timestamp: number;
+    setTimestamp: (newTime: number) => void;
     disabled: boolean;
 }
 
 /** A custom three-part input for time inputs split into hours, minutes and seconds */
 export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, disabled }) => {
-    const timeParts = (/(\d+h)?(\d+m)?(\d+s)?/).exec(timestamp)?.slice(1) ?? [];
+    const timeParts = (/(\d+h)?(\d+m)?(\d+s)?/)
+        .exec(secondsToTimeString(timestamp))?.slice(1) ?? [];
+
     const [hours, minutes, seconds] = timeParts
         .map(part => part ? parseInt(part.replace(/\D/g, "")) : 0);
 
@@ -95,7 +97,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
             + `${type === "m" ? cappedValue : minutes}m`
             + `${type === "s" ? cappedValue : seconds}s`;
 
-        setTimestamp(newTimestamp);
+        setTimestamp(timeStringToSeconds(timeString));
     };
 
     type TimeUnit = "h" | "m" | "s";

@@ -545,7 +545,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 
     const { t } = useTranslation();
     const [menuState, setMenuState] = useState<MenuState>("closed");
-    const [timestamp, setTimestamp] = useState<string>("0m0s");
+    const [timestamp, setTimestamp] = useState<number>(0);
     const [addLinkTimestamp, setAddLinkTimestamp] = useState(false);
     const [addEmbedTimestamp, setAddEmbedTimestamp] = useState(false);
     const isDark = useColorScheme().scheme === "dark";
@@ -655,7 +655,9 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         "closed": () => null,
         "main": () => {
             let url = window.location.href.replace(timeStringPattern, "");
-            url += addLinkTimestamp && timestamp ? `?t=${timestamp}` : "";
+            url += addLinkTimestamp && timestamp
+                ? `?t=${secondsToTimeString(timestamp)}`
+                : "";
 
             return <>
                 <div>
@@ -683,7 +685,9 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 : getPlayerAspectRatio(event.syncedData.tracks);
 
             const url = new URL(location.href.replace(timeStringPattern, ""));
-            url.search = addEmbedTimestamp && timestamp ? `?t=${timestamp}` : "";
+            url.search = addEmbedTimestamp && timestamp
+                ? `?t=${secondsToTimeString(timestamp)}`
+                : "";
             url.pathname = `/~embed/!v/${event.id.slice(2)}`;
 
             const embedCode = `<iframe ${[
@@ -741,7 +745,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     setMenuState(state => state === "closed" ? "main" : "closed");
                     if (playerIsLoaded) {
                         paella.current?.player.videoContainer.currentTime().then(res => {
-                            setTimestamp(secondsToTimeString(res));
+                            setTimestamp(res);
                         });
                     }
                 }}>
