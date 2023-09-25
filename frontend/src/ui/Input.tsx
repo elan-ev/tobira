@@ -1,4 +1,4 @@
-import React, { Fragment, ReactNode, useId, useState } from "react";
+import React, { Fragment, ReactNode, useId, useRef, useState } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { WithTooltip } from "@opencast/appkit";
 
@@ -88,11 +88,13 @@ export type TimeUnit = "h" | "m" | "s";
 
 /** A custom three-part input for time inputs split into hours, minutes and seconds */
 export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, disabled }) => {
+    const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+
     const hours = Math.floor(timestamp / 3600);
     const minutes = Math.floor((timestamp % 3600) / 60);
     const seconds = Math.floor(timestamp % 60);
 
-    const handleTimeChange = (newValue: number, type: TimeUnit) => {
+    const handleInput = (newValue: number, type: TimeUnit, index: number) => {
         if (isNaN(newValue) || newValue < 0 || newValue > 99) {
             return;
         }
@@ -103,6 +105,30 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
             + `${type === "s" ? cappedValue : seconds}s`;
 
         setTimestamp(timeStringToSeconds(timeString));
+
+        if (index < 2 && newValue > 9) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleArrowNavigation = (
+        e: React.KeyboardEvent<HTMLInputElement>,
+        index: number,
+    ) => {
+        const inputElement = inputRefs.current[index];
+
+        if (e.key === "ArrowLeft" && index > 0 && inputElement?.selectionStart === 0) {
+            e.preventDefault();
+            inputRefs.current[index - 1]?.focus();
+        }
+
+        if (
+            e.key === "ArrowRight" && index < inputRefs.current.length - 1
+            && inputElement?.selectionStart === inputElement?.value.length
+        ) {
+            e.preventDefault();
+            inputRefs.current[index + 1]?.focus();
+        }
     };
 
     const entries: [number, TimeUnit][] = [
@@ -124,13 +150,15 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
                 outline: `1px solid ${COLORS.neutral20}`,
             },
         }}>
-            {entries.map(([time, unit]) => <Fragment key={`${unit}-input`}>
+            {entries.map(([time, unit], index) => <Fragment key={`${unit}-input`}>
                 <input
                     {...{ disabled }}
+                    ref={ref => (inputRefs.current[index] = ref)}
                     value={time}
                     inputMode="numeric"
-                    onChange={e => handleTimeChange(Number(e.target.value), unit)}
+                    onChange={e => handleInput(Number(e.target.value), unit, index)}
                     onFocus={e => e.target.select()}
+                    onKeyDown={e => handleArrowNavigation(e, index)}
                     css={{
                         width: time > 9 ? "2ch" : "1ch",
                         lineHeight: 1,
