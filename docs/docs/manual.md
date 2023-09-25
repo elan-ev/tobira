@@ -14,49 +14,50 @@ There is one home page (also called start page, or root), which is the first thi
 Each page can have sub-pages.
 Moderators can add and remove these pages.
 
-In addition to this main page tree, each user (who is allowed to) can manage their own page tree.
+In addition to this main page tree, each user (who is allowed to) can create and manage their own page tree.
 These pages are called "user pages".
-User pages do not appear in the search or anywhere in the main page tree; one has to know the username or link to a user page in order to visit it.
+User pages and the content places there do not appear in the search or anywhere in the main page tree; one has to know the username or link to a user page in order to visit it.
+(Content that also appears on public pages, will also appear in the search.)
 
-Each page contains an ordered list of "content blocks".
-Currently there are title blocks, text blocks, series blocks and video blocks.
+Each page has a name (which is shown at the very top), can have sub-pages, and can contain an ordered list of "content blocks".
+Currently, there are title blocks, text blocks, series blocks and video blocks.
 
 
 ## Routes
 
-These are the different routes that exist in Tobira.
+Different routes exist in Tobira to access pages, videos, the management section, or other features of Tobira.
 The values `in this style` are the URL paths, e.g. what the browser will show after your domain (e.g. `tobira.my-university.de`) when visiting that route.
 
 - **Main pages**: `/<path/to/page>`.
-  Shows a page in the page tree described above.
+  Shows a page in the page tree.
   There are certain limitations on the path segments that can be used here in order to not collide with the routes defined below.
   Examples:
-    - `/lectures/biology/2023`
-    - `/conferences`
     - `/` (*home page*)
+    - `/conferences`
+    - `/lectures/biology/2023`
 
 
 - **User pages**: `/@<userid>/<path/to/page>`.
-  User pages as described above.
+  Shows a user page.
   They always start with `/@` and then the user ID of the owning user.
   Examples:
-    - `/@peter/math-explanations`
     - `/@peter` (user *root* page)
+    - `/@peter/math-explanations`
 
 
 - **Videos**: `/<path/to/page>/v/<videoid>`.
-  Videos with *page context*, meaning: a video (or its series) is included on a page.
-  When clicking on the video's thumbnail, you get to this page.
-  The navigation of the page is shown.
+  Shows a video with *page context* (meaning: a video or its series is included on a page).
+  The navigation of that page is shown.
+  If the video’s series is included on a page, you get to this page when clicking on the video's thumbnail.
   Also works for user pages.
   Examples:
     - `/lectures/biology/2023/v/L5CUekz9uQ0`
     - `/v/ENIGYvfETox`
-    - `/@peter/dancing/v/HFl9DghSw4x`
+    - `/@peter/dance-lessons/v/HFl9DghSw4x`
 
 
 - **Video direct links**: `/!v/<videoid>` or `/!v/:<oc_id>`.
-  Videos without *page context*.
+  Shows a video without *page context*.
   The home page navigation is shown.
   Useful when the video is not included in any page yet, or if you want to generate a link from an Opencast ID.
   Examples:
