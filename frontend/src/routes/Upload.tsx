@@ -743,11 +743,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                     control={control}
                     render={({ field }) => <AclSelector
                         userIsRequired
-                        onChange={setState => {
-                            // Why tho...¯\(°_o)/¯
-                            field.onChange(setState);
-                            field.onChange(field.value);
-                        }}
+                        onChange={field.onChange}
                         acl={field.value}
                     />}
                 />

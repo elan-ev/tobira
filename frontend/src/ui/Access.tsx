@@ -9,14 +9,7 @@ import {
     notNullish,
     screenWidthAtMost,
 } from "@opencast/appkit";
-import {
-    createContext,
-    useRef,
-    useState,
-    useContext,
-    Dispatch,
-    SetStateAction,
-} from "react";
+import { createContext, useRef, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { FiX, FiAlertTriangle } from "react-icons/fi";
 import { MultiValue } from "react-select";
@@ -48,7 +41,7 @@ type Option = {
 type AclContext = {
     userIsRequired: boolean;
     acl: Acl;
-    onChange: Dispatch<SetStateAction<Acl>>;
+    change: (f: (acl: Acl) => void) => void;
 }
 
 const AclContext = createContext<AclContext | null>(null);
@@ -62,15 +55,23 @@ type AclSelectorProps = {
      * This is necessary for the acl-selection in the uploader.
      */
     userIsRequired?: boolean;
-    onChange: Dispatch<SetStateAction<Acl>>;
+    onChange: (newAcl: Acl) => void;
 }
 
 export const AclSelector: React.FC<AclSelectorProps> = (
     { acl, userIsRequired = false, onChange }
 ) => {
     const [groupAcl, userAcl] = splitAcl(acl);
+    const change: AclContext["change"] = f => {
+        const copy = {
+            readRoles: new Set(acl.readRoles),
+            writeRoles: new Set(acl.writeRoles),
+        };
+        f(copy);
+        onChange(copy);
+    };
 
-    return <AclContext.Provider value={{ userIsRequired, acl, onChange }}>
+    return <AclContext.Provider value={{ userIsRequired, acl, change }}>
         <div css={{
             display: "flex",
             flexWrap: "wrap",
@@ -94,7 +95,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { onChange } = useAclContext();
+    const { change } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
 
     // Turn known roles into selectable options that react-select understands.
@@ -143,42 +144,20 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     }
 
 
-    const remove = (item: Option) => {
-        onChange(prev => {
-            prev.readRoles.delete(item.value);
-            prev.writeRoles.delete(item.value);
-            return {
-                readRoles: new Set(prev.readRoles),
-                writeRoles: new Set(prev.writeRoles),
-            };
-        });
-    };
+    const remove = (item: Option) => change(prev => {
+        prev.readRoles.delete(item.value);
+        prev.writeRoles.delete(item.value);
+    });
 
-    const handleCreate = (inputValue: string) => {
-        onChange(prev => {
-            prev.readRoles.add(inputValue);
-            return {
-                ...prev,
-                readRoles: new Set(prev.readRoles),
-            };
-        });
-    };
+    const handleCreate = (inputValue: string) => change(prev => {
+        prev.readRoles.add(inputValue);
+    });
 
-    const handleChange = (choice: MultiValue<Option>) => {
-        const newRoles = choice
+    const handleChange = (choice: MultiValue<Option>) => change(prev => {
+        choice
             .filter(option => !selection.includes(option))
-            .map(option => option.value);
-
-        onChange(prev => {
-            for (const role of newRoles) {
-                prev.readRoles.add(role);
-            }
-            return {
-                ...prev,
-                readRoles: new Set(prev.readRoles),
-            };
-        });
-    };
+            .forEach(option => prev.readRoles.add(option.value));
+    });
 
     const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
         const clipboardData = event.clipboardData.getData("Text");
@@ -379,7 +358,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const ref = useRef<FloatingHandle>(null);
     const user = useUser();
     const { t } = useTranslation();
-    const { userIsRequired, acl, onChange } = useAclContext();
+    const { userIsRequired, acl, change } = useAclContext();
     const [action, setAction] = useState<Action>(
         acl.writeRoles.has(item.value) ? "write" : "read"
     );
@@ -438,16 +417,12 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                             description={translations(actionType).description}
                             onClick={() => {
                                 setAction(actionType);
-                                onChange(prev => {
+                                change(prev => {
                                     if (actionType === "write") {
                                         prev.writeRoles.add(item.value);
                                     } else {
                                         prev.writeRoles.delete(item.value);
                                     }
-                                    return {
-                                        ...prev,
-                                        writeRoles: new Set(prev.writeRoles),
-                                    };
                                 });
                             }}
                             close={() => ref.current?.close()}
