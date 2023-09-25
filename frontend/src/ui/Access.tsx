@@ -72,8 +72,6 @@ export const AclSelector: React.FC<AclSelectorProps> = (
     return <AclContext.Provider value={{ userIsRequired, acl, onChange }}>
         <div css={{
             display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
             flexWrap: "wrap",
             gap: 24,
         }}>
@@ -201,10 +199,11 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
 
 
     return <div css={{
-        flex: "1 1 320px",
+        flex: "1 1 420px",
+        minWidth: 420,
         display: "flex",
         flexDirection: "column",
-        maxWidth: 900,
+        maxWidth: 700,
     }}>
         <strong>{translations.heading}</strong>
         <div onPaste={handlePaste}>
@@ -231,16 +230,24 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         <div>
             <table css={{
                 marginTop: 20,
-                tableLayout: "auto",
+                tableLayout: "fixed",
                 width: "100%",
                 borderRadius: 4,
                 borderCollapse: "collapse",
                 backgroundColor: COLORS.neutral10,
                 "th, td": {
                     textAlign: "left",
-                    padding: "6px 12px",
+                    padding: 6,
+                    ":first-of-type": {
+                        paddingLeft: 12,
+                    },
                 },
             }}>
+                <colgroup>
+                    <col css={{ }} />
+                    <col css={{ width: i18n.resolvedLanguage === "en" ? 190 : 224 }} />
+                    <col css={{ width: 42 }} />
+                </colgroup>
                 <thead>
                     <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
                         <th>{translations.columnHeader}</th>
@@ -308,14 +315,14 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
                 </span>
             </td>
             <td>
-                <span css={{ display: "flex" }}>
+                <div css={{ display: "flex", "> div:first-of-type": { flex: "1" } }}>
                     <ActionsMenu {...{ item, kind }} />
                     {LARGE_GROUPS.includes(item.value)
                         && acl.writeRoles.has(item.value)
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
                     }
-                </span>
+                </div>
             </td>
             <td>
                 <ProtoButton
@@ -355,7 +362,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<FloatingHandle>(null);
     const user = useUser();
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { userIsRequired, acl, onChange } = useAclContext();
     const [action, setAction] = useState<Action>(
         acl.writeRoles.has(item.value) ? "write" : "read"
@@ -384,7 +391,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
             label={t("manage.access.table.actions.title")}
             triggerContent={<>{translations(action).label}</>}
             triggerStyles={{
-                width: i18n.resolvedLanguage === "en" ? 150 : 190,
+                width: "100%",
                 gap: 0,
                 padding: "0 4px 0 8px",
                 justifyContent: "space-between",
