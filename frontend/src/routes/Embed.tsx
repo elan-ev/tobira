@@ -13,6 +13,7 @@ import { Spinner } from "../ui/Spinner";
 import { MovingTruck } from "../ui/Waiting";
 import { b64regex } from "./util";
 import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
+import { PlayerContextProvider } from "../ui/player/PlayerContext";
 
 
 const query = graphql`
@@ -60,7 +61,9 @@ export const EmbedVideoRoute = makeRoute(url => {
                     }} />
                 </PlayerPlaceholder>
             }>
-                <Embed queryRef={queryRef} />
+                <PlayerContextProvider>
+                    <Embed queryRef={queryRef} />
+                </PlayerContextProvider>
             </Suspense>
         </ErrorBoundary>,
         dispose: () => queryRef.dispose(),
