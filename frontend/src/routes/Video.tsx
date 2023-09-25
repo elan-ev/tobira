@@ -545,7 +545,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 
     const { t } = useTranslation();
     const [menuState, setMenuState] = useState<MenuState>("closed");
-    const [timestamp, setTimestamp] = useState<number>(0);
+    const [timestamp, setTimestamp] = useState(0);
     const [addLinkTimestamp, setAddLinkTimestamp] = useState(false);
     const [addEmbedTimestamp, setAddEmbedTimestamp] = useState(false);
     const isDark = useColorScheme().scheme === "dark";
@@ -663,7 +663,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 <div>
                     <CopyableInput
                         label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
-                        css={{ fontSize: 14, width: 400 }}
+                        css={{ fontSize: 14, width: 400, marginBottom: 6 }}
                         value={url}
                     />
                     <InputWithCheckbox
@@ -707,7 +707,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         label={t("video.embed.copy-embed-code-to-clipboard")}
                         value={embedCode}
                         multiline
-                        css={{ fontSize: 14, width: 400, height: 75 }}
+                        css={{ fontSize: 14, width: 400, height: 75, marginBottom: 6 }}
                     />
                     <InputWithCheckbox
                         checkboxChecked={addEmbedTimestamp}

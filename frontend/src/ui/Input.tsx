@@ -2,9 +2,10 @@ import React, { Fragment, ReactNode, useId, useState } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { WithTooltip } from "@opencast/appkit";
 
-import { focusStyle } from ".";
 import { Button } from "./Button";
 import { COLORS } from "../color";
+import { timeStringToSeconds } from "../util";
+import { focusStyle } from ".";
 
 
 const style = (error: boolean) => ({
@@ -65,9 +66,13 @@ export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = (
         type="checkbox"
         checked={checkboxChecked}
         onChange={() => setCheckboxChecked(!checkboxChecked)}
-        css={{ margin: "0 4px" }}
+        css={{ marginRight: 8 }}
     />
-    <label css={{ color: COLORS.neutral90, fontSize: 14 }}>
+    <label css={{
+        color: checkboxChecked ? COLORS.neutral90 : COLORS.neutral70,
+        fontSize: 14,
+        marginRight: 6,
+    }}>
         {label}
     </label>
     {input}
@@ -79,28 +84,27 @@ type TimeInputProps = {
     disabled: boolean;
 }
 
+export type TimeUnit = "h" | "m" | "s";
+
 /** A custom three-part input for time inputs split into hours, minutes and seconds */
 export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, disabled }) => {
-    const timeParts = (/(\d+h)?(\d+m)?(\d+s)?/)
-        .exec(secondsToTimeString(timestamp))?.slice(1) ?? [];
-
-    const [hours, minutes, seconds] = timeParts
-        .map(part => part ? parseInt(part.replace(/\D/g, "")) : 0);
+    const hours = Math.floor(timestamp / 3600);
+    const minutes = Math.floor((timestamp % 3600) / 60);
+    const seconds = Math.floor(timestamp % 60);
 
     const handleTimeChange = (newValue: number, type: TimeUnit) => {
-        if (isNaN(newValue)) {
+        if (isNaN(newValue) || newValue < 0 || newValue > 99) {
             return;
         }
 
         const cappedValue = Math.min(newValue, 59);
-        const newTimestamp = `${type === "h" ? cappedValue : hours}h`
+        const timeString = `${type === "h" ? cappedValue : hours}h`
             + `${type === "m" ? cappedValue : minutes}m`
             + `${type === "s" ? cappedValue : seconds}s`;
 
         setTimestamp(timeStringToSeconds(timeString));
     };
 
-    type TimeUnit = "h" | "m" | "s";
     const entries: [number, TimeUnit][] = [
         [hours, "h"],
         [minutes, "m"],
@@ -108,32 +112,39 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
     ];
 
     return (
-        <div css={{ color: disabled ? COLORS.neutral70 : COLORS.neutral90 }}>
+        <div css={{
+            color: disabled ? COLORS.neutral70 : COLORS.neutral90,
+            fontSize: 14,
+            borderRadius: 4,
+            padding: "0 2px",
+            ":focus-within": {
+                outline: `2.5px solid ${COLORS.focus}`,
+            },
+            ...!disabled && {
+                outline: `1px solid ${COLORS.neutral20}`,
+            },
+        }}>
             {entries.map(([time, unit]) => <Fragment key={`${unit}-input`}>
                 <input
                     {...{ disabled }}
                     value={time}
-                    maxLength={2}
+                    inputMode="numeric"
                     onChange={e => handleTimeChange(Number(e.target.value), unit)}
+                    onFocus={e => e.target.select()}
                     css={{
-                        width: time > 9 ? 24 : "2ch",
+                        width: time > 9 ? "2ch" : "1ch",
                         lineHeight: 1,
                         padding: 0,
                         border: 0,
-                        textAlign: "center",
-                        borderRadius: 4,
-                        outline: `1px solid ${COLORS.neutral20}`,
-                        outlineOffset: "-2px",
+                        outline: "none",
+                        backgroundColor: "transparent",
                         userSelect: "all",
-                        ...focusStyle({ inset: true }),
                         ":disabled": {
-                            textAlign: "right",
                             backgroundColor: "transparent",
-                            outline: "none",
                         },
                     }}
                 />
-                <span>{unit}</span>
+                <span css={{ marginRight: 1 }}>{unit}</span>
             </Fragment>)}
         </div>
     );

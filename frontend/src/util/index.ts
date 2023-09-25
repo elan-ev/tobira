@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { bug } from "@opencast/appkit";
 
 import CONFIG, { TranslatedString } from "../config";
+import { TimeUnit } from "../ui/Input";
 
 
 /** Retrieves the key of an ID by stripping the "kind" prefix. */
@@ -180,9 +181,12 @@ export const timeStringToSeconds = (timeString: string): number => {
  * e.g. "0h2m4s".
  */
 export const secondsToTimeString = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600) + "h";
-    const minutes = Math.floor((seconds % 3600) / 60) + "m";
-    const remainingSeconds = Math.floor(seconds % 60) + "s";
+    const formatTime = (time: number, unit: TimeUnit): string =>
+        time > 0 ? time.toString().padStart(2, "0") + unit : "";
+
+    const hours = formatTime(Math.floor(seconds / 3600), "h");
+    const minutes = formatTime(Math.floor((seconds % 3600) / 60), "m");
+    const remainingSeconds = formatTime(Math.floor(seconds % 60), "s");
 
     return hours + minutes + remainingSeconds;
 };

@@ -76,7 +76,7 @@ const Page: React.FC<Props> = ({ event }) => {
 
 const DirectLink: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
-    const [timestamp, setTimestamp] = useState<number>(0);
+    const [timestamp, setTimestamp] = useState(0);
     const [checkboxChecked, setCheckboxChecked] = useState(false);
 
     let url = new URL(`/!v/${event.id.slice(2)}`, document.baseURI);
@@ -92,7 +92,7 @@ const DirectLink: React.FC<Props> = ({ event }) => {
             <CopyableInput
                 label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                 value={url.href}
-                css={{ width: "100%", fontSize: 14 }}
+                css={{ width: "100%", fontSize: 14, marginBottom: 6 }}
             />
             <InputWithCheckbox
                 {...{ checkboxChecked, setCheckboxChecked }}
