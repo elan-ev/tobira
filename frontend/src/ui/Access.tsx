@@ -7,6 +7,7 @@ import {
     Floating,
     bug,
     notNullish,
+    screenWidthAtMost,
 } from "@opencast/appkit";
 import {
     createContext,
@@ -200,10 +201,13 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
 
     return <div css={{
         flex: "1 1 420px",
-        minWidth: 420,
         display: "flex",
         flexDirection: "column",
         maxWidth: 700,
+
+        [screenWidthAtMost(480)]: {
+            flexBasis: 280,
+        },
     }}>
         <strong>{translations.heading}</strong>
         <div onPaste={handlePaste}>
@@ -240,6 +244,14 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     padding: 6,
                     ":first-of-type": {
                         paddingLeft: 12,
+                    },
+                },
+                [screenWidthAtMost(480)]: {
+                    fontSize: 14,
+                    "> colgroup > col:nth-of-type(2)": { width: "unset" },
+                    "> colgroup > col:nth-of-type(3)": { width: 35 },
+                    "td:first-of-type": {
+                        overflowWrap: "anywhere",
                     },
                 },
             }}>
@@ -307,15 +319,19 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
                         ? <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>
                         : <>{item.label}</>
                     }
-                    {isSubset
-                        ? <Warning tooltip={t("manage.access.table.subset-warning",
-                            { groups: supersets.join(", ") })} />
-                        : <div css={{ width: 22 }} />
-                    }
+                    {isSubset && <Warning tooltip={
+                        t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
+                    } />}
                 </span>
             </td>
             <td>
-                <div css={{ display: "flex", "> div:first-of-type": { flex: "1" } }}>
+                <div css={{
+                    display: "flex",
+                    "> div:first-of-type": { flex: "1" },
+                    [screenWidthAtMost(480)]: {
+                        lineHeight: 1,
+                    },
+                }}>
                     <ActionsMenu {...{ item, kind }} />
                     {LARGE_GROUPS.includes(item.value)
                         && acl.writeRoles.has(item.value)
@@ -397,6 +413,10 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                 justifyContent: "space-between",
                 ":hover, :focus-visible": { backgroundColor: COLORS.neutral20 },
                 svg: { marginTop: 2, color: COLORS.neutral60 },
+                [screenWidthAtMost(480)]: {
+                    whiteSpace: "normal",
+                    textAlign: "left",
+                },
             }}
             list={
                 <Floating
