@@ -206,7 +206,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         flexDirection: "column",
         maxWidth: 900,
     }}>
-        <h4>{translations.heading}</h4>
+        <strong>{translations.heading}</strong>
         <div onPaste={handlePaste}>
             <CreatableSelect
                 onMenuOpen={() => setMenuIsOpen(true)}

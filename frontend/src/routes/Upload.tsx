@@ -733,7 +733,11 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
 
             {/* ACL */}
             <InputContainer>
-                <label>{t("manage.my-videos.acl.title")}</label>
+                <h2 css={{
+                    marginTop: 32,
+                    marginBottom: 12,
+                    fontSize: 22,
+                }}>{t("manage.my-videos.acl.title")}</h2>
                 <Controller
                     name="acl"
                     control={control}
