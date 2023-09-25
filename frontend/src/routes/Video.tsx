@@ -545,7 +545,6 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 
     const { t } = useTranslation();
     const [menuState, setMenuState] = useState<MenuState>("closed");
-    const prevMenuState = useRef<MenuState>(menuState);
     const [timestamp, setTimestamp] = useState<string>("0m0s");
     const [addLinkTimestamp, setAddLinkTimestamp] = useState(false);
     const [addEmbedTimestamp, setAddEmbedTimestamp] = useState(false);
@@ -555,16 +554,6 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const { paella, playerIsLoaded } = usePlayerContext();
 
     const timeStringPattern = /\?t=(\d+h)?(\d+m)?(\d+s)?/;
-
-
-    useEffect(() => {
-        if (prevMenuState.current === "closed" && playerIsLoaded) {
-            paella.current?.player.videoContainer.currentTime().then(res => {
-                setTimestamp(secondsToTimeString(res));
-            });
-        }
-        prevMenuState.current = menuState;
-    }, [menuState]);
 
     const isActive = (label: MenuState) => label === menuState;
 
@@ -748,9 +737,14 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             viewPortMargin={12}
         >
             <FloatingTrigger>
-                <Button onClick={() =>
-                    setMenuState(state => state === "closed" ? "main" : "closed")}
-                >
+                <Button onClick={() => {
+                    setMenuState(state => state === "closed" ? "main" : "closed");
+                    if (playerIsLoaded) {
+                        paella.current?.player.videoContainer.currentTime().then(res => {
+                            setTimestamp(secondsToTimeString(res));
+                        });
+                    }
+                }}>
                     <FiShare2 size={16} />
                     {t("general.action.share")}
                 </Button>
