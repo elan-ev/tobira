@@ -676,7 +676,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         />}
                     />
                 </div>
-                <ShowQRCodeButton target={window.location.href} label={menuState} />
+                <ShowQRCodeButton target={url} label={menuState} />
             </>;
         },
         "embed": () => {
