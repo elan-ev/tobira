@@ -14,6 +14,14 @@ declare module "paella-core" {
          */
         public loadManifest(): Promise<void>;
 
+        public videoContainer: VideoContainer;
+
+        public bindEvent(
+            event: string,
+            callback: () => void,
+            unregisterOnUnload?: boolean
+        ): () => void;
+
         public unload(): Promise<void>;
     }
 
@@ -44,6 +52,11 @@ declare module "paella-core" {
 
         logLevel?: "DISABLED" | "ERROR" | "WARN" | "INFO" | "DEBUG" | "VERBOSE";
         plugins: Record<string, PluginConfig>;
+    }
+
+    export interface VideoContainer {
+        setCurrentTime: (t: number) => Promise<void>;
+        currentTime: () => Promise<number>;
     }
 
     export type PluginConfig = Record<string, unknown> & {

@@ -1,10 +1,11 @@
-import React, { useId, useState } from "react";
+import React, { Fragment, ReactNode, useId, useRef, useState } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { WithTooltip } from "@opencast/appkit";
 
-import { focusStyle } from ".";
 import { Button } from "./Button";
 import { COLORS } from "../color";
+import { timeStringToSeconds } from "../util";
+import { focusStyle } from ".";
 
 
 const style = (error: boolean) => ({
@@ -49,6 +50,133 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
         />
     ),
 );
+
+type InputWithCheckboxProps = {
+    checkboxChecked: boolean;
+    setCheckboxChecked: (newValue: boolean) => void;
+    label: string;
+    input: ReactNode;
+}
+
+/** Checkbox with a label to enable/disable an adjacent input */
+export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = (
+    { checkboxChecked, setCheckboxChecked, label, input }
+) => <div css={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+    <input
+        type="checkbox"
+        checked={checkboxChecked}
+        onChange={() => setCheckboxChecked(!checkboxChecked)}
+        css={{ marginRight: 8 }}
+    />
+    <label css={{
+        color: checkboxChecked ? COLORS.neutral90 : COLORS.neutral70,
+        fontSize: 14,
+        marginRight: 6,
+    }}>
+        {label}
+    </label>
+    {input}
+</div>;
+
+type TimeInputProps = {
+    timestamp: number;
+    setTimestamp: (newTime: number) => void;
+    disabled: boolean;
+}
+
+export type TimeUnit = "h" | "m" | "s";
+
+/** A custom three-part input for time inputs split into hours, minutes and seconds */
+export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, disabled }) => {
+    const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+
+    const hours = Math.floor(timestamp / 3600);
+    const minutes = Math.floor((timestamp % 3600) / 60);
+    const seconds = Math.floor(timestamp % 60);
+
+    const handleInput = (newValue: number, type: TimeUnit, index: number) => {
+        if (isNaN(newValue) || newValue < 0 || newValue > 99) {
+            return;
+        }
+
+        const cappedValue = Math.min(newValue, 59);
+        const timeString = `${type === "h" ? cappedValue : hours}h`
+            + `${type === "m" ? cappedValue : minutes}m`
+            + `${type === "s" ? cappedValue : seconds}s`;
+
+        setTimestamp(timeStringToSeconds(timeString));
+
+        if (index < 2 && newValue > 9) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleArrowNavigation = (
+        e: React.KeyboardEvent<HTMLInputElement>,
+        index: number,
+    ) => {
+        const inputElement = inputRefs.current[index];
+
+        if (e.key === "ArrowLeft" && index > 0 && inputElement?.selectionStart === 0) {
+            e.preventDefault();
+            inputRefs.current[index - 1]?.focus();
+        }
+
+        if (
+            e.key === "ArrowRight" && index < inputRefs.current.length - 1
+            && inputElement?.selectionStart === inputElement?.value.length
+        ) {
+            e.preventDefault();
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const entries: [number, TimeUnit][] = [
+        [hours, "h"],
+        [minutes, "m"],
+        [seconds, "s"],
+    ];
+
+    return (
+        <div css={{
+            color: disabled ? COLORS.neutral70 : COLORS.neutral90,
+            fontSize: 14,
+            borderRadius: 4,
+            padding: "0 2px",
+            ":focus-within": {
+                outline: `2.5px solid ${COLORS.focus}`,
+            },
+            ...!disabled && {
+                outline: `1px solid ${COLORS.neutral20}`,
+            },
+        }}>
+            {entries.map(([time, unit], index) => <Fragment key={`${unit}-input`}>
+                <input
+                    {...{ disabled }}
+                    ref={ref => (inputRefs.current[index] = ref)}
+                    value={time}
+                    inputMode="numeric"
+                    onChange={e => handleInput(Number(e.target.value), unit, index)}
+                    onFocus={e => e.target.select()}
+                    onKeyDown={e => handleArrowNavigation(e, index)}
+                    css={{
+                        width: time > 9 ? "2ch" : "1ch",
+                        lineHeight: 1,
+                        padding: 0,
+                        border: 0,
+                        outline: "none",
+                        backgroundColor: "transparent",
+                        userSelect: "all",
+                        ":disabled": {
+                            backgroundColor: "transparent",
+                        },
+                    }}
+                />
+                <span css={{ marginRight: 1 }}>{unit}</span>
+            </Fragment>)}
+        </div>
+    );
+};
 
 export type SelectProps = React.ComponentPropsWithoutRef<"select"> & {
     error?: boolean;

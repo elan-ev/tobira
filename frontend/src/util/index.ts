@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { bug } from "@opencast/appkit";
 
 import CONFIG, { TranslatedString } from "../config";
+import { TimeUnit } from "../ui/Input";
 
 
 /** Retrieves the key of an ID by stripping the "kind" prefix. */
@@ -165,3 +166,28 @@ export const toIsoDuration = (milliseconds: number): string => {
 export const isExperimentalFlagSet = () => (
     window.localStorage.getItem("tobiraExperimentalFeatures") === "true"
 );
+
+export const timeStringToSeconds = (timeString: string): number => {
+    const timeSplit = /((\d+)h)?((\d+)m)?((\d+)s)?/.exec(timeString);
+    const hours = timeSplit && timeSplit[2] ? parseInt(timeSplit[2]) * 60 * 60 : 0;
+    const minutes = timeSplit && timeSplit[4] ? parseInt(timeSplit[4]) * 60 : 0;
+    const seconds = timeSplit && timeSplit[6] ? parseInt(timeSplit[6]) : 0;
+
+    return hours + minutes + seconds;
+};
+
+/**
+ * Formats the given number of seconds as string containing hours, minutes and seconds,
+ * e.g. "0h2m4s".
+ */
+export const secondsToTimeString = (seconds: number): string => {
+    const formatTime = (time: number, unit: TimeUnit): string =>
+        time > 0 ? time.toString().padStart(2, "0") + unit : "";
+
+    const hours = formatTime(Math.floor(seconds / 3600), "h");
+    const minutes = formatTime(Math.floor((seconds % 3600) / 60), "m");
+    const remainingSeconds = formatTime(Math.floor(seconds % 60), "s");
+
+    return hours + minutes + remainingSeconds;
+};
+

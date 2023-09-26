@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { FiExternalLink } from "react-icons/fi";
 
+import { useState } from "react";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
-import { CopyableInput, Input, TextArea } from "../../../ui/Input";
+import { CopyableInput, Input, InputWithCheckbox, TextArea, TimeInput } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { isRealUser, useUser } from "../../../User";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
@@ -13,6 +14,7 @@ import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
 import { buttonStyle } from "../../../ui/Button";
 import { COLORS } from "../../../color";
+import { secondsToTimeString } from "../../../util";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -74,7 +76,13 @@ const Page: React.FC<Props> = ({ event }) => {
 
 const DirectLink: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
-    const url = new URL(`/!v/${event.id.slice(2)}`, document.baseURI);
+    const [timestamp, setTimestamp] = useState(0);
+    const [checkboxChecked, setCheckboxChecked] = useState(false);
+
+    let url = new URL(`/!v/${event.id.slice(2)}`, document.baseURI);
+    if (timestamp && checkboxChecked) {
+        url = new URL(url + `?t=${secondsToTimeString(timestamp)}`);
+    }
 
     return (
         <div css={{ marginBottom: 40 }}>
@@ -84,7 +92,12 @@ const DirectLink: React.FC<Props> = ({ event }) => {
             <CopyableInput
                 label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                 value={url.href}
-                css={{ width: "100%", fontSize: 14 }}
+                css={{ width: "100%", fontSize: 14, marginBottom: 6 }}
+            />
+            <InputWithCheckbox
+                {...{ checkboxChecked, setCheckboxChecked }}
+                label={t("manage.my-videos.details.set-time")}
+                input={<TimeInput {...{ timestamp, setTimestamp }} disabled={!checkboxChecked} />}
             />
         </div>
     );

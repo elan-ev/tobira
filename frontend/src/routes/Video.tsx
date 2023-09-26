@@ -30,6 +30,7 @@ import {
     useForceRerender,
     translatedConfig,
     currentRef,
+    secondsToTimeString,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
@@ -38,7 +39,7 @@ import { Link, useRouter } from "../router";
 import { useUser } from "../User";
 import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
-import { CopyableInput } from "../ui/Input";
+import { CopyableInput, InputWithCheckbox, TimeInput } from "../ui/Input";
 import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
 import {
     VideoPageEventData$data,
@@ -62,6 +63,7 @@ import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
+import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 
 
 // ===========================================================================================
@@ -313,8 +315,10 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-        <InlinePlayer event={event} css={{ margin: "0 auto" }} onEventStateChange={rerender} />
-        <Metadata id={event.id} event={event} />
+        <PlayerContextProvider>
+            <InlinePlayer event={event} css={{ margin: "0 auto" }} onEventStateChange={rerender} />
+            <Metadata id={event.id} event={event} />
+        </PlayerContextProvider>
 
         <div css={{ height: 80 }} />
 
@@ -530,9 +534,9 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 };
 
 const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
-    type State = "closed" | "main" | "embed" | "rss";
+    type MenuState = "closed" | "main" | "embed" | "rss";
     /* eslint-disable react/jsx-key */
-    const entries: [Exclude<State, "closed">, ReactElement][] = [
+    const entries: [Exclude<MenuState, "closed">, ReactElement][] = [
         ["main", <LuLink />],
         ["embed", <FiCode />],
         // ["rss", <FiRss />],
@@ -540,12 +544,18 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     /* eslint-enable react/jsx-key */
 
     const { t } = useTranslation();
-    const [state, setState] = useState<State>("closed");
+    const [menuState, setMenuState] = useState<MenuState>("closed");
+    const [timestamp, setTimestamp] = useState(0);
+    const [addLinkTimestamp, setAddLinkTimestamp] = useState(false);
+    const [addEmbedTimestamp, setAddEmbedTimestamp] = useState(false);
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef(null);
     const qrModalRef = useRef<ModalHandle>(null);
+    const { paella, playerIsLoaded } = usePlayerContext();
 
-    const isActive = (label: State) => label === state;
+    const timeStringPattern = /\?t=(\d+h)?(\d+m)?(\d+s)?/;
+
+    const isActive = (label: MenuState) => label === menuState;
 
     const tabStyle = {
         display: "flex",
@@ -603,7 +613,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             <ProtoButton
                 disabled={isActive(label)}
                 key={label}
-                onClick={() => setState(label)}
+                onClick={() => setMenuState(label)}
                 css={tabStyle}
             >
                 {icon}
@@ -612,7 +622,9 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         ))}
     </div>;
 
-    const ShowQRCodeButton: React.FC<{ target: string; label: State }> = ({ target, label }) => <>
+    const ShowQRCodeButton: React.FC<{ target: string; label: MenuState }> = (
+        { target, label }
+    ) => <>
         <Button
             onClick={() => currentRef(qrModalRef).open()}
             css={{ width: "max-content" }}
@@ -639,28 +651,48 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         </Modal>
     </>;
 
-    const inner = match(state, {
+    const inner = match(menuState, {
         "closed": () => null,
-        "main": () => <>
-            <CopyableInput
-                label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
-                css={{ fontSize: 14, width: 400 }}
-                // TODO
-                value={window.location.href}
-            />
-            <ShowQRCodeButton target={window.location.href} label={state} />
-        </>,
+        "main": () => {
+            let url = window.location.href.replace(timeStringPattern, "");
+            url += addLinkTimestamp && timestamp
+                ? `?t=${secondsToTimeString(timestamp)}`
+                : "";
+
+            return <>
+                <div>
+                    <CopyableInput
+                        label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
+                        css={{ fontSize: 14, width: 400, marginBottom: 6 }}
+                        value={url}
+                    />
+                    <InputWithCheckbox
+                        checkboxChecked={addLinkTimestamp}
+                        setCheckboxChecked={setAddLinkTimestamp}
+                        label={t("manage.my-videos.details.set-time")}
+                        input={<TimeInput
+                            {...{ timestamp, setTimestamp }}
+                            disabled={!addLinkTimestamp}
+                        />}
+                    />
+                </div>
+                <ShowQRCodeButton target={url} label={menuState} />
+            </>;
+        },
         "embed": () => {
             const ar = event.syncedData == null
                 ? [16, 9]
                 : getPlayerAspectRatio(event.syncedData.tracks);
 
-            const target = new URL(location.href);
-            target.pathname = `/~embed/!v/${event.id.slice(2)}`;
+            const url = new URL(location.href.replace(timeStringPattern, ""));
+            url.search = addEmbedTimestamp && timestamp
+                ? `?t=${secondsToTimeString(timestamp)}`
+                : "";
+            url.pathname = `/~embed/!v/${event.id.slice(2)}`;
 
             const embedCode = `<iframe ${[
                 'name="Tobira Player"',
-                `src="${target}"`,
+                `src="${url}"`,
                 "allow=fullscreen",
                 `style="${[
                     "border: none;",
@@ -670,13 +702,24 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             ].join(" ")}></iframe>`;
 
             return <>
-                <CopyableInput
-                    label={t("video.embed.copy-embed-code-to-clipboard")}
-                    value={embedCode}
-                    multiline
-                    css={{ fontSize: 14, width: 400 }}
-                />
-                <ShowQRCodeButton target={embedCode} label={state} />
+                <div>
+                    <CopyableInput
+                        label={t("video.embed.copy-embed-code-to-clipboard")}
+                        value={embedCode}
+                        multiline
+                        css={{ fontSize: 14, width: 400, height: 75, marginBottom: 6 }}
+                    />
+                    <InputWithCheckbox
+                        checkboxChecked={addEmbedTimestamp}
+                        setCheckboxChecked={setAddEmbedTimestamp}
+                        label={t("manage.my-videos.details.set-time")}
+                        input={<TimeInput
+                            {...{ timestamp, setTimestamp }}
+                            disabled={!addEmbedTimestamp}
+                        />}
+                    />
+                </div>
+                <ShowQRCodeButton target={embedCode} label={menuState} />
             </>;
         },
         "rss": () => {
@@ -693,12 +736,19 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             placement="top"
             arrowSize={12}
             ariaRole="dialog"
-            open={state !== "closed"}
-            onClose={() => setState("closed")}
+            open={menuState !== "closed"}
+            onClose={() => setMenuState("closed")}
             viewPortMargin={12}
         >
             <FloatingTrigger>
-                <Button onClick={() => setState(state => state === "closed" ? "main" : "closed")}>
+                <Button onClick={() => {
+                    setMenuState(state => state === "closed" ? "main" : "closed");
+                    if (playerIsLoaded) {
+                        paella.current?.player.videoContainer.currentTime().then(res => {
+                            setTimestamp(res);
+                        });
+                    }
+                }}>
                     <FiShare2 size={16} />
                     {t("general.action.share")}
                 </Button>
