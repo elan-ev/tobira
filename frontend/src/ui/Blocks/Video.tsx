@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
 import { FiArrowRightCircle } from "react-icons/fi";
+import { PlayerContextProvider } from "../player/PlayerContext";
 
 
 type Props = {
@@ -58,7 +59,9 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
         {isSynced(event)
-            ? <InlinePlayer event={event} css={{ maxWidth: 800 }} />
+            ? <PlayerContextProvider>
+                <InlinePlayer event={event} css={{ maxWidth: 800 }} />
+            </PlayerContextProvider>
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
         {showLink && <Link
             to={`${basePath}/${keyOfId(event.id)}`}

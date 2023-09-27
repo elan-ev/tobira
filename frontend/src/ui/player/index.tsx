@@ -112,6 +112,8 @@ const delayTill = (date: Date): number => {
 /**
  * A more constrained version of the player component for use in normal page flow.
  * You probably want this one.
+ * Important note: This needs to be placed inside a `<PlayerContextProvider>`
+ * in order to work correctly.
  */
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
     const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
