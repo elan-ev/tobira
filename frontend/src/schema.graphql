@@ -185,6 +185,10 @@ type AuthorizedEvent implements Node {
   created: DateTimeUtc!
   creators: [String!]!
   metadata: ExtraMetadata!
+  "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
+  readRoles: [String!]!
+  "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
+  writeRoles: [String!]!
   syncedData: SyncedEventData
   "Whether the current user has write access to this event."
   canWrite: Boolean!
@@ -525,6 +529,11 @@ type User {
   "The username, a unique string identifying the user."
   username: String!
   email: String
+  """
+    Roles of the user. Note: the frontend should not do any role matching itself,
+    but should rely on Boolean API endpoints like `canUpload` or `event.canWrite`.
+    This endpoint is only for debugging and for special cases like the ACL selector.
+  """
   roles: [String!]!
   "The name of the user intended to be read by humans."
   displayName: String!

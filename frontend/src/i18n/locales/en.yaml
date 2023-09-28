@@ -230,7 +230,6 @@ search:
 
 upload:
   title: Upload video
-  public-note: 'Note: videos uploaded here will be public, i.e. everyone will be able to watch it.'
   drop-to-upload: Drag and drop video file to upload
   not-authorized: You do not have the permission to upload videos.
   select-files: Select file
@@ -272,7 +271,52 @@ upload:
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
 
+acl:
+  unknown-user-note: unknown
+  no-entries: No entries
+  admin-user: Admin
+  groups:
+    admins: Administrators
+    everyone: Everyone
+    logged-in-users: Logged in users
+    moderators: Moderators
+    studio-users: Studio users
+    editors: Editors
+
 manage:
+  access:
+    authorized-groups: Authorized groups
+    authorized-users: Authorized users
+    select:
+      groups: Add groups
+      users: Add users
+      create: 'Create {{item}}'
+    table:
+      group: Group
+      user: User
+      yourself: You
+      subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
+      actions:
+        title: Actions
+        read: Read
+        read-description: Can watch the video and view metadata.
+        write: Read and write
+        large-group-warning: You are giving write-access to a large group. Is this intentional?
+        write-description: Can also edit the video, metadata and other details.
+    unlisted:
+      note: This video is unlisted.
+      explanation: >
+        Unlisted videos can only be found by sharing its direct link. This is equivalent to a password protection.
+    reset-modal:
+      label: Reset
+      title: Reset changes?
+      body: The changes you have made will be reset.
+    save-modal:
+      title: Remove own access?
+      body: The current selection will remove your write-access.
+            Without this, you will lose the ability to make any further edits.
+      confirm: Confirm
+
   dashboard:
     title: Dashboard
     upload-tile: Here you can upload a new video from your computer.
@@ -305,7 +349,7 @@ manage:
       referencing-pages-explanation: 'This video is referenced on the following pages:'
       no-referencing-pages: No pages reference this video.
     acl:
-      title: Manage access
+      title: Access policy
     technical-details:
       title: Technical details
       tracks: Video/audio tracks

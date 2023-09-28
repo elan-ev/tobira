@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FiCornerLeftUp, FiEdit3, FiInfo, FiPlay } from "react-icons/fi";
+import { FiCornerLeftUp, FiEdit3, FiInfo, FiPlay, FiShield } from "react-icons/fi";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
@@ -13,6 +13,7 @@ import { b64regex } from "../../util";
 import { Thumbnail } from "../../../ui/Video";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
 import { Link } from "../../../router";
+import { isExperimentalFlagSet } from "../../../util";
 
 
 export const PAGE_WIDTH = 1100;
@@ -21,7 +22,7 @@ export type QueryResponse = SharedVideoManageQuery["response"];
 export type Event = QueryResponse["event"];
 export type AuthorizedEvent = Extract<Event, { __typename: "AuthorizedEvent" }>;
 
-type ManageVideoSubPageType = "details" | "technical-details";
+type ManageVideoSubPageType = "details" | "technical-details" | "acl";
 
 /** Helper around `makeRoute` for manage single video subpages. */
 export const makeManageVideoRoute = (
@@ -80,6 +81,8 @@ const query = graphql`
                 created
                 canWrite
                 isLive
+                readRoles
+                writeRoles
                 syncedData {
                     duration
                     thumbnail
@@ -131,24 +134,28 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
 
     const id = event.id.substring(2);
 
-    const items = [
+    const entries = [
         {
             url: `/~manage/videos/${id}`,
             page: "details",
             body: <><FiEdit3 />{t("manage.my-videos.details.title")}</>,
         },
-        // {
-        //     url: `/~manage/videos/${id}/access`,
-        //     page: "acl",
-        //     body: <><FiShield />{t("manage.my-videos.acl.title")}</>,
-        // },
         {
             url: `/~manage/videos/${id}/technical-details`,
             page: "technical-details",
             body: <><FiInfo />{t("manage.my-videos.technical-details.title")}</>,
         },
+    ];
 
-    ].map(({ url, page, body }, i) => (
+    if (isExperimentalFlagSet()) {
+        entries.splice(1, 0, {
+            url: `/~manage/videos/${id}/access`,
+            page: "acl",
+            body: <><FiShield />{t("manage.my-videos.acl.title")}</>,
+        });
+    }
+
+    const items = entries.map(({ url, page, body }, i) => (
         <LinkWithIcon key={i} to={url} iconPos="left" active={page === active}>
             {body}
         </LinkWithIcon>

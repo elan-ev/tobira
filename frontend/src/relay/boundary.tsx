@@ -61,6 +61,9 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
         if (error instanceof APIError) {
             // Check that the returned object actually has the fields that are
             // expected.
+            const isStringArray = (array: unknown): array is readonly string[] =>
+                Array.isArray(array) && array.every(element => typeof element === "string");
+
             const user = error.response?.data?.currentUser as unknown;
             if (typeof user === "object" && user
                 && "username" in user && typeof user.username === "string"
@@ -69,6 +72,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                 && "canUseStudio" in user && typeof user.canUseStudio === "boolean"
                 && "canUseEditor" in user && typeof user.canUseEditor === "boolean"
                 && "canCreateUserRealm" in user && typeof user.canCreateUserRealm === "boolean"
+                && "roles" in user && isStringArray(user.roles)
             ) {
                 // `userData = user` unfortunately doesn't work here as the type
                 // of the `user` object is not sufficiently narrowed. Relevant
@@ -80,6 +84,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                     canUseStudio: user.canUseStudio,
                     canUseEditor: user.canUseEditor,
                     canCreateUserRealm: user.canCreateUserRealm,
+                    roles: user.roles,
                 };
             }
         }

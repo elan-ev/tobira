@@ -232,8 +232,6 @@ search:
 
 upload:
   title: Video hochladen
-  public-note: >
-    Hinweis: Hier hochgeladene Videos sind öffentlich, d.h. sie können von allen angeschaut werden.
   drop-to-upload: Videodatei zum Hochladen per Drag-and-drop hinzufügen
   not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   select-files: Datei auswählen
@@ -277,7 +275,57 @@ upload:
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
 
+acl:
+  unknown-user-note: unbekannt
+  no-entries: Keine Einträge
+  admin-user: Admin
+  groups:
+    admins: Administration
+    everyone: Alle
+    logged-in-users: Eingeloggte Nutzende
+    moderators: Moderierende
+    studio-users: Studio-Nutzende
+    editors: Videoeditoren
+
 manage:
+  access:
+    authorized-groups: Autorisierte Gruppen
+    authorized-users: Autorisierte Personen
+    select:
+      groups: Gruppen hinzufügen
+      users: Personen hinzufügen
+      create: '{{item}} erstellen'
+    table:
+      group: Gruppe
+      user: Person
+      yourself: Sie
+      subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
+      actions:
+        title: Berechtigung
+        read: Lesen
+        read-description_one: Kann das Video anschauen und Metadaten sehen.
+        read-description_other: Können das Video anschauen und Metadaten sehen.
+        write: Lesen und schreiben
+        large-group-warning: Sie geben einer großen Gruppe Schreibzugriff. Ist das beabsichtigt?
+        write-description_one: >
+          Kann außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
+        write-description_other: >
+          Können außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
+    unlisted:
+        note: Dieses Video ist ungelistet.
+        explanation: >
+          Ungelistete Videos sind nur über ihren direkten Link aufrufbar.
+          Dies ist equivalent zu einem Passwortschutz.
+    reset-modal:
+      label: Zurücksetzen
+      title: Änderungen zurücksetzen?
+      body: Von Ihnen getätigte Änderungen werden zurückgesetzt.
+    save-modal:
+      title: Eigenen Zugriff entfernen?
+      body: Die aktuelle Auswahl wird ihren Schreibzugriff entfernen.
+            Ohne diesen werden Sie keine weiteren Änderungen vornehmen können.
+      confirm: Bestätigen
+
   dashboard:
     title: Dashboard
     upload-tile: Hier können Sie Videos von Ihrem Computer hochladen.
@@ -312,7 +360,7 @@ manage:
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
     acl:
-      title: Zugangsbeschränkung
+      title: Zugriffsrechte
     technical-details:
       title: Technische Details
       tracks: Video/Audio-Spuren

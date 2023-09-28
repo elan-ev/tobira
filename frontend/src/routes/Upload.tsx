@@ -2,7 +2,7 @@ import React, { MutableRefObject, ReactNode, useEffect, useRef, useState } from 
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { keyframes } from "@emotion/react";
-import { useController, useForm } from "react-hook-form";
+import { Controller, useController, useForm } from "react-hook-form";
 import { FiCheckCircle, FiInfo, FiUpload } from "react-icons/fi";
 import { WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
 
@@ -29,6 +29,8 @@ import { SeriesSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
+import { COMMON_ROLES } from "../util/roles";
+import { Acl, getUserRole, AclSelector } from "../ui/Access";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -59,6 +61,7 @@ type Metadata = {
     title: string;
     description: string;
     series?: string;
+    acl: Acl;
 };
 
 const Upload: React.FC = () => {
@@ -76,7 +79,6 @@ const Upload: React.FC = () => {
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
-            <div css={{ fontSize: 14, marginBottom: 16 }}>{t("upload.public-note")}</div>
             <UploadMain />
         </div>
     );
@@ -651,10 +653,19 @@ type MetaDataEditProps = {
 /** Form that lets the user set metadata about the video */
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     const { t } = useTranslation();
+    const user = useUser();
+    const userRole = getUserRole(user);
+
+    const defaultAcl: Acl = {
+        readRoles: new Set([COMMON_ROLES.ANONYMOUS, userRole]),
+        writeRoles: new Set([userRole]),
+    };
 
     const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
+        defaultValues: { acl: defaultAcl },
     });
+
     const { field: seriesField } = useController({
         name: "series",
         control,
@@ -669,7 +680,16 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     // pressing 'enter' inside inputs doesn't lead to submit the form too
     // early.
     return (
-        <Form noValidate onSubmit={e => e.preventDefault()} css={{ margin: "32px 2px" }}>
+        <Form
+            noValidate
+            onSubmit={e => e.preventDefault()}
+            css={{
+                margin: "32px 2px",
+                "label": {
+                    color: "var(--color-neutral90)",
+                },
+            }}
+        >
             {/* Title */}
             <InputContainer>
                 <TitleLabel htmlFor="title-field" />
@@ -720,8 +740,30 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                 {boxError(errors.series?.message)}
             </InputContainer>
 
+            {/* ACL */}
+            <InputContainer>
+                <h2 css={{
+                    marginTop: 32,
+                    marginBottom: 12,
+                    fontSize: 22,
+                }}>{t("manage.my-videos.acl.title")}</h2>
+                <Controller
+                    name="acl"
+                    control={control}
+                    render={({ field }) => <AclSelector
+                        userIsRequired
+                        onChange={field.onChange}
+                        acl={field.value}
+                    />}
+                />
+            </InputContainer>
+
             {/* Submit button */}
-            <Button kind="happy" disabled={disabled} onClick={onSubmit}>
+            <Button
+                kind="happy"
+                disabled={disabled}
+                css={{ marginTop: 32, marginBottom: 160 }}
+                onClick={onSubmit}>
                 {t("upload.metadata.save")}
             </Button>
         </Form>
@@ -967,7 +1009,8 @@ const finishUpload = async (
                 throw `Field \`userRole\` from 'info/me.json' is not valid: ${userRole}`;
             }
 
-            const acl = constructAcl(["ROLE_ANONYMOUS", userRole], [userRole]);
+            const { readRoles, writeRoles } = metadata.acl;
+            const acl = constructAcl([...readRoles], [...writeRoles]);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
             body.append("mediaPackage", mediaPackage);
