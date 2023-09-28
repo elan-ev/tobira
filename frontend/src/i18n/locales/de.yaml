@@ -278,11 +278,11 @@ upload:
 acl:
   unknown-user-note: unbekannt
   groups:
-    admins: Administratoren
+    admins: Administration
     everyone: Alle
-    logged-in-users: Eingeloggte Nutzer
-    moderators: Moderatoren
-    studio-users: Studio-Nutzer
+    logged-in-users: Eingeloggte Nutzende
+    moderators: Moderierende
+    studio-users: Studio-Nutzende
     editors: Videoeditoren
 
 manage:
