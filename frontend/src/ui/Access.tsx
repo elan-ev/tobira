@@ -198,7 +198,11 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 isMulti
                 isSearchable
                 placeholder={translations.placeholder}
-                isValidNewOption={input => kind === "Group" && /^ROLE_\w+/.test(input)}
+                isValidNewOption={input => {
+                    const validUserRole = /^ROLE_USER_\w+/.test(input);
+                    const validRole = /^ROLE_\w+/.test(input);
+                    return kind === "Group" ? (validRole && !validUserRole) : validUserRole;
+                }}
                 formatCreateLabel={input => t("manage.access.select.create", { item: input })}
                 noOptionsMessage={() => t("general.form.select.no-options")}
                 value={selection}
