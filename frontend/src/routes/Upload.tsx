@@ -680,7 +680,16 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
     // pressing 'enter' inside inputs doesn't lead to submit the form too
     // early.
     return (
-        <Form noValidate onSubmit={e => e.preventDefault()} css={{ margin: "32px 2px" }}>
+        <Form
+            noValidate
+            onSubmit={e => e.preventDefault()}
+            css={{
+                margin: "32px 2px",
+                "label": {
+                    color: "var(--color-neutral90)",
+                },
+            }}
+        >
             {/* Title */}
             <InputContainer>
                 <TitleLabel htmlFor="title-field" />
