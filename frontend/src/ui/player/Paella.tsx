@@ -123,7 +123,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 }
             });
 
-            const loadPromise = player.loadManifest();
+            const loadPromise = player.skin.loadSkin("/~assets/paella/theme.json")
+                .then(() => player.loadManifest());
             paella.current = { player, loadPromise };
         }
 
@@ -136,6 +137,10 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
         };
     }, [tracks, title, duration, isLive, captions, startTime, endTime, previewImage, t]);
 
+    // This is `neutral10` in dark mode. We hard code this here as it's really
+    // not important that an adjusted neutral tone is reflected in the player.
+    // We just want to override the default dark blue.
+    const toolbarBg = "#1e1e1e";
     return (
         <div
             // We use `key` here to force React to re-create this `div` and not
@@ -154,6 +159,27 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 left: "unset",
                 top: "unset",
                 fontFamily: "unset",
+
+                "--main-bg-color": toolbarBg,
+                "--main-bg-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
+                "--secondary-bg-color-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
+
+                "& .playback-bar": {
+                    transition: "background 0.08s",
+                },
+
+                '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
+                    marginTop: "-4px !important",
+                    "svg text": {
+                        transform: "translate(1px, -2px)",
+                    },
+                },
+                '& button[name="es.upv.paella.forwardButtonPlugin"] div': {
+                    marginTop: "-4px !important",
+                    "svg text": {
+                        transform: "translate(1px, -2px)",
+                    },
+                },
             }}
         />
     );
@@ -162,6 +188,10 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
 const PAELLA_CONFIG = {
     logLevel: "WARN",
     defaultVideoPreview: "/~assets/1x1-black.png",
+    ui: {
+        hideUITimer: 2000,
+        hideOnMouseLeave: true,
+    },
 
     plugins: {
         "es.upv.paella.singleVideoDynamic": {
@@ -257,37 +287,71 @@ const PAELLA_CONFIG = {
         "es.upv.paella.playPauseButton": {
             enabled: true,
             side: "left",
+            order: 0,
+            tabIndex: 1,
+        },
+        "es.upv.paella.customTimeProgressIndicator": {
+            enabled: true,
+            textSize: "large",
+            showTotal: true,
+            order: 1,
+        },
+        "es.upv.paella.backwardButtonPlugin": {
+            enabled: true,
+            side: "left",
+            order: 2,
+            time: 10,
+            suffix: false,
+            tabIndex: 2,
+        },
+        "es.upv.paella.forwardButtonPlugin": {
+            enabled: true,
+            side: "left",
+            order: 3,
+            time: 10,
+            suffix: false,
+            tabIndex: 3,
+        },
+        "es.upv.paella.playbackRateButton": {
+            enabled: true,
+            showIcon: false,
+            rates: SPEEDS,
+            side: "left",
+            order: 4,
+            tabIndex: 4,
         },
         "es.upv.paella.volumeButtonPlugin": {
             enabled: true,
             side: "left",
-        },
-        "es.upv.paella.forwardButtonPlugin": {
-            "enabled": true,
-            "side": "left",
-        },
-        "es.upv.paella.backwardButtonPlugin": {
-            "enabled": true,
-            "side": "left",
+            order: 5,
+            tabIndex: 5,
         },
 
         // Buttons on the right side
-        "es.upv.paella.captionsSelectorPlugin": {
-            enabled: true,
-            side: "right",
-        },
-        "es.upv.paella.playbackRateButton": {
-            enabled: true,
-            side: "right",
-            rates: SPEEDS,
-        },
         "es.upv.paella.qualitySelector": {
             enabled: true,
             side: "right",
+            order: 6,
+            tabIndex: 6,
+        },
+        "es.upv.paella.layoutSelector": {
+            enabled: true,
+            side: "right",
+            showIcons: false,
+            order: 7,
+            tabIndex: 7,
+        },
+        "es.upv.paella.captionsSelectorPlugin": {
+            enabled: true,
+            side: "right",
+            order: 8,
+            tabIndex: 8,
         },
         "es.upv.paella.fullscreenButton": {
             enabled: true,
             side: "right",
+            order: 9,
+            tabIndex: 9,
         },
     },
 };

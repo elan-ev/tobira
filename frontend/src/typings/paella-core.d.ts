@@ -22,6 +22,8 @@ declare module "paella-core" {
             unregisterOnUnload?: boolean
         ): () => void;
 
+        public skin: Skin;
+
         public unload(): Promise<void>;
     }
 
@@ -52,6 +54,10 @@ declare module "paella-core" {
 
         logLevel?: "DISABLED" | "ERROR" | "WARN" | "INFO" | "DEBUG" | "VERBOSE";
         plugins: Record<string, PluginConfig>;
+    }
+
+    export interface Skin {
+        loadSkin: (url: string) => Promise<void>;
     }
 
     export interface VideoContainer {

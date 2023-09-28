@@ -92,6 +92,10 @@ const config: CallableOption = (_env, argv) => ({
                 { from: path.join(APP_PATH, "index.html"), to: path.join(OUT_PATH) },
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
                 { from: path.join(__dirname, "static"), to: OUT_PATH },
+                {
+                    from: path.join(__dirname, "node_modules", "paella-skins", "skins", "opencast"),
+                    to: path.join(OUT_PATH, "paella"),
+                },
             ],
         }),
     ],
