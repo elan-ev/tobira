@@ -152,16 +152,6 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         });
     }
 
-    // The ACL might not explicitly include admin, but since we still want to show
-    // the admin entry when logged in as admin, the item needs to be added manually.
-    if (kind === "Group" && !selection.some(s => s.value === COMMON_ROLES.ADMIN)) {
-        selection.push({
-            label: t("acl.groups.admins"),
-            value: COMMON_ROLES.ADMIN,
-        });
-    }
-
-
     const remove = (item: Option) => change(prev => {
         prev.readRoles.delete(item.value);
         prev.writeRoles.delete(item.value);
@@ -241,7 +231,6 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 borderCollapse: "collapse",
                 backgroundColor: COLORS.neutral10,
                 "th, td": {
-                    textAlign: "left",
                     padding: 6,
                     ":first-of-type": {
                         paddingLeft: 12,
@@ -262,16 +251,43 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     <col css={{ width: 42 }} />
                 </colgroup>
                 <thead>
-                    <tr css={{ borderBottom: `2px solid ${COLORS.neutral05}` }}>
+                    <tr css={{
+                        borderBottom: `2px solid ${COLORS.neutral05}`,
+                        textAlign: "left",
+                    }}>
                         <th>{translations.columnHeader}</th>
                         <th>{t("manage.access.table.actions.title")}</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
+                    {/* Placeholder if there are no entries */}
+                    {selection.length === 0 && <tr>
+                        <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
+                            {t("acl.no-entries")}
+                        </td>
+                    </tr>}
+
                     {selection.map(item =>
                         <ListEntry key={item.label} {...{ remove, item, kind }} />)
                     }
+
+                    {/*
+                    The ACLs usually don't explicitly include admins, but showing that
+                    entry makes sense if the user is admin.
+                    */}
+                    {(
+                        kind === "Group"
+                        && !selection.some(s => s.value === COMMON_ROLES.ADMIN)
+                        && isRealUser(user)
+                        && user.roles.includes(COMMON_ROLES.ADMIN)
+                    ) && (
+                        <ListEntry
+                            item={{ label: t("acl.groups.admins"), value: COMMON_ROLES.ADMIN }}
+                            remove={() => {}}
+                            {...{ kind }}
+                        />
+                    )}
                 </tbody>
             </table>
         </div>
@@ -309,9 +325,8 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         label = <>{item.label}</>;
     }
 
-    return isAdmin && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ADMIN)
-        ? null
-        : <tr key={item.label} css={{
+    return (
+        <tr key={item.label} css={{
             height: 44,
             ":hover, :focus-within": {
                 td: { backgroundColor: COLORS.neutral15 },
@@ -368,7 +383,8 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
                     <FiX size={20} />
                 </ProtoButton>
             </td>
-        </tr>;
+        </tr>
+    );
 };
 
 type WarningProps = {

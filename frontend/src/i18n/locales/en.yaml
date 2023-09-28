@@ -273,6 +273,7 @@ upload:
 
 acl:
   unknown-user-note: unknown
+  no-entries: No entries
   groups:
     admins: Administrators
     everyone: Everyone
