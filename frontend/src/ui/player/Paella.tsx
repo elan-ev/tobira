@@ -328,20 +328,30 @@ const PAELLA_CONFIG = {
         },
 
         // Buttons on the right side
-        "es.upv.paella.captionsSelectorPlugin": {
-            enabled: true,
-            side: "right",
-            tabIndex: 6,
-        },
         "es.upv.paella.qualitySelector": {
             enabled: true,
             side: "right",
+            order: 6,
+            tabIndex: 6,
+        },
+        "es.upv.paella.layoutSelector": {
+            enabled: true,
+            side: "right",
+            showIcons: false,
+            order: 7,
             tabIndex: 7,
+        },
+        "es.upv.paella.captionsSelectorPlugin": {
+            enabled: true,
+            side: "right",
+            order: 8,
+            tabIndex: 8,
         },
         "es.upv.paella.fullscreenButton": {
             enabled: true,
             side: "right",
-            tabIndex: 8,
+            order: 9,
+            tabIndex: 9,
         },
     },
 };
