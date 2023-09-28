@@ -314,7 +314,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const isUser = item.value === getUserRole(user);
 
     let label: JSX.Element;
-    if (isUser || item.value === COMMON_ROLES.USER_ADMIN) {
+    if (isUser) {
         label = <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>;
     } else if (kind === "User" && item.label.startsWith("ROLE_USER_")) {
         const name = item.value.slice("ROLE_USER_".length)
@@ -565,8 +565,12 @@ const supersetList = (subsetRole: string, { readRoles, writeRoles }: Acl, i18n: 
 
 
 /** Returns a label for the role, if known to Tobira. */
-const getLabel = (role: string, kind: RoleKind, i18n: i18n) =>
-    knownRoles(kind)[role]?.(i18n) ?? role;
+const getLabel = (role: string, kind: RoleKind, i18n: i18n) => {
+    if (role === COMMON_ROLES.USER_ADMIN) {
+        return i18n.t("acl.admin-user");
+    }
+    return knownRoles(kind)[role]?.(i18n) ?? role;
+};
 
 /** Splits initial ACL into group and user roles. */
 const splitAcl = (initialAcl: Acl) => {

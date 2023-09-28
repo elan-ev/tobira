@@ -278,6 +278,7 @@ upload:
 acl:
   unknown-user-note: unbekannt
   no-entries: Keine Einträge
+  admin-user: Admin
   groups:
     admins: Administration
     everyone: Alle
