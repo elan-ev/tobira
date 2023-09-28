@@ -188,6 +188,10 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
 const PAELLA_CONFIG = {
     logLevel: "WARN",
     defaultVideoPreview: "/~assets/1x1-black.png",
+    ui: {
+        hideUITimer: 2000,
+        hideOnMouseLeave: true,
+    },
 
     plugins: {
         "es.upv.paella.singleVideoDynamic": {
