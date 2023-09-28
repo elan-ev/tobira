@@ -128,13 +128,27 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         // Sort large groups to the top.
         selection = groupDAG().sort(selection);
     } else {
-        // Always show the current user first, if included. Otherwise show
-        // entries in order of addition.
+        // Always show the current user first, if included. Then show all known
+        // users, then all unknown ones, both in alphabetical order.
         const currentUserRole = getUserRole(user);
+        const collator = new Intl.Collator(i18n.resolvedLanguage, { sensitivity: "base" });
         selection.sort((a, b) => {
-            const an = a.value === currentUserRole ? 0 : 1;
-            const bn = b.value === currentUserRole ? 0 : 1;
-            return an - bn;
+            const section = (x: Option) => {
+                if (x.value === currentUserRole) {
+                    return 0;
+                }
+                if (x.label.startsWith("ROLE_USER_")) {
+                    return 2;
+                }
+                return 1;
+            };
+
+            const sectionDiff = section(a) - section(b);
+            if (sectionDiff !== 0) {
+                return sectionDiff;
+            }
+
+            return collator.compare(a.label, b.label);
         });
     }
 
