@@ -166,10 +166,16 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 // "--highlight-bg-color-hover": COLORS.primary0, // TODO
 
                 '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
-                    marginTop: "0 !important",
+                    marginTop: "-4px !important",
+                    "svg text": {
+                        transform: "translate(1px, -2px)",
+                    },
                 },
                 '& button[name="es.upv.paella.forwardButtonPlugin"] div': {
-                    marginTop: "0 !important",
+                    marginTop: "-4px !important",
+                    "svg text": {
+                        transform: "translate(1px, -2px)",
+                    },
                 },
             }}
         />
