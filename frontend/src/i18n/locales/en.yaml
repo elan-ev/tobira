@@ -272,6 +272,7 @@ upload:
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
 
 acl:
+  unknown-user-note: unknown
   groups:
     admins: Administrators
     everyone: Everyone

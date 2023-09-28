@@ -119,7 +119,11 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     });
 
 
-    let selection: Option[] = makeSelection(acl, kind, i18n);
+    let selection: Option[] = [...new Set([...acl.readRoles, ...acl.writeRoles])]
+        .map(role => ({
+            value: role,
+            label: getLabel(role, kind, i18n),
+        }));
     if (kind === "Group") {
         // Sort large groups to the top.
         selection = groupDAG().sort(selection);
@@ -279,6 +283,18 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const isAdmin = [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value);
     const isUser = item.value === getUserRole(user);
 
+    let label: JSX.Element;
+    if (isUser || item.value === COMMON_ROLES.USER_ADMIN) {
+        label = <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>;
+    } else if (kind === "User" && item.label.startsWith("ROLE_USER_")) {
+        const name = item.value.slice("ROLE_USER_".length)
+            .toLocaleLowerCase(i18n.resolvedLanguage)
+            .replace("_", " ");
+        label = <>{name} (<i>{t("acl.unknown-user-note")}</i>)</>;
+    } else {
+        label = <>{item.label}</>;
+    }
+
     return isAdmin && isRealUser(user) && !user.roles.includes(COMMON_ROLES.ADMIN)
         ? null
         : <tr key={item.label} css={{
@@ -298,10 +314,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         }}>
             <td>
                 <span css={{ display: "flex" }}>
-                    {isUser || item.value === COMMON_ROLES.USER_ADMIN
-                        ? <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>
-                        : <>{item.label}</>
-                    }
+                    {label}
                     {isSubset && <Warning tooltip={
                         t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
                     } />}
@@ -522,33 +535,8 @@ const supersetList = (subsetRole: string, { readRoles, writeRoles }: Acl, i18n: 
 
 
 /** Returns a label for the role, if known to Tobira. */
-const getLabel = (role: string, kind: RoleKind, i18n: i18n) => {
-    // First try whether we know about the role.
-    const known = knownRoles(kind);
-    if (role in known) {
-        return known[role](i18n);
-    }
-
-    // If it's a user role, we strip the `ROLE_USER_` and format it kind of
-    // nicely.
-    if (kind === "User" && role.startsWith("ROLE_USER_")) {
-        const name = role.slice("ROLE_USER_".length).toLowerCase();
-        return name.charAt(0).toUpperCase() + name.slice(1);
-    }
-
-    return role;
-};
-
-/** Takes an initial ACL and formats it as options for react-select that are already selected. */
-const makeSelection = (acl: Acl, kind: RoleKind, i18n: i18n): Option[] => {
-    const aclArray = [...new Set([...acl.readRoles, ...acl.writeRoles])];
-
-    return aclArray.map(role => ({
-        value: role,
-        label: getLabel(role, kind, i18n),
-    }));
-};
-
+const getLabel = (role: string, kind: RoleKind, i18n: i18n) =>
+    knownRoles(kind)[role]?.(i18n) ?? role;
 
 /** Splits initial ACL into group and user roles. */
 const splitAcl = (initialAcl: Acl) => {

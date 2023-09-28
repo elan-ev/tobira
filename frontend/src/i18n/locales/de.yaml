@@ -276,6 +276,7 @@ upload:
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
 
 acl:
+  unknown-user-note: unbekannt
   groups:
     admins: Administratoren
     everyone: Alle
