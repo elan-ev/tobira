@@ -310,7 +310,6 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
 
     const supersets = kind === "Group" ? supersetList(item.value, acl, i18n) : [];
     const isSubset = supersets.length > 0;
-    const isAdmin = [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value);
     const isUser = item.value === getUserRole(user);
 
     let label: JSX.Element;
@@ -368,7 +367,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
             <td>
                 <ProtoButton
                     onClick={() => remove(item)}
-                    disabled={isAdmin || userIsRequired && isUser}
+                    disabled={item.value === COMMON_ROLES.ADMIN || userIsRequired && isUser}
                     css={{
                         marginLeft: "auto",
                         display: "flex",
