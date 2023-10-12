@@ -50,7 +50,7 @@ impl fmt::Debug for Key {
 
 
 /// Represents the `event_track` type defined in `5-events.sql`.
-#[derive(Debug, FromSql, ToSql)]
+#[derive(Debug, FromSql, ToSql, Clone)]
 #[postgres(name = "event_track")]
 pub struct EventTrack {
     pub uri: String,
