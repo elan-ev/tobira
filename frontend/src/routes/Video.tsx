@@ -722,9 +722,19 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             </>;
         },
         "rss": () => {
-            // TODO
-            const dummy = "Implement me!";
-            return <>{dummy}</>;
+            const seriesId = event.series?.id.replace("sr", "");
+            const rssUrl = window.location.origin + `/~rss/series/${seriesId}`;
+
+            return <>
+                <div>
+                    <CopyableInput
+                        label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
+                        css={{ fontSize: 14, width: 400, marginBottom: 6 }}
+                        value={rssUrl}
+                    />
+                </div>
+                <ShowQRCodeButton target={rssUrl} label={menuState} />
+            </>;
         },
     });
 
