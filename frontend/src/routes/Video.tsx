@@ -3,7 +3,7 @@ import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-r
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
 import {
-    FiCode, FiSettings, FiShare2, FiDownload,
+    FiCode, FiSettings, FiShare2, FiDownload, FiRss,
 } from "react-icons/fi";
 import { LuLink, LuQrCode } from "react-icons/lu";
 import { QRCodeCanvas } from "qrcode.react";
@@ -539,7 +539,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const entries: [Exclude<MenuState, "closed">, ReactElement][] = [
         ["main", <LuLink />],
         ["embed", <FiCode />],
-        // ["rss", <FiRss />],
+        ["rss", <FiRss />],
     ];
     /* eslint-enable react/jsx-key */
 
@@ -723,9 +723,19 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             </>;
         },
         "rss": () => {
-            // TODO
-            const dummy = "Implement me!";
-            return <>{dummy}</>;
+            const seriesId = event.series?.id.replace("sr", "");
+            const rssUrl = window.location.origin + `/~rss/series/${seriesId}`;
+
+            return <>
+                <div>
+                    <CopyableInput
+                        label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
+                        css={{ fontSize: 14, width: 400, marginBottom: 6 }}
+                        value={rssUrl}
+                    />
+                </div>
+                <ShowQRCodeButton target={rssUrl} label={menuState} />
+            </>;
         },
     });
 
