@@ -16,6 +16,7 @@ use crate::{
     http::response::bad_request,
     metrics::HttpReqCategory,
     prelude::*,
+    rss::generate_rss_feed,
 };
 use super::{Context, Request, Response, response};
 
@@ -89,6 +90,26 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 .body(out.into())
                 .unwrap()
         },
+
+        path if path.starts_with("/~rss") => {
+            register_req!(HttpReqCategory::Other);
+            // Extract the series_id from the URL path
+            let series_id: &str = match path.strip_prefix("/~rss/series/") {
+                Some(rest) => rest,
+                None => {
+                    return Response::builder()
+                        .status(StatusCode::NOT_FOUND)
+                        .body("Not found".into())
+                        .unwrap();
+                }
+            };
+
+            let rss_content = generate_rss_feed(&ctx, series_id).await; 
+            Response::builder()
+                .header("Content-Type", "application/rss+xml")
+                .body(Body::from(rss_content.unwrap()))
+                .unwrap()
+        }
 
         // Assets (JS files, fonts, ...)
         path if path.starts_with(ASSET_PREFIX) => {
