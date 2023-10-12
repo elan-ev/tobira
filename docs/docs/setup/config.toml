@@ -20,6 +20,12 @@
 # Required! This value must be specified.
 #site_title =
 
+# Public URL to Tobira (without path).
+# Used for RSS feeds, as those require specifying absolute URLs to resources.
+# 
+# Example: "https://tobira.my-uni.edu".
+#tobira_url =
+
 # Whether or not to show a download button on the video page.
 #
 # Default value: true

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::util::HttpHost;
+
 use super::TranslatedString;
 
 
@@ -9,6 +11,13 @@ pub(crate) struct GeneralConfig {
     /// heading on the home page, and potentially more.
     // TODO: fix automatically generated `site_title =` template output.
     pub(crate) site_title: TranslatedString,
+
+    /// Public URL to Tobira (without path).
+    /// Used for RSS feeds, as those require specifying absolute URLs to resources.
+    /// 
+    /// Example: "https://tobira.my-uni.edu".
+    pub(crate) tobira_url: Option<HttpHost>,
+
 
     /// Whether or not to show a download button on the video page.
     #[config(default = true)]
@@ -81,6 +90,10 @@ impl GeneralConfig {
             .iter()
             .map(|s| s.strip_prefix("/").unwrap_or(s))
             .chain(INTERNAL_RESERVED_PATHS.iter().copied())
+    }
+
+    pub(crate) fn tobira_url(&self) -> &HttpHost {
+        self.tobira_url.as_ref().unwrap()
     }
 }
 
