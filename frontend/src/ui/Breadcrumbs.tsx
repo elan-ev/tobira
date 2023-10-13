@@ -39,8 +39,9 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
                 <li>
                     <Link to="/" css={{
                         lineHeight: 1,
-                        padding: 2,
+                        padding: 3,
                         ...focusStyle({ inset: true }),
+                        borderRadius: 4,
                     }}>
                         <FiHome aria-label={t("general.home")} />
                     </Link>
@@ -82,8 +83,9 @@ type SegmentProps = {
 const TEXT_STYLE = {
     textOverflow: "ellipsis" as const,
     overflow: "hidden" as const,
-    padding: 2,
+    padding: "2px 3px",
     textDecoration: "none",
+    borderRadius: 4,
 };
 
 const Segment: React.FC<SegmentProps> = ({ target, children }) => (
@@ -94,10 +96,13 @@ const Segment: React.FC<SegmentProps> = ({ target, children }) => (
         <BreadcrumbSeparator />
         {target === undefined
             ? <div css={TEXT_STYLE}>{children}</div>
-            : <Link css={[TEXT_STYLE, focusStyle({ inset: true })]} to={target}>{children}</Link>}
+            : <Link
+                css={[TEXT_STYLE, focusStyle({ inset: true })]}
+                to={target}>{children}
+            </Link>}
     </li>
 );
 
 export const BreadcrumbSeparator: React.FC = () => (
-    <FiChevronRight css={{ margin: "0 3px", flexShrink: 0, color: COLORS.neutral40 }} />
+    <FiChevronRight css={{ margin: "0 2px", flexShrink: 0, color: COLORS.neutral40 }} />
 );

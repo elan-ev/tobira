@@ -186,7 +186,7 @@ const EventTable: React.FC<EventTableProps> = ({ events, vars }) => {
                     padding: 6,
                     verticalAlign: "top",
                     "&:not(:first-child)": {
-                        padding: "8px 12px",
+                        padding: "8px 12px 8px 8px",
                     },
                 },
             },
@@ -242,6 +242,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                 cursor: "pointer",
                 transition: "color 70ms",
                 textDecoration: "none",
+                borderRadius: 4,
+                outlineOffset: 1,
                 "& > svg": {
                     marginLeft: 6,
                     fontSize: 22,
@@ -268,7 +270,13 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
     return (
         <tr>
             <td>
-                <Link to={link}>
+                <Link to={link} css={{
+                    ":focus-visible": { outline: "none" },
+                    ":focus-within div:first-child": {
+                        outline: `2.5px solid ${COLORS.focus}`,
+                        outlineOffset: 1,
+                    },
+                }}>
                     <Thumbnail event={event} />
                 </Link>
             </td>
@@ -282,7 +290,22 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
                         whiteSpace: "nowrap",
                         textOverflow: "ellipsis",
                         overflow: "hidden",
-                    }}><Link to={link} css={{ textDecoration: "none" }}>{event.title}</Link></div>
+                        padding: "0 4px",
+                        ":focus-within": {
+                            borderRadius: 4,
+                            outline: `2.5px solid ${COLORS.focus}`,
+                        },
+                    }}>
+                        <Link
+                            to={link}
+                            css={{
+                                ":focus, :focus-visible": {
+                                    outline: "none",
+                                },
+                                textDecoration: "none",
+                            }}
+                        >{event.title}</Link>
+                    </div>
                     {!event.syncedData && <span css={{
                         padding: "0 8px",
                         fontSize: "small",
@@ -290,7 +313,7 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
                         backgroundColor: COLORS.neutral10,
                     }}>{t("video.not-ready.label")}</span>}
                 </div>
-                <SmallDescription text={event.description} />
+                <SmallDescription css={{ padding: "0 4px" }} text={event.description} />
             </td>
             <td css={{ fontSize: 14 }}>
                 {created.toLocaleDateString(i18n.language)}
@@ -326,7 +349,7 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => 
                     total: connection.totalCount,
                 })}
             </div>
-            <div>
+            <div css={{ display: "flex", alignItems: "center" }}>
                 <PageLink
                     vars={{ order: vars.order, first: LIMIT }}
                     disabled={!pageInfo.hasPreviousPage && connection.items.length === LIMIT}
@@ -366,6 +389,7 @@ const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (
             padding: "4px 4px",
             margin: "0 4px",
             lineHeight: 0,
+            borderRadius: 4,
             ...disabled
                 ? {
                     color: COLORS.neutral25,

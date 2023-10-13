@@ -72,6 +72,8 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                 marginTop: 8,
                 marginLeft: "auto",
                 width: "fit-content",
+                borderRadius: 4,
+                outlineOffset: 1,
             }}
         >
             {t("video.link")}
