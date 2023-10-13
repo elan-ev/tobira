@@ -16,6 +16,7 @@ struct Event {
     description: Option<String>,
     created: DateTime<Utc>,
     creators: Vec<String>,
+    thumbnail_url: Option<String>, 
     tracks: Vec<EventTrack>,
 }
 
@@ -52,6 +53,7 @@ pub(crate) async fn generate_rss_feed(context: &Arc<Context>, id: &str) -> Resul
                     version="2.0"
                     xmlns:dc="http://purl.org/dc/elements/1.1/"
                     xmlns:atom="http://www.w3.org/2005/Atom"
+                    xmlns:media="http://search.yahoo.com/mrss/"
                 >
                 <channel>
                     <title>{}</title>
@@ -106,6 +108,8 @@ async fn generate_video_items(
               <guid isPermaLink="true">{}</guid>
               <pubDate>{}</pubDate>
               <source url="{}">{}</source>
+              <media:thumbnail url="{}" />
+              <media:content url="{}" type="{}" />
             </item>"#,
             event.title,
             event_link,
@@ -117,6 +121,9 @@ async fn generate_video_items(
             event.created.to_rfc2822(),
             rss_link,
             series_title,
+            event.thumbnail_url.unwrap_or_default(),
+            enclosure_url,
+            mimetype,
         );
 
         video_items.push_str(&item);
@@ -127,8 +134,12 @@ async fn generate_video_items(
 
 // Gathers the needed event data for video items to include in an RSS feed of a series in Tobira.
 async fn gather_event_data(db: &Client, series_id: &str) -> Result<Vec<Event>, Error> {
-    let query = "select id, title, description, created, creators, tracks from events where part_of = $1";
-    let rows = db.query(query, &[&series_id]).await?;
+    let query = format!("\
+        select id, title, description, created, creators, thumbnail, tracks \
+        from events \
+        where part_of = $1",
+    );
+    let rows = db.query(&query, &[&series_id]).await?;
 
     let mut events = Vec::new();
 
@@ -138,6 +149,7 @@ async fn gather_event_data(db: &Client, series_id: &str) -> Result<Vec<Event>, E
         let description = row.get("description");
         let created = row.get("created");
         let creators = row.get("creators");
+        let thumbnail_url = row.get("thumbnail");
         let tracks = row.get("tracks");
 
         let event = Event {
@@ -146,6 +158,7 @@ async fn gather_event_data(db: &Client, series_id: &str) -> Result<Vec<Event>, E
             description,
             created,
             creators,
+            thumbnail_url,
             tracks,
         };
 
