@@ -35,6 +35,7 @@ pub(crate) async fn generate_rss_feed(context: &Arc<Context>, id: &str) -> Resul
     let series_oc_id = series_data.get::<_, String>("opencast_id");
     let series_title = series_data.get::<_, String>("title");
     let series_description = series_data.get::<_, Option<String>>("description");
+    let cover_image = context.config.theme.logo.large.path.clone();
 
     let video_items_result = generate_video_items(
         &db,
@@ -54,12 +55,18 @@ pub(crate) async fn generate_rss_feed(context: &Arc<Context>, id: &str) -> Resul
                     xmlns:dc="http://purl.org/dc/elements/1.1/"
                     xmlns:atom="http://www.w3.org/2005/Atom"
                     xmlns:media="http://search.yahoo.com/mrss/"
+                    xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+                    xmlns:content="http://purl.org/rss/1.0/modules/content/"
                 >
                 <channel>
                     <title>{}</title>
                     <link>{}</link>
                     <description>{}</description>
+                    <language>und</language>
                     <atom:link href="{}" rel="self" type="application/rss+xml" />
+                    <itunes:category text="Education" />
+                    <itunes:image href={:?} />
+                    <itunes:explicit>no</itunes:explicit>
                     {}
                 </channel>
                 </rss>"#,
@@ -67,6 +74,7 @@ pub(crate) async fn generate_rss_feed(context: &Arc<Context>, id: &str) -> Resul
                 series_link,
                 series_description.unwrap_or_default(),
                 rss_link,
+                cover_image,
                 video_items
             )
         })
@@ -96,20 +104,21 @@ async fn generate_video_items(
 
         let enclosure_url = &preferred_track.uri;
         let mimetype = &preferred_track.mimetype.unwrap();
+        let thumbnail = event.thumbnail_url.unwrap_or_default();
 
-        let item = format!(
-            r#"
+        let item = format!(r#"
             <item>
-              <title>{}</title>
-              <link>{}</link>
-              <description>{}</description>
-              <dc:creator>{}</dc:creator>
-              <enclosure url="{}" type="{}" length="0" />
-              <guid isPermaLink="true">{}</guid>
-              <pubDate>{}</pubDate>
-              <source url="{}">{}</source>
-              <media:thumbnail url="{}" />
-              <media:content url="{}" type="{}" />
+                <title>{}</title>
+                <link>{}</link>
+                <description>{}</description>
+                <dc:creator>{}</dc:creator>
+                <enclosure url="{}" type="{}" length="0" />
+                <guid isPermaLink="true">{}</guid>
+                <pubDate>{}</pubDate>
+                <source url="{}">{}</source>
+                <media:thumbnail url="{}" />
+                <media:content url="{}" type="{}" />
+                <itunes:image href="{}" />
             </item>"#,
             event.title,
             event_link,
@@ -121,9 +130,10 @@ async fn generate_video_items(
             event.created.to_rfc2822(),
             rss_link,
             series_title,
-            event.thumbnail_url.unwrap_or_default(),
+            thumbnail,
             enclosure_url,
             mimetype,
+            thumbnail,
         );
 
         video_items.push_str(&item);
