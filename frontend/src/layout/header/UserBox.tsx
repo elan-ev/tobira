@@ -234,30 +234,33 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 }
                 : {
                     keepOpenAfterClick: true,
-                    onClick: () => {
+                    wrapper: <div
+                        tabIndex={0}
+                        onClick={() => {
                         // We don't do anything if a request is already pending.
-                        if (logoutState === "pending") {
-                            return;
-                        }
+                            if (logoutState === "pending") {
+                                return;
+                            }
 
-                        setLogoutState("pending");
-                        fetch("/~session", { method: "DELETE" })
-                            .then(() => {
+                            setLogoutState("pending");
+                            fetch("/~session", { method: "DELETE" })
+                                .then(() => {
                                 // We deliberately ignore the `status`. See `handle_logout`
                                 // for more information.
                                 //
                                 // We hard forward to the home page to get rid of any stale state.
-                                window.location.href = "/";
-                            })
-                            .catch(error => {
+                                    window.location.href = "/";
+                                })
+                                .catch(error => {
                                 // TODO: this is not great. It should happen only
                                 // extremely rarely, but still, just showing a triangle
                                 // is not very great for the user.
                                 // eslint-disable-next-line no-console
-                                console.error("Error during logout: ", error);
-                                setLogoutState("error");
-                            });
-                    },
+                                    console.error("Error during logout: ", error);
+                                    setLogoutState("error");
+                                });
+                        }}
+                    />,
                 },
         },
     ];

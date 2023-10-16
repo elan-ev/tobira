@@ -11,7 +11,8 @@ import { MatchedRoute } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
-import { ColorSchemeProvider } from "@opencast/appkit";
+import { AppkitConfigProvider, ColorSchemeProvider, DEFAULT_CONFIG } from "@opencast/appkit";
+import { COLORS } from "./color";
 
 
 type Props = {
@@ -22,19 +23,27 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
     <StrictMode>
         <SilenceEmotionWarnings>
             <ColorSchemeProvider>
-                <GlobalStyle />
-                <GlobalErrorBoundary>
-                    <RelayEnvironmentProvider {...{ environment }}>
-                        <Router initialRoute={initialRoute}>
-                            <GraphQLErrorBoundary>
-                                <MenuProvider>
-                                    <LoadingIndicator />
-                                    <ActiveRoute />
-                                </MenuProvider>
-                            </GraphQLErrorBoundary>
-                        </Router>
-                    </RelayEnvironmentProvider>
-                </GlobalErrorBoundary>
+                <AppkitConfigProvider config={{
+                    ...DEFAULT_CONFIG,
+                    colors: {
+                        ...DEFAULT_CONFIG.colors,
+                        focus: COLORS.focus,
+                    },
+                }}>
+                    <GlobalStyle />
+                    <GlobalErrorBoundary>
+                        <RelayEnvironmentProvider {...{ environment }}>
+                            <Router initialRoute={initialRoute}>
+                                <GraphQLErrorBoundary>
+                                    <MenuProvider>
+                                        <LoadingIndicator />
+                                        <ActiveRoute />
+                                    </MenuProvider>
+                                </GraphQLErrorBoundary>
+                            </Router>
+                        </RelayEnvironmentProvider>
+                    </GlobalErrorBoundary>
+                </AppkitConfigProvider>
             </ColorSchemeProvider>
         </SilenceEmotionWarnings>
     </StrictMode>

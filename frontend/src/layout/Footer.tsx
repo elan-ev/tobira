@@ -27,6 +27,10 @@ export const Footer: React.FC = () => {
                         color: COLORS.neutral60,
                         margin: "0 12px",
                     },
+                    a: {
+                        borderRadius: 4,
+                        outlineOffset: 1,
+                    },
                 },
             }}>
                 {CONFIG.footerLinks.map((entry, i) => {
