@@ -10,10 +10,10 @@ use crate::{
 /// label and info about the relationship to other roles/groups.
 #[derive(juniper::GraphQLObject)]
 pub struct KnownGroup {
-    role: String,
-    label: TranslatedString,
-    implies: Vec<String>,
-    large: bool,
+    pub(crate) role: String,
+    pub(crate) label: TranslatedString<String>,
+    pub(crate) implies: Vec<String>,
+    pub(crate) large: bool,
 }
 
 impl_from_db!(

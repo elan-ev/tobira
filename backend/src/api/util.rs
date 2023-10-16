@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 use bytes::BytesMut;
 use fallible_iterator::FallibleIterator;
@@ -27,15 +27,15 @@ pub(crate) use impl_object_with_dummy_field;
 
 
 #[derive(Debug)]
-pub struct TranslatedString(pub(crate) HashMap<String, String>);
+pub struct TranslatedString<T>(pub(crate) HashMap<T, String>);
 
-impl ToSql for TranslatedString {
+impl<T: AsRef<str> + fmt::Debug> ToSql for TranslatedString<T> {
     fn to_sql(
         &self,
         _: &postgres_types::Type,
         out: &mut BytesMut,
     ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
-        let values = self.0.iter().map(|(k, v)| (&**k, Some(&**v)));
+        let values = self.0.iter().map(|(k, v)| (k.as_ref(), Some(&**v)));
         postgres_protocol::types::hstore_to_sql(values, out)?;
         Ok(postgres_types::IsNull::No)
     }
@@ -47,7 +47,7 @@ impl ToSql for TranslatedString {
     postgres_types::to_sql_checked!();
 }
 
-impl<'a> FromSql<'a> for TranslatedString {
+impl<'a> FromSql<'a> for TranslatedString<String> {
     fn from_sql(
         _: &postgres_types::Type,
         raw: &'a [u8],
@@ -71,7 +71,7 @@ impl<'a> FromSql<'a> for TranslatedString {
     name = "TranslatedString",
     description = "A string in different languages",
 )]
-impl<S> GraphQLScalar for TranslatedString
+impl<S> GraphQLScalar for TranslatedString<String>
 where
     S: juniper::ScalarValue + From<&str>
 {

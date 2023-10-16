@@ -114,6 +114,10 @@ async fn run() -> Result<()> {
             let config = load_config_and_init_logger(shared, &args)?;
             cmd::import_realm_tree::run(options, &config).await?;
         }
+        Command::KnownGroups { options, shared } => {
+            let config = load_config_and_init_logger(shared, &args)?;
+            cmd::known_groups::run(config, options).await?;
+        }
     }
 
     Ok(())
