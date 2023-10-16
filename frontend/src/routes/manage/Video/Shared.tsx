@@ -28,7 +28,7 @@ type ManageVideoSubPageType = "details" | "technical-details" | "acl";
 export const makeManageVideoRoute = (
     page: ManageVideoSubPageType,
     path: string,
-    render: (event: AuthorizedEvent) => JSX.Element,
+    render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
 ): Route => (
     makeRoute(url => {
         const regex = new RegExp(`^/~manage/videos/(${b64regex}+)${path}/?$`, "u");
@@ -56,7 +56,7 @@ export const makeManageVideoRoute = (
                         return <NotAuthorized />;
                     }
 
-                    return render(data.event);
+                    return render(data.event, data);
                 }}
             />,
             dispose: () => queryRef.dispose(),
@@ -71,6 +71,7 @@ export const makeManageVideoRoute = (
 const query = graphql`
     query SharedVideoManageQuery($id: ID!) {
         ...UserData
+        ...AccessKnownRolesData
         event: eventById(id: $id) {
             __typename
             ... on AuthorizedEvent {

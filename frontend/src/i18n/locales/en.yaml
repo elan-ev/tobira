@@ -279,9 +279,6 @@ acl:
     admins: Administrators
     everyone: Everyone
     logged-in-users: Logged in users
-    moderators: Moderators
-    studio-users: Studio users
-    editors: Editors
 
 manage:
   access:

@@ -11,6 +11,7 @@ module.exports = {
         "DateTimeUtc": "string",
         "Cursor": "string",
         "ExtraMetadata": "Record<string, Record<string, string[]>>",
+        "TranslatedString": "Record<string, string>",
     },
     schemaExtensions: [APP_PATH],
 };

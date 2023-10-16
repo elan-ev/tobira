@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { FiX, FiAlertTriangle } from "react-icons/fi";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
+import { graphql } from "react-relay";
 import { i18n } from "i18next";
 
 import { focusStyle } from ".";
@@ -23,6 +24,7 @@ import { COMMON_ROLES } from "../util/roles";
 import { SelectProps } from "./Input";
 import { searchableSelectStyles, theme } from "./SearchableSelect";
 import { FloatingBaseMenu } from "./FloatingBaseMenu";
+import { AccessKnownRolesData$data } from "./__generated__/AccessKnownRolesData.graphql";
 
 
 
@@ -42,6 +44,9 @@ type AclContext = {
     userIsRequired: boolean;
     acl: Acl;
     change: (f: (acl: Acl) => void) => void;
+    knownGroups: KnownRoles;
+    groupDag: GroupDag;
+    largeGroups: Set<string>;
 }
 
 const AclContext = createContext<AclContext | null>(null);
@@ -56,10 +61,11 @@ type AclSelectorProps = {
      */
     userIsRequired?: boolean;
     onChange: (newAcl: Acl) => void;
+    knownRoles: AccessKnownRolesData$data;
 }
 
 export const AclSelector: React.FC<AclSelectorProps> = (
-    { acl, userIsRequired = false, onChange }
+    { acl, userIsRequired = false, onChange, knownRoles }
 ) => {
     const [groupAcl, userAcl] = splitAcl(acl);
     const change: AclContext["change"] = f => {
@@ -70,8 +76,19 @@ export const AclSelector: React.FC<AclSelectorProps> = (
         f(copy);
         onChange(copy);
     };
+    const customGroups: KnownRoles = Object.fromEntries(knownRoles.knownGroups.map(group => [
+        group.role,
+        i18n => group.label[i18n.language] ?? group.label.en ?? Object.values(group.label)[0],
+    ]));
+    const knownGroups = { ...BUILTIN_GROUPS, ...customGroups };
+    const groupDag = buildDag(knownRoles.knownGroups);
+    const largeGroups = new Set([
+        ...BUILTIN_LARGE_GROUPS,
+        ...knownRoles.knownGroups.filter(g => g.large).map(g => g.role),
+    ]);
 
-    return <AclContext.Provider value={{ userIsRequired, acl, change }}>
+    const context = { userIsRequired, acl, change, knownGroups, groupDag, largeGroups };
+    return <AclContext.Provider value={context}>
         <div css={{
             display: "flex",
             flexWrap: "wrap",
@@ -85,6 +102,14 @@ export const AclSelector: React.FC<AclSelectorProps> = (
 
 type RoleKind = "Group" | "User";
 
+
+export const knownRolesFragement = graphql`
+    fragment AccessKnownRolesData on Query {
+        knownGroups { role label implies large }
+    }
+`;
+
+
 type AclSelectProps = SelectProps & {
     acl: Acl;
     kind: RoleKind;
@@ -95,11 +120,12 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { change } = useAclContext();
+    const { change, knownGroups, groupDag } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
 
     // Turn known roles into selectable options that react-select understands.
-    const options = Object.entries(knownRoles(kind))
+    const knownRoles = kind === "Group" ? knownGroups : KNOWN_USERS;
+    const options = Object.entries(knownRoles)
         .map(([role, label]) => ({
             value: role,
             label: label(i18n),
@@ -122,11 +148,11 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     let selection: Option[] = [...new Set([...acl.readRoles, ...acl.writeRoles])]
         .map(role => ({
             value: role,
-            label: getLabel(role, kind, i18n),
+            label: getLabel(role, knownRoles, i18n),
         }));
     if (kind === "Group") {
         // Sort large groups to the top.
-        selection = groupDAG().sort(selection);
+        selection = groupDag.sort(selection);
     } else {
         // Always show the current user first, if included. Then show all known
         // users, then all unknown ones, both in alphabetical order.
@@ -306,9 +332,13 @@ type ListEntryProps = ItemProps & {
 const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { userIsRequired, acl } = useAclContext();
+    const { userIsRequired, acl, groupDag, knownGroups, largeGroups } = useAclContext();
 
-    const supersets = kind === "Group" ? supersetList(item.value, acl, i18n) : [];
+    const canWrite = acl.writeRoles.has(item.value);
+    const supersets = kind === "User" ? [] : groupDag
+        .supersetsOf(item.value)
+        .filter(role => acl.readRoles.has(role) && (!canWrite || acl.writeRoles.has(role)))
+        .map(role => getLabel(role, knownGroups, i18n));
     const isSubset = supersets.length > 0;
     const isUser = item.value === getUserRole(user);
 
@@ -357,8 +387,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
                     },
                 }}>
                     <ActionsMenu {...{ item, kind }} />
-                    {LARGE_GROUPS.includes(item.value)
-                        && acl.writeRoles.has(item.value)
+                    {largeGroups.has(item.value) && canWrite
                         ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
                         : <div css={{ width: 22 }} />
                     }
@@ -550,25 +579,12 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
 // ===== Helper functions
 // ==============================================================================================
 
-/**
- * Returns the labels of every other selected group whose subset includes the role
- * of the selection and also has the same read/write (or a subset of write) access level.
- */
-const supersetList = (subsetRole: string, { readRoles, writeRoles }: Acl, i18n: i18n) => {
-    const isReadOnly = !writeRoles.has(subsetRole);
-    return groupDAG()
-        .supersetsOf(subsetRole)
-        .filter(superset => readRoles.has(superset) && (isReadOnly || writeRoles.has(superset)))
-        .map(superset => getLabel(superset, "Group", i18n));
-};
-
-
 /** Returns a label for the role, if known to Tobira. */
-const getLabel = (role: string, kind: RoleKind, i18n: i18n) => {
+const getLabel = (role: string, knownRoles: KnownRoles, i18n: i18n) => {
     if (role === COMMON_ROLES.USER_ADMIN) {
         return i18n.t("acl.admin-user");
     }
-    return knownRoles(kind)[role]?.(i18n) ?? role;
+    return knownRoles[role]?.(i18n) ?? role;
 };
 
 /** Splits initial ACL into group and user roles. */
@@ -601,13 +617,8 @@ export const getUserRole = (user: UserState) => {
 type KnownRoles = Record<string, (i18n: i18n) => string>;
 
 const BUILTIN_GROUPS: KnownRoles = {
-    // TODO: list all possible groups (also from Opencast?).
-    // TODO: read mappings from config.
     ROLE_ANONYMOUS: (i18n: i18n) => i18n.t("acl.groups.everyone"),
     ROLE_USER: (i18n: i18n) => i18n.t("acl.groups.logged-in-users"),
-    ROLE_TOBIRA_MODERATOR: (i18n: i18n) => i18n.t("acl.groups.moderators"),
-    ROLE_TOBIRA_STUDIO: (i18n: i18n) => i18n.t("acl.groups.studio-users"),
-    ROLE_TOBIRA_EDITOR: (i18n: i18n) => i18n.t("acl.groups.editors"),
 };
 
 const DUMMY_USERS: KnownRoles = {
@@ -617,15 +628,9 @@ const DUMMY_USERS: KnownRoles = {
     ROLE_USER_JOSE: () => "José Carreño Quiñones",
 };
 
-const KNOWN_GROUPS: KnownRoles = BUILTIN_GROUPS;
 const KNOWN_USERS: KnownRoles = DUMMY_USERS;
 
-const LARGE_GROUPS = [COMMON_ROLES.USER, COMMON_ROLES.ANONYMOUS];
-
-const knownRoles = (kind: RoleKind) => match(kind, {
-    Group: () => KNOWN_GROUPS,
-    User: () => KNOWN_USERS,
-});
+const BUILTIN_LARGE_GROUPS = [COMMON_ROLES.USER, COMMON_ROLES.ANONYMOUS];
 
 
 /**
@@ -643,33 +648,13 @@ interface GroupDag {
     sort(groups: Option[]): Option[];
 }
 
-const groupDAG: () => GroupDag = (() => {
-    let instance: GroupDag | null = null;
-    return () => {
-        if (!instance) {
-            instance = buildDag();
-        }
-
-        return instance;
-    };
-})();
-
-const buildDag = (): GroupDag => {
+const buildDag = (customGroups: AccessKnownRolesData$data["knownGroups"]): GroupDag => {
     const vertices = new Map<string, Set<string>>();
+    vertices.set(COMMON_ROLES.ANONYMOUS, new Set());
+    vertices.set(COMMON_ROLES.USER, new Set([COMMON_ROLES.ANONYMOUS]));
 
-    for (const groupRole of Object.keys(KNOWN_GROUPS)) {
-        let supersets: Set<string>;
-
-        if (groupRole === COMMON_ROLES.ANONYMOUS) {
-            supersets = new Set();
-        } else if (groupRole === COMMON_ROLES.USER) {
-            supersets = new Set([COMMON_ROLES.ANONYMOUS]);
-        } else {
-            // TODO: add configurable relationships
-            supersets = new Set([COMMON_ROLES.USER]);
-        }
-
-        vertices.set(groupRole, supersets);
+    for (const { role, implies } of customGroups) {
+        vertices.set(role, new Set([COMMON_ROLES.USER, ...implies]));
     }
 
     return {

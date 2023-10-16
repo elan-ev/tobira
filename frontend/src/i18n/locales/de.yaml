@@ -283,9 +283,6 @@ acl:
     admins: Administration
     everyone: Alle
     logged-in-users: Eingeloggte Nutzende
-    moderators: Moderierende
-    studio-users: Studio-Nutzende
-    editors: Videoeditoren
 
 manage:
   access:

@@ -1,6 +1,6 @@
 import React, { MutableRefObject, ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { Controller, useController, useForm } from "react-hook-form";
 import { FiCheckCircle, FiInfo, FiUpload } from "react-icons/fi";
@@ -30,7 +30,11 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
-import { Acl, getUserRole, AclSelector } from "../ui/Access";
+import { Acl, getUserRole, AclSelector, knownRolesFragement } from "../ui/Access";
+import {
+    AccessKnownRolesData$data,
+    AccessKnownRolesData$key,
+} from "../ui/__generated__/AccessKnownRolesData.graphql";
 
 
 export const UploadRoute = makeRoute(url => {
@@ -44,7 +48,7 @@ export const UploadRoute = makeRoute(url => {
             {...{ query, queryRef }}
             noindex
             nav={() => <ManageNav active={UPLOAD_PATH} />}
-            render={() => <Upload />}
+            render={data => <Upload knownRolesRef={data} />}
         />,
         dispose: () => queryRef.dispose(),
     };
@@ -53,6 +57,7 @@ export const UploadRoute = makeRoute(url => {
 const query = graphql`
     query UploadQuery {
         ... UserData
+        ... AccessKnownRolesData
     }
 `;
 
@@ -64,8 +69,13 @@ type Metadata = {
     acl: Acl;
 };
 
-const Upload: React.FC = () => {
+type Props = {
+    knownRolesRef: AccessKnownRolesData$key;
+};
+
+const Upload: React.FC<Props> = ({ knownRolesRef }) => {
     const { t } = useTranslation();
+    const knownRoles = useFragment(knownRolesFragement, knownRolesRef);
 
     return (
         <div css={{
@@ -79,7 +89,7 @@ const Upload: React.FC = () => {
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
-            <UploadMain />
+            <UploadMain {...{ knownRoles }} />
         </div>
     );
 };
@@ -107,7 +117,11 @@ const CancelButton: React.FC<CancelButtonProps> = ({ abortController }) => {
     );
 };
 
-const UploadMain: React.FC = () => {
+type UploadMainProps = {
+    knownRoles: AccessKnownRolesData$data;
+};
+
+const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
     // TODO: on first mount, send an `ocRequest` to `info/me.json` and make sure
     // that connection works. That way we can show an error very early, before
     // the user selected a file.
@@ -220,7 +234,11 @@ const UploadMain: React.FC = () => {
                     */}
                     {uploadState.current.state !== "cancelled" && (
                         !metadata.current
-                            ? <MetaDataEdit onSave={onMetadataSave} disabled={hasUploadError} />
+                            ? <MetaDataEdit
+                                onSave={onMetadataSave}
+                                disabled={hasUploadError}
+                                knownRoles={knownRoles}
+                            />
                             : !hasUploadError && (
                                 <div css={{ margin: "0 auto", maxWidth: 500 }}>
                                     <Card kind="info">{t("upload.still-uploading")}</Card>
@@ -648,10 +666,11 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
 type MetaDataEditProps = {
     onSave: (metadata: Metadata) => void;
     disabled: boolean;
+    knownRoles: AccessKnownRolesData$data;
 };
 
 /** Form that lets the user set metadata about the video */
-const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
+const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRoles }) => {
     const { t } = useTranslation();
     const user = useUser();
     const userRole = getUserRole(user);
@@ -754,6 +773,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled }) => {
                         userIsRequired
                         onChange={field.onChange}
                         acl={field.value}
+                        knownRoles={knownRoles}
                     />}
                 />
             </InputContainer>
