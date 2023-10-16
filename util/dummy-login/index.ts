@@ -69,7 +69,7 @@ const DUMMY_USERS: Record<string, { displayName: string; roles: string[]; email?
     },
     "sabine": {
         displayName: "Sabine Rudolfs",
-        roles: ["ROLE_USER_SABINE", "ROLE_INSTRUCTOR", "ROLE_TOBIRA_MODERATOR"],
+        roles: ["ROLE_USER_SABINE", "ROLE_INSTRUCTOR", "ROLE_STAFF", "ROLE_TOBIRA_MODERATOR"],
         email: "sabine@example.org",
     },
     "björk": {
