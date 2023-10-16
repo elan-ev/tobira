@@ -20,7 +20,9 @@ use std::{
     sync::Arc,
 };
 
-use crate::{api, auth::JwtContext, config::Config, metrics, prelude::*, search};
+use crate::{
+    api, auth::JwtContext, config::Config, metrics, prelude::*, search, default_enable_backtraces,
+};
 use self::{
     assets::Assets,
     handlers::handle,
@@ -130,6 +132,7 @@ pub(crate) async fn serve(
             fs::remove_file(unix_socket)?;
         }
         let server = Server::bind_unix(&unix_socket)?.serve(factory!());
+        default_enable_backtraces();
         info!("Listening on unix://{}", unix_socket.display());
         let permissions = fs::Permissions::from_mode(http_config.unix_socket_permissions);
         fs::set_permissions(unix_socket, permissions)?;
@@ -138,6 +141,7 @@ pub(crate) async fn serve(
         // Bind to TCP socket.
         let addr = SocketAddr::new(http_config.address, http_config.port);
         let server = Server::bind(&addr).serve(factory!());
+        default_enable_backtraces();
         info!("Listening on http://{}", server.local_addr());
         server.await?;
     }
