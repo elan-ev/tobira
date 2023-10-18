@@ -74,12 +74,15 @@ impl JwtContext {
             + chrono::Duration::from_std(self.config.expiration_time)
                 .expect("failed to convert from std Duration to chrono::Duration");
 
-        let payload = json!({
+        let mut payload = json!({
             "name": user.display_name,
             "username": user.username,
-            "email": user.email,
             "exp": exp.timestamp(),
         });
+        if let Some(email) = &user.email {
+            payload.as_object_mut().unwrap().insert("email".into(), email.clone().into());
+        }
+
 
         self.encode(&payload)
     }
