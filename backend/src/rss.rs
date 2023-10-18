@@ -41,7 +41,7 @@ impl_from_db!(
 );
 
 /// Generates the xml for an RSS feed of a series in Tobira.
-pub(crate) async fn generate_rss_feed(context: &Arc<Context>, id: &str) -> Result<String, Response> {
+pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<String, Response> {
     let db_pool = &context.db_pool;
     let tobira_url = context.config.general.tobira_url();
     let series_link = format!("{}/!s/{}", tobira_url, id);
