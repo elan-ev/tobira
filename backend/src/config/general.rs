@@ -16,7 +16,7 @@ pub(crate) struct GeneralConfig {
     /// Used for RSS feeds, as those require specifying absolute URLs to resources.
     /// 
     /// Example: "https://tobira.my-uni.edu".
-    pub(crate) tobira_url: Option<HttpHost>,
+    pub(crate) tobira_url: HttpHost,
 
 
     /// Whether or not to show a download button on the video page.
@@ -93,7 +93,7 @@ impl GeneralConfig {
     }
 
     pub(crate) fn tobira_url(&self) -> &HttpHost {
-        self.tobira_url.as_ref().unwrap()
+        &self.tobira_url
     }
 }
 

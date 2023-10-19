@@ -728,7 +728,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             return <>
                 <div>
                     <CopyableInput
-                        label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
+                        label={t("video.rss.copy-link-to-clipboard")}
                         css={{ fontSize: 14, width: 400, marginBottom: 6 }}
                         value={rssUrl}
                     />

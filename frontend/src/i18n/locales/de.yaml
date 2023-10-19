@@ -148,6 +148,8 @@ video:
     show-less: Weniger anzeigen
   embed:
     copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
+  rss:
+    copy-link-to-clipboard: RSS Link in Zwischenablage kopieren
   caption: Untertitel
   download:
     title: Download

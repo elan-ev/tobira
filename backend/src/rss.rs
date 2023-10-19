@@ -48,7 +48,7 @@ pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<St
     let rss_link = format!("{}/~rss/series/{}", tobira_url, id);
 
     let Some(series_id) = Key::from_base64(id) else {
-        return Err(bad_request("unknown series"));
+        return Err(bad_request("invalid series ID"));
     };
     
     let db = db::get_conn_or_service_unavailable(db_pool).await?;
@@ -105,11 +105,9 @@ pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<St
     add_elements_to_xml(&channel_data, &mut channel);
 
     // Add video items
-    let video_items = match generate_video_items(
-        &db, &series_oc_id, &series_title, &rss_link, &tobira_url).await {
-        Ok(items) => items,
-        Err(_) => return Err(bad_request("empty series")),
-    };
+    let video_items = generate_video_items( &db, &series_oc_id, &series_title, &rss_link, &tobira_url)
+        .await
+        .expect("failed to fetch events of series for RSS");
 
     for item in video_items {
        channel.add_child(item).unwrap();
@@ -144,7 +142,7 @@ async fn generate_video_items(
         
         let mut buf = [0; 11];
         let tobira_event_id = event.id.to_base64(&mut buf);
-        let event_link = format!("{}/!v/{}", tobira_url, tobira_event_id);
+        let event_link = format!("{tobira_url}/!v/{tobira_event_id}");
         let tracks = preferred_tracks(event.tracks);
 
         let enclosure_track = tracks.1.unwrap();

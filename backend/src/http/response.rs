@@ -27,3 +27,11 @@ pub(crate) fn internal_server_error() -> Response {
         .body("Internal server error".into())
         .unwrap()
 }
+
+pub(crate) fn not_found() -> Response {
+    Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .body("Not found".into())
+        .unwrap()
+}
+

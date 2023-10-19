@@ -110,10 +110,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // (and without our frontend!).
         "/favicon.ico" => {
             register_req!(HttpReqCategory::Other);
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body("Not found".into())
-                .unwrap()
+            response::not_found()
         }
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
@@ -183,23 +180,15 @@ pub(super) async fn reply_404(ctx: &Context, method: &Method, path: &str) -> Res
 
 async fn handle_rss_request(path: &str, ctx: &Arc<Context>) -> Result<Response, Response> {
     let Some(series_id) = path.strip_prefix("/~rss/series/") else {
-            return Ok(Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body("Not found".into())
-                .unwrap());
+        return Ok(response::not_found());
     };
 
-    let rss_content = match rss::generate_feed(&ctx, series_id).await {
-        Ok(rss_content) => rss_content,
-        Err(_) => {
-            return Err(response::internal_server_error());
-        }
-    };
-
-    Ok(Response::builder()
-        .header("Content-Type", "application/rss+xml")
-        .body(Body::from(rss_content))
-        .unwrap())
+    rss::generate_feed(&ctx, series_id).await.map(|rss_content| {
+        Response::builder()
+            .header("Content-Type", "application/rss+xml")
+            .body(Body::from(rss_content))
+            .unwrap()
+    })
 }
 
 /// Handles a request to `/graphql`. Method has to be POST.

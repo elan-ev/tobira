@@ -146,6 +146,8 @@ video:
     show-less: Show less
   embed:
     copy-embed-code-to-clipboard: Copy embed code to clipboard
+  rss:
+    copy-link-to-clipboard: Copy RSS link to clipboard
   caption: Caption
   download:
     title: Download
