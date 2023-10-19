@@ -112,10 +112,7 @@ pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<St
     };
 
     for item in video_items {
-        // I have no idea how to correctly handle items that are resulting in an error.
-        // Pretty sure however that this here is a bad solution and would result in
-        // potentially broken feeds.
-        let _ = channel.add_child(item);
+       channel.add_child(item).unwrap();
     }
 
     rss.add_child(channel).unwrap();
@@ -148,10 +145,11 @@ async fn generate_video_items(
         let mut buf = [0; 11];
         let tobira_event_id = event.id.to_base64(&mut buf);
         let event_link = format!("{}/!v/{}", tobira_url, tobira_event_id);
+        let tracks = preferred_tracks(event.tracks);
 
-        let preferred_track = choose_preferred_track(event.tracks).unwrap();
-        let enclosure_url = &preferred_track.uri;
-        let mimetype = &preferred_track.mimetype.unwrap();
+        let enclosure_track = tracks.1.unwrap();
+        let enclosure_url = &enclosure_track.uri;
+        let mimetype = &enclosure_track.mimetype.unwrap();
         let thumbnail = &event.thumbnail_url.unwrap_or_default();
 
         let mut item = XMLElement::new("item");
@@ -174,12 +172,23 @@ async fn generate_video_items(
                 ("url", rss_link.to_string()),
                 ("", series_title.to_string()),
             ]),
-            ("media:content", vec![
-                ("url", enclosure_url.to_string()),
-                ("type", mimetype.to_string()),
-            ]),
         ];
         add_elements_to_xml(&item_data, &mut item);
+
+        let mut media_group = XMLElement::new("media:group");
+        for track in tracks.0 {
+            let media_data = [
+                ("media:content", vec![
+                    ("url", track.uri),
+                    ("type", track.mimetype.unwrap()),
+                    ("medium", "video".to_string()),
+                    ("height", track.resolution.unwrap()[1].to_string()),
+                    ("width", track.resolution.unwrap()[0].to_string()),
+                ]),
+            ];
+            add_elements_to_xml(&media_data, &mut media_group);
+        }
+        item.add_child(media_group).unwrap();
 
         video_items.push(item);
         future::ready(Ok(()))
@@ -210,7 +219,7 @@ fn add_elements_to_xml(data: &[(&str, Vec<(&str, String)>)], target: &mut XMLEle
 /// a) is a `presentation` track.
 /// Defaults to any track meeting the b) criteria if there is no `presentation` track.
 /// b) has a resolution that is closest to full hd.
-fn choose_preferred_track(tracks: Vec<EventTrack>) -> Option<EventTrack> {
+fn preferred_tracks(tracks: Vec<EventTrack>) -> (Vec<EventTrack>, Option<EventTrack>) {
     let target_resolution = tracks.first().map_or([1920, 1080], |first_track| {
         let [x, y] = first_track.resolution.unwrap();
         if x >= y {
@@ -220,24 +229,24 @@ fn choose_preferred_track(tracks: Vec<EventTrack>) -> Option<EventTrack> {
         }
     });
 
-    let mut tracks_to_check: Vec<EventTrack> = tracks
+    let mut preferred_tracks: Vec<EventTrack> = tracks
         .iter()
         .filter(|track| track.flavor.contains("presentation"))
         .cloned()
         .collect();
 
-    if tracks_to_check.is_empty() {
-        tracks_to_check = tracks.clone();
+    if preferred_tracks.is_empty() {
+        preferred_tracks = tracks.clone();
     }
 
-    let preferred_track = tracks_to_check.iter().min_by_key(|&track| {
+    let single_track = preferred_tracks.iter().min_by_key(|&track| {
         let track_resolution = track.resolution.unwrap();
         let diff_x = (track_resolution[0] - target_resolution[0]).abs();
         let diff_y = (track_resolution[1] - target_resolution[1]).abs();
         diff_x + diff_y
     });
 
-    preferred_track.cloned()
+    (preferred_tracks.clone(), single_track.cloned())
 }
 
 
