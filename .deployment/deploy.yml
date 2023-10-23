@@ -48,13 +48,6 @@
         name: pgcrypto
         db: tobira-{{ id }}
 
-    - name: add hstore extension
-      become: true
-      become_user: postgres
-      community.postgresql.postgresql_ext:
-        name: hstore
-        db: tobira-{{ id }}
-
     # TOBIRA
 
 
@@ -156,6 +149,13 @@
       file:
         path: /opt/tobira/{{ id }}/db-dump.pgc
         state: absent
+
+    - name: add hstore extension
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_ext:
+        name: hstore
+        db: tobira-{{ id }}
 
     - name: run database migration
       become: true
