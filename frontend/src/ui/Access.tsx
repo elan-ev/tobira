@@ -261,15 +261,13 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     padding: 6,
                     ":first-of-type": {
                         paddingLeft: 12,
+                        overflowWrap: "anywhere",
                     },
                 },
                 [screenWidthAtMost(480)]: {
                     fontSize: 14,
                     "> colgroup > col:nth-of-type(2)": { width: "unset" },
                     "> colgroup > col:nth-of-type(3)": { width: 35 },
-                    "td:first-of-type": {
-                        overflowWrap: "anywhere",
-                    },
                 },
             }}>
                 <colgroup>
@@ -345,7 +343,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
 
     let label: JSX.Element;
     if (isUser) {
-        label = <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>;
+        label = <span><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</span>;
     } else if (kind === "User" && isUserRole(item.label)) {
         // We strip the user role prefix (we take the longest prefix that
         // matches, though in almost all cases just a single one will match).
@@ -355,7 +353,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         const name = item.value.slice(Math.max(...prefixes.map(p => p.length)))
             .toLocaleLowerCase(i18n.resolvedLanguage)
             .replace("_", " ");
-        label = <>{name} (<i>{t("acl.unknown-user-note")}</i>)</>;
+        label = <span>{name} (<i>{t("acl.unknown-user-note")}</i>)</span>;
     } else {
         label = <>{item.label}</>;
     }
