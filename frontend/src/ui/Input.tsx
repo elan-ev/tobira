@@ -1,4 +1,4 @@
-import React, { Fragment, ReactNode, useId, useRef, useState } from "react";
+import React, { Fragment, ReactNode, useId, useImperativeHandle, useRef, useState } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { WithTooltip } from "@opencast/appkit";
 
@@ -36,19 +36,38 @@ export type TextAreaProps = React.ComponentPropsWithoutRef<"textarea"> & {
 
 /** A styled multi-line text area */
 export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
-    ({ error = false, ...rest }, ref) => (
-        <textarea
-            ref={ref}
+    ({ error = false, ...rest }, ref) => {
+        const textAreaRef = useRef<HTMLTextAreaElement>(null);
+        useImperativeHandle(ref, () => textAreaRef.current as HTMLTextAreaElement);
+        const initialHeight = textAreaRef.current?.scrollHeight;
+
+        const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            if (textAreaRef.current) {
+                // Setting this to auto first prevents some weird behavior
+                // where the textarea's height decreases by a small amount
+                // whenever a single char is deleted.
+                textAreaRef.current.style.height = "auto";
+                textAreaRef.current.style.height = `${e.target.scrollHeight + 2}px`;
+            }
+        };
+
+        return <textarea
+            onInput={handleInput}
+            ref={textAreaRef}
             css={{
                 width: "100%",
-                height: 200,
+                minHeight: 200,
+                // We add 2px here and in the input handling to prevent the appearance
+                // of an unnecessary scrollbar while the whole text is visible.
+                ...initialHeight && { height: initialHeight + 2 },
+                maxHeight: "50vh",
                 resize: "none",
                 padding: "8px 10px",
                 ...style(error),
             }}
             {...rest}
-        />
-    ),
+        />;
+    },
 );
 
 type InputWithCheckboxProps = {
