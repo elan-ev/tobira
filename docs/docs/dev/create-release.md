@@ -50,5 +50,6 @@ Otherwise it might be confusing.
   Some PR titles can be unfit for release notes as they require too much context.
   Especially in the section for users, try to explain it to technically inclined users.
 - If an action from the administrator (e.g. resync) is required to use some new features, also note that.
+- If Paella was updated, always mention that explicitly. Specify what packages were updated from what version to what other version.
 - Remove all "by PeterLustig" for all regular contributors to make the release notes less noisy.
 - If in doubt, check older releases.
