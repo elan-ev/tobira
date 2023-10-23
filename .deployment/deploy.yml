@@ -185,12 +185,11 @@
         cmd: /opt/tobira/{{ id }}/tobira search-index update
         chdir: /opt/tobira/{{ id }}/
 
-    - name: Configure known groups
+    - name: Add test-data known groups
       become: true
-      become_user: tobira
       copy:
         src: known-groups.json
-        dest: /opt/tobira/{{ id }}/
+        dest: /opt/tobira/{{ id }}/known-groups.json
         owner: root
         group: root
         mode: '0644'
