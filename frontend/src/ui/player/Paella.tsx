@@ -8,6 +8,7 @@ import { SPEEDS } from "./consts";
 import { useTranslation } from "react-i18next";
 import { timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
+import { usePlayerGroupContext } from "./PlayerGroupContext";
 
 
 type PaellaPlayerProps = {
@@ -32,6 +33,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const { paella, setPlayerIsLoaded } = usePlayerContext();
+    const { players, register, unregister } = usePlayerGroupContext();
 
     useEffect(() => {
         // If the ref is not set yet (which should not usually happen), we do
@@ -115,6 +117,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 ],
             });
 
+
             const time = new URL(window.location.href).searchParams.get("t");
             player.bindEvent("paella:playerLoaded", () => {
                 setPlayerIsLoaded(true);
@@ -123,6 +126,16 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 }
             });
 
+            player.bindEvent("paella:play", () => {
+                players?.forEach(playerInstance => {
+                    if (playerInstance && playerInstance !== player) {
+                        playerInstance.videoContainer.pause();
+                    }
+                });
+            });
+
+            register(player);
+
             const loadPromise = player.skin.loadSkin("/~assets/paella/theme.json")
                 .then(() => player.loadManifest());
             paella.current = { player, loadPromise };
@@ -130,6 +143,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
 
         const paellaSnapshot = paella.current;
         return () => {
+            unregister(paellaSnapshot.player);
             paella.current = undefined;
             paellaSnapshot.loadPromise.then(() => {
                 paellaSnapshot.player.unload();

@@ -9,6 +9,7 @@ import { TitleBlock } from "./Title";
 import { TextBlockByQuery } from "./Text";
 import { SeriesBlockFromBlock } from "./Series";
 import { VideoBlock } from "./Video";
+import { PlayerGroupProvider } from "../player/PlayerGroupContext";
 
 
 type BlocksProps = {
@@ -33,9 +34,11 @@ export const Blocks: React.FC<BlocksProps> = ({ realm: realmRef }) => {
             flexDirection: "column",
             rowGap: 32,
         }}>
-            {blocks.map(
-                block => <Block key={block.id} realm={realm} block={block} />,
-            )}
+            <PlayerGroupProvider>
+                {blocks.map(
+                    block => <Block key={block.id} realm={realm} block={block} />,
+                )}
+            </PlayerGroupProvider>
         </div>
     );
 };
