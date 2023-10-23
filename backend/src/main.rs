@@ -51,9 +51,17 @@ async fn main() {
             eprintln!("‣ {cause}");
         }
 
-        eprintln!();
-        bunt::eprintln!("{$red+italic}Backtrace:{/$}");
-        eprintln!("{}", e.backtrace());
+        // This check whether the backtrace is present is somewhat bad. But it
+        // works for now. If that special string changes at some point, we will
+        // just print a bit of useless information -> nothing bad will happen.
+        // And the whole backtrace situation in `anyhow` should improve in the
+        // future anyway.
+        let backtrace = e.backtrace().to_string();
+        if backtrace != "disabled backtrace" {
+            eprintln!();
+            bunt::eprintln!("{$red+italic}Backtrace:{/$}");
+            eprintln!("{backtrace}");
+        }
 
         std::process::exit(1);
     }
@@ -61,16 +69,6 @@ async fn main() {
 
 /// Main entry point.
 async fn run() -> Result<()> {
-    // If `RUST_BACKTRACE` wasn't already set, we default to `1`. Backtraces are
-    // almost always useful for debugging. Generating a backtrace is somewhat
-    // costly, which is why it is disabled by default. However, we don't expect
-    // panics to occur regularly, so it shouldn't be a problem. Only
-    // consideration: maaaybe this is a way to DOS tobira? If someone finds a
-    // request that triggers a panic?
-    if env::var("RUST_BACKTRACE") == Err(env::VarError::NotPresent) {
-        env::set_var("RUST_BACKTRACE", "1");
-    }
-
     // Parse CLI args.
     // This is a bit roundabout because we want to override the version
     // using some runtime code.
@@ -83,7 +81,6 @@ async fn run() -> Result<()> {
     // Configure output via `bunt`
     bunt::set_stdout_color_choice(args.stdout_color());
     bunt::set_stderr_color_choice(args.stderr_color());
-
 
     // Dispatch subcommand.
     match &args.cmd {
@@ -113,6 +110,10 @@ async fn run() -> Result<()> {
         Command::ImportRealmTree { options, shared } => {
             let config = load_config_and_init_logger(shared, &args)?;
             cmd::import_realm_tree::run(options, &config).await?;
+        }
+        Command::KnownGroups { options, shared } => {
+            let config = load_config_and_init_logger(shared, &args)?;
+            cmd::known_groups::run(config, options).await?;
         }
     }
 
@@ -148,6 +149,7 @@ async fn start_worker(config: Config) -> Result<Never> {
     let stats_conn = db.get().await?;
     let auth_config = config.auth.clone();
 
+    default_enable_backtraces();
     tokio::select! {
         res = search::update_index_daemon(&search, &mut search_conn) => {
             res.context("error updating the search index")
@@ -190,4 +192,25 @@ async fn connect_and_migrate_db(config: &Config) -> Result<Pool> {
     db::migrate(&mut *db.get().await?).await
         .context("failed to check/run DB migrations")?;
     Ok(db)
+}
+
+
+/// Sets `RUST_BACKTRACE` to 1 if it is undefined.
+///
+/// This is called in long running subcommands after the setup. The idea is that
+/// backtraces are very important to debug bugs. And in long running commands
+/// like `serve` or `worker`, we are likely to find some rare bugs that are
+/// difficult to reproduce. On the other hand, getting a big backtrace is
+/// usually not helpful when you either just started a long running command
+/// (e.g. DB not reachable) or if you are using Tobira's CLI tools (like `db
+/// clear` or `known-groups add`).
+///
+/// Generating a backtrace is somewhat costly, which is why it is disabled
+/// by default. However, we don't expect panics to occur regularly, so it
+/// shouldn't be a problem. Only consideration: maaaybe this is a way to DOS
+/// tobira? If someone finds a request that triggers a panic?
+fn default_enable_backtraces() {
+    if env::var("RUST_BACKTRACE") == Err(env::VarError::NotPresent) {
+        env::set_var("RUST_BACKTRACE", "1");
+    }
 }

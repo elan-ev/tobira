@@ -159,13 +159,21 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
     let sql = "SELECT sequence_name FROM information_schema.sequences";
     let sequences = query_strings(&tx, sql).await.context("failed to query all sequences")?;
 
-    // With `typsubscript = 0` we make sure to not query automatically-created
-    // array types. Attempting to destroy those will fail.
+    // We query `pg_depend` and filter out all types that depend on something
+    // else via internal (i) or extension (e) dependency. The internal
+    // dependencies are dropped automatically by other drops (this is mostly
+    // about table types). The extension dependencies mean that this type
+    // belong to an extension (e.g. ghstore belongs to hstore); and we don't
+    // want to delete those.
     let sql = "\
         select typname \
         from pg_type \
         where typnamespace = current_schema()::regnamespace \
-        and typsubscript = 0";
+        and not exists(\
+            select from pg_depend \
+            where pg_depend.objid = pg_type.oid \
+            and (pg_depend.deptype = 'i' or pg_depend.deptype = 'e') \
+        )";
     let types = query_strings(&tx, sql).await.context("failed to query all types")?;
 
     // Tables

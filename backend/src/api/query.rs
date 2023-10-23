@@ -13,6 +13,7 @@ use super::{
         event::{AuthorizedEvent, Event},
         series::Series,
         search::{self, SearchOutcome, EventSearchOutcome, SeriesSearchOutcome},
+        known_roles::KnownGroup,
     },
     jwt::{JwtService, jwt},
 };
@@ -117,5 +118,10 @@ impl Query {
         context: &Context,
     ) -> ApiResult<SeriesSearchOutcome> {
         search::all_series(&query, writable_only, context).await
+    }
+
+    /// Returns all known groups selectable in the ACL UI.
+    async fn known_groups(context: &Context) -> ApiResult<Vec<KnownGroup>> {
+        KnownGroup::load_all(context).await
     }
 }

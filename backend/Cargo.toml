@@ -30,6 +30,7 @@ cookie = "0.17.0"
 deadpool = { version = "0.9.0", default-features = false, features = ["managed", "rt_tokio_1"] }
 deadpool-postgres = { version = "0.10", default-features = false, features = ["rt_tokio_1"] }
 elliptic-curve = { version = "0.13.4", features = ["jwk", "sec1"] }
+fallible-iterator = "0.2.0"
 form_urlencoded = "1.1.0"
 futures = { version = "0.3.1", default-features = false, features = ["std"] }
 hex = "0.4.3"
@@ -50,6 +51,7 @@ palette = { version = "0.7.1", default-features = false, features = ["std"] }
 paste = "1"
 pem-rfc7468 = { version = "0.7.0", features = ["std"] }
 percent-encoding = "2.1.0"
+postgres-protocol = "0.6.6"
 postgres-types = { version = "0.2.2", features = ["derive", "array-impls"] }
 prometheus-client = "0.20.0"
 rand = "0.8.4"

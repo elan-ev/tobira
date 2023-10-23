@@ -48,6 +48,13 @@
         name: pgcrypto
         db: tobira-{{ id }}
 
+    - name: add hstore extension
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_ext:
+        name: hstore
+        db: tobira-{{ id }}
+
     # TOBIRA
 
 
@@ -176,6 +183,23 @@
       become_user: tobira
       command:
         cmd: /opt/tobira/{{ id }}/tobira search-index update
+        chdir: /opt/tobira/{{ id }}/
+
+    - name: Configure known groups
+      become: true
+      become_user: tobira
+      copy:
+        src: known-groups.json
+        dest: /opt/tobira/{{ id }}/
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Configure known groups
+      become: true
+      become_user: tobira
+      command:
+        cmd: /opt/tobira/{{ id }}/tobira known-groups upsert known-groups.json
         chdir: /opt/tobira/{{ id }}/
 
     - name: install tobira service files

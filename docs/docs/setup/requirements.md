@@ -18,7 +18,7 @@ To run, Tobira requires:
 
 These are technicalities that you likely don't need to care about if you have a dedicated and modern PostgreSQL for Tobira.
 
-- For PostgreSQL version 12 and older, you have to manually enable the `pgcrypto` extension!
+- For PostgreSQL version 12 and older, you have to manually enable the `pgcrypto` and `hstore` extensions!
 - Over the lifetime of a Tobira installation the `current_schema()` must not change.
 - Tobira assumes exclusive control over the `current_schema()`.
   So don't let other applications use the same schema.

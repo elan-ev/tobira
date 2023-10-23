@@ -126,6 +126,17 @@ input NewVideoBlock {
   showLink: Boolean!
 }
 
+"""
+  A group selectable in the ACL UI. Basically a mapping from role to a nice
+  label and info about the relationship to other roles/groups.
+"""
+type KnownGroup {
+  role: String!
+  label: TranslatedString!
+  implies: [String!]!
+  large: Boolean!
+}
+
 type SyncedEventData {
   updated: DateTimeUtc!
   startTime: DateTimeUtc
@@ -455,6 +466,8 @@ type Query {
     searched.
   """
   searchAllSeries(query: String!, writableOnly: Boolean!): SeriesSearchOutcome!
+  "Returns all known groups selectable in the ACL UI."
+  knownGroups: [KnownGroup!]!
 }
 
 interface RealmNameSourceBlock {
@@ -474,6 +487,9 @@ type EmptyQuery {
   """
   dummy: Boolean
 }
+
+"A string in different languages"
+scalar TranslatedString
 
 input UpdateSeriesBlock {
   series: ID

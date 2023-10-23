@@ -12,27 +12,35 @@ import { WithTooltip } from "@opencast/appkit";
 import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
-import { Acl, AclSelector } from "../../../ui/Access";
+import { Acl, AclSelector, knownRolesFragement } from "../../../ui/Access";
 import { useNavBlocker } from "../../util";
+import { useFragment } from "react-relay";
+import {
+    AccessKnownRolesData$data,
+    AccessKnownRolesData$key,
+} from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
     "acl",
     "/access",
-    event => <AclPage event={event} />,
+    (event, data) => <AclPage event={event} data={data} />,
 );
 
 type AclPageProps = {
     event: AuthorizedEvent;
+    data: AccessKnownRolesData$key;
 };
 
-const AclPage: React.FC<AclPageProps> = ({ event }) => {
+const AclPage: React.FC<AclPageProps> = ({ event, data }) => {
     const { t } = useTranslation();
     const user = useUser();
 
     if (!isRealUser(user)) {
         return <NotAuthorized />;
     }
+
+    const knownRoles = useFragment(knownRolesFragement, data);
 
     const breadcrumbs = [
         { label: t("user.manage-content"), link: "/~manage" },
@@ -44,7 +52,7 @@ const AclPage: React.FC<AclPageProps> = ({ event }) => {
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
         {event.hostRealms.length < 1 && <UnlistedNote />}
-        <AccessUI {...{ event }} />
+        <AccessUI {...{ event, knownRoles }} />
     </>;
 };
 
@@ -76,9 +84,10 @@ const UnlistedNote: React.FC = () => {
 
 type AccessUIProps = {
     event: AuthorizedEvent;
+    knownRoles: AccessKnownRolesData$data;
 }
 
-const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
+const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
 
     const initialAcl: Acl = {
         readRoles: new Set(event.readRoles),
@@ -94,7 +103,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event }) => {
                 flexDirection: "column",
                 width: "100%",
             }}>
-                <AclSelector acl={selections} onChange={setSelections} />
+                <AclSelector acl={selections} onChange={setSelections} knownRoles={knownRoles} />
                 <ButtonWrapper {...{ selections, setSelections, initialAcl }} />
             </div>
         </div>

@@ -6,17 +6,17 @@ use self::{
     subscription::Subscription,
 };
 
-pub(crate) mod mutation;
-pub(crate) mod query;
-pub(crate) mod subscription;
 pub(crate) mod util;
+pub(crate) mod model;
 
 mod common;
 mod context;
 mod err;
 mod id;
-mod model;
 mod jwt;
+mod mutation;
+mod query;
+mod subscription;
 
 pub(crate) use self::{
     id::Id,

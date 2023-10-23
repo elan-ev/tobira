@@ -105,6 +105,15 @@ pub(crate) enum Command {
         #[clap(flatten)]
         shared: Shared,
     },
+
+    /// Listing, adding, and removing known groups.
+    KnownGroups {
+        #[clap(subcommand)]
+        options: cmd::known_groups::Args,
+
+        #[clap(flatten)]
+        shared: Shared,
+    },
 }
 
 #[derive(Debug, clap::Args)]
