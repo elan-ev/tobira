@@ -87,6 +87,12 @@ pub(crate) struct AuthConfig {
     #[config(default = "ROLE_USER")]
     pub(crate) user_realm_role: String,
 
+    /// List of prefixes that user roles can have. Used to distinguish user
+    /// roles from other roles. Should probably be the same as
+    /// `role_user_prefix` in `acl.default.create.properties` in OC.
+    #[config(default = ["ROLE_USER_"])]
+    pub(crate) user_role_prefixes: Vec<String>,
+
     /// Duration of a Tobira-managed login session.
     /// Note: This is only relevant if `auth.mode` is `login-proxy`.
     #[config(default = "30d", deserialize_with = crate::config::deserialize_duration)]

@@ -128,6 +128,7 @@ impl Assets {
             "passwordLabel": config.auth.login_page.password_label,
             "loginPageNote": config.auth.login_page.note,
             "preAuthExternalLinks": config.auth.pre_auth_external_links,
+            "userRolePrefixes": config.auth.user_role_prefixes,
         }).to_string());
         variables.insert("upload".into(), json!({
             "requireSeries": config.upload.require_series,
