@@ -43,8 +43,11 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
 
         const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
             if (textAreaRef.current) {
+                // Setting this to auto first prevents some weird behavior
+                // where the textarea's height decreases by a small amount
+                // whenever a single char is deleted.
                 textAreaRef.current.style.height = "auto";
-                textAreaRef.current.style.height = `${e.target.scrollHeight}px`;
+                textAreaRef.current.style.height = `${e.target.scrollHeight + 2}px`;
             }
         };
 
@@ -54,7 +57,9 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
             css={{
                 width: "100%",
                 minHeight: 200,
-                height: initialHeight,
+                // We add 2px here and in the input handling to prevent the appearance
+                // of an unnecessary scrollbar while the whole text is visible.
+                ...initialHeight && { height: initialHeight + 2 },
                 maxHeight: "50vh",
                 resize: "none",
                 padding: "8px 10px",
