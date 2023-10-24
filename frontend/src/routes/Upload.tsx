@@ -385,6 +385,13 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
         }
     };
 
+    const dragNDropSupported = () => {
+        const div = document.createElement("div");
+        const isSupported = ("draggable" in div) || ("ondragstart" in div && "ondrop" in div);
+        div.remove();
+        return isSupported;
+    };
+
     return (
         <div
             onDragEnter={e => {
@@ -436,7 +443,19 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                 <FiUpload css={{ "& > polyline, & > line": { display: "none" } }} />
             </div>
 
-            {t("upload.drop-to-upload")}
+            {
+                // This infers the dragNdrop capability of the currently used device by checking
+                // a) whether or not the device has a pointer that can hover
+                // (like a mouse or stylus) and
+                // b) if DnD is supported by the browser that's being used.
+                <span css={{
+                    ["@media (not(pointer:fine)) and (not(hover))"]: {
+                        ...!dragNDropSupported() && { display: "none" },
+                    },
+                }}>
+                    {t("upload.drop-to-upload")}
+                </span>
+            }
 
             {/* "Select files" button */}
             <div css={{ marginTop: 16 }}>
