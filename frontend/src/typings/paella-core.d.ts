@@ -63,6 +63,7 @@ declare module "paella-core" {
     export interface VideoContainer {
         setCurrentTime: (t: number) => Promise<void>;
         currentTime: () => Promise<number>;
+        pause: () => void;
     }
 
     export type PluginConfig = Record<string, unknown> & {

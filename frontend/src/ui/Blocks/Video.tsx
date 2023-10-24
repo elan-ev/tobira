@@ -78,7 +78,6 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         >
             {t("video.link")}
             <FiArrowRightCircle size={18} css={{ marginTop: 1 }} />
-        </Link>
-        }
+        </Link>}
     </div>;
 };
