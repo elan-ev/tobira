@@ -280,6 +280,10 @@ pub(crate) async fn all_events(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<EventSearchOutcome> {
+    if !context.auth.is_user() {
+        return Err(context.not_logged_in_error());
+    }
+
     // All users can find all events they have write access to. If
     // `writable_only` is false, this API also returns events that are listed
     // and that the user can read.
@@ -326,6 +330,10 @@ pub(crate) async fn all_series(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<SeriesSearchOutcome> {
+    if !context.auth.is_user() {
+        return Err(context.not_logged_in_error());
+    }
+
     let filter = match (writable_only, context.auth.is_moderator(&context.config.auth)) {
         // If the writable_only flag is set, we filter by that only. All users
         // are allowed to find all series that they have write access to.
