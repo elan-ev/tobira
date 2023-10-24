@@ -123,6 +123,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     const { t, i18n } = useTranslation();
     const { change, knownGroups, groupDag } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
+    const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
 
     // Turn known roles into selectable options that react-select understands.
     const knownRoles = kind === "Group" ? knownGroups : KNOWN_USERS;
@@ -287,7 +288,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 </thead>
                 <tbody>
                     {/* Placeholder if there are no entries */}
-                    {selection.length === 0 && <tr>
+                    {selection.length === 0 && !userIsAdmin && <tr>
                         <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
                             {t("acl.no-entries")}
                         </td>
@@ -304,8 +305,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     {(
                         kind === "Group"
                         && !selection.some(s => s.value === COMMON_ROLES.ADMIN)
-                        && isRealUser(user)
-                        && user.roles.includes(COMMON_ROLES.ADMIN)
+                        && userIsAdmin
                     ) && (
                         <ListEntry
                             item={{ label: t("acl.groups.admins"), value: COMMON_ROLES.ADMIN }}
