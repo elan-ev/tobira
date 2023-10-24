@@ -25,6 +25,7 @@ import { SelectProps } from "./Input";
 import { searchableSelectStyles, theme } from "./SearchableSelect";
 import { FloatingBaseMenu } from "./FloatingBaseMenu";
 import { AccessKnownRolesData$data } from "./__generated__/AccessKnownRolesData.graphql";
+import CONFIG from "../config";
 
 
 
@@ -163,7 +164,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 if (x.value === currentUserRole) {
                     return 0;
                 }
-                if (x.label.startsWith("ROLE_USER_")) {
+                if (x.label.startsWith("ROLE_")) {
                     return 2;
                 }
                 return 1;
@@ -233,7 +234,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 isSearchable
                 placeholder={translations.placeholder}
                 isValidNewOption={input => {
-                    const validUserRole = /^ROLE_USER_\w+/.test(input);
+                    const validUserRole = isUserRole(input);
                     const validRole = /^ROLE_\w+/.test(input);
                     return kind === "Group" ? (validRole && !validUserRole) : validUserRole;
                 }}
@@ -260,15 +261,13 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     padding: 6,
                     ":first-of-type": {
                         paddingLeft: 12,
+                        overflowWrap: "anywhere",
                     },
                 },
                 [screenWidthAtMost(480)]: {
                     fontSize: 14,
                     "> colgroup > col:nth-of-type(2)": { width: "unset" },
                     "> colgroup > col:nth-of-type(3)": { width: 35 },
-                    "td:first-of-type": {
-                        overflowWrap: "anywhere",
-                    },
                 },
             }}>
                 <colgroup>
@@ -344,12 +343,17 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
 
     let label: JSX.Element;
     if (isUser) {
-        label = <><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</>;
-    } else if (kind === "User" && item.label.startsWith("ROLE_USER_")) {
-        const name = item.value.slice("ROLE_USER_".length)
+        label = <span><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</span>;
+    } else if (kind === "User" && isUserRole(item.label)) {
+        // We strip the user role prefix (we take the longest prefix that
+        // matches, though in almost all cases just a single one will match).
+        // We then clean it a bit before displaying.
+        const prefixes = CONFIG.auth.userRolePrefixes
+            .filter(prefix => item.label.startsWith(prefix));
+        const name = item.value.slice(Math.max(...prefixes.map(p => p.length)))
             .toLocaleLowerCase(i18n.resolvedLanguage)
             .replace("_", " ");
-        label = <>{name} (<i>{t("acl.unknown-user-note")}</i>)</>;
+        label = <span>{name} (<i>{t("acl.unknown-user-note")}</i>)</span>;
     } else {
         label = <>{item.label}</>;
     }
@@ -587,16 +591,18 @@ const getLabel = (role: string, knownRoles: KnownRoles, i18n: i18n) => {
     return knownRoles[role]?.(i18n) ?? role;
 };
 
+const isUserRole = (role: string) =>
+    CONFIG.auth.userRolePrefixes.some(prefix => role.startsWith(prefix));
+
 /** Splits initial ACL into group and user roles. */
 const splitAcl = (initialAcl: Acl) => {
-    const regEx = /^ROLE_USER_\w+/;
     const groupAcl: Acl = {
-        readRoles: new Set([...initialAcl.readRoles].filter(role => !regEx.test(role))),
-        writeRoles: new Set([...initialAcl.writeRoles].filter(role => !regEx.test(role))),
+        readRoles: new Set([...initialAcl.readRoles].filter(role => !isUserRole(role))),
+        writeRoles: new Set([...initialAcl.writeRoles].filter(role => !isUserRole(role))),
     };
     const userAcl: Acl = {
-        readRoles: new Set([...initialAcl.readRoles].filter(role => regEx.test(role))),
-        writeRoles: new Set([...initialAcl.writeRoles].filter(role => regEx.test(role))),
+        readRoles: new Set([...initialAcl.readRoles].filter(role => isUserRole(role))),
+        writeRoles: new Set([...initialAcl.writeRoles].filter(role => isUserRole(role))),
     };
 
     return [groupAcl, userAcl];
@@ -604,7 +610,7 @@ const splitAcl = (initialAcl: Acl) => {
 
 
 export const getUserRole = (user: UserState) => {
-    const userRole = isRealUser(user) && user.roles.find(role => /^ROLE_USER\w+/.test(role));
+    const userRole = isRealUser(user) && user.roles.find(isUserRole);
     return typeof userRole !== "string" ? "Unknown" : userRole;
 };
 
