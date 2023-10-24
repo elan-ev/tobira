@@ -2,10 +2,11 @@ import { useEffect, useRef } from "react";
 import { Config, Manifest, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 import getZoomPluginContext from "paella-zoom-plugin";
+import { Global } from "@emotion/react";
+import { useTranslation } from "react-i18next";
 
 import { Caption, isHlsTrack, Track } from ".";
 import { SPEEDS } from "./consts";
-import { useTranslation } from "react-i18next";
 import { timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
@@ -155,7 +156,22 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
     // not important that an adjusted neutral tone is reflected in the player.
     // We just want to override the default dark blue.
     const toolbarBg = "#1e1e1e";
-    return (
+    const colors = {
+        "--main-bg-color": toolbarBg,
+        "--main-bg-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
+        "--secondary-bg-color": "#2e2e2e",
+        "--secondary-bg-color-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
+        "--highlight-bg-color": "var(--color-player-accent-darker)",
+        "--highlight-bg-color-hover": "var(--color-player-accent-dark)",
+        "--highlight-bg-color-progress-indicator": "var(--color-player-accent-light)",
+        "--volume-slider-fill-color": "var(--color-player-accent-light)",
+        "--volume-slider-empty-color": "#777",
+    };
+
+    return <>
+        <Global styles={{
+            "body > .popup-container": colors,
+        }} />
         <div
             // We use `key` here to force React to re-create this `div` and not
             // reuse the old one. This is useful as Paella's cleanup function
@@ -174,9 +190,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 top: "unset",
                 fontFamily: "unset",
 
-                "--main-bg-color": toolbarBg,
-                "--main-bg-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
-                "--secondary-bg-color-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
+                ...colors,
 
                 "& .playback-bar": {
                     transition: "background 0.08s",
@@ -196,7 +210,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 },
             }}
         />
-    );
+    </>;
 };
 
 const PAELLA_CONFIG = {

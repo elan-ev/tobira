@@ -136,9 +136,10 @@ impl ColorConfig {
     }
 
     /// Returns the CSS variables for light and dark themes, respectively.
-    pub(super) fn css_vars(&self) -> (Vars, Vars) {
+    pub(super) fn css_vars(&self) -> (Vars, Vars, Vars) {
         let mut light = vec![];
         let mut dark = vec![];
+        let mut global = vec![];
 
 
         fn add(vars: &mut Vars, name: &str, color: Lch) {
@@ -288,6 +289,11 @@ impl ColorConfig {
         add(&mut dark, "neutral80", Lch { l: 68.0, ..base_grey });
         add(&mut dark, "neutral90", Lch { l: 79.0, ..base_grey });
 
-        (light, dark)
+        let player_accent = Lch::from_color(self.primary.0.into_format::<f32>());
+        add(&mut global, "player-accent-light", Lch { l: 80.0, ..player_accent });
+        add(&mut global, "player-accent-dark", Lch { l: 38.0, ..player_accent });
+        add(&mut global, "player-accent-darker", Lch { l: 28.0, ..player_accent });
+
+        (light, dark, global)
     }
 }
