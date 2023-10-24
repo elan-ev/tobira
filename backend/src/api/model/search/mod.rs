@@ -280,7 +280,26 @@ pub(crate) async fn all_events(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<EventSearchOutcome> {
-    let filter = make_filter(writable_only, context);
+    // All users can find all events they have write access to. If
+    // `writable_only` is false, this API also returns events that are listed
+    // and that the user can read.
+    let writables = acl_filter("write_roles", context);
+    let filter = if writable_only {
+        writables.map(|f| f.to_string()).unwrap_or_default()
+    } else {
+        let listed_and_readable = Filter::And(
+            std::iter::once(Filter::Leaf("listed = true".into()))
+                .chain(acl_filter("read_roles", context))
+                .collect()
+        );
+
+        Filter::Or(
+            std::iter::once(listed_and_readable)
+                .chain(writables)
+                .collect()
+        ).to_string()
+    };
+
     let res = context.search.event_index.search()
         .with_query(user_query)
         .with_limit(50)
@@ -307,25 +326,7 @@ pub(crate) async fn all_series(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<SeriesSearchOutcome> {
-    let filter = make_filter(writable_only, context);
-    let res = context.search.series_index.search()
-        .with_query(user_query)
-        .with_show_matches_position(true)
-        .with_filter(&filter)
-        .with_limit(50)
-        .execute::<search::Series>()
-        .await;
-    let results = handle_search_result!(res, SeriesSearchOutcome);
-    let items = results.hits.into_iter().map(|h| h.result).collect();
-
-    Ok(SeriesSearchOutcome::Results(SearchResults { items }))
-}
-
-/// Creates the filter string depending on whether the user is moderator and
-/// whether `writableOnly` was set. All users can find all events/series they
-/// have write access to. Moderators can find any events/series.
-fn make_filter(writable_only: bool, context: &Context) -> String {
-    match (writable_only, context.auth.is_moderator(&context.config.auth)) {
+    let filter = match (writable_only, context.auth.is_moderator(&context.config.auth)) {
         // If the writable_only flag is set, we filter by that only. All users
         // are allowed to find all series that they have write access to.
         (true, _) => acl_filter("write_roles", context)
@@ -345,7 +346,19 @@ fn make_filter(writable_only: bool, context: &Context) -> String {
                     .collect()
             ).to_string()
         }
-    }
+    };
+
+    let res = context.search.series_index.search()
+        .with_query(user_query)
+        .with_show_matches_position(true)
+        .with_filter(&filter)
+        .with_limit(50)
+        .execute::<search::Series>()
+        .await;
+    let results = handle_search_result!(res, SeriesSearchOutcome);
+    let items = results.hits.into_iter().map(|h| h.result).collect();
+
+    Ok(SeriesSearchOutcome::Results(SearchResults { items }))
 }
 
 fn acl_filter(action: &str, context: &Context) -> Option<Filter> {

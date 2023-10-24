@@ -95,8 +95,9 @@ impl Query {
         search::perform(&query, context).await
     }
 
-    /// Searches through all events (including non-listed ones). Requires
-    /// moderator rights.
+    /// Searches through all events that the user has write access to
+    /// (unlisted and listed). If `writeable_only` is `false`, events that are
+    /// listed and that the user has read access to are also returned.
     async fn search_all_events(
         query: String,
         writable_only: bool,
