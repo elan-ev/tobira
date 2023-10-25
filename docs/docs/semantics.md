@@ -2,9 +2,10 @@
 sidebar_position: 5
 ---
 
-# User Manual: How Tobira works
+# Semantics and definitions
 
 This document is a loose collection of various additional information, defining some terms and explaining how some details of Tobira work.
+This hopefully enables more precise communication in Tobira-related discussions.
 
 
 ## Pages
