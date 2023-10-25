@@ -8,6 +8,10 @@ This document is a loose collection of various additional information, defining 
 This hopefully enables more precise communication in Tobira-related discussions.
 
 
+## Common UI elements
+
+![](./ui-elements.png)
+
 ## Pages
 
 Tobira contains a hierarchy of *pages*, also called the page tree.
