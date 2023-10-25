@@ -49,11 +49,15 @@ impl Context {
                 key: Some(translation_key),
             }
         } else {
-            ApiError {
-                msg: "user is not logged in".into(),
-                kind: ApiErrorKind::NotAuthorized,
-                key: Some("mutation.not-logged-in"),
-            }
+            self.not_logged_in_error()
+        }
+    }
+
+    pub(crate) fn not_logged_in_error(&self) -> ApiError {
+        ApiError {
+            msg: "user is not logged in".into(),
+            kind: ApiErrorKind::NotAuthorized,
+            key: Some("mutation.not-logged-in"),
         }
     }
 }
