@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
@@ -126,8 +126,10 @@ const LoginBox: React.FC = () => {
     const { t, i18n } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
-    const userid = watch("userid", "");
+    const userId = watch("userid", "");
     const password = watch("password", "");
+    const userFieldId = useId();
+    const passwordFieldId = useId();
 
     const validation = { required: t("general.form.this-field-is-required") };
 
@@ -195,14 +197,14 @@ const LoginBox: React.FC = () => {
                 }}
             >
                 <div>
-                    <Field isEmpty={userid === ""}>
-                        <label htmlFor="userid">
+                    <Field isEmpty={userId === ""}>
+                        <label htmlFor={userFieldId}>
                             {CONFIG.auth.userIdLabel
                                 ? translatedConfig(CONFIG.auth.userIdLabel, i18n)
                                 : t("login-page.user-id")}
                         </label>
                         <input
-                            id="userid"
+                            id={userFieldId}
                             autoComplete="username email"
                             spellCheck={false}
                             autoCapitalize="none"
@@ -215,13 +217,13 @@ const LoginBox: React.FC = () => {
                 </div>
                 <div>
                     <Field isEmpty={password === ""}>
-                        <label htmlFor="password">
+                        <label htmlFor={passwordFieldId}>
                             {CONFIG.auth.passwordLabel
                                 ? translatedConfig(CONFIG.auth.passwordLabel, i18n)
                                 : t("login-page.password")}
                         </label>
                         <input
-                            id="password"
+                            id={passwordFieldId}
                             type="password"
                             autoComplete="current-password"
                             required

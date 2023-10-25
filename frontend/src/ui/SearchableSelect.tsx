@@ -130,7 +130,7 @@ type SeriesOption = {
 };
 
 export const SeriesSelector: React.FC<SeriesSelectorProps> = ({
-    writableOnly = false, onBlur, onChange, defaultValue, ...rest
+    writableOnly = false, onBlur, onChange, defaultValue, inputId, ...rest
 }) => {
     const { t } = useTranslation();
     const [error, setError] = useState<ReactNode>(null);
@@ -174,7 +174,7 @@ export const SeriesSelector: React.FC<SeriesSelectorProps> = ({
             format={formatSeriesOption}
             onChange={onChange}
             isDisabled={!!error}
-            {...{ onBlur, defaultValue }}
+            {...{ onBlur, defaultValue, inputId }}
             {...rest}
         />
     </>;

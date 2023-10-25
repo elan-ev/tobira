@@ -1,4 +1,4 @@
-import React, { MutableRefObject, ReactNode, useEffect, useRef, useState } from "react";
+import React, { MutableRefObject, ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
@@ -674,6 +674,9 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
     const { t } = useTranslation();
     const user = useUser();
     const userRole = getUserRole(user);
+    const titleFieldId = useId();
+    const descriptionFieldId = useId();
+    const seriesFieldId = useId();
 
     const defaultAcl: Acl = {
         readRoles: new Set([COMMON_ROLES.ANONYMOUS, userRole]),
@@ -711,9 +714,9 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         >
             {/* Title */}
             <InputContainer>
-                <TitleLabel htmlFor="title-field" />
+                <TitleLabel htmlFor={titleFieldId} />
                 <Input
-                    id="title-field"
+                    id={titleFieldId}
                     required
                     error={!!errors.title}
                     css={{ width: 400, maxWidth: "100%" }}
@@ -727,13 +730,13 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
 
             {/* Description */}
             <InputContainer>
-                <label htmlFor="description-field">{t("upload.metadata.description")}</label>
-                <TextArea id="description-field" {...register("description")} />
+                <label htmlFor={descriptionFieldId}>{t("upload.metadata.description")}</label>
+                <TextArea id={descriptionFieldId} {...register("description")} />
             </InputContainer>
 
             {/* Series */}
             <InputContainer>
-                <label htmlFor="series-field">
+                <label htmlFor={seriesFieldId}>
                     {t("series.series")}
                     {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
                     <WithTooltip
@@ -750,6 +753,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     </WithTooltip>
                 </label>
                 <SeriesSelector
+                    inputId={seriesFieldId}
                     writableOnly
                     menuPlacement="top"
                     onChange={data => seriesField.onChange(data?.opencastId)}
