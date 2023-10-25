@@ -196,6 +196,12 @@ impl AuthContext {
             .pipe(Ok)
     }
 
+    /// Returns `true` if this is a normally authenticated user. Note that
+    /// usually, roles should be checked instead.
+    pub(crate) fn is_user(&self) -> bool {
+        matches!(self, Self::User(_))
+    }
+
     /// Returns a representation of the optional username useful for logging.
     pub(crate) fn debug_log_username(&self) -> Cow<'static, str> {
         match self {

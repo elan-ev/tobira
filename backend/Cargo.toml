@@ -1,6 +1,6 @@
 [package]
 name = "tobira"
-version = "2.2.0"
+version = "2.3.0"
 authors = [
     "The Opencast project",
     "Lukas Kalbertodt <kalbertodt@elan-ev.de>",
