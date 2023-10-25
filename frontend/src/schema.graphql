@@ -438,8 +438,9 @@ type Query {
   "Returns `null` if the query is too short."
   search(query: String!): SearchOutcome!
   """
-    Searches through all events (including non-listed ones). Requires
-    moderator rights.
+    Searches through all events that the user has write access to
+    (unlisted and listed). If `writeable_only` is `false`, events that are
+    listed and that the user has read access to are also returned.
   """
   searchAllEvents(query: String!, writableOnly: Boolean!): EventSearchOutcome!
   """
