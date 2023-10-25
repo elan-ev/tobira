@@ -1,6 +1,6 @@
 use std::fmt;
 
-use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken, Lighten};
+use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken, Lighten, Oklch, IntoColor};
 
 use crate::prelude::*;
 
@@ -289,10 +289,10 @@ impl ColorConfig {
         add(&mut dark, "neutral80", Lch { l: 68.0, ..base_grey });
         add(&mut dark, "neutral90", Lch { l: 79.0, ..base_grey });
 
-        let player_accent = Lch::from_color(self.primary.0.into_format::<f32>());
-        add(&mut global, "player-accent-light", Lch { l: 80.0, ..player_accent });
-        add(&mut global, "player-accent-dark", Lch { l: 38.0, ..player_accent });
-        add(&mut global, "player-accent-darker", Lch { l: 28.0, ..player_accent });
+        let player_accent = Oklch::from_color(self.primary.0.into_format::<f32>());
+        add(&mut global, "player-accent-light", Oklch { l: 0.77, ..player_accent }.into_color());
+        add(&mut global, "player-accent-dark", Oklch { l: 0.48, ..player_accent }.into_color());
+        add(&mut global, "player-accent-darker", Oklch { l: 0.38, ..player_accent }.into_color());
 
         (light, dark, global)
     }

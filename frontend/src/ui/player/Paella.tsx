@@ -165,7 +165,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
         "--highlight-bg-color-hover": "var(--color-player-accent-dark)",
         "--highlight-bg-color-progress-indicator": "var(--color-player-accent-light)",
         "--volume-slider-fill-color": "var(--color-player-accent-light)",
-        "--volume-slider-empty-color": "#777",
+        "--volume-slider-empty-color": "#555",
     };
 
     return <>
@@ -194,6 +194,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
 
                 "& .playback-bar": {
                     transition: "background 0.08s",
+                },
+                "& .progress-indicator-remaining": {
+                    backgroundColor: "#9e9e9e !important",
                 },
 
                 '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
