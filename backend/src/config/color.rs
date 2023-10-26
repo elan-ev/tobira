@@ -1,6 +1,6 @@
 use std::fmt;
 
-use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken, Lighten};
+use palette::{Srgb, Lch, FromColor, convert::TryFromColor, Darken, Lighten, Oklch, IntoColor};
 
 use crate::prelude::*;
 
@@ -136,9 +136,10 @@ impl ColorConfig {
     }
 
     /// Returns the CSS variables for light and dark themes, respectively.
-    pub(super) fn css_vars(&self) -> (Vars, Vars) {
+    pub(super) fn css_vars(&self) -> (Vars, Vars, Vars) {
         let mut light = vec![];
         let mut dark = vec![];
+        let mut global = vec![];
 
 
         fn add(vars: &mut Vars, name: &str, color: Lch) {
@@ -288,6 +289,11 @@ impl ColorConfig {
         add(&mut dark, "neutral80", Lch { l: 68.0, ..base_grey });
         add(&mut dark, "neutral90", Lch { l: 79.0, ..base_grey });
 
-        (light, dark)
+        let player_accent = Oklch::from_color(self.primary.0.into_format::<f32>());
+        add(&mut global, "player-accent-light", Oklch { l: 0.77, ..player_accent }.into_color());
+        add(&mut global, "player-accent-dark", Oklch { l: 0.48, ..player_accent }.into_color());
+        add(&mut global, "player-accent-darker", Oklch { l: 0.38, ..player_accent }.into_color());
+
+        (light, dark, global)
     }
 }

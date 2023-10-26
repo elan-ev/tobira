@@ -82,14 +82,16 @@ impl ThemeConfig {
         }
 
 
-        // Header and logo sizes.
+        let (light, dark, global) = self.color.css_vars();
+
         out.push_str(":root {\n");
         w!("  --header-height: {}px;", self.header_height);
+        for (key, value) in global {
+            w!("  {}: {};", key, value);
+        }
         w!("}}");
 
 
-        // Colors
-        let (light, dark) = self.color.css_vars();
         w!("html[data-color-scheme=\"light\"], html:not([data-color-scheme]) {{");
         for (key, value) in light {
             w!("  {}: {};", key, value);
