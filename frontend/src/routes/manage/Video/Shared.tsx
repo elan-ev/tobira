@@ -13,7 +13,7 @@ import { b64regex } from "../../util";
 import { Thumbnail } from "../../../ui/Video";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
 import { Link } from "../../../router";
-import { isExperimentalFlagSet, keyOfId } from "../../../util";
+import { eventId, isExperimentalFlagSet, keyOfId } from "../../../util";
 
 
 export const PAGE_WIDTH = 1100;
@@ -38,7 +38,7 @@ export const makeManageVideoRoute = (
         }
 
         const videoId = decodeURIComponent(params[1]);
-        const queryRef = loadQuery<SharedVideoManageQuery>(query, { id: `ev${videoId}` });
+        const queryRef = loadQuery<SharedVideoManageQuery>(query, { id: eventId(videoId) });
 
         return {
             render: () => <RootLoader

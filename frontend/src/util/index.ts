@@ -12,6 +12,12 @@ export function keyOfId(id: string): string {
     return id.substring(2);
 }
 
+/** Constructs event ID for graphQL by adding the "ev" prefix. */
+export const eventId = (key: string) => `ev${key}`;
+
+/** Constructs series ID for graphQL by adding the "sr" prefix. */
+export const seriesId = (key: string) => `sr${key}`;
+
 /**
  * Create a comparison function for `Array.prototype.sort` comparing whatever
  * the given key function returns as numbers.
