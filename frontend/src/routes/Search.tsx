@@ -18,6 +18,7 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_SMALL } from "../GlobalStyle";
+import { keyOfId } from "../util";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -195,8 +196,8 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
     const link = hostRealms.length !== 1
-        ? `/!v/${id.slice(2)}`
-        : `${hostRealms[0].path.replace(/^\/$/, "")}/v/${id.slice(2)}`;
+        ? `/!v/${(keyOfId(id))}`
+        : `${hostRealms[0].path.replace(/^\/$/, "")}/v/${keyOfId(id)}`;
 
     return (
         <Item key={id} link={link}>

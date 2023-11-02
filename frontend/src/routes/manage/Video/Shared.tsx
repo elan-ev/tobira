@@ -13,7 +13,7 @@ import { b64regex } from "../../util";
 import { Thumbnail } from "../../../ui/Video";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
 import { Link } from "../../../router";
-import { isExperimentalFlagSet } from "../../../util";
+import { isExperimentalFlagSet, keyOfId } from "../../../util";
 
 
 export const PAGE_WIDTH = 1100;
@@ -133,7 +133,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         return null;
     }
 
-    const id = event.id.substring(2);
+    const id = keyOfId(event.id);
 
     const entries = [
         {
