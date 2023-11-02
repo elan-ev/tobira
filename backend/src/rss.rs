@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use deadpool_postgres::{GenericClient, Client};
 use anyhow::{Error, Result};
 use futures::TryStreamExt;
-use xml_builder::{XMLBuilder, XMLElement, XMLVersion};
+use ogrim::xml;
 
 use crate::{
     db::{types::{EventTrack, Key}, self, util::{impl_from_db, FromDb, dbargs}},
@@ -44,13 +44,13 @@ impl_from_db!(
 pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<String, Response> {
     let db_pool = &context.db_pool;
     let tobira_url = context.config.general.tobira_url();
-    let series_link = format!("{}/!s/{}", tobira_url, id);
-    let rss_link = format!("{}/~rss/series/{}", tobira_url, id);
+    let series_link = format!("{tobira_url}/!s/{id}");
+    let rss_link = format!("{tobira_url}/~rss/series/{id}");
 
     let Some(series_id) = Key::from_base64(id) else {
         return Err(bad_request("invalid series ID"));
     };
-    
+
     let db = db::get_conn_or_service_unavailable(db_pool).await?;
 
     let query = "select opencast_id, title, description from series where id = $1";
@@ -61,81 +61,58 @@ pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<St
 
     let series_oc_id = series_data.get::<_, String>("opencast_id");
     let series_title = series_data.get::<_, String>("title").clone();
-    let series_description = series_data.get::<_, Option<String>>("description");
-    let cover_image = context.config.theme.logo.large.path.clone();
+    let series_description = series_data
+        .get::<_, Option<String>>("description")
+        .unwrap_or_default();
 
-    // Build rss xml
-    let mut xml = XMLBuilder::new()
-        .version(XMLVersion::XML1_0)
-        .encoding("UTF-8".into())
-        .build();
+    let format = if cfg!(debug_assertions) {
+        ogrim::Format::Pretty { indentation: "  " }
+    } else {
+        ogrim::Format::Terse
+    };
 
-    let mut rss = XMLElement::new("rss");
+    let buf = xml!(
+        #[format = format]
+        <?xml version="1.0" encoding="UTF-8"?>
+        <rss
+            version="2.0"
+            xmlns:dc="http://purl.org/dc/elements/1.1/"
+            xmlns:content="http://purl.org/rss/1.0/modules/content/"
+            xmlns:atom="http://www.w3.org/2005/Atom"
+            xmlns:media="http://search.yahoo.com/mrss/"
+            xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+        >
+            <channel>
+                <title>{series_title}</title>
+                <link>{series_link}</link>
+                <description>{series_description}</description>
+                <language>"und"</language>
+                <itunes:category text="Education">
+                    <itunes:category text="Courses"/>
+                </itunes:category>
+                <itunes:explicit>"true"</itunes:explicit>
+                <itunes:image href={format!("{tobira_url}/~assets/logo-small.svg")} />
+                <atom:link href={rss_link} rel="self" type="application/rss+xml" />
+                {|buf| video_items(buf, &db, &series_oc_id, &series_title, &rss_link, tobira_url).await.unwrap()}
+            </channel>
+        </rss>
+    );
 
-    // Add rss attributes
-    let attributes = [
-        ("version", "2.0"),
-        ("xmlns:dc", "http://purl.org/dc/elements/1.1/"),
-        ("xmlns:content", "http://purl.org/rss/1.0/modules/content/"),
-        ("xmlns:atom", "http://www.w3.org/2005/Atom"),
-        ("xmlns:media", "http://search.yahoo.com/mrss/"),
-        ("xmlns:itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd"),
-    ];
-    for (name, value) in attributes {
-        rss.add_attribute(name, value);
-    }
-
-    let mut channel = XMLElement::new("channel");
-
-    // Add channel tags
-    let channel_data = [
-        ("title", vec![("", series_title.clone())]),
-        ("link", vec![("", series_link)]),
-        ("description", vec![("", series_description.unwrap_or_default())]),
-        ("language", vec![("", "und".to_string())]),
-        ("itunes:explicit",vec![("", "true".to_string())]),
-        ("itunes:image", vec![("href", (&cover_image.to_string_lossy()).to_string())]),
-        ("itunes:category", vec![("text", "Education".to_string())]),
-        ("atom:link", vec![
-            ("href", rss_link.clone()),
-            ("rel", "self".to_string()),
-            ("type", "application/rss+xml".to_string()),
-        ]),
-    ];
-    add_elements_to_xml(&channel_data, &mut channel);
-
-    // Add video items
-    let video_items = generate_video_items( &db, &series_oc_id, &series_title, &rss_link, &tobira_url)
-        .await
-        .expect("failed to fetch events of series for RSS");
-
-    for item in video_items {
-       channel.add_child(item).unwrap();
-    }
-
-    rss.add_child(channel).unwrap();
-    xml.set_root_element(rss);
-    let mut writer: Vec<u8> = Vec::new();
-    xml.generate(&mut writer).unwrap();
-
-    let xml_string = String::from_utf8(writer).unwrap();
-    
-    Ok(xml_string)
+    Ok(buf.into_string())
 }
 
 /// Generates the single video items of a series in Tobira for inclusion in an RSS feed.
-async fn generate_video_items(
+async fn video_items(
+    doc: &mut ogrim::Document,
     db: &Client,
     series_oc_id: &str,
     series_title: &str,
     rss_link: &str,
     tobira_url: &HttpHost,
-) -> Result<Vec<XMLElement>, Error> {
+) -> Result<(), Error> {
     let selection = Event::select();
     let query = format!("select {selection} from events where part_of = $1");
     let rows = db.query_raw(&query, dbargs![&series_oc_id]).await?;
-
-    let mut video_items: Vec<XMLElement> = Vec::new();
 
     rows.try_for_each(|row| {
         let event = Event::from_row_start(&row);
@@ -143,74 +120,51 @@ async fn generate_video_items(
         let mut buf = [0; 11];
         let tobira_event_id = event.id.to_base64(&mut buf);
         let event_link = format!("{tobira_url}/!v/{tobira_event_id}");
+        let thumbnail = &event.thumbnail_url.unwrap_or_default();
         let tracks = preferred_tracks(event.tracks);
-
         let enclosure_track = tracks.1.unwrap();
         let enclosure_url = &enclosure_track.uri;
         let mimetype = &enclosure_track.mimetype.unwrap();
-        let thumbnail = &event.thumbnail_url.unwrap_or_default();
 
-        let mut item = XMLElement::new("item");
+        xml!(doc,
+            <item>
+                <title>{event.title}</title>
+                <link>{event_link}</link>
+                <description>{event.description.unwrap_or_default()}</description>
+                <dc:creator>{event.creators.join(", ")}</dc:creator>
+                <pubDate>{event.created.to_rfc2822()}</pubDate>
+                <guid>{event_link}</guid>
+                <media:thumbnail url={thumbnail} />
+                <itunes:image href={thumbnail} />
+                <enclosure
+                    url={enclosure_url}
+                    type={mimetype}
+                    length="0"
+                />
+                <source url={rss_link}>{series_title}</source>
+                <media:group>
+                    {|doc| for track in tracks.0 {
+                        xml!(doc,
+                            <media:content
+                                url={track.uri}
+                                type={track.mimetype.unwrap()}
+                                medium={"video"}
+                                height={track.resolution.unwrap()[1]}
+                                width={track.resolution.unwrap()[0]}
+                            />
+                        )}
+                    }
+                </media:group>
 
-        let item_data = [
-            ("title", vec![("", event.title)]),
-            ("link", vec![("", event_link.clone())]),
-            ("description", vec![("", event.description.unwrap_or_default())]),
-            ("dc:creator", vec![("", event.creators.join(", "))]),
-            ("pubDate", vec![("", event.created.to_rfc2822())]),
-            ("guid", vec![("", event_link)]),
-            ("media:thumbnail", vec![("url", thumbnail.to_string())]),
-            ("itunes:image", vec![("href", thumbnail.to_string())]),
-            ("enclosure", vec![
-                ("url", enclosure_url.to_string()),
-                ("type", mimetype.to_string()),
-                ("length", "0".to_string()),
-            ]),
-            ("source", vec![
-                ("url", rss_link.to_string()),
-                ("", series_title.to_string()),
-            ]),
-        ];
-        add_elements_to_xml(&item_data, &mut item);
+            </item>
+        );
 
-        let mut media_group = XMLElement::new("media:group");
-        for track in tracks.0 {
-            let media_data = [
-                ("media:content", vec![
-                    ("url", track.uri),
-                    ("type", track.mimetype.unwrap()),
-                    ("medium", "video".to_string()),
-                    ("height", track.resolution.unwrap()[1].to_string()),
-                    ("width", track.resolution.unwrap()[0].to_string()),
-                ]),
-            ];
-            add_elements_to_xml(&media_data, &mut media_group);
-        }
-        item.add_child(media_group).unwrap();
-
-        video_items.push(item);
         future::ready(Ok(()))
     }).await?;
 
-    Ok(video_items)
+    Ok(())
 }
 
-
-fn add_elements_to_xml(data: &[(&str, Vec<(&str, String)>)], target: &mut XMLElement) {
-    for (element_name, attributes) in data {
-        let mut element = XMLElement::new(element_name);
-
-        for (attribute_name, text_content) in attributes {
-            if !attribute_name.is_empty() {
-                element.add_attribute(attribute_name, text_content);
-            } else {
-                element.add_text(text_content.to_string()).unwrap();
-            }
-        }
-
-        target.add_child(element).unwrap();
-    }
-}
 
 
 /// This returns a track that:

@@ -44,6 +44,7 @@ libz-sys = { version = "1", features = ["static"] }
 log = { version = "0.4", features = ["serde", "std"] }
 meilisearch-sdk = "0.23.0"
 mime_guess = { version = "2", default-features = false }
+ogrim = "0.1.0"
 once_cell = "1.5"
 p256 = { version = "0.13.2", features = ["jwk"] }
 p384 = { version = "0.13.0", features = ["jwk"] }

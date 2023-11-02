@@ -266,7 +266,7 @@ version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ac489d939a3b4eac4a574ec70a5af015e01231983d0ef1f0833984522f04ab8"
 dependencies = [
- "litrs",
+ "litrs 0.2.3",
  "proc-macro2",
  "quote",
  "unicode-xid",
@@ -1345,6 +1345,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "litrs"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ce301924b7887e9d637144fdade93f9dfff9b60981d4ac161db09720d39aa5"
+dependencies = [
+ "proc-macro2",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1502,6 +1511,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9cf5f9dd3933bd50a9e1f149ec995f39ae2c496d31fd772c1fd45ebc27e902b0"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "ogrim"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6de9a8f5658ca59ffe6e7a18b98bd49f3b648bc6ea472642285f366fbf49b806"
+dependencies = [
+ "ogrim-macros",
+]
+
+[[package]]
+name = "ogrim-macros"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f170c5e3a3fc56d40bd38c90f98a705d513f4b2621de7f1aa3d13a30eac6654a"
+dependencies = [
+ "litrs 0.4.1",
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]
@@ -2502,6 +2531,7 @@ dependencies = [
  "log",
  "meilisearch-sdk",
  "mime_guess",
+ "ogrim",
  "once_cell",
  "p256",
  "p384",
