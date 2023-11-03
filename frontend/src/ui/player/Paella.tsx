@@ -224,6 +224,19 @@ const PAELLA_CONFIG = {
         hideOnMouseLeave: true,
     },
 
+    preferences: {
+        currentSource: "dataPlugin",
+        sources: {
+            dataPlugin: {
+                context: "preferences",
+            },
+        },
+    },
+
+    videoContainer: {
+        restoreVolume: true,
+    },
+
     plugins: {
         "es.upv.paella.singleVideoDynamic": {
             enabled: true,
@@ -383,6 +396,13 @@ const PAELLA_CONFIG = {
             side: "right",
             order: 9,
             tabIndex: 9,
+        },
+
+        // Data plugin
+        "es.upv.paella.localStorageDataPlugin": {
+            "enabled": true,
+            "order": 0,
+            "context": ["default", "trimming"],
         },
     },
 };
