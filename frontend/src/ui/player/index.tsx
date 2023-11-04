@@ -121,13 +121,14 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
 
     return (
         <div className={className} css={{
-            "--video-container-background-color": COLORS.neutral10,
-            "--base-video-rect-background-color": COLORS.neutral10,
             "div.loader-container": {
                 backgroundColor: isDark ? COLORS.neutral20 : "inherit",
             },
+            "div.video-canvas": {
+                backgroundColor: "#000",
+            },
             "div.preview-container": {
-                backgroundColor: `${COLORS.neutral15} !important`,
+                backgroundColor: "#000 !important",
                 "div, div img": {
                     height: "inherit",
                 },
