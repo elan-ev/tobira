@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, Suspense, useEffect } from "react";
+import React, { PropsWithChildren, Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiClock } from "react-icons/fi";
 import { HiOutlineStatusOffline } from "react-icons/hi";
@@ -118,9 +118,27 @@ const delayTill = (date: Date): number => {
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
     const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
     const isDark = useColorScheme().scheme === "dark";
+    const ref = useRef<HTMLDivElement>(null);
+
+    const minControlWidth = 470;
+    const [controlsFit, setControlsFit] = useState(true);
+
+    const resizeObserver = new ResizeObserver(() => {
+        if (ref.current) {
+            const inferredWidth = ref.current.offsetHeight * aspectRatio[0] / aspectRatio[1];
+            setControlsFit(inferredWidth >= minControlWidth);
+        }
+    });
+
+    useEffect(() => {
+        if (ref.current) {
+            resizeObserver.observe(ref.current);
+        }
+        return () => resizeObserver.disconnect();
+    });
 
     return (
-        <div className={className} css={{
+        <div {...{ className, ref }} css={{
             "div.loader-container": {
                 backgroundColor: isDark ? COLORS.neutral20 : "inherit",
             },
@@ -146,7 +164,7 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             // we want to see below the video (roughly 120px).
             maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 42px - 120px)",
             minHeight: 180,
-            width: "100%",
+            width: controlsFit ? "unset" : "100%",
             aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
 
             // If the player gets too small, the controls are pretty crammed, so
