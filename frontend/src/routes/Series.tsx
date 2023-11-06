@@ -8,7 +8,7 @@ import { RootLoader } from "../layout/Root";
 import { Nav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 import { WaitingPage } from "../ui/Waiting";
-import { isSynced } from "../util";
+import { isSynced, seriesId } from "../util";
 
 import { NotFound } from "./NotFound";
 import { SeriesByOpencastIdQuery } from "./__generated__/SeriesByOpencastIdQuery.graphql";
@@ -65,7 +65,7 @@ export const DirectSeriesRoute = makeRoute(url => {
             rootRealm { ... NavigationData }
         }
     `;
-    const queryRef = loadQuery<SeriesByIdQuery>(query, { id: `sr${id}` });
+    const queryRef = loadQuery<SeriesByIdQuery>(query, { id: seriesId(id) });
 
 
     return {

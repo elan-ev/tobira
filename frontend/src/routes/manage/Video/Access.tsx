@@ -10,7 +10,7 @@ import { isRealUser, useUser } from "../../../User";
 import { NotAuthorized } from "../../../ui/error";
 import { WithTooltip } from "@opencast/appkit";
 import { Modal, ModalHandle } from "../../../ui/Modal";
-import { currentRef } from "../../../util";
+import { currentRef, keyOfId } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
 import { Acl, AclSelector, knownRolesFragement } from "../../../ui/Access";
 import { useNavBlocker } from "../../util";
@@ -45,7 +45,7 @@ const AclPage: React.FC<AclPageProps> = ({ event, data }) => {
     const breadcrumbs = [
         { label: t("user.manage-content"), link: "/~manage" },
         { label: t("manage.my-videos.title"), link: "/~manage/videos" },
-        { label: event.title, link: `/~manage/videos/${event.id.substring(2)}` },
+        { label: event.title, link: `/~manage/videos/${keyOfId(event.id)}` },
     ];
 
     return <>

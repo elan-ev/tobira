@@ -4,7 +4,7 @@ import { Translation, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { unreachable } from "@opencast/appkit";
 
-import { isSynced } from "../util";
+import { eventId, isSynced } from "../util";
 import { GlobalErrorBoundary } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
@@ -46,9 +46,8 @@ export const EmbedVideoRoute = makeRoute(url => {
         return null;
     }
     const videoId = decodeURIComponent(params[1]);
-    const eventId = `ev${videoId}`;
 
-    const queryRef = loadQuery<EmbedQuery>(query, { id: eventId });
+    const queryRef = loadQuery<EmbedQuery>(query, { id: eventId(videoId) });
 
     return {
         render: () => <ErrorBoundary>

@@ -31,6 +31,7 @@ import {
     translatedConfig,
     currentRef,
     secondsToTimeString,
+    eventId,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
@@ -102,8 +103,7 @@ export const VideoRoute = makeRoute(url => {
         }
     `;
     const realmPath = "/" + realmPathParts.join("/");
-    const eventId = `ev${videoId}`;
-    const queryRef = loadQuery<VideoPageInRealmQuery>(query, { id: eventId, realmPath });
+    const queryRef = loadQuery<VideoPageInRealmQuery>(query, { id: eventId(videoId), realmPath });
 
     return {
         render: () => <RootLoader
@@ -154,8 +154,7 @@ export const DirectVideoRoute = makeRoute(url => {
         }
     `;
     const videoId = decodeURIComponent(params[1]);
-    const eventId = `ev${videoId}`;
-    const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, { id: eventId });
+    const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, { id: eventId(videoId) });
 
     return matchedDirectRoute(query, queryRef);
 });
