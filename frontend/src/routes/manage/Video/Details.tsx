@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { FiExternalLink } from "react-icons/fi";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
@@ -133,13 +133,15 @@ const DateValue: React.FC<DateValueProps> = ({ label, value }) => (
 
 const MetadataSection: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
+    const titleFieldId = useId();
+    const descriptionFieldId = useId();
 
     return (
         <Form noValidate>
             <InputContainer>
-                <TitleLabel htmlFor="title-field" />
+                <TitleLabel htmlFor={titleFieldId} />
                 <Input
-                    id="title-field"
+                    id={titleFieldId}
                     value={event.title}
                     disabled
                     css={{ width: "100%" }}
@@ -147,10 +149,10 @@ const MetadataSection: React.FC<Props> = ({ event }) => {
             </InputContainer>
 
             <InputContainer>
-                <label htmlFor="description-field">
+                <label htmlFor={descriptionFieldId}>
                     {t("upload.metadata.description")}
                 </label>
-                <TextArea id="description-field" disabled value={event.description ?? ""} />
+                <TextArea id={descriptionFieldId} disabled value={event.description ?? ""} />
             </InputContainer>
         </Form>
     );

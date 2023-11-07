@@ -203,7 +203,6 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
                     </label>
                     {isPlain && <div>
                         <Input
-                            id="rename-field"
                             defaultValue={realm.name ?? ""}
                             error={!!errors.name}
                             css={{ width: 500, maxWidth: "100%" }}

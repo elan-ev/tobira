@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useId, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
@@ -101,6 +101,8 @@ type Props = {
 
 const AddChild: React.FC<Props> = ({ parent }) => {
     const { t } = useTranslation();
+    const nameFieldId = useId();
+    const pathFieldId = useId();
 
     type FormData = {
         name: string;
@@ -162,10 +164,10 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                 }}
             >
                 <InputWithInfo info={t("manage.add-child.page-name-info")}>
-                    <label htmlFor="name-field">{t("manage.realm.general.page-name")}</label>
+                    <label htmlFor={nameFieldId}>{t("manage.realm.general.page-name")}</label>
                     <div>
                         <Input
-                            id="name-field"
+                            id={nameFieldId}
                             placeholder={t("manage.realm.general.page-name")}
                             error={!!errors.name}
                             autoFocus
@@ -181,9 +183,9 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                         {{ reservedChars: RESERVED_CHARS }}
                     </Trans>}
                 >
-                    <label htmlFor="path-field">{t("manage.add-child.path-segment")}</label>
+                    <label htmlFor={pathFieldId}>{t("manage.add-child.path-segment")}</label>
                     <PathSegmentInput
-                        id="path-field"
+                        id={pathFieldId}
                         base={parent.path}
                         error={!!errors.pathSegment}
                         {...register("pathSegment", validations.path)}

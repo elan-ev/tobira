@@ -9,7 +9,7 @@ import { COLORS } from "../color";
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
     const { t } = useTranslation();
     return (
-        <label htmlFor={htmlFor}>
+        <label {...{ htmlFor }}>
             {t("upload.metadata.title")}
             <FieldIsRequiredNote />
         </label>
