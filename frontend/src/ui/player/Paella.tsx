@@ -223,6 +223,7 @@ const PAELLA_CONFIG = {
         hideUITimer: 2000,
         hideOnMouseLeave: true,
     },
+    defaultLayout: "presenter-presentation",
 
     preferences: {
         currentSource: "dataPlugin",
@@ -261,7 +262,7 @@ const PAELLA_CONFIG = {
                 },
             ],
         },
-        "es.upv.paella.dualVideo": {
+        "es.upv.paella.dualVideoDynamic": {
             enabled: true,
             validContent: [
                 {
