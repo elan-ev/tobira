@@ -21,7 +21,7 @@ pub(crate) struct Event {
     pub(crate) description: Option<String>,
     pub(crate) creators: Vec<String>,
     pub(crate) thumbnail: Option<String>,
-    pub(crate) duration: i32,
+    pub(crate) duration: i64,
     pub(crate) created: DateTime<Utc>,
     pub(crate) start_time: Option<DateTime<Utc>>,
     pub(crate) end_time: Option<DateTime<Utc>>,

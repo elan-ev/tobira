@@ -339,4 +339,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     22: "user-email",
     23: "video-block-show-link",
     24: "known-groups",
+    25: "longer-videos",
 ];

@@ -41,14 +41,14 @@ pub(crate) struct AuthorizedEvent {
     synced_data: Option<SyncedEventData>,
 }
 
-#[derive(Debug, GraphQLObject)]
+#[derive(Debug)]
 pub(crate) struct SyncedEventData {
     updated: DateTime<Utc>,
     start_time: Option<DateTime<Utc>>,
     end_time: Option<DateTime<Utc>>,
 
     /// Duration in milliseconds
-    duration: i32,
+    duration: i64,
     tracks: Vec<Track>,
     thumbnail: Option<String>,
     captions: Vec<Caption>,
@@ -118,6 +118,32 @@ pub(crate) struct Caption {
 impl Node for AuthorizedEvent {
     fn id(&self) -> Id {
         Id::event(self.key)
+    }
+}
+
+#[graphql_object(Context = Context, impl = NodeValue)]
+impl SyncedEventData {
+    fn updated(&self) -> DateTime<Utc> {
+        self.updated
+    }
+    fn start_time(&self) -> Option<DateTime<Utc>> {
+        self.start_time
+    }
+    fn end_time(&self) -> Option<DateTime<Utc>> {
+        self.end_time
+    }
+    /// Duration in ms.
+    fn duration(&self) -> f64 {
+        self.duration as f64
+    }
+    fn tracks(&self) -> &[Track] {
+        &self.tracks
+    }
+    fn thumbnail(&self) -> Option<&str> {
+        self.thumbnail.as_deref()
+    }
+    fn captions(&self) -> &[Caption] {
+        &self.captions
     }
 }
 
@@ -555,7 +581,7 @@ pub(crate) struct EventCursor {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum CursorSortFilter {
     Title(String),
-    Duration(Option<i32>),
+    Duration(Option<i64>),
     Created(DateTime<Utc>),
     Updated(Option<DateTime<Utc>>),
 }
