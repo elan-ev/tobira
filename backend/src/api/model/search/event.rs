@@ -38,8 +38,8 @@ impl search::Event {
         self.thumbnail.as_deref()
     }
 
-    fn duration(&self) -> i32 {
-        self.duration
+    fn duration(&self) -> f64 {
+        self.duration as f64
     }
 
     fn is_live(&self) -> bool {

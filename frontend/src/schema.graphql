@@ -67,7 +67,7 @@ type SearchEvent implements Node {
   description: String
   creators: [String!]!
   thumbnail: String
-  duration: Int!
+  duration: Float!
   isLive: Boolean!
   created: DateTimeUtc!
   startTime: DateTimeUtc
@@ -137,12 +137,12 @@ type KnownGroup {
   large: Boolean!
 }
 
-type SyncedEventData {
+type SyncedEventData implements Node {
   updated: DateTimeUtc!
   startTime: DateTimeUtc
   endTime: DateTimeUtc
-  "Duration in milliseconds"
-  duration: Int!
+  "Duration in ms."
+  duration: Float!
   tracks: [Track!]!
   thumbnail: String
   captions: [Caption!]!

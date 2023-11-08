@@ -104,7 +104,7 @@ impl TestDb {
             )
             returning id";
 
-        let row = self.query_one(sql, &[&opencast_id, &title, &series, &(duration as i32)]).await?;
+        let row = self.query_one(sql, &[&opencast_id, &title, &series, &(duration as i64)]).await?;
         Ok(row.get(0))
     }
 
