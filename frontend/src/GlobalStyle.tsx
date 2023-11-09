@@ -50,6 +50,10 @@ const CSS_RESETS = css({
         // where type="checkbox", "radio" or "range",
         // as well as `<progress>` elements.
         accentColor: COLORS.primary0,
+
+        // This prevents an increase in font size when changing from
+        // portrait to landscape orientation in iOS safari.
+        "-webkit-text-size-adjust": "none",
     },
 
     // This improves the readability of underlines in links.
@@ -57,7 +61,7 @@ const CSS_RESETS = css({
         textDecorationSkipInk: "auto",
     },
 
-    // Some elements not inhereting fonts is a really confusing browser default.
+    // Some elements not inheriting fonts is a really confusing browser default.
     "input, button, textarea, select": {
         font: "inherit",
         margin: 0,
