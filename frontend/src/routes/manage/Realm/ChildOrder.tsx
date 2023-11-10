@@ -110,7 +110,13 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
                     type="radio"
                     checked={order === sortOrder}
                     onChange={() => setSortOrder(order)}
-                    css={{ alignSelf: "center", marginRight: 14, height: 16, width: 16 }}
+                    css={{
+                        alignSelf: "center",
+                        marginRight: 14,
+                        height: 16,
+                        width: 16,
+                        flexShrink: 0,
+                    }}
                 />
                 {label}
             </label>
