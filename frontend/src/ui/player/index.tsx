@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, Suspense, useEffect } from "react";
+import React, { PropsWithChildren, Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FiClock } from "react-icons/fi";
 import { HiOutlineStatusOffline } from "react-icons/hi";
@@ -118,16 +118,35 @@ const delayTill = (date: Date): number => {
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
     const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
     const isDark = useColorScheme().scheme === "dark";
+    const ref = useRef<HTMLDivElement>(null);
+
+    const minControlWidth = 470;
+    const [controlsFit, setControlsFit] = useState(true);
+
+    const resizeObserver = new ResizeObserver(() => {
+        if (ref.current) {
+            const inferredWidth = ref.current.offsetHeight * aspectRatio[0] / aspectRatio[1];
+            setControlsFit(inferredWidth >= minControlWidth);
+        }
+    });
+
+    useEffect(() => {
+        if (ref.current) {
+            resizeObserver.observe(ref.current);
+        }
+        return () => resizeObserver.disconnect();
+    });
 
     return (
-        <div className={className} css={{
-            "--video-container-background-color": COLORS.neutral10,
-            "--base-video-rect-background-color": COLORS.neutral10,
+        <div {...{ className, ref }} css={{
             "div.loader-container": {
                 backgroundColor: isDark ? COLORS.neutral20 : "inherit",
             },
+            "div.video-canvas": {
+                backgroundColor: "#000",
+            },
             "div.preview-container": {
-                backgroundColor: `${COLORS.neutral15} !important`,
+                backgroundColor: "#000 !important",
                 "div, div img": {
                     height: "inherit",
                 },
@@ -143,9 +162,9 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             // So: full height minus header, minus separation line (18px), minus main
             // padding (16px), minus breadcrumbs (roughly 42px), minus the amount of space
             // we want to see below the video (roughly 120px).
-            maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 42px - 120px)",
-            minHeight: 180,
-            width: "100%",
+            maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 38px - 60px)",
+            minHeight: `min(320px, (100vw - 32px) / (${aspectRatio[0]} / ${aspectRatio[1]}))`,
+            width: controlsFit ? "unset" : "100%",
             aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
 
             // If the player gets too small, the controls are pretty crammed, so

@@ -315,7 +315,11 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         <PlayerContextProvider>
-            <InlinePlayer event={event} css={{ margin: "0 auto" }} onEventStateChange={rerender} />
+            <InlinePlayer
+                event={event}
+                css={{ margin: "-4px auto 0" }}
+                onEventStateChange={rerender}
+            />
             <Metadata id={event.id} event={event} />
         </PlayerContextProvider>
 
@@ -400,8 +404,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
             alignItems: "center",
             flexWrap: "wrap",
             justifyContent: "space-between",
-            marginTop: 24,
-            marginBottom: 16,
+            margin: "16px 0",
             gap: 8,
         }}>
             <div>

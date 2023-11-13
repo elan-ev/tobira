@@ -166,6 +166,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
         "--highlight-bg-color-progress-indicator": "var(--color-player-accent-light)",
         "--volume-slider-fill-color": "var(--color-player-accent-light)",
         "--volume-slider-empty-color": "#555",
+        "--video-container-background-color": "#000",
+        "--base-video-rect-background-color": "#000",
     };
 
     return <>
