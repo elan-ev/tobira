@@ -183,6 +183,7 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
                                 width: 16,
                                 height: 16,
                                 margin: 0,
+                                flexShrink: 0,
                             },
                         },
                         "& > div": {
