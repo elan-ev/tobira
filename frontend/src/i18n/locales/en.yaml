@@ -17,7 +17,7 @@ general:
     share: Share
   version-information: Version
   logo-alt: Logo of “{{title}}”
-  no-root-children: No pages yet ...
+  no-root-children: No pages yet
   failed-to-load-thumbnail: Failed to load thumbnail
   yes: "Yes"
   no: "No"
@@ -25,13 +25,13 @@ general:
     this-field-is-required: This field is required.
     select:
       no-options: No options
-      select-option: Select option...
+      select-option: Select option
 
 welcome:
   title: Welcome to Tobira!
   body: >
-    It looks like your main page is still empty! To add content to this page
-    or add other pages, first log in with an account that has moderator privileges.
+    It looks like your main page is still empty. To add content to this page
+    or add other pages, log in with an account that has moderator privileges.
     Afterwards, you can use the buttons on the left to modify the pages of this
     video portal.
 
@@ -74,7 +74,7 @@ invalid-url:
   title: Invalid address
   description: >
     The URL you entered is not valid. If you typed it in manually, please verify
-    you didn't, for example, make any spelling mistakes or included invalid characters.
+    you didn't make any spelling mistakes or included invalid characters.
     If you followed a link instead, please contact the appropriate authority
     responsible for publishing that link.
 
@@ -82,7 +82,7 @@ about-tobira:
   title: About “Tobira”
   body: >
     This video portal is powered by Tobira, a video portal software for
-    Opencast. It allows its users to browse, watch and organize all episodes
+    Opencast. It allows its users to browse, watch and organize all videos
     and series of the connected Opencast instance. Tobira, like Opencast, is
     free open source software. For more information and to report bugs, please
     visit <1>its GitHub repository</1>.
@@ -126,7 +126,7 @@ video:
   not-ready:
     title: Video not processed yet
     text: >
-      This video hasn't been processed yet. This should
+      This video hasn't been fully processed yet. This should
       happen automatically soon. Try again in a few minutes.
     label: unprocessed
   thumbnail-for: Thumbnail for “{{video}}”
@@ -253,7 +253,7 @@ upload:
     hours: hours
     time-left: '{{time}} left'
   finished: >
-    Your video was uploaded successfully and is now being processed! It can be
+    Your video was uploaded successfully and is now being processed. It can be
     watched as soon as processing is done. You may close this page now.
   metadata:
     title: Video title
@@ -322,7 +322,7 @@ manage:
       Create videos by recording your screen, webcam and microphone.
     my-videos-tile: Here you can view and edit your videos.
     user-realm-tile: >
-      On your personal pages, you can freely arrange videos, text, and other elements.
+      On your personal pages, you can arrange videos, text, and other elements.
     manage-pages-tile-title: Manage pages
     manage-pages-tile-body: >
       To rename, modify, and delete pages, navigate to the page in question. If you
@@ -422,7 +422,7 @@ manage:
         failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
-          indirect sub-pages, as well as all page content of these pages. This
+          indirect sub-pages, as well as all content of these pages. This
           cannot be undone!
 
     content:
@@ -453,7 +453,7 @@ manage:
         content: You can put your title here.
 
       text:
-        content: You can put your text content here. You can even use Markdown.
+        content: You can add your text content here. You can also use Markdown.
 
       series:
         series:

@@ -18,7 +18,7 @@ general:
     share: Teilen
   version-information: Version
   logo-alt: Das Logo von „{{title}}“
-  no-root-children: Noch keine Seiten ...
+  no-root-children: Noch keine Seiten
   failed-to-load-thumbnail: Konnte Vorschaubild nicht laden
   yes: Ja
   no: Nein
@@ -26,13 +26,13 @@ general:
     this-field-is-required: Dieses Feld ist erforderlich.
     select:
       no-options: Keine Optionen
-      select-option: Option auswählen...
+      select-option: Option auswählen
 
 welcome:
   title: Willkommen zu Tobira!
   body: >
-    Die Hauptseite scheint noch leer zu sein! Um Inhalte oder weitere Seiten
-    hinzuzufügen, melden Sie sich zuerst mit einem Konto mit Moderator-Rechten
+    Die Hauptseite scheint noch leer zu sein. Um Inhalte oder weitere Seiten
+    hinzuzufügen, melden Sie sich mit einem Konto mit Moderator-Rechten
     an. Danach finden Sie auf der linken Seite Schaltflächen zum Editieren von Seiten.
 
 errors:
@@ -57,7 +57,7 @@ not-found:
   series-not-found: Serie nicht gefunden
   page-explanation: >
     Die von Ihnen gewünschte Seite existiert nicht. Sie wurde möglicherweise
-    gelöscht und umbenannt.
+    gelöscht oder umbenannt.
   video-explanation: >
     Das von Ihnen gewünschte Video existiert nicht. Es wurde möglicherweise
     gelöscht oder verschoben.
@@ -75,15 +75,15 @@ invalid-url:
   title: Ungültige Adresse
   description: >
     Die von Ihnen eingegebene URL ist nicht gültig. Haben Sie diese per Hand
-    eingegeben, überprüfen Sie sie bitte z.B. auf Tippfehler und unerlaubte Zeichen.
-    Sind Sie hingegen einem Link gefolgt, richten Sie sich an die entsprechende
+    eingegeben, überprüfen Sie sie bitte auf Tippfehler und unerlaubte Zeichen.
+    Sind Sie hingegen einem Link gefolgt, wenden Sie sich an die entsprechende
     Stelle, die diesen veröffentlicht hat.
 
 about-tobira:
   title: Informationen über „Tobira“
   body: >
     Dieses Videoportal nutzt Tobira, eine Videoportal-Software für
-    Opencast. Es erlaubt seinen Nutzern, alle Episoden und Serien aus der
+    Opencast. Es erlaubt seinen Nutzern, alle Videos und Serien aus der
     verbundenen Opencast-Instanz zu durchstöbern, anzuschauen und zu
     organisieren. Tobira, wie auch Opencast selber, ist kostenlose
     Open-Source-Software. Weitere Informationen und die Möglichkeit,
@@ -118,18 +118,18 @@ video:
   video: Video
   video-page: 'Video Seite: „{{video}}“'
   created: Erstellt
-  updated: Zuletzt angepasst
+  updated: Zuletzt verändert
   duration: Abspielzeit
   link: Zur Videoseite
-  part-of-series: Teil von Serie
+  part-of-series: Teil der Serie
   more-from-series: Mehr von „{{series}}“
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
   not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
   not-ready:
     title: Video noch nicht verarbeitet
     text: >
-      Das gewünschte Video ist leider noch nicht verarbeitet worden. Dies sollte
-      in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
+      Das gewünschte Video ist leider noch nicht vollständig verarbeitet worden. Dies sollte
+      in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal.
     label: unverarbeitet
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
@@ -360,7 +360,7 @@ manage:
       title: Zugriffsrechte
     technical-details:
       title: Technische Details
-      tracks: Video/Audio-Spuren
+      tracks: Video-/Audiospuren
       unknown-mimetype: Unbekannter MIME-Type
       opencast-id: Opencast-ID
       copy-oc-id-to-clipboard: Opencast-ID in Zwischenablage kopieren
@@ -425,8 +425,8 @@ manage:
         warning: >
           Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
           Links zu dieser Seite, zu allen direkten und indirekten Unterseiten, und
-          zu allen Videos die auf diesen eingebunden sind. Alte Links funktionieren
-          dann nicht mehr. Das betrifft persönliche Browser-Lesezeichen, als auch
+          zu allen Videos, die auf diesen eingebunden sind. Alte Links funktionieren
+          dann nicht mehr. Das betrifft persönliche Browser-Lesezeichen wie auch
           bereits veröffentlichte Links.
       delete:
         heading: Seite löschen
@@ -437,7 +437,7 @@ manage:
         failed: Löschung fehlgeschlagen.
         warning: >
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
-          indirekten Unterseiten sowie alle Seiteninhalte all dieser Seiten
+          indirekten Unterseiten sowie alle Inhalte dieser Seiten
           mitgelöscht. Die Löschung kann nicht wieder rückgängig gemacht werden!
 
     content:
@@ -468,7 +468,7 @@ manage:
         content: Hier können Sie Ihren Titel einfügen.
 
       text:
-        content: Hier können Sie Ihren Text einfügen. Sie können sogar Markdown verwenden.
+        content: Hier können Sie Ihren Text einfügen. Sie können auch Markdown verwenden.
 
       series:
         series:
@@ -521,7 +521,7 @@ manage:
 # These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
   view:
-    event: Sie sind nicht autorisiert dieses Video zu sehen.
+    event: Sie sind nicht autorisiert, dieses Video zu sehen.
   upload:
     not-logged-in: Sie müssen angemeldet sein, um Videos hochzuladen.
     not-authorized: $t(upload.not-authorized)
