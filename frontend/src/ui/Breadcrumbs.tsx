@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { FiChevronRight, FiHome } from "react-icons/fi";
+import { LuHome, LuChevronRight } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
 import { BreadcrumbList, WithContext } from "schema-dts";
 
@@ -43,7 +43,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
                         ...focusStyle({ inset: true }),
                         borderRadius: 4,
                     }}>
-                        <FiHome aria-label={t("general.home")} />
+                        <LuHome aria-label={t("general.home")} />
                     </Link>
                 </li>
                 {path.map((segment, i) => (
@@ -104,5 +104,5 @@ const Segment: React.FC<SegmentProps> = ({ target, children }) => (
 );
 
 export const BreadcrumbSeparator: React.FC = () => (
-    <FiChevronRight css={{ margin: "0 2px", flexShrink: 0, color: COLORS.neutral40 }} />
+    <LuChevronRight css={{ margin: "0 2px", flexShrink: 0, color: COLORS.neutral40 }} />
 );

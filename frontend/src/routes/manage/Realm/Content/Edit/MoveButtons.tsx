@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, graphql, useMutation } from "react-relay";
-import { FiArrowDown, FiArrowUp } from "react-icons/fi";
+import { LuArrowDown, LuArrowUp } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 
 import type { MoveButtonsData$key } from "./__generated__/MoveButtonsData.graphql";
@@ -66,7 +66,7 @@ export const MoveButtons: React.FC<Props> = ({
                 disabled={index === blocks.length - 1}
                 onClick={() => move(1)}
             >
-                <FiArrowDown />
+                <LuArrowDown />
             </Button>
         </WithTooltip>
         <WithTooltip tooltip={t("manage.realm.content.move-up")}>
@@ -75,7 +75,7 @@ export const MoveButtons: React.FC<Props> = ({
                 disabled={index === 0}
                 onClick={() => move(-1)}
             >
-                <FiArrowUp />
+                <LuArrowUp />
             </Button>
         </WithTooltip>
     </>;

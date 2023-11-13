@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { useFragment, graphql, useMutation } from "react-relay";
-import { FiTrash } from "react-icons/fi";
+import { LuTrash } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 
 import type { RemoveButtonData$key } from "./__generated__/RemoveButtonData.graphql";
@@ -81,7 +81,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
                     }
                 }}
             >
-                <FiTrash />
+                <LuTrash />
             </Button>
         </WithTooltip>
         <Modal ref={cannotDeleteModalRef} title={t("manage.realm.content.cannot-remove-block")}>

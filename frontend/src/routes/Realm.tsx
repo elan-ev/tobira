@@ -3,7 +3,7 @@ import React, { ReactElement, useState } from "react";
 import { graphql, loadQuery, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
-import { FiEdit, FiInfo, FiPlusCircle, FiSettings, FiSunrise } from "react-icons/fi";
+import { LuSunrise, LuInfo, LuSettings, LuPlusCircle, LuPenSquare } from "react-icons/lu";
 import { WithTooltip, screenWidthAtMost } from "@opencast/appkit";
 
 import { environment as relayEnv } from "../relay";
@@ -183,7 +183,7 @@ const WelcomeMessage: React.FC = () => {
             backgroundColor: COLORS.neutral10,
             border: `2px dashed ${COLORS.happy0}`,
         }}>
-            <FiSunrise css={{ marginTop: 8, fontSize: 32, minWidth: 32 }} />
+            <LuSunrise css={{ marginTop: 8, fontSize: 32, minWidth: 32 }} />
             <div>
                 <h2 css={{ textAlign: "center", fontSize: 20, marginBottom: 16 }}>
                     {t("welcome.title")}
@@ -212,7 +212,7 @@ const UserRealmNote: React.FC<Props> = ({ realm }) => {
                 display: "flex",
                 gap: 4,
             }}>
-                <FiInfo />
+                <LuInfo />
                 {t("realm.user-realm.note-label")}
             </div>
         </WithTooltip>
@@ -295,9 +295,9 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
 
     /* eslint-disable react/jsx-key */
     const buttons: [string, string, ReactElement][] = [
-        ["/~manage/realm?path=", t("realm.page-settings"), <FiSettings />],
-        ["/~manage/realm/content?path=", t("realm.edit-page-content"), <FiEdit />],
-        ["/~manage/realm/add-child?parent=", t("realm.add-sub-page"), <FiPlusCircle />],
+        ["/~manage/realm?path=", t("realm.page-settings"), <LuSettings />],
+        ["/~manage/realm/content?path=", t("realm.edit-page-content"), <LuPenSquare />],
+        ["/~manage/realm/add-child?parent=", t("realm.add-sub-page"), <LuPlusCircle />],
     ];
     /* eslint-enable react/jsx-key */
 

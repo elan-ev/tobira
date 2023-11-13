@@ -26,14 +26,7 @@ import {
 import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
-import {
-    FiChevronLeft,
-    FiChevronRight,
-    FiColumns,
-    FiGrid,
-    FiList,
-    FiPlay,
-} from "react-icons/fi";
+import { LuColumns, LuGrid, LuList, LuChevronLeft, LuChevronRight, LuPlay } from "react-icons/lu";
 import { keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
@@ -338,9 +331,9 @@ const ViewMenu: React.FC = () => {
     const ref = useRef<FloatingHandle>(null);
 
     const icon = match(state.viewState, {
-        slider: () => <FiColumns />,
-        gallery: () => <FiGrid />,
-        list: () => <FiList />,
+        slider: () => <LuColumns />,
+        gallery: () => <LuGrid />,
+        list: () => <LuList />,
     });
 
     const triggerContent = (
@@ -399,21 +392,21 @@ const List: React.FC<ListProps> = ({ type, close }) => {
                     disabled={viewState === "slider"}
                     onClick={() => setViewState("slider")}
                     close={close}
-                    Icon={FiColumns}
+                    Icon={LuColumns}
                     label={t("series.settings.slider")}
                 />
                 <MenuItem
                     disabled={viewState === "gallery"}
                     onClick={() => setViewState("gallery")}
                     close={close}
-                    Icon={FiGrid}
+                    Icon={LuGrid}
                     label={t("series.settings.gallery")}
                 />
                 <MenuItem
                     disabled={viewState === "list"}
                     onClick={() => setViewState("list")}
                     close={close}
-                    Icon={FiList}
+                    Icon={LuList}
                     label={t("series.settings.list")}
                 />
             </ul>
@@ -743,12 +736,12 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
                 aria-label={t("series.slider.scroll-left")}
                 onClick={() => scroll(-scrollDistance)}
                 css={{ left: 8, ...buttonCss }}
-            ><FiChevronLeft /></ProtoButton>}
+            ><LuChevronLeft /></ProtoButton>}
             {rightVisible && <ProtoButton
                 aria-label={t("series.slider.scroll-right")}
                 onClick={() => scroll(scrollDistance)}
                 css={{ right: 8, ...buttonCss }}
-            ><FiChevronRight /></ProtoButton>}
+            ><LuChevronRight /></ProtoButton>}
         </div>
     </div>;
 };
@@ -847,7 +840,7 @@ const Item: React.FC<ItemProps> = ({
                 gap: 4,
                 marginBottom: 4,
             }}>
-                {active && <FiPlay css={{
+                {active && <LuPlay css={{
                     flex: "0 0 auto",
                     strokeWidth: 3,
                     animation: `${keyframes({

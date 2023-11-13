@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    FiAlertTriangle, FiUserCheck, FiChevronDown,
-    FiFolder, FiLogOut, FiUpload, FiLogIn, FiFilm, FiVideo, FiMoon, FiSun,
-} from "react-icons/fi";
+    LuAlertTriangle, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
+    LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
+} from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
     match, ProtoButton, screenWidthAbove, screenWidthAtMost,
@@ -25,6 +25,7 @@ import { COLORS } from "../../color";
 import { translatedConfig } from "../../util";
 
 
+
 /** User-related UI in the header. */
 export const UserBox: React.FC = () => {
     const { t } = useTranslation();
@@ -42,7 +43,7 @@ export const UserBox: React.FC = () => {
         boxContent = <Spinner css={iconCss} />;
     } else if (user === "error") {
         // TODO: tooltip
-        boxContent = <FiAlertTriangle css={iconCss} />;
+        boxContent = <LuAlertTriangle css={iconCss} />;
     } else if (user === "none") {
         boxContent = <LoggedOut />;
     } else {
@@ -96,7 +97,7 @@ const LoggedOut: React.FC = () => {
                 },
             }}
         >
-            <FiLogIn />
+            <LuLogIn />
             <span>{t("user.login")}</span>
         </Link>
     );
@@ -124,7 +125,7 @@ export const ColorSchemeSettings: React.FC = () => {
             }}
         >
             <ActionIcon title={t("main-menu.color-scheme.label")}>
-                {scheme === "light" ? <FiMoon /> : <FiSun />}
+                {scheme === "light" ? <LuMoon /> : <LuSun />}
             </ActionIcon>
         </WithHeaderMenu>
     );
@@ -176,7 +177,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
     const indent = { paddingLeft: 30 };
     const items: HeaderMenuProps["items"] = [
         {
-            icon: <FiFolder />,
+            icon: <LuFolder />,
             wrapper: <Link to="/~manage" />,
             children: t("user.manage-content"),
             css: { minWidth: 200 },
@@ -188,19 +189,19 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             css: indent,
         }] : [],
         {
-            icon: <FiFilm />,
+            icon: <LuFilm />,
             wrapper: <Link to="/~manage/videos" />,
             children: t("manage.my-videos.title"),
             css: indent,
         },
         ...user.canUpload ? [{
-            icon: <FiUpload />,
+            icon: <LuUpload />,
             wrapper: <Link to="/~manage/upload" />,
             children: t("upload.title"),
             css: indent,
         }] : [],
         ...user.canUseStudio ? [{
-            icon: <FiVideo />,
+            icon: <LuVideo />,
             wrapper: <ExternalLink
                 service="STUDIO"
                 params={{
@@ -217,9 +218,9 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         // Logout button
         {
             icon: match(logoutState, {
-                "idle": () => <FiLogOut />,
+                "idle": () => <LuLogOut />,
                 "pending": () => <Spinner />,
-                "error": () => <FiAlertTriangle />,
+                "error": () => <LuAlertTriangle />,
             }),
             children: t("user.logout"),
             css: {
@@ -301,7 +302,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 }}>
                     {user.displayName}
                 </span>
-                <FiChevronDown size={20}/>
+                <LuChevronDown size={20}/>
             </ProtoButton>
             {/* Show icon on mobile devices. */}
             <ActionIcon
@@ -311,7 +312,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                         display: "none",
                     },
                 }}>
-                <FiUserCheck css={{ polyline: { stroke: COLORS.happy1 } }}/>
+                <LuUserCheck css={{ polyline: { stroke: COLORS.happy1 } }}/>
             </ActionIcon>
         </div>
     </WithHeaderMenu>;

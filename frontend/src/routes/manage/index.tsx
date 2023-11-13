@@ -1,8 +1,7 @@
 import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { FiExternalLink, FiFilm, FiUpload, FiVideo } from "react-icons/fi";
 import { HiOutlineFire } from "react-icons/hi";
-import { LuLayoutTemplate } from "react-icons/lu";
+import { LuExternalLink, LuFilm, LuLayoutTemplate, LuUpload, LuVideo } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
 
@@ -81,7 +80,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     /* eslint-disable react/jsx-key */
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
         ["/~manage", t("manage.dashboard.title"), <LuLayoutTemplate />],
-        ["/~manage/videos", t("manage.my-videos.title"), <FiFilm />],
+        ["/~manage/videos", t("manage.my-videos.title"), <LuFilm />],
     ];
     if (isRealUser(user) && user.canCreateUserRealm) {
         entries.splice(
@@ -89,7 +88,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
         );
     }
     if (isRealUser(user) && user.canUpload) {
-        entries.push(["/~manage/upload", t("upload.title"), <FiUpload />]);
+        entries.push(["/~manage/upload", t("upload.title"), <LuUpload />]);
     }
     /* eslint-enable react/jsx-key */
 
@@ -125,9 +124,9 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
                     ":hover, :focus-visible": { color: isDark ? COLORS.primary2 : COLORS.primary1 },
                 }}
             >
-                <FiVideo />
+                <LuVideo />
                 {t("manage.dashboard.studio-tile-title")}
-                <FiExternalLink size={18} css={{ marginLeft: 4 }} />
+                <LuExternalLink size={18} css={{ marginLeft: 4 }} />
             </ExternalLink>
         );
     }

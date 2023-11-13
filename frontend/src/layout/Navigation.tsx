@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { FiChevronRight, FiChevronLeft, FiCornerLeftUp } from "react-icons/fi";
+import { LuChevronLeft, LuChevronRight, LuCornerLeftUp } from "react-icons/lu";
 import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
@@ -76,8 +76,8 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
                 }}
             >
                 {/* Show arrow and hide chevron in burger menu */}
-                <FiCornerLeftUp css={{ display: "none" }}/>
-                <FiChevronLeft />
+                <LuCornerLeftUp css={{ display: "none" }}/>
+                <LuChevronLeft />
                 {parent.isMainRoot ? t("general.home") : parent.name ?? <MissingRealmName />}
             </LinkWithIcon>
             <div css={{
@@ -109,6 +109,6 @@ type ItemProps = {
 const Item: React.FC<ItemProps> = ({ label, link }) => (
     <LinkWithIcon to={link} iconPos="right">
         <div css={ellipsisOverflowCss(3)}>{label}</div>
-        <FiChevronRight />
+        <LuChevronRight />
     </LinkWithIcon>
 );

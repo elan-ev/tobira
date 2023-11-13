@@ -1,4 +1,4 @@
-import { FiAlertTriangle, FiInfo } from "react-icons/fi";
+import { LuAlertTriangle, LuInfo } from "react-icons/lu";
 import { match } from "@opencast/appkit";
 
 import { COLORS } from "../color";
@@ -37,8 +37,8 @@ export const Card: React.FC<Props> = ({ kind, iconPos = "left", children, ...res
         {...rest}
     >
         {match(kind, {
-            "error": () => <FiAlertTriangle />,
-            "info": () => <FiInfo css={{ color: COLORS.neutral60 }} />,
+            "error": () => <LuAlertTriangle />,
+            "info": () => <LuInfo css={{ color: COLORS.neutral60 }} />,
         })}
         <div>{children}</div>
     </div>

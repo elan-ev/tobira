@@ -7,7 +7,7 @@ import { Link } from "../router";
 import { useNoindexTag } from "../util";
 import { loadQuery } from "../relay";
 import { NotFoundQuery } from "./__generated__/NotFoundQuery.graphql";
-import { FiFrown } from "react-icons/fi";
+import { LuFrown } from "react-icons/lu";
 import { PageTitle } from "../layout/header/ui";
 import { CenteredContent } from "../ui";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -53,7 +53,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
 
     return <>
         <Breadcrumbs path={[]} tail={<i>{title}</i>} />
-        <FiFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
+        <LuFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
         <PageTitle
             title={title}
             css={{ textAlign: "center", margin: "32px 0 48px 0 !important" }}

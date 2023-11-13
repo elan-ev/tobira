@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { bug, unreachable, useColorScheme, WithTooltip } from "@opencast/appkit";
 
-import { FiArrowDown, FiArrowUp } from "react-icons/fi";
+import { LuArrowUp, LuArrowDown } from "react-icons/lu";
 import { RealmOrder } from "../../../layout/__generated__/NavigationData.graphql";
 import {
     ChildOrderEditData$data,
@@ -233,12 +233,12 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
             }}>
                 <WithTooltip tooltip={t("manage.realm.children.move-up")} placement="left">
                     <button onClick={() => swap(index - 1)} disabled={index === 0}>
-                        <FiArrowUp />
+                        <LuArrowUp />
                     </button>
                 </WithTooltip>
                 <WithTooltip tooltip={t("manage.realm.children.move-down")} placement="left">
                     <button onClick={() => swap(index)} disabled={index === numChildren - 1}>
-                        <FiArrowDown />
+                        <LuArrowDown />
                     </button>
                 </WithTooltip>
             </div>

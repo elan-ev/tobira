@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { LuArrowDownNarrowWide, LuArrowUpWideNarrow } from "react-icons/lu";
+import {
+    LuArrowDownNarrowWide, LuArrowUpWideNarrow, LuChevronLeft, LuChevronRight,
+} from "react-icons/lu";
 import { graphql, VariablesOf } from "react-relay";
 import { match, useColorScheme } from "@opencast/appkit";
 
@@ -357,11 +358,11 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => 
                 <PageLink
                     vars={{ order: vars.order, before: pageInfo.startCursor, last: LIMIT }}
                     disabled={!pageInfo.hasPreviousPage}
-                ><FiChevronLeft /></PageLink>
+                ><LuChevronLeft /></PageLink>
                 <PageLink
                     vars={{ order: vars.order, after: pageInfo.endCursor, first: LIMIT }}
                     disabled={!pageInfo.hasNextPage}
-                ><FiChevronRight /></PageLink>
+                ><LuChevronRight /></PageLink>
                 <PageLink
                     vars={{ order: vars.order, last: LIMIT }}
                     disabled={!pageInfo.hasNextPage}

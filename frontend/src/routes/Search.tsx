@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { FiFolder } from "react-icons/fi";
+import { LuFolder } from "react-icons/lu";
 import { ReactNode } from "react";
 import { screenWidthAtMost, unreachable } from "@opencast/appkit";
 
@@ -242,7 +242,7 @@ type SearchRealmProps = {
 const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, fullPath }) => (
     <Item key={id} link={fullPath}>
         <div css={{ textAlign: "center" }}>
-            <FiFolder css={{ margin: 8, fontSize: 26 }}/>
+            <LuFolder css={{ margin: 8, fontSize: 26 }}/>
         </div>
         <div>
             <BreadcrumbsContainer>

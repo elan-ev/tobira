@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { Controller, useController, useForm } from "react-hook-form";
-import { FiCheckCircle, FiInfo, FiUpload } from "react-icons/fi";
+import { LuCheckCircle, LuUpload, LuInfo } from "react-icons/lu";
 import { WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
@@ -197,7 +197,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
             marginTop: "max(16px, 10vh - 50px)",
             gap: 32,
         }}>
-            <FiCheckCircle css={{ fontSize: 64, color: COLORS.happy0 }} />
+            <LuCheckCircle css={{ fontSize: 64, color: COLORS.happy0 }} />
             {t("upload.finished")}
         </div>;
     } else {
@@ -427,13 +427,13 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
                     does not guarantee that and could change it at any time. But we decided it's
                     fine in this case. It is unlikely to change and if it breaks, nothing bad could
                     happen. Only the animation is broken. */}
-                <FiUpload css={{
+                <LuUpload css={{
                     position: "absolute",
                     top: isDragging ? 8 : 0,
                     transition: "top var(--transition-length)",
                     "& > path": { display: "none" },
                 }} />
-                <FiUpload css={{ "& > polyline, & > line": { display: "none" } }} />
+                <LuUpload css={{ "& > polyline, & > line": { display: "none" } }} />
             </div>
 
             {t("upload.drop-to-upload")}
@@ -749,7 +749,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                             marginLeft: 8,
                         }}
                     >
-                        <span><FiInfo tabIndex={0} /></span>
+                        <span><LuInfo tabIndex={0} /></span>
                     </WithTooltip>
                 </label>
                 <SeriesSelector

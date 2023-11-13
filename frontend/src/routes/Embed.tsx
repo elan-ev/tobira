@@ -1,5 +1,5 @@
 import { ReactNode, Suspense } from "react";
-import { FiAlertTriangle, FiFrown } from "react-icons/fi";
+import { LuFrown, LuAlertTriangle } from "react-icons/lu";
 import { Translation, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { unreachable } from "@opencast/appkit";
@@ -79,14 +79,14 @@ const Embed: React.FC<EmbedProps> = ({ queryRef }) => {
 
     if (!event) {
         return <PlayerPlaceholder>
-            <FiFrown />
+            <LuFrown />
             <div>{t("not-found.video-not-found")}</div>
         </PlayerPlaceholder>;
     }
 
     if (event.__typename === "NotAllowed") {
         return <PlayerPlaceholder>
-            <FiAlertTriangle />
+            <LuAlertTriangle />
             <div>{t("api-remote-errors.view.event")}</div>
         </PlayerPlaceholder>;
     }
@@ -118,7 +118,7 @@ export const BlockEmbedRoute = makeRoute(url => {
 
     return {
         render: () => <PlayerPlaceholder>
-            <FiAlertTriangle />
+            <LuAlertTriangle />
             <div>
                 <Translation>{t => t("embed.not-supported")}</Translation>
             </div>
@@ -133,7 +133,7 @@ class ErrorBoundary extends GlobalErrorBoundary {
         }
 
         return <PlayerPlaceholder>
-            <FiAlertTriangle />
+            <LuAlertTriangle />
             <div>
                 <Translation>{t => t("errors.embedded")}</Translation>
             </div>

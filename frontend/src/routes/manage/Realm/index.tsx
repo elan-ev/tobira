@@ -12,7 +12,7 @@ import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
 import { DangerZone } from "./DangerZone";
 import { LinkButton } from "../../../ui/Button";
-import { FiArrowRightCircle, FiPlusCircle } from "react-icons/fi";
+import { LuArrowRightCircle, LuPlusCircle } from "react-icons/lu";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
@@ -106,11 +106,11 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
             }}>
                 <LinkButton to={realm.path}>
                     {t("manage.realm.view-page")}
-                    <FiArrowRightCircle />
+                    <LuArrowRightCircle />
                 </LinkButton>
                 <LinkButton to={`/~manage/realm/add-child?parent=${pathToQuery(realm.path)}`}>
                     {t("realm.add-sub-page")}
-                    <FiPlusCircle />
+                    <LuPlusCircle />
                 </LinkButton>
             </div>
             <section><General fragRef={realm} /></section>

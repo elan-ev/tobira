@@ -1,5 +1,5 @@
 import React from "react";
-import { FiArrowLeft, FiMenu, FiX } from "react-icons/fi";
+import { LuArrowLeft, LuMenu, LuX } from "react-icons/lu";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
 import { match, screenWidthAbove } from "@opencast/appkit";
@@ -63,7 +63,7 @@ const SearchMode: React.FC = () => {
             onClick={() => menu.close()}
             css={{ marginLeft: 8 }}
         >
-            <FiArrowLeft />
+            <LuArrowLeft />
         </ActionIcon>
         <SearchField variant="mobile" />
     </>;
@@ -81,7 +81,7 @@ const OpenMenuMode: React.FC = () => {
                 onClick={() => menu.close()}
                 css={buttonOutline}
             >
-                <FiX />
+                <LuX />
             </ActionIcon>
         </ButtonContainer>
     </>;
@@ -120,7 +120,7 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
                         },
                     }}
                 >
-                    <FiMenu />
+                    <LuMenu />
                 </ActionIcon>
             )}
         </ButtonContainer>

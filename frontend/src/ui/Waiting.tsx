@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
 import { Card } from "../ui/Card";
-import { FiTruck } from "react-icons/fi";
+import { LuTruck } from "react-icons/lu";
 import { keyframes } from "@emotion/react";
 
 export const WaitingPage: React.FC<{ type: "video" | "series" }> = ({ type }) => {
@@ -17,7 +17,7 @@ export const WaitingPage: React.FC<{ type: "video" | "series" }> = ({ type }) =>
 };
 
 export const MovingTruck: React.FC = () => (
-    <FiTruck css={{
+    <LuTruck css={{
         fontSize: 40,
         animation: `500ms steps(2, end) infinite none ${keyframes({
             "0%": { transform: "translateY(5px)" },
