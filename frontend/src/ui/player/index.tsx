@@ -162,8 +162,8 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             // So: full height minus header, minus separation line (18px), minus main
             // padding (16px), minus breadcrumbs (roughly 42px), minus the amount of space
             // we want to see below the video (roughly 120px).
-            maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 42px - 120px)",
-            minHeight: 180,
+            maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 38px - 60px)",
+            minHeight: `min(320px, (100vw - 32px) / (${aspectRatio[0]} / ${aspectRatio[1]}))`,
             width: controlsFit ? "unset" : "100%",
             aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
 
