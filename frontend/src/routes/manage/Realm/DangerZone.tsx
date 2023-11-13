@@ -219,7 +219,9 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
         </p>
         <div css={{ marginTop: 32, textAlign: "center" }}>
             <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
-                <span>{buttonContent}</span>
+                <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
+                    {buttonContent}
+                </span>
             </Button>
         </div>
         <ConfirmationModal
