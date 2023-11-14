@@ -1,6 +1,6 @@
 import { FloatingHandle, FloatingContainer, FloatingTrigger, ProtoButton } from "@opencast/appkit";
 import React, { ReactElement } from "react";
-import { FiChevronDown } from "react-icons/fi";
+import { LuChevronDown } from "react-icons/lu";
 import { focusStyle } from ".";
 import { COLORS } from "../color";
 import { CSSObject } from "@emotion/react";
@@ -41,7 +41,7 @@ export const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMen
                     ...triggerStyles,
                 }}>
                     {triggerContent}
-                    <FiChevronDown css={{ fontSize: 20, flexShrink: 0 }} />
+                    <LuChevronDown css={{ fontSize: 20, flexShrink: 0 }} />
                 </ProtoButton>
             </FloatingTrigger>
             {list}

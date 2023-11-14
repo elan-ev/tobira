@@ -11,7 +11,7 @@ import {
 } from "@opencast/appkit";
 import { createContext, useRef, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { FiX, FiAlertTriangle } from "react-icons/fi";
+import { LuX, LuAlertTriangle } from "react-icons/lu";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { graphql } from "react-relay";
@@ -412,7 +412,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
                         ...focusStyle({ offset: -1 }),
                     }}
                 >
-                    <FiX size={20} />
+                    <LuX size={20} />
                 </ProtoButton>
             </td>
         </tr>
@@ -426,7 +426,7 @@ type WarningProps = {
 const Warning: React.FC<WarningProps> = ({ tooltip }) => (
     <WithTooltip {...{ tooltip }} css={{ display: "flex" }}>
         <span css={{ marginLeft: 6, display: "flex" }}>
-            <FiAlertTriangle css={{ color: COLORS.danger0, alignSelf: "center" }} />
+            <LuAlertTriangle css={{ color: COLORS.danger0, alignSelf: "center" }} />
         </span>
     </WithTooltip>
 );

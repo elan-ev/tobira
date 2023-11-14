@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiAlertTriangle, FiFilm, FiRadio, FiVolume2 } from "react-icons/fi";
-import { LuUserCircle } from "react-icons/lu";
+import { LuAlertTriangle, LuFilm, LuRadio, LuUserCircle, LuVolume2 } from "react-icons/lu";
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
@@ -58,7 +57,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         // We have no thumbnail. If the resolution is `null` as well, we are
         // dealing with an audio-only event and show an appropriate icon.
         // Otherwise we use a generic icon.
-        const icon = audioOnly ? <FiVolume2 /> : <FiFilm />;
+        const icon = audioOnly ? <LuVolume2 /> : <LuFilm />;
 
         inner = (
             <div css={{
@@ -112,7 +111,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             innerOverlay = t("video.ended");
         } else if (hasStarted) {
             innerOverlay = <>
-                <FiRadio css={{ fontSize: 19, strokeWidth: 1.4 }} />
+                <LuRadio css={{ fontSize: 19, strokeWidth: 1.4 }} />
                 {t("video.live")}
             </>;
         } else {
@@ -211,7 +210,7 @@ const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
                 strokeWidth: 1.5,
             },
         }}>
-            <FiAlertTriangle />
+            <LuAlertTriangle />
             {t("general.failed-to-load-thumbnail")}
         </div>
         : <img

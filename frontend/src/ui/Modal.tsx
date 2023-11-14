@@ -9,7 +9,7 @@ import {
     useEffect,
 } from "react";
 import ReactDOM from "react-dom";
-import { FiX } from "react-icons/fi";
+import { LuX } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
 import FocusTrap from "focus-trap-react";
 import { bug, useColorScheme, ProtoButton } from "@opencast/appkit";
@@ -110,7 +110,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
                                 borderRadius: 4,
                                 ...focusStyle({}),
                             }}
-                        ><FiX /></ProtoButton>}
+                        ><LuX /></ProtoButton>}
                     </div>
                     <div css={{ padding: 16 }}>{children}</div>
                 </div>

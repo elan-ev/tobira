@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FiExternalLink } from "react-icons/fi";
+import { LuExternalLink } from "react-icons/lu";
 
 import { useId, useState } from "react";
 import { Link } from "../../../router";
@@ -61,7 +61,7 @@ const Page: React.FC<Props> = ({ event }) => {
                         }}
                     >
                         {t("manage.my-videos.details.open-in-editor")}
-                        <FiExternalLink size={16} />
+                        <LuExternalLink size={16} />
                     </ExternalLink>
                 )}
                 <DirectLink event={event} />

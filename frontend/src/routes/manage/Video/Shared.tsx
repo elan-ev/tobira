@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FiCornerLeftUp, FiEdit3, FiInfo, FiPlay, FiShield } from "react-icons/fi";
+import { LuCornerLeftUp, LuInfo, LuShield, LuPlay, LuPenLine } from "react-icons/lu";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
@@ -109,7 +109,7 @@ const BackLink: React.FC = () => {
     const { t } = useTranslation();
     const items = [
         <LinkWithIcon key={MANAGE_VIDEOS_PATH} to={MANAGE_VIDEOS_PATH} iconPos="left">
-            <FiCornerLeftUp />
+            <LuCornerLeftUp />
             {t("manage.my-videos.title")}
         </LinkWithIcon>,
     ];
@@ -139,12 +139,12 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         {
             url: `/~manage/videos/${id}`,
             page: "details",
-            body: <><FiEdit3 />{t("manage.my-videos.details.title")}</>,
+            body: <><LuPenLine />{t("manage.my-videos.details.title")}</>,
         },
         {
             url: `/~manage/videos/${id}/technical-details`,
             page: "technical-details",
-            body: <><FiInfo />{t("manage.my-videos.technical-details.title")}</>,
+            body: <><LuInfo />{t("manage.my-videos.technical-details.title")}</>,
         },
     ];
 
@@ -152,7 +152,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         entries.splice(1, 0, {
             url: `/~manage/videos/${id}/access`,
             page: "acl",
-            body: <><FiShield />{t("manage.my-videos.acl.title")}</>,
+            body: <><LuShield />{t("manage.my-videos.acl.title")}</>,
         });
     }
 
@@ -192,7 +192,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
                 backgroundColor: "black",
                 borderRadius: 8,
             }}>
-                <FiPlay />
+                <LuPlay />
                 <Thumbnail event={event} />
             </Link>
             <div css={{

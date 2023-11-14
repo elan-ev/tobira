@@ -8,7 +8,7 @@ import { Card } from "../Card";
 import { useTranslation } from "react-i18next";
 import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
-import { FiArrowRightCircle } from "react-icons/fi";
+import { LuArrowRightCircle } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
 
 
@@ -77,7 +77,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
             }}
         >
             {t("video.link")}
-            <FiArrowRightCircle size={18} css={{ marginTop: 1 }} />
+            <LuArrowRightCircle size={18} css={{ marginTop: 1 }} />
         </Link>}
     </div>;
 };

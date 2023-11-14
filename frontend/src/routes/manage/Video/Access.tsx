@@ -4,7 +4,7 @@ import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
 import { Dispatch, RefObject, SetStateAction, useRef, useState } from "react";
 import { COLORS } from "../../../color";
-import { FiInfo } from "react-icons/fi";
+import { LuInfo } from "react-icons/lu";
 import { Button, Kind as ButtonKind } from "../../../ui/Button";
 import { isRealUser, useUser } from "../../../User";
 import { NotAuthorized } from "../../../ui/error";
@@ -75,7 +75,7 @@ const UnlistedNote: React.FC = () => {
                 gap: 4,
                 marginBottom: 16,
             }}>
-                <FiInfo />
+                <LuInfo />
                 {t("manage.access.unlisted.note")}
             </div>
         </WithTooltip>

@@ -1,6 +1,6 @@
 import React, { PropsWithChildren, Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiClock } from "react-icons/fi";
+import { LuClock } from "react-icons/lu";
 import { HiOutlineStatusOffline } from "react-icons/hi";
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
@@ -285,7 +285,7 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
     return <PlayerPlaceholder>
         {match(props.mode, {
             "pending": () => <>
-                <FiClock />
+                <LuClock />
                 <div>{t("video.stream-not-started-yet")}</div>
             </>,
             "ended": () => <>

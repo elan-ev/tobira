@@ -2,10 +2,7 @@ import React, { ReactElement, ReactNode, useEffect, useRef, useState } from "rea
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
-import {
-    FiCode, FiSettings, FiShare2, FiDownload,
-} from "react-icons/fi";
-import { LuLink, LuQrCode } from "react-icons/lu";
+import { LuCode, LuDownload, LuLink, LuQrCode, LuSettings, LuShare2 } from "react-icons/lu";
 import { QRCodeCanvas } from "qrcode.react";
 import {
     match, unreachable, ProtoButton,
@@ -423,7 +420,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                         "&:not([disabled])": { color: COLORS.primary0 },
                         ...shrinkOnMobile,
                     }}>
-                        <FiSettings size={16} />
+                        <LuSettings size={16} />
                         {t("video.manage")}
                     </LinkButton>
                 )}
@@ -517,7 +514,7 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         >
             <FloatingTrigger>
                 <Button>
-                    <FiDownload size={16}/>
+                    <LuDownload size={16}/>
                     {t("video.download.title")}
                 </Button>
             </FloatingTrigger>
@@ -540,7 +537,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     /* eslint-disable react/jsx-key */
     const entries: [Exclude<MenuState, "closed">, ReactElement][] = [
         ["main", <LuLink />],
-        ["embed", <FiCode />],
+        ["embed", <LuCode />],
         // ["rss", <FiRss />],
     ];
     /* eslint-enable react/jsx-key */
@@ -751,7 +748,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         });
                     }
                 }}>
-                    <FiShare2 size={16} />
+                    <LuShare2 size={16} />
                     {t("general.action.share")}
                 </Button>
             </FloatingTrigger>

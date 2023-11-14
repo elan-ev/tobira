@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, commitLocalUpdate, useRelayEnvironment } from "react-relay";
 import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
-import { FiPlus, FiType, FiGrid, FiFilm, FiHash } from "react-icons/fi";
+import { LuPlus, LuHash, LuType, LuGrid, LuFilm } from "react-icons/lu";
 import {
     ProtoButton, bug, useColorScheme,
     Floating, FloatingContainer, FloatingHandle, FloatingTrigger, WithTooltip,
@@ -94,7 +94,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                             },
                             ...focusStyle({ offset: 1 }),
                         }}>
-                            <FiPlus />
+                            <LuPlus />
                         </ProtoButton>
                     </WithTooltip>
                 </div>
@@ -124,19 +124,19 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                 }}>
                     <AddItem
                         close={() => floatingRef.current?.close()}
-                        Icon={FiHash}
+                        Icon={LuHash}
                         label={t("manage.realm.content.add-title")}
                         onClick={() => addBlock("Title")}
                     />
                     <AddItem
                         close={() => floatingRef.current?.close()}
-                        Icon={FiType}
+                        Icon={LuType}
                         label={t("manage.realm.content.add-text")}
                         onClick={() => addBlock("Text")}
                     />
                     <AddItem
                         close={() => floatingRef.current?.close()}
-                        Icon={FiGrid}
+                        Icon={LuGrid}
                         label={t("manage.realm.content.add-series")}
                         onClick={() => addBlock("Series", (_store, block) => {
                             block.setValue("NEW_TO_OLD", "order");
@@ -146,7 +146,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                     />
                     <AddItem
                         close={() => floatingRef.current?.close()}
-                        Icon={FiFilm}
+                        Icon={LuFilm}
                         label={t("manage.realm.content.add-video")}
                         onClick={() => addBlock("Video", (_store, block) => {
                             block.setValue(true, "showTitle");

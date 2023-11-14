@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { FiEye } from "react-icons/fi";
+import { LuEye } from "react-icons/lu";
 import { bug } from "@opencast/appkit";
 
 import { RootLoader } from "../../../../layout/Root";
@@ -145,7 +145,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
 
             <LinkButton to={path}>
                 {t("manage.realm.content.view-page")}
-                <FiEye />
+                <LuEye />
             </LinkButton>
 
             <div css={{

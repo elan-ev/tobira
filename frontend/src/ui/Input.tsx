@@ -1,5 +1,5 @@
 import React, { Fragment, ReactNode, useId, useImperativeHandle, useRef, useState } from "react";
-import { FiCheck, FiCopy } from "react-icons/fi";
+import { LuCheck, LuCopy } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 
 import { Button } from "./Button";
@@ -279,7 +279,7 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
                                 : { borderBottomLeftRadius: 0 },
                         }}
                     >
-                        {wasCopied ? <FiCheck /> : <FiCopy />}
+                        {wasCopied ? <LuCheck /> : <LuCopy />}
                     </Button>
                 </WithTooltip>
             </div>

@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { boxError } from "../ui/error";
 import { translatedConfig, useNoindexTag } from "../util";
 import { Spinner } from "../ui/Spinner";
-import { FiCheck, FiChevronLeft, FiLogIn } from "react-icons/fi";
+import { LuCheck, LuChevronLeft, LuLogIn } from "react-icons/lu";
 import { Card } from "../ui/Card";
 import CONFIG from "../config";
 import { LOGIN_PATH } from "./paths";
@@ -114,7 +114,7 @@ const BackButton: React.FC = () => {
             borderRadius: 4,
             textDecoration: "none",
         }}
-    ><FiChevronLeft />{t("general.action.back")}</Link>;
+    ><LuChevronLeft />{t("general.action.back")}</Link>;
 };
 
 type FormData = {
@@ -252,12 +252,12 @@ const LoginBox: React.FC = () => {
                         ...focusStyle({ offset: 1 }),
                     }}
                 >
-                    <FiLogIn size={20} />
+                    <LuLogIn size={20} />
                     {t("user.login")}
                     {match(state, {
                         "idle": () => null,
                         "pending": () => <Spinner size={20} />,
-                        "success": () => <FiCheck />,
+                        "success": () => <LuCheck />,
                     })}
                 </ProtoButton>
 
