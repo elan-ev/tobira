@@ -1,4 +1,4 @@
-use std::{sync::Arc, future};
+use std::{sync::Arc, future, collections::HashMap};
 use chrono::{DateTime, Utc};
 use deadpool_postgres::{GenericClient, Client};
 use anyhow::{Error, Result};
@@ -114,6 +114,24 @@ async fn video_items(
     let query = format!("select {selection} from events where part_of = $1");
     let rows = db.query_raw(&query, dbargs![&series_oc_id]).await?;
 
+    fn map_tracks(tracks: &Vec<EventTrack>, doc: &mut ogrim::Document) -> () {
+        xml!(doc,
+            <media:group>
+                {|doc| for track in tracks {
+                    xml!(doc,
+                        <media:content
+                            url={&track.uri}
+                            type={&track.mimetype.clone().unwrap()}
+                            medium={"video"}
+                            height={track.resolution.unwrap()[1]}
+                            width={track.resolution.unwrap()[0]}
+                        />
+                    )}
+                }
+            </media:group>
+        )
+    }
+
     rows.try_for_each(|row| {
         let event = Event::from_row_start(&row);
         
@@ -122,9 +140,11 @@ async fn video_items(
         let event_link = format!("{tobira_url}/!v/{tobira_event_id}");
         let thumbnail = &event.thumbnail_url.unwrap_or_default();
         let tracks = preferred_tracks(event.tracks);
-        let enclosure_track = tracks.1.unwrap();
+        let enclosure_track = tracks.0.unwrap();
         let enclosure_url = &enclosure_track.uri;
         let mimetype = &enclosure_track.mimetype.unwrap();
+
+        let track_groups = tracks.1;
 
         xml!(doc,
             <item>
@@ -142,20 +162,9 @@ async fn video_items(
                     length="0"
                 />
                 <source url={rss_link}>{series_title}</source>
-                <media:group>
-                    {|doc| for track in tracks.0 {
-                        xml!(doc,
-                            <media:content
-                                url={track.uri}
-                                type={track.mimetype.unwrap()}
-                                medium={"video"}
-                                height={track.resolution.unwrap()[1]}
-                                width={track.resolution.unwrap()[0]}
-                            />
-                        )}
-                    }
-                </media:group>
-
+                {|doc| for (_, tracks) in &track_groups {
+                    map_tracks(tracks, doc)
+                }}
             </item>
         );
 
@@ -167,19 +176,13 @@ async fn video_items(
 
 
 
-/// This returns a track that:
+/// This returns a single track for use in the enclosure, that:
 /// a) is a `presentation` track.
-/// Defaults to any track meeting the b) criteria if there is no `presentation` track.
 /// b) has a resolution that is closest to full hd.
-fn preferred_tracks(tracks: Vec<EventTrack>) -> (Vec<EventTrack>, Option<EventTrack>) {
-    let target_resolution = tracks.first().map_or([1920, 1080], |first_track| {
-        let [x, y] = first_track.resolution.unwrap();
-        if x >= y {
-            [1920, 1080] // Landscape
-        } else {
-            [1080, 1920] // Portrait
-        }
-    });
+/// Defaults to any track meeting the b) criteria if there is no `presentation` track.
+/// It also returns a hashmap of all tracks grouped by their flavor.
+fn preferred_tracks(tracks: Vec<EventTrack>) -> (Option<EventTrack>, HashMap<String, Vec<EventTrack>>) {
+    let target_resolution = 1920 * 1080;
 
     let mut preferred_tracks: Vec<EventTrack> = tracks
         .iter()
@@ -191,14 +194,21 @@ fn preferred_tracks(tracks: Vec<EventTrack>) -> (Vec<EventTrack>, Option<EventTr
         preferred_tracks = tracks.clone();
     }
 
-    let single_track = preferred_tracks.iter().min_by_key(|&track| {
+    let enclosure_track = preferred_tracks.iter().min_by_key(|&track| {
         let track_resolution = track.resolution.unwrap();
-        let diff_x = (track_resolution[0] - target_resolution[0]).abs();
-        let diff_y = (track_resolution[1] - target_resolution[1]).abs();
-        diff_x + diff_y
+        let diff = (track_resolution[0] * track_resolution[1] - target_resolution).abs();
+        diff
     });
 
-    (preferred_tracks.clone(), single_track.cloned())
+    let mut track_groups: HashMap<String, Vec<EventTrack>> = HashMap::new();
+
+    for track in &tracks {
+        let flavor = track.flavor.clone();
+        let entry = track_groups.entry(flavor).or_insert(Vec::new());
+        entry.push(track.clone());
+    }
+
+    (enclosure_track.cloned(), track_groups)
 }
 
 
