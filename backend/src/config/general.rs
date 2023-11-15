@@ -91,10 +91,6 @@ impl GeneralConfig {
             .map(|s| s.strip_prefix("/").unwrap_or(s))
             .chain(INTERNAL_RESERVED_PATHS.iter().copied())
     }
-
-    pub(crate) fn tobira_url(&self) -> &HttpHost {
-        &self.tobira_url
-    }
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]

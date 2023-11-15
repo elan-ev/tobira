@@ -7,8 +7,9 @@ use ogrim::xml;
 
 use crate::{
     db::{types::{EventTrack, Key}, self, util::{impl_from_db, FromDb, dbargs}},
-    http::{Context, response::bad_request, Response},
+    http::{Context, response::{bad_request, self, not_found}, Response},
     util::HttpHost,
+    prelude::*,
 };
 
 #[derive(Debug)]
@@ -43,7 +44,7 @@ impl_from_db!(
 /// Generates the xml for an RSS feed of a series in Tobira.
 pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<String, Response> {
     let db_pool = &context.db_pool;
-    let tobira_url = context.config.general.tobira_url();
+    let tobira_url = &context.config.general.tobira_url;
     let series_link = format!("{tobira_url}/!s/{id}");
     let rss_link = format!("{tobira_url}/~rss/series/{id}");
 
@@ -54,13 +55,17 @@ pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<St
     let db = db::get_conn_or_service_unavailable(db_pool).await?;
 
     let query = "select opencast_id, title, description from series where id = $1";
-    let series_data = match db.query_one(query, &[&series_id]).await {
-        Ok(data) => data,
-        Err(_) => return Err(bad_request("DB error querying series data")),
+    let series_data = match db.query_opt(query, &[&series_id]).await {
+        Ok(Some(data)) => data,
+        Ok(None) => return Err(not_found()),
+        Err(e) => {
+            error!("DB error querying series data for RSS: {e}");
+            return Err(bad_request("DB error querying series data"));
+        }
     };
 
     let series_oc_id = series_data.get::<_, String>("opencast_id");
-    let series_title = series_data.get::<_, String>("title").clone();
+    let series_title = series_data.get::<_, String>("title");
     let series_description = series_data
         .get::<_, Option<String>>("description")
         .unwrap_or_default();
@@ -87,13 +92,18 @@ pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<St
                 <link>{series_link}</link>
                 <description>{series_description}</description>
                 <language>"und"</language>
-                <itunes:category text="Education">
-                    <itunes:category text="Courses"/>
-                </itunes:category>
+                <itunes:category text="Education" />
                 <itunes:explicit>"true"</itunes:explicit>
                 <itunes:image href={format!("{tobira_url}/~assets/logo-small.svg")} />
                 <atom:link href={rss_link} rel="self" type="application/rss+xml" />
-                {|buf| video_items(buf, &db, &series_oc_id, &series_title, &rss_link, tobira_url).await.unwrap()}
+                {|buf| {
+                    video_items(buf, &db, &series_oc_id, &series_title, &rss_link, &tobira_url)
+                        .await
+                        .map_err(|e| {
+                            error!("Could not retrieve videos for RSS: {e}");
+                            response::internal_server_error()
+                        })?
+                }}
             </channel>
         </rss>
     );
@@ -114,14 +124,14 @@ async fn video_items(
     let query = format!("select {selection} from events where part_of = $1");
     let rows = db.query_raw(&query, dbargs![&series_oc_id]).await?;
 
-    fn map_tracks(tracks: &Vec<EventTrack>, doc: &mut ogrim::Document) -> () {
+    fn map_tracks(tracks: &[EventTrack], doc: &mut ogrim::Document) {
         xml!(doc,
             <media:group>
                 {|doc| for track in tracks {
                     xml!(doc,
                         <media:content
                             url={track.uri}
-                            {..track.mimetype.clone().map(|t| ("type", t))}
+                            {..track.mimetype.as_ref().map(|t| ("type", t))}
                             {..track.resolution.into_iter().flat_map(|[w, h]| [("width", w), ("height", h)])}
                         />
                     )}
@@ -137,12 +147,7 @@ async fn video_items(
         let tobira_event_id = event.id.to_base64(&mut buf);
         let event_link = format!("{tobira_url}/!v/{tobira_event_id}");
         let thumbnail = &event.thumbnail_url.unwrap_or_default();
-        let tracks = preferred_tracks(event.tracks);
-        let enclosure_track = tracks.0.unwrap();
-        let enclosure_url = &enclosure_track.uri;
-        let mimetype = &enclosure_track.mimetype.unwrap();
-
-        let track_groups = tracks.1;
+        let (enclosure_track, track_groups) = preferred_tracks(event.tracks);
 
         xml!(doc,
             <item>
@@ -155,8 +160,8 @@ async fn video_items(
                 <media:thumbnail url={thumbnail} />
                 <itunes:image href={thumbnail} />
                 <enclosure
-                    url={enclosure_url}
-                    type={mimetype}
+                    url={&enclosure_track.uri}
+                    type={&enclosure_track.mimetype.unwrap_or_default()}
                     length="0"
                 />
                 <source url={rss_link}>{series_title}</source>
@@ -179,7 +184,7 @@ async fn video_items(
 /// b) has a resolution that is closest to full hd.
 /// Defaults to any track meeting the b) criteria if there is no `presentation` track.
 /// It also returns a hashmap of all tracks grouped by their flavor.
-fn preferred_tracks(tracks: Vec<EventTrack>) -> (Option<EventTrack>, HashMap<String, Vec<EventTrack>>) {
+fn preferred_tracks(tracks: Vec<EventTrack>) -> (EventTrack, HashMap<String, Vec<EventTrack>>) {
     let target_resolution = 1920 * 1080;
 
     let mut preferred_tracks: Vec<EventTrack> = tracks
@@ -193,10 +198,9 @@ fn preferred_tracks(tracks: Vec<EventTrack>) -> (Option<EventTrack>, HashMap<Str
     }
 
     let enclosure_track = preferred_tracks.iter().min_by_key(|&track| {
-        let track_resolution = track.resolution.unwrap_or_default();
-        let diff = (track_resolution[0] * track_resolution[1] - target_resolution).abs();
-        diff
-    });
+        let [w, h] = track.resolution.unwrap_or_default();
+        (w * h - target_resolution).abs()
+    }).expect("event without tracks");
 
     let mut track_groups: HashMap<String, Vec<EventTrack>> = HashMap::new();
 
@@ -206,7 +210,6 @@ fn preferred_tracks(tracks: Vec<EventTrack>) -> (Option<EventTrack>, HashMap<Str
         entry.push(track.clone());
     }
 
-    (enclosure_track.cloned(), track_groups)
+    (enclosure_track.clone(), track_groups)
 }
-
 
