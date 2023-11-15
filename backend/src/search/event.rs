@@ -26,6 +26,7 @@ pub(crate) struct Event {
     pub(crate) start_time: Option<DateTime<Utc>>,
     pub(crate) end_time: Option<DateTime<Utc>>,
     pub(crate) is_live: bool,
+    pub(crate) audio_only: bool,
 
     // These are filterable. All roles are hex encoded to work around Meilis
     // inability to filter case-sensitively. For roles, we have to compare
@@ -58,7 +59,8 @@ impl_from_db!(
     select: {
         search_events.{
             id, series, series_title, title, description, creators, thumbnail,
-            duration, is_live, created, start_time, end_time, read_roles, write_roles, host_realms,
+            duration, is_live, created, start_time, end_time, audio_only,
+            read_roles, write_roles, host_realms,
         },
     },
     |row| {
@@ -73,6 +75,7 @@ impl_from_db!(
             thumbnail: row.thumbnail(),
             duration: row.duration(),
             is_live: row.is_live(),
+            audio_only: row.audio_only(),
             created: row.created(),
             start_time: row.start_time(),
             end_time: row.end_time(),

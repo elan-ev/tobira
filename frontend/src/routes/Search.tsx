@@ -61,6 +61,7 @@ const query = graphql`
                         creators
                         seriesTitle
                         isLive
+                        audioOnly
                         startTime
                         endTime
                         created
@@ -141,6 +142,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     creators: unwrapUndefined(item.creators),
                     seriesTitle: unwrapUndefined(item.seriesTitle),
                     isLive,
+                    audioOnly: unwrapUndefined(item.audioOnly),
                     created: unwrapUndefined(item.created),
                     startTime: unwrapUndefined(item.startTime),
                     endTime,
@@ -171,6 +173,7 @@ type SearchEventProps = {
     creators: readonly string[];
     seriesTitle: string | null;
     isLive: boolean;
+    audioOnly: boolean;
     created: string;
     startTime: string | null;
     endTime: string | null;
@@ -186,6 +189,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     creators,
     seriesTitle,
     isLive,
+    audioOnly,
     created,
     startTime,
     endTime,
@@ -211,7 +215,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                         duration,
                         startTime,
                         endTime,
-                        audioOnly: false, // TODO
+                        audioOnly,
                     },
                 }}
                 css={{ width: "100%" }}

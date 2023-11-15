@@ -69,6 +69,7 @@ type SearchEvent implements Node {
   thumbnail: String
   duration: Float!
   isLive: Boolean!
+  audioOnly: Boolean!
   created: DateTimeUtc!
   startTime: DateTimeUtc
   endTime: DateTimeUtc

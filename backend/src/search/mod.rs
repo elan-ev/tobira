@@ -38,7 +38,7 @@ pub(crate) use self::{
 
 /// The version of search index schema. Increase whenever there is a change that
 /// requires an index rebuild.
-const VERSION: u32 = 2;
+const VERSION: u32 = 3;
 
 
 // ===== Configuration ============================================================================
