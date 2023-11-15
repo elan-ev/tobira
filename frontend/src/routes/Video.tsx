@@ -2,7 +2,7 @@ import React, { ReactElement, ReactNode, useEffect, useRef, useState } from "rea
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
-import { LuCode, LuDownload, LuLink, LuQrCode, LuSettings, LuShare2 } from "react-icons/lu";
+import { LuCode, LuDownload, LuLink, LuQrCode, LuRss, LuSettings, LuShare2 } from "react-icons/lu";
 import { QRCodeCanvas } from "qrcode.react";
 import {
     match, unreachable, ProtoButton,
@@ -29,6 +29,7 @@ import {
     currentRef,
     secondsToTimeString,
     eventId,
+    keyOfId,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { Button, LinkButton } from "../ui/Button";
@@ -416,7 +417,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 "> button": { ...shrinkOnMobile },
             }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
-                    <LinkButton to={`/~manage/videos/${id.slice(2)}`} css={{
+                    <LinkButton to={`/~manage/videos/${keyOfId(id)}`} css={{
                         "&:not([disabled])": { color: COLORS.primary0 },
                         ...shrinkOnMobile,
                     }}>
@@ -538,8 +539,10 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const entries: [Exclude<MenuState, "closed">, ReactElement][] = [
         ["main", <LuLink />],
         ["embed", <LuCode />],
-        // ["rss", <FiRss />],
     ];
+    if (event.series) {
+        entries.push(["rss", <LuRss />]);
+    }
     /* eslint-enable react/jsx-key */
 
     const { t } = useTranslation();
@@ -687,7 +690,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             url.search = addEmbedTimestamp && timestamp
                 ? `?t=${secondsToTimeString(timestamp)}`
                 : "";
-            url.pathname = `/~embed/!v/${event.id.slice(2)}`;
+            url.pathname = `/~embed/!v/${keyOfId(event.id)}`;
 
             const embedCode = `<iframe ${[
                 'name="Tobira Player"',
@@ -722,9 +725,21 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             </>;
         },
         "rss": () => {
-            // TODO
-            const dummy = "Implement me!";
-            return <>{dummy}</>;
+            if (event.series) {
+                const rssUrl = window.location.origin + `/~rss/series/${keyOfId(event.series.id)}`;
+                return <>
+                    <div>
+                        <CopyableInput
+                            label={t("video.rss.copy-link-to-clipboard")}
+                            css={{ fontSize: 14, width: 400, marginBottom: 6 }}
+                            value={rssUrl}
+                        />
+                    </div>
+                    <ShowQRCodeButton target={rssUrl} label={menuState} />
+                </>;
+            } else {
+                return null;
+            }
         },
     });
 
@@ -886,11 +901,11 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
     const { t, i18n } = useTranslation();
     const pairs: [string, ReactNode][] = [];
 
-    if (event.series !== null) {
+    if (event.series) {
         pairs.push([
             t("video.part-of-series"),
             // eslint-disable-next-line react/jsx-key
-            <Link to={`/!s/${event.series.id.slice(2)}`}>{event.series.title}</Link>,
+            <Link to={`/!s/${keyOfId(event.series.id)}`}>{event.series.title}</Link>,
         ]);
     }
 

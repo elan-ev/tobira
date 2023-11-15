@@ -29,6 +29,7 @@ mod search;
 mod sync;
 mod util;
 mod version;
+mod rss;
 
 
 #[tokio::main]

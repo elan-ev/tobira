@@ -15,7 +15,7 @@ use crate::{
     db::{self, Transaction},
     http::response::bad_request,
     metrics::HttpReqCategory,
-    prelude::*,
+    prelude::*, rss,
 };
 use super::{Context, Request, Response, response};
 
@@ -90,6 +90,11 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
                 .unwrap()
         },
 
+        path if path.starts_with("/~rss") => {
+            register_req!(HttpReqCategory::Other);
+            handle_rss_request(path, &ctx).await.unwrap_or_else(|r| r)
+        }
+
         // Assets (JS files, fonts, ...)
         path if path.starts_with(ASSET_PREFIX) => {
             register_req!(HttpReqCategory::Assets);
@@ -105,10 +110,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
         // (and without our frontend!).
         "/favicon.ico" => {
             register_req!(HttpReqCategory::Other);
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body("Not found".into())
-                .unwrap()
+            response::not_found()
         }
 
         // ----- Special, internal routes, starting with `/~` ----------------------------------
@@ -174,6 +176,19 @@ pub(super) async fn reply_404(ctx: &Context, method: &Method, path: &str) -> Res
     // the frontend explicitly to show a 404 page? However, without redirecting
     // to like `/404` because that's annoying for users.
     ctx.assets.serve_index(StatusCode::NOT_FOUND, &ctx.config).await
+}
+
+async fn handle_rss_request(path: &str, ctx: &Arc<Context>) -> Result<Response, Response> {
+    let Some(series_id) = path.strip_prefix("/~rss/series/") else {
+        return Ok(response::not_found());
+    };
+
+    rss::generate_feed(&ctx, series_id).await.map(|rss_content| {
+        Response::builder()
+            .header("Content-Type", "application/rss+xml")
+            .body(Body::from(rss_content))
+            .unwrap()
+    })
 }
 
 /// Handles a request to `/graphql`. Method has to be POST.
