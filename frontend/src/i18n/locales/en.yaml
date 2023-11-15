@@ -7,6 +7,7 @@ general:
   loading: Loading...
   home: Home
   homepage: Homepage
+  page: Page
   leave-page-confirmation: Leave page? Changes you made may not be saved!
   action:
     close: Close

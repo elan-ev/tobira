@@ -170,11 +170,13 @@ const HostRealms: React.FC<Props> = ({ event }) => {
             : <>
                 <p>{t("manage.my-videos.details.referencing-pages-explanation")}</p>
                 <ul>{event.hostRealms.map(realm => <li key={realm.id}>
-                    <Link to={realm.path}>{
-                        realm.isMainRoot
-                            ? <i>{t("general.homepage")}</i>
-                            : realm.name
-                    }</Link>
+                    {realm.isMainRoot ? <i>{t("general.homepage")}</i> : realm.name}
+                    &nbsp;
+                    (<Link to={realm.path}>{t("general.page")}</Link>,
+                    &nbsp;
+                    <Link to={`${realm.isMainRoot ? "" : realm.path}/v/${keyOfId(event.id)}`}>
+                        {t("video.video")}
+                    </Link>)
                 </li>)}</ul>
             </>}
     </>;
