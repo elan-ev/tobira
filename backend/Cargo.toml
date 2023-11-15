@@ -42,7 +42,7 @@ isahc = { version = "1", features = ["static-ssl"] }
 juniper = { version = "0.15.10", default-features = false, features = ["chrono", "schema-language"] }
 libz-sys = { version = "1", features = ["static"] }
 log = { version = "0.4", features = ["serde", "std"] }
-meilisearch-sdk = "0.23.0"
+meilisearch-sdk = "0.24.3"
 mime_guess = { version = "2", default-features = false }
 once_cell = "1.5"
 p256 = { version = "0.13.2", features = ["jwk"] }
