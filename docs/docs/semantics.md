@@ -28,6 +28,15 @@ These *content pages* are called "user pages".
 User pages (and the content placed there) do not appear in the search or anywhere in the main page tree; one has to know the username or link to a user page in order to visit it.
 (Content that also appears on public pages, will also appear in the search.)
 
+## Video Pages
+
+The main place to watch a video is the video page.
+They contain the video player, the video's metadata, and buttons to share and (optionally) download the video.
+If the video is part of a series, the other videos of that series are shown at the bottom.
+
+A video page can be reached via two different means: via direct link or coming from a *content page*.
+This only affects the navigation and breadcrumbs.
+See the next chapter for more information on this.
 
 
 ## Routes
@@ -55,7 +64,7 @@ The values `in this style` are the URL paths, e.g. what the browser will show af
 - **Videos in context**: `/<path/to/page>/v/<videoid>`.
   Shows a video with *page context* (meaning: a video or its series is included on a *content page*).
   The navigation of that *content page* is shown.
-  If the video’s series is included on a *content page*, you get to this page when clicking on the video's thumbnail.
+  This is the normal route you reach by clicking on a video included in a *content page*.
   Also works for user pages.
   Examples:
     - `/lectures/biology/2023/v/L5CUekz9uQ0`
@@ -69,7 +78,7 @@ The values `in this style` are the URL paths, e.g. what the browser will show af
   Useful when the video is not included in any *content page* yet, or if you want to generate a link from an Opencast ID.
   Examples:
     - `/!v/L5CUekz9uQ0`
-    - `/!v/:25e82f02-db10-4ba6-937f-3252353cfbe8`
+    - `/!v/:25e82f02-db10-4ba6-937f-3252353cfbe8` (Opencast ID prefixed with `:`)
 
 
 - **Series direct links**: `/!s/<seriesid>` or `/!s/:<oc_id>`. Exactly like video direct links, but for series.
