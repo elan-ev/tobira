@@ -120,11 +120,9 @@ async fn video_items(
                 {|doc| for track in tracks {
                     xml!(doc,
                         <media:content
-                            url={&track.uri}
-                            type={&track.mimetype.clone().unwrap()}
-                            medium={"video"}
-                            height={track.resolution.unwrap()[1]}
-                            width={track.resolution.unwrap()[0]}
+                            url={track.uri}
+                            {..track.mimetype.clone().map(|t| ("type", t))}
+                            {..track.resolution.into_iter().flat_map(|[w, h]| [("width", w), ("height", h)])}
                         />
                     )}
                 }
@@ -195,7 +193,7 @@ fn preferred_tracks(tracks: Vec<EventTrack>) -> (Option<EventTrack>, HashMap<Str
     }
 
     let enclosure_track = preferred_tracks.iter().min_by_key(|&track| {
-        let track_resolution = track.resolution.unwrap();
+        let track_resolution = track.resolution.unwrap_or_default();
         let diff = (track_resolution[0] * track_resolution[1] - target_resolution).abs();
         diff
     });
