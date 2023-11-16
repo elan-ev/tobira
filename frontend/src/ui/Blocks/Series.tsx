@@ -3,6 +3,7 @@ import React, {
     createContext,
     useContext,
     useEffect,
+    useId,
     useRef,
     useState,
 } from "react";
@@ -26,7 +27,9 @@ import {
 import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
-import { LuColumns, LuGrid, LuList, LuChevronLeft, LuChevronRight, LuPlay } from "react-icons/lu";
+import {
+    LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid,
+} from "react-icons/lu";
 import { keyframes } from "@emotion/react";
 import { Description, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
@@ -332,7 +335,7 @@ const ViewMenu: React.FC = () => {
 
     const icon = match(state.viewState, {
         slider: () => <LuColumns />,
-        gallery: () => <LuGrid />,
+        gallery: () => <LuLayoutGrid />,
         list: () => <LuList />,
     });
 
@@ -362,6 +365,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
     const isDark = useColorScheme().scheme === "dark";
     const { viewState, setViewState } = useContext(ViewContext);
     const { eventOrder, setEventOrder } = useContext(OrderContext);
+    const itemId = useId();
 
     const listStyle = {
         minWidth: 125,
@@ -384,60 +388,44 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         }
     };
 
+    const viewItems: [View, IconType][] = [
+        ["slider", LuColumns],
+        ["gallery", LuLayoutGrid],
+        ["list", LuList],
+    ];
+
+    type OrderTranslationKey = "new-to-old" | "old-to-new" | "a-z" | "z-a";
+    const orderItems: [ExtendedVideoListOrder, OrderTranslationKey][] = [
+        ["NEW_TO_OLD", "new-to-old"],
+        ["OLD_TO_NEW", "old-to-new"],
+        ["A-Z", "a-z"],
+        ["Z-A", "z-a"],
+    ];
+
     const list = match(type, {
         view: () => <>
             <div>{t("series.settings.view")}</div>
             <ul role="menu" onBlur={handleBlur}>
-                <MenuItem
-                    disabled={viewState === "slider"}
-                    onClick={() => setViewState("slider")}
-                    close={close}
-                    Icon={LuColumns}
-                    label={t("series.settings.slider")}
-                />
-                <MenuItem
-                    disabled={viewState === "gallery"}
-                    onClick={() => setViewState("gallery")}
-                    close={close}
-                    Icon={LuGrid}
-                    label={t("series.settings.gallery")}
-                />
-                <MenuItem
-                    disabled={viewState === "list"}
-                    onClick={() => setViewState("list")}
-                    close={close}
-                    Icon={LuList}
-                    label={t("series.settings.list")}
-                />
+                {viewItems.map(([view, icon]) => <MenuItem
+                    key={`${itemId}-${view}`}
+                    disabled={viewState === view}
+                    onClick={() => setViewState(view)}
+                    {...{ close }}
+                    Icon={icon}
+                    label={t(`series.settings.${view}`)}
+                />)}
             </ul>
         </>,
         order: () => <>
             <div>{t("series.settings.order")}</div>
             <ul role="menu" onBlur={handleBlur}>
-                <MenuItem
-                    disabled={eventOrder === "NEW_TO_OLD"}
-                    onClick={() => setEventOrder("NEW_TO_OLD")}
-                    close={close}
-                    label={t("series.settings.new-to-old")}
-                />
-                <MenuItem
-                    disabled={eventOrder === "OLD_TO_NEW"}
-                    onClick={() => setEventOrder("OLD_TO_NEW")}
-                    close={close}
-                    label={t("series.settings.old-to-new")}
-                />
-                <MenuItem
-                    disabled={eventOrder === "A-Z"}
-                    onClick={() => setEventOrder("A-Z")}
-                    close={close}
-                    label={t("series.settings.a-z")}
-                />
-                <MenuItem
-                    disabled={eventOrder === "Z-A"}
-                    onClick={() => setEventOrder("Z-A")}
-                    close={close}
-                    label={t("series.settings.z-a")}
-                />
+                {orderItems.map(([order, key]) => <MenuItem
+                    key={`${itemId}-${order}`}
+                    disabled={eventOrder === order}
+                    onClick={() => setEventOrder(order)}
+                    {...{ close }}
+                    label={t(`series.settings.${key}`)}
+                />)}
             </ul>
         </>,
     });
