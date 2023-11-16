@@ -1,3 +1,4 @@
+import React from "react";
 import { fetchQuery, graphql } from "react-relay";
 import { bug, match } from "@opencast/appkit";
 
@@ -41,13 +42,13 @@ export type ExternalLinkProps = PropsWithChildren<{
  * The redirection then takes you to the final destination.
  * If the setting is not enabled, this is just a normal link.
  */
-export const ExternalLink: React.FC<ExternalLinkProps> = ({
+export const ExternalLink = React.forwardRef<HTMLButtonElement, ExternalLinkProps>(({
     className,
     fallback,
     service,
     children,
     params,
-}) => {
+}, ref) => {
     const target = serviceUrl(service);
     for (const [key, value] of Object.entries(params)) {
         target.searchParams.append(key, value);
@@ -78,14 +79,14 @@ export const ExternalLink: React.FC<ExternalLinkProps> = ({
         <input type="hidden" name="jwt" />
 
         <button
-            className={className}
+            {...{ ref, className }}
             css={{
                 backgroundColor: "transparent",
                 border: "none",
             }}
         >{children}</button>
     </form>;
-};
+});
 
 /**
  * Internal helper function to fetch JWTs mainly to hide the ceremony involved
