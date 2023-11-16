@@ -23,15 +23,14 @@ Currently, there are title blocks, text blocks, series blocks and video blocks.
 In Tobira's user-facing UI, *content pages* are simply called "pages".
 But as "page" is a very generic term, this document will use the term *content page* to specifically refer to these user-editable pages described in this section.
 
-In addition to this main page tree, each user (who is allowed to) can create and manage their own page tree.
+In addition to this main page tree, each user (who is allowed to as per `auth.user_realm_role` configuration) can create and manage their own page tree.
 These *content pages* are called "user pages".
-User pages (and the content placed there) do not appear in the search or anywhere in the main page tree; one has to know the username or link to a user page in order to visit it.
-(Content that also appears on public pages, will also appear in the search.)
+User pages (and content only included on user pages) do not appear in the search or anywhere in the main page tree; one has to know the username or link to a user page in order to visit it.
 
 ## Video Pages
 
 The main place to watch a video is the video page.
-They contain the video player, the video's metadata, and buttons to share and (optionally) download the video.
+It contains the video player, the video's metadata, and buttons to share and (optionally) download the video.
 If the video is part of a series, the other videos of that series are shown at the bottom.
 
 A video page can be reached via two different means: via direct link or coming from a *content page*.
