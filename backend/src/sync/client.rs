@@ -26,6 +26,7 @@ pub(crate) struct OcClient {
     scheme: Scheme,
     authority: Authority,
     auth_header: Secret<String>,
+    username: String,
 }
 
 impl OcClient {
@@ -50,6 +51,7 @@ impl OcClient {
             scheme: config.opencast.sync_node().scheme.clone(),
             authority: config.opencast.sync_node().authority.clone(),
             auth_header: Secret::new(auth_header),
+            username: config.sync.user.clone(),
         }
     }
 
@@ -61,7 +63,7 @@ impl OcClient {
             .await
             .with_context(|| format!("HTTP request failed (to '{uri}')"))?;
 
-        let (out, _) = Self::deserialize_response(response, &uri).await?;
+        let (out, _) = self.deserialize_response(response, &uri).await?;
         Ok(out)
     }
 
@@ -96,7 +98,7 @@ impl OcClient {
             .with_context(|| format!("Harvest request timed out (to '{uri}')"))?
             .with_context(|| format!("Harvest request failed (to '{uri}')"))?;
 
-        let (out, body_len) = Self::deserialize_response::<HarvestResponse>(response, &uri).await?;
+        let (out, body_len) = self.deserialize_response::<HarvestResponse>(response, &uri).await?;
         log!(
             if out.items.len() > 0 { log::Level::Debug } else { log::Level::Trace },
             "Received {} KiB ({} items) from the harvest API (in {:.2?}, since = {:?})",
@@ -142,6 +144,7 @@ impl OcClient {
     }
 
     async fn deserialize_response<T: for<'de> serde::Deserialize<'de>>(
+        &self,
         response: Response<Body>,
         uri: &Uri,
     ) -> Result<(T, usize)> {
@@ -151,7 +154,18 @@ impl OcClient {
 
         if parts.status != StatusCode::OK {
             trace!("HTTP response: {:#?}", parts);
-            bail!("API returned unexpected HTTP code {} (for '{}')", parts.status, uri);
+            if parts.status == StatusCode::UNAUTHORIZED {
+                bail!(
+                    "Requesting '{}' with login '{}:******' returned {}. \
+                        Check 'sync.user' and 'sync.password'!",
+                    uri, self.username, parts.status,
+                );
+            } else {
+                bail!(
+                    "API returned unexpected HTTP code {} (for '{}', authenticating as '{}')",
+                    parts.status, uri, self.username,
+                );
+            }
         }
 
         let out = serde_json::from_slice::<T>(&body)
