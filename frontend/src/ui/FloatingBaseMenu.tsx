@@ -13,8 +13,6 @@ type FloatingBaseMenuProps = {
     triggerStyles?: CSSObject;
 };
 
-
-// TODO: Make menus work with arrow keys.
 export const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>(
     ({ triggerContent, list, label, triggerStyles }, ref) => (
         <FloatingContainer

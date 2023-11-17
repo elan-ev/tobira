@@ -1,5 +1,6 @@
 import React, {
     ReactNode,
+    RefObject,
     createContext,
     useContext,
     useEffect,
@@ -11,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
-    useColorScheme, Floating, FloatingHandle,
+    useColorScheme, Floating, FloatingHandle, useFloatingContext,
 } from "@opencast/appkit";
 
 import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
@@ -321,7 +322,7 @@ const OrderMenu: React.FC = () => {
     });
 
     return <FloatingBaseMenu
-        ref={ref}
+        {...{ ref }}
         label={t("series.settings.order-label")}
         triggerContent={<>{triggerContent}</>}
         list={<List type="order" close={() => ref.current?.close()} />}
@@ -348,9 +349,8 @@ const ViewMenu: React.FC = () => {
     );
 
     return <FloatingBaseMenu
-        ref={ref}
+        {...{ ref, triggerContent }}
         label={t("series.settings.view-label")}
-        triggerContent={triggerContent}
         list={<List type="view" close={() => ref.current?.close()} />}
     />;
 };
@@ -365,6 +365,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
     const isDark = useColorScheme().scheme === "dark";
     const { viewState, setViewState } = useContext(ViewContext);
     const { eventOrder, setEventOrder } = useContext(OrderContext);
+    const { refs } = useFloatingContext();
     const itemId = useId();
 
     const listStyle = {
@@ -402,29 +403,43 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         ["Z-A", "z-a"],
     ];
 
+    const sharedProps = (index: number, key: View | OrderTranslationKey) => ({
+        // Even though https://floating-ui.com/docs/uselistnavigation recommends using
+        // a roving tabindex, this introduces some weird behavior when a user mixes tab-
+        // and arrow navigation. Experimenting with this showed that not using a roving
+        // tabindex (i.e. letting it be 0 unconditionally by not setting the tabindex manually)
+        // still enables arrow navigation while also allowing mixing in tab navigation,
+        // without breaking either.
+        close: close,
+        label: t(`series.settings.${key}`),
+        ref: (node: HTMLButtonElement) => {
+            if (refs.listRef.current !== null) {
+                refs.listRef.current[index] = node;
+            }
+        },
+    });
+
     const list = match(type, {
         view: () => <>
             <div>{t("series.settings.view")}</div>
             <ul role="menu" onBlur={handleBlur}>
-                {viewItems.map(([view, icon]) => <MenuItem
+                {viewItems.map(([view, icon], index) => <MenuItem
                     key={`${itemId}-${view}`}
                     disabled={viewState === view}
                     onClick={() => setViewState(view)}
-                    {...{ close }}
                     Icon={icon}
-                    label={t(`series.settings.${view}`)}
+                    {...sharedProps(index, view)}
                 />)}
             </ul>
         </>,
         order: () => <>
             <div>{t("series.settings.order")}</div>
             <ul role="menu" onBlur={handleBlur}>
-                {orderItems.map(([order, key]) => <MenuItem
+                {orderItems.map(([order, orderKey], index) => <MenuItem
                     key={`${itemId}-${order}`}
                     disabled={eventOrder === order}
                     onClick={() => setEventOrder(order)}
-                    {...{ close }}
-                    label={t(`series.settings.${key}`)}
+                    {...sharedProps(index, orderKey)}
                 />)}
             </ul>
         </>,
@@ -446,11 +461,13 @@ type MenuItemProps = {
     label: string;
     onClick: () => void;
     close: () => void;
-    disabled?: boolean;
+    disabled: boolean;
+    ref: RefObject<HTMLButtonElement>;
 };
 
-const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabled }) => {
-    const ref = useRef<HTMLButtonElement>(null);
+const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
+    Icon, label, onClick, close, disabled,
+}, ref) => {
     const isDark = useColorScheme().scheme === "dark";
 
     return (
@@ -463,8 +480,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
             },
         }}>
             <ProtoButton
-                ref={ref}
-                disabled={disabled}
+                {...{ ref, disabled }}
                 role="menuitem"
                 onClick={() => {
                     onClick();
@@ -494,7 +510,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
             </ProtoButton>
         </li>
     );
-};
+});
 
 
 // ==============================================================================================
