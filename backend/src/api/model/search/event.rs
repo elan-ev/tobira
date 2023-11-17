@@ -46,6 +46,10 @@ impl search::Event {
         self.is_live
     }
 
+    fn audio_only(&self) -> bool {
+        self.audio_only
+    }
+
     fn created(&self) -> DateTime<Utc> {
         self.created
     }

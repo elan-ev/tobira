@@ -35,8 +35,8 @@ tobira_trusted_external_key: "{{ vault_tobira_trusted_external_key }}"
 
 tobira_release_url: "https://github.com/elan-ev/tobira/releases/download/v1.2/tobira-x86_64-unknown-linux-gnu"
 tobira_release_checksum: "sha256:c173c60bc35e8fa922324910a4968557903c9382a5d46d67cc99a15df262e245"
-meili_release_url: "https://github.com/meilisearch/meilisearch/releases/download/v1.1.1/meilisearch-linux-amd64"
-meili_release_checksum: "sha256:dfc945fe521511af43dab0264193b154d639d91292e1899f553157836ec53acd"
+meili_release_url: "https://github.com/meilisearch/meilisearch/releases/download/v1.4.2/meilisearch-linux-amd64"
+meili_release_checksum: "sha256:b54b9ace213b0d45558c5d0e79710f718b63d2e29c190fb95be01dc27eb1ca5c"
 ```
 
 ## Services
