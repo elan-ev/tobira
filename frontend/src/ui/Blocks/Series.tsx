@@ -403,10 +403,9 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         ["Z-A", "z-a"],
     ];
 
-    const sharedProps = (index: number, key: View | OrderTranslationKey) => ({
+    const sharedProps = (key: View | OrderTranslationKey) => ({
         close: close,
         label: t(`series.settings.${key}`),
-        ...itemProps(index),
     });
 
     const list = match(type, {
@@ -416,9 +415,9 @@ const List: React.FC<ListProps> = ({ type, close }) => {
                 {viewItems.map(([view, icon], index) => <MenuItem
                     key={`${itemId}-${view}`}
                     disabled={viewState === view}
-                    onClick={() => setViewState(view)}
                     Icon={icon}
-                    {...sharedProps(index, view)}
+                    {...sharedProps(view)}
+                    {...itemProps(index, () => setViewState(view))}
                 />)}
             </ul>
         </>,
@@ -428,8 +427,8 @@ const List: React.FC<ListProps> = ({ type, close }) => {
                 {orderItems.map(([order, orderKey], index) => <MenuItem
                     key={`${itemId}-${order}`}
                     disabled={eventOrder === order}
-                    onClick={() => setEventOrder(order)}
-                    {...sharedProps(index, orderKey)}
+                    {...sharedProps(orderKey)}
+                    {...itemProps(index, () => setEventOrder(order))}
                 />)}
             </ul>
         </>,
@@ -449,7 +448,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
 type MenuItemProps = {
     Icon?: IconType;
     label: string;
-    onClick: () => void;
+    onClick?: () => void;
     close: () => void;
     disabled: boolean;
     ref: RefObject<HTMLElement>;
@@ -473,7 +472,9 @@ const MenuItem = React.forwardRef<HTMLElement, MenuItemProps>(({
                 {...{ ref, disabled }}
                 role="menuitem"
                 onClick={() => {
-                    onClick();
+                    if (onClick) {
+                        onClick();
+                    }
                     close();
                 }}
                 css={{
