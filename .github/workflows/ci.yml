@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       postgres:
-        image: postgres:11
+        image: postgres:12
         env:
           POSTGRES_USER: tobira
           POSTGRES_PASSWORD: tobira
