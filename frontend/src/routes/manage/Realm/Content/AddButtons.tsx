@@ -5,7 +5,7 @@ import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
 import { LuPlus, LuHash, LuType, LuFilm, LuLayoutGrid } from "react-icons/lu";
 import {
     ProtoButton, bug, useColorScheme, Floating, FloatingContainer,
-    FloatingHandle, FloatingTrigger, WithTooltip, useFloatingContext,
+    FloatingHandle, FloatingTrigger, WithTooltip, useFloatingItemProps,
 } from "@opencast/appkit";
 
 import { AddButtonsRealmData$key } from "./__generated__/AddButtonsRealmData.graphql";
@@ -76,7 +76,7 @@ const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}>
 }) => {
     const isDark = useColorScheme().scheme === "dark";
     const { t } = useTranslation();
-    const { refs } = useFloatingContext();
+    const itemProps = useFloatingItemProps();
     const menuId = useId();
 
     const { id: realmId } = useFragment(graphql`
@@ -153,9 +153,7 @@ const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}>
                     close={() => floatingRef.current?.close()}
                     Icon={icon}
                     label={t(`manage.realm.content.add-${type}`)}
-                    ref={node => {
-                        refs.listRef.current[index] = node;
-                    }}
+                    {...itemProps(index)}
                     {...{ onClick }}
                 />)}
             </ul>
