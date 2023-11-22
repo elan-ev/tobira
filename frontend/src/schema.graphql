@@ -553,6 +553,12 @@ type User {
     This endpoint is only for debugging and for special cases like the ACL selector.
   """
   roles: [String!]!
+  """
+    Returns the *user role* of this user. Each user has exactly one and this
+    role is used in ACLs to give access to a single user. This role is
+    always also contained in `roles`.
+  """
+  userRole: String!
   "The name of the user intended to be read by humans."
   displayName: String!
   "`True` if the user has the permission to upload videos."

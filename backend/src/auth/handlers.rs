@@ -194,6 +194,7 @@ async fn check_opencast_login(
     struct InfoMeResponse {
         roles: Vec<String>,
         user: InfoMeUserResponse,
+        user_role: String,
     }
 
     #[derive(Deserialize)]
@@ -204,12 +205,18 @@ async fn check_opencast_login(
     }
 
     let body = hyper::body::to_bytes(response.into_body()).await?;
-    let info: InfoMeResponse = serde_json::from_slice(&body)
+    let mut info: InfoMeResponse = serde_json::from_slice(&body)
         .context("Could not deserialize `/info/me.json` response")?;
 
     // If all roles are `ROLE_ANONYMOUS`, then we assume the login was invalid.
     if info.roles.iter().all(|role| role == super::ROLE_ANONYMOUS) {
         return Ok(None);
+    }
+
+    // Make sure the roles list always contains the user role. This is very
+    // likely always the case, but better be sure.
+    if !info.roles.contains(&info.user_role) {
+        info.roles.push(info.user_role.clone());
     }
 
     // Otherwise the login was correct!
@@ -220,6 +227,7 @@ async fn check_opencast_login(
         // Sometimes, Opencast does not include `ROLE_ANONYMOUS` in the
         // response, so we just add it here to be sure.
         roles: info.roles.into_iter().chain([ROLE_ANONYMOUS.to_owned()]).collect(),
+        user_role: info.user_role,
     }))
 }
 

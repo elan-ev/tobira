@@ -157,6 +157,38 @@ impl AuthMode {
     }
 }
 
+impl AuthConfig {
+    /// Finds the user role from the given roles according to
+    /// `user_role_prefixes`. If none can be found, `None` is returned and a
+    /// warning is printed. If more than one is found, a warning is printed and
+    /// the first one is returned.
+    fn find_user_role<'a>(
+        &self,
+        username: &str,
+        mut roles: impl Iterator<Item = &'a str>,
+    ) -> Option<&'a str> {
+        let is_user_role = |role: &&str| {
+            self.user_role_prefixes.iter().any(|prefix| role.starts_with(prefix))
+        };
+
+        let note = "Check 'auth.user_role_prefixes' and your auth integration.";
+        let Some(user_role) = roles.by_ref().find(is_user_role) else {
+            warn!("User '{username}' has no user role, but it needs exactly one. {note}");
+            return None;
+        };
+
+
+        if let Some(extra) = roles.find(is_user_role) {
+            warn!(
+                "User '{username}' has multiple user roles ({user_role} and {extra}) \
+                    but there should be one unique user role per user. {note}",
+            );
+        }
+
+        Some(user_role)
+    }
+}
+
 /// Information about whether or not, and if so how
 /// someone or something talking to Tobira is authenticated
 #[derive(PartialEq, Eq)]
@@ -173,6 +205,7 @@ pub(crate) struct User {
     pub(crate) display_name: String,
     pub(crate) email: Option<String>,
     pub(crate) roles: HashSet<String>,
+    pub(crate) user_role: String,
 }
 
 impl AuthContext {
@@ -225,7 +258,7 @@ impl User {
             AuthMode::None => Ok(None),
             AuthMode::FullAuthProxy => Ok(Self::from_auth_headers(headers, auth_config).into()),
             AuthMode::LoginProxy | AuthMode::Opencast => {
-                Self::from_session(headers, db, auth_config.session_duration)
+                Self::from_session(headers, db, auth_config)
                     .await
                     .map(Into::into)
             }
@@ -253,13 +286,15 @@ impl User {
         let display_name = get_header(&auth_config.display_name_header)?;
         let email = get_header(&auth_config.email_header);
 
-        // Get roles from the user. If the header is not set, the user simply has no extra roles.
+        // Get roles from the user.
         let mut roles = HashSet::from([ROLE_ANONYMOUS.to_string()]);
-        if let Some(roles_raw) = get_header(&auth_config.roles_header) {
-            roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
-        };
+        let roles_raw = get_header(&auth_config.roles_header)?;
+        roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
+        let user_role = auth_config
+            .find_user_role(&username, roles.iter().map(|s| s.as_str()))?
+            .to_owned();
 
-        Some(Self { username, display_name, email, roles })
+        Some(Self { username, display_name, email, roles, user_role })
     }
 
     /// Tries to load user data from a DB session referred to in a session
@@ -267,7 +302,7 @@ impl User {
     async fn from_session(
         headers: &HeaderMap,
         db: &Client,
-        session_duration: Duration,
+        auth_config: &AuthConfig,
     ) -> Result<Option<Self>, PgError> {
         // Try to get a session ID from the cookie.
         let session_id = match SessionId::from_headers(headers) {
@@ -282,16 +317,25 @@ impl User {
                 where id = $1 \
                 and extract(epoch from now() - created) < $2::double precision"
         );
-        let row = match db.query_opt(&query, &[&session_id, &session_duration.as_secs_f64()]).await? {
+        let session_duration = auth_config.session_duration.as_secs_f64();
+        let row = match db.query_opt(&query, &[&session_id, &session_duration]).await? {
             None => return Ok(None),
             Some(row) => row,
         };
 
+        let username: String = mapping.username.of(&row);
+        let roles = mapping.roles.of::<Vec<String>>(&row);
+        let user_role = auth_config
+            .find_user_role(&username, roles.iter().map(|s| s.as_str()))
+            .expect("user session without user role")
+            .to_owned();
+
         Ok(Some(Self {
-            username: mapping.username.of(&row),
+            username,
             display_name: mapping.display_name.of(&row),
             email: mapping.email.of(&row),
-            roles: mapping.roles.of::<Vec<String>>(&row).into_iter().collect(),
+            roles: roles.into_iter().collect(),
+            user_role,
         }))
     }
 

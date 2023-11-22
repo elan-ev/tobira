@@ -16,6 +16,7 @@ Tobira requires the following information about each user:
   An alphabetic ID is preferred over a purely numeric one as it appears in the URL to the user's personal page.
 - **Display name**: the user's name in a format intended for humans; usually something like "Forename Surname".
 - **Roles**: a list of roles that are used for authorization (e.g. deciding whether a user is allowed to see a video or modify some data).
+- **User role**: the unique user role for that user (e.g. `ROLE_USER_PETER`).
 
 In the `"opencast"` mode, this data is retrieved via `/info/me.json` from Opencast.
 In the to `"*-proxy"` modes, you have to pass this data explicitly to Tobira via so called *auth headers*.
@@ -28,8 +29,9 @@ These are just designated HTTP headers, one for each kind of information describ
 
 - `x-tobira-username`: Username
 - `x-tobira-user-display-name`: Display name
-- `x-tobira-user-roles`: List of roles, comma separated
-- `x-tobira-user-email`: User email address
+- `x-tobira-user-roles`: List of roles, comma separated.
+  Needs to contain exactly one role starting with any of the configured `auth.user_role_prefixes`.
+- `x-tobira-user-email`: User email address (optional)
 
 All these header values have to be a **base64-encoded UTF-8** string!
 

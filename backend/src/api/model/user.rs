@@ -28,6 +28,13 @@ impl User {
         self.roles.iter().map(AsRef::as_ref).collect()
     }
 
+    /// Returns the *user role* of this user. Each user has exactly one and this
+    /// role is used in ACLs to give access to a single user. This role is
+    /// always also contained in `roles`.
+    fn user_role(&self) -> &str {
+        &self.user_role
+    }
+
     /// The name of the user intended to be read by humans.
     fn display_name(&self) -> &str {
         &self.display_name
