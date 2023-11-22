@@ -18,7 +18,7 @@ import { graphql } from "react-relay";
 import { i18n } from "i18next";
 
 import { focusStyle } from ".";
-import { useUser, isRealUser, UserState } from "../User";
+import { useUser, isRealUser } from "../User";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
 import { SelectProps } from "./Input";
@@ -158,11 +158,10 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     } else {
         // Always show the current user first, if included. Then show all known
         // users, then all unknown ones, both in alphabetical order.
-        const currentUserRole = getUserRole(user);
         const collator = new Intl.Collator(i18n.resolvedLanguage, { sensitivity: "base" });
         selection.sort((a, b) => {
             const section = (x: Option) => {
-                if (x.value === currentUserRole) {
+                if (isRealUser(user) && x.value === user.userRole) {
                     return 0;
                 }
                 if (x.label.startsWith("ROLE_")) {
@@ -339,7 +338,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         .filter(role => acl.readRoles.has(role) && (!canWrite || acl.writeRoles.has(role)))
         .map(role => getLabel(role, knownGroups, i18n));
     const isSubset = supersets.length > 0;
-    const isUser = item.value === getUserRole(user);
+    const isUser = isRealUser(user) && item.value === user.userRole;
 
     let label: JSX.Element;
     if (isUser) {
@@ -458,7 +457,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
 
 
     return [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value)
-            || userIsRequired && item.value === getUserRole(user)
+            || userIsRequired && isRealUser(user) && item.value === user.userRole
         ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
         : <FloatingBaseMenu
             ref={ref}
@@ -606,12 +605,6 @@ const splitAcl = (initialAcl: Acl) => {
     };
 
     return [groupAcl, userAcl];
-};
-
-
-export const getUserRole = (user: UserState) => {
-    const userRole = isRealUser(user) && user.roles.find(isUserRole);
-    return typeof userRole !== "string" ? "Unknown" : userRole;
 };
 
 

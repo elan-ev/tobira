@@ -30,7 +30,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav } from "./manage";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
-import { Acl, getUserRole, AclSelector, knownRolesFragement } from "../ui/Access";
+import { Acl, AclSelector, knownRolesFragement } from "../ui/Access";
 import {
     AccessKnownRolesData$data,
     AccessKnownRolesData$key,
@@ -673,14 +673,17 @@ type MetaDataEditProps = {
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRoles }) => {
     const { t } = useTranslation();
     const user = useUser();
-    const userRole = getUserRole(user);
+    if (!isRealUser(user)) {
+        return unreachable();
+    }
+
     const titleFieldId = useId();
     const descriptionFieldId = useId();
     const seriesFieldId = useId();
 
     const defaultAcl: Acl = {
-        readRoles: new Set([COMMON_ROLES.ANONYMOUS, userRole]),
-        writeRoles: new Set([userRole]),
+        readRoles: new Set([COMMON_ROLES.ANONYMOUS, user.userRole]),
+        writeRoles: new Set([user.userRole]),
     };
 
     const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
