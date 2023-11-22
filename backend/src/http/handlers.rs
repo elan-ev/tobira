@@ -264,7 +264,13 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get auth session
-    let auth = match AuthContext::new(&parts.headers, &ctx.config.auth, &connection).await {
+    let auth_result = AuthContext::new(
+        &parts.headers,
+        &ctx.config.auth,
+        &connection,
+        &ctx.user_cache,
+    ).await;
+    let auth = match auth_result {
         Ok(auth) => auth,
         Err(e) => {
             error!("DB error when checking user session: {}", e);

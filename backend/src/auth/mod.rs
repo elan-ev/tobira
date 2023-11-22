@@ -10,11 +10,13 @@ use tokio_postgres::Error as PgError;
 use crate::{config::TranslatedString, prelude::*, db::util::select};
 
 
+mod cache;
 mod handlers;
 mod session_id;
 mod jwt;
 
 pub(crate) use self::{
+    cache::UserCache,
     session_id::SessionId,
     jwt::{JwtConfig, JwtContext},
     handlers::{handle_post_session, handle_delete_session, handle_post_login},
@@ -213,6 +215,7 @@ impl AuthContext {
         headers: &HeaderMap,
         auth_config: &AuthConfig,
         db: &Client,
+        user_cache: &UserCache,
     ) -> Result<Self, PgError> {
 
         if let Some(given_key) = headers.get("x-tobira-trusted-external-key") {
@@ -223,7 +226,7 @@ impl AuthContext {
             }
         }
 
-        User::new(headers, auth_config, db)
+        User::new(headers, auth_config, db, user_cache)
             .await?
             .map_or(Self::Anonymous, Self::User)
             .pipe(Ok)
@@ -248,21 +251,27 @@ impl AuthContext {
 impl User {
     /// Obtains the current user from the given request headers. This is done
     /// either via auth headers and/or a session cookie, depending on the
-    /// configuration.
+    /// configuration. The `users` table is updated if appropriate.
     pub(crate) async fn new(
         headers: &HeaderMap,
         auth_config: &AuthConfig,
         db: &Client,
+        user_cache: &UserCache,
     ) -> Result<Option<Self>, PgError> {
-        match auth_config.mode {
-            AuthMode::None => Ok(None),
-            AuthMode::FullAuthProxy => Ok(Self::from_auth_headers(headers, auth_config).into()),
+        let out = match auth_config.mode {
+            AuthMode::None => None,
+            AuthMode::FullAuthProxy => Self::from_auth_headers(headers, auth_config),
             AuthMode::LoginProxy | AuthMode::Opencast => {
-                Self::from_session(headers, db, auth_config)
-                    .await
-                    .map(Into::into)
+                Self::from_session(headers, db, auth_config).await?
             }
+        };
+
+        if let Some(user) = &out {
+            user_cache.upsert_user_info(user, db).await;
         }
+
+
+        Ok(out)
     }
 
     /// Tries to read user data auth headers (`x-tobira-username`, ...). If the
