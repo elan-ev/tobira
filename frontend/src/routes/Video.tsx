@@ -668,7 +668,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         css={{ fontSize: 14, width: 400, marginBottom: 6 }}
                         value={url}
                     />
-                    <InputWithCheckbox
+                    {!event.isLive && <InputWithCheckbox
                         checkboxChecked={addLinkTimestamp}
                         setCheckboxChecked={setAddLinkTimestamp}
                         label={t("manage.my-videos.details.set-time")}
@@ -676,7 +676,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                             {...{ timestamp, setTimestamp }}
                             disabled={!addLinkTimestamp}
                         />}
-                    />
+                    />}
                 </div>
                 <ShowQRCodeButton target={url} label={menuState} />
             </>;
@@ -711,7 +711,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         multiline
                         css={{ fontSize: 14, width: 400, height: 75, marginBottom: 6 }}
                     />
-                    <InputWithCheckbox
+                    {!event.isLive && <InputWithCheckbox
                         checkboxChecked={addEmbedTimestamp}
                         setCheckboxChecked={setAddEmbedTimestamp}
                         label={t("manage.my-videos.details.set-time")}
@@ -719,7 +719,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                             {...{ timestamp, setTimestamp }}
                             disabled={!addEmbedTimestamp}
                         />}
-                    />
+                    />}
                 </div>
                 <ShowQRCodeButton target={embedCode} label={menuState} />
             </>;
