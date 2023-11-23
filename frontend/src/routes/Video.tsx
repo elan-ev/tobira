@@ -513,12 +513,12 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             trigger="click"
             viewPortMargin={12}
         >
-            <FloatingTrigger>
+            {!event.isLive && <FloatingTrigger>
                 <Button>
                     <LuDownload size={16}/>
                     {t("video.download.title")}
                 </Button>
-            </FloatingTrigger>
+            </FloatingTrigger>}
             <Floating
                 backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
                 padding={[8, 16, 16, 16]}
