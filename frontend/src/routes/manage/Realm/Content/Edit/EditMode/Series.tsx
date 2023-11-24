@@ -8,6 +8,7 @@ import { EditModeForm } from ".";
 import { Heading } from "./util";
 import type {
     VideoListOrder,
+    VideoListView,
     SeriesEditModeBlockData$key,
 } from "./__generated__/SeriesEditModeBlockData.graphql";
 import {
@@ -25,6 +26,7 @@ import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";
 type SeriesFormData = {
     series: string;
     order: VideoListOrder;
+    view: VideoListView;
     showTitle: boolean;
     showMetadata: boolean;
 };
@@ -34,7 +36,7 @@ type EditSeriesBlockProps = {
 };
 
 export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRef }) => {
-    const { series, showTitle, showMetadata, order } = useFragment(graphql`
+    const { series, showTitle, showMetadata, order, view } = useFragment(graphql`
         fragment SeriesEditModeBlockData on SeriesBlock {
             series {
                 id
@@ -48,6 +50,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             showTitle
             showMetadata
             order
+            view
         }
     `, blockRef);
 
@@ -122,6 +125,41 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                         title: t("series.settings.old-to-new"),
                         checked: order === "OLD_TO_NEW",
                         value: "OLD_TO_NEW",
+                    },
+                    {
+                        option: "order",
+                        title: t("series.settings.a-z"),
+                        checked: order === "AZ",
+                        value: "AZ",
+                    },
+                    {
+                        option: "order",
+                        title: t("series.settings.z-a"),
+                        checked: order === "ZA",
+                        value: "ZA",
+                    },
+                ]} />
+            </div>
+            <div>
+                <Heading>{t("series.settings.view")}</Heading>
+                <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
+                    {
+                        option: "view",
+                        title: t("series.settings.slider"),
+                        checked: view === "SLIDER",
+                        value: "SLIDER",
+                    },
+                    {
+                        option: "view",
+                        title: t("series.settings.gallery"),
+                        checked: view === "GALLERY",
+                        value: "GALLERY",
+                    },
+                    {
+                        option: "view",
+                        title: t("series.settings.list"),
+                        checked: view === "LIST",
+                        value: "LIST",
                     },
                 ]} />
             </div>
