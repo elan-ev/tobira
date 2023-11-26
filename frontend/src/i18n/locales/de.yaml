@@ -479,10 +479,6 @@ manage:
           invalid: Bitte eine Serie auswählen
         layout:
           heading: Layout
-          videos-only: Nur Videos
-          title-and-videos: Titel und Videos
-          description-and-videos: Beschreibung und Videos
-          everything: Titel, Beschreibung und Videos
 
       event:
         event:
@@ -493,6 +489,7 @@ manage:
 
       show-title: Titel anzeigen
       show-link: Link zur Videoseite anzeigen
+      show-description: Beschreibung anzeigen
 
       cancel: Verwerfen
       confirm-cancel: Änderungen verwerfen?

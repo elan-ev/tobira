@@ -464,10 +464,6 @@ manage:
           invalid: Please select a series
         layout:
           heading: Layout
-          videos-only: Videos only
-          title-and-videos: Title and videos
-          description-and-videos: Description and videos
-          everything: Title, description and videos
 
       event:
         event:
@@ -478,6 +474,7 @@ manage:
 
       show-title: Show title
       show-link: Show link to video page
+      show-description: Show description
 
       cancel: Discard
       confirm-cancel: Discard changes?
