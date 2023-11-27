@@ -119,13 +119,15 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             });
 
 
-            const time = new URL(window.location.href).searchParams.get("t");
-            player.bindEvent("paella:playerLoaded", () => {
-                setPlayerIsLoaded(true);
-                if (time) {
-                    player.videoContainer.setCurrentTime(timeStringToSeconds(time));
-                }
-            });
+            if (!isLive) {
+                const time = new URL(window.location.href).searchParams.get("t");
+                player.bindEvent("paella:playerLoaded", () => {
+                    setPlayerIsLoaded(true);
+                    if (time) {
+                        player.videoContainer.setCurrentTime(timeStringToSeconds(time));
+                    }
+                });
+            }
 
             player.bindEvent("paella:play", () => {
                 players?.forEach(playerInstance => {
