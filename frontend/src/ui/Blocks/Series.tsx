@@ -28,7 +28,7 @@ import { RelativeDate } from "../time";
 import { Card } from "../Card";
 import { LuColumns, LuGrid, LuList, LuChevronLeft, LuChevronRight, LuPlay } from "react-icons/lu";
 import { keyframes } from "@emotion/react";
-import { Description, SmallDescription } from "../metadata";
+import { CollapsibleDescription, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { IconType } from "react-icons";
 import { COLORS } from "../../color";
@@ -209,9 +209,10 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     return <OrderContext.Provider value={{ eventOrder, setEventOrder }}>
         <SeriesBlockContainer showViewOptions={eventsNotEmpty} title={finalTitle}>
             {showMetadata && series.syncedData.description && <>
-                <Description
-                    text={series.syncedData.description}
-                    css={{ fontSize: 14, padding: "14px 14px 0 14px", maxWidth: "85ch" }}
+                <CollapsibleDescription
+                    type="series"
+                    description={series.syncedData.description}
+                    bottomPadding={32}
                 />
                 <hr css={{ margin: "20px 0" }} />
             </>}
