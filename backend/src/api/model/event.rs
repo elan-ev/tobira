@@ -11,7 +11,7 @@ use crate::{
         Context, Cursor, Id, Node, NodeValue,
         common::NotAllowed,
         err::{self, ApiResult, invalid_input},
-        model::{series::Series, realm::Realm},
+        model::{series::Series, realm::Realm, acl::{Acl, self}},
     },
     db::{
         types::{EventTrack, EventState, Key, ExtraMetadata, EventCaption},
@@ -220,6 +220,15 @@ impl AuthorizedEvent {
         context.db.query_mapped(&query, dbargs![&self.key], |row| Realm::from_row_start(&row))
             .await?
             .pipe(Ok)
+    }
+
+    async fn acl(&self, context: &Context) -> ApiResult<Acl> {
+        let raw_roles_sql = "\
+            select unnest(read_roles) as role, 'read' as action from events where id = $1
+            union
+            select unnest(write_roles) as role, 'write' as action from events where id = $1
+        ";
+        acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
     }
 }
 
