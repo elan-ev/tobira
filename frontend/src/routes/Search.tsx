@@ -1,14 +1,14 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { LuFolder } from "react-icons/lu";
-import { ReactNode } from "react";
+import { ReactNode, RefObject, useEffect } from "react";
 import { screenWidthAtMost, unreachable } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
-import { makeRoute } from "../rauta";
+import { RouterControl, makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
-import { Link } from "../router";
+import { Link, useRouter } from "../router";
 import { Creators, isPastLiveEvent, Thumbnail } from "../ui/Video";
 import { SmallDescription } from "../ui/metadata";
 import { Card } from "../ui/Card";
@@ -21,6 +21,7 @@ import { BREAKPOINT_SMALL } from "../GlobalStyle";
 import { keyOfId } from "../util";
 
 
+export const STORAGE_KEY = "internal-origin";
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
 
 export const SearchRoute = makeRoute(url => {
@@ -81,6 +82,23 @@ type Props = {
 
 const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     const { t } = useTranslation();
+    const router = useRouter();
+
+    // TODO: when navigating away from search, do `window.sessionStorage.removeItem(STORAGE_KEY)`.
+    // Otherwise this will still be set when a user visits an external url from the search route.
+    // The search query should also be cleared upon any navigation to prevent an edge case where
+    // it isn't cleared automatically after the search page has been reloaded and then navigated
+    // away from.
+
+    useEffect(() => {
+        const handleEscape = ((ev: KeyboardEvent) => {
+            if (ev.key === "Escape") {
+                handleNavigation(router);
+            }
+        });
+        document.addEventListener("keyup", handleEscape);
+        return () => document.removeEventListener("keyup", handleEscape);
+    });
 
     let body;
     if (outcome.__typename === "EmptyQuery") {
@@ -294,3 +312,25 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
         >{children}</Link>
     </li>
 );
+
+// If a user initiated the search in Tobira (i.e. neither coming from an
+// external link nor using the browser bar to manually visit the /~search route),
+// we can redirect to the previous page. Otherwise we redirect to Tobira's homepage.
+export const handleNavigation = ((router: RouterControl, ref?: RefObject<HTMLInputElement>) => {
+    if (ref?.current) {
+        // Why is this necessary? When a user reloads the search page and then navigates
+        // away within Tobira, the search input isn't cleared like it would be usually.
+        // So it needs to be done manually.
+        // Alternatively, I guess we could also ignore that edge case.
+        ref.current.value = "";
+    }
+    const internalOrigin = window.sessionStorage.getItem(STORAGE_KEY);
+    if (internalOrigin) {
+        window.sessionStorage.removeItem(STORAGE_KEY);
+        window.history.back();
+    } else {
+        router.goto("/");
+    }
+});
+
+
