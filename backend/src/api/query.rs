@@ -13,7 +13,7 @@ use super::{
         event::{AuthorizedEvent, Event},
         series::Series,
         search::{self, SearchOutcome, EventSearchOutcome, SeriesSearchOutcome},
-        known_roles::KnownGroup,
+        known_roles::{self, KnownUsersSearchOutcome, KnownGroup},
     },
     jwt::{JwtService, jwt},
 };
@@ -119,6 +119,17 @@ impl Query {
         context: &Context,
     ) -> ApiResult<SeriesSearchOutcome> {
         search::all_series(&query, writable_only, context).await
+    }
+
+    /// Searches through all known users. The behavior of this depends on the
+    /// `general.users_searchable` config value. If it is `false`, this returns
+    /// only users that have an exact match with the input query. The number of
+    /// results is limited to some fixed value.
+    async fn search_known_users(
+        query: String,
+        context: &Context,
+    ) -> ApiResult<KnownUsersSearchOutcome> {
+        known_roles::search_known_users(query, context).await
     }
 
     /// Returns all known groups selectable in the ACL UI.

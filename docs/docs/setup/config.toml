@@ -88,6 +88,15 @@
 # Default value: []
 #reserved_paths = []
 
+# Whether users are allowed to search through all known users, e.g. in the
+# ACL UI to grant a friend access to a video. If `false`, users in the
+# ACL selector can only be added by typing the exact username or email.
+# If this is `true` instead, it is possible to search for users by
+# (partial) name.
+#
+# Default value: false
+#users_searchable = false
+
 
 [db]
 # The username of the database user.

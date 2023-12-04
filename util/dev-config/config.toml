@@ -4,6 +4,7 @@
 [general]
 site_title.en = "Tobira Videoportal"
 tobira_url = "http://localhost:8030"
+users_searchable = true
 
 [http]
 # To make our Docker based development setup work, Tobira needs to listen

@@ -56,6 +56,11 @@ scalar Cursor
 """
 union SearchOutcome = SearchUnavailable | EmptyQuery | SearchResults
 
+type KnownUser {
+  displayName: String!
+  userRole: String!
+}
+
 type RemovedRealm {
   parent: Realm
 }
@@ -176,6 +181,8 @@ interface Block {
   index: Int!
   realm: Realm!
 }
+
+union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 
 type NotAllowed {
   """
@@ -453,6 +460,10 @@ type Caption {
   lang: String
 }
 
+type KnownUserSearchResults {
+  items: [KnownUser!]!
+}
+
 type RemovedBlock {
   id: ID!
   realm: Realm!
@@ -507,6 +518,13 @@ type Query {
     searched.
   """
   searchAllSeries(query: String!, writableOnly: Boolean!): SeriesSearchOutcome!
+  """
+    Searches through all known users. The behavior of this depends on the
+    `general.users_searchable` config value. If it is `false`, this returns
+    only users that have an exact match with the input query. The number of
+    results is limited to some fixed value.
+  """
+  searchKnownUsers(query: String!): KnownUsersSearchOutcome!
   "Returns all known groups selectable in the ACL UI."
   knownGroups: [KnownGroup!]!
 }

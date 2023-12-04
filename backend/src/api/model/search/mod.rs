@@ -47,7 +47,7 @@ pub(crate) enum SearchOutcome {
 }
 
 pub(crate) struct SearchResults<T> {
-    items: Vec<T>,
+    pub(crate) items: Vec<T>,
 }
 
 #[juniper::graphql_object(Context = Context)]

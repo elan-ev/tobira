@@ -9,12 +9,13 @@ import {
     notNullish,
     screenWidthAtMost,
 } from "@opencast/appkit";
-import { createContext, useRef, useState, useContext } from "react";
+import { createContext, useRef, useState, useContext, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { LuX, LuAlertTriangle } from "react-icons/lu";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
-import { graphql } from "react-relay";
+import AsyncCreatableSelect from "react-select/async-creatable";
+import { fetchQuery, graphql } from "react-relay";
 import { i18n, ParseKeys } from "i18next";
 
 import { focusStyle } from ".";
@@ -26,6 +27,10 @@ import { searchableSelectStyles, theme } from "./SearchableSelect";
 import { FloatingBaseMenu } from "./FloatingBaseMenu";
 import { AccessKnownRolesData$data } from "./__generated__/AccessKnownRolesData.graphql";
 import CONFIG from "../config";
+import { Card } from "./Card";
+import { environment } from "../relay";
+import { AccessUserSearchQuery } from "./__generated__/AccessUserSearchQuery.graphql";
+import { ErrorDisplay } from "../util/err";
 
 
 
@@ -158,10 +163,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     const { change, knownGroups, groupDag } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
     const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
-
-    const options = kind === "Group"
-        ? Object.entries(knownGroups).map(([role, { label }]) => ({ role, label: label(i18n) }))
-        : Object.entries(KNOWN_USERS).map(([role, label]) => ({ role, label: label(i18n) }));
+    const [error, setError] = useState<ReactNode>(null);
 
     const translations = match(kind, {
         "Group": () => ({
@@ -238,6 +240,34 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     });
 
 
+    const commonSelectProps = {
+        onMenuOpen: () => setMenuIsOpen(true),
+        onMenuClose: () => setMenuIsOpen(false),
+        menuIsOpen,
+        controlShouldRenderValue: false,
+        isClearable: false,
+        isMulti: true,
+        isSearchable: true,
+        backspaceRemovesValue: false,
+        placeholder: translations.placeholder,
+        // TODO: for users, this should say "type to search" or "enter
+        // username, email, ... to add user" depending on the
+        // users_searchable config.
+        noOptionsMessage: () => t("general.form.select.no-options"),
+        isValidNewOption: (input: string) => {
+            const validUserRole = isUserRole(input);
+            const validRole = /^ROLE_\w+/.test(input);
+            return kind === "Group" ? (validRole && !validUserRole) : validUserRole;
+        },
+        formatCreateLabel: (input: string) => t("manage.access.select.create", { item: input }),
+        value: entries.map(e => ({ role: e.role, label: e.label })),
+        getOptionValue: (option: SelectOption) => option.role,
+        onCreateOption: handleCreate,
+        onChange: handleChange,
+        styles: searchableSelectStyles(isDark),
+        css: { marginTop: 6 },
+        theme,
+    } as const;
 
     return <div css={{
         flex: "1 1 420px",
@@ -250,30 +280,37 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         },
     }}>
         <strong>{translations.heading}</strong>
-        <CreatableSelect
-            onMenuOpen={() => setMenuIsOpen(true)}
-            onMenuClose={() => setMenuIsOpen(false)}
-            controlShouldRenderValue={false}
-            isClearable={false}
-            isMulti
-            isSearchable
-            placeholder={translations.placeholder}
-            isValidNewOption={input => {
-                const validUserRole = isUserRole(input);
-                const validRole = /^ROLE_\w+/.test(input);
-                return kind === "Group" ? (validRole && !validUserRole) : validUserRole;
-            }}
-            formatCreateLabel={input => t("manage.access.select.create", { item: input })}
-            noOptionsMessage={() => t("general.form.select.no-options")}
-            value={entries.map(entry => ({ role: entry.role, label: entry.label }))}
-            onCreateOption={handleCreate}
-            backspaceRemovesValue={false}
-            onChange={handleChange}
-            styles={searchableSelectStyles(isDark)}
-            css={{ marginTop: 6 }}
-            {...{ theme, menuIsOpen, options }}
-        />
+        {error && <Card kind="error" css={{ marginBottom: 8 }}>{error}</Card>}
+        {kind === "Group"
+            ? <CreatableSelect
+                {...commonSelectProps}
+                options={[...knownGroups.entries()].map(([role, { label }]) => ({
+                    role,
+                    label: getLabel(role, label, i18n),
+                }))}
+            />
+            : <AsyncCreatableSelect
+                {...commonSelectProps}
+                loadOptions={(q: string, callback: (options: readonly SelectOption[]) => void) => {
+                    fetchQuery<AccessUserSearchQuery>(environment, userSearchQuery, { q })
+                        .subscribe({
+                            next: ({ users }) => {
+                                if (users.items === undefined) {
+                                    setError(t("search.unavailable"));
+                                    return;
+                                }
 
+                                callback(users.items.map(item => ({
+                                    role: item.userRole,
+                                    label: item.displayName,
+                                })));
+                            },
+                            start: () => {},
+                            error: (error: Error) => setError(<ErrorDisplay error={error} />),
+                        });
+                }}
+            />
+        }
         <div>
             <table css={{
                 marginTop: 20,
@@ -341,6 +378,16 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         </div>
     </div>;
 };
+
+const userSearchQuery = graphql`
+    query AccessUserSearchQuery($q: String!) {
+        users: searchKnownUsers(query: $q) {
+            ... on KnownUserSearchResults {
+                items { displayName userRole }
+            }
+        }
+    }
+`;
 
 type ItemProps = {
     item: Entry;
@@ -684,20 +731,6 @@ const insertBuiltinRoleInfo = (
     knownGroups.push({ role: COMMON_ROLES.USER, ...userInfo });
 };
 
-// ==============================================================================================
-// ===== Known groups & users
-// ==============================================================================================
-
-type KnownRoles = Record<string, (i18n: i18n) => string>;
-
-const DUMMY_USERS: KnownRoles = {
-    ROLE_USER_SABINE: () => "Sabine Rudolfs",
-    ROLE_USER_BJÖRK: () => "Prof. Björk Guðmundsdóttir",
-    ROLE_USER_MORGAN: () => "Morgan Yu",
-    ROLE_USER_JOSE: () => "José Carreño Quiñones",
-};
-
-const KNOWN_USERS: KnownRoles = DUMMY_USERS;
 
 /**
  * DAG to represent superset/subset relationships of available groups. Lazily
