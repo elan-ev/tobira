@@ -1038,14 +1038,6 @@ const finishUpload = async (
 
         // Add ACL
         {
-            // Retrieve primary user role for user.
-            // TODO: we could save this information from a previous request to info/me.
-            const userInfo = JSON.parse(await ocRequest("/info/me.json"));
-            const userRole = userInfo.userRole;
-            if (typeof userRole !== "string" || !userRole) {
-                throw `Field \`userRole\` from 'info/me.json' is not valid: ${userRole}`;
-            }
-
             const acl = constructAcl(metadata.acl);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
