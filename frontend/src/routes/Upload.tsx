@@ -681,10 +681,20 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
     const descriptionFieldId = useId();
     const seriesFieldId = useId();
 
-    const defaultAcl: Acl = {
-        readRoles: new Set([COMMON_ROLES.ANONYMOUS, user.userRole]),
-        writeRoles: new Set([user.userRole]),
-    };
+    const defaultAcl: Acl = new Map([
+        [user.userRole, {
+            actions: new Set(["read", "write"]),
+            info: {
+                label: { "_": user.displayName },
+                implies: null,
+                large: false,
+            },
+        }],
+        [COMMON_ROLES.ANONYMOUS, {
+            actions: new Set(["read"]),
+            info: null,
+        }],
+    ]);
 
     const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
         mode: "onChange",
@@ -1036,8 +1046,7 @@ const finishUpload = async (
                 throw `Field \`userRole\` from 'info/me.json' is not valid: ${userRole}`;
             }
 
-            const { readRoles, writeRoles } = metadata.acl;
-            const acl = constructAcl([...readRoles], [...writeRoles]);
+            const acl = constructAcl(metadata.acl);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
             body.append("mediaPackage", mediaPackage);
@@ -1097,7 +1106,7 @@ const constructDcc = (metadata: Metadata, user: User): string => {
 };
 
 /** Constructs an ACL XML description from the given roles that are allowd to read/write */
-const constructAcl = (readRoles: string[], writeRoles: string[]): string => {
+const constructAcl = (acl: Acl): string => {
     // TODO: maybe we should escape the role somehow?
     const makeRule = (action: string, role: string): string => `
         <Rule RuleId="${action}_permit_for_${role}" Effect="Permit">
@@ -1120,9 +1129,8 @@ const constructAcl = (readRoles: string[], writeRoles: string[]): string => {
         </Rule>
     `;
 
-
-    const readRules = readRoles.map(role => makeRule("read", role));
-    const writeRules = writeRoles.map(role => makeRule("write", role));
+    const rules = [...acl.entries()]
+        .flatMap(([role, info]) => [...info.actions].map(action => makeRule(action, role)));
 
     return `
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1131,8 +1139,7 @@ const constructAcl = (readRoles: string[], writeRoles: string[]): string => {
             "urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:permit-overrides"
           Version="2.0"
           xmlns="urn:oasis:names:tc:xacml:2.0:policy:schema:os">
-            ${readRules.join("\n")}
-            ${writeRules.join("\n")}
+            ${rules.join("\n")}
         </Policy>
     `.trim();
 };

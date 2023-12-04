@@ -15,7 +15,7 @@ import { LuX, LuAlertTriangle } from "react-icons/lu";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { graphql } from "react-relay";
-import { i18n } from "i18next";
+import { i18n, ParseKeys } from "i18next";
 
 import { focusStyle } from ".";
 import { useUser, isRealUser } from "../User";
@@ -29,15 +29,22 @@ import CONFIG from "../config";
 
 
 
-export type Acl = {
-    readRoles: Set<string>;
-    writeRoles: Set<string>;
+
+export type Acl = Map<string, {
+    actions: Set<string>;
+    info: RoleInfo | null;
+}>;
+
+export type RoleInfo = {
+    label: TranslatedLabel;
+    implies: readonly string[] | null;
+    large: boolean;
 };
 
 type Action = "read" | "write";
 
-type Option = {
-    value: string;
+type SelectOption = {
+    role: string;
     label: string;
 }
 
@@ -45,9 +52,12 @@ type AclContext = {
     userIsRequired: boolean;
     acl: Acl;
     change: (f: (acl: Acl) => void) => void;
-    knownGroups: KnownRoles;
+    knownGroups: Map<string, {
+        label: TranslatedLabel;
+        implies: Set<string>;
+        large: boolean;
+    }>;
     groupDag: GroupDag;
-    largeGroups: Set<string>;
 }
 
 const AclContext = createContext<AclContext | null>(null);
@@ -68,27 +78,34 @@ type AclSelectorProps = {
 export const AclSelector: React.FC<AclSelectorProps> = (
     { acl, userIsRequired = false, onChange, knownRoles }
 ) => {
+    const { i18n } = useTranslation();
+    const knownGroups = [...knownRoles.knownGroups];
+    insertBuiltinRoleInfo(acl, knownGroups, i18n);
     const [groupAcl, userAcl] = splitAcl(acl);
     const change: AclContext["change"] = f => {
-        const copy = {
-            readRoles: new Set(acl.readRoles),
-            writeRoles: new Set(acl.writeRoles),
-        };
+        const copy = new Map([...acl.entries()].map(([role, value]) => [role, {
+            actions: new Set(value.actions),
+            info: value.info == null ? null : {
+                label: value.info.label,
+                implies: value.info.implies,
+                large: value.info.large,
+            },
+        }]));
         f(copy);
         onChange(copy);
     };
-    const customGroups: KnownRoles = Object.fromEntries(knownRoles.knownGroups.map(group => [
-        group.role,
-        i18n => group.label[i18n.language] ?? group.label.en ?? Object.values(group.label)[0],
-    ]));
-    const knownGroups = { ...BUILTIN_GROUPS, ...customGroups };
-    const groupDag = buildDag(knownRoles.knownGroups);
-    const largeGroups = new Set([
-        ...BUILTIN_LARGE_GROUPS,
-        ...knownRoles.knownGroups.filter(g => g.large).map(g => g.role),
-    ]);
 
-    const context = { userIsRequired, acl, change, knownGroups, groupDag, largeGroups };
+    const context = {
+        userIsRequired,
+        acl,
+        change,
+        groupDag: buildDag(knownGroups),
+        knownGroups: new Map(knownGroups.map(g => [g.role, {
+            label: g.label,
+            implies: new Set(g.implies),
+            large: g.large,
+        }])),
+    };
     return <AclContext.Provider value={context}>
         <div css={{
             display: "flex",
@@ -110,6 +127,23 @@ export const knownRolesFragement = graphql`
     }
 `;
 
+/**
+ * An entry in the active ACL list. Very similar but still different from
+ * `AclItem` from the API.
+ */
+type Entry = {
+    role: string;
+    actions: Set<string>;
+
+    /**
+     * Resolved label. The value from the API, but also built-in groups
+     * evaulated and fallback to just the role.
+     */
+    label: string;
+
+    /** Whether this is a large group. `false` for unknown roles. */
+    large: boolean;
+};
 
 type AclSelectProps = SelectProps & {
     acl: Acl;
@@ -125,13 +159,9 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
     const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
 
-    // Turn known roles into selectable options that react-select understands.
-    const knownRoles = kind === "Group" ? knownGroups : KNOWN_USERS;
-    const options = Object.entries(knownRoles)
-        .map(([role, label]) => ({
-            value: role,
-            label: label(i18n),
-        }));
+    const options = kind === "Group"
+        ? Object.entries(knownGroups).map(([role, { label }]) => ({ role, label: label(i18n) }))
+        : Object.entries(KNOWN_USERS).map(([role, label]) => ({ role, label: label(i18n) }));
 
     const translations = match(kind, {
         "Group": () => ({
@@ -146,22 +176,23 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         }),
     });
 
-
-    let selection: Option[] = [...new Set([...acl.readRoles, ...acl.writeRoles])]
-        .map(role => ({
-            value: role,
-            label: getLabel(role, knownRoles, i18n),
-        }));
+    // Sort the active ACL entries (and put them into a new variable for that).
+    let entries: Entry[] = [...acl.entries()].map(([role, { actions, info }]) => ({
+        role,
+        actions,
+        label: getLabel(role, info?.label, i18n),
+        large: info?.large ?? false,
+    }));
     if (kind === "Group") {
         // Sort large groups to the top.
-        selection = groupDag.sort(selection);
+        entries = groupDag.sort(entries);
     } else {
         // Always show the current user first, if included. Then show all known
         // users, then all unknown ones, both in alphabetical order.
         const collator = new Intl.Collator(i18n.resolvedLanguage, { sensitivity: "base" });
-        selection.sort((a, b) => {
-            const section = (x: Option) => {
-                if (isRealUser(user) && x.value === user.userRole) {
+        entries.sort((a, b) => {
+            const section = (x: Entry) => {
+                if (isRealUser(user) && x.role === user.userRole) {
                     return 0;
                 }
                 if (x.label.startsWith("ROLE_")) {
@@ -179,38 +210,33 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         });
     }
 
-    const remove = (item: Option) => change(prev => {
-        prev.readRoles.delete(item.value);
-        prev.writeRoles.delete(item.value);
-    });
+    const remove = (item: Entry) => change(prev => prev.delete(item.role));
 
     const handleCreate = (inputValue: string) => change(prev => {
-        prev.readRoles.add(inputValue);
+        prev.set(inputValue, {
+            // If "create" is called, a new option is created, meaning that we
+            // don't know the role.
+            info: null,
+            actions: new Set(["read"]),
+        });
     });
 
-    const handleChange = (choice: MultiValue<Option>) => change(prev => {
+    const handleChange = (choice: MultiValue<SelectOption>) => change(prev => {
         choice
-            .filter(option => !selection.includes(option))
-            .forEach(option => prev.readRoles.add(option.value));
+            .filter(option => !acl.has(option.role))
+            .forEach(option => {
+                const info = knownGroups.get(option.role);
+                prev.set(option.role, {
+                    actions: new Set(["read"]),
+                    info: {
+                        label: info?.label ?? { "_": option.label },
+                        implies: [...info?.implies ?? new Set()],
+                        large: info?.large ?? false,
+                    },
+                });
+            });
     });
 
-    const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-        const clipboardData = event.clipboardData.getData("Text");
-
-        if (kind === "User" && clipboardData.includes("\n")) {
-            event.preventDefault();
-            const names = clipboardData.split("\n").map(name => name.trim());
-
-            const optionsToAdd: Option[] = names
-                .map(name => options.filter(option => option.label === name)[0])
-                .filter(option => option !== undefined);
-
-            if (optionsToAdd.length > 0) {
-                handleChange([...selection, ...optionsToAdd]);
-                setMenuIsOpen(false);
-            }
-        }
-    };
 
 
     return <div css={{
@@ -224,31 +250,30 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         },
     }}>
         <strong>{translations.heading}</strong>
-        <div onPaste={handlePaste}>
-            <CreatableSelect
-                onMenuOpen={() => setMenuIsOpen(true)}
-                onMenuClose={() => setMenuIsOpen(false)}
-                controlShouldRenderValue={false}
-                isClearable={false}
-                isMulti
-                isSearchable
-                placeholder={translations.placeholder}
-                isValidNewOption={input => {
-                    const validUserRole = isUserRole(input);
-                    const validRole = /^ROLE_\w+/.test(input);
-                    return kind === "Group" ? (validRole && !validUserRole) : validUserRole;
-                }}
-                formatCreateLabel={input => t("manage.access.select.create", { item: input })}
-                noOptionsMessage={() => t("general.form.select.no-options")}
-                value={selection}
-                onCreateOption={handleCreate}
-                backspaceRemovesValue={false}
-                onChange={handleChange}
-                styles={searchableSelectStyles(isDark)}
-                css={{ marginTop: 6 }}
-                {...{ theme, menuIsOpen, options }}
-            />
-        </div>
+        <CreatableSelect
+            onMenuOpen={() => setMenuIsOpen(true)}
+            onMenuClose={() => setMenuIsOpen(false)}
+            controlShouldRenderValue={false}
+            isClearable={false}
+            isMulti
+            isSearchable
+            placeholder={translations.placeholder}
+            isValidNewOption={input => {
+                const validUserRole = isUserRole(input);
+                const validRole = /^ROLE_\w+/.test(input);
+                return kind === "Group" ? (validRole && !validUserRole) : validUserRole;
+            }}
+            formatCreateLabel={input => t("manage.access.select.create", { item: input })}
+            noOptionsMessage={() => t("general.form.select.no-options")}
+            value={entries.map(entry => ({ role: entry.role, label: entry.label }))}
+            onCreateOption={handleCreate}
+            backspaceRemovesValue={false}
+            onChange={handleChange}
+            styles={searchableSelectStyles(isDark)}
+            css={{ marginTop: 6 }}
+            {...{ theme, menuIsOpen, options }}
+        />
+
         <div>
             <table css={{
                 marginTop: 20,
@@ -287,14 +312,14 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 </thead>
                 <tbody>
                     {/* Placeholder if there are no entries */}
-                    {selection.length === 0 && !userIsAdmin && <tr>
+                    {entries.length === 0 && !userIsAdmin && <tr>
                         <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
                             {t("acl.no-entries")}
                         </td>
                     </tr>}
 
-                    {selection.map(item =>
-                        <ListEntry key={item.label} {...{ remove, item, kind }} />)
+                    {entries.map(entry =>
+                        <ListEntry key={entry.role} item={entry} {...{ remove, kind }} />)
                     }
 
                     {/*
@@ -303,13 +328,12 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     */}
                     {(
                         kind === "Group"
-                        && !selection.some(s => s.value === COMMON_ROLES.ADMIN)
+                        && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
                         && userIsAdmin
                     ) && (
-                        <ListEntry
-                            item={{ label: t("acl.groups.admins"), value: COMMON_ROLES.ADMIN }}
-                            remove={() => {}}
-                            {...{ kind }}
+                        <TableRow
+                            labelCol={<>{t("acl.groups.admins")}</>}
+                            actionCol={<UnchangableAllActions />}
                         />
                     )}
                 </tbody>
@@ -319,26 +343,29 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
 };
 
 type ItemProps = {
-    item: Option;
+    item: Entry;
     kind: RoleKind;
 }
 
 type ListEntryProps = ItemProps & {
-    remove: (item: Option) => void;
+    remove: (item: Entry) => void;
 }
 
 const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { userIsRequired, acl, groupDag, knownGroups, largeGroups } = useAclContext();
+    const { userIsRequired, acl, groupDag } = useAclContext();
 
-    const canWrite = acl.writeRoles.has(item.value);
+    const canWrite = item.actions.has("write");
     const supersets = kind === "User" ? [] : groupDag
-        .supersetsOf(item.value)
-        .filter(role => acl.readRoles.has(role) && (!canWrite || acl.writeRoles.has(role)))
-        .map(role => getLabel(role, knownGroups, i18n));
+        .supersetsOf(item.role)
+        .filter(role => {
+            const actions = acl.get(role)?.actions;
+            return actions && actions.has("read") && (!canWrite || actions.has("write"));
+        })
+        .map(role => getLabel(role, acl.get(role)?.info?.label, i18n));
     const isSubset = supersets.length > 0;
-    const isUser = isRealUser(user) && item.value === user.userRole;
+    const isUser = isRealUser(user) && item.role === user.userRole;
 
     let label: JSX.Element;
     if (isUser) {
@@ -349,7 +376,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         // We then clean it a bit before displaying.
         const prefixes = CONFIG.auth.userRolePrefixes
             .filter(prefix => item.label.startsWith(prefix));
-        const name = item.value.slice(Math.max(...prefixes.map(p => p.length)))
+        const name = item.role.slice(Math.max(...prefixes.map(p => p.length)))
             .toLocaleLowerCase(i18n.resolvedLanguage)
             .replace("_", " ");
         label = <span>{name} (<i>{t("acl.unknown-user-note")}</i>)</span>;
@@ -357,66 +384,83 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         label = <>{item.label}</>;
     }
 
-    return (
-        <tr key={item.label} css={{
-            height: 44,
-            ":hover, :focus-within": {
-                td: { backgroundColor: COLORS.neutral15 },
-            },
-            ...isSubset && { color: COLORS.neutral60 },
-            borderBottom: `1px solid ${COLORS.neutral05}`,
-            ":last-child": {
-                border: "none",
-                td: {
-                    ":first-child": { borderBottomLeftRadius: 4 },
-                    ":last-child": { borderBottomRightRadius: 4 },
-                },
-            },
-        }}>
-            <td>
-                <span css={{ display: "flex" }}>
-                    {label}
-                    {isSubset && <Warning tooltip={
-                        t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
-                    } />}
-                </span>
-            </td>
-            <td>
-                <div css={{
-                    display: "flex",
-                    "> div:first-of-type": { flex: "1" },
-                    [screenWidthAtMost(480)]: {
-                        lineHeight: 1,
-                    },
-                }}>
-                    <ActionsMenu {...{ item, kind }} />
-                    {largeGroups.has(item.value) && canWrite
-                        ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
-                        : <div css={{ width: 22 }} />
-                    }
-                </div>
-            </td>
-            <td>
-                <ProtoButton
-                    onClick={() => remove(item)}
-                    disabled={item.value === COMMON_ROLES.ADMIN || userIsRequired && isUser}
-                    css={{
-                        marginLeft: "auto",
-                        display: "flex",
-                        color: COLORS.neutral60,
-                        borderRadius: 4,
-                        padding: 4,
-                        ":hover, :focus-visible": { color: COLORS.danger0 },
-                        ":disabled": { display: "none" },
-                        ...focusStyle({ offset: -1 }),
-                    }}
-                >
-                    <LuX size={20} />
-                </ProtoButton>
-            </td>
-        </tr>
-    );
+    const immutable = item.role === COMMON_ROLES.ADMIN || userIsRequired && isUser;
+    return <TableRow
+        labelCol={<>
+            {label}
+            {isSubset && <Warning tooltip={
+                t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
+            } />}
+        </>}
+        mutedLabel={isSubset}
+        actionCol={immutable ? <UnchangableAllActions /> : <>
+            <ActionsMenu {...{ item, kind }} />
+            {item.large && canWrite
+                ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
+                : <div css={{ width: 22 }} />
+            }
+        </>}
+        onRemove={immutable ? undefined : () => remove(item)}
+    />;
 };
+
+
+type TableRowProps = {
+    labelCol: JSX.Element;
+    mutedLabel?: boolean;
+    actionCol: JSX.Element;
+    onRemove?: () => void;
+}
+
+const TableRow: React.FC<TableRowProps> = ({ labelCol, mutedLabel, actionCol, onRemove }) => (
+    <tr css={{
+        height: 44,
+        ":hover, :focus-within": {
+            td: { backgroundColor: COLORS.neutral15 },
+        },
+        ...mutedLabel && { color: COLORS.neutral60 },
+        borderBottom: `1px solid ${COLORS.neutral05}`,
+        ":last-child": {
+            border: "none",
+            td: {
+                ":first-child": { borderBottomLeftRadius: 4 },
+                ":last-child": { borderBottomRightRadius: 4 },
+            },
+        },
+    }}>
+        <td>
+            <span css={{ display: "flex" }}>{labelCol}</span>
+        </td>
+        <td>
+            <div css={{
+                display: "flex",
+                "> div:first-of-type": { flex: "1" },
+                [screenWidthAtMost(480)]: {
+                    lineHeight: 1,
+                },
+            }}>
+                {actionCol}
+            </div>
+        </td>
+        <td>
+            {onRemove && <ProtoButton
+                onClick={onRemove}
+                css={{
+                    marginLeft: "auto",
+                    display: "flex",
+                    color: COLORS.neutral60,
+                    borderRadius: 4,
+                    padding: 4,
+                    ":hover, :focus-visible": { color: COLORS.danger0 },
+                    ...focusStyle({ offset: -1 }),
+                }}
+            >
+                <LuX size={20} />
+            </ProtoButton>}
+        </td>
+    </tr>
+);
+
 
 type WarningProps = {
     tooltip: string;
@@ -430,16 +474,23 @@ const Warning: React.FC<WarningProps> = ({ tooltip }) => (
     </WithTooltip>
 );
 
+const UnchangableAllActions = () => {
+    const { t } = useTranslation();
+    return <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>;
+};
 
 const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<FloatingHandle>(null);
-    const user = useUser();
     const { t } = useTranslation();
-    const { userIsRequired, acl, change } = useAclContext();
-    const [action, setAction] = useState<Action>(
-        acl.writeRoles.has(item.value) ? "write" : "read"
-    );
+    const { change } = useAclContext();
+    const currentActionOption = item.actions.has("write") ? "write" : "read";
+    const changeOption = (newOption: "read" | "write") => change(prev => {
+        notNullish(prev.get(item.role)).actions = new Set(
+            newOption === "write" ? ["read", "write"] : ["read"]
+        );
+    });
+
 
     const actions: Action[] = ["read", "write"];
 
@@ -456,13 +507,11 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     });
 
 
-    return [COMMON_ROLES.ADMIN, COMMON_ROLES.USER_ADMIN].includes(item.value)
-            || userIsRequired && isRealUser(user) && item.value === user.userRole
-        ? <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>
-        : <FloatingBaseMenu
+    return (
+        <FloatingBaseMenu
             ref={ref}
             label={t("manage.access.table.actions.title")}
-            triggerContent={<>{translations(action).label}</>}
+            triggerContent={<>{translations(currentActionOption).label}</>}
             triggerStyles={{
                 width: "100%",
                 gap: 0,
@@ -488,27 +537,19 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                         margin: 0,
                         padding: 0,
                     }}>
-                        {actions.map(actionType => <ActionMenuItem
-                            key={actionType}
-                            disabled={actionType === action}
-                            label={translations(actionType).label}
-                            description={translations(actionType).description}
-                            onClick={() => {
-                                setAction(actionType);
-                                change(prev => {
-                                    if (actionType === "write") {
-                                        prev.writeRoles.add(item.value);
-                                    } else {
-                                        prev.writeRoles.delete(item.value);
-                                    }
-                                });
-                            }}
+                        {actions.map(actionOption => <ActionMenuItem
+                            key={actionOption}
+                            disabled={actionOption === currentActionOption}
+                            label={translations(actionOption).label}
+                            description={translations(actionOption).description}
+                            onClick={() => changeOption(actionOption)}
                             close={() => ref.current?.close()}
                         />)}
                     </ul>
                 </Floating>
             }
-        />;
+        />
+    );
 };
 
 type ActionMenuItemProps = {
@@ -582,43 +623,72 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
 // ===== Helper functions
 // ==============================================================================================
 
+type TranslatedLabel = Record<string, string>;
+
 /** Returns a label for the role, if known to Tobira. */
-const getLabel = (role: string, knownRoles: KnownRoles, i18n: i18n) => {
+const getLabel = (role: string, label: TranslatedLabel | undefined, i18n: i18n) => {
     if (role === COMMON_ROLES.USER_ADMIN) {
         return i18n.t("acl.admin-user");
     }
-    return knownRoles[role]?.(i18n) ?? role;
+    if (label) {
+        return label[i18n.language] ?? label.en ?? label._;
+    }
+    return role;
 };
 
 const isUserRole = (role: string) =>
     CONFIG.auth.userRolePrefixes.some(prefix => role.startsWith(prefix));
 
 /** Splits initial ACL into group and user roles. */
-const splitAcl = (initialAcl: Acl) => {
-    const groupAcl: Acl = {
-        readRoles: new Set([...initialAcl.readRoles].filter(role => !isUserRole(role))),
-        writeRoles: new Set([...initialAcl.writeRoles].filter(role => !isUserRole(role))),
-    };
-    const userAcl: Acl = {
-        readRoles: new Set([...initialAcl.readRoles].filter(role => isUserRole(role))),
-        writeRoles: new Set([...initialAcl.writeRoles].filter(role => isUserRole(role))),
-    };
-
-    return [groupAcl, userAcl];
+const splitAcl = (initialAcl: Acl): [Acl, Acl] => {
+    const users = new Map();
+    const groups = new Map();
+    for (const [role, info] of initialAcl.entries()) {
+        (isUserRole(role) ? users : groups).set(role, info);
+    }
+    return [groups, users];
 };
 
+const insertBuiltinRoleInfo = (
+    acl: Acl,
+    knownGroups: AccessKnownRolesData$data["knownGroups"][number][],
+    i18n: i18n,
+) => {
+    const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => Object.fromEntries(
+        i18n.languages
+            .filter(lng => i18n.exists(key, { lng }))
+            .map(lng => [lng, i18n.t(key, { lng })])
+    );
 
+    const anonymousInfo = {
+        implies: [],
+        label: keyToTranslatedString("acl.groups.everyone"),
+        large: true,
+    };
+    const userInfo = {
+        implies: [COMMON_ROLES.ANONYMOUS],
+        label: keyToTranslatedString("acl.groups.logged-in-users"),
+        large: true,
+    };
+
+    const anonymous = acl.get(COMMON_ROLES.ANONYMOUS);
+    if (anonymous) {
+        anonymous.info = anonymousInfo;
+    }
+    const user = acl.get(COMMON_ROLES.USER);
+    if (user) {
+        user.info = userInfo;
+    }
+
+    knownGroups.push({ role: COMMON_ROLES.ANONYMOUS, ...anonymousInfo });
+    knownGroups.push({ role: COMMON_ROLES.USER, ...userInfo });
+};
 
 // ==============================================================================================
 // ===== Known groups & users
 // ==============================================================================================
 
 type KnownRoles = Record<string, (i18n: i18n) => string>;
-
-const BUILTIN_GROUPS: KnownRoles = {
-    ROLE_ANONYMOUS: (i18n: i18n) => i18n.t("acl.groups.everyone"),
-    ROLE_USER: (i18n: i18n) => i18n.t("acl.groups.logged-in-users"),
-};
 
 const DUMMY_USERS: KnownRoles = {
     ROLE_USER_SABINE: () => "Sabine Rudolfs",
@@ -628,9 +698,6 @@ const DUMMY_USERS: KnownRoles = {
 };
 
 const KNOWN_USERS: KnownRoles = DUMMY_USERS;
-
-const BUILTIN_LARGE_GROUPS = [COMMON_ROLES.USER, COMMON_ROLES.ANONYMOUS];
-
 
 /**
  * DAG to represent superset/subset relationships of available groups. Lazily
@@ -644,16 +711,18 @@ interface GroupDag {
      * Topologically sorts the given groups such that large groups are first,
      * smaller ones last.
      */
-    sort(groups: Option[]): Option[];
+    sort(groups: Entry[]): Entry[];
 }
 
-const buildDag = (customGroups: AccessKnownRolesData$data["knownGroups"]): GroupDag => {
+const buildDag = (groups: AccessKnownRolesData$data["knownGroups"]): GroupDag => {
     const vertices = new Map<string, Set<string>>();
     vertices.set(COMMON_ROLES.ANONYMOUS, new Set());
     vertices.set(COMMON_ROLES.USER, new Set([COMMON_ROLES.ANONYMOUS]));
 
-    for (const { role, implies } of customGroups) {
-        vertices.set(role, new Set([COMMON_ROLES.USER, ...implies]));
+    for (const { role, implies } of groups) {
+        if (role !== COMMON_ROLES.ANONYMOUS && role !== COMMON_ROLES.USER) {
+            vertices.set(role, new Set([COMMON_ROLES.USER, ...implies]));
+        }
     }
 
     return {
@@ -708,7 +777,7 @@ const buildDag = (customGroups: AccessKnownRolesData$data["knownGroups"]): Group
             while (candidates.length > 0) {
                 const candidate = notNullish(candidates.pop());
 
-                const option = options.find(o => o.value === candidate);
+                const option = options.find(o => o.role === candidate);
                 if (option) {
                     out.push(option);
                 }
@@ -728,7 +797,7 @@ const buildDag = (customGroups: AccessKnownRolesData$data["knownGroups"]): Group
 
             // Add remaining inputs, i.e. unknown roles.
             for (const option of options) {
-                if (!visited.has(option.value)) {
+                if (!visited.has(option.role)) {
                     out.push(option);
                 }
             }
