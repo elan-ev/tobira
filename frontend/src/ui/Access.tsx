@@ -11,7 +11,7 @@ import {
 } from "@opencast/appkit";
 import { createContext, useRef, useState, useContext, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { LuX, LuAlertTriangle } from "react-icons/lu";
+import { LuX, LuAlertTriangle, LuInfo } from "react-icons/lu";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import AsyncCreatableSelect from "react-select/async-creatable";
@@ -435,7 +435,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     return <TableRow
         labelCol={<>
             {label}
-            {isSubset && <Warning tooltip={
+            {isSubset && <Warning info tooltip={
                 t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
             } />}
         </>}
@@ -511,12 +511,13 @@ const TableRow: React.FC<TableRowProps> = ({ labelCol, mutedLabel, actionCol, on
 
 type WarningProps = {
     tooltip: string;
+    info?: boolean;
 }
 
-const Warning: React.FC<WarningProps> = ({ tooltip }) => (
+const Warning: React.FC<WarningProps> = ({ tooltip, info }) => (
     <WithTooltip {...{ tooltip }} css={{ display: "flex" }}>
-        <span css={{ marginLeft: 6, display: "flex" }}>
-            <LuAlertTriangle css={{ color: COLORS.danger0, alignSelf: "center" }} />
+        <span css={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
+            {info ? <LuInfo /> : <LuAlertTriangle css={{ color: COLORS.danger0 }}/>}
         </span>
     </WithTooltip>
 );
