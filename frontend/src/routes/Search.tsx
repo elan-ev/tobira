@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { LuFolder } from "react-icons/lu";
+import { LuLayout, LuPlaySquare } from "react-icons/lu";
 import { ReactNode, RefObject, useEffect } from "react";
 import { screenWidthAtMost, unreachable } from "@opencast/appkit";
 
@@ -12,13 +12,13 @@ import { Link, useRouter } from "../router";
 import { Creators, isPastLiveEvent, Thumbnail } from "../ui/Video";
 import { SmallDescription } from "../ui/metadata";
 import { Card } from "../ui/Card";
-import { PageTitle } from "../layout/header/ui";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss } from "../ui";
 import { COLORS } from "../color";
-import { BREAKPOINT_SMALL } from "../GlobalStyle";
+import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { keyOfId } from "../util";
+import { IconType } from "react-icons";
 
 
 export const STORAGE_KEY = "internal-origin";
@@ -116,9 +116,11 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     }
 
     return <>
-        <Breadcrumbs path={[]} tail={t("search.title", { query: q })} />
+        <Breadcrumbs path={[]} tail={t("search.title", {
+            query: q,
+            hits: outcome.__typename === "SearchResults" ? outcome.items.length : 0,
+        })} />
         <div css={{ maxWidth: 950, margin: "0 auto" }}>
-            <PageTitle title={t("search.title", { query: q })} />
             {body}
         </div>
     </>;
@@ -182,6 +184,31 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     </ul>
 );
 
+type WithIconProps = {
+    Icon: IconType;
+    children: ReactNode;
+};
+
+const WithIcon: React.FC<WithIconProps> = ({ Icon, children }) => (
+    <div css={{
+        display: "flex",
+        flexDirection: "row",
+        gap: 6,
+        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+            flexDirection: "row-reverse",
+            justifyContent: "space-between",
+        },
+    }}>
+        <Icon size={40} css={{ flexShrink: 0 }} />
+        <div css={{
+            height: "96%",
+            borderLeft: `1px solid ${COLORS.neutral15}`,
+            alignSelf: "center",
+        }} />
+        {children}
+    </div>
+);
+
 type SearchEventProps = {
     id: string;
     title: string;
@@ -223,6 +250,21 @@ const SearchEvent: React.FC<SearchEventProps> = ({
 
     return (
         <Item key={id} link={link}>
+            <WithIcon Icon={LuPlaySquare}>
+                <div css={{ color: COLORS.neutral90 }}>
+                    <h3 css={{
+                        color: COLORS.primary0,
+                        marginBottom: 6,
+                        ...ellipsisOverflowCss(2),
+                    }}>{title}</h3>
+                    <Creators creators={creators} />
+                    <SmallDescription text={description} lines={3} />
+                    {/* TODO: link to series */}
+                    {seriesTitle && <div css={{ fontSize: 14, marginTop: 4 }}>
+                        {t("video.part-of-series") + ": " + seriesTitle}
+                    </div>}
+                </div>
+            </WithIcon>
             <Thumbnail
                 event={{
                     title,
@@ -236,20 +278,13 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                         audioOnly,
                     },
                 }}
-                css={{ width: "100%" }}
+                css={{
+                    outline: `1px solid ${COLORS.neutral15}`,
+                    minWidth: 270,
+                    width: 270,
+                    marginLeft: "auto",
+                }}
             />
-            <div css={{ color: COLORS.neutral90 }}>
-                <h3 css={{
-                    marginBottom: 6,
-                    ...ellipsisOverflowCss(2),
-                }}>{title}</h3>
-                <Creators creators={creators} />
-                <SmallDescription text={description} lines={3} />
-                {/* TODO: link to series */}
-                {seriesTitle && <div css={{ fontSize: 14, marginTop: 4 }}>
-                    {t("video.part-of-series") + ": " + seriesTitle}
-                </div>}
-            </div>
         </Item>
     );
 };
@@ -263,18 +298,17 @@ type SearchRealmProps = {
 
 const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, fullPath }) => (
     <Item key={id} link={fullPath}>
-        <div css={{ textAlign: "center" }}>
-            <LuFolder css={{ margin: 8, fontSize: 26 }}/>
-        </div>
-        <div>
-            <BreadcrumbsContainer>
-                {ancestorNames.map((name, i) => <li key={i}>
-                    {name ?? <MissingRealmName />}
-                    <BreadcrumbSeparator />
-                </li>)}
-            </BreadcrumbsContainer>
-            <h3>{name ?? <MissingRealmName />}</h3>
-        </div>
+        <WithIcon Icon={LuLayout}>
+            <div>
+                <BreadcrumbsContainer>
+                    {ancestorNames.map((name, i) => <li key={i}>
+                        {name ?? <MissingRealmName />}
+                        <BreadcrumbSeparator />
+                    </li>)}
+                </BreadcrumbsContainer>
+                <h3>{name ?? <MissingRealmName />}</h3>
+            </div>
+        </WithIcon>
     </Item>
 );
 
@@ -289,22 +323,20 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
             to={link}
             css={{
                 display: "flex",
-                borderRadius: 4,
+                borderRadius: 16,
+                border: `1px solid ${COLORS.neutral15}`,
                 margin: 16,
                 padding: 8,
-                gap: 16,
+                paddingLeft: 10,
+                gap: 8,
                 textDecoration: "none",
                 "&:hover, &:focus": {
                     backgroundColor: COLORS.neutral10,
                 },
-                "& > *:first-child": {
-                    minWidth: 200,
-                    width: 200,
-                },
-                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                     flexDirection: "column",
                     gap: 12,
-                    "& > *:first-child": {
+                    "& > *:last-child": {
                         width: "100%",
                     },
                 },
