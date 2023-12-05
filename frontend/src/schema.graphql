@@ -68,6 +68,7 @@ type RemovedRealm {
 type SearchEvent implements Node {
   id: ID!
   title: String!
+  seriesId: ID
   seriesTitle: String
   description: String
   creators: [String!]!

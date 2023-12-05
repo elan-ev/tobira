@@ -22,6 +22,14 @@ impl search::Event {
         &self.title
     }
 
+    fn series_id(&self) -> Option<Id> {
+        if let Some(id) = self.series_id {
+            Some(Id::search_series(id.0))
+        } else {
+            None
+        }
+    }
+
     fn series_title(&self) -> Option<&str> {
         self.series_title.as_deref()
     }
