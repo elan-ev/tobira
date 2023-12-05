@@ -61,6 +61,7 @@ const query = graphql`
                         duration
                         creators
                         seriesTitle
+                        seriesId
                         isLive
                         audioOnly
                         startTime
@@ -161,6 +162,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     duration: unwrapUndefined(item.duration),
                     creators: unwrapUndefined(item.creators),
                     seriesTitle: unwrapUndefined(item.seriesTitle),
+                    seriesId: unwrapUndefined(item.seriesId),
                     isLive,
                     audioOnly: unwrapUndefined(item.audioOnly),
                     created: unwrapUndefined(item.created),
@@ -197,9 +199,10 @@ const WithIcon: React.FC<WithIconProps> = ({ Icon, children }) => (
         [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
             flexDirection: "row-reverse",
             justifyContent: "space-between",
+            paddingLeft: 4,
         },
     }}>
-        <Icon size={40} css={{ flexShrink: 0 }} />
+        <Icon size={40} css={{ flexShrink: 0, color: COLORS.primary0 }} />
         <div css={{
             height: "96%",
             borderLeft: `1px solid ${COLORS.neutral15}`,
@@ -217,6 +220,7 @@ type SearchEventProps = {
     duration: number;
     creators: readonly string[];
     seriesTitle: string | null;
+    seriesId: string | null;
     isLive: boolean;
     audioOnly: boolean;
     created: string;
@@ -233,6 +237,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     duration,
     creators,
     seriesTitle,
+    seriesId,
     isLive,
     audioOnly,
     created,
@@ -259,9 +264,14 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     }}>{title}</h3>
                     <Creators creators={creators} />
                     <SmallDescription text={description} lines={3} />
-                    {/* TODO: link to series */}
-                    {seriesTitle && <div css={{ fontSize: 14, marginTop: 4 }}>
-                        {t("video.part-of-series") + ": " + seriesTitle}
+                    {seriesTitle && seriesId && <div css={{ fontSize: 14, marginTop: 4 }}>
+                        {t("video.part-of-series") + ": "}
+                        <Link to={`/!s/${keyOfId(seriesId)}`} css={{
+                            borderRadius: 4,
+                            outlineOffset: 1,
+                            position: "relative",
+                            zIndex: 1,
+                        }}>{seriesTitle}</Link>
                     </div>}
                 </div>
             </WithIcon>
@@ -299,7 +309,7 @@ type SearchRealmProps = {
 const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, fullPath }) => (
     <Item key={id} link={fullPath}>
         <WithIcon Icon={LuLayout}>
-            <div>
+            <div css={{ color: COLORS.primary0 }}>
                 <BreadcrumbsContainer>
                     {ancestorNames.map((name, i) => <li key={i}>
                         {name ?? <MissingRealmName />}
@@ -318,30 +328,33 @@ type ItemProps = {
 };
 
 const Item: React.FC<ItemProps> = ({ link, children }) => (
-    <li>
-        <Link
-            to={link}
-            css={{
-                display: "flex",
-                borderRadius: 16,
-                border: `1px solid ${COLORS.neutral15}`,
-                margin: 16,
-                padding: 8,
-                paddingLeft: 10,
-                gap: 8,
-                textDecoration: "none",
-                "&:hover, &:focus": {
-                    backgroundColor: COLORS.neutral10,
-                },
-                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                    flexDirection: "column",
-                    gap: 12,
-                    "& > *:last-child": {
-                        width: "100%",
-                    },
-                },
-            }}
-        >{children}</Link>
+    <li css={{
+        position: "relative",
+        display: "flex",
+        borderRadius: 16,
+        border: `1px solid ${COLORS.neutral15}`,
+        margin: 16,
+        padding: 8,
+        gap: 8,
+        textDecoration: "none",
+        "&:hover, &:focus": {
+            backgroundColor: COLORS.neutral10,
+        },
+        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+            flexDirection: "column",
+            gap: 12,
+            "& > *:last-child": {
+                width: "100%",
+            },
+        },
+    }}>
+        <Link to={link} css={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 1,
+            borderRadius: 16,
+        }}/>
+        {children}
     </li>
 );
 
