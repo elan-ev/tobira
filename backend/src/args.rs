@@ -114,6 +114,16 @@ pub(crate) enum Command {
         #[clap(flatten)]
         shared: Shared,
     },
+
+    /// Managing "known users". This data is only used for the ACL UI and not
+    /// for auth at all!
+    KnownUsers {
+        #[clap(subcommand)]
+        options: cmd::known_users::Args,
+
+        #[clap(flatten)]
+        shared: Shared,
+    }
 }
 
 #[derive(Debug, clap::Args)]
