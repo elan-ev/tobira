@@ -23,3 +23,20 @@ create table users (
 
 -- Looking up users by role is a common operation for resolving roles in ACLs.
 create unique index idx_user_role on users (user_role);
+
+-- For searching users by exact match, we need these indices.
+create index idx_user_role_lower on users (lower(user_role));
+create index idx_user_username_lower on users (lower(username));
+create index idx_user_email_lower on users (lower(email));
+
+
+-- Search index ---------------------------------------------------------------
+
+-- Next we need to change the 'kind' of things we can insert into the queue to
+-- add 'user'.
+alter type search_index_item_kind add value 'user';
+
+-- And we also need to install triggers to queue users. However, we cannot do
+-- that in this script as a script is run as one transaction and we can't use
+-- the 'user' enum value in the same transaction it is added. So this is the
+-- next migration script.

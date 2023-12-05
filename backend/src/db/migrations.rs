@@ -342,4 +342,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     25: "longer-videos",
     26: "more-event-search-data",
     27: "users",
+    28: "user-index-queue-triggers",
 ];
