@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { LuX } from "react-icons/lu";
@@ -6,7 +6,7 @@ import { useRouter } from "../../router";
 import { handleNavigation, SearchRoute, isSearchActive } from "../../routes/Search";
 import { focusStyle } from "../../ui";
 import { Spinner } from "../../ui/Spinner";
-import { currentRef } from "../../util";
+import { currentRef, useDebounce } from "../../util";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
@@ -21,6 +21,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
     const router = useRouter();
     const ref = useRef<HTMLInputElement>(null);
+    const { debounce } = useDebounce();
 
     // Register global shortcut to focus search bar
     useEffect(() => {
@@ -66,9 +67,9 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         ? new URLSearchParams(document.location.search).get("q") ?? undefined
         : undefined;
 
-    const search = (expression: string) => {
+    const search = useCallback(debounce((expression: string) => {
         router.goto(SearchRoute.url({ query: expression }), onSearchRoute);
-    };
+    }, 300), []);
 
     return (
         <div css={{
