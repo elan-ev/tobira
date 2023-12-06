@@ -253,7 +253,13 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         // TODO: for users, this should say "type to search" or "enter
         // username, email, ... to add user" depending on the
         // users_searchable config.
-        noOptionsMessage: () => t("general.form.select.no-options"),
+        noOptionsMessage: kind === "Group"
+            ? () => t("general.form.select.no-options")
+            : ({ inputValue }: { inputValue: string }) => (
+                t(`manage.access.users-no-options.${
+                    inputValue.length === 0 ? "initial" : "none-found"
+                }-${CONFIG.usersSearchable ? "" : "not-"}searchable`)
+            ),
         isValidNewOption: (input: string) => {
             const validUserRole = isUserRole(input);
             const validRole = /^ROLE_\w+/.test(input);
