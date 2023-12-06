@@ -1,0 +1,6 @@
+{
+    "ROLE_USER_SABINE": { "username": "sabine", "displayName": "Sabine Rudolfs", "email": "sabine@example.org" },
+    "ROLE_USER_BJOERK": { "username": "björk", "displayName": "Prof. Björk Guðmundsdóttir", "email": "bjoerk@example.org" },
+    "ROLE_USER_MORGAN": { "username": "morgan", "displayName": "Morgan Yu", "email": "morgan@example.org" },
+    "ROLE_USER_JOSE": { "username": "jose", "displayName": "José Carreño Quiñones" }
+}

@@ -185,21 +185,27 @@
         cmd: /opt/tobira/{{ id }}/tobira search-index update
         chdir: /opt/tobira/{{ id }}/
 
-    - name: Add test-data known groups
+    - name: Add test-data known groups/users
       become: true
       copy:
-        src: known-groups.json
-        dest: /opt/tobira/{{ id }}/known-groups.json
+        src: known-{{item}}.json
+        dest: /opt/tobira/{{ id }}/known-{{item}}.json
         owner: root
         group: root
         mode: '0644'
+      with_items:
+        - groups
+        - users
 
-    - name: Configure known groups
+    - name: Configure known groups/users
       become: true
       become_user: tobira
       command:
-        cmd: /opt/tobira/{{ id }}/tobira known-groups upsert known-groups.json
+        cmd: /opt/tobira/{{ id }}/tobira known-{{item}} upsert known-{{item}}.json
         chdir: /opt/tobira/{{ id }}/
+      with_items:
+        - groups
+        - users
 
     - name: install tobira service files
       become: true
