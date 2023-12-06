@@ -49,8 +49,10 @@ pub(crate) async fn run(shared: &args::Shared, args: &Args) -> Result<()> {
                 => println!("    ▸ DB up to date"),
             Ok(MigrationPlan::EmptyDb)
                 => println!("    ▸ DB is empty, all migrations will be applied"),
-            Ok(MigrationPlan::Migrate { new_migrations })
-                => println!("    ▸ DB is compatible, {new_migrations} new migrations will be applied"),
+            Ok(m @ MigrationPlan::Migrate { .. }) => println!(
+                "    ▸ DB is compatible, {} new migrations will be applied",
+                m.missing_migrations(),
+            ),
         }
     }
     print_outcome(&mut any_errors, "MeiliSearch", &meili);

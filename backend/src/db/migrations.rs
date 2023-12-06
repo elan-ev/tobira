@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc, offset::TimeZone};
 use once_cell::sync::Lazy;
-use std::{collections::BTreeMap, time::Duration, num::NonZeroU64};
+use std::{collections::BTreeMap, time::Duration};
 use tokio_postgres::{IsolationLevel, Transaction, error::SqlState, Client};
 
 use crate::{prelude::*, db::util::select};
@@ -17,10 +17,10 @@ pub(crate) enum MigrationPlan {
     /// The database is completely up to date and all migrations match.
     UpToDate,
 
-    /// The DB can be migrated to the state we expect by applying that many new
-    /// migrations.
+    /// The DB can be migrated to the state we expect, with `next_migration`
+    /// being the migration index that needs to be executed next.
     Migrate {
-        new_migrations: NonZeroU64,
+        next_migration: u64,
     },
 }
 
@@ -51,8 +51,6 @@ impl MigrationPlan {
             applied_on: DateTime<Utc>,
             script: String,
         }
-
-        debug!("Checking DB migrations");
 
         // Retrieve all active migrations from the DB.
         let (selection, mapping) = select!(id, name, applied_on, script);
@@ -114,51 +112,58 @@ impl MigrationPlan {
 
         // We already know that `MIGRATIONS` contains at least as many elements
         // as `active_migrations`, therefore we can subtract here.
-        match NonZeroU64::new(MIGRATIONS.len() as u64 - active_migrations.len() as u64) {
-            None => Ok(Self::UpToDate),
-            Some(new_migrations) => Ok(Self::Migrate { new_migrations }),
+        if MIGRATIONS.len() == active_migrations.len() {
+            Ok(Self::UpToDate)
+        } else {
+            Ok(Self::Migrate { next_migration: active_migrations.len() as u64 + 1 })
         }
     }
 
-    /// Executes this plan on the database, bringing it into the state we expect.
-    pub(crate) async fn execute(&self, tx: &Transaction<'_>) -> Result<()> {
-        let new_migrations = match self {
+    pub(crate) fn missing_migrations(&self) -> u64 {
+        match self {
+            MigrationPlan::EmptyDb => MIGRATIONS.len() as u64,
+            MigrationPlan::UpToDate => 0,
+            MigrationPlan::Migrate { next_migration }
+                => MIGRATIONS.len() as u64 - next_migration + 1,
+        }
+    }
+
+    /// Executes the next migration in this plan on the database. Returns
+    /// `done`, i.e. `true` if the DB is up to date after this method call.
+    pub(crate) async fn execute_next(&self, tx: &Transaction<'_>) -> Result<bool> {
+        let id = match self {
             Self::UpToDate => {
                 info!("All migrations are already applied: database schema is up to date.");
-                return Ok(());
+                return Ok(true);
             }
             Self::EmptyDb => {
                 create_meta_table_if_missing(tx).await?;
-                MIGRATIONS.len() as u64
+                0
             }
-            Self::Migrate { new_migrations } => new_migrations.get(),
+            Self::Migrate { next_migration } => *next_migration,
         };
 
         // Apply missing migrations in order.
-        info!("The database is missing {new_migrations} migrations. Applying them now.");
-        for (id, migration) in MIGRATIONS.range(MIGRATIONS.len() as u64 - new_migrations + 1..) {
-            debug!("Applying migration '{}-{}' ...", id, migration.name);
-            trace!("Executing:\n{}", migration.script);
+        let migration = &MIGRATIONS[&id];
+        debug!("Applying migration '{}-{}' ...", id, migration.name);
+        trace!("Executing:\n{}", migration.script);
 
-            tx.batch_execute(migration.script)
-                .await
-                .context(format!("failed to run script for '{}-{}'", id, migration.name))?;
+        tx.batch_execute(migration.script)
+            .await
+            .context(format!("failed to run script for '{}-{}'", id, migration.name))?;
 
-            let query = "insert into __db_migrations (id, name, applied_on, script) \
-                values ($1, $2, now() at time zone 'utc', $3)";
-            tx.execute(query, &[&(*id as i64), &migration.name, &migration.script])
-                .await
-                .context("failed to update __db_migrations")?;
-        }
+        let query = "insert into __db_migrations (id, name, applied_on, script) \
+            values ($1, $2, now() at time zone 'utc', $3)";
+        tx.execute(query, &[&(id as i64), &migration.name, &migration.script])
+            .await
+            .context("failed to update __db_migrations")?;
 
-        info!("Applied {new_migrations} migrations. DB is up to date now.");
-
-        Ok(())
+        Ok(id == MIGRATIONS.len() as u64)
     }
 }
 
 async fn create_meta_table_if_missing(tx: &Transaction<'_>) -> Result<()> {
-    debug!("Creating table '__db_migrations' if it does not exist yet...");
+    trace!("Creating table '__db_migrations' if it does not exist yet...");
     tx.batch_execute(include_str!("db-migrations.sql"))
         .await
         .context("could not create migrations meta table")?;
@@ -182,6 +187,8 @@ pub async fn migrate(db: &mut Client) -> Result<()> {
     // second loop iteration the node will observe that the `__db_migrations`
     // table already exists as the transaction of another node is expected to
     // have correctly committed by that point.
+    debug!("Checking DB migrations");
+    let mut migrations_executed = 0;
     loop {
         let tx = db.build_transaction()
             .isolation_level(IsolationLevel::Serializable)
@@ -219,12 +226,22 @@ pub async fn migrate(db: &mut Client) -> Result<()> {
 
 
         // We are now the only process allowed to tinker with migrations. First
-        // build a plan of what needs to be done and then execute it.
+        // build a plan of what needs to be done and then execute the next
+        // migration. We do one migration at a time so that each migration
+        // script runs in its own transaction. Otherwise certain things
+        // (like adding a value to an enum) don't work.
         let plan = MigrationPlan::build(&tx).await?;
-        plan.execute(&tx).await?;
+        let is_done = plan.execute_next(&tx).await?;
+
 
         match tx.commit().await {
-            Ok(_) => return Ok(()),
+            Ok(_) => {
+                migrations_executed += 1;
+                if is_done {
+                    info!("Applied {migrations_executed} migrations. DB is up to date now.");
+                    return Ok(());
+                }
+            },
 
             Err(e) if e.code() == Some(&SqlState::T_R_SERIALIZATION_FAILURE) => {
                 let backoff_duration = Duration::from_millis(500);
