@@ -87,7 +87,7 @@ const GLOBAL_STYLE = css({
         // order to know where we can stop caring.
         minWidth: "var(--min-page-width)",
 
-        "& > div": {
+        "& > div:first-of-type": {
             height: "100%",
         },
     },
