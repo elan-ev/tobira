@@ -75,14 +75,6 @@
         cmd: postgresql-setup --initdb
         creates: /var/lib/pgsql/data/postgresql.conf
 
-    - name: set auth to scram-sha-256
-      become: true
-      lineinfile:
-        path: /var/lib/pgsql/data/postgresql.conf
-        regexp: '^password_encryption'
-        line: "password_encryption = 'scram-sha-256'"
-      notify: restart postgresql
-
     - name: configure postgres access
       become: true
       copy:
