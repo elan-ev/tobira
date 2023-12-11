@@ -291,8 +291,6 @@ impl ColorConfig {
 
         let player_accent = Oklch::from_color(self.primary.0.into_format::<f32>());
         add(&mut global, "player-accent-light", Oklch { l: 0.77, ..player_accent }.into_color());
-        add(&mut global, "player-accent-dark", Oklch { l: 0.48, ..player_accent }.into_color());
-        add(&mut global, "player-accent-darker", Oklch { l: 0.38, ..player_accent }.into_color());
 
         (light, dark, global)
     }
