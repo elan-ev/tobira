@@ -1,4 +1,4 @@
-import React, { ReactNode, useId, useState } from "react";
+import React, { useId, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
@@ -21,13 +21,13 @@ import { AddChildMutation$data } from "./__generated__/AddChildMutation.graphql"
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
-import { Card } from "../../../ui/Card";
 import { pathToQuery, ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { realmBreadcrumbs } from "../../../util/realm";
 import { COLORS } from "../../../color";
-import { screenWidthAtMost } from "@opencast/appkit";
+import { WithTooltip } from "@opencast/appkit";
+import { LuInfo } from "react-icons/lu";
 
 
 export const PATH = "/~manage/realm/add-child";
@@ -163,8 +163,11 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                     input: { height: 42, flexGrow: 1 },
                 }}
             >
-                <InputWithInfo info={t("manage.add-child.page-name-info")}>
-                    <label htmlFor={nameFieldId}>{t("manage.realm.general.page-name")}</label>
+                <div css={{ width: "min(100%, 500px)" }}>
+                    <label htmlFor={nameFieldId}>
+                        {t("manage.realm.general.page-name")}
+                        <InfoTooltip info={t("manage.add-child.page-name-info")} />
+                    </label>
                     <div>
                         <Input
                             id={nameFieldId}
@@ -175,15 +178,27 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                         />
                     </div>
                     {boxError(errors.name?.message)}
-                </InputWithInfo>
+                </div>
 
-                <InputWithInfo
-                    info={<Trans i18nKey="manage.add-child.path-segment-info">
-                        {{ illegalChars: ILLEGAL_CHARS }}
-                        {{ reservedChars: RESERVED_CHARS }}
-                    </Trans>}
-                >
-                    <label htmlFor={pathFieldId}>{t("manage.add-child.path-segment")}</label>
+                <div css={{ width: "min(100%, 500px)" }}>
+                    <label htmlFor={pathFieldId}>
+                        {t("manage.add-child.path-segment")}
+                        <InfoTooltip info={
+                            <div css={{
+                                "& code": {
+                                    whiteSpace: "nowrap",
+                                    borderRadius: 4,
+                                    backgroundColor: COLORS.neutral15,
+                                    padding: "2px 4px",
+                                },
+                            }}>
+                                <Trans i18nKey="manage.add-child.path-segment-info">
+                                    {{ illegalChars: ILLEGAL_CHARS }}
+                                    {{ reservedChars: RESERVED_CHARS }}
+                                </Trans>
+                            </div>
+                        } />
+                    </label>
                     <PathSegmentInput
                         id={pathFieldId}
                         base={parent.path}
@@ -191,7 +206,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
                         {...register("pathSegment", validations.path)}
                     />
                     {boxError(errors.pathSegment?.message)}
-                </InputWithInfo>
+                </div>
 
                 <div>
                     <div css={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -207,28 +222,21 @@ const AddChild: React.FC<Props> = ({ parent }) => {
     );
 };
 
-type InputWithInfoProps = {
+type InfoTooltipProps = {
     info: JSX.Element | string;
-    children: ReactNode;
 };
 
-const InputWithInfo: React.FC<InputWithInfoProps> = ({ info, children }) => (
-    <div css={{
-        display: "flex",
-        columnGap: 32,
-        rowGap: 16,
-        [screenWidthAtMost(1300)]: {
-            flexDirection: "column",
-            div: { maxWidth: 500 },
-        },
-        "& code": {
-            whiteSpace: "nowrap",
-            borderRadius: 4,
-            backgroundColor: COLORS.neutral15,
-            padding: "2px 4px",
-        },
-    }}>
-        <div css={{ width: "min(100%, 500px)" }}>{children}</div>
-        <Card kind="info" css={{ maxWidth: 500, fontSize: 14 }}>{info}</Card>
-    </div>
+const InfoTooltip: React.FC<InfoTooltipProps> = ({ info }) => (
+    <WithTooltip
+        tooltip={info}
+        tooltipCss={{ width: "min(90vw, 460px)" }}
+        css={{
+            display: "inline-block",
+            verticalAlign: "middle",
+            fontWeight: "normal",
+            marginLeft: 8,
+        }}
+    >
+        <span><LuInfo tabIndex={0} /></span>
+    </WithTooltip>
 );
