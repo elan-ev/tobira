@@ -2,12 +2,14 @@ use std::{borrow::Cow, time::Duration, collections::HashSet};
 
 use base64::Engine;
 use deadpool_postgres::Client;
-use hyper::HeaderMap;
+use hyper::{HeaderMap, Uri, StatusCode};
 use once_cell::sync::Lazy;
 use secrecy::{Secret, ExposeSecret};
+use serde::{Deserialize, Deserializer, de::Error};
 use tokio_postgres::Error as PgError;
+use url::Url;
 
-use crate::{config::TranslatedString, prelude::*, db::util::select};
+use crate::{config::TranslatedString, prelude::*, db::util::select, http::{Response, response, Request}};
 
 
 mod cache;
@@ -46,6 +48,11 @@ pub(crate) struct AuthConfig {
     /// Link of the logout button. If not set, clicking the logout button will
     /// send a `DELETE` request to `/~session`.
     pub(crate) logout_link: Option<String>,
+
+    /// Only for `*-callback` modes: URL to HTTP API to resolve incoming request
+    /// to user information.
+    #[config(deserialize_with = AuthConfig::deserialize_callback_url)]
+    pub(crate) callback_url: Option<Uri>,
 
     /// The header containing a unique and stable username of the current user.
     #[config(default = "x-tobira-username")]
@@ -123,6 +130,48 @@ pub(crate) struct AuthConfig {
     pub(crate) pre_auth_external_links: bool,
 }
 
+impl AuthConfig {
+    pub(crate) fn validate(&self) -> Result<()> {
+        let cb_mode = matches!(self.mode, AuthMode::LoginCallback | AuthMode::AuthCallback);
+        if cb_mode && !self.callback_url.is_some() {
+            bail!(
+                "'auth.mode' is '{}', but 'auth.callback_url' is not specified",
+                self.mode.label(),
+            );
+        }
+        if !cb_mode && self.callback_url.is_some() {
+            bail!(
+                "'auth.mode' is '{}', but 'auth.callback_url' is specified, which makes no sense",
+                self.mode.label(),
+            );
+        }
+
+        Ok(())
+    }
+
+    fn deserialize_callback_url<'de, D>(deserializer: D) -> Result<Uri, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let url: Url = s.parse()
+            .map_err(|e| <D::Error>::custom(format!("invalid URL: {e}")))?;
+        if url.query().is_some() || url.fragment().is_some() {
+            return Err(
+                <D::Error>::custom("'auth.callback_url' must not contain a query or fragment part"),
+            );
+        }
+
+        Uri::builder()
+            .scheme(url.scheme())
+            .authority(url.authority())
+            .path_and_query(url.path())
+            .build()
+            .unwrap()
+            .pipe(Ok)
+    }
+}
+
 /// Authentification and authorization
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct LoginPageConfig {
@@ -143,6 +192,8 @@ pub(crate) enum AuthMode {
     None,
     FullAuthProxy,
     LoginProxy,
+    AuthCallback,
+    LoginCallback,
     Opencast,
 }
 
@@ -154,6 +205,8 @@ impl AuthMode {
             AuthMode::None => "none",
             AuthMode::FullAuthProxy => "full-auth-proxy",
             AuthMode::LoginProxy => "login-proxy",
+            AuthMode::AuthCallback => "auth-callback",
+            AuthMode::LoginCallback => "login-callback",
             AuthMode::Opencast => "opencast",
         }
     }
@@ -216,7 +269,7 @@ impl AuthContext {
         auth_config: &AuthConfig,
         db: &Client,
         user_cache: &UserCache,
-    ) -> Result<Self, PgError> {
+    ) -> Result<Self, Response> {
 
         if let Some(given_key) = headers.get("x-tobira-trusted-external-key") {
             if let Some(trusted_key) = &auth_config.trusted_external_key {
@@ -257,11 +310,14 @@ impl User {
         auth_config: &AuthConfig,
         db: &Client,
         user_cache: &UserCache,
-    ) -> Result<Option<Self>, PgError> {
+    ) -> Result<Option<Self>, Response> {
         let out = match auth_config.mode {
             AuthMode::None => None,
             AuthMode::FullAuthProxy => Self::from_auth_headers(headers, auth_config),
-            AuthMode::LoginProxy | AuthMode::Opencast => {
+            AuthMode::AuthCallback => {
+                Self::from_callback_with_headers(headers, auth_config).await?
+            }
+            AuthMode::LoginProxy | AuthMode::Opencast | AuthMode::LoginCallback => {
                 Self::from_session(headers, db, auth_config).await?
             }
         };
@@ -312,7 +368,7 @@ impl User {
         headers: &HeaderMap,
         db: &Client,
         auth_config: &AuthConfig,
-    ) -> Result<Option<Self>, PgError> {
+    ) -> Result<Option<Self>, Response> {
         // Try to get a session ID from the cookie.
         let session_id = match SessionId::from_headers(headers) {
             None => return Ok(None),
@@ -327,9 +383,13 @@ impl User {
                 and extract(epoch from now() - created) < $2::double precision"
         );
         let session_duration = auth_config.session_duration.as_secs_f64();
-        let row = match db.query_opt(&query, &[&session_id, &session_duration]).await? {
-            None => return Ok(None),
-            Some(row) => row,
+        let row = match db.query_opt(&query, &[&session_id, &session_duration]).await {
+            Ok(None) => return Ok(None),
+            Ok(Some(row)) => row,
+            Err(e) => {
+                error!("DB error when checking user session: {}", e);
+                return Err(response::internal_server_error());
+            }
         };
 
         let username: String = mapping.username.of(&row);
@@ -346,6 +406,74 @@ impl User {
             roles: roles.into_iter().collect(),
             user_role,
         }))
+    }
+
+    pub(crate) async fn from_callback_with_headers(
+        headers: &HeaderMap,
+        auth_config: &AuthConfig,
+    ) -> Result<Option<Self>, Response> {
+        let mut req = Request::new(hyper::Body::empty());
+        *req.headers_mut() = headers.clone();
+        *req.uri_mut() = auth_config.callback_url.clone().unwrap();
+
+        Self::from_callback(req, auth_config).await
+    }
+
+    pub(crate) async fn from_callback(
+        req: Request,
+        auth_config: &AuthConfig,
+    ) -> Result<Option<Self>, Response> {
+        // Send request and download response.
+        // TOOD: Only create client once!
+        let client = hyper::Client::new();
+        let response = client.request(req).await.map_err(|e| {
+            // TODO: maybe limit how quickly that can be logged?
+            error!("Error contacting auth callback: {e}");
+            response::bad_gateway()
+        })?;
+        let (parts, body) = response.into_parts();
+        let body = hyper::body::to_bytes(body).await.map_err(|e| {
+            error!("Error downloading body from auth callback: {e}");
+            response::bad_gateway()
+        })?;
+
+
+        if parts.status != StatusCode::OK {
+            error!("Auth callback replied with {} (which is unexpected)", parts.status);
+            return Err(response::bad_gateway())
+        }
+
+        #[derive(Deserialize)]
+        #[serde(tag = "outcome", rename_all = "kebab-case")]
+        enum CallbackResponse {
+            // Duplicating `User` fields here as this defines a public API, that
+            // has to stay stable.
+            #[serde(rename_all = "camelCase")]
+            User {
+                username: String,
+                display_name: String,
+                email: Option<String>,
+                roles: HashSet<String>,
+            },
+            NoUser,
+            // TODO: maybe add "redirect"?
+        }
+
+        // Note: this will also fail if `body` is not valid UTF-8.
+        match serde_json::from_slice::<CallbackResponse>(&body) {
+            Ok(CallbackResponse::User { username, display_name, email, roles }) => {
+                let user_role = auth_config
+                    .find_user_role(&username, roles.iter().map(|s| s.as_str()))
+                    .expect("user session without user role")
+                    .to_owned();
+                Ok(Some(Self { username, display_name, email, roles, user_role }))
+            },
+            Ok(CallbackResponse::NoUser) => Ok(None),
+            Err(e) => {
+                error!("Could not deserialize body from auth callback: {e}");
+                Err(response::bad_gateway())
+            },
+        }
     }
 
     /// Creates a new session for this user and persists it in the database.

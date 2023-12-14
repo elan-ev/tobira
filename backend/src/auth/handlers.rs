@@ -1,3 +1,5 @@
+use std::unreachable;
+
 use base64::Engine;
 use hyper::{Body, StatusCode};
 use serde::Deserialize;
@@ -59,7 +61,12 @@ pub(crate) async fn handle_post_session(req: Request<Body>, ctx: &Context) -> Re
 ///
 /// TODO: maybe notify the user about these failures?
 pub(crate) async fn handle_delete_session(req: Request<Body>, ctx: &Context) -> Response {
-    if !matches!(ctx.config.auth.mode, AuthMode::LoginProxy | AuthMode::Opencast) {
+    let is_enabled = matches!(ctx.config.auth.mode,
+        | AuthMode::LoginProxy
+        | AuthMode::Opencast
+        | AuthMode::LoginCallback
+    );
+    if !is_enabled {
         warn!("Got DELETE /~session request, but due to the authentication mode, this endpoint \
             is disabled");
 
@@ -103,10 +110,9 @@ const PASSWORD_FIELD: &str = "password";
 
 /// Handles `POST /~login` request.
 pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Response {
-    if ctx.config.auth.mode != AuthMode::Opencast {
-        warn!("Got POST /~login request, but 'auth.mode' is not 'opencast', \
-            so login requests have to be handled by your reverse proxy. \
-            Please see the documentation about auth.");
+    let is_enabled = matches!(ctx.config.auth.mode, AuthMode::Opencast | AuthMode::LoginCallback);
+    if !is_enabled {
+        warn!("Got POST /~login request, but due to 'auth.mode', this endpoint is disabled.");
         return Response::builder().status(StatusCode::NOT_FOUND).body(Body::empty()).unwrap();
     }
 
@@ -151,13 +157,36 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
 
 
     // Check the login data.
-    match check_opencast_login(&userid, &password, &ctx.config.opencast).await {
-        Err(e) => {
-            error!("Error occured while checking Opencast login data: {e}");
-            internal_server_error()
+    let user = match ctx.config.auth.mode {
+        AuthMode::Opencast => {
+            match check_opencast_login(&userid, &password, &ctx.config.opencast).await {
+                Err(e) => {
+                    error!("Error occured while checking Opencast login data: {e}");
+                    return internal_server_error();
+                }
+                Ok(user) => user,
+            }
         }
-        Ok(None) => Response::builder().status(StatusCode::FORBIDDEN).body(Body::empty()).unwrap(),
-        Ok(Some(user)) => create_session(user, ctx).await.unwrap_or_else(|e| e),
+        AuthMode::LoginCallback => {
+            let body = serde_json::json!({
+                "userid": userid,
+                "password": password,
+            });
+            let mut req = Request::new(body.to_string().into());
+            *req.method_mut() = hyper::Method::POST;
+            *req.uri_mut() = ctx.config.auth.callback_url.clone().unwrap();
+
+            match User::from_callback(req, &ctx.config.auth).await {
+                Err(e) => return e,
+                Ok(user) => user,
+            }
+        }
+        _ => unreachable!(),
+    };
+
+    match user {
+        None => Response::builder().status(StatusCode::FORBIDDEN).body(Body::empty()).unwrap(),
+        Some(user) => create_session(user, ctx).await.unwrap_or_else(|e| e),
     }
 }
 

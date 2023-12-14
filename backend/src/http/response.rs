@@ -35,3 +35,9 @@ pub(crate) fn not_found() -> Response {
         .unwrap()
 }
 
+pub(crate) fn bad_gateway() -> Response {
+    Response::builder()
+        .status(StatusCode::BAD_GATEWAY)
+        .body("Bad gateway: broken auth callback".into())
+        .unwrap()
+}

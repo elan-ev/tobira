@@ -127,6 +127,7 @@ impl Config {
     /// illegal or conflicting values.
     pub(crate) fn validate(&self) -> Result<()> {
         debug!("Validating configuration...");
+        self.auth.validate()?;
         self.opencast.validate()?;
         self.db.validate()?;
         self.theme.validate()?;
