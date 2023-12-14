@@ -86,6 +86,7 @@ export const TextBlock: React.FC<Props> = ({ content }) => (
         maxWidth: 1200,
         "& > *:first-of-type": { marginTop: 0 },
         "& > *:last-of-type": { marginBottom: 0 },
+        color: COLORS.neutral80,
         a: {
             borderRadius: 4,
             outlineOffset: 1,
