@@ -21,6 +21,7 @@ import { useRouter } from "../../../router";
 import { useState } from "react";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import { COLORS } from "../../../color";
+import { ManageRealmRoute } from ".";
 
 
 const fragment = graphql`
@@ -128,7 +129,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
             onCompleted: () => {
                 // We have to change the current URL path, otherwise the URL is invalid.
                 const newPath = realm.path.replace(pathSegmentRegex, data.pathSegment);
-                router.replace(`/~manage/realm?path=${newPath}`);
+                router.replace(ManageRealmRoute.url({ realmPath: newPath }));
             },
             onError: error => {
                 const failure = t("manage.realm.danger-zone.change-path.failed");

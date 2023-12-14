@@ -28,42 +28,46 @@ import { realmBreadcrumbs } from "../../../../util/realm";
 import { COLORS } from "../../../../color";
 
 
-export const PATH = "/~manage/realm/content";
+const PATH = "/~manage/realm/content";
 
-export const ManageRealmContentRoute = makeRoute(url => {
-    if (url.pathname !== PATH) {
-        return null;
-    }
+export const ManageRealmContentRoute = makeRoute({
+    url: ({ realmPath }: { realmPath: string }) =>
+        `${PATH}?${new URLSearchParams({ realm: realmPath })}`,
+    match: url => {
+        if (url.pathname !== PATH) {
+            return null;
+        }
 
-    const path = url.searchParams.get("path");
-    if (path === null) {
-        return null;
-    }
+        const path = url.searchParams.get("path");
+        if (path === null) {
+            return null;
+        }
 
-    const queryRef = loadQuery<ContentManageQuery>(query, { path });
+        const queryRef = loadQuery<ContentManageQuery>(query, { path });
 
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={data => data.realm
-                ? [
-                    <Nav key="main-nav" fragRef={data.realm} />,
-                    <RealmEditLinks key="edit-buttons" path={path} />,
-                ]
-                : []}
-            render={data => {
-                if (!data.realm) {
-                    return <PathInvalid />;
-                } else if (!data.realm.canCurrentUserEdit) {
-                    return <NotAuthorized />;
-                } else {
-                    return <ManageContent data={data} />;
-                }
-            }}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={data => data.realm
+                    ? [
+                        <Nav key="main-nav" fragRef={data.realm} />,
+                        <RealmEditLinks key="edit-buttons" path={path} />,
+                    ]
+                    : []}
+                render={data => {
+                    if (!data.realm) {
+                        return <PathInvalid />;
+                    } else if (!data.realm.canCurrentUserEdit) {
+                        return <NotAuthorized />;
+                    } else {
+                        return <ManageContent data={data} />;
+                    }
+                }}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const query = graphql`

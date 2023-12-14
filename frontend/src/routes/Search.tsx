@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { LuLayout, LuPlayCircle } from "react-icons/lu";
+import { IconType } from "react-icons";
 import { ReactNode, RefObject, useEffect } from "react";
 import { screenWidthAtMost, unreachable } from "@opencast/appkit";
 
@@ -18,28 +19,31 @@ import { ellipsisOverflowCss } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
 import { keyOfId } from "../util";
-import { IconType } from "react-icons";
+import { DirectVideoRoute, VideoRoute } from "./Video";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
 
-export const SearchRoute = makeRoute(url => {
-    if (url.pathname !== "/~search") {
-        return null;
-    }
+export const SearchRoute = makeRoute({
+    url: ({ query }: { query: string }) => `/~search?${new URLSearchParams({ q: query })}`,
+    match: url => {
+        if (url.pathname !== "/~search") {
+            return null;
+        }
 
-    const q = url.searchParams.get("q") ?? "";
-    const queryRef = loadQuery<SearchQuery>(query, { q });
+        const q = url.searchParams.get("q") ?? "";
+        const queryRef = loadQuery<SearchQuery>(query, { q });
 
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={() => []}
-            render={data => <SearchPage q={q} outcome={data.search} />}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={() => []}
+                render={data => <SearchPage q={q} outcome={data.search} />}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const query = graphql`
@@ -247,8 +251,8 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
     const link = hostRealms.length !== 1
-        ? `/!v/${(keyOfId(id))}`
-        : `${hostRealms[0].path.replace(/^\/$/, "")}/v/${keyOfId(id)}`;
+        ? DirectVideoRoute.url({ videoId: id })
+        : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
 
     return (
         <Item key={id} link={link}>

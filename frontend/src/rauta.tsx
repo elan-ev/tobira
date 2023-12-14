@@ -30,8 +30,11 @@ export type MatchedRoute = {
     dispose?: () => void;
 };
 
-/** Creates the internal representation of the given route. */
-export const makeRoute = (match: (url: URL) => MatchedRoute | null): Route => ({ match });
+// /** Creates the internal representation of the given route. */
+// export const makeRoute = (match: (url: URL) => MatchedRoute | null): Route => ({ match });
+
+/** Will replace `makeRoute` in the future. */
+export const makeRoute = <T extends Route>(obj: T): T => obj;
 
 /** Routing definition */
 interface Config {

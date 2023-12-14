@@ -6,7 +6,7 @@ import {
 import { graphql, VariablesOf } from "react-relay";
 import { match, useColorScheme } from "@opencast/appkit";
 
-import { ManageNav } from "..";
+import { ManageNav, ManageRoute } from "..";
 import { RootLoader } from "../../../layout/Root";
 import {
     EventSortColumn,
@@ -29,28 +29,31 @@ import { PageTitle } from "../../../layout/header/ui";
 import { COLORS } from "../../../color";
 
 
-export const PATH = "/~manage/videos";
+const PATH = "/~manage/videos" as const;
 
-export const ManageVideosRoute = makeRoute(url => {
-    if (url.pathname !== PATH) {
-        return null;
-    }
+export const ManageVideosRoute = makeRoute({
+    url: PATH,
+    match: url => {
+        if (url.pathname !== PATH) {
+            return null;
+        }
 
-    const vars = queryParamsToVars(url.searchParams);
-    const queryRef = loadQuery<VideoManageQuery>(query, vars);
+        const vars = queryParamsToVars(url.searchParams);
+        const queryRef = loadQuery<VideoManageQuery>(query, vars);
 
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={() => <ManageNav active={PATH} />}
-            render={data => !data.currentUser
-                ? <NotAuthorized />
-                : <ManageVideos vars={vars} connection={data.currentUser.myVideos} />
-            }
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={() => <ManageNav active={PATH} />}
+                render={data => !data.currentUser
+                    ? <NotAuthorized />
+                    : <ManageVideos vars={vars} connection={data.currentUser.myVideos} />
+                }
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const query = graphql`
@@ -118,7 +121,7 @@ const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
             height: "100%",
         }}>
             <Breadcrumbs
-                path={[{ label: t("user.manage-content"), link: "/~manage" }]}
+                path={[{ label: t("user.manage-content"), link: ManageRoute.url }]}
                 tail={title}
             />
             <PageTitle title={title} css={{ marginBottom: 32 }}/>

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { LuX } from "react-icons/lu";
 import { useRouter } from "../../router";
-import { handleNavigation, isSearchActive } from "../../routes/Search";
+import { handleNavigation, SearchRoute, isSearchActive } from "../../routes/Search";
 import { focusStyle } from "../../ui";
 import { Spinner } from "../../ui/Spinner";
 import { currentRef } from "../../util";
@@ -61,14 +61,13 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const lastTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     useEffect(() => () => clearTimeout(lastTimeout.current));
 
-    const defaultValue = isSearchActive()
+    const onSearchRoute = isSearchActive();
+    const defaultValue = onSearchRoute
         ? new URLSearchParams(document.location.search).get("q") ?? undefined
         : undefined;
 
-    const onSearchRoute = document.location.pathname === "/~search";
     const search = (expression: string) => {
-        const newUrl = `/~search?q=${encodeURIComponent(expression)}`;
-        router.goto(newUrl, onSearchRoute);
+        router.goto(SearchRoute.url({ query: expression }), onSearchRoute);
     };
 
     return (

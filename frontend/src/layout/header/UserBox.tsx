@@ -17,12 +17,14 @@ import { User, useUser } from "../../User";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
 import { Spinner } from "../../ui/Spinner";
-import { LOGIN_PATH } from "../../routes/paths";
-import { REDIRECT_STORAGE_KEY } from "../../routes/Login";
+import { LoginRoute, REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { focusStyle } from "../../ui";
 import { ExternalLink } from "../../relay/auth";
 import { COLORS } from "../../color";
 import { translatedConfig } from "../../util";
+import { UploadRoute } from "../../routes/Upload";
+import { ManageRoute } from "../../routes/manage";
+import { ManageVideosRoute } from "../../routes/manage/Video";
 
 
 
@@ -64,7 +66,7 @@ const LoggedOut: React.FC = () => {
 
     return (
         <Link
-            to={CONFIG.auth.loginLink ?? LOGIN_PATH}
+            to={CONFIG.auth.loginLink ?? LoginRoute.url}
             onClick={() => {
                 // Store a redirect link in session storage.
                 window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
@@ -178,7 +180,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
     const items: HeaderMenuProps["items"] = [
         {
             icon: <LuFolder />,
-            wrapper: <Link to="/~manage" />,
+            wrapper: <Link to={ManageRoute.url} />,
             children: t("user.manage-content"),
             css: { minWidth: 200 },
         },
@@ -190,13 +192,13 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         }] : [],
         {
             icon: <LuFilm />,
-            wrapper: <Link to="/~manage/videos" />,
+            wrapper: <Link to={ManageVideosRoute.url} />,
             children: t("manage.my-videos.title"),
             css: indent,
         },
         ...user.canUpload ? [{
             icon: <LuUpload />,
-            wrapper: <Link to="/~manage/upload" />,
+            wrapper: <Link to={UploadRoute.url} />,
             children: t("upload.title"),
             css: indent,
         }] : [],

@@ -1,6 +1,8 @@
 import React, { useId, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
+import { WithTooltip } from "@opencast/appkit";
+import { LuInfo } from "react-icons/lu";
 
 import { RootLoader } from "../../../layout/Root";
 import type {
@@ -21,52 +23,54 @@ import { AddChildMutation$data } from "./__generated__/AddChildMutation.graphql"
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
-import { pathToQuery, ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
+import { ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { realmBreadcrumbs } from "../../../util/realm";
 import { COLORS } from "../../../color";
-import { WithTooltip } from "@opencast/appkit";
-import { LuInfo } from "react-icons/lu";
+import { ManageRealmContentRoute } from "./Content";
 
 
-export const PATH = "/~manage/realm/add-child";
+const PATH = "/~manage/realm/add-child";
 
-export const AddChildRoute = makeRoute(url => {
-    if (url.pathname !== PATH) {
-        return null;
-    }
+export const AddChildRoute = makeRoute({
+    url: ({ parent }: { parent: string }) => `${PATH}?${new URLSearchParams({ parent })}`,
+    match: url => {
+        if (url.pathname !== PATH) {
+            return null;
+        }
 
-    const parent = url.searchParams.get("parent");
-    if (parent === null) {
-        return null;
-    }
+        const parent = url.searchParams.get("parent");
+        if (parent === null) {
+            return null;
+        }
 
-    const queryRef = loadQuery<AddChildQuery>(query, { parent });
+        const queryRef = loadQuery<AddChildQuery>(query, { parent });
 
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={data => data.parent
-                ? [
-                    <Nav key="main-nav" fragRef={data.parent} />,
-                    <RealmEditLinks key="edit-buttons" path={parent} />,
-                ]
-                : []}
-            render={data => {
-                const parent = data.parent;
-                if (!parent) {
-                    return <PathInvalid />;
-                } else if (!parent.canCurrentUserEdit) {
-                    return <NotAuthorized />;
-                } else {
-                    return <AddChild parent={parent} />;
-                }
-            }}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={data => data.parent
+                    ? [
+                        <Nav key="main-nav" fragRef={data.parent} />,
+                        <RealmEditLinks key="edit-buttons" path={parent} />,
+                    ]
+                    : []}
+                render={data => {
+                    const parent = data.parent;
+                    if (!parent) {
+                        return <PathInvalid />;
+                    } else if (!parent.canCurrentUserEdit) {
+                        return <NotAuthorized />;
+                    } else {
+                        return <AddChild parent={parent} />;
+                    }
+                }}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 
@@ -127,8 +131,8 @@ const AddChild: React.FC<Props> = ({ parent }) => {
             updater: store => store.invalidateStore(),
             onCompleted: response => {
                 const typedResponse = response as AddChildMutation$data;
-                const path = pathToQuery(typedResponse.addRealm.path);
-                router.goto(`/~manage/realm/content?path=${path}`);
+                const realmPath = typedResponse.addRealm.path;
+                router.goto(ManageRealmContentRoute.url({ realmPath }));
             },
             onError: error => {
                 setCommitError(displayCommitError(error, t("manage.add-child.failed-to-add")));

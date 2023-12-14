@@ -7,27 +7,30 @@ import { Nav } from "../layout/Navigation";
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
 import { AboutQuery } from "./__generated__/AboutQuery.graphql";
-import { ABOUT_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { PageTitle } from "../layout/header/ui";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { COLORS } from "../color";
 
+const PATH = "/~tobira";
 
-export const AboutRoute = makeRoute(url => {
-    if (url.pathname !== ABOUT_PATH) {
-        return null;
-    }
+export const AboutRoute = makeRoute({
+    url: PATH,
+    match: url => {
+        if (url.pathname !== PATH) {
+            return null;
+        }
 
-    const queryRef = loadQuery<AboutQuery>(query, {});
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            nav={data => <Nav fragRef={data.realm} />}
-            render={() => <About />}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        const queryRef = loadQuery<AboutQuery>(query, {});
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                nav={data => <Nav fragRef={data.realm} />}
+                render={() => <About />}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const query = graphql`

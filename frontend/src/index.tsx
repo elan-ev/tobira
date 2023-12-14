@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import "./i18n";
 import { matchInitialRoute } from "./router";
-import { REDIRECT_STORAGE_KEY } from "./routes/Login";
+import { LoginRoute, REDIRECT_STORAGE_KEY } from "./routes/Login";
 
 
 // Potentially redirect to previous page after login.
@@ -19,7 +19,7 @@ import { REDIRECT_STORAGE_KEY } from "./routes/Login";
 // a component to trigger a redirect. In fact, that approach would break in
 // `StrictMode`.
 const redirectTo = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY);
-if (window.location.pathname === "/~login" && redirectTo) {
+if (window.location.pathname === LoginRoute.url && redirectTo) {
     const newUri = new URL(redirectTo, document.baseURI).href;
     // eslint-disable-next-line no-console
     console.debug(`Requested login page after login: redirecting to previous page ${newUri}`);

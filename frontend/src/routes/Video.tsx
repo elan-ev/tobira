@@ -63,6 +63,9 @@ import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { CollapsibleDescription } from "../ui/metadata";
+import { DirectSeriesRoute } from "./Series";
+import { EmbedVideoRoute } from "./Embed";
+import { ManageVideoDetailsRoute } from "./manage/Video/Details";
 
 
 // ===========================================================================================
@@ -70,115 +73,128 @@ import { CollapsibleDescription } from "../ui/metadata";
 // ===========================================================================================
 
 /** Video in realm route: `/path/to/realm/v/<videoid>` */
-export const VideoRoute = makeRoute(url => {
-    const urlPath = url.pathname.replace(/^\/|\/$/g, "");
-    const parts = urlPath.split("/").map(decodeURIComponent);
-    if (parts.length < 2) {
-        return null;
-    }
-    if (parts[parts.length - 2] !== "v") {
-        return null;
-    }
-    const videoId = parts[parts.length - 1];
-    if (!videoId.match(b64regex)) {
-        return null;
-    }
-
-    const realmPathParts = parts.slice(0, parts.length - 2);
-    if (!isValidRealmPath(realmPathParts)) {
-        return null;
-    }
-
-    const query = graphql`
-        query VideoPageInRealmQuery($id: ID!, $realmPath: String!) {
-            ... UserData
-            event: eventById(id: $id) { ... VideoPageEventData }
-            realm: realmByPath(path: $realmPath) {
-                referencesVideo: references(id: $id)
-                ... VideoPageRealmData
-                ... NavigationData
-            }
+export const VideoRoute = makeRoute({
+    url: ({ realmPath, videoID }: { realmPath: string; videoID: string }) =>
+        `${realmPath === "/" ? "" : realmPath}/v/${videoID}`,
+    match: url => {
+        const urlPath = url.pathname.replace(/^\/|\/$/g, "");
+        const parts = urlPath.split("/").map(decodeURIComponent);
+        if (parts.length < 2) {
+            return null;
         }
-    `;
-    const realmPath = "/" + realmPathParts.join("/");
-    const queryRef = loadQuery<VideoPageInRealmQuery>(query, { id: eventId(videoId), realmPath });
+        if (parts[parts.length - 2] !== "v") {
+            return null;
+        }
+        const videoId = parts[parts.length - 1];
+        if (!videoId.match(b64regex)) {
+            return null;
+        }
 
-    return {
-        render: () => <RootLoader
-            {... { query, queryRef }}
-            nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-            render={({ event, realm }) => {
-                if (!event) {
-                    return <NotFound kind="video" />;
+        const realmPathParts = parts.slice(0, parts.length - 2);
+        if (!isValidRealmPath(realmPathParts)) {
+            return null;
+        }
+
+        const query = graphql`
+            query VideoPageInRealmQuery($id: ID!, $realmPath: String!) {
+                ... UserData
+                event: eventById(id: $id) { ... VideoPageEventData }
+                realm: realmByPath(path: $realmPath) {
+                    referencesVideo: references(id: $id)
+                    ... VideoPageRealmData
+                    ... NavigationData
                 }
+            }
+        `;
+        const realmPath = "/" + realmPathParts.join("/");
+        const queryRef = loadQuery<VideoPageInRealmQuery>(query, {
+            id: eventId(videoId),
+            realmPath,
+        });
 
-                if (!realm || !realm.referencesVideo) {
-                    return <ForwardToDirectRoute videoId={videoId} />;
-                }
+        return {
+            render: () => <RootLoader
+                {... { query, queryRef }}
+                nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+                render={({ event, realm }) => {
+                    if (!event) {
+                        return <NotFound kind="video" />;
+                    }
 
-                return <VideoPage
-                    eventRef={event}
-                    realmRef={realm}
-                    basePath={realmPath.replace(/\/$/u, "") + "/v"}
-                />;
-            }}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+                    if (!realm || !realm.referencesVideo) {
+                        return <ForwardToDirectRoute videoId={videoId} />;
+                    }
+
+                    return <VideoPage
+                        eventRef={event}
+                        realmRef={realm}
+                        basePath={realmPath.replace(/\/$/u, "") + "/v"}
+                    />;
+                }}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const ForwardToDirectRoute: React.FC<{ videoId: string }> = ({ videoId }) => {
     const router = useRouter();
-    useEffect(() => router.goto(`/!v/${videoId}`));
+    useEffect(() => router.goto(DirectVideoRoute.url({ videoId })));
     return <InitialLoading />;
 };
 
 /** Direct link to video with our ID: `/!v/<videoid>` */
-export const DirectVideoRoute = makeRoute(url => {
-    const regex = new RegExp(`^/!v/(${b64regex}+)/?$`, "u");
-    const params = regex.exec(url.pathname);
-    if (params === null) {
-        return null;
-    }
-
-    const query = graphql`
-        query VideoPageDirectLinkQuery($id: ID!) {
-            ... UserData
-            event: eventById(id: $id) { ... VideoPageEventData }
-            realm: rootRealm {
-                ... VideoPageRealmData
-                ... NavigationData
-            }
+export const DirectVideoRoute = makeRoute({
+    url: (args: { videoId: string }) => `/!v/${keyOfId(args.videoId)}`,
+    match: url => {
+        const regex = new RegExp(`^/!v/(${b64regex}+)/?$`, "u");
+        const params = regex.exec(url.pathname);
+        if (params === null) {
+            return null;
         }
-    `;
-    const videoId = decodeURIComponent(params[1]);
-    const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, { id: eventId(videoId) });
 
-    return matchedDirectRoute(query, queryRef);
+        const query = graphql`
+            query VideoPageDirectLinkQuery($id: ID!) {
+                ... UserData
+                event: eventById(id: $id) { ... VideoPageEventData }
+                realm: rootRealm {
+                    ... VideoPageRealmData
+                    ... NavigationData
+                }
+            }
+        `;
+        const videoId = decodeURIComponent(params[1]);
+        const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, { id: eventId(videoId) });
+
+        return matchedDirectRoute(query, queryRef);
+    },
 });
 
 /** Direct link to video with Opencast ID: `/!v/:<ocid>` */
-export const DirectOpencastVideoRoute = makeRoute(url => {
-    const regex = new RegExp("^/!v/:([^/]+)$", "u");
-    const matches = regex.exec(url.pathname);
-    if (!matches) {
-        return null;
-    }
-
-    const query = graphql`
-        query VideoPageDirectOpencastLinkQuery($id: String!) {
-            ... UserData
-            event: eventByOpencastId(id: $id) { ... VideoPageEventData }
-            realm: rootRealm {
-                ... VideoPageRealmData
-                ... NavigationData
-            }
+export const DirectOpencastVideoRoute = makeRoute({
+    url: (args: { ocID: string }) => `/!v/:${args.ocID}`,
+    match: url => {
+        const regex = new RegExp("^/!v/:([^/]+)$", "u");
+        const matches = regex.exec(url.pathname);
+        if (!matches) {
+            return null;
         }
-    `;
-    const videoId = decodeURIComponent(matches[1]);
-    const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, { id: videoId });
 
-    return matchedDirectRoute(query, queryRef);
+        const query = graphql`
+            query VideoPageDirectOpencastLinkQuery($id: String!) {
+                ... UserData
+                event: eventByOpencastId(id: $id) { ... VideoPageEventData }
+                realm: rootRealm {
+                    ... VideoPageRealmData
+                    ... NavigationData
+                }
+            }
+        `;
+        const videoId = decodeURIComponent(matches[1]);
+        const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, { id: videoId });
+
+        return matchedDirectRoute(query, queryRef);
+    },
 });
 
 
@@ -373,7 +389,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 "> button": { ...shrinkOnMobile },
             }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
-                    <LinkButton to={`/~manage/videos/${keyOfId(id)}`} css={{
+                    <LinkButton to={ManageVideoDetailsRoute.url({ videoId: id })} css={{
                         "&:not([disabled])": { color: COLORS.primary0 },
                         ...shrinkOnMobile,
                     }}>
@@ -608,7 +624,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             url.search = addEmbedTimestamp && timestamp
                 ? `?t=${secondsToTimeString(timestamp)}`
                 : "";
-            url.pathname = `/~embed/!v/${keyOfId(event.id)}`;
+            url.pathname = EmbedVideoRoute.url({ videoId: event.id });
 
             const embedCode = `<iframe ${[
                 'name="Tobira Player"',
@@ -823,7 +839,9 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
         pairs.push([
             t("video.part-of-series"),
             // eslint-disable-next-line react/jsx-key
-            <Link to={`/!s/${keyOfId(event.series.id)}`}>{event.series.title}</Link>,
+            <Link to={DirectSeriesRoute.url({ seriesId: event.series.id })}>
+                {event.series.title}
+            </Link>,
         ]);
     }
 

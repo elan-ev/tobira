@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
 import CONFIG from "../config";
 import { Link } from "../router";
-import { ABOUT_PATH } from "../routes/paths";
 import { translatedConfig } from "../util";
 import { COLORS } from "../color";
+import { AboutRoute } from "../routes/About";
 
 
 export const Footer: React.FC = () => {
@@ -36,7 +36,7 @@ export const Footer: React.FC = () => {
                 {CONFIG.footerLinks.map((entry, i) => {
                     if (entry === "about") {
                         return <li key={i}>
-                            <Link to={ABOUT_PATH}>{t("footer.about-tobira")}</Link>
+                            <Link to={AboutRoute.url}>{t("footer.about-tobira")}</Link>
                         </li>;
                     } else if (entry === "graphiql") {
                         return <li key={i}>

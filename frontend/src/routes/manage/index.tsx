@@ -22,26 +22,31 @@ import { useMenu } from "../../layout/MenuState";
 import CONFIG from "../../config";
 import { translatedConfig } from "../../util";
 import i18n from "../../i18n";
+import { UploadRoute } from "../Upload";
+import { ManageVideosRoute } from "./Video";
 
 
-const PATH = "/~manage";
+const PATH = "/~manage" as const;
 
-export const ManageRoute = makeRoute(url => {
-    if (url.pathname !== PATH) {
-        return null;
-    }
+export const ManageRoute = makeRoute({
+    url: PATH,
+    match: url => {
+        if (url.pathname !== PATH) {
+            return null;
+        }
 
-    const queryRef = loadQuery<ManageDashboardQuery>(query, {});
-    return {
+        const queryRef = loadQuery<ManageDashboardQuery>(query, {});
+        return {
 
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={() => <ManageNav active={PATH} />}
-            render={() => <Manage />}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={() => <ManageNav active={PATH} />}
+                render={() => <Manage />}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 
@@ -68,7 +73,7 @@ const Manage: React.FC = () => {
 
 
 type ManageNavProps = {
-    active?: "/~manage" | "/~manage/videos" | "/~manage/upload" | `/@${string}`;
+    active?: typeof PATH | typeof ManageVideosRoute.url | typeof UploadRoute.url | `/@${string}`;
 };
 
 export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
@@ -79,8 +84,8 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
 
     /* eslint-disable react/jsx-key */
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
-        ["/~manage", t("manage.dashboard.title"), <LuLayoutTemplate />],
-        ["/~manage/videos", t("manage.my-videos.title"), <LuFilm />],
+        [PATH, t("manage.dashboard.title"), <LuLayoutTemplate />],
+        [ManageVideosRoute.url, t("manage.my-videos.title"), <LuFilm />],
     ];
     if (isRealUser(user) && user.canCreateUserRealm) {
         entries.splice(
@@ -88,7 +93,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
         );
     }
     if (isRealUser(user) && user.canUpload) {
-        entries.push(["/~manage/upload", t("upload.title"), <LuUpload />]);
+        entries.push([UploadRoute.url, t("upload.title"), <LuUpload />]);
     }
     /* eslint-enable react/jsx-key */
 

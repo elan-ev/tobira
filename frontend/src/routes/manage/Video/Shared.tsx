@@ -8,12 +8,16 @@ import { loadQuery } from "../../../relay";
 import { ellipsisOverflowCss, LinkList, LinkWithIcon } from "../../../ui";
 import { NotAuthorized } from "../../../ui/error";
 import { NotFound } from "../../NotFound";
-import { PATH as MANAGE_VIDEOS_PATH } from ".";
 import { b64regex } from "../../util";
 import { Thumbnail } from "../../../ui/Video";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
 import { Link } from "../../../router";
 import { eventId, isExperimentalFlagSet, keyOfId } from "../../../util";
+import { DirectVideoRoute, VideoRoute } from "../../Video";
+import { ManageVideosRoute } from ".";
+import { ManageVideoDetailsRoute } from "./Details";
+import { ManageVideoTechnicalDetailsRoute } from "./TechnicalDetails";
+import { ManageVideoAccessRoute } from "./Access";
 
 
 export const PAGE_WIDTH = 1100;
@@ -29,38 +33,41 @@ export const makeManageVideoRoute = (
     page: ManageVideoSubPageType,
     path: string,
     render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
-): Route => (
-    makeRoute(url => {
-        const regex = new RegExp(`^/~manage/videos/(${b64regex}+)${path}/?$`, "u");
-        const params = regex.exec(url.pathname);
-        if (params === null) {
-            return null;
-        }
+): Route & { url: (args: { videoId: string }) => string } => (
+    makeRoute({
+        url: ({ videoId }: { videoId: string }) => `/~manage/videos/${keyOfId(videoId)}/${path}`,
+        match: url => {
+            const regex = new RegExp(`^/~manage/videos/(${b64regex}+)${path}/?$`, "u");
+            const params = regex.exec(url.pathname);
+            if (params === null) {
+                return null;
+            }
 
-        const videoId = decodeURIComponent(params[1]);
-        const queryRef = loadQuery<SharedVideoManageQuery>(query, { id: eventId(videoId) });
+            const videoId = decodeURIComponent(params[1]);
+            const queryRef = loadQuery<SharedVideoManageQuery>(query, { id: eventId(videoId) });
 
-        return {
-            render: () => <RootLoader
-                {...{ query, queryRef }}
-                noindex
-                nav={data => [
-                    <BackLink key={1} />,
-                    <ManageVideoNav key={2} event={data.event} active={page} />,
-                ]}
-                render={data => {
-                    if (data.event === null) {
-                        return <NotFound kind="video" />;
-                    }
-                    if (data.event.__typename !== "AuthorizedEvent" || !data.event.canWrite) {
-                        return <NotAuthorized />;
-                    }
+            return {
+                render: () => <RootLoader
+                    {...{ query, queryRef }}
+                    noindex
+                    nav={data => [
+                        <BackLink key={1} />,
+                        <ManageVideoNav key={2} event={data.event} active={page} />,
+                    ]}
+                    render={data => {
+                        if (data.event === null) {
+                            return <NotFound kind="video" />;
+                        }
+                        if (data.event.__typename !== "AuthorizedEvent" || !data.event.canWrite) {
+                            return <NotAuthorized />;
+                        }
 
-                    return render(data.event, data);
-                }}
-            />,
-            dispose: () => queryRef.dispose(),
-        };
+                        return render(data.event, data);
+                    }}
+                />,
+                dispose: () => queryRef.dispose(),
+            };
+        },
     })
 );
 
@@ -107,7 +114,7 @@ const query = graphql`
 const BackLink: React.FC = () => {
     const { t } = useTranslation();
     const items = [
-        <LinkWithIcon key={MANAGE_VIDEOS_PATH} to={MANAGE_VIDEOS_PATH} iconPos="left">
+        <LinkWithIcon key={ManageVideosRoute.url} to={ManageVideosRoute.url} iconPos="left">
             <LuCornerLeftUp />
             {t("manage.my-videos.title")}
         </LinkWithIcon>,
@@ -136,12 +143,12 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
 
     const entries = [
         {
-            url: `/~manage/videos/${id}`,
+            url: ManageVideoDetailsRoute.url({ videoId: id }),
             page: "details",
             body: <><LuPenLine />{t("manage.my-videos.details.title")}</>,
         },
         {
-            url: `/~manage/videos/${id}/technical-details`,
+            url: ManageVideoTechnicalDetailsRoute.url({ videoId: id }),
             page: "technical-details",
             body: <><LuInfo />{t("manage.my-videos.technical-details.title")}</>,
         },
@@ -149,7 +156,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
 
     if (isExperimentalFlagSet()) {
         entries.splice(1, 0, {
-            url: `/~manage/videos/${id}/access`,
+            url: ManageVideoAccessRoute.url({ videoId: id }),
             page: "acl",
             body: <><LuShield />{t("manage.my-videos.acl.title")}</>,
         });
@@ -162,8 +169,8 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
     ));
 
     const videoLink = event.hostRealms.length === 1
-        ? `${event.hostRealms[0].path.replace(/^\/$/, "")}/v/${id}`
-        : `/!v/${id}`;
+        ? VideoRoute.url({ realmPath: event.hostRealms[0].path, videoID: id })
+        : DirectVideoRoute.url({ videoId: id });
 
     const header = (
         <div css={{ display: "flex", flexDirection: "column" }}>

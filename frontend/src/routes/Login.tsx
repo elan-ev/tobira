@@ -17,7 +17,6 @@ import { Spinner } from "../ui/Spinner";
 import { LuCheck, LuChevronLeft, LuLogIn } from "react-icons/lu";
 import { Card } from "../ui/Card";
 import CONFIG from "../config";
-import { LOGIN_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { Header } from "../layout/header";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
@@ -28,17 +27,21 @@ import { focusStyle } from "../ui";
 
 
 export const REDIRECT_STORAGE_KEY = "tobira-redirect-after-login";
+const PATH = "/~login";
 
-export const LoginRoute = makeRoute(url => {
-    if (url.pathname !== LOGIN_PATH) {
-        return null;
-    }
+export const LoginRoute = makeRoute({
+    url: PATH,
+    match: url => {
+        if (url.pathname !== PATH) {
+            return null;
+        }
 
-    const queryRef = loadQuery<LoginQuery>(query, {});
-    return {
-        render: () => <Login queryRef={queryRef} />,
-        dispose: () => queryRef.dispose(),
-    };
+        const queryRef = loadQuery<LoginQuery>(query, {});
+        return {
+            render: () => <Login queryRef={queryRef} />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const query = graphql`
