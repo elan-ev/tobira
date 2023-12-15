@@ -2,8 +2,8 @@ import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { LuLayout, LuPlayCircle } from "react-icons/lu";
 import { IconType } from "react-icons";
-import { ReactNode, RefObject, useEffect } from "react";
-import { screenWidthAtMost, unreachable } from "@opencast/appkit";
+import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useState } from "react";
+import { screenWidthAbove, screenWidthAtMost, unreachable } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
@@ -18,7 +18,9 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
+import { BREAKPOINT as BREAKPOINT_NAV } from "../layout/Navigation";
 import { keyOfId } from "../util";
+import { Button } from "../ui/Button";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 
 
@@ -89,6 +91,9 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     const { t } = useTranslation();
     const router = useRouter();
 
+    const [filter, setFilter] = useState<Filter>("all");
+    const filterType: Filter[] = ["all", "videos", "pages"];
+
     useEffect(() => {
         const handleEscape = ((ev: KeyboardEvent) => {
             if (ev.key === "Escape") {
@@ -109,7 +114,7 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     } else if (outcome.__typename === "SearchResults") {
         body = outcome.items.length === 0
             ? <CenteredNote>{t("search.no-results")}</CenteredNote>
-            : <SearchResults items={outcome.items} />;
+            : <SearchResults items={outcome.items} {...{ filter }} />;
     } else {
         return unreachable("unknown search outcome");
     }
@@ -119,10 +124,63 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
             query: q,
             hits: outcome.__typename === "SearchResults" ? outcome.totalHits : 0,
         }) : t("search.no-query")} />
-        <div css={{ maxWidth: 950, margin: "0 auto" }}>
-            {body}
+        <div css={{
+            display: "grid",
+            gridTemplateColumns: "1fr 4fr 1fr",
+            [screenWidthAtMost(BREAKPOINT_NAV)]: {
+                display: "flex",
+                flexDirection: "column",
+            },
+        }}>
+            {/* Filter */}
+            <div css={{
+                [screenWidthAbove(BREAKPOINT_NAV)]: {
+                    marginTop: 16,
+                },
+            }}>
+                {
+                    // eslint-disable-next-line react/jsx-key
+                    filterType.map(type => <FilterButton {...{ type, filter, setFilter }} />)
+                }
+            </div>
+            {/* Search results */}
+            <div css={{ maxWidth: 950, margin: "0 auto" }}>
+                {body}
+            </div>
         </div>
     </>;
+};
+
+type Filter = "all" | "videos" | "pages";
+
+type FilterButtonProps = {
+    type: Filter;
+    filter: Filter;
+    setFilter: Dispatch<SetStateAction<Filter>>;
+}
+
+const FilterButton: React.FC<FilterButtonProps> = ({ type, filter, setFilter }) => {
+    const { t } = useTranslation();
+
+    return <Button
+        onClick={() => setFilter(type)}
+        disabled={filter === type}
+        css={{
+            width: "fit-content",
+            justifyContent: "center",
+            marginRight: 4,
+            [screenWidthAbove(BREAKPOINT_NAV)]: {
+                ":not(:first-child)": {
+                    marginTop: 4,
+                },
+            },
+            ":disabled": {
+                backgroundColor: COLORS.neutral30,
+                color: COLORS.neutral90,
+                border: `1px solid ${COLORS.neutral90}`,
+            },
+        }}
+    >{t(`search.filter-${type}`)}</Button>;
 };
 
 const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
@@ -135,16 +193,19 @@ type Results = Extract<SearchQuery$data["search"], { __typename: "SearchResults"
 
 type SearchResultsProps = {
     items: Results["items"];
+    filter: Filter;
 };
 
 const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "undefined"
     ? unreachable("type dependent field for search item is not set")
     : value;
 
-const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
+const SearchResults: React.FC<SearchResultsProps> = ({ items, filter }) => (
     <ul css={{ listStyle: "none", padding: 0 }}>
         {items.map(item => {
-            if (item.__typename === "SearchEvent") {
+            if (item.__typename === "SearchEvent" && (
+                filter === "all" || filter === "videos"
+            )) {
                 return <SearchEvent key={item.id} {...{
                     id: item.id,
                     title: unwrapUndefined(item.title),
@@ -161,7 +222,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
                 }}/>;
-            } else if (item.__typename === "SearchRealm") {
+            } else if (item.__typename === "SearchRealm" && (
+                filter === "all" || filter === "pages"
+            )) {
                 return <SearchRealm key={item.id} {...{
                     id: item.id,
                     name: unwrapUndefined(item.name),

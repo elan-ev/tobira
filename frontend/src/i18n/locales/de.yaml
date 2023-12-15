@@ -233,6 +233,9 @@ search:
   no-results: Keine Ergebnisse
   too-few-characters: Tippen Sie weitere Zeichen, um die Suche zu starten.
   unavailable: Die Suchfunktion ist zurzeit nicht verfügbar. Versuchen Sie es später erneut.
+  filter-all: Alle
+  filter-videos: Videos
+  filter-pages: Seiten
 
 upload:
   title: Video hochladen
