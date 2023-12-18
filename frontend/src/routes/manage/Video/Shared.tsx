@@ -15,9 +15,6 @@ import { Link } from "../../../router";
 import { eventId, isExperimentalFlagSet, keyOfId } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
-import { ManageVideoDetailsRoute } from "./Details";
-import { ManageVideoTechnicalDetailsRoute } from "./TechnicalDetails";
-import { ManageVideoAccessRoute } from "./Access";
 
 
 export const PAGE_WIDTH = 1100;
@@ -143,12 +140,12 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
 
     const entries = [
         {
-            url: ManageVideoDetailsRoute.url({ videoId: id }),
+            url: `/~manage/videos/${id}`,
             page: "details",
             body: <><LuPenLine />{t("manage.my-videos.details.title")}</>,
         },
         {
-            url: ManageVideoTechnicalDetailsRoute.url({ videoId: id }),
+            url: `/~manage/videos/${id}/technical-details`,
             page: "technical-details",
             body: <><LuInfo />{t("manage.my-videos.technical-details.title")}</>,
         },
@@ -156,7 +153,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
 
     if (isExperimentalFlagSet()) {
         entries.splice(1, 0, {
-            url: ManageVideoAccessRoute.url({ videoId: id }),
+            url: `/~manage/videos/${id}/access`,
             page: "acl",
             body: <><LuShield />{t("manage.my-videos.acl.title")}</>,
         });
