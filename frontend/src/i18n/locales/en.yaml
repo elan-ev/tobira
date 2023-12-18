@@ -234,6 +234,8 @@ search:
   filter-all: All
   filter-videos: Videos
   filter-pages: Pages
+  select-time-frame: Select time frame
+  clear-time-frame: Clear time frame
 
 upload:
   title: Upload video

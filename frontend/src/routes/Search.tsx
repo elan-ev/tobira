@@ -1,9 +1,17 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { LuLayout, LuPlayCircle } from "react-icons/lu";
+import { LuCalendarRange, LuLayout, LuPlayCircle, LuX } from "react-icons/lu";
 import { IconType } from "react-icons";
-import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useState } from "react";
-import { screenWidthAbove, screenWidthAtMost, unreachable } from "@opencast/appkit";
+import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
+import {
+    Floating,
+    FloatingContainer,
+    FloatingTrigger,
+    ProtoButton,
+    screenWidthAbove,
+    screenWidthAtMost,
+    unreachable,
+} from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
@@ -15,10 +23,9 @@ import { SmallDescription } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
-import { ellipsisOverflowCss } from "../ui";
+import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
-import { BREAKPOINT as BREAKPOINT_NAV } from "../layout/Navigation";
 import { keyOfId } from "../util";
 import { Button } from "../ui/Button";
 import { DirectVideoRoute, VideoRoute } from "./Video";
@@ -94,6 +101,10 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     const [filter, setFilter] = useState<Filter>("all");
     const filterType: Filter[] = ["all", "videos", "pages"];
 
+    const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
+    const dateRange = { startDate, endDate };
+
     useEffect(() => {
         const handleEscape = ((ev: KeyboardEvent) => {
             if (ev.key === "Escape") {
@@ -114,7 +125,7 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     } else if (outcome.__typename === "SearchResults") {
         body = outcome.items.length === 0
             ? <CenteredNote>{t("search.no-results")}</CenteredNote>
-            : <SearchResults items={outcome.items} {...{ filter }} />;
+            : <SearchResults items={outcome.items} {...{ filter, dateRange }} />;
     } else {
         return unreachable("unknown search outcome");
     }
@@ -127,28 +138,102 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
         <div css={{
             display: "grid",
             gridTemplateColumns: "1fr 4fr 1fr",
-            [screenWidthAtMost(BREAKPOINT_NAV)]: {
+            [screenWidthAtMost(1000)]: {
                 display: "flex",
                 flexDirection: "column",
             },
         }}>
-            {/* Filter */}
+            {/* Filters */}
             <div css={{
-                [screenWidthAbove(BREAKPOINT_NAV)]: {
-                    marginTop: 16,
+                [screenWidthAbove(1000)]: {
+                    padding: "16px 0",
                 },
             }}>
-                {
-                    // eslint-disable-next-line react/jsx-key
-                    filterType.map(type => <FilterButton {...{ type, filter, setFilter }} />)
-                }
+                <div css={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                }}>
+                    {/* Type */}
+                    {filterType.map((type, index) =>
+                        <FilterButton key={index} {...{ type, filter, setFilter }} />)
+                    }
+                    {/* Date */}
+                    <DatePicker {...{ startDate, endDate, setStartDate, setEndDate }} />
+                </div>
             </div>
             {/* Search results */}
-            <div css={{ maxWidth: 950, margin: "0 auto" }}>
+            <div css={{ width: "100%", maxWidth: 900, margin: "0 auto" }}>
                 {body}
             </div>
         </div>
     </>;
+};
+
+type DatePickerProps = {
+    startDate: string;
+    endDate: string;
+    setStartDate: Dispatch<SetStateAction<string>>;
+    setEndDate: Dispatch<SetStateAction<string>>;
+}
+
+const DatePicker: React.FC<DatePickerProps> = ({
+    startDate, endDate, setStartDate, setEndDate,
+}) => {
+    const { t } = useTranslation();
+    const ref = useRef(null);
+
+    const isActive = startDate || endDate;
+    const inputStyle = {
+        borderRadius: 4,
+        border: `1px solid ${COLORS.neutral40}`,
+        ...focusStyle({ width: 2, inset: true }),
+    };
+
+    return <FloatingContainer
+        {...{ ref }}
+        placement="top"
+        arrowSize={12}
+        ariaRole="dialog"
+        trigger="click"
+        viewPortMargin={12}
+    >
+        <FloatingTrigger>
+            <Button aria-label={t("search.select-time-frame")} css={{
+                height: 40,
+                ...isActive && {
+                    backgroundColor: COLORS.neutral30,
+                    "&&": {
+                        border: `1px solid ${COLORS.neutral90}`,
+                    },
+                },
+            }}><LuCalendarRange /></Button>
+        </FloatingTrigger>
+        <Floating css={{ padding: "0 8px 8px 8px" }}>
+            <p css={{ fontSize: 14, padding: "4px 2px" }}>{t("search.select-time-frame")}</p>
+            <div css={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+            }}>
+                {isActive && <ProtoButton
+                    aria-label={t("search.clear-time-frame")}
+                    css={{ display: "flex", alignItems: "center" }}
+                    onClick={() => {
+                        setStartDate("");
+                        setEndDate("");
+                    }}
+                ><LuX /></ProtoButton>}
+                <input value={startDate} css={inputStyle} type="date" onChange={e =>
+                    setStartDate(e.target.value)
+                } />
+                <span>-</span>
+                <input value={endDate} css={inputStyle} type="date" onChange={e =>
+                    setEndDate(e.target.value)
+                } />
+            </div>
+        </Floating>
+    </FloatingContainer>;
 };
 
 type Filter = "all" | "videos" | "pages";
@@ -168,12 +253,6 @@ const FilterButton: React.FC<FilterButtonProps> = ({ type, filter, setFilter }) 
         css={{
             width: "fit-content",
             justifyContent: "center",
-            marginRight: 4,
-            [screenWidthAbove(BREAKPOINT_NAV)]: {
-                ":not(:first-child)": {
-                    marginTop: 4,
-                },
-            },
             ":disabled": {
                 backgroundColor: COLORS.neutral30,
                 color: COLORS.neutral90,
@@ -194,19 +273,41 @@ type Results = Extract<SearchQuery$data["search"], { __typename: "SearchResults"
 type SearchResultsProps = {
     items: Results["items"];
     filter: Filter;
+    dateRange: {
+        startDate: string;
+        endDate: string;
+    };
 };
 
 const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "undefined"
     ? unreachable("type dependent field for search item is not set")
     : value;
 
-const SearchResults: React.FC<SearchResultsProps> = ({ items, filter }) => (
+const SearchResults: React.FC<SearchResultsProps> = ({ items, filter, dateRange }) => (
     <ul css={{ listStyle: "none", padding: 0 }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent" && (
                 filter === "all" || filter === "videos"
             )) {
-                return <SearchEvent key={item.id} {...{
+                const { startDate, endDate } = dateRange;
+                const included = () => {
+                    if (!startDate && !endDate || !item.created) {
+                        return true;
+                    }
+                    if (startDate && !endDate) {
+                        return startDate <= item.created;
+                    }
+                    if (!startDate && endDate) {
+                        return endDate >= item.created;
+                    }
+                    if (startDate && endDate) {
+                        return startDate <= item.created && endDate >= item.created;
+                    }
+                    return false;
+                };
+
+
+                return included() ? <SearchEvent key={item.id} {...{
                     id: item.id,
                     title: unwrapUndefined(item.title),
                     description: unwrapUndefined(item.description),
@@ -221,7 +322,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items, filter }) => (
                     startTime: unwrapUndefined(item.startTime),
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
-                }}/>;
+                }}/> : null;
             } else if (item.__typename === "SearchRealm" && (
                 filter === "all" || filter === "pages"
             )) {

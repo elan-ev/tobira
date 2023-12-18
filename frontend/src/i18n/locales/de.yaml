@@ -236,6 +236,8 @@ search:
   filter-all: Alle
   filter-videos: Videos
   filter-pages: Seiten
+  select-time-frame: Zeitraum auswählen
+  clear-time-frame: Zeitraum zurücksetzen
 
 upload:
   title: Video hochladen
