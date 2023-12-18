@@ -111,11 +111,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                                 search(e.target.value);
                             }, 30);
                         }}
-                        onKeyUp={() => {
-                            if (ref.current?.value === "") {
-                                handleNavigation(router, ref);
-                            }
-                        }}
                         css={{
                             flex: 1,
                             color: COLORS.neutral60,

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { LuLayout, LuPlaySquare } from "react-icons/lu";
+import { LuLayout, LuPlayCircle } from "react-icons/lu";
 import { ReactNode, RefObject, useEffect } from "react";
 import { screenWidthAtMost, unreachable } from "@opencast/appkit";
 
@@ -16,7 +16,7 @@ import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Br
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss } from "../ui";
 import { COLORS } from "../color";
-import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
+import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
 import { keyOfId } from "../util";
 import { IconType } from "react-icons";
 
@@ -182,24 +182,30 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
 
 type WithIconProps = React.PropsWithChildren<{
     Icon: IconType;
+    hideIconOnMobile?: boolean;
 }>;
 
-const WithIcon: React.FC<WithIconProps> = ({ Icon, children }) => (
+const WithIcon: React.FC<WithIconProps> = ({ Icon, children, hideIconOnMobile }) => (
     <div css={{
         display: "flex",
         flexDirection: "row",
-        gap: 6,
+        minWidth: 0,
+        gap: 24,
         [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
             flexDirection: "row-reverse",
             justifyContent: "space-between",
             paddingLeft: 4,
         },
     }}>
-        <Icon size={40} css={{ flexShrink: 0, color: COLORS.primary0 }} />
-        <div css={{
-            height: "96%",
-            borderLeft: `1px solid ${COLORS.neutral15}`,
-            alignSelf: "center",
+        <Icon size={30} css={{
+            flexShrink: 0,
+            color: COLORS.primary0,
+            strokeWidth: 1.5,
+            ...hideIconOnMobile && {
+                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                    display: "none",
+                },
+            },
         }} />
         {children}
     </div>
@@ -248,16 +254,45 @@ const SearchEvent: React.FC<SearchEventProps> = ({
 
     return (
         <Item key={id} link={link}>
-            <WithIcon Icon={LuPlaySquare}>
-                <div css={{ color: COLORS.neutral90 }}>
+            <WithIcon Icon={LuPlayCircle} hideIconOnMobile>
+                <div css={{
+                    color: COLORS.neutral90,
+                    marginRight: "clamp(12px, 4vw - 13px, 40px)",
+                    display: "flex",
+                    flexDirection: "column",
+                    minWidth: 0,
+                }}>
                     <h3 css={{
                         color: COLORS.primary0,
                         marginBottom: 6,
+                        fontSize: 17,
+                        lineHeight: 1.3,
                         ...ellipsisOverflowCss(2),
                     }}>{title}</h3>
-                    <Creators creators={creators} />
-                    <SmallDescription text={description} lines={3} />
-                    {seriesTitle && seriesId && <div css={{ fontSize: 14, marginTop: 4 }}>
+                    <Creators creators={creators} css={{
+                        ul: {
+                            display: "inline-block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                        },
+                        li: {
+                            display: "inline",
+                        },
+                    }} />
+                    {description && <SmallDescription
+                        text={description}
+                        lines={3}
+                    />}
+                    {seriesTitle && seriesId && <div css={{
+                        fontSize: 14,
+                        marginTop: "auto",
+                        paddingTop: 8,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        padding: 3,
+                    }}>
                         {t("video.part-of-series") + ": "}
                         <Link to={`/!s/${keyOfId(seriesId)}`} css={{
                             borderRadius: 4,
@@ -286,6 +321,14 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     minWidth: 270,
                     width: 270,
                     marginLeft: "auto",
+                    [screenWidthAtMost(800)]: {
+                        minWidth: 240,
+                        width: 240,
+                    },
+                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                        maxWidth: 400,
+                        margin: "0 auto",
+                    },
                 }}
             />
         </Item>
@@ -302,14 +345,14 @@ type SearchRealmProps = {
 const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, fullPath }) => (
     <Item key={id} link={fullPath}>
         <WithIcon Icon={LuLayout}>
-            <div css={{ color: COLORS.primary0 }}>
+            <div>
                 <BreadcrumbsContainer>
                     {ancestorNames.map((name, i) => <li key={i}>
                         {name ?? <MissingRealmName />}
                         <BreadcrumbSeparator />
                     </li>)}
                 </BreadcrumbsContainer>
-                <h3>{name ?? <MissingRealmName />}</h3>
+                <h3 css={{ color: COLORS.primary0 }}>{name ?? <MissingRealmName />}</h3>
             </div>
         </WithIcon>
     </Item>
@@ -334,8 +377,9 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
             backgroundColor: COLORS.neutral10,
         },
         [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-            flexDirection: "column",
+            flexDirection: "column-reverse",
             gap: 12,
+            margin: "16px 0",
             "& > *:last-child": {
                 width: "100%",
             },
