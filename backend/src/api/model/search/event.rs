@@ -23,11 +23,7 @@ impl search::Event {
     }
 
     fn series_id(&self) -> Option<Id> {
-        if let Some(id) = self.series_id {
-            Some(Id::search_series(id.0))
-        } else {
-            None
-        }
+        self.series_id.map(|id| Id::search_series(id.0))
     }
 
     fn series_title(&self) -> Option<&str> {

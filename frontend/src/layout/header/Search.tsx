@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { LuX } from "react-icons/lu";
 import { useRouter } from "../../router";
-import { STORAGE_KEY, handleNavigation, isSearchActive } from "../../routes/Search";
+import { handleNavigation, isSearchActive } from "../../routes/Search";
 import { focusStyle } from "../../ui";
 import { Spinner } from "../../ui/Spinner";
 import { currentRef } from "../../util";
@@ -110,11 +110,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                             lastTimeout.current = setTimeout(() => {
                                 search(e.target.value);
                             }, 30);
-                        }}
-                        onFocus={() => {
-                            if (!onSearchRoute) {
-                                window.sessionStorage.setItem(STORAGE_KEY, "true");
-                            }
                         }}
                         onKeyUp={() => {
                             if (ref.current?.value === "") {

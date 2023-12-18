@@ -21,7 +21,6 @@ import { keyOfId } from "../util";
 import { IconType } from "react-icons";
 
 
-export const STORAGE_KEY = "internal-origin";
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
 
 export const SearchRoute = makeRoute(url => {
@@ -84,12 +83,6 @@ type Props = {
 const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     const { t } = useTranslation();
     const router = useRouter();
-
-    // TODO: when navigating away from search, do `window.sessionStorage.removeItem(STORAGE_KEY)`.
-    // Otherwise this will still be set when a user visits an external url from the search route.
-    // The search query should also be cleared upon any navigation to prevent an edge case where
-    // it isn't cleared automatically after the search page has been reloaded and then navigated
-    // away from.
 
     useEffect(() => {
         const handleEscape = ((ev: KeyboardEvent) => {
@@ -186,10 +179,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     </ul>
 );
 
-type WithIconProps = {
+type WithIconProps = React.PropsWithChildren<{
     Icon: IconType;
-    children: ReactNode;
-};
+}>;
 
 const WithIcon: React.FC<WithIconProps> = ({ Icon, children }) => (
     <div css={{
@@ -366,12 +358,9 @@ export const handleNavigation = ((router: RouterControl, ref?: RefObject<HTMLInp
         // Why is this necessary? When a user reloads the search page and then navigates
         // away within Tobira, the search input isn't cleared like it would be usually.
         // So it needs to be done manually.
-        // Alternatively, I guess we could also ignore that edge case.
         ref.current.value = "";
     }
-    const internalOrigin = window.sessionStorage.getItem(STORAGE_KEY);
-    if (internalOrigin) {
-        window.sessionStorage.removeItem(STORAGE_KEY);
+    if (router.internalOrigin) {
         window.history.back();
     } else {
         router.goto("/");
