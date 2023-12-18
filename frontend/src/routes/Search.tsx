@@ -70,6 +70,7 @@ const query = graphql`
                     }
                     ... on SearchRealm { name path ancestorNames }
                 }
+                totalHits
             }
         }
     }
@@ -112,7 +113,7 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     return <>
         <Breadcrumbs path={[]} tail={t("search.title", {
             query: q,
-            hits: outcome.__typename === "SearchResults" ? outcome.items.length : 0,
+            hits: outcome.__typename === "SearchResults" ? outcome.totalHits : 0,
         })} />
         <div css={{ maxWidth: 950, margin: "0 auto" }}>
             {body}

@@ -43,12 +43,16 @@ pub(crate) enum SearchOutcome {
 
 pub(crate) struct SearchResults<T> {
     pub(crate) items: Vec<T>,
+    total_hits: usize,
 }
 
 #[juniper::graphql_object(Context = Context)]
 impl SearchResults<NodeValue> {
     fn items(&self) -> &[NodeValue] {
         &self.items
+    }
+    fn total_hits(&self) -> i32 {
+        self.total_hits as i32
     }
 }
 
@@ -122,13 +126,14 @@ pub(crate) async fn perform(
         let query = format!("select {selection} from search_events \
             where id = (select id from events where opencast_id = $1) \
             and (read_roles || 'ROLE_ADMIN'::text) && $2");
-        let items = context.db
+        let items: Vec<NodeValue> = context.db
             .query_opt(&query, &[&uuid_query, &context.auth.roles_vec()])
             .await?
             .map(|row| search::Event::from_row_start(&row).into())
             .into_iter()
             .collect();
-        return Ok(SearchOutcome::Results(SearchResults { items }));
+        let total_hits = items.len();
+        return Ok(SearchOutcome::Results(SearchResults { items, total_hits }));
     }
 
 
@@ -179,8 +184,10 @@ pub(crate) async fn perform(
     let mut merged = realms.chain(events).collect::<Vec<_>>();
     merged.sort_unstable_by(|(_, score0), (_, score1)| score1.unwrap().total_cmp(&score0.unwrap()));
 
+    let total_hits = [event_results.estimated_total_hits, realm_results.estimated_total_hits].into_iter().flatten().sum();
+
     let items = merged.into_iter().map(|(node, _)| node).collect();
-    Ok(SearchOutcome::Results(SearchResults { items }))
+    Ok(SearchOutcome::Results(SearchResults { items, total_hits }))
 }
 
 fn looks_like_opencast_uuid(query: &str) -> bool {
@@ -240,8 +247,9 @@ pub(crate) async fn all_events(
         .await;
     let results = handle_search_result!(res, EventSearchOutcome);
     let items = results.hits.into_iter().map(|h| h.result).collect();
+    let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(EventSearchOutcome::Results(SearchResults { items }))
+    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
 }
 
 // See `EventSearchOutcome` for additional information.
@@ -292,8 +300,9 @@ pub(crate) async fn all_series(
         .await;
     let results = handle_search_result!(res, SeriesSearchOutcome);
     let items = results.hits.into_iter().map(|h| h.result).collect();
+    let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(SeriesSearchOutcome::Results(SearchResults { items }))
+    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits }))
 }
 
 fn acl_filter(action: &str, context: &Context) -> Option<Filter> {
