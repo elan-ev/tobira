@@ -86,10 +86,6 @@ const GLOBAL_STYLE = css({
         // width: 320px. It does make sense to set a minimum width early on in
         // order to know where we can stop caring.
         minWidth: "var(--min-page-width)",
-
-        "& > div:first-of-type": {
-            height: "100%",
-        },
     },
     h1: {
         fontSize: 30,
