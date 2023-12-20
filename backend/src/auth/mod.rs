@@ -183,7 +183,7 @@ impl AuthConfig {
         if let Some(extra) = roles.find(is_user_role) {
             warn!(
                 "User '{username}' has multiple user roles ({user_role} and {extra}) \
-                    but there should be one unique user role per user. {note}",
+                    but there should be only one user role per user. {note}",
             );
         }
 

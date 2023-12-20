@@ -90,11 +90,7 @@ export const AclSelector: React.FC<AclSelectorProps> = (
     const change: AclContext["change"] = f => {
         const copy = new Map([...acl.entries()].map(([role, value]) => [role, {
             actions: new Set(value.actions),
-            info: value.info == null ? null : {
-                label: value.info.label,
-                implies: value.info.implies,
-                large: value.info.large,
-            },
+            info: value.info,
         }]));
         f(copy);
         onChange(copy);
@@ -376,7 +372,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     ) && (
                         <TableRow
                             labelCol={<>{t("acl.groups.admins")}</>}
-                            actionCol={<UnchangableAllActions />}
+                            actionCol={<UnchangeableAllActions />}
                         />
                     )}
                 </tbody>
@@ -446,7 +442,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
             } />}
         </>}
         mutedLabel={isSubset}
-        actionCol={immutable ? <UnchangableAllActions /> : <>
+        actionCol={immutable ? <UnchangeableAllActions /> : <>
             <ActionsMenu {...{ item, kind }} />
             {item.large && canWrite
                 ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
@@ -528,7 +524,7 @@ const Warning: React.FC<WarningProps> = ({ tooltip, info }) => (
     </WithTooltip>
 );
 
-const UnchangableAllActions = () => {
+const UnchangeableAllActions = () => {
     const { t } = useTranslation();
     return <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>;
 };

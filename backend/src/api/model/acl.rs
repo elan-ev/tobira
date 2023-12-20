@@ -93,26 +93,4 @@ where
             }),
         }
     }).await.map_err(Into::into)
-
-    // let mut labels = context.db.query_raw(&sql, params)
-    //     .await?
-    //     .map_ok(|row| (row.get::<_, String>(0), row.get::<_, Option<TranslatedString<String>>>(1)))
-    //     .try_collect::<HashMap<_, _>>()
-    //     .await?;
-
-    // // Assemble everything. This will likely change in the future once we
-    // // allow arbitrary actions.
-    // let mut map = <HashMap<_, Vec<String>>>::new();
-    // for (list, action) in [(&self.read_roles, "read"), (&self.write_roles, "write")] {
-    //     for role in list {
-    //         map.entry(role).or_default().push(action.into());
-    //     }
-    // }
-
-    // Ok(map.into_iter().map(|(role, actions)| AclItem {
-    //     role: role.into(),
-    //     // Roles are unique so we can `remove` her to avoid cloning.
-    //     label: labels.remove(role).flatten(),
-    //     actions,
-    // }).collect())
 }
