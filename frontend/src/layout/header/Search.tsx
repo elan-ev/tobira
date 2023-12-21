@@ -1,15 +1,17 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
+import { LuX } from "react-icons/lu";
 import { useRouter } from "../../router";
-import { isSearchActive } from "../../routes/Search";
+import { handleNavigation, isSearchActive } from "../../routes/Search";
 import { focusStyle } from "../../ui";
 import { Spinner } from "../../ui/Spinner";
 import { currentRef } from "../../util";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
-import { screenWidthAtMost } from "@opencast/appkit";
+import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
+
 
 type SearchFieldProps = {
     variant: "desktop" | "mobile";
@@ -23,6 +25,12 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     // Register global shortcut to focus search bar
     useEffect(() => {
         const handleShortcut = (ev: KeyboardEvent) => {
+            // Clear input field. See comment inside `handleNavigation` function
+            // in `routes/Search.tsx` for explanation. I'd rather do this here than
+            // needing to pass the input ref.
+            if (ev.key === "Escape" && ref.current) {
+                ref.current.value = "";
+            }
             // If any element is focussed that could receive character input, we
             // don't do anything.
             if (/^input|textarea|select|button$/i.test(document.activeElement?.tagName ?? "")) {
@@ -47,6 +55,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const height = 42;
     const spinnerSize = 24;
     const paddingSpinner = (height - spinnerSize) / 2;
+    const iconStyle = { position: "absolute", right: paddingSpinner, top: paddingSpinner } as const;
+
 
     const lastTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     useEffect(() => () => clearTimeout(lastTimeout.current));
@@ -128,8 +138,22 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             </form>
             {router.isTransitioning && isSearchActive() && <Spinner
                 size={spinnerSize}
-                css={{ position: "absolute", right: paddingSpinner, top: paddingSpinner }}
+                css={iconStyle}
             />}
+            {!router.isTransitioning && isSearchActive() && <ProtoButton
+                onClick={() => handleNavigation(router, ref)}
+                css={{
+                    ":hover, :focus": {
+                        color: COLORS.neutral90,
+                        borderColor: COLORS.neutral25,
+                        outline: `2.5px solid ${COLORS.neutral25}`,
+                    },
+                    ...focusStyle({}),
+                    borderRadius: 4,
+                    color: COLORS.neutral60,
+                    ...iconStyle,
+                }}
+            ><LuX size={spinnerSize} css={{ display: "block" }} /></ProtoButton>}
         </div>
     );
 };

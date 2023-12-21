@@ -22,6 +22,10 @@ impl search::Event {
         &self.title
     }
 
+    fn series_id(&self) -> Option<Id> {
+        self.series_id.map(|id| Id::search_series(id.0))
+    }
+
     fn series_title(&self) -> Option<&str> {
         self.series_title.as_deref()
     }

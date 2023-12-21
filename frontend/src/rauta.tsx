@@ -169,6 +169,11 @@ export interface RouterControl {
      * to show a loading indicator.
      */
     isTransitioning: boolean;
+
+    /**
+     * Indicates whether a user navigated to the current route from outside Tobira.
+     */
+    internalOrigin: boolean;
 }
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
@@ -261,6 +266,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 debugLog(`Setting active route for '${href}' (index ${currentIndex}) `
                     + "to: ", newRoute);
             },
+            internalOrigin: window.history.state.index > 0,
         };
     };
 

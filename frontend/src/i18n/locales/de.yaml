@@ -228,7 +228,8 @@ realm:
 
 search:
   input-label: Suche
-  title: Suchergebnisse für „{{query}}“
+  title: Suchergebnisse für „{{query}}“ ({{hits}} Treffer)
+  no-query: Suchergebnisse
   no-results: Keine Ergebnisse
   too-few-characters: Tippen Sie weitere Zeichen, um die Suche zu starten.
   unavailable: Die Suchfunktion ist zurzeit nicht verfügbar. Versuchen Sie es später erneut.

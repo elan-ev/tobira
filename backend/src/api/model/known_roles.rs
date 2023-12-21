@@ -119,5 +119,5 @@ pub(crate) async fn search_known_users(
         items.extend(results.hits.into_iter().map(|h| h.result));
     }
 
-    Ok(KnownUsersSearchOutcome::Results(SearchResults { items }))
+    Ok(KnownUsersSearchOutcome::Results(SearchResults { items, total_hits: None }))
 }
