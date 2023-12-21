@@ -1,6 +1,7 @@
 [general]
 site_title.en = "Tobira Test Deployment"
 tobira_url = "https://{% if id != 'master' %}{{id}}.{% endif %}tobira.opencast.org"
+users_searchable = true
 
 [general.metadata]
 dcterms.source = "builtin:source"
