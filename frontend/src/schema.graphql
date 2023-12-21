@@ -271,7 +271,7 @@ type Track {
 
 type SearchResults {
   items: [Node!]!
-  totalHits: Int
+  totalHits: Int!
 }
 
 input UpdateTextBlock {

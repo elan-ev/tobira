@@ -43,7 +43,7 @@ pub(crate) enum SearchOutcome {
 
 pub(crate) struct SearchResults<T> {
     pub(crate) items: Vec<T>,
-    pub(crate) total_hits: Option<usize>,
+    pub(crate) total_hits: usize,
 }
 
 #[juniper::graphql_object(Context = Context)]
@@ -51,8 +51,8 @@ impl SearchResults<NodeValue> {
     fn items(&self) -> &[NodeValue] {
         &self.items
     }
-    fn total_hits(&self) -> Option<i32> {
-        self.total_hits.map(|usize| usize as i32)
+    fn total_hits(&self) -> i32 {
+        self.total_hits as i32
     }
 }
 
@@ -133,7 +133,7 @@ pub(crate) async fn perform(
             .into_iter()
             .collect();
         let total_hits = items.len();
-        return Ok(SearchOutcome::Results(SearchResults { items, total_hits: Some(total_hits) }));
+        return Ok(SearchOutcome::Results(SearchResults { items, total_hits }));
     }
 
 
@@ -190,7 +190,7 @@ pub(crate) async fn perform(
         .sum();
 
     let items = merged.into_iter().map(|(node, _)| node).collect();
-    Ok(SearchOutcome::Results(SearchResults { items, total_hits: Some(total_hits) }))
+    Ok(SearchOutcome::Results(SearchResults { items, total_hits }))
 }
 
 fn looks_like_opencast_uuid(query: &str) -> bool {
@@ -252,7 +252,7 @@ pub(crate) async fn all_events(
     let items = results.hits.into_iter().map(|h| h.result).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits: Some(total_hits) }))
+    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
 }
 
 // See `EventSearchOutcome` for additional information.
@@ -305,7 +305,7 @@ pub(crate) async fn all_series(
     let items = results.hits.into_iter().map(|h| h.result).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits: Some(total_hits) }))
+    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits }))
 }
 
 fn acl_filter(action: &str, context: &Context) -> Option<Filter> {
