@@ -114,10 +114,18 @@ pub(crate) async fn search_known_users(
     // Run both loads concurrently and combine results.
     let (db_results, meili_results) = tokio::join!(db_load, meili_search);
     let mut items = db_results?;
+    let mut total_hits = items.len();
     if let Some(res) = meili_results {
         let results = handle_search_result!(res, KnownUsersSearchOutcome);
+
+        // Remove duplicates. This looks like quadratic time, but `items` (the
+        // DB result) will be very short, almost all the time having 0 or 1
+        // results. So this is fine.
+        items.retain(|item| !results.hits.iter().any(|h| h.result.user_role == item.user_role));
+        total_hits = items.len() + results.estimated_total_hits
+            .expect("no total hits estimate from Meili");
         items.extend(results.hits.into_iter().map(|h| h.result));
     }
 
-    Ok(KnownUsersSearchOutcome::Results(SearchResults { items, total_hits: None }))
+    Ok(KnownUsersSearchOutcome::Results(SearchResults { items, total_hits }))
 }
