@@ -111,10 +111,10 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     }
 
     return <>
-        <Breadcrumbs path={[]} tail={t("search.title", {
+        <Breadcrumbs path={[]} tail={q ? t("search.title", {
             query: q,
             hits: outcome.__typename === "SearchResults" ? outcome.totalHits : 0,
-        })} />
+        }) : t("search.no-query")} />
         <div css={{ maxWidth: 950, margin: "0 auto" }}>
             {body}
         </div>
