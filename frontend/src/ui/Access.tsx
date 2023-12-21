@@ -302,6 +302,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                                     return;
                                 }
 
+                                setError(null);
                                 callback(users.items.map(item => ({
                                     role: item.userRole,
                                     label: item.displayName,
