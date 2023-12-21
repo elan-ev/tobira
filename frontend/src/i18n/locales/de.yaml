@@ -291,6 +291,11 @@ manage:
   access:
     authorized-groups: Autorisierte Gruppen
     authorized-users: Autorisierte Personen
+    users-no-options:
+      initial-searchable: Nach Name suchen oder exakten Nutzernamen/exakte E-Mail angeben
+      none-found-searchable: Keine Personen gefunden
+      initial-not-searchable: Geben Sie Nutzernamen oder E-Mail an, um Personen hinzuzufügen
+      none-found-not-searchable: Keine Person mit diesem Nutzernamen bzw. dieser E-Mail gefunden
     select:
       groups: Gruppen hinzufügen
       users: Personen hinzufügen

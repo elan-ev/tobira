@@ -25,6 +25,7 @@ type Config = {
     auth: AuthConfig;
     siteTitle: TranslatedString;
     showDownloadButton: boolean;
+    usersSearchable: boolean;
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;

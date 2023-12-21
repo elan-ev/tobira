@@ -1,11 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{fmt, borrow::Cow};
-use meilisearch_sdk::errors::{
-    Error as MsError,
-    MeilisearchError as MsRespError,
-    ErrorCode as MsErrorCode,
-};
 
 use crate::{
     api::{
@@ -47,7 +42,7 @@ pub(crate) enum SearchOutcome {
 }
 
 pub(crate) struct SearchResults<T> {
-    items: Vec<T>,
+    pub(crate) items: Vec<T>,
 }
 
 #[juniper::graphql_object(Context = Context)]
@@ -73,7 +68,13 @@ impl SearchResults<search::Series> {
 
 
 macro_rules! handle_search_result {
-    ($res:expr, $return_type:ty) => {
+    ($res:expr, $return_type:ty) => {{
+        use meilisearch_sdk::errors::{
+            Error as MsError,
+            MeilisearchError as MsRespError,
+            ErrorCode as MsErrorCode,
+        };
+
         match $res {
             Ok(v) => v,
 
@@ -97,11 +98,12 @@ macro_rules! handle_search_result {
             }
 
             // All other errors just result in a general "internal server error".
-            Err(e) => return Err(e.into()),
+            Err(e) => return ApiResult::Err(e.into()),
         }
-
-    };
+    }};
 }
+
+pub(crate) use handle_search_result;
 
 
 /// Main entry point for the main search (including all items).

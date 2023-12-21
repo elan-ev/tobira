@@ -25,6 +25,7 @@ export type User = {
     canUseEditor: boolean;
     canCreateUserRealm: boolean;
     roles: readonly string[];
+    userRole: string;
 };
 
 export const isRealUser = (state: UserState): state is User => (
@@ -59,6 +60,7 @@ export const userDataFragment = graphql`
             canUseEditor
             canCreateUserRealm
             roles
+            userRole
         }
     }
 `;

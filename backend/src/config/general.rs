@@ -79,6 +79,14 @@ pub(crate) struct GeneralConfig {
     /// Example: ["/Shibboleth.sso", "/something-else"]
     #[config(default = [])]
     pub reserved_paths: Vec<String>,
+
+    /// Whether users are allowed to search through all known users, e.g. in the
+    /// ACL UI to grant a friend access to a video. If `false`, users in the
+    /// ACL selector can only be added by typing the exact username or email.
+    /// If this is `true` instead, it is possible to search for users by
+    /// (partial) name.
+    #[config(default = false)]
+    pub users_searchable: bool,
 }
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];

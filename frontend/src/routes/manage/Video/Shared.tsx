@@ -82,8 +82,7 @@ const query = graphql`
                 created
                 canWrite
                 isLive
-                readRoles
-                writeRoles
+                acl { role actions info { label implies large } }
                 syncedData {
                     duration
                     thumbnail

@@ -186,6 +186,8 @@ async fn status(meili: &Client) -> Result<()> {
     println!();
     index_status("realm", &meili.realm_index, meili.config.realm_index_name()).await?;
     println!();
+    index_status("user", &meili.user_index, meili.config.user_index_name()).await?;
+    println!();
 
     Ok(())
 }

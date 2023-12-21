@@ -56,6 +56,11 @@ scalar Cursor
 """
 union SearchOutcome = SearchUnavailable | EmptyQuery | SearchResults
 
+type KnownUser {
+  displayName: String!
+  userRole: String!
+}
+
 type RemovedRealm {
   parent: Realm
 }
@@ -119,13 +124,28 @@ type Series {
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
 }
 
-union EventSearchOutcome = SearchUnavailable | EventSearchResults
-
-input NewVideoBlock {
-  event: ID!
-  showTitle: Boolean!
-  showLink: Boolean!
+"Some extra information we know about a role."
+type RoleInfo {
+  """
+    A user-facing label for this role (group or person). If the label does
+    not depend on the language (e.g. a name), `{ "_": "Peter" }` is
+    returned.
+  """
+  label: TranslatedString!
+  """
+    For user roles this is `null`. For groups, it defines a list of other
+    group roles that this role implies. I.e. a user with this role always
+    also has these other roles.
+  """
+  implies: [String!]
+  """
+    Is `true` if this role represents a large group. Used to warn users
+    accidentally giving write access to large groups.
+  """
+  large: Boolean!
 }
+
+union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
 """
   A group selectable in the ACL UI. Basically a mapping from role to a nice
@@ -136,6 +156,12 @@ type KnownGroup {
   label: TranslatedString!
   implies: [String!]!
   large: Boolean!
+}
+
+input NewVideoBlock {
+  event: ID!
+  showTitle: Boolean!
+  showLink: Boolean!
 }
 
 type SyncedEventData implements Node {
@@ -155,6 +181,8 @@ interface Block {
   index: Int!
   realm: Realm!
 }
+
+union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 
 type NotAllowed {
   """
@@ -207,6 +235,7 @@ type AuthorizedEvent implements Node {
   series: Series
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!
+  acl: [AclItem!]!
 }
 
 "A block just showing some title."
@@ -327,6 +356,23 @@ type Realm implements Node {
   references(id: ID!): Boolean!
 }
 
+"A role being granted permission to perform certain actions."
+type AclItem {
+  "Role. In arrays of AclItems, no two items have the same `role`."
+  role: String!
+  """
+    List of actions this role can perform (e.g. `read`, `write`,
+    `annotate`). This is a set, i.e. no duplicate elements.
+  """
+  actions: [String!]!
+  """
+    Additional info we have about the role. Is `null` if the role is unknown
+    or is `ROLE_ANONYMOUS`, `ROLE_ADMIN` or `ROLE_USER`, as those are
+    handled in a special way in the frontend.
+  """
+  info: RoleInfo
+}
+
 union SeriesSearchOutcome = SearchUnavailable | SeriesSearchResults
 
 "Exactly one of `plain` or `block` has to be non-null."
@@ -414,6 +460,10 @@ type Caption {
   lang: String
 }
 
+type KnownUserSearchResults {
+  items: [KnownUser!]!
+}
+
 type RemovedBlock {
   id: ID!
   realm: Realm!
@@ -468,6 +518,13 @@ type Query {
     searched.
   """
   searchAllSeries(query: String!, writableOnly: Boolean!): SeriesSearchOutcome!
+  """
+    Searches through all known users. The behavior of this depends on the
+    `general.users_searchable` config value. If it is `false`, this returns
+    only users that have an exact match with the input query. The number of
+    results is limited to some fixed value.
+  """
+  searchKnownUsers(query: String!): KnownUsersSearchOutcome!
   "Returns all known groups selectable in the ACL UI."
   knownGroups: [KnownGroup!]!
 }
@@ -553,6 +610,12 @@ type User {
     This endpoint is only for debugging and for special cases like the ACL selector.
   """
   roles: [String!]!
+  """
+    Returns the *user role* of this user. Each user has exactly one and this
+    role is used in ACLs to give access to a single user. This role is
+    always also contained in `roles`.
+  """
+  userRole: String!
   "The name of the user intended to be read by humans."
   displayName: String!
   "`True` if the user has the permission to upload videos."

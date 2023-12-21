@@ -287,6 +287,11 @@ manage:
   access:
     authorized-groups: Authorized groups
     authorized-users: Authorized users
+    users-no-options:
+      initial-searchable: Type to search for users by name (or enter exact email/username)
+      none-found-searchable: No user found
+      initial-not-searchable: Enter username or email of the person you want to add
+      none-found-not-searchable: No user with that username/email found
     select:
       groups: Add groups
       users: Add users

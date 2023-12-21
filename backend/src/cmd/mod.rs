@@ -4,6 +4,7 @@ pub(crate) mod export_api_schema;
 pub(crate) mod import_realm_tree;
 pub(crate) mod check;
 pub(crate) mod known_groups;
+pub(crate) mod known_users;
 
 
 /// Reads stdin and returns an error if the trimmed input is not exactly "yes".

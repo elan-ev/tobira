@@ -1,20 +1,21 @@
 import { useTranslation } from "react-i18next";
+import { WithTooltip } from "@opencast/appkit";
+import { Dispatch, RefObject, SetStateAction, useRef, useState } from "react";
+import { LuInfo } from "react-icons/lu";
+import { useFragment } from "react-relay";
+
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { PageTitle } from "../../../layout/header/ui";
-import { Dispatch, RefObject, SetStateAction, useRef, useState } from "react";
 import { COLORS } from "../../../color";
-import { LuInfo } from "react-icons/lu";
 import { Button, Kind as ButtonKind } from "../../../ui/Button";
 import { isRealUser, useUser } from "../../../User";
 import { NotAuthorized } from "../../../ui/error";
-import { WithTooltip } from "@opencast/appkit";
 import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef, keyOfId } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
 import { Acl, AclSelector, knownRolesFragement } from "../../../ui/Access";
 import { useNavBlocker } from "../../util";
-import { useFragment } from "react-relay";
 import {
     AccessKnownRolesData$data,
     AccessKnownRolesData$key,
@@ -89,10 +90,12 @@ type AccessUIProps = {
 
 const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
 
-    const initialAcl: Acl = {
-        readRoles: new Set(event.readRoles),
-        writeRoles: new Set(event.writeRoles),
-    };
+    const initialAcl: Acl = new Map(
+        event.acl.map(item => [item.role, {
+            actions: new Set(item.actions),
+            info: item.info,
+        }])
+    );
 
     const [selections, setSelections] = useState<Acl>(initialAcl);
 
@@ -123,13 +126,15 @@ const ButtonWrapper: React.FC<ButtonWrapperProps> = ({ selections, setSelections
     const resetModalRef = useRef<ModalHandle>(null);
 
     const containsUser = (acl: Acl) => isRealUser(user)
-        && user.roles.some(r => r === COMMON_ROLES.ADMIN || acl.writeRoles.has(r));
+        && user.roles.some(r => r === COMMON_ROLES.ADMIN || acl.get(r)?.actions.has("write"));
 
-    const compareSets = (a: Set<string>, b: Set<string>) =>
+    const areSetsEqual = (a: Set<string>, b: Set<string>) =>
         a.size === b.size && [...a].every((str => b.has(str)));
-
-    const selectionIsInitial = compareSets(selections.readRoles, initialAcl.readRoles)
-        && compareSets(selections.writeRoles, initialAcl.writeRoles);
+    const selectionIsInitial = selections.size === initialAcl.size
+        && [...selections].every(([role, info]) => {
+            const other = initialAcl.get(role);
+            return other && areSetsEqual(other.actions, info.actions);
+        });
 
     const submit = async (acl: Acl) => {
         // TODO: Actually save new ACL.

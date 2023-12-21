@@ -73,6 +73,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                 && "canUseEditor" in user && typeof user.canUseEditor === "boolean"
                 && "canCreateUserRealm" in user && typeof user.canCreateUserRealm === "boolean"
                 && "roles" in user && isStringArray(user.roles)
+                && "userRole" in user && typeof user.userRole === "string"
             ) {
                 // `userData = user` unfortunately doesn't work here as the type
                 // of the `user` object is not sufficiently narrowed. Relevant
@@ -85,6 +86,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                     canUseEditor: user.canUseEditor,
                     canCreateUserRealm: user.canCreateUserRealm,
                     roles: user.roles,
+                    userRole: user.userRole,
                 };
             }
         }

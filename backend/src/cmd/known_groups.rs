@@ -58,7 +58,7 @@ pub(crate) async fn run(config: Config, args: &Args) -> Result<()> {
 
     match args {
         Args::List => list(tx).await?,
-        Args::Upsert { file } => upsert(&file, tx).await?,
+        Args::Upsert { file } => upsert(&file, &config, tx).await?,
         Args::Remove { roles } => remove(roles, tx).await?,
         Args::Clear => clear(tx).await?,
     }
@@ -104,7 +104,7 @@ async fn list(tx: Transaction<'_>) -> Result<()> {
 }
 
 
-async fn upsert(file: &str, tx: Transaction<'_>) -> Result<()> {
+async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> {
     // Read JSON
     let content = tokio::fs::read_to_string(file).await
         .context("failed to read the file")?;
@@ -115,6 +115,10 @@ async fn upsert(file: &str, tx: Transaction<'_>) -> Result<()> {
     for (role, info) in &groups {
         if info.label.is_empty() {
             bail!("No label given for {}", role.0);
+        }
+        if config.auth.user_role_prefixes.iter().any(|prefix| role.0.starts_with(prefix)) {
+            bail!("Role '{}' is a user role according to 'auth.user_role_prefixes'. \
+                This should be added as user, not as group.", role.0);
         }
     }
 
