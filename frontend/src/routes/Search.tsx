@@ -196,6 +196,11 @@ const WithIcon: React.FC<WithIconProps> = ({ Icon, children, hideIconOnMobile })
             justifyContent: "space-between",
             paddingLeft: 4,
         },
+        ...hideIconOnMobile && {
+            [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                justifyContent: "flex-end",
+            },
+        },
     }}>
         <Icon size={30} css={{
             flexShrink: 0,
