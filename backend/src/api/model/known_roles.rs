@@ -116,6 +116,12 @@ pub(crate) async fn search_known_users(
     let mut items = db_results?;
     if let Some(res) = meili_results {
         let results = handle_search_result!(res, KnownUsersSearchOutcome);
+
+        // Remove duplicates. This looks like quadratic time, but `items` (the
+        // DB result) will be very short, almost all the time having 0 or 1
+        // results. So this is fine.
+        items.retain(|item| !results.hits.iter().any(|h| h.result.user_role == item.user_role));
+
         items.extend(results.hits.into_iter().map(|h| h.result));
     }
 
