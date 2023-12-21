@@ -68,7 +68,7 @@
   "devDependencies": {
     "@emotion/babel-plugin": "^11.11.0",
     "@opencast/eslint-config-ts-react": "^0.1.0",
-    "@playwright/test": "^1.37.1",
+    "@playwright/test": "^1.40.1",
     "@types/react": "^18.2.21",
     "@types/react-beforeunload": "^2.1.1",
     "@types/react-dom": "^18.2.7",
