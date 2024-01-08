@@ -7,15 +7,21 @@ path: ''
 name: 'Welcome to Tobira'
 blocks:
   - text: |
-      Welcome to Tobira, a video portal for [Opencast](https://opencast.org)!
-      Tobira is fully open source and you can find its code
+      Welcome to *Tobira*, a video portal for [Opencast](https://opencast.org)!
+      It aims to be a pleasant interface through which users interact with
+      Opencast content. It lets you present videos and series in a customizable,
+      hierarchical page structure, but also makes it easy for users to search
+      through all media. Additionally, Tobira offers tools to upload and manage
+      videos. The project is fully open source and you can find its code
       [here](https://github.com/elan-ev/tobira).
 
-      What you are seeing here is the most recent development build (the latest `master`)
-      containing test data, mostly consisting of all CC-licensed videos from [the old video
-      portal of the ETHZ](https://video.ethz.ch/). The page structure is also borrowed
-      from that video portal. All of this is just to have meaningful data in a test
-      deployment. This is not a real website of the ETHZ!
+      To find out more, read [Tobira's documentation](https://elan-ev.github.io/tobira/)
+      or watch some [Tobira-related talks](https://tobira.opencast.org/!s/Oq6FEP0pP-v)
+      (also shown below).
+
+      What you are seeing here is the most recent development build containing
+      test data, mostly consisting of all CC-licensed videos and the page
+      structure from [ETHZ's old video portal](https://video.ethz.ch/).
 
   - series:
       series: { by_uuid: 94ecfeed-aa7d-4a5c-912b-58b5891543f4 }
@@ -25,16 +31,53 @@ blocks:
       series: { by_uuid: 8a430c59-7e04-4e4b-b532-b2fcad8de8d4 }
       show_title: true
       show_description: false
-  - title: Opencast Summit 2021
-  - text: |
-      The virtual Opencast Summit 2021, which took place in April of that year.
-      Of course, there have been Opencast summits every year after this one, but
-      you have to look for recordings of those elsewhere, sorry!
   - series:
-      series: { by_uuid: ec912549-5bac-4f97-b72a-ace807047aca }
-      show_title: false
-      show_description: false
+      series: { by_uuid: 9d2f81a2-aa03-4684-948b-28c145df4960 }
+      show_title: true
+      show_description: true
+  - title: More useful videos
+  - text: |
+      The following videos might be interesting to you:
+      - Under [*Live*](/live), you can find three 24/7 live streams.
+      - Under [*Test videos*](/test-videos) you can find additional test and dummy videos.
+      - You can watch past Opencast Summits under [Events › Opencast](/events/opencast).
+        However, only summits until 2021 are included as this text deployment data is not regularly
+        updated.
 children:
+  - path: 'test-videos'
+    name: 'Test videos'
+    blocks:
+      - text: |
+          This page contains various additional test videos. And this text block
+          also contains tests for various Markdown features.
+
+          > A block quote
+
+          An ordered list:
+          1. foo
+          2. bar
+          3. baz
+
+          You can also have `inline monofont` or even text blocks (unfortunately
+          without syntax highlighting, but oh well):
+
+          ```
+          fn main() {
+              println!("Ja guten Morgen, Welt");
+          }
+          ```
+
+          That's almost all. Here a horizontal line:
+
+          ---
+
+          And of course there is **bold** and *cursive* text.
+
+      - series:
+          series: { by_uuid: 3e586498-d00a-48c6-9c65-63c61acfc64a }
+          show_title: true
+          show_description: true
+
   - path: 'campus'
     name: 'Campus'
     children:
