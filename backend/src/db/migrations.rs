@@ -132,10 +132,7 @@ impl MigrationPlan {
     /// `done`, i.e. `true` if the DB is up to date after this method call.
     pub(crate) async fn execute_next(&self, tx: &Transaction<'_>) -> Result<bool> {
         let id = match self {
-            Self::UpToDate => {
-                info!("All migrations are already applied: database schema is up to date.");
-                return Ok(true);
-            }
+            Self::UpToDate => return Ok(true),
             Self::EmptyDb => {
                 create_meta_table_if_missing(tx).await?;
                 0
@@ -231,6 +228,10 @@ pub async fn migrate(db: &mut Client) -> Result<()> {
         // script runs in its own transaction. Otherwise certain things
         // (like adding a value to an enum) don't work.
         let plan = MigrationPlan::build(&tx).await?;
+        if matches!(plan, MigrationPlan::UpToDate) && migrations_executed == 0 {
+            info!("All migrations are already applied: database schema is up to date.");
+            return Ok(());
+        }
         let is_done = plan.execute_next(&tx).await?;
 
 
