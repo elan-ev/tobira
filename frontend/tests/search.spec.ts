@@ -21,7 +21,7 @@ test("Search", async ({ page }) => {
     });
 
     await test.step("Should show search results", async () => {
-        expect(page.getByText("Search results")).toBeVisible();
+        await expect(page.getByText("Search results")).toBeVisible();
         const results = page
             .locator("li")
             .filter({ hasText: "video" })
