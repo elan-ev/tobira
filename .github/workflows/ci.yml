@@ -101,7 +101,7 @@ jobs:
       run: cargo build ${{ env.ci_cargo_flags }} ${{ env.ci_cargo_target }}
     - name: Test backend
       working-directory: backend
-      run: cargo test ${{ env.ci_cargo_target }}
+      run: cargo test ${{ env.ci_cargo_flags }} ${{ env.ci_cargo_target }}
 
     - name: Move Tobira binary
       run: mv backend/${{ env.ci_targetdir }}/tobira tobira
@@ -140,12 +140,16 @@ jobs:
           tobira-meilisearch
 
     - name: Rebuild search index
-      working-directory: backend
-      run: cargo run -- search-index update
+      run: ./tobira search-index update --config util/dev-config/config.toml
 
     - name: Install Playwright browsers
       working-directory: frontend
       run: npx playwright install --with-deps
+    - name: Start Tobira for playwright tests
+      uses: JarvusInnovations/background-action@v1
+      with:
+        run: ./tobira serve --config util/dev-config/config.toml &
+        wait-on: http://localhost:3090
     - name: Run playwright tests
       working-directory: frontend
       run: npx playwright test
