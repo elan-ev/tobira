@@ -393,7 +393,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
 
     const sharedStyle = {
         padding: "20px 22px",
-        ...showButton && { paddingBottom: 26 },
+        ...showButton && { paddingBottom: 55 },
     };
 
     return <>

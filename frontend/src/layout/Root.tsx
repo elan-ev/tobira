@@ -81,6 +81,7 @@ export const Outer: React.FC<OuterProps> = ({ children, disableScrolling = false
 const Main: React.FC<{ children: ReactNode }> = ({ children }) => (
     <main css={{
         margin: OUTER_CONTAINER_MARGIN,
+        marginBottom: 48,
         padding: MAIN_PADDING,
         flexGrow: 1,
         display: "flex",
