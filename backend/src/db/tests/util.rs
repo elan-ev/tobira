@@ -136,8 +136,8 @@ impl TestDb {
 
     pub(super) async fn add_series_block(&self, realm: Key, series: Key, index: u8) -> Result<Key> {
         let row = self.query_one(
-            "insert into blocks (realm, index, type, series, show_title, videolist_order)
-                values ($1, $2, 'series', $3, true, 'new_to_old')
+            "insert into blocks (realm, index, type, series, show_title, videolist_order, videolist_view)
+                values ($1, $2, 'series', $3, true, 'new_to_old', 'gallery')
                 returning id",
             &[&realm, &(index as i16), &series],
         ).await?;
