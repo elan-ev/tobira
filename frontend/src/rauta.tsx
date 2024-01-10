@@ -266,7 +266,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                 debugLog(`Setting active route for '${href}' (index ${currentIndex}) `
                     + "to: ", newRoute);
             },
-            internalOrigin: window.history.state.index > 0,
+            internalOrigin: window.history.state?.index > 0,
         };
     };
 
