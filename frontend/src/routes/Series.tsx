@@ -107,7 +107,7 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
 
     return <div css={{ display: "flex", flexDirection: "column" }}>
         <PageTitle title={series.title} />
-        <p>{series.syncedData.description}</p>
+        <p css={{ maxWidth: "90ch" }}>{series.syncedData.description}</p>
         <div css={{ marginTop: 12 }}>
             <SeriesBlockFromSeries
                 title={t("series.videos.heading")}
