@@ -80,22 +80,28 @@ type InputWithCheckboxProps = {
 /** Checkbox with a label to enable/disable an adjacent input */
 export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = (
     { checkboxChecked, setCheckboxChecked, label, input }
-) => <div css={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-    <input
-        type="checkbox"
-        checked={checkboxChecked}
-        onChange={() => setCheckboxChecked(!checkboxChecked)}
-        css={{ marginRight: 8 }}
-    />
-    <label css={{
-        color: checkboxChecked ? COLORS.neutral90 : COLORS.neutral70,
-        fontSize: 14,
-        marginRight: 6,
-    }}>
-        {label}
-    </label>
-    {input}
-</div>;
+) => {
+    const id = useId();
+    return (
+        <div css={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+            <input
+                id={id}
+                type="checkbox"
+                checked={checkboxChecked}
+                onChange={() => setCheckboxChecked(!checkboxChecked)}
+                css={{ marginRight: 8 }}
+            />
+            <label htmlFor={id} css={{
+                color: checkboxChecked ? COLORS.neutral90 : COLORS.neutral70,
+                fontSize: 14,
+                marginRight: 6,
+            }}>
+                {label}
+            </label>
+            {input}
+        </div>
+    );
+};
 
 type TimeInputProps = {
     timestamp: number;
