@@ -90,7 +90,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 fontSize: 23,
                 color: COLORS.neutral60,
             }} />
-            <form onSubmit={() => {
+            <form onSubmit={event => {
+                event.preventDefault();
                 clearTimeout(lastTimeout.current);
                 search(currentRef(ref).value);
             }}>
