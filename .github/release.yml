@@ -8,5 +8,7 @@ changelog:
       labels: ['changelog:admin']
     - title: Changes primarily for developers
       labels: ['changelog:dev']
+    - title: 'NOPE: delete from changelog'
+      labels: ['changelog:nope']
     - title: No category
       labels: ['*']
