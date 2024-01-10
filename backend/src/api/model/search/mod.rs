@@ -1,3 +1,4 @@
+use chrono::Utc;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{fmt, borrow::Cow};
@@ -141,6 +142,11 @@ pub(crate) async fn perform(
     let filter = Filter::And(
         std::iter::once(Filter::Leaf("listed = true".into()))
             .chain(acl_filter("read_roles", context))
+            // Filter out live events that are already over.
+            .chain([Filter::Or([
+                Filter::Leaf("is_live = false ".into()),
+                Filter::Leaf(format!("end_time_timestamp >= {}", Utc::now().timestamp()).into()),
+            ].into())])
             .collect()
     ).to_string();
     let mut event_query = context.search.event_index.search();
