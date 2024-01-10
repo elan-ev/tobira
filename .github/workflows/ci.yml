@@ -145,6 +145,11 @@ jobs:
     - name: Install Playwright browsers
       working-directory: frontend
       run: npx playwright install --with-deps
+    - name: Start Tobira for playwright tests
+      uses: JarvusInnovations/background-action@v1
+      with:
+        run: ./tobira serve --config util/dev-config/config.toml &
+        wait-on: http://localhost:3090
     - name: Run playwright tests
       working-directory: frontend
       run: npx playwright test
