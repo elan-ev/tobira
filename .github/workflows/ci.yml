@@ -140,8 +140,7 @@ jobs:
           tobira-meilisearch
 
     - name: Rebuild search index
-      working-directory: backend
-      run: cargo run -- search-index update
+      run: ./tobira search-index update --config util/dev-config/config.toml
 
     - name: Install Playwright browsers
       working-directory: frontend
