@@ -101,7 +101,7 @@ jobs:
       run: cargo build ${{ env.ci_cargo_flags }} ${{ env.ci_cargo_target }}
     - name: Test backend
       working-directory: backend
-      run: cargo test ${{ env.ci_cargo_target }}
+      run: cargo test ${{ env.ci_cargo_flags }} ${{ env.ci_cargo_target }}
 
     - name: Move Tobira binary
       run: mv backend/${{ env.ci_targetdir }}/tobira tobira
