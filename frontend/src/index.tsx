@@ -23,7 +23,12 @@ if (window.location.pathname === "/~login" && redirectTo) {
     const newUri = new URL(redirectTo, document.baseURI).href;
     // eslint-disable-next-line no-console
     console.debug(`Requested login page after login: redirecting to previous page ${newUri}`);
-    window.history.replaceState(null, "", newUri);
+    const state = {
+        scrollY: 0,
+        index: 0,
+        ...window.history.state,
+    };
+    window.history.replaceState(state, "", newUri);
     window.sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
 }
 
