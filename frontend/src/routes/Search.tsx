@@ -9,7 +9,7 @@ import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graph
 import { RouterControl, makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link, useRouter } from "../router";
-import { Creators, isPastLiveEvent, Thumbnail } from "../ui/Video";
+import { Creators, Thumbnail } from "../ui/Video";
 import { SmallDescription } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
@@ -141,13 +141,6 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     <ul css={{ listStyle: "none", padding: 0 }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
-                // Filter out live events that are over
-                const endTime = unwrapUndefined(item.endTime);
-                const isLive = unwrapUndefined(item.isLive);
-                if (isPastLiveEvent(endTime, isLive)) {
-                    return null;
-                }
-
                 return <SearchEvent key={item.id} {...{
                     id: item.id,
                     title: unwrapUndefined(item.title),
@@ -157,11 +150,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     creators: unwrapUndefined(item.creators),
                     seriesTitle: unwrapUndefined(item.seriesTitle),
                     seriesId: unwrapUndefined(item.seriesId),
-                    isLive,
+                    isLive: unwrapUndefined(item.isLive),
                     audioOnly: unwrapUndefined(item.audioOnly),
                     created: unwrapUndefined(item.created),
                     startTime: unwrapUndefined(item.startTime),
-                    endTime,
+                    endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
                 }}/>;
             } else if (item.__typename === "SearchRealm") {

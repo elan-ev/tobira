@@ -25,6 +25,7 @@ pub(crate) struct Event {
     pub(crate) created: DateTime<Utc>,
     pub(crate) start_time: Option<DateTime<Utc>>,
     pub(crate) end_time: Option<DateTime<Utc>>,
+    pub(crate) end_time_timestamp: Option<i64>,
     pub(crate) is_live: bool,
     pub(crate) audio_only: bool,
 
@@ -65,6 +66,7 @@ impl_from_db!(
     },
     |row| {
         let host_realms = row.host_realms::<Vec<Realm>>();
+        let end_time = row.end_time();
         Self {
             id: row.id(),
             series_id: row.series(),
@@ -78,7 +80,8 @@ impl_from_db!(
             audio_only: row.audio_only(),
             created: row.created(),
             start_time: row.start_time(),
-            end_time: row.end_time(),
+            end_time,
+            end_time_timestamp: end_time.map(|date_time| date_time.timestamp()),
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed: host_realms.iter().any(|realm| !realm.is_user_realm()),
@@ -113,6 +116,6 @@ pub(super) async fn prepare_index(index: &Index) -> Result<()> {
         index,
         "event",
         &["title", "creators", "description", "series_title"],
-        &["listed", "read_roles", "write_roles"],
+        &["listed", "read_roles", "write_roles", "is_live", "end_time_timestamp"],
     ).await
 }
