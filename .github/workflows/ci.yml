@@ -56,7 +56,7 @@ jobs:
 
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
           echo "ci_cargo_flags=--profile=release-ci" >> $GITHUB_ENV
-          echo "ci_targetdir=${target_dir}/release" >> $GITHUB_ENV
+          echo "ci_targetdir=${target_dir}/release-ci" >> $GITHUB_ENV
           echo "ci_webpack_flags=production" >> $GITHUB_ENV
           echo "rust_cache_key2=release" >> $GITHUB_ENV
         else
