@@ -29,7 +29,7 @@
     "@babel/preset-typescript": "^7.22.15",
     "@emotion/cache": "^11.11.0",
     "@emotion/react": "^11.11.1",
-    "@opencast/appkit": "^0.1.4",
+    "@opencast/appkit": "^0.2.4",
     "@svgr/webpack": "^8.1.0",
     "babel-loader": "^9.1.3",
     "babel-plugin-relay": "^15.0.0",

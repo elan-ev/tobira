@@ -1,6 +1,5 @@
 import React, {
     ReactNode,
-    RefObject,
     createContext,
     useContext,
     useEffect,
@@ -417,7 +416,8 @@ const List: React.FC<ListProps> = ({ type, close }) => {
                     disabled={viewState === view}
                     Icon={icon}
                     {...sharedProps(view)}
-                    {...itemProps(index, () => setViewState(view))}
+                    {...itemProps(index)}
+                    onClick={() => setViewState(view)}
                 />)}
             </ul>
         </>,
@@ -428,7 +428,8 @@ const List: React.FC<ListProps> = ({ type, close }) => {
                     key={`${itemId}-${order}`}
                     disabled={eventOrder === order}
                     {...sharedProps(orderKey)}
-                    {...itemProps(index, () => setEventOrder(order))}
+                    {...itemProps(index)}
+                    onClick={() => setEventOrder(order)}
                 />)}
             </ul>
         </>,
@@ -451,10 +452,9 @@ type MenuItemProps = {
     onClick?: () => void;
     close: () => void;
     disabled: boolean;
-    ref: RefObject<HTMLElement>;
 };
 
-const MenuItem = React.forwardRef<HTMLElement, MenuItemProps>(({
+const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
     Icon, label, onClick, close, disabled,
 }, ref) => {
     const isDark = useColorScheme().scheme === "dark";

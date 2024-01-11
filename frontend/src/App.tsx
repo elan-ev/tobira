@@ -22,7 +22,7 @@ type Props = {
 export const App: React.FC<Props> = ({ initialRoute }) => (
     <StrictMode>
         <SilenceEmotionWarnings>
-            <ColorSchemeProvider>
+            <ColorSchemeProvider allowedSchemes={["light", "dark"]}>
                 <AppkitConfigProvider config={{
                     ...DEFAULT_CONFIG,
                     colors: {
