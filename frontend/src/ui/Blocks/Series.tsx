@@ -543,9 +543,9 @@ const Videos: React.FC<ViewProps> = ({ basePath, items }) => {
     });
 };
 
-const ITEM_MIN_SIZE = 240;
-const ITEM_MIN_SIZE_LARGE_SCREENS = 260;
-const ITEM_MAX_SIZE = 315;
+const ITEM_MIN_SIZE = 250;
+const ITEM_MIN_SIZE_SMALL_SCREENS = 240;
+const ITEM_MAX_SIZE = 330;
 const ITEM_MAX_SIZE_SMALL_SCREENS = 360;
 
 const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
@@ -618,7 +618,7 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
         columnGap: 12,
         rowGap: 28,
         [screenWidthAtMost(1600)]: {
-            gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE_LARGE_SCREENS}px, 1fr))`,
+            gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE_SMALL_SCREENS}px, 1fr))`,
         },
     }}>
         {items.map(({ event, active }) => (

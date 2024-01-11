@@ -53,7 +53,7 @@ const CSS_RESETS = css({
 
         // This prevents an increase in font size when changing from
         // portrait to landscape orientation in iOS safari.
-        "-webkit-text-size-adjust": "none",
+        WebkitTextSizeAdjust: "none",
     },
 
     // This improves the readability of underlines in links.
