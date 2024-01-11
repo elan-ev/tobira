@@ -52,8 +52,7 @@ import {
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
 import { getEventTimeInfo } from "../util/video";
-import { Creators, formatDuration } from "../ui/Video";
-import { Description } from "../ui/metadata";
+import { formatDuration } from "../ui/Video";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
@@ -63,6 +62,7 @@ import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
+import { CollapsibleDescription } from "../ui/metadata";
 
 
 // ===========================================================================================
@@ -352,50 +352,6 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
         },
     };
 
-    const descriptionRef = useRef<HTMLDivElement>(null);
-    const descriptionContainerRef = useRef<HTMLDivElement>(null);
-
-    const [expanded, setExpanded] = useState(false);
-    const [showButton, setShowButton] = useState(false);
-
-    const resizeObserver = new ResizeObserver(() => {
-        if (descriptionRef.current && descriptionContainerRef.current) {
-            setShowButton(
-                descriptionRef.current.scrollHeight > descriptionContainerRef.current.offsetHeight
-                || expanded,
-            );
-        }
-    });
-
-    useEffect(() => {
-        if (descriptionRef.current) {
-            resizeObserver.observe(descriptionRef.current);
-        }
-
-        return () => resizeObserver.disconnect();
-    });
-
-    const InnerDescription: React.FC<({ truncated?: boolean })> = ({ truncated = false }) => <>
-        <Creators creators={event.creators} css={{
-            fontWeight: "bold",
-            marginBottom: 12,
-        }} />
-        <Description
-            text={event.description}
-            css={{
-                color: COLORS.neutral80,
-                fontSize: 14,
-                maxWidth: "90ch",
-                ...truncated && ellipsisOverflowCss(6),
-            }}
-        />
-    </>;
-
-    const sharedStyle = {
-        padding: "20px 22px",
-        ...showButton && { paddingBottom: 55 },
-    };
-
     return <>
         <div css={{
             display: "flex",
@@ -407,7 +363,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
         }}>
             <div>
                 <VideoTitle title={event.title} />
-                <VideoDate event={event} />
+                <VideoDate {...{ event }} />
             </div>
             {/* Buttons */}
             <div css={{
@@ -426,7 +382,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                     </LinkButton>
                 )}
                 {CONFIG.showDownloadButton && <DownloadButton event={event} />}
-                <ShareButton event={event} />
+                <ShareButton {...{ event }} />
             </div>
         </div>
         <div css={{
@@ -441,52 +397,14 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 },
             },
         }}>
-            <div ref={descriptionContainerRef} css={{
-                flex: event.description ? "1 400px" : "1 200px",
-                alignSelf: "flex-start",
-                position: "relative",
-                overflow: "hidden",
-            }}>
-                <div ref={descriptionRef} css={{
-                    position: expanded ? "initial" : "absolute",
-                    top: 0,
-                    left: 0,
-                    ...sharedStyle,
-                }}><InnerDescription /></div>
-                <div css={{
-                    visibility: "hidden",
-                    ...sharedStyle,
-                    ...expanded && { display: "none" },
-                }}><InnerDescription truncated /></div>
-                <div css={{
-                    ...!showButton && { display: "none" },
-                    ...!expanded && {
-                        background: `linear-gradient(transparent, ${COLORS.neutral10} 60%)`,
-                    },
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    paddingTop: 30,
-                }}>
-                    <ProtoButton onClick={() => setExpanded(b => !b)} css={{
-                        textAlign: "center",
-                        width: "100%",
-                        fontSize: 12,
-                        padding: "4px 0",
-                        borderRadius: "0 0 8px 8px",
-                        ":hover, :focus-visible": { backgroundColor: COLORS.neutral15 },
-                        ...focusStyle({ inset: true }),
-                    }}>
-                        {expanded
-                            ? t("video.description.show-less")
-                            : t("video.description.show-more")
-                        }
-                    </ProtoButton>
-                </div>
-            </div>
+            <CollapsibleDescription
+                type="video"
+                description={event.description}
+                creators={event.creators}
+                bottomPadding={40}
+            />
             <div css={{ flex: "1 200px", alignSelf: "flex-start", padding: "20px 22px" }}>
-                <MetadataTable event={event} />
+                <MetadataTable {...{ event }} />
             </div>
         </div>
     </>;

@@ -1,9 +1,10 @@
-import { ReactNode, forwardRef } from "react";
+import { ReactNode, forwardRef, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useColorScheme } from "@opencast/appkit";
+import { ProtoButton, useColorScheme } from "@opencast/appkit";
 
-import { ellipsisOverflowCss } from ".";
+import { ellipsisOverflowCss, focusStyle } from ".";
 import { COLORS } from "../color";
+import { Creators } from "./Video";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -116,3 +117,118 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
         );
     },
 );
+
+type CollapsibleDescriptionProps = {
+    type: "series" | "video";
+    description: string | null;
+    creators?: readonly string[];
+    bottomPadding: number;
+}
+
+export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (
+    { type, description, creators, bottomPadding }
+) => {
+    const { t } = useTranslation();
+    const isVideo = type === "video";
+
+    const descriptionRef = useRef<HTMLDivElement>(null);
+    const descriptionContainerRef = useRef<HTMLDivElement>(null);
+
+    const [expanded, setExpanded] = useState(false);
+    const [showButton, setShowButton] = useState(false);
+
+    const resizeObserver = new ResizeObserver(() => {
+        if (descriptionRef.current && descriptionContainerRef.current) {
+            setShowButton(
+                descriptionRef.current.scrollHeight > descriptionContainerRef.current.offsetHeight
+                || expanded,
+            );
+        }
+    });
+
+    useEffect(() => {
+        if (descriptionRef.current) {
+            resizeObserver.observe(descriptionRef.current);
+        }
+
+        return () => resizeObserver.disconnect();
+    });
+
+    const InnerDescription: React.FC<({ truncated?: boolean })> = ({ truncated = false }) => <>
+        {creators && <Creators creators={creators} css={{
+            fontWeight: "bold",
+            marginBottom: 12,
+        }} />}
+        <Description
+            text={description}
+            css={{
+                color: COLORS.neutral80,
+                fontSize: 14,
+                maxWidth: isVideo ? "90ch" : "85ch",
+                ...truncated && ellipsisOverflowCss(6),
+            }}
+        />
+    </>;
+
+    const sharedStyle = {
+        padding: isVideo ? "20px 22px" : "8px 12px",
+        ...showButton && {
+            paddingBottom: expanded ? bottomPadding : 26,
+        },
+    };
+
+    return (
+        <div ref={descriptionContainerRef} css={{
+            flex: description ? "1 400px" : "1 200px",
+            alignSelf: "flex-start",
+            position: "relative",
+            overflow: "hidden",
+        }}>
+            <div ref={descriptionRef} css={{
+                position: expanded ? "initial" : "absolute",
+                top: 0,
+                left: 0,
+                ...sharedStyle,
+            }}><InnerDescription /></div>
+            <div css={{
+                visibility: "hidden",
+                ...sharedStyle,
+                ...expanded && { display: "none" },
+            }}><InnerDescription truncated /></div>
+            <div css={{
+                ...!showButton && { display: "none" },
+                ...!expanded && {
+                    background: `linear-gradient(transparent, ${COLORS.neutral10} 60%)`,
+                    paddingTop: 30,
+                },
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+            }}>
+                <ProtoButton onClick={() => setExpanded(b => !b)} css={{
+                    textAlign: "center",
+                    fontSize: 12,
+                    ...isVideo ? {
+                        borderRadius: "0 0 8px 8px",
+                        padding: "4px 0",
+                        width: "100%",
+                    } : {
+                        borderRadius: 8,
+                        padding: "4px 8px",
+                        marginLeft: 4,
+                    },
+                    ":hover, :focus-visible": { backgroundColor: COLORS.neutral15 },
+                    ...focusStyle({ inset: true }),
+                }}>
+                    <b>
+                        {expanded
+                            ? t("video.description.show-less")
+                            : t("video.description.show-more")
+                        }
+                    </b>
+                </ProtoButton>
+            </div>
+        </div>
+    );
+};

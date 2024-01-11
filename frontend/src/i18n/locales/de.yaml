@@ -145,7 +145,7 @@ video:
   starts: Startet 
   starts-in: Startet {{duration}}
   description:
-    show-more: Mehr anzeigen
+    show-more: ...mehr anzeigen
     show-less: Weniger anzeigen
   embed:
     copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren

@@ -28,7 +28,7 @@ import { RelativeDate } from "../time";
 import { Card } from "../Card";
 import { LuColumns, LuGrid, LuList, LuChevronLeft, LuChevronRight, LuPlay } from "react-icons/lu";
 import { keyframes } from "@emotion/react";
-import { Description, SmallDescription } from "../metadata";
+import { CollapsibleDescription, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { IconType } from "react-icons";
 import { COLORS } from "../../color";
@@ -207,18 +207,11 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     const eventsNotEmpty = series.events.length > 0;
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder }}>
-        {showMetadata && !showTitle && <Description
-            text={series.syncedData.description}
-            css={{ maxWidth: "85ch" }}
-        />}
-        <SeriesBlockContainer showViewOptions={eventsNotEmpty} title={finalTitle}>
-            {showMetadata && showTitle && series.syncedData.description && <>
-                <Description
-                    text={series.syncedData.description}
-                    css={{ fontSize: 14, padding: "14px 14px 0 14px", maxWidth: "85ch" }}
-                />
-                <hr css={{ margin: "20px 0" }} />
-            </>}
+        <SeriesBlockContainer
+            showViewOptions={eventsNotEmpty}
+            title={finalTitle}
+            description={showMetadata ? series.syncedData.description : null}
+        >
             {!eventsNotEmpty
                 ? <div css={{ padding: 14 }}>{t("series.no-events")}</div>
                 : <>
@@ -238,6 +231,7 @@ type Event = SeriesBlockSeriesData$data["events"][0];
 
 type SeriesBlockContainerProps = {
     title?: string;
+    description?: string | null;
     children: ReactNode;
     showViewOptions: boolean;
 };
@@ -255,7 +249,7 @@ const ViewContext = createContext<ViewContext>({
 });
 
 const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
-    { title, children, showViewOptions },
+    { title, description, children, showViewOptions },
 ) => {
     const [viewState, setViewState] = useState<View>("gallery");
     const isDark = useColorScheme().scheme === "dark";
@@ -268,32 +262,51 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
             borderRadius: 10,
             ...isDark && darkModeBoxShadow,
         }}>
-            <div css={{
-                display: "flex",
-                [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
-                    flexWrap: "wrap",
-                },
-            }}>
-                {title && <h2 css={{
-                    display: "inline-block",
-                    padding: "8px 12px",
-                    color: isDark ? COLORS.neutral90 : COLORS.neutral80,
-                    fontSize: 20,
-                    lineHeight: 1.3,
-                }}>{title}</h2>}
-                {showViewOptions && <div css={{
+            <>
+                <div css={{
                     display: "flex",
-                    alignItems: "center",
-                    alignSelf: "flex-start",
-                    marginLeft: "auto",
-                    fontSize: 14,
-                    gap: 16,
-                    padding: 5,
+                    justifyContent: "space-between",
+                    ...title && description && { flexDirection: "column" },
+                    [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
+                        flexWrap: "wrap",
+                    },
                 }}>
-                    <OrderMenu />
-                    <ViewMenu/>
-                </div>}
-            </div>
+                    {title && <h2 css={{
+                        display: "inline-block",
+                        padding: "8px 12px",
+                        color: isDark ? COLORS.neutral90 : COLORS.neutral80,
+                        fontSize: 20,
+                        lineHeight: 1.3,
+                    }}>{title}</h2>}
+                    <div css={{
+                        display: "flex",
+                        flexDirection: "row",
+                        flexGrow: 1,
+                        [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
+                            flexWrap: "wrap",
+                        },
+                    }}>
+                        {description && <CollapsibleDescription
+                            type="series"
+                            bottomPadding={32}
+                            {...{ description }}
+                        />}
+                        {showViewOptions && <div css={{
+                            display: "flex",
+                            alignItems: "center",
+                            alignSelf: description ? "flex-end" : "flex-start",
+                            marginLeft: "auto",
+                            fontSize: 14,
+                            gap: 16,
+                            padding: 5,
+                        }}>
+                            <OrderMenu />
+                            <ViewMenu/>
+                        </div>}
+                    </div>
+                </div>
+                {description && <hr css={{ margin: "12px 6px 20px 6px" }} />}
+            </>
             {children}
         </div>
     </ViewContext.Provider>;
