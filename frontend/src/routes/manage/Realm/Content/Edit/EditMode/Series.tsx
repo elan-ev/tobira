@@ -101,17 +101,19 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             css={{
                 display: "flex",
                 flexDirection: "row",
+                flexWrap: "wrap",
                 marginTop: 12,
-                marginRight: 48,
-                justifyContent: "space-between",
-                maxWidth: 400,
+                justifyContent: "start",
                 [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                     flexDirection: "column",
                     gap: 12,
                 },
             }}
         >
-            <div>
+            <div css={{
+                marginRight: 36,
+                marginBottom: 12,
+            }}>
                 <Heading>{t("series.settings.order")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
                     {
@@ -140,7 +142,10 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                     },
                 ]} />
             </div>
-            <div>
+            <div css={{
+                marginRight: 36,
+                marginBottom: 12,
+            }}>
                 <Heading>{t("series.settings.view")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
                     {
@@ -163,7 +168,10 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                     },
                 ]} />
             </div>
-            <div>
+            <div css={{
+                marginRight: 36,
+                marginBottom: 12,
+            }}>
                 <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
                 <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
                     {
