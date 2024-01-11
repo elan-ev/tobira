@@ -92,18 +92,22 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             onChange={data => seriesField.onChange(data?.id)}
             onBlur={seriesField.onBlur}
         />
-        <div css={{
-            display: "flex",
-            flexDirection: "row",
-            marginTop: 12,
-            marginRight: 48,
-            justifyContent: "space-between",
-            maxWidth: 400,
-            [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                flexDirection: "column",
-                gap: 12,
-            },
-        }}>
+        <div
+            role="group"
+            aria-labelledby={t("manage.realm.content.display-options")}
+            css={{
+                display: "flex",
+                flexDirection: "row",
+                marginTop: 12,
+                marginRight: 48,
+                justifyContent: "space-between",
+                maxWidth: 400,
+                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                    flexDirection: "column",
+                    gap: 12,
+                },
+            }}
+        >
             <div>
                 <Heading>{t("series.settings.order")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[

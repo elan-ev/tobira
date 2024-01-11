@@ -475,6 +475,7 @@ manage:
       show-title: Show title
       show-link: Show link to video page
       show-description: Show description
+      display-options: Display options
 
       cancel: Discard
       confirm-cancel: Discard changes?

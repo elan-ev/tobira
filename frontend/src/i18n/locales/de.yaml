@@ -490,6 +490,7 @@ manage:
       show-title: Titel anzeigen
       show-link: Link zur Videoseite anzeigen
       show-description: Beschreibung anzeigen
+      display-options: Anzeigeoptionen
 
       cancel: Verwerfen
       confirm-cancel: Änderungen verwerfen?
