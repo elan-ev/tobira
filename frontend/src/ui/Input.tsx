@@ -6,6 +6,7 @@ import { Button } from "./Button";
 import { COLORS } from "../color";
 import { timeStringToSeconds } from "../util";
 import { focusStyle } from ".";
+import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 
 
 const style = (error: boolean) => ({
@@ -293,3 +294,36 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
         </div>
     );
 };
+
+type DisplayOptionGroup<TFieldValues extends FieldValues> = {
+    form: UseFormReturn<TFieldValues>;
+    type: "radio" | "checkbox";
+    optionProps: {
+        option: Path<TFieldValues>;
+        title: string;
+        checked?: boolean;
+        value?: string;
+    }[];
+}
+
+/** Group of input elements to be used with react-hook-form */
+export function DisplayOptionGroup<TFieldValues extends FieldValues>(
+    { form, type, optionProps }: DisplayOptionGroup<TFieldValues>
+): JSX.Element {
+    const id = useId();
+
+    return <div css={{ display: "flex", flexDirection: "column", marginTop: 8 }}>
+        {optionProps.map(({ option, title, checked, value }, index) =>
+            <label key={`${id}-${option}${index}`} css={{ display: "flex" }}>
+                <input
+                    {...{ type, value }}
+                    defaultChecked={checked}
+                    {...form.register(option)}
+                    style={{ marginRight: 6 }}
+                />
+                {title}
+            </label>)
+        }
+    </div>;
+}
+

@@ -1,12 +1,11 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { useController, useFormContext, UseFormReturn } from "react-hook-form";
-import { match } from "@opencast/appkit";
+import { useController, useFormContext } from "react-hook-form";
 
 import { Card } from "../../../../../../ui/Card";
 import { EditModeForm } from ".";
-import { Heading, NiceRadio, NiceRadioOption } from "./util";
+import { Heading } from "./util";
 import type {
     VideoListOrder,
     SeriesEditModeBlockData$key,
@@ -17,17 +16,18 @@ import {
 import {
     SeriesEditCreateMutation,
 } from "./__generated__/SeriesEditCreateMutation.graphql";
-import { BREAKPOINT_MEDIUM } from "../../../../../../GlobalStyle";
 import { SeriesSelector } from "../../../../../../ui/SearchableSelect";
+import { DisplayOptionGroup } from "../../../../../../ui/Input";
+import { screenWidthAtMost } from "@opencast/appkit";
+import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";
 
 
 type SeriesFormData = {
     series: string;
     order: VideoListOrder;
-    layout: Layout;
+    showTitle: boolean;
+    showMetadata: boolean;
 };
-
-type Layout = "videos-only" | "title-and-videos" | "description-and-videos" | "everything";
 
 type EditSeriesBlockProps = {
     block: SeriesEditModeBlockData$key;
@@ -41,7 +41,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 opencastId
                 title
                 syncedData {
-                    # only queried to see wether syncedData is null
+                    # only queried to see whether syncedData is null
                     description
                 }
             }
@@ -50,10 +50,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             order
         }
     `, blockRef);
-    const currentLayout = showTitle
-        ? (showMetadata ? "everything" : "title-and-videos")
-        : (showMetadata ? "description-and-videos" : "videos-only");
-
 
     const [save] = useMutation<SeriesEditSaveMutation>(graphql`
         mutation SeriesEditSaveMutation($id: ID!, $set: UpdateSeriesBlock!) {
@@ -72,17 +68,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         }
     `);
 
-    const mapFormData = ({ layout, order, series }: SeriesFormData) => {
-        const [showTitle, showMetadata] = match(layout, {
-            "videos-only": () => [false, false],
-            "title-and-videos": () => [true, false],
-            "description-and-videos": () => [false, true],
-            "everything": () => [true, true],
-        });
-
-        return { series, order, showTitle, showMetadata };
-    };
-
     const { t } = useTranslation();
 
     const form = useFormContext<SeriesFormData>();
@@ -94,7 +79,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         rules: { required: true },
     });
 
-    return <EditModeForm create={create} save={save} map={mapFormData}>
+    return <EditModeForm create={create} save={save} map={(data: SeriesFormData) => data}>
         <Heading>{t("manage.realm.content.series.series.heading")}</Heading>
         {"series" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
@@ -107,53 +92,54 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             onChange={data => seriesField.onChange(data?.id)}
             onBlur={seriesField.onBlur}
         />
-
-        <Heading>{t("series.settings.order")}</Heading>
-        <NiceRadio breakpoint={0}>
-            <NiceRadioOption
-                value="NEW_TO_OLD"
-                defaultChecked={order === "NEW_TO_OLD"}
-                {...form.register("order")}
-            >{t("series.settings.new-to-old")}</NiceRadioOption>
-            <NiceRadioOption
-                value="OLD_TO_NEW"
-                defaultChecked={order === "OLD_TO_NEW"}
-                {...form.register("order")}
-            >{t("series.settings.old-to-new")}</NiceRadioOption>
-        </NiceRadio>
-
-        <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
-        <LayoutChooser {...{ currentLayout, form }} />
+        <div
+            role="group"
+            aria-labelledby={t("manage.realm.content.display-options")}
+            css={{
+                display: "flex",
+                flexDirection: "row",
+                marginTop: 12,
+                marginRight: 48,
+                justifyContent: "space-between",
+                maxWidth: 400,
+                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                    flexDirection: "column",
+                    gap: 12,
+                },
+            }}
+        >
+            <div>
+                <Heading>{t("series.settings.order")}</Heading>
+                <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
+                    {
+                        option: "order",
+                        title: t("series.settings.new-to-old"),
+                        checked: order === "NEW_TO_OLD",
+                        value: "NEW_TO_OLD",
+                    },
+                    {
+                        option: "order",
+                        title: t("series.settings.old-to-new"),
+                        checked: order === "OLD_TO_NEW",
+                        value: "OLD_TO_NEW",
+                    },
+                ]} />
+            </div>
+            <div>
+                <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
+                <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
+                    {
+                        option: "showTitle",
+                        title: t("manage.realm.content.show-title"),
+                        checked: showTitle,
+                    },
+                    {
+                        option: "showMetadata",
+                        title: t("manage.realm.content.show-description"),
+                        checked: showMetadata,
+                    },
+                ]} />
+            </div>
+        </div>
     </EditModeForm>;
-};
-
-type LayoutChooserProps = {
-    currentLayout: Layout;
-    form: UseFormReturn<SeriesFormData>;
-};
-
-const LayoutChooser: React.FC<LayoutChooserProps> = ({ currentLayout, form }) => {
-    const { t } = useTranslation();
-    const inputProps = (layout: Layout) => ({
-        value: layout,
-        defaultChecked: currentLayout === layout,
-        ...form.register("layout"),
-    });
-
-    return (
-        <NiceRadio breakpoint={BREAKPOINT_MEDIUM}>
-            <NiceRadioOption {...inputProps("videos-only")}>
-                {t("manage.realm.content.series.layout.videos-only")}
-            </NiceRadioOption>
-            <NiceRadioOption {...inputProps("title-and-videos")}>
-                {t("manage.realm.content.series.layout.title-and-videos")}
-            </NiceRadioOption>
-            <NiceRadioOption {...inputProps("description-and-videos")}>
-                {t("manage.realm.content.series.layout.description-and-videos")}
-            </NiceRadioOption>
-            <NiceRadioOption {...inputProps("everything")}>
-                {t("manage.realm.content.series.layout.everything")}
-            </NiceRadioOption>
-        </NiceRadio>
-    );
 };
