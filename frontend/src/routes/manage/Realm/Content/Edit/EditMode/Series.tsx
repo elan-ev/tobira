@@ -97,7 +97,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         />
         <div
             role="group"
-            aria-labelledby={t("manage.realm.content.display-options")}
+            aria-label={t("manage.realm.content.display-options")}
             css={{
                 display: "flex",
                 flexDirection: "row",
