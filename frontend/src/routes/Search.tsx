@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { LuCalendarRange, LuLayout, LuPlayCircle, LuX } from "react-icons/lu";
 import { IconType } from "react-icons";
@@ -130,11 +130,15 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
         return unreachable("unknown search outcome");
     }
 
+    const hits = outcome.__typename === "SearchResults" ? outcome.totalHits : 0;
+
     return <>
-        <Breadcrumbs path={[]} tail={q ? t("search.title", {
-            query: q,
-            hits: outcome.__typename === "SearchResults" ? outcome.totalHits : 0,
-        }) : t("search.no-query")} />
+        <Breadcrumbs path={[]} tail={q
+            ? <Trans i18nKey={"search.title"} count={hits}>
+                {{ query: q }}
+            </Trans>
+            : t("search.no-query")
+        } />
         <div css={{
             display: "grid",
             gridTemplateColumns: "1fr 4fr 1fr",

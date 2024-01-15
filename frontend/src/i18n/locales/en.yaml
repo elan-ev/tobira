@@ -226,7 +226,7 @@ realm:
 
 search:
   input-label: Search
-  title: Search results for “{{query}}” ({{hits}} hits)
+  title: Search results for <i>{{query}}</i> ({{count}} hits)
   no-query: Search results
   no-results: No results
   too-few-characters: Please type more characters to start the search.
