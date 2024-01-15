@@ -4,7 +4,7 @@ import { Translation, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { unreachable } from "@opencast/appkit";
 
-import { eventId, isSynced } from "../util";
+import { eventId, isSynced, keyOfId } from "../util";
 import { GlobalErrorBoundary } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
@@ -39,34 +39,37 @@ const query = graphql`
     }
 `;
 
-export const EmbedVideoRoute = makeRoute(url => {
-    const regex = new RegExp(`^/~embed/!v/(${b64regex}+)/?$`, "u");
-    const params = regex.exec(url.pathname);
-    if (params === null) {
-        return null;
-    }
-    const videoId = decodeURIComponent(params[1]);
+export const EmbedVideoRoute = makeRoute({
+    url: ({ videoId }: { videoId: string }) => `/~embed/!v/${keyOfId(videoId)}`,
+    match: url => {
+        const regex = new RegExp(`^/~embed/!v/(${b64regex}+)/?$`, "u");
+        const params = regex.exec(url.pathname);
+        if (params === null) {
+            return null;
+        }
+        const videoId = decodeURIComponent(params[1]);
 
-    const queryRef = loadQuery<EmbedQuery>(query, { id: eventId(videoId) });
+        const queryRef = loadQuery<EmbedQuery>(query, { id: eventId(videoId) });
 
-    return {
-        render: () => <ErrorBoundary>
-            <Suspense fallback={
-                <PlayerPlaceholder>
-                    <Spinner css={{
-                        "& > circle": {
-                            stroke: "white",
-                        },
-                    }} />
-                </PlayerPlaceholder>
-            }>
-                <PlayerContextProvider>
-                    <Embed queryRef={queryRef} />
-                </PlayerContextProvider>
-            </Suspense>
-        </ErrorBoundary>,
-        dispose: () => queryRef.dispose(),
-    };
+        return {
+            render: () => <ErrorBoundary>
+                <Suspense fallback={
+                    <PlayerPlaceholder>
+                        <Spinner css={{
+                            "& > circle": {
+                                stroke: "white",
+                            },
+                        }} />
+                    </PlayerPlaceholder>
+                }>
+                    <PlayerContextProvider>
+                        <Embed queryRef={queryRef} />
+                    </PlayerContextProvider>
+                </Suspense>
+            </ErrorBoundary>,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 type EmbedProps = {
@@ -105,25 +108,27 @@ const Embed: React.FC<EmbedProps> = ({ queryRef }) => {
     return <Player event={event} />;
 };
 
-export const BlockEmbedRoute = makeRoute(url => {
-    // Only do something if we are embedded
-    if (window === window.top) {
-        return null;
-    }
+export const BlockEmbedRoute = makeRoute({
+    match: url => {
+        // Only do something if we are embedded
+        if (window === window.top) {
+            return null;
+        }
 
-    // And only if this is a non-embeddable route
-    if (url.pathname.startsWith("/~embed/")) {
-        return null;
-    }
+        // And only if this is a non-embeddable route
+        if (url.pathname.startsWith("/~embed/")) {
+            return null;
+        }
 
-    return {
-        render: () => <PlayerPlaceholder>
-            <LuAlertTriangle />
-            <div>
-                <Translation>{t => t("embed.not-supported")}</Translation>
-            </div>
-        </PlayerPlaceholder>,
-    };
+        return {
+            render: () => <PlayerPlaceholder>
+                <LuAlertTriangle />
+                <div>
+                    <Translation>{t => t("embed.not-supported")}</Translation>
+                </div>
+            </PlayerPlaceholder>,
+        };
+    },
 });
 
 class ErrorBoundary extends GlobalErrorBoundary {

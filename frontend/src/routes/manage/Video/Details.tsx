@@ -14,7 +14,10 @@ import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
 import { buttonStyle } from "../../../ui/Button";
 import { COLORS } from "../../../color";
-import { keyOfId, secondsToTimeString } from "../../../util";
+import { secondsToTimeString } from "../../../util";
+import { DirectVideoRoute, VideoRoute } from "../../Video";
+import { ManageRoute } from "..";
+import { ManageVideosRoute } from ".";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -31,8 +34,8 @@ const Page: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
     const breadcrumbs = [
-        { label: t("user.manage-content"), link: "/~manage" },
-        { label: t("manage.my-videos.title"), link: "/~manage/videos" },
+        { label: t("user.manage-content"), link: ManageRoute.url },
+        { label: t("manage.my-videos.title"), link: ManageVideosRoute.url },
     ];
 
     const user = useUser();
@@ -79,7 +82,7 @@ const DirectLink: React.FC<Props> = ({ event }) => {
     const [timestamp, setTimestamp] = useState(0);
     const [checkboxChecked, setCheckboxChecked] = useState(false);
 
-    let url = new URL(`/!v/${keyOfId(event.id)}`, document.baseURI);
+    let url = new URL(DirectVideoRoute.url({ videoId: event.id }), document.baseURI);
     if (timestamp && checkboxChecked) {
         url = new URL(url + `?t=${secondsToTimeString(timestamp)}`);
     }
@@ -174,7 +177,7 @@ const HostRealms: React.FC<Props> = ({ event }) => {
                     &nbsp;
                     (<Link to={realm.path}>{t("general.page")}</Link>,
                     &nbsp;
-                    <Link to={`${realm.isMainRoot ? "" : realm.path}/v/${keyOfId(event.id)}`}>
+                    <Link to={VideoRoute.url({ realmPath: realm.path, videoID: event.id })}>
                         {t("video.video")}
                     </Link>)
                 </li>)}</ul>

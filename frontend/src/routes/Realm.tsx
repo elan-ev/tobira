@@ -77,38 +77,40 @@ export const isValidRealmPath = (path: string[]): boolean => {
     ));
 };
 
-export const RealmRoute = makeRoute(url => {
-    const urlPath = url.pathname.replace(/^\/|\/$/g, "");
-    const pathSegments = urlPath.split("/").map(decodeURIComponent);
-    if (!isValidRealmPath(pathSegments)) {
-        return null;
-    }
+export const RealmRoute = makeRoute({
+    match: url => {
+        const urlPath = url.pathname.replace(/^\/|\/$/g, "");
+        const pathSegments = urlPath.split("/").map(decodeURIComponent);
+        if (!isValidRealmPath(pathSegments)) {
+            return null;
+        }
 
-    const realmPath = "/" + pathSegments.join("/");
+        const realmPath = "/" + pathSegments.join("/");
 
-    const queryRef = loadQuery<RealmQuery>(relayEnv, query, { path: realmPath });
+        const queryRef = loadQuery<RealmQuery>(relayEnv, query, { path: realmPath });
 
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            nav={data => {
-                if (!data.realm) {
-                    return <ManageNav active={realmPath as `/@${string}`} />;
-                }
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                nav={data => {
+                    if (!data.realm) {
+                        return <ManageNav active={realmPath as `/@${string}`} />;
+                    }
 
-                const mainNav = <Nav key="nav" fragRef={data.realm} />;
-                return data.realm.canCurrentUserEdit
-                    ? [mainNav, <RealmEditLinks key="edit-buttons" path={realmPath} />]
-                    : mainNav;
-            }}
-            render={data => (
-                data.realm
-                    ? <RealmPage realm={data.realm} />
-                    : <NoRealm realmPath={realmPath} />
-            )}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+                    const mainNav = <Nav key="nav" fragRef={data.realm} />;
+                    return data.realm.canCurrentUserEdit
+                        ? [mainNav, <RealmEditLinks key="edit-buttons" path={realmPath} />]
+                        : mainNav;
+                }}
+                render={data => (
+                    data.realm
+                        ? <RealmPage realm={data.realm} />
+                        : <NoRealm realmPath={realmPath} />
+                )}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const query = graphql`

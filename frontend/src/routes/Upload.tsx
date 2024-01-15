@@ -9,7 +9,6 @@ import { WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
 import { UploadQuery } from "./__generated__/UploadQuery.graphql";
-import { UPLOAD_PATH } from "./paths";
 import { makeRoute } from "../rauta";
 import { ErrorDisplay, errorDisplayInfo } from "../util/err";
 import { useNavBlocker } from "./util";
@@ -27,7 +26,7 @@ import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
 import { SeriesSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
-import { ManageNav } from "./manage";
+import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
 import { Acl, AclSelector, knownRolesFragement } from "../ui/Access";
@@ -37,21 +36,25 @@ import {
 } from "../ui/__generated__/AccessKnownRolesData.graphql";
 
 
-export const UploadRoute = makeRoute(url => {
-    if (url.pathname !== UPLOAD_PATH) {
-        return null;
-    }
+const PATH = "/~manage/upload" as const;
+export const UploadRoute = makeRoute({
+    url: PATH,
+    match: url => {
+        if (url.pathname !== PATH) {
+            return null;
+        }
 
-    const queryRef = loadQuery<UploadQuery>(query, {});
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={() => <ManageNav active={UPLOAD_PATH} />}
-            render={data => <Upload knownRolesRef={data} />}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        const queryRef = loadQuery<UploadQuery>(query, {});
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={() => <ManageNav active={PATH} />}
+                render={data => <Upload knownRolesRef={data} />}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const query = graphql`
@@ -85,7 +88,7 @@ const Upload: React.FC<Props> = ({ knownRolesRef }) => {
             flexDirection: "column",
         }}>
             <Breadcrumbs
-                path={[{ label: t("user.manage-content"), link: "/~manage" }]}
+                path={[{ label: t("user.manage-content"), link: ManageRoute.url }]}
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
@@ -557,10 +560,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
         }}>
             <span>{t("upload.upload-cancelled")}</span>
             <div>
-                <LinkButton
-                    kind="happy"
-                    to="/~manage/upload"
-                >
+                <LinkButton kind="happy" to={UploadRoute.url}>
                     {t("upload.reselect")}
                 </LinkButton>
             </div>

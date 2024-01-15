@@ -8,23 +8,25 @@ import { ErrorPage } from "../ui/error";
 import { InvalidUrlQuery } from "./__generated__/InvalidUrlQuery.graphql";
 
 
-export const InvalidUrlRoute = makeRoute(url => {
-    try {
-        decodeURIComponent(url.pathname);
-    } catch (e) {
-        if (e instanceof URIError) {
-            const queryRef = loadQuery<InvalidUrlQuery>(query, {});
-            return {
-                render: () => <RootLoader
-                    {...{ query, queryRef }}
-                    nav={() => []}
-                    render={() => <InvalidUrl />}
-                />,
-                dispose: () => queryRef.dispose(),
-            };
+export const InvalidUrlRoute = makeRoute({
+    match: url => {
+        try {
+            decodeURIComponent(url.pathname);
+        } catch (e) {
+            if (e instanceof URIError) {
+                const queryRef = loadQuery<InvalidUrlQuery>(query, {});
+                return {
+                    render: () => <RootLoader
+                        {...{ query, queryRef }}
+                        nav={() => []}
+                        render={() => <InvalidUrl />}
+                    />,
+                    dispose: () => queryRef.dispose(),
+                };
+            }
         }
-    }
-    return null;
+        return null;
+    },
 });
 
 const query = graphql`

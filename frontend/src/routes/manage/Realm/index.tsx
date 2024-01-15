@@ -21,40 +21,45 @@ import { RealmSettingsContainer } from "./util";
 import { makeRoute } from "../../../rauta";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
-import { pathToQuery, RealmEditLinks } from "../../Realm";
+import { RealmEditLinks } from "../../Realm";
 import { realmBreadcrumbs } from "../../../util/realm";
+import { AddChildRoute } from "./AddChild";
 
 
 // Route definition
 
-export const PATH = "/~manage/realm";
+const PATH = "/~manage/realm";
 
-export const ManageRealmRoute = makeRoute(url => {
-    if (url.pathname !== PATH) {
-        return null;
-    }
+export const ManageRealmRoute = makeRoute({
+    url: ({ realmPath }: { realmPath: string }) =>
+        `${PATH}?${new URLSearchParams({ path: realmPath })}`,
+    match: url => {
+        if (url.pathname !== PATH) {
+            return null;
+        }
 
-    const path = url.searchParams.get("path");
-    if (path === null) {
-        return null;
-    }
+        const path = url.searchParams.get("path");
+        if (path === null) {
+            return null;
+        }
 
-    const queryRef = loadQuery<RealmManageQuery>(query, { path });
+        const queryRef = loadQuery<RealmManageQuery>(query, { path });
 
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={data => data.realm
-                ? [
-                    <Nav key="main-nav" fragRef={data.realm} />,
-                    <RealmEditLinks key="edit-buttons" path={data.realm.path} />,
-                ]
-                : []}
-            render={data => data.realm ? <SettingsPage realm={data.realm} /> : <PathInvalid />}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={data => data.realm
+                    ? [
+                        <Nav key="main-nav" fragRef={data.realm} />,
+                        <RealmEditLinks key="edit-buttons" path={data.realm.path} />,
+                    ]
+                    : []}
+                render={data => data.realm ? <SettingsPage realm={data.realm} /> : <PathInvalid />}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 
@@ -108,7 +113,7 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
                     {t("manage.realm.view-page")}
                     <LuArrowRightCircle />
                 </LinkButton>
-                <LinkButton to={`/~manage/realm/add-child?parent=${pathToQuery(realm.path)}`}>
+                <LinkButton to={AddChildRoute.url({ parent: realm.path })}>
                     {t("realm.add-sub-page")}
                     <LuPlusCircle />
                 </LinkButton>

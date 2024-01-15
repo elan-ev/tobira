@@ -8,7 +8,7 @@ import { RootLoader } from "../layout/Root";
 import { Nav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 import { WaitingPage } from "../ui/Waiting";
-import { isSynced, seriesId } from "../util";
+import { isSynced, keyOfId, seriesId } from "../util";
 
 import { NotFound } from "./NotFound";
 import { SeriesByOpencastIdQuery } from "./__generated__/SeriesByOpencastIdQuery.graphql";
@@ -17,66 +17,72 @@ import { SeriesByIdQuery } from "./__generated__/SeriesByIdQuery.graphql";
 import { SeriesRouteData$key } from "./__generated__/SeriesRouteData.graphql";
 
 
-export const DirectSeriesOCRoute = makeRoute(url => {
-    const regex = new RegExp("^/!s/:([^/]+)$", "u");
-    const matches = regex.exec(url.pathname);
+export const DirectSeriesOCRoute = makeRoute({
+    url: ({ ocID }: { ocID: string }) => `/!s/:${ocID}`,
+    match: url => {
+        const regex = new RegExp("^/!s/:([^/]+)$", "u");
+        const matches = regex.exec(url.pathname);
 
-    if (!matches) {
-        return null;
-    }
-
-
-    const opencastId = decodeURIComponent(matches[1]);
-    const query = graphql`
-        query SeriesByOpencastIdQuery($id: String!) {
-            ... UserData
-            series: seriesByOpencastId(id: $id) { ...SeriesRouteData }
-            rootRealm { ... NavigationData }
+        if (!matches) {
+            return null;
         }
-    `;
-    const queryRef = loadQuery<SeriesByOpencastIdQuery>(query, { id: opencastId });
 
 
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={data => <Nav fragRef={data.rootRealm} />}
-            render={result => <SeriesPage seriesFrag={result.series} />}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        const opencastId = decodeURIComponent(matches[1]);
+        const query = graphql`
+            query SeriesByOpencastIdQuery($id: String!) {
+                ... UserData
+                series: seriesByOpencastId(id: $id) { ...SeriesRouteData }
+                rootRealm { ... NavigationData }
+            }
+        `;
+        const queryRef = loadQuery<SeriesByOpencastIdQuery>(query, { id: opencastId });
+
+
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={data => <Nav fragRef={data.rootRealm} />}
+                render={result => <SeriesPage seriesFrag={result.series} />}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
-export const DirectSeriesRoute = makeRoute(url => {
-    const regex = new RegExp(`^/!s/(${b64regex}+)$`, "u");
-    const matches = regex.exec(url.pathname);
+export const DirectSeriesRoute = makeRoute({
+    url: ({ seriesId }: { seriesId: string }) => `/!s/${keyOfId(seriesId)}`,
+    match: url => {
+        const regex = new RegExp(`^/!s/(${b64regex}+)$`, "u");
+        const matches = regex.exec(url.pathname);
 
-    if (!matches) {
-        return null;
-    }
-
-
-    const id = decodeURIComponent(matches[1]);
-    const query = graphql`
-        query SeriesByIdQuery($id: ID!) {
-            ... UserData
-            series: seriesById(id: $id) { ...SeriesRouteData }
-            rootRealm { ... NavigationData }
+        if (!matches) {
+            return null;
         }
-    `;
-    const queryRef = loadQuery<SeriesByIdQuery>(query, { id: seriesId(id) });
 
 
-    return {
-        render: () => <RootLoader
-            {...{ query, queryRef }}
-            noindex
-            nav={data => <Nav fragRef={data.rootRealm} />}
-            render={result => <SeriesPage seriesFrag={result.series} />}
-        />,
-        dispose: () => queryRef.dispose(),
-    };
+        const id = decodeURIComponent(matches[1]);
+        const query = graphql`
+            query SeriesByIdQuery($id: ID!) {
+                ... UserData
+                series: seriesById(id: $id) { ...SeriesRouteData }
+                rootRealm { ... NavigationData }
+            }
+        `;
+        const queryRef = loadQuery<SeriesByIdQuery>(query, { id: seriesId(id) });
+
+
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={data => <Nav fragRef={data.rootRealm} />}
+                render={result => <SeriesPage seriesFrag={result.series} />}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
 });
 
 const fragment = graphql`

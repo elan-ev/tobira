@@ -12,7 +12,7 @@ import { Button, Kind as ButtonKind } from "../../../ui/Button";
 import { isRealUser, useUser } from "../../../User";
 import { NotAuthorized } from "../../../ui/error";
 import { Modal, ModalHandle } from "../../../ui/Modal";
-import { currentRef, keyOfId } from "../../../util";
+import { currentRef } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
 import { Acl, AclSelector, knownRolesFragement } from "../../../ui/Access";
 import { useNavBlocker } from "../../util";
@@ -20,6 +20,9 @@ import {
     AccessKnownRolesData$data,
     AccessKnownRolesData$key,
 } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
+import { ManageRoute } from "..";
+import { ManageVideosRoute } from ".";
+import { ManageVideoDetailsRoute } from "./Details";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -44,9 +47,9 @@ const AclPage: React.FC<AclPageProps> = ({ event, data }) => {
     const knownRoles = useFragment(knownRolesFragement, data);
 
     const breadcrumbs = [
-        { label: t("user.manage-content"), link: "/~manage" },
-        { label: t("manage.my-videos.title"), link: "/~manage/videos" },
-        { label: event.title, link: `/~manage/videos/${keyOfId(event.id)}` },
+        { label: t("user.manage-content"), link: ManageRoute.url },
+        { label: t("manage.my-videos.title"), link: ManageVideosRoute.url },
+        { label: event.title, link: ManageVideoDetailsRoute.url({ videoId: event.id }) },
     ];
 
     return <>

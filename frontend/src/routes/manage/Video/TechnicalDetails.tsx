@@ -7,7 +7,9 @@ import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { CopyableInput } from "../../../ui/Input";
 import { COLORS } from "../../../color";
-import { keyOfId } from "../../../util";
+import { ManageRoute } from "..";
+import { ManageVideosRoute } from ".";
+import { ManageVideoDetailsRoute } from "./Details";
 
 
 export const ManageVideoTechnicalDetailsRoute = makeManageVideoRoute(
@@ -34,9 +36,9 @@ const Page: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
     const breadcrumbs = [
-        { label: t("user.manage-content"), link: "/~manage" },
-        { label: t("manage.my-videos.title"), link: "/~manage/videos" },
-        { label: event.title, link: `/~manage/videos/${keyOfId(event.id)}` },
+        { label: t("user.manage-content"), link: ManageRoute.url },
+        { label: t("manage.my-videos.title"), link: ManageVideosRoute.url },
+        { label: event.title, link: ManageVideoDetailsRoute.url({ videoId: event.id }) },
     ];
 
     const user = useUser();

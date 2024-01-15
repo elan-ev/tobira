@@ -1,15 +1,23 @@
 import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { bug } from "@opencast/appkit";
+import { bug, match } from "@opencast/appkit";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 
 
-/** Retrieves the key of an ID by stripping the "kind" prefix. */
+/**
+ * Retrieves the key of an ID by stripping the "kind" prefix. If a key
+ * (already without "kind" prefix) is passed as argument, it is returned
+ * untouched. If the argument has the wrong length, meaning it's neither an ID
+ * nor a key, this panics.
+ */
 export function keyOfId(id: string): string {
-    return id.substring(2);
+    return match(id.length, {
+        13: () => id.substring(2),
+        11: () => id,
+    }, () => bug("argument of `keyOfId` is neither a key nor an ID"));
 }
 
 /** Constructs event ID for graphQL by adding the "ev" prefix. */
