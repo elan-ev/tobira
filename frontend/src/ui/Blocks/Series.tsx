@@ -3,6 +3,7 @@ import React, {
     createContext,
     useContext,
     useEffect,
+    useId,
     useRef,
     useState,
 } from "react";
@@ -10,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
-    useColorScheme, Floating, FloatingHandle,
+    useColorScheme, Floating, FloatingHandle, useFloatingItemProps,
 } from "@opencast/appkit";
 
 import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
@@ -26,7 +27,9 @@ import {
 import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
 import { Card } from "../Card";
-import { LuColumns, LuGrid, LuList, LuChevronLeft, LuChevronRight, LuPlay } from "react-icons/lu";
+import {
+    LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid,
+} from "react-icons/lu";
 import { keyframes } from "@emotion/react";
 import { CollapsibleDescription, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
@@ -331,7 +334,7 @@ const OrderMenu: React.FC = () => {
     });
 
     return <FloatingBaseMenu
-        ref={ref}
+        {...{ ref }}
         label={t("series.settings.order-label")}
         triggerContent={<>{triggerContent}</>}
         list={<List type="order" close={() => ref.current?.close()} />}
@@ -345,7 +348,7 @@ const ViewMenu: React.FC = () => {
 
     const icon = match(state.viewState, {
         slider: () => <LuColumns />,
-        gallery: () => <LuGrid />,
+        gallery: () => <LuLayoutGrid />,
         list: () => <LuList />,
     });
 
@@ -358,9 +361,8 @@ const ViewMenu: React.FC = () => {
     );
 
     return <FloatingBaseMenu
-        ref={ref}
+        {...{ ref, triggerContent }}
         label={t("series.settings.view-label")}
-        triggerContent={triggerContent}
         list={<List type="view" close={() => ref.current?.close()} />}
     />;
 };
@@ -375,6 +377,8 @@ const List: React.FC<ListProps> = ({ type, close }) => {
     const isDark = useColorScheme().scheme === "dark";
     const { viewState, setViewState } = useContext(ViewContext);
     const { eventOrder, setEventOrder } = useContext(OrderContext);
+    const itemProps = useFloatingItemProps();
+    const itemId = useId();
 
     const listStyle = {
         minWidth: 125,
@@ -397,60 +401,49 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         }
     };
 
+    const viewItems: [View, IconType][] = [
+        ["slider", LuColumns],
+        ["gallery", LuLayoutGrid],
+        ["list", LuList],
+    ];
+
+    type OrderTranslationKey = "new-to-old" | "old-to-new" | "a-z" | "z-a";
+    const orderItems: [ExtendedVideoListOrder, OrderTranslationKey][] = [
+        ["NEW_TO_OLD", "new-to-old"],
+        ["OLD_TO_NEW", "old-to-new"],
+        ["A-Z", "a-z"],
+        ["Z-A", "z-a"],
+    ];
+
+    const sharedProps = (key: View | OrderTranslationKey) => ({
+        close: close,
+        label: t(`series.settings.${key}`),
+    });
+
     const list = match(type, {
         view: () => <>
             <div>{t("series.settings.view")}</div>
             <ul role="menu" onBlur={handleBlur}>
-                <MenuItem
-                    disabled={viewState === "slider"}
-                    onClick={() => setViewState("slider")}
-                    close={close}
-                    Icon={LuColumns}
-                    label={t("series.settings.slider")}
-                />
-                <MenuItem
-                    disabled={viewState === "gallery"}
-                    onClick={() => setViewState("gallery")}
-                    close={close}
-                    Icon={LuGrid}
-                    label={t("series.settings.gallery")}
-                />
-                <MenuItem
-                    disabled={viewState === "list"}
-                    onClick={() => setViewState("list")}
-                    close={close}
-                    Icon={LuList}
-                    label={t("series.settings.list")}
-                />
+                {viewItems.map(([view, icon], index) => <MenuItem
+                    key={`${itemId}-${view}`}
+                    disabled={viewState === view}
+                    Icon={icon}
+                    {...sharedProps(view)}
+                    {...itemProps(index)}
+                    onClick={() => setViewState(view)}
+                />)}
             </ul>
         </>,
         order: () => <>
             <div>{t("series.settings.order")}</div>
             <ul role="menu" onBlur={handleBlur}>
-                <MenuItem
-                    disabled={eventOrder === "NEW_TO_OLD"}
-                    onClick={() => setEventOrder("NEW_TO_OLD")}
-                    close={close}
-                    label={t("series.settings.new-to-old")}
-                />
-                <MenuItem
-                    disabled={eventOrder === "OLD_TO_NEW"}
-                    onClick={() => setEventOrder("OLD_TO_NEW")}
-                    close={close}
-                    label={t("series.settings.old-to-new")}
-                />
-                <MenuItem
-                    disabled={eventOrder === "A-Z"}
-                    onClick={() => setEventOrder("A-Z")}
-                    close={close}
-                    label={t("series.settings.a-z")}
-                />
-                <MenuItem
-                    disabled={eventOrder === "Z-A"}
-                    onClick={() => setEventOrder("Z-A")}
-                    close={close}
-                    label={t("series.settings.z-a")}
-                />
+                {orderItems.map(([order, orderKey], index) => <MenuItem
+                    key={`${itemId}-${order}`}
+                    disabled={eventOrder === order}
+                    {...sharedProps(orderKey)}
+                    {...itemProps(index)}
+                    onClick={() => setEventOrder(order)}
+                />)}
             </ul>
         </>,
     });
@@ -469,13 +462,14 @@ const List: React.FC<ListProps> = ({ type, close }) => {
 type MenuItemProps = {
     Icon?: IconType;
     label: string;
-    onClick: () => void;
+    onClick?: () => void;
     close: () => void;
-    disabled?: boolean;
+    disabled: boolean;
 };
 
-const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabled }) => {
-    const ref = useRef<HTMLButtonElement>(null);
+const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
+    Icon, label, onClick, close, disabled,
+}, ref) => {
     const isDark = useColorScheme().scheme === "dark";
 
     return (
@@ -488,11 +482,12 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
             },
         }}>
             <ProtoButton
-                ref={ref}
-                disabled={disabled}
+                {...{ ref, disabled }}
                 role="menuitem"
                 onClick={() => {
-                    onClick();
+                    if (onClick) {
+                        onClick();
+                    }
                     close();
                 }}
                 css={{
@@ -519,7 +514,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ Icon, label, onClick, close, disabl
             </ProtoButton>
         </li>
     );
-};
+});
 
 
 // ==============================================================================================

@@ -1,11 +1,11 @@
-import React, { useRef } from "react";
+import React, { RefObject, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, commitLocalUpdate, useRelayEnvironment } from "react-relay";
 import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
-import { LuPlus, LuHash, LuType, LuGrid, LuFilm } from "react-icons/lu";
+import { LuPlus, LuHash, LuType, LuFilm, LuLayoutGrid } from "react-icons/lu";
 import {
-    ProtoButton, bug, useColorScheme,
-    Floating, FloatingContainer, FloatingHandle, FloatingTrigger, WithTooltip,
+    ProtoButton, bug, useColorScheme, Floating, FloatingContainer,
+    FloatingHandle, FloatingTrigger, WithTooltip, useFloatingItemProps,
 } from "@opencast/appkit";
 
 import { AddButtonsRealmData$key } from "./__generated__/AddButtonsRealmData.graphql";
@@ -21,40 +21,7 @@ type Props = {
 
 export const AddButtons: React.FC<Props> = ({ index, realm }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
-
     const floatingRef = useRef<FloatingHandle>(null);
-
-    const { id: realmId } = useFragment(graphql`
-        fragment AddButtonsRealmData on Realm {
-            id
-        }
-    `, realm);
-
-    const env = useRelayEnvironment();
-
-    const addBlock = (
-        type: string,
-        prepareBlock?: (store: RecordSourceProxy, block: RecordProxy) => void,
-    ) => {
-        commitLocalUpdate(env, store => {
-            const realm = store.get(realmId) ?? bug("could not find realm");
-
-            const blocks = [
-                ...realm.getLinkedRecords("blocks") ?? bug("realm does not have blocks"),
-            ];
-
-            const id = "clNEWBLOCK";
-            const block = store.create(id, `${type}Block`);
-            prepareBlock?.(store, block);
-            block.setValue(true, "editMode");
-            block.setValue(id, "id");
-
-            blocks.splice(index, 0, block);
-
-            realm.setLinkedRecords(blocks, "blocks");
-        });
-    };
 
     const BUTTON_SIZE = 36;
 
@@ -99,63 +66,98 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
                     </WithTooltip>
                 </div>
             </FloatingTrigger>
-
-            <Floating
-                padding={0}
-                borderWidth={isDark ? 1 : 0}
-                backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
-                shadowBlur={12}
-                shadowColor="rgba(0, 0, 0, 30%)"
-                css={{ width: 200 }}
-            >
-                <div css={{
-                    fontSize: 14,
-                    color: COLORS.neutral60,
-                    padding: "8px 16px",
-                    cursor: "default",
-                }}>{t("manage.realm.content.add-popup-title")}</div>
-                <ul css={{
-                    listStyle: "none",
-                    margin: 0,
-                    padding: 0,
-                    "& > li:not(:last-child)": {
-                        borderBottom: `1px solid ${isDark ? COLORS.neutral25 : COLORS.neutral15}`,
-                    },
-                }}>
-                    <AddItem
-                        close={() => floatingRef.current?.close()}
-                        Icon={LuHash}
-                        label={t("manage.realm.content.add-title")}
-                        onClick={() => addBlock("Title")}
-                    />
-                    <AddItem
-                        close={() => floatingRef.current?.close()}
-                        Icon={LuType}
-                        label={t("manage.realm.content.add-text")}
-                        onClick={() => addBlock("Text")}
-                    />
-                    <AddItem
-                        close={() => floatingRef.current?.close()}
-                        Icon={LuGrid}
-                        label={t("manage.realm.content.add-series")}
-                        onClick={() => addBlock("Series", (_store, block) => {
-                            block.setValue("NEW_TO_OLD", "order");
-                            block.setValue(true, "showTitle");
-                            block.setValue(false, "showMetadata");
-                        })}
-                    />
-                    <AddItem
-                        close={() => floatingRef.current?.close()}
-                        Icon={LuFilm}
-                        label={t("manage.realm.content.add-video")}
-                        onClick={() => addBlock("Video", (_store, block) => {
-                            block.setValue(true, "showTitle");
-                            block.setValue(true, "showLink");
-                        })}
-                    />
-                </ul>
-            </Floating>
+            <AddButtonsMenu {...{ index, realm, floatingRef }} />
         </FloatingContainer>
+    );
+};
+
+const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}> = ({
+    index, realm, floatingRef,
+}) => {
+    const isDark = useColorScheme().scheme === "dark";
+    const { t } = useTranslation();
+    const itemProps = useFloatingItemProps();
+    const menuId = useId();
+
+    const { id: realmId } = useFragment(graphql`
+        fragment AddButtonsRealmData on Realm {
+            id
+        }
+    `, realm);
+
+    const env = useRelayEnvironment();
+
+    const addBlock = (
+        type: string,
+        prepareBlock?: (store: RecordSourceProxy, block: RecordProxy) => void,
+    ) => {
+        commitLocalUpdate(env, store => {
+            const realm = store.get(realmId) ?? bug("could not find realm");
+
+            const blocks = [
+                ...realm.getLinkedRecords("blocks") ?? bug("realm does not have blocks"),
+            ];
+
+            const id = "clNEWBLOCK";
+            const block = store.create(id, `${type}Block`);
+            prepareBlock?.(store, block);
+            block.setValue(true, "editMode");
+            block.setValue(id, "id");
+
+            blocks.splice(index, 0, block);
+
+            realm.setLinkedRecords(blocks, "blocks");
+        });
+    };
+
+    type Block = "title" | "text" | "series" | "video";
+    const buttonProps: [IconType, Block, () => void][] = [
+        [LuHash, "title", () => addBlock("Title")],
+        [LuType, "text", () => addBlock("Text")],
+        [LuLayoutGrid, "series", () => addBlock("Series", (_store, block) => {
+            block.setValue("NEW_TO_OLD", "order");
+            block.setValue(true, "showTitle");
+            block.setValue(false, "showMetadata");
+        })],
+        [LuFilm, "video", () => addBlock("Video", (_store, block) => {
+            block.setValue(true, "showTitle");
+            block.setValue(true, "showLink");
+        })],
+    ];
+
+    return (
+        <Floating
+            padding={0}
+            borderWidth={isDark ? 1 : 0}
+            backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
+            shadowBlur={12}
+            shadowColor="rgba(0, 0, 0, 30%)"
+            css={{ width: 200 }}
+        >
+            <div css={{
+                fontSize: 14,
+                color: COLORS.neutral60,
+                padding: "8px 16px",
+                cursor: "default",
+            }}>{t("manage.realm.content.add-popup-title")}</div>
+            <ul css={{
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+                "& > li:not(:last-child)": {
+                    borderBottom: `1px solid ${isDark ? COLORS.neutral25 : COLORS.neutral15}`,
+                },
+            }}>
+                {buttonProps.map(([icon, type, onClick], index) => <AddItem
+                    key={`${menuId}-${type}`}
+                    close={() => floatingRef.current?.close()}
+                    Icon={icon}
+                    label={t(`manage.realm.content.add-${type}`)}
+                    {...itemProps(index)}
+                    {...{ onClick }}
+                />)}
+            </ul>
+        </Floating>
     );
 };
 
@@ -166,7 +168,9 @@ type AddItemProps = {
     close: () => void;
 };
 
-const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
+const AddItem = React.forwardRef<HTMLButtonElement, AddItemProps>(({
+    label, Icon, onClick, close,
+}, ref) => (
     <li role="menuitem" css={{
         "&:last-child > button": {
             borderBottomLeftRadius: 8,
@@ -174,6 +178,7 @@ const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
         },
     }}>
         <ProtoButton
+            {...{ ref }}
             onClick={() => {
                 onClick();
                 close();
@@ -196,4 +201,4 @@ const AddItem: React.FC<AddItemProps> = ({ label, Icon, onClick, close }) => (
             {label}
         </ProtoButton>
     </li>
-);
+));
