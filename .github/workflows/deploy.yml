@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["Build & test"]
     types:
-      - completed
+      - requested
 
 concurrency:
   group: deploy
@@ -14,7 +14,7 @@ jobs:
   deploy:
     runs-on: ubuntu-20.04
     if: >-
-      ${{ github.event.workflow_run.conclusion == 'success' && (
+      ${{ (
         github.actor == 'LukasKalbertodt' ||
         github.actor == 'JulianKniephoff' ||
         github.actor == 'owi92' ||
@@ -22,62 +22,6 @@ jobs:
       ) }}
     steps:
     - uses: actions/checkout@v3
-
-    # Unfortunately we cannot use `actions/download-artifact` here since that
-    # only allows to download artifacts from the same run.
-    - name: Download artifacts from build workflow
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: ${{ github.event.workflow_run.id }},
-          });
-          const deployFiles = artifacts.data.artifacts
-              .filter(a => a.name == "test-deployment-files")[0];
-          const download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              artifact_id: deployFiles.id,
-              archive_format: 'zip',
-          });
-
-          const fs = require('fs');
-          fs.writeFileSync('${{github.workspace}}/artifacts.zip', Buffer.from(download.data));
-
-          // The artifact is not needed anymore
-          github.rest.actions.deleteArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              artifact_id: deployFiles.id,
-          })
-
-
-    - name: extract artifacts
-      run: mkdir tmp_artifacts && unzip artifacts.zip -d tmp_artifacts
-
-    - name: Read Deploy ID
-      run: echo "DEPLOY_ID=$(cat ./tmp_artifacts/deploy-id)" >> $GITHUB_ENV
-
-    - name: Set GitHub deployment status to "Pending"
-      uses: bobheadxi/deployments@v1.3.0
-      id: gh_deployment_start
-      with:
-        step: start
-        token: ${{ secrets.GITHUB_TOKEN }}
-        env: test-deployment-${{ env.DEPLOY_ID }}
-        ref: ${{ github.event.workflow_run.head_commit.id }}
-
-    - name: Prepare files for deployment
-      run: |
-        cp -v tmp_artifacts/tobira .deployment/files/
-        cp -v tmp_artifacts/util/dev-config/logo-large.svg .deployment/files/
-        cp -v tmp_artifacts/util/dev-config/logo-small.svg .deployment/files/
-        cp -v tmp_artifacts/util/dev-config/logo-large-dark.svg .deployment/files/
-        cp -v tmp_artifacts/util/dev-config/favicon.svg .deployment/files/
-        cp -v tmp_artifacts/.deployment/templates/config.toml .deployment/templates/config.toml
-        cp -v tmp_artifacts/util/dummy-login/dist/index.js .deployment/files/login-handler.js
 
     - name: prepare deploy key
       env:
@@ -90,6 +34,38 @@ jobs:
 
     - name: install ansible postgres extensions
       run: ansible-galaxy collection install community.postgresql
+
+    # Now waiting for the CI step to finish.
+    - name: Wait for build to succeed
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.event.workflow_run.head_commit.id }}
+        check-name: 'build'
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Download artifacts from build workflow
+      uses: dawidd6/action-download-artifact@v3
+      with:
+        name: test-deployment-files
+        run_id: ${{ github.event.workflow_run.id }}
+
+    - name: Set GitHub deployment status to "Pending"
+      uses: bobheadxi/deployments@v1.3.0
+      id: gh_deployment_start
+      with:
+        step: start
+        token: ${{ secrets.GITHUB_TOKEN }}
+        env: test-deployment-${{ env.DEPLOY_ID }}
+        ref: ${{ github.event.workflow_run.head_commit.id }}
+
+    - name: Prepare files for deployment
+      run: |
+        cp -v tobira .deployment/files/
+        cp -v util/dev-config/logo-large.svg .deployment/files/
+        cp -v util/dev-config/logo-small.svg .deployment/files/
+        cp -v util/dev-config/logo-large-dark.svg .deployment/files/
+        cp -v util/dev-config/favicon.svg .deployment/files/
+        cp -v util/dummy-login/dist/index.js .deployment/files/login-handler.js
 
     - name: deploy tobira branch
       working-directory: .deployment
