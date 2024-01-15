@@ -238,7 +238,7 @@ type SeriesBlockContainerProps = {
     description?: string | null;
     children: ReactNode;
     showViewOptions: boolean;
-    view: VideoListView | undefined;
+    view?: VideoListView;
 };
 
 type ViewContext = {

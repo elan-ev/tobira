@@ -1,4 +1,6 @@
--- Adds a single `videolist_view` field to blocks, used for series to define the view
+-- This adds a single `videolist_view` field of type `video_list_view` to blocks,
+-- used for series to define the view
+
 create type video_list_view as enum ('slider', 'gallery', 'list');
 
 -- Add new `videolist_view` column with default value to initialize existing series blocks
@@ -17,5 +19,5 @@ alter table blocks
     ));
 
 -- Extend `video_list_order` type to support additional sort orders
-alter type video_list_order add value 'a_to_z'; -- appends to list
-alter type video_list_order add value 'z_to_a'; -- appends to list
+alter type video_list_order add value 'a_to_z';
+alter type video_list_order add value 'z_to_a';
