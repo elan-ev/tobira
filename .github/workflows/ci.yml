@@ -172,6 +172,12 @@ jobs:
     # Run backend tests
     - name: Read cache key
       run: echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
+    - name: Install MUSL dependencies
+      if: startsWith(env.cache_key, 'musl')
+      run: |
+        sudo apt install -y musl-dev musl-tools
+        rustup target add x86_64-unknown-linux-musl
+
     - name: Restore backend cache
       uses: Swatinem/rust-cache@v2
       with:

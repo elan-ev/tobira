@@ -49,6 +49,9 @@ jobs:
         name: test-deployment-files
         run_id: ${{ github.event.workflow_run.id }}
 
+    - name: Read Deploy ID
+      run: echo "DEPLOY_ID=$(cat .deploy-id)" >> $GITHUB_ENV
+
     - name: Set GitHub deployment status to "Pending"
       uses: bobheadxi/deployments@v1.3.0
       id: gh_deployment_start
