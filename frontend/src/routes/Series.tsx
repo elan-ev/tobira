@@ -15,6 +15,7 @@ import { SeriesByOpencastIdQuery } from "./__generated__/SeriesByOpencastIdQuery
 import { b64regex } from "./util";
 import { SeriesByIdQuery } from "./__generated__/SeriesByIdQuery.graphql";
 import { SeriesRouteData$key } from "./__generated__/SeriesRouteData.graphql";
+import { Breadcrumbs } from "../ui/Breadcrumbs";
 
 
 export const DirectSeriesOCRoute = makeRoute({
@@ -112,6 +113,7 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
     }
 
     return <div css={{ display: "flex", flexDirection: "column" }}>
+        <Breadcrumbs path={[]} tail={series.title} />
         <PageTitle title={series.title} />
         <p css={{ maxWidth: "90ch" }}>{series.syncedData.description}</p>
         <div css={{ marginTop: 12 }}>
