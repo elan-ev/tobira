@@ -226,9 +226,9 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             }),
             children: t("user.logout"),
             css: {
-                color: COLORS.danger0,
-                ":hover, :focus": {
+                "&&": {
                     color: COLORS.danger0,
+                    width: "100%",
                 },
             },
             ...CONFIG.auth.logoutLink !== null
@@ -237,8 +237,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 }
                 : {
                     keepOpenAfterClick: true,
-                    wrapper: <div
-                        tabIndex={0}
+                    wrapper: <ProtoButton
                         onClick={() => {
                         // We don't do anything if a request is already pending.
                             if (logoutState === "pending") {
