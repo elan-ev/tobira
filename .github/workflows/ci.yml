@@ -23,19 +23,8 @@ env:
   RUSTFLAGS: --deny warnings
 
 jobs:
-  main:
+  build:
     runs-on: ubuntu-20.04
-    services:
-      postgres:
-        image: postgres:12
-        env:
-          POSTGRES_USER: tobira
-          POSTGRES_PASSWORD: tobira
-          POSTGRES_DB: tobira
-        ports:
-          - 5432:5432
-        options: '--name tobira_pg'
-
     steps:
     - uses: actions/checkout@v3
 
@@ -46,30 +35,30 @@ jobs:
         if (( "$(date +%w)" % 2 == 0 )); then
           sudo apt install -y musl-dev musl-tools
           rustup target add x86_64-unknown-linux-musl
-          echo "ci_cargo_target=--target=x86_64-unknown-linux-musl" >> $GITHUB_ENV
-          echo "rust_cache_key=musl" >> $GITHUB_ENV
+          printf -- "--target=x86_64-unknown-linux-musl " >> .cargo-flags
+          printf "musl" >> .cache-key
           target_dir="${target_dir}/x86_64-unknown-linux-musl"
         else
-          echo "ci_cargo_target=" >> $GITHUB_ENV
-          echo "rust_cache_key=gnu" >> $GITHUB_ENV
+          printf "gnu" >> .cache-key
         fi
 
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
-          echo "ci_cargo_flags=--profile=release-ci" >> $GITHUB_ENV
+          printf -- "--profile=release-ci" >> .cargo-flags
+          printf -- "-release" >> .cache-key
           echo "ci_targetdir=${target_dir}/release-ci" >> $GITHUB_ENV
           echo "ci_webpack_flags=production" >> $GITHUB_ENV
-          echo "rust_cache_key2=release" >> $GITHUB_ENV
         else
-          echo "ci_cargo_flags=--features=embed-in-debug" >> $GITHUB_ENV
+          printf -- "--features=embed-in-debug" >> .cargo-flags
+          printf -- "-dev" >> .cache-key
           echo "ci_targetdir=${target_dir}/debug" >> $GITHUB_ENV
           echo "ci_webpack_flags=development" >> $GITHUB_ENV
-          echo "rust_cache_key2=dev" >> $GITHUB_ENV
         fi
+        echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
 
     - name: Restore backend cache
       uses: Swatinem/rust-cache@v2
       with:
-        key: '${{ env.rust_cache_key }}-${{ env.rust_cache_key2 }}'
+        shared-key: '${{ env.cache_key }}'
         workspaces: backend
 
     # Frontend cache: only the NPM folder is cached, not the node_modules, as
@@ -81,7 +70,8 @@ jobs:
         key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
 
 
-    # The actual building and testing!
+    # ----- Build the frontend -----
+    # We also lint and typecheck, as it is convenient and fastest to do here.
     - name: Installing frontend dependencies (npm ci)
       working-directory: frontend
       run: npm ci
@@ -98,21 +88,99 @@ jobs:
       working-directory: frontend
       run: npx tsc
 
+    # ----- Build the backend -----
     - name: Build backend
       working-directory: backend
-      run: cargo build ${{ env.ci_cargo_flags }} ${{ env.ci_cargo_target }}
-    - name: Test backend
-      working-directory: backend
-      run: cargo test ${{ env.ci_cargo_flags }} ${{ env.ci_cargo_target }}
+      run: cargo build $(cat ../.cargo-flags)
 
+    # ----- Prepare binary -----
     - name: Move Tobira binary
       run: mv backend/${{ env.ci_targetdir }}/tobira tobira
     - name: Compress Tobira binary
       run: objcopy --compress-debug-sections tobira
+
+
+    # Prepare the ID (used in the subdomain) for deployment. This has to be done
+    # here because in the `deploy` workflow, we don't have access to the correct
+    # `GITHUB_REF` anymore.
+    - name: Write deploy ID to file
+      run: ./.deployment/deploy-id.sh "$GITHUB_REF" > .deploy-id
+
+    # Archive files to be used in the `deploy` workflow
+    - name: Upload binary and deployment files as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-deployment-files
+        retention-days: 1
+        path: |
+          tobira
+          util/dev-config/logo-large.svg
+          util/dev-config/logo-small.svg
+          util/dev-config/logo-large-dark.svg
+          util/dev-config/favicon.svg
+          .deploy-id
+          .cache-key
+          .cargo-flags
+          .deployment/templates/config.toml
+          util/dummy-login/dist/index.js
+
+    # This is uploaded for the test job, specifically `cargo test`
+    - name: Upload frontend artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-artifacts
+        retention-days: 1
+        path: frontend/build
+
+
+
+  # --------------------------------------------------------------------------
+
+  test:
+    runs-on: ubuntu-20.04
+    needs: build
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: tobira
+          POSTGRES_PASSWORD: tobira
+          POSTGRES_DB: tobira
+        ports:
+          - 5432:5432
+        options: '--name tobira_pg'
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/download-artifact@v4
+      with:
+        name: test-deployment-files
+    - uses: actions/download-artifact@v4
+      with:
+        name: frontend-artifacts
+        path: ./frontend/build
+    - run: chmod +x tobira
+
+
+    # Perform simple checks
     - name: Make sure `schema.graphql` is up to date
       run: ./tobira export-api-schema | diff -u --color=always - frontend/src/schema.graphql
     - name: Make sure `docs/docs/setup/config.toml` is up to date
       run: ./tobira write-config | diff -u --color=always - docs/docs/setup/config.toml
+
+
+    # Run backend tests
+    - name: Read cache key
+      run: echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
+    - name: Restore backend cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: '${{ env.cache_key }}'
+        workspaces: backend
+        save-if: false
+    - name: Test backend
+      working-directory: backend
+      run: cargo test $(cat ../.cargo-flags)
 
 
     # Test DB migrations
@@ -132,7 +200,8 @@ jobs:
     - name: Run migrations
       run: ./tobira db migrate --config util/dev-config/config.toml
 
-    # UI tests
+
+    # Run UI Playwright tests
     - name: Start docker containers
       working-directory: util/containers
       run: |
@@ -144,6 +213,9 @@ jobs:
     - name: Rebuild search index
       run: ./tobira search-index update --config util/dev-config/config.toml
 
+    - name: Install Playwright
+      working-directory: frontend
+      run: npm i @playwright/test
     - name: Install Playwright browsers
       working-directory: frontend
       run: npx playwright install --with-deps
@@ -165,24 +237,3 @@ jobs:
         name: playwright-report
         path: frontend/playwright-report/
         retention-days: 7
-
-    # Prepare the ID (used in the subdomain) for deployment. This has to be done
-    # here because in the `deploy` workflow, we don't have access to the correct
-    # `GITHUB_REF` anymore.
-    - name: Write deploy ID to file
-      run: ./.deployment/deploy-id.sh "$GITHUB_REF" > deploy-id
-
-    # Archive files to be used in the `deploy` workflow
-    - name: Archive deployment files as artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-deployment-files
-        path: |
-          tobira
-          util/dev-config/logo-large.svg
-          util/dev-config/logo-small.svg
-          util/dev-config/logo-large-dark.svg
-          util/dev-config/favicon.svg
-          deploy-id
-          .deployment/templates/config.toml
-          util/dummy-login/dist/index.js
