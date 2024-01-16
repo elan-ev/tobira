@@ -48,7 +48,7 @@ const About: React.FC = () => {
 
     return <>
         <Breadcrumbs path={[]} tail={t("about-tobira.title")}/>
-        <div css={{ margin: "0 auto", maxWidth: 600 }}>
+        <div css={{ maxWidth: "80ch" }}>
             <PageTitle title={t("about-tobira.title")} />
             <p css={{ margin: "16px 0" }}>
                 <Trans i18nKey="about-tobira.body">
