@@ -741,7 +741,8 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
                     {...{ event, active, basePath }}
                     css={{
                         scrollSnapAlign: "start",
-                        flex: "0 0 265px",
+                        flex: "0 0 270px",
+                        maxWidth: 270,
                         margin: 6,
                         marginBottom: 24,
                     }}
