@@ -76,6 +76,21 @@ pub(crate) enum VideoListOrder {
     NewToOld,
     #[postgres(name = "old_to_new")]
     OldToNew,
+    #[postgres(name = "a_to_z")]
+    AZ,
+    #[postgres(name = "z_to_a")]
+    ZA,
+}
+
+#[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
+#[postgres(name = "video_list_view")]
+pub(crate) enum VideoListView {
+    #[postgres(name = "slider")]
+    Slider,
+    #[postgres(name = "gallery")]
+    Gallery,
+    #[postgres(name = "list")]
+    List,
 }
 
 /// Data shared by all blocks.
@@ -157,6 +172,7 @@ pub(crate) struct SeriesBlock {
     pub(crate) show_title: bool,
     pub(crate) show_metadata: bool,
     pub(crate) order: VideoListOrder,
+    pub(crate) view: VideoListView,
 }
 
 impl Block for SeriesBlock {
@@ -186,6 +202,10 @@ impl SeriesBlock {
 
     fn order(&self) -> VideoListOrder {
         self.order
+    }
+
+    fn view(&self) -> VideoListView {
+        self.view
     }
 
     fn id(&self) -> Id {
@@ -258,6 +278,7 @@ impl_from_db!(
             text_content,
             series,
             videolist_order,
+            videolist_view,
             video,
             show_title,
             show_link,
@@ -288,6 +309,7 @@ impl_from_db!(
                 shared,
                 series: row.series::<Option<Key>>().map(Id::series),
                 order: unwrap_type_dep(row.videolist_order(), "series", "videolist_order"),
+                view: unwrap_type_dep(row.videolist_view(), "series", "videolist_view"),
                 show_title: unwrap_type_dep(row.show_title(), "series", "show_title"),
                 show_metadata: unwrap_type_dep(row.show_metadata(), "series", "show_metadata"),
             }.into(),

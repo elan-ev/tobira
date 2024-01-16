@@ -18,7 +18,7 @@ import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
 import type { Fields } from "../../relay";
 import { Link } from "../../router";
 import {
-    SeriesBlockData$data, SeriesBlockData$key, VideoListOrder,
+    SeriesBlockData$data, SeriesBlockData$key, VideoListOrder, VideoListView,
 } from "./__generated__/SeriesBlockData.graphql";
 import {
     SeriesBlockSeriesData$data,
@@ -54,6 +54,7 @@ const blockFragment = graphql`
         showTitle
         showMetadata
         order
+        view
     }
 `;
 
@@ -118,8 +119,8 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
 
     if (!isSynced(series)) {
-        const { title } = props;
-        return <SeriesBlockContainer showViewOptions={false} title={title}>
+        const { title, view } = props;
+        return <SeriesBlockContainer showViewOptions={false} title={title} view={view}>
             {t("series.not-ready.text")}
         </SeriesBlockContainer>;
     }
@@ -131,11 +132,9 @@ type ReadyProps = SharedFromSeriesProps & {
     series: SyncedOpencastEntity<SeriesBlockSeriesData$data>;
 };
 
-type ExtendedVideoListOrder = VideoListOrder | "A-Z" | "Z-A";
-
 type OrderContext = {
-    eventOrder: ExtendedVideoListOrder;
-    setEventOrder: (newOrder: ExtendedVideoListOrder) => void;
+    eventOrder: VideoListOrder;
+    setEventOrder: (newOrder: VideoListOrder) => void;
 };
 
 const OrderContext = createContext<OrderContext>({
@@ -156,12 +155,13 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     series,
     activeEventId,
     order = "NEW_TO_OLD",
+    view = "GALLERY",
     showTitle = true,
     showMetadata,
 }) => {
     const { t, i18n } = useTranslation();
     const collator = new Intl.Collator(i18n.language);
-    const [eventOrder, setEventOrder] = useState<ExtendedVideoListOrder>(order);
+    const [eventOrder, setEventOrder] = useState<VideoListOrder>(order);
 
     const events = series.events.filter(event =>
         !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)
@@ -177,8 +177,8 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
         match(eventOrder, {
             "NEW_TO_OLD": () => reverseTime ? timeMs(a) - timeMs(b) : timeMs(b) - timeMs(a),
             "OLD_TO_NEW": () => reverseTime ? timeMs(b) - timeMs(a) : timeMs(a) - timeMs(b),
-            "A-Z": () => collator.compare(a.title, b.title),
-            "Z-A": () => collator.compare(b.title, a.title),
+            "AZ": () => collator.compare(a.title, b.title),
+            "ZA": () => collator.compare(b.title, a.title),
         }, unreachable);
 
     const sortedEvents = [...events];
@@ -214,6 +214,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
             showViewOptions={eventsNotEmpty}
             title={finalTitle}
             description={showMetadata ? series.syncedData.description : null}
+            view={view}
         >
             {!eventsNotEmpty
                 ? <div css={{ padding: 14 }}>{t("series.no-events")}</div>
@@ -237,24 +238,23 @@ type SeriesBlockContainerProps = {
     description?: string | null;
     children: ReactNode;
     showViewOptions: boolean;
+    view?: VideoListView;
 };
 
-type View = "slider" | "gallery" | "list";
-
 type ViewContext = {
-    viewState: View;
-    setViewState: (view: View) => void;
+    viewState: VideoListView;
+    setViewState: (view: VideoListView) => void;
 };
 
 const ViewContext = createContext<ViewContext>({
-    viewState: "gallery",
+    viewState: "GALLERY",
     setViewState: () => {},
 });
 
 const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
-    { title, description, children, showViewOptions },
+    { title, description, children, showViewOptions, view = "GALLERY" },
 ) => {
-    const [viewState, setViewState] = useState<View>("gallery");
+    const [viewState, setViewState] = useState<VideoListView>(view);
     const isDark = useColorScheme().scheme === "dark";
 
     return <ViewContext.Provider value={{ viewState, setViewState }}>
@@ -328,8 +328,8 @@ const OrderMenu: React.FC = () => {
     const triggerContent = match(order.eventOrder, {
         "NEW_TO_OLD": () => t("series.settings.new-to-old"),
         "OLD_TO_NEW": () => t("series.settings.old-to-new"),
-        "A-Z": () => t("series.settings.a-z"),
-        "Z-A": () => t("series.settings.z-a"),
+        "AZ": () => t("series.settings.a-z"),
+        "ZA": () => t("series.settings.z-a"),
         "%future added value": () => unreachable(),
     });
 
@@ -347,9 +347,10 @@ const ViewMenu: React.FC = () => {
     const ref = useRef<FloatingHandle>(null);
 
     const icon = match(state.viewState, {
-        slider: () => <LuColumns />,
-        gallery: () => <LuLayoutGrid />,
-        list: () => <LuList />,
+        SLIDER: () => <LuColumns />,
+        GALLERY: () => <LuLayoutGrid />,
+        LIST: () => <LuList />,
+        "%future added value": () => unreachable(),
     });
 
     const triggerContent = (
@@ -401,21 +402,26 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         }
     };
 
-    const viewItems: [View, IconType][] = [
-        ["slider", LuColumns],
-        ["gallery", LuLayoutGrid],
-        ["list", LuList],
+    type ViewTranslationKey = "slider" | "gallery" | "list";
+    const viewItems: [
+        VideoListView,
+        ViewTranslationKey,
+        IconType
+    ][] = [
+        ["SLIDER", "slider", LuColumns],
+        ["GALLERY", "gallery", LuLayoutGrid],
+        ["LIST", "list", LuList],
     ];
 
     type OrderTranslationKey = "new-to-old" | "old-to-new" | "a-z" | "z-a";
-    const orderItems: [ExtendedVideoListOrder, OrderTranslationKey][] = [
+    const orderItems: [VideoListOrder, OrderTranslationKey][] = [
         ["NEW_TO_OLD", "new-to-old"],
         ["OLD_TO_NEW", "old-to-new"],
-        ["A-Z", "a-z"],
-        ["Z-A", "z-a"],
+        ["AZ", "a-z"],
+        ["ZA", "z-a"],
     ];
 
-    const sharedProps = (key: View | OrderTranslationKey) => ({
+    const sharedProps = (key: ViewTranslationKey | OrderTranslationKey) => ({
         close: close,
         label: t(`series.settings.${key}`),
     });
@@ -424,11 +430,11 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         view: () => <>
             <div>{t("series.settings.view")}</div>
             <ul role="menu" onBlur={handleBlur}>
-                {viewItems.map(([view, icon], index) => <MenuItem
+                {viewItems.map(([view, viewKey, icon], index) => <MenuItem
                     key={`${itemId}-${view}`}
                     disabled={viewState === view}
                     Icon={icon}
-                    {...sharedProps(view)}
+                    {...sharedProps(viewKey)}
                     {...itemProps(index)}
                     onClick={() => setViewState(view)}
                 />)}
@@ -532,9 +538,10 @@ type ViewProps = {
 const Videos: React.FC<ViewProps> = ({ basePath, items }) => {
     const { viewState } = useContext(ViewContext);
     return match(viewState, {
-        slider: () => <SliderView {...{ basePath, items }} />,
-        gallery: () => <GalleryView {...{ basePath, items }} />,
-        list: () => <ListView {...{ basePath, items }} />,
+        SLIDER: () => <SliderView {...{ basePath, items }} />,
+        GALLERY: () => <GalleryView {...{ basePath, items }} />,
+        LIST: () => <ListView {...{ basePath, items }} />,
+        "%future added value": () => unreachable(),
     });
 };
 

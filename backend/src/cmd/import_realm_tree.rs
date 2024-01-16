@@ -304,8 +304,8 @@ impl Block {
                 // Insert block
                 let query = "
                     insert into blocks
-                    (realm, type, index, series, videolist_order, show_title, show_metadata)
-                    values ($1, 'series', $2, $3, 'new_to_old', $4, $5)
+                    (realm, type, index, series, videolist_order, videolist_view, show_title, show_metadata)
+                    values ($1, 'series', $2, $3, 'new_to_old', 'gallery', $4, $5)
                     returning id
                 ";
                 db.query_one(

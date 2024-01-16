@@ -116,6 +116,7 @@ const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}>
         [LuType, "text", () => addBlock("Text")],
         [LuLayoutGrid, "series", () => addBlock("Series", (_store, block) => {
             block.setValue("NEW_TO_OLD", "order");
+            block.setValue("GALLERY", "view");
             block.setValue(true, "showTitle");
             block.setValue(false, "showMetadata");
         })],

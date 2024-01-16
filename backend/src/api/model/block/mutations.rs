@@ -5,7 +5,7 @@ use crate::{
     db::{types::Key, util::select},
     prelude::*,
 };
-use super::{BlockValue, VideoListOrder};
+use super::{BlockValue, VideoListOrder, VideoListView};
 
 
 impl BlockValue {
@@ -60,10 +60,10 @@ impl BlockValue {
         context.db
             .execute(
                 "insert into blocks \
-                    (realm, index, type, series, videolist_order, show_title, show_metadata) \
-                    values ($1, $2, 'series', $3, $4, $5, $6)",
+                    (realm, index, type, series, videolist_order, videolist_view, show_title, show_metadata) \
+                    values ($1, $2, 'series', $3, $4, $5, $6, $7)",
                 &[&realm.key, &index, &series,
-                    &block.order, &block.show_title, &block.show_metadata],
+                    &block.order, &block.view, &block.show_title, &block.show_metadata],
             )
             .await?;
 
@@ -274,8 +274,9 @@ impl BlockValue {
             "update blocks set \
                 series = coalesce($2, series), \
                 videolist_order = coalesce($3, videolist_order), \
-                show_title = coalesce($4, show_title), \
-                show_metadata = coalesce($5, show_metadata) \
+                videolist_view = coalesce($4, videolist_view), \
+                show_title = coalesce($5, show_title), \
+                show_metadata = coalesce($6, show_metadata) \
                 where id = $1 \
                 and type = 'series' \
                 returning {selection}",
@@ -284,6 +285,7 @@ impl BlockValue {
             (&Self::key_for(id)?) as &(dyn postgres_types::ToSql + Sync),
             &series_id,
             &set.order,
+            &set.view,
             &set.show_title,
             &set.show_metadata,
         ];
@@ -390,6 +392,7 @@ pub(crate) struct NewSeriesBlock {
     pub(crate) show_title: bool,
     pub(crate) show_metadata: bool,
     pub(crate) order: VideoListOrder,
+    pub(crate) view: VideoListView,
 }
 
 #[derive(GraphQLInputObject)]
@@ -416,6 +419,7 @@ pub(crate) struct UpdateSeriesBlock {
     show_title: Option<bool>,
     show_metadata: Option<bool>,
     order: Option<VideoListOrder>,
+    view: Option<VideoListView>,
 }
 
 #[derive(GraphQLInputObject)]

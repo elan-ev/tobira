@@ -30,6 +30,8 @@ scalar ExtraMetadata
 enum VideoListOrder {
   NEW_TO_OLD
   OLD_TO_NEW
+  AZ
+  ZA
 }
 
 "A block just showing some text."
@@ -110,6 +112,7 @@ type SeriesBlock implements Block & RealmNameSourceBlock {
   showTitle: Boolean!
   showMetadata: Boolean!
   order: VideoListOrder!
+  view: VideoListView!
   id: ID!
   index: Int!
   realm: Realm!
@@ -557,6 +560,7 @@ input UpdateSeriesBlock {
   showTitle: Boolean
   showMetadata: Boolean
   order: VideoListOrder
+  view: VideoListView
 }
 
 type SearchRealm implements Node {
@@ -592,6 +596,7 @@ input NewSeriesBlock {
   showTitle: Boolean!
   showMetadata: Boolean!
   order: VideoListOrder!
+  view: VideoListView!
 }
 
 type SearchSeries implements Node {
@@ -600,6 +605,12 @@ type SearchSeries implements Node {
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
+}
+
+enum VideoListView {
+  SLIDER
+  GALLERY
+  LIST
 }
 
 type User {

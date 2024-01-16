@@ -30,6 +30,7 @@ use super::{
             UpdateVideoBlock,
             RemovedBlock,
             VideoListOrder,
+            VideoListView,
         },
     },
 };
@@ -247,6 +248,7 @@ impl Mutation {
                 show_title: false,
                 show_metadata: true,
                 order: VideoListOrder::NewToOld,
+                view: VideoListView::Gallery,
             },
             context,
         ).await?;
