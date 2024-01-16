@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useController, useFormContext } from "react-hook-form";
@@ -82,6 +82,8 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         rules: { required: true },
     });
 
+    const headingId = useId();
+
     return <EditModeForm create={create} save={save} map={(data: SeriesFormData) => data}>
         <Heading>{t("manage.realm.content.series.series.heading")}</Heading>
         {"series" in errors && <div css={{ margin: "8px 0" }}>
@@ -96,8 +98,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             onBlur={seriesField.onBlur}
         />
         <div
-            role="group"
-            aria-label={t("manage.realm.content.display-options")}
             css={{
                 display: "flex",
                 flexDirection: "row",
@@ -115,8 +115,11 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 },
             }}
         >
-            <div>
-                <Heading>{t("series.settings.order")}</Heading>
+            <div
+                role="group"
+                aria-labelledby={headingId + "-order"}
+            >
+                <Heading id={headingId + "-order"}>{t("series.settings.order")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
                     {
                         option: "order",
@@ -144,8 +147,11 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                     },
                 ]} />
             </div>
-            <div>
-                <Heading>{t("series.settings.layout")}</Heading>
+            <div
+                role="group"
+                aria-labelledby={headingId + "-view"}
+            >
+                <Heading id={headingId + "-view"}>{t("series.settings.layout")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
                     {
                         option: "layout",
@@ -167,8 +173,13 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                     },
                 ]} />
             </div>
-            <div>
-                <Heading>{t("manage.realm.content.series.metadata.heading")}</Heading>
+            <div
+                role="group"
+                aria-labelledby={headingId + "-metadata"}
+            >
+                <Heading id={headingId + "-metadata"}>
+                    {t("manage.realm.content.series.metadata.heading")}
+                </Heading>
                 <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
                     {
                         option: "showTitle",

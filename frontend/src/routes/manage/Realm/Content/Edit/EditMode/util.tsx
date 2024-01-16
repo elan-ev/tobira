@@ -3,13 +3,14 @@ import { COLORS } from "../../../../../../color";
 import { screenWidthAbove, screenWidthAtMost } from "@opencast/appkit";
 
 
-export const Heading: React.FC<{ children: ReactNode }> = ({ children }) => <h3 css={{
-    ":not(:first-of-type)": { marginTop: 12 },
-    marginBottom: 8,
-    fontSize: 18,
-}}>
-    {children}
-</h3>;
+export const Heading: React.FC<{ id?: string; children: ReactNode }> = ({ id, children }) =>
+    <h3 id={id} css={{
+        ":not(:first-of-type)": { marginTop: 12 },
+        marginBottom: 8,
+        fontSize: 18,
+    }}>
+        {children}
+    </h3>;
 
 
 type NiceRadioProps = React.PropsWithChildren<{
