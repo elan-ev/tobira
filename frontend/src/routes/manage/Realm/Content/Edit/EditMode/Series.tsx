@@ -104,8 +104,11 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 flexWrap: "wrap",
                 marginTop: 12,
                 justifyContent: "start",
-                rowGap: 12,
-                columnGap: 36,
+                rowGap: 24,
+                columnGap: 96,
+                [screenWidthAtMost(1000)]: {
+                    columnGap: 48,
+                },
                 [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                     flexDirection: "column",
                     gap: 12,
