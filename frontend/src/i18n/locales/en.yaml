@@ -468,8 +468,8 @@ manage:
         series:
           heading: Series
           invalid: Please select a series
-        layout:
-          heading: Layout
+        metadata:
+          heading: Metadata
 
       event:
         event:

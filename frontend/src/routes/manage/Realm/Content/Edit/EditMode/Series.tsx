@@ -168,7 +168,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 ]} />
             </div>
             <div>
-                <Heading>{t("manage.realm.content.series.layout.heading")}</Heading>
+                <Heading>{t("manage.realm.content.series.metadata.heading")}</Heading>
                 <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
                     {
                         option: "showTitle",
