@@ -189,8 +189,8 @@ series:
     old-to-new: Oldest first
     a-z: A to Z
     z-a: Z to A
-    view: View
-    view-label: Change block view
+    layout: Layout
+    layout-label: Change block layout
     gallery: Gallery
     slider: Slider
     list: List

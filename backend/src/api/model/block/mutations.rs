@@ -5,7 +5,7 @@ use crate::{
     db::{types::Key, util::select},
     prelude::*,
 };
-use super::{BlockValue, VideoListOrder, VideoListView};
+use super::{BlockValue, VideoListOrder, VideoListLayout};
 
 
 impl BlockValue {
@@ -60,10 +60,10 @@ impl BlockValue {
         context.db
             .execute(
                 "insert into blocks \
-                    (realm, index, type, series, videolist_order, videolist_view, show_title, show_metadata) \
+                    (realm, index, type, series, videolist_order, videolist_layout, show_title, show_metadata) \
                     values ($1, $2, 'series', $3, $4, $5, $6, $7)",
                 &[&realm.key, &index, &series,
-                    &block.order, &block.view, &block.show_title, &block.show_metadata],
+                    &block.order, &block.layout, &block.show_title, &block.show_metadata],
             )
             .await?;
 
@@ -274,7 +274,7 @@ impl BlockValue {
             "update blocks set \
                 series = coalesce($2, series), \
                 videolist_order = coalesce($3, videolist_order), \
-                videolist_view = coalesce($4, videolist_view), \
+                videolist_layout = coalesce($4, videolist_layout), \
                 show_title = coalesce($5, show_title), \
                 show_metadata = coalesce($6, show_metadata) \
                 where id = $1 \
@@ -285,7 +285,7 @@ impl BlockValue {
             (&Self::key_for(id)?) as &(dyn postgres_types::ToSql + Sync),
             &series_id,
             &set.order,
-            &set.view,
+            &set.layout,
             &set.show_title,
             &set.show_metadata,
         ];
@@ -392,7 +392,7 @@ pub(crate) struct NewSeriesBlock {
     pub(crate) show_title: bool,
     pub(crate) show_metadata: bool,
     pub(crate) order: VideoListOrder,
-    pub(crate) view: VideoListView,
+    pub(crate) layout: VideoListLayout,
 }
 
 #[derive(GraphQLInputObject)]
@@ -419,7 +419,7 @@ pub(crate) struct UpdateSeriesBlock {
     show_title: Option<bool>,
     show_metadata: Option<bool>,
     order: Option<VideoListOrder>,
-    view: Option<VideoListView>,
+    layout: Option<VideoListLayout>,
 }
 
 #[derive(GraphQLInputObject)]
