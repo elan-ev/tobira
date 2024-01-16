@@ -8,7 +8,7 @@ import { EditModeForm } from ".";
 import { Heading } from "./util";
 import type {
     VideoListOrder,
-    VideoListView,
+    VideoListLayout,
     SeriesEditModeBlockData$key,
 } from "./__generated__/SeriesEditModeBlockData.graphql";
 import {
@@ -26,7 +26,7 @@ import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";
 type SeriesFormData = {
     series: string;
     order: VideoListOrder;
-    view: VideoListView;
+    layout: VideoListLayout;
     showTitle: boolean;
     showMetadata: boolean;
 };
@@ -36,7 +36,7 @@ type EditSeriesBlockProps = {
 };
 
 export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRef }) => {
-    const { series, showTitle, showMetadata, order, view } = useFragment(graphql`
+    const { series, showTitle, showMetadata, order, layout } = useFragment(graphql`
         fragment SeriesEditModeBlockData on SeriesBlock {
             series {
                 id
@@ -50,7 +50,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             showTitle
             showMetadata
             order
-            view
+            layout
         }
     `, blockRef);
 
@@ -104,8 +104,11 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 flexWrap: "wrap",
                 marginTop: 12,
                 justifyContent: "start",
-                rowGap: 12,
-                columnGap: 36,
+                rowGap: 24,
+                columnGap: 96,
+                [screenWidthAtMost(1000)]: {
+                    columnGap: 48,
+                },
                 [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                     flexDirection: "column",
                     gap: 12,
@@ -142,24 +145,24 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 ]} />
             </div>
             <div>
-                <Heading>{t("series.settings.view")}</Heading>
+                <Heading>{t("series.settings.layout")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
                     {
-                        option: "view",
+                        option: "layout",
                         title: t("series.settings.slider"),
-                        checked: view === "SLIDER",
+                        checked: layout === "SLIDER",
                         value: "SLIDER",
                     },
                     {
-                        option: "view",
+                        option: "layout",
                         title: t("series.settings.gallery"),
-                        checked: view === "GALLERY",
+                        checked: layout === "GALLERY",
                         value: "GALLERY",
                     },
                     {
-                        option: "view",
+                        option: "layout",
                         title: t("series.settings.list"),
-                        checked: view === "LIST",
+                        checked: layout === "LIST",
                         value: "LIST",
                     },
                 ]} />

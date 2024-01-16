@@ -18,7 +18,7 @@ import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
 import type { Fields } from "../../relay";
 import { Link } from "../../router";
 import {
-    SeriesBlockData$data, SeriesBlockData$key, VideoListOrder, VideoListView,
+    SeriesBlockData$data, SeriesBlockData$key, VideoListOrder, VideoListLayout,
 } from "./__generated__/SeriesBlockData.graphql";
 import {
     SeriesBlockSeriesData$data,
@@ -54,7 +54,7 @@ const blockFragment = graphql`
         showTitle
         showMetadata
         order
-        view
+        layout
     }
 `;
 
@@ -119,8 +119,8 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
 
     if (!isSynced(series)) {
-        const { title, view } = props;
-        return <SeriesBlockContainer showViewOptions={false} title={title} view={view}>
+        const { title, layout } = props;
+        return <SeriesBlockContainer showViewOptions={false} {...{ title, layout }}>
             {t("series.not-ready.text")}
         </SeriesBlockContainer>;
     }
@@ -155,7 +155,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
     series,
     activeEventId,
     order = "NEW_TO_OLD",
-    view = "GALLERY",
+    layout = "GALLERY",
     showTitle = true,
     showMetadata,
 }) => {
@@ -214,7 +214,7 @@ const ReadySeriesBlock: React.FC<ReadyProps> = ({
             showViewOptions={eventsNotEmpty}
             title={finalTitle}
             description={showMetadata ? series.syncedData.description : null}
-            view={view}
+            layout={layout}
         >
             {!eventsNotEmpty
                 ? <div css={{ padding: 14 }}>{t("series.no-events")}</div>
@@ -238,26 +238,26 @@ type SeriesBlockContainerProps = {
     description?: string | null;
     children: ReactNode;
     showViewOptions: boolean;
-    view?: VideoListView;
+    layout?: VideoListLayout;
 };
 
-type ViewContext = {
-    viewState: VideoListView;
-    setViewState: (view: VideoListView) => void;
+type LayoutContext = {
+    layoutState: VideoListLayout;
+    setLayoutState: (layout: VideoListLayout) => void;
 };
 
-const ViewContext = createContext<ViewContext>({
-    viewState: "GALLERY",
-    setViewState: () => {},
+const LayoutContext = createContext<LayoutContext>({
+    layoutState: "GALLERY",
+    setLayoutState: () => {},
 });
 
 const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
-    { title, description, children, showViewOptions, view = "GALLERY" },
+    { title, description, children, showViewOptions, layout = "GALLERY" },
 ) => {
-    const [viewState, setViewState] = useState<VideoListView>(view);
+    const [layoutState, setLayoutState] = useState<VideoListLayout>(layout);
     const isDark = useColorScheme().scheme === "dark";
 
-    return <ViewContext.Provider value={{ viewState, setViewState }}>
+    return <LayoutContext.Provider value={{ layoutState, setLayoutState }}>
         <div css={{
             marginTop: 24,
             padding: 12,
@@ -304,7 +304,7 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
                             padding: 5,
                         }}>
                             <OrderMenu />
-                            <ViewMenu/>
+                            <LayoutMenu />
                         </div>}
                     </div>
                 </div>
@@ -312,12 +312,12 @@ const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
             </>
             {children}
         </div>
-    </ViewContext.Provider>;
+    </LayoutContext.Provider>;
 };
 
 
 // ==============================================================================================
-// ===== The menus for choosing order and view mode
+// ===== The menus for choosing order and layout mode
 // ==============================================================================================
 
 const OrderMenu: React.FC = () => {
@@ -341,12 +341,12 @@ const OrderMenu: React.FC = () => {
     />;
 };
 
-const ViewMenu: React.FC = () => {
+const LayoutMenu: React.FC = () => {
     const { t } = useTranslation();
-    const state = useContext(ViewContext);
+    const state = useContext(LayoutContext);
     const ref = useRef<FloatingHandle>(null);
 
-    const icon = match(state.viewState, {
+    const icon = match(state.layoutState, {
         SLIDER: () => <LuColumns />,
         GALLERY: () => <LuLayoutGrid />,
         LIST: () => <LuList />,
@@ -363,20 +363,20 @@ const ViewMenu: React.FC = () => {
 
     return <FloatingBaseMenu
         {...{ ref, triggerContent }}
-        label={t("series.settings.view-label")}
-        list={<List type="view" close={() => ref.current?.close()} />}
+        label={t("series.settings.layout-label")}
+        list={<List type="layout" close={() => ref.current?.close()} />}
     />;
 };
 
 type ListProps = {
-    type: "view" | "order";
+    type: "layout" | "order";
     close: () => void;
 };
 
 const List: React.FC<ListProps> = ({ type, close }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
-    const { viewState, setViewState } = useContext(ViewContext);
+    const { layoutState, setLayoutState } = useContext(LayoutContext);
     const { eventOrder, setEventOrder } = useContext(OrderContext);
     const itemProps = useFloatingItemProps();
     const itemId = useId();
@@ -402,10 +402,10 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         }
     };
 
-    type ViewTranslationKey = "slider" | "gallery" | "list";
-    const viewItems: [
-        VideoListView,
-        ViewTranslationKey,
+    type LayoutTranslationKey = "slider" | "gallery" | "list";
+    const layoutItems: [
+        VideoListLayout,
+        LayoutTranslationKey,
         IconType
     ][] = [
         ["SLIDER", "slider", LuColumns],
@@ -421,22 +421,22 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         ["ZA", "z-a"],
     ];
 
-    const sharedProps = (key: ViewTranslationKey | OrderTranslationKey) => ({
+    const sharedProps = (key: LayoutTranslationKey | OrderTranslationKey) => ({
         close: close,
         label: t(`series.settings.${key}`),
     });
 
     const list = match(type, {
-        view: () => <>
-            <div>{t("series.settings.view")}</div>
+        layout: () => <>
+            <div>{t("series.settings.layout")}</div>
             <ul role="menu" onBlur={handleBlur}>
-                {viewItems.map(([view, viewKey, icon], index) => <MenuItem
-                    key={`${itemId}-${view}`}
-                    disabled={viewState === view}
+                {layoutItems.map(([layout, translationKey, icon], index) => <MenuItem
+                    key={`${itemId}-${layout}`}
+                    disabled={layoutState === layout}
                     Icon={icon}
-                    {...sharedProps(viewKey)}
+                    {...sharedProps(translationKey)}
                     {...itemProps(index)}
-                    onClick={() => setViewState(view)}
+                    onClick={() => setLayoutState(layout)}
                 />)}
             </ul>
         </>,
@@ -536,8 +536,8 @@ type ViewProps = {
 };
 
 const Videos: React.FC<ViewProps> = ({ basePath, items }) => {
-    const { viewState } = useContext(ViewContext);
-    return match(viewState, {
+    const { layoutState } = useContext(LayoutContext);
+    return match(layoutState, {
         SLIDER: () => <SliderView {...{ basePath, items }} />,
         GALLERY: () => <GalleryView {...{ basePath, items }} />,
         LIST: () => <ListView {...{ basePath, items }} />,

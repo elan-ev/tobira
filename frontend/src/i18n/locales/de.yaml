@@ -192,8 +192,8 @@ series:
     old-to-new: Älteste zuerst
     a-z: A bis Z
     z-a: Z bis A
-    view: Ansicht
-    view-label: Blockansicht ändern
+    layout: Ansicht
+    layout-label: Blockansicht ändern
     gallery: Galerie
     slider: Slider
     list: Liste

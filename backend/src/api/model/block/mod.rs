@@ -83,8 +83,8 @@ pub(crate) enum VideoListOrder {
 }
 
 #[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
-#[postgres(name = "video_list_view")]
-pub(crate) enum VideoListView {
+#[postgres(name = "video_list_layout")]
+pub(crate) enum VideoListLayout {
     #[postgres(name = "slider")]
     Slider,
     #[postgres(name = "gallery")]
@@ -172,7 +172,7 @@ pub(crate) struct SeriesBlock {
     pub(crate) show_title: bool,
     pub(crate) show_metadata: bool,
     pub(crate) order: VideoListOrder,
-    pub(crate) view: VideoListView,
+    pub(crate) layout: VideoListLayout,
 }
 
 impl Block for SeriesBlock {
@@ -204,8 +204,8 @@ impl SeriesBlock {
         self.order
     }
 
-    fn view(&self) -> VideoListView {
-        self.view
+    fn layout(&self) -> VideoListLayout {
+        self.layout
     }
 
     fn id(&self) -> Id {
@@ -278,7 +278,7 @@ impl_from_db!(
             text_content,
             series,
             videolist_order,
-            videolist_view,
+            videolist_layout,
             video,
             show_title,
             show_link,
@@ -309,7 +309,7 @@ impl_from_db!(
                 shared,
                 series: row.series::<Option<Key>>().map(Id::series),
                 order: unwrap_type_dep(row.videolist_order(), "series", "videolist_order"),
-                view: unwrap_type_dep(row.videolist_view(), "series", "videolist_view"),
+                layout: unwrap_type_dep(row.videolist_layout(), "series", "videolist_layout"),
                 show_title: unwrap_type_dep(row.show_title(), "series", "show_title"),
                 show_metadata: unwrap_type_dep(row.show_metadata(), "series", "show_metadata"),
             }.into(),

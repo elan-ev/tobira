@@ -9,6 +9,10 @@ type EventSearchResults {
   items: [SearchEvent!]!
 }
 
+input NewTitleBlock {
+  content: String!
+}
+
 type EventPageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
@@ -112,7 +116,7 @@ type SeriesBlock implements Block & RealmNameSourceBlock {
   showTitle: Boolean!
   showMetadata: Boolean!
   order: VideoListOrder!
-  view: VideoListView!
+  layout: VideoListLayout!
   id: ID!
   index: Int!
   realm: Realm!
@@ -560,7 +564,7 @@ input UpdateSeriesBlock {
   showTitle: Boolean
   showMetadata: Boolean
   order: VideoListOrder
-  view: VideoListView
+  layout: VideoListLayout
 }
 
 type SearchRealm implements Node {
@@ -596,7 +600,7 @@ input NewSeriesBlock {
   showTitle: Boolean!
   showMetadata: Boolean!
   order: VideoListOrder!
-  view: VideoListView!
+  layout: VideoListLayout!
 }
 
 type SearchSeries implements Node {
@@ -605,12 +609,6 @@ type SearchSeries implements Node {
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
-}
-
-enum VideoListView {
-  SLIDER
-  GALLERY
-  LIST
 }
 
 type User {
@@ -665,8 +663,10 @@ enum JwtService {
   EDITOR
 }
 
-input NewTitleBlock {
-  content: String!
+enum VideoListLayout {
+  SLIDER
+  GALLERY
+  LIST
 }
 
 schema {
