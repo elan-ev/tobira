@@ -483,8 +483,8 @@ manage:
         series:
           heading: Serie
           invalid: Bitte eine Serie auswählen
-        layout:
-          heading: Layout
+        metadata:
+          heading: Metadaten
 
       event:
         event:
