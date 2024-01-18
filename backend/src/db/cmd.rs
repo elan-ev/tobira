@@ -252,6 +252,20 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
     tx.commit().await.context("failed to commit clear transaction")?;
     info!("Dropped everything inside schema '{schema}' of the database");
 
+    // Try to disconnect all active connections. This is useful as those might
+    // hold cached statements that are now invalid.
+    let db_name = &config.db.database;
+    let sql = format!("
+        select pg_terminate_backend(pg_stat_activity.pid)
+        from pg_stat_activity
+        where pg_stat_activity.datname = '{db_name}'
+            and pid <> pg_backend_pid();"
+    );
+    match db.execute(&sql, &[]).await {
+        Ok(_) => info!("Disconnected all existing connection to this database"),
+        Err(e) => warn!("Could not disconnect all active connections: {e}"),
+    }
+
 
     // ### Step 4: Also clear the search index ###
     let meili = config.meili.connect().await?;
