@@ -75,7 +75,7 @@ import { ManageVideoDetailsRoute } from "./manage/Video/Details";
 /** Video in realm route: `/path/to/realm/v/<videoid>` */
 export const VideoRoute = makeRoute({
     url: ({ realmPath, videoID }: { realmPath: string; videoID: string }) =>
-        `${realmPath === "/" ? "" : realmPath}/v/${videoID}`,
+        `${realmPath === "/" ? "" : realmPath}/v/${keyOfId(videoID)}`,
     match: url => {
         const urlPath = url.pathname.replace(/^\/|\/$/g, "");
         const parts = urlPath.split("/").map(decodeURIComponent);
