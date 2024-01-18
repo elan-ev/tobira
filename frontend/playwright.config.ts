@@ -3,13 +3,11 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
     testDir: "./tests",
-    workers: process.env.CI ? 1 : undefined,
-    retries: 1,
+    workers: 1, // TODO
+    retries: 0, // TODO
     reporter: "html",
-    expect: { timeout: 20 * 1000 },
 
     use: {
-        baseURL: "http://localhost:3080",
         headless: true,
         locale: "en",
         trace: "retain-on-failure",
@@ -32,10 +30,4 @@ export default defineConfig({
             use: { ...devices["Desktop Safari"] },
         },
     ],
-
-    webServer: {
-        command: "cargo run --manifest-path=../backend/Cargo.toml -- serve",
-        url: "http://localhost:3080",
-        reuseExistingServer: true,
-    },
 });
