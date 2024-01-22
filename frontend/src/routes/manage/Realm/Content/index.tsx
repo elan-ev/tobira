@@ -32,7 +32,7 @@ const PATH = "/~manage/realm/content";
 
 export const ManageRealmContentRoute = makeRoute({
     url: ({ realmPath }: { realmPath: string }) =>
-        `${PATH}?${new URLSearchParams({ realm: realmPath })}`,
+        `${PATH}?${new URLSearchParams({ path: realmPath })}`,
     match: url => {
         if (url.pathname !== PATH) {
             return null;
