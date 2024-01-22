@@ -23,6 +23,7 @@ export type TobiraProcess = {
     workerDir: string;
     configPath: string;
     binaryPath: string;
+    dbName: string;
 };
 
 export type TobiraReset = {
@@ -59,7 +60,7 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
 
         // Create temporary database for this Tobira process
         const sql = postgres("postgres://tobira:tobira@127.0.0.1/tobira", {
-            onnotice: notice => {},
+            onnotice: () => {},
         });
         await sql.unsafe(`drop database if exists ${dbName}`);
         await sql.unsafe(`create database ${dbName}`);
@@ -75,7 +76,7 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
 
 
         // Use fixture
-        await use({ port, workerDir, configPath, binaryPath });
+        await use({ port, workerDir, configPath, binaryPath, dbName });
 
 
         // Cleanup

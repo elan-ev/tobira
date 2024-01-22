@@ -1,4 +1,4 @@
-import { test } from "./isolation";
+import { test } from "./data";
 import { expect } from '@playwright/test';
 
 
@@ -29,4 +29,9 @@ test("Empty Tobira", async ({ page }) => {
         // await expect(page).toHaveURL(baseURL as string);
         // await expect(page.getByRole("button", { name: "Administrator" })).toBeVisible();
     });
+});
+
+test("TMP", async ({ page, standardData }) => {
+    await page.goto("/");
+    await expect(page.locator("main")).toContainText("Henlo good fren");
 });
