@@ -2,7 +2,7 @@ use juniper::{graphql_object, GraphQLEnum, GraphQLObject, GraphQLUnion, graphql_
 use postgres_types::{FromSql, ToSql};
 
 use crate::{
-    api::{Context, Id, err::ApiResult, Node, NodeValue},
+    api::{Context, Id, err::ApiResult, Node, NodeValue, model::acl::{Acl, self}},
     auth::AuthContext,
     db::{types::Key, util::{select, impl_from_db}},
     prelude::*,
@@ -13,7 +13,7 @@ use super::block::{Block, BlockValue, SeriesBlock, VideoBlock};
 mod mutations;
 
 pub(crate) use mutations::{
-    ChildIndex, NewRealm, RemovedRealm, UpdateRealm, UpdatedRealmName, RealmSpecifier,
+    ChildIndex, NewRealm, RemovedRealm, UpdateRealm, UpdatedPermissions, UpdatedRealmName, RealmSpecifier,
 };
 
 
@@ -101,6 +101,10 @@ pub(crate) struct Realm {
     index: i32,
     child_order: RealmOrder,
     owner_display_name: Option<String>,
+    moderator_roles: Vec<String>,
+    admin_roles: Vec<String>,
+    _flattened_moderator_roles: Vec<String>,
+    _flattened_admin_roles: Vec<String>,
 }
 
 impl_from_db!(
@@ -108,7 +112,8 @@ impl_from_db!(
     select: {
         realms.{
             id, parent, name, name_from_block, path_segment, full_path, index,
-            child_order, resolved_name, owner_display_name,
+            child_order, resolved_name, owner_display_name, moderator_roles,
+            admin_roles, flattened_moderator_roles, flattened_admin_roles,
         },
     },
     |row| {
@@ -123,13 +128,17 @@ impl_from_db!(
             index: row.index(),
             child_order: row.child_order(),
             owner_display_name: row.owner_display_name(),
+            moderator_roles: row.moderator_roles(),
+            admin_roles: row.admin_roles(),
+            _flattened_moderator_roles: row.flattened_moderator_roles(),
+            _flattened_admin_roles: row.flattened_admin_roles(),
         }
     }
 );
 
 impl Realm {
     pub(crate) async fn root(context: &Context) -> ApiResult<Self> {
-        let (selection, mapping) = select!(child_order);
+        let (selection, mapping) = select!(child_order, moderator_roles, admin_roles);
         let row = context.db
             .query_one(&format!("select {selection} from realms where id = 0"), &[])
             .await?;
@@ -145,6 +154,10 @@ impl Realm {
             index: 0,
             child_order: mapping.child_order.of(&row),
             owner_display_name: None,
+            moderator_roles: mapping.moderator_roles.of(&row),
+            admin_roles: mapping.admin_roles.of(&row),
+            _flattened_moderator_roles: Vec::new(),
+            _flattened_admin_roles: Vec::new(),
         })
     }
 
@@ -307,6 +320,31 @@ impl Realm {
     /// `null` is returned.
     fn owner_display_name(&self) -> Option<&str> {
         self.owner_display_name.as_deref()
+    }
+
+    /// Returns the acl of this realm, combining moderator and admin roles and assigns 
+    /// the respective actions that are necessary for UI purposes.
+    async fn own_acl(&self, context: &Context) -> ApiResult<Acl> {
+        let raw_roles_sql = "
+            select unnest(moderator_roles) as role, 'moderate' as action from realms where id = $1
+            union
+            select unnest(admin_roles) as role, 'admin' as action from realms where id = $1
+        ";
+        acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
+    }
+
+    /// Returns the combined acl of this realm's parent, which effectively contains
+    /// the acl and inherited acl of each ancestor realm. This is used to display
+    /// these roles in the permissions UI, where we don't want to show that realm's onw
+    /// flattened acl since that also contains the realm's "regular", i.e. non-inherited
+    /// acl.
+    async fn inherited_acl(&self, context: &Context) -> ApiResult<Acl> {
+        let raw_roles_sql = "
+            select unnest(flattened_moderator_roles) as role, 'moderate' as action from realms where id = $1
+            union
+            select unnest(flattened_admin_roles) as role, 'admin' as action from realms where id = $1
+        ";
+        acl::load_for(context, raw_roles_sql, dbargs![&self.parent_key]).await
     }
 
     /// Returns the immediate parent of this realm.

@@ -192,6 +192,11 @@ interface Block {
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 
+input UpdatedPermissions {
+  moderatorRoles: [String!]
+  adminRoles: [String!]
+}
+
 type NotAllowed {
   """
     Unused dummy field for this marker type. GraphQL requires all objects to
@@ -328,6 +333,19 @@ type Realm implements Node {
     `null` is returned.
   """
   ownerDisplayName: String
+  """
+    Returns the acl of this realm, combining moderator and admin roles and assigns
+    the respective actions that are necessary for UI purposes.
+  """
+  ownAcl: [AclItem!]!
+  """
+    Returns the combined acl of this realm's parent, which effectively contains
+    the acl and inherited acl of each ancestor realm. This is used to display
+    these roles in the permissions UI, where we don't want to show that realm's onw
+    flattened acl since that also contains the realm's "regular", i.e. non-inherited
+    acl.
+  """
+  inheritedAcl: [AclItem!]!
   "Returns the immediate parent of this realm."
   parent: Realm
   """
@@ -404,6 +422,8 @@ type Mutation {
   setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
   "Changes the name of a realm."
   renameRealm(id: ID!, name: UpdatedRealmName!): Realm!
+  "Changes the moderator and/or admin roles of a realm."
+  updatePermissions(id: ID!, permissions: UpdatedPermissions!): Realm!
   "Updates a realm's data."
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
   "Remove a realm from the tree."

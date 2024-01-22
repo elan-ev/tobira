@@ -222,6 +222,40 @@ impl Realm {
         })
     }
 
+    pub(crate) async fn update_permissions(
+        id: Id,
+        permissions: UpdatedPermissions,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        let Some(realm) = Self::load_by_id(id, context).await? else {
+            return Err(invalid_input!("`id` does not refer to an existing realm"));
+        };
+        realm.require_write_access(context)?;
+        let db = &context.db;
+
+        db.execute(
+            "update realms set \
+            moderator_roles = coalesce($2, moderator_roles), \
+            admin_roles = coalesce($3, admin_roles) \
+            where id = $1",
+            &[&realm.key, &permissions.moderator_roles, &permissions.admin_roles],
+        )
+        .await?;
+
+        Self::load_by_key(realm.key, context).await.map(Option::unwrap).inspect_(|new| {
+            info!(
+                "Updated permissions of realm {:?} ({}) from moderators: '{:?}' to '{:?}' and from admins: '{:?}' to '{:?}'",
+                realm.key,
+                realm.full_path,
+                realm.moderator_roles,
+                new.moderator_roles,
+                realm.admin_roles,
+                new.admin_roles,
+            );
+        })
+    }
+
+
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
         // TODO: validate input
 
@@ -317,6 +351,12 @@ pub(crate) struct ChildIndex {
 pub(crate) struct UpdateRealm {
     parent: Option<Id>,
     path_segment: Option<String>,
+}
+
+#[derive(juniper::GraphQLInputObject)]
+pub(crate) struct UpdatedPermissions {
+    moderator_roles: Option<Vec<String>>,
+    admin_roles: Option<Vec<String>>,
 }
 
 /// Exactly one of `plain` or `block` has to be non-null.
