@@ -244,7 +244,7 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
             </div>
 
             <div css={{ display: "flex", alignItems: "center" }}>
-                <Button type="submit"disabled={isInFlight || !canSave}>
+                <Button type="submit" disabled={isInFlight || !canSave}>
                     {t("general.action.save")}
                 </Button>
                 {isInFlight && <Spinner size={20} css={{ marginLeft: 16 }} />}

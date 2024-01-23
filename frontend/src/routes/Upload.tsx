@@ -29,7 +29,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
-import { Acl, AclSelector, knownRolesFragement } from "../ui/Access";
+import { Acl, AclSelector, knownRolesFragment } from "../ui/Access";
 import {
     AccessKnownRolesData$data,
     AccessKnownRolesData$key,
@@ -78,7 +78,7 @@ type Props = {
 
 const Upload: React.FC<Props> = ({ knownRolesRef }) => {
     const { t } = useTranslation();
-    const knownRoles = useFragment(knownRolesFragement, knownRolesRef);
+    const knownRoles = useFragment(knownRolesFragment, knownRolesRef);
 
     return (
         <div css={{

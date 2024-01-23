@@ -122,7 +122,7 @@ export const AclSelector: React.FC<AclSelectorProps> = (
 type RoleKind = "Group" | "User";
 
 
-export const knownRolesFragement = graphql`
+export const knownRolesFragment = graphql`
     fragment AccessKnownRolesData on Query {
         knownGroups { role label implies large }
     }

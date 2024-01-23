@@ -14,7 +14,7 @@ import { NotAuthorized } from "../../../ui/error";
 import { Modal, ModalHandle } from "../../../ui/Modal";
 import { currentRef } from "../../../util";
 import { COMMON_ROLES } from "../../../util/roles";
-import { Acl, AclSelector, knownRolesFragement } from "../../../ui/Access";
+import { Acl, AclSelector, knownRolesFragment } from "../../../ui/Access";
 import { useNavBlocker } from "../../util";
 import {
     AccessKnownRolesData$data,
@@ -44,7 +44,7 @@ const AclPage: React.FC<AclPageProps> = ({ event, data }) => {
         return <NotAuthorized />;
     }
 
-    const knownRoles = useFragment(knownRolesFragement, data);
+    const knownRoles = useFragment(knownRolesFragment, data);
 
     const breadcrumbs = [
         { label: t("user.manage-content"), link: ManageRoute.url },
