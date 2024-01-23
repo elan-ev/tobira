@@ -34,6 +34,7 @@ import {
     AccessKnownRolesData$data,
     AccessKnownRolesData$key,
 } from "../ui/__generated__/AccessKnownRolesData.graphql";
+import { READ_WRITE_ACTIONS } from "../util/permissionLevels";
 
 
 const PATH = "/~manage/upload" as const;
@@ -791,6 +792,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         onChange={field.onChange}
                         acl={field.value}
                         knownRoles={knownRoles}
+                        permissionLevels={READ_WRITE_ACTIONS}
                     />}
                 />
             </InputContainer>

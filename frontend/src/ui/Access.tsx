@@ -1,6 +1,5 @@
 import {
     useColorScheme,
-    match,
     ProtoButton,
     WithTooltip,
     FloatingHandle,
@@ -9,7 +8,15 @@ import {
     notNullish,
     screenWidthAtMost,
 } from "@opencast/appkit";
-import { createContext, useRef, useState, useContext, ReactNode } from "react";
+import {
+    createContext,
+    useRef,
+    useState,
+    useContext,
+    ReactNode,
+    Dispatch,
+    SetStateAction,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { LuX, LuAlertTriangle, LuInfo } from "react-icons/lu";
 import { MultiValue } from "react-select";
@@ -31,6 +38,12 @@ import { Card } from "./Card";
 import { environment } from "../relay";
 import { AccessUserSearchQuery } from "./__generated__/AccessUserSearchQuery.graphql";
 import { ErrorDisplay } from "../util/err";
+import { useNavBlocker } from "../routes/util";
+import { currentRef } from "../util";
+import { Button } from "./Button";
+import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
+import { Spinner } from "./Spinner";
+import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
 
 
@@ -46,8 +59,6 @@ export type RoleInfo = {
     large: boolean;
 };
 
-type Action = "read" | "write";
-
 type SelectOption = {
     role: string;
     label: string;
@@ -56,6 +67,7 @@ type SelectOption = {
 type AclContext = {
     userIsRequired: boolean;
     acl: Acl;
+    permissionLevels: PermissionLevels;
     change: (f: (acl: Acl) => void) => void;
     knownGroups: Map<string, {
         label: TranslatedLabel;
@@ -74,14 +86,21 @@ type AclSelectorProps = {
     /**
      * If `true`, the current user is included by default with `write` access and can't be removed.
      * This is necessary for the acl-selection in the uploader.
-     */
+    */
     userIsRequired?: boolean;
     onChange: (newAcl: Acl) => void;
     knownRoles: AccessKnownRolesData$data;
+    permissionLevels: PermissionLevels;
 }
 
 export const AclSelector: React.FC<AclSelectorProps> = (
-    { acl, userIsRequired = false, onChange, knownRoles }
+    {
+        acl,
+        userIsRequired = false,
+        onChange,
+        knownRoles,
+        permissionLevels,
+    }
 ) => {
     const { i18n } = useTranslation();
     const knownGroups = [...knownRoles.knownGroups];
@@ -101,6 +120,7 @@ export const AclSelector: React.FC<AclSelectorProps> = (
         acl,
         change,
         groupDag: buildDag(knownGroups),
+        permissionLevels,
         knownGroups: new Map(knownGroups.map(g => [g.role, {
             label: g.label,
             implies: new Set(g.implies),
@@ -113,13 +133,13 @@ export const AclSelector: React.FC<AclSelectorProps> = (
             flexWrap: "wrap",
             gap: 24,
         }}>
-            <AclSelect kind="Group" acl={groupAcl} />
-            <AclSelect kind="User" acl={userAcl} />
+            <AclSelect kind="group" acl={groupAcl} />
+            <AclSelect kind="user" acl={userAcl} />
         </div>
     </AclContext.Provider>;
 };
 
-type RoleKind = "Group" | "User";
+type RoleKind = "group" | "user";
 
 
 export const knownRolesFragment = graphql`
@@ -138,7 +158,7 @@ type Entry = {
 
     /**
      * Resolved label. The value from the API, but also built-in groups
-     * evaulated and fallback to just the role.
+     * evaluated and fallback to just the role.
      */
     label: string;
 
@@ -156,23 +176,10 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { change, knownGroups, groupDag } = useAclContext();
+    const { change, knownGroups, groupDag, permissionLevels } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
     const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
     const [error, setError] = useState<ReactNode>(null);
-
-    const translations = match(kind, {
-        "Group": () => ({
-            heading: t("manage.access.authorized-groups"),
-            placeholder: t("manage.access.select.groups"),
-            columnHeader: t("manage.access.table.group"),
-        }),
-        "User": () => ({
-            heading: t("manage.access.authorized-users"),
-            placeholder: t("manage.access.select.users"),
-            columnHeader: t("manage.access.table.user"),
-        }),
-    });
 
     // Sort the active ACL entries (and put them into a new variable for that).
     let entries: Entry[] = [...acl.entries()].map(([role, { actions, info }]) => ({
@@ -181,7 +188,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         label: getLabel(role, info?.label, i18n),
         large: info?.large ?? false,
     }));
-    if (kind === "Group") {
+    if (kind === "group") {
         // Sort large groups to the top.
         entries = groupDag.sort(entries);
     } else {
@@ -215,7 +222,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
             // If "create" is called, a new option is created, meaning that we
             // don't know the role.
             info: null,
-            actions: new Set(["read"]),
+            actions: new Set([permissionLevels.default]),
         });
     });
 
@@ -225,7 +232,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
             .forEach(option => {
                 const info = knownGroups.get(option.role);
                 prev.set(option.role, {
-                    actions: new Set(["read"]),
+                    actions: new Set([permissionLevels.default]),
                     info: {
                         label: info?.label ?? { "_": option.label },
                         implies: [...info?.implies ?? new Set()],
@@ -245,11 +252,11 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         isMulti: true,
         isSearchable: true,
         backspaceRemovesValue: false,
-        placeholder: translations.placeholder,
+        placeholder: t(`manage.access.select.${kind}s`),
         // TODO: for users, this should say "type to search" or "enter
         // username, email, ... to add user" depending on the
         // users_searchable config.
-        noOptionsMessage: kind === "Group"
+        noOptionsMessage: kind === "group"
             ? () => t("general.form.select.no-options")
             : ({ inputValue }: { inputValue: string }) => (
                 t(`manage.access.users-no-options.${
@@ -259,7 +266,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         isValidNewOption: (input: string) => {
             const validUserRole = isUserRole(input);
             const validRole = /^ROLE_\w+/.test(input);
-            return kind === "Group" ? (validRole && !validUserRole) : validUserRole;
+            return kind === "group" ? (validRole && !validUserRole) : validUserRole;
         },
         formatCreateLabel: (input: string) => t("manage.access.select.create", { item: input }),
         value: entries.map(e => ({ role: e.role, label: e.label })),
@@ -281,9 +288,9 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
             flexBasis: 280,
         },
     }}>
-        <strong>{translations.heading}</strong>
+        <strong>{t(`manage.access.authorized-${kind}s`)}</strong>
         {error && <Card kind="error" css={{ marginBottom: 8 }}>{error}</Card>}
-        {kind === "Group"
+        {kind === "group"
             ? <CreatableSelect
                 {...commonSelectProps}
                 options={[...knownGroups.entries()].map(([role, { label }]) => ({
@@ -345,7 +352,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                         borderBottom: `2px solid ${COLORS.neutral05}`,
                         textAlign: "left",
                     }}>
-                        <th>{translations.columnHeader}</th>
+                        <th>{t(`manage.access.table.${kind}`)}</th>
                         <th>{t("manage.access.table.actions.title")}</th>
                         <th></th>
                     </tr>
@@ -367,7 +374,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     entry makes sense if the user is admin.
                     */}
                     {(
-                        kind === "Group"
+                        kind === "group"
                         && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
                         && userIsAdmin
                     ) && (
@@ -406,12 +413,23 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     const { t, i18n } = useTranslation();
     const { userIsRequired, acl, groupDag } = useAclContext();
 
-    const canWrite = item.actions.has("write");
-    const supersets = kind === "User" ? [] : groupDag
+    const entryContainsActions = (actions: PermissionLevel[]) =>
+        actions.every(action => item.actions.has(action));
+
+    let noteworthyAccessType: PermissionLevel | null = null;
+    if (entryContainsActions(["write"])) {
+        noteworthyAccessType = "write";
+    } else if (entryContainsActions(["admin"])) {
+        noteworthyAccessType = "admin";
+    } else if (entryContainsActions(["moderate"]) && !entryContainsActions(["admin"])) {
+        noteworthyAccessType = "moderate";
+    }
+
+    const supersets = kind === "user" ? [] : groupDag
         .supersetsOf(item.role)
         .filter(role => {
             const actions = acl.get(role)?.actions;
-            return actions && actions.has("read") && (!canWrite || actions.has("write"));
+            return actions && [...item.actions].every(action => actions?.has(action));
         })
         .map(role => getLabel(role, acl.get(role)?.info?.label, i18n));
     const isSubset = supersets.length > 0;
@@ -420,7 +438,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
     let label: JSX.Element;
     if (isUser) {
         label = <span><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</span>;
-    } else if (kind === "User" && isUserRole(item.label)) {
+    } else if (kind === "user" && isUserRole(item.label)) {
         // We strip the user role prefix (we take the longest prefix that
         // matches, though in almost all cases just a single one will match).
         // We then clean it a bit before displaying.
@@ -445,8 +463,9 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         mutedLabel={isSubset}
         actionCol={immutable ? <UnchangeableAllActions /> : <>
             <ActionsMenu {...{ item, kind }} />
-            {item.large && canWrite
-                ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
+            {item.large && noteworthyAccessType
+                ? <Warning tooltip={t("manage.access.table.actions.large-group-warning",
+                    { val: t(`manage.access.table.actions.${noteworthyAccessType}-access`) })} />
                 : <div css={{ width: 22 }} />
             }
         </>}
@@ -527,42 +546,29 @@ const Warning: React.FC<WarningProps> = ({ tooltip, info }) => (
 
 const UnchangeableAllActions = () => {
     const { t } = useTranslation();
-    return <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>;
+    const { permissionLevels } = useAclContext();
+    const label = permissionLevels.highest;
+    return <span css={{ marginLeft: 8 }}>{t(`manage.access.table.actions.${label}`)}</span>;
 };
 
 const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<FloatingHandle>(null);
     const { t } = useTranslation();
-    const { change } = useAclContext();
-    const currentActionOption = item.actions.has("write") ? "write" : "read";
-    const changeOption = (newOption: "read" | "write") => change(prev => {
-        notNullish(prev.get(item.role)).actions = new Set(
-            newOption === "write" ? ["read", "write"] : ["read"]
-        );
+    const { change, permissionLevels } = useAclContext();
+    const allLabels = Object.keys(permissionLevels.all) as PermissionLevel[];
+    const currentActionOption = getActionLabel(item, permissionLevels);
+
+    const changeOption = (newOption: PermissionLevel) => change(prev => {
+        notNullish(prev.get(item.role)).actions
+            = notNullish(permissionLevels.all[newOption]).actions;
     });
-
-
-    const actions: Action[] = ["read", "write"];
-
-    const count = kind === "User" ? 1 : 2;
-    const translations = (actionType: Action) => match(actionType, {
-        "read": () => ({
-            label: t("manage.access.table.actions.read"),
-            description: t("manage.access.table.actions.read-description", { ...{ count } }),
-        }),
-        "write": () => ({
-            label: t("manage.access.table.actions.write"),
-            description: t("manage.access.table.actions.write-description", { ...{ count } }),
-        }),
-    });
-
 
     return (
         <FloatingBaseMenu
             ref={ref}
             label={t("manage.access.table.actions.title")}
-            triggerContent={<>{translations(currentActionOption).label}</>}
+            triggerContent={<>{t(`manage.access.table.actions.${currentActionOption}`)}</>}
             triggerStyles={{
                 width: "100%",
                 gap: 0,
@@ -588,11 +594,14 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                         margin: 0,
                         padding: 0,
                     }}>
-                        {actions.map(actionOption => <ActionMenuItem
+                        {allLabels.map(actionOption => <ActionMenuItem
                             key={actionOption}
                             disabled={actionOption === currentActionOption}
-                            label={translations(actionOption).label}
-                            description={translations(actionOption).description}
+                            label={t(`manage.access.table.actions.${actionOption}`)}
+                            description={
+                                t(`manage.access.table.actions.${actionOption}-description`,
+                                    { count: kind === "user" ? 1 : 2 })
+                            }
                             onClick={() => changeOption(actionOption)}
                             close={() => ref.current?.close()}
                         />)}
@@ -670,6 +679,96 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
 };
 
 
+/* Optional reset and save buttons to use if selector is not part of a larger form */
+type AclEditButtonsProps = {
+    selections: Acl;
+    setSelections: Dispatch<SetStateAction<Acl>>;
+    initialAcl: Acl;
+    onSubmit: (acl: Acl) => Promise<void>;
+    className?: string;
+    inFlight?: boolean;
+    kind: "write" | "admin";
+}
+
+export const AclEditButtons: React.FC<AclEditButtonsProps> = (
+    { selections, setSelections, initialAcl, onSubmit, className, inFlight, kind }
+) => {
+    const { t } = useTranslation();
+    const user = useUser();
+    const resetModalRef = useRef<ModalHandle>(null);
+    const saveModalRef = useRef<ConfirmationModalHandle>(null);
+
+    const containsUser = (acl: Acl) => isRealUser(user) && user.roles.some(r =>
+        r === COMMON_ROLES.ADMIN || acl.get(r)?.actions.has(kind));
+
+    const selectionIsInitial = selections.size === initialAcl.size
+        && [...selections].every(([role, info]) => {
+            const other = initialAcl.get(role);
+            return other && areSetsEqual(other.actions, info.actions);
+        });
+
+    const submit = onSubmit;
+
+    useNavBlocker(!selectionIsInitial);
+
+    return (
+        <div {...{ className }} css={{
+            display: "flex",
+            gap: 8,
+            alignSelf: "flex-start",
+            marginTop: 40,
+        }}>
+            {/* Reset button */}
+            <Button
+                disabled={selectionIsInitial}
+                onClick={() => currentRef(resetModalRef).open()}
+                css={{ ...!selectionIsInitial && { ":hover": { color: COLORS.danger0 } } }}
+            >
+                {t("manage.access.reset-modal.label")}
+            </Button>
+            <Modal ref={resetModalRef} title={t("manage.access.reset-modal.title")}>
+                <p>{t("manage.access.reset-modal.body")}</p>
+                <div css={{
+                    display: "flex",
+                    gap: 12,
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    marginTop: 32,
+                }}>
+                    <Button onClick={() => currentRef(resetModalRef).close?.()}>
+                        {t("general.action.cancel")}
+                    </Button>
+                    <Button kind="danger" onClick={() => {
+                        setSelections(initialAcl);
+                        currentRef(resetModalRef).close?.();
+                    }}>{t("manage.access.reset-modal.label")}</Button>
+                </div>
+            </Modal>
+
+            {/* Save button */}
+            <Button
+                disabled={selectionIsInitial}
+                onClick={() =>
+                    !containsUser(selections)
+                        ? currentRef(saveModalRef).open()
+                        : submit(selections)
+                }
+                css={{ ...!selectionIsInitial && { ":hover": { color: COLORS.happy0 } } }}
+            >{t("general.action.save")}</Button>
+            {inFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
+            <ConfirmationModal
+                ref={saveModalRef}
+                title={t("manage.access.save-modal.title")}
+                buttonContent={t("manage.access.save-modal.confirm")}
+                onSubmit={() => submit(selections)}
+            >
+                <p>{t(`manage.access.save-modal.disclaimer-${kind}`)}</p>
+            </ConfirmationModal>
+        </div>
+    );
+};
+
+
 // ==============================================================================================
 // ===== Helper functions
 // ==============================================================================================
@@ -687,8 +786,18 @@ const getLabel = (role: string, label: TranslatedLabel | undefined, i18n: i18n) 
     return role;
 };
 
+/** Returns label for the currently selected action of a role entry */
+const getActionLabel = (item: Entry, permissionLevels: PermissionLevels): PermissionLevel =>
+    (Object.keys(permissionLevels.all).find(level => {
+        const lvl = permissionLevels.all[level as PermissionLevel]?.actions;
+        return lvl && areSetsEqual(lvl, item.actions);
+    }) ?? "unknown") as PermissionLevel;
+
 const isUserRole = (role: string) =>
     CONFIG.auth.userRolePrefixes.some(prefix => role.startsWith(prefix));
+
+const areSetsEqual = (a: Set<string>, b: Set<string>) =>
+    a.size === b.size && [...a].every((str => b.has(str)));
 
 /** Splits initial ACL into group and user roles. */
 const splitAcl = (initialAcl: Acl): [Acl, Acl] => {

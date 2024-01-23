@@ -307,8 +307,17 @@ manage:
         read: Read
         read-description: Can watch the video and view metadata.
         write: Read and write
-        large-group-warning: You are giving write-access to a large group. Is this intentional?
         write-description: Can also edit the video, metadata and other details.
+        moderate: Moderate
+        moderate-description: Can edit content, add subpages and change the name and subpage order.
+        admin: Page admin
+        admin-description: Can moderate, delete pages and edit permissions.
+        unknown: Unknown permission
+        unknown-description: This permission isn't known.
+        write-access: write-access
+        moderate-access: moderating-rights
+        admin-access: page admin-rights
+        large-group-warning: You are giving {{val}} to a large group. Is this intentional?
     unlisted:
       note: This video is unlisted.
       explanation: >
@@ -319,8 +328,10 @@ manage:
       body: The changes you have made will be reset.
     save-modal:
       title: Remove own access?
-      body: The current selection will remove your write-access.
-            Without this, you will lose the ability to make any further edits.
+      disclaimer-write: The current selection will remove your write-access.
+        Without this, you will lose the ability to make any further edits.
+      disclaimer-admin: The current selection will remove your page admin-rights.
+        Without these, you can no longer edit these permissions, change the realm path, or delete the page.
       confirm: Confirm
 
   dashboard:

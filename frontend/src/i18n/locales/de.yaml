@@ -312,11 +312,28 @@ manage:
         read-description_one: Kann das Video anschauen und Metadaten sehen.
         read-description_other: Können das Video anschauen und Metadaten sehen.
         write: Lesen und schreiben
-        large-group-warning: Sie geben einer großen Gruppe Schreibzugriff. Ist das beabsichtigt?
         write-description_one: >
           Kann außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
         write-description_other: >
           Können außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
+        moderate: Moderieren
+        moderate-description-one: >
+          Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
+          der Unterseiten bearbeiten.
+        moderate-description-other: >
+          Können Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
+          der Unterseiten bearbeiten.
+        admin: Verwalten
+        admin-description-one: >
+          Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
+        admin-description-other: >
+          Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
+        unknown: Unbekanntes Berechtigungsschema
+        unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
+        write-access: Schreibzugriff
+        moderate-access: Moderationsrechte
+        admin-access: Adminrechte
+        large-group-warning: Sie geben einer großen Gruppe {{val}}. Ist das beabsichtigt?
     unlisted:
         note: Dieses Video ist ungelistet.
         explanation: >
@@ -328,8 +345,11 @@ manage:
       body: Von Ihnen getätigte Änderungen werden zurückgesetzt.
     save-modal:
       title: Eigenen Zugriff entfernen?
-      body: Die aktuelle Auswahl wird ihren Schreibzugriff entfernen.
-            Ohne diesen werden Sie keine weiteren Änderungen vornehmen können.
+      disclaimer-write: Die aktuelle Auswahl wird ihren Schreibzugriff entfernen.
+        Ohne diesen werden Sie keine weiteren Änderungen vornehmen können.
+      disclaimer-admin: Die aktuelle Auswahl wird ihre Verwaltungsrechte entfernen.
+        Ohne diese werden Sie keine weiteren Änderungen an diesen Berechtigungen und dem Seitenpfad
+        vornehmen können, und die Seite kann von Ihnen nicht mehr gelöscht werden.
       confirm: Bestätigen
 
   dashboard:
