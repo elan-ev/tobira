@@ -1,5 +1,5 @@
 import { test } from "./common";
-import { expect } from '@playwright/test';
+import { expect } from "@playwright/test";
 
 
 test("Empty Tobira", async ({ page }) => {

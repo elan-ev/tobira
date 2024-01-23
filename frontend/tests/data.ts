@@ -10,10 +10,10 @@ export type CustomTestFixtures = {
     standardData: StandardData;
 };
 
-export type StandardData = {};
+export type StandardData = Record<string, never>;
 
-export const test = base.extend<CustomTestFixtures, {}>({
-    standardData: async ({ tobiraProcess,  }, use, workerInfo) => {
+export const test = base.extend<CustomTestFixtures>({
+    standardData: async ({ tobiraProcess }, use, workerInfo) => {
         // Create temporary database for this Tobira process
         const sql = postgres(`postgres://tobira:tobira@127.0.0.1/${tobiraProcess.dbName}`, {
             onnotice: () => {},

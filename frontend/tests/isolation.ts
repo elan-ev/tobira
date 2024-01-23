@@ -3,8 +3,8 @@
 // its own database. The database is cleared after every test.
 
 import * as fs from "fs/promises";
-import * as child_process from "child_process";
-import { test as base } from '@playwright/test';
+import * as childProcess from "child_process";
+import { test as base } from "@playwright/test";
 import postgres from "postgres";
 import waitPort from "wait-port";
 
@@ -36,7 +36,7 @@ export type TobiraReset = {
     resetNotNecessaryIDoNotModifyAnything: () => void;
 };
 
-export type ActiveSearchIndex = {};
+export type ActiveSearchIndex = Record<string, never>;
 
 export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
     tobiraBinary: ["backend/target/debug/tobira", { option: true, scope: "worker" }],
@@ -55,8 +55,8 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
         // Write config file for this test runner
         const port = 3100 + index;
         const dbName = `tobira_ui_test_${index}`;
-        const config = tobiraConfig({ port, dbName, index, rootPath })
-        fs.writeFile(configPath, config, { encoding: "utf8" });
+        const config = tobiraConfig({ port, dbName, index, rootPath });
+        await fs.writeFile(configPath, config, { encoding: "utf8" });
 
         // Create temporary database for this Tobira process
         const sql = postgres("postgres://tobira:tobira@127.0.0.1/tobira", {
@@ -67,7 +67,7 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
 
         // Start Tobira
         const binaryPath = `${rootPath}/${tobiraBinary}`;
-        const tobiraProcess = child_process.spawn(
+        const tobiraProcess = childProcess.spawn(
             binaryPath,
             ["serve", "--config", configPath],
             // { stdio: "inherit" }
@@ -83,7 +83,7 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
         tobiraProcess.kill();
         await sql.unsafe(`drop database if exists ${dbName}`);
         await fs.rm(workerDir, { recursive: true });
-    }, { scope: 'worker', auto: true }],
+    }, { scope: "worker", auto: true }],
 
     // We set the base URL for all tests here, which depends on the port.
     baseURL: async ({ tobiraProcess }, use) => {
@@ -104,26 +104,28 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
     activeSearchIndex: async ({ tobiraProcess }, use) => {
         await runTobiraCommand(tobiraProcess, ["search-index", "update"]);
         await use({});
-        await runTobiraCommand(tobiraProcess, ["search-index", "clear", "--yes-absolutely-clear-index"]);
+        await runTobiraCommand(tobiraProcess,
+            ["search-index", "clear", "--yes-absolutely-clear-index"]);
     },
 });
 
 const runTobiraCommand = async (tobira: TobiraProcess, args: string[]) => {
+    // eslint-disable-next-line no-console
     console.debug(`Running: tobira${tobira.index} `, args);
     await new Promise(resolve => {
         args.push("-c");
         args.push(tobira.configPath);
-        const p = child_process.spawn(tobira.binaryPath, args);
+        const p = childProcess.spawn(tobira.binaryPath, args);
         p.on("close", resolve);
-    })
+    });
 };
 
 // TODO: DB
 const tobiraConfig = ({ index, port, dbName, rootPath }: {
-    index: number,
-    port: number,
-    dbName: string,
-    rootPath: string,
+    index: number;
+    port: number;
+    dbName: string;
+    rootPath: string;
 }) => `
     [general]
     site_title.en = "Tobira Videoportal"

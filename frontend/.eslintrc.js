@@ -67,6 +67,28 @@ module.exports = {
                 project: false,
             },
         },
+
+        {
+            files: ["./tests/*"],
+            rules: {
+                // Playwright uses fixtures where only destructuring in the arg
+                // object already has an effect. We just ignore fixtures that
+                // can be used that way.
+                "@typescript-eslint/no-unused-vars": ["warn", {
+                    args: "all",
+                    varsIgnorePattern: "^_",
+                    argsIgnorePattern: "^_|standardData|activeSearchIndex",
+                    caughtErrors: "all",
+                    caughtErrorsIgnorePattern: "^_",
+                    ignoreRestSiblings: true,
+
+                }],
+
+                // Playwright tests use tons of async and it's easy to forget
+                // writing `await`, which leads to confusing test behavior.
+                "@typescript-eslint/no-floating-promises": "warn",
+            },
+        },
     ],
 
     ignorePatterns: [
