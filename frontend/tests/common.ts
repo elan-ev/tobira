@@ -1,4 +1,8 @@
-import { Page, expect, test } from "@playwright/test";
+import { Page, expect } from "@playwright/test";
+import { test as base } from "./data";
+
+// Reexport such that everything can be imported from this file.
+export const test = base;
 
 
 export type User = { login: "admin"; displayName: "Administrator" }

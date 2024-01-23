@@ -1,4 +1,4 @@
-import { test } from "./data";
+import { test } from "./common";
 import { expect } from '@playwright/test';
 
 

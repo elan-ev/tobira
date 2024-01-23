@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
     testDir: "./tests",
-    workers: 1, // TODO
+    workers: process.env.CI ? 1 : undefined,
     retries: 0, // TODO
     reporter: "html",
 
