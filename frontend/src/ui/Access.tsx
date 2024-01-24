@@ -215,6 +215,10 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         });
     }
 
+    const showAdminEntry = kind === "group"
+        && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
+        && userIsAdmin;
+
     const remove = (item: Entry) => change(prev => prev.delete(item.role));
 
     const handleCreate = (inputValue: string) => change(prev => {
@@ -343,7 +347,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 },
             }}>
                 <colgroup>
-                    <col css={{ }} />
+                    <col />
                     <col css={{ width: i18n.resolvedLanguage === "en" ? 190 : 224 }} />
                     <col css={{ width: 42 }} />
                 </colgroup>
@@ -359,7 +363,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 </thead>
                 <tbody>
                     {/* Placeholder if there are no entries */}
-                    {entries.length === 0 && !userIsAdmin && <tr>
+                    {entries.length === 0 && !showAdminEntry && <tr>
                         <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
                             {t("acl.no-entries")}
                         </td>
@@ -370,19 +374,13 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     }
 
                     {/*
-                    The ACLs usually don't explicitly include admins, but showing that
-                    entry makes sense if the user is admin.
+                        The ACLs usually don't explicitly include admins, but showing that
+                        entry makes sense if the user is admin.
                     */}
-                    {(
-                        kind === "group"
-                        && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
-                        && userIsAdmin
-                    ) && (
-                        <TableRow
-                            labelCol={<>{t("acl.groups.admins")}</>}
-                            actionCol={<UnchangeableAllActions />}
-                        />
-                    )}
+                    {showAdminEntry && <TableRow
+                        labelCol={<>{t("acl.groups.admins")}</>}
+                        actionCol={<UnchangeableAllActions />}
+                    />}
                 </tbody>
             </table>
         </div>
