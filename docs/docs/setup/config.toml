@@ -207,6 +207,11 @@
 # to user information.
 #callback_url =
 
+# Headers relevant for the auth callback. Only requests that have at least
+# one of these headers are forwarded to the callback, all other are
+# treated as unauthenticated.
+#callback_headers =
+
 # The header containing a unique and stable username of the current user.
 #
 # Default value: "x-tobira-username"

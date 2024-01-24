@@ -200,21 +200,38 @@ impl User {
         }))
     }
 
+    /// Sends incoming request to `auth-callback`.
     pub(crate) async fn from_callback_with_headers(
         headers: &HeaderMap,
         auth_config: &AuthConfig,
     ) -> Result<Option<Self>, Response> {
         let mut req = Request::new(hyper::Body::empty());
-        *req.headers_mut() = headers.clone();
+        for h in auth_config.callback_headers.as_ref().unwrap() {
+            if let Some(value) = headers.get(h) {
+                req.headers_mut().insert(h.clone(), value.clone());
+            }
+        }
+
+        // If the incoming request contains none of the specified headers, we
+        // treat it as unauthenticated.
+        if req.headers().is_empty() {
+            trace!("None of 'auth.callback_headers' are in the incoming requests \
+                -> treating as unauthenticated");
+            return Ok(None);
+        }
+
         *req.uri_mut() = auth_config.callback_url.clone().unwrap();
 
         Self::from_callback(req, auth_config).await
     }
 
+    /// Impl for `auth-callback` and `login-callback`.
     pub(crate) async fn from_callback(
         req: Request,
         auth_config: &AuthConfig,
     ) -> Result<Option<Self>, Response> {
+        trace!("Sending request to callback '{}'", auth_config.callback_url.as_ref().unwrap());
+
         // Send request and download response.
         // TOOD: Only create client once!
         let client = hyper::Client::new();
@@ -235,7 +252,7 @@ impl User {
             return Err(response::bad_gateway())
         }
 
-        #[derive(Deserialize)]
+        #[derive(Debug, Deserialize)]
         #[serde(tag = "outcome", rename_all = "kebab-case")]
         enum CallbackResponse {
             // Duplicating `User` fields here as this defines a public API, that
@@ -252,7 +269,11 @@ impl User {
         }
 
         // Note: this will also fail if `body` is not valid UTF-8.
-        match serde_json::from_slice::<CallbackResponse>(&body) {
+        let deserialized = serde_json::from_slice::<CallbackResponse>(&body);
+        if let Ok(v) = &deserialized {
+            trace!("Auth callback returned {v:?}");
+        }
+        match deserialized {
             Ok(CallbackResponse::User { username, display_name, email, roles }) => {
                 let user_role = auth_config
                     .find_user_role(&username, roles.iter().map(|s| s.as_str()))

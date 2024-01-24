@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use hyper::Uri;
+use isahc::http::HeaderName;
 use secrecy::Secret;
 use serde::{Deserialize, Deserializer, de::Error};
 use url::Url;
@@ -29,6 +30,12 @@ pub(crate) struct AuthConfig {
     /// to user information.
     #[config(deserialize_with = AuthConfig::deserialize_callback_url)]
     pub(crate) callback_url: Option<Uri>,
+
+    /// Headers relevant for the auth callback. Only requests that have at least
+    /// one of these headers are forwarded to the callback, all other are
+    /// treated as unauthenticated.
+    #[config(deserialize_with = AuthConfig::deserialize_callback_headers)]
+    pub(crate) callback_headers: Option<Vec<HeaderName>>,
 
     /// The header containing a unique and stable username of the current user.
     #[config(default = "x-tobira-username")]
@@ -111,7 +118,7 @@ impl AuthConfig {
         let cb_mode = matches!(self.mode, AuthMode::LoginCallback | AuthMode::AuthCallback);
         if cb_mode && !self.callback_url.is_some() {
             bail!(
-                "'auth.mode' is '{}', but 'auth.callback_url' is not specified",
+                "'auth.mode' is '{}', which requires 'auth.callback_url' to be set, but it is not.",
                 self.mode.label(),
             );
         }
@@ -120,6 +127,14 @@ impl AuthConfig {
                 "'auth.mode' is '{}', but 'auth.callback_url' is specified, which makes no sense",
                 self.mode.label(),
             );
+        }
+
+        match (self.mode == AuthMode::AuthCallback, self.callback_headers.is_some()) {
+            (true, true) | (false, false) => {}
+            (true, false) => bail!("'auth.mode' is 'auth-callback', which requires \
+                'auth.callback_headers' to be set, but it is not."),
+            (false, true) => bail!("'auth.callback_headers' is specified, but \
+                'auth.mode' is not 'auth-callback', which makes no sense"),
         }
 
         Ok(())
@@ -144,6 +159,22 @@ impl AuthConfig {
             .path_and_query(url.path())
             .build()
             .unwrap()
+            .pipe(Ok)
+    }
+
+    pub(super) fn deserialize_callback_headers<'de, D>(
+        deserializer: D,
+    ) -> Result<Vec<HeaderName>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        <Vec<String>>::deserialize(deserializer)?
+            .into_iter()
+            .map(|s| {
+                HeaderName::try_from(s)
+                    .map_err(|e| <D::Error>::custom(format!("invalid header name: {e}")))
+            })
+            .collect::<Result<Vec<_>, _>>()?
             .pipe(Ok)
     }
 
