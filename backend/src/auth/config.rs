@@ -31,11 +31,8 @@ pub(crate) struct AuthConfig {
     #[config(deserialize_with = AuthConfig::deserialize_callback_url)]
     pub(crate) callback_url: Option<Uri>,
 
-    /// Headers relevant for the auth callback. Only requests that have at least
-    /// one of these headers are forwarded to the callback, all other are
-    /// treated as unauthenticated.
-    #[config(deserialize_with = AuthConfig::deserialize_callback_headers)]
-    pub(crate) callback_headers: Option<Vec<HeaderName>>,
+    #[config(nested)]
+    pub(crate) callback: CallbackConfig,
 
     /// The header containing a unique and stable username of the current user.
     #[config(default = "x-tobira-username")]
@@ -129,7 +126,7 @@ impl AuthConfig {
             );
         }
 
-        match (self.mode == AuthMode::AuthCallback, self.callback_headers.is_some()) {
+        match (self.mode == AuthMode::AuthCallback, self.callback.relevant_headers.is_some()) {
             (true, true) | (false, false) => {}
             (true, false) => bail!("'auth.mode' is 'auth-callback', which requires \
                 'auth.callback_headers' to be set, but it is not."),
@@ -248,4 +245,19 @@ impl AuthMode {
             AuthMode::Opencast => "opencast",
         }
     }
+}
+
+#[derive(Debug, Clone, confique::Config)]
+pub(crate) struct CallbackConfig {
+    /// Headers relevant for the auth callback. Only headers of the incoming
+    /// request listed here are forwarded to the callback. Requests without any
+    /// of these headers set are treated as unauthenticated.
+    #[config(deserialize_with = AuthConfig::deserialize_callback_headers)]
+    pub(crate) relevant_headers: Option<Vec<HeaderName>>,
+
+    /// For how long a callback's response is cached. The key of the cache is
+    /// the set of headers forwarded to the callback. Set to 0 to disable
+    /// caching.
+    #[config(default = "5min", deserialize_with = crate::config::deserialize_duration)]
+    pub(crate) cache_duration: Duration,
 }

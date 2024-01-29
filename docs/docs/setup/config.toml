@@ -207,11 +207,6 @@
 # to user information.
 #callback_url =
 
-# Headers relevant for the auth callback. Only requests that have at least
-# one of these headers are forwarded to the callback, all other are
-# treated as unauthenticated.
-#callback_headers =
-
 # The header containing a unique and stable username of the current user.
 #
 # Default value: "x-tobira-username"
@@ -290,6 +285,20 @@
 #
 # Default value: false
 #pre_auth_external_links = false
+
+
+[auth.callback]
+# Headers relevant for the auth callback. Only headers of the incoming
+# request listed here are forwarded to the callback. Requests without any
+# of these headers set are treated as unauthenticated.
+#relevant_headers =
+
+# For how long a callback's response is cached. The key of the cache is
+# the set of headers forwarded to the callback. Set to 0 to disable
+# caching.
+#
+# Default value: "5min"
+#cache_duration = "5min"
 
 
 # Configuration related to the built-in login page.

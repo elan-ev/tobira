@@ -1,14 +1,30 @@
-use std::{time::{Instant, Duration}, collections::HashSet};
+use std::{collections::HashSet, hash::Hash, time::{Instant, Duration}};
 
 use dashmap::{DashMap, mapref::entry::Entry};
 use deadpool_postgres::Client;
+use hyper::HeaderMap;
 
 use crate::prelude::*;
 
+use super::{config::CallbackConfig, User};
+
+pub struct Caches {
+    pub(super) user: UserCache,
+    pub(super) callback: AuthCallbackCache,
+}
+
+impl Caches {
+    pub fn new() -> Self {
+        Self {
+            user: UserCache::new(),
+            callback: AuthCallbackCache::new(),
+        }
+    }
+}
 
 const CACHE_DURATION: Duration = Duration::from_secs(60 * 10);
 
-struct CacheEntry {
+struct UserCacheEntry {
     display_name: String,
     email: Option<String>,
     roles: HashSet<String>,
@@ -23,10 +39,10 @@ struct CacheEntry {
 /// This works fine in multi-node setups: each node just has its local cache and
 /// prevents some DB writes. But as this data is never used otherwise, we don't
 /// run into data inconsistency problems.
-pub(crate) struct UserCache(DashMap<String, CacheEntry>);
+pub(crate) struct UserCache(DashMap<String, UserCacheEntry>);
 
 impl UserCache {
-    pub(crate) fn new() -> Self {
+    fn new() -> Self {
         Self(DashMap::new())
     }
 
@@ -50,7 +66,7 @@ impl UserCache {
             Entry::Vacant(vacant) => {
                 let res = Self::write_to_db(user, db).await;
                 if res.is_ok() {
-                    vacant.insert(CacheEntry {
+                    vacant.insert(UserCacheEntry {
                         display_name: user.display_name.clone(),
                         email: user.email.clone(),
                         roles: user.roles.clone(),
@@ -92,6 +108,64 @@ impl UserCache {
         }
 
         Ok(())
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+
+#[derive(PartialEq, Eq)]
+struct AuthCallbackCacheKey(HeaderMap);
+
+impl Hash for AuthCallbackCacheKey {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // Sigh, unfortunately this requires us to sort the headers in order to
+        // get the same hash for the same set of headers. Well, there might be
+        // some clever ways to avoid that, but the `Hasher` trait is quite
+        // limited and does not allow these clever tricks, at least not without
+        // basically writing your own hashing logic.
+        let mut keys = self.0.keys().collect::<Vec<_>>();
+        keys.sort_by_key(|hn| hn.as_str());
+
+        for key in keys {
+            for value in self.0.get_all(key) {
+                key.hash(state);
+                b": ".hash(state);
+                value.hash(state);
+                state.write_u8(b'\n');
+            }
+        }
+    }
+}
+
+struct AuthCallbackCacheEntry {
+    user: Option<User>,
+    timestamp: Instant,
+}
+
+
+/// Cache for `auth-callback` calls.
+pub(crate) struct AuthCallbackCache(DashMap<AuthCallbackCacheKey, AuthCallbackCacheEntry>);
+
+impl AuthCallbackCache {
+    fn new() -> Self {
+        Self(DashMap::new())
+    }
+
+    pub(super) fn get(&self, key: &HeaderMap, config: &CallbackConfig) -> Option<Option<User>> {
+        // TODO: this `clone` should not be necessary. It can be removed with
+        // `#[repr(transparent)]` and an `unsafe`, but I don't want to just
+        // throw around `unsafe` here.
+        self.0.get(&AuthCallbackCacheKey(key.clone()))
+            .filter(|e| e.timestamp.elapsed() < config.cache_duration)
+            .map(|e| e.user.clone())
+    }
+
+    pub(super) fn insert(&self, key: HeaderMap, user: Option<User>) {
+        self.0.insert(AuthCallbackCacheKey(key), AuthCallbackCacheEntry {
+            user,
+            timestamp: Instant::now(),
+        });
     }
 }
 

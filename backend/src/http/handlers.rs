@@ -264,7 +264,12 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get auth session
-    let auth = AuthContext::new(&parts.headers, &ctx.config.auth, &connection, &ctx.user_cache,).await?;
+    let auth = AuthContext::new(
+        &parts.headers,
+        &ctx.config.auth,
+        &connection,
+        &ctx.auth_caches,
+    ).await?;
 
     let tx = match connection.transaction().await {
         Ok(tx) => tx,

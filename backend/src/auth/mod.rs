@@ -18,7 +18,7 @@ mod session_id;
 mod jwt;
 
 pub(crate) use self::{
-    cache::UserCache,
+    cache::Caches,
     config::{AuthConfig, AuthMode},
     session_id::SessionId,
     jwt::{JwtConfig, JwtContext},
@@ -46,7 +46,7 @@ pub(crate) enum AuthContext {
 }
 
 /// Data about a user.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct User {
     pub(crate) username: String,
     pub(crate) display_name: String,
@@ -60,7 +60,7 @@ impl AuthContext {
         headers: &HeaderMap,
         auth_config: &AuthConfig,
         db: &Client,
-        user_cache: &UserCache,
+        caches: &Caches,
     ) -> Result<Self, Response> {
 
         if let Some(given_key) = headers.get("x-tobira-trusted-external-key") {
@@ -71,7 +71,7 @@ impl AuthContext {
             }
         }
 
-        User::new(headers, auth_config, db, user_cache)
+        User::new(headers, auth_config, db, caches)
             .await?
             .map_or(Self::Anonymous, Self::User)
             .pipe(Ok)
@@ -101,13 +101,13 @@ impl User {
         headers: &HeaderMap,
         auth_config: &AuthConfig,
         db: &Client,
-        user_cache: &UserCache,
+        caches: &Caches,
     ) -> Result<Option<Self>, Response> {
         let out = match auth_config.mode {
             AuthMode::None => None,
             AuthMode::FullAuthProxy => Self::from_auth_headers(headers, auth_config),
             AuthMode::AuthCallback => {
-                Self::from_callback_with_headers(headers, auth_config).await?
+                Self::from_callback_with_headers(headers, auth_config, caches).await?
             }
             AuthMode::LoginProxy | AuthMode::Opencast | AuthMode::LoginCallback => {
                 Self::from_session(headers, db, auth_config).await?
@@ -115,7 +115,7 @@ impl User {
         };
 
         if let Some(user) = &out {
-            user_cache.upsert_user_info(user, db).await;
+            caches.user.upsert_user_info(user, db).await;
         }
 
 
@@ -204,11 +204,16 @@ impl User {
     pub(crate) async fn from_callback_with_headers(
         headers: &HeaderMap,
         auth_config: &AuthConfig,
+        caches: &Caches,
     ) -> Result<Option<Self>, Response> {
+        // TODO: instead of creating a new header map, we could take the old one
+        // and just remove the headers we are not interested in. This is kind
+        // of blocked by this: https://github.com/hyperium/http/issues/541
+
         let mut req = Request::new(hyper::Body::empty());
-        for h in auth_config.callback_headers.as_ref().unwrap() {
-            if let Some(value) = headers.get(h) {
-                req.headers_mut().insert(h.clone(), value.clone());
+        for h in auth_config.callback.relevant_headers.as_ref().unwrap() {
+            for value in headers.get_all(h) {
+                req.headers_mut().append(h.clone(), value.clone());
             }
         }
 
@@ -220,9 +225,25 @@ impl User {
             return Ok(None);
         }
 
-        *req.uri_mut() = auth_config.callback_url.clone().unwrap();
+        // Check cache.
+        let mut header_copy = None;
+        if !auth_config.callback.cache_duration.is_zero() {
+            header_copy = Some(req.headers().clone());
+            if let Some(user) = caches.callback.get(req.headers(), &auth_config.callback) {
+                return Ok(user);
+            }
+        }
 
-        Self::from_callback(req, auth_config).await
+        // Cache miss or disabled cache: ask the callback.
+        *req.uri_mut() = auth_config.callback_url.clone().unwrap();
+        let out = Self::from_callback(req, auth_config).await?;
+
+        // Insert into cache
+        if !auth_config.callback.cache_duration.is_zero() {
+            caches.callback.insert(header_copy.unwrap(), out.clone());
+        }
+
+        Ok(out)
     }
 
     /// Impl for `auth-callback` and `login-callback`.
