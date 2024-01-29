@@ -100,6 +100,11 @@ pub(crate) async fn serve(
         auth_caches: auth::Caches::new(),
     });
 
+    let ctx_clone = ctx.clone();
+    tokio::spawn(async move {
+        ctx_clone.auth_caches.maintainence_task(&ctx_clone.config).await;
+    });
+
     // This sets up all the hyper server stuff. It's a bit of magic and touching
     // this code likely results in strange lifetime errors.
     //

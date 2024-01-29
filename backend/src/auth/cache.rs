@@ -4,7 +4,7 @@ use dashmap::{DashMap, mapref::entry::Entry};
 use deadpool_postgres::Client;
 use hyper::HeaderMap;
 
-use crate::prelude::*;
+use crate::{config::Config, prelude::*};
 
 use super::{config::CallbackConfig, User};
 
@@ -18,6 +18,58 @@ impl Caches {
         Self {
             user: UserCache::new(),
             callback: AuthCallbackCache::new(),
+        }
+    }
+
+    /// Starts a daemon that regularly removes outdated entries from the cache.
+    pub(crate) async fn maintainence_task(&self, config: &Config) -> ! {
+        fn cleanup<K: Eq + Hash, V>(
+            now: Instant,
+            map: &DashMap<K, V>,
+            cache_duration: Duration,
+            mut timestamp: impl FnMut(&V) -> Instant,
+        ) -> Option<Instant> {
+            let mut out = None;
+            map.retain(|_, v| {
+                let instant = timestamp(v);
+                let is_outdated = now.saturating_duration_since(instant) > cache_duration;
+                if !is_outdated {
+                    out = match out {
+                        None => Some(instant),
+                        Some(existing) => Some(std::cmp::min(existing, instant)),
+                    };
+                }
+                !is_outdated
+            });
+            out.map(|out| out + cache_duration)
+        }
+
+        let empty_wait_time = std::cmp::min(CACHE_DURATION, config.auth.callback.cache_duration);
+        tokio::time::sleep(empty_wait_time).await;
+
+        loop {
+            let now = Instant::now();
+            let next_user_action =
+                cleanup(now, &self.user.0, CACHE_DURATION, |v| v.last_written_to_db);
+            let next_callback_action =
+                cleanup(now, &self.callback.0, config.auth.callback.cache_duration, |v| v.timestamp);
+
+            // We will wait until the next entry in the hashmap gets stale, but
+            // at least 30s to not do cleanup too often. In case there are no
+            // entries currently, it will also retry in 30s. But we will wait
+            // at most as long as we would do for an empty cache.
+            let next_action = [next_user_action, next_callback_action].into_iter()
+                .filter_map(|x| x)
+                .min();
+            let wait_duration = std::cmp::min(
+                std::cmp::max(
+                    next_action.map(|i| i.saturating_duration_since(now))
+                        .unwrap_or(empty_wait_time),
+                    Duration::from_secs(30),
+                ),
+                empty_wait_time,
+            );
+            tokio::time::sleep(wait_duration).await;
         }
     }
 }
