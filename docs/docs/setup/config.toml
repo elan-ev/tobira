@@ -190,10 +190,10 @@
 
 
 [auth]
-# The mode of authentication. See the authentication docs for more information.
+# How incoming HTTP requests are authenticated. See the documentation!
 #
 # Default value: "none"
-#mode = "none"
+#source = "none"
 
 # Link of the login button. If not set, the login button internally
 # (not via `<a>`, but through JavaScript) links to Tobira's own login page.
@@ -202,10 +202,6 @@
 # Link of the logout button. If not set, clicking the logout button will
 # send a `DELETE` request to `/~session`.
 #logout_link =
-
-# Only for `*-callback` modes: URL to HTTP API to resolve incoming request
-# to user information.
-#callback_url =
 
 # The header containing a unique and stable username of the current user.
 #
@@ -265,12 +261,6 @@
 # Default value: ["ROLE_USER_"]
 #user_role_prefixes = ["ROLE_USER_"]
 
-# Duration of a Tobira-managed login session.
-# Note: This is only relevant if `auth.mode` is `login-proxy`.
-#
-# Default value: "30d"
-#session_duration = "30d"
-
 # A shared secret for **trusted** external applications.
 # Send this value as the `x-tobira-trusted-external-key`-header
 # to use certain APIs without having to invent a user.
@@ -299,6 +289,24 @@
 #
 # Default value: "5min"
 #cache_duration = "5min"
+
+
+# Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.
+[auth.session]
+# How to create sessions from login credentials (userid + password).
+#
+# Default value: "none"
+#from_login_credentials = "none"
+
+# How `POST /~session` requests are authenticated.
+#
+# Default value: "none"
+#from_session_endpoint = "none"
+
+# Duration of a Tobira-managed login session.
+#
+# Default value: "30d"
+#duration = "30d"
 
 
 # Configuration related to the built-in login page.

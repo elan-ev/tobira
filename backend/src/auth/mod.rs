@@ -2,7 +2,7 @@ use std::{borrow::Cow, time::Duration, collections::HashSet};
 
 use base64::Engine;
 use deadpool_postgres::Client;
-use hyper::{HeaderMap, StatusCode};
+use hyper::{HeaderMap, StatusCode, Uri};
 use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
@@ -19,7 +19,7 @@ mod jwt;
 
 pub(crate) use self::{
     cache::Caches,
-    config::{AuthConfig, AuthMode},
+    config::{AuthConfig, AuthSource},
     session_id::SessionId,
     jwt::{JwtConfig, JwtContext},
     handlers::{handle_post_session, handle_delete_session, handle_post_login},
@@ -62,7 +62,6 @@ impl AuthContext {
         db: &Client,
         caches: &Caches,
     ) -> Result<Self, Response> {
-
         if let Some(given_key) = headers.get("x-tobira-trusted-external-key") {
             if let Some(trusted_key) = &auth_config.trusted_external_key {
                 if trusted_key.expose_secret() == given_key {
@@ -94,23 +93,20 @@ impl AuthContext {
 }
 
 impl User {
-    /// Obtains the current user from the given request headers. This is done
-    /// either via auth headers and/or a session cookie, depending on the
-    /// configuration. The `users` table is updated if appropriate.
+    /// Obtains the current user from the given request, depending on
+    /// `auth.source`. The `users` table is updated if appropriate.
     pub(crate) async fn new(
         headers: &HeaderMap,
         auth_config: &AuthConfig,
         db: &Client,
         caches: &Caches,
     ) -> Result<Option<Self>, Response> {
-        let out = match auth_config.mode {
-            AuthMode::None => None,
-            AuthMode::FullAuthProxy => Self::from_auth_headers(headers, auth_config),
-            AuthMode::AuthCallback => {
-                Self::from_callback_with_headers(headers, auth_config, caches).await?
-            }
-            AuthMode::LoginProxy | AuthMode::Opencast | AuthMode::LoginCallback => {
-                Self::from_session(headers, db, auth_config).await?
+        let out = match &auth_config.source {
+            AuthSource::None => None,
+            AuthSource::TobiraSession => Self::from_session(headers, db, auth_config).await?,
+            AuthSource::TrustAuthHeaders => Self::from_auth_headers(headers, auth_config),
+            AuthSource::Callback(uri) => {
+                Self::from_auth_callback(headers, uri, auth_config, caches).await?
             }
         };
 
@@ -122,8 +118,9 @@ impl User {
         Ok(out)
     }
 
-    /// Tries to read user data auth headers (`x-tobira-username`, ...). If the
-    /// username or display name are not defined, returns `None`.
+    /// Handler for `auth.source = "trust-auth-headers"`. Tries to read user
+    /// data auth headers (`x-tobira-username`, ...). If the username or
+    /// display name are not defined, returns `None`.
     pub(crate) fn from_auth_headers(headers: &HeaderMap, auth_config: &AuthConfig) -> Option<Self> {
         // Helper function to read and base64 decode a header value.
         let get_header = |header_name: &str| -> Option<String> {
@@ -154,8 +151,8 @@ impl User {
         Some(Self { username, display_name, email, roles, user_role })
     }
 
-    /// Tries to load user data from a DB session referred to in a session
-    /// cookie. Should only be called if the auth mode is `LoginProxy`.
+    /// Handler for `auth.source = "tobira-session"`. Tries to load user data
+    /// from a DB session referred to in a session cookie.
     async fn from_session(
         headers: &HeaderMap,
         db: &Client,
@@ -174,7 +171,7 @@ impl User {
                 where id = $1 \
                 and extract(epoch from now() - created) < $2::double precision"
         );
-        let session_duration = auth_config.session_duration.as_secs_f64();
+        let session_duration = auth_config.session.duration.as_secs_f64();
         let row = match db.query_opt(&query, &[&session_id, &session_duration]).await {
             Ok(None) => return Ok(None),
             Ok(Some(row)) => row,
@@ -200,9 +197,11 @@ impl User {
         }))
     }
 
-    /// Sends incoming request to `auth-callback`.
-    pub(crate) async fn from_callback_with_headers(
+    /// Handler for value `auth.source = "callback:..."`. Forwards the relevant
+    /// request headers to the callback, which returns user info.
+    pub(crate) async fn from_auth_callback(
         headers: &HeaderMap,
+        callback_url: &Uri,
         auth_config: &AuthConfig,
         caches: &Caches,
     ) -> Result<Option<Self>, Response> {
@@ -235,8 +234,8 @@ impl User {
         }
 
         // Cache miss or disabled cache: ask the callback.
-        *req.uri_mut() = auth_config.callback_url.clone().unwrap();
-        let out = Self::from_callback(req, auth_config).await?;
+        *req.uri_mut() = callback_url.clone();
+        let out = Self::from_callback_impl(req, auth_config).await?;
 
         // Insert into cache
         if !auth_config.callback.cache_duration.is_zero() {
@@ -246,12 +245,12 @@ impl User {
         Ok(out)
     }
 
-    /// Impl for `auth-callback` and `login-callback`.
-    pub(crate) async fn from_callback(
+    /// Impl for `callback:...` and `login-callback:...`.
+    pub async fn from_callback_impl(
         req: Request,
         auth_config: &AuthConfig,
     ) -> Result<Option<Self>, Response> {
-        trace!("Sending request to callback '{}'", auth_config.callback_url.as_ref().unwrap());
+        trace!("Sending request to callback '{}'", req.uri());
 
         // Send request and download response.
         // TOOD: Only create client once!
@@ -259,18 +258,18 @@ impl User {
         let response = client.request(req).await.map_err(|e| {
             // TODO: maybe limit how quickly that can be logged?
             error!("Error contacting auth callback: {e}");
-            response::bad_gateway()
+            callback_bad_gateway()
         })?;
         let (parts, body) = response.into_parts();
         let body = hyper::body::to_bytes(body).await.map_err(|e| {
             error!("Error downloading body from auth callback: {e}");
-            response::bad_gateway()
+            callback_bad_gateway()
         })?;
 
 
         if parts.status != StatusCode::OK {
             error!("Auth callback replied with {} (which is unexpected)", parts.status);
-            return Err(response::bad_gateway())
+            return Err(callback_bad_gateway())
         }
 
         #[derive(Debug, Deserialize)]
@@ -305,7 +304,7 @@ impl User {
             Ok(CallbackResponse::NoUser) => Ok(None),
             Err(e) => {
                 error!("Could not deserialize body from auth callback: {e}");
-                Err(response::bad_gateway())
+                Err(callback_bad_gateway())
             },
         }
     }
@@ -457,7 +456,7 @@ pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) -> ! {
         // Remove outdated user sessions.
         let sql = "delete from user_sessions \
             where extract(epoch from now() - created) > $1::double precision";
-        match db.execute(sql, &[&config.session_duration.as_secs_f64()]).await {
+        match db.execute(sql, &[&config.session.duration.as_secs_f64()]).await {
             Err(e) => error!("Error deleting outdated user sessions: {}", e),
             Ok(0) => debug!("No outdated user sessions found in DB"),
             Ok(num) => info!("Deleted {num} outdated user sessions from DB"),
@@ -465,4 +464,11 @@ pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) -> ! {
 
         tokio::time::sleep(RUN_PERIOD).await;
     }
+}
+
+pub(crate) fn callback_bad_gateway() -> Response {
+    Response::builder()
+        .status(StatusCode::BAD_GATEWAY)
+        .body("Bad gateway: broken auth callback".into())
+        .unwrap()
 }

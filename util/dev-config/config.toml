@@ -23,9 +23,10 @@ key = "tobira"
 level = "debug"
 
 [auth]
-mode = "login-proxy"
+source = "tobira-session"
 trusted_external_key = "tobira"
 pre_auth_external_links = true
+session.from_session_endpoint = "trust-auth-headers"
 
 [auth.jwt]
 signing_algorithm = "ES256"

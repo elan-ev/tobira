@@ -35,9 +35,11 @@ pub(crate) fn not_found() -> Response {
         .unwrap()
 }
 
-pub(crate) fn bad_gateway() -> Response {
+/// Returns "401 Unauthorized", but that's a misnomer as the semantics of this
+/// are "unauthenticated".
+pub(crate) fn unauthorized() -> Response {
     Response::builder()
-        .status(StatusCode::BAD_GATEWAY)
-        .body("Bad gateway: broken auth callback".into())
+        .status(StatusCode::UNAUTHORIZED)
+        .body("Not authenticated".into())
         .unwrap()
 }

@@ -14,9 +14,9 @@ use super::JwtConfig;
 /// Authentification and authorization
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct AuthConfig {
-    /// The mode of authentication. See the authentication docs for more information.
+    /// How incoming HTTP requests are authenticated. See the documentation!
     #[config(default = "none")]
-    pub(crate) mode: AuthMode,
+    pub(crate) source: AuthSource,
 
     /// Link of the login button. If not set, the login button internally
     /// (not via `<a>`, but through JavaScript) links to Tobira's own login page.
@@ -25,11 +25,6 @@ pub(crate) struct AuthConfig {
     /// Link of the logout button. If not set, clicking the logout button will
     /// send a `DELETE` request to `/~session`.
     pub(crate) logout_link: Option<String>,
-
-    /// Only for `*-callback` modes: URL to HTTP API to resolve incoming request
-    /// to user information.
-    #[config(deserialize_with = AuthConfig::deserialize_callback_url)]
-    pub(crate) callback_url: Option<Uri>,
 
     #[config(nested)]
     pub(crate) callback: CallbackConfig,
@@ -82,11 +77,6 @@ pub(crate) struct AuthConfig {
     #[config(default = ["ROLE_USER_"])]
     pub(crate) user_role_prefixes: Vec<String>,
 
-    /// Duration of a Tobira-managed login session.
-    /// Note: This is only relevant if `auth.mode` is `login-proxy`.
-    #[config(default = "30d", deserialize_with = crate::config::deserialize_duration)]
-    pub(crate) session_duration: Duration,
-
     /// A shared secret for **trusted** external applications.
     /// Send this value as the `x-tobira-trusted-external-key`-header
     /// to use certain APIs without having to invent a user.
@@ -95,6 +85,16 @@ pub(crate) struct AuthConfig {
     /// this is sent over.
     pub(crate) trusted_external_key: Option<Secret<String>>,
 
+    /// Determines whether or not Tobira users are getting pre-authenticated against
+    /// Opencast when they visit external links like the ones to Opencast Studio
+    /// or the Editor. If you have an SSO-solution, you don't need this.
+    #[config(default = false)]
+    pub(crate) pre_auth_external_links: bool,
+
+    /// Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.
+    #[config(nested)]
+    pub(crate) session: SessionConfig,
+
     /// Configuration related to the built-in login page.
     #[config(nested)]
     pub(crate) login_page: LoginPageConfig,
@@ -102,77 +102,36 @@ pub(crate) struct AuthConfig {
     /// JWT configuration. See documentation for more information.
     #[config(nested)]
     pub(crate) jwt: JwtConfig,
-
-    /// Determines whether or not Tobira users are getting pre-authenticated against
-    /// Opencast when they visit external links like the ones to Opencast Studio
-    /// or the Editor. If you have an SSO-solution, you don't need this.
-    #[config(default = false)]
-    pub(crate) pre_auth_external_links: bool,
 }
 
 impl AuthConfig {
     pub(crate) fn validate(&self) -> Result<()> {
-        let cb_mode = matches!(self.mode, AuthMode::LoginCallback | AuthMode::AuthCallback);
-        if cb_mode && !self.callback_url.is_some() {
-            bail!(
-                "'auth.mode' is '{}', which requires 'auth.callback_url' to be set, but it is not.",
-                self.mode.label(),
-            );
-        }
-        if !cb_mode && self.callback_url.is_some() {
-            bail!(
-                "'auth.mode' is '{}', but 'auth.callback_url' is specified, which makes no sense",
-                self.mode.label(),
-            );
+        if self.login_link.is_some() && (self.login_page.user_id_label.is_some()
+            || self.login_page.password_label.is_some()
+            || self.login_page.note.is_some())
+        {
+            bail!("'auth.login_link' is set, but so are some 'auth.login_page.*' values. \
+                That makes no sense.");
         }
 
-        match (self.mode == AuthMode::AuthCallback, self.callback.relevant_headers.is_some()) {
-            (true, true) | (false, false) => {}
-            (true, false) => bail!("'auth.mode' is 'auth-callback', which requires \
-                'auth.callback_headers' to be set, but it is not."),
-            (false, true) => bail!("'auth.callback_headers' is specified, but \
-                'auth.mode' is not 'auth-callback', which makes no sense"),
+        let session_sources_defined = false
+            || self.session.from_login_credentials != LoginCredentialsHandler::None
+            || self.session.from_session_endpoint != SessionEndpointHandler::None;
+        if self.source == AuthSource::TobiraSession {
+            if !session_sources_defined {
+                bail!("'auth.source' is 'tobira-session', but no way to create \
+                    sessions is configured: set 'auth.session.from_login_credentials' \
+                    or 'auth.session.from_session_endpoint'");
+            }
+        } else {
+            if session_sources_defined {
+                bail!("'auth.source' is not 'tobira-session', but \
+                    'auth.session.from_login_credentials' or \
+                    'auth.session.from_session_endpoint' is set.");
+            }
         }
 
         Ok(())
-    }
-
-    pub(super) fn deserialize_callback_url<'de, D>(deserializer: D) -> Result<Uri, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        let url: Url = s.parse()
-            .map_err(|e| <D::Error>::custom(format!("invalid URL: {e}")))?;
-        if url.query().is_some() || url.fragment().is_some() {
-            return Err(
-                <D::Error>::custom("'auth.callback_url' must not contain a query or fragment part"),
-            );
-        }
-
-        Uri::builder()
-            .scheme(url.scheme())
-            .authority(url.authority())
-            .path_and_query(url.path())
-            .build()
-            .unwrap()
-            .pipe(Ok)
-    }
-
-    pub(super) fn deserialize_callback_headers<'de, D>(
-        deserializer: D,
-    ) -> Result<Vec<HeaderName>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        <Vec<String>>::deserialize(deserializer)?
-            .into_iter()
-            .map(|s| {
-                HeaderName::try_from(s)
-                    .map_err(|e| <D::Error>::custom(format!("invalid header name: {e}")))
-            })
-            .collect::<Result<Vec<_>, _>>()?
-            .pipe(Ok)
     }
 
     /// Finds the user role from the given roles according to
@@ -206,6 +165,20 @@ impl AuthConfig {
     }
 }
 
+#[derive(Debug, Clone, confique::Config)]
+pub(crate) struct SessionConfig {
+    /// How to create sessions from login credentials (userid + password).
+    #[config(default = "none")]
+    pub(crate) from_login_credentials: LoginCredentialsHandler,
+
+    /// How `POST /~session` requests are authenticated.
+    #[config(default = "none")]
+    pub(crate) from_session_endpoint: SessionEndpointHandler,
+
+    /// Duration of a Tobira-managed login session.
+    #[config(default = "30d", deserialize_with = crate::config::deserialize_duration)]
+    pub(crate) duration: Duration,
+}
 
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct LoginPageConfig {
@@ -220,29 +193,109 @@ pub(crate) struct LoginPageConfig {
     pub(crate) note: Option<TranslatedString>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum AuthMode {
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(try_from = "String")]
+pub(crate) enum AuthSource {
     None,
-    FullAuthProxy,
-    LoginProxy,
-    AuthCallback,
-    LoginCallback,
-    Opencast,
+    TobiraSession,
+    Callback(Uri),
+    TrustAuthHeaders,
 }
 
+impl TryFrom<String> for AuthSource {
+    type Error = String;
 
-impl AuthMode {
-    /// Returns the string that has to be specified in the config file to select
-    /// this mode.
-    pub fn label(&self) -> &'static str {
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        if value == "none" {
+            Ok(Self::None)
+        } else if value == "trust-auth-headers" {
+            Ok(Self::TrustAuthHeaders)
+        } else if value == "tobira-session" {
+            Ok(Self::TobiraSession)
+        } else if let Some(url) = value.strip_prefix("callback:") {
+            Ok(Self::Callback(parse_callback_url(url)?))
+        } else {
+            Err("invalid value, check docs for possible options".into())
+        }
+    }
+}
+
+impl AuthSource {
+    pub(crate) fn label(&self) -> &'static str {
         match self {
-            AuthMode::None => "none",
-            AuthMode::FullAuthProxy => "full-auth-proxy",
-            AuthMode::LoginProxy => "login-proxy",
-            AuthMode::AuthCallback => "auth-callback",
-            AuthMode::LoginCallback => "login-callback",
-            AuthMode::Opencast => "opencast",
+            Self::None => "none",
+            Self::TobiraSession => "tobira-session",
+            Self::Callback(_) => "callback",
+            Self::TrustAuthHeaders => "trust-auth-headers",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(try_from = "String")]
+pub(crate) enum LoginCredentialsHandler {
+    None,
+    Opencast,
+    Callback(Uri),
+}
+
+impl TryFrom<String> for LoginCredentialsHandler {
+    type Error = String;
+
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        if value == "none" {
+            Ok(Self::None)
+        } else if value == "opencast" {
+            Ok(Self::Opencast)
+        } else if let Some(url) = value.strip_prefix("login-callback:") {
+            Ok(Self::Callback(parse_callback_url(url)?))
+        } else {
+            Err("invalid value, check docs for possible options".into())
+        }
+    }
+}
+
+impl LoginCredentialsHandler {
+    pub(crate) fn label(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Callback(_) => "login-callback",
+            Self::Opencast => "opencast",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(try_from = "String")]
+pub(crate) enum SessionEndpointHandler {
+    None,
+    Callback(Uri),
+    TrustAuthHeaders,
+}
+
+impl TryFrom<String> for SessionEndpointHandler {
+    type Error = String;
+
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        if value == "none" {
+            Ok(Self::None)
+        } else if value == "trust-auth-headers" {
+            Ok(Self::TrustAuthHeaders)
+        } else if let Some(url) = value.strip_prefix("callback:") {
+            Ok(Self::Callback(parse_callback_url(url)?))
+        } else {
+            Err("invalid value, check docs for possible options".into())
+        }
+    }
+}
+
+impl SessionEndpointHandler {
+    pub(crate) fn label(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Callback(_) => "login-callback",
+            Self::TrustAuthHeaders => "trust-auth-headers",
         }
     }
 }
@@ -252,7 +305,7 @@ pub(crate) struct CallbackConfig {
     /// Headers relevant for the auth callback. Only headers of the incoming
     /// request listed here are forwarded to the callback. Requests without any
     /// of these headers set are treated as unauthenticated.
-    #[config(deserialize_with = AuthConfig::deserialize_callback_headers)]
+    #[config(deserialize_with = deserialize_callback_headers)]
     pub(crate) relevant_headers: Option<Vec<HeaderName>>,
 
     /// For how long a callback's response is cached. The key of the cache is
@@ -260,4 +313,35 @@ pub(crate) struct CallbackConfig {
     /// caching.
     #[config(default = "5min", deserialize_with = crate::config::deserialize_duration)]
     pub(crate) cache_duration: Duration,
+}
+
+fn parse_callback_url(s: &str) -> std::result::Result<Uri, String> {
+    let url: Url = s.parse().map_err(|e| format!("invalid URL: {e}"))?;
+    if url.query().is_some() || url.fragment().is_some() {
+        return Err("'auth.callback_url' must not contain a query or fragment part".into());
+    }
+
+    Uri::builder()
+        .scheme(url.scheme())
+        .authority(url.authority())
+        .path_and_query(url.path())
+        .build()
+        .unwrap()
+        .pipe(Ok)
+}
+
+pub(super) fn deserialize_callback_headers<'de, D>(
+    deserializer: D,
+) -> Result<Vec<HeaderName>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    <Vec<String>>::deserialize(deserializer)?
+        .into_iter()
+        .map(|s| {
+            HeaderName::try_from(s)
+                .map_err(|e| <D::Error>::custom(format!("invalid header name: {e}")))
+        })
+        .collect::<Result<Vec<_>, _>>()?
+        .pipe(Ok)
 }

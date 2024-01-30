@@ -6,7 +6,7 @@ use reinda::{assets, Setup};
 use secrecy::ExposeSecret;
 use serde_json::json;
 
-use crate::{config::Config, prelude::*};
+use crate::{auth::AuthSource, config::Config, prelude::*};
 use super::{Response, handlers::CommonHeadersExt};
 
 
@@ -122,6 +122,7 @@ impl Assets {
         }).to_string());
         variables.insert("global-style".into(), config.theme.to_css());
         variables.insert("auth".into(), json!({
+            "usesTobiraSessions": config.auth.source == AuthSource::TobiraSession,
             "loginLink": config.auth.login_link,
             "logoutLink": config.auth.logout_link,
             "userIdLabel": config.auth.login_page.user_id_label,
