@@ -116,7 +116,7 @@ async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> 
         if info.label.is_empty() {
             bail!("No label given for {}", role.0);
         }
-        if config.auth.user_role_prefixes.iter().any(|prefix| role.0.starts_with(prefix)) {
+        if config.auth.is_user_role(&role.0) {
             bail!("Role '{}' is a user role according to 'auth.user_role_prefixes'. \
                 This should be added as user, not as group.", role.0);
         }

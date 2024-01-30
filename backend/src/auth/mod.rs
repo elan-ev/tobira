@@ -390,23 +390,23 @@ pub(crate) trait HasRoles {
     }
 
     fn is_moderator(&self, auth_config: &AuthConfig) -> bool {
-        self.is_admin() || self.roles().contains(&auth_config.moderator_role)
+        self.is_admin() || self.roles().contains(&auth_config.roles.moderator)
     }
 
     fn can_upload(&self, auth_config: &AuthConfig) -> bool {
-        self.is_moderator(auth_config) || self.roles().contains(&auth_config.upload_role)
+        self.is_moderator(auth_config) || self.roles().contains(&auth_config.roles.upload)
     }
 
     fn can_use_studio(&self, auth_config: &AuthConfig) -> bool {
-        self.is_moderator(auth_config) || self.roles().contains(&auth_config.studio_role)
+        self.is_moderator(auth_config) || self.roles().contains(&auth_config.roles.studio)
     }
 
     fn can_use_editor(&self, auth_config: &AuthConfig) -> bool {
-        self.is_moderator(auth_config) || self.roles().contains(&auth_config.editor_role)
+        self.is_moderator(auth_config) || self.roles().contains(&auth_config.roles.editor)
     }
 
     fn can_create_user_realm(&self, auth_config: &AuthConfig) -> bool {
-        self.roles().contains(&auth_config.user_realm_role)
+        self.roles().contains(&auth_config.roles.user_realm)
     }
 
     /// Returns `true` if the user is a global Opencast administrator and can do

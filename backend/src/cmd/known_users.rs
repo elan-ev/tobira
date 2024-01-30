@@ -71,7 +71,7 @@ async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> 
 
     // Validate
     for role in users.keys() {
-        if !config.auth.user_role_prefixes.iter().any(|prefix| role.starts_with(prefix)) {
+        if !config.auth.is_user_role(role) {
             bail!("Role {role} does not start with any prefix \
                 specified in 'auth.user_role_prefixes'!");
         }

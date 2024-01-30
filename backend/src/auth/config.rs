@@ -26,40 +26,6 @@ pub(crate) struct AuthConfig {
     /// send a `DELETE` request to `/~session`.
     pub(crate) logout_link: Option<String>,
 
-    #[config(nested)]
-    pub(crate) callback: CallbackConfig,
-
-    /// If a user has this role, they are treated as a moderator in Tobira,
-    /// giving them the ability to modify the realm structure among other
-    /// things.
-    #[config(default = "ROLE_TOBIRA_MODERATOR")]
-    pub(crate) moderator_role: String,
-
-    /// If a user has this role, they are allowed to use the Tobira video
-    /// uploader to ingest videos to Opencast.
-    #[config(default = "ROLE_TOBIRA_UPLOAD")]
-    pub(crate) upload_role: String,
-
-    /// If a user has this role, they are allowed to use Opencast Studio to
-    /// record and upload videos.
-    #[config(default = "ROLE_TOBIRA_STUDIO")]
-    pub(crate) studio_role: String,
-
-    /// If a user has this role, they are allowed to use the Opencast editor to
-    /// edit videos they have write access to.
-    #[config(default = "ROLE_TOBIRA_EDITOR")]
-    pub(crate) editor_role: String,
-
-    /// If a user has this role, they are allowed to create their own "user realm".
-    #[config(default = "ROLE_USER")]
-    pub(crate) user_realm_role: String,
-
-    /// List of prefixes that user roles can have. Used to distinguish user
-    /// roles from other roles. Should probably be the same as
-    /// `role_user_prefix` in `acl.default.create.properties` in OC.
-    #[config(default = ["ROLE_USER_"])]
-    pub(crate) user_role_prefixes: Vec<String>,
-
     /// A shared secret for **trusted** external applications.
     /// Send this value as the `x-tobira-trusted-external-key`-header
     /// to use certain APIs without having to invent a user.
@@ -78,6 +44,9 @@ pub(crate) struct AuthConfig {
     #[config(nested)]
     pub(crate) session: SessionConfig,
 
+    #[config(nested)]
+    pub(crate) callback: CallbackConfig,
+
     /// Configuration related to the built-in login page.
     #[config(nested)]
     pub(crate) login_page: LoginPageConfig,
@@ -85,6 +54,9 @@ pub(crate) struct AuthConfig {
     /// JWT configuration. See documentation for more information.
     #[config(nested)]
     pub(crate) jwt: JwtConfig,
+
+    #[config(nested)]
+    pub(crate) roles: RoleConfig,
 }
 
 impl AuthConfig {
@@ -126,9 +98,7 @@ impl AuthConfig {
         username: &str,
         mut roles: impl Iterator<Item = &'a str>,
     ) -> Option<&'a str> {
-        let is_user_role = |role: &&str| {
-            self.user_role_prefixes.iter().any(|prefix| role.starts_with(prefix))
-        };
+        let is_user_role = |role: &&str| self.is_user_role(*role);
 
         let note = "Check 'auth.user_role_prefixes' and your auth integration.";
         let Some(user_role) = roles.by_ref().find(is_user_role) else {
@@ -145,6 +115,10 @@ impl AuthConfig {
         }
 
         Some(user_role)
+    }
+
+    pub(crate) fn is_user_role(&self, role: &str) -> bool {
+        self.roles.user_role_prefixes.iter().any(|prefix| role.starts_with(prefix))
     }
 }
 
@@ -296,6 +270,41 @@ pub(crate) struct CallbackConfig {
     /// caching.
     #[config(default = "5min", deserialize_with = crate::config::deserialize_duration)]
     pub(crate) cache_duration: Duration,
+}
+
+
+#[derive(Debug, Clone, confique::Config)]
+pub(crate) struct RoleConfig {
+    /// If a user has this role, they are treated as a moderator in Tobira,
+    /// giving them the ability to modify the realm structure among other
+    /// things.
+    #[config(default = "ROLE_TOBIRA_MODERATOR")]
+    pub(crate) moderator: String,
+
+    /// If a user has this role, they are allowed to use the Tobira video
+    /// uploader to ingest videos to Opencast.
+    #[config(default = "ROLE_TOBIRA_UPLOAD")]
+    pub(crate) upload: String,
+
+    /// If a user has this role, they are allowed to use Opencast Studio to
+    /// record and upload videos.
+    #[config(default = "ROLE_TOBIRA_STUDIO")]
+    pub(crate) studio: String,
+
+    /// If a user has this role, they are allowed to use the Opencast editor to
+    /// edit videos they have write access to.
+    #[config(default = "ROLE_TOBIRA_EDITOR")]
+    pub(crate) editor: String,
+
+    /// If a user has this role, they are allowed to create their own "user realm".
+    #[config(default = "ROLE_USER")]
+    pub(crate) user_realm: String,
+
+    /// List of prefixes that user roles can have. Used to distinguish user
+    /// roles from other roles. Should probably be the same as
+    /// `role_user_prefix` in `acl.default.create.properties` in OC.
+    #[config(default = ["ROLE_USER_"])]
+    pub(crate) user_role_prefixes: Vec<String>,
 }
 
 fn parse_callback_url(s: &str) -> std::result::Result<Uri, String> {
