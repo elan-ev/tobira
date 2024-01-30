@@ -203,27 +203,6 @@
 # send a `DELETE` request to `/~session`.
 #logout_link =
 
-# The header containing a unique and stable username of the current user.
-#
-# Default value: "x-tobira-username"
-#username_header = "x-tobira-username"
-
-# The header containing the human-readable name of the current user
-# (e.g. "Peter Lustig").
-#
-# Default value: "x-tobira-user-display-name"
-#display_name_header = "x-tobira-user-display-name"
-
-# The header containing the email address of the current user.
-#
-# Default value: "x-tobira-user-email"
-#email_header = "x-tobira-user-email"
-
-# The header containing a comma-separated list of roles of the current user.
-#
-# Default value: "x-tobira-user-roles"
-#roles_header = "x-tobira-user-roles"
-
 # If a user has this role, they are treated as a moderator in Tobira,
 # giving them the ability to modify the realm structure among other
 # things.

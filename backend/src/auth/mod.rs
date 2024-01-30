@@ -34,6 +34,12 @@ const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
 
 const SESSION_COOKIE: &str = "tobira-session";
 
+// Auth headers
+const AUTH_HEADER_USERNAME: &str = "x-tobira-username";
+const AUTH_HEADER_DISPLAY_NAME: &str = "x-tobira-user-display-name";
+const AUTH_HEADER_EMAIL: &str = "x-tobira-user-email";
+const AUTH_HEADER_ROLES: &str = "x-tobira-user-roles";
+
 
 
 /// Information about whether or not, and if so how
@@ -136,13 +142,13 @@ impl User {
 
         // Get required headers. If these are not set and valid, we treat it as
         // if there is no user session.
-        let username = get_header(&auth_config.username_header)?;
-        let display_name = get_header(&auth_config.display_name_header)?;
-        let email = get_header(&auth_config.email_header);
+        let username = get_header(AUTH_HEADER_USERNAME)?;
+        let display_name = get_header(AUTH_HEADER_DISPLAY_NAME)?;
+        let email = get_header(AUTH_HEADER_EMAIL);
 
         // Get roles from the user.
         let mut roles = HashSet::from([ROLE_ANONYMOUS.to_string()]);
-        let roles_raw = get_header(&auth_config.roles_header)?;
+        let roles_raw = get_header(AUTH_HEADER_ROLES)?;
         roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
         let user_role = auth_config
             .find_user_role(&username, roles.iter().map(|s| s.as_str()))?

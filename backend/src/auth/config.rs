@@ -29,23 +29,6 @@ pub(crate) struct AuthConfig {
     #[config(nested)]
     pub(crate) callback: CallbackConfig,
 
-    /// The header containing a unique and stable username of the current user.
-    #[config(default = "x-tobira-username")]
-    pub(crate) username_header: String,
-
-    /// The header containing the human-readable name of the current user
-    /// (e.g. "Peter Lustig").
-    #[config(default = "x-tobira-user-display-name")]
-    pub(crate) display_name_header: String,
-
-    /// The header containing the email address of the current user.
-    #[config(default = "x-tobira-user-email")]
-    pub(crate) email_header: String,
-
-    /// The header containing a comma-separated list of roles of the current user.
-    #[config(default = "x-tobira-user-roles")]
-    pub(crate) roles_header: String,
-
     /// If a user has this role, they are treated as a moderator in Tobira,
     /// giving them the ability to modify the realm structure among other
     /// things.
