@@ -199,16 +199,14 @@
 # (not via `<a>`, but through JavaScript) links to Tobira's own login page.
 #login_link =
 
-# Link of the logout button. If not set, clicking the logout button will
-# send a `DELETE` request to `/~session`.
+# Link of the logout button.
 #logout_link =
 
-# A shared secret for **trusted** external applications.
-# Send this value as the `x-tobira-trusted-external-key`-header
-# to use certain APIs without having to invent a user.
-# Note that this should be hard to guess, and kept secret.
-# Specifically, you are going to want to encrypt every channel
-# this is sent over.
+# A shared secret for **trusted** external applications. Send this value
+# as the `x-tobira-trusted-external-key`-header to use certain APIs
+# without having to invent a user. Note that this should be hard to
+# guess, and kept secret. Specifically, you are going to want to encrypt
+# every channel this is sent over.
 #trusted_external_key =
 
 # Determines whether or not Tobira users are getting pre-authenticated against

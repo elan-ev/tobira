@@ -22,16 +22,14 @@ pub(crate) struct AuthConfig {
     /// (not via `<a>`, but through JavaScript) links to Tobira's own login page.
     pub(crate) login_link: Option<String>,
 
-    /// Link of the logout button. If not set, clicking the logout button will
-    /// send a `DELETE` request to `/~session`.
+    /// Link of the logout button.
     pub(crate) logout_link: Option<String>,
 
-    /// A shared secret for **trusted** external applications.
-    /// Send this value as the `x-tobira-trusted-external-key`-header
-    /// to use certain APIs without having to invent a user.
-    /// Note that this should be hard to guess, and kept secret.
-    /// Specifically, you are going to want to encrypt every channel
-    /// this is sent over.
+    /// A shared secret for **trusted** external applications. Send this value
+    /// as the `x-tobira-trusted-external-key`-header to use certain APIs
+    /// without having to invent a user. Note that this should be hard to
+    /// guess, and kept secret. Specifically, you are going to want to encrypt
+    /// every channel this is sent over.
     pub(crate) trusted_external_key: Option<Secret<String>>,
 
     /// Determines whether or not Tobira users are getting pre-authenticated against
