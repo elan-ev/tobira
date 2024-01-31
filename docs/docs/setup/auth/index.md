@@ -6,18 +6,12 @@ sidebar_position: 8
 
 The topic of authentication and authorization comes up in the context of Tobira in several situations, each described in its own section in this document:
 
-- [Users authenticating themselves against Tobira](#user-login) (i.e. logging into Tobira)
+- [Users authenticating themselves against Tobira](./auth/user) (i.e. logging into Tobira)
 - [Tobira authenticating against Opencast](#tobira-against-opencast) (used for syncing)
 - [Opencast authenticating against Tobira](#opencast-against-tobira) (used to change pages from within the Opencast admin UI)
 - [Tobira cross-authenticating its users against Opencast](#cross-auth-users-against-opencast) (used for the uploader, Studio and the editor)
 
 ---
-
-## User login & auth {#user-login}
-
-Users logging into Tobira via the normal web UI is discussed in [this document](./auth/user).
-
-
 
 
 ## Tobira authenticating against Opencast {#tobira-against-opencast}

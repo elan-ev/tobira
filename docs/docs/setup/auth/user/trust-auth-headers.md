@@ -2,37 +2,69 @@
 sidebar_position: 3
 ---
 
-# Mode "full-auth-proxy"
+# Trust auth headers
 
-```toml
-[auth]
-mode = "full-auth-proxy"
-```
+> ```toml
+> auth.source = "trust-auth-headers"
+> ```
 
-This mode should be used if you want to use your own or an existing session management (e.g. that of Shibboleth).
-If any of the other auth modes work for you, rather use those to make the setup easier.
+## How it works
 
-In this mode, it is expected that all incoming requests are intercepted and that all user information is always passed to Tobira via [auth headers](in-depth#auth-headers).
-Tobira will not inspect any `Cookie` headers and will not react to login requests.
+In this mode, your custom auth logic sits in front of Tobira and passes user information to it via *auth headers*.
 From Tobira's perspective it's easy: if the auth headers are set, the request is authenticated, otherwise it's not.
+*Note*: the [auth callback](./callback) method is better than this in most cases, so try to use that instead.
 
-How you do this is ultimately up to you, but this document explains some rough starting points.
-Most information in ["Auth systems in depth"](in-depth) is relevant here, so be sure to read that document.
+```
+┌──────┐                    ┌─────────┐────────┐  req with auth headers   ┌────────┐
+│      │ -----------------> │ reverse │  Your  │ -----------------------> │        │
+│ User │                    │  proxy  │  Auth  │                          │ Tobira │
+│      │ <----------------- │         │  Logic │ <----------------------- │        │
+└──────┘                    └─────────┘────────┘                          └────────┘
+```
 
 :::tip
 Authentication is irrelevant for requests to `/~assets/*` as those are just static files everyone can access.
 Don't run your auth logic for those to prevent useless work.
 :::
 
+The *auth headers* are just designated HTTP headers, one for each kind of information described in ["User information Tobira needs"](./#user-information-tobira-needs):
+
+- `x-tobira-username`: Username
+- `x-tobira-user-display-name`: Display name
+- `x-tobira-user-roles`: List of roles, comma separated.
+- `x-tobira-user-email`: User email address (optional)
+
+All these header values have to be a **base64-encoded UTF-8** string!
+
+<details>
+<summary>Why Base64?</summary>
+
+It is strongly recommended by the HTTP standard to only include ASCII bytes in HTTP headers.
+Arbitrary bytes are *usually* passed through verbatim, but this is not guaranteed and often forbidden.
+Base64 encoding is the safer option, that's why we chose it for Tobira.
+
+</details>
+
+For example:
+
+```
+x-tobira-username: YXVndXN0dXM=
+x-tobira-user-display-name: QXVndXN0dXMgUGFnZW5rw6RtcGVy
+x-tobira-user-roles: Uk9MRV9VU0VSX0FVR1VTVFVTLFJPTEVfQU5PTllNT1VTLFJPTEVfVVNFUixST0xFX1NUVURFTlQ=
+x-tobira-user-email: YXVndXN0dXNAZXhhbXBsZS5vcmc=
+```
+
+Base64 decoding those values results in `augustus`, `Augustus Pagenkämper`, `ROLE_USER_AUGUSTUS,ROLE_ANONYMOUS,ROLE_USER,ROLE_STUDENT` and `augustus@example.org`.
+
 :::danger
-Remember to never forward auth headers set by the user to Tobira.
-Otherwise it's extremely easy for someone to pretend to be anyone and get access to anything.
+**Important**: you have to make sure that your reverse proxy removes any of these header values that the user might have sent!
+Tobira blindly trusts these header values and assumes they come from your auth proxy and *not* from the user.
 :::
 
 
-## Basics
+## Examples
 
-Example nginx config:
+Very simple nginx config:
 
 ```nginx
 server {
@@ -66,24 +98,21 @@ server {
 If you use Tobira's login page, you have to properly intercept and react to the `POST /~login` requests sent by it.
 Alternatively, you can use your own login page of course.
 
-How to implement the "TODO" in that nginx block?
-Again, that's up to you, but usually you would send some kind of "auth sub request".
-That means that the incoming request is first sent to some other service speaking HTTP.
-That service evaluates the request (e.g. by reading the `Cookie` header) and sends back information about authentication via headers.
-That information would land in nginx, then being forwarded to Tobira alongside the original request.
-See [this](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-subrequest-authentication/) for the general idea.
+Of course the "TODO" part is the interesting one.
+How you implement that logic is up to you.
+You would usually ask an external system (like Shibboleth) about the request, and then pack the Shibboleth data into the auth headers.
 
-That external auth service could be something existing (like the shibauthorizer from Shibboleth) or your own HTTP server.
-One difficulty lies in getting the user data into the exact shape Tobira expects.
-For example, nginx offers no easy way to encode something as base64.
-So unless your existing auth service already offers base64 encoding and the exact headers you need, you have to write some custom code to shuffle some data around.
 
-## Shibboleth example
+### Shibboleth example
 
 The following is a very rough outline how one could setup authentification via Shibboleth.
 We were very hesitant to include this part in the official docs as it's far from perfect and not a recommendation!
 If you know how to improve upon this, please let us know.
 Please be very cautious before just copying this code!
+
+:::tip
+[The auth callback docs](./callback) have a Shibboleth example as well, which is better in many ways compared to this one!
+:::
 
 You have to install Shibboleth's FastCGI apps on the machine and make sure that [this nginx Shibboleth module](https://github.com/nginx-shib/nginx-http-shibboleth) is loaded.
 Then, the basic idea is to use a Lua block inside nginx to convert Shibboleth's data into the form Tobira expects.
@@ -177,3 +206,5 @@ location /Shibboleth.sso {
     fastcgi_pass unix:/run/shibboleth/shibresponder.sock;
 }
 ```
+
+
