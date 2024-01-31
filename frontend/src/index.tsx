@@ -7,21 +7,8 @@ import { LoginRoute, REDIRECT_STORAGE_KEY } from "./routes/Login";
 import { checkInitialConsent } from "./ui/InitialConsent";
 
 
-// Potentially redirect to previous page after login.
-//
-// When clicking on the login button, the (then) current page is stored in
-// session storage. If the login button is configured to be a link to some
-// external page, the user is likely redirected to `/~login` from that external
-// login page. In that case, we want to redirect the user to the page they are
-// coming from.
-//
-// We previously had this logic in the `LoginPage` component and redirected in
-// an effect. But this is not the proper tool: we don't want to cause rendering
-// a component to trigger a redirect. In fact, that approach would break in
-// `StrictMode`.
-const redirectTo = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY);
-if (window.location.pathname === LoginRoute.url && redirectTo) {
-    const newUri = new URL(redirectTo, document.baseURI).href;
+const redirect = (target: string) => {
+    const newUri = new URL(target, document.baseURI).href;
     // eslint-disable-next-line no-console
     console.debug(`Requested login page after login: redirecting to previous page ${newUri}`);
     const state = {
@@ -31,9 +18,38 @@ if (window.location.pathname === LoginRoute.url && redirectTo) {
     };
     window.history.replaceState(state, "", newUri);
     window.sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
-}
+};
 
 (async () => {
+    // This a special route mostly useful for using custom login pages. Those
+    // pages can usually be configured where they should redirect after
+    // successful login.
+    if (window.location.pathname === "/~session") {
+        // eslint-disable-next-line no-console
+        console.debug("Sending 'POST /~session' request and then redirecting");
+        await fetch("/~session", { method: "POST" });
+        redirect(window.sessionStorage.getItem(REDIRECT_STORAGE_KEY) ?? "/");
+    }
+
+    // Potentially redirect to previous page after login.
+    //
+    // When clicking on the login button, the (then) current page is stored in
+    // session storage. If the login button is configured to be a link to some
+    // external page, the user is likely redirected to `/~login` from that external
+    // login page. In that case, we want to redirect the user to the page they are
+    // coming from.
+    //
+    // We previously had this logic in the `LoginPage` component and redirected in
+    // an effect. But this is not the proper tool: we don't want to cause rendering
+    // a component to trigger a redirect. In fact, that approach would break in
+    // `StrictMode`.
+    const target = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY);
+    if (window.location.pathname === LoginRoute.url && target) {
+        // eslint-disable-next-line no-console
+        console.debug(`Requested login page after login: redirecting to previous page ${target}`);
+        redirect(target);
+    }
+
     const initialRoute = matchInitialRoute();
     const consentGiven = await checkInitialConsent();
     const root = document.createElement("div");

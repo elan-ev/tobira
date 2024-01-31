@@ -92,6 +92,11 @@ The last two methods work exactly like configuring those as `auth.source`.
 So see those docs for more information.
 See the examples below to get a better understanding of feature.
 
+### Utility route `GET /~session`
+
+In practice, it's usually easy to configure your external system/login page where to direct to after successful login, while it's hard to send a POST request.
+This route helps in these situations: when a user opens this in the browser, a `POST /~session` request is sent by JavaScript and then the user is redirect to the page they were on when clicking on the login button.
+
 
 ## Delete sessions
 
@@ -206,4 +211,39 @@ This is shown in this diagram:
 
 ### Shibboleth
 
-TODO
+In [the docs about the auth callback](./callback), there is already a good Shibboleth example, that can be used without problems.
+But maybe you want to use Shibboleth to login, but afterwards want to use Tobira's session management.
+In that case, you would proceed as follows:
+
+```toml
+[general]
+reserved_paths = ["/Shibboleth.sso"]
+
+[auth]
+source = "tobira-session"
+login_link = "/~login"
+logout_link = "/Shibboleth.sso/Logout?return=/"
+session.from_session_endpoint = "callback:http://localhost:9090"
+callback.relevant_headers = ["Variable-uniqueID", ...]
+```
+
+(Note: setting the `login_link` to `/~login` makes sense as if left unset, the login button would be an internal JS-based navigation, not sending a `GET /~login` request.)
+
+In your Shibboleth configuration you would:
+- Set `/~login` as protected path such that a user visiting that path is sent to the login page.
+- Set the return URL after login to `/~session`
+
+The callback script would be the same as in the Shibboleth example in [the callback docs](./callback).
+Finally, you would configure your reverse proxy to run the shibauthorizer only for `GET /~login` and `POST /~session` requests.
+
+All of this results in the following behavior:
+
+- The user visits Tobira first the first time, then clicks the login button.
+- That request to `GET /~login` get detected as authorized by the shibauthorizer, which replies 302, redirecting the user to the Shibboleth login page.
+- The user logs in and Shibboleth redirects to `/~session`.
+- The user loads Tobira's JS from `/~session`, which then sends a `POST /~session` request.
+- That request is authorized by shibauthorizer, setting a bunch of Shibboleth headers.
+- Tobira receives the request with Shibboleth headers, and due to `session.from_session_endpoint`, it sends a request to the configured callback.
+- The callback reads the Shibboleth headers, and returns a JSON blob describing the user to Tobira.
+- Tobira receives the user info and creates a session for it, returning a `Set-Cookie` header.
+- The user receives the session cookie, now being logged in.

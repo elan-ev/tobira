@@ -78,8 +78,9 @@ impl AuthConfig {
 
         let relevant_headers_or_cookies = self.callback.relevant_headers.is_some()
             || self.callback.relevant_cookies.is_some();
-        let is_callback = matches!(self.source, AuthSource::Callback(_));
-        match (is_callback, relevant_headers_or_cookies) {
+        let auth_callback_used = matches!(self.source, AuthSource::Callback(_))
+            || matches!(self.session.from_session_endpoint, SessionEndpointHandler::Callback(_));
+        match (auth_callback_used, relevant_headers_or_cookies) {
             (true, false) => bail!("'auth.source' is 'callback', which means 'relevant_headers' \
                 and/or 'relevant_cookies' need to be set, but they are not."),
             (false, true) => bail!("'auth.source' is not 'callback', but 'relevant_headers' \
