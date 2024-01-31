@@ -67,6 +67,35 @@ impl AuthConfig {
                 That makes no sense.");
         }
 
+        if self.logout_link.is_none()
+            && matches!(self.source, AuthSource::Callback(_) | AuthSource::TrustAuthHeaders)
+        {
+            bail!("'auth.logout_link' is not set, but 'auth.source' is '{}'. That \
+                would mean the logout button does nothing. You have to set a logout link.",
+                self.source.label(),
+            )
+        }
+
+        let relevant_headers_or_cookies = self.callback.relevant_headers.is_some()
+            || self.callback.relevant_cookies.is_some();
+        let is_callback = matches!(self.source, AuthSource::Callback(_));
+        match (is_callback, relevant_headers_or_cookies) {
+            (true, false) => bail!("'auth.source' is 'callback', which means 'relevant_headers' \
+                and/or 'relevant_cookies' need to be set, but they are not."),
+            (false, true) => bail!("'auth.source' is not 'callback', but 'relevant_headers' \
+                and/or 'relevant_cookies' is set, which makes no sense."),
+            _ => {}
+        }
+
+        let cookie_header_relevant = self.callback.relevant_headers
+            .as_ref()
+            .is_some_and(|v| v.contains(&HeaderName::from_static("cookie")));
+        if cookie_header_relevant && self.callback.relevant_cookies.is_some() {
+            bail!("'auth.callback.relevant_headers' contains 'Cookie', so the full \
+                cookie header is always included, and thus it makes no sense to set \
+                'auth.callback.relevant_cookies'. But it is set.");
+        }
+
         let session_sources_defined = false
             || self.session.from_login_credentials != LoginCredentialsHandler::None
             || self.session.from_session_endpoint != SessionEndpointHandler::None;
@@ -257,11 +286,12 @@ impl SessionEndpointHandler {
 
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct CallbackConfig {
-    /// Headers relevant for the auth callback. Only headers of the incoming
-    /// request listed here are forwarded to the callback. Requests without any
-    /// of these headers set are treated as unauthenticated.
+    /// Headers relevant for the auth callback. See docs.
     #[config(deserialize_with = deserialize_callback_headers)]
     pub(crate) relevant_headers: Option<Vec<HeaderName>>,
+
+    /// Cookies relevant for the auth callback. See docs.
+    pub(crate) relevant_cookies: Option<Vec<String>>,
 
     /// For how long a callback's response is cached. The key of the cache is
     /// the set of headers forwarded to the callback. Set to 0 to disable

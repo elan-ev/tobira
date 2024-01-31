@@ -22,11 +22,54 @@ In this mode, your custom auth logic sits behind Tobira and is called for every 
 
 Your callback needs to be an HTTP endpoint that you specify behind the colon of `callback:`.
 The URL can have a path, but no query or fragment part.
-You also have to specify `auth.callback.relevant_headers`: a list of headers that your auth logic reads.
+You also have to specify `auth.callback.relevant_headers` and/or `relevant_cookies`: a list of headers/cookies that your auth logic reads.
 
 On receiving a request that needs authentication, Tobira sends a request to your callback.
-That request has no body, but all `relevant_headers` copied from the incoming request.
-Your callback then needs to return UTF-8 encoded JSON.
+That request has no body, but all `relevant_headers` and `relevant_cookies` copied from the incoming request.
+If you include `"cookie"` in the `relevant_headers` field, all cookies are always forwarded (note: this would usually make the caching fairly useless, so you probably want to disable it then).
+If none of the relevant headers or cookies are in the incoming request, your auth callback is not called at all and the request is treated as unauthenticated.
+
+
+<details>
+<summary>Example requests</summary>
+
+So for example, with this config:
+
+```toml
+[auth]
+source = "callback:http://localhost:1234/tobiraaaaa"
+callback.relevant_headers = ["banana", "kiwi"];
+callback.relevant_cookies = ["fox"]
+```
+
+If a user sends a request like this:
+
+```
+POST /~graphql
+Host: tobira.myuni.edu
+Content-Type: application/json
+Accept: application/json
+banana: foo
+apple: bar
+cookie: funky-session=abc123;fox=is-the-best
+kiwi: baz
+
+{ ... graphql query in body }
+```
+
+Then Tobira would send the following request to your callback:
+
+```
+GET /tobiraaaaa
+Host: localhost:1234
+banana: foo
+cookie: fox=is-the-best
+kiwi: baz
+```
+
+</details>
+
+Your callback is expected to return UTF-8 encoded JSON.
 Said JSON always has to have a top-level `"outcome"` field, plus additional fields depending on the `outcome`.
 
 - `{ "outcome": "no-user" }`: means that the incoming request is not authenticated.
@@ -77,7 +120,7 @@ You could implement a cookie-based session management yourself.
 source = "callback:http://localhost:9090/"
 
 [auth.callback]
-relevant_headers = ["Cookie"]
+relevant_cookies = ["mySession"]
 ```
 
 Here is an example for the callback daemon.
@@ -182,5 +225,5 @@ So the above solution can be improved by having a second nginx server so that th
 user -> nginx (no shib) -> Tobira -> nginx (internal, runs shib) -> callback script
 ```
 
-The `relevant_headers` need to be `["Cookie"]` in that case.
+The `relevant_headers`/`relevant_cookies` need to be adjusted to include everything that the shibauthorizer reads.
 Then, not only is the shibauthorizer only called when the request requires it, but you can also use Tobira's built-in caching.

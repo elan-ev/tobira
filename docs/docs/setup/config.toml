@@ -236,10 +236,11 @@
 
 
 [auth.callback]
-# Headers relevant for the auth callback. Only headers of the incoming
-# request listed here are forwarded to the callback. Requests without any
-# of these headers set are treated as unauthenticated.
+# Headers relevant for the auth callback. See docs.
 #relevant_headers =
+
+# Cookies relevant for the auth callback. See docs.
+#relevant_cookies =
 
 # For how long a callback's response is cached. The key of the cache is
 # the set of headers forwarded to the callback. Set to 0 to disable

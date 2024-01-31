@@ -1,8 +1,9 @@
 use std::{borrow::Cow, time::Duration, collections::HashSet};
 
 use base64::Engine;
+use cookie::Cookie;
 use deadpool_postgres::Client;
-use hyper::{HeaderMap, StatusCode, Uri};
+use hyper::{HeaderMap, http::HeaderValue, StatusCode, Uri};
 use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
@@ -216,16 +217,30 @@ impl User {
         // of blocked by this: https://github.com/hyperium/http/issues/541
 
         let mut req = Request::new(hyper::Body::empty());
-        for h in auth_config.callback.relevant_headers.as_ref().unwrap() {
+        for h in auth_config.callback.relevant_headers.iter().flatten() {
             for value in headers.get_all(h) {
                 req.headers_mut().append(h.clone(), value.clone());
             }
         }
 
+        if let Some(relevant_cookies) = &auth_config.callback.relevant_cookies {
+            headers.get_all(hyper::header::COOKIE)
+                .into_iter()
+                .filter_map(|value| value.to_str().ok()) // Ignore non-UTF8 cookies
+                .flat_map(|value| Cookie::split_parse(value))
+                .filter_map(|r| r.ok()) // Ignore unparsable cookies
+                .filter(|cookie| relevant_cookies.iter().any(|rc| cookie.name() == rc))
+                .for_each(|cookie| {
+                    // Unwrap is fine: this value was a `HeaderValue` before.
+                    let value = HeaderValue::from_bytes(cookie.to_string().as_bytes()).unwrap();
+                    req.headers_mut().append(hyper::header::COOKIE, value);
+                });
+        }
+
         // If the incoming request contains none of the specified headers, we
         // treat it as unauthenticated.
         if req.headers().is_empty() {
-            trace!("None of 'auth.callback_headers' are in the incoming requests \
+            trace!("None of the relevant headers or cookies are in the incoming requests \
                 -> treating as unauthenticated");
             return Ok(None);
         }
