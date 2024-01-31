@@ -48,8 +48,9 @@ Tobira requires the following information about each user:
 - **Username**: a unique, unchanging, URL-safe identifier for each user.
   An alphabetic ID is preferred over a purely numeric one as it appears in the URL to the user's personal page.
 - **Display name**: the user's name in a format intended for humans; usually something like "Forename Surname".
+- **User role**: single role uniquely identifying the user that starts with any of the configured `auth.user_role_prefixes`
 - **Roles**: a list of roles that are used for authorization (e.g. deciding whether a user is allowed to see a video or modify some data).
-  Needs to contain exactly one role starting with any of the configured `auth.user_role_prefixes`.
+  May contain the user role, but there must not be any other roles starting with any of the configured `auth.user_role_prefixes`.
 - **E-Mail** (optional)
 
 In the `"opencast"` mode, this data is retrieved via `/info/me.json` from Opencast.

@@ -303,6 +303,7 @@ impl User {
                 username: String,
                 display_name: String,
                 email: Option<String>,
+                user_role: String,
                 roles: HashSet<String>,
             },
             NoUser,
@@ -315,11 +316,21 @@ impl User {
             trace!("Auth callback returned {v:?}");
         }
         match deserialized {
-            Ok(CallbackResponse::User { username, display_name, email, roles }) => {
-                let user_role = auth_config
-                    .find_user_role(&username, roles.iter().map(|s| s.as_str()))
-                    .expect("user session without user role")
-                    .to_owned();
+            Ok(CallbackResponse::User { username, display_name, email, user_role, mut roles }) => {
+                // Validate values
+                let any_empty = username.is_empty() || display_name.is_empty()
+                    || user_role.is_empty() || roles.contains("");
+                if any_empty {
+                    error!("Auth callback returned empty strings as user info");
+                    return Err(callback_bad_gateway());
+                }
+                if !auth_config.is_user_role(&user_role) {
+                    error!("Auth callback returned a user role that does not start \
+                        with the configured user role prefix.");
+                    return Err(callback_bad_gateway());
+                }
+
+                roles.insert(user_role.clone());
                 Ok(Some(Self { username, display_name, email, roles, user_role }))
             },
             Ok(CallbackResponse::NoUser) => Ok(None),

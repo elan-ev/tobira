@@ -77,6 +77,7 @@ Said JSON always has to have a top-level `"outcome"` field, plus additional fiel
   User data is specified in these additional fields (with the same semantic as described in ["User information Tobira needs"](./#user-information-tobira-needs)):
   - `username`
   - `displayName`
+  - `userRole`
   - `roles`
   - `email` (optional)
 
@@ -88,10 +89,10 @@ So an example `"outcome": "user"` response might look like this:
   "username": "peter",
   "displayName": "Peter Lustig",
   "email": "peter@lustig.de",
+  "userRole": "ROLE_USER_PETER",
   "roles": [
     "ROLE_ANONYMOUS",
     "ROLE_USER",
-    "ROLE_USER_PETER",
     "ROLE_COURSE_123",
     "ROLE_COURSE_125"
   ]
@@ -133,6 +134,7 @@ type User = {
   username: string;
   displayName: string;
   email: string;
+  userRole: string;
   roles: string[];
 }
 
@@ -191,7 +193,7 @@ Deno.serve({ port: 9090 }, request => {
     return Response.json({ outcome: "no-user" });
   }
 
-  const roles = ["ROLE_ANONYMOUS", "ROLE_USER", `ROLE_USER_${uniqueID}`];
+  const roles = ["ROLE_ANONYMOUS", "ROLE_USER"];
   if (affiliation == "staff") {
     roles.push("ROLE_STAFF");
   }
@@ -204,6 +206,7 @@ Deno.serve({ port: 9090 }, request => {
     username: uniqueID,
     displayName: fullName,
     email,
+    userRole: `ROLE_USER_${uniqueID}`,
     roles,
   });
 });

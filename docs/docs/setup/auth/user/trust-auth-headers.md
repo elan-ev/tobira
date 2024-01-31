@@ -32,6 +32,7 @@ The *auth headers* are just designated HTTP headers, one for each kind of inform
 - `x-tobira-username`: Username
 - `x-tobira-user-display-name`: Display name
 - `x-tobira-user-roles`: List of roles, comma separated.
+  Must contain exactly one role starting with any of `auth.user_role_prefixes`, which is treated as the user role.
 - `x-tobira-user-email`: User email address (optional)
 
 All these header values have to be a **base64-encoded UTF-8** string!
