@@ -1,10 +1,10 @@
 use std::{
-    fs,
-    io::{self, Write},
-    path::{Path, PathBuf},
-    time::Duration,
+    fmt, fs, io::{self, Write}, net::{Ipv4Addr, Ipv6Addr}, path::{Path, PathBuf}, str::FromStr, time::Duration
 };
 use confique::Config as _;
+use hyper::Uri;
+use serde::Deserialize;
+use url::Url;
 
 use crate::prelude::*;
 
@@ -202,7 +202,7 @@ pub(crate) fn write_template(path: Option<&PathBuf>) -> Result<()> {
 pub(crate) fn deserialize_duration<'de, D>(deserializer: D) -> Result<Duration, D::Error>
     where D: serde::Deserializer<'de>,
 {
-    use serde::{Deserialize, de::Error};
+    use serde::de::Error;
 
     let s = String::deserialize(deserializer)?;
     let start_unit = s.find(|c: char| !c.is_digit(10))
@@ -219,5 +219,167 @@ pub(crate) fn deserialize_duration<'de, D>(deserializer: D) -> Result<Duration, 
         "h" => Ok(Duration::from_secs(num * 60 * 60)),
         "d" => Ok(Duration::from_secs(num * 60 * 60 * 24)),
         _ => Err(D::Error::custom("invalid unit of time for duration")),
+    }
+}
+
+/// Parses a URI with some default checks. Is required to have an HTTP(S)
+/// scheme, an authority, no userinfo, no query part. A path is allowed. Is
+/// checked for HTTPS security.
+pub(crate) fn parse_normal_http_uri(src: &str) -> Result<Uri> {
+    const SAFE_WORD: &str = "allow-insecure";
+
+    let url: Url = src.parse().map_err(|e| anyhow!("invalid URL: {e}"))?;
+
+    anyhow::ensure!(url.query().is_none(), "URL must not contain a query part");
+    anyhow::ensure!(!url.fragment().is_some_and(|f| f != SAFE_WORD),
+        "URL must not have a fragment part, except for optionally '{SAFE_WORD}'");
+    anyhow::ensure!(url.username().is_empty(), "URL must not contain username part");
+    anyhow::ensure!(url.password().is_none(), "URL must not contain password part");
+    anyhow::ensure!(["http", "https"]. contains(&url.scheme()),
+        "URL scheme must be 'http' or 'https'");
+
+    let host = url.host_str().ok_or(anyhow!("URL must have a host"))?;
+    let is_local = {
+        let bracketed_ipv6 =
+            (|| host.strip_prefix('[')?.strip_suffix(']')?.parse::<Ipv6Addr>().ok())();
+
+
+        if let Some(ipv6) = bracketed_ipv6 {
+            ipv6.is_loopback()
+        } else if let Ok(ipv4) = host.parse::<Ipv4Addr>() {
+            ipv4.is_loopback()
+        } else {
+            // Sure, "localhost" could resolve to anything. But this check
+            // is for catching human errors, not for defending against
+            // attackers, so nothing here needs to be bulletproof.
+            host == "localhost"
+        }
+    };
+
+    if url.scheme() != "https" && !(is_local || url.fragment() == Some(SAFE_WORD)) {
+        bail!("Potentially dangerous URL with non-local host and 'http' scheme. \
+            If you really want to use unencrypted HTTP for non-local hosts, \
+            confirm by specifing the host as '{url}#{SAFE_WORD}'");
+    }
+
+    Uri::builder()
+        .scheme(url.scheme())
+        .authority(url.authority())
+        .path_and_query(url.path())
+        .build()
+        .unwrap()
+        .pipe(Ok)
+}
+
+
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "String")]
+pub(crate) struct HttpHost {
+    pub(crate) scheme: hyper::http::uri::Scheme,
+    pub(crate) authority: hyper::http::uri::Authority,
+}
+
+impl HttpHost {
+    /// Returns a full URI by combining `self` with the given path+query. Panics
+    /// if `pq` is malformed!
+    pub fn with_path_and_query(self, pq: &str) -> Uri {
+        Uri::builder()
+            .scheme(self.scheme)
+            .authority(self.authority)
+            .path_and_query(pq)
+            .build()
+            .expect("invalid URI path+query")
+    }
+}
+
+impl fmt::Display for HttpHost {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}://{}", self.scheme, self.authority)
+    }
+}
+
+impl fmt::Debug for HttpHost {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl FromStr for HttpHost {
+    type Err = anyhow::Error;
+    fn from_str(src: &str) -> Result<Self, Self::Err> {
+        let parts = parse_normal_http_uri(src)?.into_parts();
+        let authority = parts.authority.unwrap();
+        let scheme = parts.scheme.unwrap();
+
+        let has_real_path = parts.path_and_query.as_ref()
+            .map_or(false, |pq| !pq.as_str().is_empty() && pq.as_str() != "/");
+        anyhow::ensure!(!has_real_path, "invalid HTTP host: must not contain a path");
+
+        Ok(Self { scheme, authority })
+    }
+}
+
+impl TryFrom<String> for HttpHost {
+    type Error = <Self as FromStr>::Err;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        value.parse()
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::HttpHost;
+
+    fn parse_http_host(s: &str) -> HttpHost {
+        s.parse::<HttpHost>().expect(&format!("could not parse '{s}' as HttpHost"))
+    }
+
+    const LOCAL_HOSTS: &[&str] = &[
+        "localhost",
+        "localhost:1234",
+        "127.0.0.1",
+        "127.0.0.1:4321",
+        "127.1.2.3",
+        "127.1.2.3:4321",
+        "[::1]",
+        "[::1]:4321",
+    ];
+
+    const NON_LOCAL_HOSTS: &[&str] = &[
+        "1.1.1.1",
+        "1.1.1.1:3456",
+        "[2606:4700:4700::1111]",
+        "[2606:4700:4700::1111]:3456",
+        "github.com",
+        "github.com:3456",
+    ];
+
+    #[test]
+    fn http_host_parse_https() {
+        for host in LOCAL_HOSTS.iter().chain(NON_LOCAL_HOSTS) {
+            parse_http_host(&format!("https://{host}"));
+        }
+    }
+
+    #[test]
+    fn http_host_parse_http_local() {
+        for host in LOCAL_HOSTS {
+            parse_http_host(&format!("http://{host}"));
+        }
+    }
+
+    #[test]
+    fn http_host_parse_http_non_local_safeword() {
+        for host in NON_LOCAL_HOSTS {
+            parse_http_host(&format!("http://{host}#allow-insecure"));
+        }
+    }
+
+    #[test]
+    fn http_host_parse_http_non_local_error() {
+        for host in NON_LOCAL_HOSTS {
+            format!("http://{host}").parse::<HttpHost>().unwrap_err();
+        }
     }
 }

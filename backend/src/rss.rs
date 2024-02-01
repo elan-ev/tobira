@@ -8,7 +8,7 @@ use ogrim::xml;
 use crate::{
     db::{types::{EventTrack, Key}, self, util::{impl_from_db, FromDb, dbargs}},
     http::{Context, response::{bad_request, self, not_found}, Response},
-    util::HttpHost,
+    config::HttpHost,
     prelude::*,
 };
 

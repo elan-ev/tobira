@@ -1,9 +1,8 @@
-use std::{fmt, str::FromStr, net::{Ipv6Addr, Ipv4Addr}};
-use hyper::{http::uri, client::HttpConnector, Uri};
+use std::fmt;
+use hyper::client::HttpConnector;
 use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use rand::{RngCore, CryptoRng};
 use secrecy::Secret;
-use serde::Deserialize;
 
 use crate::prelude::*;
 
@@ -36,98 +35,6 @@ macro_rules! lazy_format {
 pub(crate) use lazy_format;
 
 
-#[derive(Clone, Deserialize)]
-#[serde(try_from = "String")]
-pub(crate) struct HttpHost {
-    pub(crate) scheme: hyper::http::uri::Scheme,
-    pub(crate) authority: hyper::http::uri::Authority,
-}
-
-impl HttpHost {
-    /// Returns a full URI by combining `self` with the given path+query. Panics
-    /// if `pq` is malformed!
-    pub fn with_path_and_query(self, pq: &str) -> Uri {
-        Uri::builder()
-            .scheme(self.scheme)
-            .authority(self.authority)
-            .path_and_query(pq)
-            .build()
-            .expect("invalid URI path+query")
-    }
-}
-
-impl fmt::Display for HttpHost {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}://{}", self.scheme, self.authority)
-    }
-}
-
-impl fmt::Debug for HttpHost {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(self, f)
-    }
-}
-
-impl FromStr for HttpHost {
-    type Err = anyhow::Error;
-    fn from_str(src: &str) -> Result<Self, Self::Err> {
-        let parts = src.parse::<hyper::http::uri::Uri>()?.into_parts();
-        let has_real_path = parts.path_and_query.as_ref()
-            .map_or(false, |pq| !pq.as_str().is_empty() && pq.as_str() != "/");
-        if has_real_path {
-            bail!("invalid HTTP host: must not contain a path");
-        }
-
-        let authority = parts.authority
-            .ok_or(anyhow!("invalid HTTP host: contains no authority part"))?;
-        let scheme = parts.scheme
-            .ok_or(anyhow!("invalid HTTP host: has to specify 'http' or 'https'"))?;
-
-        if scheme != uri::Scheme::HTTP && scheme != uri::Scheme::HTTPS {
-            bail!("scheme has to be 'http' or 'https'");
-        }
-
-        if !authority.as_str().starts_with(authority.host()) {
-            bail!("userinfo not allowed in authority");
-        }
-
-        // Next, we check for HTTP safety. For local hosts, we allow HTTP, but
-        // for others, we require a special "safe word" at the end. This is
-        // just to avoid human errors.
-        let host = authority.host();
-        let is_local = {
-            let bracketed_ipv6 =
-                (|| host.strip_prefix('[')?.strip_suffix(']')?.parse::<Ipv6Addr>().ok())();
-
-
-            if let Some(ipv6) = bracketed_ipv6 {
-                ipv6.is_loopback()
-            } else if let Ok(ipv4) = host.parse::<Ipv4Addr>() {
-                ipv4.is_loopback()
-            } else {
-                // Sure, "localhost" could resolve to anything. But this check
-                // is for catching human errors, not for defending against
-                // attackers, so nothing here needs to be bulletproof.
-                host == "localhost"
-            }
-        };
-
-        const SAFE_WORD: &str = "#allow-insecure";
-        if scheme == uri::Scheme::HTTP && !(is_local || src.ends_with(SAFE_WORD)) {
-            bail!("if you really want to use unencrypted HTTP for non-local hosts, \
-                confirm by specifing the host as 'http://{host}{SAFE_WORD}'");
-        }
-
-        Ok(Self { scheme, authority })
-    }
-}
-
-impl TryFrom<String> for HttpHost {
-    type Error = <Self as FromStr>::Err;
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        value.parse()
-    }
-}
 
 /// An empty `enum` for signaling the fact that a function (potentially) never returns.
 /// Note that you can't construct a value of this type, so a function returning it
@@ -187,63 +94,5 @@ impl<T, E> InspectExt<T> for Result<T, E> {
             f(&t);
             t
         })
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::HttpHost;
-
-    fn parse_http_host(s: &str) -> HttpHost {
-        s.parse::<HttpHost>().expect(&format!("could not parse '{s}' as HttpHost"))
-    }
-
-    const LOCAL_HOSTS: &[&str] = &[
-        "localhost",
-        "localhost:1234",
-        "127.0.0.1",
-        "127.0.0.1:4321",
-        "127.1.2.3",
-        "127.1.2.3:4321",
-        "[::1]",
-        "[::1]:4321",
-    ];
-
-    const NON_LOCAL_HOSTS: &[&str] = &[
-        "1.1.1.1",
-        "1.1.1.1:3456",
-        "[2606:4700:4700::1111]",
-        "[2606:4700:4700::1111]:3456",
-        "github.com",
-        "github.com:3456",
-    ];
-
-    #[test]
-    fn http_host_parse_https() {
-        for host in LOCAL_HOSTS.iter().chain(NON_LOCAL_HOSTS) {
-            parse_http_host(&format!("https://{host}"));
-        }
-    }
-
-    #[test]
-    fn http_host_parse_http_local() {
-        for host in LOCAL_HOSTS {
-            parse_http_host(&format!("http://{host}"));
-        }
-    }
-
-    #[test]
-    fn http_host_parse_http_non_local_safeword() {
-        for host in NON_LOCAL_HOSTS {
-            parse_http_host(&format!("http://{host}#allow-insecure"));
-        }
-    }
-
-    #[test]
-    fn http_host_parse_http_non_local_error() {
-        for host in NON_LOCAL_HOSTS {
-            format!("http://{host}").parse::<HttpHost>().unwrap_err();
-        }
     }
 }

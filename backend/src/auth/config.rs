@@ -4,9 +4,8 @@ use hyper::Uri;
 use isahc::http::HeaderName;
 use secrecy::Secret;
 use serde::{Deserialize, Deserializer, de::Error};
-use url::Url;
 
-use crate::{config::TranslatedString, prelude::*};
+use crate::{config::{parse_normal_http_uri, TranslatedString}, prelude::*};
 
 use super::JwtConfig;
 
@@ -189,7 +188,7 @@ pub(crate) enum AuthSource {
 }
 
 impl TryFrom<String> for AuthSource {
-    type Error = String;
+    type Error = anyhow::Error;
 
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         if value == "none" {
@@ -199,9 +198,9 @@ impl TryFrom<String> for AuthSource {
         } else if value == "tobira-session" {
             Ok(Self::TobiraSession)
         } else if let Some(url) = value.strip_prefix("callback:") {
-            Ok(Self::Callback(parse_callback_url(url)?))
+            Ok(Self::Callback(parse_normal_http_uri(url)?))
         } else {
-            Err("invalid value, check docs for possible options".into())
+            Err(anyhow!("invalid value, check docs for possible options"))
         }
     }
 }
@@ -226,7 +225,7 @@ pub(crate) enum LoginCredentialsHandler {
 }
 
 impl TryFrom<String> for LoginCredentialsHandler {
-    type Error = String;
+    type Error = anyhow::Error;
 
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         if value == "none" {
@@ -234,9 +233,9 @@ impl TryFrom<String> for LoginCredentialsHandler {
         } else if value == "opencast" {
             Ok(Self::Opencast)
         } else if let Some(url) = value.strip_prefix("login-callback:") {
-            Ok(Self::Callback(parse_callback_url(url)?))
+            Ok(Self::Callback(parse_normal_http_uri(url)?))
         } else {
-            Err("invalid value, check docs for possible options".into())
+            Err(anyhow!("invalid value, check docs for possible options"))
         }
     }
 }
@@ -260,7 +259,7 @@ pub(crate) enum SessionEndpointHandler {
 }
 
 impl TryFrom<String> for SessionEndpointHandler {
-    type Error = String;
+    type Error = anyhow::Error;
 
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         if value == "none" {
@@ -268,9 +267,9 @@ impl TryFrom<String> for SessionEndpointHandler {
         } else if value == "trust-auth-headers" {
             Ok(Self::TrustAuthHeaders)
         } else if let Some(url) = value.strip_prefix("callback:") {
-            Ok(Self::Callback(parse_callback_url(url)?))
+            Ok(Self::Callback(parse_normal_http_uri(url)?))
         } else {
-            Err("invalid value, check docs for possible options".into())
+            Err(anyhow!("invalid value, check docs for possible options"))
         }
     }
 }
@@ -336,20 +335,6 @@ pub(crate) struct RoleConfig {
     pub(crate) user_role_prefixes: Vec<String>,
 }
 
-fn parse_callback_url(s: &str) -> std::result::Result<Uri, String> {
-    let url: Url = s.parse().map_err(|e| format!("invalid URL: {e}"))?;
-    if url.query().is_some() || url.fragment().is_some() {
-        return Err("'auth.callback_url' must not contain a query or fragment part".into());
-    }
-
-    Uri::builder()
-        .scheme(url.scheme())
-        .authority(url.authority())
-        .path_and_query(url.path())
-        .build()
-        .unwrap()
-        .pipe(Ok)
-}
 
 pub(super) fn deserialize_callback_headers<'de, D>(
     deserializer: D,
