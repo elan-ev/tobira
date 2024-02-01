@@ -83,7 +83,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         "/~metrics" => {
             register_req!(HttpReqCategory::Metrics);
-            let out = ctx.metrics.gather_and_encode(&ctx.db_pool).await;
+            let out = ctx.metrics.gather_and_encode(&ctx).await;
             Response::builder()
                 .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
                 .body(out.into())

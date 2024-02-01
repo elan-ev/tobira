@@ -3,14 +3,15 @@ use std::{collections::HashSet, hash::Hash, time::{Instant, Duration}};
 use dashmap::{DashMap, mapref::entry::Entry};
 use deadpool_postgres::Client;
 use hyper::HeaderMap;
+use prometheus_client::metrics::counter::Counter;
 
 use crate::{config::Config, prelude::*};
 
 use super::{config::CallbackConfig, User};
 
 pub struct Caches {
-    pub(super) user: UserCache,
-    pub(super) callback: AuthCallbackCache,
+    pub(crate) user: UserCache,
+    pub(crate) callback: AuthCallbackCache,
 }
 
 impl Caches {
@@ -52,7 +53,7 @@ impl Caches {
             let next_user_action =
                 cleanup(now, &self.user.0, CACHE_DURATION, |v| v.last_written_to_db);
             let next_callback_action =
-                cleanup(now, &self.callback.0, config.auth.callback.cache_duration, |v| v.timestamp);
+                cleanup(now, &self.callback.map, config.auth.callback.cache_duration, |v| v.timestamp);
 
             // We will wait until the next entry in the hashmap gets stale, but
             // at least 30s to not do cleanup too often. In case there are no
@@ -197,24 +198,51 @@ struct AuthCallbackCacheEntry {
 
 
 /// Cache for `auth-callback` calls.
-pub(crate) struct AuthCallbackCache(DashMap<AuthCallbackCacheKey, AuthCallbackCacheEntry>);
+pub(crate) struct AuthCallbackCache {
+    map: DashMap<AuthCallbackCacheKey, AuthCallbackCacheEntry>,
+    // Metrics
+    hits: Counter,
+    misses: Counter,
+}
 
 impl AuthCallbackCache {
     fn new() -> Self {
-        Self(DashMap::new())
+        Self {
+            map: DashMap::new(),
+            hits: Counter::default(),
+            misses: Counter::default(),
+        }
+    }
+
+    pub(crate) fn hits(&self) -> &Counter {
+        &self.hits
+    }
+
+    pub(crate) fn misses(&self) -> &Counter {
+        &self.misses
+    }
+    pub(crate) fn size(&self) -> usize {
+        self.map.len()
     }
 
     pub(super) fn get(&self, key: &HeaderMap, config: &CallbackConfig) -> Option<Option<User>> {
         // TODO: this `clone` should not be necessary. It can be removed with
         // `#[repr(transparent)]` and an `unsafe`, but I don't want to just
         // throw around `unsafe` here.
-        self.0.get(&AuthCallbackCacheKey(key.clone()))
+        let out = self.map.get(&AuthCallbackCacheKey(key.clone()))
             .filter(|e| e.timestamp.elapsed() < config.cache_duration)
-            .map(|e| e.user.clone())
+            .map(|e| e.user.clone());
+
+        match out.is_some() {
+            true => self.hits.inc(),
+            false => self.misses.inc(),
+        };
+
+        out
     }
 
     pub(super) fn insert(&self, key: HeaderMap, user: Option<User>) {
-        self.0.insert(AuthCallbackCacheKey(key), AuthCallbackCacheEntry {
+        self.map.insert(AuthCallbackCacheKey(key), AuthCallbackCacheEntry {
             user,
             timestamp: Instant::now(),
         });
