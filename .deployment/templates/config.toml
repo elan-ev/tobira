@@ -23,7 +23,8 @@ unix_socket = "/opt/tobira/{{ id }}/socket/tobira.sock"
 unix_socket_permissions = 0o777
 
 [auth]
-mode = "login-proxy"
+source = "tobira-session"
+session.from_session_endpoint = "trust-auth-headers"
 login_page.note.en = 'Dummy users: "jose", "morgan", "björk", "sabine" and "admin". Password for all: "tobira".'
 login_page.note.de = 'Testnutzer: "jose", "morgan", "björk", "sabine" und "admin". Passwort für alle: "tobira".'
 
