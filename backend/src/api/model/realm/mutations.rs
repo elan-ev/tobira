@@ -14,7 +14,7 @@ impl Realm {
         let Some(parent) = Self::load_by_id(realm.parent, context).await? else {
             return Err(invalid_input!("`parent` realm does not exist"));
         };
-        parent.require_write_access(context)?;
+        parent.require_moderator_rights(context)?;
         let db = &context.db;
 
         // Check if the path is a reserved one.
@@ -102,7 +102,7 @@ impl Realm {
             // is on the settings page. Maybe we want to give a hint.
             return Err(invalid_input!("`parent` realm does not exist (for `setChildOrder`)"));
         };
-        parent.require_write_access(context)?;
+        parent.require_moderator_rights(context)?;
         let db = &context.db;
 
         if let Some(child_indices) = child_indices {
@@ -189,7 +189,7 @@ impl Realm {
         let Some(realm) = Self::load_by_id(id, context).await? else {
             return Err(invalid_input!("`id` does not refer to an existing realm"));
         };
-        realm.require_write_access(context)?;
+        realm.require_moderator_rights(context)?;
 
         let db = &context.db;
         if name.plain.is_some() == name.block.is_some() {
@@ -230,7 +230,7 @@ impl Realm {
         let Some(realm) = Self::load_by_id(id, context).await? else {
             return Err(invalid_input!("`id` does not refer to an existing realm"));
         };
-        realm.require_write_access(context)?;
+        realm.require_admin_rights(context)?;
         let db = &context.db;
 
         db.execute(
@@ -262,7 +262,7 @@ impl Realm {
         let Some(realm) = Self::load_by_id(id, context).await? else {
             return Err(invalid_input!("`id` does not refer to an existing realm"));
         };
-        realm.require_write_access(context)?;
+        realm.require_admin_rights(context)?;
         let db = &context.db;
 
         if realm.is_user_root() {
@@ -316,7 +316,7 @@ impl Realm {
         let Some(realm) = Self::load_by_id(id, context).await? else {
             return Err(invalid_input!("`id` does not refer to an existing realm"));
         };
-        realm.require_write_access(context)?;
+        realm.require_admin_rights(context)?;
         let db = &context.db;
 
         if realm.is_main_root() {

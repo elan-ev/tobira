@@ -75,7 +75,8 @@ const query = graphql`
             name
             isMainRoot
             path
-            canCurrentUserEdit
+            currentUserIsPageAdmin
+            canCurrentUserModerate
             numberOfDescendants
             ancestors { name path }
             ... GeneralRealmData
@@ -95,7 +96,7 @@ type Props = {
 /** The actual settings page */
 const SettingsPage: React.FC<Props> = ({ realm, data }) => {
     const { t } = useTranslation();
-    if (!realm.canCurrentUserEdit) {
+    if (!realm.canCurrentUserModerate) {
         return <NotAuthorized />;
     }
 
@@ -127,8 +128,10 @@ const SettingsPage: React.FC<Props> = ({ realm, data }) => {
             </div>
             <section><General fragRef={realm} /></section>
             <section><ChildOrder fragRef={realm} /></section>
-            <section><RealmPermissions fragRef={realm} {...{ data }} /></section>
-            <section><DangerZone fragRef={realm} /></section>
+            {realm.currentUserIsPageAdmin && <>
+                <section><RealmPermissions fragRef={realm} {...{ data }} /></section>
+                <section><DangerZone fragRef={realm} /></section>
+            </>}
         </RealmSettingsContainer>
     );
 };

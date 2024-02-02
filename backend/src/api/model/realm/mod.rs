@@ -103,8 +103,8 @@ pub(crate) struct Realm {
     owner_display_name: Option<String>,
     moderator_roles: Vec<String>,
     admin_roles: Vec<String>,
-    _flattened_moderator_roles: Vec<String>,
-    _flattened_admin_roles: Vec<String>,
+    flattened_moderator_roles: Vec<String>,
+    flattened_admin_roles: Vec<String>,
 }
 
 impl_from_db!(
@@ -130,8 +130,8 @@ impl_from_db!(
             owner_display_name: row.owner_display_name(),
             moderator_roles: row.moderator_roles(),
             admin_roles: row.admin_roles(),
-            _flattened_moderator_roles: row.flattened_moderator_roles(),
-            _flattened_admin_roles: row.flattened_admin_roles(),
+            flattened_moderator_roles: row.flattened_moderator_roles(),
+            flattened_admin_roles: row.flattened_admin_roles(),
         }
     }
 );
@@ -156,8 +156,8 @@ impl Realm {
             owner_display_name: None,
             moderator_roles: mapping.moderator_roles.of(&row),
             admin_roles: mapping.admin_roles.of(&row),
-            _flattened_moderator_roles: Vec::new(),
-            _flattened_admin_roles: Vec::new(),
+            flattened_moderator_roles: mapping.moderator_roles.of(&row),
+            flattened_admin_roles: mapping.admin_roles.of(&row),
         })
     }
 
@@ -221,20 +221,34 @@ impl Realm {
         self.full_path.strip_prefix("/@")?.split('/').next()
     }
 
-    fn can_current_user_edit(&self, context: &Context) -> bool {
+    fn current_user_is_page_admin(&self, context: &Context) -> bool {
         if let Some(owning_user) = self.owning_user() {
             matches!(&context.auth, AuthContext::User(u) if u.username == owning_user)
                 || context.auth.is_admin()
         } else {
-            // TODO: at some point, we want ACLs per realm
-            context.auth.is_moderator(&context.config.auth)
+            context.auth.overlaps_roles(&self.flattened_admin_roles)
         }
     }
 
-    pub(crate) fn require_write_access(&self, context: &Context) -> ApiResult<()> {
-        if !self.can_current_user_edit(context) {
-            return Err(context.access_error("realm.no-write-access", |user| format!(
-                "write access for page '{}' required, but '{user}' is not allowed to",
+    fn can_current_user_moderate(&self, context: &Context) -> bool {
+        context.auth.overlaps_roles(&self.flattened_moderator_roles)
+    }
+
+    pub(crate) fn require_moderator_rights(&self, context: &Context) -> ApiResult<()> {
+        if !self.can_current_user_moderate(context) {
+            return Err(context.access_error("realm.no-moderator-rights", |user| format!(
+                "moderator rights for page '{}' required, but '{user}' is ineligible",
+                self.full_path,
+            )))
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn require_admin_rights(&self, context: &Context) -> ApiResult<()> {
+        if !self.current_user_is_page_admin(context) {
+            return Err(context.access_error("realm.no-page-admin-rights", |user| format!(
+                "page admin rights for page '{}' required, but '{user}' is ineligible",
                 self.full_path,
             )))
         }
@@ -335,7 +349,7 @@ impl Realm {
 
     /// Returns the combined acl of this realm's parent, which effectively contains
     /// the acl and inherited acl of each ancestor realm. This is used to display
-    /// these roles in the permissions UI, where we don't want to show that realm's onw
+    /// these roles in the permissions UI, where we don't want to show that realm's own
     /// flattened acl since that also contains the realm's "regular", i.e. non-inherited
     /// acl.
     async fn inherited_acl(&self, context: &Context) -> ApiResult<Acl> {
@@ -416,8 +430,17 @@ impl Realm {
         Ok(count.try_into().expect("number of descendants overflows i32"))
     }
 
-    fn can_current_user_edit(&self, context: &Context) -> bool {
-        self.can_current_user_edit(context)
+    /// Returns whether the current user has the rights to add sub-pages, edit realm content,
+    /// and edit settings including changing the realm path, deleting the realm and editing
+    /// the realm's acl.
+    fn current_user_is_page_admin(&self, context: &Context) -> bool {
+        self.current_user_is_page_admin(context)
+    }
+
+    /// Returns whether the current user has the rights to add sub-pages and edit realm content
+    /// and non-critical settings.
+    fn can_current_user_moderate(&self, context: &Context) -> bool {
+        self.can_current_user_moderate(context)
     }
 
     /// Returns `true` if this realm somehow references the given node via

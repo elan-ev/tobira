@@ -341,7 +341,7 @@ type Realm implements Node {
   """
     Returns the combined acl of this realm's parent, which effectively contains
     the acl and inherited acl of each ancestor realm. This is used to display
-    these roles in the permissions UI, where we don't want to show that realm's onw
+    these roles in the permissions UI, where we don't want to show that realm's own
     flattened acl since that also contains the realm's "regular", i.e. non-inherited
     acl.
   """
@@ -368,7 +368,17 @@ type Realm implements Node {
     (excluding this one). Returns a number ≥ 0.
   """
   numberOfDescendants: Int!
-  canCurrentUserEdit: Boolean!
+  """
+    Returns whether the current user has the rights to add sub-pages, edit realm content,
+    and edit settings including changing the realm path, deleting the realm and editing
+    the realm's acl.
+  """
+  currentUserIsPageAdmin: Boolean!
+  """
+    Returns whether the current user has the rights to add sub-pages and edit realm content
+    and non-critical settings.
+  """
+  canCurrentUserModerate: Boolean!
   """
     Returns `true` if this realm somehow references the given node via
     blocks. Currently, the following rules are used:

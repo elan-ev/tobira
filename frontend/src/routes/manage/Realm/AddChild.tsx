@@ -61,7 +61,7 @@ export const AddChildRoute = makeRoute({
                     const parent = data.parent;
                     if (!parent) {
                         return <PathInvalid />;
-                    } else if (!parent.canCurrentUserEdit) {
+                    } else if (!parent.canCurrentUserModerate) {
                         return <NotAuthorized />;
                     } else {
                         return <AddChild parent={parent} />;
@@ -82,7 +82,7 @@ const query = graphql`
             name
             isMainRoot
             path
-            canCurrentUserEdit
+            canCurrentUserModerate
             ancestors { name path }
             children { path }
             ... NavigationData

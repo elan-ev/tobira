@@ -98,7 +98,7 @@ export const RealmRoute = makeRoute({
                     }
 
                     const mainNav = <Nav key="nav" fragRef={data.realm} />;
-                    return data.realm.canCurrentUserEdit
+                    return data.realm.canCurrentUserModerate
                         ? [mainNav, <RealmEditLinks key="edit-buttons" path={realmPath} />]
                         : mainNav;
                 }}
@@ -125,7 +125,7 @@ const query = graphql`
             ownerDisplayName
             children { id }
             blocks { id }
-            canCurrentUserEdit
+            canCurrentUserModerate
             ancestors { name path ownerDisplayName }
             parent { id }
             ... BlocksData
