@@ -201,7 +201,7 @@ series:
 realm:
   page-settings: Page settings
   edit-page-content: Edit page content
-  add-sub-page: Add sub-page
+  add-sub-page: Add subpage
   missing-name: Missing name
   user-realm:
     my-page: My page
@@ -215,7 +215,7 @@ realm:
       what-you-can-do: >
         On your personal page, you can freely arrange videos, text, and other elements.
         This allows you to better present and share your content.
-        You can even create sub-pages to create your own small video-portal.
+        You can even create subpages to create your own small video-portal.
       available-at: 'Your page will be available at:'
       find-and-delete: >
         Anyone who has this link or knows your username can visit your page.
@@ -302,6 +302,9 @@ manage:
       user: User
       yourself: You
       subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
+      inherited: Inherited permissions
+      inherited-tooltip: >
+        The following permissions were granted in a higher level page and are inherited to all subpages.
       actions:
         title: Actions
         read: Read
@@ -385,7 +388,7 @@ manage:
       Error: invalid path to page. Was the page deleted or its path changed?
     heading: Settings of page “{{realm}}”
     heading-root: Homepage settings
-    descendants-count: This page has {{count}} direct and indirect sub-pages.
+    descendants-count: This page has {{count}} direct and indirect subpages.
     view-page: Go to page
 
     name-must-not-be-empty: Name must not be empty.
@@ -433,19 +436,19 @@ manage:
         cannot-userrealm: The path of your personal page cannot be changed.
         warning: >
           Important: Changing the path of this page invalidates all links to
-          this page, to all direct or indirect sub-pages, and to all videos
+          this page, to all direct or indirect subpages, and to all videos
           linked on any of those pages. Old links, e.g. in personal
           browser-bookmarks or published somewhere, won't work anymore.
       delete:
         heading: Delete page
-        button: Delete this page and <strong>{{numSubPages}}</strong> sub-pages
+        button: Delete this page and <strong>{{numSubPages}}</strong> subpages
         button-single: Delete page
         cannot-be-undone: This action <strong>cannot</strong> be undone!
         confirm-removal: Delete page?
         failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
-          indirect sub-pages, as well as all content of these pages. This
+          indirect subpages, as well as all content of these pages. This
           cannot be undone!
 
     content:

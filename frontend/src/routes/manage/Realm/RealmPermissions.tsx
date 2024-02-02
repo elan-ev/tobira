@@ -15,6 +15,7 @@ const fragment = graphql`
     fragment RealmPermissionsData on Realm {
         id
         ownAcl { role actions info { label implies large } }
+        inheritedAcl { role actions info { label implies large } }
     }
 `;
 
@@ -29,12 +30,12 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
     const realm = useFragment(fragment, fragRef);
     const knownRoles = useFragment(knownRolesFragment, data);
 
-    const initialAcl: Acl = new Map(
-        realm.ownAcl.map(item => [item.role, {
+    const [initialAcl, inheritedAcl]: Acl[] = [realm.ownAcl, realm.inheritedAcl].map(acl => new Map(
+        acl.map(item => [item.role, {
             actions: new Set(item.actions),
             info: item.info,
         }])
-    );
+    ));
 
     const [selections, setSelections] = useState<Acl>(initialAcl);
 
@@ -80,11 +81,11 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
         <AclSelector
             acl={selections}
             onChange={setSelections}
-            {...{ knownRoles }}
+            {...{ knownRoles, inheritedAcl }}
             permissionLevels={MODERATE_ADMIN_ACTIONS}
         >
             <AclEditButtons
-                {...{ selections, setSelections, initialAcl, onSubmit, inFlight }}
+                {...{ selections, setSelections, initialAcl, onSubmit, inFlight, inheritedAcl }}
                 css={{ marginTop: 16 }}
             />
             {boxError(commitError)}
