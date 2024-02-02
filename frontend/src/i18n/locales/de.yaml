@@ -441,6 +441,9 @@ manage:
       move-up: Hoch schieben
       move-down: Runter schieben
 
+    permissions:
+      heading: Berechtigungen verwalten
+
     danger-zone:
       heading: Gefahrenbereich
       root-note: >

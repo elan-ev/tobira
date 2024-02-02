@@ -24,6 +24,7 @@ import { PageTitle } from "../../../layout/header/ui";
 import { RealmEditLinks } from "../../Realm";
 import { realmBreadcrumbs } from "../../../util/realm";
 import { AddChildRoute } from "./AddChild";
+import { RealmPermissions } from "./RealmPermissions";
 
 
 // Route definition
@@ -55,7 +56,10 @@ export const ManageRealmRoute = makeRoute({
                         <RealmEditLinks key="edit-buttons" path={data.realm.path} />,
                     ]
                     : []}
-                render={data => data.realm ? <SettingsPage realm={data.realm} /> : <PathInvalid />}
+                render={data => data.realm
+                    ? <SettingsPage realm={data.realm} {...{ data }} />
+                    : <PathInvalid />
+                }
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -66,6 +70,7 @@ export const ManageRealmRoute = makeRoute({
 const query = graphql`
     query RealmManageQuery($path: String!) {
         ... UserData
+        ... AccessKnownRolesData
         realm: realmByPath(path: $path) {
             name
             isMainRoot
@@ -77,16 +82,18 @@ const query = graphql`
             ... ChildOrderEditData
             ... DangerZoneRealmData
             ... NavigationData
+            ... RealmPermissionsData
         }
     }
 `;
 
 type Props = {
     realm: Exclude<RealmManageQuery$data["realm"], null>;
+    data: RealmManageQuery$data;
 };
 
 /** The actual settings page */
-const SettingsPage: React.FC<Props> = ({ realm }) => {
+const SettingsPage: React.FC<Props> = ({ realm, data }) => {
     const { t } = useTranslation();
     if (!realm.canCurrentUserEdit) {
         return <NotAuthorized />;
@@ -120,6 +127,7 @@ const SettingsPage: React.FC<Props> = ({ realm }) => {
             </div>
             <section><General fragRef={realm} /></section>
             <section><ChildOrder fragRef={realm} /></section>
+            <section><RealmPermissions fragRef={realm} {...{ data }} /></section>
             <section><DangerZone fragRef={realm} /></section>
         </RealmSettingsContainer>
     );

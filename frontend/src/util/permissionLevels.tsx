@@ -17,3 +17,12 @@ export const READ_WRITE_ACTIONS: PermissionLevels = {
     highest: "write",
 };
 
+export const MODERATE_ADMIN_ACTIONS: PermissionLevels = {
+    all: {
+        "moderate": { actions: new Set(["moderate"]) },
+        "admin": { actions: new Set(["moderate", "admin"]) },
+    },
+    default: "moderate",
+    highest: "admin",
+};
+
