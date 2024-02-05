@@ -7,6 +7,7 @@ use rustls::{
     client::{ServerCertVerifier, ServerCertVerified, HandshakeSignatureValid},
 };
 use std::{
+    fmt::Write,
     fs,
     path::{PathBuf, Path},
     sync::Arc,
@@ -14,7 +15,7 @@ use std::{
 };
 use tokio_postgres::NoTls;
 
-use crate::{http::{self, Response}, prelude::*};
+use crate::{http::{self, Response}, prelude::*, db::util::select};
 
 
 pub(crate) mod cmd;
@@ -175,7 +176,7 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
         let tls = tokio_postgres_rustls::MakeRustlsConnect::new(tls_config);
         pool_config.create_pool(Some(Runtime::Tokio1), tls)?
     };
-    info!("Created database pool");
+    debug!("Created database pool");
 
 
     // Test the connection by executing a simple query.
@@ -183,8 +184,7 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
         .context("failed to get DB connection")?;
     client.execute("select 1", &[]).await
         .context("failed to execute DB test query")?;
-    debug!("Successfully tested database connection with test query");
-
+    trace!("Successfully tested database connection with test query");
 
     // Make sure the database uses UTF8 encoding. There is no good reason to use
     // anything else.
@@ -195,6 +195,78 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
     if encoding != "UTF8" {
         bail!("Database encoding is not UTF8, but Tobira requires UTF8!");
     }
+
+
+    // ----- Get some information about the server/connection ------------------------------------
+    let search_path = client.query_one(&format!("show search_path"), &[])
+        .await?
+        .get::<_, String>(0);
+    let version = client.query_one(&format!("show server_version"), &[])
+        .await?
+        .get::<_, String>(0);
+    let version = version.trim()
+        .split_once(' ')
+        .map(|(first, _)| first)
+        .unwrap_or(&version);
+    // TODO: warn/error if the PG version is not supported?
+
+    let (selection, mapping) = select!(
+        full_version: "version()",
+        user: "current_user",
+        session_user,
+        database: "current_database()",
+        schema: "current_schema()",
+    );
+    let row = client.query_one(&format!("select {selection}"), &[]).await?;
+    let full_version: String = mapping.full_version.of(&row);
+    let user: String = mapping.user.of(&row);
+    let session_user: String = mapping.session_user.of(&row);
+    let database: String = mapping.database.of(&row);
+    let schema: String = mapping.schema.of(&row);
+    info!("Connected to DB! (PG server version: {version}, user: '{user}', \
+        session_user: '{session_user}', schema: '{schema}', database: '{database}')");
+    trace!("Detailed PostgreSQL server info:\n\
+        Version: {full_version}\n\
+        Search path: {search_path}");
+
+    // Query permissions on schemata
+    let (selection, mapping) = select!(
+        schema_name,
+        current_user_create: "pg_catalog.has_schema_privilege(current_user, schema_name, 'CREATE')",
+        current_user_usage: "pg_catalog.has_schema_privilege(current_user, schema_name, 'USAGE')",
+        session_user_create: "pg_catalog.has_schema_privilege(session_user, schema_name, 'CREATE')",
+        session_user_usage: "pg_catalog.has_schema_privilege(session_user, schema_name, 'USAGE')",
+    );
+    let query = format!("\
+        with schemas as (select schema_name from information_schema.schemata)
+        select {selection} from schemas\
+    ");
+    match client.query(&query, &[]).await {
+        Ok(rows) => {
+            let mut log_output = "Schema permissions:".to_owned();
+            for row in rows {
+                let schema_name: String = mapping.schema_name.of(&row);
+                let current_user_create: bool = mapping.current_user_create.of(&row);
+                let current_user_usage: bool = mapping.current_user_usage.of(&row);
+                let session_user_create: bool = mapping.session_user_create.of(&row);
+                let session_user_usage: bool = mapping.session_user_usage.of(&row);
+                write!(log_output, "\n{schema_name} -> \
+                    current_user (create: {current_user_create}, usage: {current_user_usage}), \
+                    session_user (create: {session_user_create}, usage: {session_user_usage})\
+                ").unwrap();
+            }
+            trace!("{log_output}");
+        }
+        // The above query is a bit complex, is just for additional info
+        // (not required to run Tobira) and uses pg_catalog which might change
+        // in newer PG versions. So we won't fail if the query fails, but just
+        // print a warning.
+        Err(e) => {
+            warn!("Could not query schema permissions: {e}");
+        }
+    }
+
+
 
     Ok(pool)
 }
