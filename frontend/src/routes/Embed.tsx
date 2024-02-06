@@ -25,6 +25,7 @@ const query = graphql`
                 title
                 created
                 isLive
+                opencastId
                 syncedData {
                     updated
                     startTime

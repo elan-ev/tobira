@@ -13,6 +13,7 @@ import { usePlayerGroupContext } from "./PlayerGroupContext";
 
 
 type PaellaPlayerProps = {
+    opencastId: string;
     title: string;
     duration: number;
     tracks: readonly Track[];
@@ -29,7 +30,7 @@ export type PaellaState = {
 };
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
-    tracks, title, duration, isLive, captions, startTime, endTime, previewImage,
+    opencastId, tracks, title, duration, isLive, captions, startTime, endTime, previewImage,
 }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
@@ -108,7 +109,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 // override all functions (which Paella luckily allows) to do
                 // nothing except immediately return the data.
                 loadConfig: async () => PAELLA_CONFIG as Config,
-                getVideoId: async () => "dummy-id",
+                getVideoId: async () => opencastId,
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
