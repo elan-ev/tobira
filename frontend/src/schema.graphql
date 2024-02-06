@@ -328,7 +328,7 @@ type Realm implements Node {
   """
   path: String!
   """
-    This is only returns a value for root user realms, in which case it is
+    This only returns a value for root user realms, in which case it is
     the display name of the user who owns this realm. For all other realms,
     `null` is returned.
   """
@@ -373,7 +373,7 @@ type Realm implements Node {
     and edit settings including changing the realm path, deleting the realm and editing
     the realm's acl.
   """
-  currentUserIsPageAdmin: Boolean!
+  isCurrentUserPageAdmin: Boolean!
   """
     Returns whether the current user has the rights to add sub-pages and edit realm content
     and non-critical settings.

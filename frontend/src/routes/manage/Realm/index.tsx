@@ -75,7 +75,7 @@ const query = graphql`
             name
             isMainRoot
             path
-            currentUserIsPageAdmin
+            isCurrentUserPageAdmin
             canCurrentUserModerate
             numberOfDescendants
             ancestors { name path }
@@ -128,7 +128,7 @@ const SettingsPage: React.FC<Props> = ({ realm, data }) => {
             </div>
             <section><General fragRef={realm} /></section>
             <section><ChildOrder fragRef={realm} /></section>
-            {realm.currentUserIsPageAdmin && <>
+            {realm.isCurrentUserPageAdmin && <>
                 <section><RealmPermissions fragRef={realm} {...{ data }} /></section>
                 <section><DangerZone fragRef={realm} /></section>
             </>}

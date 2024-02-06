@@ -221,17 +221,23 @@ impl Realm {
         self.full_path.strip_prefix("/@")?.split('/').next()
     }
 
-    fn current_user_is_page_admin(&self, context: &Context) -> bool {
-        if let Some(owning_user) = self.owning_user() {
+    /// Returns whether the current user is the owner of this realm.
+    fn is_current_user_owner(&self, context: &Context) -> bool {
+        self.owning_user().is_some_and(|owning_user| {
             matches!(&context.auth, AuthContext::User(u) if u.username == owning_user)
-                || context.auth.is_admin()
-        } else {
-            context.auth.overlaps_roles(&self.flattened_admin_roles)
-        }
+        })
+    }
+
+    fn is_current_user_page_admin(&self, context: &Context) -> bool {
+        context.auth.is_admin()
+            || self.is_current_user_owner(context)
+            || context.auth.overlaps_roles(&self.flattened_admin_roles)
     }
 
     fn can_current_user_moderate(&self, context: &Context) -> bool {
-        context.auth.overlaps_roles(&self.flattened_moderator_roles)
+        context.auth.is_admin()
+            || self.is_current_user_owner(context)
+            || context.auth.overlaps_roles(&self.flattened_moderator_roles)
     }
 
     pub(crate) fn require_moderator_rights(&self, context: &Context) -> ApiResult<()> {
@@ -246,7 +252,7 @@ impl Realm {
     }
 
     pub(crate) fn require_admin_rights(&self, context: &Context) -> ApiResult<()> {
-        if !self.current_user_is_page_admin(context) {
+        if !self.is_current_user_page_admin(context) {
             return Err(context.access_error("realm.no-page-admin-rights", |user| format!(
                 "page admin rights for page '{}' required, but '{user}' is ineligible",
                 self.full_path,
@@ -329,7 +335,7 @@ impl Realm {
         if self.key.0 == 0 { "/" } else { &self.full_path }
     }
 
-    /// This is only returns a value for root user realms, in which case it is
+    /// This only returns a value for root user realms, in which case it is
     /// the display name of the user who owns this realm. For all other realms,
     /// `null` is returned.
     fn owner_display_name(&self) -> Option<&str> {
@@ -433,8 +439,8 @@ impl Realm {
     /// Returns whether the current user has the rights to add sub-pages, edit realm content,
     /// and edit settings including changing the realm path, deleting the realm and editing
     /// the realm's acl.
-    fn current_user_is_page_admin(&self, context: &Context) -> bool {
-        self.current_user_is_page_admin(context)
+    fn is_current_user_page_admin(&self, context: &Context) -> bool {
+        self.is_current_user_page_admin(context)
     }
 
     /// Returns whether the current user has the rights to add sub-pages and edit realm content

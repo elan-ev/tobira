@@ -67,6 +67,7 @@ type SelectOption = {
 type AclContext = {
     userIsRequired: boolean;
     acl: Acl;
+    ownerDisplayName: string | null;
     permissionLevels: PermissionLevels;
     change: (f: (acl: Acl) => void) => void;
     knownGroups: Map<string, {
@@ -91,6 +92,7 @@ type AclSelectorProps = {
     userIsRequired?: boolean;
     onChange: (newAcl: Acl) => void;
     knownRoles: AccessKnownRolesData$data;
+    ownerDisplayName?: string | null;
     permissionLevels: PermissionLevels;
 }
 
@@ -101,6 +103,7 @@ export const AclSelector: React.FC<AclSelectorProps> = (
         userIsRequired = false,
         onChange,
         knownRoles,
+        ownerDisplayName = "",
         permissionLevels,
     }
 ) => {
@@ -125,6 +128,7 @@ export const AclSelector: React.FC<AclSelectorProps> = (
         acl,
         change,
         groupDag: buildDag(knownGroups),
+        ownerDisplayName,
         permissionLevels,
         knownGroups: new Map(knownGroups.map(g => [g.role, {
             label: g.label,
@@ -183,9 +187,10 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { change, knownGroups, groupDag, permissionLevels } = useAclContext();
+    const { change, knownGroups, groupDag, permissionLevels, ownerDisplayName } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
     const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
+    const userIsOwner = isRealUser(user) && user.displayName === ownerDisplayName;
     const [error, setError] = useState<ReactNode>(null);
 
     // Sort the active ACL entries (and put them into a new variable for that).
@@ -233,6 +238,8 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
     const showAdminEntry = kind === "group"
         && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
         && userIsAdmin;
+
+    const showUserEntry = (kind === "user" && ownerDisplayName);
 
     const remove = (item: Entry) => change(prev => prev.delete(item.role));
 
@@ -392,7 +399,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                 </thead>
                 <tbody>
                     {/* Placeholder if there are no entries */}
-                    {entries.length === 0 && !showAdminEntry && <tr>
+                    {entries.length === 0 && !(showAdminEntry || showUserEntry) && <tr>
                         <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
                             {t("acl.no-entries")}
                         </td>
@@ -408,6 +415,18 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                     */}
                     {showAdminEntry && <TableRow
                         labelCol={<>{t("acl.groups.admins")}</>}
+                        actionCol={<UnchangeableAllActions />}
+                    />}
+
+                    {/*
+                        Similarly to the above, the ACL for user realms does not explicitly
+                        include that realm's owning user, but it should still be shown in the UI.
+                    */}
+                    {showUserEntry && <TableRow
+                        labelCol={!userIsOwner ? <>{ownerDisplayName}</> : <>
+                            <i>{t("manage.access.table.yourself")}</i>
+                            &nbsp;({ownerDisplayName})
+                        </>}
                         actionCol={<UnchangeableAllActions />}
                     />}
 
@@ -750,6 +769,7 @@ type AclEditButtonsProps = {
     className?: string;
     inFlight?: boolean;
     inheritedAcl?: Acl;
+    userIsOwner?: boolean;
     kind: "write" | "admin";
 }
 
@@ -762,6 +782,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
         className,
         inFlight,
         inheritedAcl,
+        userIsOwner,
         kind,
     }
 ) => {
@@ -770,10 +791,11 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
     const resetModalRef = useRef<ModalHandle>(null);
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
 
-    const containsUser = (acl: Acl) => isRealUser(user) && user.roles.some(r =>
+    const containsUser = (acl: Acl) => isRealUser(user) && (userIsOwner || user.roles.some(r =>
         r === COMMON_ROLES.ADMIN
         || acl.get(r)?.actions.has(kind)
-        || inheritedAcl?.get(r)?.actions.has(kind));
+        || inheritedAcl?.get(r)?.actions.has(kind))
+    );
 
     const selectionIsInitial = selections.size === initialAcl.size
         && [...selections].every(([role, info]) => {
