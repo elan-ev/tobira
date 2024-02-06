@@ -13,13 +13,17 @@ mod color;
 mod general;
 mod theme;
 mod translated_string;
+mod matomo;
 mod opencast;
+mod player;
 mod upload;
 
 pub(crate) use self::{
     translated_string::TranslatedString,
     theme::ThemeConfig,
+    matomo::MatomoConfig,
     opencast::OpencastConfig,
+    player::PlayerConfig,
     upload::UploadConfig,
 };
 
@@ -85,6 +89,13 @@ pub(crate) struct Config {
 
     #[config(nested)]
     pub(crate) upload: UploadConfig,
+
+    /// Matomo integration (optional). Currently only used by Paella if configured.
+    #[config(nested)]
+    pub(crate) matomo: MatomoConfig,
+
+    #[config(nested)]
+    pub(crate) player: PlayerConfig,
 }
 
 impl Config {

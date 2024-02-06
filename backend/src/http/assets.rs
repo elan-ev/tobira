@@ -133,6 +133,9 @@ impl Assets {
         variables.insert("upload".into(), json!({
             "requireSeries": config.upload.require_series,
         }).to_string());
+        variables.insert("paella-plugin-config".into(),
+            serde_json::Value::from(config.player.paella_plugin_config.clone()).to_string());
+        variables.insert("matomo-code".into(), config.matomo.js_code().unwrap_or_default());
 
         // Note the mismatch between presentation and sync node;
         // these might not be the same forever!

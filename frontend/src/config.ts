@@ -32,6 +32,7 @@ type Config = {
     logo: LogoConfig;
     plyr: PlyrConfig;
     upload: UploadConfig;
+    paellaPluginConfig: object;
 };
 
 type FooterLink = "about" | "graphiql" | {

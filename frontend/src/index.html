@@ -18,6 +18,7 @@
         "usersSearchable": {{: var:users-searchable :}},
         "footerLinks": {{: var:footer-links :}},
         "metadataLabels": {{: var:metadata-labels :}},
+        "paellaPluginConfig": {{: var:paella-plugin-config :}},
         "opencast": {
           "presentationNode": "{{: var:presentation-node :}}",
           "uploadNode": "{{: var:upload-node :}}",
@@ -53,6 +54,7 @@
       document.documentElement.dataset.colorScheme = (scheme === "dark" || scheme === "light")
         ? scheme
         : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      {{: var:matomo-code :}}
     </script>
   </head>
   <body>

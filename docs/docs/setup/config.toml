@@ -489,3 +489,30 @@
 #
 # Default value: false
 #require_series = false
+
+
+# Matomo integration (optional). Currently only used by Paella if configured.
+[matomo]
+# URL of your Matomo server. This URL + `matomo.js` should be a publicly
+# accessible JS file. Example: "https://matomo.myuni.edu/matomo/".
+#server =
+
+# Matomo site ID, e.g. `side_id = "1"`
+#site_id =
+
+
+[player]
+# Additional Paella plugin configuration (JSON object). This is merged
+# into the `plugins` object in the Tobira-internal Paella config.
+# Warning: this could break Paella if used incorrectly. This is mostly
+# intended to configure user tracking, e.g.:
+#
+# ```
+# paella_plugin_config = """{
+#     "es.upv.paella.userEventTracker": { ... },
+#     "es.upv.paella.matomo.userTrackingDataPlugin": { ... }
+# }"""
+# ```
+#
+# Default value: "{}"
+#paella_plugin_config = "{}"

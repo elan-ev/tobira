@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Config, Manifest, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 import getZoomPluginContext from "paella-zoom-plugin";
+import getUserTrackingPluginsContext from "paella-user-tracking";
 import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
@@ -10,6 +11,7 @@ import { SPEEDS } from "./consts";
 import { timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
+import CONFIG from "../../config";
 
 
 type PaellaPlayerProps = {
@@ -116,6 +118,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 customPluginContext: [
                     getBasicPluginsContext(),
                     getZoomPluginContext(),
+                    getUserTrackingPluginsContext(),
                 ],
             });
 
@@ -410,6 +413,9 @@ const PAELLA_CONFIG = {
             "order": 0,
             "context": ["default", "trimming"],
         },
+
+        // Let admin provided config add and override entries.
+        ...CONFIG.paellaPluginConfig,
     },
 };
 
