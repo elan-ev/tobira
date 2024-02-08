@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
 import { RealmPermissionsData$key } from "./__generated__/RealmPermissionsData.graphql";
-import { Acl, AclSelector, AclEditButtons, knownRolesFragment } from "../../../ui/Access";
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { RealmPermissionsMutation } from "./__generated__/RealmPermissionsMutation.graphql";
-import { displayCommitError } from "./util";
+import { Acl, AclSelector, AclEditButtons, knownRolesFragment } from "../../../ui/Access";
+import { ConfirmationModalHandle } from "../../../ui/Modal";
 import { boxError } from "../../../ui/error";
-import { useTranslation } from "react-i18next";
+import { displayCommitError } from "./util";
+import { currentRef } from "../../../util";
 import { MODERATE_ADMIN_ACTIONS } from "../../../util/permissionLevels";
 
 
@@ -32,6 +34,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
     const realm = useFragment(fragment, fragRef);
     const knownRoles = useFragment(knownRolesFragment, data);
     const ownerDisplayName = (realm.ancestors[0] ?? realm).ownerDisplayName;
+    const saveModalRef = useRef<ConfirmationModalHandle>(null);
 
     const [initialAcl, inheritedAcl]: Acl[] = [realm.ownAcl, realm.inheritedAcl].map(acl => new Map(
         acl.map(item => [item.role, {
@@ -47,6 +50,8 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
         mutation RealmPermissionsMutation($id: ID!, $permissions: UpdatedPermissions!) {
             updatePermissions(id: $id, permissions: $permissions) {
                 ownAcl { role actions info { label implies large } }
+                isCurrentUserPageAdmin
+                canCurrentUserModerate
                 ... GeneralRealmData
             }
         }
@@ -74,6 +79,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
                 id: realm.id,
                 permissions: mapSelections(selections),
             },
+            onCompleted: () => currentRef(saveModalRef).done(),
             onError: e => setCommitError(displayCommitError(e)),
             updater: store => store.invalidateStore(),
         });
@@ -88,10 +94,18 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
             permissionLevels={MODERATE_ADMIN_ACTIONS}
         />
         <AclEditButtons
-            {...{ selections, setSelections, initialAcl, onSubmit, inFlight, inheritedAcl }}
-            kind="admin"
             userIsOwner={!!ownerDisplayName}
             css={{ marginTop: 16 }}
+            kind="admin"
+            {...{
+                selections,
+                setSelections,
+                initialAcl,
+                onSubmit,
+                inFlight,
+                inheritedAcl,
+                saveModalRef,
+            }}
         />
         {boxError(commitError)}
     </>;

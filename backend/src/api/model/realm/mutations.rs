@@ -24,11 +24,16 @@ impl Realm {
             return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
         }
 
+        let roles = match &context.auth {
+            AuthContext::User(user) if !parent.is_current_user_owner(context) => vec![&user.user_role],
+            _ => vec![]
+        };
+
         let res = db.query_one(
-            "insert into realms (parent, name, path_segment) \
-                values ($1, $2, $3) \
+            "insert into realms (parent, name, path_segment, admin_roles, moderator_roles) \
+                values ($1, $2, $3, $4, $4) \
                 returning id",
-            &[&parent.key, &realm.name, &realm.path_segment],
+            &[&parent.key, &realm.name, &realm.path_segment, &roles],
         ).await;
 
         let row = map_db_err!(res, {

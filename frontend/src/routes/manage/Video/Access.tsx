@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { WithTooltip } from "@opencast/appkit";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LuInfo } from "react-icons/lu";
 import { useFragment } from "react-relay";
 
@@ -19,6 +19,7 @@ import { ManageRoute } from "..";
 import { ManageVideosRoute } from ".";
 import { ManageVideoDetailsRoute } from "./Details";
 import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
+import { ConfirmationModalHandle } from "../../../ui/Modal";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -88,6 +89,7 @@ type AccessUIProps = {
 }
 
 const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
+    const saveModalRef = useRef<ConfirmationModalHandle>(null);
 
     const initialAcl: Acl = new Map(
         event.acl.map(item => [item.role, {
@@ -110,10 +112,9 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
                     onChange={setSelections}
                     knownRoles={knownRoles}
                     permissionLevels={READ_WRITE_ACTIONS}
-                >
-                </AclSelector>
+                />
                 <AclEditButtons
-                    {...{ selections, setSelections, initialAcl }}
+                    {...{ selections, setSelections, initialAcl, saveModalRef }}
                     kind="write"
                     onSubmit={async (acl: Acl) => {
                         // TODO: Actually save new ACL.

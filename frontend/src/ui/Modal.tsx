@@ -49,7 +49,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
     useImperativeHandle(ref, () => ({
         isOpen: () => isOpen,
         open: () => setOpen(true),
-        close: closable ? (() => setOpen(false)) : undefined,
+        close: () => setOpen(false),
     }), [isOpen, closable]);
 
     useEffect(() => {

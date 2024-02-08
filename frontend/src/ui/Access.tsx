@@ -771,6 +771,7 @@ type AclEditButtonsProps = {
     inheritedAcl?: Acl;
     userIsOwner?: boolean;
     kind: "write" | "admin";
+    saveModalRef: React.RefObject<ConfirmationModalHandle>;
 }
 
 export const AclEditButtons: React.FC<AclEditButtonsProps> = (
@@ -783,13 +784,13 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
         inFlight,
         inheritedAcl,
         userIsOwner,
+        saveModalRef,
         kind,
     }
 ) => {
     const { t } = useTranslation();
     const user = useUser();
     const resetModalRef = useRef<ModalHandle>(null);
-    const saveModalRef = useRef<ConfirmationModalHandle>(null);
 
     const containsUser = (acl: Acl) => isRealUser(user) && (userIsOwner || user.roles.some(r =>
         r === COMMON_ROLES.ADMIN
