@@ -336,10 +336,12 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                                 }
 
                                 setError(null);
-                                callback(users.items.map(item => ({
-                                    role: item.userRole,
-                                    label: item.displayName,
-                                })));
+                                callback(users.items
+                                    .filter(item => item.displayName !== ownerDisplayName)
+                                    .map(item => ({
+                                        role: item.userRole,
+                                        label: item.displayName,
+                                    })));
                             },
                             start: () => {},
                             error: (error: Error) => setError(<ErrorDisplay error={error} />),
