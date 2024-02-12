@@ -215,6 +215,23 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                         transform: "translate(1px, -2px)",
                     },
                 },
+
+                '& button[name="es.upv.paella.qualitySelector"] div': {
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    i: {
+                        display: "none",
+                    },
+                    span: {
+                        color: "black",
+                        backgroundColor: "var(--main-fg-color)",
+                        borderRadius: 3,
+                        margin: "0 !important",
+                        fontSize: "10px !important",
+                        padding: "2px 3px",
+                    },
+                },
             }}
         />
     </>;
