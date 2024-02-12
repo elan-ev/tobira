@@ -205,6 +205,12 @@ pub(crate) fn deserialize_duration<'de, D>(deserializer: D) -> Result<Duration, 
     use serde::de::Error;
 
     let s = String::deserialize(deserializer)?;
+
+    // Allow unit-less zeroes
+    if s == "0" {
+        return Ok(Duration::ZERO);
+    }
+
     let start_unit = s.find(|c: char| !c.is_digit(10))
         .ok_or_else(|| D::Error::custom("no time unit for duration"))?;
     let (num, unit) = s.split_at(start_unit);
