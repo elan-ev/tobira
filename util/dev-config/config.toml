@@ -6,6 +6,17 @@ site_title.en = "Tobira Videoportal"
 tobira_url = "http://localhost:8030"
 users_searchable = true
 
+[general.initial_consent]
+title.en = "Terms & Conditions"
+button.en = "Agree"
+text.en = """
+By using this video portal, you agree to our terms and conditions.
+
+For more information, see:
+- [Our terms](https://www.our.terms)
+- [Our conditions](https://www.our.conditions)
+"""
+
 [http]
 # To make our Docker based development setup work, Tobira needs to listen
 # on every interface. This is an unfortunate side effect of us trying to avoid

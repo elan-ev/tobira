@@ -24,6 +24,7 @@ type Config = {
     version: VersionInfo;
     auth: AuthConfig;
     siteTitle: TranslatedString;
+    initialConsent: InitialConsent | null;
     showDownloadButton: boolean;
     usersSearchable: boolean;
     opencast: OpencastConfig;
@@ -38,6 +39,12 @@ type FooterLink = "about" | "graphiql" | {
     label: TranslatedString;
     link: string;
 };
+
+type InitialConsent = {
+    title: TranslatedString;
+    button: TranslatedString;
+    text: TranslatedString;
+}
 
 type AuthConfig = {
     loginLink: string | null;

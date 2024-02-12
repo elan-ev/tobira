@@ -3,6 +3,17 @@ site_title.en = "Tobira Test Deployment"
 tobira_url = "https://{% if id != 'master' %}{{id}}.{% endif %}tobira.opencast.org"
 users_searchable = true
 
+[general.initial_consent]
+title.en = "Terms & Conditions"
+button.en = "Agree"
+text.en = """
+By using this video portal, you agree to our terms and conditions.
+
+For more information, see:
+- [Our terms](https://www.our.terms)
+- [Our conditions](https://www.our.conditions)
+"""
+
 [general.metadata]
 dcterms.source = "builtin:source"
 dcterms.license = "builtin:license"

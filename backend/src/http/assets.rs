@@ -143,6 +143,7 @@ impl Assets {
 
         variables.insert("html-title".into(), config.general.site_title.en().into());
         variables.insert("site-title".into(), config.general.site_title.to_json());
+        variables.insert("initial-consent".into(), json!(config.general.initial_consent).to_string());
         variables.insert("show-download-button".into(), json!(config.general.show_download_button).to_string());
         variables.insert("users-searchable".into(), json!(config.general.users_searchable).to_string());
         variables.insert("footer-links".into(), json!(config.general.footer_links).to_string());
