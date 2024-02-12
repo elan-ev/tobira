@@ -102,7 +102,8 @@ case "$1" in
             >&2 echo "Your system is missing some tools. Run './x.sh check-system' to repeat this check."
             exit 1
         fi
-        "$basedir"/util/scripts/start-dev.sh
+        shift
+        "$basedir"/util/scripts/start-dev.sh "$@"
         ;;
     "build-release")
         if ! "$basedir"/util/scripts/check-system.sh building-only > /dev/null; then
