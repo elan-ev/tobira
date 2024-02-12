@@ -15,6 +15,7 @@ import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { useNoindexTag } from "../util";
 import { screenWidthAtMost } from "@opencast/appkit";
+import { InitialConsent } from "../ui/InitialConsent";
 
 
 export const MAIN_PADDING = 16;
@@ -31,6 +32,7 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
 
     return (
         <Outer disableScrolling={menu.state === "burger"}>
+            <InitialConsent />
             <Header hideNavIcon={!navExists} />
             {menu.state === "burger" && navExists && (
                 <BurgerMenu items={navElements} hide={() => menu.close()} />

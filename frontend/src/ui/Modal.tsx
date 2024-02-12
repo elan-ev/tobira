@@ -27,6 +27,8 @@ type ModalProps = {
     closable?: boolean;
     className?: string;
     closeOnOutsideClick?: boolean;
+    open?: boolean;
+    initialFocus?: false;
 };
 
 export type ModalHandle = {
@@ -41,16 +43,18 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
     children,
     className,
     closeOnOutsideClick = false,
+    open = false,
+    initialFocus,
 }, ref) => {
     const { t } = useTranslation();
-    const [isOpen, setOpen] = useState(false);
+    const [isOpen, setOpen] = useState(open);
     const isDark = useColorScheme().scheme === "dark";
 
     useImperativeHandle(ref, () => ({
         isOpen: () => isOpen,
         open: () => setOpen(true),
         close: () => setOpen(false),
-    }), [isOpen, closable]);
+    }), [isOpen]);
 
     useEffect(() => {
         const handleEscape = (event: KeyboardEvent) => {
@@ -63,7 +67,7 @@ export const Modal = forwardRef<ModalHandle, PropsWithChildren<ModalProps>>(({
     }, [closable]);
 
     return ReactDOM.createPortal(
-        isOpen && <FocusTrap>
+        isOpen && <FocusTrap focusTrapOptions={{ initialFocus }}>
             <div
                 {...(closable && closeOnOutsideClick && { onClick: e => {
                     if (e.target === e.currentTarget) {
