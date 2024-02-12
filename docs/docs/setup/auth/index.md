@@ -26,8 +26,8 @@ That user currently has to have `ROLE_ADMIN`.
 
 If you happen to use Tobira's integration in the Opencast Admin-UI
 to directly mount newly created series, Opencast has to authenticate
-against Tobira as well. This does not use most of the mechanisms above.
-Instead, Tobira and Opencast have to share a secret, which Opencast
+against Tobira as well.
+To do that, Tobira and Opencast share a secret, which Opencast
 sends to Tobira under the `x-tobira-trusted-external-key`-header.
 Note that this means that your reverse proxy **must not** remove this header.
 Don't worry, though! Tobira is going to verify the secret.

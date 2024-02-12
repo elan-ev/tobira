@@ -26,7 +26,7 @@ You also have to specify `auth.callback.relevant_headers` and/or `relevant_cooki
 
 On receiving a request that needs authentication, Tobira sends a request to your callback.
 That request has no body, but all `relevant_headers` and `relevant_cookies` copied from the incoming request.
-If you include `"cookie"` in the `relevant_headers` field, all cookies are always forwarded (note: this would usually make the caching fairly useless, so you probably want to disable it then).
+If you include `"cookie"` in the `relevant_headers` field, all cookies are always forwarded (note: this would usually make the [caching](#caching) fairly useless, so you probably want to disable it then).
 If none of the relevant headers or cookies are in the incoming request, your auth callback is not called at all and the request is treated as unauthenticated.
 
 
@@ -101,7 +101,7 @@ So an example `"outcome": "user"` response might look like this:
 
 ## Caching
 
-By default, Tobira caches responses from the auth callback in-memory, to speed up successive requests from the same user.
+By default, Tobira caches responses from the auth callback in memory, to speed up successive requests from the same user.
 By changing `auth.callback.cache_duration`, you can change the duration or disable caching completely.
 The key for the cache is the set of relevant headers including values, as that's the input for your callback.
 If the relevant headers in your situation constantly change, the cache will be quite useless and you should disable it (and drop us a quick message so that we can improve the situation).
@@ -160,11 +160,11 @@ Deno.serve({ port: 9090 }, request => {
 The following is a very rough outline how one could setup authentication via Shibboleth.
 It is assumed that Shibboleth's FastCGI apps are installed and [this nginx Shibboleth module](https://github.com/nginx-shib/nginx-http-shibboleth) is loaded.
 
-The basic idea then is to run the "shibauthorizer" for every route (that requires it, see below).
+The basic idea then is to run the "`shibauthorizer`" for every route (that requires it, see below).
 That adds a bunch of headers containing information about the user, e.g. `Variable-givenName`.
 Those are included in the request sent to Tobira, which Tobira then forwards to your callback.
-The callback can read those headers, and building the user information Tobira expects.
-Your callback can of course also request additional information from external services, e.g. a list of courses the user is signed up for.
+The callback can read those headers, and build the user information Tobira expects.
+It can of course also request additional information from external services, e.g. a list of courses the user is signed up for.
 
 ```toml
 [auth]
@@ -189,7 +189,7 @@ Deno.serve({ port: 9090 }, request => {
   const affiliation = request.header.get("Variable-affiliation");
 
   // If the headers are not set, the request is not authenticated
-  if (!uniqueID || !surname || !givenName || !email) {
+  if (!uniqueID || !fullName || !email) {
     return Response.json({ outcome: "no-user" });
   }
 
@@ -212,13 +212,13 @@ Deno.serve({ port: 9090 }, request => {
 });
 ```
 
-You might be asking: if the shibauthorizer already has the user data in nginx, i.e. before the request reaches Tobira, why do we pass it through Tobira to the callback?
+You might be asking: if the `shibauthorizer` already has the user data in nginx, i.e. before the request reaches Tobira, why do we pass it through Tobira to the callback?
 Good question, and you can actually move your auth logic into the reverse proxy by using `auth.source = "trust-auth-header"`.
 However, that has a few disadvantages:
 for one, most web servers limit the size of HTTP headers fairly agressively, which leads to problems when your user has lots of roles.
 Further, putting that logic into a web server config is quite the adventure.
 
-Finally, you should configure your nginx in a way that "shibauthorizer" is not ran for routes that don't need authentication.
+Finally, you should configure your nginx in a way that `shibauthorizer` is not run for routes that don't need authentication.
 For Tobira, everything starting with `/~assets` never needs authentication.
 But Tobira itself can decide much more precisely when a request needs to be authenticated, meaning that your callback (your auth logic) is just called when actually necessary.
 
@@ -228,5 +228,5 @@ So the above solution can be improved by having a second nginx server so that th
 user -> nginx (no shib) -> Tobira -> nginx (internal, runs shib) -> callback script
 ```
 
-The `relevant_headers`/`relevant_cookies` need to be adjusted to include everything that the shibauthorizer reads.
-Then, not only is the shibauthorizer only called when the request requires it, but you can also use Tobira's built-in caching.
+The `relevant_headers`/`relevant_cookies` need to be adjusted to include everything that the `shibauthorizer` reads.
+Then, not only is the `shibauthorizer` only called when the request requires it, but you can also use Tobira's built-in caching.

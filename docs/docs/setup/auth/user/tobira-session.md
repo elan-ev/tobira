@@ -18,7 +18,7 @@ That session ID is stored in Tobira's DB with a timestamp and the associated use
 For incoming requests, Tobira just reads the cookie and checks it against the DB.
 The duration of Tobira's login sessions can be set via `auth.session.duration`.
 
-The interesting part is how to create these sessions.
+The interesting part is how these sessions are created.
 
 
 ## Create sessions from login credentials
@@ -45,18 +45,18 @@ This is similar to [the `"callback:..."` auth source](./callback) in many ways.
 You also have to specify an HTTP endpoint and your callback is also expected to return the JSON as specified in the above link.
 
 What's different is that your login callback does not receive the headers of the incoming request, but the login credentials as JSON in the request body (e.g. `{ "userid": "joachim", "password": "blub" }`).
-Consequently, `callback.relevant_headers` is ignored for the login-callback.
-These login callbacks are *not* cached.
+Consequently, `auth.callback.relevant_headers` and `auth.callback.relevant_cookies` are ignored for the login-callback.
+The replies from these login callbacks are *not* cached.
 
 A simple example:
 
-```toml
+```toml title="Relevant Tobira configuration"
 [auth]
 source = "tobira-session"
-from_login_credentials = "login-callback:http://localhost:7007"
+session.from_login_credentials = "login-callback:http://localhost:7007"
 ```
 
-```ts
+```ts title="Example program serving as a callback"
 Deno.serve({ port: 7007 }, async (request) => {
   // Read login credentials
   const { userid, password } = await request.json();
@@ -79,7 +79,7 @@ Deno.serve({ port: 7007 }, async (request) => {
 
 ## Create sessions manually via `POST /~session`
 
-For more complex setups, you might want to create Tobira sessions manually and not from Tobira's login mechanism.
+For more complex setups, you might want to create Tobira sessions from an external script.
 That's what the `POST /~session` route is for.
 When Tobira receives such a request, it tries to authenticate the request and if that succeeds, a session is created.
 The authentication can be done via different means, configured as `auth.session.from_session_endpoint`:
@@ -94,7 +94,8 @@ See the examples below to get a better understanding of feature.
 
 ### Utility route `GET /~session`
 
-In practice, it's usually easy to configure your external system/login page where to direct to after successful login, while it's hard to send a POST request.
+It's usually easy to configure your external login-page with a redirect URL, i.e. a URL to redirect to after a successful login.
+However, it's usually difficult/impossible to configure those systems to send a `POST` request after the login.
 This route helps in these situations: when a user opens this in the browser, a `POST /~session` request is sent by JavaScript and then the user is redirect to the page they were on when clicking on the login button.
 
 
@@ -211,8 +212,8 @@ This is shown in this diagram:
 
 ### Shibboleth
 
-In [the docs about the auth callback](./callback), there is already a good Shibboleth example, that can be used without problems.
-But maybe you want to use Shibboleth to login, but afterwards want to use Tobira's session management.
+There is already a good Shibboleth example that can be used without problems in [the docs about the auth callback](./callback).
+However, maybe you want to use Shibboleth to login, but afterwards want to use Tobira's session management.
 In that case, you would proceed as follows:
 
 ```toml
@@ -227,22 +228,22 @@ session.from_session_endpoint = "callback:http://localhost:9090"
 callback.relevant_headers = ["Variable-uniqueID", ...]
 ```
 
-(Note: setting the `login_link` to `/~login` makes sense as if left unset, the login button would be an internal JS-based navigation, not sending a `GET /~login` request.)
+(Note: setting the `login_link` to `/~login` makes sense because if left unset, the login button would be an internal JS-based navigation, not sending a `GET /~login` request.)
 
 In your Shibboleth configuration you would:
 - Set `/~login` as protected path such that a user visiting that path is sent to the login page.
 - Set the return URL after login to `/~session`
 
 The callback script would be the same as in the Shibboleth example in [the callback docs](./callback).
-Finally, you would configure your reverse proxy to run the shibauthorizer only for `GET /~login` and `POST /~session` requests.
+Finally, you would configure your reverse proxy to run the `shibauthorizer` only for `GET /~login` and `POST /~session` requests.
 
 All of this results in the following behavior:
 
-- The user visits Tobira first the first time, then clicks the login button.
-- That request to `GET /~login` get detected as authorized by the shibauthorizer, which replies 302, redirecting the user to the Shibboleth login page.
+- The user visits Tobira for the first time, then clicks the login button.
+- That request to `GET /~login` gets detected as unauthorized by the `shibauthorizer`, which replies 302, redirecting the user to the Shibboleth login page.
 - The user logs in and Shibboleth redirects to `/~session`.
 - The user loads Tobira's JS from `/~session`, which then sends a `POST /~session` request.
-- That request is authorized by shibauthorizer, setting a bunch of Shibboleth headers.
+- That request is authorized by `shibauthorizer`, setting a bunch of Shibboleth headers.
 - Tobira receives the request with Shibboleth headers, and due to `session.from_session_endpoint`, it sends a request to the configured callback.
 - The callback reads the Shibboleth headers, and returns a JSON blob describing the user to Tobira.
 - Tobira receives the user info and creates a session for it, returning a `Set-Cookie` header.

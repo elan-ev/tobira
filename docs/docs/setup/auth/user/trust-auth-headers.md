@@ -35,7 +35,7 @@ The *auth headers* are just designated HTTP headers, one for each kind of inform
   Must contain exactly one role starting with any of `auth.user_role_prefixes`, which is treated as the user role.
 - `x-tobira-user-email`: User email address (optional)
 
-All these header values have to be a **base64-encoded UTF-8** string!
+All these header values have to be **base64-encoded UTF-8** strings!
 
 <details>
 <summary>Why Base64?</summary>
