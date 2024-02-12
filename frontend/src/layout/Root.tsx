@@ -1,6 +1,7 @@
 import React, { ReactNode, Suspense } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
+import { screenWidthAtMost } from "@opencast/appkit";
 
 import { Header } from "./header";
 import { BREAKPOINT as NAV_BREAKPOINT, NavItems } from "./Navigation";
@@ -14,7 +15,6 @@ import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } fro
 import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { useNoindexTag } from "../util";
-import { screenWidthAtMost } from "@opencast/appkit";
 
 
 export const MAIN_PADDING = 16;
