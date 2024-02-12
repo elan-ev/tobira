@@ -222,20 +222,42 @@ reserved_paths = ["/Shibboleth.sso"]
 
 [auth]
 source = "tobira-session"
-login_link = "/~login"
+login_link = "/~session"
 logout_link = "/Shibboleth.sso/Logout?return=/"
 session.from_session_endpoint = "callback:http://localhost:9090"
 callback.relevant_headers = ["Variable-uniqueID", ...]
 ```
 
-(Note: setting the `login_link` to `/~login` makes sense because if left unset, the login button would be an internal JS-based navigation, not sending a `GET /~login` request.)
-
 In your Shibboleth configuration you would:
-- Set `/~login` as protected path such that a user visiting that path is sent to the login page.
+- Set `/~session` as protected path such that a user visiting that path is sent to the login page.
 - Set the return URL after login to `/~session`
 
 The callback script would be the same as in the Shibboleth example in [the callback docs](./callback).
-Finally, you would configure your reverse proxy to run the `shibauthorizer` only for `GET /~login` and `POST /~session` requests.
+Finally, you would configure your reverse proxy to run the `shibauthorizer` only for `GET /~session` and `POST /~session` requests.
+Specifically, it must not run for `DELETE /~session` as otherwise, logout can fail in some cases.
+
+<details>
+<summary>Example nginx config (only relevant parts)</summary>
+
+```
+location /~session {
+  if ($request_method = DELETE) {
+      rewrite ^ @internal-delete-session last;
+  }
+  shib_request /shibauthorizer;
+  shib_request_use_headers on;
+  include shib_clear_headers;
+  proxy_pass http://localhost:3080;
+}
+
+location @internal-delete-session {
+  internal;
+  proxy_pass http://localhost:3080/~session;
+}
+```
+
+</details>
+
 
 All of this results in the following behavior:
 
