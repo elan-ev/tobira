@@ -90,6 +90,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
         <AclSelector
             acl={selections}
             onChange={setSelections}
+            addAnonymous={false}
             {...{ knownRoles, inheritedAcl, ownerDisplayName }}
             permissionLevels={MODERATE_ADMIN_ACTIONS}
         />

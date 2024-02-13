@@ -94,6 +94,7 @@ type AclSelectorProps = {
     knownRoles: AccessKnownRolesData$data;
     ownerDisplayName?: string | null;
     permissionLevels: PermissionLevels;
+    addAnonymous?: boolean;
 }
 
 export const AclSelector: React.FC<AclSelectorProps> = (
@@ -105,12 +106,13 @@ export const AclSelector: React.FC<AclSelectorProps> = (
         knownRoles,
         ownerDisplayName = "",
         permissionLevels,
+        addAnonymous = true,
     }
 ) => {
     const { i18n } = useTranslation();
     const knownGroups = [...knownRoles.knownGroups];
-    insertBuiltinRoleInfo(acl, knownGroups, i18n);
-    insertBuiltinRoleInfo(inheritedAcl, knownGroups, i18n);
+    [acl, inheritedAcl].forEach(list =>
+        insertBuiltinRoleInfo(list, knownGroups, i18n, addAnonymous));
     const [groupAcl, userAcl] = splitAcl(acl);
     const [inheritedGroupAcl, inheritedUserAcl] = splitAcl(inheritedAcl);
 
@@ -912,6 +914,7 @@ const insertBuiltinRoleInfo = (
     acl: Acl,
     knownGroups: AccessKnownRolesData$data["knownGroups"][number][],
     i18n: i18n,
+    addAnonymous: boolean,
 ) => {
     const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => Object.fromEntries(
         i18n.languages
@@ -939,7 +942,9 @@ const insertBuiltinRoleInfo = (
         user.info = userInfo;
     }
 
-    knownGroups.push({ role: COMMON_ROLES.ANONYMOUS, ...anonymousInfo });
+    if (addAnonymous) {
+        knownGroups.push({ role: COMMON_ROLES.ANONYMOUS, ...anonymousInfo });
+    }
     knownGroups.push({ role: COMMON_ROLES.USER, ...userInfo });
 };
 
