@@ -182,13 +182,15 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         }
 
         setLogoutState("pending");
-        fetch("/~session", { method: "DELETE" })
+        fetch("/~session", { method: "DELETE", keepalive: true })
             .then(() => {
-                // We deliberately ignore the `status`. See `handle_logout` for
-                // more information.
-                //
-                // We hard forward to the home page to get rid of any stale state.
-                window.location.href = "/";
+                if (CONFIG.auth.logoutLink === null) {
+                    // We deliberately ignore the `status`. See `handle_logout` for
+                    // more information.
+                    //
+                    // We hard forward to the home page to get rid of any stale state.
+                    window.location.href = "/";
+                }
             })
             .catch(error => {
                 // TODO: this is not great. It should happen only extremely
