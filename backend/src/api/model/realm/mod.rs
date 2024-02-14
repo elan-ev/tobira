@@ -2,7 +2,7 @@ use juniper::{graphql_object, GraphQLEnum, GraphQLObject, GraphQLUnion, graphql_
 use postgres_types::{FromSql, ToSql};
 
 use crate::{
-    api::{Context, Id, err::ApiResult, Node, NodeValue},
+    api::{Context, Id, err::ApiResult, Node, NodeValue, model::acl::{Acl, self}},
     auth::AuthContext,
     db::{types::Key, util::{select, impl_from_db}},
     prelude::*,
@@ -13,7 +13,7 @@ use super::block::{Block, BlockValue, SeriesBlock, VideoBlock};
 mod mutations;
 
 pub(crate) use mutations::{
-    ChildIndex, NewRealm, RemovedRealm, UpdateRealm, UpdatedRealmName, RealmSpecifier,
+    ChildIndex, NewRealm, RemovedRealm, UpdateRealm, UpdatedPermissions, UpdatedRealmName, RealmSpecifier,
 };
 
 
@@ -101,6 +101,10 @@ pub(crate) struct Realm {
     index: i32,
     child_order: RealmOrder,
     owner_display_name: Option<String>,
+    moderator_roles: Vec<String>,
+    admin_roles: Vec<String>,
+    flattened_moderator_roles: Vec<String>,
+    flattened_admin_roles: Vec<String>,
 }
 
 impl_from_db!(
@@ -108,7 +112,8 @@ impl_from_db!(
     select: {
         realms.{
             id, parent, name, name_from_block, path_segment, full_path, index,
-            child_order, resolved_name, owner_display_name,
+            child_order, resolved_name, owner_display_name, moderator_roles,
+            admin_roles, flattened_moderator_roles, flattened_admin_roles,
         },
     },
     |row| {
@@ -123,13 +128,17 @@ impl_from_db!(
             index: row.index(),
             child_order: row.child_order(),
             owner_display_name: row.owner_display_name(),
+            moderator_roles: row.moderator_roles(),
+            admin_roles: row.admin_roles(),
+            flattened_moderator_roles: row.flattened_moderator_roles(),
+            flattened_admin_roles: row.flattened_admin_roles(),
         }
     }
 );
 
 impl Realm {
     pub(crate) async fn root(context: &Context) -> ApiResult<Self> {
-        let (selection, mapping) = select!(child_order);
+        let (selection, mapping) = select!(child_order, moderator_roles, admin_roles);
         let row = context.db
             .query_one(&format!("select {selection} from realms where id = 0"), &[])
             .await?;
@@ -145,6 +154,10 @@ impl Realm {
             index: 0,
             child_order: mapping.child_order.of(&row),
             owner_display_name: None,
+            moderator_roles: mapping.moderator_roles.of(&row),
+            admin_roles: mapping.admin_roles.of(&row),
+            flattened_moderator_roles: mapping.moderator_roles.of(&row),
+            flattened_admin_roles: mapping.admin_roles.of(&row),
         })
     }
 
@@ -208,20 +221,40 @@ impl Realm {
         self.full_path.strip_prefix("/@")?.split('/').next()
     }
 
-    fn can_current_user_edit(&self, context: &Context) -> bool {
-        if let Some(owning_user) = self.owning_user() {
+    /// Returns whether the current user is the owner of this realm.
+    fn is_current_user_owner(&self, context: &Context) -> bool {
+        self.owning_user().is_some_and(|owning_user| {
             matches!(&context.auth, AuthContext::User(u) if u.username == owning_user)
-                || context.auth.is_admin()
-        } else {
-            // TODO: at some point, we want ACLs per realm
-            context.auth.is_moderator(&context.config.auth)
-        }
+        })
     }
 
-    pub(crate) fn require_write_access(&self, context: &Context) -> ApiResult<()> {
-        if !self.can_current_user_edit(context) {
-            return Err(context.access_error("realm.no-write-access", |user| format!(
-                "write access for page '{}' required, but '{user}' is not allowed to",
+    fn is_current_user_page_admin(&self, context: &Context) -> bool {
+        context.auth.is_admin()
+            || self.is_current_user_owner(context)
+            || context.auth.overlaps_roles(&self.flattened_admin_roles)
+    }
+
+    fn can_current_user_moderate(&self, context: &Context) -> bool {
+        context.auth.is_admin()
+            || self.is_current_user_owner(context)
+            || context.auth.overlaps_roles(&self.flattened_moderator_roles)
+    }
+
+    pub(crate) fn require_moderator_rights(&self, context: &Context) -> ApiResult<()> {
+        if !self.can_current_user_moderate(context) {
+            return Err(context.access_error("realm.no-moderator-rights", |user| format!(
+                "moderator rights for page '{}' required, but '{user}' is ineligible",
+                self.full_path,
+            )))
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn require_admin_rights(&self, context: &Context) -> ApiResult<()> {
+        if !self.is_current_user_page_admin(context) {
+            return Err(context.access_error("realm.no-page-admin-rights", |user| format!(
+                "page admin rights for page '{}' required, but '{user}' is ineligible",
                 self.full_path,
             )))
         }
@@ -302,11 +335,36 @@ impl Realm {
         if self.key.0 == 0 { "/" } else { &self.full_path }
     }
 
-    /// This is only returns a value for root user realms, in which case it is
+    /// This only returns a value for root user realms, in which case it is
     /// the display name of the user who owns this realm. For all other realms,
     /// `null` is returned.
     fn owner_display_name(&self) -> Option<&str> {
         self.owner_display_name.as_deref()
+    }
+
+    /// Returns the acl of this realm, combining moderator and admin roles and assigns 
+    /// the respective actions that are necessary for UI purposes.
+    async fn own_acl(&self, context: &Context) -> ApiResult<Acl> {
+        let raw_roles_sql = "
+            select unnest(moderator_roles) as role, 'moderate' as action from realms where id = $1
+            union
+            select unnest(admin_roles) as role, 'admin' as action from realms where id = $1
+        ";
+        acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
+    }
+
+    /// Returns the combined acl of this realm's parent, which effectively contains
+    /// the acl and inherited acl of each ancestor realm. This is used to display
+    /// these roles in the permissions UI, where we don't want to show that realm's own
+    /// flattened acl since that also contains the realm's "regular", i.e. non-inherited
+    /// acl.
+    async fn inherited_acl(&self, context: &Context) -> ApiResult<Acl> {
+        let raw_roles_sql = "
+            select unnest(flattened_moderator_roles) as role, 'moderate' as action from realms where id = $1
+            union
+            select unnest(flattened_admin_roles) as role, 'admin' as action from realms where id = $1
+        ";
+        acl::load_for(context, raw_roles_sql, dbargs![&self.parent_key]).await
     }
 
     /// Returns the immediate parent of this realm.
@@ -378,8 +436,17 @@ impl Realm {
         Ok(count.try_into().expect("number of descendants overflows i32"))
     }
 
-    fn can_current_user_edit(&self, context: &Context) -> bool {
-        self.can_current_user_edit(context)
+    /// Returns whether the current user has the rights to add sub-pages, edit realm content,
+    /// and edit settings including changing the realm path, deleting the realm and editing
+    /// the realm's acl.
+    fn is_current_user_page_admin(&self, context: &Context) -> bool {
+        self.is_current_user_page_admin(context)
+    }
+
+    /// Returns whether the current user has the rights to add sub-pages and edit realm content
+    /// and non-critical settings.
+    fn can_current_user_moderate(&self, context: &Context) -> bool {
+        self.can_current_user_moderate(context)
     }
 
     /// Returns `true` if this realm somehow references the given node via

@@ -14,6 +14,7 @@ use super::{
             Realm,
             RealmOrder,
             RemovedRealm,
+            UpdatedPermissions,
             UpdatedRealmName,
             UpdateRealm,
             RealmSpecifier,
@@ -72,6 +73,11 @@ impl Mutation {
     /// Changes the name of a realm.
     async fn rename_realm(id: Id, name: UpdatedRealmName, context: &Context) -> ApiResult<Realm> {
         Realm::rename(id, name, context).await
+    }
+
+    /// Changes the moderator and/or admin roles of a realm.
+    async fn update_permissions(id: Id, permissions: UpdatedPermissions, context: &Context) -> ApiResult<Realm> {
+        Realm::update_permissions(id, permissions, context).await
     }
 
     /// Updates a realm's data.

@@ -58,7 +58,7 @@ export const ManageRealmContentRoute = makeRoute({
                 render={data => {
                     if (!data.realm) {
                         return <PathInvalid />;
-                    } else if (!data.realm.canCurrentUserEdit) {
+                    } else if (!data.realm.canCurrentUserModerate) {
                         return <NotAuthorized />;
                     } else {
                         return <ManageContent data={data} />;
@@ -74,7 +74,7 @@ const query = graphql`
     query ContentManageQuery($path: String!) {
         ... UserData
         realm: realmByPath(path: $path) {
-            canCurrentUserEdit
+            canCurrentUserModerate
             ... NavigationData
             ... ContentManageRealmData
         }

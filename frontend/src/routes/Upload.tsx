@@ -29,11 +29,12 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
-import { Acl, AclSelector, knownRolesFragement } from "../ui/Access";
+import { Acl, AclSelector, knownRolesFragment } from "../ui/Access";
 import {
     AccessKnownRolesData$data,
     AccessKnownRolesData$key,
 } from "../ui/__generated__/AccessKnownRolesData.graphql";
+import { READ_WRITE_ACTIONS } from "../util/permissionLevels";
 
 
 const PATH = "/~manage/upload" as const;
@@ -78,7 +79,7 @@ type Props = {
 
 const Upload: React.FC<Props> = ({ knownRolesRef }) => {
     const { t } = useTranslation();
-    const knownRoles = useFragment(knownRolesFragement, knownRolesRef);
+    const knownRoles = useFragment(knownRolesFragment, knownRolesRef);
 
     return (
         <div css={{
@@ -791,6 +792,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         onChange={field.onChange}
                         acl={field.value}
                         knownRoles={knownRoles}
+                        permissionLevels={READ_WRITE_ACTIONS}
                     />}
                 />
             </InputContainer>

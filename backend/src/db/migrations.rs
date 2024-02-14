@@ -362,4 +362,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     27: "users",
     28: "user-index-queue-triggers",
     29: "extend-series-block",
+    30: "realm-permissions",
 ];

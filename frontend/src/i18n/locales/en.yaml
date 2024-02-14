@@ -201,7 +201,7 @@ series:
 realm:
   page-settings: Page settings
   edit-page-content: Edit page content
-  add-sub-page: Add sub-page
+  add-sub-page: Add subpage
   missing-name: Missing name
   user-realm:
     my-page: My page
@@ -215,7 +215,7 @@ realm:
       what-you-can-do: >
         On your personal page, you can freely arrange videos, text, and other elements.
         This allows you to better present and share your content.
-        You can even create sub-pages to create your own small video-portal.
+        You can even create subpages to create your own small video-portal.
       available-at: 'Your page will be available at:'
       find-and-delete: >
         Anyone who has this link or knows your username can visit your page.
@@ -302,13 +302,25 @@ manage:
       user: User
       yourself: You
       subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
+      inherited: Inherited permissions
+      inherited-tooltip: >
+        The following permissions were granted in a higher level page and are inherited to all subpages.
       actions:
         title: Actions
         read: Read
         read-description: Can watch the video and view metadata.
         write: Read and write
-        large-group-warning: You are giving write-access to a large group. Is this intentional?
         write-description: Can also edit the video, metadata and other details.
+        moderate: Moderate
+        moderate-description: Can edit content, add subpages and change the name and subpage order.
+        admin: Page admin
+        admin-description: Can moderate, delete pages and edit permissions.
+        unknown: Unknown permission
+        unknown-description: This permission isn't known.
+        write-access: write-access
+        moderate-access: moderating-rights
+        admin-access: page admin-rights
+        large-group-warning: You are giving {{val}} to a large group. Is this intentional?
     unlisted:
       note: This video is unlisted.
       explanation: >
@@ -319,8 +331,10 @@ manage:
       body: The changes you have made will be reset.
     save-modal:
       title: Remove own access?
-      body: The current selection will remove your write-access.
-            Without this, you will lose the ability to make any further edits.
+      disclaimer-write: The current selection will remove your write-access.
+        Without this, you will lose the ability to make any further edits.
+      disclaimer-admin: The current selection will remove your page admin-rights.
+        Without these, you can no longer edit these permissions, change the realm path, or delete the page.
       confirm: Confirm
 
   dashboard:
@@ -374,7 +388,7 @@ manage:
       Error: invalid path to page. Was the page deleted or its path changed?
     heading: Settings of page “{{realm}}”
     heading-root: Homepage settings
-    descendants-count: This page has {{count}} direct and indirect sub-pages.
+    descendants-count: This page has {{count}} direct and indirect subpages.
     view-page: Go to page
 
     name-must-not-be-empty: Name must not be empty.
@@ -409,6 +423,9 @@ manage:
       move-up: Move up
       move-down: Move down
 
+    permissions:
+      heading: Manage permissions
+
     danger-zone:
       heading: Danger zone
       root-note: The homepage cannot be deleted or moved, nor can its path be changed.
@@ -419,19 +436,19 @@ manage:
         cannot-userrealm: The path of your personal page cannot be changed.
         warning: >
           Important: Changing the path of this page invalidates all links to
-          this page, to all direct or indirect sub-pages, and to all videos
+          this page, to all direct or indirect subpages, and to all videos
           linked on any of those pages. Old links, e.g. in personal
           browser-bookmarks or published somewhere, won't work anymore.
       delete:
         heading: Delete page
-        button: Delete this page and <strong>{{numSubPages}}</strong> sub-pages
+        button: Delete this page and <strong>{{numSubPages}}</strong> subpages
         button-single: Delete page
         cannot-be-undone: This action <strong>cannot</strong> be undone!
         confirm-removal: Delete page?
         failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
-          indirect sub-pages, as well as all content of these pages. This
+          indirect subpages, as well as all content of these pages. This
           cannot be undone!
 
     content:
@@ -523,7 +540,8 @@ api-remote-errors:
   realm:
     path-is-reserved: The chosen path is reserved and cannot be used for pages.
     path-collision: A page with this path already exists.
-    no-write-access: You are not allowed to modify this page.
+    no-moderator-rights: You are not allowed to modify this page.
+    no-page-admin-rights: You are not allowed to carry out this action.
     cannot-create-user-realm: You are not allowed to create your own page.
     user-realm-already-exists: Your own page already exists.
     username-not-valid-as-path: >

@@ -192,6 +192,11 @@ interface Block {
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 
+input UpdatedPermissions {
+  moderatorRoles: [String!]
+  adminRoles: [String!]
+}
+
 type NotAllowed {
   """
     Unused dummy field for this marker type. GraphQL requires all objects to
@@ -323,11 +328,24 @@ type Realm implements Node {
   """
   path: String!
   """
-    This is only returns a value for root user realms, in which case it is
+    This only returns a value for root user realms, in which case it is
     the display name of the user who owns this realm. For all other realms,
     `null` is returned.
   """
   ownerDisplayName: String
+  """
+    Returns the acl of this realm, combining moderator and admin roles and assigns
+    the respective actions that are necessary for UI purposes.
+  """
+  ownAcl: [AclItem!]!
+  """
+    Returns the combined acl of this realm's parent, which effectively contains
+    the acl and inherited acl of each ancestor realm. This is used to display
+    these roles in the permissions UI, where we don't want to show that realm's own
+    flattened acl since that also contains the realm's "regular", i.e. non-inherited
+    acl.
+  """
+  inheritedAcl: [AclItem!]!
   "Returns the immediate parent of this realm."
   parent: Realm
   """
@@ -350,7 +368,17 @@ type Realm implements Node {
     (excluding this one). Returns a number ≥ 0.
   """
   numberOfDescendants: Int!
-  canCurrentUserEdit: Boolean!
+  """
+    Returns whether the current user has the rights to add sub-pages, edit realm content,
+    and edit settings including changing the realm path, deleting the realm and editing
+    the realm's acl.
+  """
+  isCurrentUserPageAdmin: Boolean!
+  """
+    Returns whether the current user has the rights to add sub-pages and edit realm content
+    and non-critical settings.
+  """
+  canCurrentUserModerate: Boolean!
   """
     Returns `true` if this realm somehow references the given node via
     blocks. Currently, the following rules are used:
@@ -404,6 +432,8 @@ type Mutation {
   setChildOrder(parent: ID!, childOrder: RealmOrder!, childIndices: [ChildIndex!] = null): Realm!
   "Changes the name of a realm."
   renameRealm(id: ID!, name: UpdatedRealmName!): Realm!
+  "Changes the moderator and/or admin roles of a realm."
+  updatePermissions(id: ID!, permissions: UpdatedPermissions!): Realm!
   "Updates a realm's data."
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
   "Remove a realm from the tree."

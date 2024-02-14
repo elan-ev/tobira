@@ -14,7 +14,7 @@ impl Realm {
         let Some(parent) = Self::load_by_id(realm.parent, context).await? else {
             return Err(invalid_input!("`parent` realm does not exist"));
         };
-        parent.require_write_access(context)?;
+        parent.require_moderator_rights(context)?;
         let db = &context.db;
 
         // Check if the path is a reserved one.
@@ -24,11 +24,16 @@ impl Realm {
             return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
         }
 
+        let roles = match &context.auth {
+            AuthContext::User(user) if !parent.is_current_user_owner(context) => vec![&user.user_role],
+            _ => vec![]
+        };
+
         let res = db.query_one(
-            "insert into realms (parent, name, path_segment) \
-                values ($1, $2, $3) \
+            "insert into realms (parent, name, path_segment, admin_roles, moderator_roles) \
+                values ($1, $2, $3, $4, $4) \
                 returning id",
-            &[&parent.key, &realm.name, &realm.path_segment],
+            &[&parent.key, &realm.name, &realm.path_segment, &roles],
         ).await;
 
         let row = map_db_err!(res, {
@@ -102,7 +107,7 @@ impl Realm {
             // is on the settings page. Maybe we want to give a hint.
             return Err(invalid_input!("`parent` realm does not exist (for `setChildOrder`)"));
         };
-        parent.require_write_access(context)?;
+        parent.require_moderator_rights(context)?;
         let db = &context.db;
 
         if let Some(child_indices) = child_indices {
@@ -189,7 +194,7 @@ impl Realm {
         let Some(realm) = Self::load_by_id(id, context).await? else {
             return Err(invalid_input!("`id` does not refer to an existing realm"));
         };
-        realm.require_write_access(context)?;
+        realm.require_moderator_rights(context)?;
 
         let db = &context.db;
         if name.plain.is_some() == name.block.is_some() {
@@ -222,13 +227,47 @@ impl Realm {
         })
     }
 
+    pub(crate) async fn update_permissions(
+        id: Id,
+        permissions: UpdatedPermissions,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        let Some(realm) = Self::load_by_id(id, context).await? else {
+            return Err(invalid_input!("`id` does not refer to an existing realm"));
+        };
+        realm.require_admin_rights(context)?;
+        let db = &context.db;
+
+        db.execute(
+            "update realms set \
+            moderator_roles = coalesce($2, moderator_roles), \
+            admin_roles = coalesce($3, admin_roles) \
+            where id = $1",
+            &[&realm.key, &permissions.moderator_roles, &permissions.admin_roles],
+        )
+        .await?;
+
+        Self::load_by_key(realm.key, context).await.map(Option::unwrap).inspect_(|new| {
+            info!(
+                "Updated permissions of realm {:?} ({}) from moderators: '{:?}' to '{:?}' and from admins: '{:?}' to '{:?}'",
+                realm.key,
+                realm.full_path,
+                realm.moderator_roles,
+                new.moderator_roles,
+                realm.admin_roles,
+                new.admin_roles,
+            );
+        })
+    }
+
+
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
         // TODO: validate input
 
         let Some(realm) = Self::load_by_id(id, context).await? else {
             return Err(invalid_input!("`id` does not refer to an existing realm"));
         };
-        realm.require_write_access(context)?;
+        realm.require_admin_rights(context)?;
         let db = &context.db;
 
         if realm.is_user_root() {
@@ -282,7 +321,7 @@ impl Realm {
         let Some(realm) = Self::load_by_id(id, context).await? else {
             return Err(invalid_input!("`id` does not refer to an existing realm"));
         };
-        realm.require_write_access(context)?;
+        realm.require_admin_rights(context)?;
         let db = &context.db;
 
         if realm.is_main_root() {
@@ -317,6 +356,12 @@ pub(crate) struct ChildIndex {
 pub(crate) struct UpdateRealm {
     parent: Option<Id>,
     path_segment: Option<String>,
+}
+
+#[derive(juniper::GraphQLInputObject)]
+pub(crate) struct UpdatedPermissions {
+    moderator_roles: Option<Vec<String>>,
+    admin_roles: Option<Vec<String>>,
 }
 
 /// Exactly one of `plain` or `block` has to be non-null.

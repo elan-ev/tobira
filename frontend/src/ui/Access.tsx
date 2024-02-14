@@ -1,6 +1,5 @@
 import {
     useColorScheme,
-    match,
     ProtoButton,
     WithTooltip,
     FloatingHandle,
@@ -9,7 +8,15 @@ import {
     notNullish,
     screenWidthAtMost,
 } from "@opencast/appkit";
-import { createContext, useRef, useState, useContext, ReactNode } from "react";
+import {
+    createContext,
+    useRef,
+    useState,
+    useContext,
+    ReactNode,
+    Dispatch,
+    SetStateAction,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { LuX, LuAlertTriangle, LuInfo } from "react-icons/lu";
 import { MultiValue } from "react-select";
@@ -31,6 +38,12 @@ import { Card } from "./Card";
 import { environment } from "../relay";
 import { AccessUserSearchQuery } from "./__generated__/AccessUserSearchQuery.graphql";
 import { ErrorDisplay } from "../util/err";
+import { useNavBlocker } from "../routes/util";
+import { currentRef } from "../util";
+import { Button } from "./Button";
+import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
+import { Spinner } from "./Spinner";
+import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
 
 
@@ -46,8 +59,6 @@ export type RoleInfo = {
     large: boolean;
 };
 
-type Action = "read" | "write";
-
 type SelectOption = {
     role: string;
     label: string;
@@ -56,6 +67,8 @@ type SelectOption = {
 type AclContext = {
     userIsRequired: boolean;
     acl: Acl;
+    ownerDisplayName: string | null;
+    permissionLevels: PermissionLevels;
     change: (f: (acl: Acl) => void) => void;
     knownGroups: Map<string, {
         label: TranslatedLabel;
@@ -71,22 +84,38 @@ const useAclContext = () => useContext(AclContext) ?? bug("Acl context is not in
 
 type AclSelectorProps = {
     acl: Acl;
+    inheritedAcl?: Acl;
     /**
      * If `true`, the current user is included by default with `write` access and can't be removed.
      * This is necessary for the acl-selection in the uploader.
-     */
+    */
     userIsRequired?: boolean;
     onChange: (newAcl: Acl) => void;
     knownRoles: AccessKnownRolesData$data;
+    ownerDisplayName?: string | null;
+    permissionLevels: PermissionLevels;
+    addAnonymous?: boolean;
 }
 
 export const AclSelector: React.FC<AclSelectorProps> = (
-    { acl, userIsRequired = false, onChange, knownRoles }
+    {
+        acl,
+        inheritedAcl = new Map(),
+        userIsRequired = false,
+        onChange,
+        knownRoles,
+        ownerDisplayName = "",
+        permissionLevels,
+        addAnonymous = true,
+    }
 ) => {
     const { i18n } = useTranslation();
     const knownGroups = [...knownRoles.knownGroups];
-    insertBuiltinRoleInfo(acl, knownGroups, i18n);
+    [acl, inheritedAcl].forEach(list =>
+        insertBuiltinRoleInfo(list, knownGroups, i18n, addAnonymous));
     const [groupAcl, userAcl] = splitAcl(acl);
+    const [inheritedGroupAcl, inheritedUserAcl] = splitAcl(inheritedAcl);
+
     const change: AclContext["change"] = f => {
         const copy = new Map([...acl.entries()].map(([role, value]) => [role, {
             actions: new Set(value.actions),
@@ -101,28 +130,31 @@ export const AclSelector: React.FC<AclSelectorProps> = (
         acl,
         change,
         groupDag: buildDag(knownGroups),
+        ownerDisplayName,
+        permissionLevels,
         knownGroups: new Map(knownGroups.map(g => [g.role, {
             label: g.label,
             implies: new Set(g.implies),
             large: g.large,
         }])),
     };
+
     return <AclContext.Provider value={context}>
         <div css={{
             display: "flex",
             flexWrap: "wrap",
             gap: 24,
         }}>
-            <AclSelect kind="Group" acl={groupAcl} />
-            <AclSelect kind="User" acl={userAcl} />
+            <AclSelect kind="group" acl={groupAcl} inheritedAcl={inheritedGroupAcl} />
+            <AclSelect kind="user" acl={userAcl} inheritedAcl={inheritedUserAcl} />
         </div>
     </AclContext.Provider>;
 };
 
-type RoleKind = "Group" | "User";
+type RoleKind = "group" | "user";
 
 
-export const knownRolesFragement = graphql`
+export const knownRolesFragment = graphql`
     fragment AccessKnownRolesData on Query {
         knownGroups { role label implies large }
     }
@@ -138,7 +170,7 @@ type Entry = {
 
     /**
      * Resolved label. The value from the API, but also built-in groups
-     * evaulated and fallback to just the role.
+     * evaluated and fallback to just the role.
      */
     label: string;
 
@@ -148,31 +180,20 @@ type Entry = {
 
 type AclSelectProps = SelectProps & {
     acl: Acl;
+    inheritedAcl: Acl;
     kind: RoleKind;
 };
 
 /** One of the two columns for either users or groups. */
-const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
+const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { change, knownGroups, groupDag } = useAclContext();
+    const { change, knownGroups, groupDag, permissionLevels, ownerDisplayName } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
     const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
+    const userIsOwner = isRealUser(user) && user.displayName === ownerDisplayName;
     const [error, setError] = useState<ReactNode>(null);
-
-    const translations = match(kind, {
-        "Group": () => ({
-            heading: t("manage.access.authorized-groups"),
-            placeholder: t("manage.access.select.groups"),
-            columnHeader: t("manage.access.table.group"),
-        }),
-        "User": () => ({
-            heading: t("manage.access.authorized-users"),
-            placeholder: t("manage.access.select.users"),
-            columnHeader: t("manage.access.table.user"),
-        }),
-    });
 
     // Sort the active ACL entries (and put them into a new variable for that).
     let entries: Entry[] = [...acl.entries()].map(([role, { actions, info }]) => ({
@@ -181,7 +202,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         label: getLabel(role, info?.label, i18n),
         large: info?.large ?? false,
     }));
-    if (kind === "Group") {
+    if (kind === "group") {
         // Sort large groups to the top.
         entries = groupDag.sort(entries);
     } else {
@@ -208,6 +229,20 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         });
     }
 
+    const inheritedEntries: Entry[] = [...inheritedAcl.entries()]
+        .map(([role, { actions, info }]) => ({
+            role,
+            actions,
+            label: getLabel(role, info?.label, i18n),
+            large: false, // Don't show any warning on inherited entries as they can't be changed.
+        }));
+
+    const showAdminEntry = kind === "group"
+        && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
+        && userIsAdmin;
+
+    const showUserEntry = (kind === "user" && ownerDisplayName);
+
     const remove = (item: Entry) => change(prev => prev.delete(item.role));
 
     const handleCreate = (inputValue: string) => change(prev => {
@@ -215,7 +250,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
             // If "create" is called, a new option is created, meaning that we
             // don't know the role.
             info: null,
-            actions: new Set(["read"]),
+            actions: new Set([permissionLevels.default]),
         });
     });
 
@@ -225,7 +260,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
             .forEach(option => {
                 const info = knownGroups.get(option.role);
                 prev.set(option.role, {
-                    actions: new Set(["read"]),
+                    actions: new Set([permissionLevels.default]),
                     info: {
                         label: info?.label ?? { "_": option.label },
                         implies: [...info?.implies ?? new Set()],
@@ -245,11 +280,11 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         isMulti: true,
         isSearchable: true,
         backspaceRemovesValue: false,
-        placeholder: translations.placeholder,
+        placeholder: t(`manage.access.select.${kind}s`),
         // TODO: for users, this should say "type to search" or "enter
         // username, email, ... to add user" depending on the
         // users_searchable config.
-        noOptionsMessage: kind === "Group"
+        noOptionsMessage: kind === "group"
             ? () => t("general.form.select.no-options")
             : ({ inputValue }: { inputValue: string }) => (
                 t(`manage.access.users-no-options.${
@@ -259,7 +294,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
         isValidNewOption: (input: string) => {
             const validUserRole = isUserRole(input);
             const validRole = /^ROLE_\w+/.test(input);
-            return kind === "Group" ? (validRole && !validUserRole) : validUserRole;
+            return kind === "group" ? (validRole && !validUserRole) : validUserRole;
         },
         formatCreateLabel: (input: string) => t("manage.access.select.create", { item: input }),
         value: entries.map(e => ({ role: e.role, label: e.label })),
@@ -281,9 +316,9 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
             flexBasis: 280,
         },
     }}>
-        <strong>{translations.heading}</strong>
+        <strong>{t(`manage.access.authorized-${kind}s`)}</strong>
         {error && <Card kind="error" css={{ marginBottom: 8 }}>{error}</Card>}
-        {kind === "Group"
+        {kind === "group"
             ? <CreatableSelect
                 {...commonSelectProps}
                 options={[...knownGroups.entries()].map(([role, { label }]) => ({
@@ -303,10 +338,12 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                                 }
 
                                 setError(null);
-                                callback(users.items.map(item => ({
-                                    role: item.userRole,
-                                    label: item.displayName,
-                                })));
+                                callback(users.items
+                                    .filter(item => item.displayName !== ownerDisplayName)
+                                    .map(item => ({
+                                        role: item.userRole,
+                                        label: item.displayName,
+                                    })));
                             },
                             start: () => {},
                             error: (error: Error) => setError(<ErrorDisplay error={error} />),
@@ -336,8 +373,22 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                 },
             }}>
                 <colgroup>
-                    <col css={{ }} />
-                    <col css={{ width: i18n.resolvedLanguage === "en" ? 190 : 224 }} />
+                    <col />
+                    <col css={{
+                        // This is a little hacky and kind of messy.
+                        // We want the width of the action columns to be fixed
+                        // and determined by the longest action label (e.g. `read and write`
+                        // should also determine the width of the `read` label). These lengths are
+                        // of course also dependent on the current language (german for example
+                        // has a reputation for having ridiculously lengthy words).
+                        // Now that we use this selector also for realm acl that use different
+                        // labels altogether, this needs yet another check.
+                        // This will of course become even more complicated once more languages are
+                        // added.
+                        width: permissionLevels.highest === "admin"
+                            ? i18n.resolvedLanguage === "en" ? 155 : 160
+                            : i18n.resolvedLanguage === "en" ? 190 : 224,
+                    }} />
                     <col css={{ width: 42 }} />
                 </colgroup>
                 <thead>
@@ -345,14 +396,14 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                         borderBottom: `2px solid ${COLORS.neutral05}`,
                         textAlign: "left",
                     }}>
-                        <th>{translations.columnHeader}</th>
+                        <th>{t(`manage.access.table.${kind}`)}</th>
                         <th>{t("manage.access.table.actions.title")}</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {/* Placeholder if there are no entries */}
-                    {entries.length === 0 && !userIsAdmin && <tr>
+                    {entries.length === 0 && !(showAdminEntry || showUserEntry) && <tr>
                         <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
                             {t("acl.no-entries")}
                         </td>
@@ -363,19 +414,52 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, kind }) => {
                     }
 
                     {/*
-                    The ACLs usually don't explicitly include admins, but showing that
-                    entry makes sense if the user is admin.
+                        The ACLs usually don't explicitly include admins, but showing that
+                        entry makes sense if the user is admin.
                     */}
-                    {(
-                        kind === "Group"
-                        && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
-                        && userIsAdmin
-                    ) && (
-                        <TableRow
-                            labelCol={<>{t("acl.groups.admins")}</>}
-                            actionCol={<UnchangeableAllActions />}
-                        />
-                    )}
+                    {showAdminEntry && <TableRow
+                        labelCol={<>{t("acl.groups.admins")}</>}
+                        actionCol={<UnchangeableAllActions />}
+                    />}
+
+                    {/*
+                        Similarly to the above, the ACL for user realms does not explicitly
+                        include that realm's owning user, but it should still be shown in the UI.
+                    */}
+                    {showUserEntry && <TableRow
+                        labelCol={!userIsOwner ? <>{ownerDisplayName}</> : <>
+                            <i>{t("manage.access.table.yourself")}</i>
+                            &nbsp;({ownerDisplayName})
+                        </>}
+                        actionCol={<UnchangeableAllActions />}
+                    />}
+
+                    {/* Inherited ACL */}
+                    {inheritedAcl.size > 0 && <>
+                        <tr css={{
+                            borderTop: `1px solid ${COLORS.neutral05}`,
+                            borderBottom: `1px solid ${COLORS.neutral05}`,
+                            backgroundColor: COLORS.neutral15,
+                        }}>
+                            <td colSpan={3}>
+                                <span css={{ display: "flex", justifyContent: "center" }}>
+                                    <span css={{ fontStyle: "oblique" }}>
+                                        {t("manage.access.table.inherited")}
+                                    </span>
+                                    {/*
+                                        Technically not a warning, but it's easiest
+                                        to just reuse this component
+                                    */}
+                                    <Warning info tooltip={
+                                        t("manage.access.table.inherited-tooltip")
+                                    }/>
+                                </span>
+                            </td>
+                        </tr>
+                        {inheritedEntries.map(entry =>
+                            <ListEntry key={entry.role} item={entry} inherited {...{ kind }} />)
+                        }
+                    </>}
                 </tbody>
             </table>
         </div>
@@ -398,29 +482,42 @@ type ItemProps = {
 }
 
 type ListEntryProps = ItemProps & {
-    remove: (item: Entry) => void;
+    remove?: (item: Entry) => void;
+    inherited?: boolean;
 }
 
-const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
+const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = false }) => {
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { userIsRequired, acl, groupDag } = useAclContext();
+    const { userIsRequired, acl, groupDag, permissionLevels } = useAclContext();
 
-    const canWrite = item.actions.has("write");
-    const supersets = kind === "User" ? [] : groupDag
+    const entryContainsActions = (actions: PermissionLevel[]) =>
+        actions.every(action => item.actions.has(action));
+
+    let noteworthyAccessType: PermissionLevel | null = null;
+    if (entryContainsActions(["write"])) {
+        noteworthyAccessType = "write";
+    } else if (entryContainsActions(["admin"])) {
+        noteworthyAccessType = "admin";
+    } else if (entryContainsActions(["moderate"]) && !entryContainsActions(["admin"])) {
+        noteworthyAccessType = "moderate";
+    }
+
+    const supersets = kind === "user" ? [] : groupDag
         .supersetsOf(item.role)
         .filter(role => {
             const actions = acl.get(role)?.actions;
-            return actions && actions.has("read") && (!canWrite || actions.has("write"));
+            return actions && [...item.actions].every(action => actions?.has(action));
         })
         .map(role => getLabel(role, acl.get(role)?.info?.label, i18n));
-    const isSubset = supersets.length > 0;
+    const isSubset = !inherited && supersets.length > 0;
     const isUser = isRealUser(user) && item.role === user.userRole;
+    const immutable = item.role === COMMON_ROLES.ADMIN || userIsRequired && isUser || inherited;
 
     let label: JSX.Element;
     if (isUser) {
         label = <span><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</span>;
-    } else if (kind === "User" && isUserRole(item.label)) {
+    } else if (kind === "user" && isUserRole(item.label)) {
         // We strip the user role prefix (we take the longest prefix that
         // matches, though in almost all cases just a single one will match).
         // We then clean it a bit before displaying.
@@ -434,7 +531,6 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
         label = <>{item.label}</>;
     }
 
-    const immutable = item.role === COMMON_ROLES.ADMIN || userIsRequired && isUser;
     return <TableRow
         labelCol={<>
             {label}
@@ -442,15 +538,20 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind }) => {
                 t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
             } />}
         </>}
-        mutedLabel={isSubset}
-        actionCol={immutable ? <UnchangeableAllActions /> : <>
-            <ActionsMenu {...{ item, kind }} />
-            {item.large && canWrite
-                ? <Warning tooltip={t("manage.access.table.actions.large-group-warning")} />
-                : <div css={{ width: 22 }} />
-            }
-        </>}
-        onRemove={immutable ? undefined : () => remove(item)}
+        mutedLabel={isSubset || inherited}
+        actionCol={immutable
+            ? <UnchangeableAllActions permission={getActionLabel(item, permissionLevels)} />
+            : <>
+                <ActionsMenu {...{ item, kind }} />
+                {item.large && noteworthyAccessType
+                    ? <Warning tooltip={t("manage.access.table.actions.large-group-warning", {
+                        val: t(`manage.access.table.actions.${noteworthyAccessType}-access`),
+                    })} />
+                    : <div css={{ width: 22 }} />
+                }
+            </>}
+        onRemove={immutable ? undefined : () => remove && remove(item)}
+        {...{ inherited }}
     />;
 };
 
@@ -460,13 +561,16 @@ type TableRowProps = {
     mutedLabel?: boolean;
     actionCol: JSX.Element;
     onRemove?: () => void;
+    inherited?: boolean;
 }
 
-const TableRow: React.FC<TableRowProps> = ({ labelCol, mutedLabel, actionCol, onRemove }) => (
+const TableRow: React.FC<TableRowProps> = (
+    { labelCol, mutedLabel, actionCol, onRemove, inherited }
+) => (
     <tr css={{
         height: 44,
-        ":hover, :focus-within": {
-            td: { backgroundColor: COLORS.neutral15 },
+        ...!inherited && { ":hover, :focus-within":
+            { td: { backgroundColor: COLORS.neutral15 } },
         },
         ...mutedLabel && { color: COLORS.neutral60 },
         borderBottom: `1px solid ${COLORS.neutral05}`,
@@ -525,44 +629,31 @@ const Warning: React.FC<WarningProps> = ({ tooltip, info }) => (
     </WithTooltip>
 );
 
-const UnchangeableAllActions = () => {
+const UnchangeableAllActions: React.FC<{ permission?: PermissionLevel }> = ({ permission }) => {
     const { t } = useTranslation();
-    return <span css={{ marginLeft: 8 }}>{t("manage.access.table.actions.write")}</span>;
+    const { permissionLevels } = useAclContext();
+    const label = permission ?? permissionLevels.highest;
+    return <span css={{ marginLeft: 8 }}>{t(`manage.access.table.actions.${label}`)}</span>;
 };
 
 const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<FloatingHandle>(null);
     const { t } = useTranslation();
-    const { change } = useAclContext();
-    const currentActionOption = item.actions.has("write") ? "write" : "read";
-    const changeOption = (newOption: "read" | "write") => change(prev => {
-        notNullish(prev.get(item.role)).actions = new Set(
-            newOption === "write" ? ["read", "write"] : ["read"]
-        );
+    const { change, permissionLevels } = useAclContext();
+    const allLabels = Object.keys(permissionLevels.all) as PermissionLevel[];
+    const currentActionOption = getActionLabel(item, permissionLevels);
+
+    const changeOption = (newOption: PermissionLevel) => change(prev => {
+        notNullish(prev.get(item.role)).actions
+            = notNullish(permissionLevels.all[newOption]).actions;
     });
-
-
-    const actions: Action[] = ["read", "write"];
-
-    const count = kind === "User" ? 1 : 2;
-    const translations = (actionType: Action) => match(actionType, {
-        "read": () => ({
-            label: t("manage.access.table.actions.read"),
-            description: t("manage.access.table.actions.read-description", { ...{ count } }),
-        }),
-        "write": () => ({
-            label: t("manage.access.table.actions.write"),
-            description: t("manage.access.table.actions.write-description", { ...{ count } }),
-        }),
-    });
-
 
     return (
         <FloatingBaseMenu
             ref={ref}
             label={t("manage.access.table.actions.title")}
-            triggerContent={<>{translations(currentActionOption).label}</>}
+            triggerContent={<>{t(`manage.access.table.actions.${currentActionOption}`)}</>}
             triggerStyles={{
                 width: "100%",
                 gap: 0,
@@ -588,11 +679,14 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                         margin: 0,
                         padding: 0,
                     }}>
-                        {actions.map(actionOption => <ActionMenuItem
+                        {allLabels.map(actionOption => <ActionMenuItem
                             key={actionOption}
                             disabled={actionOption === currentActionOption}
-                            label={translations(actionOption).label}
-                            description={translations(actionOption).description}
+                            label={t(`manage.access.table.actions.${actionOption}`)}
+                            description={
+                                t(`manage.access.table.actions.${actionOption}-description`,
+                                    { count: kind === "user" ? 1 : 2 })
+                            }
                             onClick={() => changeOption(actionOption)}
                             close={() => ref.current?.close()}
                         />)}
@@ -670,6 +764,112 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
 };
 
 
+/* Optional reset and save buttons to use if selector is not part of a larger form */
+type AclEditButtonsProps = {
+    selections: Acl;
+    setSelections: Dispatch<SetStateAction<Acl>>;
+    initialAcl: Acl;
+    onSubmit: (acl: Acl) => Promise<void>;
+    className?: string;
+    inFlight?: boolean;
+    inheritedAcl?: Acl;
+    userIsOwner?: boolean;
+    kind: "write" | "admin";
+    saveModalRef: React.RefObject<ConfirmationModalHandle>;
+}
+
+export const AclEditButtons: React.FC<AclEditButtonsProps> = (
+    {
+        selections,
+        setSelections,
+        initialAcl,
+        onSubmit,
+        className,
+        inFlight,
+        inheritedAcl,
+        userIsOwner,
+        saveModalRef,
+        kind,
+    }
+) => {
+    const { t } = useTranslation();
+    const user = useUser();
+    const resetModalRef = useRef<ModalHandle>(null);
+
+    const containsUser = (acl: Acl) => isRealUser(user) && (userIsOwner || user.roles.some(r =>
+        r === COMMON_ROLES.ADMIN
+        || acl.get(r)?.actions.has(kind)
+        || inheritedAcl?.get(r)?.actions.has(kind))
+    );
+
+    const selectionIsInitial = selections.size === initialAcl.size
+        && [...selections].every(([role, info]) => {
+            const other = initialAcl.get(role);
+            return other && areSetsEqual(other.actions, info.actions);
+        });
+
+    const submit = onSubmit;
+
+    useNavBlocker(!selectionIsInitial);
+
+    return (
+        <div {...{ className }} css={{
+            display: "flex",
+            gap: 8,
+            alignSelf: "flex-start",
+            marginTop: 40,
+        }}>
+            {/* Reset button */}
+            <Button
+                disabled={selectionIsInitial}
+                onClick={() => currentRef(resetModalRef).open()}
+                css={{ ...!selectionIsInitial && { ":hover": { color: COLORS.danger0 } } }}
+            >
+                {t("manage.access.reset-modal.label")}
+            </Button>
+            <Modal ref={resetModalRef} title={t("manage.access.reset-modal.title")}>
+                <p>{t("manage.access.reset-modal.body")}</p>
+                <div css={{
+                    display: "flex",
+                    gap: 12,
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    marginTop: 32,
+                }}>
+                    <Button onClick={() => currentRef(resetModalRef).close?.()}>
+                        {t("general.action.cancel")}
+                    </Button>
+                    <Button kind="danger" onClick={() => {
+                        setSelections(initialAcl);
+                        currentRef(resetModalRef).close?.();
+                    }}>{t("manage.access.reset-modal.label")}</Button>
+                </div>
+            </Modal>
+
+            {/* Save button */}
+            <Button
+                disabled={selectionIsInitial}
+                onClick={() =>
+                    !containsUser(selections)
+                        ? currentRef(saveModalRef).open()
+                        : submit(selections)
+                }
+                css={{ ...!selectionIsInitial && { ":hover": { color: COLORS.happy0 } } }}
+            >{t("general.action.save")}</Button>
+            {inFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
+            <ConfirmationModal
+                ref={saveModalRef}
+                title={t("manage.access.save-modal.title")}
+                buttonContent={t("manage.access.save-modal.confirm")}
+                onSubmit={() => submit(selections)}
+            >
+                <p>{t(`manage.access.save-modal.disclaimer-${kind}`)}</p>
+            </ConfirmationModal>
+        </div>
+    );
+};
+
+
 // ==============================================================================================
 // ===== Helper functions
 // ==============================================================================================
@@ -687,8 +887,18 @@ const getLabel = (role: string, label: TranslatedLabel | undefined, i18n: i18n) 
     return role;
 };
 
+/** Returns label for the currently selected action of a role entry */
+const getActionLabel = (item: Entry, permissionLevels: PermissionLevels): PermissionLevel =>
+    (Object.keys(permissionLevels.all).find(level => {
+        const lvl = permissionLevels.all[level as PermissionLevel]?.actions;
+        return lvl && areSetsEqual(lvl, item.actions);
+    }) ?? "unknown") as PermissionLevel;
+
 const isUserRole = (role: string) =>
     CONFIG.auth.userRolePrefixes.some(prefix => role.startsWith(prefix));
+
+const areSetsEqual = (a: Set<string>, b: Set<string>) =>
+    a.size === b.size && [...a].every((str => b.has(str)));
 
 /** Splits initial ACL into group and user roles. */
 const splitAcl = (initialAcl: Acl): [Acl, Acl] => {
@@ -704,6 +914,7 @@ const insertBuiltinRoleInfo = (
     acl: Acl,
     knownGroups: AccessKnownRolesData$data["knownGroups"][number][],
     i18n: i18n,
+    addAnonymous: boolean,
 ) => {
     const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => Object.fromEntries(
         i18n.languages
@@ -731,7 +942,9 @@ const insertBuiltinRoleInfo = (
         user.info = userInfo;
     }
 
-    knownGroups.push({ role: COMMON_ROLES.ANONYMOUS, ...anonymousInfo });
+    if (addAnonymous) {
+        knownGroups.push({ role: COMMON_ROLES.ANONYMOUS, ...anonymousInfo });
+    }
     knownGroups.push({ role: COMMON_ROLES.USER, ...userInfo });
 };
 
