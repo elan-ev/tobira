@@ -320,16 +320,16 @@ manage:
         write-description_other: >
           Können außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
         moderate: Moderieren
-        moderate-description-one: >
+        moderate-description_one: >
           Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
           der Unterseiten bearbeiten.
-        moderate-description-other: >
+        moderate-description_other: >
           Können Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
           der Unterseiten bearbeiten.
         admin: Verwalten
-        admin-description-one: >
+        admin-description_one: >
           Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
-        admin-description-other: >
+        admin-description_other: >
           Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
         unknown: Unbekanntes Berechtigungsschema
         unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
