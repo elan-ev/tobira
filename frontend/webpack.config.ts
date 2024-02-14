@@ -8,6 +8,7 @@ import * as fs from "fs";
 
 const APP_PATH = path.join(__dirname, "src");
 const OUT_PATH = path.join(__dirname, "build");
+const PAELLA_SKIN_PATH = path.join(__dirname, "node_modules", "paella-skins", "skins", "opencast");
 
 const config: CallableOption = (_env, argv) => ({
     entry: APP_PATH,
@@ -92,15 +93,35 @@ const config: CallableOption = (_env, argv) => ({
                 { from: path.join(APP_PATH, "index.html"), to: path.join(OUT_PATH) },
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
                 { from: path.join(__dirname, "static"), to: OUT_PATH },
-                {
-                    from: path.join(__dirname, "node_modules", "paella-skins", "skins", "opencast"),
-                    to: path.join(OUT_PATH, "paella"),
-                },
+                { from: PAELLA_SKIN_PATH, to: path.join(OUT_PATH, "paella") },
             ],
         }),
+        compiler => {
+            compiler.hooks.afterEmit.tap("AdjustPaellaSkinPlugin", async () => {
+                const outPath = path.join(OUT_PATH, "paella/theme.css");
+                const inPath = path.join(PAELLA_SKIN_PATH, "theme.css");
+                const file = fs.readFileSync(inPath).toString();
+                if (!file.includes(fontDecl)) {
+                    // To guard against updates.
+                    throw new Error("Paella skin CSS changed! Adjust webpack config.");
+                }
+                // @ts-expect-error replaceAll requires a newer es standard, but
+                // that's trick to configure for this file.
+                const out = file.replace(fontDecl, "").replaceAll("font-family: roboto;", "");
+                fs.writeFileSync(outPath, out);
+            });
+        },
     ],
 
     devtool: "hidden-source-map",
 });
+
+const fontDecl = `@font-face {
+  font-family: roboto;
+  src: local('Roboto'),
+       url(Roboto-Regular.woff2) format('woff2'),
+       url(Roboto-Regular.woff) format('woff'),
+       url(Roboto-Regular.ttf) format('truetype');
+}`;
 
 export default config;
