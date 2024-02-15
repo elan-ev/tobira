@@ -302,7 +302,7 @@ manage:
       user: User
       yourself: You
       subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
-      inherited: Inherited permissions
+      inherited: 'Inherited permissions:'
       inherited-tooltip: >
         The following permissions were granted in a higher level page and are inherited to all subpages.
       actions:
@@ -311,7 +311,7 @@ manage:
         read-description: Can watch the video and view metadata.
         write: Read and write
         write-description: Can also edit the video, metadata and other details.
-        moderate: Moderate
+        moderate: Moderator
         moderate-description: Can edit content, add subpages and change the name and subpage order.
         admin: Page admin
         admin-description: Can moderate, delete pages and edit permissions.

@@ -16,6 +16,7 @@ import {
     ReactNode,
     Dispatch,
     SetStateAction,
+    PropsWithChildren,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { LuX, LuAlertTriangle, LuInfo } from "react-icons/lu";
@@ -352,118 +353,125 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             />
         }
         <div>
-            <table css={{
-                marginTop: 20,
-                tableLayout: "fixed",
-                width: "100%",
-                borderRadius: 4,
-                borderCollapse: "collapse",
-                backgroundColor: COLORS.neutral10,
-                "th, td": {
-                    padding: 6,
-                    ":first-of-type": {
-                        paddingLeft: 12,
-                        overflowWrap: "anywhere",
-                    },
-                },
-                [screenWidthAtMost(480)]: {
-                    fontSize: 14,
-                    "> colgroup > col:nth-of-type(2)": { width: "unset" },
-                    "> colgroup > col:nth-of-type(3)": { width: 35 },
-                },
-            }}>
-                <colgroup>
-                    <col />
-                    <col css={{
-                        // This is a little hacky and kind of messy.
-                        // We want the width of the action columns to be fixed
-                        // and determined by the longest action label (e.g. `read and write`
-                        // should also determine the width of the `read` label). These lengths are
-                        // of course also dependent on the current language (german for example
-                        // has a reputation for having ridiculously lengthy words).
-                        // Now that we use this selector also for realm acl that use different
-                        // labels altogether, this needs yet another check.
-                        // This will of course become even more complicated once more languages are
-                        // added.
-                        width: permissionLevels.highest === "admin"
-                            ? i18n.resolvedLanguage === "en" ? 155 : 160
-                            : i18n.resolvedLanguage === "en" ? 190 : 224,
-                    }} />
-                    <col css={{ width: 42 }} />
-                </colgroup>
-                <thead>
-                    <tr css={{
-                        borderBottom: `2px solid ${COLORS.neutral05}`,
-                        textAlign: "left",
-                    }}>
-                        <th>{t(`manage.access.table.${kind}`)}</th>
-                        <th>{t("manage.access.table.actions.title")}</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {/* Placeholder if there are no entries */}
-                    {entries.length === 0 && !(showAdminEntry || showUserEntry) && <tr>
-                        <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
-                            {t("acl.no-entries")}
-                        </td>
-                    </tr>}
+            <Table header={<>
+                <th>{t(`manage.access.table.${kind}`)}</th>
+                <th>{t("manage.access.table.actions.title")}</th>
+                <th></th></>
+            }>
+                {/* Placeholder if there are no entries */}
+                {entries.length === 0 && !(showAdminEntry || showUserEntry) && <tr>
+                    <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
+                        {t("acl.no-entries")}
+                    </td>
+                </tr>}
 
-                    {entries.map(entry =>
-                        <ListEntry key={entry.role} item={entry} {...{ remove, kind }} />)
-                    }
+                {entries.map(entry =>
+                    <ListEntry key={entry.role} item={entry} {...{ remove, kind }} />)
+                }
 
-                    {/*
-                        The ACLs usually don't explicitly include admins, but showing that
-                        entry makes sense if the user is admin.
-                    */}
-                    {showAdminEntry && <TableRow
-                        labelCol={<>{t("acl.groups.admins")}</>}
-                        actionCol={<UnchangeableAllActions />}
-                    />}
+                {/*
+                    The ACLs usually don't explicitly include admins, but showing that
+                    entry makes sense if the user is admin.
+                */}
+                {showAdminEntry && <TableRow
+                    labelCol={<>{t("acl.groups.admins")}</>}
+                    actionCol={<UnchangeableAllActions />}
+                />}
 
-                    {/*
-                        Similarly to the above, the ACL for user realms does not explicitly
-                        include that realm's owning user, but it should still be shown in the UI.
-                    */}
-                    {showUserEntry && <TableRow
-                        labelCol={!userIsOwner ? <>{ownerDisplayName}</> : <>
-                            <i>{t("manage.access.table.yourself")}</i>
+                {/*
+                    Similarly to the above, the ACL for user realms does not explicitly
+                    include that realm's owning user, but it should still be shown in the UI.
+                */}
+                {showUserEntry && <TableRow
+                    labelCol={!userIsOwner ? <>{ownerDisplayName}</> : <>
+                        <i>{t("manage.access.table.yourself")}</i>
                             &nbsp;({ownerDisplayName})
-                        </>}
-                        actionCol={<UnchangeableAllActions />}
-                    />}
-
-                    {/* Inherited ACL */}
-                    {inheritedAcl.size > 0 && <>
-                        <tr css={{
-                            borderTop: `1px solid ${COLORS.neutral05}`,
-                            borderBottom: `1px solid ${COLORS.neutral05}`,
-                            backgroundColor: COLORS.neutral15,
-                        }}>
-                            <td colSpan={3}>
-                                <span css={{ display: "flex", justifyContent: "center" }}>
-                                    <span css={{ fontStyle: "oblique" }}>
-                                        {t("manage.access.table.inherited")}
-                                    </span>
-                                    {/*
-                                        Technically not a warning, but it's easiest
-                                        to just reuse this component
-                                    */}
-                                    <Warning info tooltip={
-                                        t("manage.access.table.inherited-tooltip")
-                                    }/>
-                                </span>
-                            </td>
-                        </tr>
-                        {inheritedEntries.map(entry =>
-                            <ListEntry key={entry.role} item={entry} inherited {...{ kind }} />)
-                        }
                     </>}
-                </tbody>
-            </table>
+                    actionCol={<UnchangeableAllActions />}
+                />}
+            </Table>
+
+            {/* Inherited ACL */}
+            {inheritedAcl.size > 0 && <Table header={
+                <th colSpan={3}>
+                    <span css={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        paddingRight: 12,
+                    }}>
+                        {t("manage.access.table.inherited")}
+                        <InfoWithTooltip
+                            mode="info"
+                            tooltip={t("manage.access.table.inherited-tooltip")}
+                        />
+                    </span>
+                </th>
+            }>
+                {inheritedEntries.map(entry =>
+                    <ListEntry key={entry.role} item={entry} inherited {...{ kind }} />)
+                }
+            </Table>}
         </div>
     </div>;
+};
+
+type TableProps = PropsWithChildren<{
+    header?: ReactNode;
+}>
+
+const Table: React.FC<TableProps> = ({ children, header }) => {
+    const { i18n } = useTranslation();
+    const { permissionLevels } = useAclContext();
+
+    return (
+        <table css={{
+            marginTop: 20,
+            tableLayout: "fixed",
+            width: "100%",
+            borderRadius: 4,
+            borderCollapse: "collapse",
+            backgroundColor: COLORS.neutral10,
+            "th, td": {
+                padding: 6,
+                ":first-of-type": {
+                    paddingLeft: 12,
+                    overflowWrap: "anywhere",
+                },
+            },
+            [screenWidthAtMost(480)]: {
+                fontSize: 14,
+                "> colgroup > col:nth-of-type(2)": { width: "unset" },
+                "> colgroup > col:nth-of-type(3)": { width: 35 },
+            },
+        }}>
+            <colgroup>
+                <col />
+                <col css={{
+                    // This is a little hacky and kind of messy.
+                    // We want the width of the action columns to be fixed
+                    // and determined by the longest action label (e.g. `read and write`
+                    // should also determine the width of the `read` label). These lengths are
+                    // of course also dependent on the current language (german for example
+                    // has a reputation for having ridiculously lengthy words).
+                    // Now that we use this selector also for realm acl that use different
+                    // labels altogether, this needs yet another check.
+                    // This will of course become even more complicated once more languages are
+                    // added.
+                    width: permissionLevels.highest === "admin"
+                        ? i18n.resolvedLanguage === "en" ? 160 : 165
+                        : i18n.resolvedLanguage === "en" ? 190 : 224,
+                }} />
+                <col css={{ width: 42 }} />
+            </colgroup>
+            <thead>
+                <tr css={{
+                    borderBottom: `2px solid ${COLORS.neutral05}`,
+                    textAlign: "left",
+                }}>{header}</tr>
+            </thead>
+            <tbody>{children}</tbody>
+        </table>
+    );
 };
 
 const userSearchQuery = graphql`
@@ -534,7 +542,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
     return <TableRow
         labelCol={<>
             {label}
-            {isSubset && <Warning info tooltip={
+            {isSubset && <InfoWithTooltip mode="info" tooltip={
                 t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
             } />}
         </>}
@@ -544,9 +552,12 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
             : <>
                 <ActionsMenu {...{ item, kind }} />
                 {item.large && noteworthyAccessType
-                    ? <Warning tooltip={t("manage.access.table.actions.large-group-warning", {
-                        val: t(`manage.access.table.actions.${noteworthyAccessType}-access`),
-                    })} />
+                    ? <InfoWithTooltip
+                        mode="warning"
+                        tooltip={t("manage.access.table.actions.large-group-warning", {
+                            val: t(`manage.access.table.actions.${noteworthyAccessType}-access`),
+                        })}
+                    />
                     : <div css={{ width: 22 }} />
                 }
             </>}
@@ -616,15 +627,15 @@ const TableRow: React.FC<TableRowProps> = (
 );
 
 
-type WarningProps = {
+type InfoWithTooltipProps = {
     tooltip: string;
-    info?: boolean;
+    mode: "info" | "warning";
 }
 
-const Warning: React.FC<WarningProps> = ({ tooltip, info }) => (
-    <WithTooltip {...{ tooltip }} css={{ display: "flex" }}>
+const InfoWithTooltip: React.FC<InfoWithTooltipProps> = ({ tooltip, mode }) => (
+    <WithTooltip {...{ tooltip }} css={{ display: "flex", fontWeight: "normal" }}>
         <span css={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
-            {info ? <LuInfo /> : <LuAlertTriangle css={{ color: COLORS.danger0 }}/>}
+            {mode === "info" ? <LuInfo /> : <LuAlertTriangle css={{ color: COLORS.danger0 }}/>}
         </span>
     </WithTooltip>
 );
