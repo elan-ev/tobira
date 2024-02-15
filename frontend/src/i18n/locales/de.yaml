@@ -306,7 +306,7 @@ manage:
       user: Person
       yourself: Sie
       subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
-      inherited: Geerbte Berechtigungen
+      inherited: 'Geerbte Berechtigungen:'
       inherited-tooltip: > 
         Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden auf alle Unterseiten vererbt.
       actions:
@@ -319,17 +319,17 @@ manage:
           Kann außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
         write-description_other: >
           Können außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
-        moderate: Moderieren
-        moderate-description-one: >
+        moderate: Moderation
+        moderate-description_one: >
           Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
           der Unterseiten bearbeiten.
-        moderate-description-other: >
+        moderate-description_other: >
           Können Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
           der Unterseiten bearbeiten.
-        admin: Verwalten
-        admin-description-one: >
+        admin: Seitenadmin
+        admin-description_one: >
           Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
-        admin-description-other: >
+        admin-description_other: >
           Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
         unknown: Unbekanntes Berechtigungsschema
         unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
