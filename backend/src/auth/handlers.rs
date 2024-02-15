@@ -194,6 +194,7 @@ async fn check_opencast_login(
     struct InfoMeResponse {
         roles: Vec<String>,
         user: InfoMeUserResponse,
+        #[serde(rename = "userRole")]
         user_role: String,
     }
 
