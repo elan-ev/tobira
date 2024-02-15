@@ -159,7 +159,7 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
         LoginCredentialsHandler::Opencast => {
             match check_opencast_login(&userid, &password, &ctx.config.opencast).await {
                 Err(e) => {
-                    error!("Error occured while checking Opencast login data: {e}");
+                    error!("Error occured while checking Opencast login data: {e:#}");
                     return http::response::internal_server_error();
                 }
                 Ok(user) => user,
