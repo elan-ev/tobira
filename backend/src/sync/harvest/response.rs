@@ -119,6 +119,8 @@ impl Into<EventCaption> for Caption {
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Acl {
+    #[serde(default)]
     pub(crate) read: Vec<String>,
+    #[serde(default)]
     pub(crate) write: Vec<String>,
 }
