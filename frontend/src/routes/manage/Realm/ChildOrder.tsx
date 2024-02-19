@@ -141,9 +141,9 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
                 order="BY_INDEX"
             />
 
-            <ChildList disabled={sortOrder !== "BY_INDEX"} swap={swap}>
+            {sortOrder === "BY_INDEX" && <ChildList swap={swap}>
                 {sortedChildren}
-            </ChildList>
+            </ChildList>}
 
             <div css={{ display: "flex", alignItems: "center" }}>
                 <Button onClick={save} disabled={!anyChange}>{t("general.action.save")}</Button>
@@ -158,18 +158,10 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
 type ChildListProps = {
     children: readonly Child[];
     swap: (index: number) => void;
-    disabled: boolean;
 };
 
-const ChildList: React.FC<ChildListProps> = ({ disabled, children, swap }) => (
-    <ol css={{
-        maxWidth: 900,
-        padding: 0,
-        ...disabled && {
-            pointerEvents: "none",
-            opacity: 0.5,
-        },
-    }}>
+const ChildList: React.FC<ChildListProps> = ({ children, swap }) => (
+    <ol css={{ maxWidth: 900, padding: 0 }}>
         {children.map((child, i) => <ChildEntry
             key={child.id}
             index={i}
