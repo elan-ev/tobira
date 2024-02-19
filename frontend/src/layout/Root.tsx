@@ -32,7 +32,9 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
 
     return (
         <Outer disableScrolling={menu.state === "burger"}>
-            <InitialConsent />
+            <Suspense fallback={<div css={{ backgroundColor: "red" }}>fallback</div>}>
+                <InitialConsent />
+            </Suspense>
             <Header hideNavIcon={!navExists} />
             {menu.state === "burger" && navExists && (
                 <BurgerMenu items={navElements} hide={() => menu.close()} />
