@@ -46,6 +46,8 @@ blocks:
 children:
   - path: 'test-videos'
     name: 'Test videos'
+    page_moderators:
+      - ROLE_USER
     blocks:
       - text: |
           This page contains various additional test videos. And this text block
@@ -82,6 +84,10 @@ children:
     children:
       - path: 'betrieb'
         name: 'Betrieb'
+        page_admins:
+          - ROLE_USER_SABINE
+        page_moderators:
+          - ROLE_USER_BJORK
         children:
           - { path: 'schluesseldelegierte', name: 'Schlüsseldelegierte' }
       - { path: 'alumni', name: 'ETH Alumni Headquarter' }
@@ -116,6 +122,8 @@ children:
       - { path: 'isn', name: 'International Relations and Security Network' }
       - path: 'miscellaneous'
         name: 'Miscellaneous'
+        page_admins:
+          - ROLE_STAFF
         children:
           - { path: 'iam', name: 'IAM' }
           - { path: 'it-shop', name: 'IT-Shop' }
@@ -227,6 +235,8 @@ children:
       - { path: 'unitedvisions', name: 'United Visions - Science City Magazin' }
   - path: 'conferences'
     name: 'Conferences'
+    page_moderators:
+      - ROLE_USER_MORGAN
     blocks:
       - text: |
           Videos from conferences our university hosts. Like:
@@ -555,6 +565,8 @@ children:
           - { path: 'zkm', name: 'ZKM/ELK-Tagung: Nachhaltige Schule' }
   - path: 'events'
     name: 'Events'
+    page_admins:
+      - ROLE_USER_SABINE
     children:
       - path: '2021'
         name: '2021'
@@ -1247,6 +1259,9 @@ children:
               - { path: '2012', name: '2012: Zehn Jahre NSL' }
       - path: 'opencast'
         name: 'Opencast'
+        page_moderators:
+          - ROLE_USER_MORGAN
+          - ROLE_USER_JOSE
         children:
           - path: '2021'
             name: '2021'
@@ -1327,6 +1342,8 @@ children:
           - { path: '2018', name: 'Venture 2018' }
   - path: 'lectures'
     name: 'Lectures'
+    page_admins:
+      - ROLE_USER_BJORK
     blocks:
       - text: |
           Watch the recordings of all your favorite lectures! Knowledge at your fingertips.
@@ -1419,6 +1436,8 @@ children:
                   - { path: '103-0448-01L', name: 'Transformation of Urban Landscapes' }
           - path: '2019'
             name: '2019'
+            page_moderators:
+              - ROLE_USER_JOSE
             children:
               - path: 'autumn'
                 name: 'Autumn'
@@ -4537,6 +4556,11 @@ children:
                   - { path: '701-0005-00L', name: 'Technik der Problemlösung' }
   - path: 'speakers'
     name: 'Speakers'
+    page_admins:
+      - ROLE_USER_SABINE
+      - ROLE_USER_BJORK
+    page_moderators:
+      - ROLE_USER_MORGAN
     children:
       - { path: 'introductory-lectures', name: 'Antrittsvorlesungen' }
       - path: 'bernays'
@@ -4809,6 +4833,8 @@ children:
       - { path: 'd-bsse', name: 'D-BSSE: Lunch Meetings Molecular Systems Engineering' }
       - path: 'd-infk'
         name: 'D-INFK'
+        page_admins:
+          - ROLE_USER_JOSE
         children:
           - path: '2021'
             name: '2021'
@@ -5094,6 +5120,8 @@ children:
   - { path: 'documents', name: 'Support' }
   - path: 'live'
     name: 'Live'
+    page_moderators:
+      - ROLE_USER_MORGAN
     blocks:
       - text: |
           Here are some never ending live streams!
@@ -5104,6 +5132,8 @@ children:
     children:
       - path: 'events'
         name: 'Events'
+        page_admins:
+          - ROLE_STAFF
         children:
           - { path: 'live-1', name: 'ETH Live 1' }
           - { path: 'live-2', name: 'ETH Live 2' }

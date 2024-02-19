@@ -40,6 +40,12 @@ struct Realm {
 
     #[serde(default)]
     children: Vec<Realm>,
+
+    #[serde(default)]
+    page_admins: Vec<String>,
+
+    #[serde(default)]
+    page_moderators: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -219,6 +225,16 @@ fn insert_realm<'a>(
                 name_source_block_id = Some(block_id);
             }
         }
+
+        // Insert acl roles
+        if !realm.page_admins.is_empty() || !realm.page_moderators.is_empty() {
+            let query = "update realms \
+                set admin_roles = $1, moderator_roles = ($1::text[] || $2) \
+                where id = $3 \
+            ";
+            db.execute(query, &[&realm.page_admins, &realm.page_moderators, &id]).await?;
+        }
+        
 
         match name_source_block_id {
             Some(block_id) => {
