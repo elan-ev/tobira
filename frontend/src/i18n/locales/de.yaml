@@ -154,8 +154,8 @@ video:
   caption: Untertitel
   download:
     title: Download
-    presenter: Kamera
-    slides: Präsentation
+    presenter: Video (Sprecher:in)
+    slides: Video (Präsentation)
     info: >
       Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen 
       (Rechtsklick - Speichern unter).
@@ -393,6 +393,8 @@ manage:
     technical-details:
       title: Technische Details
       tracks: Video-/Audiospuren
+      video: Video
+      audio: Audio
       unknown-mimetype: Unbekannter MIME-Type
       opencast-id: Opencast-ID
       copy-oc-id-to-clipboard: Opencast-ID in Zwischenablage kopieren

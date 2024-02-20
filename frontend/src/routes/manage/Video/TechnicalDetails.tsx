@@ -94,6 +94,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
         return null;
     }
 
+
     const flavorTranslation = (flavor: string) => {
         if (flavor.startsWith("presenter")) {
             return t("video.download.presenter");
@@ -115,35 +116,50 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
         tracks.push({ resolution, mimetype, uri });
     }
 
+    const isSingleFlavor = flavors.size === 1;
+
     return <section css={className}>
         <h2>{t("manage.my-videos.technical-details.tracks")}</h2>
         <ul css={{ fontSize: 15, marginTop: 8, paddingLeft: 24 }}>
-            {Array.from(flavors, ([flavor, tracks]) => <li key={flavor}>
-                {translateFlavors ? flavorTranslation(flavor) : <code>{flavor}</code>}
-                <ul>{tracks
+            {Array.from(flavors, ([flavor, tracks]) => {
+                const trackItems = tracks
                     .sort((a, b) => (a.resolution?.[0] ?? 0) - (b.resolution?.[0] ?? 0))
-                    .map((track, i) => <TrackItem key={i} {...track} />)
-                }</ul>
-            </li>)}
+                    .map((track, i) => <TrackItem key={i} {...track} />);
+                const flavorLabel = translateFlavors
+                    ? flavorTranslation(flavor)
+                    : <code>{flavor}</code>;
+                const flat = isSingleFlavor && translateFlavors;
+
+                return <li key={flavor}>
+                    {flat ? trackItems : <>{flavorLabel}<ul>{trackItems}</ul></>}
+                </li>;
+            })}
         </ul>
     </section>;
 };
 
+
 const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => {
     const { t } = useTranslation();
+    const type = mimetype && mimetype.split("/")[0];
+    const subtype = mimetype && mimetype.split("/")[1];
+    const typeTranslation = (type === "audio" || type === "video")
+        ? t(`manage.my-videos.technical-details.${type}`)
+        : type;
+
+    const resolutionString = (type && " ")
+        + "("
+        + [subtype, resolution?.join(" × ")].filter(Boolean).join(", ")
+        + ")";
 
     return (
         <li css={{ marginBottom: 4 }}>
             <a href={uri}>
-                {mimetype == null
-                    ? <i>{t("manage.my-videos.technical-details.unknown-mimetype")}</i>
-                    : <code>{mimetype}</code>}
-                {resolution && <span css={{
-                    backgroundColor: COLORS.neutral10,
-                    marginLeft: 8,
-                    padding: "2px 4px",
-                    borderRadius: 4,
-                }}>{resolution.join(" × ")}</span>}
+                {type
+                    ? <>{typeTranslation}</>
+                    : <i>{t("manage.my-videos.technical-details.unknown-mimetype")}</i>
+                }
+                {(resolution || subtype) && resolutionString}
             </a>
         </li>
     );

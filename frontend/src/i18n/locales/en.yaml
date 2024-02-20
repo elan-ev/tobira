@@ -152,8 +152,8 @@ video:
   caption: Caption
   download:
     title: Download
-    presenter: Presenter
-    slides: Presentation
+    presenter: Video (speaker)
+    slides: Video (presentation)
     info: > 
       Here you can download the video(s) in different formats/qualities (Right click - Save as).
   manage: Manage
@@ -373,6 +373,8 @@ manage:
     technical-details:
       title: Technical details
       tracks: Video/audio tracks
+      video: Video
+      audio: Audio
       unknown-mimetype: Unknown MIME type
       opencast-id: Opencast ID
       copy-oc-id-to-clipboard: Copy Opencast-ID to clipboard
