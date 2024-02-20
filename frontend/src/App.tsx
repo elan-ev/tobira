@@ -13,13 +13,15 @@ import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
 import { AppkitConfigProvider, ColorSchemeProvider, DEFAULT_CONFIG } from "@opencast/appkit";
 import { COLORS } from "./color";
+import { InitialConsent } from "./ui/InitialConsent";
 
 
 type Props = {
     initialRoute: MatchedRoute;
+    consentGiven: boolean | null;
 };
 
-export const App: React.FC<Props> = ({ initialRoute }) => (
+export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
     <StrictMode>
         <SilenceEmotionWarnings>
             <ColorSchemeProvider allowedSchemes={["light", "dark"]}>
@@ -37,6 +39,7 @@ export const App: React.FC<Props> = ({ initialRoute }) => (
                                 <GraphQLErrorBoundary>
                                     <MenuProvider>
                                         <LoadingIndicator />
+                                        <InitialConsent {...{ consentGiven }} />
                                         <ActiveRoute />
                                     </MenuProvider>
                                 </GraphQLErrorBoundary>

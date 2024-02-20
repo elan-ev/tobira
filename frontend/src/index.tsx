@@ -4,6 +4,7 @@ import { App } from "./App";
 import "./i18n";
 import { matchInitialRoute } from "./router";
 import { LoginRoute, REDIRECT_STORAGE_KEY } from "./routes/Login";
+import { checkInitialConsent } from "./ui/InitialConsent";
 
 
 // Potentially redirect to previous page after login.
@@ -32,9 +33,12 @@ if (window.location.pathname === LoginRoute.url && redirectTo) {
     window.sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
 }
 
-const initialRoute = matchInitialRoute();
-const root = document.createElement("div");
-root.style.height = "100svh";
-document.body.appendChild(root);
-const reactRoot = ReactDOM.createRoot(root);
-reactRoot.render(<App initialRoute={initialRoute} />);
+(async () => {
+    const initialRoute = matchInitialRoute();
+    const consentGiven = await checkInitialConsent();
+    const root = document.createElement("div");
+    root.style.height = "100svh";
+    document.body.appendChild(root);
+    const reactRoot = ReactDOM.createRoot(root);
+    reactRoot.render(<App {...{ initialRoute, consentGiven }} />);
+})();
