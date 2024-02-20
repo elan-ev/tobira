@@ -41,7 +41,7 @@
     "i18next": "^23.5.1",
     "i18next-browser-languagedetector": "^7.1.0",
     "paella-basic-plugins": "1.44.2",
-    "paella-core": "1.46.1",
+    "paella-core": "github:LukasKalbertodt/paella-core#mp4-quality-selector",
     "paella-skins": "1.32.4",
     "paella-zoom-plugin": "1.41.1",
     "qrcode.react": "^3.1.0",
