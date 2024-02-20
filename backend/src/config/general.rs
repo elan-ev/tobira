@@ -18,6 +18,29 @@ pub(crate) struct GeneralConfig {
     /// Example: "https://tobira.my-uni.edu".
     pub(crate) tobira_url: HttpHost,
 
+    /// Terms and conditions that a user has to agree to in order to use Tobira.
+    /// This consists of a title, a markdown rendered text explaining what a user
+    /// is agreeing to, and a button label for confirmation.
+    /// These can be specified in multiple languages.
+    /// Consent is prompted upon first use and only if this is configured. It is
+    /// re-prompted when any of these values change.
+    /// 
+    /// We recommend not to configure this unless absolutely necessary,
+    /// in order to not degrade the user experience needlessly.
+    /// 
+    /// Example:
+    /// 
+    /// ```
+    /// [general.initial_consent]
+    /// title.en = "Terms & Conditions"
+    /// button_label.en = "Agree"
+    /// text.en = """
+    /// To use Tobira, you need to agree to our terms and conditions:
+    /// - [Terms](https://www.our-terms.de)
+    /// - [Conditions](https://www.our-conditions.de)
+    /// """
+    /// ```
+    pub initial_consent: Option<InitialConsent>,
 
     /// Whether or not to show a download button on the video page.
     #[config(default = true)]
@@ -155,3 +178,10 @@ pub(crate) enum MetadataLabel {
 
 make_fixed_string_deserializer!(serde_metadata_license, "builtin:license");
 make_fixed_string_deserializer!(serde_metadata_source, "builtin:source");
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct InitialConsent {
+    title: TranslatedString,
+    button: TranslatedString,
+    text: TranslatedString,
+}
