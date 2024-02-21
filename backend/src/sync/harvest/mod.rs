@@ -256,6 +256,11 @@ async fn store_in_db(
                 check_affected_rows_removed(rows_affected, "series", &opencast_id);
                 removed_series += 1;
             }
+
+            HarvestItem::Unknown { kind, .. } => {
+                warn!("Unknown item of kind '{kind}' in harvest response. \
+                    You might need to update Tobira.");
+            }
         }
     }
 
