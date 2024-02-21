@@ -175,6 +175,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
     return <>
         <Global styles={{
             "body > .popup-container": colors,
+            "body:has(.paella-fallback-fullscreen)": {
+                overflow: "hidden",
+            },
         }} />
         <div
             // We use `key` here to force React to re-create this `div` and not
@@ -214,6 +217,15 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                     "svg text": {
                         transform: "translate(1px, -2px)",
                     },
+                },
+
+                "&.paella-fallback-fullscreen": {
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 100000,
                 },
             }}
         />
