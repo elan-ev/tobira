@@ -5,8 +5,10 @@ use crate::prelude::*;
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct MatomoConfig {
-    /// URL of your Matomo server. This URL + `matomo.js` should be a publicly
-    /// accessible JS file. Example: "https://matomo.myuni.edu/matomo/".
+    /// URL of your Matomo server. Example: "https://matomo.myuni.edu/matomo/".
+    ///
+    /// Note: Adding `matomo.js` to the URL configured here should result in a
+    /// URL to a publicly accessible JS file.
     #[config(deserialize_with = deserialize_server)]
     pub(crate) server: Option<Uri>,
 

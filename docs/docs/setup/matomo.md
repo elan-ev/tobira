@@ -15,10 +15,9 @@ There are two resources on this topic by Matomo:
 - [Lawful basis for processing personal data under GDPR with Matomo](https://matomo.org/blog/2018/04/lawful-basis-for-processing-personal-data-under-gdpr-with-matomo/)
 - [How to not process any personally identifiable information (PII) with Matomo, and what it means for you](https://matomo.org/blog/2018/04/how-to-not-process-any-personal-data-with-matomo-and-what-it-means-for-you/)
 
-The best way to comply with the law is to make sure the data you collect is no "personaly data"/"personally identifiable information".
-If you must, you can instead comply with the law by asking for the users consent.
-To do that: you have to wait, because Tobira cannot do that yet.
-Will be added in the near future!
+The best way to comply with the law is to make sure the data you collect is no "personal data"/"personally identifiable information".
+If you must, you can instead comply with the law by asking for the user's consent.
+To do that, check the `general.initial_consent` value in configuration file.
 
 
 ## Configuration
@@ -31,7 +30,7 @@ server = "https://matomo.test.tobira.ethz.ch/matomo/"
 site_id = "1"
 ```
 
-This won't make anything interesting happen though, as Tobira itself does not yet send any events to Matomo itself.
+This alone won't make anything interesting happen though, as Tobira itself does not yet send any events to Matomo itself.
 In order to get anything out of this, you have to configure Paella to do so.
 
 ```toml
