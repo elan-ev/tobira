@@ -66,6 +66,13 @@ pub(crate) enum HarvestItem {
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
+
+    #[serde(untagged)]
+    Unknown {
+        kind: String,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
+    },
 }
 
 impl HarvestItem {
@@ -75,6 +82,7 @@ impl HarvestItem {
             Self::EventDeleted { updated, .. } =>  updated,
             Self::Series { updated, .. } => updated,
             Self::SeriesDeleted { updated, .. } => updated,
+            Self::Unknown { updated, .. } => updated,
         }
     }
 }
