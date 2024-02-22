@@ -8,7 +8,8 @@ use crate::{
     db,
     http::{self, Context, Request, Response, response::bad_request},
     prelude::*,
-    config::OpencastConfig, auth::{config::LoginCredentialsHandler, ROLE_ANONYMOUS},
+    config::OpencastConfig,
+    auth::config::LoginCredentialsHandler,
 };
 use super::{config::SessionEndpointHandler, AuthSource, SessionId, User};
 
@@ -252,15 +253,15 @@ async fn check_opencast_login(
         username: info.user.username,
         display_name: info.user.name,
         email: info.user.email,
-        // Sometimes, Opencast does not include `ROLE_ANONYMOUS` in the
-        // response, so we just add it here to be sure.
-        roles: info.roles.into_iter().chain([ROLE_ANONYMOUS.to_owned()]).collect(),
+        roles: info.roles.into_iter().collect(),
         user_role: info.user_role,
     }))
 }
 
 /// Creates a session for the given user and persists it in the DB.
-async fn create_session(user: User, ctx: &Context) -> Result<Response, Response> {
+async fn create_session(mut user: User, ctx: &Context) -> Result<Response, Response> {
+    user.add_default_roles();
+
     // TODO: check if a user is already logged in? And remove that session then?
 
     let db = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
