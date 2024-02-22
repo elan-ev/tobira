@@ -190,89 +190,23 @@
 
 
 [auth]
-# The mode of authentication. See the authentication docs for more information.
+# How incoming HTTP requests are authenticated. See the documentation!
 #
 # Default value: "none"
-#mode = "none"
+#source = "none"
 
 # Link of the login button. If not set, the login button internally
 # (not via `<a>`, but through JavaScript) links to Tobira's own login page.
 #login_link =
 
-# Link of the logout button. If not set, clicking the logout button will
-# send a `DELETE` request to `/~session`.
+# Link of the logout button.
 #logout_link =
 
-# The header containing a unique and stable username of the current user.
-#
-# Default value: "x-tobira-username"
-#username_header = "x-tobira-username"
-
-# The header containing the human-readable name of the current user
-# (e.g. "Peter Lustig").
-#
-# Default value: "x-tobira-user-display-name"
-#display_name_header = "x-tobira-user-display-name"
-
-# The header containing the email address of the current user.
-#
-# Default value: "x-tobira-user-email"
-#email_header = "x-tobira-user-email"
-
-# The header containing a comma-separated list of roles of the current user.
-#
-# Default value: "x-tobira-user-roles"
-#roles_header = "x-tobira-user-roles"
-
-# If a user has this role, they are treated as a moderator in Tobira,
-# giving them the ability to modify the realm structure among other
-# things.
-#
-# Default value: "ROLE_TOBIRA_MODERATOR"
-#moderator_role = "ROLE_TOBIRA_MODERATOR"
-
-# If a user has this role, they are allowed to use the Tobira video
-# uploader to ingest videos to Opencast.
-#
-# Default value: "ROLE_TOBIRA_UPLOAD"
-#upload_role = "ROLE_TOBIRA_UPLOAD"
-
-# If a user has this role, they are allowed to use Opencast Studio to
-# record and upload videos.
-#
-# Default value: "ROLE_TOBIRA_STUDIO"
-#studio_role = "ROLE_TOBIRA_STUDIO"
-
-# If a user has this role, they are allowed to use the Opencast editor to
-# edit videos they have write access to.
-#
-# Default value: "ROLE_TOBIRA_EDITOR"
-#editor_role = "ROLE_TOBIRA_EDITOR"
-
-# If a user has this role, they are allowed to create their own "user realm".
-#
-# Default value: "ROLE_USER"
-#user_realm_role = "ROLE_USER"
-
-# List of prefixes that user roles can have. Used to distinguish user
-# roles from other roles. Should probably be the same as
-# `role_user_prefix` in `acl.default.create.properties` in OC.
-#
-# Default value: ["ROLE_USER_"]
-#user_role_prefixes = ["ROLE_USER_"]
-
-# Duration of a Tobira-managed login session.
-# Note: This is only relevant if `auth.mode` is `login-proxy`.
-#
-# Default value: "30d"
-#session_duration = "30d"
-
-# A shared secret for **trusted** external applications.
-# Send this value as the `x-tobira-trusted-external-key`-header
-# to use certain APIs without having to invent a user.
-# Note that this should be hard to guess, and kept secret.
-# Specifically, you are going to want to encrypt every channel
-# this is sent over.
+# A shared secret for **trusted** external applications. Send this value
+# as the `x-tobira-trusted-external-key`-header to use certain APIs
+# without having to invent a user. Note that this should be hard to
+# guess, and kept secret. Specifically, you are going to want to encrypt
+# every channel this is sent over.
 #trusted_external_key =
 
 # Determines whether or not Tobira users are getting pre-authenticated against
@@ -281,6 +215,39 @@
 #
 # Default value: false
 #pre_auth_external_links = false
+
+
+# Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.
+[auth.session]
+# How to create sessions from login credentials (userid + password).
+#
+# Default value: "none"
+#from_login_credentials = "none"
+
+# How `POST /~session` requests are authenticated.
+#
+# Default value: "none"
+#from_session_endpoint = "none"
+
+# Duration of a Tobira-managed login session.
+#
+# Default value: "30d"
+#duration = "30d"
+
+
+[auth.callback]
+# Headers relevant for the auth callback. See docs.
+#relevant_headers =
+
+# Cookies relevant for the auth callback. See docs.
+#relevant_cookies =
+
+# For how long a callback's response is cached. The key of the cache is
+# the set of headers forwarded to the callback. Set to 0 to disable
+# caching.
+#
+# Default value: "5min"
+#cache_duration = "5min"
 
 
 # Configuration related to the built-in login page.
@@ -316,6 +283,45 @@
 #
 # Default value: "30s"
 #expiration_time = "30s"
+
+
+[auth.roles]
+# If a user has this role, they are treated as a moderator in Tobira,
+# giving them the ability to modify the realm structure among other
+# things.
+#
+# Default value: "ROLE_TOBIRA_MODERATOR"
+#moderator = "ROLE_TOBIRA_MODERATOR"
+
+# If a user has this role, they are allowed to use the Tobira video
+# uploader to ingest videos to Opencast.
+#
+# Default value: "ROLE_TOBIRA_UPLOAD"
+#upload = "ROLE_TOBIRA_UPLOAD"
+
+# If a user has this role, they are allowed to use Opencast Studio to
+# record and upload videos.
+#
+# Default value: "ROLE_TOBIRA_STUDIO"
+#studio = "ROLE_TOBIRA_STUDIO"
+
+# If a user has this role, they are allowed to use the Opencast editor to
+# edit videos they have write access to.
+#
+# Default value: "ROLE_TOBIRA_EDITOR"
+#editor = "ROLE_TOBIRA_EDITOR"
+
+# If a user has this role, they are allowed to create their own "user realm".
+#
+# Default value: "ROLE_USER"
+#user_realm = "ROLE_USER"
+
+# List of prefixes that user roles can have. Used to distinguish user
+# roles from other roles. Should probably be the same as
+# `role_user_prefix` in `acl.default.create.properties` in OC.
+#
+# Default value: ["ROLE_USER_"]
+#user_role_prefixes = ["ROLE_USER_"]
 
 
 [log]

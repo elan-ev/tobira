@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use crate::{
     prelude::*,
-    util::HttpHost,
+    config::HttpHost,
 };
 
 

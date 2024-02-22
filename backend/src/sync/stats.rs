@@ -74,8 +74,12 @@ struct VersionStats {
 struct ConfigStats {
     /// Value of `general.show_download_button`.
     download_button_shown: bool,
-    /// Value of `auth.mode`
-    auth_mode: &'static str,
+    /// Value of `auth.source`
+    auth_source: &'static str,
+    /// Value of `auth.session.from_login_credentials`
+    login_credentials_handler: &'static str,
+    /// Value of `auth.session.from_session_endpoint`
+    session_endpoint_handler: &'static str,
     /// Whether `auth.login_link` is set or not.
     login_link_overridden: bool,
     /// Whether `auth.logout_link` is set or not.
@@ -108,7 +112,9 @@ impl Stats {
             },
             config: ConfigStats {
                 download_button_shown: config.general.show_download_button,
-                auth_mode: config.auth.mode.label(),
+                auth_source: config.auth.source.label(),
+                login_credentials_handler: config.auth.session.from_login_credentials.label(),
+                session_endpoint_handler: config.auth.session.from_session_endpoint.label(),
                 login_link_overridden: config.auth.login_link.is_some(),
                 logout_link_overridden: config.auth.logout_link.is_some(),
                 uses_pre_auth: config.auth.pre_auth_external_links,

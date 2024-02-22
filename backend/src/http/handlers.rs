@@ -83,7 +83,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
 
         "/~metrics" => {
             register_req!(HttpReqCategory::Metrics);
-            let out = ctx.metrics.gather_and_encode(&ctx.db_pool).await;
+            let out = ctx.metrics.gather_and_encode(&ctx).await;
             Response::builder()
                 .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
                 .body(out.into())
@@ -264,19 +264,12 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get auth session
-    let auth_result = AuthContext::new(
+    let auth = AuthContext::new(
         &parts.headers,
         &ctx.config.auth,
         &connection,
-        &ctx.user_cache,
-    ).await;
-    let auth = match auth_result {
-        Ok(auth) => auth,
-        Err(e) => {
-            error!("DB error when checking user session: {}", e);
-            return Err(response::internal_server_error());
-        },
-    };
+        &ctx.auth_caches,
+    ).await?;
 
     let tx = match connection.transaction().await {
         Ok(tx) => tx,

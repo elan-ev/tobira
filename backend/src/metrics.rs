@@ -1,11 +1,12 @@
 use std::{time::Duration, fmt::Write};
 
-use deadpool_postgres::Pool;
 use prometheus_client::{
     metrics::{gauge::Gauge, counter::Counter, family::Family, histogram::Histogram},
     registry::{Registry, Unit, Metric},
     encoding::{text::encode, EncodeLabelSet, LabelSetEncoder},
 };
+
+use crate::http;
 
 
 struct MetricDesc {
@@ -55,6 +56,22 @@ const NUM_ITEMS: MetricDesc = MetricDesc {
     help: "Number of different kinds of items in the DB",
     unit: None,
 };
+const AUTH_CALLBACK_CACHE_SIZE: MetricDesc = MetricDesc {
+    name: "auth_callback_cache_size",
+    help: "Number of elements inside the auth callback cache",
+    unit: None,
+};
+const AUTH_CALLBACK_CACHE_HITS: MetricDesc = MetricDesc {
+    name: "auth_callback_cache_hits",
+    help: "Number of auth callback cache hits",
+    unit: None,
+};
+const AUTH_CALLBACK_CACHE_MISSES: MetricDesc = MetricDesc {
+    name: "auth_callback_cache_misses",
+    help: "Number of auth callback cache misses",
+    unit: None,
+};
+
 
 const RESPONSE_TIMES_BASKETS: [f64; 9] = [0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5];
 
@@ -81,7 +98,7 @@ impl Metrics {
         self.response_times.get_or_create(&category).observe(duration.as_secs_f64());
     }
 
-    pub(crate) async fn gather_and_encode(&self, db_pool: &Pool) -> String {
+    pub(crate) async fn gather_and_encode(&self, ctx: &http::Context) -> String {
         let mut reg = <Registry>::default();
 
         add_any(&mut reg, HTTP_REQUESTS, self.http_requests.clone());
@@ -96,9 +113,14 @@ impl Metrics {
         ]).set(1);
         add_any(&mut reg, BUILD_INFO, info);
 
+        // Add auth information
+        add_gauge(&mut reg, AUTH_CALLBACK_CACHE_SIZE, ctx.auth_caches.callback.size() as i64);
+        add_any(&mut reg, AUTH_CALLBACK_CACHE_HITS, ctx.auth_caches.callback.hits().clone());
+        add_any(&mut reg, AUTH_CALLBACK_CACHE_MISSES, ctx.auth_caches.callback.misses().clone());
+
         // Information from the DB.
         // TODO: Do all of that in parallel?
-        if let Ok(db) = db_pool.get().await {
+        if let Ok(db) = ctx.db_pool.get().await {
             // Sync lag
             let sql = "select extract(epoch from now() at time zone 'UTC' \
                 - harvested_until)::double precision from sync_status";

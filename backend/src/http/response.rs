@@ -35,3 +35,11 @@ pub(crate) fn not_found() -> Response {
         .unwrap()
 }
 
+/// Returns "401 Unauthorized", but that's a misnomer as the semantics of this
+/// are "unauthenticated".
+pub(crate) fn unauthorized() -> Response {
+    Response::builder()
+        .status(StatusCode::UNAUTHORIZED)
+        .body("Not authenticated".into())
+        .unwrap()
+}

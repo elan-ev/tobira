@@ -21,7 +21,13 @@ use std::{
 };
 
 use crate::{
-    api, auth::{JwtContext, UserCache}, config::Config, metrics, prelude::*, search, default_enable_backtraces,
+    api,
+    auth::{self, JwtContext},
+    config::Config,
+    metrics,
+    prelude::*,
+    search,
+    default_enable_backtraces,
 };
 use self::{
     assets::Assets,
@@ -69,7 +75,7 @@ pub(crate) struct Context {
     pub(crate) jwt: Arc<JwtContext>,
     pub(crate) search: Arc<search::Client>,
     pub(crate) metrics: Arc<metrics::Metrics>,
-    pub(crate) user_cache: UserCache,
+    pub(crate) auth_caches: auth::Caches,
 }
 
 
@@ -91,7 +97,12 @@ pub(crate) async fn serve(
         config: Arc::new(config),
         search: Arc::new(search),
         metrics: Arc::new(metrics::Metrics::new()),
-        user_cache: UserCache::new(),
+        auth_caches: auth::Caches::new(),
+    });
+
+    let ctx_clone = ctx.clone();
+    tokio::spawn(async move {
+        ctx_clone.auth_caches.maintainence_task(&ctx_clone.config).await;
     });
 
     // This sets up all the hyper server stuff. It's a bit of magic and touching

@@ -175,6 +175,33 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
 
     type LogoutState = "idle" | "pending" | "error";
     const [logoutState, setLogoutState] = useState<LogoutState>("idle");
+    const deleteSession = () => {
+        // We don't do anything if a request is already pending.
+        if (logoutState === "pending") {
+            return;
+        }
+
+        setLogoutState("pending");
+        fetch("/~session", { method: "DELETE", keepalive: true })
+            .then(() => {
+                if (CONFIG.auth.logoutLink === null) {
+                    // We deliberately ignore the `status`. See `handle_logout` for
+                    // more information.
+                    //
+                    // We hard forward to the home page to get rid of any stale state.
+                    window.location.href = "/";
+                }
+            })
+            .catch(error => {
+                // TODO: this is not great. It should happen only extremely
+                // rarely, but still, just showing a triangle is not very great
+                // for the user.
+
+                // eslint-disable-next-line no-console
+                console.error("Error during logout: ", error);
+                setLogoutState("error");
+            });
+    };
 
     const indent = { paddingLeft: 30 };
     const items: HeaderMenuProps["items"] = [
@@ -233,36 +260,15 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             },
             ...CONFIG.auth.logoutLink !== null
                 ? {
-                    wrapper: <Link to={CONFIG.auth.logoutLink} htmlLink />,
+                    wrapper: <Link
+                        to={CONFIG.auth.logoutLink}
+                        onClick={CONFIG.auth.usesTobiraSessions ? deleteSession : () => {}}
+                        htmlLink
+                    />,
                 }
                 : {
                     keepOpenAfterClick: true,
-                    wrapper: <ProtoButton
-                        onClick={() => {
-                        // We don't do anything if a request is already pending.
-                            if (logoutState === "pending") {
-                                return;
-                            }
-
-                            setLogoutState("pending");
-                            fetch("/~session", { method: "DELETE" })
-                                .then(() => {
-                                // We deliberately ignore the `status`. See `handle_logout`
-                                // for more information.
-                                //
-                                // We hard forward to the home page to get rid of any stale state.
-                                    window.location.href = "/";
-                                })
-                                .catch(error => {
-                                // TODO: this is not great. It should happen only
-                                // extremely rarely, but still, just showing a triangle
-                                // is not very great for the user.
-                                // eslint-disable-next-line no-console
-                                    console.error("Error during logout: ", error);
-                                    setLogoutState("error");
-                                });
-                        }}
-                    />,
+                    wrapper: <ProtoButton onClick={deleteSession} />,
                 },
         },
     ];

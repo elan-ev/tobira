@@ -2576,6 +2576,7 @@ dependencies = [
  "tokio",
  "tokio-postgres",
  "tokio-postgres-rustls",
+ "url",
 ]
 
 [[package]]

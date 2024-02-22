@@ -1,45 +1,56 @@
+use std::unreachable;
+
 use base64::Engine;
 use hyper::{Body, StatusCode};
 use serde::Deserialize;
 
 use crate::{
     db,
-    http::{self, Context, Request, Response, response::{bad_request, internal_server_error}},
+    http::{self, Context, Request, Response, response::bad_request},
     prelude::*,
-    config::OpencastConfig, auth::ROLE_ANONYMOUS,
+    config::OpencastConfig, auth::{config::LoginCredentialsHandler, ROLE_ANONYMOUS},
 };
-use super::{AuthMode, SessionId, User};
+use super::{config::SessionEndpointHandler, AuthSource, SessionId, User};
 
 
 /// Handles POST requests to `/~session`.
-pub(crate) async fn handle_post_session(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
-    if ctx.config.auth.mode != AuthMode::LoginProxy {
-        warn!("Got POST /~session request, but due to the authentication mode, this endpoint \
-            is disabled");
-
-        return Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap()
-            .pipe(Ok);
-    }
-
-    match User::from_auth_headers(&req.headers(), &ctx.config.auth) {
-        Some(user) => {
-            // Some auth proxy received the request, did the authorization, put all
-            // user information into our auth headers and forwarded it to us. We
-            // need to create a DB session now and reply with a `set-cookie` header.
-            debug!("Login request for '{}' (POST '/~session' with auth headers)", user.username);
-
-            create_session(user, ctx).await
+pub(crate) async fn handle_post_session(
+    req: Request<Body>,
+    ctx: &Context,
+) -> Result<Response, Response> {
+    let user = match &ctx.config.auth.session.from_session_endpoint {
+        SessionEndpointHandler::None => {
+            warn!("Got POST /~session request, but this route is disabled via \
+                'auth.session.from_session_endpoint'");
+            return Ok(http::response::not_found());
         }
-
-        None => {
-            // No auth headers are set: this should not happen. This means that
-            // either there is no auth proxy or it was incorrectly configured.
-            warn!("Got POST /~session request without auth headers set: this should not happen");
-            Err(http::response::bad_request(None))
+        SessionEndpointHandler::TrustAuthHeaders => {
+            User::from_auth_headers(&req.headers(), &ctx.config.auth)
         }
+        SessionEndpointHandler::Callback(callback_url) => {
+            User::from_auth_callback(
+                &req.headers(),
+                &callback_url,
+                &ctx.config.auth,
+                &ctx.auth_caches,
+            ).await?
+        }
+    };
+
+    trace!("POST /~session with handler {:?} resulted in user: {:?}",
+        ctx.config.auth.session.from_session_endpoint,
+        user,
+    );
+
+    match user {
+        // User is authenticated -> create session for it and set `Set-Cookie` header.
+        Some(user) => create_session(user, ctx).await,
+
+        // No authentication -> we can't create a session. This should normally
+        // not happen as the auth integration should only send a request here
+        // when the request can be authenticated. But users can always manually
+        // call this for example.
+        None => Err(http::response::unauthorized()),
     }
 }
 
@@ -59,14 +70,9 @@ pub(crate) async fn handle_post_session(req: Request<Body>, ctx: &Context) -> Re
 ///
 /// TODO: maybe notify the user about these failures?
 pub(crate) async fn handle_delete_session(req: Request<Body>, ctx: &Context) -> Response {
-    if !matches!(ctx.config.auth.mode, AuthMode::LoginProxy | AuthMode::Opencast) {
-        warn!("Got DELETE /~session request, but due to the authentication mode, this endpoint \
-            is disabled");
-
-        return Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap();
+    if ctx.config.auth.source != AuthSource::TobiraSession {
+        warn!("Got DELETE /~session request, but due to 'auth.source', this endpoint is disabled");
+        return http::response::not_found();
     }
 
     let response = Response::builder()
@@ -103,11 +109,9 @@ const PASSWORD_FIELD: &str = "password";
 
 /// Handles `POST /~login` request.
 pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Response {
-    if ctx.config.auth.mode != AuthMode::Opencast {
-        warn!("Got POST /~login request, but 'auth.mode' is not 'opencast', \
-            so login requests have to be handled by your reverse proxy. \
-            Please see the documentation about auth.");
-        return Response::builder().status(StatusCode::NOT_FOUND).body(Body::empty()).unwrap();
+    if ctx.config.auth.session.from_login_credentials == LoginCredentialsHandler::None {
+        warn!("Got POST /~login request, but due to 'auth.mode', this endpoint is disabled.");
+        return http::response::not_found();
     }
 
     trace!("Handling POST /~login...");
@@ -151,13 +155,36 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
 
 
     // Check the login data.
-    match check_opencast_login(&userid, &password, &ctx.config.opencast).await {
-        Err(e) => {
-            error!("Error occured while checking Opencast login data: {e}");
-            internal_server_error()
+    let user = match &ctx.config.auth.session.from_login_credentials {
+        LoginCredentialsHandler::Opencast => {
+            match check_opencast_login(&userid, &password, &ctx.config.opencast).await {
+                Err(e) => {
+                    error!("Error occured while checking Opencast login data: {e:#}");
+                    return http::response::internal_server_error();
+                }
+                Ok(user) => user,
+            }
         }
-        Ok(None) => Response::builder().status(StatusCode::FORBIDDEN).body(Body::empty()).unwrap(),
-        Ok(Some(user)) => create_session(user, ctx).await.unwrap_or_else(|e| e),
+        LoginCredentialsHandler::Callback(callback_url) => {
+            let body = serde_json::json!({
+                "userid": userid,
+                "password": password,
+            });
+            let mut req = Request::new(body.to_string().into());
+            *req.method_mut() = hyper::Method::POST;
+            *req.uri_mut() = callback_url.clone();
+
+            match User::from_callback_impl(req, &ctx.config.auth).await {
+                Err(e) => return e,
+                Ok(user) => user,
+            }
+        }
+        _ => unreachable!(),
+    };
+
+    match user {
+        None => Response::builder().status(StatusCode::FORBIDDEN).body(Body::empty()).unwrap(),
+        Some(user) => create_session(user, ctx).await.unwrap_or_else(|e| e),
     }
 }
 
@@ -245,7 +272,7 @@ async fn create_session(user: User, ctx: &Context) -> Result<Response, Response>
 
     Response::builder()
         .status(StatusCode::NO_CONTENT)
-        .header("set-cookie", session_id.set_cookie(ctx.config.auth.session_duration).to_string())
+        .header("set-cookie", session_id.set_cookie(ctx.config.auth.session.duration).to_string())
         .body(Body::empty())
         .unwrap()
         .pipe(Ok)
