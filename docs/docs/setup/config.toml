@@ -523,8 +523,10 @@
 
 # Matomo integration (optional). Currently only used by Paella if configured.
 [matomo]
-# URL of your Matomo server. This URL + `matomo.js` should be a publicly
-# accessible JS file. Example: "https://matomo.myuni.edu/matomo/".
+# URL of your Matomo server. Example: "https://matomo.myuni.edu/matomo/".
+#
+# Note: Adding `matomo.js` to the URL configured here should result in a
+# URL to a publicly accessible JS file.
 #server =
 
 # Matomo site ID, e.g. `side_id = "1"`
