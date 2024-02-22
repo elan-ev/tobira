@@ -28,6 +28,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                     id
                     title
                     isLive
+                    opencastId
                     created
                     syncedData {
                         duration

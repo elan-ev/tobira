@@ -477,6 +477,14 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             "'none'".into()
         };
 
+        // TODO: when this is fixed, use `format_args!` to avoid the useless
+        // space in the None case below.
+        // https://github.com/rust-lang/rust/issues/92698
+        let matomo_url = match &config.matomo.server {
+            Some(server) => server as &dyn std::fmt::Display,
+            None => &"",
+        };
+
         // Some comments about all relaxations:
         //
         // - `img` and `media` are loaded from Opencast. We know one URL host,
@@ -510,7 +518,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             img-src *; \
             media-src * blob:; \
             font-src *; \
-            script-src 'self' 'nonce-{nonce}'; \
+            script-src 'self' 'nonce-{nonce}' {matomo_url}; \
             style-src 'self' 'unsafe-inline'; \
             connect-src *; \
             worker-src blob: 'self'; \

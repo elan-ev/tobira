@@ -27,6 +27,7 @@ export type PlayerEvent = {
     title: string;
     created: string;
     isLive: boolean;
+    opencastId: string;
     syncedData: {
         updated: string;
         startTime: string | null;

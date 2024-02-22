@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Config, Manifest, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 import getZoomPluginContext from "paella-zoom-plugin";
+import getUserTrackingPluginsContext from "paella-user-tracking";
 import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
@@ -10,9 +11,11 @@ import { SPEEDS } from "./consts";
 import { timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
+import CONFIG from "../../config";
 
 
 type PaellaPlayerProps = {
+    opencastId: string;
     title: string;
     duration: number;
     tracks: readonly Track[];
@@ -29,7 +32,7 @@ export type PaellaState = {
 };
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
-    tracks, title, duration, isLive, captions, startTime, endTime, previewImage,
+    opencastId, tracks, title, duration, isLive, captions, startTime, endTime, previewImage,
 }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
@@ -108,13 +111,14 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 // override all functions (which Paella luckily allows) to do
                 // nothing except immediately return the data.
                 loadConfig: async () => PAELLA_CONFIG as Config,
-                getVideoId: async () => "dummy-id",
+                getVideoId: async () => opencastId,
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
                 customPluginContext: [
                     getBasicPluginsContext(),
                     getZoomPluginContext(),
+                    getUserTrackingPluginsContext(),
                 ],
             });
 
@@ -421,6 +425,9 @@ const PAELLA_CONFIG = {
             "order": 0,
             "context": ["default", "trimming"],
         },
+
+        // Let admin provided config add and override entries.
+        ...CONFIG.paellaPluginConfig,
     },
 };
 
