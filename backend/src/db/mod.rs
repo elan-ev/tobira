@@ -4,7 +4,7 @@ use deadpool_postgres::{Config as PoolConfig, Pool, Runtime};
 use secrecy::{ExposeSecret, Secret};
 use rustls::{
     Error, DigitallySignedStruct,
-    client::{ServerCertVerifier, ServerCertVerified, HandshakeSignatureValid},
+    client::danger::{ServerCertVerifier, ServerCertVerified, HandshakeSignatureValid},
 };
 use std::{
     fmt::Write,
@@ -150,7 +150,7 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
 
             let system_count = system_certs.len();
             for cert in system_certs {
-                root_certs.add(&rustls::Certificate(cert.0))
+                root_certs.add(cert)
                     .context("failed to load system-wide certificate")?;
             }
             debug!("Loaded {system_count} system-wide certificates");
@@ -164,7 +164,6 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
         }
 
         let mut tls_config = rustls::ClientConfig::builder()
-            .with_safe_defaults()
             .with_root_certificates(root_certs)
             .with_no_client_auth();
 
@@ -294,12 +293,15 @@ pub(crate) async fn get_conn_or_service_unavailable(pool: &Pool) -> Result<DbCon
 /// number of certs added to `root_certs`.
 fn load_pem_file(path: &Path, root_certs: &mut rustls::RootCertStore) -> Result<usize> {
     let file = fs::read(path).context("could not read file")?;
+    let mut read = &*file;
 
-    let items = rustls_pemfile::read_all(&mut &*file).context("could not parse file as PEM")?;
-    let count = items.len();
+    let items = rustls_pemfile::read_all(&mut read);
+    let mut count = 0;
     for item in items {
+        count += 1;
+        let item = item.context("could not parse file as PEM")?;
         if let rustls_pemfile::Item::X509Certificate(cert) = item {
-            root_certs.add(&rustls::Certificate(cert)).context("failed to load X509 certificate")?;
+            root_certs.add(cert).context("failed to load X509 certificate")?;
         } else {
             bail!("found unexpected item, expected X509 certificate");
         }
@@ -312,36 +314,42 @@ fn load_pem_file(path: &Path, root_certs: &mut rustls::RootCertStore) -> Result<
 /// used in the "don't check certificates" mode. Unfortunately, as rustls
 /// values an API where it's hard to do potentially insecure things, it's a bit
 /// of boilerplate.
+#[derive(Debug)]
 pub(crate) struct DangerousAlwaysAcceptCerts;
 
 impl ServerCertVerifier for DangerousAlwaysAcceptCerts {
     fn verify_server_cert(
         &self,
-        _end_entity: &rustls::Certificate,
-        _intermediates: &[rustls::Certificate],
-        _server_name: &rustls::client::ServerName,
-        _scts: &mut dyn Iterator<Item = &[u8]>,
+        _end_entity: &rustls::pki_types::CertificateDer<'_>,
+        _intermediates: &[rustls::pki_types::CertificateDer<'_>],
+        _server_name: &rustls::pki_types::ServerName<'_>,
         _ocsp_response: &[u8],
-        _now: std::time::SystemTime,
-    ) -> Result<ServerCertVerified, Error> {
-        Ok(rustls::client::ServerCertVerified::assertion())
+        _now: rustls::pki_types::UnixTime,
+    ) -> std::prelude::v1::Result<ServerCertVerified, Error> {
+        Ok(ServerCertVerified::assertion())
     }
 
     fn verify_tls12_signature(
         &self,
         _message: &[u8],
-        _cert: &rustls::Certificate,
+        _cert: &rustls::pki_types::CertificateDer<'_>,
         _dss: &DigitallySignedStruct,
-    ) -> Result<HandshakeSignatureValid, Error> {
+    ) -> std::prelude::v1::Result<HandshakeSignatureValid, Error> {
         Ok(HandshakeSignatureValid::assertion())
     }
+
     fn verify_tls13_signature(
         &self,
         _message: &[u8],
-        _cert: &rustls::Certificate,
+        _cert: &rustls::pki_types::CertificateDer<'_>,
         _dss: &DigitallySignedStruct,
-    ) -> Result<HandshakeSignatureValid, Error> {
+    ) -> std::prelude::v1::Result<HandshakeSignatureValid, Error> {
         Ok(HandshakeSignatureValid::assertion())
+    }
 
+    fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
+        rustls::crypto::ring::default_provider()
+            .signature_verification_algorithms
+            .supported_schemes()
     }
 }
