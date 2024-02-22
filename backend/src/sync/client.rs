@@ -12,9 +12,10 @@ use secrecy::{ExposeSecret, Secret};
 use tap::TapFallible;
 
 use crate::{
-    prelude::*,
     config::Config,
+    prelude::*,
     sync::harvest::HarvestResponse,
+    util::download_body,
 };
 
 use super::VersionResponse;
@@ -149,7 +150,7 @@ impl OcClient {
         uri: &Uri,
     ) -> Result<(T, usize)> {
         let (parts, body) = response.into_parts();
-        let body = hyper::body::to_bytes(body).await
+        let body = download_body(body).await
             .with_context(|| format!("failed to download body from '{uri}'"))?;
 
         if parts.status != StatusCode::OK {

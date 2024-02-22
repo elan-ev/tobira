@@ -1,5 +1,6 @@
 use std::fmt;
-use hyper::client::HttpConnector;
+use bytes::Bytes;
+use hyper::{body::HttpBody, client::HttpConnector};
 use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use rand::{RngCore, CryptoRng};
 use secrecy::Secret;
@@ -95,4 +96,17 @@ impl<T, E> InspectExt<T> for Result<T, E> {
             t
         })
     }
+}
+
+pub(crate) async fn download_body<B>(body: B) -> Result<Bytes>
+where
+    B: HttpBody,
+    B::Error: 'static + Send + Sync + std::error::Error,
+{
+    // TODO: this should somehow limit the size in order to prevent DOS attacks
+    // https://github.com/elan-ev/tobira/issues/667
+    body.collect().await
+        .context("failed to download HTTP body")?
+        .to_bytes()
+        .pipe(Ok)
 }

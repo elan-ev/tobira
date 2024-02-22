@@ -11,11 +11,13 @@ use std::{
 use crate::{
     api,
     auth::{self, AuthContext},
-    Config,
     db::{self, Transaction},
     http::response::bad_request,
     metrics::HttpReqCategory,
-    prelude::*, rss,
+    prelude::*,
+    rss,
+    util::download_body,
+    Config,
 };
 use super::{Context, Request, Response, response};
 
@@ -247,7 +249,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     // Download the full body. Responding with 400 if this fails is maybe not
     // correct, but when this fails there is likely a network problem and our
     // response won't ever be seen anyway.
-    let raw_body = hyper::body::to_bytes(body).await.map_err(|e| {
+    let raw_body = download_body(body).await.map_err(|e| {
         error!("Failed to download API request body: {e}");
         response::bad_request(None)
     })?;

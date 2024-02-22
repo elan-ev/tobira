@@ -9,7 +9,7 @@ use secrecy::ExposeSecret;
 use serde::Deserialize;
 use tokio_postgres::Error as PgError;
 
-use crate::{prelude::*, db::util::select, http::{Response, response, Request}};
+use crate::{db::util::select, http::{response, Request, Response}, prelude::*, util::download_body};
 
 
 mod cache;
@@ -285,7 +285,7 @@ impl User {
             callback_bad_gateway()
         })?;
         let (parts, body) = response.into_parts();
-        let body = hyper::body::to_bytes(body).await.map_err(|e| {
+        let body = download_body(body).await.map_err(|e| {
             error!("Error downloading body from auth callback: {e}");
             callback_bad_gateway()
         })?;

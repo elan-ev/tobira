@@ -5,11 +5,12 @@ use hyper::{Body, StatusCode};
 use serde::Deserialize;
 
 use crate::{
-    db,
-    http::{self, Context, Request, Response, response::bad_request},
-    prelude::*,
-    config::OpencastConfig,
     auth::config::LoginCredentialsHandler,
+    config::OpencastConfig,
+    db,
+    http::{self, response::bad_request, Context, Request, Response},
+    prelude::*,
+    util::download_body,
 };
 use super::{config::SessionEndpointHandler, AuthSource, SessionId, User};
 
@@ -126,7 +127,7 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
     }
 
     // Download whole body.
-    let body = match hyper::body::to_bytes(req.into_body()).await {
+    let body = match download_body(req.into_body()).await {
         Ok(v) => v,
         Err(e) => {
             error!("Failed to download login request body: {e}");
@@ -233,7 +234,7 @@ async fn check_opencast_login(
         email: Option<String>,
     }
 
-    let body = hyper::body::to_bytes(response.into_body()).await?;
+    let body = download_body(response.into_body()).await?;
     let mut info: InfoMeResponse = serde_json::from_slice(&body)
         .context("Could not deserialize `/info/me.json` response")?;
 
