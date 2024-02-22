@@ -44,7 +44,9 @@ export const Footer: React.FC = () => {
                         </li>;
                     } else {
                         return <li key={i}>
-                            <Link to={entry.link}>{translatedConfig(entry.label, i18n)}</Link>
+                            <Link to={translatedConfig(entry.link, i18n)}>
+                                {translatedConfig(entry.label, i18n)}
+                            </Link>
                         </li>;
                     }
                 })}

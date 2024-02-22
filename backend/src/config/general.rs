@@ -53,7 +53,7 @@ pub(crate) struct GeneralConfig {
     ///
     /// ```
     /// footer_links = [
-    ///     { label = { en = "Example" }, link = "https://example.com" },
+    ///     { label = { en = "Example" }, link = { en = "https://example.com/en" } },
     ///     "about",
     /// ]
     /// ```
@@ -131,7 +131,7 @@ pub(crate) enum FooterLink {
     GraphiQL,
     Custom {
         label: TranslatedString,
-        link: String,
+        link: TranslatedString,
     }
 }
 
