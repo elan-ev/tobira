@@ -2,19 +2,22 @@ import { Trans, useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { LuCalendarRange, LuLayout, LuPlayCircle, LuX } from "react-icons/lu";
 import { IconType } from "react-icons";
-import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
+import { ReactNode, RefObject, useEffect, useRef } from "react";
 import {
     Floating,
     FloatingContainer,
     FloatingTrigger,
     ProtoButton,
-    screenWidthAbove,
     screenWidthAtMost,
     unreachable,
 } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
-import { SearchQuery, SearchQuery$data } from "./__generated__/SearchQuery.graphql";
+import {
+    ItemType as RawItemType,
+    SearchQuery,
+    SearchQuery$data,
+} from "./__generated__/SearchQuery.graphql";
 import { RouterControl, makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link, useRouter } from "../router";
@@ -26,39 +29,82 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
-import { keyOfId } from "../util";
+import { isExperimentalFlagSet, keyOfId } from "../util";
 import { Button } from "../ui/Button";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
 
+type ItemType = Exclude<RawItemType, "%future added value">
+type SearchParams = {
+    query: string;
+    itemType?: ItemType;
+    start?: string;
+    end?: string;
+}
+
 export const SearchRoute = makeRoute({
-    url: ({ query }: { query: string }) => `/~search?${new URLSearchParams({ q: query })}`,
+    url: ({ query, itemType, start, end }: SearchParams) => {
+        const searchParams = new URLSearchParams({ q: query });
+
+        if (itemType) {
+            searchParams.append("f", itemType);
+        }
+        if (start) {
+            searchParams.append("start", start);
+        }
+        if (end) {
+            searchParams.append("end", end);
+        }
+
+        return `/~search?${searchParams}`;
+    },
     match: url => {
         if (url.pathname !== "/~search") {
             return null;
         }
 
         const q = url.searchParams.get("q") ?? "";
-        const queryRef = loadQuery<SearchQuery>(query, { q });
+        const filters = prepareFilters(url);
+
+        const queryRef = loadQuery<SearchQuery>(query, { q, filters });
 
         return {
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
                 nav={() => []}
-                render={data => <SearchPage q={q} outcome={data.search} />}
+                render={data => <SearchPage {...{ q }} outcome={data.search} />}
             />,
             dispose: () => queryRef.dispose(),
         };
     },
 });
 
+const itemTypes: ItemType[] = ["EVENT", "REALM"];
+export const isValidSearchItemType = (value: string | null | undefined) =>
+    value && (itemTypes as string[]).includes(value)
+        ? value as ItemType
+        : undefined;
+const prepareFilters = (url: URL) => {
+    const parseTime = (timeString: string | null) => {
+        const date = new Date(timeString + "T00:00:00Z");
+        return !isNaN(date.getTime()) ? date.toISOString() : null;
+    };
+    const filters = {
+        itemType: isValidSearchItemType(url.searchParams.get("f")),
+        start: parseTime(url.searchParams.get("start")),
+        end: parseTime(url.searchParams.get("end")),
+    };
+
+    return filters;
+};
+
 const query = graphql`
-    query SearchQuery($q: String!) {
+    query SearchQuery($q: String!, $filters: Filters! ) {
         ... UserData
-        search(query: $q) {
+        search(query: $q, filters: $filters) {
             __typename
             ... on EmptyQuery { dummy }
             ... on SearchUnavailable { dummy }
@@ -98,13 +144,6 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     const { t } = useTranslation();
     const router = useRouter();
 
-    const [filter, setFilter] = useState<Filter>("all");
-    const filterType: Filter[] = ["all", "videos", "pages"];
-
-    const [startDate, setStartDate] = useState<string>("");
-    const [endDate, setEndDate] = useState<string>("");
-    const dateRange = { startDate, endDate };
-
     useEffect(() => {
         const handleEscape = ((ev: KeyboardEvent) => {
             if (ev.key === "Escape") {
@@ -125,7 +164,7 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     } else if (outcome.__typename === "SearchResults") {
         body = outcome.items.length === 0
             ? <CenteredNote>{t("search.no-results")}</CenteredNote>
-            : <SearchResults items={outcome.items} {...{ filter, dateRange }} />;
+            : <SearchResults items={outcome.items} />;
     } else {
         return unreachable("unknown search outcome");
     }
@@ -139,53 +178,57 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
             </Trans>
             : t("search.no-query")
         } />
-        <div css={{
-            display: "grid",
-            gridTemplateColumns: "1fr 4fr 1fr",
-            [screenWidthAtMost(1000)]: {
-                display: "flex",
-                flexDirection: "column",
-            },
-        }}>
-            {/* Filters */}
-            <div css={{
-                [screenWidthAbove(1000)]: {
-                    padding: "16px 0",
-                },
-            }}>
-                <div css={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 8,
-                }}>
-                    {/* Type */}
-                    {filterType.map((type, index) =>
-                        <FilterButton key={index} {...{ type, filter, setFilter }} />)
-                    }
-                    {/* Date */}
-                    <DatePicker {...{ startDate, endDate, setStartDate, setEndDate }} />
+        <div css={{ maxWidth: 900, margin: "0 auto" }}>
+            {isExperimentalFlagSet() && <>
+                {/* Filters */}
+                <div>
+                    <div css={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                    }}>
+                        {/* Type */}
+                        <FilterButton {...{ router }} />
+                        {itemTypes.map((type, index) =>
+                            <FilterButton key={index} {...{ type, router }} />)
+                        }
+                        {/* Date */}
+                        <DatePicker {...{ router }} />
+                    </div>
                 </div>
-            </div>
+            </>}
             {/* Search results */}
-            <div css={{ width: "100%", maxWidth: 900, margin: "0 auto" }}>
-                {body}
-            </div>
+            {body}
         </div>
     </>;
 };
 
 type DatePickerProps = {
-    startDate: string;
-    endDate: string;
-    setStartDate: Dispatch<SetStateAction<string>>;
-    setEndDate: Dispatch<SetStateAction<string>>;
+    router: RouterControl;
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({
-    startDate, endDate, setStartDate, setEndDate,
-}) => {
+const DatePicker: React.FC<DatePickerProps> = ({ router }) => {
     const { t } = useTranslation();
     const ref = useRef(null);
+    const handleChange = (
+        date: string,
+        type: "start" | "end",
+    ) => {
+        const params = new URLSearchParams(window.location.search);
+        const query = params.get("q") ?? "";
+        const itemType = isValidSearchItemType(params.get("f")) ?? undefined;
+        const start = type === "start"
+            ? date
+            : params.get("start") ?? "";
+        const end = type === "end"
+            ? date
+            : params.get("end") ?? "";
+        router.goto(SearchRoute.url({ query, itemType, start, end }), true);
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const startDate = params.get("start");
+    const endDate = params.get("end");
 
     const isActive = startDate || endDate;
     const inputStyle = {
@@ -224,36 +267,52 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     aria-label={t("search.clear-time-frame")}
                     css={{ display: "flex", alignItems: "center" }}
                     onClick={() => {
-                        setStartDate("");
-                        setEndDate("");
+                        handleChange("", "start");
+                        handleChange("", "end");
                     }}
                 ><LuX /></ProtoButton>}
-                <input value={startDate} css={inputStyle} type="date" onChange={e =>
-                    setStartDate(e.target.value)
-                } />
+                <input
+                    value={startDate ?? ""}
+                    css={inputStyle}
+                    type="date"
+                    onChange={e => handleChange(e.target.value, "start")}
+                />
                 <span>-</span>
-                <input value={endDate} css={inputStyle} type="date" onChange={e =>
-                    setEndDate(e.target.value)
-                } />
+                <input
+                    value={endDate ?? ""}
+                    css={inputStyle}
+                    type="date"
+                    min={startDate ?? ""}
+                    onChange={e => handleChange(e.target.value, "end")}
+                />
             </div>
         </Floating>
     </FloatingContainer>;
 };
 
-type Filter = "all" | "videos" | "pages";
-
 type FilterButtonProps = {
-    type: Filter;
-    filter: Filter;
-    setFilter: Dispatch<SetStateAction<Filter>>;
+    type?: ItemType;
+    router: RouterControl;
 }
 
-const FilterButton: React.FC<FilterButtonProps> = ({ type, filter, setFilter }) => {
+const FilterButton: React.FC<FilterButtonProps> = ({ type, router }) => {
     const { t } = useTranslation();
+    const handleClick = () => {
+        const params = new URLSearchParams(window.location.search);
+        const query = params.get("q") ?? "";
+        const start = params.get("start") ?? "";
+        const end = params.get("end") ?? "";
+        const itemType = type ?? undefined;
+        router.goto(SearchRoute.url({ query, itemType, start, end }), true);
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const filter = isValidSearchItemType(params.get("f"));
+    const translationKey = type ? type.toLowerCase() as Lowercase<ItemType> : "all";
 
     return <Button
-        onClick={() => setFilter(type)}
-        disabled={filter === type}
+        onClick={handleClick}
+        disabled={!filter && !type || filter === type}
         css={{
             width: "fit-content",
             justifyContent: "center",
@@ -263,7 +322,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({ type, filter, setFilter }) 
                 border: `1px solid ${COLORS.neutral90}`,
             },
         }}
-    >{t(`search.filter-${type}`)}</Button>;
+    >{t(`search.filter-${translationKey}`)}</Button>;
 };
 
 const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
@@ -276,42 +335,17 @@ type Results = Extract<SearchQuery$data["search"], { __typename: "SearchResults"
 
 type SearchResultsProps = {
     items: Results["items"];
-    filter: Filter;
-    dateRange: {
-        startDate: string;
-        endDate: string;
-    };
 };
 
 const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "undefined"
     ? unreachable("type dependent field for search item is not set")
     : value;
 
-const SearchResults: React.FC<SearchResultsProps> = ({ items, filter, dateRange }) => (
+const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     <ul css={{ listStyle: "none", padding: 0 }}>
         {items.map(item => {
-            if (item.__typename === "SearchEvent" && (
-                filter === "all" || filter === "videos"
-            )) {
-                const { startDate, endDate } = dateRange;
-                const included = () => {
-                    if (!startDate && !endDate || !item.created) {
-                        return true;
-                    }
-                    if (startDate && !endDate) {
-                        return startDate <= item.created;
-                    }
-                    if (!startDate && endDate) {
-                        return endDate >= item.created;
-                    }
-                    if (startDate && endDate) {
-                        return startDate <= item.created && endDate >= item.created;
-                    }
-                    return false;
-                };
-
-
-                return included() ? <SearchEvent key={item.id} {...{
+            if (item.__typename === "SearchEvent") {
+                return <SearchEvent key={item.id} {...{
                     id: item.id,
                     title: unwrapUndefined(item.title),
                     description: unwrapUndefined(item.description),
@@ -326,10 +360,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items, filter, dateRange 
                     startTime: unwrapUndefined(item.startTime),
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
-                }}/> : null;
-            } else if (item.__typename === "SearchRealm" && (
-                filter === "all" || filter === "pages"
-            )) {
+                }}/>;
+            } else if (item.__typename === "SearchRealm") {
                 return <SearchRealm key={item.id} {...{
                     id: item.id,
                     name: unwrapUndefined(item.name),

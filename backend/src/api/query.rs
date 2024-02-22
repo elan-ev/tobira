@@ -4,18 +4,18 @@ use juniper::graphql_object;
 use crate::auth::{AuthContext, User};
 
 use super::{
+    err::ApiResult,
+    jwt::{jwt, JwtService},
+    model::{
+        event::{AuthorizedEvent, Event},
+        known_roles::{self, KnownGroup, KnownUsersSearchOutcome},
+        realm::Realm,
+        search::{self, EventSearchOutcome, Filters, SearchOutcome, SeriesSearchOutcome},
+        series::Series,
+    },
     Context,
     Id,
     NodeValue,
-    err::ApiResult,
-    model::{
-        realm::Realm,
-        event::{AuthorizedEvent, Event},
-        series::Series,
-        search::{self, SearchOutcome, EventSearchOutcome, SeriesSearchOutcome},
-        known_roles::{self, KnownUsersSearchOutcome, KnownGroup},
-    },
-    jwt::{JwtService, jwt},
 };
 
 
@@ -92,8 +92,8 @@ impl Query {
     }
 
     /// Returns `null` if the query is too short.
-    async fn search(query: String, context: &Context) -> ApiResult<SearchOutcome> {
-        search::perform(&query, context).await
+    async fn search(query: String, filters: Filters, context: &Context) -> ApiResult<SearchOutcome> {
+        search::perform(&query, filters, context).await
     }
 
     /// Searches through all events that the user has write access to
