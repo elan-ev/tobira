@@ -5,6 +5,7 @@ import "./i18n";
 import { matchInitialRoute } from "./router";
 import { LoginRoute, REDIRECT_STORAGE_KEY } from "./routes/Login";
 import { checkInitialConsent } from "./ui/InitialConsent";
+import CONFIG from "./config";
 
 
 const redirect = (target: string) => {
@@ -44,7 +45,7 @@ const redirect = (target: string) => {
     // a component to trigger a redirect. In fact, that approach would break in
     // `StrictMode`.
     const target = window.sessionStorage.getItem(REDIRECT_STORAGE_KEY);
-    if (window.location.pathname === LoginRoute.url && target) {
+    if (window.location.pathname === LoginRoute.url && target && CONFIG.auth.loginLink) {
         // eslint-disable-next-line no-console
         console.debug(`Requested login page after login: redirecting to previous page ${target}`);
         redirect(target);
