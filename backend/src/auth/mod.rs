@@ -32,6 +32,7 @@ pub(crate) use self::{
 pub(crate) const ROLE_ADMIN: &str = "ROLE_ADMIN";
 
 const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
+const ROLE_USER: &str = "ROLE_USER";
 
 const SESSION_COOKIE: &str = "tobira-session";
 
@@ -108,7 +109,7 @@ impl User {
         db: &Client,
         caches: &Caches,
     ) -> Result<Option<Self>, Response> {
-        let out = match &auth_config.source {
+        let mut out = match &auth_config.source {
             AuthSource::None => None,
             AuthSource::TobiraSession => Self::from_session(headers, db, auth_config).await?,
             AuthSource::TrustAuthHeaders => Self::from_auth_headers(headers, auth_config),
@@ -117,7 +118,8 @@ impl User {
             }
         };
 
-        if let Some(user) = &out {
+        if let Some(user) = &mut out {
+            user.add_default_roles();
             caches.user.upsert_user_info(user, db).await;
         }
 
@@ -148,9 +150,10 @@ impl User {
         let email = get_header(AUTH_HEADER_EMAIL);
 
         // Get roles from the user.
-        let mut roles = HashSet::from([ROLE_ANONYMOUS.to_string()]);
-        let roles_raw = get_header(AUTH_HEADER_ROLES)?;
-        roles.extend(roles_raw.split(',').map(|role| role.trim().to_owned()));
+        let roles: HashSet<_> = get_header(AUTH_HEADER_ROLES)?
+            .split(',')
+            .map(|role| role.trim().to_owned())
+            .collect();
         let user_role = auth_config
             .find_user_role(&username, roles.iter().map(|s| s.as_str()))?
             .to_owned();
@@ -359,6 +362,17 @@ impl User {
         ).await?;
 
         Ok(session_id)
+    }
+
+    /// Makes sure this user has the roles `ROLE_ANONYMOUS` and `ROLE_USER`.
+    fn add_default_roles(&mut self) {
+        // The conditionals are to prevent heap allocations when unneceesary.
+        if !self.roles.contains(ROLE_ANONYMOUS) {
+            self.roles.insert(ROLE_ANONYMOUS.into());
+        }
+        if !self.roles.contains(ROLE_USER) {
+            self.roles.insert(ROLE_USER.into());
+        }
     }
 }
 
