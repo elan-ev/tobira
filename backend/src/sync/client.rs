@@ -1,13 +1,15 @@
 use std::time::{Duration, Instant};
 
 use base64::Engine;
+use bytes::Bytes;
 use chrono::{DateTime, Utc, TimeZone};
 use hyper::{
-    Body, Request, Response, StatusCode,
-    client::{Client, HttpConnector},
-    http::{uri::{Authority, Scheme, Uri}, request, self},
+    Response, Request, StatusCode,
+    body::Incoming,
+    http::{self, request, uri::{Authority, Scheme, Uri}},
 };
 use hyper_rustls::HttpsConnector;
+use hyper_util::client::legacy::{connect::HttpConnector, Client};
 use secrecy::{ExposeSecret, Secret};
 use tap::TapFallible;
 
@@ -20,10 +22,13 @@ use crate::{
 
 use super::VersionResponse;
 
+// Most requests have an empty body, but sending stats requires sending data in
+// the body.
+type RequestBody = http_body_util::Full<Bytes>;
 
 /// Used to send request to the harvesting API.
 pub(crate) struct OcClient {
-    http_client: Client<HttpsConnector<HttpConnector>, Body>,
+    http_client: Client<HttpsConnector<HttpConnector>, RequestBody>,
     scheme: Scheme,
     authority: Authority,
     auth_header: Secret<String>,
@@ -35,8 +40,8 @@ impl OcClient {
     const VERSION_PATH: &'static str = "/tobira/version";
     const STATS_PATH: &'static str = "/tobira/stats";
 
-    pub(crate) fn new(config: &Config) -> Self {
-        let http_client = crate::util::http_client();
+    pub(crate) fn new(config: &Config) -> Result<Self> {
+        let http_client = crate::util::http_client()?;
 
         // Prepare authentication
         let credentials = format!(
@@ -47,13 +52,13 @@ impl OcClient {
         let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
         let auth_header = format!("Basic {}", encoded_credentials);
 
-        Self {
+        Ok(Self {
             http_client,
             scheme: config.opencast.sync_node().scheme.clone(),
             authority: config.opencast.sync_node().authority.clone(),
             auth_header: Secret::new(auth_header),
             username: config.sync.user.clone(),
-        }
+        })
     }
 
     pub(crate) async fn get_version(&self) -> Result<VersionResponse> {
@@ -113,7 +118,7 @@ impl OcClient {
     }
 
     /// Sends the given serialized JSON to the `/stats` endpoint in Opencast.
-    pub async fn send_stats(&self, stats: String) -> Result<Response<Body>> {
+    pub async fn send_stats(&self, stats: String) -> Result<Response<Incoming>> {
         let req = self.req_builder(Self::STATS_PATH)
             .method(http::Method::POST)
             .header(http::header::CONTENT_TYPE, "application/json")
@@ -123,9 +128,9 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
-    fn build_req(&self, path_and_query: &str) -> (Uri, Request<Body>) {
+    fn build_req(&self, path_and_query: &str) -> (Uri, Request<RequestBody>) {
         let req = self.req_builder(path_and_query)
-            .body(Body::empty())
+            .body(RequestBody::empty())
             .expect("bug: failed to build request");
 
         (req.uri().clone(), req)
@@ -146,7 +151,7 @@ impl OcClient {
 
     async fn deserialize_response<T: for<'de> serde::Deserialize<'de>>(
         &self,
-        response: Response<Body>,
+        response: Response<Incoming>,
         uri: &Uri,
     ) -> Result<(T, usize)> {
         let (parts, body) = response.into_parts();

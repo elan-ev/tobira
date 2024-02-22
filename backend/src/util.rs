@@ -1,11 +1,12 @@
 use std::fmt;
 use bytes::Bytes;
-use hyper::{body::HttpBody, client::HttpConnector};
+use http_body_util::BodyExt;
 use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
+use hyper_util::client::legacy::{connect::HttpConnector, Client};
 use rand::{RngCore, CryptoRng};
 use secrecy::Secret;
 
-use crate::prelude::*;
+use crate::{http::Response, prelude::*};
 
 
 /// A lazy `fmt` formatter, specified by a callable. Usually created via
@@ -63,15 +64,44 @@ pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> Secret<[u8; N]> {
     Secret::new(imp(rand::thread_rng()))
 }
 
+pub(crate) type HttpsClient<B> = Client<HttpsConnector<HttpConnector>, B>;
+
 /// Returns an HTTP client that can also speak HTTPS. HTTPS is _not_ enforced!
-pub(crate) fn http_client() -> hyper::Client<HttpsConnector<HttpConnector>, hyper::Body> {
+pub(crate) fn http_client<B>() -> Result<HttpsClient<B>>
+where
+    B: hyper::body::Body + Send,
+    B::Data: Send,
+{
     let https = HttpsConnectorBuilder::new()
         .with_native_roots()
+        .context("failed to load native certificate roots")?
         .https_or_http()
         .enable_http1()
         .enable_http2()
         .build();
-    hyper::Client::builder().build(https)
+    Ok(Client::builder(hyper_util::rt::TokioExecutor::new()).build(https))
+}
+
+pub(crate) type ByteBody = http_body_util::Full<Bytes>;
+
+pub(crate) trait FullBodyExt {
+    fn empty() -> Self;
+}
+
+impl FullBodyExt for ByteBody {
+    fn empty() -> Self {
+        Self::new(Bytes::new())
+    }
+}
+
+pub(crate) trait ResponseExt {
+    fn builder() -> hyper::http::response::Builder;
+}
+
+impl ResponseExt for Response {
+    fn builder() -> hyper::http::response::Builder {
+        hyper::Response::builder()
+    }
 }
 
 /// This just adds a stable version of `Result::inspect` and `Option::inspect`.
@@ -100,7 +130,7 @@ impl<T, E> InspectExt<T> for Result<T, E> {
 
 pub(crate) async fn download_body<B>(body: B) -> Result<Bytes>
 where
-    B: HttpBody,
+    B: hyper::body::Body,
     B::Error: 'static + Send + Sync + std::error::Error,
 {
     // TODO: this should somehow limit the size in order to prevent DOS attacks

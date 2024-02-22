@@ -1,23 +1,24 @@
 use std::unreachable;
 
 use base64::Engine;
-use hyper::{Body, StatusCode};
+use bytes::Bytes;
+use hyper::{body::Incoming, StatusCode, Request};
 use serde::Deserialize;
 
 use crate::{
     auth::config::LoginCredentialsHandler,
     config::OpencastConfig,
     db,
-    http::{self, response::bad_request, Context, Request, Response},
+    http::{self, response::bad_request, Context, Response},
     prelude::*,
-    util::download_body,
+    util::{download_body, ByteBody},
 };
 use super::{config::SessionEndpointHandler, AuthSource, SessionId, User};
 
 
 /// Handles POST requests to `/~session`.
 pub(crate) async fn handle_post_session(
-    req: Request<Body>,
+    req: Request<Incoming>,
     ctx: &Context,
 ) -> Result<Response, Response> {
     let user = match &ctx.config.auth.session.from_session_endpoint {
@@ -71,7 +72,7 @@ pub(crate) async fn handle_post_session(
 /// settings. That's the proper tool to remove sessions. Still:
 ///
 /// TODO: maybe notify the user about these failures?
-pub(crate) async fn handle_delete_session(req: Request<Body>, ctx: &Context) -> Response {
+pub(crate) async fn handle_delete_session(req: Request<Incoming>, ctx: &Context) -> Response {
     if ctx.config.auth.source != AuthSource::TobiraSession {
         warn!("Got DELETE /~session request, but due to 'auth.source', this endpoint is disabled");
         return http::response::not_found();
@@ -80,7 +81,7 @@ pub(crate) async fn handle_delete_session(req: Request<Body>, ctx: &Context) -> 
     let response = Response::builder()
         .status(StatusCode::NO_CONTENT)
         .header("set-cookie", SessionId::unset_cookie().to_string())
-        .body(Body::empty())
+        .body(ByteBody::empty())
         .unwrap();
 
 
@@ -110,7 +111,7 @@ const USERID_FIELD: &str = "userid";
 const PASSWORD_FIELD: &str = "password";
 
 /// Handles `POST /~login` request.
-pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Response {
+pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> Response {
     if ctx.config.auth.session.from_login_credentials == LoginCredentialsHandler::None {
         warn!("Got POST /~login request, but due to 'auth.mode', this endpoint is disabled.");
         return http::response::not_found();
@@ -131,7 +132,7 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
         Ok(v) => v,
         Err(e) => {
             error!("Failed to download login request body: {e}");
-            return bad_request(None);
+            return bad_request("");
         },
     };
 
@@ -185,7 +186,10 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
     };
 
     match user {
-        None => Response::builder().status(StatusCode::FORBIDDEN).body(Body::empty()).unwrap(),
+        None => Response::builder()
+            .status(StatusCode::FORBIDDEN)
+            .body(ByteBody::empty())
+            .unwrap(),
         Some(user) => create_session(user, ctx).await.unwrap_or_else(|e| e),
     }
 }
@@ -196,7 +200,7 @@ async fn check_opencast_login(
     config: &OpencastConfig,
 ) -> Result<Option<User>> {
     trace!("Checking Opencast login...");
-    let client = crate::util::http_client();
+    let client = crate::util::http_client().expect("TODO"); // TODO!!!!
 
     // Send request. We use basic auth here: our configuration checks already
     // assert that we use HTTPS or Opencast is running on the same machine
@@ -207,7 +211,7 @@ async fn check_opencast_login(
     let req = Request::builder()
         .uri(config.sync_node().clone().with_path_and_query("/info/me.json"))
         .header(hyper::header::AUTHORIZATION, auth_header)
-        .body(Body::empty())
+        .body(http_body_util::Empty::<Bytes>::new())
         .unwrap();
     let response = client.request(req).await?;
 
@@ -275,7 +279,7 @@ async fn create_session(mut user: User, ctx: &Context) -> Result<Response, Respo
     Response::builder()
         .status(StatusCode::NO_CONTENT)
         .header("set-cookie", session_id.set_cookie(ctx.config.auth.session.duration).to_string())
-        .body(Body::empty())
+        .body(ByteBody::empty())
         .unwrap()
         .pipe(Ok)
 }

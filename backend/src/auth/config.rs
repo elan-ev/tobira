@@ -1,7 +1,6 @@
 use std::time::Duration;
 
-use hyper::Uri;
-use isahc::http::HeaderName;
+use hyper::{http::HeaderName, Uri};
 use secrecy::Secret;
 use serde::{Deserialize, Deserializer, de::Error};
 

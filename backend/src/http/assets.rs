@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use bstr::ByteSlice;
-use hyper::{Body, StatusCode};
+use hyper::{StatusCode};
 use reinda::{assets, Setup};
 use secrecy::ExposeSecret;
 use serde_json::json;
 
-use crate::{auth::AuthSource, config::Config, prelude::*};
-use super::{Response, handlers::CommonHeadersExt};
+use crate::{auth::AuthSource, config::Config, prelude::*, util::ByteBody};
+use super::{handlers::CommonHeadersExt, Response};
 
 
 const ASSETS: Setup = assets! {
@@ -216,7 +216,7 @@ impl Assets {
             builder = builder.header("cache-control", "public, max-age=31536000, immutable");
         }
 
-        let body = Body::from(data);
+        let body = ByteBody::new(data);
         Some(builder.body(body).expect("bug: invalid response"))
     }
 

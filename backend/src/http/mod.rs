@@ -4,11 +4,9 @@
 //! `hyper` server and catches errors. The main logic is in `handlers.rs`.
 
 use deadpool_postgres::Pool;
-use hyper::{
-    Body, Server,
-    service::{make_service_fn, service_fn},
-};
-use hyperlocal::UnixServerExt;
+use hyper::service::service_fn;
+use hyper_util::{rt::{TokioExecutor, TokioIo}, server::conn::auto::Builder};
+use tokio::net::{TcpListener, UnixListener};
 use std::{
     convert::Infallible,
     fs,
@@ -24,10 +22,11 @@ use crate::{
     api,
     auth::{self, JwtContext},
     config::Config,
+    default_enable_backtraces,
     metrics,
     prelude::*,
     search,
-    default_enable_backtraces,
+    util::ByteBody,
 };
 use self::{
     assets::Assets,
@@ -62,8 +61,8 @@ pub(crate) struct HttpConfig {
 
 
 // Our requests and responses always use the hyper provided body type.
-pub(crate) type Response<T = Body> = hyper::Response<T>;
-pub(crate) type Request<T = Body> = hyper::Request<T>;
+pub(crate) type Response = hyper::Response<ByteBody>;
+// pub(crate) type Request<T = Body> = hyper::Request<T>;
 
 
 /// Context that the request handler has access to.
@@ -105,61 +104,53 @@ pub(crate) async fn serve(
         ctx_clone.auth_caches.maintainence_task(&ctx_clone.config).await;
     });
 
-    // This sets up all the hyper server stuff. It's a bit of magic and touching
-    // this code likely results in strange lifetime errors.
-    //
-    // In short: a hyper "service" is something that can handle requests. The
-    // outer closure is called whenever hyper needs a new service instance (as
-    // far as I understand it, it does that only for each worker thread, for
-    // example). The inner closure is actually called each time a request is
-    // received. Seems a bit more complicated than a single "handler" function,
-    // but I'm sure hyper knows what they are doing.
-    //
-    // All our logic is encoded in the function `handle`. The only thing we are
-    // doing here is to pass the context to that function, and clone its `Arc`
-    // accordingly.
-    //
-    // We wrap the factory definition in a macro because we need two slightly
-    // different factories. One for binding to a unix socket and one for
-    // binding to a TCP socket. The code for defining the factory is exactly
-    // the same, but due to type inference, it results in a different type. The
-    // macro avoids code duplication.
-    macro_rules! factory {
-        () => {
-            make_service_fn(move |_| {
+
+    // Helper macro to avoid duplicate code. It's basically just an abstraction
+    // over TcpListener and UnixListener, which is otherwise annoying to do.
+    macro_rules! listen {
+        ($listener:ident) => {
+            default_enable_backtraces();
+
+            loop {
+                let (tcp, _) = $listener.accept().await.context("failed to accept TCP connection")?;
+                let io = TokioIo::new(tcp);
+
                 let ctx = Arc::clone(&ctx);
-                async {
-                    Ok::<_, Infallible>(service_fn(move |req| {
-                        handle_internal_errors(handle(req, Arc::clone(&ctx)))
-                    }))
-                }
-            })
-        }
+                tokio::task::spawn(async move {
+                    let res = Builder::new(TokioExecutor::new())
+                        .serve_connection(io, service_fn(move |req| {
+                            handle_internal_errors(handle(req, Arc::clone(&ctx)))
+                        }))
+                        .await;
+                    if let Err(e) = res {
+                        warn!("Error serving connectiion: {e:#}");
+                    }
+                });
+            }
+        };
     }
 
 
-    // Start the server with our service.
     if let Some(unix_socket) = &http_config.unix_socket {
         // Bind to Unix domain socket.
         if unix_socket.exists() {
             fs::remove_file(unix_socket)?;
         }
-        let server = Server::bind_unix(&unix_socket)?.serve(factory!());
-        default_enable_backtraces();
-        info!("Listening on unix://{}", unix_socket.display());
+        let listener = UnixListener::bind(unix_socket)
+            .context(format!("failed to bind unix socket {}", unix_socket.display()))?;
         let permissions = fs::Permissions::from_mode(http_config.unix_socket_permissions);
         fs::set_permissions(unix_socket, permissions)?;
-        server.await?;
+        info!("Listening on unix://{}", unix_socket.display());
+        listen!(listener);
     } else {
         // Bind to TCP socket.
         let addr = SocketAddr::new(http_config.address, http_config.port);
-        let server = Server::bind(&addr).serve(factory!());
-        default_enable_backtraces();
-        info!("Listening on http://{}", server.local_addr());
-        server.await?;
+        let listener = TcpListener::bind(&addr).await
+            .context(format!("failed to bind socket address {addr}"))?;
+        info!("Listening on http://{}",
+            listener.local_addr().context("failed to acquire local addr")?);
+        listen!(listener);
     }
-
-    Ok(())
 }
 
 /// This just wraps another future and catches all panics that might occur when

@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use ring::{rand::{SecureRandom, SystemRandom}, signature::EcdsaKeyPair};
 use serde::Serialize;
 use serde_json::json;
@@ -64,7 +65,7 @@ impl JwtContext {
     }
 
     /// Returns the JWKS as string. This is served as public JSON document.
-    pub(crate) fn jwks(&self) -> &str {
+    pub(crate) fn jwks(&self) -> &Bytes {
         &self.auth.jwks
     }
 
@@ -149,7 +150,7 @@ impl JwtConfig {
 
 struct JwtAuth {
     signer: Box<dyn Signer>,
-    jwks: String,
+    jwks: Bytes,
 }
 
 impl JwtAuth {
@@ -191,7 +192,7 @@ impl JwtAuth {
 }
 
 /// Serializes the given `jwk` from `elliptic_curve` into the expected JWKS structure.
-fn jwk_to_jwks(algo: Algorithm, jwk: impl Serialize) -> String {
+fn jwk_to_jwks(algo: Algorithm, jwk: impl Serialize) -> Bytes {
     #[derive(Serialize)]
     struct Jwk<T: Serialize> {
         #[serde(flatten)]
@@ -213,7 +214,7 @@ fn jwk_to_jwks(algo: Algorithm, jwk: impl Serialize) -> String {
             alg: algo.to_str(),
         }]
     };
-    serde_json::to_string(&jwks).expect("failed to serialize JWKS")
+    serde_json::to_string(&jwks).expect("failed to serialize JWKS").into()
 }
 
 /// A signature algorithm with corresponding key. Can sign a message.

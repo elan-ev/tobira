@@ -36,9 +36,10 @@ form_urlencoded = "1.1.0"
 futures = { version = "0.3.1", default-features = false, features = ["std"] }
 hex = "0.4.3"
 hostname = "0.3"
-hyper = { version = "0.14", features = ["client", "http1", "http2", "backports", "deprecated"] }
-hyper-rustls = { version = "0.24.0", features = ["http2"] }
-hyperlocal = { version = "0.8", default-features = false, features = ["server"] }
+hyper = { version = "1", features = ["client", "http1", "http2"] }
+http-body-util = "0.1"
+hyper-rustls = { version = "0.26.0", features = ["http2"] }
+hyper-util = { version = "0.1.3", features = ["client", "server", "http1", "http2"] }
 isahc = { version = "1", features = ["static-ssl"] }
 juniper = { version = "0.15.10", default-features = false, features = ["chrono", "schema-language"] }
 libz-sys = { version = "1", features = ["static"] }

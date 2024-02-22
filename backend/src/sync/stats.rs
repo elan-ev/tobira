@@ -4,7 +4,7 @@ use hyper::StatusCode;
 use serde::Serialize;
 use tokio_postgres::Row;
 
-use crate::{config::Config, db::DbConnection, prelude::*};
+use crate::{config::Config, db::DbConnection, prelude::*, util::Never};
 
 use super::OcClient;
 
@@ -16,12 +16,12 @@ const SEND_PERIOD: Duration = Duration::from_secs(60 * 60 * 24);
 /// to sharing basic data as part of adopter registration, this data is sent to
 /// the Opencast server. Otherwise it is not used at all (and only stored in
 /// memory at the Opencast side).
-pub(crate) async fn run_daemon(db: DbConnection, config: &Config) -> ! {
+pub(crate) async fn run_daemon(db: DbConnection, config: &Config) -> Result<Never> {
     // Let the other more important worker processes do stuff first. This is
     // mainly to have less interleaved output in the log.
     tokio::time::sleep(Duration::from_secs(3)).await;
 
-    let client = OcClient::new(config);
+    let client = OcClient::new(config)?;
 
     loop {
         if let Err(e) = send_stats(&client, &db, config).await {

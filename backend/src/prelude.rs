@@ -9,5 +9,5 @@ pub(crate) use tap::Pipe;
 pub(crate) use crate::{
     auth::HasRoles,
     db::util::{dbargs, FromDb},
-    util::InspectExt,
+    util::{InspectExt, ResponseExt, FullBodyExt},
 };

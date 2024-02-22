@@ -3,13 +3,13 @@ use std::{borrow::Cow, time::Duration, collections::HashSet};
 use base64::Engine;
 use cookie::Cookie;
 use deadpool_postgres::Client;
-use hyper::{HeaderMap, http::HeaderValue, StatusCode, Uri};
+use hyper::{http::HeaderValue, HeaderMap, Request, StatusCode, Uri};
 use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
 use tokio_postgres::Error as PgError;
 
-use crate::{db::util::select, http::{response, Request, Response}, prelude::*, util::download_body};
+use crate::{db::util::select, http::{response, Response}, prelude::*, util::{self, download_body, ByteBody}};
 
 
 mod cache;
@@ -219,7 +219,7 @@ impl User {
         // and just remove the headers we are not interested in. This is kind
         // of blocked by this: https://github.com/hyperium/http/issues/541
 
-        let mut req = Request::new(hyper::Body::empty());
+        let mut req = Request::new(ByteBody::empty());
         for h in auth_config.callback.relevant_headers.iter().flatten() {
             for value in headers.get_all(h) {
                 req.headers_mut().append(h.clone(), value.clone());
@@ -271,14 +271,14 @@ impl User {
 
     /// Impl for `callback:...` and `login-callback:...`.
     pub async fn from_callback_impl(
-        req: Request,
+        req: Request<ByteBody>,
         auth_config: &AuthConfig,
     ) -> Result<Option<Self>, Response> {
         trace!("Sending request to callback '{}'", req.uri());
 
         // Send request and download response.
         // TOOD: Only create client once!
-        let client = hyper::Client::new();
+        let client = util::http_client().expect("TODO"); // TODO
         let response = client.request(req).await.map_err(|e| {
             // TODO: maybe limit how quickly that can be logged?
             error!("Error contacting auth callback: {e}");
