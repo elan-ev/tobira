@@ -8,6 +8,7 @@ export type LoginOutcome = "forbidden" | {
     username: string;
     displayName: string;
     roles: string[];
+    userRole: string;
     email?: string;
 };
 
@@ -34,13 +35,7 @@ export type ServerOptions = {
     check: LoginCheck;
 
     /** What the server should listen on. Defaults to 127.0.0.1:3091.*/
-    listen?: HttpLocation,
-
-    /**
-     * How to reach Tobira. On successful logins, `POST /~session` is sent to
-     * the specified Tobira. Default: `{ host: "localhost", port: 3080 }`.
-     */
-    tobira?: HttpLocation;
+    listen: HttpLocation,
 
     /**
      * Called once the server starts listening (e.g. the port is open). If not
@@ -49,35 +44,13 @@ export type ServerOptions = {
     onListen?: () => void;
 };
 
-
-/**
- * Starts an HTTP server that handles Tobira logins by calling the specified
- * `check` function.
- *
- * While this is only intended for login requests (`POST /~login`), the path of
- * the request is actually completely ignored. This might be convenient for
- * some situations and does not introduce any problems. However, some other
- * conditions are checked:
- * - If method is not POST => 405 Method not allowed
- * - If the "Content-Type" header is missing or does not start
- *   with "application/x-www-form-urlencoded" => 400 Bad request
- * - If the body is not UTF-8 => 400 Bad request
- * - If the body is not a correctly encoded query string with `userid` and
- *   `password` fields exactly once => 400 Bad request
- *
- * If all those checks pass, the `check` function is called with the login data.
- * Depending on what it returns, either "Forbidden" is replied or a user
- * session in Tobira is created and an appropriate response is sent.
- */
-export const runServer = async (options: ServerOptions): Promise<void> => (
+const runServerImpl = async (
+    options: Pick<ServerOptions, "listen" | "onListen">,
+    handler: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
+): Promise<void> => (
     new Promise((resolve, reject) => {
-        const listen = options.listen ?? {
-            host: "127.0.0.1",
-            port: 3091,
-        };
-
         const server = http.createServer((req, res) => {
-            listener(req, res, options)
+            handler(req, res)
                 .then(() => res.end())
                 .catch(e => {
                     if (e instanceof ErrorResponse) {
@@ -94,23 +67,20 @@ export const runServer = async (options: ServerOptions): Promise<void> => (
         });
         server.on("listening", () => {
             if (options.onListen == null) {
-                console.log("Listening on: ", listen);
+                console.log("Listening on: ", options.listen);
             } else {
                 options.onListen();
             }
         });
         server.on("error", reject);
         server.on("close", resolve);
-        if ("socketPath" in listen) {
-            server.listen(listen.socketPath);
+        if ("socketPath" in options.listen) {
+            server.listen(options.listen.socketPath);
         } else {
-            server.listen(listen.port, listen.host);
+            server.listen(options.listen.port, options.listen.host);
         }
     })
 );
-
-const USERID_FIELD = "userid";
-const PASSWORD_FIELD = "password";
 
 class ErrorResponse {
     code: number;
@@ -122,10 +92,44 @@ class ErrorResponse {
     }
 }
 
-const listener = async (
+export type LoginProxyOptions = ServerOptions & {
+    /**
+     * How to reach Tobira. On successful logins, `POST /~session` is sent to
+     * the specified Tobira. Default: `{ host: "localhost", port: 3080 }`.
+     */
+    tobira?: HttpLocation;
+};
+
+/**
+ * Starts an HTTP server that handles Tobira raw logins by calling the specified
+ * `check` function. This is useful for the former mode `login-proxy`.
+ *
+ * While this is only intended for login requests (`POST /~login`), the path of
+ * the request is actually completely ignored. This might be convenient for
+ * some situations and does not introduce any problems. However, some other
+ * conditions are checked:
+ * - If method is not POST => 405 Method not allowed
+ * - If the "Content-Type" header is missing or does not start
+ *   with "application/x-www-form-urlencoded" => 400 Bad request
+ * - If the body is not UTF-8 => 400 Bad request
+ * - If the body is not a correctly encoded query string with `userid` and
+ *   `password` fields exactly once => 400 Bad request
+ *
+ * If all those checks pass, the `check` function is called with the login data.
+ * Depending on what it returns, either "Forbidden" is replied or a user
+ * session in Tobira is created and an appropriate response is sent.
+ */
+export const runLoginProxyServer = async (options: LoginProxyOptions): Promise<void> => (
+    runServerImpl(options, (req, res) => loginProxyHandler(req, res, options))
+);
+
+const USERID_FIELD = "userid";
+const PASSWORD_FIELD = "password";
+
+const loginProxyHandler = async (
     req: IncomingMessage,
     res: ServerResponse,
-    { check, tobira }: ServerOptions,
+    { check, tobira }: LoginProxyOptions,
 ) => {
     // Make sure method and content type are correct.
     if (req.method !== "POST") {
@@ -137,19 +141,9 @@ const listener = async (
     }
 
 
-    // Read full body and make sure it's proper UTF-8.
-    const body = await downloadBody(req);
-    const decoder = new TextDecoder("utf8", { fatal: true });
-    let bodyStr;
-    try {
-        bodyStr = decoder.decode(body);
-    } catch (e) {
-        throw new ErrorResponse(StatusCode.BAD_REQUEST, "Request body is not valid UTF-8");
-    }
-
-
     // Parse body as form data and make sure both expected fields are present.
-    const form = querystring.parse(bodyStr);
+    const body = await downloadBody(req);
+    const form = querystring.parse(body);
     const [userid, password] = [USERID_FIELD, PASSWORD_FIELD].map(key => {
         // This can either be a string (if the key is present only once) or an
         // array or `undefined`. We even handle the case of the one element
@@ -182,7 +176,8 @@ const listener = async (
     if (outcome === "forbidden") {
         res.writeHead(StatusCode.FORBIDDEN);
     } else {
-        const { username, displayName, roles, email } = outcome;
+        const { username, displayName, roles, userRole, email } = outcome;
+        roles.push(userRole);
         const b64encode = (s: string) => Buffer.from(s).toString("base64");
 
         let response: http.IncomingMessage;
@@ -220,14 +215,22 @@ const listener = async (
     }
 };
 
-const downloadBody = async (req: IncomingMessage): Promise<Buffer> => (
-    new Promise((resolve, reject) => {
+/** Downloads the body from the request and makes sure it's proper UTF-8. */
+const downloadBody = async (req: IncomingMessage): Promise<string> => {
+    const buffer: Buffer = await new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];
         req.on("data", chunk => chunks.push(chunk));
         req.on("end", () => resolve(Buffer.concat(chunks)));
         req.on("error", reject);
-    })
-);
+    });
+
+    const decoder = new TextDecoder("utf8", { fatal: true });
+    try {
+        return decoder.decode(buffer);
+    } catch (e) {
+        throw new ErrorResponse(StatusCode.BAD_REQUEST, "Request body is not valid UTF-8");
+    }
+};
 
 // Just to make the code above nicer.
 const StatusCode = {

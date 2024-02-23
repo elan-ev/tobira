@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import { HttpLocation, LoginCheck, runServer, ServerOptions } from "../authkit";
+import { HttpLocation, LoginCheck, runLoginProxyServer } from "../authkit";
 
 
 const main = async () => {
@@ -29,7 +29,7 @@ const main = async () => {
     process.on("SIGTERM", () => process.exit(0));
 
     try {
-        await runServer({
+        await runLoginProxyServer({
             listen,
             tobira,
             check,
@@ -54,37 +54,49 @@ const check: LoginCheck = async ({ userid, password }) => {
         ? {
             username: userid,
             displayName: user.displayName,
+            userRole: user.userRole,
             roles: user.roles.concat(["ROLE_ANONYMOUS", "ROLE_USER"]),
             email: user.email,
         }
         : "forbidden";
 };
 
+type DummyUserInfo = {
+    displayName: string;
+    userRole: string;
+    roles: string[];
+    email?: string;
+};
 const DUMMY_PASSWORD = "tobira";
-const DUMMY_USERS: Record<string, { displayName: string; roles: string[]; email?: string; }> = {
+const DUMMY_USERS: Record<string, DummyUserInfo> = {
     "admin": {
         displayName: "Administrator",
-        roles: ["ROLE_ADMIN", "ROLE_USER_ADMIN", "ROLE_SUDO"],
+        userRole: "ROLE_USER_ADMIN",
+        roles: ["ROLE_ADMIN", "ROLE_SUDO"],
         email: "admin@example.org",
     },
     "sabine": {
         displayName: "Sabine Rudolfs",
-        roles: ["ROLE_USER_SABINE", "ROLE_INSTRUCTOR", "ROLE_STAFF", "ROLE_TOBIRA_MODERATOR"],
+        userRole: "ROLE_USER_SABINE",
+        roles: ["ROLE_INSTRUCTOR", "ROLE_STAFF", "ROLE_TOBIRA_MODERATOR"],
         email: "sabine@example.org",
     },
     "björk": {
         displayName: "Prof. Björk Guðmundsdóttir",
-        roles: ["ROLE_USER_BJOERK", "ROLE_EXTERNAL", "ROLE_TOBIRA_MODERATOR"],
+        userRole: "ROLE_USER_BJOERK",
+        roles: ["ROLE_EXTERNAL", "ROLE_TOBIRA_MODERATOR"],
         email: "bjoerk@example.org",
     },
     "morgan": {
         displayName: "Morgan Yu",
-        roles: ["ROLE_USER_MORGAN", "ROLE_STUDENT", "ROLE_TOBIRA_UPLOAD"],
+        userRole: "ROLE_USER_MORGAN",
+        roles: ["ROLE_STUDENT", "ROLE_TOBIRA_UPLOAD"],
         email: "morgan@example.org",
     },
     "jose": {
         displayName: "José Carreño Quiñones",
-        roles: ["ROLE_USER_JOSE", "ROLE_STUDENT"],
+        userRole: "ROLE_USER_JOSE",
+        roles: ["ROLE_STUDENT"],
     },
 };
 
