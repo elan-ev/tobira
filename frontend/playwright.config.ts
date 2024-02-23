@@ -9,7 +9,7 @@ export default defineConfig({
     expect: { timeout: 20 * 1000 },
 
     use: {
-        baseURL: "http://localhost:3090",
+        baseURL: "http://localhost:3080",
         headless: true,
         locale: "en",
         trace: "retain-on-failure",
@@ -35,7 +35,7 @@ export default defineConfig({
 
     webServer: {
         command: "cargo run --manifest-path=../backend/Cargo.toml -- serve",
-        url: "http://localhost:3090",
+        url: "http://localhost:3080",
         reuseExistingServer: true,
     },
 });

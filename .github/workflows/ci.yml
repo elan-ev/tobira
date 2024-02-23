@@ -212,7 +212,6 @@ jobs:
       working-directory: util/containers
       run: |
         docker-compose -f docker-compose.yml up -d \
-          tobira-auth-proxy \
           tobira-login-handler \
           tobira-meilisearch
 
@@ -229,7 +228,7 @@ jobs:
       uses: JarvusInnovations/background-action@v1
       with:
         run: ./tobira serve --config util/dev-config/config.toml &
-        wait-on: http://localhost:3090
+        wait-on: http://localhost:3080
     - name: Run playwright tests
       working-directory: frontend
       run: npx playwright test

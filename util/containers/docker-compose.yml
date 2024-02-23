@@ -1,24 +1,11 @@
 version: '2'
 
 services:
-  # A reverse proxy in front of Tobira that handles authentication via the login
-  # handler.
-  tobira-auth-proxy:
-    image: nginx
-    ports:
-      - "3090:3090"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - ./tobira-auth-proxy-nginx.conf:/etc/nginx/conf.d/default.conf
-
-  # A simple webserver handling login requests with some dummy users.
+  # The server handling login callback requests.
   tobira-login-handler:
     image: node:18
     ports:
       - "3091:3091"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ../dummy-login/dist/index.js:/usr/bin/login-handler.js
     command: node /usr/bin/login-handler.js

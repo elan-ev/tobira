@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import { HttpLocation, LoginCheck, runLoginProxyServer } from "../authkit";
+import { HttpLocation, LoginCheck, runLoginCallbackServer } from "../authkit";
 
 
 const main = async () => {
@@ -7,21 +7,17 @@ const main = async () => {
     // test deployments, we pass the deploy ID. In the latter case we need to
     // use Unix sockets.
     let listen: HttpLocation;
-    let tobira: HttpLocation;
     if (process.argv[2]) {
         const deployId = process.argv[2];
         const listenSocket = `/opt/tobira/${deployId}/socket/auth.sock`;
-        const tobiraSocket = `/opt/tobira/${deployId}/socket/tobira.sock`;
 
         // Remove socket if it already exists. Yes, that disconnects existing
         // connections, but its fine for test deployment.
         await fs.rm(listenSocket, { force: true });
 
         listen = { socketPath: listenSocket };
-        tobira = { socketPath: tobiraSocket };
     } else {
         listen = { host: "0.0.0.0", port: 3091 };
-        tobira = { host: "host.docker.internal", port: 3080 };
     };
 
     // React to sigterm to be able to quickly shut down. This is a problem in
@@ -29,9 +25,8 @@ const main = async () => {
     process.on("SIGTERM", () => process.exit(0));
 
     try {
-        await runLoginProxyServer({
+        await runLoginCallbackServer({
             listen,
-            tobira,
             check,
             onListen: () => {
                 console.log("Listening on:", listen);

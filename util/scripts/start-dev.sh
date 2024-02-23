@@ -4,13 +4,13 @@
 # auto-rebuilding. Only thing this doesn't do is start any docker containers.
 #
 # If 'without-login' is passed as first argument, the dev server forwards to
-# port 3080 instead of 3090. This only makes sense if you don't want to start
+# port 3080 instead of 3080. This only makes sense if you don't want to start
 # the auth-proxy for some reason.
 
 basedir=$(dirname "$0")
 source "$basedir"/common-vars.sh
 
-target_port=3090
+target_port=3080
 if [[ $1 == without-login ]]; then
     target_port=3080
 fi
