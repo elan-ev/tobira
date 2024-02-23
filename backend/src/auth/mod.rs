@@ -1,4 +1,4 @@
-use std::{borrow::Cow, time::Duration, collections::HashSet};
+use std::{borrow::Cow, collections::HashSet, time::Duration};
 
 use base64::Engine;
 use cookie::Cookie;
@@ -282,12 +282,14 @@ impl User {
         // Send request and download response.
         let response = ctx.http_client.request(req).await.map_err(|e| {
             // TODO: maybe limit how quickly that can be logged?
-            error!("Error contacting auth callback: {e}");
+            let e = anyhow::Error::from(e);
+            error!("Error contacting auth callback: {e:#}");
             callback_bad_gateway()
         })?;
         let (parts, body) = response.into_parts();
         let body = download_body(body).await.map_err(|e| {
-            error!("Error downloading body from auth callback: {e}");
+            let e = anyhow::Error::from(e);
+            error!("Error downloading body from auth callback: {e:#}");
             callback_bad_gateway()
         })?;
 
