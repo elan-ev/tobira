@@ -9,7 +9,12 @@ use secrecy::ExposeSecret;
 use serde::Deserialize;
 use tokio_postgres::Error as PgError;
 
-use crate::{db::util::select, http::{response, Response}, prelude::*, util::{self, download_body, ByteBody}};
+use crate::{
+    db::util::select,
+    http::{response, Context, Response},
+    prelude::*,
+    util::{download_body, ByteBody},
+};
 
 
 mod cache;
@@ -66,19 +71,18 @@ pub(crate) struct User {
 impl AuthContext {
     pub(crate) async fn new(
         headers: &HeaderMap,
-        auth_config: &AuthConfig,
         db: &Client,
-        caches: &Caches,
+        ctx: &Context,
     ) -> Result<Self, Response> {
         if let Some(given_key) = headers.get("x-tobira-trusted-external-key") {
-            if let Some(trusted_key) = &auth_config.trusted_external_key {
+            if let Some(trusted_key) = &ctx.config.auth.trusted_external_key {
                 if trusted_key.expose_secret() == given_key {
                     return Ok(Self::TrustedExternal);
                 }
             }
         }
 
-        User::new(headers, auth_config, db, caches)
+        User::new(headers, db, ctx)
             .await?
             .map_or(Self::Anonymous, Self::User)
             .pipe(Ok)
@@ -105,22 +109,21 @@ impl User {
     /// `auth.source`. The `users` table is updated if appropriate.
     pub(crate) async fn new(
         headers: &HeaderMap,
-        auth_config: &AuthConfig,
         db: &Client,
-        caches: &Caches,
+        ctx: &Context,
     ) -> Result<Option<Self>, Response> {
-        let mut out = match &auth_config.source {
+        let mut out = match &ctx.config.auth.source {
             AuthSource::None => None,
-            AuthSource::TobiraSession => Self::from_session(headers, db, auth_config).await?,
-            AuthSource::TrustAuthHeaders => Self::from_auth_headers(headers, auth_config),
+            AuthSource::TobiraSession => Self::from_session(headers, db, &ctx.config.auth).await?,
+            AuthSource::TrustAuthHeaders => Self::from_auth_headers(headers, &ctx.config.auth),
             AuthSource::Callback(uri) => {
-                Self::from_auth_callback(headers, uri, auth_config, caches).await?
+                Self::from_auth_callback(headers, uri, ctx).await?
             }
         };
 
         if let Some(user) = &mut out {
             user.add_default_roles();
-            caches.user.upsert_user_info(user, db).await;
+            ctx.auth_caches.user.upsert_user_info(user, db).await;
         }
 
 
@@ -212,21 +215,20 @@ impl User {
     pub(crate) async fn from_auth_callback(
         headers: &HeaderMap,
         callback_url: &Uri,
-        auth_config: &AuthConfig,
-        caches: &Caches,
+        ctx: &Context,
     ) -> Result<Option<Self>, Response> {
         // TODO: instead of creating a new header map, we could take the old one
         // and just remove the headers we are not interested in. This is kind
         // of blocked by this: https://github.com/hyperium/http/issues/541
 
         let mut req = Request::new(ByteBody::empty());
-        for h in auth_config.callback.relevant_headers.iter().flatten() {
+        for h in ctx.config.auth.callback.relevant_headers.iter().flatten() {
             for value in headers.get_all(h) {
                 req.headers_mut().append(h.clone(), value.clone());
             }
         }
 
-        if let Some(relevant_cookies) = &auth_config.callback.relevant_cookies {
+        if let Some(relevant_cookies) = &ctx.config.auth.callback.relevant_cookies {
             headers.get_all(hyper::header::COOKIE)
                 .into_iter()
                 .filter_map(|value| value.to_str().ok()) // Ignore non-UTF8 cookies
@@ -250,20 +252,21 @@ impl User {
 
         // Check cache.
         let mut header_copy = None;
-        if !auth_config.callback.cache_duration.is_zero() {
+        if !ctx.config.auth.callback.cache_duration.is_zero() {
             header_copy = Some(req.headers().clone());
-            if let Some(user) = caches.callback.get(req.headers(), &auth_config.callback) {
+            let callback_config = &ctx.config.auth.callback;
+            if let Some(user) = ctx.auth_caches.callback.get(req.headers(), callback_config) {
                 return Ok(user);
             }
         }
 
         // Cache miss or disabled cache: ask the callback.
         *req.uri_mut() = callback_url.clone();
-        let out = Self::from_callback_impl(req, auth_config).await?;
+        let out = Self::from_callback_impl(req, ctx).await?;
 
         // Insert into cache
-        if !auth_config.callback.cache_duration.is_zero() {
-            caches.callback.insert(header_copy.unwrap(), out.clone());
+        if !ctx.config.auth.callback.cache_duration.is_zero() {
+            ctx.auth_caches.callback.insert(header_copy.unwrap(), out.clone());
         }
 
         Ok(out)
@@ -272,14 +275,12 @@ impl User {
     /// Impl for `callback:...` and `login-callback:...`.
     pub async fn from_callback_impl(
         req: Request<ByteBody>,
-        auth_config: &AuthConfig,
+        ctx: &Context,
     ) -> Result<Option<Self>, Response> {
         trace!("Sending request to callback '{}'", req.uri());
 
         // Send request and download response.
-        // TOOD: Only create client once!
-        let client = util::http_client().expect("TODO"); // TODO
-        let response = client.request(req).await.map_err(|e| {
+        let response = ctx.http_client.request(req).await.map_err(|e| {
             // TODO: maybe limit how quickly that can be logged?
             error!("Error contacting auth callback: {e}");
             callback_bad_gateway()
@@ -327,7 +328,7 @@ impl User {
                     error!("Auth callback returned empty strings as user info");
                     return Err(callback_bad_gateway());
                 }
-                if !auth_config.is_user_role(&user_role) {
+                if !ctx.config.auth.is_user_role(&user_role) {
                     error!("Auth callback returned a user role that does not start \
                         with the configured user role prefix.");
                     return Err(callback_bad_gateway());

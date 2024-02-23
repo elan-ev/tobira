@@ -26,7 +26,7 @@ use crate::{
     metrics,
     prelude::*,
     search,
-    util::ByteBody,
+    util::{self, ByteBody, HttpsClient},
 };
 use self::{
     assets::Assets,
@@ -75,6 +75,7 @@ pub(crate) struct Context {
     pub(crate) search: Arc<search::Client>,
     pub(crate) metrics: Arc<metrics::Metrics>,
     pub(crate) auth_caches: auth::Caches,
+    pub(crate) http_client: HttpsClient<ByteBody>,
 }
 
 
@@ -97,6 +98,7 @@ pub(crate) async fn serve(
         search: Arc::new(search),
         metrics: Arc::new(metrics::Metrics::new()),
         auth_caches: auth::Caches::new(),
+        http_client: util::http_client().context("failed to create HTTP client")?,
     });
 
     let ctx_clone = ctx.clone();

@@ -1,13 +1,11 @@
 use std::unreachable;
 
 use base64::Engine;
-use bytes::Bytes;
 use hyper::{body::Incoming, StatusCode, Request};
 use serde::Deserialize;
 
 use crate::{
     auth::config::LoginCredentialsHandler,
-    config::OpencastConfig,
     db,
     http::{self, response::bad_request, Context, Response},
     prelude::*,
@@ -31,12 +29,7 @@ pub(crate) async fn handle_post_session(
             User::from_auth_headers(&req.headers(), &ctx.config.auth)
         }
         SessionEndpointHandler::Callback(callback_url) => {
-            User::from_auth_callback(
-                &req.headers(),
-                &callback_url,
-                &ctx.config.auth,
-                &ctx.auth_caches,
-            ).await?
+            User::from_auth_callback(&req.headers(), &callback_url, ctx).await?
         }
     };
 
@@ -160,7 +153,7 @@ pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> 
     // Check the login data.
     let user = match &ctx.config.auth.session.from_login_credentials {
         LoginCredentialsHandler::Opencast => {
-            match check_opencast_login(&userid, &password, &ctx.config.opencast).await {
+            match check_opencast_login(&userid, &password, ctx).await {
                 Err(e) => {
                     error!("Error occured while checking Opencast login data: {e:#}");
                     return http::response::internal_server_error();
@@ -177,7 +170,7 @@ pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> 
             *req.method_mut() = hyper::Method::POST;
             *req.uri_mut() = callback_url.clone();
 
-            match User::from_callback_impl(req, &ctx.config.auth).await {
+            match User::from_callback_impl(req, ctx).await {
                 Err(e) => return e,
                 Ok(user) => user,
             }
@@ -197,10 +190,9 @@ pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> 
 async fn check_opencast_login(
     userid: &str,
     password: &str,
-    config: &OpencastConfig,
+    ctx: &Context,
 ) -> Result<Option<User>> {
     trace!("Checking Opencast login...");
-    let client = crate::util::http_client().expect("TODO"); // TODO!!!!
 
     // Send request. We use basic auth here: our configuration checks already
     // assert that we use HTTPS or Opencast is running on the same machine
@@ -209,11 +201,11 @@ async fn check_opencast_login(
         .encode(&format!("{userid}:{password}"));
     let auth_header = format!("Basic {}", credentials);
     let req = Request::builder()
-        .uri(config.sync_node().clone().with_path_and_query("/info/me.json"))
+        .uri(ctx.config.opencast.sync_node().clone().with_path_and_query("/info/me.json"))
         .header(hyper::header::AUTHORIZATION, auth_header)
-        .body(http_body_util::Empty::<Bytes>::new())
+        .body(ByteBody::empty())
         .unwrap();
-    let response = client.request(req).await?;
+    let response = ctx.http_client.request(req).await?;
 
 
     // We treat all non-OK response as invalid login data.
