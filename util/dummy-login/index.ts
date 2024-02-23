@@ -50,15 +50,18 @@ const main = async () => {
 
 const check: LoginCheck = async ({ userid, password }) => {
     const user = DUMMY_USERS[userid];
-    return password === DUMMY_PASSWORD && user
-        ? {
+    if (password === DUMMY_PASSWORD && user) {
+        return {
             username: userid,
             displayName: user.displayName,
             userRole: user.userRole,
             roles: user.roles.concat(["ROLE_ANONYMOUS", "ROLE_USER"]),
             email: user.email,
         }
-        : "forbidden";
+    } else {
+        console.log(`Invalid login ${userid}:${password}`);
+        return "forbidden";
+    }
 };
 
 type DummyUserInfo = {
