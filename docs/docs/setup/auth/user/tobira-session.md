@@ -66,7 +66,8 @@ Deno.serve({ port: 7007 }, async (request) => {
       outcome: "user",
       username: "peter",
       displayName: "Peter Lustig",
-      roles: ["ROLE_USER_PETER", "ROLE_USER", "ROLE_ANONYMOUS", ...],
+      userRole: "ROLE_USER_PETER",
+      roles: ["ROLE_USER", "ROLE_ANONYMOUS", ...],
     });
   } else {
     return Response.json({
