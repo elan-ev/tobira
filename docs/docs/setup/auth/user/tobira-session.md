@@ -44,7 +44,7 @@ This allows you to handle login attempts in your own code.
 This is similar to [the `"callback:..."` auth source](./callback) in many ways.
 You also have to specify an HTTP endpoint and your callback is also expected to return the JSON as specified in the above link.
 
-What's different is that your login callback does not receive the headers of the incoming request, but the login credentials as JSON in the request body (e.g. `{ "userid": "joachim", "password": "blub" }`).
+What's different is that your login callback does not receive the headers of the incoming request, but the login credentials as JSON in the request body (e.g. `{ "userid": "joachim", "password": "blub" }`) as `POST` request.
 Consequently, `auth.callback.relevant_headers` and `auth.callback.relevant_cookies` are ignored for the login-callback.
 The replies from these login callbacks are *not* cached.
 

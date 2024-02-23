@@ -24,7 +24,7 @@ Your callback needs to be an HTTP endpoint that you specify behind the colon of 
 The URL can have a path, but no query or fragment part.
 You also have to specify `auth.callback.relevant_headers` and/or `relevant_cookies`: a list of headers/cookies that your auth logic reads.
 
-On receiving a request that needs authentication, Tobira sends a request to your callback.
+On receiving a request that needs authentication, Tobira sends a `GET` request to your callback.
 That request has no body, but all `relevant_headers` and `relevant_cookies` copied from the incoming request.
 If you include `"cookie"` in the `relevant_headers` field, all cookies are always forwarded (note: this would usually make the [caching](#caching) fairly useless, so you probably want to disable it then).
 If none of the relevant headers or cookies are in the incoming request, your auth callback is not called at all and the request is treated as unauthenticated.
