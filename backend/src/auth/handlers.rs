@@ -1,7 +1,7 @@
 use std::unreachable;
 
 use base64::Engine;
-use hyper::{body::Incoming, StatusCode, Request};
+use hyper::{body::Incoming, StatusCode, Request, http::HeaderValue};
 use serde::Deserialize;
 
 use crate::{
@@ -169,6 +169,8 @@ pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> 
             let mut req = Request::new(body.to_string().into());
             *req.method_mut() = hyper::Method::POST;
             *req.uri_mut() = callback_url.clone();
+            req.headers_mut()
+                .insert(hyper::header::CONTENT_TYPE, HeaderValue::from_static("application/json"));
 
             match User::from_callback_impl(req, ctx).await {
                 Err(e) => return e,
