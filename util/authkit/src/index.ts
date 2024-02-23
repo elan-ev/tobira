@@ -92,6 +92,66 @@ class ErrorResponse {
     }
 }
 
+export const runLoginCallbackServer = async (options: ServerOptions): Promise<void> => (
+    runServerImpl(options, (req, res) => loginCallbackHandler(req, res, options))
+);
+
+const loginCallbackHandler = async (
+    req: IncomingMessage,
+    res: ServerResponse,
+    { check }: ServerOptions,
+) => {
+    // Make sure method and content type are correct.
+    if (req.method !== "POST") {
+        throw new ErrorResponse(StatusCode.METHOD_NOT_ALLOWED);
+    }
+
+    if (!req.headers["content-type"]?.startsWith("application/json")) {
+        throw new ErrorResponse(StatusCode.BAD_REQUEST, "incorrect content type");
+    }
+
+
+    // Parse body as form data and make sure both expected fields are present.
+    const body = await downloadBody(req);
+    let userid;
+    let password;
+    try {
+        const json = JSON.parse(body);
+        userid = json["userid"];
+        password = json["password"];
+    } catch (e) {
+        throw new ErrorResponse(StatusCode.BAD_REQUEST, "Invalid JSON request body");
+    }
+    if (userid == null || password == null) {
+        throw new ErrorResponse(StatusCode.BAD_REQUEST, "Missing fields in body");
+    }
+
+
+    // Actually perform login check and build appropriate response.
+    let outcome;
+    try {
+        outcome = await check({ userid, password });
+    } catch(e) {
+        console.error("Login check threw an exception: ", e);
+        res.writeHead(StatusCode.INTERNAL_SERVER_ERROR);
+        return;
+    };
+
+    // Reply with outcome
+    res.writeHead(200, { "Content-Type": "application/json" });
+    if (outcome === "forbidden") {
+        res.end(JSON.stringify({
+            outcome: "no-user",
+        }));
+    } else {
+        res.end(JSON.stringify({
+            outcome: "user",
+            ...outcome,
+        }));
+    }
+};
+
+
 export type LoginProxyOptions = ServerOptions & {
     /**
      * How to reach Tobira. On successful logins, `POST /~session` is sent to
