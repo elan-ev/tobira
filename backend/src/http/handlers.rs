@@ -1,4 +1,9 @@
-use hyper::{Body, Method, StatusCode, http::{HeaderValue, uri::PathAndQuery}, header, Uri};
+use hyper::{
+    body::Incoming,
+    header,
+    http::{uri::PathAndQuery, HeaderValue},
+    Method, Request, StatusCode, Uri,
+};
 use juniper::{http::GraphQLResponse, graphql_value};
 use std::{
     collections::HashSet,
@@ -11,17 +16,19 @@ use std::{
 use crate::{
     api,
     auth::{self, AuthContext},
-    Config,
     db::{self, Transaction},
     http::response::bad_request,
     metrics::HttpReqCategory,
-    prelude::*, rss,
+    prelude::*,
+    rss,
+    util::{download_body, ByteBody},
+    Config,
 };
-use super::{Context, Request, Response, response};
+use super::{Context, Response, response};
 
 
 /// This is the main HTTP entry point, called for each incoming request.
-pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
+pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Response {
     let time_incoming = Instant::now();
     trace!(
         "Incoming HTTP {:?} request to '{}'",
@@ -77,7 +84,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
             Response::builder()
                 .status(StatusCode::METHOD_NOT_ALLOWED)
                 .header("Content-Type", "text/plain; charset=UTF-8")
-                .body(Body::from("405 Method not allowed"))
+                .body(ByteBody::new("405 Method not allowed".into()))
                 .unwrap()
         }
 
@@ -118,7 +125,7 @@ pub(super) async fn handle(req: Request<Body>, ctx: Arc<Context>) -> Response {
             register_req!(HttpReqCategory::Other);
             Response::builder()
                 .header("Content-Type", "application/json")
-                .body(Body::from(ctx.jwt.jwks().to_owned()))
+                .body(ByteBody::new(ctx.jwt.jwks().clone()))
                 .unwrap()
         }
 
@@ -186,13 +193,13 @@ async fn handle_rss_request(path: &str, ctx: &Arc<Context>) -> Result<Response, 
     rss::generate_feed(&ctx, series_id).await.map(|rss_content| {
         Response::builder()
             .header("Content-Type", "application/rss+xml")
-            .body(Body::from(rss_content))
+            .body(ByteBody::from(rss_content))
             .unwrap()
     })
 }
 
 /// Handles a request to `/graphql`. Method has to be POST.
-async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Response> {
+async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, Response> {
     // TODO: With Juniper 0.16, this function can likely be simplified!
 
     /// This is basically `juniper::http::GraphQLRequest`. We unfortunately have
@@ -241,21 +248,21 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
 
     // Make sure the content type is correct. We do not support `application/graphql`.
     if parts.headers.get(hyper::header::CONTENT_TYPE).map_or(true, |v| v != "application/json") {
-        return Err(response::bad_request(Some("content type should be 'application/json'")));
+        return Err(response::bad_request("content type should be 'application/json'"));
     }
 
     // Download the full body. Responding with 400 if this fails is maybe not
     // correct, but when this fails there is likely a network problem and our
     // response won't ever be seen anyway.
-    let raw_body = hyper::body::to_bytes(body).await.map_err(|e| {
+    let raw_body = download_body(body).await.map_err(|e| {
         error!("Failed to download API request body: {e}");
-        response::bad_request(None)
+        response::bad_request("")
     })?;
 
     // Parse body as GraphQL request.
     let gql_request = serde_json::from_slice::<GraphQLReq>(&raw_body).map_err(|e| {
         warn!("Failed to deserialize GraphQL request: {e}");
-        response::bad_request(Some("invalid GraphQL request body"))
+        response::bad_request("invalid GraphQL request body")
     })?;
 
 
@@ -264,12 +271,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
     let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get auth session
-    let auth = AuthContext::new(
-        &parts.headers,
-        &ctx.config.auth,
-        &connection,
-        &ctx.auth_caches,
-    ).await?;
+    let auth = AuthContext::new(&parts.headers, &connection, &ctx).await?;
 
     let tx = match connection.transaction().await {
         Ok(tx) => tx,
@@ -363,7 +365,7 @@ async fn handle_api(req: Request<Body>, ctx: &Context) -> Result<Response, Respo
             // been executed, but we roll back the transaction anyway.
             warn!("GraphQL request error: {e}");
             log_and_rollback!();
-            return Err(bad_request(format!("bad GraphQL request: {e}").as_str()));
+            return Err(bad_request(format!("bad GraphQL request: {e}")));
         }
 
         Ok((value, errors)) if !errors.is_empty() => {
@@ -533,7 +535,7 @@ trait MakeNoindexExt {
     fn make_noindex(self, noindex: bool) -> Self;
 }
 
-impl MakeNoindexExt for hyper::Response<hyper::Body> {
+impl MakeNoindexExt for Response {
     /// Adds the `x-robots-tag: noindex` header if `noindex` is true.
     fn make_noindex(mut self, noindex: bool) -> Self {
         if noindex {

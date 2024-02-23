@@ -1,22 +1,22 @@
 use std::unreachable;
 
 use base64::Engine;
-use hyper::{Body, StatusCode};
+use hyper::{body::Incoming, StatusCode, Request};
 use serde::Deserialize;
 
 use crate::{
-    db,
-    http::{self, Context, Request, Response, response::bad_request},
-    prelude::*,
-    config::OpencastConfig,
     auth::config::LoginCredentialsHandler,
+    db,
+    http::{self, response::bad_request, Context, Response},
+    prelude::*,
+    util::{download_body, ByteBody},
 };
 use super::{config::SessionEndpointHandler, AuthSource, SessionId, User};
 
 
 /// Handles POST requests to `/~session`.
 pub(crate) async fn handle_post_session(
-    req: Request<Body>,
+    req: Request<Incoming>,
     ctx: &Context,
 ) -> Result<Response, Response> {
     let user = match &ctx.config.auth.session.from_session_endpoint {
@@ -29,12 +29,7 @@ pub(crate) async fn handle_post_session(
             User::from_auth_headers(&req.headers(), &ctx.config.auth)
         }
         SessionEndpointHandler::Callback(callback_url) => {
-            User::from_auth_callback(
-                &req.headers(),
-                &callback_url,
-                &ctx.config.auth,
-                &ctx.auth_caches,
-            ).await?
+            User::from_auth_callback(&req.headers(), &callback_url, ctx).await?
         }
     };
 
@@ -70,7 +65,7 @@ pub(crate) async fn handle_post_session(
 /// settings. That's the proper tool to remove sessions. Still:
 ///
 /// TODO: maybe notify the user about these failures?
-pub(crate) async fn handle_delete_session(req: Request<Body>, ctx: &Context) -> Response {
+pub(crate) async fn handle_delete_session(req: Request<Incoming>, ctx: &Context) -> Response {
     if ctx.config.auth.source != AuthSource::TobiraSession {
         warn!("Got DELETE /~session request, but due to 'auth.source', this endpoint is disabled");
         return http::response::not_found();
@@ -79,7 +74,7 @@ pub(crate) async fn handle_delete_session(req: Request<Body>, ctx: &Context) -> 
     let response = Response::builder()
         .status(StatusCode::NO_CONTENT)
         .header("set-cookie", SessionId::unset_cookie().to_string())
-        .body(Body::empty())
+        .body(ByteBody::empty())
         .unwrap();
 
 
@@ -109,7 +104,7 @@ const USERID_FIELD: &str = "userid";
 const PASSWORD_FIELD: &str = "password";
 
 /// Handles `POST /~login` request.
-pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Response {
+pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> Response {
     if ctx.config.auth.session.from_login_credentials == LoginCredentialsHandler::None {
         warn!("Got POST /~login request, but due to 'auth.mode', this endpoint is disabled.");
         return http::response::not_found();
@@ -126,11 +121,11 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
     }
 
     // Download whole body.
-    let body = match hyper::body::to_bytes(req.into_body()).await {
+    let body = match download_body(req.into_body()).await {
         Ok(v) => v,
         Err(e) => {
             error!("Failed to download login request body: {e}");
-            return bad_request(None);
+            return bad_request("");
         },
     };
 
@@ -158,7 +153,7 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
     // Check the login data.
     let user = match &ctx.config.auth.session.from_login_credentials {
         LoginCredentialsHandler::Opencast => {
-            match check_opencast_login(&userid, &password, &ctx.config.opencast).await {
+            match check_opencast_login(&userid, &password, ctx).await {
                 Err(e) => {
                     error!("Error occured while checking Opencast login data: {e:#}");
                     return http::response::internal_server_error();
@@ -175,7 +170,7 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
             *req.method_mut() = hyper::Method::POST;
             *req.uri_mut() = callback_url.clone();
 
-            match User::from_callback_impl(req, &ctx.config.auth).await {
+            match User::from_callback_impl(req, ctx).await {
                 Err(e) => return e,
                 Ok(user) => user,
             }
@@ -184,7 +179,10 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
     };
 
     match user {
-        None => Response::builder().status(StatusCode::FORBIDDEN).body(Body::empty()).unwrap(),
+        None => Response::builder()
+            .status(StatusCode::FORBIDDEN)
+            .body(ByteBody::empty())
+            .unwrap(),
         Some(user) => create_session(user, ctx).await.unwrap_or_else(|e| e),
     }
 }
@@ -192,10 +190,9 @@ pub(crate) async fn handle_post_login(req: Request<Body>, ctx: &Context) -> Resp
 async fn check_opencast_login(
     userid: &str,
     password: &str,
-    config: &OpencastConfig,
+    ctx: &Context,
 ) -> Result<Option<User>> {
     trace!("Checking Opencast login...");
-    let client = crate::util::http_client();
 
     // Send request. We use basic auth here: our configuration checks already
     // assert that we use HTTPS or Opencast is running on the same machine
@@ -204,11 +201,11 @@ async fn check_opencast_login(
         .encode(&format!("{userid}:{password}"));
     let auth_header = format!("Basic {}", credentials);
     let req = Request::builder()
-        .uri(config.sync_node().clone().with_path_and_query("/info/me.json"))
+        .uri(ctx.config.opencast.sync_node().clone().with_path_and_query("/info/me.json"))
         .header(hyper::header::AUTHORIZATION, auth_header)
-        .body(Body::empty())
+        .body(ByteBody::empty())
         .unwrap();
-    let response = client.request(req).await?;
+    let response = ctx.http_client.request(req).await?;
 
 
     // We treat all non-OK response as invalid login data.
@@ -233,7 +230,7 @@ async fn check_opencast_login(
         email: Option<String>,
     }
 
-    let body = hyper::body::to_bytes(response.into_body()).await?;
+    let body = download_body(response.into_body()).await?;
     let mut info: InfoMeResponse = serde_json::from_slice(&body)
         .context("Could not deserialize `/info/me.json` response")?;
 
@@ -274,7 +271,7 @@ async fn create_session(mut user: User, ctx: &Context) -> Result<Response, Respo
     Response::builder()
         .status(StatusCode::NO_CONTENT)
         .header("set-cookie", session_id.set_cookie(ctx.config.auth.session.duration).to_string())
-        .body(Body::empty())
+        .body(ByteBody::empty())
         .unwrap()
         .pipe(Ok)
 }

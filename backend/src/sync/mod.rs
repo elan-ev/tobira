@@ -19,7 +19,7 @@ const MIN_REQUIRED_API_VERSION: ApiVersion = ApiVersion::new(1, 0);
 
 
 pub(crate) async fn run(daemon: bool, db: DbConnection, config: &Config) -> Result<()> {
-    let client = OcClient::new(config);
+    let client = OcClient::new(config)?;
     check_compatibility(&client).await?;
     harvest::run(daemon, config, &client, db).await
 }

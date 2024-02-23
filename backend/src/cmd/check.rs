@@ -147,7 +147,7 @@ async fn check_meili(config: &Config) -> Result<bool> {
 }
 
 async fn check_opencast_sync(config: &Config) -> Result<()> {
-    let client = OcClient::new(config);
+    let client = OcClient::new(config)?;
     crate::sync::check_compatibility(&client).await?;
     client.test_harvest().await?;
     Ok(())

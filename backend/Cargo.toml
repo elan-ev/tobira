@@ -26,19 +26,20 @@ bytes = "1"
 chrono = { version = "0.4", default-features = false, features = ["serde", "std"] }
 clap = { version = "4.2.2", features = ["derive", "string"] }
 confique = { version = "0.2.0", default-features = false, features = ["toml"] }
-cookie = "0.17.0"
+cookie = "0.18.0"
 dashmap = "5.5.3"
-deadpool = { version = "0.9.0", default-features = false, features = ["managed", "rt_tokio_1"] }
-deadpool-postgres = { version = "0.10", default-features = false, features = ["rt_tokio_1"] }
+deadpool = { version = "0.10.0", default-features = false, features = ["managed", "rt_tokio_1"] }
+deadpool-postgres = { version = "0.12.1", default-features = false, features = ["rt_tokio_1"] }
 elliptic-curve = { version = "0.13.4", features = ["jwk", "sec1"] }
 fallible-iterator = "0.2.0"
 form_urlencoded = "1.1.0"
 futures = { version = "0.3.1", default-features = false, features = ["std"] }
 hex = "0.4.3"
 hostname = "0.3"
-hyper = { version = "0.14", features = ["client", "http1", "http2"] }
-hyper-rustls = { version = "0.24.0", features = ["http2"] }
-hyperlocal = { version = "0.8", default-features = false, features = ["server"] }
+hyper = { version = "1", features = ["client", "http1", "http2"] }
+http-body-util = "0.1"
+hyper-rustls = { version = "0.26.0", features = ["http2"] }
+hyper-util = { version = "0.1.3", features = ["client", "server", "http1", "http2"] }
 isahc = { version = "1", features = ["static-ssl"] }
 juniper = { version = "0.15.10", default-features = false, features = ["chrono", "schema-language"] }
 libz-sys = { version = "1", features = ["static"] }
@@ -55,14 +56,14 @@ pem-rfc7468 = { version = "0.7.0", features = ["std"] }
 percent-encoding = "2.1.0"
 postgres-protocol = "0.6.6"
 postgres-types = { version = "0.2.2", features = ["derive", "array-impls"] }
-prometheus-client = "0.20.0"
+prometheus-client = "0.22.1"
 rand = "0.8.4"
 regex = "1.7.1"
 reinda = "0.2"
-ring = "0.16"
-rustls = { version = "0.21.0", features = ["dangerous_configuration"] }
-rustls-native-certs = "0.6.2"
-rustls-pemfile = "1.0.0"
+ring = "0.17.8"
+rustls = "0.22.2"
+rustls-native-certs = "0.7.0"
+rustls-pemfile = "2.1.0"
 secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1"
@@ -71,13 +72,13 @@ static_assertions = "1"
 tap = "1"
 termcolor = "1.1.1"
 time = "0.3"
-tokio = { version = "=1.28", features = ["fs", "rt-multi-thread", "macros", "time"] }
+tokio = { version = "1.36", features = ["fs", "rt-multi-thread", "macros", "time"] }
 tokio-postgres = { version = "0.7", features = ["with-chrono-0_4", "with-serde_json-1"] }
-tokio-postgres-rustls = "0.10.0"
+tokio-postgres-rustls = "0.11.1"
 url = "2.4.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-procfs = "0.15.1"
+procfs = "0.16.0"
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 tikv-jemallocator = "0.5"

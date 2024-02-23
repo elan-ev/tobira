@@ -56,7 +56,7 @@ impl SessionId {
     /// Returns a cookie for a `set-cookie` header in order to store the session
     /// ID in the client's cookie jar.
     pub(crate) fn set_cookie(&self, session_duration: Duration) -> Cookie {
-        Cookie::build(SESSION_COOKIE, base64encode(self.0.expose_secret()))
+        Cookie::build((SESSION_COOKIE, base64encode(self.0.expose_secret())))
 
             // Only send via HTTPS as it contains sensitive information.
             .secure(true)
@@ -81,18 +81,18 @@ impl SessionId {
                 // because we parse the duration as `u32` anyway.
                 session_duration.try_into().expect("session duration too large"),
             )
-            .finish()
+            .build()
     }
 
     /// Returns a cookie for a `set-cookie` header that removes the session ID
     /// from the client's cookie jar.
     pub(crate) fn unset_cookie() -> Cookie<'static> {
-        Cookie::build(SESSION_COOKIE, "")
+        Cookie::build((SESSION_COOKIE, ""))
             .max_age(time::Duration::ZERO)
             .secure(true)
             .http_only(true)
             .same_site(cookie::SameSite::Lax)
-            .finish()
+            .build()
     }
 
     /// Tries to remove this session from the DB. Returns `Some(username)` if
