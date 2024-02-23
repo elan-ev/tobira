@@ -124,6 +124,14 @@ impl GeneralConfig {
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
+pub(crate) enum StringOrTranslatedString {
+    Simple(String),
+    Translated(TranslatedString),
+}
+
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
 pub(crate) enum FooterLink {
     #[serde(with = "serde_about_footer")]
     About,
@@ -131,7 +139,7 @@ pub(crate) enum FooterLink {
     GraphiQL,
     Custom {
         label: TranslatedString,
-        link: TranslatedString,
+        link: StringOrTranslatedString,
     }
 }
 

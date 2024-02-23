@@ -44,7 +44,11 @@ export const Footer: React.FC = () => {
                         </li>;
                     } else {
                         return <li key={i}>
-                            <Link to={translatedConfig(entry.link, i18n)}>
+                            <Link to={
+                                typeof entry.link === "string"
+                                    ? entry.link
+                                    : translatedConfig(entry.link, i18n)
+                            }>
                                 {translatedConfig(entry.label, i18n)}
                             </Link>
                         </li>;
