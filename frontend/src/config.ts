@@ -38,7 +38,7 @@ type Config = {
 
 type FooterLink = "about" | "graphiql" | {
     label: TranslatedString;
-    link: string;
+    link: TranslatedString | string;
 };
 
 type InitialConsent = {

@@ -49,11 +49,14 @@ pub(crate) struct GeneralConfig {
     /// By overwriting this default value, you can remove the default links and
     /// add custom ones. Note that these two default links are special and can
     /// be specified with only the shown string. To add custom ones, you need
-    /// to define a label and a link. Example:
+    /// to define a label and a link. The link is either the same for every language
+    /// or can be specified for each language in the same manner as the label. 
+    /// Example:
     ///
     /// ```
     /// footer_links = [
-    ///     { label = { en = "Example" }, link = "https://example.com" },
+    ///     { label = { en = "Example 1" }, link = "https://example.com" },
+    ///     { label = { en = "Example 2" }, link = { en = "https://example.com/en" } },
     ///     "about",
     /// ]
     /// ```
@@ -124,6 +127,14 @@ impl GeneralConfig {
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
+pub(crate) enum StringOrTranslatedString {
+    Simple(String),
+    Translated(TranslatedString),
+}
+
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
 pub(crate) enum FooterLink {
     #[serde(with = "serde_about_footer")]
     About,
@@ -131,7 +142,7 @@ pub(crate) enum FooterLink {
     GraphiQL,
     Custom {
         label: TranslatedString,
-        link: String,
+        link: StringOrTranslatedString,
     }
 }
 
