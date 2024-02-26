@@ -880,7 +880,7 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ 
         }
     }
 
-    if (event.syncedData?.duration) {
+    if (event.syncedData?.duration && !event.isLive) {
         pairs.push([
             t("video.duration"),
             formatDuration(event.syncedData.duration),

@@ -223,6 +223,23 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                     },
                 },
 
+                '& button[name="es.upv.paella.qualitySelector"] div': {
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    i: {
+                        display: "none",
+                    },
+                    span: {
+                        color: "black",
+                        backgroundColor: "var(--main-fg-color)",
+                        borderRadius: 3,
+                        margin: "0 !important",
+                        fontSize: "10px !important",
+                        padding: "2px 3px",
+                    },
+                },
+
                 "&.paella-fallback-fullscreen": {
                     position: "fixed",
                     top: 0,
