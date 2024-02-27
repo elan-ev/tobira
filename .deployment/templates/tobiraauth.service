@@ -1,5 +1,5 @@
 [Unit]
-Description=Tobira Auth Dummy {{ id }}
+Description=Tobira Login Callback {{ id }}
 Documentation=https://github.com/elan-ev/tobira
 
 After=local-fs.target
