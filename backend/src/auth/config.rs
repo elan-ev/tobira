@@ -182,7 +182,7 @@ pub(crate) struct LoginPageConfig {
 pub(crate) enum AuthSource {
     None,
     TobiraSession,
-    Callback(Uri),
+    Callback(CallbackUri),
     TrustAuthHeaders,
 }
 
@@ -197,7 +197,7 @@ impl TryFrom<String> for AuthSource {
         } else if value == "tobira-session" {
             Ok(Self::TobiraSession)
         } else if let Some(url) = value.strip_prefix("callback:") {
-            Ok(Self::Callback(parse_normal_http_uri(url)?))
+            Ok(Self::Callback(CallbackUri::parse(url)?))
         } else {
             Err(anyhow!("invalid value, check docs for possible options"))
         }
@@ -220,7 +220,7 @@ impl AuthSource {
 pub(crate) enum LoginCredentialsHandler {
     None,
     Opencast,
-    Callback(Uri),
+    Callback(CallbackUri),
 }
 
 impl TryFrom<String> for LoginCredentialsHandler {
@@ -232,7 +232,7 @@ impl TryFrom<String> for LoginCredentialsHandler {
         } else if value == "opencast" {
             Ok(Self::Opencast)
         } else if let Some(url) = value.strip_prefix("login-callback:") {
-            Ok(Self::Callback(parse_normal_http_uri(url)?))
+            Ok(Self::Callback(CallbackUri::parse(url)?))
         } else {
             Err(anyhow!("invalid value, check docs for possible options"))
         }
@@ -253,7 +253,7 @@ impl LoginCredentialsHandler {
 #[serde(try_from = "String")]
 pub(crate) enum SessionEndpointHandler {
     None,
-    Callback(Uri),
+    Callback(CallbackUri),
     TrustAuthHeaders,
 }
 
@@ -266,7 +266,7 @@ impl TryFrom<String> for SessionEndpointHandler {
         } else if value == "trust-auth-headers" {
             Ok(Self::TrustAuthHeaders)
         } else if let Some(url) = value.strip_prefix("callback:") {
-            Ok(Self::Callback(parse_normal_http_uri(url)?))
+            Ok(Self::Callback(CallbackUri::parse(url)?))
         } else {
             Err(anyhow!("invalid value, check docs for possible options"))
         }
@@ -349,4 +349,36 @@ where
         })
         .collect::<Result<Vec<_>, _>>()?
         .pipe(Ok)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq,)]
+pub(crate) enum CallbackUri {
+    Tcp(Uri),
+    Uds(Uri),
+}
+
+impl CallbackUri {
+    fn parse(s: &str) -> Result<Self> {
+        if s.starts_with("http://") || s.starts_with("https://") {
+            Ok(Self::Tcp(parse_normal_http_uri(s)?))
+        } else if let Some(s) = s.strip_prefix("http+unix://") {
+            let msg = "UDS urls must use syntax 'http+unix://[/path/to/socket.sock]/foo/bar'";
+            anyhow::ensure!(s.as_bytes()[0] == b'[', msg);
+            let end_authority = s.find("]/").ok_or_else(|| anyhow!(msg))?;
+            let fs_path = &s[1..end_authority];
+            let http_path = &s[end_authority + 2..];
+            anyhow::ensure!(!http_path.contains('?'), "query part not allowed in callback URI");
+            anyhow::ensure!(!http_path.contains('#'), "fragment not allowed in callback URI");
+            Ok(Self::Uds(hyperlocal::Uri::new(fs_path, http_path).into()))
+        } else {
+            bail!("callback URI has to start with one of 'http://', 'https://' or 'http+unix://'");
+        }
+    }
+
+    pub(crate) fn uri(&self) -> &Uri {
+        match self {
+            CallbackUri::Tcp(uri) => uri,
+            CallbackUri::Uds(uri) => uri,
+        }
+    }
 }
