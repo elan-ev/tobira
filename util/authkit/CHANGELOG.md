@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.2.0
 
 - Add `userRole` to `LoginOutcome`: this reflects the Tobira change of requiring an explicit unique user role.
 - Rename `runServer` to `runLoginProxyServer`
