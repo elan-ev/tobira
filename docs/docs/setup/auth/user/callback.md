@@ -21,6 +21,7 @@ In this mode, your custom auth logic sits behind Tobira and is called for every 
 ```
 
 Your callback needs to be an HTTP endpoint that you specify behind the colon of `callback:`.
+You can also use the syntax `http+unix://[/path/to/socket.uds]/foo/bar` to use UDS.
 The URL can have a path, but no query or fragment part.
 You also have to specify `auth.callback.relevant_headers` and/or `relevant_cookies`: a list of headers/cookies that your auth logic reads.
 

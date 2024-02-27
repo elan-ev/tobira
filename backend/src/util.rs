@@ -3,6 +3,7 @@ use bytes::Bytes;
 use http_body_util::BodyExt;
 use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
+use hyperlocal::UnixConnector;
 use rand::{RngCore, CryptoRng};
 use secrecy::Secret;
 
@@ -65,6 +66,7 @@ pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> Secret<[u8; N]> {
 }
 
 pub(crate) type HttpsClient<B> = Client<HttpsConnector<HttpConnector>, B>;
+pub(crate) type UdxHttpClient<B> = Client<UnixConnector, B>;
 
 /// Returns an HTTP client that can also speak HTTPS. HTTPS is _not_ enforced!
 pub(crate) fn http_client<B>() -> Result<HttpsClient<B>>

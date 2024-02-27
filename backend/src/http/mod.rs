@@ -6,6 +6,7 @@
 use deadpool_postgres::Pool;
 use hyper::service::service_fn;
 use hyper_util::{rt::{TokioExecutor, TokioIo}, server::conn::auto::Builder};
+use hyperlocal::UnixClientExt;
 use tokio::net::{TcpListener, UnixListener};
 use std::{
     convert::Infallible,
@@ -26,7 +27,7 @@ use crate::{
     metrics,
     prelude::*,
     search,
-    util::{self, ByteBody, HttpsClient},
+    util::{self, ByteBody, HttpsClient, UdxHttpClient},
 };
 use self::{
     assets::Assets,
@@ -76,6 +77,7 @@ pub(crate) struct Context {
     pub(crate) metrics: Arc<metrics::Metrics>,
     pub(crate) auth_caches: auth::Caches,
     pub(crate) http_client: HttpsClient<ByteBody>,
+    pub(crate) uds_http_client: UdxHttpClient<ByteBody>,
 }
 
 
@@ -99,6 +101,7 @@ pub(crate) async fn serve(
         metrics: Arc::new(metrics::Metrics::new()),
         auth_caches: auth::Caches::new(),
         http_client: util::http_client().context("failed to create HTTP client")?,
+        uds_http_client: UdxHttpClient::unix(),
     });
 
     let ctx_clone = ctx.clone();

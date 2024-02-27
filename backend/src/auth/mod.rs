@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashSet, time::Duration};
 use base64::Engine;
 use cookie::Cookie;
 use deadpool_postgres::Client;
-use hyper::{http::HeaderValue, HeaderMap, Request, StatusCode, Uri};
+use hyper::{http::HeaderValue, HeaderMap, Request, StatusCode};
 use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
@@ -25,7 +25,7 @@ mod jwt;
 
 pub(crate) use self::{
     cache::Caches,
-    config::{AuthConfig, AuthSource},
+    config::{AuthConfig, AuthSource, CallbackUri},
     session_id::SessionId,
     jwt::{JwtConfig, JwtContext},
     handlers::{handle_post_session, handle_delete_session, handle_post_login},
@@ -214,7 +214,7 @@ impl User {
     /// request headers to the callback, which returns user info.
     pub(crate) async fn from_auth_callback(
         headers: &HeaderMap,
-        callback_url: &Uri,
+        callback_url: &CallbackUri,
         ctx: &Context,
     ) -> Result<Option<Self>, Response> {
         // TODO: instead of creating a new header map, we could take the old one
@@ -261,8 +261,7 @@ impl User {
         }
 
         // Cache miss or disabled cache: ask the callback.
-        *req.uri_mut() = callback_url.clone();
-        let out = Self::from_callback_impl(req, ctx).await?;
+        let out = Self::from_callback_impl(req, callback_url, ctx).await?;
 
         // Insert into cache
         if !ctx.config.auth.callback.cache_duration.is_zero() {
@@ -274,13 +273,20 @@ impl User {
 
     /// Impl for `callback:...` and `login-callback:...`.
     pub async fn from_callback_impl(
-        req: Request<ByteBody>,
+        mut req: Request<ByteBody>,
+        callback_url: &CallbackUri,
         ctx: &Context,
     ) -> Result<Option<Self>, Response> {
         trace!("Sending request to callback '{}'", req.uri());
 
+        *req.uri_mut() = callback_url.uri().clone();
+        let res = match callback_url {
+            CallbackUri::Tcp(_) => ctx.http_client.request(req),
+            CallbackUri::Uds(_) => ctx.uds_http_client.request(req),
+        };
+
         // Send request and download response.
-        let response = ctx.http_client.request(req).await.map_err(|e| {
+        let response = res.await.map_err(|e| {
             // TODO: maybe limit how quickly that can be logged?
             let e = anyhow::Error::from(e);
             error!("Error contacting auth callback: {e:#}");
