@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-import { navigateTo } from "./common";
+import { expect } from "@playwright/test";
+import { navigateTo, test } from "./common";
 
 test("Login", async ({ page, baseURL, browserName }) => {
     test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");

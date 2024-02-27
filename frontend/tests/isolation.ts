@@ -149,7 +149,8 @@ const tobiraConfig = ({ index, port, dbName, rootPath }: {
     level = "debug"
 
     [auth]
-    mode = "login-proxy"
+    source = "tobira-session"
+    session.from_login_credentials = "login-callback:http://localhost:3091"
     trusted_external_key = "tobira"
     pre_auth_external_links = true
 
