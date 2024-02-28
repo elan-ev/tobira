@@ -502,7 +502,7 @@ manage:
         den Seiteneinstellungen ändern.
 
       title:
-        content: Hier können Sie Ihren Titel einfügen.
+        content: Titel
 
       text:
         content: Hier können Sie Ihren Text einfügen. Sie können auch Markdown verwenden.
