@@ -69,7 +69,7 @@ module.exports = {
         },
 
         {
-            files: ["./tests/*"],
+            files: ["./tests/**/*"],
             rules: {
                 // Playwright uses fixtures where only destructuring in the arg
                 // object already has an effect. We just ignore fixtures that
@@ -88,7 +88,7 @@ module.exports = {
 
                 // Playwright tests use tons of async and it's easy to forget
                 // writing `await`, which leads to confusing test behavior.
-                "@typescript-eslint/no-floating-promises": "warn",
+                "@typescript-eslint/no-floating-promises": "error",
             },
         },
     ],
