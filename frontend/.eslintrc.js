@@ -84,6 +84,8 @@ module.exports = {
 
                 }],
 
+                "no-empty-pattern": "off",
+
                 // Playwright tests use tons of async and it's easy to forget
                 // writing `await`, which leads to confusing test behavior.
                 "@typescript-eslint/no-floating-promises": "warn",

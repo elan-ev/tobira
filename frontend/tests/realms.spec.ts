@@ -1,50 +1,51 @@
-import { test, expect, Page } from "@playwright/test";
-import {
-    addSubPage,
-    deleteRealm,
-    insertBlock,
-    login,
-    navigateTo,
-    realmSetup,
-    realms,
-    User,
-} from "./common";
+import { expect } from "@playwright/test";
+import { test, realms } from "./common";
+import { USERS, login } from "./util/user";
+import { createUserRealm, addSubPage, addBlock } from "./util/realm";
 
 
-for (const realm of realms) {
-    test.skip(`${realm} realm editing`, async ({ page, browserName }) => {
+for (const realmType of realms) {
+    test(`${realmType} realm moderator editing`, async ({
+        page, browserName, standardData, activeSearchIndex,
+    }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
-        const user: User = browserName === "chromium"
-            ? { login: "admin", displayName: "Administrator" }
-            : { login: "sabine", displayName: "Sabine Rudolfs" };
-        const realmIndex = browserName === "chromium" ? 2 : 3;
-
-        const settingsLink = page.getByRole("link", { name: "Page settings" });
-        const saveButton = page.getByRole("button", { name: "Save" });
-        const subPages = ["Alchemy", "Barnacles", "Cheese"];
-        const nav = page.locator("nav").first().getByRole("listitem");
-
+        const userid = realmType === "User" ? "jose" : "sabine";
+        const parentPageName = realmType === "User" ? USERS[userid] : "Support page";
         await test.step("Setup", async () => {
-            await login(page, user.login);
-            await realmSetup(page, realm, user, realmIndex);
-            await insertBlock(page, "Video");
-        });
+            await page.goto("/");
+            await login(page, userid);
 
-        await test.step("Sub-pages can be added", async () => {
-            const target = realm === "User" ? `@${user.login}` : `e2e-test-realm-${realmIndex}`;
-            for (const subPage of subPages) {
-                await expect(async () => {
-                    await navigateTo(target, page);
-                    await addSubPage(page, subPage);
-                    await page.waitForSelector(`h1:has-text("Edit page “${subPage}”")`);
-                }).toPass();
+            // Go to a non-root realm
+            if (realmType === "Regular") {
+                await page.locator("nav").getByRole("link", { name: parentPageName }).click();
+                await expect(page).toHaveURL("/support");
             }
 
-            await navigateTo(target, page);
+            // Create user realm
+            if (realmType === "User") {
+                await test.step("Create new user realm", async () => {
+                    await createUserRealm(page, userid);
+                });
+                await page.locator("nav").getByRole("link", { name: parentPageName }).click();
+                await expect(page).toHaveURL(`/@${userid}`);
+            }
+        });
+
+        const nav = page.locator("nav").first().getByRole("listitem");
+        const subPages = ["Alchemy", "Barnacles", "Cheese"];
+        await test.step("Sub-pages can be added", async () => {
+            for (const subPage of subPages) {
+                await addSubPage(page, subPage);
+                await page.locator("nav > ol").getByRole("link", { name: parentPageName }).click();
+                await page.getByRole("heading", { name: parentPageName, level: 1 }).waitFor();
+            }
+
             await expect(nav).toHaveText(subPages);
         });
 
+        const saveButton = page.getByRole("button", { name: "Save" });
+        const settingsLink = page.getByRole("link", { name: "Page settings" });
         await test.step("Order of sub-pages can be changed", async () => {
             await test.step("Sort alphabetically descending", async () => {
                 await settingsLink.click();
@@ -83,35 +84,50 @@ for (const realm of realms) {
         });
 
         await test.step("Name can be changed", async () => {
+            const derivedOption = page.getByText("Derive name from video or series");
+
+            await test.step("Derived name not possible without blocks", async () => {
+                await derivedOption.click();
+                await expect(page.getByText("There are no linkable video/series on this page."))
+                    .toBeVisible();
+            });
+
             await test.step("Derived name", async () => {
-                await page.locator("label:has-text('Derive name from video or series')").click();
-                await page.getByRole("combobox").selectOption("Video: Chicken");
+                await page.getByRole("link", { name: "Edit page content" }).click();
+                await addBlock(page, 0, { type: "video", query: "long" });
+
+                await settingsLink.click();
+                await derivedOption.click();
+                await derivedOption
+                    .locator("..")
+                    .locator("..")
+                    .getByRole("combobox")
+                    .selectOption("Video: Long boy");
                 await saveButton.first().click();
 
-                await expect(
-                    page.getByRole("heading", { name: "Settings of page “Chicken”" }),
-                ).toBeVisible();
+                await expect(page.getByRole("heading", { name: "Settings of page “Long boy”" }))
+                    .toBeVisible();
+                await expect(page.locator("nav > ol").getByRole("link", { name: "Long boy" }))
+                    .toBeVisible();
             });
 
             await test.step("Custom name", async () => {
-                await page.locator("label:has-text('Name directly')").click();
-                await page.locator("#rename-field").fill(`Funky Realm ${realmIndex}`);
+                await page.reload(); // To clear the name input field
+                const name = "Yummy Kale";
+                await page.getByText("Name directly").click();
+                await page.getByPlaceholder("Page name").fill(name);
                 await saveButton.first().click();
 
-                await expect(
-                    page.getByRole(
-                        "heading", { name: `Settings of page “Funky Realm ${realmIndex}”` }
-                    ),
-                ).toBeVisible();
-
-                await page.locator("#rename-field").fill(`E2E Test Realm ${realmIndex}`);
-                await saveButton.first().click();
-                await expect(
-                    page.getByRole("heading", { name: `E2E Test Realm ${realmIndex}` })
-                ).toBeVisible();
+                await expect(page.getByRole("heading", { name: `Settings of page “${name}”` }))
+                    .toBeVisible();
             });
         });
 
+    });
+}
+// eslint-disable-next-line capitalized-comments
+// eslint-disable-next-line multiline-comment-style
+/*
         if (realm === "Regular") {
             await test.step("Path changing", async () => {
                 await test.step("Path can be changed", async () => {
@@ -159,6 +175,4 @@ for (const realm of realms) {
                 ).not.toBeVisible();
             }
         });
-    });
-}
-
+*/

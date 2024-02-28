@@ -5,24 +5,6 @@ import { test as base } from "./data";
 export const test = base;
 
 
-export type User = { login: "admin"; displayName: "Administrator" }
-    | { login: "björk"; displayName: "Prof. Björk Guðmundsdóttir" }
-    | { login: "jose"; displayName: "José Carreño Quiñones" }
-    | { login: "morgan"; displayName: "Morgan Yu" }
-    | { login: "sabine"; displayName: "Sabine Rudolfs" };
-
-export const login = async (page: Page, userLogin: string) => {
-    await expect(async () => {
-        await navigateTo("~login", page);
-        await page.getByLabel("User ID").fill(userLogin);
-        await page.getByLabel("Password").fill("tobira");
-        await page.getByRole("button", { name: "Login" }).click();
-        await page.waitForURL("/");
-    }).toPass({
-        intervals: [2000, 5000, 10000],
-        timeout: 30 * 1000,
-    });
-};
 
 
 export const navigateTo = async (path: string, page: Page) => {
@@ -58,61 +40,6 @@ export const deleteRealm = async (page: Page) => {
 
 export const realms = ["User", "Regular"] as const;
 export type Realm = typeof realms[number];
-
-export const realmSetup = async (page: Page, realm: Realm, user: User, index: number) => {
-    if (realm === "User") {
-        await navigateTo(`@${user.login}`, page);
-        await page.waitForURL(`@${user.login}`);
-    } else {
-        await navigateTo("/", page);
-    }
-
-    await test.step("Create test realms", async () => {
-        if (realm === "User") {
-            const createRealmButton = page.getByRole("button", { name: "Create your own page" });
-            if (!await createRealmButton.isVisible()) {
-                await expect(async () => {
-                    await deleteRealm(page);
-                    await page.waitForURL("/");
-                    await navigateTo(`@${user.login}`, page);
-                    await expect(createRealmButton).toBeVisible();
-                }).toPass();
-            }
-            await createRealmButton.click();
-            await expect(page.getByText(`Edit page “${user.displayName}”`)).toBeVisible();
-        }
-
-        if (realm === "Regular") {
-            await page.waitForSelector("nav");
-            const realms = [`Chicken ${index}`, `Funky Realm ${index}`, `E2E Test Realm ${index}`];
-            for (const name of realms) {
-                const realmLink = page.locator("nav").getByRole("link", { name: name });
-                if (await realmLink.isVisible()) {
-                    await realmLink.click();
-                    await deleteRealm(page);
-                }
-            }
-
-            await addSubPage(page, `E2E Test Realm ${index}`);
-            await expect(page.getByRole("link", { name: `E2E Test Realm ${index}` })).toBeVisible();
-            await page.waitForURL(`~manage/realm/content?path=/e2e-test-realm-${index}`);
-        }
-    });
-};
-
-
-export const addSubPage = async (page: Page, name: string) => {
-    await page.getByRole("link", { name: "Add sub-page" }).first().click();
-    await page.getByPlaceholder("Page name").fill(name);
-    await page.keyboard.press("Tab");
-    await page.keyboard.type(name.trim().toLowerCase().replace(/\s+/g, "-"));
-    await Promise.all([
-        page.waitForResponse(response =>
-            response.url().includes("graphql")
-            && response.status() === 200),
-        page.getByRole("button", { name: "Create page" }).click(),
-    ]);
-};
 
 
 export const blocks = ["Series", "Video", "Text", "Title"] as const;
