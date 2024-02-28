@@ -1,8 +1,11 @@
 import { test } from "./common";
 import { expect } from "@playwright/test";
+import { USERS } from "./util/user";
 
 
-test("Empty Tobira", async ({ page }) => {
+test("Empty Tobira", async ({ page, browserName }) => {
+    test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
+
     await page.goto("/");
 
     await test.step("Looks empty", async () => {
@@ -21,17 +24,11 @@ test("Empty Tobira", async ({ page }) => {
         await page.getByRole("link", { name: "Login" }).click();
         await expect(page).toHaveURL("~login");
 
-        await page.getByLabel("User ID").fill("admin");
+        await page.getByLabel("User ID").fill("sabine");
         await page.getByLabel("Password").fill("tobira");
         await page.keyboard.press("Enter");
 
-        // TODO
-        // await expect(page).toHaveURL(baseURL as string);
-        // await expect(page.getByRole("button", { name: "Administrator" })).toBeVisible();
+        await expect(page).toHaveURL("~tobira");
+        await expect(page.getByRole("button", { name: USERS.sabine })).toBeVisible();
     });
-});
-
-test("TMP", async ({ page, standardData }) => {
-    await page.goto("/");
-    await expect(page.locator("main")).toContainText("Henlo good fren");
 });
