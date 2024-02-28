@@ -206,6 +206,7 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
                         <Input
                             defaultValue={realm.name ?? ""}
                             error={!!errors.name}
+                            placeholder={t("manage.realm.general.page-name")}
                             css={{ width: 500, maxWidth: "100%" }}
                             {...register("name", validation)}
                         />
