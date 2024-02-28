@@ -110,8 +110,6 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
 });
 
 const runTobiraCommand = async (tobira: TobiraProcess, args: string[]) => {
-    // eslint-disable-next-line no-console
-    console.debug(`Running: tobira${tobira.index} `, args);
     await new Promise(resolve => {
         args.push("-c");
         args.push(tobira.configPath);
