@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { navigateTo, test } from "./common";
+import { navigateTo, test } from "./util/common";
 
 
 test("Video page", async ({ page, standardData, browserName }) => {

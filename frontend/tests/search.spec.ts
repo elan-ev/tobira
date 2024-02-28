@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test, navigateTo } from "./common";
+import { test, navigateTo } from "./util/common";
 
 
 test("Search", async ({ page, standardData, activeSearchIndex }) => {

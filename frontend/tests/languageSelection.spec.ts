@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { navigateTo, test } from "./common";
+import { navigateTo, test } from "./util/common";
 
 test("Language selection", async ({ page }) => {
     const html = page.locator("html");
