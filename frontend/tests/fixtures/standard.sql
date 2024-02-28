@@ -214,7 +214,7 @@ values ('ready', '1c5d5e89-76b7-4d81-a316-ef62b470e13d', 'Long boy',
 );
 
 -- TODO:
--- Video with thumbnails -> array[row('https://...', 'en')]::event_caption[]
+-- Video with subtitles -> array[row('https://...', 'en')]::event_caption[]
 
 
 -- ----- Realms ---------------------------------------------------------------
@@ -233,9 +233,24 @@ insert into realms (parent, path_segment, name, index, child_order)
 values ((select id from realms where full_path = '/animals'), 'foxes', 'Foxes', 1, 'alphabetic:asc');
 
 insert into realms (parent, path_segment, name, child_order)
+values ((select id from realms where full_path = '/animals/dogs'), 'small', 'Small ones', 'alphabetic:asc');
+insert into realms (parent, path_segment, name, child_order)
+values ((select id from realms where full_path = '/animals/dogs'), 'big', 'Big ones', 'alphabetic:asc');
+
+insert into realms (parent, path_segment, name, child_order)
 values ((select id from realms where full_path = '/love'), 'kiwi', 'Kiwis', 'alphabetic:asc');
 insert into realms (parent, path_segment, name, child_order)
 values ((select id from realms where full_path = '/love'), 'turtles', 'Turtles', 'alphabetic:desc');
+
+-- Permissions
+update realms set moderator_roles = '{ROLE_STAFF}' where full_path = '';
+update realms set admin_roles = '{ROLE_USER_SABINE}' where full_path = '/love';
+update realms set moderator_roles = '{ROLE_STUDENT}' where full_path = '/love';
+update realms set admin_roles = '{ROLE_USER_MORGAN}' where full_path = '/love/kiwi';
+update realms set moderator_roles = '{ROLE_USER_MORGAN}' where full_path = '/support';
+update realms set admin_roles = '{ROLE_STAFF}' where full_path = '/animals';
+update realms set admin_roles = '{ROLE_USER_BJOERK}' where full_path = '/animals/dogs';
+update realms set moderator_roles = '{ROLE_USER_JOSE}' where full_path = '/animals/dogs';
 
 
 -- ----- Blocks ---------------------------------------------------------------
@@ -333,3 +348,7 @@ values ((select id from realms where full_path = '/animals/foxes'),
     'series', 0,
     (select id from series where title = 'Foxes are the very best!!'),
     'z_to_a', 'gallery', false, false);
+
+insert into blocks (realm, type, index, text_content)
+values ((select id from realms where full_path = '/animals/dogs/big'),
+    'text', 0, 'Big dogs are the better dogs.');
