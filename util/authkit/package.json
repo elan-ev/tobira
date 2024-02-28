@@ -1,6 +1,6 @@
 {
   "name": "@opencast/tobira-authkit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Helper library to implement your own auth logic for Tobira",
   "author": "The Opencast project",
   "repository": {

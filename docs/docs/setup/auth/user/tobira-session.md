@@ -77,6 +77,32 @@ Deno.serve({ port: 7007 }, async (request) => {
 });
 ```
 
+You can also use [the `@opencast/tobira-authkit` package](https://www.npmjs.com/package/@opencast/tobira-authkit) for writing your service.
+That library uses Node.js, gives you type safety (via TypeScript) and performs additional checks.
+
+```ts title="Same login callback written with authkit using Node.js"
+import { LoginCheck, runLoginCallbackServer } from "@opencast/tobira-authkit";
+
+await runLoginCallbackServer({
+  listen: { host: "127.0.0.1", port: 7007 },
+  check,
+});
+
+const check: LoginCheck = async ({ userid, password }) => {
+  if (userid === "peter" && password === "verysecure") {
+    return {
+      outcome: "user",
+      username: "peter",
+      displayName: "Peter Lustig",
+      userRole: "ROLE_USER_PETER",
+      roles: ["ROLE_USER", "ROLE_ANONYMOUS", ...],
+    };
+  } else {
+    return "forbidden";
+  }
+};
+```
+
 
 ## Create sessions manually via `POST /~session`
 
