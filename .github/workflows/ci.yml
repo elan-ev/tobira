@@ -152,6 +152,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        lfs: true
     - uses: actions/download-artifact@v4
       with:
         name: test-deployment-files
@@ -213,22 +215,18 @@ jobs:
       run: |
         docker-compose -f docker-compose.yml up -d \
           tobira-login-handler \
-          tobira-meilisearch
-
-    - name: Rebuild search index
-      run: ./tobira search-index update --config util/dev-config/config.toml
-
+          tobira-meilisearch \
+          tobira-ui-test-files
+    - name: Link Tobira binary to location expected by Playwright tests
+      run: |
+        mkdir -p backend/target/debug/
+        ln -s "$(pwd)/tobira" backend/target/debug/tobira
     - name: Install Playwright
       working-directory: frontend
       run: npm i @playwright/test
     - name: Install Playwright browsers
       working-directory: frontend
       run: npx playwright install --with-deps
-    - name: Start Tobira for playwright tests
-      uses: JarvusInnovations/background-action@v1
-      with:
-        run: ./tobira serve --config util/dev-config/config.toml &
-        wait-on: http://localhost:3080
     - name: Run playwright tests
       working-directory: frontend
       run: npx playwright test

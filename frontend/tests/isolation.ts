@@ -10,7 +10,6 @@ import waitPort from "wait-port";
 
 
 export type CustomWorkerFixtures = {
-    tobiraBinary: string;
     tobiraProcess: TobiraProcess;
 };
 
@@ -39,11 +38,9 @@ export type TobiraReset = {
 export type ActiveSearchIndex = Record<string, never>;
 
 export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
-    tobiraBinary: ["backend/target/debug/tobira", { option: true, scope: "worker" }],
-
     // This fixture starts a new completely isolated Tobira process (with its
     // own DB) for each Playwright worker process.
-    tobiraProcess: [async ({ tobiraBinary }, use, workerInfo) => {
+    tobiraProcess: [async ({}, use, workerInfo) => {
         // Create temporary folder
         const index = workerInfo.parallelIndex;
         const outDir = `${workerInfo.config.rootDir}/../test-results/`;
@@ -66,7 +63,7 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
         await sql.unsafe(`create database ${dbName}`);
 
         // Start Tobira
-        const binaryPath = `${rootPath}/${tobiraBinary}`;
+        const binaryPath = `${rootPath}/backend/target/debug/tobira`;
         const tobiraProcess = childProcess.spawn(
             binaryPath,
             ["serve", "--config", configPath],
