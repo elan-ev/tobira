@@ -37,7 +37,7 @@
     "copy-webpack-plugin": "^11.0.0",
     "focus-trap-react": "^10.2.3",
     "graphql": "^16.8.1",
-    "hls.js": "^1.4.12",
+    "hls.js": "^1.5.7",
     "i18next": "^23.5.1",
     "i18next-browser-languagedetector": "^7.1.0",
     "paella-basic-plugins": "1.44.4",
