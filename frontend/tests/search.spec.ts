@@ -22,20 +22,17 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
         await expect(page.getByText("Search results for “cat” (4 hits)")).toBeVisible();
     });
 
-    await test.step("Should show video 'Video of a Tabbby Cat'", async () => {
-        await expect(page.getByRole("img", { name: "Thumbnail for “Video of a Tabby Cat”" }))
-            .toBeVisible();
-        const title = page.getByRole("heading", { name: "Video of A Tabby Cat" });
-        // We need `force` to allow clicking the overlay.
-        await title.click({ force: true });
-        expect(page.url().startsWith("/!v/"));
-        await page.goBack();
-    });
-
-    await test.step("Should show video 'Video of a Tabbby Cat'", async () => {
-        await expect(page.getByRole("img", { name: "Thumbnail for “Dual Stream Cats”" }))
-            .toBeVisible();
-    });
+    for (const videoTitle of ["Video of a Tabby Cat", "Dual Stream Cats"]) {
+        await test.step(`Should show video '${videoTitle}'`, async () => {
+            await expect(page.getByRole("img", { name: `Thumbnail for “${videoTitle}”` }))
+                .toBeVisible();
+            const title = page.getByRole("heading", { name: videoTitle });
+            // We need `force` to allow clicking the overlay.
+            await title.click({ force: true });
+            expect(page.url().startsWith("/!v/"));
+            await page.goBack();
+        });
+    }
 
     await test.step("Series links should work", async () => {
         const eventSeriesLink = page.getByRole("link", { name: "Fabulous Cats" });

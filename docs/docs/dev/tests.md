@@ -5,7 +5,7 @@ sidebar_position: 7
 # Tests
 
 Tobira comes with various different automated tests to prevent bugs or unintended changes.
-These are all automatically ran by our GitHub-based continious integration (CI) for every pull request.
+These are all automatically run by our GitHub-based continious integration (CI) for every pull request.
 But it is also useful to run the tests locally, for example to add new tests.
 
 
