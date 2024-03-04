@@ -58,7 +58,7 @@
     "react-relay": "^16.2.0",
     "react-select": "^5.8.0",
     "react-transition-group": "^4.4.5",
-    "relay-compiler": "^15.0.0",
+    "relay-compiler": "^16.2.0",
     "relay-compiler-language-typescript": "^15.0.1",
     "relay-config": "^12.0.1",
     "webpack": "^5.90.3",

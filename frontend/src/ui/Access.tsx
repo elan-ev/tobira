@@ -51,12 +51,12 @@ import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
 export type Acl = Map<string, {
     actions: Set<string>;
-    info: RoleInfo | null;
+    info?: RoleInfo | null;
 }>;
 
 export type RoleInfo = {
     label: TranslatedLabel;
-    implies: readonly string[] | null;
+    implies?: readonly string[] | null;
     large: boolean;
 };
 

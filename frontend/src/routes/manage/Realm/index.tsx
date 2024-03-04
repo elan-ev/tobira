@@ -89,7 +89,7 @@ const query = graphql`
 `;
 
 type Props = {
-    realm: Exclude<RealmManageQuery$data["realm"], null>;
+    realm: NonNullable<RealmManageQuery$data["realm"]>;
     data: RealmManageQuery$data;
 };
 

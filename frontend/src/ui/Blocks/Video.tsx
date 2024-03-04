@@ -46,7 +46,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         }
     `, fragRef);
 
-    if (event === null) {
+    if (event == null) {
         return <Card kind="error">{t("video.deleted-video-block")}</Card>;
     }
 

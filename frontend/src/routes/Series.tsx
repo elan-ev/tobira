@@ -97,12 +97,12 @@ const fragment = graphql`
 `;
 
 type SeriesPageProps = {
-    seriesFrag: SeriesRouteData$key | null;
+    seriesFrag?: SeriesRouteData$key | null;
 };
 
 const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
     const { t } = useTranslation();
-    const series = useFragment(fragment, seriesFrag);
+    const series = useFragment(fragment, seriesFrag ?? null);
 
     if (!series) {
         return <NotFound kind="series" />;

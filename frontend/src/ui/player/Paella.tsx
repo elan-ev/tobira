@@ -21,9 +21,9 @@ type PaellaPlayerProps = {
     tracks: readonly Track[];
     captions: readonly Caption[];
     isLive: boolean;
-    startTime: string | null;
-    endTime: string | null;
-    previewImage: string | null;
+    startTime?: string | null;
+    endTime?: string | null;
+    previewImage?: string | null;
 };
 
 export type PaellaState = {

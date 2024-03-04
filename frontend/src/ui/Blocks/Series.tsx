@@ -88,7 +88,7 @@ type FromBlockProps = SharedProps & {
 export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
     const { t } = useTranslation();
     const { series, ...block } = useFragment(blockFragment, fragRef);
-    return series === null
+    return series == null
         ? <Card kind="error">{t("series.deleted-series-block")}</Card>
         : <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };

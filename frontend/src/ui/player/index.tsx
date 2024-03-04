@@ -30,26 +30,26 @@ export type PlayerEvent = {
     opencastId: string;
     syncedData: {
         updated: string;
-        startTime: string | null;
-        endTime: string | null;
+        startTime?: string | null;
+        endTime?: string | null;
         duration: number;
         tracks: readonly Track[];
         captions: readonly Caption[];
-        thumbnail: string | null;
+        thumbnail?: string | null;
     };
 };
 
 export type Track = {
     uri: string;
     flavor: string;
-    mimetype: string | null;
-    resolution: readonly number[] | null;
-    isMaster: boolean | null;
+    mimetype?: string | null;
+    resolution?: readonly number[] | null;
+    isMaster?: boolean | null;
 };
 
 export type Caption = {
     uri: string;
-    lang: string | null;
+    lang?: string | null;
 };
 
 /**
@@ -201,7 +201,7 @@ const LoadPaellaPlayer = PaellaPlayer;
  * completely unused right now as the player code is embedded in the main
  * bundle. Splitting the bundle is tracked by #257.
  */
-const PlayerFallback: React.FC<{ image: string | null }> = ({ image }) => {
+const PlayerFallback: React.FC<{ image?: string | null }> = ({ image }) => {
     const { t } = useTranslation();
 
     return (

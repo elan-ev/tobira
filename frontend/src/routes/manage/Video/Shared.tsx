@@ -52,7 +52,7 @@ export const makeManageVideoRoute = (
                         <ManageVideoNav key={2} event={data.event} active={page} />,
                     ]}
                     render={data => {
-                        if (data.event === null) {
+                        if (data.event == null) {
                             return <NotFound kind="video" />;
                         }
                         if (data.event.__typename !== "AuthorizedEvent" || !data.event.canWrite) {
@@ -129,7 +129,7 @@ type ManageVideoNavProps = {
 const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
     const { t } = useTranslation();
 
-    if (event === null) {
+    if (event == null) {
         return null;
     }
     if (event.__typename !== "AuthorizedEvent" || !event.canWrite) {

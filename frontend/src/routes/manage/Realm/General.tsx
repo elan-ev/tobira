@@ -72,7 +72,7 @@ export const General: React.FC<Props> = ({ fragRef }) => {
     }
 
     const { nameSource, ...rest } = realm;
-    if (nameSource === null) {
+    if (nameSource == null) {
         return bug("name source is null for non-root realm");
     }
 
