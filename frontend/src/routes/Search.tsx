@@ -340,7 +340,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
 type SearchRealmProps = {
     id: string;
     name: string | null;
-    ancestorNames: readonly (string | null)[];
+    ancestorNames: readonly (string | null | undefined)[];
     fullPath: string;
 };
 

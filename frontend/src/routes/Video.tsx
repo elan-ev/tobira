@@ -201,7 +201,7 @@ export const DirectOpencastVideoRoute = makeRoute({
 interface DirectRouteQuery extends OperationType {
     response: UserData$key & {
         realm: VideoPageRealmData$key & NavigationData$key;
-        event: VideoPageEventData$key | null;
+        event?: VideoPageEventData$key | null;
     };
 }
 

@@ -33,7 +33,7 @@ export const InputContainer: React.FC<{ children: ReactNode }> = ({ children }) 
 );
 
 type SmallDescriptionProps = {
-    text: string | null;
+    text?: string | null;
     lines?: number;
     className?: string;
 };
@@ -73,7 +73,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
 
 
 type DescriptionProps = {
-    text: string | null;
+    text?: string | null;
     className?: string;
 };
 
@@ -120,7 +120,7 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
 
 type CollapsibleDescriptionProps = {
     type: "series" | "video";
-    description: string | null;
+    description?: string | null;
     creators?: readonly string[];
     bottomPadding: number;
 }

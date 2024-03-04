@@ -158,7 +158,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                     // starting with `ev`.
                     id: item.id.replace(/^es/, "ev"),
                     syncedData: item,
-                    series: item.seriesTitle === null ? null : { title: item.seriesTitle },
+                    series: item.seriesTitle == null ? null : { title: item.seriesTitle },
                 })));
             },
             start: () => {},
@@ -186,7 +186,7 @@ const formatOption = (event: Option, t: TFunction) => (
                 css={{ width: 120, minWidth: 120 }}
                 event={{
                     ...event,
-                    syncedData: {
+                    syncedData: event.syncedData && {
                         ...event.syncedData,
                         audioOnly: false, // TODO
                     },

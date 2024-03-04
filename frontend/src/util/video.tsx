@@ -3,8 +3,8 @@ type EventWithTimeInfo = {
     created: string;
     syncedData: {
         updated: string;
-        startTime: string | null;
-        endTime: string | null;
+        startTime?: string | null;
+        endTime?: string | null;
     };
 };
 

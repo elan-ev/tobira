@@ -24,7 +24,7 @@ type Props = {
 
 type TrackInfoProps = {
     event: {
-        syncedData: null | {
+        syncedData?: null | {
             tracks: NonNullable<AuthorizedEvent["syncedData"]>["tracks"];
         };
     };
@@ -80,8 +80,8 @@ const OpencastId: React.FC<Props> = ({ event }) => {
 };
 
 type SingleTrackInfo = {
-    resolution: readonly number[] | null;
-    mimetype: string | null;
+    resolution?: readonly number[] | null;
+    mimetype?: string | null;
     uri: string;
 };
 
@@ -169,7 +169,7 @@ const FurtherInfo: React.FC<Props> = ({ event }) => {
     const { t, i18n } = useTranslation();
 
     const boolToYesNo = (v: boolean) => v ? t("general.yes") : t("general.no");
-    const printDate = (date: string | null): string => {
+    const printDate = (date?: string | null): string => {
         if (date == null) {
             return "-";
         }

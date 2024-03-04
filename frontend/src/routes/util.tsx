@@ -22,13 +22,13 @@ type RealmSortOrder = "ALPHABETIC_ASC" | "ALPHABETIC_DESC" | "BY_INDEX" | string
  * only sorted for `ALPHABETIC*` values of `sortOrder`. For `BY_INDEX`, the
  * original array is returned as it is assumed it is already ordered by index.
  */
-export const sortRealms = <T extends { readonly name: string | null }>(
+export const sortRealms = <T extends { readonly name?: string | null }>(
     realms: readonly T[],
     sortOrder: RealmSortOrder,
     language: string,
 ): readonly T[] => {
     const collator = new Intl.Collator(language);
-    const compare = (a: string | null, b: string | null) => {
+    const compare = (a?: string | null, b?: string | null) => {
         if (a == null && b == null) {
             return 0;
         }

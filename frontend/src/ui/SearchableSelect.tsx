@@ -126,7 +126,7 @@ type SeriesOption = {
     readonly id: string;
     readonly opencastId: string;
     readonly title: string;
-    readonly description: string | null;
+    readonly description?: string | null;
 };
 
 export const SeriesSelector: React.FC<SeriesSelectorProps> = ({

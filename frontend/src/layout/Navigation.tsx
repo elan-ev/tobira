@@ -53,7 +53,7 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
             isMainRoot: true,
         }
         : realm.parent;
-    const hasRealmParent = parent !== null;
+    const hasRealmParent = parent != null;
 
     // We expect all production instances to have more than the root realm. So
     // we print this information instead of an empty div to avoid confusion.

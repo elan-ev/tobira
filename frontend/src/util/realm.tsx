@@ -4,7 +4,7 @@ import { Props as BreadcrumbsProps } from "../ui/Breadcrumbs";
 
 export const realmBreadcrumbs = (
     t: TFunction,
-    realms: readonly ({ name: string | null; path: string })[],
+    realms: readonly ({ name?: string | null; path: string })[],
 ): BreadcrumbsProps["path"] => (
     realms.map(({ name, path }) => ({
         label: name ?? t("realm.missing-name"),

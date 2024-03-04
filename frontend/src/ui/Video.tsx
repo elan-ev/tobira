@@ -12,14 +12,14 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
         title: string;
         isLive: boolean;
         created: string;
-        syncedData: {
+        syncedData?: {
             duration: number;
-            thumbnail: string | null;
-            startTime: string | null;
-            endTime: string | null;
+            thumbnail?: string | null;
+            startTime?: string | null;
+            endTime?: string | null;
         } & (
             {
-                tracks: readonly { resolution: readonly number[] | null }[];
+                tracks: readonly { resolution?: readonly number[] | null }[];
             } | {
                 audioOnly: boolean;
             }
