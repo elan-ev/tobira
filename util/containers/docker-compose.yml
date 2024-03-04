@@ -46,6 +46,15 @@ services:
       - MEILI_NO_ANALYTICS=true
       - MEILI_MASTER_KEY=tobira
 
+  # A static file server for UI tests
+  tobira-ui-test-files:
+    image: nginx
+    ports:
+      - "38456:38456"
+    volumes:
+      - ./ui-test-files-nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./test-files:/www/data
+
 
 volumes:
   tobira-dev-postgres:

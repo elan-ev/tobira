@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-import { navigateTo } from "./common";
+import { expect } from "@playwright/test";
+import { navigateTo, test } from "./util/common";
 
 test("Language selection", async ({ page }) => {
     const html = page.locator("html");
@@ -7,7 +7,7 @@ test("Language selection", async ({ page }) => {
     const german = page.getByRole("checkbox", { name: "Deutsch" });
 
     await navigateTo("/", page);
-    await page.waitForSelector("nav");
+    await page.waitForSelector("h1");
 
     await test.step("Language button is present and opens menu", async () => {
         await page.getByRole("button", { name: "Language selection" }).click();

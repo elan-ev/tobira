@@ -478,7 +478,7 @@ manage:
         the page settings.
 
       title:
-        content: You can put your title here.
+        content: Title
 
       text:
         content: You can add your text content here. You can also use Markdown.
