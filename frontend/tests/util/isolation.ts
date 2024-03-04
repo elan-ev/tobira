@@ -14,7 +14,7 @@ export type CustomWorkerFixtures = {
 };
 
 export type CustomTestFixtures = {
-    tobiraReset: TobiraReset;
+    tobiraReset: Record<string, never>;
     activeSearchIndex: ActiveSearchIndex;
 };
 
@@ -25,14 +25,6 @@ export type TobiraProcess = {
     binaryPath: string;
     dbName: string;
     index: number;
-};
-
-export type TobiraReset = {
-    /**
-     * This is for speeding up tests: tests that do not write anything to the DB
-     * can call this to prevent the reset step after they are finished.
-     */
-    resetNotNecessaryIDoNotModifyAnything: () => void;
 };
 
 export type ActiveSearchIndex = Record<string, never>;
@@ -89,13 +81,8 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
 
     // This resets the Tobira DB after every test that modifies any data.
     tobiraReset: [async ({ tobiraProcess }, use) => {
-        let shouldReset = true;
-        await use({
-            resetNotNecessaryIDoNotModifyAnything: () => { shouldReset = false; },
-        });
-        if (shouldReset) {
-            await runTobiraCommand(tobiraProcess, ["db", "reset", "--yes-absolutely-clear-db"]);
-        }
+        await use({});
+        await runTobiraCommand(tobiraProcess, ["db", "reset", "--yes-absolutely-clear-db"]);
     }, { auto: true }],
 
     activeSearchIndex: async ({ tobiraProcess }, use) => {
