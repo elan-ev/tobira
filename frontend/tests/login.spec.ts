@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { navigateTo, test } from "./util/common";
+import { logout } from "./util/user";
 
 test("Login", async ({ page, baseURL, browserName }) => {
     test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
@@ -14,4 +15,8 @@ test("Login", async ({ page, baseURL, browserName }) => {
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(baseURL as string);
     await expect(page.getByRole("button", { name: "Administrator" })).toBeVisible();
+
+    await test.step("Logout again", async () => {
+        await logout(page, "admin");
+    });
 });

@@ -26,3 +26,16 @@ export const login = async (page: Page, username: UserId) => {
     await page.getByRole("button", { name: "Login" }).click();
     await expect(page).toHaveURL(prevUrl);
 };
+
+
+/**
+ * Logs out the current user.
+ *
+ * - Pre-conditions: Logged in as `username`.
+ * - Post-conditions: Logged out.
+ */
+export const logout = async (page: Page, username: UserId) => {
+    await page.getByRole("button", { name: USERS[username] }).click();
+    await page.getByRole("button", { name: "Log out" }).click();
+    await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
+};
