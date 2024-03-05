@@ -1,10 +1,10 @@
-import { screenWidthAbove, useColorScheme } from "@opencast/appkit";
-import { match } from "@opencast/appkit";
+import { match, WithTooltip, screenWidthAbove, useColorScheme } from "@opencast/appkit";
+import { LuInfo } from "react-icons/lu";
+import { ReactNode } from "react";
+import { CSSObject } from "@emotion/react";
 
 import { Link } from "../router";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
-import { ReactNode } from "react";
-import { CSSObject } from "@emotion/react";
 import { COLORS } from "../color";
 
 
@@ -172,3 +172,22 @@ export const ellipsisOverflowCss = (lines: number): CSSObject => ({
 
 /** Box shadow used on multiple elements in dark mode */
 export const darkModeBoxShadow = { boxShadow: "0 0 5px rgba(0, 0, 0, .2)" };
+
+type InfoTooltipProps = {
+    info: JSX.Element | string;
+};
+
+export const InfoTooltip: React.FC<InfoTooltipProps> = ({ info }) => (
+    <WithTooltip
+        tooltip={info}
+        tooltipCss={{ width: "min(85vw, 460px)" }}
+        css={{
+            display: "inline-block",
+            verticalAlign: "middle",
+            fontWeight: "normal",
+            marginLeft: 8,
+        }}
+    >
+        <span><LuInfo tabIndex={0} /></span>
+    </WithTooltip>
+);

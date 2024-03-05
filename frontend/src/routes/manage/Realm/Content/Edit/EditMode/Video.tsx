@@ -20,6 +20,7 @@ import { VideoEditModeSearchQuery } from "./__generated__/VideoEditModeSearchQue
 import { MovingTruck } from "../../../../../../ui/Waiting";
 import { ErrorDisplay } from "../../../../../../util/err";
 import { DisplayOptionGroup } from "../../../../../../ui/Input";
+import { InfoTooltip } from "../../../../../../ui";
 
 
 type VideoFormData = {
@@ -82,7 +83,12 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         : undefined;
 
     return <EditModeForm create={create} save={save} map={(data: VideoFormData) => data}>
-        <Heading>{t("manage.realm.content.event.event.heading")}</Heading>
+        <Heading>
+            {t("manage.realm.content.event.event.heading")}
+            <InfoTooltip
+                info={t("manage.realm.content.event.event.findable-events-note")}
+            />
+        </Heading>
         {"event" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.event.event.invalid")}</Card>
         </div>}
@@ -169,6 +175,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
     return <>
         {error && <Card kind="error" css={{ marginBottom: 8 }}>{error}</Card>}
         <SearchableSelect
+            autoFocus
             loadOptions={loadEvents}
             format={formatOption}
             onChange={data => onChange(data?.id)}

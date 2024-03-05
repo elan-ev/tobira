@@ -1,5 +1,6 @@
-import { expect } from "@playwright/test";
+import { Page, expect } from "@playwright/test";
 import { test, navigateTo } from "./util/common";
+import { login, logout } from "./util/user";
 
 
 test("Search", async ({ page, standardData, activeSearchIndex }) => {
@@ -59,6 +60,90 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
     });
 });
 
+const startSearch = async (page: Page, query: string, startUrl?: string) => {
+    if (startUrl) {
+        await page.goto(startUrl);
+    }
+    const searchField = page.getByPlaceholder("Search");
+    await searchField.click();
+    await searchField.fill(query);
+    await expect(page).toHaveURL(`~search?${new URLSearchParams({ q: query })}`);
+};
+
+const expectNoResults = async (page: Page, query: string) => {
+    await expect(page.getByText(`Search results for “${query}” (0 hits)`)).toBeVisible();
+    await expect(page.getByText("No results")).toBeVisible();
+    await expect(page.getByRole("img", { name: "Thumbnail" })).toBeHidden();
+};
+
+test("Cannot find unlisted items in main search", async ({
+    page, standardData, activeSearchIndex,
+}) => {
+    const query = "unlisted";
+    await startSearch(page, query, "/love/kiwi");
+    await expectNoResults(page, query);
+});
+
+test("Read access is checked", async ({ page, standardData, activeSearchIndex, browserName }) => {
+    test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
+
+    const videoTitle = "Very secret private video";
+    const query = `"${videoTitle}"`;
+
+    await test.step("Anonymous cannot see", async () => {
+        await startSearch(page, query, "/~tobira");
+        await expectNoResults(page, query);
+    });
+
+    await test.step("Jose cannot see", async () => {
+        await login(page, "jose");
+        // We should be forwarded to the search page again
+        await expectNoResults(page, query);
+    });
+
+    await test.step("Morgan can see", async () => {
+        await logout(page, "jose");
+        await login(page, "morgan");
+        await startSearch(page, query);
+        await expect(page.getByRole("img", { name: `Thumbnail for “${videoTitle}”` }))
+            .toBeVisible();
+    });
+});
+
+for (const username of ["jose", "admin"] as const) {
+    test(`Video search finds listed & writable (for ${username})`, async ({
+        page, standardData, activeSearchIndex, browserName,
+    }) => {
+        test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
+
+        const toBeVisibleIfAdmin = username === "admin" ? "toBeVisible" : "toBeHidden";
+
+        await page.goto("/");
+        await login(page, username);
+
+        // Use page without content blocks
+        await page.goto("~manage/realm/content?path=/love/turtles");
+        await page.getByRole("button", { name: "Insert a new block here" }).nth(0).click();
+        await page.getByRole("button", { name: "Video", exact: true }).click();
+        const input = page.locator("div").filter({ hasText: "Select option" }).nth(1);
+
+        // Of the two unlisted videos, jose can only see the one where they have
+        // write access to.
+        await input.type("unlisted");
+        await expect(page.getByText("Unlisted video without series")).toBeVisible();
+        await expect(page.getByText("Unlisted video in series"))[toBeVisibleIfAdmin]();
+        await page.keyboard.press("Escape");
+
+        // A video, even if listed, is not found if user has no read access.
+        await input.type("private");
+        await expect(page.getByText("Very secret private video"))[toBeVisibleIfAdmin]();
+        await page.keyboard.press("Escape");
+
+        // Listed & readable appear, even if user has no write access.
+        await input.type("cat");
+        await expect(page.getByText("Black Cat (protected)")).toBeVisible();
+    });
+}
+
 // TODO:
-// - login and see protected videos
 // - search for video only included in one page & having correct link

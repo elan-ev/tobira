@@ -511,6 +511,9 @@ manage:
         series:
           heading: Serie
           invalid: Bitte eine Serie auswählen
+          findable-series-note: >
+            Sie können hier nur Serien wählen, die gelistet sind oder auf die
+            Sie Schreibzugriff haben.
         metadata:
           heading: Metadaten
 
@@ -518,6 +521,9 @@ manage:
         event:
           heading: Video
           invalid: Bitte ein Video auswählen
+          findable-events-note: >
+            Sie können hier nur Videos wählen, die gelistet sind oder auf die
+            Sie Schreibzugriff haben.
           no-read-access-to-current: >
             Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
 
