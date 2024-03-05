@@ -233,9 +233,11 @@ search:
   no-results: Keine Ergebnisse
   too-few-characters: Tippen Sie weitere Zeichen, um die Suche zu starten.
   unavailable: Die Suchfunktion ist zurzeit nicht verfügbar. Versuchen Sie es später erneut.
-  filter-all: Alle
-  filter-event: Videos
-  filter-realm: Seiten
+  filter:
+    all: Alle
+    event: Videos
+    realm: Seiten
+    series: Serien
   select-time-frame: Zeitraum auswählen
   clear-time-frame: Zeitraum zurücksetzen
 

@@ -1,6 +1,6 @@
 import { Trans, useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { LuCalendarRange, LuLayout, LuPlayCircle, LuX } from "react-icons/lu";
+import { LuCalendarRange, LuLayout, LuLibrary, LuPlayCircle, LuX } from "react-icons/lu";
 import { IconType } from "react-icons";
 import { ReactNode, RefObject, useEffect, useRef } from "react";
 import {
@@ -32,6 +32,7 @@ import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
 import { isExperimentalFlagSet, keyOfId } from "../util";
 import { Button } from "../ui/Button";
 import { DirectVideoRoute, VideoRoute } from "./Video";
+import { DirectSeriesRoute } from "./Series";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -125,6 +126,11 @@ const query = graphql`
                         startTime
                         endTime
                         created
+                        hostRealms { path }
+                    }
+                    ... on SearchSeries {
+                        title
+                        description
                         hostRealms { path }
                     }
                     ... on SearchRealm { name path ancestorNames }
@@ -322,7 +328,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({ type, router }) => {
                 border: `1px solid ${COLORS.neutral90}`,
             },
         }}
-    >{t(`search.filter-${translationKey}`)}</Button>;
+    >{t(`search.filter.${translationKey}`)}</Button>;
 };
 
 const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
@@ -360,7 +366,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     startTime: unwrapUndefined(item.startTime),
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
-                }}/>;
+                }} />;
+            } else if (item.__typename === "SearchSeries") {
+                return <SearchSeries key={item.id} {...{
+                    id: item.id,
+                    title: unwrapUndefined(item.title),
+                    description: unwrapUndefined(item.description),
+                    hostRealms: unwrapUndefined(item.hostRealms),
+                }} />;
             } else if (item.__typename === "SearchRealm") {
                 return <SearchRealm key={item.id} {...{
                     id: item.id,
@@ -535,6 +548,44 @@ const SearchEvent: React.FC<SearchEventProps> = ({
             />
         </Item>
     );
+};
+
+
+type SearchSeriesProps = {
+    id: string;
+    title: string;
+    description: string | null;
+    hostRealms: readonly {
+        readonly path: string;
+    }[];
+}
+
+const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, hostRealms }) => {
+    const _dum = "";
+
+    return <Item key={id} link={DirectSeriesRoute.url({ seriesId: id })}>
+        <WithIcon Icon={LuLibrary} hideIconOnMobile>
+            <div css={{
+                color: COLORS.neutral90,
+                marginRight: "clamp(12px, 4vw - 13px, 40px)",
+                display: "flex",
+                flexDirection: "column",
+                minWidth: 0,
+            }}>
+                <h3 css={{
+                    color: COLORS.primary0,
+                    marginBottom: 6,
+                    fontSize: 17,
+                    lineHeight: 1.3,
+                    ...ellipsisOverflowCss(2),
+                }}>{title}</h3>
+                {description && <SmallDescription
+                    text={description}
+                    lines={3}
+                />}
+            </div>
+        </WithIcon>
+    </Item>;
 };
 
 type SearchRealmProps = {

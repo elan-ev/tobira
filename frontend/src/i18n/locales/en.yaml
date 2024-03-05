@@ -231,9 +231,11 @@ search:
   no-results: No results
   too-few-characters: Please type more characters to start the search.
   unavailable: The search is currently unavailable. Try again later.
-  filter-all: All
-  filter-event: Videos
-  filter-realm: Pages
+  filter:
+    all: All
+    event: Videos
+    realm: Pages
+    series: Series
   select-time-frame: Select time frame
   clear-time-frame: Clear time frame
 
