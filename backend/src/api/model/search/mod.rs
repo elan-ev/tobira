@@ -74,6 +74,7 @@ impl SearchResults<search::Series> {
 #[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
 enum ItemType {
    Event,
+   Series,
    Realm,
 }
 
@@ -173,6 +174,16 @@ pub(crate) async fn perform(
         .build();
 
 
+    // Prepare the series search
+    let series_query = context.search.series_index.search()
+        .with_query(user_query)
+        .with_show_matches_position(true)
+        .with_filter("listed = true")
+        .with_limit(15)
+        .with_show_ranking_score(true)
+        .build();
+
+
     // Prepare the realm search
     let realm_query = context.search.realm_index.search()
         .with_query(user_query)
@@ -186,9 +197,10 @@ pub(crate) async fn perform(
     // Perform the searches
     let res = tokio::try_join!(
         event_query.execute::<search::Event>(),
+        series_query.execute::<search::Series>(),
         realm_query.execute::<search::Realm>(),
     );
-    let (event_results, realm_results) = handle_search_result!(res, SearchOutcome);
+    let (event_results, series_results, realm_results) = handle_search_result!(res, SearchOutcome);
 
     // Merge results according to Meilis score.
     //
@@ -197,6 +209,8 @@ pub(crate) async fn perform(
     // realm index. See this discussion for more info:
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
     let events = event_results.hits.into_iter()
+        .map(|result| (NodeValue::from(result.result), result.ranking_score));
+    let series = series_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
     let realms = realm_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
@@ -209,14 +223,23 @@ pub(crate) async fn perform(
             merged.extend(events);
             total_hits = event_results.estimated_total_hits.unwrap_or(0);
         },
+        Some(ItemType::Series) => {
+            merged.extend(series);
+            total_hits = series_results.estimated_total_hits.unwrap_or(0);
+        },
         Some(ItemType::Realm) => {
             merged.extend(realms);
             total_hits = realm_results.estimated_total_hits.unwrap_or(0);
         },
         None => {
             merged.extend(events);
+            merged.extend(series);
             merged.extend(realms);
-            total_hits = [event_results.estimated_total_hits, realm_results.estimated_total_hits]
+            total_hits = [
+                event_results.estimated_total_hits,
+                series_results.estimated_total_hits,
+                realm_results.estimated_total_hits,
+            ]
                 .iter()
                 .filter_map(|&x| x)
                 .sum();

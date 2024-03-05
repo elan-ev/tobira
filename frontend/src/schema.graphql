@@ -630,6 +630,7 @@ input UpdateTitleBlock {
 
 enum ItemType {
   EVENT
+  SERIES
   REALM
 }
 
