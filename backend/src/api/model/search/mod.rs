@@ -227,24 +227,26 @@ pub(crate) async fn all_events(
         return Err(context.not_logged_in_error());
     }
 
-    // All users can find all events they have write access to. If
-    // `writable_only` is false, this API also returns events that are listed
-    // and that the user can read.
-    let writables = acl_filter("write_roles", context);
-    let filter = if writable_only {
-        writables.map(|f| f.to_string()).unwrap_or_default()
-    } else {
-        let listed_and_readable = Filter::And(
-            std::iter::once(Filter::Leaf("listed = true".into()))
-                .chain(acl_filter("read_roles", context))
-                .collect()
-        );
+    let filter = if context.auth.is_admin() {
+        // Admins have write access to all events so they can always see all.
+        String::new()
+    }  else {
+        // For other users: they can always find all events they have write
+        // access to. If `writable_only` is false, this API also returns events
+        // that are listed and that the user can read.
+        let error = "None ACL filter for non-admin user";
+        let writables = acl_filter("write_roles", context).expect(error);
 
-        Filter::Or(
-            std::iter::once(listed_and_readable)
-                .chain(writables)
-                .collect()
-        ).to_string()
+        if writable_only {
+            writables.to_string()
+        } else {
+            let listed_and_readable = Filter::And(vec![
+                Filter::Leaf("listed = true".into()),
+                acl_filter("read_roles", context).expect(error),
+            ]);
+
+            Filter::Or(vec![listed_and_readable, writables]).to_string()
+        }
     };
 
     let res = context.search.event_index.search()
