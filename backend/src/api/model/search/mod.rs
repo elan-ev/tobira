@@ -202,22 +202,28 @@ pub(crate) async fn perform(
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
 
     let mut merged: Vec<(NodeValue, Option<f64>)> = Vec::new();
+    let total_hits: usize;
 
     match filters.item_type {
-        Some(ItemType::Event) => merged.extend(events),
-        Some(ItemType::Realm) => merged.extend(realms),
+        Some(ItemType::Event) => {
+            merged.extend(events);
+            total_hits = event_results.estimated_total_hits.unwrap_or(0);
+        },
+        Some(ItemType::Realm) => {
+            merged.extend(realms);
+            total_hits = realm_results.estimated_total_hits.unwrap_or(0);
+        },
         None => {
             merged.extend(events);
             merged.extend(realms);
+            total_hits = [event_results.estimated_total_hits, realm_results.estimated_total_hits]
+                .iter()
+                .filter_map(|&x| x)
+                .sum();
         },
     }
 
     merged.sort_unstable_by(|(_, score0), (_, score1)| score1.unwrap().total_cmp(&score0.unwrap()));
-
-    let total_hits: usize = [event_results.estimated_total_hits, realm_results.estimated_total_hits]
-        .iter()
-        .filter_map(|&x| x)
-        .sum();
 
     let items = merged.into_iter().map(|(node, _)| node).collect();
     Ok(SearchOutcome::Results(SearchResults { items, total_hits }))
