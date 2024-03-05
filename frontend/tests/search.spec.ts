@@ -20,7 +20,7 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
     });
 
     await test.step("Should show breadcrumbs", async () => {
-        await expect(page.getByText("Search results for “cat” (4 hits)")).toBeVisible();
+        await expect(page.getByText("Search results for cat (4 hits)")).toBeVisible();
     });
 
     for (const videoTitle of ["Video of a Tabby Cat", "Dual Stream Cats"]) {
@@ -71,7 +71,7 @@ const startSearch = async (page: Page, query: string, startUrl?: string) => {
 };
 
 const expectNoResults = async (page: Page, query: string) => {
-    await expect(page.getByText(`Search results for “${query}” (0 hits)`)).toBeVisible();
+    await expect(page.getByText(`Search results for ${query} (0 hits)`)).toBeVisible();
     await expect(page.getByText("No results")).toBeVisible();
     await expect(page.getByRole("img", { name: "Thumbnail" })).toBeHidden();
 };
