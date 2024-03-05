@@ -23,6 +23,10 @@ values ('ready', '4034db58-0233-4926-9a6c-a88c6430cf14', 'Empty series', 'Has no
     '2018-09-01 14:00:00+00', '{}', '{"ROLE_STAFF"}');
 
 insert into series (state, opencast_id, title, description, updated, read_roles, write_roles)
+values ('ready', 'b56452ed-5ff4-47a1-aa41-5950637b08fb', 'Unlisted series', 'Single unlisted video',
+    '2016-09-02 14:30:00+00', '{}', '{"ROLE_USER_MORGAN"}');
+
+insert into series (state, opencast_id, title, description, updated, read_roles, write_roles)
 values ('waiting', '2b814c02-c849-4553-b5f5-f4e9e69fd74f', null, null, '-infinity', null, null);
 
 
@@ -209,6 +213,45 @@ values ('ready', '1c5d5e89-76b7-4d81-a316-ef62b470e13d', 'Long boy',
     array[
         row('http://localhost:38456/train-portrait-x264.mp4',
             'presentation/preview', 'video/mp4', '{256, 144}', true)
+    ]::event_track[],
+    '{}'
+);
+
+insert into events (state, opencast_id, title, description, creators, metadata, duration, is_live,
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+values ('ready', '0637a85a-c360-450b-900d-81f423cb21f3', 'Unlisted video without series',
+    'Unlisted video being alone',
+    '{"Stanley"}',
+    '{}',
+    12520, false,
+    '2022-03-04 12:00:00+00', '2022-03-04 13:01:00+00', null, null,
+    '{"ROLE_USER"}', '{ROLE_USER_JOSE}',
+    'http://localhost:38456/thumbnail-cat2.jpg',
+    array[
+        row('http://localhost:38456/cat-black-x264-144p.mp4',
+            'presentation/preview', 'video/mp4', '{256, 144}', true),
+        row('http://localhost:38456/cat-black-x264-240p.mp4',
+            'presentation/preview', 'video/mp4', '{432, 240}', true)
+    ]::event_track[],
+    '{}'
+);
+
+insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+values ('ready', '06a71e43-94cd-472d-a345-952979489e88', 'Unlisted video in series',
+    'Cheesecake is yummy',
+    '{"klimkin"}',
+    '{}',
+    (select id from series where title = 'Unlisted series'), 'b56452ed-5ff4-47a1-aa41-5950637b08fb',
+    13520, false,
+    '2022-03-05 12:00:00+00', '2022-03-05 13:01:00+00', null, null,
+    '{"ROLE_USER"}', '{ROLE_USER_MORGAN}',
+    'http://localhost:38456/thumbnail-cat2.jpg',
+    array[
+        row('http://localhost:38456/cat-black-x264-144p.mp4',
+            'presentation/preview', 'video/mp4', '{256, 144}', true),
+        row('http://localhost:38456/cat-black-x264-240p.mp4',
+            'presentation/preview', 'video/mp4', '{432, 240}', true)
     ]::event_track[],
     '{}'
 );
