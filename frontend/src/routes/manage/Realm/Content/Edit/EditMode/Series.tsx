@@ -21,6 +21,7 @@ import { SeriesSelector } from "../../../../../../ui/SearchableSelect";
 import { DisplayOptionGroup } from "../../../../../../ui/Input";
 import { screenWidthAtMost } from "@opencast/appkit";
 import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";
+import { InfoTooltip } from "../../../../../../ui";
 
 
 type SeriesFormData = {
@@ -85,7 +86,12 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
     const headingId = useId();
 
     return <EditModeForm create={create} save={save} map={(data: SeriesFormData) => data}>
-        <Heading>{t("manage.realm.content.series.series.heading")}</Heading>
+        <Heading>
+            {t("manage.realm.content.series.series.heading")}
+            <InfoTooltip
+                info={t("manage.realm.content.series.series.findable-series-note")}
+            />
+        </Heading>
         {"series" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
         </div>}
@@ -96,6 +102,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             }}
             onChange={data => seriesField.onChange(data?.id)}
             onBlur={seriesField.onBlur}
+            autoFocus
         />
         <div
             css={{

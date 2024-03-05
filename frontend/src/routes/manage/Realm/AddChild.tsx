@@ -1,8 +1,6 @@
 import React, { useId, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
-import { WithTooltip } from "@opencast/appkit";
-import { LuInfo } from "react-icons/lu";
 
 import { RootLoader } from "../../../layout/Root";
 import type {
@@ -29,6 +27,7 @@ import { PageTitle } from "../../../layout/header/ui";
 import { realmBreadcrumbs } from "../../../util/realm";
 import { COLORS } from "../../../color";
 import { ManageRealmContentRoute } from "./Content";
+import { InfoTooltip } from "../../../ui";
 
 
 const PATH = "/~manage/realm/add-child";
@@ -225,22 +224,3 @@ const AddChild: React.FC<Props> = ({ parent }) => {
         </RealmSettingsContainer>
     );
 };
-
-type InfoTooltipProps = {
-    info: JSX.Element | string;
-};
-
-const InfoTooltip: React.FC<InfoTooltipProps> = ({ info }) => (
-    <WithTooltip
-        tooltip={info}
-        tooltipCss={{ width: "min(90vw, 460px)" }}
-        css={{
-            display: "inline-block",
-            verticalAlign: "middle",
-            fontWeight: "normal",
-            marginLeft: 8,
-        }}
-    >
-        <span><LuInfo tabIndex={0} /></span>
-    </WithTooltip>
-);

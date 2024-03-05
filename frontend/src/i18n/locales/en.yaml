@@ -487,6 +487,8 @@ manage:
         series:
           heading: Series
           invalid: Please select a series
+          findable-series-note: >
+            You can only select series here which are listed or which you have write-access to.
         metadata:
           heading: Metadata
 
@@ -494,6 +496,8 @@ manage:
         event:
           heading: Event
           invalid: Please select an event
+          findable-events-note: >
+            You can only select videos here which are listed or which you have write-access to.
           no-read-access-to-current: >
             You do not have read access to the video that is currently referenced here.
 
