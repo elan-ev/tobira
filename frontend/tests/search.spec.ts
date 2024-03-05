@@ -110,5 +110,40 @@ test("Read access is checked", async ({ page, standardData, activeSearchIndex, b
     });
 });
 
+for (const username of ["jose", "admin"] as const) {
+    test(`Video search finds listed & writable (for ${username})`, async ({
+        page, standardData, activeSearchIndex, browserName,
+    }) => {
+        test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
+
+        const toBeVisibleIfAdmin = username === "admin" ? "toBeVisible" : "toBeHidden";
+
+        await page.goto("/");
+        await login(page, username);
+
+        // Use page without content blocks
+        await page.goto("~manage/realm/content?path=/love/turtles");
+        await page.getByRole("button", { name: "Insert a new block here" }).nth(0).click();
+        await page.getByRole("button", { name: "Video", exact: true }).click();
+        const input = page.locator("div").filter({ hasText: "Select option" }).nth(1);
+
+        // Of the two unlisted videos, jose can only see the one where they have
+        // write access to.
+        await input.type("unlisted");
+        await expect(page.getByText("Unlisted video without series")).toBeVisible();
+        await expect(page.getByText("Unlisted video in series"))[toBeVisibleIfAdmin]();
+        await page.keyboard.press("Escape");
+
+        // A video, even if listed, is not found if user has no read access.
+        await input.type("private");
+        await expect(page.getByText("Very secret private video"))[toBeVisibleIfAdmin]();
+        await page.keyboard.press("Escape");
+
+        // Listed & readable appear, even if user has no write access.
+        await input.type("cat");
+        await expect(page.getByText("Black Cat (protected)")).toBeVisible();
+    });
+}
+
 // TODO:
 // - search for video only included in one page & having correct link
