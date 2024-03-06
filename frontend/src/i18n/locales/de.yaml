@@ -379,6 +379,9 @@ manage:
       next: Nächste Seite
       last: Letzte Seite
     columns:
+      description: 'Sortieren nach {{title}}, {{direction}}'
+      ascending: aufsteigend
+      descending: absteigend
       title: Titel
       created: Erstellt
     no-description: Keine Beschreibung

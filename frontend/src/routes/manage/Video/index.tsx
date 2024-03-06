@@ -229,15 +229,22 @@ type ColumnHeaderProps = {
     vars: VariablesOf<VideoManageQuery>;
 };
 
-const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => (
-    <th>
+const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => {
+    const { t } = useTranslation();
+    const direction = vars.order.column === sortKey && vars.order.direction === "ASCENDING"
+        ? "DESCENDING"
+        : "ASCENDING";
+    const directionTransKey = direction.toLowerCase() as Lowercase<typeof direction>;
+
+    return <th>
         <Link
+            aria-label={t("manage.my-videos.columns.description",
+                { title: label, direction: t(`manage.my-videos.columns.${directionTransKey}`) })
+            }
             to={varsToLink({
                 order: {
                     column: sortKey,
-                    direction: vars.order.column === sortKey && vars.order.direction === "ASCENDING"
-                        ? "DESCENDING"
-                        : "ASCENDING",
+                    direction,
                 },
             })}
             css={{
@@ -262,8 +269,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                 "DESCENDING": () => <LuArrowUpWideNarrow />,
             }, () => null)}
         </Link>
-    </th>
-);
+    </th>;
+};
 
 const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
     const isDark = useColorScheme().scheme === "dark";
