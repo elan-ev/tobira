@@ -22,6 +22,7 @@ import { DisplayOptionGroup } from "../../../../../../ui/Input";
 import { screenWidthAtMost } from "@opencast/appkit";
 import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";
 import { InfoTooltip } from "../../../../../../ui";
+import { isRealUser, useUser } from "../../../../../../User";
 
 
 type SeriesFormData = {
@@ -73,6 +74,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
     `);
 
     const { t } = useTranslation();
+    const user = useUser();
 
     const form = useFormContext<SeriesFormData>();
     const { formState: { errors }, control } = form;
@@ -88,9 +90,9 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
     return <EditModeForm create={create} save={save} map={(data: SeriesFormData) => data}>
         <Heading>
             {t("manage.realm.content.series.series.heading")}
-            <InfoTooltip
+            {isRealUser(user) && !user.canFindUnlisted && <InfoTooltip
                 info={t("manage.realm.content.series.series.findable-series-note")}
-            />
+            />}
         </Heading>
         {"series" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>

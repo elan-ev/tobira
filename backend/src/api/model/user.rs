@@ -59,6 +59,11 @@ impl User {
         self.can_create_user_realm(&context.config.auth)
     }
 
+    /// `True` if the user is allowed to find unlisted items when editing page content.
+    fn can_find_unlisted(&self, context: &Context) -> bool {
+        context.auth.can_find_unlisted_items(&context.config.auth)
+    }
+
     /// Returns all events that somehow "belong" to the user, i.e. that appear
     /// on the "my videos" page.
     ///

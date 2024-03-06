@@ -458,6 +458,10 @@ pub(crate) trait HasRoles {
         self.roles().contains(&auth_config.roles.user_realm)
     }
 
+    fn can_find_unlisted_items(&self, auth_config: &AuthConfig) -> bool {
+        self.is_admin() || self.roles().contains(&auth_config.roles.can_find_unlisted)
+    }
+
     fn is_global_page_admin(&self, auth_config: &AuthConfig) -> bool {
         self.is_admin() || self.roles().contains(&auth_config.roles.global_page_admin)
     }

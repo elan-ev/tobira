@@ -677,6 +677,8 @@ type User {
   "`True` if the user has the permission to use Opencast Studio."
   canUseEditor: Boolean!
   canCreateUserRealm: Boolean!
+  "`True` if the user is allowed to find unlisted items when editing page content."
+  canFindUnlisted: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page.

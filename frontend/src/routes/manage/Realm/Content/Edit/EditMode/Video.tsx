@@ -21,6 +21,7 @@ import { MovingTruck } from "../../../../../../ui/Waiting";
 import { ErrorDisplay } from "../../../../../../util/err";
 import { DisplayOptionGroup } from "../../../../../../ui/Input";
 import { InfoTooltip } from "../../../../../../ui";
+import { isRealUser, useUser } from "../../../../../../User";
 
 
 type VideoFormData = {
@@ -74,6 +75,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
     `);
 
     const { t } = useTranslation();
+    const user = useUser();
 
     const form = useFormContext<VideoFormData>();
     const { formState: { errors } } = form;
@@ -85,9 +87,9 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
     return <EditModeForm create={create} save={save} map={(data: VideoFormData) => data}>
         <Heading>
             {t("manage.realm.content.event.event.heading")}
-            <InfoTooltip
+            {isRealUser(user) && !user.canFindUnlisted && <InfoTooltip
                 info={t("manage.realm.content.event.event.findable-events-note")}
-            />
+            />}
         </Heading>
         {"event" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.event.event.invalid")}</Card>

@@ -316,6 +316,15 @@
 # Default value: "ROLE_USER"
 #user_realm = "ROLE_USER"
 
+# The role granting permission to find unlisted events and series when
+# editing page content. Usually, only very few people should have this
+# privilege. Everyone can always find listed items and items they have
+# write access to. This does not affect the search results of the main
+# search.
+#
+# Default value: "ROLE_TOBIRA_CAN_FIND_UNLISTED"
+#can_find_unlisted = "ROLE_TOBIRA_CAN_FIND_UNLISTED"
+
 # The role granting "page admin" privileges on all non-user pages.
 #
 # Default value: "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN"

@@ -342,6 +342,14 @@ pub(crate) struct RoleConfig {
     #[config(default = "ROLE_USER")]
     pub(crate) user_realm: String,
 
+    /// The role granting permission to find unlisted events and series when
+    /// editing page content. Usually, only very few people should have this
+    /// privilege. Everyone can always find listed items and items they have
+    /// write access to. This does not affect the search results of the main
+    /// search.
+    #[config(default = "ROLE_TOBIRA_CAN_FIND_UNLISTED")]
+    pub(crate) can_find_unlisted: String,
+
     /// The role granting "page admin" privileges on all non-user pages.
     #[config(default = "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN")]
     pub(crate) global_page_admin: String,
