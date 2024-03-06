@@ -17,7 +17,7 @@ general:
     goto-homepage: Go to homepage
     share: Share
   version-information: Version
-  logo-alt: Logo of “{{title}}”
+  logo-alt: Homepage of “{{title}}”
   no-root-children: No pages yet
   failed-to-load-thumbnail: Failed to load thumbnail
   yes: "Yes"

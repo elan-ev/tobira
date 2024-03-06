@@ -18,7 +18,7 @@ general:
     goto-homepage: Zur Startseite
     share: Teilen
   version-information: Version
-  logo-alt: Das Logo von „{{title}}“
+  logo-alt: Startseite von „{{title}}“
   no-root-children: Noch keine Seiten
   failed-to-load-thumbnail: Konnte Vorschaubild nicht laden
   yes: Ja
