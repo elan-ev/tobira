@@ -420,10 +420,10 @@ pub(crate) trait HasRoles {
         self.roles().iter().map(|s| &**s).collect()
     }
 
-    /// Returns an auth token IF this user is a Tobira moderator (as determined
-    /// by `config.moderator_role`).
-    fn require_moderator(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        AuthToken::some_if(self.is_moderator(auth_config))
+    /// Returns an auth token IF this user is a Tobira admin (as determined
+    /// by `RoleConfig::tobira_admin`).
+    fn require_tobira_admin(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
+        AuthToken::some_if(self.is_tobira_admin(auth_config))
     }
 
     fn required_upload_permission(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
@@ -438,20 +438,20 @@ pub(crate) trait HasRoles {
         AuthToken::some_if(self.can_use_editor(auth_config))
     }
 
-    fn is_moderator(&self, auth_config: &AuthConfig) -> bool {
-        self.is_admin() || self.roles().contains(&auth_config.roles.moderator)
+    fn is_tobira_admin(&self, auth_config: &AuthConfig) -> bool {
+        self.is_admin() || self.roles().contains(&auth_config.roles.tobira_admin)
     }
 
     fn can_upload(&self, auth_config: &AuthConfig) -> bool {
-        self.is_moderator(auth_config) || self.roles().contains(&auth_config.roles.upload)
+        self.is_tobira_admin(auth_config) || self.roles().contains(&auth_config.roles.upload)
     }
 
     fn can_use_studio(&self, auth_config: &AuthConfig) -> bool {
-        self.is_moderator(auth_config) || self.roles().contains(&auth_config.roles.studio)
+        self.is_tobira_admin(auth_config) || self.roles().contains(&auth_config.roles.studio)
     }
 
     fn can_use_editor(&self, auth_config: &AuthConfig) -> bool {
-        self.is_moderator(auth_config) || self.roles().contains(&auth_config.roles.editor)
+        self.is_tobira_admin(auth_config) || self.roles().contains(&auth_config.roles.editor)
     }
 
     fn can_create_user_realm(&self, auth_config: &AuthConfig) -> bool {
@@ -459,11 +459,13 @@ pub(crate) trait HasRoles {
     }
 
     fn can_find_unlisted_items(&self, auth_config: &AuthConfig) -> bool {
-        self.is_admin() || self.roles().contains(&auth_config.roles.can_find_unlisted)
+        self.is_tobira_admin(auth_config)
+            || self.roles().contains(&auth_config.roles.can_find_unlisted)
     }
 
     fn is_global_page_admin(&self, auth_config: &AuthConfig) -> bool {
-        self.is_admin() || self.roles().contains(&auth_config.roles.global_page_admin)
+        self.is_tobira_admin(auth_config)
+            || self.roles().contains(&auth_config.roles.global_page_admin)
     }
 
     fn is_global_page_moderator(&self, auth_config: &AuthConfig) -> bool {

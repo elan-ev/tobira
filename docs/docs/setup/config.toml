@@ -289,12 +289,13 @@
 
 
 [auth.roles]
-# If a user has this role, they are treated as a moderator in Tobira,
-# giving them the ability to modify the realm structure among other
-# things.
+# The role giving a user "Tobira admin" status, giving them all
+# Tobira-related privileges, i.e. everything for which a role can be
+# configured below. Unlike ROLE_ADMIN, this does not give the user access
+# to all content.
 #
-# Default value: "ROLE_TOBIRA_MODERATOR"
-#moderator = "ROLE_TOBIRA_MODERATOR"
+# Default value: "ROLE_TOBIRA_ADMIN"
+#tobira_admin = "ROLE_TOBIRA_ADMIN"
 
 # The role granting permission to use Tobira's uploader.
 #

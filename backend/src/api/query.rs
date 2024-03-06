@@ -96,9 +96,12 @@ impl Query {
         search::perform(&query, filters, context).await
     }
 
-    /// Searches through all events that the user has write access to
-    /// (unlisted and listed). If `writeable_only` is `false`, events that are
-    /// listed and that the user has read access to are also returned.
+    /// Searches through events. Searches through:
+    ///
+    /// - Events that the user has write access to (listed & unlisted).
+    /// - If `writable_only` is false, this also searches through videos that
+    ///   the user has read access to. However, unless the user has the
+    ///   privilege to find unlisted events, only listed ones are searched.
     async fn search_all_events(
         query: String,
         writable_only: bool,
@@ -107,12 +110,12 @@ impl Query {
         search::all_events(&query, writable_only, context).await
     }
 
-    /// Searches through all series. If `writable_only` is true, only series
-    /// that the user has write access to are searched (but including
-    /// non-listed ones). If it's false, it depends: if the user is moderator,
-    /// all series are searched (including non-listed ones). If the user is not
-    /// moderator, series that are listed or the user has write access to are
-    /// searched.
+    /// Searches through series. Searches through:
+    ///
+    /// - Series that the user has write access to (listed & unlisted).
+    /// - If `writable_only` is false, this also searches through listed series.
+    ///   If the user has the privilege to find unlisted series, all series are
+    ///   searched.
     async fn search_all_series(
         query: String,
         writable_only: bool,

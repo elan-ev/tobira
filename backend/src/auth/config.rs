@@ -320,11 +320,12 @@ impl CallbackCacheDuration {
 
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct RoleConfig {
-    /// If a user has this role, they are treated as a moderator in Tobira,
-    /// giving them the ability to modify the realm structure among other
-    /// things.
-    #[config(default = "ROLE_TOBIRA_MODERATOR")]
-    pub(crate) moderator: String,
+    /// The role giving a user "Tobira admin" status, giving them all
+    /// Tobira-related privileges, i.e. everything for which a role can be
+    /// configured below. Unlike ROLE_ADMIN, this does not give the user access
+    /// to all content.
+    #[config(default = "ROLE_TOBIRA_ADMIN")]
+    pub(crate) tobira_admin: String,
 
     /// The role granting permission to use Tobira's uploader.
     #[config(default = "ROLE_TOBIRA_UPLOAD")]

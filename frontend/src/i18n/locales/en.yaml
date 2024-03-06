@@ -32,7 +32,7 @@ welcome:
   title: Welcome to Tobira!
   body: >
     It looks like your main page is still empty. To add content to this page
-    or add other pages, log in with an account that has moderator privileges.
+    or add other pages, log in with an account that has sufficient privileges.
     Afterwards, you can use the buttons on the left to modify the pages of this
     video portal.
 
@@ -556,7 +556,7 @@ api-remote-errors:
     not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: You have to be logged in to perform this action.
-    not-a-moderator: You have to be a moderator to perform this action.
+    not-a-tobira-admin: You have to be a Tobira admin to perform this action.
   realm:
     path-is-reserved: The chosen path is reserved and cannot be used for pages.
     path-collision: A page with this path already exists.
