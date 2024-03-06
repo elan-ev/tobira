@@ -645,7 +645,11 @@ type InfoWithTooltipProps = {
 }
 
 const InfoWithTooltip: React.FC<InfoWithTooltipProps> = ({ tooltip, mode }) => (
-    <WithTooltip {...{ tooltip }} css={{ display: "flex", fontWeight: "normal" }}>
+    <WithTooltip
+        {...{ tooltip }}
+        css={{ display: "flex", fontWeight: "normal" }}
+        tooltipCss={{ width: "min(85vw, 460px)" }}
+    >
         <span css={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
             {mode === "info" ? <LuInfo /> : <LuAlertTriangle css={{ color: COLORS.danger0 }}/>}
         </span>
