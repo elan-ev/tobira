@@ -426,18 +426,6 @@ pub(crate) trait HasRoles {
         AuthToken::some_if(self.is_tobira_admin(auth_config))
     }
 
-    fn required_upload_permission(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        AuthToken::some_if(self.can_upload(auth_config))
-    }
-
-    fn required_studio_permission(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        AuthToken::some_if(self.can_use_studio(auth_config))
-    }
-
-    fn required_editor_permission(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        AuthToken::some_if(self.can_use_editor(auth_config))
-    }
-
     fn is_tobira_admin(&self, auth_config: &AuthConfig) -> bool {
         self.is_admin() || self.roles().contains(&auth_config.roles.tobira_admin)
     }
