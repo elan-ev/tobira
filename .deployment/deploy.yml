@@ -6,6 +6,7 @@
     # will usually be overwritten by --extra-vars='deployid=<id>'
     id: "{{ deployid }}"
     opencast_admin_password: '{{ lookup("env", "OPENCAST_ADMIN_PASSWORD") }}'
+    tobira_admin_password: '{{ lookup("env", "TOBIRA_ADMIN_PASSWORD") }}'
 
   tasks:
     # We always recreate the DB from the last release dump. To do that, we have

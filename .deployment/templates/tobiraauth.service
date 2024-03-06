@@ -7,6 +7,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/tobira/{{ id }}/
+Environment="TOBIRA_ADMIN_PASSWORD={{ tobira_admin_password }}"
 ExecStart=node /opt/tobira/{{ id }}/login-handler.js {{ id }}
 Restart=always
 User=tobira
