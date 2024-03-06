@@ -353,6 +353,11 @@ manage:
 
   my-videos:
     title: My videos
+    navigation:
+      first: First page
+      previous: Previous page
+      next: Next page
+      last: Last page
     columns:
       title: Title
       created: Created

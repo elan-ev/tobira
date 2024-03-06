@@ -357,18 +357,22 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => 
                 <PageLink
                     vars={{ order: vars.order, first: LIMIT }}
                     disabled={!pageInfo.hasPreviousPage && connection.items.length === LIMIT}
+                    label={t("manage.my-videos.navigation.first")}
                 ><FirstPage /></PageLink>
                 <PageLink
                     vars={{ order: vars.order, before: pageInfo.startCursor, last: LIMIT }}
                     disabled={!pageInfo.hasPreviousPage}
+                    label={t("manage.my-videos.navigation.previous")}
                 ><LuChevronLeft /></PageLink>
                 <PageLink
                     vars={{ order: vars.order, after: pageInfo.endCursor, first: LIMIT }}
                     disabled={!pageInfo.hasNextPage}
+                    label={t("manage.my-videos.navigation.next")}
                 ><LuChevronRight /></PageLink>
                 <PageLink
                     vars={{ order: vars.order, last: LIMIT }}
                     disabled={!pageInfo.hasNextPage}
+                    label={t("manage.my-videos.navigation.last")}
                 ><LastPage /></PageLink>
             </div>
         </div>
@@ -379,13 +383,15 @@ type PageLinkProps = {
     vars: VariablesOf<VideoManageQuery>;
     disabled: boolean;
     children: ReactNode;
+    label: string;
 };
 
-const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (
+const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled, label }) => (
     <Link
         to={varsToLink(vars)}
         tabIndex={disabled ? -1 : 0}
         aria-hidden={disabled}
+        aria-label={label}
         css={{
             background: "none",
             border: "none",
