@@ -316,6 +316,16 @@
 # Default value: "ROLE_USER"
 #user_realm = "ROLE_USER"
 
+# The role granting "page admin" privileges on all non-user pages.
+#
+# Default value: "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN"
+#global_page_admin = "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN"
+
+# The role granting "page moderator" privileges on all non-user pages.
+#
+# Default value: "ROLE_TOBIRA_GLOBAL_PAGE_MODERATOR"
+#global_page_moderator = "ROLE_TOBIRA_GLOBAL_PAGE_MODERATOR"
+
 # List of prefixes that user roles can have. Used to distinguish user
 # roles from other roles. Should probably be the same as
 # `role_user_prefix` in `acl.default.create.properties` in OC.

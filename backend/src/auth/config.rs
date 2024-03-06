@@ -342,6 +342,14 @@ pub(crate) struct RoleConfig {
     #[config(default = "ROLE_USER")]
     pub(crate) user_realm: String,
 
+    /// The role granting "page admin" privileges on all non-user pages.
+    #[config(default = "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN")]
+    pub(crate) global_page_admin: String,
+
+    /// The role granting "page moderator" privileges on all non-user pages.
+    #[config(default = "ROLE_TOBIRA_GLOBAL_PAGE_MODERATOR")]
+    pub(crate) global_page_moderator: String,
+
     /// List of prefixes that user roles can have. Used to distinguish user
     /// roles from other roles. Should probably be the same as
     /// `role_user_prefix` in `acl.default.create.properties` in OC.

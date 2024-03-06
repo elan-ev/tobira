@@ -229,13 +229,13 @@ impl Realm {
     }
 
     fn is_current_user_page_admin(&self, context: &Context) -> bool {
-        context.auth.is_admin()
+        context.auth.is_global_page_admin(&context.config.auth)
             || self.is_current_user_owner(context)
             || context.auth.overlaps_roles(&self.flattened_admin_roles)
     }
 
     fn can_current_user_moderate(&self, context: &Context) -> bool {
-        context.auth.is_admin()
+        context.auth.is_global_page_moderator(&context.config.auth)
             || self.is_current_user_owner(context)
             || context.auth.overlaps_roles(&self.flattened_moderator_roles)
     }

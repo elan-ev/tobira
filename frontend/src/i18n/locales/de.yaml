@@ -292,6 +292,7 @@ acl:
     admins: Administration
     everyone: Alle
     logged-in-users: Eingeloggte Nutzende
+    global-page-admins: Globale Seitenadministration
 
 manage:
   access:

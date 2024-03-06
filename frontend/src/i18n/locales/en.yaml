@@ -288,6 +288,7 @@ acl:
     admins: Administrators
     everyone: Everyone
     logged-in-users: Logged in users
+    global-page-admins: Global page admins
 
 manage:
   access:
