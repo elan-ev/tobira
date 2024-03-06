@@ -326,22 +326,19 @@ pub(crate) struct RoleConfig {
     #[config(default = "ROLE_TOBIRA_MODERATOR")]
     pub(crate) moderator: String,
 
-    /// If a user has this role, they are allowed to use the Tobira video
-    /// uploader to ingest videos to Opencast.
+    /// The role granting permission to use Tobira's uploader.
     #[config(default = "ROLE_TOBIRA_UPLOAD")]
     pub(crate) upload: String,
 
-    /// If a user has this role, they are allowed to use Opencast Studio to
-    /// record and upload videos.
+    /// The role granting permission to use Opencast Studio from Tobira.
     #[config(default = "ROLE_TOBIRA_STUDIO")]
     pub(crate) studio: String,
 
-    /// If a user has this role, they are allowed to use the Opencast editor to
-    /// edit videos they have write access to.
+    /// The role granting permission to use the Opencast Editor from Tobira.
     #[config(default = "ROLE_TOBIRA_EDITOR")]
     pub(crate) editor: String,
 
-    /// If a user has this role, they are allowed to create their own "user realm".
+    /// The role granting permission to create one's own "user page".
     #[config(default = "ROLE_USER")]
     pub(crate) user_realm: String,
 

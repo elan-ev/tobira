@@ -296,25 +296,22 @@
 # Default value: "ROLE_TOBIRA_MODERATOR"
 #moderator = "ROLE_TOBIRA_MODERATOR"
 
-# If a user has this role, they are allowed to use the Tobira video
-# uploader to ingest videos to Opencast.
+# The role granting permission to use Tobira's uploader.
 #
 # Default value: "ROLE_TOBIRA_UPLOAD"
 #upload = "ROLE_TOBIRA_UPLOAD"
 
-# If a user has this role, they are allowed to use Opencast Studio to
-# record and upload videos.
+# The role granting permission to use Opencast Studio from Tobira.
 #
 # Default value: "ROLE_TOBIRA_STUDIO"
 #studio = "ROLE_TOBIRA_STUDIO"
 
-# If a user has this role, they are allowed to use the Opencast editor to
-# edit videos they have write access to.
+# The role granting permission to use the Opencast Editor from Tobira.
 #
 # Default value: "ROLE_TOBIRA_EDITOR"
 #editor = "ROLE_TOBIRA_EDITOR"
 
-# If a user has this role, they are allowed to create their own "user realm".
+# The role granting permission to create one's own "user page".
 #
 # Default value: "ROLE_USER"
 #user_realm = "ROLE_USER"
