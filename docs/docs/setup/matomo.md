@@ -26,7 +26,7 @@ First, you have to tell Tobira about your Matomo server so that the correct trac
 
 ```toml
 [matomo]
-server = "https://matomo.test.tobira.ethz.ch/matomo/"
+server = "https://matomo.my-university.edu/matomo/"
 site_id = "1"
 ```
 
