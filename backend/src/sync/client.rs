@@ -105,14 +105,22 @@ impl OcClient {
             .with_context(|| format!("Harvest request failed (to '{uri}')"))?;
 
         let (out, body_len) = self.deserialize_response::<HarvestResponse>(response, &uri).await?;
-        log!(
-            if out.items.len() > 0 { log::Level::Debug } else { log::Level::Trace },
-            "Received {} KiB ({} items) from the harvest API (in {:.2?}, since = {:?})",
-            body_len / 1024,
-            out.items.len(),
-            before.elapsed(),
-            since,
-        );
+
+        if out.items.len() > 0 {
+            debug!(
+                "Received {} KiB ({} items) from the harvest API (in {:.2?}, since = {:?})",
+                body_len / 1024,
+                out.items.len(),
+                before.elapsed(),
+                since,
+            );
+        } else {
+            trace!(
+                "Received 0 items from harvest API (in {:.2?}, since = {:?})",
+                before.elapsed(),
+                since,
+            );
+        }
 
         Ok(out)
     }

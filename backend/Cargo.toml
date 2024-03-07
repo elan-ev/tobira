@@ -77,6 +77,7 @@ tokio = { version = "1.36", features = ["fs", "rt-multi-thread", "macros", "time
 tokio-postgres = { version = "0.7", features = ["with-chrono-0_4", "with-serde_json-1"] }
 tokio-postgres-rustls = "0.11.1"
 url = "2.4.1"
+tracing = { version = "0.1.40", features = ["log"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 procfs = "0.16.0"
