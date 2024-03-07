@@ -44,8 +44,18 @@ const main = async () => {
 };
 
 const check: LoginCheck = async ({ userid, password }) => {
+    // On the test deployment, for admin, we require a good password.
+    const expectedPassword = (process.argv[2] && userid === "admin")
+        ? process.env.TOBIRA_ADMIN_PASSWORD
+        : DUMMY_PASSWORD;
+
+    if (!expectedPassword) {
+        console.error("Tobira admin password env not set!");
+        return "forbidden";
+    }
+
     const user = DUMMY_USERS[userid];
-    if (password === DUMMY_PASSWORD && user) {
+    if (password === expectedPassword && user) {
         return {
             username: userid,
             displayName: user.displayName,

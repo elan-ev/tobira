@@ -25,8 +25,8 @@ unix_socket_permissions = 0o777
 [auth]
 source = "tobira-session"
 session.from_login_credentials = "login-callback:http+unix://[/opt/tobira/{{ id }}/socket/auth.sock]/"
-login_page.note.en = 'Dummy users: "jose", "morgan", "björk", "sabine" and "admin". Password for all: "tobira".'
-login_page.note.de = 'Testnutzer: "jose", "morgan", "björk", "sabine" und "admin". Passwort für alle: "tobira".'
+login_page.note.en = 'Dummy users: "jose", "morgan", "björk" and "sabine". Password for all: "tobira".'
+login_page.note.de = 'Testnutzer: "jose", "morgan", "björk" und "sabine". Passwort für alle: "tobira".'
 
 trusted_external_key = "tobira"
 
