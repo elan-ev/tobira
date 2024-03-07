@@ -229,15 +229,22 @@ type ColumnHeaderProps = {
     vars: VariablesOf<VideoManageQuery>;
 };
 
-const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => (
-    <th>
+const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => {
+    const { t } = useTranslation();
+    const direction = vars.order.column === sortKey && vars.order.direction === "ASCENDING"
+        ? "DESCENDING"
+        : "ASCENDING";
+    const directionTransKey = direction.toLowerCase() as Lowercase<typeof direction>;
+
+    return <th>
         <Link
+            aria-label={t("manage.my-videos.columns.description",
+                { title: label, direction: t(`manage.my-videos.columns.${directionTransKey}`) })
+            }
             to={varsToLink({
                 order: {
                     column: sortKey,
-                    direction: vars.order.column === sortKey && vars.order.direction === "ASCENDING"
-                        ? "DESCENDING"
-                        : "ASCENDING",
+                    direction,
                 },
             })}
             css={{
@@ -262,8 +269,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                 "DESCENDING": () => <LuArrowUpWideNarrow />,
             }, () => null)}
         </Link>
-    </th>
-);
+    </th>;
+};
 
 const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
     const isDark = useColorScheme().scheme === "dark";
@@ -357,18 +364,22 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => 
                 <PageLink
                     vars={{ order: vars.order, first: LIMIT }}
                     disabled={!pageInfo.hasPreviousPage && connection.items.length === LIMIT}
+                    label={t("manage.my-videos.navigation.first")}
                 ><FirstPage /></PageLink>
                 <PageLink
                     vars={{ order: vars.order, before: pageInfo.startCursor, last: LIMIT }}
                     disabled={!pageInfo.hasPreviousPage}
+                    label={t("manage.my-videos.navigation.previous")}
                 ><LuChevronLeft /></PageLink>
                 <PageLink
                     vars={{ order: vars.order, after: pageInfo.endCursor, first: LIMIT }}
                     disabled={!pageInfo.hasNextPage}
+                    label={t("manage.my-videos.navigation.next")}
                 ><LuChevronRight /></PageLink>
                 <PageLink
                     vars={{ order: vars.order, last: LIMIT }}
                     disabled={!pageInfo.hasNextPage}
+                    label={t("manage.my-videos.navigation.last")}
                 ><LastPage /></PageLink>
             </div>
         </div>
@@ -379,13 +390,15 @@ type PageLinkProps = {
     vars: VariablesOf<VideoManageQuery>;
     disabled: boolean;
     children: ReactNode;
+    label: string;
 };
 
-const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled }) => (
+const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled, label }) => (
     <Link
         to={varsToLink(vars)}
         tabIndex={disabled ? -1 : 0}
         aria-hidden={disabled}
+        aria-label={label}
         css={{
             background: "none",
             border: "none",

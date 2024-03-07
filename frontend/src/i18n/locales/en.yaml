@@ -17,7 +17,7 @@ general:
     goto-homepage: Go to homepage
     share: Share
   version-information: Version
-  logo-alt: Logo of “{{title}}”
+  logo-alt: Homepage of “{{title}}”
   no-root-children: No pages yet
   failed-to-load-thumbnail: Failed to load thumbnail
   yes: "Yes"
@@ -353,7 +353,15 @@ manage:
 
   my-videos:
     title: My videos
+    navigation:
+      first: First page
+      previous: Previous page
+      next: Next page
+      last: Last page
     columns:
+      description: 'Sort by {{title}}, {{direction}}'
+      ascending: ascending
+      descending: descending
       title: Title
       created: Created
     no-description: No description
