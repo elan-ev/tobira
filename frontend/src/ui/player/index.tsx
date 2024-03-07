@@ -91,11 +91,7 @@ export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange }) => 
                         ? { mode: "pending", startTime }
                         : { mode: "ended" },
                 }} />
-                : <LoadPaellaPlayer
-                    {...event}
-                    {...event.syncedData}
-                    previewImage={event.syncedData.thumbnail}
-                />}
+                : <LoadPaellaPlayer {...{ event }} />}
         </Suspense>
     );
 };

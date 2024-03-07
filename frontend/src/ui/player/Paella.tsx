@@ -6,7 +6,7 @@ import getUserTrackingPluginsContext from "paella-user-tracking";
 import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
-import { Caption, isHlsTrack, Track } from ".";
+import { isHlsTrack, PlayerEvent, Track } from ".";
 import { SPEEDS } from "./consts";
 import { timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
@@ -15,15 +15,7 @@ import CONFIG from "../../config";
 
 
 type PaellaPlayerProps = {
-    opencastId: string;
-    title: string;
-    duration: number;
-    tracks: readonly Track[];
-    captions: readonly Caption[];
-    isLive: boolean;
-    startTime?: string | null;
-    endTime?: string | null;
-    previewImage?: string | null;
+    event: PlayerEvent;
 };
 
 export type PaellaState = {
@@ -31,9 +23,7 @@ export type PaellaState = {
     loadPromise: Promise<void>;
 };
 
-const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
-    opencastId, tracks, title, duration, isLive, captions, startTime, endTime, previewImage,
-}) => {
+const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const { paella, setPlayerIsLoaded } = usePlayerContext();
@@ -51,7 +41,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
         if (!paella.current) {
             // Video/event specific information we have to give to Paella.
             const tracksByKind: Record<string, Track[]> = {};
-            for (const track of tracks) {
+            for (const track of event.syncedData.tracks) {
                 const kind = track.flavor.split("/")[0];
                 if (!(kind in tracksByKind)) {
                     tracksByKind[kind] = [];
@@ -59,7 +49,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 tracksByKind[kind].push(track);
             }
 
-            let fixedDuration = duration;
+            let fixedDuration = event.syncedData.duration;
+            const { startTime, endTime } = event.syncedData;
             if (fixedDuration === 0 && startTime && endTime) {
                 const diffMs = (new Date(endTime).getTime() - new Date(startTime).getTime());
                 fixedDuration = diffMs / 1000;
@@ -74,15 +65,15 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
 
             const manifest: Manifest = {
                 metadata: {
-                    title,
+                    title: event.title,
                     duration: fixedDuration,
-                    preview: previewImage,
+                    preview: event.syncedData.thumbnail,
                 },
                 streams: Object.entries(tracksByKind).map(([key, tracks]) => ({
                     content: key,
-                    sources: tracksToPaellaSources(tracks, isLive),
+                    sources: tracksToPaellaSources(tracks, event.isLive),
                 })),
-                captions: captions.map(({ uri, lang }, index) => ({
+                captions: event.syncedData.captions.map(({ uri, lang }, index) => ({
                     format: "vtt",
                     url: uri,
                     lang: lang ?? undefined,
@@ -90,7 +81,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                     // improved in the future, hopefully by getting better information.
                     text: t("video.caption")
                         + (lang ? ` (${lang})` : "")
-                        + (captions.length > 1 ? ` [${index + 1}]` : ""),
+                        + (event.syncedData.captions.length > 1 ? ` [${index + 1}]` : ""),
                 })),
             };
 
@@ -100,7 +91,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             // at random.
             if (manifest.streams.length > 1 && !("presenter" in tracksByKind)) {
                 // eslint-disable-next-line no-console
-                console.warn("Picking first stream as main audio source. Tracks: ", tracks);
+                console.warn("Picking first stream as main audio source. Tracks: ",
+                    event.syncedData.tracks);
                 manifest.streams[0].role = "mainAudio";
             }
 
@@ -111,7 +103,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 // override all functions (which Paella luckily allows) to do
                 // nothing except immediately return the data.
                 loadConfig: async () => PAELLA_CONFIG as Config,
-                getVideoId: async () => opencastId,
+                getVideoId: async () => event.opencastId,
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
@@ -123,7 +115,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             });
 
 
-            if (!isLive) {
+            if (!event.isLive) {
                 const time = new URL(window.location.href).searchParams.get("t");
                 player.bindEvent("paella:playerLoaded", () => {
                     setPlayerIsLoaded(true);
@@ -156,7 +148,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
                 paellaSnapshot.player.unload();
             });
         };
-    }, [tracks, title, duration, isLive, captions, startTime, endTime, previewImage, t]);
+    }, [event, t]);
 
     // This is `neutral10` in dark mode. We hard code this here as it's really
     // not important that an adjusted neutral tone is reflected in the player.
@@ -190,7 +182,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
             // report those bugs and then update Paella, but this way we avoid
             // all these problems. And re-rendering the div is really not
             // problematic as it doesn't have many children.
-            key={title}
+            key={event.opencastId}
             ref={ref}
             css={{
                 height: "100%",
@@ -254,7 +246,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({
 };
 
 const PAELLA_CONFIG = {
-    logLevel: "WARN",
+    logLevel: "DEBUG",
     defaultVideoPreview: "/~assets/1x1-black.png",
     ui: {
         hideUITimer: 2000,
