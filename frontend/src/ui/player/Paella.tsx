@@ -68,6 +68,18 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     title: event.title,
                     duration: fixedDuration,
                     preview: event.syncedData.thumbnail,
+
+                    // These are not strictly necessary for Paella to know, but can be used by
+                    // plugins, like the Matomo plugin. It is not well defined what to pass how,
+                    // but we just copy what the Opencast integration does:
+                    // https://github.com/opencast/opencast/blob/e08812b52a94469dee586909ae414cca85508168/modules/engage-paella-player-7/src/js/EpisodeConversor.js#L134-L152
+                    description: event.description,
+                    seriestitle: event.series?.title, // Yes, no camelCase, lowercase t.
+                    series: event.series?.opencastId,
+                    presenters: event.creators, // Also yes, the name mismatch is intended.
+                    license: event.metadata.dcterms?.license,
+                    location: event.metadata.dcterms?.spatial,
+                    isLive: event.isLive, // Not passed by the OC integration, but useful.
                 },
                 streams: Object.entries(tracksByKind).map(([key, tracks]) => ({
                     content: key,

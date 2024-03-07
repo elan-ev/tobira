@@ -80,7 +80,7 @@ declare module "paella-core" {
             title?: string;
             preview?: string | null;
             // TODO: `related`
-        };
+        } & Record<string, unknown>;
 
         streams: Stream[];
 

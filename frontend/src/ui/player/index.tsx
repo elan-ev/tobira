@@ -6,7 +6,7 @@ import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
 
 import { MAIN_PADDING } from "../../layout/Root";
-import { useForceRerender } from "../../util";
+import { ExtraMetadata, useForceRerender } from "../../util";
 import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
 import { RelativeDate } from "../time";
@@ -28,6 +28,13 @@ export type PlayerEvent = {
     created: string;
     isLive: boolean;
     opencastId: string;
+    description?: string | null;
+    creators: readonly string[];
+    metadata: ExtraMetadata;
+    series?: null | {
+        opencastId: string;
+        title: string;
+    };
     syncedData: {
         updated: string;
         startTime?: string | null;

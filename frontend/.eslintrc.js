@@ -9,7 +9,7 @@ module.exports = {
         "indent": ["warn", 4, { SwitchCase: 1 }],
 
         // Making this stricter
-        "max-len": ["warn", { code: 100 }],
+        "max-len": ["warn", { code: 100, ignoreUrls: true }],
 
 
         // ----- Additional rules  -------------------------------------------

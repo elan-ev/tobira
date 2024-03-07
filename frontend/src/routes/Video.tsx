@@ -264,6 +264,7 @@ const eventFragment = graphql`
             }
             series {
                 id
+                opencastId
                 title
                 ... SeriesBlockSeriesData
             }

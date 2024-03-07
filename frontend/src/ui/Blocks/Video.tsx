@@ -30,6 +30,10 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                     isLive
                     opencastId
                     created
+                    creators
+                    metadata
+                    description
+                    series { title opencastId }
                     syncedData {
                         duration
                         updated
