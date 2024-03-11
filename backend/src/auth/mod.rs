@@ -255,7 +255,7 @@ impl User {
         if !ctx.config.auth.callback.cache_duration.is_zero() {
             header_copy = Some(req.headers().clone());
             let callback_config = &ctx.config.auth.callback;
-            if let Some(user) = ctx.auth_caches.callback.get(req.headers(), callback_config) {
+            if let Some(user) = ctx.auth_caches.callback.get(req.headers(), &callback_config).await {
                 return Ok(user);
             }
         }
@@ -265,7 +265,7 @@ impl User {
 
         // Insert into cache
         if !ctx.config.auth.callback.cache_duration.is_zero() {
-            ctx.auth_caches.callback.insert(header_copy.unwrap(), out.clone());
+            ctx.auth_caches.callback.insert(header_copy.unwrap(), out.clone()).await;
         }
 
         Ok(out)
