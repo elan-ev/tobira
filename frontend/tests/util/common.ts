@@ -5,19 +5,6 @@ import { test as base } from "./data";
 export const test = base;
 
 
-
-
-export const navigateTo = async (path: string, page: Page) => {
-    await expect(async () => {
-        await page.goto(path);
-        await page.waitForURL(path);
-    }).toPass({
-        intervals: [2000, 5000, 10000],
-        timeout: 30 * 1000,
-    });
-};
-
-
 export const deleteRealm = async (page: Page) => {
     const deleteButton = page.locator("button:has-text('Delete')");
 
