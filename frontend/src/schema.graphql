@@ -38,6 +38,12 @@ enum VideoListOrder {
   ZA
 }
 
+input Filters {
+  itemType: ItemType
+  start: DateTimeUtc
+  end: DateTimeUtc
+}
+
 "A block just showing some text."
 type TextBlock implements Block {
   content: String!
@@ -541,7 +547,7 @@ type Query {
   "Retrieve a node by globally unique ID. Mostly useful for relay."
   node(id: ID!): Node
   "Returns `null` if the query is too short."
-  search(query: String!): SearchOutcome!
+  search(query: String!, filters: Filters!): SearchOutcome!
   """
     Searches through all events that the user has write access to
     (unlisted and listed). If `writeable_only` is `false`, events that are
@@ -617,6 +623,11 @@ input UpdateRealm {
 
 input UpdateTitleBlock {
   content: String
+}
+
+enum ItemType {
+  EVENT
+  REALM
 }
 
 enum EventSortColumn {

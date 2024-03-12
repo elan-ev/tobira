@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{fmt, borrow::Cow};
@@ -71,6 +71,18 @@ impl SearchResults<search::Series> {
     }
 }
 
+#[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
+enum ItemType {
+   Event,
+   Realm,
+}
+
+#[derive(juniper::GraphQLInputObject)]
+pub(crate) struct Filters {
+    item_type: Option<ItemType>,
+    start: Option<DateTime<Utc>>,
+    end: Option<DateTime<Utc>>,
+}
 
 macro_rules! handle_search_result {
     ($res:expr, $return_type:ty) => {{
@@ -114,6 +126,7 @@ pub(crate) use handle_search_result;
 /// Main entry point for the main search (including all items).
 pub(crate) async fn perform(
     user_query: &str,
+    filters: Filters,
     context: &Context,
 ) -> ApiResult<SearchOutcome> {
     if user_query.is_empty() {
@@ -147,27 +160,27 @@ pub(crate) async fn perform(
                 Filter::Leaf("is_live = false ".into()),
                 Filter::Leaf(format!("end_time_timestamp >= {}", Utc::now().timestamp()).into()),
             ].into())])
+            .chain(filters.start.map(|start| Filter::Leaf(format!("created_timestamp >= {}", start.timestamp()).into())))
+            .chain(filters.end.map(|end| Filter::Leaf(format!("created_timestamp <= {}", end.timestamp()).into())))
             .collect()
     ).to_string();
-    let mut event_query = context.search.event_index.search();
-    event_query.with_query(user_query);
-    event_query.with_limit(15);
-    event_query.with_show_matches_position(true);
-    event_query.with_filter(&filter);
-    event_query.with_show_ranking_score(true);
-
+    let event_query = context.search.event_index.search()
+        .with_query(user_query)
+        .with_limit(15)
+        .with_show_matches_position(true)
+        .with_filter(&filter)
+        .with_show_ranking_score(true)
+        .build();
 
 
     // Prepare the realm search
-    let realm_query = {
-        let mut query = context.search.realm_index.search();
-        query.with_query(user_query);
-        query.with_limit(10);
-        query.with_filter("is_user_realm = false");
-        query.with_show_matches_position(true);
-        query.with_show_ranking_score(true);
-        query
-    };
+    let realm_query = context.search.realm_index.search()
+        .with_query(user_query)
+        .with_limit(10)
+        .with_filter("is_user_realm = false")
+        .with_show_matches_position(true)
+        .with_show_ranking_score(true)
+        .build();
 
 
     // Perform the searches
@@ -179,7 +192,7 @@ pub(crate) async fn perform(
 
     // Merge results according to Meilis score.
     //
-    // TODO: Comparing scores of differen indices is not well defined right now.
+    // TODO: Comparing scores of different indices is not well defined right now.
     // We can either use score details or adding dummy searchable fields to the
     // realm index. See this discussion for more info:
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
@@ -187,13 +200,30 @@ pub(crate) async fn perform(
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
     let realms = realm_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
-    let mut merged = realms.chain(events).collect::<Vec<_>>();
-    merged.sort_unstable_by(|(_, score0), (_, score1)| score1.unwrap().total_cmp(&score0.unwrap()));
 
-    let total_hits: usize = [event_results.estimated_total_hits, realm_results.estimated_total_hits]
-        .iter()
-        .filter_map(|&x| x)
-        .sum();
+    let mut merged: Vec<(NodeValue, Option<f64>)> = Vec::new();
+    let total_hits: usize;
+
+    match filters.item_type {
+        Some(ItemType::Event) => {
+            merged.extend(events);
+            total_hits = event_results.estimated_total_hits.unwrap_or(0);
+        },
+        Some(ItemType::Realm) => {
+            merged.extend(realms);
+            total_hits = realm_results.estimated_total_hits.unwrap_or(0);
+        },
+        None => {
+            merged.extend(events);
+            merged.extend(realms);
+            total_hits = [event_results.estimated_total_hits, realm_results.estimated_total_hits]
+                .iter()
+                .filter_map(|&x| x)
+                .sum();
+        },
+    }
+
+    merged.sort_unstable_by(|(_, score0), (_, score1)| score1.unwrap().total_cmp(&score0.unwrap()));
 
     let items = merged.into_iter().map(|(node, _)| node).collect();
     Ok(SearchOutcome::Results(SearchResults { items, total_hits }))

@@ -1,12 +1,17 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { LuX } from "react-icons/lu";
 import { useRouter } from "../../router";
-import { handleNavigation, SearchRoute, isSearchActive } from "../../routes/Search";
+import {
+    handleNavigation,
+    SearchRoute,
+    isSearchActive,
+    isValidSearchItemType,
+} from "../../routes/Search";
 import { focusStyle } from "../../ui";
 import { Spinner } from "../../ui/Spinner";
-import { currentRef } from "../../util";
+import { currentRef, useDebounce } from "../../util";
 
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
@@ -21,6 +26,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
     const router = useRouter();
     const ref = useRef<HTMLInputElement>(null);
+    const { debounce } = useDebounce();
 
     // Register global shortcut to focus search bar
     useEffect(() => {
@@ -62,13 +68,23 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     useEffect(() => () => clearTimeout(lastTimeout.current));
 
     const onSearchRoute = isSearchActive();
-    const defaultValue = onSearchRoute
-        ? new URLSearchParams(document.location.search).get("q") ?? undefined
-        : undefined;
-
-    const search = (expression: string) => {
-        router.goto(SearchRoute.url({ query: expression }), onSearchRoute);
+    const getSearchParam = (searchParameter: string) => {
+        const searchParams = new URLSearchParams(document.location.search);
+        return onSearchRoute
+            ? searchParams.get(searchParameter) ?? undefined
+            : undefined;
     };
+    const defaultValue = getSearchParam("q");
+
+
+    const search = useCallback(debounce((expression: string) => {
+        const filters = {
+            itemType: isValidSearchItemType(getSearchParam("f")),
+            start: getSearchParam("start"),
+            end: getSearchParam("end"),
+        };
+        router.goto(SearchRoute.url({ query: expression, ...filters }), onSearchRoute);
+    }, 250), []);
 
     return (
         <div css={{

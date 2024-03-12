@@ -226,11 +226,16 @@ realm:
 
 search:
   input-label: Search
-  title: Search results for “{{query}}” ({{hits}} hits)
+  title: Search results for <i>{{query}}</i> ({{count}} hits)
   no-query: Search results
   no-results: No results
   too-few-characters: Please type more characters to start the search.
   unavailable: The search is currently unavailable. Try again later.
+  filter-all: All
+  filter-event: Videos
+  filter-realm: Pages
+  select-time-frame: Select time frame
+  clear-time-frame: Clear time frame
 
 upload:
   title: Upload video
