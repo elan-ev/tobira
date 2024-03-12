@@ -26,6 +26,10 @@ const query = graphql`
                 created
                 isLive
                 opencastId
+                creators
+                metadata
+                description
+                series { title opencastId }
                 syncedData {
                     updated
                     startTime

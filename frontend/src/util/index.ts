@@ -208,3 +208,4 @@ export const secondsToTimeString = (seconds: number): string => {
     return hours + minutes + remainingSeconds;
 };
 
+export type ExtraMetadata = Record<string, Record<string, string[]>>;
