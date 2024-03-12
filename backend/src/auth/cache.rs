@@ -5,9 +5,9 @@ use hyper::HeaderMap;
 use prometheus_client::metrics::counter::Counter;
 use scc::{hash_map::Entry, HashMap};
 
-use crate::{config::Config, prelude::*};
+use crate::{auth::config::CallbackCacheDuration, config::Config, prelude::*};
 
-use super::{config::CallbackConfig, User};
+use super::User;
 
 pub struct Caches {
     pub(crate) user: UserCache,
@@ -45,7 +45,13 @@ impl Caches {
             out.map(|out| out + cache_duration)
         }
 
-        let empty_wait_time = std::cmp::min(CACHE_DURATION, config.auth.callback.cache_duration);
+        let empty_wait_time = {
+            let mut out = CACHE_DURATION;
+            if let CallbackCacheDuration::Enabled(duration) = config.auth.callback.cache_duration {
+                out = std::cmp::min(duration, out);
+            }
+            out
+        };
         tokio::time::sleep(empty_wait_time).await;
 
         loop {
@@ -56,12 +62,13 @@ impl Caches {
                 CACHE_DURATION,
                 |v| v.last_written_to_db,
             ).await;
-            let next_callback_action = cleanup(
-                now,
-                &self.callback.map,
-                config.auth.callback.cache_duration,
-                |v| v.timestamp,
-            ).await;
+            let next_callback_action = if let CallbackCacheDuration::Enabled(duration)
+                = config.auth.callback.cache_duration
+            {
+                cleanup(now, &self.callback.map, duration, |v| v.timestamp).await
+            } else {
+                None
+            };
 
             // We will wait until the next entry in the hashmap gets stale, but
             // at least 30s to not do cleanup too often. In case there are no
@@ -238,14 +245,14 @@ impl AuthCallbackCache {
     pub(super) async fn get(
         &self,
         key: &HeaderMap,
-        config: &CallbackConfig,
+        cache_duration: Duration,
     ) -> Option<Option<User>> {
         // TODO: this `clone` should not be necessary. It can be removed with
         // `#[repr(transparent)]` and an `unsafe`, but I don't want to just
         // throw around `unsafe` here.
         let out = self.map.get_async(&AuthCallbackCacheKey(key.clone()))
             .await
-            .filter(|e| e.get().timestamp.elapsed() < config.cache_duration)
+            .filter(|e| e.get().timestamp.elapsed() < cache_duration)
             .map(|e| e.get().user.clone());
 
         match out.is_some() {
