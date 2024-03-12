@@ -295,10 +295,28 @@ pub(crate) struct CallbackConfig {
     /// For how long a callback's response is cached. The key of the cache is
     /// the set of headers forwarded to the callback. Set to 0 to disable
     /// caching.
-    #[config(default = "5min", deserialize_with = crate::config::deserialize_duration)]
-    pub(crate) cache_duration: Duration,
+    #[config(default = "5min", deserialize_with = CallbackCacheDuration::deserialize)]
+    pub(crate) cache_duration: CallbackCacheDuration,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) enum CallbackCacheDuration {
+    Disabled,
+    Enabled(Duration),
+}
+
+impl CallbackCacheDuration {
+    fn deserialize<'de, D>(deserializer: D) -> Result<Self, D::Error>
+        where D: serde::Deserializer<'de>,
+    {
+        let duration = crate::config::deserialize_duration(deserializer)?;
+        if duration.is_zero() {
+            Ok(Self::Disabled)
+        } else {
+            Ok(Self::Enabled(duration))
+        }
+    }
+}
 
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct RoleConfig {

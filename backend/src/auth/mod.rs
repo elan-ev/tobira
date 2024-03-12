@@ -23,6 +23,7 @@ mod handlers;
 mod session_id;
 mod jwt;
 
+use self::config::CallbackCacheDuration;
 pub(crate) use self::{
     cache::Caches,
     config::{AuthConfig, AuthSource, CallbackUri},
@@ -252,10 +253,9 @@ impl User {
 
         // Check cache.
         let mut header_copy = None;
-        if !ctx.config.auth.callback.cache_duration.is_zero() {
+        if let CallbackCacheDuration::Enabled(duration) = ctx.config.auth.callback.cache_duration {
             header_copy = Some(req.headers().clone());
-            let callback_config = &ctx.config.auth.callback;
-            if let Some(user) = ctx.auth_caches.callback.get(req.headers(), callback_config) {
+            if let Some(user) = ctx.auth_caches.callback.get(req.headers(), duration).await {
                 return Ok(user);
             }
         }
@@ -264,8 +264,8 @@ impl User {
         let out = Self::from_callback_impl(req, callback_url, ctx).await?;
 
         // Insert into cache
-        if !ctx.config.auth.callback.cache_duration.is_zero() {
-            ctx.auth_caches.callback.insert(header_copy.unwrap(), out.clone());
+        if let CallbackCacheDuration::Enabled(_) = ctx.config.auth.callback.cache_duration {
+            ctx.auth_caches.callback.insert(header_copy.unwrap(), out.clone()).await;
         }
 
         Ok(out)
