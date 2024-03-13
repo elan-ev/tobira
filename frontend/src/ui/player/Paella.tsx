@@ -188,6 +188,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             "body:has(.paella-fallback-fullscreen)": {
                 overflow: "hidden",
             },
+            ".popup-container": {
+                zIndex: 500050,
+            },
         }} />
         <div
             // We use `key` here to force React to re-create this `div` and not
@@ -255,7 +258,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    zIndex: 100000,
+                    zIndex: 500000,
                 },
             }}
         />
