@@ -109,6 +109,27 @@ type EventConnection {
   totalCount: Int!
 }
 
+"Some extra information we know about a role."
+type RoleInfo {
+  """
+    A user-facing label for this role (group or person). If the label does
+    not depend on the language (e.g. a name), `{ "_": "Peter" }` is
+    returned.
+  """
+  label: TranslatedString!
+  """
+    For user roles this is `null`. For groups, it defines a list of other
+    group roles that this role implies. I.e. a user with this role always
+    also has these other roles.
+  """
+  implies: [String!]
+  """
+    Is `true` if this role represents a large group. Used to warn users
+    accidentally giving write access to large groups.
+  """
+  large: Boolean!
+}
+
 "A simple realm name: a fixed string."
 type PlainRealmName {
   name: String!
@@ -136,27 +157,6 @@ type Series {
   syncedData: SyncedSeriesData
   hostRealms: [Realm!]!
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
-}
-
-"Some extra information we know about a role."
-type RoleInfo {
-  """
-    A user-facing label for this role (group or person). If the label does
-    not depend on the language (e.g. a name), `{ "_": "Peter" }` is
-    returned.
-  """
-  label: TranslatedString!
-  """
-    For user roles this is `null`. For groups, it defines a list of other
-    group roles that this role implies. I.e. a user with this role always
-    also has these other roles.
-  """
-  implies: [String!]
-  """
-    Is `true` if this role represents a large group. Used to warn users
-    accidentally giving write access to large groups.
-  """
-  large: Boolean!
 }
 
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
@@ -654,6 +654,19 @@ type SearchSeries implements Node {
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
+}
+
+type ThumbnailInfo {
+  thumbnail: String
+  isLive: Boolean!
+  audioOnly: Boolean!
+}
+
+type SearchSeriesExtended implements Node {
+  id: ID!
+  title: String!
+  description: String
+  thumbnailInfo: [ThumbnailInfo!]!
 }
 
 type User {
