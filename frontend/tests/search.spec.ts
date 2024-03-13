@@ -20,7 +20,7 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
     });
 
     await test.step("Should show breadcrumbs", async () => {
-        await expect(page.getByText("Search results for cat (4 hits)")).toBeVisible();
+        await expect(page.getByText("Search results for cat (6 hits)")).toBeVisible();
     });
 
     for (const videoTitle of ["Video of a Tabby Cat", "Dual Stream Cats"]) {
@@ -52,7 +52,7 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
     });
 
     await test.step("Should show realm 'Fabulous Cats'", async () => {
-        const realm = page.getByRole("heading", { name: "Fabulous Cats" });
+        const realm = page.getByRole("heading", { name: "Fabulous Cats" }).nth(1);
         await expect(realm).toBeVisible();
         await realm.click({ force: true });
         await expect(page).toHaveURL("/love");
