@@ -345,6 +345,7 @@ impl BlockValue {
                 &[&realm.key, &index],
             )
             .await?;
+        info!(?block_id, realm.path = realm.full_path, "Removed block");
 
         Ok(RemovedBlock { id, realm })
     }
