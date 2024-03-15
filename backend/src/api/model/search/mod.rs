@@ -391,17 +391,9 @@ impl Filter {
         use std::io::Write;
         const HEX_DIGITS: &[u8; 16] = b"0123456789abcdef";
 
-        // TODO: On the one hand, it was probably overkill to optimize this
-        // function. On the other hand, the `extend_from_slice` and `push`
-        // below are likely still doing a capacity comparison, which is a
-        // shame. Doing this as fast as possible requires unsafe code, but at
-        // least we only have one allocation.
+        // TODO: this function can be optimized in various places.
 
-        let cap = roles_field.len()
-            + " IN []".len()
-            + context.auth.roles().iter().map(|role| role.len() + ",".len()).sum::<usize>();
-        let mut out = Vec::with_capacity(cap);
-
+        let mut out = Vec::new();
         write!(out, "{roles_field} IN [").unwrap();
         for role in context.auth.roles() {
             for byte in role.bytes() {
