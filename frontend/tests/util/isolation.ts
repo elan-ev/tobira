@@ -127,9 +127,6 @@ const tobiraConfig = ({ index, port, dbName, rootPath }: {
     index_prefix = "tobira_ui_test_${index}"
     key = "tobira"
 
-    [log]
-    level = "debug"
-
     [auth]
     source = "tobira-session"
     session.from_login_credentials = "login-callback:http://localhost:3091"

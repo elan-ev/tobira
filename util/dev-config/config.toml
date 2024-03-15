@@ -20,7 +20,7 @@ tls_mode = "off"
 key = "tobira"
 
 [log]
-level = "debug"
+filters.tobira = "debug"
 
 [auth]
 source = "tobira-session"

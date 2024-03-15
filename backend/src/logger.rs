@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::OpenOptions,
     path::PathBuf,
 };
@@ -19,11 +20,28 @@ use crate::{prelude::*, args::Args};
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct LogConfig {
-    /// Determines how many messages are logged. Log messages below
-    /// this level are not emitted. Possible values: "trace", "debug",
-    /// "info", "warn", "error" and "off".
-    #[config(default = "debug", deserialize_with = deserialize_level)]
-    pub(crate) level: LevelFilter,
+    /// Specifies what log messages to emit, based on the module path and log level.
+    ///
+    /// This is a map where the key specifies a module path prefix, and the
+    /// value specifies a minimum log level. For each log message, the map
+    /// entry with the longest prefix matching the log's module path is chosen.
+    /// If no such entry exists, the log is not emitted. Otherwise, that
+    /// entry's level is used to check whether the log message should be
+    /// emitted.
+    ///
+    /// Take the following example: the following config only allows ≥"info"
+    /// logs from Tobira generally, but also ≥"trace" messages from the `db`
+    /// submodule. But it completely disables all logs from `tobira::db::tx`.
+    /// Finally, it also enabled ≥"debug" messages from one of Tobira's
+    /// dependencies, the HTTP library `hyper`.
+    ///
+    ///    [log]
+    ///    filters.tobira = "info"
+    ///    filters."tobira::db" = "trace"
+    ///    filters."tobira::db::tx" = "off"
+    ///    filters.hyper = "debug"
+    #[config(default = { "tobira": "debug" })]
+    pub(crate) filters: Filters,
 
     /// If this is set, log messages are also written to this file.
     /// Example: "/var/log/tobira.log".
@@ -39,12 +57,21 @@ pub(crate) struct LogConfig {
     pub(crate) log_http_headers: bool,
 }
 
-fn deserialize_level<'de, D>(deserializer: D) -> Result<LevelFilter, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    parse_level_filter(&s).map_err(|msg| <D::Error as serde::de::Error>::custom(msg))
+#[derive(Debug, Deserialize)]
+#[serde(try_from = "HashMap<String, String>")]
+pub(crate) struct Filters(HashMap<String, LevelFilter>);
+
+impl TryFrom<HashMap<String, String>> for Filters {
+    type Error = String;
+    fn try_from(value: HashMap<String, String>) -> Result<Self, Self::Error> {
+        value.into_iter()
+            .map(|(target_prefix, level)| {
+                let level = parse_level_filter(&level)?;
+                Ok((target_prefix, level))
+            })
+            .collect::<Result<_, _>>()
+            .map(Self)
+    }
 }
 
 fn parse_level_filter(s: &str) -> Result<LevelFilter, String> {
@@ -62,12 +89,21 @@ fn parse_level_filter(s: &str) -> Result<LevelFilter, String> {
 /// Installs our own logger globally. Must only be called once!
 pub(crate) fn init(config: &LogConfig, args: &Args) -> Result<()> {
     let filter = {
-        let level = config.level;
+        let filters = config.filters.0.clone();
+        let max_level = filters.values().max().copied().unwrap_or(LevelFilter::OFF);
         let filter = FilterFn::new(move |metadata| {
-            metadata.target().starts_with("tobira")
-                && metadata.level() <= &level
+            // If there are many filters, it might be worth to build an extra
+            // prefix data structure, but in practice we only expect very few
+            // entries.
+            //
+            // See the config doc comment to see the logic behind this filter.
+            filters.iter()
+                .filter(|(target_prefix, _)| metadata.target().starts_with(*target_prefix))
+                .max_by_key(|(target_prefix, _)| target_prefix.len())
+                .map(|(_, level_filter)| metadata.level() <= level_filter)
+                .unwrap_or(false)
         });
-        filter.with_max_level_hint(level)
+        filter.with_max_level_hint(max_level)
     };
 
     macro_rules! subscriber {
