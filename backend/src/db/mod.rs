@@ -128,14 +128,10 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
         .. PoolConfig::default()
     };
 
-    debug!(
-        "Connecting to 'postgresql://{}:*****@{}:{}/{}' (TLS: {:?})",
-        config.user,
-        config.host,
-        config.port,
-        config.database,
-        config.tls_mode,
-    );
+    {
+        let DbConfig { user, host, port, database, tls_mode, .. } = &config;
+        debug!(user, host, port, database, ?tls_mode, "Connecting to database");
+    }
 
     // Handle TLS and create pool.
     let pool = if config.tls_mode == TlsMode::Off {
@@ -200,13 +196,13 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
     let search_path = client.query_one(&format!("show search_path"), &[])
         .await?
         .get::<_, String>(0);
-    let version = client.query_one(&format!("show server_version"), &[])
+    let server_version = client.query_one(&format!("show server_version"), &[])
         .await?
         .get::<_, String>(0);
-    let version = version.trim()
+    let server_version = server_version.trim()
         .split_once(' ')
         .map(|(first, _)| first)
-        .unwrap_or(&version);
+        .unwrap_or(&server_version);
     // TODO: warn/error if the PG version is not supported?
 
     let (selection, mapping) = select!(
@@ -222,11 +218,8 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
     let session_user: String = mapping.session_user.of(&row);
     let database: String = mapping.database.of(&row);
     let schema: String = mapping.schema.of(&row);
-    info!("Connected to DB! (PG server version: {version}, user: '{user}', \
-        session_user: '{session_user}', schema: '{schema}', database: '{database}')");
-    trace!("Detailed PostgreSQL server info:\n\
-        Version: {full_version}\n\
-        Search path: {search_path}");
+    info!(server_version, user, session_user, schema, database, "Connected to DB!");
+    trace!(tobira.multiline = true, full_version, %search_path, "Detailed PostgreSQL server info:");
 
     // Query permissions on schemata
     let (selection, mapping) = select!(
@@ -264,7 +257,6 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
             warn!("Could not query schema permissions: {e}");
         }
     }
-
 
 
     Ok(pool)

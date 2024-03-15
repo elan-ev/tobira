@@ -183,7 +183,7 @@ fn load_config_and_init_logger(shared: &args::Shared, args: &Args) -> Result<Con
     // Initialize logger. Unfortunately, we can only do this here
     // after reading the config.
     logger::init(&config.log, args)?;
-    info!("Loaded config from '{}'", path.display());
+    info!(source_file = ?path.display(), "Loaded config");
 
     // Call validate again, as some of the checks will only print warnings.
     config.validate()?;
