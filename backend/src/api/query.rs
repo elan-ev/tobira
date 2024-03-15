@@ -96,7 +96,7 @@ impl Query {
         search::perform(&query, filters, context).await
     }
 
-    /// Searches through events. Searches through:
+    /// Searches through events. Results include:
     ///
     /// - Events that the user has write access to (listed & unlisted).
     /// - If `writable_only` is false, this also searches through videos that

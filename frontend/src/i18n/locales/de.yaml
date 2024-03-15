@@ -582,7 +582,7 @@ api-remote-errors:
     not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
-    not-a-tobira-admin: Sie müssen Tobira admin sein, um diese Aktion auszuführen.
+    not-a-tobira-admin: Sie müssen Tobira Admin sein, um diese Aktion auszuführen.
   realm:
     path-is-reserved: Dieser Pfad ist reserviert und kann nicht für Seiten genutzt werden.
     path-collision: Eine Seite mit diesem Pfad existiert bereits.

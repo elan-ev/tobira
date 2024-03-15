@@ -549,7 +549,7 @@ type Query {
   "Returns `null` if the query is too short."
   search(query: String!, filters: Filters!): SearchOutcome!
   """
-    Searches through events. Searches through:
+    Searches through events. Results include:
 
     - Events that the user has write access to (listed & unlisted).
     - If `writable_only` is false, this also searches through videos that
