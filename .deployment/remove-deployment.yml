@@ -39,7 +39,9 @@
         - /etc/systemd/system/tobiraworker-{{ id }}.service
         - /etc/systemd/system/tobiraauth-{{ id }}.service
         - /etc/nginx/conf.d/tobira-{{ id }}.conf
-        - /var/log/tobira/{{ id }}.log
+        - /var/log/tobira/{{ id }}-serve.log
+        - /var/log/tobira/{{ id }}-cli.log
+        - /var/log/tobira/{{ id }}-worker.log
       notify: reload nginx
 
     - name: force systemd to reread configs
