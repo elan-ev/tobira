@@ -31,9 +31,9 @@ use super::{Context, Response, response};
 pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Response {
     let time_incoming = Instant::now();
     trace!(
-        "Incoming HTTP {:?} request to '{}'",
-        req.method(),
-        req.uri().path_and_query().map_or("", |pq| pq.as_str()),
+        method = ?req.method(),
+        path = req.uri().path_and_query().map_or("", |pq| pq.as_str()),
+        "Incoming HTTP request",
     );
     if ctx.config.log.log_http_headers {
         let mut out = String::new();
@@ -80,7 +80,7 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
         // will result in 404.
         _ if method != Method::GET && method != Method::HEAD => {
             register_req!(HttpReqCategory::Other);
-            debug!("Responding 405 Method not allowed to {method:?} {path}");
+            debug!(?method, path, "Responding 405 Method not allowed");
             Response::builder()
                 .status(StatusCode::METHOD_NOT_ALLOWED)
                 .header("Content-Type", "text/plain; charset=UTF-8")
@@ -172,7 +172,7 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
 
 /// Replies with a 404 Not Found.
 pub(super) async fn reply_404(ctx: &Context, method: &Method, path: &str) -> Response {
-    debug!("Responding with 404 to {:?} '{}'", method, path);
+    debug!(?method, path, "Responding with 404");
 
     // We simply send the normal index and let the frontend router determinate
     // this is a 404. That way, our 404 page looks like the main page and users

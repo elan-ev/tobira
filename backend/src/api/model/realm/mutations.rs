@@ -48,7 +48,7 @@ impl Realm {
 
         Self::load_by_key(key, context).await.map(Option::unwrap).inspect_(|realm| {
             let Self { key, full_path, resolved_name, .. } = realm;
-            info!("Realm added: {key:?} '{full_path}' {resolved_name:?}");
+            info!(path = full_path, ?key, ?resolved_name, "Created realm");
         })
     }
 
@@ -83,9 +83,10 @@ impl Realm {
 
         Self::load_by_key(key, context).await.map(Option::unwrap).inspect_(|_| {
             info!(
-                "Root user realm added for user '{}' ({}): {key:?}",
-                user.username,
-                user.display_name,
+                username = user.username,
+                display_name = user.display_name,
+                ?key,
+                "Created root user realm",
             );
         })
     }
@@ -335,7 +336,7 @@ impl Realm {
             None => None,
         };
 
-        info!("Removed realm {id:?} ({})", realm.full_path);
+        info!(%id, path = realm.full_path, "Removed realm");
         Ok(RemovedRealm { parent })
     }
 }

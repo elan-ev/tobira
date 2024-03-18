@@ -345,15 +345,34 @@
 
 
 [log]
-# Determines how many messages are logged. Log messages below
-# this level are not emitted. Possible values: "trace", "debug",
-# "info", "warn", "error" and "off".
+# Specifies what log messages to emit, based on the module path and log level.
 #
-# Default value: "debug"
-#level = "debug"
+# This is a map where the key specifies a module path prefix, and the
+# value specifies a minimum log level. For each log message, the map
+# entry with the longest prefix matching the log's module path is chosen.
+# If no such entry exists, the log is not emitted. Otherwise, that
+# entry's level is used to check whether the log message should be
+# emitted.
+#
+# Take the following example: the following config only allows ≥"info"
+# logs from Tobira generally, but also ≥"trace" messages from the `db`
+# submodule. But it completely disables all logs from `tobira::db::tx`.
+# Finally, it also enabled ≥"debug" messages from one of Tobira's
+# dependencies, the HTTP library `hyper`.
+#
+#    [log]
+#    filters.tobira = "info"
+#    filters."tobira::db" = "trace"
+#    filters."tobira::db::tx" = "off"
+#    filters.hyper = "debug"
+#
+# Default value: { tobira = "debug" }
+#filters = { tobira = "debug" }
 
-# If this is set, log messages are also written to this file.
-# Example: "/var/log/tobira.log".
+# If this is set, log messages are also written to this file. The string
+# `${cmd}` in this value is replaced by the subcommand name of the Tobira
+# process, e.g. `serve`, `worker` or `other` (for less important
+# commands). Example: "/var/log/tobira-${job}.log".
 #file =
 
 # If this is set to `false`, log messages are not written to stdout.

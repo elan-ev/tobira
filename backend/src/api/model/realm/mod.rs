@@ -92,19 +92,19 @@ impl Block for RealmNameSourceBlockValue {
 
 pub(crate) struct Realm {
     pub(crate) key: Key,
-    parent_key: Option<Key>,
-    plain_name: Option<String>,
-    resolved_name: Option<String>,
-    name_from_block: Option<Key>,
-    path_segment: String,
-    full_path: String,
-    index: i32,
-    child_order: RealmOrder,
-    owner_display_name: Option<String>,
-    moderator_roles: Vec<String>,
-    admin_roles: Vec<String>,
-    flattened_moderator_roles: Vec<String>,
-    flattened_admin_roles: Vec<String>,
+    pub(crate) parent_key: Option<Key>,
+    pub(crate) plain_name: Option<String>,
+    pub(crate) resolved_name: Option<String>,
+    pub(crate) name_from_block: Option<Key>,
+    pub(crate) path_segment: String,
+    pub(crate) full_path: String,
+    pub(crate) index: i32,
+    pub(crate) child_order: RealmOrder,
+    pub(crate) owner_display_name: Option<String>,
+    pub(crate) moderator_roles: Vec<String>,
+    pub(crate) admin_roles: Vec<String>,
+    pub(crate) flattened_moderator_roles: Vec<String>,
+    pub(crate) flattened_admin_roles: Vec<String>,
 }
 
 impl_from_db!(

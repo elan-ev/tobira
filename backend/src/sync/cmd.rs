@@ -33,6 +33,12 @@ pub(crate) enum SyncCommand {
     },
 }
 
+impl Args {
+    pub(crate) fn is_long_running(&self) -> bool {
+        matches!(self.cmd, SyncCommand::Run { daemon: true })
+    }
+}
+
 /// Entry point for `search-index` commands.
 pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
     info!("Starting Tobira <-> Opencast synchronization ...");

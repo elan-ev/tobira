@@ -16,7 +16,7 @@ use crate::{
 
 
 pub(crate) async fn run(shared: &args::Shared, args: &Args) -> Result<()> {
-    let config = load_config_and_init_logger(shared, args)
+    let config = load_config_and_init_logger(shared, args, "cli")
         .context("failed to load config: cannot proceed with `check` command")?;
 
 

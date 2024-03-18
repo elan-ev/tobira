@@ -299,9 +299,11 @@ pub(crate) async fn rebuild_if_necessary(
 ) -> Result<()> {
     let state = IndexState::fetch(&meili.meta_index).await?;
     if state.needs_rebuild() {
-        info!("Search index schema incompatible -> will rebuild search index\n\
-            Search index state: {state:?}\n\
-            Expected version: {VERSION}");
+        info!(
+            search_index_state = ?state,
+            expected_version = VERSION,
+            "Search index schema incompatible -> will rebuild search index",
+        );
 
         meili.meta_index.add_or_replace(&[meta::Meta::current_dirty()], None).await
             .context("failed to update index version document (dirty)")?;
