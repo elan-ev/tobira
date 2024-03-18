@@ -185,7 +185,9 @@ fn load_config_and_init_logger(shared: &args::Shared, args: &Args, cmd: &str) ->
     // Initialize logger. Unfortunately, we can only do this here
     // after reading the config.
     logger::init(&config.log, args, cmd)?;
+    info!(cli_args = ?std::env::args().collect::<Vec<_>>(), "Starting Tobira");
     info!(source_file = ?path.display(), "Loaded config");
+    debug!(cmd, "Initialized logger");
 
     // Call validate again, as some of the checks will only print warnings.
     config.validate()?;
