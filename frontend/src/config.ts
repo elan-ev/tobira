@@ -56,6 +56,8 @@ type AuthConfig = {
     loginPageNote: TranslatedString | null;
     preAuthExternalLinks: boolean;
     userRolePrefixes: string[];
+    globalPageAdminRole: string;
+    globalPageModeratorRole: string;
 };
 
 type LogoConfig = {

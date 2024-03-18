@@ -28,11 +28,11 @@ impl Context {
         &self.db
     }
 
-    pub(crate) fn require_moderator(&self) -> ApiResult<AuthToken> {
-        self.auth.require_moderator(&self.config.auth).ok_or_else(|| {
+    pub(crate) fn require_tobira_admin(&self) -> ApiResult<AuthToken> {
+        self.auth.require_tobira_admin(&self.config.auth).ok_or_else(|| {
             self.access_error(
-                "mutation.not-a-moderator",
-                |user| format!("moderator required, but '{user}' is not a moderator"),
+                "mutation.not-a-tobira-admin",
+                |user| format!("Tobira admin required, but '{user}' is not"),
             )
         })
     }

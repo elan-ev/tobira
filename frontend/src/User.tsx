@@ -24,6 +24,7 @@ export type User = {
     canUseStudio: boolean;
     canUseEditor: boolean;
     canCreateUserRealm: boolean;
+    canFindUnlisted: boolean;
     roles: readonly string[];
     userRole: string;
 };
@@ -59,6 +60,7 @@ export const userDataFragment = graphql`
             canUseStudio
             canUseEditor
             canCreateUserRealm
+            canFindUnlisted
             roles
             userRole
         }

@@ -86,7 +86,7 @@ impl Series {
                 values ($1, $2, 'waiting', '-infinity') \
                 returning {selection}",
         );
-        context.db(context.require_moderator()?)
+        context.db(context.require_tobira_admin()?)
             .query_one(&query, &[&series.opencast_id, &series.title])
             .await?
             .pipe(|row| Self::from_row_start(&row))

@@ -192,7 +192,6 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
     const { t, i18n } = useTranslation();
     const { change, knownGroups, groupDag, permissionLevels, ownerDisplayName } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
-    const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
     const userIsOwner = isRealUser(user) && user.displayName === ownerDisplayName;
     const [error, setError] = useState<ReactNode>(null);
 
@@ -238,11 +237,20 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             large: false, // Don't show any warning on inherited entries as they can't be changed.
         }));
 
+    const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
     const showAdminEntry = kind === "group"
         && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
         && userIsAdmin;
 
+    const userIsGlobalPageAdmin = isRealUser(user)
+        && user.roles.includes(COMMON_ROLES.TOBIRA_GLOBAL_PAGE_ADMIN);
+    const showGlobalPageAdminEntry = kind === "group"
+        && !entries.some(e => e.role === COMMON_ROLES.TOBIRA_GLOBAL_PAGE_ADMIN)
+        && userIsGlobalPageAdmin;
+
     const showUserEntry = (kind === "user" && ownerDisplayName);
+    const noEntries = entries.length === 0
+        && !(showAdminEntry || showUserEntry || showGlobalPageAdminEntry);
 
     const remove = (item: Entry) => change(prev => prev.delete(item.role));
 
@@ -359,7 +367,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                 <th></th></>
             }>
                 {/* Placeholder if there are no entries */}
-                {entries.length === 0 && !(showAdminEntry || showUserEntry) && <tr>
+                {noEntries && <tr>
                     <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
                         {t("acl.no-entries")}
                     </td>
@@ -371,10 +379,14 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
 
                 {/*
                     The ACLs usually don't explicitly include admins, but showing that
-                    entry makes sense if the user is admin.
+                    entry makes sense if the user is admin. Same for the global page admin.
                 */}
                 {showAdminEntry && <TableRow
                     labelCol={<>{t("acl.groups.admins")}</>}
+                    actionCol={<UnchangeableAllActions />}
+                />}
+                {showGlobalPageAdminEntry && <TableRow
+                    labelCol={<>{t("acl.groups.global-page-admins")}</>}
                     actionCol={<UnchangeableAllActions />}
                 />}
 
@@ -633,7 +645,11 @@ type InfoWithTooltipProps = {
 }
 
 const InfoWithTooltip: React.FC<InfoWithTooltipProps> = ({ tooltip, mode }) => (
-    <WithTooltip {...{ tooltip }} css={{ display: "flex", fontWeight: "normal" }}>
+    <WithTooltip
+        {...{ tooltip }}
+        css={{ display: "flex", fontWeight: "normal" }}
+        tooltipCss={{ width: "min(85vw, 460px)" }}
+    >
         <span css={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
             {mode === "info" ? <LuInfo /> : <LuAlertTriangle css={{ color: COLORS.danger0 }}/>}
         </span>

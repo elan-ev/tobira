@@ -320,30 +320,44 @@ impl CallbackCacheDuration {
 
 #[derive(Debug, Clone, confique::Config)]
 pub(crate) struct RoleConfig {
-    /// If a user has this role, they are treated as a moderator in Tobira,
-    /// giving them the ability to modify the realm structure among other
-    /// things.
-    #[config(default = "ROLE_TOBIRA_MODERATOR")]
-    pub(crate) moderator: String,
+    /// The role giving a user "Tobira admin" status, giving them all
+    /// Tobira-related privileges, i.e. everything for which a role can be
+    /// configured below. Unlike ROLE_ADMIN, this does not give the user access
+    /// to all content.
+    #[config(default = "ROLE_TOBIRA_ADMIN")]
+    pub(crate) tobira_admin: String,
 
-    /// If a user has this role, they are allowed to use the Tobira video
-    /// uploader to ingest videos to Opencast.
+    /// The role granting permission to use Tobira's uploader.
     #[config(default = "ROLE_TOBIRA_UPLOAD")]
     pub(crate) upload: String,
 
-    /// If a user has this role, they are allowed to use Opencast Studio to
-    /// record and upload videos.
+    /// The role granting permission to use Opencast Studio from Tobira.
     #[config(default = "ROLE_TOBIRA_STUDIO")]
     pub(crate) studio: String,
 
-    /// If a user has this role, they are allowed to use the Opencast editor to
-    /// edit videos they have write access to.
+    /// The role granting permission to use the Opencast Editor from Tobira.
     #[config(default = "ROLE_TOBIRA_EDITOR")]
     pub(crate) editor: String,
 
-    /// If a user has this role, they are allowed to create their own "user realm".
+    /// The role granting permission to create one's own "user page".
     #[config(default = "ROLE_USER")]
     pub(crate) user_realm: String,
+
+    /// The role granting permission to find unlisted events and series when
+    /// editing page content. Usually, only very few people should have this
+    /// privilege. Everyone can always find listed items and items they have
+    /// write access to. This does not affect the search results of the main
+    /// search.
+    #[config(default = "ROLE_TOBIRA_CAN_FIND_UNLISTED")]
+    pub(crate) can_find_unlisted: String,
+
+    /// The role granting "page admin" privileges on all non-user pages.
+    #[config(default = "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN")]
+    pub(crate) global_page_admin: String,
+
+    /// The role granting "page moderator" privileges on all non-user pages.
+    #[config(default = "ROLE_TOBIRA_GLOBAL_PAGE_MODERATOR")]
+    pub(crate) global_page_moderator: String,
 
     /// List of prefixes that user roles can have. Used to distinguish user
     /// roles from other roles. Should probably be the same as

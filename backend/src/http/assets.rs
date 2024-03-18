@@ -130,6 +130,8 @@ impl Assets {
             "loginPageNote": config.auth.login_page.note,
             "preAuthExternalLinks": config.auth.pre_auth_external_links,
             "userRolePrefixes": config.auth.roles.user_role_prefixes,
+            "globalPageAdminRole": config.auth.roles.global_page_admin,
+            "globalPageModeratorRole": config.auth.roles.global_page_moderator,
         }).to_string());
         variables.insert("upload".into(), json!({
             "requireSeries": config.upload.require_series,

@@ -257,27 +257,17 @@ pub(crate) async fn all_events(
         return Err(context.not_logged_in_error());
     }
 
-    let filter = if context.auth.is_admin() {
-        // Admins have write access to all events so they can always see all.
-        String::new()
-    }  else {
-        // For other users: they can always find all events they have write
-        // access to. If `writable_only` is false, this API also returns events
-        // that are listed and that the user can read.
-        let error = "None ACL filter for non-admin user";
-        let writables = acl_filter("write_roles", context).expect(error);
-
+    let filter = Filter::make_or_none_for_admins(context, || {
+        // All users can always find all events they have write access to. If
+        // `writable_only` is false, this API also returns events that are
+        // listed and that the user can read.
+        let writable = Filter::acl_access("write_roles", context);
         if writable_only {
-            writables.to_string()
+            writable
         } else {
-            let listed_and_readable = Filter::And(vec![
-                Filter::Leaf("listed = true".into()),
-                acl_filter("read_roles", context).expect(error),
-            ]);
-
-            Filter::Or(vec![listed_and_readable, writables]).to_string()
+            Filter::or([Filter::listed_and_readable(context), writable])
         }
-    };
+    }).to_string();
 
     let res = context.search.event_index.search()
         .with_query(user_query)
@@ -310,27 +300,23 @@ pub(crate) async fn all_series(
         return Err(context.not_logged_in_error());
     }
 
-    let filter = match (writable_only, context.auth.is_moderator(&context.config.auth)) {
-        // If the writable_only flag is set, we filter by that only. All users
-        // are allowed to find all series that they have write access to.
-        (true, _) => acl_filter("write_roles", context)
-            .map(|f| f.to_string())
-            .unwrap_or(String::new()),
+    let filter = Filter::make_or_none_for_admins(context, || {
+        let writable = Filter::acl_access("write_roles", context);
 
-        // If the flag is not set and the user is moderator, all series are
-        // searched.
-        (false, true) => String::new(),
-
-        // If the user is not moderator, they may only find listed series or
-        // series they have write access to.
-        (false, false) => {
-            Filter::Or(
-                std::iter::once(Filter::Leaf("listed = true".into()))
-                    .chain(acl_filter("write_roles", context))
-                    .collect()
-            ).to_string()
+        // All users can always find all items they have write access to,
+        // regardless whether they are listed or not.
+        if writable_only {
+            return writable;
         }
-    };
+
+        // Since series read_roles are not used for access control, we only need
+        // to check whether we can return unlisted videos.
+        if context.auth.can_find_unlisted_items(&context.config.auth) {
+            Filter::None
+        } else {
+            Filter::or([writable, Filter::listed()])
+        }
+    }).to_string();
 
     let res = context.search.series_index.search()
         .with_query(user_query)
@@ -346,6 +332,7 @@ pub(crate) async fn all_series(
     Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits }))
 }
 
+// TODO: replace usages of this and remove this.
 fn acl_filter(action: &str, context: &Context) -> Option<Filter> {
     // If the user is admin, we just skip the filter alltogether as the admin
     // can see anything anyway.
@@ -353,21 +340,84 @@ fn acl_filter(action: &str, context: &Context) -> Option<Filter> {
         return None;
     }
 
-    let operands = context.auth.roles().iter()
-        .map(|role| Filter::Leaf(format!("{} = '{}'", action, hex::encode(role)).into()))
-        .collect();
-    Some(Filter::Or(operands))
+    Some(Filter::acl_access(action, context))
 }
 
 enum Filter {
+    // TODO: try to avoid Vec if not necessary. Oftentimes there are only two operands.
     And(Vec<Filter>),
     Or(Vec<Filter>),
     Leaf(Cow<'static, str>),
+
+    /// No filter. Formats to empty string and is filtered out if inside the
+    /// `And` or `Or` operands.
+    None,
+}
+
+impl Filter {
+    fn make_or_none_for_admins(context: &Context, f: impl FnOnce() -> Self) -> Self {
+        if context.auth.is_admin() { Self::None } else { f() }
+    }
+
+    fn or(operands: impl IntoIterator<Item = Self>) -> Self {
+        Self::Or(operands.into_iter().collect())
+    }
+
+    fn and(operands: impl IntoIterator<Item = Self>) -> Self {
+        Self::And(operands.into_iter().collect())
+    }
+
+    /// Returns the filter "listed = true".
+    fn listed() -> Self {
+        Self::Leaf("listed = true".into())
+    }
+
+    /// Returns a filter checking that the current user has read access and that
+    /// the item is listed. If the user has the privilege to find unlisted
+    /// item, the second check is not performed.
+    fn listed_and_readable(context: &Context) -> Self {
+        let readable = Self::acl_access("read_roles", context);
+        if context.auth.can_find_unlisted_items(&context.config.auth) {
+            readable
+        } else {
+            Self::and([readable, Self::listed()])
+        }
+    }
+
+    /// Returns a filter checking if `roles_field` has any overlap with the
+    /// current user roles. Encodes all roles as hex to work around Meili's
+    /// lack of case-sensitive comparison.
+    fn acl_access(roles_field: &str, context: &Context) -> Self {
+        use std::io::Write;
+        const HEX_DIGITS: &[u8; 16] = b"0123456789abcdef";
+
+        // TODO: this function can be optimized in various places.
+
+        let mut out = Vec::new();
+        write!(out, "{roles_field} IN [").unwrap();
+        for role in context.auth.roles() {
+            for byte in role.bytes() {
+                out.extend_from_slice(&[
+                    HEX_DIGITS[(byte >> 4) as usize],
+                    HEX_DIGITS[(byte & 0xF) as usize],
+                ]);
+            }
+            out.push(b',');
+        }
+        out.push(b']');
+
+        let out = String::from_utf8(out).unwrap();
+        Self::Leaf(out.into())
+    }
 }
 
 impl fmt::Display for Filter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fn join(f: &mut fmt::Formatter, operands: &[Filter], sep: &str) -> fmt::Result {
+            if operands.iter().all(|op| matches!(op, Filter::None)) {
+                return Ok(());
+            }
+
             write!(f, "(")?;
             for (i, operand) in operands.iter().enumerate() {
                 if i > 0 {
@@ -382,6 +432,7 @@ impl fmt::Display for Filter {
             Self::And(operands) => join(f, operands, "AND"),
             Self::Or(operands) =>  join(f, operands, "OR"),
             Self::Leaf(s) => write!(f, "{s}"),
+            Self::None => Ok(()),
         }
     }
 }

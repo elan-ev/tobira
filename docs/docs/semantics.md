@@ -16,7 +16,7 @@ This hopefully enables more precise communication in Tobira-related discussions.
 
 Tobira contains a hierarchy of *content pages*, collectively also called the *page tree*.
 There is one root *content page* (also called home page or start page), which is the first thing you see when visiting Tobira.
-Each *content page* can have sub-*content pages*, which moderators can add and remove.
+Each *content page* can have sub-*content pages*, which page-moderators can add and remove.
 Each *content page* has a name (which is shown at the very top) and contains an ordered list of "content blocks".
 Currently, there are title blocks, text blocks, series blocks and video blocks.
 
@@ -100,3 +100,29 @@ Similarly, a series is included in a content page, if a series block refers to i
 
 If and only if a video/series is included in any non-user content page, it is findable via search.
 (Note: currently, series are not findable via search at all, but simply because it was not implemented yet. The described rules will be used in the future.)
+
+## Permissions in Tobira
+
+There are a number of special roles that grant users the permission to perform certain actions in Tobira.
+All these roles can be configured in `auth.roles`.
+
+| Config | Permissions |
+| ------ | ----------- |
+| `roles.upload` | Can use Tobira's uploader |
+| `roles.studio` | Can use Studio from Tobira |
+| `roles.editor` | Can use the Editor from Tobira |
+| `roles.user_realm` | Can create own user page |
+| `roles.can_find_unlisted` | Can find unlisted items when editing page content |
+| `roles.global_page_admin` | Is *page admin* on all non-user content-pages |
+| `roles.global_page_moderator` | Is *page moderator* on all non-user content-pages |
+| `roles.tobira_admin` | Is *Tobira admin* and can do all of the above |
+
+For content-pages, permissions can be given to users and groups via the UI.
+Permissions are inherited down the page tree.
+There are currently three permission levels:
+
+| Name | Permissions |
+| ---- | ----------- |
+| *None* | Can only see the page, but not edit in any way |
+| Page moderator | Can edit content, rename, change sub-page order and add new sub pages |
+| Page admin | Can do everything: all page moderator permissions plus deleting the content-page, changing its path and changing page permissions |

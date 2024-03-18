@@ -549,18 +549,21 @@ type Query {
   "Returns `null` if the query is too short."
   search(query: String!, filters: Filters!): SearchOutcome!
   """
-    Searches through all events that the user has write access to
-    (unlisted and listed). If `writeable_only` is `false`, events that are
-    listed and that the user has read access to are also returned.
+    Searches through events. Results include:
+
+    - Events that the user has write access to (listed & unlisted).
+    - If `writable_only` is false, this also searches through videos that
+      the user has read access to. However, unless the user has the
+      privilege to find unlisted events, only listed ones are searched.
   """
   searchAllEvents(query: String!, writableOnly: Boolean!): EventSearchOutcome!
   """
-    Searches through all series. If `writable_only` is true, only series
-    that the user has write access to are searched (but including
-    non-listed ones). If it's false, it depends: if the user is moderator,
-    all series are searched (including non-listed ones). If the user is not
-    moderator, series that are listed or the user has write access to are
-    searched.
+    Searches through series. Searches through:
+
+    - Series that the user has write access to (listed & unlisted).
+    - If `writable_only` is false, this also searches through listed series.
+      If the user has the privilege to find unlisted series, all series are
+      searched.
   """
   searchAllSeries(query: String!, writableOnly: Boolean!): SeriesSearchOutcome!
   """
@@ -677,6 +680,8 @@ type User {
   "`True` if the user has the permission to use Opencast Studio."
   canUseEditor: Boolean!
   canCreateUserRealm: Boolean!
+  "`True` if the user is allowed to find unlisted items when editing page content."
+  canFindUnlisted: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page.

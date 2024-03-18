@@ -32,6 +32,9 @@ trusted_external_key = "tobira"
 
 pre_auth_external_links = true
 
+[auth.roles]
+editor = "ROLE_USER"
+
 [auth.jwt]
 signing_algorithm = "ES256"
 # This is currently not created by scripts, but is expected to be generated on site manually.

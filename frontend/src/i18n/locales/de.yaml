@@ -33,7 +33,7 @@ welcome:
   title: Willkommen zu Tobira!
   body: >
     Die Hauptseite scheint noch leer zu sein. Um Inhalte oder weitere Seiten
-    hinzuzufügen, melden Sie sich mit einem Konto mit Moderator-Rechten
+    hinzuzufügen, melden Sie sich mit einem Konto mit ausreichenden Rechten
     an. Danach finden Sie auf der linken Seite Schaltflächen zum Editieren von Seiten.
 
 errors:
@@ -292,6 +292,7 @@ acl:
     admins: Administration
     everyone: Alle
     logged-in-users: Eingeloggte Nutzende
+    global-page-admins: Globale Seitenadministration
 
 manage:
   access:
@@ -581,7 +582,7 @@ api-remote-errors:
     not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
-    not-a-moderator: Sie müssen Moderator sein, um diese Aktion auszuführen.
+    not-a-tobira-admin: Sie müssen Tobira Admin sein, um diese Aktion auszuführen.
   realm:
     path-is-reserved: Dieser Pfad ist reserviert und kann nicht für Seiten genutzt werden.
     path-collision: Eine Seite mit diesem Pfad existiert bereits.

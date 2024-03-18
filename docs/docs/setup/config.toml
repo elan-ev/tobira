@@ -289,35 +289,52 @@
 
 
 [auth.roles]
-# If a user has this role, they are treated as a moderator in Tobira,
-# giving them the ability to modify the realm structure among other
-# things.
+# The role giving a user "Tobira admin" status, giving them all
+# Tobira-related privileges, i.e. everything for which a role can be
+# configured below. Unlike ROLE_ADMIN, this does not give the user access
+# to all content.
 #
-# Default value: "ROLE_TOBIRA_MODERATOR"
-#moderator = "ROLE_TOBIRA_MODERATOR"
+# Default value: "ROLE_TOBIRA_ADMIN"
+#tobira_admin = "ROLE_TOBIRA_ADMIN"
 
-# If a user has this role, they are allowed to use the Tobira video
-# uploader to ingest videos to Opencast.
+# The role granting permission to use Tobira's uploader.
 #
 # Default value: "ROLE_TOBIRA_UPLOAD"
 #upload = "ROLE_TOBIRA_UPLOAD"
 
-# If a user has this role, they are allowed to use Opencast Studio to
-# record and upload videos.
+# The role granting permission to use Opencast Studio from Tobira.
 #
 # Default value: "ROLE_TOBIRA_STUDIO"
 #studio = "ROLE_TOBIRA_STUDIO"
 
-# If a user has this role, they are allowed to use the Opencast editor to
-# edit videos they have write access to.
+# The role granting permission to use the Opencast Editor from Tobira.
 #
 # Default value: "ROLE_TOBIRA_EDITOR"
 #editor = "ROLE_TOBIRA_EDITOR"
 
-# If a user has this role, they are allowed to create their own "user realm".
+# The role granting permission to create one's own "user page".
 #
 # Default value: "ROLE_USER"
 #user_realm = "ROLE_USER"
+
+# The role granting permission to find unlisted events and series when
+# editing page content. Usually, only very few people should have this
+# privilege. Everyone can always find listed items and items they have
+# write access to. This does not affect the search results of the main
+# search.
+#
+# Default value: "ROLE_TOBIRA_CAN_FIND_UNLISTED"
+#can_find_unlisted = "ROLE_TOBIRA_CAN_FIND_UNLISTED"
+
+# The role granting "page admin" privileges on all non-user pages.
+#
+# Default value: "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN"
+#global_page_admin = "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN"
+
+# The role granting "page moderator" privileges on all non-user pages.
+#
+# Default value: "ROLE_TOBIRA_GLOBAL_PAGE_MODERATOR"
+#global_page_moderator = "ROLE_TOBIRA_GLOBAL_PAGE_MODERATOR"
 
 # List of prefixes that user roles can have. Used to distinguish user
 # roles from other roles. Should probably be the same as
