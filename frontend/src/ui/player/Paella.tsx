@@ -213,6 +213,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 "& .progress-indicator-remaining": {
                     backgroundColor: "#9e9e9e !important",
                 },
+                "& .progress-indicator-content": {
+                    opacity: "unset",
+                },
 
                 '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
                     marginTop: "-4px !important",
