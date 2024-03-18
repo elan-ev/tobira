@@ -44,8 +44,10 @@ const main = async () => {
 };
 
 const check: LoginCheck = async ({ userid, password }) => {
+    const user = DUMMY_USERS[userid];
+
     // On the test deployment, for admin, we require a good password.
-    const expectedPassword = (process.argv[2] && userid === "admin")
+    const expectedPassword = (process.argv[2] && user?.properPassword)
         ? process.env.TOBIRA_ADMIN_PASSWORD
         : DUMMY_PASSWORD;
 
@@ -54,7 +56,6 @@ const check: LoginCheck = async ({ userid, password }) => {
         return "forbidden";
     }
 
-    const user = DUMMY_USERS[userid];
     if (password === expectedPassword && user) {
         return {
             username: userid,
@@ -74,6 +75,7 @@ type DummyUserInfo = {
     userRole: string;
     roles: string[];
     email?: string;
+    properPassword?: boolean;
 };
 const DUMMY_PASSWORD = "tobira";
 const DUMMY_USERS: Record<string, DummyUserInfo> = {
@@ -82,17 +84,33 @@ const DUMMY_USERS: Record<string, DummyUserInfo> = {
         userRole: "ROLE_USER_ADMIN",
         roles: ["ROLE_ADMIN", "ROLE_SUDO"],
         email: "admin@example.org",
+        properPassword: true,
+    },
+    "tobiradmin": {
+        displayName: "Tobira Admin",
+        userRole: "ROLE_USER_TOBIRADMIN",
+        roles: ["ROLE_TOBIRA_ADMIN"],
+        email: "tobiradmin@example.org",
+        properPassword: true,
+    },
+    "gustav": {
+        displayName: "Gustav Mahler",
+        userRole: "ROLE_USER_GUSTAV",
+        roles: ["ROLE_INSTRUCTOR", "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN"],
+        properPassword: true,
     },
     "sabine": {
         displayName: "Sabine Rudolfs",
         userRole: "ROLE_USER_SABINE",
-        roles: ["ROLE_INSTRUCTOR", "ROLE_STAFF", "ROLE_TOBIRA_MODERATOR"],
+        roles: ["ROLE_INSTRUCTOR", "ROLE_STAFF", "ROLE_TOBIRA_CAN_FIND_UNLISTED",
+            "ROLE_TOBIRA_UPLOAD", "ROLE_TOBIRA_STUDIO"],
         email: "sabine@example.org",
     },
     "björk": {
         displayName: "Prof. Björk Guðmundsdóttir",
         userRole: "ROLE_USER_BJOERK",
-        roles: ["ROLE_EXTERNAL", "ROLE_TOBIRA_MODERATOR"],
+        roles: ["ROLE_EXTERNAL", "ROLE_TOBIRA_CAN_FIND_UNLISTED",
+            "ROLE_TOBIRA_UPLOAD", "ROLE_TOBIRA_STUDIO"],
         email: "bjoerk@example.org",
     },
     "morgan": {
