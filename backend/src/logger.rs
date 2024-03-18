@@ -43,8 +43,10 @@ pub(crate) struct LogConfig {
     #[config(default = { "tobira": "debug" })]
     pub(crate) filters: Filters,
 
-    /// If this is set, log messages are also written to this file.
-    /// Example: "/var/log/tobira.log".
+    /// If this is set, log messages are also written to this file. The string
+    /// `${cmd}` in this value is replaced by the subcommand name of the Tobira
+    /// process, e.g. `serve`, `worker` or `other` (for less important
+    /// commands). Example: "/var/log/tobira-${job}.log".
     pub(crate) file: Option<PathBuf>,
 
     /// If this is set to `false`, log messages are not written to stdout.
@@ -87,7 +89,7 @@ fn parse_level_filter(s: &str) -> Result<LevelFilter, String> {
 }
 
 /// Installs our own logger globally. Must only be called once!
-pub(crate) fn init(config: &LogConfig, args: &Args) -> Result<()> {
+pub(crate) fn init(config: &LogConfig, args: &Args, cmd: &str) -> Result<()> {
     let filter = {
         let filters = config.filters.0.clone();
         let max_level = filters.values().max().copied().unwrap_or(LevelFilter::OFF);
@@ -122,10 +124,14 @@ pub(crate) fn init(config: &LogConfig, args: &Args) -> Result<()> {
 
     let file_output = config.file.as_ref()
         .map(|path| {
+            let new_path = path.to_str()
+                .ok_or_else(|| anyhow!("log file path is not valid UTF-8"))?
+                .replace("${cmd}", cmd);
+
             OpenOptions::new()
                 .append(true)
                 .create(true)
-                .open(path)
+                .open(new_path)
                 .with_context(|| format!("failed to open/create log file '{}'", path.display()))
         })
         .transpose()?

@@ -38,7 +38,7 @@ signing_algorithm = "ES256"
 secret_key = "/opt/tobira/secret-jwt-key.pem"
 
 [log]
-file = "/var/log/tobira/{{ id }}.log"
+file = "/var/log/tobira/{{ id }}-${cmd}.log"
 
 [opencast]
 host = "https://oc.tobira.ethz.ch"

@@ -352,8 +352,10 @@
 # Default value: { tobira = "debug" }
 #filters = { tobira = "debug" }
 
-# If this is set, log messages are also written to this file.
-# Example: "/var/log/tobira.log".
+# If this is set, log messages are also written to this file. The string
+# `${cmd}` in this value is replaced by the subcommand name of the Tobira
+# process, e.g. `serve`, `worker` or `other` (for less important
+# commands). Example: "/var/log/tobira-${job}.log".
 #file =
 
 # If this is set to `false`, log messages are not written to stdout.

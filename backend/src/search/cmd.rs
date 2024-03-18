@@ -32,6 +32,12 @@ pub(crate) enum SearchIndexCommand {
     },
 }
 
+impl SearchIndexCommand {
+    pub(crate) fn is_long_running(&self) -> bool {
+        matches!(self, Self::Update { daemon: true })
+    }
+}
+
 /// Entry point for `search-index` commands.
 pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()> {
     let meili = config.meili.connect().await?;

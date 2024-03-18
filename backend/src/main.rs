@@ -86,38 +86,40 @@ async fn run() -> Result<()> {
     // Dispatch subcommand.
     match &args.cmd {
         Command::Serve { shared } => {
-            let config = load_config_and_init_logger(shared, &args)?;
+            let config = load_config_and_init_logger(shared, &args, "serve")?;
             start_server(config).await?;
         }
         Command::Sync { args: sync_args, shared } => {
-            let config = load_config_and_init_logger(shared, &args)?;
+            let cmd_name = if sync_args.is_long_running() { "sync" } else { "cli" };
+            let config = load_config_and_init_logger(shared, &args, cmd_name)?;
             sync::cmd::run(sync_args, &config).await?;
         }
         Command::Db { cmd, shared } => {
-            let config = load_config_and_init_logger(shared, &args)?;
+            let config = load_config_and_init_logger(shared, &args, "cli")?;
             db::cmd::run(cmd, &config).await?;
         }
         Command::SearchIndex { cmd, shared } => {
-            let config = load_config_and_init_logger(shared, &args)?;
+            let cmd_name = if cmd.is_long_running() { "search-index-update" } else { "cli" };
+            let config = load_config_and_init_logger(shared, &args, cmd_name)?;
             search::cmd::run(cmd, &config).await?;
         }
         Command::Worker { shared } => {
-            let config = load_config_and_init_logger(shared, &args)?;
+            let config = load_config_and_init_logger(shared, &args, "worker")?;
             start_worker(config).await?;
         }
         Command::Check { shared } => cmd::check::run(shared, &args).await?,
         Command::WriteConfig { target } => config::write_template(target.as_ref())?,
         Command::ExportApiSchema { args } => cmd::export_api_schema::run(args)?,
         Command::ImportRealmTree { options, shared } => {
-            let config = load_config_and_init_logger(shared, &args)?;
+            let config = load_config_and_init_logger(shared, &args, "cli")?;
             cmd::import_realm_tree::run(options, &config).await?;
         }
         Command::KnownGroups { options, shared } => {
-            let config = load_config_and_init_logger(shared, &args)?;
+            let config = load_config_and_init_logger(shared, &args, "cli")?;
             cmd::known_groups::run(config, options).await?;
         }
         Command::KnownUsers { options, shared } => {
-            let config = load_config_and_init_logger(shared, &args)?;
+            let config = load_config_and_init_logger(shared, &args, "cli")?;
             cmd::known_users::run(config, options).await?;
         }
     }
@@ -169,7 +171,7 @@ async fn start_worker(config: Config) -> Result<Never> {
 }
 
 
-fn load_config_and_init_logger(shared: &args::Shared, args: &Args) -> Result<Config> {
+fn load_config_and_init_logger(shared: &args::Shared, args: &Args, cmd: &str) -> Result<Config> {
     // Load configuration.
     let (config, path) = match &shared.config {
         Some(path) => {
@@ -182,7 +184,7 @@ fn load_config_and_init_logger(shared: &args::Shared, args: &Args) -> Result<Con
 
     // Initialize logger. Unfortunately, we can only do this here
     // after reading the config.
-    logger::init(&config.log, args)?;
+    logger::init(&config.log, args, cmd)?;
     info!(source_file = ?path.display(), "Loaded config");
 
     // Call validate again, as some of the checks will only print warnings.
