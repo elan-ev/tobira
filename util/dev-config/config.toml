@@ -28,6 +28,9 @@ session.from_login_credentials = "login-callback:http://localhost:3091"
 trusted_external_key = "tobira"
 pre_auth_external_links = true
 
+[auth.roles]
+editor = "ROLE_USER"
+
 [auth.jwt]
 signing_algorithm = "ES256"
 secret_key = "jwt-key.pem"
