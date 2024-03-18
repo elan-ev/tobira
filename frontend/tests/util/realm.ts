@@ -15,6 +15,54 @@ export const createUserRealm = async (page: Page, userid: UserId) => {
     await page.getByRole("button", { name: "Create your own page" }).click();
 };
 
+/**
+ * Sets up or navigates to either a user realm or a non-user realm.
+ *
+ * - Pre-conditions: User is not logged in. If `realmType` is `user`,
+ *   the user must not have a user realm yet.
+ * - Post-conditions: If `realmType` is `user`: User realm created, user
+ *   is on the page that Tobira forwards to immediately after creating the realm.
+ *   Otherwise, if `realmType` is `regular`, nothing was created but the user
+ *   is on a non-root realm page ("/support" or "/empty").
+ */
+export const realmSetup = async (
+    page: Page,
+    userid: UserId,
+    realmType: Realm,
+    parentPageName: string,
+    empty?: boolean,
+) => {
+    await test.step("Setup", async () => {
+        await page.goto("/");
+        await login(page, userid);
+
+        // Go to a non-root realm
+        if (realmType === "Regular") {
+            if (empty) {
+                // This is an unfortunate workaround.
+                // The `nth()` locator used in block tests sometimes resolves to the wrong
+                // element if there is already a block present.
+                // I believe this is a bug in playwright. To prevent that from happening,
+                // the block tests should always be starting with an empty realm.
+                await page.locator("nav").getByRole("link", { name: "Empty" }).click();
+                await expect(page).toHaveURL("/empty");
+            } else {
+                await page.locator("nav").getByRole("link", { name: parentPageName }).click();
+                await expect(page).toHaveURL("/support");
+            }
+        }
+
+        // Create user realm
+        if (realmType === "User") {
+            await test.step("Create new user realm", async () => {
+                await createUserRealm(page, userid);
+            });
+            await page.locator("nav").getByRole("link", { name: parentPageName }).click();
+            await expect(page).toHaveURL(`/@${userid}`);
+        }
+    });
+};
+
 
 /**
  * Creates a sub-realm on the page you are currently on.

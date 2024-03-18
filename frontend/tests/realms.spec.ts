@@ -1,7 +1,8 @@
 import { expect } from "@playwright/test";
-import { test, realms } from "./util/common";
-import { USERS, login } from "./util/user";
-import { createUserRealm, addSubPage, addBlock } from "./util/realm";
+import { test } from "./util/common";
+import { USERS } from "./util/user";
+import { addSubPage, realms, realmSetup } from "./util/realm";
+import { addBlock } from "./util/blocks";
 
 
 for (const realmType of realms) {
@@ -12,25 +13,7 @@ for (const realmType of realms) {
 
         const userid = realmType === "User" ? "jose" : "sabine";
         const parentPageName = realmType === "User" ? USERS[userid] : "Support page";
-        await test.step("Setup", async () => {
-            await page.goto("/");
-            await login(page, userid);
-
-            // Go to a non-root realm
-            if (realmType === "Regular") {
-                await page.locator("nav").getByRole("link", { name: parentPageName }).click();
-                await expect(page).toHaveURL("/support");
-            }
-
-            // Create user realm
-            if (realmType === "User") {
-                await test.step("Create new user realm", async () => {
-                    await createUserRealm(page, userid);
-                });
-                await page.locator("nav").getByRole("link", { name: parentPageName }).click();
-                await expect(page).toHaveURL(`/@${userid}`);
-            }
-        });
+        await realmSetup(page, userid, realmType, parentPageName);
 
         const nav = page.locator("nav").first().getByRole("listitem");
         const subPages = ["Alchemy", "Barnacles", "Cheese"];

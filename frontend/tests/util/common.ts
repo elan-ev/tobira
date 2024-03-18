@@ -25,10 +25,6 @@ export const deleteRealm = async (page: Page) => {
 };
 
 
-export const realms = ["User", "Regular"] as const;
-export type Realm = typeof realms[number];
-
-
 export const blocks = ["Series", "Video", "Text", "Title"] as const;
 export type Block = typeof blocks[number];
 
