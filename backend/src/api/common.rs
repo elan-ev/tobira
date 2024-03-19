@@ -3,13 +3,15 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     api::{
-        Id, Context,
+        Id,
+        Context,
         err::{self, ApiResult},
-        model::{event::AuthorizedEvent, series::Series, realm::Realm},
+        model::{event::AuthorizedEvent, series::Series, realm::Realm, search::SearchSeriesExtended},
     },
     prelude::*,
     search::Event as SearchEvent,
     search::Realm as SearchRealm,
+    search::Series as SearchSeries,
     db::types::ExtraMetadata,
 };
 
@@ -17,7 +19,7 @@ use crate::{
 /// A node with a globally unique ID. Mostly useful for relay.
 #[juniper::graphql_interface(
     Context = Context,
-    for = [AuthorizedEvent, Realm, Series, SearchEvent, SearchRealm]
+    for = [AuthorizedEvent, Realm, Series, SearchEvent, SearchRealm, SearchSeries, SearchSeriesExtended]
 )]
 pub(crate) trait Node {
     fn id(&self) -> Id;

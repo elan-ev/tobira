@@ -1,6 +1,13 @@
 import { Trans, useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { LuCalendarRange, LuLayout, LuPlayCircle, LuX } from "react-icons/lu";
+import {
+    LuCalendarRange,
+    LuLayout,
+    LuLibrary,
+    LuPlayCircle,
+    LuRadio,
+    LuX,
+} from "react-icons/lu";
 import { IconType } from "react-icons";
 import { ReactNode, RefObject, useEffect, useRef } from "react";
 import {
@@ -10,6 +17,7 @@ import {
     ProtoButton,
     screenWidthAtMost,
     unreachable,
+    useColorScheme,
 } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
@@ -21,7 +29,14 @@ import {
 import { RouterControl, makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link, useRouter } from "../router";
-import { Creators, Thumbnail } from "../ui/Video";
+import {
+    Creators,
+    Thumbnail,
+    ThumbnailImg,
+    ThumbnailOverlay,
+    ThumbnailOverlayContainer,
+    ThumbnailReplacement,
+} from "../ui/Video";
 import { SmallDescription } from "../ui/metadata";
 import { Card } from "../ui/Card";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
@@ -32,6 +47,7 @@ import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
 import { isExperimentalFlagSet, keyOfId } from "../util";
 import { Button } from "../ui/Button";
 import { DirectVideoRoute, VideoRoute } from "./Video";
+import { DirectSeriesRoute } from "./Series";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -82,7 +98,7 @@ export const SearchRoute = makeRoute({
     },
 });
 
-const itemTypes: ItemType[] = ["EVENT", "REALM"];
+const itemTypes: ItemType[] = ["EVENT", "REALM", "SERIES"];
 export const isValidSearchItemType = (value: string | null | undefined) =>
     value && (itemTypes as string[]).includes(value)
         ? value as ItemType
@@ -126,6 +142,11 @@ const query = graphql`
                         endTime
                         created
                         hostRealms { path }
+                    }
+                    ... on SearchSeriesExtended {
+                        title
+                        description
+                        thumbnailInfo { thumbnail isLive audioOnly }
                     }
                     ... on SearchRealm { name path ancestorNames }
                 }
@@ -322,7 +343,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({ type, router }) => {
                 border: `1px solid ${COLORS.neutral90}`,
             },
         }}
-    >{t(`search.filter-${translationKey}`)}</Button>;
+    >{t(`search.filter.${translationKey}`)}</Button>;
 };
 
 const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
@@ -360,7 +381,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     startTime: unwrapUndefined(item.startTime),
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
-                }}/>;
+                }} />;
+            } else if (item.__typename === "SearchSeriesExtended") {
+                return <SearchSeries key={item.id} {...{
+                    id: item.id,
+                    title: unwrapUndefined(item.title),
+                    description: unwrapUndefined(item.description),
+                    thumbnailInfo: unwrapUndefined(item.thumbnailInfo),
+                }} />;
             } else if (item.__typename === "SearchRealm") {
                 return <SearchRealm key={item.id} {...{
                     id: item.id,
@@ -379,10 +407,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
 
 type WithIconProps = React.PropsWithChildren<{
     Icon: IconType;
+    iconSize?: number;
     hideIconOnMobile?: boolean;
 }>;
 
-const WithIcon: React.FC<WithIconProps> = ({ Icon, children, hideIconOnMobile }) => (
+const WithIcon: React.FC<WithIconProps> = ({ Icon, iconSize = 30, children, hideIconOnMobile }) => (
     <div css={{
         display: "flex",
         flexDirection: "row",
@@ -399,7 +428,7 @@ const WithIcon: React.FC<WithIconProps> = ({ Icon, children, hideIconOnMobile })
             },
         },
     }}>
-        <Icon size={30} css={{
+        <Icon size={iconSize} css={{
             flexShrink: 0,
             color: COLORS.primary0,
             strokeWidth: 1.5,
@@ -500,7 +529,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                             borderRadius: 4,
                             outlineOffset: 1,
                             position: "relative",
-                            zIndex: 1,
+                            zIndex: 4,
                         }}>{seriesTitle}</Link>
                     </div>}
                 </div>
@@ -518,23 +547,133 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                         audioOnly,
                     },
                 }}
-                css={{
-                    outline: `1px solid ${COLORS.neutral15}`,
-                    minWidth: 270,
-                    width: 270,
-                    marginLeft: "auto",
-                    [screenWidthAtMost(800)]: {
-                        minWidth: 240,
-                        width: 240,
-                    },
-                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                        maxWidth: 400,
-                        margin: "0 auto",
-                    },
-                }}
+                css={thumbnailCss}
             />
         </Item>
     );
+};
+
+const thumbnailCss = {
+    outline: `1px solid ${COLORS.neutral15}`,
+    minWidth: 270,
+    width: 270,
+    marginLeft: "auto",
+    [screenWidthAtMost(800)]: {
+        minWidth: 240,
+        width: 240,
+    },
+    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+        maxWidth: 400,
+        margin: "0 auto",
+    },
+};
+
+
+type ThumbnailInfo = {
+    readonly audioOnly: boolean;
+    readonly isLive: boolean;
+    readonly thumbnail: string | null | undefined;
+}
+type SearchSeriesProps = {
+    id: string;
+    title: string;
+    description: string | null;
+    thumbnailInfo: readonly ThumbnailInfo[] | undefined;
+}
+
+const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thumbnailInfo }) =>
+    <Item key={id} link={DirectSeriesRoute.url({ seriesId: id })}>
+        <WithIcon Icon={LuLibrary} iconSize={28} hideIconOnMobile>
+            <div css={{
+                color: COLORS.neutral90,
+                marginRight: "clamp(12px, 4vw - 13px, 40px)",
+                display: "flex",
+                flexDirection: "column",
+                minWidth: 0,
+            }}>
+                <h3 css={{
+                    color: COLORS.primary0,
+                    marginBottom: 6,
+                    fontSize: 17,
+                    lineHeight: 1.3,
+                    ...ellipsisOverflowCss(2),
+                }}>{title}</h3>
+                {description && <SmallDescription
+                    text={description}
+                    lines={3}
+                />}
+            </div>
+        </WithIcon>
+        <ThumbnailStack {...{ thumbnailInfo, title }} />
+    </Item>
+;
+
+type ThumbnailStackProps = Pick<SearchSeriesProps, "title" | "thumbnailInfo">
+
+const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnailInfo, title }) => (
+    <div css={{
+        ...thumbnailCss,
+        outline: 0,
+        display: "grid",
+        gridAutoColumns: "1fr",
+        "> div": {
+            outline: `1px solid ${COLORS.neutral10}`,
+            borderRadius: 8,
+        },
+        "> div:not(:last-child)": {
+            boxShadow: "3px -2px 6px rgba(0, 0, 0, 40%)",
+        },
+        "> div:nth-child(1)": {
+            zIndex: 3,
+            gridColumn: "1 / span 10",
+            gridRow: "3 / span 10",
+        },
+        "> div:nth-child(2)": {
+            zIndex: 2,
+            gridColumn: "2 / span 10",
+            gridRow: "2 / span 10",
+        },
+        "> div:nth-child(3)": {
+            zIndex: 1,
+            gridColumn: "3 / span 10",
+            gridRow: "1 / span 10",
+        },
+    }}>
+        {thumbnailInfo?.map((info, idx) => <div key={idx}>
+            <SeriesThumbnail {...{ info, title }} />
+        </div>)}
+    </div>
+);
+
+type SeriesThumbnailProps = {
+    info: ThumbnailInfo;
+    title: string;
+}
+
+const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
+    const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+
+    let inner;
+    if (info.thumbnail != null) {
+        // We have a proper thumbnail.
+        inner = <ThumbnailImg
+            src={info.thumbnail}
+            alt={t("series.entry-of-series-thumbnail", { series: title })}
+        />;
+    } else {
+        inner = <ThumbnailReplacement audioOnly={info.audioOnly} {...{ isDark }} />;
+    }
+
+    const overlay = <ThumbnailOverlay backgroundColor="rgba(200, 0, 0, 0.9)">
+        <LuRadio css={{ fontSize: 19, strokeWidth: 1.4 }} />
+        {t("video.live")}
+    </ThumbnailOverlay>;
+
+    return <ThumbnailOverlayContainer>
+        {inner}
+        {info.isLive && overlay}
+    </ThumbnailOverlayContainer>;
 };
 
 type SearchRealmProps = {
@@ -590,7 +729,7 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
         <Link to={link} css={{
             position: "absolute",
             inset: 0,
-            zIndex: 1,
+            zIndex: 4,
             borderRadius: 16,
         }}/>
         {children}

@@ -1,15 +1,20 @@
 use chrono::{DateTime, Utc};
+use juniper::GraphQLObject;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::{fmt, borrow::Cow};
+use std::{borrow::Cow, collections::HashMap, fmt, future};
 
 use crate::{
     api::{
-        Context, NodeValue,
         err::ApiResult,
         util::impl_object_with_dummy_field,
+        Context,
+        Id,
+        Node,
+        NodeValue
     },
     auth::HasRoles,
+    db::{types::Key, util::select},
     prelude::*,
     search,
 };
@@ -74,6 +79,7 @@ impl SearchResults<search::Series> {
 #[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
 enum ItemType {
    Event,
+   Series,
    Realm,
 }
 
@@ -83,6 +89,29 @@ pub(crate) struct Filters {
     start: Option<DateTime<Utc>>,
     end: Option<DateTime<Utc>>,
 }
+
+#[derive(Debug, GraphQLObject)]
+pub(crate) struct ThumbnailInfo {
+    pub(crate) thumbnail: Option<String>,
+    pub(crate) is_live: bool,
+    pub(crate) audio_only: bool,
+}
+
+#[derive(Debug, GraphQLObject)]
+#[graphql(context = Context, impl = NodeValue)]
+pub(crate) struct SearchSeriesExtended {
+    pub(crate) id: Id,
+    pub(crate) title: String,
+    pub(crate) description: Option<String>,
+    pub(crate) thumbnail_info: Vec<ThumbnailInfo>,
+}
+
+impl Node for SearchSeriesExtended {
+    fn id(&self) -> Id {
+        self.id
+    }
+}
+
 
 macro_rules! handle_search_result {
     ($res:expr, $return_type:ty) => {{
@@ -173,6 +202,16 @@ pub(crate) async fn perform(
         .build();
 
 
+    // Prepare the series search
+    let series_query = context.search.series_index.search()
+        .with_query(user_query)
+        .with_show_matches_position(true)
+        .with_filter("listed = true")
+        .with_limit(15)
+        .with_show_ranking_score(true)
+        .build();
+
+
     // Prepare the realm search
     let realm_query = context.search.realm_index.search()
         .with_query(user_query)
@@ -186,9 +225,48 @@ pub(crate) async fn perform(
     // Perform the searches
     let res = tokio::try_join!(
         event_query.execute::<search::Event>(),
+        series_query.execute::<search::Series>(),
         realm_query.execute::<search::Realm>(),
     );
-    let (event_results, realm_results) = handle_search_result!(res, SearchOutcome);
+    let (event_results, series_results, realm_results) = handle_search_result!(res, SearchOutcome);
+
+    // Get thumbnails for series
+    let ids = series_results.hits.iter()
+        .map(|r| r.result.id.0)
+        .collect::<Vec<_>>();
+
+    let (selection, mapping) = select!(series, is_live, audio_only, thumbnail);
+    let thumbnail_info_query = format!("\
+        select {selection} \
+        from ( \
+            select e.series, e.is_live, e.thumbnail, \
+                not exists ( \
+                    select 1 from unnest(e.tracks) as t where t.resolution is not null \
+                ) as audio_only, \
+                row_number() over ( \
+                    partition by e.series order by e.created desc \
+                ) as row_num \
+            from events e \
+            where e.series = any($1) and (read_roles || 'ROLE_ADMIN'::text) && $2 \
+            and (e.start_time <= current_timestamp or e.start_time is null) \
+        ) as ranked \
+        where row_num <= 3");
+
+    let mut thumbnail_info = HashMap::new();
+    context.db
+        .query_raw(&thumbnail_info_query, dbargs![&ids, &context.auth.roles_vec()])
+        .await?
+        .try_for_each(|row| {
+            let value = ThumbnailInfo {
+                thumbnail: mapping.thumbnail.of(&row),
+                is_live: mapping.is_live.of(&row),
+                audio_only: mapping.audio_only.of(&row),
+            };
+            let key = mapping.series.of::<Key>(&row);
+            thumbnail_info.entry(key).or_insert(vec![]).push(value);
+            future::ready(Ok(()))
+        })
+        .await?;
 
     // Merge results according to Meilis score.
     //
@@ -198,6 +276,17 @@ pub(crate) async fn perform(
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
     let events = event_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
+    let series = series_results.hits.into_iter()
+        .map(|result| {
+            let series = SearchSeriesExtended {
+                id: Id::search_series(result.result.id.0),
+                title: result.result.title,
+                description: result.result.description,
+                thumbnail_info: thumbnail_info.remove(&result.result.id.0).unwrap_or_default(),
+            };
+            (NodeValue::from(series), result.ranking_score)
+        } 
+    );
     let realms = realm_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
 
@@ -209,14 +298,23 @@ pub(crate) async fn perform(
             merged.extend(events);
             total_hits = event_results.estimated_total_hits.unwrap_or(0);
         },
+        Some(ItemType::Series) => {
+            merged.extend(series);
+            total_hits = series_results.estimated_total_hits.unwrap_or(0);
+        },
         Some(ItemType::Realm) => {
             merged.extend(realms);
             total_hits = realm_results.estimated_total_hits.unwrap_or(0);
         },
         None => {
             merged.extend(events);
+            merged.extend(series);
             merged.extend(realms);
-            total_hits = [event_results.estimated_total_hits, realm_results.estimated_total_hits]
+            total_hits = [
+                event_results.estimated_total_hits,
+                series_results.estimated_total_hits,
+                realm_results.estimated_total_hits,
+            ]
                 .iter()
                 .filter_map(|&x| x)
                 .sum();
