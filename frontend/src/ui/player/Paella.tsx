@@ -215,15 +215,17 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 },
 
                 '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
-                    marginTop: "-4px !important",
+                    marginTop: "-7px !important",
                     "svg text": {
-                        transform: "translate(1px, -2px)",
+                        transform: "translate(0px, -1px)",
+                        fontFamily: "var(--main-font) !important",
                     },
                 },
                 '& button[name="es.upv.paella.forwardButtonPlugin"] div': {
-                    marginTop: "-4px !important",
+                    marginTop: "-7px !important",
                     "svg text": {
-                        transform: "translate(1px, -2px)",
+                        transform: "translate(2px, -1px)",
+                        fontFamily: "var(--main-font) !important",
                     },
                 },
 
