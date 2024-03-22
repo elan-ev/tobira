@@ -1,29 +1,29 @@
 import { expect } from "@playwright/test";
-import { test, realms } from "./util/common";
+import { test, realmTypes } from "./util/common";
 import { USERS, login } from "./util/user";
 import { createUserRealm, addSubPage, addBlock } from "./util/realm";
 
 
-for (const realmType of realms) {
+for (const realmType of realmTypes) {
     test(`${realmType} realm moderator editing`, async ({
         page, browserName, standardData, activeSearchIndex,
     }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
-        const userid = realmType === "User" ? "jose" : "sabine";
-        const parentPageName = realmType === "User" ? USERS[userid] : "Support page";
+        const userid = realmType === "UserRealm" ? "jose" : "sabine";
+        const parentPageName = realmType === "UserRealm" ? USERS[userid] : "Support page";
         await test.step("Setup", async () => {
             await page.goto("/");
             await login(page, userid);
 
             // Go to a non-root realm
-            if (realmType === "Regular") {
+            if (realmType === "RegularRealm") {
                 await page.locator("nav").getByRole("link", { name: parentPageName }).click();
                 await expect(page).toHaveURL("/support");
             }
 
             // Create user realm
-            if (realmType === "User") {
+            if (realmType === "UserRealm") {
                 await test.step("Create new user realm", async () => {
                     await createUserRealm(page, userid);
                 });
@@ -33,7 +33,7 @@ for (const realmType of realms) {
         });
 
         const nav = page.locator("nav").first().getByRole("listitem");
-        const subPages = ["Alchemy", "Barnacles", "Cheese"];
+        const subPages = ["Apple", "Banana", "Cherry"];
         await test.step("Sub-pages can be added", async () => {
             for (const subPage of subPages) {
                 await addSubPage(page, subPage);
@@ -125,54 +125,3 @@ for (const realmType of realms) {
 
     });
 }
-// eslint-disable-next-line capitalized-comments
-// eslint-disable-next-line multiline-comment-style
-/*
-        if (realm === "Regular") {
-            await test.step("Path changing", async () => {
-                await test.step("Path can be changed", async () => {
-                    const pathInput = page.locator("input[name='pathSegment']");
-                    await pathInput.fill(`chicken-${realmIndex}`);
-                    await page.getByRole("button", { name: "Change path segment" }).click();
-
-                    await expect(page).toHaveURL(`~manage/realm?path=/chicken-${realmIndex}`);
-                });
-
-                await test.step("Links are updated", async () => {
-                    const links = [
-                        ["Go to page", "E2E Test Realm"],
-                        ["Page settings", `Settings of page “E2E Test Realm ${realmIndex}”`],
-                        ["Edit page content", `Edit page “E2E Test Realm ${realmIndex}”`],
-                        ["Add sub-page", "Add page"],
-                        ["Barnacles", "Barnacles"],
-                        ["E2E Test Realm", "E2E Test Realm"],
-                    ];
-
-                    const linkTest = async (page: Page, linkName: string, heading: string) => {
-                        await page.getByRole("link", { name: linkName }).first().click();
-                        await expect(page.getByRole("heading", { name: heading })).toBeVisible();
-                    };
-
-                    for (const [name, heading] of links) {
-                        await linkTest(page, name, heading);
-                    }
-                });
-            });
-        }
-
-
-        await test.step("Page can be deleted", async () => {
-            await deleteRealm(page);
-
-            if (realm === "User") {
-                await navigateTo(`@${user.login}`, page);
-                await expect(
-                    page.getByRole("button", { name: "Create your own page" }),
-                ).toBeVisible();
-            } else {
-                await expect(
-                    page.getByRole("link", { name: `E2E Test realm ${realmIndex}` })
-                ).not.toBeVisible();
-            }
-        });
-*/
