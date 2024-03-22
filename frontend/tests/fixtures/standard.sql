@@ -267,6 +267,10 @@ insert into realms (parent, path_segment, name, child_order)
 values (0, 'support', 'Support page', 'alphabetic:asc');
 insert into realms (parent, path_segment, name, child_order)
 values (0, 'love', 'WILL DERIVE', 'alphabetic:desc');
+insert into realms (parent, path_segment, name)
+values(0, 'moon', 'Far side');
+insert into realms (path_segment, name, owner_display_name)
+values('@morgan', 'Morgan Yu', 'Morgan Yu');
 
 insert into realms (parent, path_segment, name, index, child_order)
 values ((select id from realms where full_path = '/animals'), 'cats', 'Cats', 2, 'alphabetic:asc');
@@ -285,12 +289,19 @@ values ((select id from realms where full_path = '/love'), 'kiwi', 'Kiwis', 'alp
 insert into realms (parent, path_segment, name, child_order)
 values ((select id from realms where full_path = '/love'), 'turtles', 'Turtles', 'alphabetic:desc');
 
+insert into realms (parent, path_segment, name)
+values ((select id from realms where full_path = '/moon'), 'finanzamt', 'Finanzamt'); 
+
+insert into realms (parent, path_segment, name)
+values ((select id from realms where full_path = '/@morgan'), 'apple', 'Apple');
+
 -- Permissions
 update realms set moderator_roles = '{ROLE_STAFF}' where full_path = '';
 update realms set admin_roles = '{ROLE_USER_SABINE}' where full_path = '/love';
 update realms set moderator_roles = '{ROLE_STUDENT}' where full_path = '/love';
 update realms set admin_roles = '{ROLE_USER_MORGAN}' where full_path = '/love/kiwi';
 update realms set moderator_roles = '{ROLE_USER_MORGAN}' where full_path = '/support';
+update realms set admin_roles = '{ROLE_USER_SABINE}' where full_path = '/moon';
 update realms set admin_roles = '{ROLE_STAFF}' where full_path = '/animals';
 update realms set admin_roles = '{ROLE_USER_BJOERK}' where full_path = '/animals/dogs';
 update realms set moderator_roles = '{ROLE_USER_JOSE}' where full_path = '/animals/dogs';
