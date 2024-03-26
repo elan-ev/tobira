@@ -33,7 +33,7 @@ for (const realmType of realms) {
         });
 
         const nav = page.locator("nav").first().getByRole("listitem");
-        const subPages = ["Alchemy", "Barnacles", "Cheese"];
+        const subPages = ["Apple", "Banana", "Cherry"];
         await test.step("Sub-pages can be added", async () => {
             for (const subPage of subPages) {
                 await addSubPage(page, subPage);
@@ -125,54 +125,3 @@ for (const realmType of realms) {
 
     });
 }
-// eslint-disable-next-line capitalized-comments
-// eslint-disable-next-line multiline-comment-style
-/*
-        if (realm === "Regular") {
-            await test.step("Path changing", async () => {
-                await test.step("Path can be changed", async () => {
-                    const pathInput = page.locator("input[name='pathSegment']");
-                    await pathInput.fill(`chicken-${realmIndex}`);
-                    await page.getByRole("button", { name: "Change path segment" }).click();
-
-                    await expect(page).toHaveURL(`~manage/realm?path=/chicken-${realmIndex}`);
-                });
-
-                await test.step("Links are updated", async () => {
-                    const links = [
-                        ["Go to page", "E2E Test Realm"],
-                        ["Page settings", `Settings of page “E2E Test Realm ${realmIndex}”`],
-                        ["Edit page content", `Edit page “E2E Test Realm ${realmIndex}”`],
-                        ["Add sub-page", "Add page"],
-                        ["Barnacles", "Barnacles"],
-                        ["E2E Test Realm", "E2E Test Realm"],
-                    ];
-
-                    const linkTest = async (page: Page, linkName: string, heading: string) => {
-                        await page.getByRole("link", { name: linkName }).first().click();
-                        await expect(page.getByRole("heading", { name: heading })).toBeVisible();
-                    };
-
-                    for (const [name, heading] of links) {
-                        await linkTest(page, name, heading);
-                    }
-                });
-            });
-        }
-
-
-        await test.step("Page can be deleted", async () => {
-            await deleteRealm(page);
-
-            if (realm === "User") {
-                await navigateTo(`@${user.login}`, page);
-                await expect(
-                    page.getByRole("button", { name: "Create your own page" }),
-                ).toBeVisible();
-            } else {
-                await expect(
-                    page.getByRole("link", { name: `E2E Test realm ${realmIndex}` })
-                ).not.toBeVisible();
-            }
-        });
-*/
