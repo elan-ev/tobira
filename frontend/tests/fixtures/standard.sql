@@ -267,6 +267,8 @@ insert into realms (parent, path_segment, name, child_order)
 values (0, 'support', 'Support page', 'alphabetic:asc');
 insert into realms (parent, path_segment, name, child_order)
 values (0, 'love', 'WILL DERIVE', 'alphabetic:desc');
+insert into realms (parent, path_segment, name, child_order)
+values (0, 'empty', 'Empty', 'alphabetic:desc');
 
 insert into realms (parent, path_segment, name, index, child_order)
 values ((select id from realms where full_path = '/animals'), 'cats', 'Cats', 2, 'alphabetic:asc');

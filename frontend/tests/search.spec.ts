@@ -1,10 +1,10 @@
 import { Page, expect } from "@playwright/test";
-import { test, navigateTo } from "./util/common";
+import { test } from "./util/common";
 import { login, logout } from "./util/user";
 
 
 test("Search", async ({ page, standardData, activeSearchIndex }) => {
-    await navigateTo("/", page);
+    await page.goto("/");
     await page.waitForSelector("nav");
     const searchField = page.getByPlaceholder("Search");
     const query = "cat";
