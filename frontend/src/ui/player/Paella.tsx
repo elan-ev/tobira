@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Config, Manifest, Paella, Source, Stream } from "paella-core";
 import getBasicPluginsContext from "paella-basic-plugins";
 import getZoomPluginContext from "paella-zoom-plugin";
+import getMP4MultiQualityContext from "paella-mp4multiquality-plugin";
 import getUserTrackingPluginsContext from "paella-user-tracking";
 import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
@@ -123,6 +124,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     getBasicPluginsContext(),
                     getZoomPluginContext(),
                     getUserTrackingPluginsContext(),
+                    getMP4MultiQualityContext(),
                 ],
             });
 
@@ -185,6 +187,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             "body > .popup-container": colors,
             "body:has(.paella-fallback-fullscreen)": {
                 overflow: "hidden",
+            },
+            ".popup-container": {
+                zIndex: 500050,
             },
         }} />
         <div
@@ -253,7 +258,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    zIndex: 100000,
+                    zIndex: 500000,
                 },
             }}
         />
@@ -341,7 +346,7 @@ const PAELLA_CONFIG = {
         },
 
         // Format plugins
-        "es.upv.paella.mp4VideoFormat": {
+        "es.upv.paella.mp4MultiQualityVideoFormat": {
             enabled: true,
             order: 1,
             crossOrigin: false,
