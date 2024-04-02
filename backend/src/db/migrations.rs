@@ -298,7 +298,7 @@ pub(crate) async fn unsafe_overwrite_migrations(db: &mut Db) -> Result<()> {
 }
 
 
-// Helper macro to include migrations in the `migations` folder and add them to
+// Helper macro to include migrations in the `migrations` folder and add them to
 // a map. The `assert!` and `panic!` in there should ideally be compile errors,
 // but panics are fine for now.
 macro_rules! include_migrations {

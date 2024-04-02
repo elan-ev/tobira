@@ -139,7 +139,7 @@ macro_rules! handle_search_result {
             // rebuilt yet. We also show "search unavailable" for this case.
             Err(MsError::ParseError(e)) if e.is_data() => {
                 error!("Failed to deserialize search results (missing rebuild after update?): {e} \
-                    (=> replying 'search uavailable')");
+                    (=> replying 'search unavailable')");
                 return Ok(<$return_type>::SearchUnavailable(SearchUnavailable));
             }
 

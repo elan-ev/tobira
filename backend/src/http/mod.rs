@@ -128,7 +128,7 @@ pub(crate) async fn serve(
                         }))
                         .await;
                     if let Err(e) = res {
-                        warn!("Error serving connectiion: {e:#}");
+                        warn!("Error serving connection: {e:#}");
                     }
                 });
             }

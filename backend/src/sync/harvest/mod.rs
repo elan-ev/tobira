@@ -25,7 +25,7 @@ const INITIAL_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
 
 
-/// Continuiously fetches from the harvesting API and writes new data into our
+/// Continuously fetches from the harvesting API and writes new data into our
 /// database.
 pub(crate) async fn run(
     daemon: bool,
