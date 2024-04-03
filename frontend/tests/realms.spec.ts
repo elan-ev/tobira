@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "./util/common";
+import { test } from "./util/data";
 import { USERS, login } from "./util/user";
 import { createUserRealm, addSubPage, realmTypes } from "./util/realm";
 import { addBlock } from "./util/blocks";

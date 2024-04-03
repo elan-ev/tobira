@@ -1,4 +1,4 @@
-import { test } from "./util/common";
+import { test } from "./util/data";
 import { expect } from "@playwright/test";
 import { USERS } from "./util/user";
 

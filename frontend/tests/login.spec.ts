@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "./util/common";
+import { test } from "./util/data";
 import { logout } from "./util/user";
 
 test("Login", async ({ page, baseURL, browserName }) => {

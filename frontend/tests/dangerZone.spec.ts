@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "./util/common";
+import { test } from "./util/data";
 import { USERS, login } from "./util/user";
 import { realmTypes } from "./util/realm";
 
