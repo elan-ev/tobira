@@ -23,7 +23,3 @@ export const deleteRealm = async (page: Page) => {
         deleteButton.nth(1).click(),
     ]);
 };
-
-
-export const realmTypes = ["UserRealm", "RegularRealm"] as const;
-export type Realm = typeof realmTypes[number];

@@ -1,7 +1,8 @@
 import { expect } from "@playwright/test";
-import { test, realmTypes } from "./util/common";
+import { test } from "./util/common";
 import { USERS, login } from "./util/user";
-import { createUserRealm, addSubPage, addBlock } from "./util/realm";
+import { createUserRealm, addSubPage, realmTypes } from "./util/realm";
+import { addBlock } from "./util/blocks";
 
 
 for (const realmType of realmTypes) {

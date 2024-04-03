@@ -1,8 +1,8 @@
 import { expect } from "@playwright/test";
 import { test } from "./util/common";
-import { USERS } from "./util/user";
-import { realmSetup, realms } from "./util/realm";
+import { USERS, login } from "./util/user";
 import { Block, addBlock } from "./util/blocks";
+import { createUserRealm, realmTypes } from "./util/realm";
 
 const testBlocks: Block[] = [
     {
@@ -30,15 +30,33 @@ const testBlocks: Block[] = [
 ];
 
 
-for (const realmType of realms) {
+for (const realmType of realmTypes) {
     test(`${realmType} realm moderator block editing`, async ({
         page, browserName, standardData, activeSearchIndex,
     }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
-        const userid = realmType === "User" ? "jose" : "sabine";
-        const parentPageName = realmType === "User" ? USERS[userid] : "Support page";
-        await realmSetup(page, userid, realmType, parentPageName);
+        const userid = realmType === "UserRealm" ? "jose" : "sabine";
+        const parentPageName = realmType === "UserRealm" ? USERS[userid] : "Support page";
+        await test.step("Setup", async () => {
+            await page.goto("/");
+            await login(page, userid);
+
+            // Go to a non-root realm
+            if (realmType === "RegularRealm") {
+                await page.locator("nav").getByRole("link", { name: parentPageName }).click();
+                await expect(page).toHaveURL("/support");
+            }
+
+            // Create user realm
+            if (realmType === "UserRealm") {
+                await test.step("Create new user realm", async () => {
+                    await createUserRealm(page, userid);
+                });
+                await page.locator("nav").getByRole("link", { name: parentPageName }).click();
+                await expect(page).toHaveURL(`/@${userid}`);
+            }
+        });
 
         await page.getByRole("link", { name: "Edit page content" }).click();
 

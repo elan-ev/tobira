@@ -1,9 +1,9 @@
-import { Page, expect, test } from "@playwright/test";
-import { USERS, UserId, login } from "./user";
+import { Page, expect } from "@playwright/test";
+import { USERS, UserId } from "./user";
 
 
-export const realms = ["User", "Regular"] as const;
-export type Realm = typeof realms[number];
+export const realmTypes = ["UserRealm", "RegularRealm"] as const;
+export type Realm = typeof realmTypes[number];
 
 /**
  * Creates the user realm for the given user.
@@ -12,50 +12,12 @@ export type Realm = typeof realms[number];
  * - Post-conditions: User realm created, is on the page that Tobira forwards to
  *   immediately after creating the realm.
  */
-const createUserRealm = async (page: Page, userid: UserId) => {
+export const createUserRealm = async (page: Page, userid: UserId) => {
     await page.getByRole("button", { name: USERS[userid] }).click();
     await page.getByRole("link", { name: "My page" }).click();
     await expect(page).toHaveURL(`/@${userid}`);
     await page.getByRole("button", { name: "Create your own page" }).click();
 };
-
-/**
- * Sets up or navigates to either a user realm or a non-user realm.
- *
- * - Pre-conditions: User is not logged in. If `realmType` is `user`,
- *   the user must not have a user realm yet.
- * - Post-conditions: If `realmType` is `user`: User realm created, user
- *   is on the page that Tobira forwards to immediately after creating the realm.
- *   Otherwise, if `realmType` is `regular`, nothing was created but the user
- *   is on a non-root realm page ("/support" or "/empty").
- */
-export const realmSetup = async (
-    page: Page,
-    userid: UserId,
-    realmType: Realm,
-    parentPageName: string,
-) => {
-    await test.step("Setup", async () => {
-        await page.goto("/");
-        await login(page, userid);
-
-        // Go to a non-root realm
-        if (realmType === "Regular") {
-            await page.locator("nav").getByRole("link", { name: parentPageName }).click();
-            await expect(page).toHaveURL("/support");
-        }
-
-        // Create user realm
-        if (realmType === "User") {
-            await test.step("Create new user realm", async () => {
-                await createUserRealm(page, userid);
-            });
-            await page.locator("nav").getByRole("link", { name: parentPageName }).click();
-            await expect(page).toHaveURL(`/@${userid}`);
-        }
-    });
-};
-
 
 /**
  * Creates a sub-realm on the page you are currently on.

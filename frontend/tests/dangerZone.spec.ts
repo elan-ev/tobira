@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
-import { test, realmTypes } from "./util/common";
+import { test } from "./util/common";
 import { USERS, login } from "./util/user";
+import { realmTypes } from "./util/realm";
 
 for (const realmType of realmTypes) {
     test(`${realmType} danger zone`, async ({
