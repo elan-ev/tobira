@@ -2,7 +2,7 @@ import { Page, expect } from "@playwright/test";
 import { USERS, UserId } from "./user";
 
 
-export const realmTypes = ["UserRealm", "RegularRealm"] as const;
+export const realmTypes = ["User realm", "Regular realm"] as const;
 export type Realm = typeof realmTypes[number];
 
 /**

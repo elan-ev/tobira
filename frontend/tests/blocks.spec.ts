@@ -36,20 +36,20 @@ for (const realmType of realmTypes) {
     }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
-        const userid = realmType === "UserRealm" ? "jose" : "sabine";
-        const parentPageName = realmType === "UserRealm" ? USERS[userid] : "Support page";
+        const userid = realmType === "User realm" ? "jose" : "sabine";
+        const parentPageName = realmType === "User realm" ? USERS[userid] : "Support page";
         await test.step("Setup", async () => {
             await page.goto("/");
             await login(page, userid);
 
             // Go to a non-root realm
-            if (realmType === "RegularRealm") {
+            if (realmType === "Regular realm") {
                 await page.locator("nav").getByRole("link", { name: parentPageName }).click();
                 await expect(page).toHaveURL("/support");
             }
 
             // Create user realm
-            if (realmType === "UserRealm") {
+            if (realmType === "User realm") {
                 await test.step("Create new user realm", async () => {
                     await createUserRealm(page, userid);
                 });

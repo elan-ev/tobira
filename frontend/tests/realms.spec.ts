@@ -1,43 +1,42 @@
 import { expect } from "@playwright/test";
 import { test } from "./util/data";
 import { USERS, login } from "./util/user";
-import { createUserRealm, addSubPage, realmTypes } from "./util/realm";
+import { addSubPage, realmTypes } from "./util/realm";
 import { addBlock } from "./util/blocks";
 
 
 for (const realmType of realmTypes) {
-    test(`${realmType} realm moderator editing`, async ({
+    test(`${realmType} moderator editing`, async ({
         page, browserName, standardData, activeSearchIndex,
     }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
-        const userid = realmType === "UserRealm" ? "jose" : "sabine";
-        const parentPageName = realmType === "UserRealm" ? USERS[userid] : "Support page";
+        const userid = realmType === "User realm" ? "morgan" : "sabine";
+        const parentPageName = realmType === "User realm" ? USERS[userid] : "Support page";
         await test.step("Setup", async () => {
             await page.goto("/");
             await login(page, userid);
 
             // Go to a non-root realm
-            if (realmType === "RegularRealm") {
+            if (realmType === "Regular realm") {
                 await page.locator("nav").getByRole("link", { name: parentPageName }).click();
                 await expect(page).toHaveURL("/support");
             }
 
-            // Create user realm
-            if (realmType === "UserRealm") {
-                await test.step("Create new user realm", async () => {
-                    await createUserRealm(page, userid);
-                });
-                await page.locator("nav").getByRole("link", { name: parentPageName }).click();
+            // Go to user realm
+            if (realmType === "User realm") {
+                await page.goto(`/@${userid}`);
                 await expect(page).toHaveURL(`/@${userid}`);
             }
         });
 
         const nav = page.locator("nav").first().getByRole("listitem");
         const subPages = ["Apple", "Banana", "Cherry"];
+        // User realm already has an "Apple" sub-page
+        const pagesToAdd = realmType === "User realm" ? ["Banana", "Cherry"] : subPages;
         await test.step("Sub-pages can be added", async () => {
-            for (const subPage of subPages) {
-                await addSubPage(page, subPage);
+            for (const name of pagesToAdd) {
+                await addSubPage(page, name);
                 await page.locator("nav > ol").getByRole("link", { name: parentPageName }).click();
                 await page.getByRole("heading", { name: parentPageName, level: 1 }).waitFor();
             }

@@ -9,20 +9,20 @@ for (const realmType of realmTypes) {
     }) => {
         test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
-        const userid = realmType === "UserRealm" ? "morgan" : "sabine";
-        const parentPageName = realmType === "UserRealm" ? USERS[userid] : "Far side";
+        const userid = realmType === "User realm" ? "morgan" : "sabine";
+        const parentPageName = realmType === "User realm" ? USERS[userid] : "Far side";
         await test.step("Setup", async () => {
             await page.goto("/");
             await login(page, userid);
 
             // Go to a non-root realm
-            if (realmType === "RegularRealm") {
+            if (realmType === "Regular realm") {
                 await page.locator("nav").getByRole("link", { name: parentPageName }).click();
                 await expect(page).toHaveURL("/moon");
             }
 
             // Go to user realm
-            if (realmType === "UserRealm") {
+            if (realmType === "User realm") {
                 await page.goto(`/@${userid}`);
                 await expect(page).toHaveURL(`/@${userid}`);
             }
@@ -30,7 +30,7 @@ for (const realmType of realmTypes) {
             await page.getByRole("link", { name: "Page settings" }).click();
         });
 
-        if (realmType === "RegularRealm") {
+        if (realmType === "Regular realm") {
             await test.step("Path changing", async () => {
                 await test.step("Path can be changed", async () => {
                     const pathInput = page.locator("input[name='pathSegment']");
@@ -58,7 +58,7 @@ for (const realmType of realmTypes) {
 
 
         await test.step("Page can be deleted", async () => {
-            if (realmType === "UserRealm") {
+            if (realmType === "User realm") {
                 await page.getByRole("button", { name: "Delete" }).click();
                 await page.getByRole("button", { name: "Delete" }).nth(1).click();
 
