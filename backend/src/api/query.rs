@@ -9,6 +9,7 @@ use super::{
     model::{
         event::{AuthorizedEvent, Event},
         known_roles::{self, KnownGroup, KnownUsersSearchOutcome},
+        playlist::Playlist,
         realm::Realm,
         search::{self, EventSearchOutcome, Filters, SearchOutcome, SeriesSearchOutcome},
         series::Series,
@@ -64,6 +65,16 @@ impl Query {
     /// Returns a series by its ID.
     async fn series_by_id(id: Id, context: &Context) -> ApiResult<Option<Series>> {
         Series::load_by_id(id, context).await
+    }
+
+    /// Returns a playlist by its Opencast ID.
+    async fn playlist_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Playlist>> {
+        Playlist::load_by_opencast_id(id, context).await
+    }
+
+    /// Returns a playlist by its ID.
+    async fn playlist_by_id(id: Id, context: &Context) -> ApiResult<Option<Playlist>> {
+        Playlist::load_by_id(id, context).await
     }
 
     /// Returns the current user.

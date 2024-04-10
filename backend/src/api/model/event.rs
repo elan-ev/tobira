@@ -23,21 +23,21 @@ use crate::{
 #[derive(Debug)]
 pub(crate) struct AuthorizedEvent {
     pub(crate) key: Key,
-    series: Option<Key>,
-    opencast_id: String,
-    is_live: bool,
+    pub(crate) series: Option<Key>,
+    pub(crate) opencast_id: String,
+    pub(crate) is_live: bool,
 
-    title: String,
-    description: Option<String>,
-    created: DateTime<Utc>,
-    creators: Vec<String>,
+    pub(crate) title: String,
+    pub(crate) description: Option<String>,
+    pub(crate) created: DateTime<Utc>,
+    pub(crate) creators: Vec<String>,
 
-    metadata: ExtraMetadata,
-    read_roles: Vec<String>,
-    write_roles: Vec<String>,
+    pub(crate) metadata: ExtraMetadata,
+    pub(crate) read_roles: Vec<String>,
+    pub(crate) write_roles: Vec<String>,
 
-    synced_data: Option<SyncedEventData>,
-    tobira_deletion_timestamp: Option<DateTime<Utc>>,
+    pub(crate) synced_data: Option<SyncedEventData>,
+    pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug)]
