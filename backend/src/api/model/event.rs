@@ -1,5 +1,3 @@
-use std::fmt;
-
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
 use postgres_types::ToSql;
@@ -19,7 +17,6 @@ use crate::{
         util::{impl_from_db, select},
     },
     prelude::*,
-    util::lazy_format,
 };
 
 
@@ -329,14 +326,12 @@ impl AuthorizedEvent {
 
     pub(crate) async fn load_for_series(
         series_key: Key,
-        order: EventSortOrder,
         context: &Context,
     ) -> ApiResult<Vec<Self>> {
         let selection = Self::select();
         let query = format!(
             "select {selection} from events \
-                where series = $2 and (read_roles || 'ROLE_ADMIN'::text) && $1 {}",
-            order.to_sql(),
+                where series = $2 and (read_roles || 'ROLE_ADMIN'::text) && $1",
         );
         context.db
             .query_mapped(
@@ -627,14 +622,6 @@ impl Default for EventSortOrder {
             column: EventSortColumn::Created,
             direction: SortDirection::Descending,
         }
-    }
-}
-
-impl EventSortOrder {
-    /// Returns an SQL query fragment like `order by foo asc`.
-    fn to_sql(&self) -> impl fmt::Display {
-        let Self { column, direction } = *self;
-        lazy_format!("order by {} {}", column.to_sql(), direction.to_sql())
     }
 }
 
