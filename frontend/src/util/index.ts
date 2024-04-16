@@ -203,6 +203,9 @@ export const isExperimentalFlagSet = () => (
     window.localStorage.getItem("tobiraExperimentalFeatures") === "true"
 );
 
+/**
+ * Converts a time string used in URL params like "01h30m49s" to seconds.
+ */
 export const timeStringToSeconds = (timeString: string): number => {
     const timeSplit = /((\d+)h)?((\d+)m)?((\d+)s)?/.exec(timeString);
     const hours = timeSplit && timeSplit[2] ? parseInt(timeSplit[2]) * 60 * 60 : 0;
