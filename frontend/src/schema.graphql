@@ -154,6 +154,8 @@ type Series {
   id: ID!
   opencastId: String!
   title: String!
+  created: DateTimeUtc
+  metadata: ExtraMetadata
   syncedData: SyncedSeriesData
   hostRealms: [Realm!]!
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
