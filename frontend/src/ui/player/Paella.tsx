@@ -25,7 +25,7 @@ export type PaellaState = {
 };
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const { paella, setPlayerIsLoaded } = usePlayerContext();
     const { players, register, unregister } = usePlayerGroupContext();
@@ -120,6 +120,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
+                loadDictionaries: (player: Paella) => player.setLanguage(i18n.language),
                 customPluginContext: [
                     getBasicPluginsContext(),
                     getZoomPluginContext(),
@@ -275,6 +276,7 @@ const PAELLA_CONFIG = {
         hideOnMouseLeave: true,
     },
     defaultLayout: "presenter-presentation",
+    defaultLanguage: "en",
 
     preferences: {
         currentSource: "dataPlugin",

@@ -22,6 +22,8 @@ declare module "paella-core" {
             unregisterOnUnload?: boolean
         ): () => void;
 
+        public setLanguage(lang: string): void;
+
         public skin: Skin;
 
         public unload(): Promise<void>;
@@ -38,6 +40,7 @@ declare module "paella-core" {
         getManifestUrl?: (repoUrl: string, videoId: string) => Promise<string>;
         getManifestFileUrl?: (manifestUrl: string, manifestFileName: string) => Promise<string>;
         loadVideoManifest?: (manifestUrl: string) => Promise<Manifest>;
+        loadDictionaries?: (player: Paella) => void;
 
         customPluginContext?: PluginContext[];
     }
@@ -51,6 +54,12 @@ declare module "paella-core" {
 
         // TODO: what exactly does this do?
         defaultLayout?: string;
+
+        /**
+         * Language paella defaults to if there is no translation file corresponding
+         * to the current browser language or Tobira's currently set language.
+         */
+        defaultLanguage?: string;
 
         logLevel?: "DISABLED" | "ERROR" | "WARN" | "INFO" | "DEBUG" | "VERBOSE";
         plugins: Record<string, PluginConfig>;
