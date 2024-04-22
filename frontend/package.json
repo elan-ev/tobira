@@ -40,7 +40,7 @@
     "hls.js": "^1.5.7",
     "i18next": "^23.10.0",
     "i18next-browser-languagedetector": "^7.2.0",
-    "paella-basic-plugins": "1.44.4",
+    "paella-basic-plugins": "1.44.7",
     "paella-core": "1.48.1",
     "paella-mp4multiquality-plugin": "1.47.1",
     "paella-skins": "1.48.0",
