@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use bstr::ByteSlice;
-use hyper::{StatusCode};
+use hyper::StatusCode;
 use reinda::{assets, Setup};
 use secrecy::ExposeSecret;
 use serde_json::json;
@@ -80,6 +80,8 @@ const ASSETS: Setup = assets! {
     "paella/icons/volume-mid.svg": {},
     "paella/icons/volume-mute-cross.svg": {},
     "paella/icons/volume-mute.svg": {},
+    "paella/icons/circle-play.svg": {},
+    "paella/icons/loader-circle.svg": {},
     "paella/Roboto-Regular.ttf": {},
     "paella/theme.css": {},
     "paella/theme.json": {},
