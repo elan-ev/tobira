@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use juniper::{graphql_object, GraphQLObject, GraphQLInputObject};
 use postgres_types::ToSql;
 
@@ -12,7 +13,7 @@ use crate::{
         },
         Node,
     },
-    db::{types::{SeriesState as State, Key}, util::impl_from_db},
+    db::{types::{ExtraMetadata, Key, SeriesState as State}, util::impl_from_db},
     prelude::*,
 };
 
@@ -22,6 +23,8 @@ pub(crate) struct Series {
     opencast_id: String,
     synced_data: Option<SyncedSeriesData>,
     title: String,
+    created: Option<DateTime<Utc>>,
+    metadata: Option<ExtraMetadata>,
 }
 
 #[derive(GraphQLObject)]
@@ -32,13 +35,15 @@ struct SyncedSeriesData {
 impl_from_db!(
     Series,
     select: {
-        series.{ id, opencast_id, state, title, description },
+        series.{ id, opencast_id, state, title, description, created, metadata },
     },
     |row| {
         Series {
             key: row.id(),
             opencast_id: row.opencast_id(),
             title: row.title(),
+            created: row.created(),
+            metadata: row.metadata(),
             synced_data: (State::Ready == row.state()).then(
                 || SyncedSeriesData {
                     description: row.description(),
@@ -107,6 +112,14 @@ impl Series {
 
     fn title(&self) -> &str {
         &self.title
+    }
+
+    fn created(&self) -> &Option<DateTime<Utc>> {
+        &self.created
+    }
+
+    fn metadata(&self) -> &Option<ExtraMetadata> {
+        &self.metadata
     }
 
     fn synced_data(&self) -> &Option<SyncedSeriesData> {
