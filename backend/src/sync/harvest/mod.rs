@@ -162,6 +162,7 @@ async fn store_in_db(
                 is_live,
                 metadata,
                 updated,
+                slide_text,
             } => {
                 let series_id = match &part_of {
                     None => None,
@@ -206,6 +207,7 @@ async fn store_in_db(
                     ("custom_action_roles", &acl.custom_actions),
                     ("tracks", &tracks),
                     ("captions", &captions),
+                    ("slide_text", &slide_text),
                 ]).await?;
 
                 trace!("Inserted or updated event {} ({})", opencast_id, title);

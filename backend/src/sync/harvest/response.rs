@@ -41,6 +41,7 @@ pub(crate) enum HarvestItem {
         end_time: Option<DateTime<Utc>>,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
+        slide_text: Option<String>,
     },
 
     #[serde(rename_all = "camelCase")]
