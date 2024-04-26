@@ -109,27 +109,6 @@ type EventConnection {
   totalCount: Int!
 }
 
-"Some extra information we know about a role."
-type RoleInfo {
-  """
-    A user-facing label for this role (group or person). If the label does
-    not depend on the language (e.g. a name), `{ "_": "Peter" }` is
-    returned.
-  """
-  label: TranslatedString!
-  """
-    For user roles this is `null`. For groups, it defines a list of other
-    group roles that this role implies. I.e. a user with this role always
-    also has these other roles.
-  """
-  implies: [String!]
-  """
-    Is `true` if this role represents a large group. Used to warn users
-    accidentally giving write access to large groups.
-  """
-  large: Boolean!
-}
-
 "A simple realm name: a fixed string."
 type PlainRealmName {
   name: String!
@@ -161,6 +140,27 @@ type Series {
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
 }
 
+"Some extra information we know about a role."
+type RoleInfo {
+  """
+    A user-facing label for this role (group or person). If the label does
+    not depend on the language (e.g. a name), `{ "_": "Peter" }` is
+    returned.
+  """
+  label: TranslatedString!
+  """
+    For user roles this is `null`. For groups, it defines a list of other
+    group roles that this role implies. I.e. a user with this role always
+    also has these other roles.
+  """
+  implies: [String!]
+  """
+    Is `true` if this role represents a large group. Used to warn users
+    accidentally giving write access to large groups.
+  """
+  large: Boolean!
+}
+
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
 """
@@ -189,6 +189,7 @@ type SyncedEventData implements Node {
   tracks: [Track!]!
   thumbnail: String
   captions: [Caption!]!
+  segments: [Segment!]!
 }
 
 "A `Block`: a UI element that belongs to a realm."
@@ -711,6 +712,11 @@ input NewRealm {
   parent: ID!
   name: String!
   pathSegment: String!
+}
+
+type Segment {
+  uri: String!
+  startTime: Float!
 }
 
 enum SortDirection {

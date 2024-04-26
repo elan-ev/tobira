@@ -8,7 +8,7 @@ use tokio_postgres::types::ToSql;
 use crate::{
     auth::ROLE_ADMIN,
     config::Config,
-    db::{types::{EventTrack, EventState, SeriesState, EventCaption}, DbConnection},
+    db::{types::{EventCaption, EventSegment, EventState, EventTrack, SeriesState}, DbConnection},
     prelude::*,
 };
 use super::{status::SyncStatus, OcClient};
@@ -162,6 +162,7 @@ async fn store_in_db(
                 is_live,
                 metadata,
                 updated,
+                segments,
                 slide_text,
             } => {
                 let series_id = match &part_of {
@@ -184,6 +185,7 @@ async fn store_in_db(
 
                 let tracks = tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>();
                 let captions = captions.into_iter().map(Into::into).collect::<Vec<EventCaption>>();
+                let segments = segments.into_iter().map(Into::into).collect::<Vec<EventSegment>>();
 
                 // We upsert the event data.
                 upsert(db, "events", "opencast_id", &[
@@ -207,6 +209,7 @@ async fn store_in_db(
                     ("custom_action_roles", &acl.custom_actions),
                     ("tracks", &tracks),
                     ("captions", &captions),
+                    ("segments", &segments),
                     ("slide_text", &slide_text),
                 ]).await?;
 
