@@ -89,7 +89,7 @@ impl TestDb {
     ) -> Result<Key> {
         let sql = "insert into events
             (state, opencast_id, title, series, is_live, read_roles, write_roles, created,
-                updated, metadata, duration, tracks, captions)
+                updated, metadata, duration, tracks, captions, segments)
             values
             ('ready', $1, $2, $3, false, '{ROLE_ANONYMOUS}', '{ROLE_ANONYMOUS}',
                 now(), now(), '{}', $4,
@@ -100,7 +100,7 @@ impl TestDb {
                     '{1280, 720}',
                     true
                 )]::event_track[],
-             '{}'
+             '{}', '{}'
             )
             returning id";
 

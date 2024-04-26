@@ -22,9 +22,9 @@ begin
     insert into series (opencast_id, state, title, read_roles, write_roles, updated)
         values ('event-tests', 'ready', 'Different event states', '{"ROLE_ANONYMOUS"}', '{"ROLE_ADMIN"}', now())
         returning id into series_event_tests;
-    insert into events (opencast_id, state, updated, is_live, read_roles, write_roles, title, created, metadata, series, captions)
-        values ('waiting', 'waiting', '-infinity', false, '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', 'Waiting event', now(), '{}', series_event_tests, '{}');
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (opencast_id, state, updated, is_live, read_roles, write_roles, title, created, metadata, series, captions, segments)
+        values ('waiting', 'waiting', '-infinity', false, '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}', 'Waiting event', now(), '{}', series_event_tests, '{}', '{}');
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
             'ready',
             'restricted',
@@ -45,9 +45,10 @@ begin
             '{}',
             false,
             '{}',
+            '{}',
             '{}'
         );
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time, captions, segments)
         values (
             'ready',
             'live-future',
@@ -69,9 +70,10 @@ begin
             '{}',
             true,
             '9999-01-01',
+            '{}',
             '{}'
         );
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time, end_time, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time, end_time, captions, segments)
         values (
             'ready',
             'live-present',
@@ -94,9 +96,10 @@ begin
             true,
             'epoch',
             '9999-01-01',
+            '{}',
             '{}'
         );
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time, end_time, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, series, created, updated, read_roles, write_roles, metadata, is_live, start_time, end_time, captions, segments)
         values (
             'ready',
             'live-past',
@@ -119,6 +122,7 @@ begin
             true,
             'epoch',
             '2000-01-01',
+            '{}',
             '{}'
         );
 
@@ -149,7 +153,7 @@ begin
 
 
     -- Add a bunch of events/videos
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
             'ready',
             'bbb',
@@ -173,9 +177,10 @@ begin
             '{}',
             false,
             '{}',
+            '{}',
             '{}'
         );
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
         'ready',
             'cosmos-laundromat',
@@ -199,9 +204,10 @@ begin
             '{}',
             false,
             '{}',
+            '{}',
             '{}'
         );
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
         'ready',
             'spring',
@@ -225,10 +231,11 @@ begin
             '{}',
             false,
             '{}',
+            '{}',
             '{}'
         );
 
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
         'ready',
             'bee',
@@ -252,10 +259,11 @@ begin
             '{}',
             false,
             '{}',
+            '{}',
             '{}'
         );
 
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
         'ready',
             'nasa',
@@ -279,10 +287,11 @@ begin
             '{}',
             false,
             '{}',
-            array[row('https://tobira-test-oc.ethz.ch/static/mh_default_org/moontour_narrated.en_US.vtt', 'en')]::event_caption[]
+            array[row('https://tobira-test-oc.ethz.ch/static/mh_default_org/moontour_narrated.en_US.vtt', 'en')]::event_caption[],
+            '{}'
         );
 
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
         'ready',
             'pir-introduction',
@@ -306,9 +315,10 @@ begin
             '{}',
             false,
             '{}',
+            '{}',
             '{}'
         );
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
         'ready',
             'pir-modules',
@@ -332,9 +342,10 @@ begin
             '{}',
             false,
             '{}',
+            '{}',
             '{}'
         );
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
         'ready',
             'pir-stack-heap',
@@ -358,9 +369,10 @@ begin
             '{}',
             false,
             '{}',
+            '{}',
             '{}'
         );
-    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
+    insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions, segments)
         values (
         'ready',
             'pir-performance',
@@ -383,6 +395,7 @@ begin
             '{"ROLE_ANONYMOUS"}',
             '{}',
             false,
+            '{}',
             '{}',
             '{}'
         );
