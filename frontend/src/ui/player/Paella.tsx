@@ -25,7 +25,7 @@ export type PaellaState = {
 };
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const { paella, setPlayerIsLoaded } = usePlayerContext();
     const { players, register, unregister } = usePlayerGroupContext();
@@ -120,6 +120,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
+                loadDictionaries: (player: Paella) => player.setLanguage(i18n.language),
                 customPluginContext: [
                     getBasicPluginsContext(),
                     getZoomPluginContext(),
@@ -254,13 +255,27 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     },
                 },
 
-                "&.paella-fallback-fullscreen": {
+                "& .paella-fallback-fullscreen": {
                     position: "fixed",
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
                     zIndex: 500000,
+                },
+
+                "& .preview-play-icon, .loader-container i": {
+                    color: "#ecf0f1",
+                    opacity: "0.8 !important",
+                    transition: "opacity 0.08s",
+                },
+
+                "& .preview-play-icon > svg": {
+                    filter: "drop-shadow(0 0 2px #777777)",
+                },
+
+                ":hover .preview-play-icon, .loader-container i": {
+                    opacity: "1 !important",
                 },
             }}
         />
@@ -275,6 +290,7 @@ const PAELLA_CONFIG = {
         hideOnMouseLeave: true,
     },
     defaultLayout: "presenter-presentation",
+    defaultLanguage: "en",
 
     preferences: {
         currentSource: "dataPlugin",
