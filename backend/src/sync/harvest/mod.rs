@@ -177,6 +177,10 @@ async fn store_in_db(
                 acl.read.retain(|role| role != ROLE_ADMIN);
                 acl.write.retain(|role| role != ROLE_ADMIN);
 
+                for (_, roles) in &mut acl.custom_actions.0 {
+                    roles.retain(|role| role != ROLE_ADMIN);
+                }
+
                 let tracks = tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>();
                 let captions = captions.into_iter().map(Into::into).collect::<Vec<EventCaption>>();
 
@@ -199,6 +203,7 @@ async fn store_in_db(
                     ("metadata", &metadata),
                     ("read_roles", &acl.read),
                     ("write_roles", &acl.write),
+                    ("custom_action_roles", &acl.custom_actions),
                     ("tracks", &tracks),
                     ("captions", &captions),
                 ]).await?;
