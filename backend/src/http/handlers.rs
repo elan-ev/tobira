@@ -108,7 +108,7 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
             let asset_path = &path[ASSET_PREFIX.len()..];
             match ctx.assets.serve(asset_path).await {
                 Some(r) => r,
-                None => reply_404(&ctx, &method, path).await,
+                None => response::not_found(),
             }
         }
 
@@ -168,21 +168,6 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
     let response_time = time_incoming.elapsed();
     ctx.metrics.observe_response_time(category, response_time);
     response
-}
-
-/// Replies with a 404 Not Found.
-pub(super) async fn reply_404(ctx: &Context, method: &Method, path: &str) -> Response {
-    debug!(?method, path, "Responding with 404");
-
-    // We simply send the normal index and let the frontend router determinate
-    // this is a 404. That way, our 404 page looks like the main page and users
-    // are not confused. And it's easier to return to the normal page.
-    //
-    // TODO: I am somewhat uneasy about this code assuming the router of the
-    // frontend is the same as the backend router. Maybe we want to indicate to
-    // the frontend explicitly to show a 404 page? However, without redirecting
-    // to like `/404` because that's annoying for users.
-    ctx.assets.serve_index(StatusCode::NOT_FOUND, &ctx.config).await
 }
 
 async fn handle_rss_request(path: &str, ctx: &Arc<Context>) -> Result<Response, Response> {
