@@ -32,7 +32,18 @@ export const Logo: React.FC = () => {
     // The solution is to calculate the correct `flex-basis` for the `<a>`
     // element manually.
 
-    const { small, large, smallDark, largeDark } = CONFIG.logo;
+    const large = CONFIG.logo.large;
+    const small = CONFIG.logo.small ?? CONFIG.logo.large;
+    const largeDark = CONFIG.logo.largeDark ?? CONFIG.logo.large;
+    const smallDark = CONFIG.logo.smallDark
+        ?? CONFIG.logo.largeDark
+        ?? CONFIG.logo.small
+        ?? CONFIG.logo.large;
+
+    // If the dark logos are not specified, we default to the white ones but
+    // inverting them.
+    const invertLargeDark = CONFIG.logo.largeDark === null;
+    const invertSmallDark = CONFIG.logo.smallDark === null && CONFIG.logo.largeDark === null;
 
     const alt = t("general.logo-alt", { title: translatedConfig(CONFIG.siteTitle, i18n) });
     const invertCss = {
@@ -60,7 +71,7 @@ export const Logo: React.FC = () => {
                 src={(isDark ? largeDark : large).path}
                 alt={alt}
                 css={{
-                    ...isDark && largeDark.invert && invertCss,
+                    ...isDark && invertLargeDark && invertCss,
                     [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                         display: "none",
                     },
@@ -72,7 +83,7 @@ export const Logo: React.FC = () => {
                 src={(isDark ? smallDark : small).path}
                 alt={alt}
                 css={{
-                    ...isDark && smallDark.invert && invertCss,
+                    ...isDark && invertSmallDark && invertCss,
                     [screenWidthAbove(BREAKPOINT_SMALL)]: {
                         display: "none",
                     },

@@ -20,7 +20,7 @@ mod upload;
 
 pub(crate) use self::{
     translated_string::TranslatedString,
-    theme::ThemeConfig,
+    theme::{ThemeConfig, LogoDef},
     matomo::MatomoConfig,
     opencast::OpencastConfig,
     player::PlayerConfig,

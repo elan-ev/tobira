@@ -47,13 +47,13 @@ pub(crate) struct LogoConfig {
     pub(crate) small_dark: Option<LogoDef>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub(crate) struct LogoDef {
     pub(crate) path: PathBuf,
     pub(crate) resolution: LogoResolution,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub(crate) struct LogoResolution(pub(crate) [u32; 2]);
 
 impl fmt::Debug for LogoResolution {

@@ -62,9 +62,9 @@ type AuthConfig = {
 
 type LogoConfig = {
     large: SingleLogoConfig;
-    small: SingleLogoConfig;
-    largeDark: SingleLogoConfig & { invert: boolean };
-    smallDark: SingleLogoConfig & { invert: boolean };
+    small: SingleLogoConfig | null;
+    largeDark: SingleLogoConfig | null;
+    smallDark: SingleLogoConfig | null;
 };
 
 type SingleLogoConfig = {

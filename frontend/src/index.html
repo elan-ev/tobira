@@ -1,52 +1,15 @@
 <!DOCTYPE html>
 <html data-tobira-style-nonce="{{ nonce }}">
   <head>
-    <title>{{: var:html-title :}}</title>
+    <title>{{ htmlTitle }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="/~assets/{{: path:favicon.svg :}}" sizes="any" type="image/svg+xml">
-    <link rel="stylesheet" href="/~assets/{{: path:fonts.css :}}">
+    <link rel="icon" href="/~assets/{{ faviconPath }}" sizes="any" type="image/svg+xml">
+    <link rel="stylesheet" href="/~assets/{{ fontCssPath }}">
     <style nonce="{{ nonce }}">
-      {{: var:global-style :}}
+      {{ globalStyle }}
     </style>
     <script id="tobira-frontend-config" type="application/json">
-      {
-        "version": {{: var:version :}},
-        "auth": {{: var:auth :}},
-        "upload": {{: var:upload :}},
-        "siteTitle": {{: var:site-title :}},
-        "initialConsent": {{: var:initial-consent :}},
-        "showDownloadButton": {{: var:show-download-button :}},
-        "usersSearchable": {{: var:users-searchable :}},
-        "footerLinks": {{: var:footer-links :}},
-        "metadataLabels": {{: var:metadata-labels :}},
-        "paellaPluginConfig": {{: var:paella-plugin-config :}},
-        "opencast": {
-          "presentationNode": "{{: var:presentation-node :}}",
-          "uploadNode": "{{: var:upload-node :}}",
-          "studioUrl": "{{: var:studio-url :}}",
-          "editorUrl": "{{: var:editor-url :}}"
-        },
-        "logo": {
-          "large": {
-            "path": "/~assets/{{: path:logo-large.svg :}}",
-            "resolution": {{: var:large-logo-resolution :}}
-          },
-          "small": {
-            "path": "/~assets/{{: path:logo-small.svg :}}",
-            "resolution": {{: var:small-logo-resolution :}}
-          },
-          "largeDark": {
-            "path": "/~assets/{{: path:logo-large-dark.svg :}}",
-            "resolution": {{: var:large-dark-logo-resolution :}},
-            "invert": {{: var:invertLargeDarkLogo :}}
-          },
-          "smallDark": {
-            "path": "/~assets/{{: path:logo-small-dark.svg :}}",
-            "resolution": {{: var:small-dark-logo-resolution :}},
-            "invert": {{: var:invertSmallDarkLogo :}}
-          }
-        }
-      }
+      {{ frontendConfig }}
     </script>
     <script nonce="{{ nonce }}">
       // Read dark mode preference. This code is inlined here to run it as soon
@@ -55,10 +18,10 @@
       document.documentElement.dataset.colorScheme = (scheme === "dark" || scheme === "light")
         ? scheme
         : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      {{: var:matomo-code :}}
+      {{ matomoCode }}
     </script>
   </head>
   <body>
-    <script src="/~assets/{{: path:main.bundle.js :}}"></script>
+    <script src="/~assets/{{ bundlePath }}"></script>
   </body>
 </html>

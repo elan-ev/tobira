@@ -1,91 +1,32 @@
-use std::collections::HashMap;
-
 use bstr::ByteSlice;
 use hyper::StatusCode;
-use reinda::{assets, Setup};
+use reinda::{Embeds};
 use secrecy::ExposeSecret;
 use serde_json::json;
 
-use crate::{auth::AuthSource, config::Config, prelude::*, util::ByteBody};
+use crate::{auth::AuthSource, config::{Config, LogoDef}, prelude::*, util::ByteBody};
 use super::{handlers::CommonHeadersExt, Response};
 
 
-const ASSETS: Setup = assets! {
-    #![base_path = "../frontend/build"]
+const EMBEDS: Embeds = reinda::embed! {
+    base_path: "../frontend/build",
+    print_stats: true,
+    files: [
+        "index.html",
+        "main.bundle.js",
+        // "main.bundle.js.map",
 
-    "index.html": { template },
-    "main.bundle.js": {
-        template,
-        hash,
-        append: b"//# sourceMappingURL=/~assets/{{: path:main.bundle.js.map :}}"
-    },
-    "main.bundle.js.map": { hash },
+        "1x1-black.png",
 
-    "logo-large.svg": { hash, dynamic },
-    "logo-small.svg": { hash, dynamic },
-    "logo-large-dark.svg": { hash, dynamic },
-    "logo-small-dark.svg": { hash, dynamic },
-    "favicon.svg": { hash, dynamic },
+        // Fonts files
+        "fonts.css",
+        "fonts/*.woff2",
 
-    "fonts.css": { hash, template },
-
-    "1x1-black.png": {},
-
-    // Font files
-    "fonts/cyrillic-400.woff2": { hash },
-    "fonts/cyrillic-700.woff2": { hash },
-    "fonts/cyrillic-ext-400.woff2": { hash },
-    "fonts/cyrillic-ext-700.woff2": { hash },
-    "fonts/cyrillic-ext-i400.woff2": { hash },
-    "fonts/cyrillic-ext-i700.woff2": { hash },
-    "fonts/cyrillic-i400.woff2": { hash },
-    "fonts/cyrillic-i700.woff2": { hash },
-    "fonts/greek-400.woff2": { hash },
-    "fonts/greek-700.woff2": { hash },
-    "fonts/greek-ext-400.woff2": { hash },
-    "fonts/greek-ext-700.woff2": { hash },
-    "fonts/greek-ext-i400.woff2": { hash },
-    "fonts/greek-ext-i700.woff2": { hash },
-    "fonts/greek-i400.woff2": { hash },
-    "fonts/greek-i700.woff2": { hash },
-    "fonts/latin-400.woff2": { hash },
-    "fonts/latin-700.woff2": { hash },
-    "fonts/latin-ext-400.woff2": { hash },
-    "fonts/latin-ext-700.woff2": { hash },
-    "fonts/latin-ext-i400.woff2": { hash },
-    "fonts/latin-ext-i700.woff2": { hash },
-    "fonts/latin-i400.woff2": { hash },
-    "fonts/latin-i700.woff2": { hash },
-    "fonts/vietnamese-400.woff2": { hash },
-    "fonts/vietnamese-700.woff2": { hash },
-    "fonts/vietnamese-i400.woff2": { hash },
-    "fonts/vietnamese-i700.woff2": { hash },
-
-    // Paella
-    "paella/icons/backward.svg": {},
-    "paella/icons/captions-icon.svg": {},
-    "paella/icons/close.svg": {},
-    "paella/icons/forward.svg": {},
-    "paella/icons/fullscreen-exit.svg": {},
-    "paella/icons/fullscreen-icon.svg": {},
-    "paella/icons/maximize.svg": {},
-    "paella/icons/minimize.svg": {},
-    "paella/icons/play.svg": {},
-    "paella/icons/slide-next-icon.svg": {},
-    "paella/icons/slide-prev-icon.svg": {},
-    "paella/icons/slides-icon.svg": {},
-    "paella/icons/view-mode.svg": {},
-    "paella/icons/volume-high.svg": {},
-    "paella/icons/volume-low.svg": {},
-    "paella/icons/volume-mid.svg": {},
-    "paella/icons/volume-mute-cross.svg": {},
-    "paella/icons/volume-mute.svg": {},
-    "paella/icons/circle-play.svg": {},
-    "paella/icons/loader-circle.svg": {},
-    "paella/Roboto-Regular.ttf": {},
-    "paella/theme.css": {},
-    "paella/theme.json": {},
-
+        // Paella
+        "paella/icons/*.svg",
+        "paella/theme.css",
+        "paella/theme.json",
+    ],
 };
 
 const INDEX_FILE: &str = "index.html";
@@ -96,97 +37,88 @@ pub(crate) struct Assets {
 
 impl Assets {
     pub(crate) async fn init(config: &Config) -> Result<Self> {
-        let mut path_overrides = HashMap::new();
-        let small_logo = config.theme.logo.small.as_ref().unwrap_or(&config.theme.logo.large);
-        let large_logo_dark = config.theme.logo.large_dark.as_ref().unwrap_or(&config.theme.logo.large);
-        let small_logo_dark = config.theme.logo.small_dark.as_ref()
-            .or(config.theme.logo.large_dark.as_ref())
-            .or(config.theme.logo.small.as_ref())
-            .unwrap_or(&config.theme.logo.large);
-        path_overrides.insert("logo-large.svg".into(), config.theme.logo.large.path.clone());
-        path_overrides.insert("logo-large-dark.svg".into(), large_logo_dark.path.clone());
-        path_overrides.insert("logo-small.svg".into(), small_logo.path.clone());
-        path_overrides.insert("logo-small-dark.svg".into(), small_logo_dark.path.clone());
-        path_overrides.insert("favicon.svg".into(), config.theme.favicon.clone());
+        // Iterator over all defined logos, with their (config_field, http_path, fs_path).
+        //
+        // TODO: adjust file extension according to actual file path, to avoid
+        // PNG files being served as `.svg`.
+        let logo_files = || [
+            ("large", "logo-large.svg", Some(&config.theme.logo.large)),
+            ("small", "logo-small.svg", config.theme.logo.small.as_ref()),
+            ("largeDark", "logo-large-dark.svg", config.theme.logo.large_dark.as_ref()),
+            ("smallDark", "logo-small-dark.svg", config.theme.logo.small_dark.as_ref()),
+        ].into_iter().filter_map(|(config_field, http_path, logo)| {
+            logo.map(|logo| (config_field, http_path, &logo.path))
+        });
 
-        let mut variables = <HashMap<String, String>>::new();
-        let invert_large_dark_logo = config.theme.logo.large_dark.is_none();
-        let invert_small_dark_logo = config.theme.logo.small_dark.is_none()
-            && invert_large_dark_logo;
-        variables.insert("invertLargeDarkLogo".into(), invert_large_dark_logo.to_string());
-        variables.insert("invertSmallDarkLogo".into(), invert_small_dark_logo.to_string());
-        variables.insert("version".into(), json!({
-            "identifier": crate::version::identifier(),
-            "buildDateUtc": crate::version::build_time_utc(),
-            "gitCommitHash": crate::version::git_commit_hash(),
-            "gitWasDirty": crate::version::git_was_dirty(),
-            "target": crate::version::target(),
-        }).to_string());
-        variables.insert("global-style".into(), config.theme.to_css());
-        variables.insert("auth".into(), json!({
-            "usesTobiraSessions": config.auth.source == AuthSource::TobiraSession,
-            "loginLink": config.auth.login_link,
-            "logoutLink": config.auth.logout_link,
-            "userIdLabel": config.auth.login_page.user_id_label,
-            "passwordLabel": config.auth.login_page.password_label,
-            "loginPageNote": config.auth.login_page.note,
-            "preAuthExternalLinks": config.auth.pre_auth_external_links,
-            "userRolePrefixes": config.auth.roles.user_role_prefixes,
-            "globalPageAdminRole": config.auth.roles.global_page_admin,
-            "globalPageModeratorRole": config.auth.roles.global_page_moderator,
-        }).to_string());
-        variables.insert("upload".into(), json!({
-            "requireSeries": config.upload.require_series,
-        }).to_string());
-        variables.insert("paella-plugin-config".into(),
-            serde_json::Value::from(config.player.paella_plugin_config.clone()).to_string());
-        variables.insert("matomo-code".into(), config.matomo.js_code().unwrap_or_default());
 
-        // Note the mismatch between presentation and sync node;
-        // these might not be the same forever!
-        variables.insert("presentation-node".into(), config.opencast.sync_node().to_string());
-        variables.insert("upload-node".into(), config.opencast.upload_node().to_string());
-        variables.insert("studio-url".into(), config.opencast.studio_url().to_string());
-        variables.insert("editor-url".into(), config.opencast.editor_url().to_string());
+        let mut builder = reinda::Assets::builder();
 
-        variables.insert("html-title".into(), config.general.site_title.en().into());
-        variables.insert("site-title".into(), config.general.site_title.to_json());
-        variables.insert("initial-consent".into(), json!(config.general.initial_consent).to_string());
-        variables.insert("show-download-button".into(), json!(config.general.show_download_button).to_string());
-        variables.insert("users-searchable".into(), json!(config.general.users_searchable).to_string());
-        variables.insert("footer-links".into(), json!(config.general.footer_links).to_string());
-        variables.insert("metadata-labels".into(), json!(config.general.metadata).to_string());
-        variables.insert(
-            "large-logo-resolution".into(),
-            format!("{:?}", config.theme.logo.large.resolution.0),
-        );
-        variables.insert(
-            "small-logo-resolution".into(),
-            format!("{:?}", small_logo.resolution.0),
-        );
-        variables.insert(
-            "large-dark-logo-resolution".into(),
-            format!("{:?}", large_logo_dark.resolution.0),
-        );
-        variables.insert(
-            "small-dark-logo-resolution".into(),
-            format!("{:?}", small_logo_dark.resolution.0),
-        );
+        // Add logo & favicon files
+        let favicon_path = "favicon.svg";
+        builder.add_file(favicon_path, &config.theme.favicon).with_hash();
+        for (_, http_path, logo_path) in logo_files() {
+            builder.add_file(http_path, logo_path).with_hash();
+        }
 
-        let reinda_config = reinda::Config {
-            base_path: if cfg!(debug_assertions) {
-                Some("../frontend/build".into())
-            } else {
-                None
-            },
-            path_overrides,
-            variables,
-        };
 
-        let assets = reinda::Assets::new(ASSETS, reinda_config).await
-            .context("failed to prepare asset files")?;
-        info!("Prepared {} assets", assets.asset_ids().count());
+        // ----- Main HTML file -----------------------------------------------------
+        //
+        // We use a "modifier" to adjust the file, including the frontend
+        // config, and in particular: refer to the correct paths (which are
+        // potentially hashed). We also insert other variables and code.
+        let deps = [favicon_path, "fonts.css", "main.bundle.js"]
+            .into_iter()
+            .chain(logo_files().map(|(_, http_path, _)| http_path));
 
+        builder.add_embedded(INDEX_FILE, &EMBEDS["index.html"]).with_modifier(deps, {
+            let frontend_config = frontend_config(config);
+            let html_title = config.general.site_title.en().to_owned();
+            let global_style = config.theme.to_css();
+            let matomo_code = config.matomo.js_code().unwrap_or_default();
+            let logo_paths = logo_files()
+                .map(|(config_field, http_path, _)| (config_field, http_path))
+                .collect::<Vec<_>>();
+
+            move |original, ctx| {
+                // Fill logo path in frontend config and convert it to string.
+                let mut frontend_config = frontend_config.clone();
+                for (config_field, http_path) in &logo_paths {
+                    let actual_path = format!("/~assets/{}", ctx.resolve_path(http_path));
+                    frontend_config["logo"][config_field]["path"] = json!(actual_path);
+                }
+                let frontend_config = if cfg!(debug_assertions) {
+                    serde_json::to_string_pretty(&frontend_config).unwrap()
+                } else {
+                    serde_json::to_string(&frontend_config).unwrap()
+                };
+
+                reinda::util::replace_many(&original, &[
+                    ("{{ frontendConfig }}", frontend_config.as_str()),
+                    ("{{ htmlTitle }}", html_title.as_str()),
+                    ("{{ globalStyle }}", global_style.as_str()),
+                    ("{{ matomoCode }}", matomo_code.as_str()),
+                    ("{{ faviconPath }}", ctx.resolve_path(favicon_path)),
+                    ("{{ fontCssPath }}", ctx.resolve_path("fonts.css")),
+                    ("{{ bundlePath }}", ctx.resolve_path("main.bundle.js")),
+                ]).into()
+            }
+        });
+
+        // JS bundle
+        builder.add_embedded("main.bundle.js", &EMBEDS["main.bundle.js"]).with_hash();
+
+        // Fonts
+        builder.add_embedded("fonts.css", &EMBEDS["fonts.css"]).with_hash();
+        builder.add_embedded("fonts/", &EMBEDS["fonts/*.woff2"]).with_hash();
+
+        // Paella assets: no hashing as Paella requests these fixed paths.
+        builder.add_embedded("1x1-black.png", &EMBEDS["1x1-black.png"]);
+        builder.add_embedded("paella/icons/", &EMBEDS["paella/icons/*.svg"]);
+        builder.add_embedded("paella/theme.css", &EMBEDS["paella/theme.css"]);
+        builder.add_embedded("paella/theme.json", &EMBEDS["paella/theme.json"]);
+
+        let assets = builder.build().await?;
+        info!("Prepared {} assets", assets.len());
         Ok(Self { assets } )
     }
 
@@ -199,9 +131,10 @@ impl Assets {
             return None;
         }
 
-        let data = self.assets.get(path).await.unwrap_or_else(|e| {
+        let asset = self.assets.get(path)?;
+        let data = asset.content().await.unwrap_or_else(|e| {
             panic!("failed to read asset '{}': {}", path, e);
-        })?;
+        });
 
         // Prepare HTTP headers
         let mut builder = Response::builder();
@@ -215,7 +148,7 @@ impl Assets {
 
         // Caching header if the filename contains a content hash. We can unwrap
         // the `lookup` call as we know from above that the path is valid.
-        if self.assets.asset_info(self.assets.lookup(path).unwrap()).is_filename_hashed() {
+        if asset.is_filename_hashed() {
             // This is one year in seconds.
             builder = builder.header("cache-control", "public, max-age=31536000, immutable");
         }
@@ -228,11 +161,17 @@ impl Assets {
     /// and other "public routes", like `/lectures`. Basically everywhere where
     /// the user is supposed to see the website.
     pub(crate) async fn serve_index(&self, status: StatusCode, config: &Config) -> Response {
-        let bytes = self.assets.get(INDEX_FILE).await
-            .expect("failed to read 'index.html'")
-            .expect("`index.html` missing in internal assets");
+        let bytes = self.assets.get(INDEX_FILE)
+            .expect("`index.html` missing in internal assets")
+            .content()
+            .await
+            .expect("failed to read 'index.html'");
 
         // Generate nonce and put it into the HTML response.
+        //
+        // TODO: we could, in the asset preparation, replace `{{ nonce }}` with
+        // a placeholder that is exactly as wide as the hex string we will
+        // insert as nonce. Then we could replace without heap allocations.
         let nonce_bytes = crate::util::gen_random_bytes_crypto::<16>();
         let nonce = hex::encode(&nonce_bytes.expose_secret());
         let body = bytes.replace("{{ nonce }}", &nonce);
@@ -245,4 +184,56 @@ impl Assets {
             .body(body.into())
             .expect("bug: invalid response")
     }
+}
+
+fn frontend_config(config: &Config) -> serde_json::Value {
+    let logo_obj = |logo_def: &LogoDef| json!({
+        // The path will be added later in the modifier
+        "path": "",
+        "resolution": logo_def.resolution,
+    });
+
+    json!({
+        "version": {
+            "identifier": crate::version::identifier(),
+            "buildDateUtc": crate::version::build_time_utc(),
+            "gitCommitHash": crate::version::git_commit_hash(),
+            "gitWasDirty": crate::version::git_was_dirty(),
+            "target": crate::version::target(),
+        },
+        "auth": {
+            "usesTobiraSessions": config.auth.source == AuthSource::TobiraSession,
+            "loginLink": config.auth.login_link,
+            "logoutLink": config.auth.logout_link,
+            "userIdLabel": config.auth.login_page.user_id_label,
+            "passwordLabel": config.auth.login_page.password_label,
+            "loginPageNote": config.auth.login_page.note,
+            "preAuthExternalLinks": config.auth.pre_auth_external_links,
+            "userRolePrefixes": config.auth.roles.user_role_prefixes,
+            "globalPageAdminRole": config.auth.roles.global_page_admin,
+            "globalPageModeratorRole": config.auth.roles.global_page_moderator,
+        },
+        "upload": {
+            "requireSeries": config.upload.require_series,
+        },
+        "siteTitle": config.general.site_title,
+        "initialConsent": config.general.initial_consent,
+        "showDownloadButton": config.general.show_download_button,
+        "usersSearchable": config.general.users_searchable,
+        "footerLinks": config.general.footer_links,
+        "metadataLabels": config.general.metadata,
+        "paellaPluginConfig": config.player.paella_plugin_config,
+        "opencast": {
+            "presentationNode": config.opencast.sync_node().to_string(),
+            "uploadNode": config.opencast.upload_node().to_string(),
+            "studioUrl": config.opencast.studio_url().to_string(),
+            "editorUrl": config.opencast.editor_url().to_string(),
+        },
+        "logo": {
+            "large": logo_obj(&config.theme.logo.large),
+            "small": config.theme.logo.small.as_ref().map(logo_obj),
+            "largeDark": config.theme.logo.large_dark.as_ref().map(logo_obj),
+            "smallDark": config.theme.logo.small_dark.as_ref().map(logo_obj),
+        }
+    })
 }
