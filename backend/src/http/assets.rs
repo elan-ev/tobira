@@ -104,12 +104,67 @@ impl Assets {
             }
         });
 
+
+        // ----- Fonts --------------------------------------------------------------
+        //
+        // This is also a bit involved to support custom fonts. We have to
+        // include all font files, which is easy. But then the `fonts.css`
+        // needs to be adjusted to insert hashed paths and also set the
+        // `--main-font` correctly.
+        let extra_fonts = config.theme.font.files.iter().map(|path| {
+            // Build the HTTP path of custom fonts using their filename.
+            let filename = path.file_name()
+                .expect("path in `theme.font.files` has no filename")
+                .to_str()
+                .expect("filename in `theme.font.files` should be valid UTF-8");
+            let http_path = format!("fonts/{filename}");
+            (http_path, path)
+        }).collect::<Vec<_>>();
+
+        let mut font_paths = builder.add_embedded("fonts/open-sans/", &EMBEDS["fonts/*.woff2"])
+            .with_hash()
+            .http_paths();
+        for (http_path, font_path) in extra_fonts {
+            builder.add_file(http_path.clone(), font_path).with_hash();
+            font_paths.push(http_path.into());
+        }
+
+        builder.add_embedded("fonts.css", &EMBEDS["fonts.css"])
+            .with_hash()
+            .with_modifier(font_paths.clone(), {
+                // Load extra CSS
+                let extra_css = if let Some(path) = &config.theme.font.extra_css {
+                    tokio::fs::read(path).await
+                        .context("failed to read 'theme.font.extra_css'")?
+                } else {
+                    Vec::new()
+                };
+                let main_family = config.theme.font.main_family.clone();
+
+                move |original, ctx| {
+                    let mut v = Vec::from(original);
+                    v.extend_from_slice(&extra_css);
+                    reinda::util::replace_many_with(
+                        &v,
+                        ctx.dependencies().iter()
+                            .map(|c| c.as_ref())
+                            .chain(["{{ main_family }}"]),
+                        |idx, find, out| {
+                            let replacement = if find == b"{{ main_family }}" {
+                                &main_family
+                            } else {
+                                ctx.resolve_path(ctx.dependencies()[idx].as_ref())
+                            };
+                            out.extend_from_slice(replacement.as_bytes());
+                        }
+                    ).into()
+                }
+            });
+
+
+        // ----------------------------------------------------------------------------
         // JS bundle
         builder.add_embedded("main.bundle.js", &EMBEDS["main.bundle.js"]).with_hash();
-
-        // Fonts
-        builder.add_embedded("fonts.css", &EMBEDS["fonts.css"]).with_hash();
-        builder.add_embedded("fonts/", &EMBEDS["fonts/*.woff2"]).with_hash();
 
         // Paella assets: no hashing as Paella requests these fixed paths.
         builder.add_embedded("1x1-black.png", &EMBEDS["1x1-black.png"]);
@@ -117,6 +172,8 @@ impl Assets {
         builder.add_embedded("paella/theme.css", &EMBEDS["paella/theme.css"]);
         builder.add_embedded("paella/theme.json", &EMBEDS["paella/theme.json"]);
 
+
+        // Prepare all assets
         let assets = builder.build().await?;
         info!("Prepared {} assets", assets.len());
         Ok(Self { assets } )
