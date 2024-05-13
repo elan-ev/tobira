@@ -264,14 +264,19 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     zIndex: 500000,
                 },
 
-                "& .preview-play-icon, .loader-container i": {
-                    color: "#ecf0f1",
-                    opacity: "0.8 !important",
-                    transition: "opacity 0.08s",
+                "button:has(.preview-play-icon), & .loader-container i": {
+                    maxWidth: 150,
                 },
 
-                "& .preview-play-icon > svg": {
-                    filter: "drop-shadow(0 0 2px #777777)",
+                "& .preview-play-icon, & .loader-container i": {
+                    color: "#ecf0f1",
+                    opacity: ".8 !important",
+                    transition: "opacity 0.08s",
+
+                    "> svg": {
+                        strokeWidth: 1.5,
+                        filter: "drop-shadow(0 0 1px #000)",
+                    },
                 },
 
                 ":hover .preview-play-icon, .loader-container i": {
