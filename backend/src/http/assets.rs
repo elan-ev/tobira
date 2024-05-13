@@ -13,8 +13,8 @@ const EMBEDS: Embeds = reinda::embed! {
     print_stats: true,
     files: [
         "index.html",
-        "main.bundle.js",
-        // "main.bundle.js.map",
+        "bundle.*.js",
+        "bundle.*.js.map",
 
         "1x1-black.png",
 
@@ -66,7 +66,19 @@ impl Assets {
         // We use a "modifier" to adjust the file, including the frontend
         // config, and in particular: refer to the correct paths (which are
         // potentially hashed). We also insert other variables and code.
-        let deps = [favicon_path, "fonts.css", "main.bundle.js"]
+        //
+        // First we find the path of the main bundle to insert it into the
+        // index. That main bundle file has a hash calculated by webpack, which
+        // is required so that webpack can refer all bundles to each other
+        // correctly. We could make webpack insert the correct `<script>` tag
+        // into the HTML, but we can also just do it here.
+        let main_bundle = EMBEDS["bundle.*.js"].as_glob()
+            .unwrap()
+            .files()
+            .find(|f| f.path().starts_with("bundle.main."))
+            .unwrap()
+            .path();
+        let deps = [favicon_path, "fonts.css", main_bundle]
             .into_iter()
             .chain(logo_files().map(|(_, http_path, _)| http_path));
 
@@ -99,7 +111,7 @@ impl Assets {
                     ("{{ matomoCode }}", matomo_code.as_str()),
                     ("{{ faviconPath }}", ctx.resolve_path(favicon_path)),
                     ("{{ fontCssPath }}", ctx.resolve_path("fonts.css")),
-                    ("{{ bundlePath }}", ctx.resolve_path("main.bundle.js")),
+                    ("{{ bundlePath }}", ctx.resolve_path(main_bundle)),
                 ]).into()
             }
         });
@@ -164,7 +176,8 @@ impl Assets {
 
         // ----------------------------------------------------------------------------
         // JS bundle
-        builder.add_embedded("main.bundle.js", &EMBEDS["main.bundle.js"]).with_hash();
+        builder.add_embedded("", &EMBEDS["bundle.*.js"]);
+        builder.add_embedded("", &EMBEDS["bundle.*.js.map"]);
 
         // Paella assets: no hashing as Paella requests these fixed paths.
         builder.add_embedded("1x1-black.png", &EMBEDS["1x1-black.png"]);

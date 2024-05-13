@@ -15,7 +15,7 @@ const config: CallableOption = (_env, argv) => ({
     context: __dirname,
 
     output: {
-        filename: "[name].bundle.js",
+        filename: "bundle.[name].[contenthash].js",
         path: OUT_PATH,
         publicPath: "/~assets/",
     },
@@ -113,7 +113,7 @@ const config: CallableOption = (_env, argv) => ({
         },
     ],
 
-    devtool: "hidden-source-map",
+    devtool: "source-map",
 });
 
 const fontDecl = `@font-face {
