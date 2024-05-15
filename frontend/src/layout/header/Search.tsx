@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
+import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
 import { LuX } from "react-icons/lu";
+
 import { useRouter } from "../../router";
 import {
     handleNavigation,
@@ -12,10 +14,9 @@ import {
 import { focusStyle } from "../../ui";
 import { Spinner } from "../../ui/Spinner";
 import { currentRef, useDebounce } from "../../util";
-
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
-import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
+import { useUser } from "../../User";
 
 
 type SearchFieldProps = {
@@ -27,6 +28,12 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const router = useRouter();
     const ref = useRef<HTMLInputElement>(null);
     const { debounce } = useDebounce();
+
+    // If the user is unknown, then we are still in the initial loading phase.
+    // We don't want users to input anything into the search field in that
+    // state, as their input would be ignored and discarded as soon as the
+    // initial-loading phase is done.
+    const disabled = useUser() === "unknown";
 
     // Register global shortcut to focus search bar
     useEffect(() => {
@@ -115,6 +122,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     <input
                         ref={ref}
                         type="text"
+                        disabled={disabled}
                         placeholder={t("search.input-label")}
                         defaultValue={defaultValue}
                         // The `onSearchRoute` part of this is a hacky fix to the search
