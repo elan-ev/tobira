@@ -13,7 +13,7 @@ description = "Backend of the Tobira video portal for Opencast"
 
 
 [features]
-embed-in-debug = ["reinda/debug-is-prod"]
+embed-in-debug = ["reinda/always-prod"]
 
 
 [dependencies]
@@ -59,7 +59,7 @@ postgres-types = { version = "0.2.2", features = ["derive", "array-impls"] }
 prometheus-client = "0.22.1"
 rand = "0.8.4"
 regex = "1.7.1"
-reinda = "0.2"
+reinda = "0.3"
 ring = "0.17.8"
 rustls = "0.22.4"
 rustls-native-certs = "0.7.0"

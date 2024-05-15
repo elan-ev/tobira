@@ -10,7 +10,6 @@ import { ExtraMetadata, useForceRerender } from "../../util";
 import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "../Spinner";
 import { RelativeDate } from "../time";
-import PaellaPlayer from "./Paella";
 import { COLORS } from "../../color";
 
 
@@ -197,7 +196,7 @@ export const getPlayerAspectRatio = (tracks: readonly Track[]): [number, number]
 };
 
 
-const LoadPaellaPlayer = PaellaPlayer;
+const LoadPaellaPlayer = React.lazy(() => import(/* webpackChunkName: "paella" */ "./Paella"));
 
 /**
  * Suspense fallback while the player JS files are still loading. This is

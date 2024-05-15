@@ -20,7 +20,7 @@ mod upload;
 
 pub(crate) use self::{
     translated_string::TranslatedString,
-    theme::ThemeConfig,
+    theme::{ThemeConfig, LogoDef},
     matomo::MatomoConfig,
     opencast::OpencastConfig,
     player::PlayerConfig,
@@ -179,6 +179,12 @@ impl Config {
             fix_path(&base, &mut logo.path);
         }
         fix_path(&base, &mut self.theme.favicon);
+        if let Some(p) = &mut self.theme.font.extra_css {
+            fix_path(&base, p);
+        }
+        for font_path in &mut self.theme.font.files {
+            fix_path(&base, font_path);
+        }
         if let Some(jwt_key) = &mut self.auth.jwt.secret_key {
             fix_path(&base, jwt_key);
         }

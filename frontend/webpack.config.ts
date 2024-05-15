@@ -4,6 +4,7 @@ import YAML from "yaml";
 import { CleanWebpackPlugin } from "clean-webpack-plugin";
 import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
+import HtmlWebpackPlugin from "html-webpack-plugin";
 import * as fs from "fs";
 
 const APP_PATH = path.join(__dirname, "src");
@@ -15,7 +16,7 @@ const config: CallableOption = (_env, argv) => ({
     context: __dirname,
 
     output: {
-        filename: "[name].bundle.js",
+        filename: "bundle.[name].[contenthash].js",
         path: OUT_PATH,
         publicPath: "/~assets/",
     },
@@ -90,7 +91,6 @@ const config: CallableOption = (_env, argv) => ({
         }),
         new CopyPlugin({
             patterns: [
-                { from: path.join(APP_PATH, "index.html"), to: path.join(OUT_PATH) },
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
                 { from: path.join(__dirname, "static"), to: OUT_PATH },
                 { from: PAELLA_SKIN_PATH, to: path.join(OUT_PATH, "paella") },
@@ -111,9 +111,12 @@ const config: CallableOption = (_env, argv) => ({
                 fs.writeFileSync(outPath, out);
             });
         },
+        new HtmlWebpackPlugin({
+            template: path.join(APP_PATH, "index.html"),
+        }),
     ],
 
-    devtool: "hidden-source-map",
+    devtool: "source-map",
 });
 
 const fontDecl = `@font-face {

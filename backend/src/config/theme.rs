@@ -22,6 +22,9 @@ pub(crate) struct ThemeConfig {
     /// Colors used in the UI. Specified in sRGB.
     #[config(nested)]
     pub(crate) color: ColorConfig,
+
+    #[config(nested)]
+    pub(crate) font: FontConfig,
 }
 
 
@@ -47,13 +50,13 @@ pub(crate) struct LogoConfig {
     pub(crate) small_dark: Option<LogoDef>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub(crate) struct LogoDef {
     pub(crate) path: PathBuf,
     pub(crate) resolution: LogoResolution,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub(crate) struct LogoResolution(pub(crate) [u32; 2]);
 
 impl fmt::Debug for LogoResolution {
@@ -61,6 +64,26 @@ impl fmt::Debug for LogoResolution {
         let [w, h] = self.0;
         write!(f, "{}x{}", w, h)
     }
+}
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct FontConfig {
+    /// The main font family to use in Tobira. Needs to be a valid CSS value for
+    /// `font-family`.
+    #[config(default = "'Open Sans'")]
+    pub(crate) main_family: String,
+
+    /// Path to a CSS file with extra `@font-face` declarations. If you want to
+    /// refer to files included via `font_files` (see below), be sure to to
+    /// include the full path, e.g. `/~assets/fonts/vollkorn-400.woff2`. That's
+    /// required as the font files are served with a hashed filename for
+    /// caching and Tobira needs to fix up the path in your CSS.
+    pub(crate) extra_css: Option<PathBuf>,
+
+    /// Additional font files to serve under `/~assets/fonts/`. Prefer using the
+    /// WOFF 2.0 format: it has excellent browser support and great compression.
+    #[config(default = [])]
+    pub(crate) files: Vec<PathBuf>,
 }
 
 impl ThemeConfig {

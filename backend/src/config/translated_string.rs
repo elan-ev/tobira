@@ -10,11 +10,6 @@ pub(crate) struct TranslatedString(HashMap<String, String>);
 impl TranslatedString {
     pub(crate) const LANGUAGES: &'static [&'static str] = &["en", "de"];
 
-    pub(crate) fn to_json(&self) -> String {
-        serde_json::to_string(&self.0)
-            .expect("serialization of translated string failed")
-    }
-
     pub(crate) fn en(&self) -> &str {
         &self.0["en"]
     }

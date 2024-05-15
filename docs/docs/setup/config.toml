@@ -553,6 +553,27 @@
 #happy =
 
 
+[theme.font]
+# The main font family to use in Tobira. Needs to be a valid CSS value for
+# `font-family`.
+#
+# Default value: "'Open Sans'"
+#main_family = "'Open Sans'"
+
+# Path to a CSS file with extra `@font-face` declarations. If you want to
+# refer to files included via `font_files` (see below), be sure to to
+# include the full path, e.g. `/~assets/fonts/vollkorn-400.woff2`. That's
+# required as the font files are served with a hashed filename for
+# caching and Tobira needs to fix up the path in your CSS.
+#extra_css =
+
+# Additional font files to serve under `/~assets/fonts/`. Prefer using the
+# WOFF 2.0 format: it has excellent browser support and great compression.
+#
+# Default value: []
+#files = []
+
+
 [upload]
 # Whether specifying a series is required when uploading.
 #
