@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Theme: Logo & Colors
+# Theme: Logo, Font & Colors
 
 This document will explain how to best adjust the `[theme]` configuration.
 If you have no experience in UI design and are not familiar with your organization's CI, you usually want to talk to such a person and do this part of the configuration together.
@@ -35,6 +35,70 @@ You should also test if the logo is  properly configured for dark mode:
 
 The favicon is a single SVG file, that's usually a simplified version of your logo.
 It is shown as tiny image in browser tabs, the browser's history or a bookmark list.
+
+## Font
+
+You can change the main font used by Tobira.
+The relevant config section is `theme.font` – see the comments there for specifics on the individual values.
+The following goes over three different ways of changing the font.
+
+If you want to use a font that you expect most of your users to already have installed on their devices, you can just set `font.main_family`.
+For example: `font.main_family = "Arial"` (please don't actually use Arial though).
+The `main_family` value is used as the value for the CSS `font-family` declaration, which has two consequences.
+For one, you have to quote font names with spaces, e.g. `font.main_family = "'Noto Sans'"`.
+More importantly, you can use multiple values to let the browser choose the first one that's available, for example:
+`font.main_family = "Papyrus, Helvetica, 'Noto Sans'"`.
+Tobira will always add `sans-serif` at the very end as a fallback.
+
+But you cannot assume anything about the fonts installed on a user's device.
+So to be sure a particular font is used, it has to be provided.
+Tobira always provides "Open Sans", its default font. So you can just mention `'Open Sans'` in `main_family` to be sure that that is used as a fallback.
+But you can also provide your own fonts by specifying `font.extra_css`, a CSS file that is expected to contain `@font-face` declarations.
+As examples, you can look at the Google Font files, e.g. [this for Montserrat](https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap).
+You could download that CSS file from Google (this is not legal advice) and specify it as `extra_css`, then set `main_family = "Montserrat"` and be sure that the user's browser can display that font.
+
+But said CSS file refers to Google Font servers via `url()`.
+You likely don't want that, so you can also instruct Tobira to host font files for you.
+These you have to specify as `font.files`.
+Tobira will serve them under `/~assets/fonts/`.
+So you can then just use links to the Tobira hosted files in your CSS file.
+Try encoding your fonts in the WOFF2 format, as this is widely supported and well compressed.
+
+Finally, here is a full example of self-hosted custom fonts:
+
+```toml title=config.toml
+[theme.font]
+main_family = "'My Fancy Font', 'Open Sans'"
+extra_css = "font.css"
+files = [
+    "font/MyFancyFont-Regular.woff2",
+    "font/MyFancyFont-Bold.woff2",
+]
+```
+
+```css title=font.css
+@font-face {
+  font-family: 'My Fancy Font';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/~assets/fonts/MyFancyFont-Regular.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'My Fancy Font';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/~assets/fonts/MyFancyFont-Bold.woff2) format('woff2');
+}
+```
+
+**Note**:
+Tobira is developed with Open Sans in mind and optimized for it.
+Other fonts might have different glyph heights and positioning metrics, making them look off in Tobira.
+To make your font look good, use CSS properties such as `size-adjust` and `ascent-override` inside your `@font-face` declaration.
+Simply compare your configured font to the default Open Sans to see if letter height, baseline and other metrics fit.
+See [these docs about `@font-face`](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face) to see what you can adjust.
 
 
 ## Colors
