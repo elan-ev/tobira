@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use hyper::StatusCode;
-use reinda::{Embeds};
+use reinda::Embeds;
 use secrecy::ExposeSecret;
 use serde_json::json;
 
@@ -30,6 +30,8 @@ const EMBEDS: Embeds = reinda::embed! {
 };
 
 const INDEX_FILE: &str = "index.html";
+const FAVICON_FILE: &str = "favicon.svg";
+const FONTS_CSS_FILE: &str = "fonts.css";
 
 pub(crate) struct Assets {
     assets: reinda::Assets,
@@ -54,8 +56,7 @@ impl Assets {
         let mut builder = reinda::Assets::builder();
 
         // Add logo & favicon files
-        let favicon_path = "favicon.svg";
-        builder.add_file(favicon_path, &config.theme.favicon).with_hash();
+        builder.add_file(FAVICON_FILE, &config.theme.favicon).with_hash();
         for (_, http_path, logo_path) in logo_files() {
             builder.add_file(http_path, logo_path).with_hash();
         }
@@ -66,23 +67,11 @@ impl Assets {
         // We use a "modifier" to adjust the file, including the frontend
         // config, and in particular: refer to the correct paths (which are
         // potentially hashed). We also insert other variables and code.
-        //
-        // First we find the path of the main bundle to insert it into the
-        // index. That main bundle file has a hash calculated by webpack, which
-        // is required so that webpack can refer all bundles to each other
-        // correctly. We could make webpack insert the correct `<script>` tag
-        // into the HTML, but we can also just do it here.
-        let main_bundle = EMBEDS["bundle.*.js"].as_glob()
-            .unwrap()
-            .files()
-            .find(|f| f.path().starts_with("bundle.main."))
-            .unwrap()
-            .path();
-        let deps = [favicon_path, "fonts.css", main_bundle]
+        let deps = [FAVICON_FILE, FONTS_CSS_FILE]
             .into_iter()
             .chain(logo_files().map(|(_, http_path, _)| http_path));
 
-        builder.add_embedded(INDEX_FILE, &EMBEDS["index.html"]).with_modifier(deps, {
+        builder.add_embedded(INDEX_FILE, &EMBEDS[INDEX_FILE]).with_modifier(deps, {
             let frontend_config = frontend_config(config);
             let html_title = config.general.site_title.en().to_owned();
             let global_style = config.theme.to_css();
@@ -109,9 +98,8 @@ impl Assets {
                     ("{{ htmlTitle }}", html_title.as_str()),
                     ("{{ globalStyle }}", global_style.as_str()),
                     ("{{ matomoCode }}", matomo_code.as_str()),
-                    ("{{ faviconPath }}", ctx.resolve_path(favicon_path)),
-                    ("{{ fontCssPath }}", ctx.resolve_path("fonts.css")),
-                    ("{{ bundlePath }}", ctx.resolve_path(main_bundle)),
+                    ("{{ faviconPath }}", ctx.resolve_path(FAVICON_FILE)),
+                    ("{{ fontCssPath }}", ctx.resolve_path(FONTS_CSS_FILE)),
                 ]).into()
             }
         });
@@ -141,7 +129,7 @@ impl Assets {
             font_paths.push(http_path.into());
         }
 
-        builder.add_embedded("fonts.css", &EMBEDS["fonts.css"])
+        builder.add_embedded(FONTS_CSS_FILE, &EMBEDS[FONTS_CSS_FILE])
             .with_hash()
             .with_modifier(font_paths.clone(), {
                 // Load extra CSS
