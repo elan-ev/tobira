@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { navigateTo, test } from "./util/common";
+import { test } from "./util/data";
 
 
 test("Video page", async ({ page, standardData, browserName }) => {
@@ -7,7 +7,7 @@ test("Video page", async ({ page, standardData, browserName }) => {
         page.locator(`dd:right-of(dt:has-text("${datum}"))`).first();
 
     await test.step("Setup", async () => {
-        await navigateTo("/", page);
+        await page.goto("/");
         await page.getByRole("img", { name: "Video of a Tabby Cat" }).first().click();
         await page.waitForSelector("nav");
     });

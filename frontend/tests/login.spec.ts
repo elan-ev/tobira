@@ -1,11 +1,11 @@
 import { expect } from "@playwright/test";
-import { navigateTo, test } from "./util/common";
+import { test } from "./util/data";
 import { logout } from "./util/user";
 
 test("Login", async ({ page, baseURL, browserName }) => {
     test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
-    await navigateTo("/", page);
+    await page.goto("/");
 
     await page.getByRole("link", { name: "Login" }).click();
     await expect(page).toHaveURL("~login");
