@@ -141,3 +141,40 @@ impl<'a> FromSql<'a> for ExtraMetadata {
         <serde_json::Value as FromSql>::accepts(ty)
     }
 }
+
+/// Represents the type for the `custom_action_roles` field from `32-custom-actions.sql`.
+/// This holds a mapping of actions to lists holding roles that are allowed
+/// to carry out the respective action.
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct CustomActions(pub(crate) HashMap<String, Vec<String>>);
+
+impl ToSql for CustomActions {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        serde_json::to_value(self)
+            .expect("failed to convert `CustomActions` to JSON value")
+            .to_sql(ty, out)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        <serde_json::Value as ToSql>::accepts(ty)
+    }
+
+    postgres_types::to_sql_checked!();
+}
+
+impl<'a> FromSql<'a> for CustomActions {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        serde_json::from_value(<_>::from_sql(ty, raw)?).map_err(Into::into)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        <serde_json::Value as FromSql>::accepts(ty)
+    }
+}

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-use crate::db::types::{EventTrack, ExtraMetadata, EventCaption};
+use crate::db::types::{CustomActions, EventCaption, EventTrack, ExtraMetadata};
 
 
 /// What the harvesting API returns.
@@ -128,10 +128,12 @@ impl Into<EventCaption> for Caption {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Acl {
     #[serde(default)]
     pub(crate) read: Vec<String>,
     #[serde(default)]
     pub(crate) write: Vec<String>,
+    #[serde(flatten)]
+    pub(crate) custom_actions: CustomActions,
 }
