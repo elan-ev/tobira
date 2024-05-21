@@ -332,9 +332,23 @@ async fn store_in_db(
                 removed_playlists += 1;
             }
 
-            HarvestItem::Unknown { kind, .. } => {
-                warn!("Unknown item of kind '{kind}' in harvest response. \
-                    You might need to update Tobira.");
+            HarvestItem::Unknown { kind, updated } => {
+                let known = [
+                    "event",
+                    "event-deleted",
+                    "series",
+                    "series-deleted",
+                    "playlist",
+                    "playlist-deleted",
+                ];
+
+                if known.contains(&&*kind) {
+                    warn!("Could not deserialize item in harvest response for \
+                        kind '{kind}' (updated {updated})");
+                } else {
+                    warn!("Unknown item of kind '{kind}' in harvest response. \
+                        You might need to update Tobira.");
+                }
             }
         }
     }
