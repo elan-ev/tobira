@@ -2,8 +2,8 @@
 
 - hosts: all
   roles:
-    - cloudalchemy.prometheus
-    - cloudalchemy.grafana
+    - prometheus.prometheus.prometheus
+    - grafana.grafana.grafana
   vars:
     prometheus_scrape_configs:
       - job_name: 'tobira'
@@ -22,6 +22,10 @@
           34313337343261363739653632663736613763613763636561363633653362613238333638313733
           3265616634663435390a306566656530373362623562333232373364393261353864636665316339
           36303161333735313639333735613132626364346536613133626534633063376139
+    # The latest grafana ansible role does not support grafana version 11 (or later) for now
+    # due to braking configuration changes. Please update the grafana ansible collection
+    # and remove this setting to upgrade to the newest grafana version.
+    grafana_version: 10.4.3
 
   tasks:
     - name: deploy nginx vhosts
@@ -32,6 +36,7 @@
       with_items:
         - grafana.conf
         - prometheus.conf
+      notify: reload nginx
 
     - name: install ansible dependencies
       become: true
@@ -52,3 +57,10 @@
             30653565646262336134646339313735643564396532633464353234346239393730313032346339
             3162363337383162360a393065646565316330396162653365366436666562666437663163303038
             31336237343537393836633735656530306263316132396136383763393037363365
+
+  handlers:
+    - name: reload nginx
+      become: true
+      service:
+        name: nginx
+        state: reloaded

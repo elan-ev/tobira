@@ -1,5 +1,6 @@
 ---
-
-roles:
-  - cloudalchemy.prometheus
-  - cloudalchemy.grafana
+collections:
+  - name: prometheus.prometheus
+    version: 0.16.3
+  - name: grafana.grafana
+    version: 5.2.0
