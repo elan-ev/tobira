@@ -131,12 +131,41 @@
         force: false
         mode: '0640'
       loop:
-        - src: certificate.pem
-          dest: '{{ inventory_hostname }}.crt'
-        - src: key.pem
-          dest: '{{ inventory_hostname }}.key'
         - src: dhparam.pem
           dest: dhparam.pem
+      notify: reload nginx
+
+    - name: acquire SSL certificate
+      become: true
+      import_role:
+        name: lkiesow.certbot_cloudflare
+      vars:
+        certbot_cloudflare_email: cloud@opencast.org
+        certbot_cloudflare_api_token: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          65366633353265363462656262346364613564666164653239306335343736666636386639636635
+          6232313465626334353362633766376533363532663532340a653365353563346235393665666430
+          30666635376132376338313037653163383538623039333935616665396238333730613531633664
+          6235393165376338640a363430393638346236663265616235633563393862336261666564333163
+          31323466376464613738626435306633376633633266653263386165346166646238313232326339
+          6537666639376535656563653563653533356166653666643233
+        certbot_cloudflare_domains:
+          - "tobira.opencast.org"
+          - "*.tobira.opencast.org"
+        certbot_cloudflare_post_hook: '--post-hook "systemctl reload nginx"'
+
+    - name: link certificate
+      become: true
+      file:
+        src: /etc/letsencrypt/live/tobira.opencast.org/{{ item.src }}
+        dest: /etc/nginx/ssl/{{ item.dest  }}
+        state: link
+        force: true
+      loop:
+        - src: fullchain.pem
+          dest: tobira.opencast.org.crt
+        - src: privkey.pem
+          dest: tobira.opencast.org.key
       notify: reload nginx
 
     - name: configure firewall
