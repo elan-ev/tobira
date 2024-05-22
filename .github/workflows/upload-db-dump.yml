@@ -34,7 +34,7 @@ jobs:
       - name: Adjust config for syncing
         run: |
           sed --in-place \
-            -e 's/host = "http:\/\/localhost:8081"/host = "https:\/\/oc.tobira.ethz.ch"/g' \
+            -e 's/host = "http:\/\/localhost:8081"/host = "https:\/\/tobira-test-oc.ethz.ch"/g' \
             -e 's/password = "opencast"/password = "${{ secrets.TOBIRA_OPENCAST_ADMIN_PASSWORD }}"/g' \
             -e 's/level = "trace"/level = "debug"/g' \
             -e '/preferred_harvest_size/d' \

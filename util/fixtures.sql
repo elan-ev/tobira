@@ -279,7 +279,7 @@ begin
             '{}',
             false,
             '{}',
-            array[row('https://oc.tobira.ethz.ch/static/mh_default_org/moontour_narrated.en_US.vtt', 'en')]::event_caption[]
+            array[row('https://tobira-test-oc.ethz.ch/static/mh_default_org/moontour_narrated.en_US.vtt', 'en')]::event_caption[]
         );
 
     insert into events (state, opencast_id, title, tracks, thumbnail, duration, description, series, part_of, creators, created, updated, read_roles, write_roles, is_live, metadata, captions)
