@@ -31,8 +31,16 @@
         url: https://github.com/meilisearch/meilisearch/releases/download/v1.4.2/meilisearch-linux-amd64
         dest: /opt/meili/meilisearch
         mode: '0755'
-        checksum: sha256:b54b9ace213b0d45558c5d0e79710f718b63d2e29c190fb95be01dc27eb1ca5c
+        checksum: 'sha256:b54b9ace213b0d45558c5d0e79710f718b63d2e29c190fb95be01dc27eb1ca5c'
       register: meili_updated
+      notify: restart MeiliSearch
+
+    - name: remove MeiliSearch indexes
+      become: true
+      file:
+        path: /opt/meili/data.ms
+        state: absent
+      when: meili_updated.changed
 
     - name: install MeiliSearch service file
       become: true
@@ -42,30 +50,19 @@
         mode: '0644'
         owner: root
         group: root
-      register: meili_changed
+      register: meili_service_changed
+      notify: restart MeiliSearch
 
-    - name: start and enable Meili
+    - name: reload systemd due to service file changes
       become: true
-      service:
+      systemd:
+        daemon_reload: true
         name: meili
-        state: started
-        enabled: yes
+        enabled: true
+      when: meili_service_changed.changed
 
-    - name: remove Meili indexes
-      become: true
-      file:
-        path: /opt/meili/data.ms
-        state: absent
-      when: meili_updated.changed
-
-    - name: restart Meili
-      become: true
-      service:
-        name: meili
-        state: restarted
-        enabled: yes
-      when: meili_changed.changed or meili_updated.changed
-
+    - name: Flush handlers
+      meta: flush_handlers
 
     # DATABASE
 
@@ -74,24 +71,18 @@
       command:
         cmd: postgresql-setup --initdb
         creates: /var/lib/pgsql/data/postgresql.conf
-
-    - name: configure postgres access
-      become: true
-      copy:
-        src: pg_hba.conf
-        dest: /var/lib/pgsql/data/pg_hba.conf
-        owner: postgres
-        group: postgres
-        mode: '0644'
+      environment:
+        PGSETUP_INITDB_OPTIONS: "--auth-local=peer --auth-host=scram-sha-256"
       notify: restart postgresql
 
-    - name: start and enable database
+    - name: enable database
       become: true
       service:
         name: postgresql
-        state: started
         enabled: yes
 
+    - name: Flush handlers
+      meta: flush_handlers
 
     # Tobira
 
@@ -168,6 +159,12 @@
 
 
   handlers:
+    - name: restart MeiliSearch
+      become: true
+      service:
+        name: meili
+        state: restarted
+
     - name: restart postgresql
       become: true
       service:

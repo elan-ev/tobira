@@ -44,7 +44,7 @@ secret_key = "/opt/tobira/secret-jwt-key.pem"
 file = "/var/log/tobira/{{ id }}-${cmd}.log"
 
 [opencast]
-host = "https://oc.tobira.ethz.ch"
+host = "https://tobira-test-oc.ethz.ch"
 
 [sync]
 user = "admin"
