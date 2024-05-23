@@ -6,10 +6,7 @@ import { WithTooltip } from "@opencast/appkit";
 
 import type { RemoveButtonData$key } from "./__generated__/RemoveButtonData.graphql";
 import type { RemoveButtonMutation } from "./__generated__/RemoveButtonMutation.graphql";
-import { ModalHandle, Modal } from "@opencast/appkit";
-import {
-    ConfirmationModal, ConfirmationModalHandle,
-} from "../../../../../ui/Modal";
+import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "@opencast/appkit";
 import { displayCommitError } from "../../util";
 import { Button } from "../util";
 import { currentRef } from "../../../../../util";
@@ -97,7 +94,11 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
             buttonContent={t("manage.realm.content.remove")}
             onSubmit={remove}
             ref={modalRef}
-            text={{ generalActionClose: t("general.action.close") }}
+            text={{
+                generalActionCancel: t("general.action.cancel"),
+                generalActionClose: t("general.action.close"),
+                manageAreYouSure: t("manage.are-you-sure"),
+            }}
         >
             <p>
                 <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone" />

@@ -9,7 +9,13 @@ import type {
     DangerZoneRealmData$key,
 } from "./__generated__/DangerZoneRealmData.graphql";
 import { currentRef } from "../../../util";
-import { Button, boxError, Card } from "@opencast/appkit";
+import {
+    Button,
+    boxError,
+    Card,
+    ConfirmationModal,
+    ConfirmationModalHandle,
+} from "@opencast/appkit";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { displayCommitError, realmValidations } from "./util";
 import {
@@ -17,7 +23,6 @@ import {
 } from "./__generated__/DangerZoneRemoveRealmMutation.graphql";
 import { useRouter } from "../../../router";
 import { useState } from "react";
-import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import { COLORS } from "../../../color";
 import { ManageRealmRoute } from ".";
 
@@ -228,7 +233,11 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             {...{ buttonContent }}
             onSubmit={remove}
             ref={modalRef}
-            text={{ generalActionClose: t("general.action.close") }}
+            text={{
+                generalActionCancel: t("general.action.cancel"),
+                generalActionClose: t("general.action.close"),
+                manageAreYouSure: t("manage.are-you-sure"),
+            }}
         >
             <p>
                 <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone" />

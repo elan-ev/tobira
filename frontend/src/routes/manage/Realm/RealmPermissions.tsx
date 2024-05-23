@@ -6,8 +6,7 @@ import { RealmPermissionsData$key } from "./__generated__/RealmPermissionsData.g
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { RealmPermissionsMutation } from "./__generated__/RealmPermissionsMutation.graphql";
 import { Acl, AclSelector, AclEditButtons, knownRolesFragment } from "../../../ui/Access";
-import { ConfirmationModalHandle } from "../../../ui/Modal";
-import { boxError } from "@opencast/appkit";
+import { boxError, ConfirmationModalHandle } from "@opencast/appkit";
 import { displayCommitError } from "./util";
 import { currentRef } from "../../../util";
 import { MODERATE_ADMIN_ACTIONS } from "../../../util/permissionLevels";

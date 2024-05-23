@@ -2,9 +2,8 @@ import React, { useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useForm, useFormContext, FormProvider } from "react-hook-form";
-import { bug, match } from "@opencast/appkit";
+import { bug, match, ConfirmationModal, ConfirmationModalHandle } from "@opencast/appkit";
 
-import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
 import { Button } from "@opencast/appkit";
 import { currentRef, useOnOutsideClick } from "../../../../../../util";
 import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
@@ -155,7 +154,11 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
             buttonContent={t("manage.realm.content.cancel")}
             onSubmit={onCancel}
             ref={modalRef}
-            text={{ generalActionClose: t("general.action.close") }}
+            text={{
+                generalActionCancel: t("general.action.cancel"),
+                generalActionClose: t("general.action.close"),
+                manageAreYouSure: t("manage.are-you-sure"),
+            }}
         >
             <p>{t("manage.realm.content.cancel-warning")}</p>
         </ConfirmationModal>

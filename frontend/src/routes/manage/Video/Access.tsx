@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { WithTooltip } from "@opencast/appkit";
+import { WithTooltip, ConfirmationModalHandle } from "@opencast/appkit";
 import { useRef, useState } from "react";
 import { LuInfo } from "react-icons/lu";
 import { useFragment } from "react-relay";
@@ -19,7 +19,6 @@ import { ManageRoute } from "..";
 import { ManageVideosRoute } from ".";
 import { ManageVideoDetailsRoute } from "./Details";
 import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
-import { ConfirmationModalHandle } from "../../../ui/Modal";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(

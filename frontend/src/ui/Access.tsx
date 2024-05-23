@@ -12,6 +12,8 @@ import {
     ModalHandle,
     Modal,
     Spinner,
+    ConfirmationModal,
+    ConfirmationModalHandle,
 } from "@opencast/appkit";
 import {
     createContext,
@@ -45,7 +47,6 @@ import { AccessUserSearchQuery } from "./__generated__/AccessUserSearchQuery.gra
 import { ErrorDisplay } from "../util/err";
 import { useNavBlocker } from "../routes/util";
 import { currentRef } from "../util";
-import { ConfirmationModal, ConfirmationModalHandle } from "./Modal";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
 
@@ -895,7 +896,11 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
                 title={t("manage.access.save-modal.title")}
                 buttonContent={t("manage.access.save-modal.confirm")}
                 onSubmit={() => submit(selections)}
-                text={{ generalActionClose: t("general.action.close") }}
+                text={{
+                    generalActionCancel: t("general.action.cancel"),
+                    generalActionClose: t("general.action.close"),
+                    manageAreYouSure: t("manage.are-you-sure"),
+                }}
             >
                 <p>{t(`manage.access.save-modal.disclaimer-${kind}`)}</p>
             </ConfirmationModal>
