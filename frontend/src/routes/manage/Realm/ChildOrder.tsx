@@ -9,9 +9,7 @@ import {
     ChildOrderEditData$data,
     ChildOrderEditData$key,
 } from "./__generated__/ChildOrderEditData.graphql";
-import { Button } from "@opencast/appkit";
-import { Spinner } from "@opencast/appkit";
-import { boxError } from "../../../ui/error";
+import { Button, Spinner, boxError } from "@opencast/appkit";
 import { displayCommitError } from "./util";
 import { sortRealms } from "../../util";
 import { focusStyle } from "../../../ui";

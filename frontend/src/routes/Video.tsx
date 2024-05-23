@@ -7,7 +7,9 @@ import { QRCodeCanvas } from "qrcode.react";
 import {
     match, unreachable, ProtoButton,
     useColorScheme, Floating, FloatingContainer, FloatingTrigger, WithTooltip, screenWidthAtMost,
+    Card, Button,
 } from "@opencast/appkit";
+import { VideoObject, WithContext } from "schema-dts";
 
 import { loadQuery } from "../relay";
 import { InitialLoading, RootLoader } from "../layout/Root";
@@ -32,7 +34,6 @@ import {
     keyOfId,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
-import { Button } from "@opencast/appkit";
 import { LinkButton } from "../ui/LinkButton";
 import CONFIG from "../config";
 import { Link, useRouter } from "../router";
@@ -56,9 +57,7 @@ import { VideoPageByOcIdInRealmQuery } from "./__generated__/VideoPageByOcIdInRe
 import { getEventTimeInfo } from "../util/video";
 import { formatDuration } from "../ui/Video";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
-import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
-import { VideoObject, WithContext } from "schema-dts";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";

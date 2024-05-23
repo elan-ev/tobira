@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next";
 import {
     bug,
+    boxError,
     Button,
     Spinner,
     Modal as AppkitModal,
@@ -17,7 +18,6 @@ import {
     ModalProps as AppkitModalProps,
 } from "@opencast/appkit";
 
-import { boxError } from "./error";
 import { currentRef } from "../util";
 
 

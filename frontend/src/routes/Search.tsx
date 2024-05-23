@@ -38,14 +38,13 @@ import {
     ThumbnailReplacement,
 } from "../ui/Video";
 import { SmallDescription } from "../ui/metadata";
-import { Card } from "../ui/Card";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
 import { isExperimentalFlagSet, keyOfId } from "../util";
-import { Button } from "@opencast/appkit";
+import { Button, Card } from "@opencast/appkit";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute } from "./Series";
 

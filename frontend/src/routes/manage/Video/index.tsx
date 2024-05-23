@@ -4,7 +4,7 @@ import {
     LuArrowDownNarrowWide, LuArrowUpWideNarrow, LuChevronLeft, LuChevronRight,
 } from "react-icons/lu";
 import { graphql, VariablesOf } from "react-relay";
-import { match, useColorScheme } from "@opencast/appkit";
+import { match, useColorScheme, Card } from "@opencast/appkit";
 
 import { ManageNav, ManageRoute } from "..";
 import { RootLoader } from "../../../layout/Root";
@@ -22,7 +22,6 @@ import { Thumbnail } from "../../../ui/Video";
 import { keyOfId } from "../../../util";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
-import { Card } from "../../../ui/Card";
 import { SmallDescription } from "../../../ui/metadata";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";

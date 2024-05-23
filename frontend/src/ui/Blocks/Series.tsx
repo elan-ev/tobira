@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Card } from "@opencast/appkit";
 import { graphql, readInlineData, useFragment } from "react-relay";
 
 import { isSynced } from "../../util";
@@ -10,7 +11,6 @@ import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
-import { Card } from "../Card";
 import { VideoListBlock, VideoListBlockContainer, videoListEventFragment } from "./VideoList";
 import { VideoListEventData$key } from "./__generated__/VideoListEventData.graphql";
 

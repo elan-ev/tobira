@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Card } from "../../../../../../ui/Card";
+import { Card } from "@opencast/appkit";
 import { EditModeForm } from ".";
 import { Heading } from "./util";
 import type {

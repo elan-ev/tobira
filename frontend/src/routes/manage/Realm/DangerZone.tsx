@@ -9,10 +9,8 @@ import type {
     DangerZoneRealmData$key,
 } from "./__generated__/DangerZoneRealmData.graphql";
 import { currentRef } from "../../../util";
-import { Button } from "@opencast/appkit";
-import { Card } from "../../../ui/Card";
+import { Button, boxError, Card } from "@opencast/appkit";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
-import { boxError } from "../../../ui/error";
 import { displayCommitError, realmValidations } from "./util";
 import {
     DangerZoneRemoveRealmMutation$data,
