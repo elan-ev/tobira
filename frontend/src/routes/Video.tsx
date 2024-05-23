@@ -32,7 +32,8 @@ import {
     keyOfId,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
-import { Button, LinkButton } from "../ui/Button";
+import { Button } from "@opencast/appkit";
+import { LinkButton } from "../ui/LinkButton";
 import CONFIG from "../config";
 import { Link, useRouter } from "../router";
 import { useUser } from "../User";

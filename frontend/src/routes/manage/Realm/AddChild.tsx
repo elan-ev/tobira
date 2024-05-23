@@ -16,7 +16,7 @@ import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { PathInvalid } from ".";
 import { boxError, NotAuthorized } from "../../../ui/error";
 import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
-import { Button } from "../../../ui/Button";
+import { Button } from "@opencast/appkit";
 import { AddChildMutation$data } from "./__generated__/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";
@@ -213,7 +213,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
 
                 <div>
                     <div css={{ display: "flex", alignItems: "center", gap: 16 }}>
-                        <Button type="submit" kind="happy" disabled={isInFlight}>
+                        <Button type="submit" kind="call-to-action" disabled={isInFlight}>
                             {t("manage.add-child.button-create-page")}
                         </Button>
                         {isInFlight && <Spinner size={20} />}

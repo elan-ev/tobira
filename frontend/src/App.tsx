@@ -11,7 +11,12 @@ import { MatchedRoute } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
-import { AppkitConfigProvider, ColorSchemeProvider, DEFAULT_CONFIG } from "@opencast/appkit";
+import {
+    AppkitConfig,
+    AppkitConfigProvider,
+    ColorSchemeProvider,
+    DEFAULT_CONFIG,
+} from "@opencast/appkit";
 import { COLORS } from "./color";
 import { InitialConsent } from "./ui/InitialConsent";
 
@@ -25,13 +30,7 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
     <StrictMode>
         <SilenceEmotionWarnings>
             <ColorSchemeProvider allowedSchemes={["light", "dark"]}>
-                <AppkitConfigProvider config={{
-                    ...DEFAULT_CONFIG,
-                    colors: {
-                        ...DEFAULT_CONFIG.colors,
-                        focus: COLORS.focus,
-                    },
-                }}>
+                <AppkitConfigProvider config={APPKIT_CONFIG}>
                     <GlobalStyle />
                     <GlobalErrorBoundary>
                         <RelayEnvironmentProvider {...{ environment }}>
@@ -51,6 +50,34 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
         </SilenceEmotionWarnings>
     </StrictMode>
 );
+
+const APPKIT_CONFIG: AppkitConfig = {
+    ...DEFAULT_CONFIG,
+    colors: {
+        ...DEFAULT_CONFIG.colors,
+
+        accent7: COLORS.primary0,
+        accent8: COLORS.primary1,
+        accent9: COLORS.primary2,
+        accent7BwInverted: COLORS.primary0BwInverted,
+        accent8BwInverted: COLORS.primary1BwInverted,
+        accent9BwInverted: COLORS.primary2BwInverted,
+
+        happy7: COLORS.primary0,
+        happy8: COLORS.primary1,
+        happy9: COLORS.primary2,
+        happy7BwInverted: COLORS.primary0BwInverted,
+        happy8BwInverted: COLORS.primary1BwInverted,
+        happy9BwInverted: COLORS.primary2BwInverted,
+
+        danger4: COLORS.danger0,
+        danger5: COLORS.danger1,
+        danger4BwInverted: COLORS.danger0BwInverted,
+        danger5BwInverted: COLORS.danger1BwInverted,
+
+        focus: COLORS.focus,
+    },
+};
 
 /**
  * This thingy is kind of sad. In short: emotion-js emits warnings whenever one

@@ -2,11 +2,9 @@ import { useRef } from "react";
 import CONFIG from "../config";
 import { currentRef, getTranslatedString, translatedConfig } from "../util";
 import { Modal, ModalHandle } from "./Modal";
-import { Button } from "./Button";
 import { TextBlock } from "./Blocks/Text";
 import { useTranslation } from "react-i18next";
-import { notNullish } from "@opencast/appkit";
-
+import { Button, notNullish } from "@opencast/appkit";
 
 const LOCAL_STORAGE_KEY = "tobiraUserConsent";
 

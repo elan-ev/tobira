@@ -7,7 +7,7 @@ import { environment } from ".";
 import { authJwtQuery, JwtService } from "./__generated__/authJwtQuery.graphql";
 import { FormEvent, PropsWithChildren } from "react";
 import { Link } from "../router";
-import { LinkButton } from "../ui/Button";
+import { LinkButton } from "../ui/LinkButton";
 
 
 /** Different external services we can link to using JWT pre-authentication */

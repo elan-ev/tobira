@@ -11,7 +11,7 @@ import { loadQuery } from "../../../relay";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
 import { DangerZone } from "./DangerZone";
-import { LinkButton } from "../../../ui/Button";
+import { LinkButton } from "../../../ui/LinkButton";
 import { LuArrowRightCircle, LuPlusCircle } from "react-icons/lu";
 import { Card } from "../../../ui/Card";
 import { Nav } from "../../../layout/Navigation";

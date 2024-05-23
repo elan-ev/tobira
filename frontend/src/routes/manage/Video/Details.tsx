@@ -12,7 +12,7 @@ import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
-import { Button, buttonStyle } from "../../../ui/Button";
+import { Button, buttonStyle, useAppkitConfig, useColorScheme } from "@opencast/appkit";
 import { COLORS } from "../../../color";
 import { currentRef, secondsToTimeString, translatedConfig } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
@@ -42,6 +42,8 @@ type Props = {
 
 const Page: React.FC<Props> = ({ event }) => {
     const { t, i18n } = useTranslation();
+    const { isHighContrast } = useColorScheme();
+    const config = useAppkitConfig();
 
     const breadcrumbs = [
         { label: t("user.manage-content"), link: ManageRoute.url },
@@ -73,7 +75,7 @@ const Page: React.FC<Props> = ({ event }) => {
                                 callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
                             }}
                             fallback="button"
-                            css={buttonStyle("normal")}
+                            css={buttonStyle(config, "normal", isHighContrast)}
                         >
                             {t("manage.my-videos.details.open-in-editor")}
                             <LuExternalLink size={16} />
