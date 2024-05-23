@@ -155,6 +155,7 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
             buttonContent={t("manage.realm.content.cancel")}
             onSubmit={onCancel}
             ref={modalRef}
+            text={{ generalActionClose: t("general.action.close") }}
         >
             <p>{t("manage.realm.content.cancel-warning")}</p>
         </ConfirmationModal>

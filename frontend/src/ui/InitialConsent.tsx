@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import CONFIG from "../config";
 import { currentRef, getTranslatedString, translatedConfig } from "../util";
-import { Modal, ModalHandle } from "./Modal";
+import { ModalHandle, Modal } from "@opencast/appkit";
 import { Button } from "./Button";
 import { TextBlock } from "./Blocks/Text";
 import { useTranslation } from "react-i18next";
@@ -16,6 +16,7 @@ type Props = {
 
 export const InitialConsent: React.FC<Props> = ({ consentGiven: initialConsentGiven }) => {
     const { i18n } = useTranslation();
+    const { t } = useTranslation();
     const modalRef = useRef<ModalHandle>(null);
 
     if (initialConsentGiven !== false || !CONFIG.initialConsent) {
@@ -42,6 +43,7 @@ export const InitialConsent: React.FC<Props> = ({ consentGiven: initialConsentGi
             title={translatedConfig(CONFIG.initialConsent.title, i18n)}
             closable={false}
             initialFocus={false}
+            text={{ generalActionClose: t("general.action.close") }}
         >
             <TextBlock content={translatedConfig(CONFIG.initialConsent.text, i18n)} />
             <div css={{ display: "flex" }}>

@@ -230,6 +230,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             {...{ buttonContent }}
             onSubmit={remove}
             ref={modalRef}
+            text={{ generalActionClose: t("general.action.close") }}
         >
             <p>
                 <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone" />

@@ -42,7 +42,8 @@ import { ErrorDisplay } from "../util/err";
 import { useNavBlocker } from "../routes/util";
 import { currentRef } from "../util";
 import { Button } from "./Button";
-import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
+import { ModalHandle, Modal } from "@opencast/appkit";
+import { ConfirmationModal, ConfirmationModalHandle } from "./Modal";
 import { Spinner } from "./Spinner";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
@@ -854,7 +855,11 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
             >
                 {t("manage.access.reset-modal.label")}
             </Button>
-            <Modal ref={resetModalRef} title={t("manage.access.reset-modal.title")}>
+            <Modal
+                ref={resetModalRef}
+                title={t("manage.access.reset-modal.title")}
+                text={{ generalActionClose: t("general.action.close") }}
+            >
                 <p>{t("manage.access.reset-modal.body")}</p>
                 <div css={{
                     display: "flex",
@@ -889,6 +894,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
                 title={t("manage.access.save-modal.title")}
                 buttonContent={t("manage.access.save-modal.confirm")}
                 onSubmit={() => submit(selections)}
+                text={{ generalActionClose: t("general.action.close") }}
             >
                 <p>{t(`manage.access.save-modal.disclaimer-${kind}`)}</p>
             </ConfirmationModal>

@@ -60,7 +60,7 @@ import { VideoObject, WithContext } from "schema-dts";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
-import { Modal, ModalHandle } from "../ui/Modal";
+import { ModalHandle, Modal } from "@opencast/appkit";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { CollapsibleDescription } from "../ui/metadata";
 import { DirectSeriesRoute } from "./Series";
@@ -574,6 +574,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             title={t("video.share.title", { title: label })}
             css={{ minWidth: "max-content" }}
             closeOnOutsideClick
+            text={{ generalActionClose: t("general.action.close") }}
         >
             <div css={{ display: "flex", justifyContent: "center" }}>
                 <QRCodeCanvas
