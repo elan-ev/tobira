@@ -8,9 +8,8 @@ import {
     useImperativeHandle,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { bug, ModalProps, ModalHandle, Modal, Button, Spinner } from "@opencast/appkit";
+import { bug, ModalProps, ModalHandle, Modal, Button, Spinner, boxError } from "@opencast/appkit";
 
-import { boxError } from "./error";
 import { currentRef } from "../util";
 
 

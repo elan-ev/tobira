@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
-    useColorScheme, Floating, FloatingHandle, useFloatingItemProps,
+    useColorScheme, Floating, FloatingHandle, useFloatingItemProps, Card,
 } from "@opencast/appkit";
 
 import { keyOfId, isSynced, SyncedOpencastEntity } from "../../util";
@@ -26,7 +26,6 @@ import {
 } from "./__generated__/SeriesBlockSeriesData.graphql";
 import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
 import { RelativeDate } from "../time";
-import { Card } from "../Card";
 import {
     LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid,
 } from "react-icons/lu";

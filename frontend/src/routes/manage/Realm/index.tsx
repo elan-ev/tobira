@@ -13,7 +13,7 @@ import { General } from "./General";
 import { DangerZone } from "./DangerZone";
 import { LinkButton } from "../../../ui/LinkButton";
 import { LuArrowRightCircle, LuPlusCircle } from "react-icons/lu";
-import { Card } from "../../../ui/Card";
+import { Card } from "@opencast/appkit";
 import { Nav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
 import { NotAuthorized } from "../../../ui/error";

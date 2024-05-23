@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useController, useFormContext } from "react-hook-form";
 
-import { Card } from "../../../../../../ui/Card";
 import { EditModeForm } from ".";
 import { Heading } from "./util";
 import type {
@@ -19,7 +18,7 @@ import {
 } from "./__generated__/SeriesEditCreateMutation.graphql";
 import { SeriesSelector } from "../../../../../../ui/SearchableSelect";
 import { DisplayOptionGroup } from "../../../../../../ui/Input";
-import { screenWidthAtMost } from "@opencast/appkit";
+import { Card, screenWidthAtMost } from "@opencast/appkit";
 import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";
 import { InfoTooltip } from "../../../../../../ui";
 import { isRealUser, useUser } from "../../../../../../User";

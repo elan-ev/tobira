@@ -55,13 +55,12 @@ import { NavigationData$key } from "../layout/__generated__/NavigationData.graph
 import { getEventTimeInfo } from "../util/video";
 import { formatDuration } from "../ui/Video";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
-import { Card } from "../ui/Card";
 import { realmBreadcrumbs } from "../util/realm";
 import { VideoObject, WithContext } from "schema-dts";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 import { RelativeDate } from "../ui/time";
-import { ModalHandle, Modal } from "@opencast/appkit";
+import { ModalHandle, Modal, Card } from "@opencast/appkit";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { CollapsibleDescription } from "../ui/metadata";
 import { DirectSeriesRoute } from "./Series";
