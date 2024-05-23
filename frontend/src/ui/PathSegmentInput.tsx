@@ -1,6 +1,6 @@
 import React from "react";
 import { Input, InputProps } from "./Input";
-import { Spinner } from "./Spinner";
+import { Spinner } from "@opencast/appkit";
 import { COLORS } from "../color";
 
 

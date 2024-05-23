@@ -16,7 +16,7 @@ import { NotAuthorized } from "../../../../ui/error";
 import { RealmSettingsContainer } from "../util";
 import { Nav } from "../../../../layout/Navigation";
 import { makeRoute } from "../../../../rauta";
-import { Spinner } from "../../../../ui/Spinner";
+import { Spinner } from "@opencast/appkit";
 import { AddButtons } from "./AddButtons";
 import { EditBlock } from "./Block";
 import { Breadcrumbs } from "../../../../ui/Breadcrumbs";

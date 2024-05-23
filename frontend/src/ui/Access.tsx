@@ -42,7 +42,7 @@ import { useNavBlocker } from "../routes/util";
 import { currentRef } from "../util";
 import { Button } from "@opencast/appkit";
 import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
-import { Spinner } from "./Spinner";
+import { Spinner } from "@opencast/appkit";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
 

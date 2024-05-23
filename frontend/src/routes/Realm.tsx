@@ -23,7 +23,7 @@ import { Card } from "../ui/Card";
 import { Button } from "@opencast/appkit";
 import { displayCommitError } from "./manage/Realm/util";
 import { boxError } from "../ui/error";
-import { Spinner } from "../ui/Spinner";
+import { Spinner } from "@opencast/appkit";
 import { useRouter } from "../router";
 import { COLORS } from "../color";
 import { useMenu } from "../layout/MenuState";

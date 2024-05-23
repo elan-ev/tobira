@@ -11,12 +11,12 @@ import { useTranslation } from "react-i18next";
 import {
     bug,
     Button,
+    Spinner,
     Modal as AppkitModal,
     ModalHandle as AppkitModalHandle,
     ModalProps as AppkitModalProps,
 } from "@opencast/appkit";
 
-import { Spinner } from "./Spinner";
 import { boxError } from "./error";
 import { currentRef } from "../util";
 

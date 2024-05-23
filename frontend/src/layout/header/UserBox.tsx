@@ -16,7 +16,7 @@ import { Link } from "../../router";
 import { User, useUser } from "../../User";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
-import { Spinner } from "../../ui/Spinner";
+import { Spinner } from "@opencast/appkit";
 import { LoginRoute, REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { focusStyle } from "../../ui";
 import { ExternalLink } from "../../relay/auth";
