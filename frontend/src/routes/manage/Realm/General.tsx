@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { Input, Select } from "../../../ui/Input";
 import { Card } from "../../../ui/Card";
 import { Button } from "@opencast/appkit";
-import { Spinner } from "../../../ui/Spinner";
+import { Spinner } from "@opencast/appkit";
 import { Form } from "../../../ui/Form";
 import { boxError } from "../../../ui/error";
 import { displayCommitError } from "./util";

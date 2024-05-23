@@ -44,7 +44,7 @@ import { currentRef } from "../util";
 import { Button } from "@opencast/appkit";
 import { ModalHandle, Modal } from "@opencast/appkit";
 import { ConfirmationModal, ConfirmationModalHandle } from "./Modal";
-import { Spinner } from "./Spinner";
+import { Spinner } from "@opencast/appkit";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
 

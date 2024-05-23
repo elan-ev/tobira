@@ -18,7 +18,7 @@ import { boxError, NotAuthorized } from "../../../ui/error";
 import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
 import { Button } from "@opencast/appkit";
 import { AddChildMutation$data } from "./__generated__/AddChildMutation.graphql";
-import { Spinner } from "../../../ui/Spinner";
+import { Spinner } from "@opencast/appkit";
 import { Nav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
 import { ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";

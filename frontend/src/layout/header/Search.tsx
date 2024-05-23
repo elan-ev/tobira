@@ -12,7 +12,7 @@ import {
     isValidSearchItemType,
 } from "../../routes/Search";
 import { focusStyle } from "../../ui";
-import { Spinner } from "../../ui/Spinner";
+import { Spinner } from "@opencast/appkit";
 import { currentRef, useDebounce } from "../../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";

@@ -8,7 +8,7 @@ import { match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
 import { MAIN_PADDING } from "../../layout/Root";
 import { ExtraMetadata, useForceRerender } from "../../util";
 import { getEventTimeInfo } from "../../util/video";
-import { Spinner } from "../Spinner";
+import { Spinner } from "@opencast/appkit";
 import { RelativeDate } from "../time";
 import { COLORS } from "../../color";
 

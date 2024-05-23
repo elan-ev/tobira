@@ -13,7 +13,7 @@ import { PageTitle } from "../layout/header/ui";
 import { useForm } from "react-hook-form";
 import { boxError } from "../ui/error";
 import { translatedConfig, useNoindexTag } from "../util";
-import { Spinner } from "../ui/Spinner";
+import { Spinner } from "@opencast/appkit";
 import { LuCheck, LuChevronLeft, LuLogIn } from "react-icons/lu";
 import { Card } from "../ui/Card";
 import CONFIG from "../config";
