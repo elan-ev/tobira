@@ -16,7 +16,7 @@ import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { PathInvalid } from ".";
 import { boxError, NotAuthorized } from "../../../ui/error";
 import { displayCommitError, RealmSettingsContainer, realmValidations } from "./util";
-import { Button } from "../../../ui/Button";
+import { Button } from "@opencast/appkit";
 import { AddChildMutation$data } from "./__generated__/AddChildMutation.graphql";
 import { Spinner } from "../../../ui/Spinner";
 import { Nav } from "../../../layout/Navigation";

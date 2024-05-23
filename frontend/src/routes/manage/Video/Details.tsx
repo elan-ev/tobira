@@ -12,7 +12,7 @@ import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
-import { buttonStyle } from "../../../ui/Button";
+import { buttonStyle } from "@opencast/appkit";
 import { COLORS } from "../../../color";
 import { secondsToTimeString } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";

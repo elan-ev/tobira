@@ -20,7 +20,7 @@ import { MissingRealmName } from "./util";
 import { realmBreadcrumbs } from "../util/realm";
 import { isRealUser, useUser } from "../User";
 import { Card } from "../ui/Card";
-import { Button } from "../ui/Button";
+import { Button } from "@opencast/appkit";
 import { displayCommitError } from "./manage/Realm/util";
 import { boxError } from "../ui/error";
 import { Spinner } from "../ui/Spinner";

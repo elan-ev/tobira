@@ -10,7 +10,7 @@ import type {
 import { useForm } from "react-hook-form";
 import { Input, Select } from "../../../ui/Input";
 import { Card } from "../../../ui/Card";
-import { Button } from "../../../ui/Button";
+import { Button } from "@opencast/appkit";
 import { Spinner } from "../../../ui/Spinner";
 import { Form } from "../../../ui/Form";
 import { boxError } from "../../../ui/error";

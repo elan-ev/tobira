@@ -45,7 +45,7 @@ import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
 import { isExperimentalFlagSet, keyOfId } from "../util";
-import { Button } from "../ui/Button";
+import { Button } from "@opencast/appkit";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute } from "./Series";
 

@@ -21,7 +21,7 @@ import { AddButtons } from "./AddButtons";
 import { EditBlock } from "./Block";
 import { Breadcrumbs } from "../../../../ui/Breadcrumbs";
 import { useNavBlocker } from "../../../util";
-import { LinkButton } from "../../../../ui/Button";
+import { LinkButton } from "../../../../ui/LinkButton";
 import { PageTitle } from "../../../../layout/header/ui";
 import { RealmEditLinks } from "../../../Realm";
 import { realmBreadcrumbs } from "../../../../util/realm";

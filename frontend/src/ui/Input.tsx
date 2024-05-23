@@ -2,7 +2,7 @@ import React, { Fragment, ReactNode, useId, useImperativeHandle, useRef, useStat
 import { LuCheck, LuCopy } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 
-import { Button } from "./Button";
+import { Button } from "@opencast/appkit";
 import { COLORS } from "../color";
 import { timeStringToSeconds } from "../util";
 import { focusStyle } from ".";

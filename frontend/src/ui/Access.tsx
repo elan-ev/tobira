@@ -41,7 +41,7 @@ import { AccessUserSearchQuery } from "./__generated__/AccessUserSearchQuery.gra
 import { ErrorDisplay } from "../util/err";
 import { useNavBlocker } from "../routes/util";
 import { currentRef } from "../util";
-import { Button } from "./Button";
+import { Button } from "@opencast/appkit";
 import { ModalHandle, Modal } from "@opencast/appkit";
 import { ConfirmationModal, ConfirmationModalHandle } from "./Modal";
 import { Spinner } from "./Spinner";

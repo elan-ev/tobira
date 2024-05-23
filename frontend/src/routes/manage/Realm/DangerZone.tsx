@@ -9,7 +9,7 @@ import type {
     DangerZoneRealmData$key,
 } from "./__generated__/DangerZoneRealmData.graphql";
 import { currentRef } from "../../../util";
-import { Button } from "../../../ui/Button";
+import { Button } from "@opencast/appkit";
 import { Card } from "../../../ui/Card";
 import { PathSegmentInput } from "../../../ui/PathSegmentInput";
 import { boxError } from "../../../ui/error";
