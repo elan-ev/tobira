@@ -42,12 +42,15 @@
         name: tobira-{{ id }}
         owner: tobira-{{ id }}
 
-    - name: add pgcrypto extension
+    - name: add postgres extensions
       become: true
       become_user: postgres
       community.postgresql.postgresql_ext:
-        name: pgcrypto
+        name: "{{ item }}"
         db: tobira-{{ id }}
+      loop:
+          - hstore
+          - pgcrypto
 
     # TOBIRA
 
@@ -134,15 +137,7 @@
         # The ending `pgc` is important so that `pg_restore` (and not psql) is used.
         target: /opt/tobira/{{ id }}/db-dump.pgc
         name:  tobira-{{ id }}
-        target_opts: '--no-owner --role=tobira-{{ id }}'
-      # Unfortunately, we have to add this here as the command fails when adding
-      # comments to the 'public' schema and to two extensions. That fails
-      # because the user can't access those. In the future, with a newer
-      # `pg_restore` function we can specify `--no-comments` which should fix
-      # this. Also note: despite those errors, the dump is correctly restored.
-      # Of course this now ignores all errors, so we might miss other stuff
-      # that goes wrong.
-      ignore_errors: true
+        target_opts: '--no-comments --no-owner --role=tobira-{{ id }}'
 
     # We don't need it anymore and it takes quite a bit of storage space.
     - name: Delete DB dump file
@@ -150,13 +145,6 @@
       file:
         path: /opt/tobira/{{ id }}/db-dump.pgc
         state: absent
-
-    - name: add hstore extension
-      become: true
-      become_user: postgres
-      community.postgresql.postgresql_ext:
-        name: hstore
-        db: tobira-{{ id }}
 
     - name: run database migration
       become: true
