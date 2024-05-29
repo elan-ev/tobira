@@ -1,8 +1,8 @@
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { LuExternalLink } from "react-icons/lu";
 
-import { useId, useState } from "react";
-import { Link } from "../../../router";
+import { useId, useRef, useState } from "react";
+import { Link, useRouter } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
 import { CopyableInput, Input, InputWithCheckbox, TextArea, TimeInput } from "../../../ui/Input";
@@ -12,13 +12,16 @@ import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
-import { buttonStyle } from "../../../ui/Button";
+import { Button, buttonStyle } from "../../../ui/Button";
 import { COLORS } from "../../../color";
-import { secondsToTimeString, translatedConfig } from "../../../util";
+import { currentRef, secondsToTimeString, translatedConfig } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageRoute } from "..";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
+import { graphql, useMutation } from "react-relay";
+import { displayCommitError } from "../Realm/util";
+import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -26,6 +29,12 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
     "",
     event => <Page event={event} />,
 );
+
+const deleteVideoMutation = graphql`
+    mutation DetailsDeleteVideoMutation($id: ID!) {
+        deleteVideo(id: $id) { id }
+    }
+`;
 
 type Props = {
     event: AuthorizedEvent;
@@ -54,31 +63,74 @@ const Page: React.FC<Props> = ({ event }) => {
         }}>
             <UpdatedCreatedInfo event={event} />
             <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
-                {user.canUseEditor && !event.isLive && event.canWrite && (
-                    <ExternalLink
-                        service="EDITOR"
-                        params={{
-                            id: event.opencastId,
-                            callbackUrl: document.location.href,
-                            callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
-                        }}
-                        fallback="button"
-                        css={{
-                            marginBottom: 16,
-                            ...buttonStyle("normal") as Record<string, unknown>,
-                        }}
-                    >
-                        {t("manage.my-videos.details.open-in-editor")}
-                        <LuExternalLink size={16} />
-                    </ExternalLink>
-                )}
-                <DirectLink event={event} />
-                <MetadataSection event={event} />
+                <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                    {user.canUseEditor && !event.isLive && event.canWrite && (
+                        <ExternalLink
+                            service="EDITOR"
+                            params={{
+                                id: event.opencastId,
+                                callbackUrl: document.location.href,
+                                callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
+                            }}
+                            fallback="button"
+                            css={buttonStyle("normal")}
+                        >
+                            {t("manage.my-videos.details.open-in-editor")}
+                            <LuExternalLink size={16} />
+                        </ExternalLink>
+                    )}
+                    <DeleteButton {...{ event }} />
+                </div>
+                <DirectLink {...{ event }} />
+                <MetadataSection {...{ event }} />
             </div>
         </section>
         <section css={{ marginBottom: 32 }}>
-            <HostRealms event={event} />
+            <HostRealms {...{ event }} />
         </section>
+    </>;
+};
+
+const DeleteButton: React.FC<Props> = ({ event }) => {
+    const { t } = useTranslation();
+    const router = useRouter();
+    const [commit] = useMutation(deleteVideoMutation);
+    const modalRef = useRef<ConfirmationModalHandle>(null);
+
+
+    const deleteVideo = () => {
+        commit({
+            variables: {
+                id: event.id,
+            },
+            updater: store => store.invalidateStore(),
+            onCompleted: () => {
+                currentRef(modalRef).done();
+                router.goto("/~manage/videos");
+            },
+            onError: error => {
+                const failedAction = t("manage.my-videos.details.delete.failed");
+                currentRef(modalRef).reportError(displayCommitError(error, failedAction));
+            },
+        });
+    };
+
+    return <>
+        <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
+            <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
+                {t("manage.my-videos.details.delete.title")}
+            </span>
+        </Button>
+        <ConfirmationModal
+            title={t("manage.my-videos.details.delete.confirm")}
+            buttonContent={t("manage.my-videos.details.delete.title")}
+            onSubmit={deleteVideo}
+            ref={modalRef}
+        >
+            <p>
+                <Trans i18nKey="manage.my-videos.details.delete.cannot-be-undone" />
+            </p>
+        </ConfirmationModal>
     </>;
 };
 

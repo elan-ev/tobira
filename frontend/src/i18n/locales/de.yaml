@@ -406,6 +406,11 @@ manage:
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
+      delete:
+        title: Video löschen
+        confirm: Video löschen?
+        cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
+        failed: Löschen fehlgeschlagen.
     acl:
       title: Zugriffsrechte
     technical-details:
