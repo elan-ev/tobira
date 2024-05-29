@@ -303,6 +303,7 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
         config: ctx.config.clone(),
         jwt: ctx.jwt.clone(),
         search: ctx.search.clone(),
+        oc_client: ctx.oc_client.clone(),
     });
     let gql_result = juniper::execute(
         &gql_request.query,
