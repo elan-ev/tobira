@@ -254,6 +254,7 @@ type AuthorizedEvent implements Node {
   syncedData: SyncedEventData
   "Whether the current user has write access to this event."
   canWrite: Boolean!
+  tobiraDeletionTimestamp: DateTimeUtc
   series: Series
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!
@@ -716,7 +717,9 @@ type User {
   canFindUnlisted: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
-    on the "my videos" page.
+    on the "my videos" page. This also returns events that have been marked
+    as deleted (meaning their deletion in Opencast has been requested but they
+    are not yet removed from Tobira's database).
 
     Exactly one of `first` and `last` must be set!
   """

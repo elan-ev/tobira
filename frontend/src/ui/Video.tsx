@@ -1,6 +1,6 @@
 import { PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuAlertTriangle, LuFilm, LuRadio, LuUserCircle, LuVolume2 } from "react-icons/lu";
+import { LuAlertTriangle, LuFilm, LuRadio, LuTrash, LuUserCircle, LuVolume2 } from "react-icons/lu";
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
@@ -28,11 +28,15 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
 
     /** If `true`, an indicator overlay is shown */
     active?: boolean;
+
+    /** If `true`, a special icon is shown instead of the thumbnail */
+    deletionIsPending?: boolean;
 };
 
 export const Thumbnail: React.FC<ThumbnailProps> = ({
     event,
     active = false,
+    deletionIsPending = false,
     ...rest
 }) => {
     const { t } = useTranslation();
@@ -47,18 +51,20 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         : false;
 
     let inner;
-    if (event.syncedData?.thumbnail != null) {
+    if (event.syncedData?.thumbnail != null && !deletionIsPending) {
         // We have a proper thumbnail.
         inner = <ThumbnailImg
             src={event.syncedData.thumbnail}
             alt={t("video.thumbnail-for", { video: event.title })}
         />;
     } else {
-        inner = <ThumbnailReplacement {...{ audioOnly, isUpcoming, isDark }} />;
+        inner = <ThumbnailReplacement {...{ audioOnly, isUpcoming, isDark, deletionIsPending }} />;
     }
 
     let overlay;
-    if (event.isLive) {
+    if (deletionIsPending) {
+        overlay = null;
+    } else if (event.isLive) {
         // TODO: we might want to have a better "is currently live" detection.
         const now = new Date();
         const startTime = new Date(event.syncedData?.startTime ?? event.created);
@@ -101,14 +107,23 @@ type ThumbnailReplacementProps = {
     audioOnly: boolean;
     isDark: boolean;
     isUpcoming?: boolean;
+    deletionIsPending?: boolean;
 }
 export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
-    { audioOnly, isDark, isUpcoming }
+    { audioOnly, isDark, isUpcoming, deletionIsPending }
 ) => {
     // We have no thumbnail. If the resolution is `null` as well, we are
     // dealing with an audio-only event and show an appropriate icon.
     // Otherwise we use a generic icon.
-    const icon = audioOnly ? <LuVolume2 /> : <LuFilm />;
+    // If the event has been marked as deleted, the other criteria are
+    // ignored and an icon that indicates deletion is shown instead.
+    let icon = <LuFilm />;
+    if (audioOnly) {
+        icon = <LuVolume2 />;
+    }
+    if (deletionIsPending) {
+        icon = <LuTrash />;
+    }
 
     return <div css={{
         display: "flex",
@@ -116,12 +131,13 @@ export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
         alignItems: "center",
         justifyContent: "center",
         fontSize: 40,
-        background: "linear-gradient(135deg, #33333380 50%, transparent 0),"
-            + "linear-gradient(-135deg, #33333380 50%, transparent 0)",
+        ...!deletionIsPending && {
+            background: "linear-gradient(135deg, #33333380 50%, transparent 0),"
+                + "linear-gradient(-135deg, #33333380 50%, transparent 0)" },
         backgroundSize: "17px 17px",
         color: "#dbdbdb",
-        backgroundColor: "#292929",
-        ...isDark && {
+        backgroundColor: !deletionIsPending ? "#292929" : COLORS.neutral50,
+        ...isDark && !deletionIsPending && {
             backgroundColor: "#313131",
             background: isUpcoming
                 ? "linear-gradient(135deg, #48484880 50%, transparent 0),"

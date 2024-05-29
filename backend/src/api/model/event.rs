@@ -40,6 +40,7 @@ pub(crate) struct AuthorizedEvent {
     write_roles: Vec<String>,
 
     synced_data: Option<SyncedEventData>,
+    tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug)]
@@ -65,6 +66,7 @@ impl_from_db!(
             created, updated, start_time, end_time,
             tracks, captions, segments,
             read_roles, write_roles,
+            tobira_deletion_timestamp,
         },
     },
     |row| {
@@ -80,6 +82,7 @@ impl_from_db!(
             metadata: row.metadata(),
             read_roles: row.read_roles::<Vec<String>>(),
             write_roles: row.write_roles::<Vec<String>>(),
+            tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             synced_data: match row.state::<EventState>() {
                 EventState::Ready => Some(SyncedEventData {
                     updated: row.updated(),
@@ -204,6 +207,10 @@ impl AuthorizedEvent {
     /// Whether the current user has write access to this event.
     fn can_write(&self, context: &Context) -> bool {
         context.auth.overlaps_roles(&self.write_roles)
+    }
+
+    fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
+        &self.tobira_deletion_timestamp
     }
 
     async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
@@ -451,13 +458,13 @@ impl AuthorizedEvent {
                     select {event_cols}, \
                         row_number() over(order by ({sort_col}, id) {sort_order}) as row_num, \
                         count(*) over() as total_count \
-                    from events \
+                    from all_events as events \
                     {acl_filter} \
                     order by ({sort_col}, id) {sort_order} \
                 ) as tmp \
                 {filter} \
                 limit {limit}",
-            event_cols = Self::select().with_omitted_table_prefix("events"),
+            event_cols = Self::select(),
             sort_col = order.column.to_sql(),
             sort_order = sql_sort_order.to_sql(),
             limit = limit,
@@ -493,7 +500,7 @@ impl AuthorizedEvent {
         let total_count = match total_count {
             Some(c) => c,
             None => {
-                let query = format!("select count(*) from events {}", acl_filter);
+                let query = format!("select count(*) from all_events {}", acl_filter);
                 context.db
                     .query_one(&query, &[&context.auth.roles_vec()])
                     .await?

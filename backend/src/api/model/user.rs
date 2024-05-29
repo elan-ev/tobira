@@ -65,7 +65,9 @@ impl User {
     }
 
     /// Returns all events that somehow "belong" to the user, i.e. that appear
-    /// on the "my videos" page.
+    /// on the "my videos" page. This also returns events that have been marked
+    /// as deleted (meaning their deletion in Opencast has been requested but they
+    /// are not yet removed from Tobira's database).
     ///
     /// Exactly one of `first` and `last` must be set!
     #[graphql(arguments(order(default = Default::default())))]

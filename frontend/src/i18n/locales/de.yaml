@@ -411,6 +411,16 @@ manage:
         confirm: Video löschen?
         cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
         failed: Löschen fehlgeschlagen.
+        failed-maybe: Löschen möglicherweise fehlgeschlagen.
+        pending: Löschvorgang ausstehend.
+        tooltip:
+          failed: >
+            Der Löschvorgang für dieses Video wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
+            und daher möglicherweise fehlgeschlagen.
+          pending: >
+            Der Löschvorgang dieses Videos in Opencast wurde angesetzt und es wird
+            nach dessen Erfolg hier entfernt.
+
     acl:
       title: Zugriffsrechte
     technical-details:

@@ -34,6 +34,7 @@ type Config = {
     plyr: PlyrConfig;
     upload: UploadConfig;
     paellaPluginConfig: object;
+    sync: SyncConfig;
 };
 
 type FooterLink = "about" | "graphiql" | {
@@ -94,6 +95,10 @@ type VersionInfo = {
 
 type UploadConfig = {
     requireSeries: boolean;
+};
+
+type SyncConfig = {
+    pollPeriod: number;
 };
 
 type MetadataLabel = "builtin:license" | "builtin:source" | TranslatedString;
