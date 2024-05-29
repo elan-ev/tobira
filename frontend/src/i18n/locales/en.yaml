@@ -45,6 +45,7 @@ errors:
   not-authorized-to-view-page: You are not authorized to view this page.
   might-need-to-login: You might need to login.
   invalid-input: Invalid input.
+  opencast-unavailable: Opencast is currently not available.
   internal-server-error: Internal server error (something is wrong with the server).
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
@@ -571,6 +572,12 @@ api-remote-errors:
       Your username '{{username}}' contains characters that are not allowed in page paths,
       thus you cannot create your own page. Contact a system administrator for
       further assistance.
+  event:
+    delete:
+      not-found: >
+        The video you are trying to delete does not exist.
+        It might have been removed already.
+      not-allowed: You are not allowed to delete this video.
 
 embed:
   not-supported: This page can't be embedded.

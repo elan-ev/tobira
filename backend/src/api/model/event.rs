@@ -1,6 +1,7 @@
 use std::fmt;
 
 use chrono::{DateTime, Utc};
+use hyper::StatusCode;
 use postgres_types::ToSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::Row;
@@ -317,6 +318,50 @@ impl AuthorizedEvent {
             )
             .await?
             .pipe(Ok)
+    }
+
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+        let event = Self::load_by_id(id, context)
+            .await? 
+            .ok_or_else(|| err::invalid_input!(
+                key = "event.delete.not-found",
+                "event not found",
+            ))?
+            .into_result()?;
+
+        if !context.auth.overlaps_roles(&event.write_roles) {
+            return Err(err::not_authorized!(
+                key = "event.delete.not-allowed",
+                "you are not allowed to delete this event",
+            ));
+        }
+
+        let response = context
+            .oc_client
+            .delete_event(&event.opencast_id)
+            .await
+            .map_err(|e| {
+                error!("Failed to send delete request: {}", e);
+                err::opencast_unavailable!("Failed to communicate with Opencast")
+            })?;
+
+        if response.status() == StatusCode::ACCEPTED {
+            // 202: The retraction of publications has started.
+            info!(event_id = %id, "Requested deletion of event");
+            context.db.execute("\
+                update all_events \
+                set tobira_deletion_timestamp = current_timestamp \
+                where id = $1 \
+            ", &[&event.key]).await?;
+            Ok(RemovedEvent { id })
+        } else {
+            warn!(
+                event_id = %id,
+                "Failed to delete event, OC returned status: {}",
+                response.status()
+            );
+            Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
+        }
     }
 
     pub(crate) async fn load_writable_for_user(
@@ -668,4 +713,10 @@ pub(crate) struct EventPageInfo {
     pub(crate) start_index: Option<i32>,
     /// The index of the last returned event.
     pub(crate) end_index: Option<i32>,
+}
+
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct RemovedEvent {
+    id: Id,
 }

@@ -46,6 +46,7 @@ errors:
   not-authorized-to-view-page: Sie sind nicht dazu autorisiert, diese Seite aufzurufen.
   might-need-to-login: Sie müssen sich möglicherweise einloggen.
   invalid-input: Ungültige Eingabe.
+  opencast-unavailable: Opencast ist momentan nicht erreichbar.
   internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
   unknown: Unbekannter Fehler.
@@ -597,6 +598,10 @@ api-remote-errors:
       Ihr Nutzername '{{username}}' enthält Zeichen, die nicht in Seitenpfaden erlaubt sind.
       Daher können Sie sich keine persönliche Seite anlegen.
       Kontaktieren Sie einen Systemadministrator für weitere Unterstützung.
+  event:
+    delete:
+      not-found: Das zu löschende Video existiert nicht. Möglicherweise wurde es bereits entfernt.
+      not-allowed: Sie haben nicht die Berechtigung, dieses Video zu löschen.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.
