@@ -273,7 +273,7 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
                 <WithTooltip tooltip={label} css={{ fontFamily: "var(--main-font), sans-serif" }}>
                     <Button
                         aria-label={label}
-                        kind="happy"
+                        kind="call-to-action"
                         onClick={copy}
                         css={{
                             paddingLeft: 10,

@@ -1,6 +1,6 @@
 import { Interpolation, Theme } from "@emotion/react";
 import React from "react";
-import { buttonStyle, Kind } from "@opencast/appkit";
+import { buttonStyle, Kind, useAppkitConfig, useColorScheme } from "@opencast/appkit";
 
 import { Link } from "../router";
 
@@ -18,6 +18,16 @@ export const LinkButton: React.FC<LinkButtonProps> = ({
     to,
     children,
     ...rest
-}) => (
-    <Link to={to} css={buttonStyle(kind, extraCss)} {...rest}>{children}</Link>
-);
+}) => {
+    const appkitConfig = useAppkitConfig();
+    const { isHighContrast } = useColorScheme();
+    return (
+        <Link
+            to={to}
+            css={buttonStyle(appkitConfig, kind, isHighContrast, extraCss)}
+            {...rest}
+        >
+            {children}
+        </Link>
+    );
+};

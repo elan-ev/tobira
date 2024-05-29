@@ -85,7 +85,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
         <Modal
             ref={cannotDeleteModalRef}
             title={t("manage.realm.content.cannot-remove-block")}
-            text={{ generalActionClose: t("general.action.close") }}
+            text={{ close: t("general.action.close") }}
         >
             {t("manage.realm.content.cannot-remove-name-source-block")}
         </Modal>
@@ -95,9 +95,9 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
             onSubmit={remove}
             ref={modalRef}
             text={{
-                generalActionCancel: t("general.action.cancel"),
-                generalActionClose: t("general.action.close"),
-                manageAreYouSure: t("manage.are-you-sure"),
+                cancel: t("general.action.cancel"),
+                close: t("general.action.close"),
+                areYouSure: t("manage.are-you-sure"),
             }}
         >
             <p>

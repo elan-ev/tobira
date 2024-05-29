@@ -574,7 +574,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             title={t("video.share.title", { title: label })}
             css={{ minWidth: "max-content" }}
             closeOnOutsideClick
-            text={{ generalActionClose: t("general.action.close") }}
+            text={{ close: t("general.action.close") }}
         >
             <div css={{ display: "flex", justifyContent: "center" }}>
                 <QRCodeCanvas

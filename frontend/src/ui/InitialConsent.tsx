@@ -41,7 +41,7 @@ export const InitialConsent: React.FC<Props> = ({ consentGiven: initialConsentGi
             title={translatedConfig(CONFIG.initialConsent.title, i18n)}
             closable={false}
             initialFocus={false}
-            text={{ generalActionClose: t("general.action.close") }}
+            text={{ close: t("general.action.close") }}
         >
             <TextBlock content={translatedConfig(CONFIG.initialConsent.text, i18n)} />
             <div css={{ display: "flex" }}>

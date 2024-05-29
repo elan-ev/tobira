@@ -234,9 +234,9 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             onSubmit={remove}
             ref={modalRef}
             text={{
-                generalActionCancel: t("general.action.cancel"),
-                generalActionClose: t("general.action.close"),
-                manageAreYouSure: t("manage.are-you-sure"),
+                cancel: t("general.action.cancel"),
+                close: t("general.action.close"),
+                areYouSure: t("manage.are-you-sure"),
             }}
         >
             <p>

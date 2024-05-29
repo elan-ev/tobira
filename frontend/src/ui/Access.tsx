@@ -860,7 +860,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
             <Modal
                 ref={resetModalRef}
                 title={t("manage.access.reset-modal.title")}
-                text={{ generalActionClose: t("general.action.close") }}
+                text={{ close: t("general.action.close") }}
             >
                 <p>{t("manage.access.reset-modal.body")}</p>
                 <div css={{
@@ -897,9 +897,9 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
                 buttonContent={t("manage.access.save-modal.confirm")}
                 onSubmit={() => submit(selections)}
                 text={{
-                    generalActionCancel: t("general.action.cancel"),
-                    generalActionClose: t("general.action.close"),
-                    manageAreYouSure: t("manage.are-you-sure"),
+                    cancel: t("general.action.cancel"),
+                    close: t("general.action.close"),
+                    areYouSure: t("manage.are-you-sure"),
                 }}
             >
                 <p>{t(`manage.access.save-modal.disclaimer-${kind}`)}</p>
