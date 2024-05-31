@@ -30,7 +30,9 @@ export type ExternalLinkProps = PropsWithChildren<{
 } | {
     service: "EDITOR";
     params: {
-        mediaPackageId: string;
+        id: string;
+        callbackUrl: string;
+        callbackSystem: string;
     };
 })>;
 
