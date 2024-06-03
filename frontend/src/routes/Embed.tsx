@@ -1,7 +1,9 @@
 import { ReactNode, Suspense } from "react";
 import { LuFrown, LuAlertTriangle } from "react-icons/lu";
 import { Translation, useTranslation } from "react-i18next";
-import { graphql, PreloadedQuery, usePreloadedQuery } from "react-relay";
+import {
+    graphql, GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery,
+} from "react-relay";
 import { unreachable } from "@opencast/appkit";
 
 import { eventId, isSynced, keyOfId } from "../util";
@@ -13,37 +15,9 @@ import { Spinner } from "../ui/Spinner";
 import { MovingTruck } from "../ui/Waiting";
 import { b64regex } from "./util";
 import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
+import { EmbedDirectOpencastQuery } from "./__generated__/EmbedDirectOpencastQuery.graphql";
+import { EmbedEventData$key, EmbedEventData$data } from "./__generated__/EmbedEventData.graphql";
 import { PlayerContextProvider } from "../ui/player/PlayerContext";
-
-
-const query = graphql`
-    query EmbedQuery($id: ID!) {
-        eventById(id: $id) {
-            __typename
-            ... on NotAllowed { dummy }
-            ... on AuthorizedEvent {
-                title
-                created
-                isLive
-                opencastId
-                creators
-                metadata
-                description
-                series { title opencastId }
-                syncedData {
-                    updated
-                    startTime
-                    endTime
-                    duration
-                    thumbnail
-                    tracks { uri flavor mimetype resolution isMaster }
-                    captions { uri lang }
-                    segments { uri startTime }
-                }
-            }
-        }
-    }
-`;
 
 export const EmbedVideoRoute = makeRoute({
     url: ({ videoId }: { videoId: string }) => `/~embed/!v/${keyOfId(videoId)}`,
@@ -54,6 +28,12 @@ export const EmbedVideoRoute = makeRoute({
             return null;
         }
         const videoId = decodeURIComponent(params[1]);
+
+        const query = graphql`
+            query EmbedQuery($id: ID!) {
+                event: eventById(id: $id) { ... EmbedEventData }
+            }
+            `;
 
         const queryRef = loadQuery<EmbedQuery>(query, { id: eventId(videoId) });
 
@@ -69,7 +49,7 @@ export const EmbedVideoRoute = makeRoute({
                     </PlayerPlaceholder>
                 }>
                     <PlayerContextProvider>
-                        <Embed queryRef={queryRef} />
+                        <Embed query={query} queryRef={queryRef} />
                     </PlayerContextProvider>
                 </Suspense>
             </ErrorBoundary>,
@@ -78,12 +58,85 @@ export const EmbedVideoRoute = makeRoute({
     },
 });
 
+/** Direct link to video with Opencast ID: `/!v/:<ocid>` */
+export const EmbedOpencastVideoRoute = makeRoute({
+    url: (args: { ocID: string }) => `/~embed/!v/:${args.ocID}`,
+    match: url => {
+        const regex = new RegExp("^/~embed/!v/:([^/]+)$", "u");
+        const matches = regex.exec(url.pathname);
+        if (!matches) {
+            return null;
+        }
+
+        const query = graphql`
+            query EmbedDirectOpencastQuery($id: String!) {
+                event: eventByOpencastId(id: $id)  { ... EmbedEventData }
+            }
+            `;
+
+        const videoId = decodeURIComponent(matches[1]);
+        const queryRef = loadQuery<EmbedDirectOpencastQuery>(query, { id: videoId });
+
+        return {
+            render: () => <ErrorBoundary>
+                <Suspense fallback={
+                    <PlayerPlaceholder>
+                        <Spinner css={{
+                            "& > circle": {
+                                stroke: "white",
+                            },
+                        }} />
+                    </PlayerPlaceholder>
+                }>
+                    <PlayerContextProvider>
+                        <Embed query={query} queryRef={queryRef} />
+                    </PlayerContextProvider>
+                </Suspense>
+            </ErrorBoundary>,
+            dispose: () => queryRef.dispose(),
+        };
+    },
+});
+
+const embedEventFragment = graphql`
+    fragment EmbedEventData on Event {
+        __typename
+        ... on NotAllowed { dummy }
+        ... on AuthorizedEvent {
+            title
+            created
+            isLive
+            opencastId
+            creators
+            metadata
+            description
+            series { title opencastId }
+            syncedData {
+                updated
+                startTime
+                endTime
+                duration
+                thumbnail
+                tracks { uri flavor mimetype resolution isMaster }
+                captions { uri lang }
+                segments { uri startTime }
+            }
+        }
+    }
+`;
+
+
 type EmbedProps = {
-    queryRef: PreloadedQuery<EmbedQuery>;
+    query: GraphQLTaggedNode;
+    queryRef: PreloadedQuery<EmbedQuery|EmbedDirectOpencastQuery>;
 };
 
-const Embed: React.FC<EmbedProps> = ({ queryRef }) => {
-    const { eventById: event } = usePreloadedQuery(query, queryRef);
+const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
+    const fragmentRef = usePreloadedQuery(query, queryRef);
+    const event: EmbedEventData$data = useFragment(
+        embedEventFragment,
+        fragmentRef.event as EmbedEventData$key,
+    );
     const { t } = useTranslation();
 
     if (!event) {
