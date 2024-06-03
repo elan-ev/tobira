@@ -57,6 +57,7 @@ not-found:
   page-not-found: Seite nicht gefunden
   video-not-found: Video nicht gefunden
   series-not-found: Serie nicht gefunden
+  playlist-not-found: Playlist nicht gefunden
   page-explanation: >
     Die von Ihnen gewünschte Seite existiert nicht. Sie wurde möglicherweise
     gelöscht oder umbenannt.
@@ -65,6 +66,9 @@ not-found:
     gelöscht oder verschoben.
   series-explanation: >
     Die von Ihnen gewünschte Serie existiert nicht. Sie wurde möglicherweise
+    gelöscht oder verschoben.
+  playlist-explanation: >
+    Die von Ihnen gewünschte Playlist existiert nicht. Sie wurde möglicherweise
     gelöscht oder verschoben.
   url-typo: >
     Falls Sie die Adresse/URL manuell eingegeben haben, prüfen Sie diese auf
@@ -177,7 +181,6 @@ series:
   series: Serie
   deleted: Gelöschte Serie
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
-  no-events: Diese Serie enthält keine Videos oder Sie sind nicht berechtigt, diese zu sehen.
   entry-of-series-thumbnail: "Vorschlaubild für Teil von „{{series}}“"
   videos:
     heading: Videos
@@ -188,10 +191,15 @@ series:
       in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
 
 videolist-block:
-  upcoming-live-streams: "Upcoming live streams ({{count}})"
+  upcoming-live-streams: "Anstehende Livestreams ({{count}})"
+  missing-video: Video nicht gefunden
+  unauthorized: Fehlende Berechtigung
+  hidden-items_one: 'Ein Video wurde nicht gefunden oder Sie haben keinen Zugriff darauf.'
+  hidden-items_other: '{{count}} Videos wurden nicht gefunden oder Sie haben keinen Zugriff darauf.'
   settings:
     order: Reihenfolge
     order-label: Video Reihenfolge auswählen
+    original: Wie Playlist
     new-to-old: Neueste zuerst
     old-to-new: Älteste zuerst
     a-z: A bis Z
@@ -598,6 +606,7 @@ manage:
 api-remote-errors:
   view:
     event: Sie sind nicht autorisiert, dieses Video zu sehen.
+    playlist: Sie sind nicht autorisiert, diese Playlist zu sehen.
   upload:
     not-logged-in: Sie müssen angemeldet sein, um Videos hochzuladen.
     not-authorized: $t(upload.not-authorized)

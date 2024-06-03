@@ -26,6 +26,9 @@ export const eventId = (key: string) => `ev${key}`;
 /** Constructs series ID for graphQL by adding the "sr" prefix. */
 export const seriesId = (key: string) => `sr${key}`;
 
+/** Constructs series ID for graphQL by adding the "sr" prefix. */
+export const playlistId = (key: string) => `pl${key}`;
+
 /**
  * Create a comparison function for `Array.prototype.sort` comparing whatever
  * the given key function returns as numbers.

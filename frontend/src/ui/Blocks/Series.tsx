@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, readInlineData, useFragment } from "react-relay";
 
 import { isSynced } from "../../util";
 import type { Fields } from "../../relay";
@@ -11,7 +11,8 @@ import {
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
 import { Card } from "../Card";
-import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
+import { VideoListBlock, VideoListBlockContainer, videoListEventFragment } from "./VideoList";
+import { VideoListEventData$key } from "./__generated__/VideoListEventData.graphql";
 
 
 // ==============================================================================================
@@ -79,6 +80,9 @@ type Props = SharedFromSeriesProps & {
 
 const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
+    const events = series.events.map(event => (
+        readInlineData<VideoListEventData$key>(videoListEventFragment, event)
+    ));
 
     if (!isSynced(series)) {
         const { title, layout } = props;
@@ -89,11 +93,14 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
 
     return <VideoListBlock
         initialLayout={props.layout}
-        initialOrder={props.order}
+        initialOrder={
+            (props.order === "%future added value" ? undefined : props.order) ?? "NEW_TO_OLD"
+        }
+        allowOriginalOrder={false}
         title={props.title ?? (props.showTitle ? series.title : undefined)}
         description={(props.showMetadata && series.syncedData.description) || undefined}
         activeEventId={props.activeEventId}
         basePath={props.basePath}
-        eventsFrag={series.events}
+        items={events}
     />;
 };

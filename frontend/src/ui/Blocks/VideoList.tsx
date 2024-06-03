@@ -8,37 +8,39 @@ import React, {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import type { i18n } from "i18next";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
-    useColorScheme, Floating, FloatingHandle, useFloatingItemProps,
+    useColorScheme, Floating, FloatingHandle, useFloatingItemProps, bug,
 } from "@opencast/appkit";
 import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
-    LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid,
+    LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuAlertCircle, LuInfo,
 } from "react-icons/lu";
-import { graphql, useFragment } from "react-relay";
+import { graphql } from "react-relay";
 
 import { keyOfId } from "../../util";
 import { Link } from "../../router";
-import { VideoListOrder, VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
-import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
+import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
+import {
+    BaseThumbnailReplacement, isPastLiveEvent, isUpcomingLiveEvent, Thumbnail,
+    ThumbnailOverlayContainer,
+} from "../Video";
 import { RelativeDate } from "../time";
 import { CollapsibleDescription, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { COLORS } from "../../color";
 import { FloatingBaseMenu } from "../FloatingBaseMenu";
-import {
-    VideoListEventData$data,
-    VideoListEventData$key,
-} from "./__generated__/VideoListEventData.graphql";
+import { VideoListEventData$data } from "./__generated__/VideoListEventData.graphql";
 
 
 
 
-
-const eventFragment = graphql`
-    fragment VideoListEventData on AuthorizedEvent @relay(plural: true) {
+// This uses `@inline` because the fragment is used in different situations,
+// where using `useFragment` is very tricky (or maybe even impossible).
+export const videoListEventFragment = graphql`
+    fragment VideoListEventData on AuthorizedEvent @inline {
         id
         title
         created
@@ -54,7 +56,7 @@ const eventFragment = graphql`
         }
     }
 `;
-type Event = VideoListEventData$data[0];
+type Event = VideoListEventData$data;
 
 
 // ==============================================================================================
@@ -62,55 +64,134 @@ type Event = VideoListEventData$data[0];
 // ==============================================================================================
 
 type OrderContext = {
-    eventOrder: VideoListOrder;
-    setEventOrder: (newOrder: VideoListOrder) => void;
+    eventOrder: Order;
+    setEventOrder: (newOrder: Order) => void;
+    allowOriginalOrder: boolean;
 };
 
-const OrderContext = createContext<OrderContext>({
-    eventOrder: "NEW_TO_OLD",
-    setEventOrder: () => {},
-});
+const OrderContext = createContext<OrderContext | null>(null);
 
 const VIDEO_GRID_BREAKPOINT = 600;
+
+type VideoListItem = Event | "missing" | "unauthorized";
+
+type Order = "ORIGINAL" | "AZ" | "ZA" | "NEW_TO_OLD" | "OLD_TO_NEW";
 
 export type VideoListBlockProps = {
     basePath: string;
     activeEventId?: string;
-    initialOrder?: VideoListOrder;
+    allowOriginalOrder: boolean;
+    initialOrder: Order;
     initialLayout?: VideoListLayout;
     title?: string;
     description?: string;
-    eventsFrag: VideoListEventData$key;
+    items: ReadonlyArray<VideoListItem>;
 }
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     basePath,
     activeEventId,
-    initialOrder = "NEW_TO_OLD",
+    allowOriginalOrder,
+    initialOrder,
     initialLayout = "GALLERY",
     title,
     description,
-    eventsFrag,
+    items,
 }) => {
     const { t, i18n } = useTranslation();
-    const collator = new Intl.Collator(i18n.language);
-    const [eventOrder, setEventOrder] = useState<VideoListOrder>(initialOrder);
+    const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
+    const { mainItems, upcomingLiveEvents, hiddenItems } = orderItems(items, eventOrder, i18n);
 
-    const events = useFragment(eventFragment, eventsFrag);
+    const renderEvents = (events: readonly VideoListItem[]) => (
+        <Items
+            basePath={basePath}
+            items={events.map(item => ({
+                item,
+                active: item !== "missing"
+                    && item !== "unauthorized"
+                    && item.id === activeEventId,
+            }))}
+        />
+    );
 
-    const upcomingLiveEvents = [];
-    const mainEvents = [];
-    for (const event of events) {
+    const eventsNotEmpty = items.length > 0;
+
+    return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
+        <VideoListBlockContainer
+            showViewOptions={eventsNotEmpty}
+            {...{ title, description, initialLayout }}
+        >
+            {(mainItems.length === 0 && upcomingLiveEvents.length === 0)
+                ? <div css={{ padding: 14 }}>{t("videolist-block.no-videos")}</div>
+                : <>
+                    {upcomingLiveEvents.length > 1 && (
+                        <UpcomingEventsGrid count={upcomingLiveEvents.length}>
+                            {renderEvents(upcomingLiveEvents)}
+                        </UpcomingEventsGrid>
+                    )}
+                    {renderEvents(mainItems)}
+                </>
+            }
+            {hiddenItems > 0 && (
+                <div css={{
+                    fontSize: 14,
+                    marginTop: 24,
+                    backgroundColor: COLORS.neutral15,
+                    padding: "8px 16px",
+                    borderRadius: 4,
+                    display: "flex",
+                    gap: 16,
+                    alignItems: "center",
+                }}>
+                    <LuInfo size={18} />
+                    {t("videolist-block.hidden-items", { count: hiddenItems })}
+                </div>
+            )}
+        </VideoListBlockContainer>
+    </OrderContext.Provider>;
+};
+
+type OrderedItems = {
+    mainItems: readonly VideoListItem[];
+    upcomingLiveEvents: Event[];
+    hiddenItems: number;
+};
+
+const orderItems = (
+    items: readonly VideoListItem[],
+    eventOrder: Order,
+    i18n: i18n,
+): OrderedItems => {
+    if (eventOrder === "ORIGINAL") {
+        return {
+            mainItems: items,
+            upcomingLiveEvents: [],
+            hiddenItems: 0,
+        };
+    }
+
+    const upcomingLiveEvents: Event[] = [];
+    const mainItems: VideoListItem[] = [];
+    let hiddenItems = 0;
+    for (const event of items) {
+        // When the order isn't "original", then we don't show special items
+        // inline, but as a separate note at the bottom.
+        if (event === "missing" || event === "unauthorized") {
+            hiddenItems += 1;
+            continue;
+        }
+
         if (isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive)) {
             upcomingLiveEvents.push(event);
         } else if (!isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)) {
-            mainEvents.push(event);
+            mainItems.push(event);
         }
     }
 
     const timeMs = (event: Event) =>
         new Date(event.syncedData?.startTime ?? event.created).getTime();
 
+    const collator = new Intl.Collator(i18n.language);
     const compareEvents = (a: Event, b: Event, reverseTime = false) =>
         match(eventOrder, {
             "NEW_TO_OLD": () => reverseTime ? timeMs(a) - timeMs(b) : timeMs(b) - timeMs(a),
@@ -119,7 +200,17 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
             "ZA": () => collator.compare(b.title, a.title),
         }, unreachable);
 
-    mainEvents.sort((a, b) => {
+
+    mainItems.sort((a, b) => {
+        // Sort all missing and unauthorized items last. The `return` is
+        // basically unreachable code, so it could also be replaced by
+        // `unreachable`.
+        const aSpecial = a === "missing" || a === "unauthorized";
+        const bSpecial = b === "missing" || b === "unauthorized";
+        if (aSpecial || bSpecial) {
+            return +aSpecial - +bSpecial;
+        }
+
         // Sort all live events before non-live events.
         if (a.isLive !== b.isLive) {
             return +b.isLive - +a.isLive;
@@ -130,39 +221,12 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 
     // If there is only one upcoming event, it doesn't need an extra box or ordering.
     if (upcomingLiveEvents.length === 1) {
-        mainEvents.unshift(upcomingLiveEvents[0]);
+        mainItems.unshift(upcomingLiveEvents[0]);
     } else {
         upcomingLiveEvents.sort((a, b) => compareEvents(a, b, true));
     }
 
-    const renderEvents = (events: Event[]) => (
-        <Videos
-            basePath={basePath}
-            items={events.map(event => ({ event, active: event.id === activeEventId }))}
-        />
-    );
-
-
-    const eventsNotEmpty = events.length > 0;
-
-    return <OrderContext.Provider value={{ eventOrder, setEventOrder }}>
-        <VideoListBlockContainer
-            showViewOptions={eventsNotEmpty}
-            {...{ title, description, initialLayout }}
-        >
-            {!eventsNotEmpty
-                ? <div css={{ padding: 14 }}>{t("series.no-events")}</div>
-                : <>
-                    {upcomingLiveEvents.length > 1 && (
-                        <UpcomingEventsGrid count={upcomingLiveEvents.length}>
-                            {renderEvents(upcomingLiveEvents)}
-                        </UpcomingEventsGrid>
-                    )}
-                    {renderEvents(mainEvents)}
-                </>
-            }
-        </VideoListBlockContainer>
-    </OrderContext.Provider>;
+    return { mainItems, upcomingLiveEvents, hiddenItems };
 };
 
 
@@ -258,14 +322,14 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
 const OrderMenu: React.FC = () => {
     const { t } = useTranslation();
     const ref = useRef<FloatingHandle>(null);
-    const order = useContext(OrderContext);
+    const order = useContext(OrderContext) ?? bug("order context not defined for videolist block");
 
     const triggerContent = match(order.eventOrder, {
+        "ORIGINAL": () => t("videolist-block.settings.original"),
         "NEW_TO_OLD": () => t("videolist-block.settings.new-to-old"),
         "OLD_TO_NEW": () => t("videolist-block.settings.old-to-new"),
         "AZ": () => t("videolist-block.settings.a-z"),
         "ZA": () => t("videolist-block.settings.z-a"),
-        "%future added value": () => unreachable(),
     });
 
     return <FloatingBaseMenu
@@ -313,7 +377,8 @@ const List: React.FC<ListProps> = ({ type, close }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const { layoutState, setLayoutState } = useContext(LayoutContext);
-    const { eventOrder, setEventOrder } = useContext(OrderContext);
+    const { eventOrder, setEventOrder, allowOriginalOrder }
+        = useContext(OrderContext) ?? bug("missing order context");
     const itemProps = useFloatingItemProps();
     const itemId = useId();
 
@@ -349,13 +414,16 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         ["LIST", "list", LuList],
     ];
 
-    type OrderTranslationKey = "new-to-old" | "old-to-new" | "a-z" | "z-a";
-    const orderItems: [VideoListOrder, OrderTranslationKey][] = [
+    type OrderTranslationKey = "original" | "new-to-old" | "old-to-new" | "a-z" | "z-a";
+    const orderItems: [Order, OrderTranslationKey][] = [
         ["NEW_TO_OLD", "new-to-old"],
         ["OLD_TO_NEW", "old-to-new"],
         ["AZ", "a-z"],
         ["ZA", "z-a"],
     ];
+    if (allowOriginalOrder) {
+        orderItems.unshift(["ORIGINAL", "original"]);
+    }
 
     const sharedProps = (key: LayoutTranslationKey | OrderTranslationKey) => ({
         close: close,
@@ -466,12 +534,12 @@ const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
 type ViewProps = {
     basePath: string;
     items: {
-        event: Event;
+        item: VideoListItem;
         active: boolean;
     }[];
 };
 
-const Videos: React.FC<ViewProps> = ({ basePath, items }) => {
+const Items: React.FC<ViewProps> = ({ basePath, items }) => {
     const { layoutState } = useContext(LayoutContext);
     return match(layoutState, {
         SLIDER: () => <SliderView {...{ basePath, items }} />,
@@ -559,10 +627,10 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
             gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_MIN_SIZE_SMALL_SCREENS}px, 1fr))`,
         },
     }}>
-        {items.map(({ event, active }) => (
+        {items.map(({ item, active }, idx) => (
             <Item
-                key={event.id}
-                {...{ event, active, basePath }}
+                key={idx}
+                {...{ item, active, basePath }}
                 css={{
                     width: "100%",
                     maxWidth: ITEM_MAX_SIZE,
@@ -589,10 +657,10 @@ const ListView: React.FC<ViewProps> = ({ basePath, items }) => (
         flexDirection: "column",
         alignItems: "center",
     }}>
-        {items.map(({ event, active }) => (
+        {items.map(({ item, active }, idx) => (
             <Item
-                key={event.id}
-                {...{ event, active, basePath }}
+                key={idx}
+                {...{ item, active, basePath }}
                 showDescription
                 css={{
                     width: "100%",
@@ -671,10 +739,10 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
                 scrollMargin: 6,
             },
         }}>
-            {items.map(({ event, active }) => (
+            {items.map(({ item, active }, idx) => (
                 <Item
-                    key={event.id}
-                    {...{ event, active, basePath }}
+                    key={idx}
+                    {...{ item, active, basePath }}
                     css={{
                         scrollSnapAlign: "start",
                         flex: "0 0 270px",
@@ -740,26 +808,37 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
 
 type ItemProps = {
     basePath: string;
-    event: Event;
+    item: VideoListItem;
     active: boolean;
     showDescription?: boolean;
     className?: string;
 };
 
 const Item: React.FC<ItemProps> = ({
-    event,
+    item,
     basePath,
     active,
     showDescription = false,
     className,
 }) => {
+    const { t } = useTranslation();
+    const isPlaceholder = item === "missing" || item === "unauthorized";
+
     const TRANSITION_IN_DURATION = "0.15s";
     const TRANSITION_OUT_DURATION = "0.3s";
-    const date = event.syncedData?.startTime ?? event.created;
 
-    const inner = <>
-        <div css={{ borderRadius: 8, position: "relative" }}>
-            <Thumbnail event={event} active={active} />
+    const thumbnail = isPlaceholder
+        ? <ThumbnailOverlayContainer>
+            <BaseThumbnailReplacement css={{
+                background: "repeating-linear-gradient(115deg, "
+                    + "#2e2e2e, #2e2e2e 30px, #292929 30px, #292929 60px)",
+                color: "#dbdbdb",
+            }}>
+                <LuAlertCircle />
+            </BaseThumbnailReplacement>
+        </ThumbnailOverlayContainer>
+        : <>
+            <Thumbnail event={item} active={active} />
             <div css={{
                 position: "absolute",
                 top: 0,
@@ -779,7 +858,23 @@ const Item: React.FC<ItemProps> = ({
                     transform: "translateY(-60px) rotate(30deg)",
                 }} />
             </div>
-        </div>
+        </>;
+    const title = (() => {
+        const placeholderStyle = {
+            fontWeight: "normal",
+            color: COLORS.neutral80,
+        } as const;
+        if (item === "missing") {
+            return <i css={placeholderStyle}>{t("videolist-block.missing-video")}</i>;
+        } else if (item === "unauthorized") {
+            return <i css={placeholderStyle}>{t("videolist-block.unauthorized")}</i>;
+        } else {
+            return item.title;
+        }
+    })();
+
+    const inner = <>
+        <div css={{ position: "relative" }}>{thumbnail}</div>
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
@@ -805,31 +900,36 @@ const Item: React.FC<ItemProps> = ({
                     fontSize: "inherit",
                     lineHeight: 1.3,
                     ...ellipsisOverflowCss(2),
-                }}>{event.title}</div>
+                }}>{title}</div>
             </h3>
-            <div css={{
-                color: COLORS.neutral80,
-                fontSize: 14,
-                display: "flex",
-                flexWrap: "wrap",
-                "& > span": {
-                    display: "inline-block",
-                    whiteSpace: "nowrap",
-                },
-            }}>
-                {event.creators.length > 0 && <span css={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    "&:after": {
-                        content: "'•'",
-                        padding: "0 8px",
+            {!isPlaceholder && <>
+                <div css={{
+                    color: COLORS.neutral80,
+                    fontSize: 14,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    "& > span": {
+                        display: "inline-block",
+                        whiteSpace: "nowrap",
                     },
-                    // TODO: maybe find something better than `join`
-                }}>{event.creators.join(", ")}</span>}
-                {/* `new Date` is well defined for our ISO Date strings */}
-                <RelativeDate date={new Date(date)} isLive={event.isLive} />
-            </div>
-            {showDescription && <SmallDescription lines={3} text={event.description} />}
+                }}>
+                    {item.creators.length > 0 && <span css={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        "&:after": {
+                            content: "'•'",
+                            padding: "0 8px",
+                        },
+                        // TODO: maybe find something better than `join`
+                    }}>{item.creators.join(", ")}</span>}
+                    {/* `new Date` is well defined for our ISO Date strings */}
+                    <RelativeDate
+                        date={new Date(item.syncedData?.startTime ?? item.created)}
+                        isLive={item.isLive}
+                    />
+                </div>
+                {showDescription && <SmallDescription lines={3} text={item.description} />}
+            </>}
         </div>
     </>;
 
@@ -841,7 +941,7 @@ const Item: React.FC<ItemProps> = ({
         textDecoration: "none",
         "& a": { color: COLORS.neutral90, textDecoration: "none" },
         ...active && { backgroundColor: COLORS.neutral20 },
-        ...!active && {
+        ...!active && !isPlaceholder && {
             "& > div:first-child": {
                 transition: `transform ${TRANSITION_OUT_DURATION}, `
                     + `box-shadow ${TRANSITION_OUT_DURATION},`
@@ -864,10 +964,10 @@ const Item: React.FC<ItemProps> = ({
         },
     } as const;
 
-    return active
+    return (active || isPlaceholder)
         ? <div css={containerStyle} {...{ className }}>{inner}</div>
         : <Link
-            to={`${basePath}/${keyOfId(event.id)}`}
+            to={`${basePath}/${keyOfId(item.id)}`}
             css={containerStyle}
             {...{ className }}
         >{inner}</Link>;

@@ -32,7 +32,7 @@ const query = graphql`
 `;
 
 type Props = {
-    kind: "page" | "video" | "series";
+    kind: "page" | "video" | "series" | "playlist";
 };
 
 export const NotFound: React.FC<Props> = ({ kind }) => {
@@ -41,6 +41,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
         "page": () => t("not-found.page-not-found"),
         "video": () => t("not-found.video-not-found"),
         "series": () => t("not-found.series-not-found"),
+        "playlist": () => t("not-found.playlist-not-found"),
     });
 
     // Ideally our backend would respond with 404 here, but that's not
@@ -64,6 +65,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
                     "page": () => t("not-found.page-explanation"),
                     "video": () => t("not-found.video-explanation"),
                     "series": () => t("not-found.series-explanation"),
+                    "playlist": () => t("not-found.playlist-explanation"),
                 })}
                 {t("not-found.url-typo")}
             </p>
