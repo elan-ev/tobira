@@ -298,7 +298,7 @@ pub(crate) async fn unsafe_overwrite_migrations(db: &mut Db) -> Result<()> {
 }
 
 
-// Helper macro to include migrations in the `migations` folder and add them to
+// Helper macro to include migrations in the `migrations` folder and add them to
 // a map. The `assert!` and `panic!` in there should ideally be compile errors,
 // but panics are fine for now.
 macro_rules! include_migrations {
@@ -365,4 +365,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     30: "realm-permissions",
     31: "series-metadata",
     32: "custom-actions",
+    33: "event-slide-text-and-segments",
 ];

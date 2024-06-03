@@ -95,7 +95,16 @@ declare module "paella-core" {
 
         captions: Caption[];
 
-        // TODO: `frameList`
+        frameList: Frame[];
+    }
+
+    // https://github.com/polimediaupv/paella-core/blob/main/doc/video_manifest.md#frame-list
+    export interface Frame {
+        id: string;
+        mimetype: "image/jpeg";
+        time: number;
+        url: string;
+        thumb: string;
     }
 
     export interface Stream {

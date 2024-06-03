@@ -4,6 +4,7 @@ import getBasicPluginsContext from "paella-basic-plugins";
 import getZoomPluginContext from "paella-zoom-plugin";
 import getMP4MultiQualityContext from "paella-mp4multiquality-plugin";
 import getUserTrackingPluginsContext from "paella-user-tracking";
+import getSlidePluginsContext from "paella-slide-plugins";
 import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
@@ -96,6 +97,16 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                         + (lang ? ` (${lang})` : "")
                         + (event.syncedData.captions.length > 1 ? ` [${index + 1}]` : ""),
                 })),
+                frameList: event.syncedData.segments.map(segment => {
+                    const time = segment.startTime / 1000;
+                    return {
+                        id: "frame_" + time,
+                        mimetype: "image/jpeg",
+                        time,
+                        url: segment.uri,
+                        thumb: segment.uri,
+                    };
+                }),
             };
 
             // If there are no presenter tracks (and there is more than one
@@ -126,6 +137,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     getZoomPluginContext(),
                     getUserTrackingPluginsContext(),
                     getMP4MultiQualityContext(),
+                    getSlidePluginsContext(),
                 ],
             });
 
@@ -469,6 +481,22 @@ const PAELLA_CONFIG = {
             side: "right",
             order: 9,
             tabIndex: 9,
+        },
+        "es.upv.paella.frameControlButtonPlugin": {
+            enabled: true,
+            side: "right",
+            order: 10,
+            tabIndex: 10,
+        },
+
+        "es.upv.paella.slideMapProgressBarPlugin": {
+            enabled: true,
+            markColor: {
+                mouseOut: "#0A0A0A",
+                mouseHover: "#A9A9A9",
+            },
+            markWidth: 3,
+            drawBackground: false,
         },
 
         // Data plugin

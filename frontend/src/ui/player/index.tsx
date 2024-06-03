@@ -42,6 +42,7 @@ export type PlayerEvent = {
         tracks: readonly Track[];
         captions: readonly Caption[];
         thumbnail?: string | null;
+        segments: readonly Segment[];
     };
 };
 
@@ -57,6 +58,11 @@ export type Caption = {
     uri: string;
     lang?: string | null;
 };
+
+export type Segment = {
+    uri: string;
+    startTime: number;
+}
 
 /**
  * Video player.

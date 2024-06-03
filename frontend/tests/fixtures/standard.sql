@@ -37,7 +37,7 @@ values ('waiting', '2b814c02-c849-4553-b5f5-f4e9e69fd74f', null, null, '-infinit
 -- player should only use videos where it fits.
 
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', 'aaa12fa0-95f8-4722-84d7-4fac5e59a572', 'Video of a Tabby Cat',
     'A nice cat captured with a narrow depth of field.\n\nKindly uploaded by Gustavo Belemmi with a very permissive license.',
     '{"Gustavo Belemmi"}',
@@ -53,11 +53,12 @@ values ('ready', 'aaa12fa0-95f8-4722-84d7-4fac5e59a572', 'Video of a Tabby Cat',
         row('http://localhost:38456/cat-bokeh-no-audio-x264-240p.mp4',
             'presenter/preview', 'video/mp4', '{432, 240}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', '2784521d-d10a-4a27-a77c-cd3f557259c2', 'Black Cat (protected)',
     'Secret kitty hihi',
     '{"klimkin"}',
@@ -73,12 +74,13 @@ values ('ready', '2784521d-d10a-4a27-a77c-cd3f557259c2', 'Black Cat (protected)'
         row('http://localhost:38456/cat-black-x264-240p.mp4',
             'presentation/preview', 'video/mp4', '{432, 240}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 -- Dual stream public
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', '172d4ec3-4e58-48b4-bdf0-85909a32439d', 'Dual Stream Cats',
     null,
     '{"Gustavo Belemmi", "klimkin"}',
@@ -98,12 +100,13 @@ values ('ready', '172d4ec3-4e58-48b4-bdf0-85909a32439d', 'Dual Stream Cats',
         row('http://localhost:38456/cat-black-x264-240p.mp4',
             'presentation/preview', 'video/mp4', '{432, 240}', false)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 -- Planned event
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', '9dc41ccb-4a54-498f-98cf-98ca455f708c', 'Far in the Future',
     null,
     '{"Peter Lustig"}',
@@ -119,12 +122,13 @@ values ('ready', '9dc41ccb-4a54-498f-98cf-98ca455f708c', 'Far in the Future',
         row('http://localhost:38456/cat-black-x264-240p.mp4',
             'presentation/preview', 'video/mp4', '{432, 240}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 -- Live event
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', 'b5d4533f-0ddd-4dd2-aa64-de24d3b20d72', 'Currently live!!',
     null,
     '{"Die Maus"}',
@@ -138,12 +142,13 @@ values ('ready', 'b5d4533f-0ddd-4dd2-aa64-de24d3b20d72', 'Currently live!!',
         row('http://localhost:38456/cat-black-x264-144p.mp4',
             'presentation/preview', 'video/mp4', '{256, 144}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 -- Past Live event
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', 'd5af7441-e9a3-4a1f-a58d-1116b899c693', 'Past live event',
     null,
     '{"Hubert"}',
@@ -157,12 +162,13 @@ values ('ready', 'd5af7441-e9a3-4a1f-a58d-1116b899c693', 'Past live event',
         row('http://localhost:38456/cat-black-x264-144p.mp4',
             'presentation/preview', 'video/mp4', '{256, 144}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 -- Private video
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', '7205a608-08bc-44fc-af8d-65578697c625', 'Very secret private video',
     null,
     '{"Anon"}',
@@ -176,12 +182,13 @@ values ('ready', '7205a608-08bc-44fc-af8d-65578697c625', 'Very secret private vi
         row('http://localhost:38456/scifi-tunnel-no-audio-x264-144p.mp4',
             'presentation/preview', 'video/mp4', '{256, 144}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 -- Portrait video
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', '2e5b56da-695d-4be8-b557-7f0fba51ca24', 'Portait video of a train',
     null,
     '{"Joachim Rübe"}',
@@ -195,12 +202,13 @@ values ('ready', '2e5b56da-695d-4be8-b557-7f0fba51ca24', 'Portait video of a tra
         row('http://localhost:38456/train-portrait-x264.mp4',
             'presentation/preview', 'video/mp4', '{256, 144}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 -- 1h+ video
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', '1c5d5e89-76b7-4d81-a316-ef62b470e13d', 'Long boy',
     null,
     '{"Joachim Rübe"}',
@@ -214,11 +222,12 @@ values ('ready', '1c5d5e89-76b7-4d81-a316-ef62b470e13d', 'Long boy',
         row('http://localhost:38456/train-portrait-x264.mp4',
             'presentation/preview', 'video/mp4', '{256, 144}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 insert into events (state, opencast_id, title, description, creators, metadata, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', '0637a85a-c360-450b-900d-81f423cb21f3', 'Unlisted video without series',
     'Unlisted video being alone',
     '{"Stanley"}',
@@ -233,11 +242,12 @@ values ('ready', '0637a85a-c360-450b-900d-81f423cb21f3', 'Unlisted video without
         row('http://localhost:38456/cat-black-x264-240p.mp4',
             'presentation/preview', 'video/mp4', '{432, 240}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 insert into events (state, opencast_id, title, description, creators, metadata, series, part_of, duration, is_live,
-    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions)
+    created, updated, start_time, end_time, read_roles, write_roles, thumbnail, tracks, captions, segments)
 values ('ready', '06a71e43-94cd-472d-a345-952979489e88', 'Unlisted video in series',
     'Cheesecake is yummy',
     '{"klimkin"}',
@@ -253,11 +263,13 @@ values ('ready', '06a71e43-94cd-472d-a345-952979489e88', 'Unlisted video in seri
         row('http://localhost:38456/cat-black-x264-240p.mp4',
             'presentation/preview', 'video/mp4', '{432, 240}', true)
     ]::event_track[],
+    '{}',
     '{}'
 );
 
 -- TODO:
 -- Video with subtitles -> array[row('https://...', 'en')]::event_caption[]
+-- Video with slide segments?
 
 
 -- ----- Realms ---------------------------------------------------------------

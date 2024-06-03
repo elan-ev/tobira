@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::db::types::{CustomActions, EventCaption, EventTrack, ExtraMetadata};
+use crate::db::types::{CustomActions, EventCaption, EventTrack, EventSegment, ExtraMetadata};
 
 
 /// What the harvesting API returns.
@@ -41,6 +41,8 @@ pub(crate) enum HarvestItem {
         end_time: Option<DateTime<Utc>>,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
+        segments: Vec<Segment>,
+        slide_text: Option<String>,
     },
 
     #[serde(rename_all = "camelCase")]
@@ -124,6 +126,22 @@ impl Into<EventCaption> for Caption {
         EventCaption {
             uri: self.uri,
             lang: self.lang,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Segment {
+    uri: String,
+    start_time: i64
+}
+
+impl Into<EventSegment> for Segment {
+    fn into(self) -> EventSegment {
+        EventSegment {
+            uri: self.uri,
+            start_time: self.start_time,
         }
     }
 }

@@ -10,11 +10,11 @@ use crate::{
     api::{
         Context, Cursor, Id, Node, NodeValue,
         common::NotAllowed,
-        err::{self, ApiResult, invalid_input},
-        model::{series::Series, realm::Realm, acl::{Acl, self}},
+        err::{self, invalid_input, ApiResult},
+        model::{acl::{self, Acl}, realm::Realm, series::Series},
     },
     db::{
-        types::{EventTrack, EventState, Key, ExtraMetadata, EventCaption},
+        types::{EventCaption, EventSegment, EventState, EventTrack, ExtraMetadata, Key},
         util::{impl_from_db, select},
     },
     prelude::*,
@@ -52,6 +52,7 @@ pub(crate) struct SyncedEventData {
     tracks: Vec<Track>,
     thumbnail: Option<String>,
     captions: Vec<Caption>,
+    segments: Vec<Segment>,
 }
 
 impl_from_db!(
@@ -61,7 +62,7 @@ impl_from_db!(
             id, state, series, opencast_id, is_live,
             title, description, duration, creators, thumbnail, metadata,
             created, updated, start_time, end_time,
-            tracks, captions,
+            tracks, captions, segments,
             read_roles, write_roles,
         },
     },
@@ -90,6 +91,10 @@ impl_from_db!(
                         .into_iter()
                         .map(Caption::from)
                         .collect(),
+                    segments: row.segments::<Vec<EventSegment>>()
+                        .into_iter()
+                        .map(Segment::from)
+                        .collect(),
                 }),
                 EventState::Waiting => None,
             },
@@ -113,6 +118,12 @@ pub(crate) struct Track {
 pub(crate) struct Caption {
     uri: String,
     lang: Option<String>,
+}
+
+#[derive(Debug, GraphQLObject)]
+pub(crate) struct Segment {
+    uri: String,
+    start_time: f64,
 }
 
 impl Node for AuthorizedEvent {
@@ -144,6 +155,9 @@ impl SyncedEventData {
     }
     fn captions(&self) -> &[Caption] {
         &self.captions
+    }
+    fn segments(&self) -> &[Segment] {
+        &self.segments
     }
 }
 
@@ -501,6 +515,15 @@ impl From<EventCaption> for Caption {
         Self {
             uri: src.uri,
             lang: src.lang,
+        }
+    }
+}
+
+impl From<EventSegment> for Segment {
+    fn from(src: EventSegment) -> Self {
+        Self {
+            uri: src.uri,
+            start_time: src.start_time as f64,
         }
     }
 }

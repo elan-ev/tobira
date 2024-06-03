@@ -8,7 +8,7 @@ use tokio_postgres::types::ToSql;
 use crate::{
     auth::ROLE_ADMIN,
     config::Config,
-    db::{types::{EventTrack, EventState, SeriesState, EventCaption}, DbConnection},
+    db::{types::{EventCaption, EventSegment, EventState, EventTrack, SeriesState}, DbConnection},
     prelude::*,
 };
 use super::{status::SyncStatus, OcClient};
@@ -25,7 +25,7 @@ const INITIAL_BACKOFF: Duration = Duration::from_secs(1);
 const MAX_BACKOFF: Duration = Duration::from_secs(5 * 60);
 
 
-/// Continuiously fetches from the harvesting API and writes new data into our
+/// Continuously fetches from the harvesting API and writes new data into our
 /// database.
 pub(crate) async fn run(
     daemon: bool,
@@ -162,6 +162,8 @@ async fn store_in_db(
                 is_live,
                 metadata,
                 updated,
+                segments,
+                slide_text,
             } => {
                 let series_id = match &part_of {
                     None => None,
@@ -183,6 +185,7 @@ async fn store_in_db(
 
                 let tracks = tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>();
                 let captions = captions.into_iter().map(Into::into).collect::<Vec<EventCaption>>();
+                let segments = segments.into_iter().map(Into::into).collect::<Vec<EventSegment>>();
 
                 // We upsert the event data.
                 upsert(db, "events", "opencast_id", &[
@@ -206,6 +209,8 @@ async fn store_in_db(
                     ("custom_action_roles", &acl.custom_actions),
                     ("tracks", &tracks),
                     ("captions", &captions),
+                    ("segments", &segments),
+                    ("slide_text", &slide_text),
                 ]).await?;
 
                 trace!("Inserted or updated event {} ({})", opencast_id, title);

@@ -59,6 +59,13 @@ pub struct EventTrack {
     pub resolution: Option<[i32; 2]>,
     pub is_master: Option<bool>,
 }
+/// Represents the `event_segment` type defined in `33-event-slide-text-and-segments.sql`.
+#[derive(Debug, FromSql, ToSql)]
+#[postgres(name = "event_segment")]
+pub struct EventSegment {
+    pub uri: String,
+    pub start_time: i64,
+}
 
 /// Represents the `event_caption` type defined in `14-event-captions.sql`.
 #[derive(Debug, FromSql, ToSql)]

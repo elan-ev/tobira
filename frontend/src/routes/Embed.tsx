@@ -38,6 +38,7 @@ const query = graphql`
                     thumbnail
                     tracks { uri flavor mimetype resolution isMaster }
                     captions { uri lang }
+                    segments { uri startTime }
                 }
             }
         }
