@@ -9,14 +9,14 @@ import { unreachable } from "@opencast/appkit";
 import { eventId, isSynced, keyOfId } from "../util";
 import { GlobalErrorBoundary } from "../util/err";
 import { loadQuery } from "../relay";
-import { makeRoute } from "../rauta";
+import { makeRoute, MatchedRoute } from "../rauta";
 import { Player, PlayerPlaceholder } from "../ui/player";
 import { Spinner } from "../ui/Spinner";
 import { MovingTruck } from "../ui/Waiting";
 import { b64regex } from "./util";
 import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
 import { EmbedDirectOpencastQuery } from "./__generated__/EmbedDirectOpencastQuery.graphql";
-import { EmbedEventData$key, EmbedEventData$data } from "./__generated__/EmbedEventData.graphql";
+import { EmbedEventData$key } from "./__generated__/EmbedEventData.graphql";
 import { PlayerContextProvider } from "../ui/player/PlayerContext";
 
 export const EmbedVideoRoute = makeRoute({
@@ -37,28 +37,10 @@ export const EmbedVideoRoute = makeRoute({
 
         const queryRef = loadQuery<EmbedQuery>(query, { id: eventId(videoId) });
 
-        return {
-            render: () => <ErrorBoundary>
-                <Suspense fallback={
-                    <PlayerPlaceholder>
-                        <Spinner css={{
-                            "& > circle": {
-                                stroke: "white",
-                            },
-                        }} />
-                    </PlayerPlaceholder>
-                }>
-                    <PlayerContextProvider>
-                        <Embed query={query} queryRef={queryRef} />
-                    </PlayerContextProvider>
-                </Suspense>
-            </ErrorBoundary>,
-            dispose: () => queryRef.dispose(),
-        };
+        return matchedEmbedRoute(query, queryRef);
     },
 });
 
-/** Direct link to video with Opencast ID: `/!v/:<ocid>` */
 export const EmbedOpencastVideoRoute = makeRoute({
     url: (args: { ocID: string }) => `/~embed/!v/:${args.ocID}`,
     match: url => {
@@ -72,30 +54,35 @@ export const EmbedOpencastVideoRoute = makeRoute({
             query EmbedDirectOpencastQuery($id: String!) {
                 event: eventByOpencastId(id: $id)  { ... EmbedEventData }
             }
-            `;
+        `;
 
         const videoId = decodeURIComponent(matches[1]);
         const queryRef = loadQuery<EmbedDirectOpencastQuery>(query, { id: videoId });
 
-        return {
-            render: () => <ErrorBoundary>
-                <Suspense fallback={
-                    <PlayerPlaceholder>
-                        <Spinner css={{
-                            "& > circle": {
-                                stroke: "white",
-                            },
-                        }} />
-                    </PlayerPlaceholder>
-                }>
-                    <PlayerContextProvider>
-                        <Embed query={query} queryRef={queryRef} />
-                    </PlayerContextProvider>
-                </Suspense>
-            </ErrorBoundary>,
-            dispose: () => queryRef.dispose(),
-        };
+        return matchedEmbedRoute(query, queryRef);
     },
+});
+
+const matchedEmbedRoute = (
+    query: GraphQLTaggedNode,
+    queryRef: PreloadedQuery<EmbedQuery | EmbedDirectOpencastQuery>,
+): MatchedRoute => ({
+    render: () => <ErrorBoundary>
+        <Suspense fallback={
+            <PlayerPlaceholder>
+                <Spinner css={{
+                    "& > circle": {
+                        stroke: "white",
+                    },
+                }} />
+            </PlayerPlaceholder>
+        }>
+            <PlayerContextProvider>
+                <Embed query={query} queryRef={queryRef} />
+            </PlayerContextProvider>
+        </Suspense>
+    </ErrorBoundary>,
+    dispose: () => queryRef.dispose(),
 });
 
 const embedEventFragment = graphql`
@@ -133,9 +120,9 @@ type EmbedProps = {
 
 const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
     const fragmentRef = usePreloadedQuery(query, queryRef);
-    const event: EmbedEventData$data = useFragment(
+    const event = useFragment<EmbedEventData$key>(
         embedEventFragment,
-        fragmentRef.event as EmbedEventData$key,
+        fragmentRef.event,
     );
     const { t } = useTranslation();
 
