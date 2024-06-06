@@ -76,7 +76,7 @@ export const ExternalLink = React.forwardRef<HTMLButtonElement, ExternalLinkProp
         form.submit();
     };
 
-    return <form action={redirect.toString()} method="POST" target="_blank" onSubmit={onSubmit}>
+    return <form action={redirect.toString()} method="POST" onSubmit={onSubmit}>
         <input type="hidden" name="target" value={target.toString()} />
         <input type="hidden" name="jwt" />
 
