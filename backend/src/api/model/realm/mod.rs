@@ -20,7 +20,8 @@ use super::block::{Block, BlockValue, SeriesBlock, VideoBlock};
 mod mutations;
 
 pub(crate) use mutations::{
-    ChildIndex, NewRealm, RemovedRealm, UpdateRealm, UpdatedPermissions, UpdatedRealmName, RealmSpecifier,
+    ChildIndex, NewRealm, RemovedRealm, UpdateRealm, UpdatedPermissions,
+    UpdatedRealmName, RealmSpecifier, RealmLineageComponent, CreateRealmLineageOutcome,
 };
 
 
