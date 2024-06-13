@@ -23,7 +23,7 @@ import { FieldIsRequiredNote, InputContainer, TitleLabel } from "../ui/metadata"
 import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
-import { SeriesSelector } from "../ui/SearchableSelect";
+import { VideoListSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
@@ -765,7 +765,8 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         <span><LuInfo tabIndex={0} /></span>
                     </WithTooltip>
                 </label>
-                <SeriesSelector
+                <VideoListSelector
+                    type="series"
                     inputId={seriesFieldId}
                     writableOnly
                     menuPlacement="top"

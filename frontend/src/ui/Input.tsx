@@ -299,7 +299,7 @@ type DisplayOptionGroup<TFieldValues extends FieldValues> = {
     form: UseFormReturn<TFieldValues>;
     type: "radio" | "checkbox";
     optionProps: {
-        option: Path<TFieldValues>;
+        option: string;
         title: string;
         checked?: boolean;
         value?: string;
@@ -318,7 +318,7 @@ export function DisplayOptionGroup<TFieldValues extends FieldValues>(
                 <input
                     {...{ type, value }}
                     defaultChecked={checked}
-                    {...form.register(option)}
+                    {...form.register(option as Path<TFieldValues>)}
                     style={{ marginRight: 6 }}
                 />
                 {title}
