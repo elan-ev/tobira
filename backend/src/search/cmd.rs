@@ -194,6 +194,8 @@ async fn status(meili: &Client) -> Result<()> {
     println!();
     index_status("user", &meili.user_index, meili.config.user_index_name()).await?;
     println!();
+    index_status("playlist", &meili.playlist_index, meili.config.playlist_index_name()).await?;
+    println!();
 
     Ok(())
 }
