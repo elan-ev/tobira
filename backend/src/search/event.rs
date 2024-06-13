@@ -43,7 +43,7 @@ pub(crate) struct Event {
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
 
-    // The `listed` field is always `!host_realms.is_empty()`, but we need to
+    // The `listed` field is always derived from `host_realms`, but we need to
     // store it explicitly to filter for this condition in Meili.
     pub(crate) listed: bool,
     pub(crate) host_realms: Vec<Realm>,

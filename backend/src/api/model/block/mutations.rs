@@ -70,6 +70,29 @@ impl BlockValue {
         Ok(realm)
     }
 
+    pub(crate) async fn add_playlist(
+        realm: Id,
+        index: i32,
+        block: NewPlaylistBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
+        let playlist = block.playlist.key_for(Id::PLAYLIST_KIND)
+            .ok_or_else(|| invalid_input!("`block.playlist` does not refer to a playlist"))?;
+
+        context.db
+            .execute(
+                "insert into blocks \
+                    (realm, index, type, playlist, videolist_order, videolist_layout, show_title, show_metadata) \
+                    values ($1, $2, 'playlist', $3, $4, $5, $6, $7)",
+                &[&realm.key, &index, &playlist,
+                    &block.order, &block.layout, &block.show_title, &block.show_metadata],
+            )
+            .await?;
+
+        Ok(realm)
+    }
+
     pub(crate) async fn add_video(
         realm: Id,
         index: i32,
@@ -295,6 +318,44 @@ impl BlockValue {
             .pipe(|row| Ok(Self::from_row_start(&row)))
     }
 
+    pub(crate) async fn update_playlist(
+        id: Id,
+        set: UpdatePlaylistBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
+        Self::require_realm_moderator_rights(id, context).await?;
+
+        let playlist_id = set.playlist.map(
+            |playlist| playlist.key_for(Id::PLAYLIST_KIND)
+                .ok_or_else(|| invalid_input!("`set.playlist` does not refer to a playlist"))
+        ).transpose()?;
+
+        let selection = Self::select();
+        let query = format!(
+            "update blocks set \
+                playlist = coalesce($2, playlist), \
+                videolist_order = coalesce($3, videolist_order), \
+                videolist_layout = coalesce($4, videolist_layout), \
+                show_title = coalesce($5, show_title), \
+                show_metadata = coalesce($6, show_metadata) \
+                where id = $1 \
+                and type = 'playlist' \
+                returning {selection}",
+        );
+        let args = [
+            (&Self::key_for(id)?) as &(dyn postgres_types::ToSql + Sync),
+            &playlist_id,
+            &set.order,
+            &set.layout,
+            &set.show_title,
+            &set.show_metadata,
+        ];
+        context.db
+            .query_one(&query, &args)
+            .await?
+            .pipe(|row| Ok(Self::from_row_start(&row)))
+    }
+
     pub(crate) async fn update_video(
         id: Id,
         set: UpdateVideoBlock,
@@ -397,6 +458,15 @@ pub(crate) struct NewSeriesBlock {
 }
 
 #[derive(GraphQLInputObject)]
+pub(crate) struct NewPlaylistBlock {
+    pub(crate) playlist: Id,
+    pub(crate) show_title: bool,
+    pub(crate) show_metadata: bool,
+    pub(crate) order: VideoListOrder,
+    pub(crate) layout: VideoListLayout,
+}
+
+#[derive(GraphQLInputObject)]
 pub(crate) struct NewVideoBlock {
     event: Id,
     show_title: bool,
@@ -417,6 +487,15 @@ pub(crate) struct UpdateTextBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateSeriesBlock {
     series: Option<Id>,
+    show_title: Option<bool>,
+    show_metadata: Option<bool>,
+    order: Option<VideoListOrder>,
+    layout: Option<VideoListLayout>,
+}
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct UpdatePlaylistBlock {
+    playlist: Option<Id>,
     show_title: Option<bool>,
     show_metadata: Option<bool>,
     order: Option<VideoListOrder>,

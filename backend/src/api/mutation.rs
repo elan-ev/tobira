@@ -27,10 +27,12 @@ use super::{
             NewTitleBlock,
             NewTextBlock,
             NewSeriesBlock,
+            NewPlaylistBlock,
             NewVideoBlock,
             UpdateTitleBlock,
             UpdateTextBlock,
             UpdateSeriesBlock,
+            UpdatePlaylistBlock,
             UpdateVideoBlock,
             RemovedBlock,
             VideoListOrder,
@@ -146,6 +148,18 @@ impl Mutation {
         BlockValue::add_series(realm, index, block, context).await
     }
 
+    /// Adds a playlist block to a realm.
+    ///
+    /// See `addTitleBlock` for more details.
+    async fn add_playlist_block(
+        realm: Id,
+        index: i32,
+        block: NewPlaylistBlock,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        BlockValue::add_playlist(realm, index, block, context).await
+    }
+
     /// Adds a video block to a realm.
     ///
     /// See `addTitleBlock` for more details.
@@ -193,6 +207,15 @@ impl Mutation {
         context: &Context,
     ) -> ApiResult<BlockValue> {
         BlockValue::update_series(id, set, context).await
+    }
+
+    /// Update a playlist block's data.
+    async fn update_playlist_block(
+        id: Id,
+        set: UpdatePlaylistBlock,
+        context: &Context,
+    ) -> ApiResult<BlockValue> {
+        BlockValue::update_playlist(id, set, context).await
     }
 
     /// Update a video block's data.

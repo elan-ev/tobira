@@ -63,7 +63,7 @@ impl_from_db!(
 
 impl Playlist {
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
-        if let Some(key) = id.key_for(Id::SERIES_KIND) {
+        if let Some(key) = id.key_for(Id::PLAYLIST_KIND) {
             Self::load_by_key(key, context).await
         } else {
             Ok(None)

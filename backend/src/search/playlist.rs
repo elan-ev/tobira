@@ -23,6 +23,9 @@ pub(crate) struct Playlist {
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
 
+    // The `listed` field is always derived from `host_realms`, but we need to
+    // store it explicitly to filter for this condition in Meili.
+    pub(crate) listed: bool,
     pub(crate) host_realms: Vec<Realm>,
 }
 
@@ -53,6 +56,7 @@ impl_from_db!(
             creator: row.creator(),
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
+            listed: host_realms.iter().any(|realm| !realm.is_user_realm()),
             host_realms,
         }
     }

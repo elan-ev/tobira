@@ -32,12 +32,6 @@ type Missing {
   dummy: Boolean
 }
 
-input Filters {
-  itemType: ItemType
-  start: DateTimeUtc
-  end: DateTimeUtc
-}
-
 "Arbitrary metadata for events/series. Serialized as JSON object."
 scalar ExtraMetadata
 
@@ -46,6 +40,13 @@ enum VideoListOrder {
   OLD_TO_NEW
   AZ
   ZA
+  ORIGINAL
+}
+
+input Filters {
+  itemType: ItemType
+  start: DateTimeUtc
+  end: DateTimeUtc
 }
 
 "A block just showing some text."
@@ -107,10 +108,6 @@ input NewTextBlock {
   content: String!
 }
 
-type SyncedSeriesData {
-  description: String
-}
-
 "Represents an Opencast series."
 type AuthorizedPlaylist {
   id: ID!
@@ -118,6 +115,10 @@ type AuthorizedPlaylist {
   title: String!
   description: String
   entries: [PlaylistEntry!]!
+}
+
+type SyncedSeriesData {
+  description: String
 }
 
 type EventConnection {
@@ -132,35 +133,6 @@ type PlainRealmName {
 }
 
 union RealmNameSource = PlainRealmName | RealmNameFromBlock
-
-"A block just showing the list of videos in an Opencast series"
-type SeriesBlock implements Block & RealmNameSourceBlock {
-  series: Series
-  showTitle: Boolean!
-  showMetadata: Boolean!
-  order: VideoListOrder!
-  layout: VideoListLayout!
-  id: ID!
-  index: Int!
-  realm: Realm!
-}
-
-"Represents an Opencast series."
-type Series {
-  id: ID!
-  opencastId: String!
-  title: String!
-  created: DateTimeUtc
-  metadata: ExtraMetadata
-  syncedData: SyncedSeriesData
-  hostRealms: [Realm!]!
-  events: [AuthorizedEvent!]!
-  """
-    Returns `true` if the realm has a series block with this series.
-    Otherwise, `false` is returned.
-  """
-  isReferencedByRealm(path: String!): Boolean!
-}
 
 "Some extra information we know about a role."
 type RoleInfo {
@@ -183,7 +155,36 @@ type RoleInfo {
   large: Boolean!
 }
 
+"Represents an Opencast series."
+type Series {
+  id: ID!
+  opencastId: String!
+  title: String!
+  created: DateTimeUtc
+  metadata: ExtraMetadata
+  syncedData: SyncedSeriesData
+  hostRealms: [Realm!]!
+  events: [AuthorizedEvent!]!
+  """
+    Returns `true` if the realm has a series block with this series.
+    Otherwise, `false` is returned.
+  """
+  isReferencedByRealm(path: String!): Boolean!
+}
+
 union PlaylistEntry = AuthorizedEvent | NotAllowed | Missing
+
+"A block just showing the list of videos in an Opencast series"
+type SeriesBlock implements Block & RealmNameSourceBlock {
+  series: Series
+  showTitle: Boolean!
+  showMetadata: Boolean!
+  order: VideoListOrder!
+  layout: VideoListLayout!
+  id: ID!
+  index: Int!
+  realm: Realm!
+}
 
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
@@ -210,6 +211,14 @@ type SyncedEventData implements Node {
   segments: [Segment!]!
 }
 
+input NewPlaylistBlock {
+  playlist: ID!
+  showTitle: Boolean!
+  showMetadata: Boolean!
+  order: VideoListOrder!
+  layout: VideoListLayout!
+}
+
 input NewVideoBlock {
   event: ID!
   showTitle: Boolean!
@@ -221,6 +230,14 @@ interface Block {
   id: ID!
   index: Int!
   realm: Realm!
+}
+
+type SearchPlaylist implements Node {
+  id: ID!
+  opencastId: String!
+  title: String!
+  description: String
+  hostRealms: [SearchRealm!]!
 }
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
@@ -260,6 +277,14 @@ type SearchUnavailable {
     have at least one field. Always returns `null`.
   """
   dummy: Boolean
+}
+
+input UpdatePlaylistBlock {
+  playlist: ID
+  showTitle: Boolean
+  showMetadata: Boolean
+  order: VideoListOrder
+  layout: VideoListLayout
 }
 
 type AuthorizedEvent implements Node {
@@ -423,6 +448,18 @@ type Realm implements Node {
   canCurrentUserModerate: Boolean!
 }
 
+"A block just showing the list of videos in an Opencast playlist"
+type PlaylistBlock implements Block & RealmNameSourceBlock {
+  playlist: Playlist
+  showTitle: Boolean!
+  showMetadata: Boolean!
+  order: VideoListOrder!
+  layout: VideoListLayout!
+  id: ID!
+  index: Int!
+  realm: Realm!
+}
+
 "A role being granted permission to perform certain actions."
 type AclItem {
   "Role. In arrays of AclItems, no two items have the same `role`."
@@ -502,6 +539,12 @@ type Mutation {
   """
   addSeriesBlock(realm: ID!, index: Int!, block: NewSeriesBlock!): Realm!
   """
+    Adds a playlist block to a realm.
+
+    See `addTitleBlock` for more details.
+  """
+  addPlaylistBlock(realm: ID!, index: Int!, block: NewPlaylistBlock!): Realm!
+  """
     Adds a video block to a realm.
 
     See `addTitleBlock` for more details.
@@ -515,6 +558,8 @@ type Mutation {
   updateTextBlock(id: ID!, set: UpdateTextBlock!): Block!
   "Update a series block's data."
   updateSeriesBlock(id: ID!, set: UpdateSeriesBlock!): Block!
+  "Update a playlist block's data."
+  updatePlaylistBlock(id: ID!, set: UpdatePlaylistBlock!): Block!
   "Update a video block's data."
   updateVideoBlock(id: ID!, set: UpdateVideoBlock!): Block!
   "Remove a block from a realm."
@@ -606,6 +651,15 @@ type Query {
   """
   searchAllSeries(query: String!, writableOnly: Boolean!): SeriesSearchOutcome!
   """
+    Searches through playlists. Results may include:
+
+    - Playlists that the user has write access to (listed & unlisted).
+    - If `writable_only` is false, this also searches through listed playlists.
+      If the user has the privilege to find unlisted playlists, all playlists are
+      searched.
+  """
+  searchAllPlaylists(query: String!, writableOnly: Boolean!): PlaylistSearchOutcome!
+  """
     Searches through all known users. The behavior of this depends on the
     `general.users_searchable` config value. If it is `false`, this returns
     only users that have an exact match with the input query. The number of
@@ -634,8 +688,14 @@ type EmptyQuery {
   dummy: Boolean
 }
 
+union PlaylistSearchOutcome = SearchUnavailable | PlaylistSearchResults
+
 "A string in different languages"
 scalar TranslatedString
+
+type PlaylistSearchResults {
+  items: [SearchPlaylist!]!
+}
 
 input UpdateSeriesBlock {
   series: ID

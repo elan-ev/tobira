@@ -87,6 +87,7 @@ define_kinds![
     search_realm = b"rs",
     search_event = b"es",
     search_series = b"ss",
+    search_playlist = b"ps",
 ];
 
 

@@ -14,7 +14,7 @@ use crate::{
     db::{types::Key, util::{impl_from_db, select}},
     prelude::*,
 };
-use super::block::{Block, BlockValue, SeriesBlock, VideoBlock};
+use super::block::{Block, BlockValue, PlaylistBlock, SeriesBlock, VideoBlock};
 
 
 mod mutations;
@@ -61,12 +61,13 @@ impl RealmNameFromBlock {
         match BlockValue::load_by_key(self.block, context).await? {
             BlockValue::VideoBlock(b) => Ok(RealmNameSourceBlockValue::VideoBlock(b)),
             BlockValue::SeriesBlock(b) => Ok(RealmNameSourceBlockValue::SeriesBlock(b)),
+            BlockValue::PlaylistBlock(b) => Ok(RealmNameSourceBlockValue::PlaylistBlock(b)),
             _ => unreachable!("block {:?} has invalid type for name source", self.block),
         }
     }
 }
 
-#[graphql_interface(Context = Context, for = [SeriesBlock, VideoBlock])]
+#[graphql_interface(Context = Context, for = [SeriesBlock, VideoBlock, PlaylistBlock])]
 pub(crate) trait RealmNameSourceBlock: Block {
     // TODO: we repeat the `id` method here from the `Block` and `Node` trait.
     // This should be done in a better way. Since the Octobor 2021 spec,
@@ -87,11 +88,18 @@ impl RealmNameSourceBlock for VideoBlock {
     }
 }
 
+impl RealmNameSourceBlock for PlaylistBlock {
+    fn id(&self) -> Id {
+        self.shared.id
+    }
+}
+
 impl Block for RealmNameSourceBlockValue {
     fn shared(&self) -> &super::block::SharedData {
         match self {
             Self::SeriesBlock(b) => b.shared(),
             Self::VideoBlock(b) => b.shared(),
+            Self::PlaylistBlock(b) => b.shared(),
         }
     }
 }
