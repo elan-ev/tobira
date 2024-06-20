@@ -370,4 +370,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     35: "playlists",
     36: "playlist-blocks",
     37: "redo-search-triggers-and-listed",
+    38: "event-texts",
 ];
