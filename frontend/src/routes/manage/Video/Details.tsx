@@ -14,10 +14,11 @@ import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
 import { buttonStyle } from "../../../ui/Button";
 import { COLORS } from "../../../color";
-import { secondsToTimeString } from "../../../util";
+import { secondsToTimeString, translatedConfig } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageRoute } from "..";
 import { ManageVideosRoute } from ".";
+import CONFIG from "../../../config";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -31,7 +32,7 @@ type Props = {
 };
 
 const Page: React.FC<Props> = ({ event }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const breadcrumbs = [
         { label: t("user.manage-content"), link: ManageRoute.url },
@@ -56,7 +57,11 @@ const Page: React.FC<Props> = ({ event }) => {
                 {user.canUseEditor && !event.isLive && event.canWrite && (
                     <ExternalLink
                         service="EDITOR"
-                        params={{ mediaPackageId: event.opencastId }}
+                        params={{
+                            id: event.opencastId,
+                            callbackUrl: document.location.href,
+                            callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
+                        }}
                         fallback="button"
                         css={{
                             marginBottom: 16,
