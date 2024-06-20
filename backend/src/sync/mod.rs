@@ -11,6 +11,7 @@ pub(crate) mod harvest;
 pub(crate) mod stats;
 mod client;
 mod status;
+mod text;
 
 pub(crate) use self::client::OcClient;
 
