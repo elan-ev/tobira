@@ -44,6 +44,11 @@ pub(crate) struct OpencastConfig {
     ///
     /// Example: "https://admin.oc.my-uni.edu/editor-ui/index.html".
     pub(crate) editor_url: Option<ToolBaseUri>,
+
+    /// Extra Opencast hosts not listed in any other value above, that can also
+    /// be trusted.
+    #[config(default = [])]
+    pub(crate) other_hosts: Vec<HttpHost>,
 }
 
 impl OpencastConfig {
