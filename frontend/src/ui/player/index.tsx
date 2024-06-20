@@ -174,6 +174,7 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 38px - 60px)",
             minHeight: `min(320px, (100vw - 32px) / (${aspectRatio[0]} / ${aspectRatio[1]}))`,
             width: controlsFit ? "unset" : "100%",
+            maxWidth: "100%",
             aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
 
             // If the player gets too small, the controls are pretty crammed, so
@@ -181,6 +182,7 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             [screenWidthAtMost(380)]: {
                 margin: `0 -${MAIN_PADDING}px`,
                 width: `calc(100% + ${2 * MAIN_PADDING}px)`,
+                maxWidth: `calc(100% + ${2 * MAIN_PADDING}px)`,
             },
         }}>
             <Player {...{ event, ...playerProps }} />
