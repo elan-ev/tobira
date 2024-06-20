@@ -31,17 +31,38 @@ pub(crate) enum SyncCommand {
         #[clap(long)]
         yes_absolutely_reset: bool,
     },
+
+    /// Commands related to fetching texts like subtitles and slide
+    /// transcriptions from Opencast.
+    Texts {
+        #[clap(subcommand)]
+        cmd: TextsCommand,
+    },
+}
+
+#[derive(Debug, clap::Subcommand)]
+pub(crate) enum TextsCommand {
+    /// Fetches text attachments for events that have been enqueued.
+    Fetch {
+        /// If specified, the command will run forever and not stop after the
+        /// clear has been cleared.
+        #[clap(long)]
+        daemon: bool,
+    },
 }
 
 impl Args {
     pub(crate) fn is_long_running(&self) -> bool {
-        matches!(self.cmd, SyncCommand::Run { daemon: true })
+        match self.cmd {
+            SyncCommand::Run { daemon } => daemon,
+            SyncCommand::Texts { cmd: TextsCommand::Fetch { daemon }} => daemon,
+            _ => false,
+        }
     }
 }
 
 /// Entry point for `search-index` commands.
 pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
-    info!("Starting Tobira <-> Opencast synchronization ...");
     trace!("Configuration: {:#?}", config);
 
     let db = crate::connect_and_migrate_db(config).await?;
@@ -49,12 +70,16 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
 
     match args.cmd {
         SyncCommand::Run { daemon } => {
+            info!("Starting Tobira <-> Opencast synchronization ...");
             let before = Instant::now();
             super::run(daemon, conn, config).await?;
             info!("Finished harvest in {:.2?}", before.elapsed());
             Ok(())
         }
         SyncCommand::Reset { yes_absolutely_reset: yes } => reset(conn, yes).await,
+        SyncCommand::Texts { cmd: TextsCommand::Fetch { daemon } } => {
+            super::text::fetch_update(conn, config, daemon).await
+        }
     }
 }
 
