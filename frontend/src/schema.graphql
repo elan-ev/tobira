@@ -138,6 +138,11 @@ type Series {
   syncedData: SyncedSeriesData
   hostRealms: [Realm!]!
   events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
+  """
+    Returns `true` if the realm has a series block with this series.
+    Otherwise, `false` is returned.
+  """
+  isReferencedByRealm(path: String!): Boolean!
 }
 
 "Some extra information we know about a role."
@@ -259,6 +264,12 @@ type AuthorizedEvent implements Node {
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!
   acl: [AclItem!]!
+  """
+    Returns `true` if the realm has a video block with this video
+    OR if the realm has a series block with this event's series.
+    Otherwise, `false` is returned.
+  """
+  isReferencedByRealm(path: String!): Boolean!
 }
 
 "A block just showing some title."
@@ -389,18 +400,6 @@ type Realm implements Node {
     and non-critical settings.
   """
   canCurrentUserModerate: Boolean!
-  """
-    Returns `true` if this realm somehow references the given node via
-    blocks. Currently, the following rules are used:
-
-    - If `id` refers to a series: returns `true` if the realm has a series
-      block with that series.
-    - If `id` refers to an event: returns `true` if the realm has a video
-      block with that video OR if the realm has a series block with that
-      event's series.
-    - Otherwise, `false` is returned.
-  """
-  references(id: ID!): Boolean!
 }
 
 "A role being granted permission to perform certain actions."

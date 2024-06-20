@@ -149,6 +149,21 @@ impl Series {
     async fn events(&self, order: EventSortOrder, context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
         AuthorizedEvent::load_for_series(self.key, order, context).await
     }
+
+    /// Returns `true` if the realm has a series block with this series.
+    /// Otherwise, `false` is returned.
+    pub(crate) async fn is_referenced_by_realm(&self, path: String, context: &Context) -> ApiResult<bool> {
+        let query = "select exists(\
+            select 1 \
+            from blocks \
+            join realms on blocks.realm = realms.id \
+            where realms.full_path = $1 and blocks.series = $2 \
+        )";
+        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key])
+            .await?
+            .get::<_, bool>(0)
+            .pipe(Ok)
+    }
 }
 
 impl Node for Series {
