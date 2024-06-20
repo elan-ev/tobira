@@ -101,6 +101,10 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
                     },
                     INVALID_INPUT: () => t("errors.invalid-input"),
                     NOT_AUTHORIZED: () => t("errors.not-authorized"),
+                    OPENCAST_UNAVAILABLE: () => {
+                        notOurFault = false;
+                        return t("errors.opencast-unavailable");
+                    },
                 });
                 causes.add(msg);
             }

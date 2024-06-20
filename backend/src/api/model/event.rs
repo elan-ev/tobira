@@ -1,6 +1,7 @@
 use std::fmt;
 
 use chrono::{DateTime, Utc};
+use hyper::StatusCode;
 use postgres_types::ToSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::Row;
@@ -39,6 +40,7 @@ pub(crate) struct AuthorizedEvent {
     write_roles: Vec<String>,
 
     synced_data: Option<SyncedEventData>,
+    tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug)]
@@ -64,6 +66,7 @@ impl_from_db!(
             created, updated, start_time, end_time,
             tracks, captions, segments,
             read_roles, write_roles,
+            tobira_deletion_timestamp,
         },
     },
     |row| {
@@ -79,6 +82,7 @@ impl_from_db!(
             metadata: row.metadata(),
             read_roles: row.read_roles::<Vec<String>>(),
             write_roles: row.write_roles::<Vec<String>>(),
+            tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             synced_data: match row.state::<EventState>() {
                 EventState::Ready => Some(SyncedEventData {
                     updated: row.updated(),
@@ -205,6 +209,10 @@ impl AuthorizedEvent {
         context.auth.overlaps_roles(&self.write_roles)
     }
 
+    fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
+        &self.tobira_deletion_timestamp
+    }
+
     async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
         if let Some(series) = self.series {
             Ok(Series::load_by_key(series, context).await?)
@@ -319,6 +327,50 @@ impl AuthorizedEvent {
             .pipe(Ok)
     }
 
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+        let event = Self::load_by_id(id, context)
+            .await? 
+            .ok_or_else(|| err::invalid_input!(
+                key = "event.delete.not-found",
+                "event not found",
+            ))?
+            .into_result()?;
+
+        if !context.auth.overlaps_roles(&event.write_roles) {
+            return Err(err::not_authorized!(
+                key = "event.delete.not-allowed",
+                "you are not allowed to delete this event",
+            ));
+        }
+
+        let response = context
+            .oc_client
+            .delete_event(&event.opencast_id)
+            .await
+            .map_err(|e| {
+                error!("Failed to send delete request: {}", e);
+                err::opencast_unavailable!("Failed to communicate with Opencast")
+            })?;
+
+        if response.status() == StatusCode::ACCEPTED {
+            // 202: The retraction of publications has started.
+            info!(event_id = %id, "Requested deletion of event");
+            context.db.execute("\
+                update all_events \
+                set tobira_deletion_timestamp = current_timestamp \
+                where id = $1 \
+            ", &[&event.key]).await?;
+            Ok(RemovedEvent { id })
+        } else {
+            warn!(
+                event_id = %id,
+                "Failed to delete event, OC returned status: {}",
+                response.status()
+            );
+            Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
+        }
+    }
+
     pub(crate) async fn load_writable_for_user(
         context: &Context,
         order: EventSortOrder,
@@ -406,13 +458,13 @@ impl AuthorizedEvent {
                     select {event_cols}, \
                         row_number() over(order by ({sort_col}, id) {sort_order}) as row_num, \
                         count(*) over() as total_count \
-                    from events \
+                    from all_events as events \
                     {acl_filter} \
                     order by ({sort_col}, id) {sort_order} \
                 ) as tmp \
                 {filter} \
                 limit {limit}",
-            event_cols = Self::select().with_omitted_table_prefix("events"),
+            event_cols = Self::select(),
             sort_col = order.column.to_sql(),
             sort_order = sql_sort_order.to_sql(),
             limit = limit,
@@ -448,7 +500,7 @@ impl AuthorizedEvent {
         let total_count = match total_count {
             Some(c) => c,
             None => {
-                let query = format!("select count(*) from events {}", acl_filter);
+                let query = format!("select count(*) from all_events {}", acl_filter);
                 context.db
                     .query_one(&query, &[&context.auth.roles_vec()])
                     .await?
@@ -668,4 +720,10 @@ pub(crate) struct EventPageInfo {
     pub(crate) start_index: Option<i32>,
     /// The index of the last returned event.
     pub(crate) end_index: Option<i32>,
+}
+
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct RemovedEvent {
+    id: Id,
 }

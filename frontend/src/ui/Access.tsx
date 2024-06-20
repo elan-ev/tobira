@@ -1,7 +1,6 @@
 import {
     useColorScheme,
     ProtoButton,
-    WithTooltip,
     FloatingHandle,
     Floating,
     bug,
@@ -19,14 +18,14 @@ import {
     PropsWithChildren,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { LuX, LuAlertTriangle, LuInfo } from "react-icons/lu";
+import { LuX } from "react-icons/lu";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import AsyncCreatableSelect from "react-select/async-creatable";
 import { fetchQuery, graphql } from "react-relay";
 import { i18n, ParseKeys } from "i18next";
 
-import { focusStyle } from ".";
+import { InfoWithTooltip, focusStyle } from ".";
 import { useUser, isRealUser } from "../User";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
@@ -636,24 +635,6 @@ const TableRow: React.FC<TableRowProps> = (
             </ProtoButton>}
         </td>
     </tr>
-);
-
-
-type InfoWithTooltipProps = {
-    tooltip: string;
-    mode: "info" | "warning";
-}
-
-const InfoWithTooltip: React.FC<InfoWithTooltipProps> = ({ tooltip, mode }) => (
-    <WithTooltip
-        {...{ tooltip }}
-        css={{ display: "flex", fontWeight: "normal" }}
-        tooltipCss={{ width: "min(85vw, 460px)" }}
-    >
-        <span css={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
-            {mode === "info" ? <LuInfo /> : <LuAlertTriangle css={{ color: COLORS.danger0 }}/>}
-        </span>
-    </WithTooltip>
 );
 
 const UnchangeableAllActions: React.FC<{ permission?: PermissionLevel }> = ({ permission }) => {

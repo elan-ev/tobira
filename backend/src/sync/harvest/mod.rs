@@ -188,7 +188,7 @@ async fn store_in_db(
                 let segments = segments.into_iter().map(Into::into).collect::<Vec<EventSegment>>();
 
                 // We upsert the event data.
-                upsert(db, "events", "opencast_id", &[
+                upsert(db, "all_events", "opencast_id", &[
                     ("opencast_id", &opencast_id),
                     ("state", &EventState::Ready),
                     ("series", &series_id),
@@ -219,7 +219,7 @@ async fn store_in_db(
 
             HarvestItem::EventDeleted { id: opencast_id, .. } => {
                 let rows_affected = db
-                    .execute("delete from events where opencast_id = $1", &[&opencast_id])
+                    .execute("delete from all_events where opencast_id = $1", &[&opencast_id])
                     .await?;
                 check_affected_rows_removed(rows_affected, "event", &opencast_id);
                 removed_events += 1;

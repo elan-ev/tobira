@@ -136,6 +136,16 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
+    pub async fn delete_event(&self, oc_id: &String) -> Result<Response<Incoming>> {
+        let pq = format!("/api/events/{}", oc_id);
+        let req = self.req_builder(&pq)
+            .method(http::Method::DELETE)
+            .body(RequestBody::empty())
+            .expect("failed to build request");
+
+        self.http_client.request(req).await.map_err(Into::into)
+    }
+
     fn build_req(&self, path_and_query: &str) -> (Uri, Request<RequestBody>) {
         let req = self.req_builder(path_and_query)
             .body(RequestBody::empty())

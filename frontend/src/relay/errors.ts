@@ -111,4 +111,8 @@ export type ApiError = {
  *
  * This has to be kept in sync with the `ApiErrorKind` in `api/err.rs`!
  */
-export type ErrorKind = "INVALID_INPUT" | "NOT_AUTHORIZED" | "INTERNAL_SERVER_ERROR";
+export type ErrorKind = "INVALID_INPUT"
+    | "NOT_AUTHORIZED"
+    | "INTERNAL_SERVER_ERROR"
+    | "OPENCAST_UNAVAILABLE"
+;

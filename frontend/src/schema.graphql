@@ -254,6 +254,7 @@ type AuthorizedEvent implements Node {
   syncedData: SyncedEventData
   "Whether the current user has write access to this event."
   canWrite: Boolean!
+  tobiraDeletionTimestamp: DateTimeUtc
   series: Series
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!
@@ -432,6 +433,17 @@ type Mutation {
   addRealm(realm: NewRealm!): Realm!
   "Creates the current users realm. Errors if it already exists."
   createMyUserRealm: Realm!
+  """
+    Deletes the given event. Meaning: a deletion request is sent to Opencast, the event
+    is marked as "deletion pending" in Tobira, and fully removed once Opencast
+    finished deleting the event.
+
+    Returns the deletion timestamp in case of success and errors otherwise.
+    Note that "success" in this case only means the request was successfully sent
+    and accepted, not that the deletion itself succeeded, which is instead checked
+    in subsequent harvesting results.
+  """
+  deleteVideo(id: ID!): RemovedEvent!
   """
     Sets the order of all children of a specific realm.
 
@@ -622,6 +634,10 @@ input EventSortOrder {
   direction: SortDirection!
 }
 
+type RemovedEvent {
+  id: ID!
+}
+
 input UpdateRealm {
   parent: ID
   pathSegment: String
@@ -701,7 +717,9 @@ type User {
   canFindUnlisted: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
-    on the "my videos" page.
+    on the "my videos" page. This also returns events that have been marked
+    as deleted (meaning their deletion in Opencast has been requested but they
+    are not yet removed from Tobira's database).
 
     Exactly one of `first` and `last` must be set!
   """

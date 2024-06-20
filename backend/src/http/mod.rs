@@ -27,6 +27,7 @@ use crate::{
     metrics,
     prelude::*,
     search,
+    sync::OcClient,
     util::{self, ByteBody, HttpsClient, UdxHttpClient},
 };
 use self::{
@@ -78,6 +79,7 @@ pub(crate) struct Context {
     pub(crate) auth_caches: auth::Caches,
     pub(crate) http_client: HttpsClient<ByteBody>,
     pub(crate) uds_http_client: UdxHttpClient<ByteBody>,
+    pub(crate) oc_client: Arc<OcClient>,
 }
 
 
@@ -96,12 +98,13 @@ pub(crate) async fn serve(
         db_pool: db,
         assets,
         jwt: Arc::new(JwtContext::new(&config.auth.jwt)?),
-        config: Arc::new(config),
         search: Arc::new(search),
         metrics: Arc::new(metrics::Metrics::new()),
         auth_caches: auth::Caches::new(),
         http_client: util::http_client().context("failed to create HTTP client")?,
         uds_http_client: UdxHttpClient::unix(),
+        oc_client: Arc::new(OcClient::new(&config).context("Failed to create Opencast client")?),
+        config: Arc::new(config),
     });
 
     let ctx_clone = ctx.clone();

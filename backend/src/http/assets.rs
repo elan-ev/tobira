@@ -292,6 +292,9 @@ fn frontend_config(config: &Config) -> serde_json::Value {
             "small": config.theme.logo.small.as_ref().map(logo_obj),
             "largeDark": config.theme.logo.large_dark.as_ref().map(logo_obj),
             "smallDark": config.theme.logo.small_dark.as_ref().map(logo_obj),
-        }
+        },
+        "sync": {
+            "pollPeriod": config.sync.poll_period.as_secs_f64(),
+        },
     })
 }

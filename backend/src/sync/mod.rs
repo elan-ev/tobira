@@ -68,7 +68,7 @@ pub(crate) struct SyncConfig {
     /// The duration to wait after a "no new data" reply from Opencast. Only
     /// relevant in `--daemon` mode.
     #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
-    poll_period: Duration,
+    pub(crate) poll_period: Duration,
 }
 
 

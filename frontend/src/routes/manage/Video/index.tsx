@@ -27,6 +27,9 @@ import { SmallDescription } from "../../../ui/metadata";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
 import { COLORS } from "../../../color";
+import { InfoWithTooltip } from "../../../ui";
+import { relativeDate } from "../../../ui/time";
+import CONFIG from "../../../config";
 
 
 const PATH = "/~manage/videos" as const;
@@ -74,7 +77,7 @@ const query = graphql`
                     startIndex endIndex
                 }
                 items {
-                    id title created description isLive
+                    id title created description isLive tobiraDeletionTimestamp
                     syncedData {
                         duration thumbnail updated startTime endTime
                         tracks { resolution }
@@ -278,18 +281,32 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
     const link = `${PATH}/${keyOfId(event.id)}`;
     const { t, i18n } = useTranslation();
 
+    const deletionIsPending = Boolean(event.tobiraDeletionTimestamp);
+    const deletionDate = new Date(event.tobiraDeletionTimestamp ?? "");
+
+    // This checks if the current time is later than the deletion timestamp + twice
+    // the configured poll period to ensure at least one sync has taken place
+    // (+ 1min to allow some time for the Opencast delete job).
+    // If it is, the deletion in Opencast has possibly failed.
+    const pollPeriod = CONFIG.sync.pollPeriod * 1000;
+    const deletionFailed = Boolean(event.tobiraDeletionTimestamp
+        && Date.parse(event.tobiraDeletionTimestamp) + pollPeriod * 2 + 60000 < Date.now());
+
     return (
         <tr>
             <td>
-                <Link to={link} css={{
-                    ":focus-visible": { outline: "none" },
-                    ":focus-within div:first-child": {
-                        outline: `2.5px solid ${COLORS.focus}`,
-                        outlineOffset: 1,
-                    },
-                }}>
-                    <Thumbnail event={event} />
-                </Link>
+                {deletionIsPending
+                    ? <Thumbnail {...{ event, deletionIsPending }} />
+                    : <Link to={link} css={{
+                        ":focus-visible": { outline: "none" },
+                        ":focus-within div:first-child": {
+                            outline: `2.5px solid ${COLORS.focus}`,
+                            outlineOffset: 1,
+                        },
+                    }}>
+                        <Thumbnail {...{ event }} />
+                    </Link>
+                }
             </td>
             <td>
                 <div css={{
@@ -307,15 +324,20 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
                             outline: `2.5px solid ${COLORS.focus}`,
                         },
                     }}>
-                        <Link
-                            to={link}
-                            css={{
-                                ":focus, :focus-visible": {
-                                    outline: "none",
-                                },
-                                textDecoration: "none",
-                            }}
-                        >{event.title}</Link>
+                        {deletionIsPending
+                            ? <span css={{ color: COLORS.neutral60 }}>
+                                {event.title}
+                            </span>
+                            : <Link
+                                to={link}
+                                css={{
+                                    ":focus, :focus-visible": {
+                                        outline: "none",
+                                    },
+                                    textDecoration: "none",
+                                }}
+                            >{event.title}</Link>
+                        }
                     </div>
                     {!event.syncedData && <span css={{
                         padding: "0 8px",
@@ -324,7 +346,10 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
                         backgroundColor: COLORS.neutral10,
                     }}>{t("video.not-ready.label")}</span>}
                 </div>
-                <SmallDescription css={{ padding: "0 4px" }} text={event.description} />
+                {deletionIsPending
+                    ? <PendingDeletionBody {...{ deletionFailed, deletionDate, event }} />
+                    : <SmallDescription css={{ padding: "0 4px" }} text={event.description} />
+                }
             </td>
             <td css={{ fontSize: 14 }}>
                 {created.toLocaleDateString(i18n.language)}
@@ -334,6 +359,43 @@ const Row: React.FC<{ event: Events[number] }> = ({ event }) => {
                 </span>
             </td>
         </tr>
+    );
+};
+
+type PendingDeleteBodyProps = {
+    deletionFailed: boolean;
+    deletionDate: Date;
+}
+
+const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
+    deletionFailed, deletionDate,
+}) => {
+    const isDark = useColorScheme().scheme === "dark";
+    const { t } = useTranslation();
+
+    const now = Date.now();
+    const [, relative] = relativeDate(deletionDate, now);
+
+    return (
+        <div css={{
+            color: isDark ? COLORS.neutral60 : COLORS.neutral50,
+            display: "flex",
+            fontSize: 13,
+            marginTop: 4,
+            padding: "0 4px",
+        }}>
+            <span css={{ fontStyle: "italic" }}>
+                {t(`manage.my-videos.details.delete.${
+                    deletionFailed ? "failed-maybe" : "pending"
+                }`)}
+            </span>
+            <InfoWithTooltip
+                tooltip={t(`manage.my-videos.details.delete.tooltip.${
+                    deletionFailed ? "failed" : "pending"
+                }`, { time: relative })}
+                mode={deletionFailed ? "warning" : "info"}
+            />
+        </div>
     );
 };
 

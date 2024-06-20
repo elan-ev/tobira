@@ -6,6 +6,7 @@ use crate::{
     config::Config,
     db::Transaction,
     search,
+    sync::OcClient,
     prelude::*,
 };
 
@@ -17,6 +18,7 @@ pub(crate) struct Context {
     pub(crate) config: Arc<Config>,
     pub(crate) jwt: Arc<JwtContext>,
     pub(crate) search: Arc<search::Client>,
+    pub(crate) oc_client: Arc<OcClient>,
 }
 
 impl juniper::Context for Context {}

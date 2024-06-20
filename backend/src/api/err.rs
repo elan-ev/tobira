@@ -30,6 +30,9 @@ pub(crate) enum ApiErrorKind {
 
     /// Some server error out of control of the API user.
     InternalServerError,
+
+    /// Communication error with Opencast.
+    OpencastUnavailable,
 }
 
 impl ApiErrorKind {
@@ -39,6 +42,7 @@ impl ApiErrorKind {
             Self::InvalidInput => "INVALID_INPUT",
             Self::NotAuthorized => "NOT_AUTHORIZED",
             Self::InternalServerError => "INTERNAL_SERVER_ERROR",
+            Self::OpencastUnavailable => "OPENCAST_UNAVAILABLE",
         }
     }
 
@@ -47,6 +51,7 @@ impl ApiErrorKind {
             Self::InvalidInput => "Invalid input",
             Self::NotAuthorized => "Not authorized",
             Self::InternalServerError => "Internal server error",
+            Self::OpencastUnavailable => "Opencast unavailable",
         }
     }
 }
@@ -130,9 +135,14 @@ macro_rules! not_authorized {
     ($($t:tt)+) => { $crate::api::err::api_err!(NotAuthorized, $($t)*) };
 }
 
+macro_rules! opencast_unavailable {
+    ($($t:tt)+) => { $crate::api::err::api_err!(OpencastUnavailable, $($t)*) };
+}
+
 pub(crate) use api_err;
 pub(crate) use invalid_input;
 pub(crate) use not_authorized;
+pub(crate) use opencast_unavailable;
 
 
 // ===== Helper macro to inspect DbError ==================================================

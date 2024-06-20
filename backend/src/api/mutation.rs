@@ -1,6 +1,9 @@
 use juniper::graphql_object;
 
-use crate::auth::AuthContext;
+use crate::{
+    api::model::event::RemovedEvent,
+    auth::AuthContext,
+};
 use super::{
     Context,
     err::{ApiResult, invalid_input, not_authorized},
@@ -33,6 +36,7 @@ use super::{
             VideoListOrder,
             VideoListLayout,
         },
+        event::AuthorizedEvent,
     },
 };
 
@@ -50,6 +54,18 @@ impl Mutation {
     /// Creates the current users realm. Errors if it already exists.
     async fn create_my_user_realm(context: &Context) -> ApiResult<Realm> {
         Realm::create_user_realm(context).await
+    }
+
+    /// Deletes the given event. Meaning: a deletion request is sent to Opencast, the event
+    /// is marked as "deletion pending" in Tobira, and fully removed once Opencast
+    /// finished deleting the event.
+    /// 
+    /// Returns the deletion timestamp in case of success and errors otherwise.
+    /// Note that "success" in this case only means the request was successfully sent
+    /// and accepted, not that the deletion itself succeeded, which is instead checked
+    /// in subsequent harvesting results.
+    async fn delete_video(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+        AuthorizedEvent::delete(id, context).await
     }
 
     /// Sets the order of all children of a specific realm.

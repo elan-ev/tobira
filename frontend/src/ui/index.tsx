@@ -1,5 +1,5 @@
 import { match, WithTooltip, screenWidthAbove, useColorScheme } from "@opencast/appkit";
-import { LuInfo } from "react-icons/lu";
+import { LuAlertTriangle, LuInfo } from "react-icons/lu";
 import { ReactNode } from "react";
 import { CSSObject } from "@emotion/react";
 
@@ -189,5 +189,22 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ info }) => (
         }}
     >
         <span><LuInfo tabIndex={0} /></span>
+    </WithTooltip>
+);
+
+type InfoWithTooltipProps = {
+    tooltip: string;
+    mode: "info" | "warning";
+}
+
+export const InfoWithTooltip: React.FC<InfoWithTooltipProps> = ({ tooltip, mode }) => (
+    <WithTooltip
+        {...{ tooltip }}
+        css={{ display: "flex", fontWeight: "normal" }}
+        tooltipCss={{ width: "min(85vw, 460px)" }}
+    >
+        <span css={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
+            {mode === "info" ? <LuInfo /> : <LuAlertTriangle css={{ color: COLORS.danger0 }}/>}
+        </span>
     </WithTooltip>
 );

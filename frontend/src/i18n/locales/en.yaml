@@ -45,6 +45,7 @@ errors:
   not-authorized-to-view-page: You are not authorized to view this page.
   might-need-to-login: You might need to login.
   invalid-input: Invalid input.
+  opencast-unavailable: Opencast is currently not available.
   internal-server-error: Internal server error (something is wrong with the server).
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
@@ -385,6 +386,20 @@ manage:
       referencing-pages: Referencing pages
       referencing-pages-explanation: 'This video is referenced on the following pages:'
       no-referencing-pages: No pages reference this video.
+      delete:
+        title: Delete Video
+        confirm: Delete Video?
+        cannot-be-undone: This action <strong>cannot</strong> be undone!
+        failed: Deleting the video failed.
+        failed-maybe: Deleting the video possibly failed.
+        pending: Deletion is pending.
+        tooltip:
+          failed: >
+            The deletion was requested {{time}} but still has not happened, so it might have failed.
+          pending: >
+            The deletion of this video was requested in Opencast
+            and it will be removed from this list upon success.
+
     acl:
       title: Access policy
     technical-details:
@@ -571,6 +586,12 @@ api-remote-errors:
       Your username '{{username}}' contains characters that are not allowed in page paths,
       thus you cannot create your own page. Contact a system administrator for
       further assistance.
+  event:
+    delete:
+      not-found: >
+        The video you are trying to delete does not exist.
+        It might have been removed already.
+      not-allowed: You are not allowed to delete this video.
 
 embed:
   not-supported: This page can't be embedded.
