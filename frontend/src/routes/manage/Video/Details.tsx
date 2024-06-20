@@ -53,7 +53,7 @@ const Page: React.FC<Props> = ({ event }) => {
         }}>
             <UpdatedCreatedInfo event={event} />
             <div css={{ margin: "8px 2px", flex: "1 0 auto" }}>
-                {user.canUseEditor && event.canWrite && (
+                {user.canUseEditor && !event.isLive && event.canWrite && (
                     <ExternalLink
                         service="EDITOR"
                         params={{ mediaPackageId: event.opencastId }}
