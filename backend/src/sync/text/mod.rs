@@ -13,6 +13,8 @@ use crate::{
     prelude::*,
 };
 
+mod mpeg7;
+
 
 /// How many queue entries are loaded and processed in one chunk.
 const CHUNK_SIZE: i64 = 100;
@@ -396,7 +398,7 @@ async fn process_asset(
     let texts = if uri.ends_with(".vtt") || ty == AssetType::Caption {
         parse_vtt(text)
     } else if uri.ends_with(".xml") || ty == AssetType::SlideText {
-        todo!()
+        mpeg7::parse(&text)
     } else {
         warn!(oc_event_id, uri, "unknown file type of text -> ignoring");
         return Outcome::Ignore;
