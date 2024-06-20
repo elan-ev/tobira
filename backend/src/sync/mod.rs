@@ -1,4 +1,5 @@
-use secrecy::Secret;
+use base64::Engine as _;
+use secrecy::{ExposeSecret as _, Secret};
 use core::fmt;
 use std::time::Duration;
 
@@ -71,6 +72,14 @@ pub(crate) struct SyncConfig {
     pub(crate) poll_period: Duration,
 }
 
+impl SyncConfig {
+    pub(crate) fn basic_auth_header(&self) -> Secret<String> {
+        let credentials = format!("{}:{}", self.user, self.password.expose_secret());
+        let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
+        let auth_header = format!("Basic {}", encoded_credentials);
+        Secret::new(auth_header)
+    }
+}
 
 /// Version of the Tobira-module API in Opencast.
 struct ApiVersion {
