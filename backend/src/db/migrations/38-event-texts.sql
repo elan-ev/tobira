@@ -80,3 +80,48 @@ create trigger queue_event_for_text_extract_on_update
 after update of updated, slide_text, captions
 on all_events for each row
 execute procedure queue_event_for_text_extract();
+
+
+-- This is almost the same definition as in migration `37`, only the `texts`
+-- selected column was added.
+create or replace view search_events as
+    select
+        events.id, events.opencast_id, events.state,
+        events.series, series.title as series_title,
+        events.title, events.description, events.creators,
+        events.thumbnail, events.duration,
+        events.is_live, events.updated, events.created, events.start_time, events.end_time,
+        events.read_roles, events.write_roles,
+        coalesce(
+            array_agg(
+                distinct
+                row(search_realms.*)::search_realms
+            ) filter(where search_realms.id is not null),
+            '{}'
+        ) as host_realms,
+        is_audio_only(events.tracks) as audio_only,
+        coalesce(
+            array_agg(playlists.id)
+                filter(where playlists.id is not null),
+            '{}'
+        ) as containing_playlists,
+        (
+            select array_agg(t)
+            from (
+                select unnest(texts) as t
+                from event_texts
+                where event_id = events.id
+            ) as subquery
+        ) as texts
+    from all_events as events
+    left join series on events.series = series.id
+    -- This syntax instead of `foo = any(...)` to use the index, which is not
+    -- otherwise used.
+    left join playlists on array[events.opencast_id] <@ event_entry_ids(entries)
+    left join blocks on (
+        type = 'series' and blocks.series = events.series
+        or type = 'video' and blocks.video = events.id
+        or type = 'playlist' and blocks.playlist = playlists.id
+    )
+    left join search_realms on search_realms.id = blocks.realm
+    group by events.id, series.id;
