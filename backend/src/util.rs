@@ -9,6 +9,11 @@ use secrecy::Secret;
 use crate::{http::Response, prelude::*};
 
 
+/// The URL-safe base64 alphabet.
+pub(crate) const BASE64_DIGITS: &[u8; 64] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+
 /// An empty `enum` for signaling the fact that a function (potentially) never returns.
 /// Note that you can't construct a value of this type, so a function returning it
 /// can never return. A function returning `Result<NeverReturns>` never returns
