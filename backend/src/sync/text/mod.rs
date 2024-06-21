@@ -24,9 +24,6 @@ mod mpeg7;
 /// How many queue entries are loaded and processed in one chunk.
 const CHUNK_SIZE: i64 = 100;
 
-/// Number of tokio tasks that concurrently fetch assets.
-const MAX_CONCURRENT_WORKERS: usize = 4;
-
 /// Number of times an asset is attempted to fetch in case of unexpected errors.
 const MAX_RETRIES: i32 = 12;
 
@@ -73,7 +70,8 @@ pub(crate) async fn fetch_update(
 
             // We simply propagate the error upwards as this function only
             // errors on DB errors.
-            let outcome = fetch_update_chunk(&ctx, &mut db).await
+            let outcome = fetch_update_chunk(&ctx, config.sync.concurrent_download_tasks, &mut db)
+                .await
                 .context("failed to fetch chunk of asset texts")?;
             did_work_last = true;
 
@@ -126,6 +124,7 @@ enum SingleUpdateOutcome {
 
 async fn fetch_update_chunk(
     ctx: &Context,
+    concurrent_tasks: u8,
     db: &mut DbConnection,
 ) -> Result<SingleUpdateOutcome> {
     let tx = db.build_transaction()
@@ -195,7 +194,7 @@ async fn fetch_update_chunk(
             (QueueAction::Remove, entry.queue, texts)
         }
     });
-    let mut stream = futures::stream::iter(future_iter).buffer_unordered(MAX_CONCURRENT_WORKERS);
+    let mut stream = futures::stream::iter(future_iter).buffer_unordered(concurrent_tasks.into());
 
     // Iterate over the `buffer_unordered` stream and read the results.
     let mut texts_to_be_inserted = Vec::new();

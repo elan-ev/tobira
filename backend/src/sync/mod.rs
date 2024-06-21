@@ -71,6 +71,12 @@ pub(crate) struct SyncConfig {
     /// relevant in `--daemon` mode.
     #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
     pub(crate) poll_period: Duration,
+
+    /// Number of concurrent tasks with which Tobira downloads assets from
+    /// Opencast. The default should be a good sweet spot. Decrease to reduce
+    /// load on Opencast, increase to speed up download a bit.
+    #[config(default = 8)]
+    concurrent_download_tasks: u8,
 }
 
 impl SyncConfig {
