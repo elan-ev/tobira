@@ -1,14 +1,19 @@
 use std::{sync::Arc, time::Duration};
 
 use chrono::{DateTime, Utc};
-use futures::StreamExt;
+use futures::{pin_mut, StreamExt};
 use hyper::StatusCode;
 use secrecy::ExposeSecret as _;
 use url::Url;
 
 use crate::{
     config::Config,
-    db::{types::{EventCaption, EventTextsQueueRecord, Key, TimespanText}, util::{collect_rows_mapped, select}, DbConnection},
+    db::{
+        self,
+        types::{EventCaption, EventTextsQueueRecord, Key, TimespanText},
+        util::{collect_rows_mapped, select},
+        DbConnection,
+    },
     dbargs,
     prelude::*,
 };
@@ -239,17 +244,19 @@ async fn fetch_update_chunk(
     let bumped_queue_entries = tx.execute(sql,&[&queue_entries_to_be_bumped]).await
         .context("failed to update queue entries")?;
 
-    // Write fetched texts to DB.
-    // TODO: this could be done with a single bulk insert.
+    // Write fetched texts to DB and clear old ones for these events.
+    let event_ids = texts_to_be_inserted.iter().map(|t| t.event_id).collect::<Vec<_>>();
+    tx.execute("delete from event_texts where event_id = any($1)", &[&event_ids]).await
+        .context("failed to delete from event_texts")?;
+    let columns = ["uri", "event_id", "texts", "fetch_time"];
+    let writer = db::util::bulk_insert("event_texts", &columns, &tx).await?;
+    pin_mut!(writer);
     for t in &texts_to_be_inserted {
-        let sql = "insert into event_texts (uri, event_id, texts, fetch_time) \
-            values ($1, $2, $3, $4) \
-            on conflict (uri, event_id) do update set \
-                texts = excluded.texts, \
-                fetch_time = excluded.fetch_time";
-        tx.execute(sql, &[&t.uri, &t.event_id, &t.texts, &t.fetch_time]).await
-            .context("failed to write event text to DB")?;
+        writer.as_mut()
+            .write_raw(dbargs![&t.uri, &t.event_id, &t.texts, &t.fetch_time])
+            .await?;
     }
+    writer.finish().await?;
 
     // Remove entries from queue
     let sql = "delete from event_texts_queue \
