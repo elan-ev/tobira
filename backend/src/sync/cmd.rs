@@ -53,6 +53,34 @@ pub(crate) enum TextsCommand {
         daemon: bool,
     },
 
+    /// Queues events to fetch their text assets.
+    #[clap(arg_required_else_help = true)]
+    Queue {
+        /// Queues all events with text assets.
+        #[clap(long, exclusive = true)]
+        all: bool,
+
+        /// Queues all events with incompletely fetched assets.
+        #[clap(long, exclusive = true)]
+        missing: bool,
+
+        /// Opencast IDs of events to be queued.
+        #[clap(exclusive = true)]
+        events: Vec<String>,
+    },
+
+    /// Removes events from the queue.
+    #[clap(arg_required_else_help = true)]
+    Dequeue {
+        /// Completely clears the queue.
+        #[clap(long, exclusive = true)]
+        all: bool,
+
+        /// Opencast IDs of events to be removed from the queue.
+        #[clap(exclusive = true)]
+        events: Vec<String>,
+    },
+
     Status,
 }
 
@@ -86,6 +114,12 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
             super::text::fetch_update(conn, config, daemon).await
         }
         SyncCommand::Texts { cmd: TextsCommand::Status } => text_status(conn).await,
+        SyncCommand::Texts { cmd: TextsCommand::Queue { all, missing, ref events } } => {
+            text_queue(conn, all, missing, events).await
+        },
+        SyncCommand::Texts { cmd: TextsCommand::Dequeue { all, ref events } } => {
+            text_dequeue(conn, all, events).await
+        }
     }
 }
 
@@ -184,6 +218,72 @@ async fn text_status(db: DbConnection) -> Result<()> {
     info_line!("Fetched text assets", num_texts);
     info_line!("Incomplete events", incomplete_events);
     info_line!("Incomplete events not queued (failed)", failed_events);
+
+    Ok(())
+}
+
+async fn text_queue(
+    db: DbConnection,
+    all: bool,
+    missing: bool,
+    events: &[String],
+) -> Result<()> {
+    // These options are all mutually exclusive, checked by clap.
+    async fn insert_from_table(db: DbConnection, from: &str) -> Result<()> {
+        let sql = format!("
+            with {HELPER_QUERIES}
+            insert into event_texts_queue (event_id, fetch_after, retry_count)
+            select id, updated, 0 from {from}
+            on conflict(event_id) do nothing
+        ");
+        let affected = db.execute(&sql, &[]).await?;
+        info!("Added {affected} entries to queue");
+        Ok(())
+    }
+
+
+    if all {
+        insert_from_table(db, "events_with_text_assets").await?;
+    } else if missing {
+        insert_from_table(db, "incomplete_events").await?;
+    } else {
+        let sql = "
+            insert into event_texts_queue (event_id, fetch_after, retry_count)
+            select id, updated, 0 from events
+                where opencast_id = any($1)
+            on conflict(event_id) do nothing
+        ";
+        let affected = db.execute(sql, &[&events]).await?;
+        info!("Added {affected} entries to queue");
+        if affected != events.len() as u64 {
+            warn!("Inserted fewer entries into queue than specified. One or more \
+                IDs might not exist or already queued.");
+        }
+    }
+
+    Ok(())
+}
+
+async fn text_dequeue(
+    db: DbConnection,
+    all: bool,
+    events: &[String],
+) -> Result<()> {
+    if all {
+        db.execute("truncate event_texts_queue", &[]).await?;
+        info!("Cleared text assets fetch queue");
+    } else {
+        let affected = db.execute(
+            "delete from event_texts_queue
+                where event_id in (select id from events where opencast_id = any($1))",
+            &[&events],
+        ).await?;
+        info!("Removed {affected} entries from the queue");
+        if affected != events.len() as u64 {
+            warn!("Fewer items were dequeued than specified -> some specified \
+                events IDs were not in the queue");
+        }
+    }
 
     Ok(())
 }
