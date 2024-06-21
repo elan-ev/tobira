@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use static_assertions::const_assert;
 use std::fmt;
 
-use crate::db::types::Key;
+use crate::{db::types::Key, util::BASE64_DIGITS};
 
 
 /// An opaque, globally-unique identifier for all "nodes" that the GraphQL API
@@ -122,10 +122,6 @@ impl Id {
         self.kind
     }
 }
-
-/// The URL-safe base64 alphabet.
-const BASE64_DIGITS: &[u8; 64] =
-    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 impl Key {
     pub(crate) fn from_base64(s: &str) -> Option<Self> {
