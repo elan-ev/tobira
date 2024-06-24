@@ -96,7 +96,7 @@ type SearchEvent implements Node {
   isLive: Boolean!
   audioOnly: Boolean!
   hostRealms: [SearchRealm!]!
-  timespanMatches: [TimeSpan!]!
+  textMatches: [TextMatch!]!
 }
 
 input ChildIndex {
@@ -125,16 +125,6 @@ type EventConnection {
   pageInfo: EventPageInfo!
   items: [AuthorizedEvent!]!
   totalCount: Int!
-}
-
-type TimeSpan {
-  """
-    Start of this timespan in number of milliseconds from the beginning of
-    the video.
-  """
-  start: Float!
-  "Duration of this timespan in number of milliseconds."
-  duration: Float!
 }
 
 "A simple realm name: a fixed string."
@@ -322,6 +312,23 @@ interface Node {
 
 type SeriesSearchResults {
   items: [SearchSeries!]!
+}
+
+"A match inside an event's texts while searching."
+type TextMatch {
+  """
+    Start of this timespan in number of milliseconds from the beginning of
+    the video.
+  """
+  start: Float!
+  "Duration of this timespan in number of milliseconds."
+  duration: Float!
+  "The text containing the match, with some context"
+  text: String!
+  "Byte offset inside `text` where the match starts."
+  highlightStart: Int!
+  "How many bytes of `text` should be highlighted."
+  highlightLength: Int!
 }
 
 type Track {

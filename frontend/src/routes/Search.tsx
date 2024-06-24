@@ -144,7 +144,7 @@ const query = graphql`
                         endTime
                         created
                         hostRealms { path }
-                        timespanMatches { start duration }
+                        textMatches { start duration text highlightStart highlightLength }
                     }
                     ... on SearchSeriesExtended {
                         title
@@ -366,7 +366,12 @@ const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "unde
     : value;
 
 const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
-    <ul css={{ listStyle: "none", padding: 0 }}>
+    <ul css={{
+        listStyle: "none",
+        padding: 0,
+        // A yellow that looks good for dark and light mode.
+        "--highlight-color": "#ba9f14",
+    }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
                 return <SearchEvent key={item.id} {...{
@@ -384,7 +389,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     startTime: unwrapUndefined(item.startTime),
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
-                    timespanMatches: unwrapUndefined(item.timespanMatches),
+                    textMatches: unwrapUndefined(item.textMatches),
                 }} />;
             } else if (item.__typename === "SearchSeriesExtended") {
                 return <SearchSeries key={item.id} {...{
@@ -461,7 +466,7 @@ type SearchEventProps = {
     startTime: string | null;
     endTime: string | null;
     hostRealms: readonly { readonly path: string }[];
-    timespanMatches: readonly { start: number; duration: number }[];
+    textMatches: NonNullable<Results["items"][number]["textMatches"]>;
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
@@ -479,7 +484,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     startTime,
     endTime,
     hostRealms,
-    timespanMatches,
+    textMatches,
 }) => {
     const { t } = useTranslation();
 
@@ -488,7 +493,6 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     const link = hostRealms.length !== 1
         ? DirectVideoRoute.url({ videoId: id })
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
-    const sectionLink = (startMs: number) => `${link}?t=${secondsToTimeString(startMs / 1000)}`;
 
     return (
         <Item key={id} link={link}>
@@ -541,60 +545,8 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     </div>}
 
                     {/* Show timeline with matches if there are any */}
-                    {timespanMatches.length > 0 && (
-                        <div css={{
-                            width: "100%",
-                            position: "relative",
-                            height: 10,
-                            margin: "16px 0",
-                        }}>
-                            <div css={{
-                                position: "absolute",
-                                left: -3,
-                                right: -2,
-                                bottom: -3,
-                                height: 6,
-                                border: `1.5px solid ${COLORS.neutral50}`,
-                                borderTop: "none",
-                                borderBottomLeftRadius: 1,
-                                borderBottomRightRadius: 1,
-                            }} />
-
-                            {timespanMatches.map((m, i) => (
-                                <WithTooltip
-                                    key={i}
-                                    tooltip={
-                                        formatDuration(m.start)
-                                        + " – "
-                                        + formatDuration(m.start + m.duration)
-                                    }
-                                    css={{
-                                        height: "100%",
-                                        position: "absolute",
-                                        bottom: 0,
-                                        width: `calc(${m.duration / duration * 100}% - 1px)`,
-                                        minWidth: 4, // To make the sections not too small to click
-                                        left: `${m.start / duration * 100}%`,
-                                        backgroundColor: COLORS.primary0,
-                                        zIndex: 4,
-                                        borderTop: "none",
-                                        borderBottom: "none",
-                                        "&:hover": {
-                                            backgroundColor: COLORS.primary1,
-                                        },
-                                    }}
-                                >
-                                    <Link
-                                        to={sectionLink(m.start)}
-                                        css={{
-                                            display: "block",
-                                            width: "100%",
-                                            height: "100%",
-                                        }}
-                                    />
-                                </WithTooltip>
-                            ))}
-                        </div>
+                    {textMatches.length > 0 && (
+                        <TextMatchTimeline {...{ duration, link, textMatches }} />
                     )}
                 </div>
             </WithIcon>
@@ -630,6 +582,93 @@ const thumbnailCss = {
         maxWidth: 400,
         margin: "0 auto",
     },
+};
+
+type TextMatchTimelineProps = Pick<SearchEventProps, "duration" | "textMatches"> & {
+    link: string;
+};
+
+const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMatches, link }) => {
+    const sectionLink = (startMs: number) => `${link}?t=${secondsToTimeString(startMs / 1000)}`;
+
+    return (
+        <div css={{
+            width: "100%",
+            position: "relative",
+            height: 10,
+            margin: "16px 0",
+        }}>
+            {/* The timeline frame */}
+            <div css={{
+                position: "absolute",
+                left: -3,
+                right: -2,
+                bottom: -3,
+                height: 6,
+                border: `1.5px solid ${COLORS.neutral50}`,
+                borderTop: "none",
+                borderBottomLeftRadius: 1,
+                borderBottomRightRadius: 1,
+            }} />
+
+            {textMatches.map((m, i) => (
+                <WithTooltip
+                    key={i}
+                    tooltip={(() => {
+                        // Slice the string to highlight the matched text.
+                        const [prefix, highlight, suffix]
+                            = byteSlice(m.text, m.highlightStart, m.highlightLength);
+                        const startDuration = formatDuration(m.start);
+                        const endDuration = formatDuration(m.start + m.duration);
+
+                        return <>
+                            <div css={{
+                                maxWidth: "min(85vw, 460px)",
+                                paddingLeft: 13,
+                                textIndent: -13,
+                            }}>
+                                …{prefix}
+                                <span css={{
+                                    color: COLORS.neutral90,
+                                    backgroundColor: COLORS.neutral15,
+                                    borderBottom: "2px solid var(--highlight-color)",
+                                    borderRadius: 2,
+                                }}>{highlight}</span>
+                                {suffix}…
+                            </div>
+                            <div css={{ textAlign: "center" }}>
+                                {`(${startDuration} – ${endDuration})`}
+                            </div>
+                        </>;
+                    })()}
+                    css={{
+                        height: "100%",
+                        position: "absolute",
+                        bottom: 0,
+                        width: `calc(${m.duration / duration * 100}% - 1px)`,
+                        minWidth: 4, // To make the sections not too small to click
+                        left: `${m.start / duration * 100}%`,
+                        backgroundColor: COLORS.primary0,
+                        zIndex: 4,
+                        borderTop: "none",
+                        borderBottom: "none",
+                        "&:hover": {
+                            backgroundColor: COLORS.primary1,
+                        },
+                    }}
+                >
+                    <Link
+                        to={sectionLink(m.start)}
+                        css={{
+                            display: "block",
+                            width: "100%",
+                            height: "100%",
+                        }}
+                    />
+                </WithTooltip>
+            ))}
+        </div>
+    );
 };
 
 
@@ -817,4 +856,43 @@ export const handleNavigation = ((router: RouterControl, ref?: RefObject<HTMLInp
     }
 });
 
+/**
+ * Slices a string with byte indices. Never cuts into UTF-8 chars, but
+ * arbitrarily decides in what output to place them.
+ */
+const byteSlice = (s: string, start: number, len: number): readonly [string, string, string] => {
+    const isCharBoundary = (b: Uint8Array, idx: number): boolean => {
+        if (idx === 0 || idx === b.byteLength) {
+            return true;
+        }
+        const v = b.at(idx);
+        if (v === undefined) {
+            return false;
+        }
+
+        // UTF-8 chars have either the first bit 0 or the first two bits 1.
+        return v < 0x80 || v >= 0xC0;
+    };
+
+    const bytes = new TextEncoder().encode(s);
+    const decoder = new TextDecoder("utf-8");
+
+    // Round indices to avoid cutting into UTF8 chars. The loop only needs to
+    // execute 3 times as every 4 bytes there is always a char boundary.
+    let end = start + len;
+    for (let i = 0; i < 3; i += 1) {
+        if (!isCharBoundary(bytes, start)) {
+            start += 1;
+        }
+        if (!isCharBoundary(bytes, end)) {
+            end += 1;
+        }
+    }
+
+    return [
+        decoder.decode(bytes.slice(0, start)),
+        decoder.decode(bytes.slice(start, end)),
+        decoder.decode(bytes.slice(end)),
+    ] as const;
+};
 
