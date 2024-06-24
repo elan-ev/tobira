@@ -425,6 +425,7 @@ const WithIcon: React.FC<WithIconProps> = ({ Icon, iconSize = 30, children, hide
     <div css={{
         display: "flex",
         flexDirection: "row",
+        flexGrow: "1",
         minWidth: 0,
         gap: 24,
         [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
@@ -502,6 +503,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     display: "flex",
                     flexDirection: "column",
                     minWidth: 0,
+                    width: "100%",
                 }}>
                     <h3 css={{
                         color: COLORS.primary0,
