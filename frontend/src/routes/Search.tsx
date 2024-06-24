@@ -15,6 +15,7 @@ import {
     FloatingContainer,
     FloatingTrigger,
     ProtoButton,
+    WithTooltip,
     screenWidthAtMost,
     unreachable,
     useColorScheme,
@@ -36,6 +37,7 @@ import {
     ThumbnailOverlay,
     ThumbnailOverlayContainer,
     ThumbnailReplacement,
+    formatDuration,
 } from "../ui/Video";
 import { SmallDescription } from "../ui/metadata";
 import { Card } from "../ui/Card";
@@ -44,7 +46,7 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
-import { isExperimentalFlagSet, keyOfId } from "../util";
+import { isExperimentalFlagSet, keyOfId, secondsToTimeString } from "../util";
 import { Button } from "../ui/Button";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute } from "./Series";
@@ -142,6 +144,7 @@ const query = graphql`
                         endTime
                         created
                         hostRealms { path }
+                        timespanMatches { start duration }
                     }
                     ... on SearchSeriesExtended {
                         title
@@ -381,6 +384,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     startTime: unwrapUndefined(item.startTime),
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
+                    timespanMatches: unwrapUndefined(item.timespanMatches),
                 }} />;
             } else if (item.__typename === "SearchSeriesExtended") {
                 return <SearchSeries key={item.id} {...{
@@ -457,6 +461,7 @@ type SearchEventProps = {
     startTime: string | null;
     endTime: string | null;
     hostRealms: readonly { readonly path: string }[];
+    timespanMatches: readonly { start: number; duration: number }[];
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
@@ -474,6 +479,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     startTime,
     endTime,
     hostRealms,
+    timespanMatches,
 }) => {
     const { t } = useTranslation();
 
@@ -482,6 +488,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     const link = hostRealms.length !== 1
         ? DirectVideoRoute.url({ videoId: id })
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
+    const sectionLink = (startMs: number) => `${link}?t=${secondsToTimeString(startMs / 1000)}`;
 
     return (
         <Item key={id} link={link}>
@@ -532,6 +539,63 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                             zIndex: 4,
                         }}>{seriesTitle}</Link>
                     </div>}
+
+                    {/* Show timeline with matches if there are any */}
+                    {timespanMatches.length > 0 && (
+                        <div css={{
+                            width: "100%",
+                            position: "relative",
+                            height: 10,
+                            margin: "16px 0",
+                        }}>
+                            <div css={{
+                                position: "absolute",
+                                left: -3,
+                                right: -2,
+                                bottom: -3,
+                                height: 6,
+                                border: `1.5px solid ${COLORS.neutral50}`,
+                                borderTop: "none",
+                                borderBottomLeftRadius: 1,
+                                borderBottomRightRadius: 1,
+                            }} />
+
+                            {timespanMatches.map((m, i) => (
+                                <WithTooltip
+                                    key={i}
+                                    tooltip={
+                                        formatDuration(m.start)
+                                        + " – "
+                                        + formatDuration(m.start + m.duration)
+                                    }
+                                    css={{
+                                        height: "100%",
+                                        position: "absolute",
+                                        bottom: 0,
+                                        width: `calc(${m.duration / duration * 100}% - 1px)`,
+                                        minWidth: 4, // To make the sections not too small to click
+                                        left: `${m.start / duration * 100}%`,
+                                        backgroundColor: COLORS.primary0,
+                                        zIndex: 4,
+                                        borderTop: "none",
+                                        borderBottom: "none",
+                                        "&:hover": {
+                                            backgroundColor: COLORS.primary1,
+                                        },
+                                    }}
+                                >
+                                    <Link
+                                        to={sectionLink(m.start)}
+                                        css={{
+                                            display: "block",
+                                            width: "100%",
+                                            height: "100%",
+                                        }}
+                                    />
+                                </WithTooltip>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </WithIcon>
             <Thumbnail
