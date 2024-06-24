@@ -83,19 +83,20 @@ type RemovedRealm {
 
 type SearchEvent implements Node {
   id: ID!
-  title: String!
   seriesId: ID
   seriesTitle: String
+  title: String!
   description: String
   creators: [String!]!
   thumbnail: String
   duration: Float!
-  isLive: Boolean!
-  audioOnly: Boolean!
   created: DateTimeUtc!
   startTime: DateTimeUtc
   endTime: DateTimeUtc
+  isLive: Boolean!
+  audioOnly: Boolean!
   hostRealms: [SearchRealm!]!
+  timespanMatches: [TimeSpan!]!
 }
 
 input ChildIndex {
@@ -124,6 +125,16 @@ type EventConnection {
   pageInfo: EventPageInfo!
   items: [AuthorizedEvent!]!
   totalCount: Int!
+}
+
+type TimeSpan {
+  """
+    Start of this timespan in number of milliseconds from the beginning of
+    the video.
+  """
+  start: Float!
+  "Duration of this timespan in number of milliseconds."
+  duration: Float!
 }
 
 "A simple realm name: a fixed string."
