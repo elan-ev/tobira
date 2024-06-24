@@ -1,7 +1,9 @@
-use std::cmp::max;
+use std::{cmp::max, collections::BTreeMap};
 
 use chrono::{DateTime, Utc};
+use fallible_iterator::FallibleIterator;
 use meilisearch_sdk::indexes::Index;
+use postgres_types::FromSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
@@ -102,7 +104,8 @@ impl_from_db!(
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed: host_realms.iter().any(|realm| !realm.is_user_realm()),
             host_realms,
-            text_index: TextSearchIndex::build(row.texts()),
+            text_index: row.texts::<Option<TextSearchIndex>>()
+                .unwrap_or_else(TextSearchIndex::empty),
         }
     }
 );
@@ -136,6 +139,35 @@ pub(super) async fn prepare_index(index: &Index) -> Result<()> {
     }).await
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct SearchTimespan {
+    start: u64,
+    duration: u64,
+}
+
+impl SearchTimespan {
+    /// We reduce the precision of our timestamps to 100ms, as more is really
+    /// not needed for search.
+    const PRECISION: u64 = 100;
+
+    fn from_tst(v: &TimespanText) -> Self {
+        Self {
+            start: v.span_start as u64 / Self::PRECISION,
+            duration: (v.span_end as u64).saturating_sub(v.span_start as u64) / Self::PRECISION,
+        }
+    }
+
+    fn to_api(self) -> TimeSpan {
+        TimeSpan {
+            start: (self.start * Self::PRECISION) as f64,
+            duration: (self.duration * Self::PRECISION) as f64,
+        }
+    }
+}
+
+/// What we store in Meili to nicely search through texts and then lookup the
+/// corresponding timespan for the match. This is built inside `FromSql` as
+/// that way, we can avoid useless heap allocations.
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct TextSearchIndex {
     /// This contains all source strings concatenated with `;` as separator. You
@@ -168,103 +200,11 @@ pub(crate) struct TextSearchIndex {
 }
 
 impl TextSearchIndex {
-    /// We reduce the precision of our timestamps to 100ms, as more is really
-    /// not needed for search.
-    const PRECISION: u64 = 100;
-
-    fn build(db_texts: Option<Vec<TimespanText>>) -> Self {
-        fn duration(ts: &TimespanText) -> u64 {
-            (ts.span_end as u64).saturating_sub(ts.span_start as u64) / TextSearchIndex::PRECISION
+    fn empty() -> Self {
+        Self {
+            texts: String::new(),
+            text_timespan_index: String::new(),
         }
-
-        let mut texts = db_texts.unwrap_or_default();
-
-        // ----- Step 1:
-        //
-        // Clean texts by filtering out ones that are very unlikely to
-        // contribute to a meaningful search experience. The responsibility of
-        // delivering good texts to search for is still with Opencast and its
-        // captions and slide texts. It doesn't hurt to do some basic cleaning
-        // here though.
-        //
-        // In this step we also gather various stats about the data which we
-        // will use later.
-        let mut needed_main_capacity = 0;
-        let mut max_duration = 0;
-        let mut max_start = 0;
-        texts.retain(|ts| {
-            // TODO: Do more cleanup.
-            let s = ts.t.trim();
-            if s.len() <= 1 {
-                return false;
-            }
-
-            max_duration = max(max_duration, duration(ts));
-            max_start = max(max_start, ts.span_start as u64 / Self::PRECISION);
-            needed_main_capacity += ts.t.len();
-            true
-        });
-
-        if texts.is_empty() {
-            return Self { texts: String::new(), text_timespan_index: String::new() };
-        }
-
-
-        // ----- Step 2: actually build the two fields that we store in Meili.
-
-        // For the separators.
-        needed_main_capacity += texts.len().saturating_sub(1);
-
-        // Figure out how much base64 digits we need for the three fields.
-        let required_digits = |max: u64| if max == 0 { 1 } else { max.ilog(64) + 1 };
-        let offset_digits = required_digits(needed_main_capacity as u64);
-        let start_digits = required_digits(max_start);
-        let duration_digits = required_digits(max_duration);
-
-        // Original duration uses u64, but is divided by 100. And 2^64 / 100 is
-        // less than 64^10.
-        assert!(offset_digits <= 10 && start_digits <= 10 && duration_digits <= 10);
-
-        let index_len = 3 + (offset_digits + start_digits + duration_digits) as usize * texts.len();
-        let mut out = Self {
-            texts: String::with_capacity(needed_main_capacity),
-            text_timespan_index: String::with_capacity(index_len),
-        };
-
-        // Write index header, specifying how each field is encoded. We subtract
-        // by 1 to make sure we always use exactly one digit.
-        use std::fmt::Write;
-        write!(
-            out.text_timespan_index,
-            "{}{}{}",
-            offset_digits - 1,
-            start_digits - 1,
-            duration_digits - 1,
-        ).unwrap();
-
-        let mut encode_index_int = |mut value: u64, digits: u32| {
-            // This is reverse order encoding for convience/performance here.
-            // Least significant digit is leftmost.
-            for _ in 0..digits {
-                let digit = BASE64_DIGITS[value as usize % 64].into();
-                out.text_timespan_index.push(digit);
-                value /= 64;
-            }
-            debug_assert!(value == 0);
-        };
-
-        for ts in texts {
-            if !out.texts.is_empty() {
-                out.texts.push(';');
-            }
-            let offset = out.texts.len() as u64;
-            out.texts.push_str(&ts.t);
-            encode_index_int(offset, offset_digits);
-            encode_index_int(ts.span_start as u64 / Self::PRECISION, start_digits);
-            encode_index_int(duration(&ts), duration_digits);
-        }
-
-        out
     }
 
     /// Looks up a match position (byte offset inside `texts`) and returns the
@@ -348,9 +288,129 @@ impl TextSearchIndex {
 
         let start_idx = entry_idx * entry_len + offset_digits as usize;
         let duration_idx = entry_idx * entry_len + offset_digits as usize + start_digits as usize;
-        TimeSpan {
-            start: (decode_index_int(start_idx, start_digits) * Self::PRECISION) as f64,
-            duration: (decode_index_int(duration_idx, duration_digits) * Self::PRECISION) as f64,
+        SearchTimespan {
+            start: decode_index_int(start_idx, start_digits),
+            duration: decode_index_int(duration_idx, duration_digits),
+        }.to_api()
+    }
+}
+
+impl<'a> FromSql<'a> for TextSearchIndex {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        // ----- Step 0: Postgres stuff -----------------------------------------------------------
+        let member_type = match *ty.kind() {
+            postgres_types::Kind::Array(ref member) => member,
+            _ => panic!("expected array type"),
+        };
+
+        let array = postgres_protocol::types::array_from_sql(raw)?;
+        if array.dimensions().count()? > 1 {
+            return Err("array contains too many dimensions".into());
+        }
+
+
+        // ----- Step 1: Read all data, transform and analyze it ----------------------------------
+        //
+        // Clean texts by filtering out ones that are very unlikely to
+        // contribute to a meaningful search experience. The responsibility of
+        // delivering good texts to search for is still with Opencast and its
+        // captions and slide texts. It doesn't hurt to do some basic cleaning
+        // here though.
+        //
+        // We also gather some statistical data and concat all strings that have
+        // the same timespan into a single string(separated by newline).
+        let mut needed_main_capacity = 0;
+        let mut max_duration = 0;
+        let mut max_start = 0;
+        let mut texts = <BTreeMap<_, String>>::new();
+        let mut it = array.values();
+        while let Some(v) = it.next()? {
+            let ts = TimespanText::from_sql_nullable(member_type, v)?;
+
+            // TODO: Do more cleanup.
+            let s = ts.t.trim();
+            if s.len() <= 1 {
+                continue;
+            }
+
+            let key = SearchTimespan::from_tst(&ts);
+            let buf = texts.entry(key).or_default();
+            if !buf.is_empty() {
+                needed_main_capacity += 1;
+                buf.push('\n');
+            }
+            needed_main_capacity += s.len();
+            buf.push_str(s);
+
+            max_start = max(max_start, key.start);
+            max_duration = max(max_duration, key.duration);
+        }
+
+
+        // ----- Step 2: actually build the two fields that we store in Meili ---------------------
+
+        // For the separators.
+        needed_main_capacity += texts.len().saturating_sub(1);
+
+        // Figure out how much base64 digits we need for the three fields.
+        let required_digits = |max: u64| if max == 0 { 1 } else { max.ilog(64) + 1 };
+        let offset_digits = required_digits(needed_main_capacity as u64);
+        let start_digits = required_digits(max_start);
+        let duration_digits = required_digits(max_duration);
+
+        // Original duration uses u64, but is divided by 100. And 2^64 / 100 is
+        // less than 64^10.
+        assert!(offset_digits <= 10 && start_digits <= 10 && duration_digits <= 10);
+
+        let index_len = 3 + (offset_digits + start_digits + duration_digits) as usize * texts.len();
+        let mut out = Self {
+            texts: String::with_capacity(needed_main_capacity),
+            text_timespan_index: String::with_capacity(index_len),
+        };
+
+        // Write index header, specifying how each field is encoded. We subtract
+        // by 1 to make sure we always use exactly one digit.
+        use std::fmt::Write;
+        write!(
+            out.text_timespan_index,
+            "{}{}{}",
+            offset_digits - 1,
+            start_digits - 1,
+            duration_digits - 1,
+        ).unwrap();
+
+        let mut encode_index_int = |mut value: u64, digits: u32| {
+            // This is reverse order encoding for convience/performance here.
+            // Least significant digit is leftmost.
+            for _ in 0..digits {
+                let digit = BASE64_DIGITS[value as usize % 64].into();
+                out.text_timespan_index.push(digit);
+                value /= 64;
+            }
+            debug_assert!(value == 0);
+        };
+
+        for (ts, s) in texts {
+            if !out.texts.is_empty() {
+                out.texts.push(';');
+            }
+            let offset = out.texts.len() as u64;
+            out.texts.push_str(&s);
+            encode_index_int(offset, offset_digits);
+            encode_index_int(ts.start, start_digits);
+            encode_index_int(ts.duration, duration_digits);
+        }
+
+        Ok(out)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        match *ty.kind() {
+            postgres_types::Kind::Array(ref inner) => TimespanText::accepts(inner),
+            _ => false,
         }
     }
 }
