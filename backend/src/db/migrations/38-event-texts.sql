@@ -125,3 +125,26 @@ create or replace view search_events as
     )
     left join search_realms on search_realms.id = blocks.realm
     group by events.id, series.id;
+
+
+-- Add triggers to queue events for search indexing when their texts change.
+
+create function queue_event_for_search_after_text_update()
+   returns trigger
+   language plpgsql
+as $$
+begin
+    insert into search_index_queue (item_id, kind)
+    select old.event_id, 'event'::search_index_item_kind where tg_op <> 'INSERT'
+    union all
+    select new.event_id, 'event'::search_index_item_kind where tg_op <> 'DELETE'
+    on conflict do nothing;
+    return null;
+end;
+$$;
+
+create trigger queue_event_for_search_after_text_update
+after insert or delete or update
+on event_texts
+for each row
+execute procedure queue_event_for_search_after_text_update();
