@@ -72,6 +72,25 @@ pub(crate) enum HarvestItem {
         updated: DateTime<Utc>,
     },
 
+    #[serde(rename_all = "camelCase")]
+    Playlist {
+        id: String,
+        title: String,
+        description: Option<String>,
+        creator: Option<String>,
+        acl: Acl,
+        entries: Vec<PlaylistEntry>,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
+    },
+
+    #[serde(rename_all = "camelCase")]
+    PlaylistDeleted {
+        id: String,
+        #[serde(with = "chrono::serde::ts_milliseconds")]
+        updated: DateTime<Utc>,
+    },
+
     #[serde(untagged)]
     Unknown {
         kind: String,
@@ -87,6 +106,8 @@ impl HarvestItem {
             Self::EventDeleted { updated, .. } =>  updated,
             Self::Series { updated, .. } => updated,
             Self::SeriesDeleted { updated, .. } => updated,
+            Self::Playlist { updated, .. } => updated,
+            Self::PlaylistDeleted { updated, .. } => updated,
             Self::Unknown { updated, .. } => updated,
         }
     }
@@ -154,4 +175,13 @@ pub(crate) struct Acl {
     pub(crate) write: Vec<String>,
     #[serde(flatten)]
     pub(crate) custom_actions: CustomActions,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct PlaylistEntry {
+    pub id: i64,
+    #[serde(rename = "type")]
+    pub ty: String,
+    pub content_id: String,
 }

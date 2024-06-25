@@ -97,6 +97,23 @@ pub enum SeriesState {
     Waiting,
 }
 
+/// Represents the `playlist_entry_type` type defined in `31-playlists.sql`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql)]
+#[postgres(name = "playlist_entry_type")]
+pub enum PlaylistEntryType {
+    #[postgres(name = "event")]
+    Event,
+}
+
+/// Represents the `playlist_entry` type defined in `31-playlists.sql`.
+#[derive(Debug, FromSql, ToSql, Clone)]
+#[postgres(name = "playlist_entry")]
+pub struct PlaylistEntry {
+    pub opencast_id: i64,
+    #[postgres(name = "type")]
+    pub ty: PlaylistEntryType,
+    pub content_id: String,
+}
 
 /// Represents extra metadata in the DB. Is a map from "namespace" to a
 /// `string -> string array` map.
