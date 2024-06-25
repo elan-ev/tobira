@@ -48,7 +48,7 @@ old_major=${old_version_without_patch%.*}
 old_minor=${old_version_without_patch#*.}
 
 
-echo -e "Bumping \e[1;94mv$old_major.$old_minor\e[0m  →  \e[1;92mv$major.$minor\e[0m"
+echo -e "Bumping \x1b[1;94mv$old_major.$old_minor\x1b[0m  →  \x1b[1;92mv$major.$minor\x1b[0m"
 
 # Make sure it's a valid version bump
 if (( ! ( (major == old_major + 1 && minor == 0) || (major == old_major && minor == old_minor + 1 ) ) )); then
@@ -88,17 +88,17 @@ echo "(Pushing to $GIT_REMOTE. Make sure you have push access.)"
 echo "To cancel, ctrl+c! To continue, press enter."
 read -r
 git commit -m "Bump version to $major.$minor"
-echo -e "\e[1;32m✔ Committed version bump\e[0m"
+echo -e "\x1b[1;32m✔ Committed version bump\x1b[0m"
 echo
 
 git tag "$tag_name"
-echo -e "\e[1;32m✔ Created tag $tag_name\e[0m"
+echo -e "\x1b[1;32m✔ Created tag $tag_name\x1b[0m"
 echo
 
 git push $GIT_REMOTE "$tag_name"
-echo -e "\e[1;32m✔ Pushed tag\e[0m"
+echo -e "\x1b[1;32m✔ Pushed tag\x1b[0m"
 echo
 
 git push $GIT_REMOTE master
-echo -e "\e[1;32m✔ Pushed to master\e[0m"
+echo -e "\x1b[1;32m✔ Pushed to master\x1b[0m"
 echo

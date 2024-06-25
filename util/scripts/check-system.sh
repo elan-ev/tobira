@@ -8,11 +8,11 @@ has_command() {
 }
 
 print_yes() {
-    echo -e " → \e[1;32mYes\e[0m"
+    echo -e " → \x1b[1;32mYes\x1b[0m"
 }
 
 print_no() {
-    echo -e " → \e[1;31mNo\e[0m"
+    echo -e " → \x1b[1;31mNo\x1b[0m"
 }
 
 # Checks if $1 >= $2 with both parameters treated as version numbers.
