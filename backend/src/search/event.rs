@@ -373,9 +373,17 @@ impl<'a> FromSql<'a> for TextSearchIndex {
         while let Some(v) = it.next()? {
             let ts = TimespanText::from_sql_nullable(member_type, v)?;
 
-            // TODO: Do more cleanup.
+            // We exclude all strings that contain no segments longer than 1
+            // byte. However, we do not remove these short segments from
+            // strings that do have longer words, as included strings should be
+            // kept intact, otherwise we will transform "Saw a dog" into "Saw
+            // dog", which is something we show the user.
+            //
+            // Counting 'bytes' instead of chars is deliberate, as we can only
+            // be sure about ASCII characters that they don't contain intrinsic
+            // meaning worth searching for individually.
             let s = ts.t.trim();
-            if s.len() <= 1 {
+            if s.split_whitespace().all(|part| part.len() <= 1) {
                 continue;
             }
 
