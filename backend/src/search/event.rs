@@ -1,4 +1,4 @@
-use std::{cmp::max, collections::BTreeMap};
+use std::{cmp::{max, min}, collections::BTreeMap};
 
 use chrono::{DateTime, Utc};
 use fallible_iterator::FallibleIterator;
@@ -364,7 +364,7 @@ impl<'a> FromSql<'a> for TextSearchIndex {
         // here though.
         //
         // We also gather some statistical data and concat all strings that have
-        // the same timespan into a single string(separated by newline).
+        // the same timespan into a single string (separated by newline).
         let mut needed_main_capacity = 0;
         let mut max_duration = 0;
         let mut max_start = 0;
@@ -381,6 +381,16 @@ impl<'a> FromSql<'a> for TextSearchIndex {
 
             let key = SearchTimespan::from_tst(&ts);
             let buf = texts.entry(key).or_default();
+
+            // If the text is already present in this span, we do not include it
+            // again. This can happen if some text is repeated in a slide for
+            // example. Having duplicates is not useful for search. The `4096`
+            // limit is just there to avoid quadratic blowup in case there are
+            // lots of texts in the same span.
+            if buf[..min(buf.len(), 4096)].contains(s) {
+                continue;
+            }
+
             if !buf.is_empty() {
                 needed_main_capacity += 1;
                 buf.push('\n');
