@@ -29,6 +29,10 @@ const config: CallableOption = (_env, argv) => ({
         },
     },
 
+    watchOptions: {
+        ignored: [OUT_PATH, "**/node_modules"],
+    },
+
     resolve: {
         extensions: [".ts", ".tsx", ".js", ".json"],
         // For local appkit development, see this for more details:
