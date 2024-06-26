@@ -1263,9 +1263,25 @@ children:
           - ROLE_USER_MORGAN
           - ROLE_USER_JOSE
         children:
+          - path: '2024'
+            name: '2024'
+            children:
+              - { path: 'zaragoza', name: '2024 Opencast Summit' }
+          - path: '2023'
+            name: '2023'
+            children:
+              - { path: 'bern-dach', name: '2023 Opencast D/A/CH' }
+              - { path: 'berlin', name: '2023 Opencast Summit' }
+              - { path: 'virtual', name: '2023 Opencast Virtual Summit' }
+          - path: '2022'
+            name: '2022'
+            children:
+              - { path: 'osnabruck-dach', name: '2022 Opencast D/A/CH' }
+              - { path: 'osnabruck', name: '2022 Opencast Summit' }
           - path: '2021'
             name: '2021'
             children:
+              - { path: 'osnabruck', name: '2021 Opencast D/A/CH' }
               - { path: 'graz', name: '2021 Opencast summit' }
           - path: '2020'
             name: '2020'
