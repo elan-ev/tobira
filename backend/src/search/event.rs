@@ -388,6 +388,12 @@ impl<'a> FromSql<'a> for TextSearchIndex {
             }
 
             let key = SearchTimespan::from_tst(&ts);
+
+            // Skip empty timespans (after reducing to our lower precision).
+            if key.duration == 0 {
+                continue;
+            }
+
             let buf = texts.entry(key).or_default();
 
             // If the text is already present in this span, we do not include it
