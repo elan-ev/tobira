@@ -99,7 +99,6 @@ A video is "included in a content page" if that content page has a video block w
 Similarly, a series is included in a content page, if a series block refers to it or if a video block refers to any of its videos.
 
 If and only if a video/series is included in any non-user content page, it is findable via search.
-(Note: currently, series are not findable via search at all, but simply because it was not implemented yet. The described rules will be used in the future.)
 
 ## Permissions in Tobira
 
