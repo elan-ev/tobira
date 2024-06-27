@@ -25,7 +25,7 @@ use crate::{
 
 #[derive(Debug)]
 pub(crate) struct AuthorizedEvent {
-    key: Key,
+    pub(crate) key: Key,
     series: Option<Key>,
     opencast_id: String,
     is_live: bool,
@@ -251,6 +251,27 @@ impl AuthorizedEvent {
             select unnest(write_roles) as role, 'write' as action from events where id = $1
         ";
         acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
+    }
+
+    /// Returns `true` if the realm has a video block with this video
+    /// OR if the realm has a series block with this event's series.
+    /// Otherwise, `false` is returned.
+    pub(crate) async fn is_referenced_by_realm(&self, path: String, context: &Context) -> ApiResult<bool> {
+        let query = "select exists(\
+            select 1 \
+            from blocks \
+            join realms on blocks.realm = realms.id \
+            where realms.full_path = $1 \
+                and ( \
+                    blocks.video = $2 or \
+                    blocks.series = (select series from events where id = $2) \
+                )\
+            )\
+        ";
+        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key])
+            .await?
+            .get::<_, bool>(0)
+            .pipe(Ok)
     }
 }
 
