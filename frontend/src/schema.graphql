@@ -32,12 +32,6 @@ type Missing {
   dummy: Boolean
 }
 
-input Filters {
-  itemType: ItemType
-  start: DateTimeUtc
-  end: DateTimeUtc
-}
-
 "Arbitrary metadata for events/series. Serialized as JSON object."
 scalar ExtraMetadata
 
@@ -46,6 +40,12 @@ enum VideoListOrder {
   OLD_TO_NEW
   AZ
   ZA
+}
+
+input Filters {
+  itemType: ItemType
+  start: DateTimeUtc
+  end: DateTimeUtc
 }
 
 "A block just showing some text."
@@ -325,10 +325,8 @@ type TextMatch {
   duration: Float!
   "The text containing the match, with some context"
   text: String!
-  "Byte offset inside `text` where the match starts."
-  highlightStart: Int!
-  "How many bytes of `text` should be highlighted."
-  highlightLength: Int!
+  "Parts of `text` that should be highlighted."
+  highlights: [ByteSpan!]!
 }
 
 type Track {
@@ -348,7 +346,10 @@ input UpdateTextBlock {
   content: String
 }
 
-union Playlist = AuthorizedPlaylist | NotAllowed
+type ByteSpan {
+  start: Int!
+  len: Int!
+}
 
 type Realm implements Node {
   id: ID!
@@ -440,6 +441,8 @@ type Realm implements Node {
   """
   canCurrentUserModerate: Boolean!
 }
+
+union Playlist = AuthorizedPlaylist | NotAllowed
 
 "A role being granted permission to perform certain actions."
 type AclItem {
@@ -774,14 +777,14 @@ input NewRealm {
   pathSegment: String!
 }
 
-type Segment {
-  uri: String!
-  startTime: Float!
-}
-
 enum SortDirection {
   ASCENDING
   DESCENDING
+}
+
+type Segment {
+  uri: String!
+  startTime: Float!
 }
 
 "Services a user can be pre-authenticated for using a JWT"
