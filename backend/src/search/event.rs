@@ -1,4 +1,4 @@
-use std::{cmp::{max, min}, collections::{BTreeMap, HashMap}};
+use std::{cmp::{max, min}, collections::{BTreeMap, HashMap}, fmt::Write};
 
 use chrono::{DateTime, Utc};
 use fallible_iterator::FallibleIterator;
@@ -537,7 +537,6 @@ impl<'a> FromSql<'a> for TextSearchIndex {
 
         // Write index header, specifying how each field is encoded. We subtract
         // by 1 to make sure we always use exactly one digit.
-        use std::fmt::Write;
         write!(
             out.text_timespan_index,
             "{}{}{}",

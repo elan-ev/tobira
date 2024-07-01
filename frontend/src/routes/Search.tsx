@@ -664,11 +664,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
                 >
                     <Link
                         to={sectionLink(m.start)}
-                        css={{
-                            display: "block",
-                            width: "100%",
-                            height: "100%",
-                        }}
+                        css={{ display: "block", height: "100%" }}
                     />
                 </WithTooltip>
             ))}
