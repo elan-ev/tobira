@@ -245,7 +245,7 @@ async fn clear(db: &mut Db, config: &Config, yes: bool) -> Result<()> {
 
     // Next we drop all types.
     for ty in types {
-        tx.execute(&format!("drop type if exists {ty}"), &[]).await?;
+        tx.execute(&format!("drop type if exists {ty} cascade"), &[]).await?;
         trace!("Dropped type {ty}");
     }
 

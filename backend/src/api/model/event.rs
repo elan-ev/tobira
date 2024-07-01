@@ -1,5 +1,3 @@
-use std::fmt;
-
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
 use postgres_types::ToSql;
@@ -19,28 +17,27 @@ use crate::{
         util::{impl_from_db, select},
     },
     prelude::*,
-    util::lazy_format,
 };
 
 
 #[derive(Debug)]
 pub(crate) struct AuthorizedEvent {
     pub(crate) key: Key,
-    series: Option<Key>,
-    opencast_id: String,
-    is_live: bool,
+    pub(crate) series: Option<Key>,
+    pub(crate) opencast_id: String,
+    pub(crate) is_live: bool,
 
-    title: String,
-    description: Option<String>,
-    created: DateTime<Utc>,
-    creators: Vec<String>,
+    pub(crate) title: String,
+    pub(crate) description: Option<String>,
+    pub(crate) created: DateTime<Utc>,
+    pub(crate) creators: Vec<String>,
 
-    metadata: ExtraMetadata,
-    read_roles: Vec<String>,
-    write_roles: Vec<String>,
+    pub(crate) metadata: ExtraMetadata,
+    pub(crate) read_roles: Vec<String>,
+    pub(crate) write_roles: Vec<String>,
 
-    synced_data: Option<SyncedEventData>,
-    tobira_deletion_timestamp: Option<DateTime<Utc>>,
+    pub(crate) synced_data: Option<SyncedEventData>,
+    pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug)]
@@ -329,14 +326,12 @@ impl AuthorizedEvent {
 
     pub(crate) async fn load_for_series(
         series_key: Key,
-        order: EventSortOrder,
         context: &Context,
     ) -> ApiResult<Vec<Self>> {
         let selection = Self::select();
         let query = format!(
             "select {selection} from events \
-                where series = $2 and (read_roles || 'ROLE_ADMIN'::text) && $1 {}",
-            order.to_sql(),
+                where series = $2 and (read_roles || 'ROLE_ADMIN'::text) && $1",
         );
         context.db
             .query_mapped(
@@ -627,14 +622,6 @@ impl Default for EventSortOrder {
             column: EventSortColumn::Created,
             direction: SortDirection::Descending,
         }
-    }
-}
-
-impl EventSortOrder {
-    /// Returns an SQL query fragment like `order by foo asc`.
-    fn to_sql(&self) -> impl fmt::Display {
-        let Self { column, direction } = *self;
-        lazy_format!("order by {} {}", column.to_sql(), direction.to_sql())
     }
 }
 

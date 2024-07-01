@@ -125,15 +125,11 @@ export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
         icon = <LuTrash />;
     }
 
-    return <div css={{
-        display: "flex",
-        height: "100%",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 40,
+    return <BaseThumbnailReplacement css={{
         ...!deletionIsPending && {
             background: "linear-gradient(135deg, #33333380 50%, transparent 0),"
-                + "linear-gradient(-135deg, #33333380 50%, transparent 0)" },
+                + "linear-gradient(-135deg, #33333380 50%, transparent 0)",
+        },
         backgroundSize: "17px 17px",
         color: "#dbdbdb",
         backgroundColor: !deletionIsPending ? "#292929" : COLORS.neutral50,
@@ -145,8 +141,24 @@ export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
                 : "linear-gradient(135deg, #3e3e3e80 50%, transparent 0),"
                     + "linear-gradient(-135deg, #3e3e3e80 50%, transparent 0)",
         },
-    }}>{icon}</div>;
+    }}>{icon}</BaseThumbnailReplacement>;
 };
+
+type BaseThumbnailReplacementProps = PropsWithChildren<{
+    className?: string;
+}>;
+export const BaseThumbnailReplacement: React.FC<BaseThumbnailReplacementProps> = ({
+    children,
+    className,
+}) => (
+    <div {...{ className }} css={{
+        display: "flex",
+        height: "100%",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 40,
+    }}>{children}</div>
+);
 
 type ThumbnailOverlayProps = PropsWithChildren<{
     backgroundColor: string;

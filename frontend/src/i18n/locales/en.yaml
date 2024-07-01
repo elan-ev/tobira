@@ -56,6 +56,7 @@ not-found:
   page-not-found: Page not found
   video-not-found: Video not found
   series-not-found: Series not found
+  playlist-not-found: Playlist not found
   page-explanation: >
     The page you want to visit does not exist. It might have been removed or
     renamed.
@@ -64,6 +65,9 @@ not-found:
     moved.
   series-explanation: >
     The series you want to view does not exist. It might have been removed or
+    moved.
+  playlist-explanation: >
+    The playlist you want to view does not exist. It might have been removed or
     moved.
   url-typo: >
     If you entered the address/URL manually, please double check it for
@@ -174,8 +178,6 @@ series:
   series: Series
   deleted: Deleted series
   deleted-series-block: The series referenced here was deleted.
-  no-events: This series does not contain any events, or you might not be authorized to see them.
-  upcoming-live-streams: "Upcoming live streams ({{count}})"
   entry-of-series-thumbnail: "Thumbnail for entry of “{{series}}”"
   videos:
     heading: Videos
@@ -184,9 +186,18 @@ series:
     text: >
       The data of the requested series has not been fully transferred yet. This should
       happen automatically soon. Try again in a few minutes.
+
+videolist-block:
+  upcoming-live-streams: "Upcoming live streams ({{count}})"
+  missing-video: Video not found
+  unauthorized: Missing permissions
+  hidden-items_one: 'One video is missing or requires additional permissions to view.'
+  hidden-items_other: '{{count}} videos are missing or require additional permissions to view.'
+  no-videos: No videos
   settings:
     order: Order
     order-label: Choose video order
+    original: Playlist order
     new-to-old: Newest first
     old-to-new: Oldest first
     a-z: A to Z
@@ -569,6 +580,7 @@ manage:
 api-remote-errors:
   view:
     event: You are not authorized to view this video.
+    playlist: You are not authorized to view this playlist.
   upload:
     not-logged-in: You have to be logged in to upload videos.
     not-authorized: $t(upload.not-authorized)

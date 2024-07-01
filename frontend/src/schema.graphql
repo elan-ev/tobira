@@ -24,8 +24,18 @@ type EventPageInfo {
   endIndex: Int
 }
 
-input NewTextBlock {
-  content: String!
+type Missing {
+  """
+    Unused dummy field for this marker type. GraphQL requires all objects to
+    have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
+}
+
+input Filters {
+  itemType: ItemType
+  start: DateTimeUtc
+  end: DateTimeUtc
 }
 
 "Arbitrary metadata for events/series. Serialized as JSON object."
@@ -36,12 +46,6 @@ enum VideoListOrder {
   OLD_TO_NEW
   AZ
   ZA
-}
-
-input Filters {
-  itemType: ItemType
-  start: DateTimeUtc
-  end: DateTimeUtc
 }
 
 "A block just showing some text."
@@ -99,8 +103,21 @@ input ChildIndex {
   index: Int!
 }
 
+input NewTextBlock {
+  content: String!
+}
+
 type SyncedSeriesData {
   description: String
+}
+
+"Represents an Opencast series."
+type AuthorizedPlaylist {
+  id: ID!
+  opencastId: String!
+  title: String!
+  description: String
+  entries: [PlaylistEntry!]!
 }
 
 type EventConnection {
@@ -137,7 +154,7 @@ type Series {
   metadata: ExtraMetadata
   syncedData: SyncedSeriesData
   hostRealms: [Realm!]!
-  events(order: EventSortOrder = {column: "CREATED", direction: "DESCENDING"}): [AuthorizedEvent!]!
+  events: [AuthorizedEvent!]!
   """
     Returns `true` if the realm has a series block with this series.
     Otherwise, `false` is returned.
@@ -166,6 +183,8 @@ type RoleInfo {
   large: Boolean!
 }
 
+union PlaylistEntry = AuthorizedEvent | NotAllowed | Missing
+
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
 """
@@ -179,12 +198,6 @@ type KnownGroup {
   large: Boolean!
 }
 
-input NewVideoBlock {
-  event: ID!
-  showTitle: Boolean!
-  showLink: Boolean!
-}
-
 type SyncedEventData implements Node {
   updated: DateTimeUtc!
   startTime: DateTimeUtc
@@ -195,6 +208,12 @@ type SyncedEventData implements Node {
   thumbnail: String
   captions: [Caption!]!
   segments: [Segment!]!
+}
+
+input NewVideoBlock {
+  event: ID!
+  showTitle: Boolean!
+  showLink: Boolean!
 }
 
 "A `Block`: a UI element that belongs to a realm."
@@ -310,6 +329,8 @@ type SearchResults {
 input UpdateTextBlock {
   content: String
 }
+
+union Playlist = AuthorizedPlaylist | NotAllowed
 
 type Realm implements Node {
   id: ID!
@@ -554,6 +575,10 @@ type Query {
   seriesByOpencastId(id: String!): Series
   "Returns a series by its ID."
   seriesById(id: ID!): Series
+  "Returns a playlist by its Opencast ID."
+  playlistByOpencastId(id: String!): Playlist
+  "Returns a playlist by its ID."
+  playlistById(id: ID!): Playlist
   "Returns the current user."
   currentUser: User
   "Returns a new JWT that can be used to authenticate against Opencast for using the given service"

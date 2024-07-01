@@ -5,6 +5,7 @@ pub(crate) mod acl;
 pub(crate) mod block;
 pub(crate) mod event;
 pub(crate) mod known_roles;
+pub(crate) mod playlist;
 pub(crate) mod realm;
 pub(crate) mod search;
 pub(crate) mod series;

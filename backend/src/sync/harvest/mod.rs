@@ -8,7 +8,11 @@ use tokio_postgres::types::ToSql;
 use crate::{
     auth::ROLE_ADMIN,
     config::Config,
-    db::{types::{EventCaption, EventSegment, EventState, EventTrack, SeriesState}, DbConnection},
+    db::{
+        self,
+        DbConnection,
+        types::{EventCaption, EventSegment, EventState, EventTrack, SeriesState},
+    },
     prelude::*,
 };
 use super::{status::SyncStatus, OcClient};
@@ -134,6 +138,8 @@ async fn store_in_db(
     let mut removed_events = 0;
     let mut upserted_series = 0;
     let mut removed_series = 0;
+    let mut upserted_playlists = 0;
+    let mut removed_playlists = 0;
 
     for item in items {
         // Make sure we haven't received this update yet. The code below can
@@ -277,23 +283,85 @@ async fn store_in_db(
                 removed_series += 1;
             }
 
-            HarvestItem::Unknown { kind, .. } => {
-                warn!("Unknown item of kind '{kind}' in harvest response. \
-                    You might need to update Tobira.");
+            HarvestItem::Playlist {
+                id: opencast_id,
+                title,
+                description,
+                creator,
+                acl,
+                entries,
+                updated,
+            } => {
+                let entries = entries.into_iter().filter_map(|e| {
+                    // We do not store entries that we don't know, meaning that
+                    // a resync is required as soon as Tobira learns about
+                    // these new entries. But that's fine as that's likely
+                    // required anyway, given that more changes have to be done.
+                    let ty = match e.ty.as_str() {
+                        "E" => db::types::PlaylistEntryType::Event,
+                        _ => return None,
+                    };
+
+                    Some(db::types::PlaylistEntry {
+                        opencast_id: e.id,
+                        ty,
+                        content_id: e.content_id,
+                    })
+                }).collect::<Vec<_>>();
+
+                upsert(db, "playlists", "opencast_id", &[
+                    ("opencast_id", &opencast_id),
+                    ("title", &title),
+                    ("description", &description),
+                    ("creator", &creator),
+                    ("read_roles", &acl.read),
+                    ("write_roles", &acl.write),
+                    ("entries", &entries),
+                    ("updated", &updated),
+                ]).await?;
+
+                trace!(opencast_id, title, "Inserted or updated playlist");
+                upserted_playlists += 1;
+            }
+
+            HarvestItem::PlaylistDeleted { id: opencast_id, .. } => {
+                let rows_affected = db
+                    .execute("delete from playlists where opencast_id = $1", &[&opencast_id])
+                    .await?;
+                check_affected_rows_removed(rows_affected, "playlist", &opencast_id);
+                removed_playlists += 1;
+            }
+
+            HarvestItem::Unknown { kind, updated } => {
+                let known = [
+                    "event",
+                    "event-deleted",
+                    "series",
+                    "series-deleted",
+                    "playlist",
+                    "playlist-deleted",
+                ];
+
+                if known.contains(&&*kind) {
+                    warn!("Could not deserialize item in harvest response for \
+                        kind '{kind}' (updated {updated})");
+                } else {
+                    warn!("Unknown item of kind '{kind}' in harvest response. \
+                        You might need to update Tobira.");
+                }
             }
         }
     }
 
-    if upserted_events == 0 && upserted_series == 0 && removed_events == 0 && removed_series == 0 {
+    if upserted_events == 0 && upserted_series == 0 && upserted_playlists == 0
+        && removed_events == 0 && removed_series == 0 && removed_playlists == 0
+    {
         trace!("Harvest outcome: nothing changed!");
     } else {
         info!(
-            "Harvest outcome: upserted {} events, upserted {} series, \
-                removed {} events, removed {} series (in {:.2?})",
-            upserted_events,
-            upserted_series,
-            removed_events,
-            removed_series,
+            upserted_events, upserted_series, upserted_playlists,
+            removed_events, removed_series, removed_playlists,
+            "Harvest done in {:.2?}",
             before.elapsed(),
         );
     }

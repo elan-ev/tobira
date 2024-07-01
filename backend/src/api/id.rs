@@ -83,6 +83,7 @@ define_kinds![
     block = b"bl",
     series = b"sr",
     event = b"ev",
+    playlist = b"pl",
     search_realm = b"rs",
     search_event = b"es",
     search_series = b"ss",

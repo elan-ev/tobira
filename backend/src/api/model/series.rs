@@ -9,7 +9,7 @@ use crate::{
         Id,
         model::{
             realm::Realm,
-            event::{AuthorizedEvent, EventSortOrder}
+            event::AuthorizedEvent,
         },
         Node,
     },
@@ -145,9 +145,8 @@ impl Series {
             .pipe(Ok)
     }
 
-    #[graphql(arguments(order(default = Default::default())))]
-    async fn events(&self, order: EventSortOrder, context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
-        AuthorizedEvent::load_for_series(self.key, order, context).await
+    async fn events(&self, context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
+        AuthorizedEvent::load_for_series(self.key, context).await
     }
 
     /// Returns `true` if the realm has a series block with this series.
