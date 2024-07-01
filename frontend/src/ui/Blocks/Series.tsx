@@ -11,7 +11,7 @@ import {
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
 import { Card } from "../Card";
-import { ReadySeriesBlock, SeriesBlockContainer } from "./VideoList";
+import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 
 
 // ==============================================================================================
@@ -39,21 +39,7 @@ const seriesFragment = graphql`
         title
         # description is only queried to get the sync status
         syncedData { description }
-        events {
-            id
-            title
-            created
-            creators
-            isLive
-            description
-            syncedData {
-                duration
-                thumbnail
-                startTime
-                endTime
-                tracks { resolution }
-            }
-        }
+        events { ...VideoListEventData }
     }
 `;
 
@@ -71,7 +57,7 @@ export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...res
 
 type BlockProps = Partial<Omit<Fields<SeriesBlockData$data>, "series">>;
 
-export type SharedFromSeriesProps = SharedProps & BlockProps & {
+type SharedFromSeriesProps = SharedProps & BlockProps & {
     title?: string;
     activeEventId?: string;
 };
@@ -96,10 +82,18 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
 
     if (!isSynced(series)) {
         const { title, layout } = props;
-        return <SeriesBlockContainer showViewOptions={false} {...{ title, layout }}>
+        return <VideoListBlockContainer showViewOptions={false} {...{ title, layout }}>
             {t("series.not-ready.text")}
-        </SeriesBlockContainer>;
+        </VideoListBlockContainer>;
     }
 
-    return <ReadySeriesBlock series={series} {...props} />;
+    return <VideoListBlock
+        initialLayout={props.layout}
+        initialOrder={props.order}
+        title={props.title ?? (props.showTitle ? series.title : undefined)}
+        description={(props.showMetadata && series.syncedData.description) || undefined}
+        activeEventId={props.activeEventId}
+        basePath={props.basePath}
+        eventsFrag={series.events}
+    />;
 };

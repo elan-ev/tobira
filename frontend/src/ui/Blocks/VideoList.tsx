@@ -12,34 +12,54 @@ import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
     useColorScheme, Floating, FloatingHandle, useFloatingItemProps,
 } from "@opencast/appkit";
-
-import { keyOfId, SyncedOpencastEntity } from "../../util";
-import { Link } from "../../router";
-import { VideoListOrder, VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
-import { SeriesBlockSeriesData$data } from "./__generated__/SeriesBlockSeriesData.graphql";
-import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
-import { RelativeDate } from "../time";
+import { keyframes } from "@emotion/react";
+import { IconType } from "react-icons";
 import {
     LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid,
 } from "react-icons/lu";
-import { keyframes } from "@emotion/react";
+import { graphql, useFragment } from "react-relay";
+
+import { keyOfId } from "../../util";
+import { Link } from "../../router";
+import { VideoListOrder, VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
+import { isPastLiveEvent, isUpcomingLiveEvent, Thumbnail } from "../Video";
+import { RelativeDate } from "../time";
 import { CollapsibleDescription, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
-import { IconType } from "react-icons";
 import { COLORS } from "../../color";
 import { FloatingBaseMenu } from "../FloatingBaseMenu";
-import { SharedFromSeriesProps } from "./Series";
+import {
+    VideoListEventData$data,
+    VideoListEventData$key,
+} from "./__generated__/VideoListEventData.graphql";
 
 
+
+
+
+const eventFragment = graphql`
+    fragment VideoListEventData on AuthorizedEvent @relay(plural: true) {
+        id
+        title
+        created
+        creators
+        isLive
+        description
+        syncedData {
+            duration
+            thumbnail
+            startTime
+            endTime
+            tracks { resolution }
+        }
+    }
+`;
+type Event = VideoListEventData$data[0];
 
 
 // ==============================================================================================
 // ===== Main components defining UI
 // ==============================================================================================
-
-type ReadyProps = SharedFromSeriesProps & {
-    series: SyncedOpencastEntity<SeriesBlockSeriesData$data>;
-};
 
 type OrderContext = {
     eventOrder: VideoListOrder;
@@ -53,26 +73,40 @@ const OrderContext = createContext<OrderContext>({
 
 const VIDEO_GRID_BREAKPOINT = 600;
 
-export const ReadySeriesBlock: React.FC<ReadyProps> = ({
+export type VideoListBlockProps = {
+    basePath: string;
+    activeEventId?: string;
+    initialOrder?: VideoListOrder;
+    initialLayout?: VideoListLayout;
+    title?: string;
+    description?: string;
+    eventsFrag: VideoListEventData$key;
+}
+
+export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     basePath,
-    title,
-    series,
     activeEventId,
-    order = "NEW_TO_OLD",
-    layout = "GALLERY",
-    showTitle = true,
-    showMetadata,
+    initialOrder = "NEW_TO_OLD",
+    initialLayout = "GALLERY",
+    title,
+    description,
+    eventsFrag,
 }) => {
     const { t, i18n } = useTranslation();
     const collator = new Intl.Collator(i18n.language);
-    const [eventOrder, setEventOrder] = useState<VideoListOrder>(order);
+    const [eventOrder, setEventOrder] = useState<VideoListOrder>(initialOrder);
 
-    const events = series.events.filter(event =>
-        !isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)
-        && !isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive));
+    const events = useFragment(eventFragment, eventsFrag);
 
-    const upcomingLiveEvents = series.events.filter(event =>
-        isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive));
+    const upcomingLiveEvents = [];
+    const mainEvents = [];
+    for (const event of events) {
+        if (isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive)) {
+            upcomingLiveEvents.push(event);
+        } else if (!isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)) {
+            mainEvents.push(event);
+        }
+    }
 
     const timeMs = (event: Event) =>
         new Date(event.syncedData?.startTime ?? event.created).getTime();
@@ -85,8 +119,7 @@ export const ReadySeriesBlock: React.FC<ReadyProps> = ({
             "ZA": () => collator.compare(b.title, a.title),
         }, unreachable);
 
-    const sortedEvents = [...events];
-    sortedEvents.sort((a, b) => {
+    mainEvents.sort((a, b) => {
         // Sort all live events before non-live events.
         if (a.isLive !== b.isLive) {
             return +b.isLive - +a.isLive;
@@ -97,7 +130,7 @@ export const ReadySeriesBlock: React.FC<ReadyProps> = ({
 
     // If there is only one upcoming event, it doesn't need an extra box or ordering.
     if (upcomingLiveEvents.length === 1) {
-        sortedEvents.unshift(upcomingLiveEvents[0]);
+        mainEvents.unshift(upcomingLiveEvents[0]);
     } else {
         upcomingLiveEvents.sort((a, b) => compareEvents(a, b, true));
     }
@@ -110,15 +143,12 @@ export const ReadySeriesBlock: React.FC<ReadyProps> = ({
     );
 
 
-    const finalTitle = title ?? (showTitle ? series.title : undefined);
-    const eventsNotEmpty = series.events.length > 0;
+    const eventsNotEmpty = events.length > 0;
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder }}>
-        <SeriesBlockContainer
+        <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
-            title={finalTitle}
-            description={showMetadata ? series.syncedData.description : null}
-            layout={layout}
+            {...{ title, description, initialLayout }}
         >
             {!eventsNotEmpty
                 ? <div css={{ padding: 14 }}>{t("series.no-events")}</div>
@@ -128,21 +158,20 @@ export const ReadySeriesBlock: React.FC<ReadyProps> = ({
                             {renderEvents(upcomingLiveEvents)}
                         </UpcomingEventsGrid>
                     )}
-                    {renderEvents(sortedEvents)}
+                    {renderEvents(mainEvents)}
                 </>
             }
-        </SeriesBlockContainer>
+        </VideoListBlockContainer>
     </OrderContext.Provider>;
 };
 
-type Event = SeriesBlockSeriesData$data["events"][0];
 
-type SeriesBlockContainerProps = {
+type VideoListBlockContainerProps = {
     title?: string;
     description?: string | null;
     children: ReactNode;
     showViewOptions: boolean;
-    layout?: VideoListLayout;
+    initialLayout?: VideoListLayout;
 };
 
 type LayoutContext = {
@@ -155,10 +184,10 @@ const LayoutContext = createContext<LayoutContext>({
     setLayoutState: () => {},
 });
 
-export const SeriesBlockContainer: React.FC<SeriesBlockContainerProps> = (
-    { title, description, children, showViewOptions, layout = "GALLERY" },
+export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
+    { title, description, children, showViewOptions, initialLayout = "GALLERY" },
 ) => {
-    const [layoutState, setLayoutState] = useState<VideoListLayout>(layout);
+    const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
     const isDark = useColorScheme().scheme === "dark";
 
     return <LayoutContext.Provider value={{ layoutState, setLayoutState }}>
@@ -232,16 +261,16 @@ const OrderMenu: React.FC = () => {
     const order = useContext(OrderContext);
 
     const triggerContent = match(order.eventOrder, {
-        "NEW_TO_OLD": () => t("series.settings.new-to-old"),
-        "OLD_TO_NEW": () => t("series.settings.old-to-new"),
-        "AZ": () => t("series.settings.a-z"),
-        "ZA": () => t("series.settings.z-a"),
+        "NEW_TO_OLD": () => t("videolist-block.settings.new-to-old"),
+        "OLD_TO_NEW": () => t("videolist-block.settings.old-to-new"),
+        "AZ": () => t("videolist-block.settings.a-z"),
+        "ZA": () => t("videolist-block.settings.z-a"),
         "%future added value": () => unreachable(),
     });
 
     return <FloatingBaseMenu
         {...{ ref }}
-        label={t("series.settings.order-label")}
+        label={t("videolist-block.settings.order-label")}
         triggerContent={<>{triggerContent}</>}
         list={<List type="order" close={() => ref.current?.close()} />}
     />;
@@ -269,7 +298,7 @@ const LayoutMenu: React.FC = () => {
 
     return <FloatingBaseMenu
         {...{ ref, triggerContent }}
-        label={t("series.settings.layout-label")}
+        label={t("videolist-block.settings.layout-label")}
         list={<List type="layout" close={() => ref.current?.close()} />}
     />;
 };
@@ -330,12 +359,12 @@ const List: React.FC<ListProps> = ({ type, close }) => {
 
     const sharedProps = (key: LayoutTranslationKey | OrderTranslationKey) => ({
         close: close,
-        label: t(`series.settings.${key}`),
+        label: t(`videolist-block.settings.${key}`),
     });
 
     const list = match(type, {
         layout: () => <>
-            <div>{t("series.settings.layout")}</div>
+            <div>{t("videolist-block.settings.layout")}</div>
             <ul role="menu" onBlur={handleBlur}>
                 {layoutItems.map(([layout, translationKey, icon], index) => <MenuItem
                     key={`${itemId}-${layout}`}
@@ -348,7 +377,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
             </ul>
         </>,
         order: () => <>
-            <div>{t("series.settings.order")}</div>
+            <div>{t("videolist-block.settings.order")}</div>
             <ul role="menu" onBlur={handleBlur}>
                 {orderItems.map(([order, orderKey], index) => <MenuItem
                     key={`${itemId}-${order}`}
@@ -656,12 +685,12 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
                 />
             ))}
             {leftVisible && <ProtoButton
-                aria-label={t("series.slider.scroll-left")}
+                aria-label={t("videolist-block.slider.scroll-left")}
                 onClick={() => scroll(-scrollDistance)}
                 css={{ left: 8, ...buttonCss }}
             ><LuChevronLeft /></ProtoButton>}
             {rightVisible && <ProtoButton
-                aria-label={t("series.slider.scroll-right")}
+                aria-label={t("videolist-block.slider.scroll-right")}
                 onClick={() => scroll(scrollDistance)}
                 css={{ right: 8, ...buttonCss }}
             ><LuChevronRight /></ProtoButton>}
@@ -700,7 +729,7 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
                 ...focusStyle({}),
             }}>
                 <span css={{ marginLeft: 4 }}>
-                    {t("series.upcoming-live-streams", { count })}
+                    {t("videolist-block.upcoming-live-streams", { count })}
                 </span>
             </summary>
             {children}

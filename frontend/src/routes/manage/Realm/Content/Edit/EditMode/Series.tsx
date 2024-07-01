@@ -128,29 +128,29 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 role="group"
                 aria-labelledby={headingId + "-order"}
             >
-                <Heading id={headingId + "-order"}>{t("series.settings.order")}</Heading>
+                <Heading id={headingId + "-order"}>{t("videolist-block.settings.order")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
                     {
                         option: "order",
-                        title: t("series.settings.new-to-old"),
+                        title: t("videolist-block.settings.new-to-old"),
                         checked: order === "NEW_TO_OLD",
                         value: "NEW_TO_OLD",
                     },
                     {
                         option: "order",
-                        title: t("series.settings.old-to-new"),
+                        title: t("videolist-block.settings.old-to-new"),
                         checked: order === "OLD_TO_NEW",
                         value: "OLD_TO_NEW",
                     },
                     {
                         option: "order",
-                        title: t("series.settings.a-z"),
+                        title: t("videolist-block.settings.a-z"),
                         checked: order === "AZ",
                         value: "AZ",
                     },
                     {
                         option: "order",
-                        title: t("series.settings.z-a"),
+                        title: t("videolist-block.settings.z-a"),
                         checked: order === "ZA",
                         value: "ZA",
                     },
@@ -160,23 +160,23 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 role="group"
                 aria-labelledby={headingId + "-view"}
             >
-                <Heading id={headingId + "-view"}>{t("series.settings.layout")}</Heading>
+                <Heading id={headingId + "-view"}>{t("videolist-block.settings.layout")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
                     {
                         option: "layout",
-                        title: t("series.settings.slider"),
+                        title: t("videolist-block.settings.slider"),
                         checked: layout === "SLIDER",
                         value: "SLIDER",
                     },
                     {
                         option: "layout",
-                        title: t("series.settings.gallery"),
+                        title: t("videolist-block.settings.gallery"),
                         checked: layout === "GALLERY",
                         value: "GALLERY",
                     },
                     {
                         option: "layout",
-                        title: t("series.settings.list"),
+                        title: t("videolist-block.settings.list"),
                         checked: layout === "LIST",
                         value: "LIST",
                     },

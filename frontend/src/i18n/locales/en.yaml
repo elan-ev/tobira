@@ -175,7 +175,6 @@ series:
   deleted: Deleted series
   deleted-series-block: The series referenced here was deleted.
   no-events: This series does not contain any events, or you might not be authorized to see them.
-  upcoming-live-streams: "Upcoming live streams ({{count}})"
   entry-of-series-thumbnail: "Thumbnail for entry of “{{series}}”"
   videos:
     heading: Videos
@@ -184,6 +183,9 @@ series:
     text: >
       The data of the requested series has not been fully transferred yet. This should
       happen automatically soon. Try again in a few minutes.
+
+videolist-block:
+  upcoming-live-streams: "Upcoming live streams ({{count}})"
   settings:
     order: Order
     order-label: Choose video order
