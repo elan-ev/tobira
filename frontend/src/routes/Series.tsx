@@ -118,7 +118,7 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesFrag }) => {
         <p css={{ maxWidth: "90ch" }}>{series.syncedData.description}</p>
         <div css={{ marginTop: 12 }}>
             <SeriesBlockFromSeries
-                title={t("series.videos.heading")}
+                title={t("videolist-block.videos.heading")}
                 basePath="/!v"
                 fragRef={series}
             />

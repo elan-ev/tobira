@@ -174,13 +174,15 @@ video:
     rss: RSS
     show-qr-code: Show QR code
 
+playlist:
+  deleted-playlist-block: The playlist referenced here was deleted.
+  not-allowed-playlist-block: You are not allowed to view the playlist embedded here.
+
 series:
   series: Series
   deleted: Deleted series
   deleted-series-block: The series referenced here was deleted.
   entry-of-series-thumbnail: "Thumbnail for entry of “{{series}}”"
-  videos:
-    heading: Videos
   not-ready:
     title: Series not synchronized yet
     text: >
@@ -194,6 +196,8 @@ videolist-block:
   hidden-items_one: 'One video is missing or requires additional permissions to view.'
   hidden-items_other: '{{count}} videos are missing or require additional permissions to view.'
   no-videos: No videos
+  videos:
+    heading: Videos
   settings:
     order: Order
     order-label: Choose video order
@@ -507,6 +511,7 @@ manage:
       add-text: Text
       add-series: Series
       add-video: Video
+      add-playlist: Playlist
 
       move-down: Move block down
       move-up: Move block up
@@ -532,6 +537,15 @@ manage:
           invalid: Please select a series
           findable-series-note: >
             You can only select series here which are listed or which you have write-access to.
+        metadata:
+          heading: Metadata
+
+      playlist:
+        playlist:
+          heading: Playlist
+          invalid: Please select a playlist
+          findable-playlist-note: >
+            You can only select playlists here which are listed or which you have write-access to.
         metadata:
           heading: Metadata
 

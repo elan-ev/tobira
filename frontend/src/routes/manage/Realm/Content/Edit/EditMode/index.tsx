@@ -14,6 +14,7 @@ import { EditTextBlock } from "./Text";
 import { EditSeriesBlock } from "./Series";
 import { EditVideoBlock } from "./Video";
 import FocusTrap from "focus-trap-react";
+import { EditPlaylistBlock } from "./Playlist";
 
 
 type EditModeProps = {
@@ -42,6 +43,7 @@ export const EditMode: React.FC<EditModeProps> = props => {
                 ... on TextBlock { ...TextEditModeBlockData }
                 ... on SeriesBlock { ...SeriesEditModeBlockData }
                 ... on VideoBlock { ...VideoEditModeBlockData }
+                ... on PlaylistBlock { ...PlaylistEditModeBlockData }
             }
             ...EditModeFormRealmData
         }
@@ -58,6 +60,7 @@ export const EditMode: React.FC<EditModeProps> = props => {
                 TextBlock: () => <EditTextBlock block={block} />,
                 SeriesBlock: () => <EditSeriesBlock block={block} />,
                 VideoBlock: () => <EditVideoBlock block={block} />,
+                PlaylistBlock: () => <EditPlaylistBlock block={block} />,
             }, () => bug("unknown block type"))}
         </FormProvider>
     </EditModeFormContext.Provider>;

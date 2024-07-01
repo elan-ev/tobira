@@ -144,7 +144,7 @@ const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag }) => {
             <VideoListBlock
                 allowOriginalOrder={true}
                 initialOrder="ORIGINAL"
-                title={t("series.videos.heading")}
+                title={t("videolist-block.videos.heading")}
                 basePath="/!v"
                 items={items}
             />
