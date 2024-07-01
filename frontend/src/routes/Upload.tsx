@@ -1027,7 +1027,7 @@ const finishUpload = async (
         // Add metadata in DC-Catalog
         {
             const dcc = constructDcc(metadata, user);
-            const body = new FormData();
+            const body = new URLSearchParams();
             body.append("mediaPackage", mediaPackage);
             body.append("dublinCore", dcc);
             body.append("flavor", "dublincore/episode");
@@ -1067,16 +1067,9 @@ const finishUpload = async (
 
 /**
  * Encodes a value for inclusion in XML sent to Opencast.
- *
- * For one, we need to escape some characters for XML inclusion. But Opencast
- * also tries to URI-decode the value, meaning that `%` in the original value
- * will be interpreted as encoded characters, which usually fails. So if the
- * original value contains `%`, we URI-encode it.
  */
-const encodeValue = (value: string): string => {
-    const escapedXml = new XMLSerializer().serializeToString(new Text(value));
-    return escapedXml.includes("%") ? encodeURIComponent(escapedXml) : escapedXml;
-};
+const encodeValue = (value: string): string =>
+    new XMLSerializer().serializeToString(new Text(value));
 
 /** Creates a Dublin Core Catalog in XML format that describes the given metadata. */
 const constructDcc = (metadata: Metadata, user: User): string => {
