@@ -9,6 +9,38 @@ use secrecy::Secret;
 use crate::{http::Response, prelude::*};
 
 
+/// The URL-safe base64 alphabet.
+pub(crate) const BASE64_DIGITS: &[u8; 64] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+pub(crate) fn base64_decode(ascii: u8) -> Option<u8> {
+    /// The reverse lookup table to `BASE64_DIGITS`. If you index by an ASCII value, you
+    /// either get the corresponding digit value OR `0xFF`, signalling that the
+    /// character is not a valid base64 character.
+    const DECODE_TABLE: [u8; 256] = create_decode_table();
+
+    const fn create_decode_table() -> [u8; 256] {
+        let mut out = [0xFF; 256];
+
+        // If you wonder why we are using `while` instead of a more idiomatic loop:
+        // const fns are still somewhat limited and do not allow `for`.
+        let mut i = 0;
+        while i < BASE64_DIGITS.len() {
+            out[BASE64_DIGITS[i] as usize] = i as u8;
+            i += 1;
+        }
+
+        out
+    }
+    let raw = DECODE_TABLE[ascii as usize];
+    if raw == 0xFF {
+        return None;
+    }
+
+    Some(raw)
+}
+
+
 /// An empty `enum` for signaling the fact that a function (potentially) never returns.
 /// Note that you can't construct a value of this type, so a function returning it
 /// can never return. A function returning `Result<NeverReturns>` never returns

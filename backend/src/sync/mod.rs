@@ -1,4 +1,5 @@
-use secrecy::Secret;
+use base64::Engine as _;
+use secrecy::{ExposeSecret as _, Secret};
 use core::fmt;
 use std::time::Duration;
 
@@ -8,6 +9,7 @@ use crate::{config::Config, db::DbConnection, prelude::*};
 pub(crate) mod cmd;
 pub(crate) mod harvest;
 pub(crate) mod stats;
+pub(crate) mod text;
 mod client;
 mod status;
 
@@ -69,8 +71,22 @@ pub(crate) struct SyncConfig {
     /// relevant in `--daemon` mode.
     #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
     pub(crate) poll_period: Duration,
+
+    /// Number of concurrent tasks with which Tobira downloads assets from
+    /// Opencast. The default should be a good sweet spot. Decrease to reduce
+    /// load on Opencast, increase to speed up download a bit.
+    #[config(default = 8)]
+    concurrent_download_tasks: u8,
 }
 
+impl SyncConfig {
+    pub(crate) fn basic_auth_header(&self) -> Secret<String> {
+        let credentials = format!("{}:{}", self.user, self.password.expose_secret());
+        let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
+        let auth_header = format!("Basic {}", encoded_credentials);
+        Secret::new(auth_header)
+    }
+}
 
 /// Version of the Tobira-module API in Opencast.
 struct ApiVersion {

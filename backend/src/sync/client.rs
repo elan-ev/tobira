@@ -1,6 +1,5 @@
 use std::time::{Duration, Instant};
 
-use base64::Engine;
 use bytes::Bytes;
 use chrono::{DateTime, Utc, TimeZone};
 use hyper::{
@@ -41,22 +40,11 @@ impl OcClient {
     const STATS_PATH: &'static str = "/tobira/stats";
 
     pub(crate) fn new(config: &Config) -> Result<Self> {
-        let http_client = crate::util::http_client()?;
-
-        // Prepare authentication
-        let credentials = format!(
-            "{}:{}",
-            config.sync.user,
-            config.sync.password.expose_secret(),
-        );
-        let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
-        let auth_header = format!("Basic {}", encoded_credentials);
-
         Ok(Self {
-            http_client,
+            http_client: crate::util::http_client()?,
             scheme: config.opencast.sync_node().scheme.clone(),
             authority: config.opencast.sync_node().authority.clone(),
-            auth_header: Secret::new(auth_header),
+            auth_header: config.sync.basic_auth_header(),
             username: config.sync.user.clone(),
         })
     }

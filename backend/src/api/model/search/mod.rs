@@ -24,6 +24,8 @@ mod event;
 mod realm;
 mod series;
 
+pub(crate) use self::event::{SearchEvent, TextMatch, ByteSpan};
+
 
 /// Marker type to signal that the search functionality is unavailable for some
 /// reason.
@@ -63,8 +65,8 @@ impl SearchResults<NodeValue> {
 }
 
 #[juniper::graphql_object(Context = Context, name = "EventSearchResults")]
-impl SearchResults<search::Event> {
-    fn items(&self) -> &[search::Event] {
+impl SearchResults<SearchEvent> {
+    fn items(&self) -> &[SearchEvent] {
         &self.items
     }
 }
@@ -172,7 +174,10 @@ pub(crate) async fn perform(
         let items: Vec<NodeValue> = context.db
             .query_opt(&query, &[&uuid_query, &context.auth.roles_vec()])
             .await?
-            .map(|row| search::Event::from_row_start(&row).into())
+            .map(|row| {
+                let e = search::Event::from_row_start(&row);
+                SearchEvent::new(e, &[]).into()
+            })
             .into_iter()
             .collect();
         let total_hits = items.len();
@@ -274,8 +279,10 @@ pub(crate) async fn perform(
     // We can either use score details or adding dummy searchable fields to the
     // realm index. See this discussion for more info:
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
-    let events = event_results.hits.into_iter()
-        .map(|result| (NodeValue::from(result.result), result.ranking_score));
+    let events = event_results.hits.into_iter().map(|result| {
+        let score = result.ranking_score;
+        (NodeValue::from(hit_to_search_event(result)), score)
+    });
     let series = series_results.hits.into_iter()
         .map(|result| {
             let series = SearchSeriesExtended {
@@ -343,7 +350,7 @@ fn looks_like_opencast_uuid(query: &str) -> bool {
 #[graphql(Context = Context)]
 pub(crate) enum EventSearchOutcome {
     SearchUnavailable(SearchUnavailable),
-    Results(SearchResults<search::Event>),
+    Results(SearchResults<SearchEvent>),
 }
 
 pub(crate) async fn all_events(
@@ -375,7 +382,7 @@ pub(crate) async fn all_events(
         .execute::<search::Event>()
         .await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| h.result).collect();
+    let items = results.hits.into_iter().map(|h| hit_to_search_event(h)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
@@ -533,4 +540,14 @@ impl fmt::Display for Filter {
             Self::None => Ok(()),
         }
     }
+}
+
+fn hit_to_search_event(
+    hit: meilisearch_sdk::SearchResult<search::Event>,
+) -> SearchEvent {
+    let matches = hit.matches_position.as_ref()
+        .and_then(|matches| matches.get("texts"))
+        .map(|v| v.as_slice())
+        .unwrap_or_default();
+    SearchEvent::new(hit.result, matches)
 }

@@ -32,12 +32,6 @@ type Missing {
   dummy: Boolean
 }
 
-input Filters {
-  itemType: ItemType
-  start: DateTimeUtc
-  end: DateTimeUtc
-}
-
 "Arbitrary metadata for events/series. Serialized as JSON object."
 scalar ExtraMetadata
 
@@ -46,6 +40,12 @@ enum VideoListOrder {
   OLD_TO_NEW
   AZ
   ZA
+}
+
+input Filters {
+  itemType: ItemType
+  start: DateTimeUtc
+  end: DateTimeUtc
 }
 
 "A block just showing some text."
@@ -83,19 +83,20 @@ type RemovedRealm {
 
 type SearchEvent implements Node {
   id: ID!
-  title: String!
   seriesId: ID
   seriesTitle: String
+  title: String!
   description: String
   creators: [String!]!
   thumbnail: String
   duration: Float!
-  isLive: Boolean!
-  audioOnly: Boolean!
   created: DateTimeUtc!
   startTime: DateTimeUtc
   endTime: DateTimeUtc
+  isLive: Boolean!
+  audioOnly: Boolean!
   hostRealms: [SearchRealm!]!
+  textMatches: [TextMatch!]!
 }
 
 input ChildIndex {
@@ -313,6 +314,21 @@ type SeriesSearchResults {
   items: [SearchSeries!]!
 }
 
+"A match inside an event's texts while searching."
+type TextMatch {
+  """
+    Start of this timespan in number of milliseconds from the beginning of
+    the video.
+  """
+  start: Float!
+  "Duration of this timespan in number of milliseconds."
+  duration: Float!
+  "The text containing the match, with some context"
+  text: String!
+  "Parts of `text` that should be highlighted."
+  highlights: [ByteSpan!]!
+}
+
 type Track {
   uri: String!
   flavor: String!
@@ -330,7 +346,10 @@ input UpdateTextBlock {
   content: String
 }
 
-union Playlist = AuthorizedPlaylist | NotAllowed
+type ByteSpan {
+  start: Int!
+  len: Int!
+}
 
 type Realm implements Node {
   id: ID!
@@ -422,6 +441,8 @@ type Realm implements Node {
   """
   canCurrentUserModerate: Boolean!
 }
+
+union Playlist = AuthorizedPlaylist | NotAllowed
 
 "A role being granted permission to perform certain actions."
 type AclItem {
@@ -756,14 +777,14 @@ input NewRealm {
   pathSegment: String!
 }
 
-type Segment {
-  uri: String!
-  startTime: Float!
-}
-
 enum SortDirection {
   ASCENDING
   DESCENDING
+}
+
+type Segment {
+  uri: String!
+  startTime: Float!
 }
 
 "Services a user can be pre-authenticated for using a JWT"
