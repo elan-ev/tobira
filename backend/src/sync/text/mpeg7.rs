@@ -308,7 +308,8 @@ fn parse_children<'a>(
 }
 
 
-/// Can be called after an `ElementStart` token, skipping all its attributes and makes sure that there is
+/// Can be called after an `ElementStart` token, skipping all its attributes and
+/// returns once an `ElementEnd` token is found, which is returned.
 fn skip_attrs<'a>(it: &mut Iter<'a>) -> Result<ElementEnd<'a>> {
     loop {
         match it.next().ok_or_else(unexpected_eof)?? {
