@@ -4,7 +4,7 @@ import React, { ReactNode } from "react";
 import { APIError, NotJson, ServerError } from ".";
 import { Root } from "../layout/Root";
 import { useRouter } from "../router";
-import { Card } from "../ui/Card";
+import { Card } from "@opencast/appkit";
 import { ErrorDisplay, NetworkError } from "../util/err";
 import { RouterControl } from "../rauta";
 import { UserProvider, Props as UserProviderProps } from "../User";

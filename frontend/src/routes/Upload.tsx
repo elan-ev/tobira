@@ -13,13 +13,12 @@ import { makeRoute } from "../rauta";
 import { ErrorDisplay, errorDisplayInfo } from "../util/err";
 import { useNavBlocker } from "./util";
 import CONFIG from "../config";
-import { Button, LinkButton } from "../ui/Button";
-import { boxError, ErrorBox } from "../ui/error";
+import { Button, boxError, ErrorBox, Card } from "@opencast/appkit";
+import { LinkButton } from "../ui/LinkButton";
 import { Form } from "../ui/Form";
 import { Input, TextArea } from "../ui/Input";
 import { isRealUser, User, useUser } from "../User";
 import { currentRef, useRefState } from "../util";
-import { Card } from "../ui/Card";
 import { FieldIsRequiredNote, InputContainer, TitleLabel } from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
@@ -445,7 +444,7 @@ const FileSelect: React.FC<FileSelectProps> = ({ onSelect }) => {
             {/* "Select files" button */}
             <div css={{ marginTop: 16 }}>
                 <Button
-                    kind="happy"
+                    kind="call-to-action"
                     onClick={() => currentRef(fileInput).click()}
                 >{t("upload.select-files")}</Button>
                 <input
@@ -561,7 +560,7 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
         }}>
             <span>{t("upload.upload-cancelled")}</span>
             <div>
-                <LinkButton kind="happy" to={UploadRoute.url}>
+                <LinkButton kind="call-to-action" to={UploadRoute.url}>
                     {t("upload.reselect")}
                 </LinkButton>
             </div>
@@ -799,7 +798,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
 
             {/* Submit button */}
             <Button
-                kind="happy"
+                kind="call-to-action"
                 disabled={disabled}
                 css={{ marginTop: 32, marginBottom: 160 }}
                 onClick={onSubmit}>

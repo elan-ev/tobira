@@ -19,11 +19,9 @@ import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
 import { realmBreadcrumbs } from "../util/realm";
 import { isRealUser, useUser } from "../User";
-import { Card } from "../ui/Card";
-import { Button } from "../ui/Button";
+import { Button, Card } from "@opencast/appkit";
 import { displayCommitError } from "./manage/Realm/util";
-import { boxError } from "../ui/error";
-import { Spinner } from "../ui/Spinner";
+import { Spinner, boxError } from "@opencast/appkit";
 import { useRouter } from "../router";
 import { COLORS } from "../color";
 import { useMenu } from "../layout/MenuState";
@@ -282,7 +280,7 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
             <p>{t("realm.user-realm.create.available-at")}</p>
             <code css={{ textAlign: "center" }}>{window.location.origin + realmPath}</code>
             <p>{t("realm.user-realm.create.find-and-delete")}</p>
-            <Button kind="happy"css={{ marginTop: 32 }} onClick={onSubmit}>
+            <Button kind="call-to-action"css={{ marginTop: 32 }} onClick={onSubmit}>
                 {t("realm.user-realm.create.button")}
             </Button>
             {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}

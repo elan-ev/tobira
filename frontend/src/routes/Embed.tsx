@@ -11,7 +11,7 @@ import { GlobalErrorBoundary } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { Player, PlayerPlaceholder } from "../ui/player";
-import { Spinner } from "../ui/Spinner";
+import { Spinner } from "@opencast/appkit";
 import { MovingTruck } from "../ui/Waiting";
 import { b64regex } from "./util";
 import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";

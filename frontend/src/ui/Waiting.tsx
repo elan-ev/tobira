@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-import { Card } from "../ui/Card";
+import { Card } from "@opencast/appkit";
 import { LuTruck } from "react-icons/lu";
 import { keyframes } from "@emotion/react";
 

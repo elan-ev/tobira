@@ -5,7 +5,7 @@ import { useForm, useFormContext, FormProvider } from "react-hook-form";
 import { bug, match } from "@opencast/appkit";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
-import { Button } from "../../../../../../ui/Button";
+import { Button } from "@opencast/appkit";
 import { currentRef, useOnOutsideClick } from "../../../../../../util";
 import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
 import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
@@ -181,10 +181,7 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
         >
             {t("manage.realm.content.cancel")}
         </Button>
-        <Button
-            kind="happy"
-            type="submit"
-        >
+        <Button kind="call-to-action" type="submit">
             {t("general.action.save")}
         </Button>
     </div>;
