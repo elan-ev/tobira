@@ -874,7 +874,10 @@ const Item: React.FC<ItemProps> = ({
     })();
 
     const inner = <>
-        <div css={{ position: "relative" }}>{thumbnail}</div>
+        <div css={{
+            position: "relative",
+            borderRadius: 8,
+        }}>{thumbnail}</div>
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
