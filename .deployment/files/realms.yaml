@@ -23,16 +23,19 @@ blocks:
       test data, mostly consisting of all CC-licensed videos and the page
       structure from [ETHZ's old video portal](https://video.ethz.ch/).
 
-  - series:
-      series: { by_uuid: 94ecfeed-aa7d-4a5c-912b-58b5891543f4 }
+  - video_list:
+      ty: series
+      id: { by_uuid: 94ecfeed-aa7d-4a5c-912b-58b5891543f4 }
       show_title: true
       show_description: true
-  - series:
-      series: { by_uuid: 8a430c59-7e04-4e4b-b532-b2fcad8de8d4 }
+  - video_list:
+      ty: series
+      id: { by_uuid: 8a430c59-7e04-4e4b-b532-b2fcad8de8d4 }
       show_title: true
       show_description: false
-  - series:
-      series: { by_uuid: 9d2f81a2-aa03-4684-948b-28c145df4960 }
+  - video_list:
+      ty: playlist
+      id: { by_uuid: ee39bb7b-7022-458b-ab54-570e81f4730d }
       show_title: true
       show_description: true
   - title: More useful videos
@@ -74,8 +77,9 @@ children:
 
           And of course there is **bold** and *cursive* text.
 
-      - series:
-          series: { by_uuid: 3e586498-d00a-48c6-9c65-63c61acfc64a }
+      - video_list:
+          ty: series
+          id: { by_uuid: 3e586498-d00a-48c6-9c65-63c61acfc64a }
           show_title: true
           show_description: true
 
@@ -5141,8 +5145,9 @@ children:
     blocks:
       - text: |
           Here are some never ending live streams!
-      - series:
-          series: { by_uuid: 089944f4-e69c-4eb6-81fd-44b8b9924f0b }
+      - video_list:
+          ty: series
+          id: { by_uuid: 089944f4-e69c-4eb6-81fd-44b8b9924f0b }
           show_title: true
           show_description: false
     children:
