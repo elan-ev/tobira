@@ -31,7 +31,7 @@ pub(crate) struct GeneralConfig {
     /// ```
     /// [general.initial_consent]
     /// title.en = "Terms & Conditions"
-    /// button_label.en = "Agree"
+    /// button.en = "Agree"
     /// text.en = """
     /// To use Tobira, you need to agree to our terms and conditions:
     /// - [Terms](https://www.our-terms.de)
