@@ -637,7 +637,8 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
                                 paddingLeft: 13,
                                 textIndent: -13,
                                 padding: 1,
-                                ...ellipsisOverflowCss(3),
+                                fontSize: 13,
+                                ...ellipsisOverflowCss(2),
                             }}>
                                 …{textParts}…
                             </div>
