@@ -608,29 +608,6 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
                         const startDuration = formatDuration(m.start);
                         const endDuration = formatDuration(m.start + m.duration);
 
-                        // Slice the string to highlight the matched text.
-                        const textParts = [];
-                        let remainingText = m.text;
-                        let offset = 0;
-                        for (const highlight of m.highlights) {
-                            const highlightStart = highlight.start - offset;
-                            const [prefix, middle, rest]
-                                = byteSlice(remainingText, highlightStart, highlight.len);
-
-                            textParts.push(<span key={offset + 1}>{prefix}</span>);
-                            textParts.push(
-                                <span key={offset} css={{
-                                    color: COLORS.neutral90,
-                                    backgroundColor: COLORS.neutral15,
-                                    borderBottom: "2px solid var(--highlight-color)",
-                                    borderRadius: 2,
-                                }}>{middle}</span>
-                            );
-                            remainingText = rest;
-                            offset = highlight.start + highlight.len;
-                        }
-                        textParts.push(remainingText);
-
                         return <>
                             <div css={{
                                 maxWidth: "min(85vw, 460px)",
@@ -639,8 +616,9 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
                                 padding: 1,
                                 fontSize: 13,
                                 ...ellipsisOverflowCss(2),
+                                mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
                             }}>
-                                …{textParts}…
+                                …{highlightText(m.text, m.highlights)}…
                             </div>
                             <div css={{ textAlign: "center" }}>
                                 {`(${startDuration} – ${endDuration})`}
@@ -898,3 +876,32 @@ const byteSlice = (s: string, start: number, len: number): readonly [string, str
     ] as const;
 };
 
+const highlightText = (
+    s: string,
+    spans: readonly { start: number; len: number }[],
+) => {
+    const textParts = [];
+    let remainingText = s;
+    let offset = 0;
+    for (const span of spans) {
+        const highlightStart = span.start - offset;
+        const [prefix, middle, rest]
+            = byteSlice(remainingText, highlightStart, span.len);
+
+        textParts.push(<span key={offset + 1}>{prefix}</span>);
+        textParts.push(
+            <mark key={offset}>{middle}</mark>
+        );
+        remainingText = rest;
+        offset = span.start + span.len;
+    }
+    textParts.push(remainingText);
+    return textParts;
+};
+
+const highlightCss = (color: string, backgroundColor: string) => ({
+    color,
+    backgroundColor,
+    borderBottom: "2px solid var(--highlight-color)",
+    borderRadius: 2,
+});
