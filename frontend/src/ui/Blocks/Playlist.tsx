@@ -72,5 +72,6 @@ export const PlaylistBlock: React.FC<PlaylistProps> = ({ fragRef, basePath }) =>
         description={(showMetadata && playlist.description) || undefined}
         basePath={basePath}
         items={items}
+        isPlaylist
     />;
 };
