@@ -8,7 +8,11 @@ test("Video page", async ({ page, standardData, browserName }) => {
 
     await test.step("Setup", async () => {
         await page.goto("/");
-        await page.getByRole("img", { name: "Video of a Tabby Cat" }).first().click();
+        await page
+            .locator("div")
+            .filter({ hasText: /^0:12Video of a Tabby CatGustavo Belemmi2 years ago$/ })
+            .getByRole("link")
+            .click();
         await page.waitForSelector("nav");
     });
 
@@ -57,7 +61,10 @@ test("Video page", async ({ page, standardData, browserName }) => {
         });
 
         await test.step("Block contains sibling event tile", async () => {
-            const siblingEvent = page.getByRole("link", { name: "Thumbnail" }).first();
+            const siblingEvent = page
+                .locator("div")
+                .filter({ hasText: /^0:12Dual Stream CatsGustavo Belemmi, klimkin2 years ago$/ })
+                .getByRole("link");
             await test.step("Tile links to event", async () => {
                 const siblingId = await siblingEvent.getAttribute("href") as string;
                 await siblingEvent.click();
