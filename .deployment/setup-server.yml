@@ -15,6 +15,11 @@
           - nginx
           - nodejs
 
+    - name: enable auto-updates
+      become: true
+      import_role:
+        name: lkiesow.dnf_autoupdate
+
 
     # MeiliSearch
 

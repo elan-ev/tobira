@@ -2,3 +2,5 @@
 roles:
   - name: lkiesow.certbot_cloudflare
     version: 0.2.0
+  - name: lkiesow.dnf_autoupdate
+    version: 2.0.1
