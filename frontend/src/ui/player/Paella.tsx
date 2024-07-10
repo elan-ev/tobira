@@ -225,6 +225,22 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
 
                 ...colors,
 
+                // Buttons inside video containers
+                "& .video-canvas": {
+                    containerName: "video-canvas",
+                    containerType: "inline-size",
+                },
+                "@container video-canvas (width < 400px)": {
+                    "& .button-area": {
+                        padding: "2px !important",
+                        top: "unset !important",
+                        "& button": {
+                            transform: "scale(0.7)",
+                            margin: "-3px !important",
+                        },
+                    },
+                },
+
                 "& .playback-bar": {
                     transition: "background 0.08s",
                 },
