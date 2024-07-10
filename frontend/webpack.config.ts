@@ -98,6 +98,10 @@ const config: CallableOption = (_env, argv) => ({
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
                 { from: path.join(__dirname, "static"), to: OUT_PATH },
                 { from: PAELLA_SKIN_PATH, to: path.join(OUT_PATH, "paella") },
+                {
+                    from: path.join(APP_PATH, "icons/settings.svg"),
+                    to: path.join(OUT_PATH, "paella/icons"),
+                },
             ],
         }),
         compiler => {

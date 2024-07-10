@@ -132,6 +132,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
                 loadDictionaries: (player: Paella) => player.setLanguage(i18n.language),
+                configResourcesUrl: "/~assets/paella",
                 customPluginContext: [
                     getBasicPluginsContext(),
                     getZoomPluginContext(),
@@ -203,6 +204,29 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             },
             ".popup-container": {
                 zIndex: 500050,
+                "& .button-group": {
+                    "& .button-plugin-wrapper:hover, button:hover": {
+                        backgroundColor: "var(--highlight-bg-color-hover)",
+                    },
+                },
+                '& button[name="es.upv.paella.qualitySelector"] div': {
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    i: {
+                        display: "none",
+                    },
+                    span: {
+                        color: "var(--main-fg-color)",
+                        backgroundColor: "var(--main-bg-color)",
+                        border: "2px solid var(--main-fg-color)",
+                        borderRadius: 3,
+                        margin: "0 !important",
+                        fontSize: "10px !important",
+                        fontWeight: "bold",
+                        padding: "2px 3px",
+                    },
+                },
             },
         }} />
         <div
@@ -251,6 +275,10 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     opacity: "unset",
                 },
 
+                '& div[name="es.upv.paella.customTimeProgressIndicator"]': {
+                    fontWeight: "bold",
+                },
+
                 '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
                     marginTop: "-7px !important",
                     "svg text": {
@@ -263,23 +291,6 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     "svg text": {
                         transform: "translate(2px, -1px)",
                         fontFamily: "var(--main-font) !important",
-                    },
-                },
-
-                '& button[name="es.upv.paella.qualitySelector"] div': {
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    i: {
-                        display: "none",
-                    },
-                    span: {
-                        color: "black",
-                        backgroundColor: "var(--main-fg-color)",
-                        borderRadius: 3,
-                        margin: "0 !important",
-                        fontSize: "10px !important",
-                        padding: "2px 3px",
                     },
                 },
 
@@ -338,6 +349,20 @@ const PAELLA_CONFIG = {
         restoreVolume: true,
     },
 
+    buttonGroups: [
+        {
+            enabled: true,
+            groupName: "optionsContainer",
+            description: "Options",
+            icon: "icons/settings.svg",
+            order: 6,
+            side: "right",
+            tabIndex: 6,
+            parentContainer: "playbackBar",
+            ariaLabel: "Show options",
+        },
+    ],
+
     plugins: {
         "es.upv.paella.singleVideoDynamic": {
             enabled: true,
@@ -384,6 +409,7 @@ const PAELLA_CONFIG = {
                     title: "Presenter and presentation",
                 },
             ],
+            tabIndexStart: 11,
         },
 
         // Canvas plugins
@@ -472,12 +498,13 @@ const PAELLA_CONFIG = {
             tabIndex: 5,
         },
 
-        // Buttons on the right side
+        // Buttons on the right side inside settings menu
         "es.upv.paella.qualitySelector": {
             enabled: true,
             side: "right",
             order: 6,
             tabIndex: 6,
+            parentContainer: "optionsContainer",
         },
         "es.upv.paella.layoutSelector": {
             enabled: true,
@@ -485,20 +512,24 @@ const PAELLA_CONFIG = {
             showIcons: false,
             order: 7,
             tabIndex: 7,
+            parentContainer: "optionsContainer",
         },
-        "es.upv.paella.captionsSelectorPlugin": {
+        "es.upv.paella.frameControlButtonPlugin": {
             enabled: true,
             side: "right",
             order: 8,
             tabIndex: 8,
+            parentContainer: "optionsContainer",
         },
-        "es.upv.paella.fullscreenButton": {
+
+        // Buttons on the right side outside of settings menu
+        "es.upv.paella.captionsSelectorPlugin": {
             enabled: true,
             side: "right",
             order: 9,
             tabIndex: 9,
         },
-        "es.upv.paella.frameControlButtonPlugin": {
+        "es.upv.paella.fullscreenButton": {
             enabled: true,
             side: "right",
             order: 10,
@@ -513,6 +544,17 @@ const PAELLA_CONFIG = {
             },
             markWidth: 3,
             drawBackground: false,
+        },
+
+        "es.upv.paella.prevSlideNavigatorButton": {
+            enabled: true,
+            content: ["presentation"],
+            order: 0,
+        },
+        "es.upv.paella.nextSlideNavigatorButton": {
+            enabled: true,
+            content: ["presentation"],
+            order: 1,
         },
 
         // Data plugin
