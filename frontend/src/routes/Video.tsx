@@ -215,13 +215,13 @@ const getVideoDetailsFromUrl = (url: URL, regEx: string) => {
 
 const ForwardToDirectRoute: React.FC<{ videoId: string }> = ({ videoId }) => {
     const router = useRouter();
-    useEffect(() => router.goto(DirectVideoRoute.url({ videoId })));
+    useEffect(() => router.goto(DirectVideoRoute.url({ videoId }), true));
     return <InitialLoading />;
 };
 
 const ForwardToDirectOcRoute: React.FC<{ ocID: string }> = ({ ocID }) => {
     const router = useRouter();
-    useEffect(() => router.goto(DirectOpencastVideoRoute.url({ ocID })));
+    useEffect(() => router.goto(DirectOpencastVideoRoute.url({ ocID }), true));
     return <InitialLoading />;
 };
 
