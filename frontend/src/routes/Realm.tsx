@@ -91,8 +91,12 @@ export const RealmRoute = makeRoute({
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 nav={data => {
-                    if (!data.realm) {
+                    if (showCreateUserRealmPage(realmPath, data.currentUser) && !data.realm) {
                         return <ManageNav active={realmPath as `/@${string}`} />;
+                    }
+
+                    if (!data.realm) {
+                        return [];
                     }
 
                     const mainNav = <Nav key="nav" fragRef={data.realm} />;
@@ -114,6 +118,7 @@ export const RealmRoute = makeRoute({
 const query = graphql`
     query RealmQuery($path: String!) {
         ... UserData
+        currentUser { username canCreateUserRealm }
         realm: realmByPath(path: $path) {
             id
             name
@@ -223,7 +228,7 @@ const UserRealmNote: React.FC<Props> = ({ realm }) => {
 const NoRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
     const user = useUser();
 
-    return isRealUser(user) && `/@${user.username}` === realmPath && user.canCreateUserRealm
+    return isRealUser(user) && showCreateUserRealmPage(realmPath, user)
         ? <CreateUserRealm realmPath={realmPath} />
         : <NotFound kind="page" />;
 };
@@ -329,3 +334,8 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
 export const pathToQuery = (path: string): string => (
     encodeURIComponent(path).replace(/%2f/gui, "/")
 );
+
+const showCreateUserRealmPage = (
+    realmPath: string,
+    user?: { username: string; canCreateUserRealm: boolean } | null,
+) => user && `/@${user.username}` === realmPath && user.canCreateUserRealm;
