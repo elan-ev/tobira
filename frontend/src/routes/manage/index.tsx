@@ -1,7 +1,7 @@
 import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineFire } from "react-icons/hi";
-import { LuExternalLink, LuFilm, LuLayoutTemplate, LuUpload, LuVideo } from "react-icons/lu";
+import { LuFilm, LuLayoutTemplate, LuUpload, LuVideo } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
 
@@ -131,7 +131,6 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
             >
                 <LuVideo />
                 {t("manage.dashboard.studio-tile-title")}
-                <LuExternalLink size={18} css={{ marginLeft: 4 }} />
             </ExternalLink>
         );
     }

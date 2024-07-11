@@ -1,5 +1,4 @@
 import { Trans, useTranslation } from "react-i18next";
-import { LuExternalLink } from "react-icons/lu";
 
 import { useId, useRef, useState } from "react";
 import { Link, useRouter } from "../../../router";
@@ -78,7 +77,6 @@ const Page: React.FC<Props> = ({ event }) => {
                             css={buttonStyle(config, "normal", isHighContrast)}
                         >
                             {t("manage.my-videos.details.open-in-editor")}
-                            <LuExternalLink size={16} />
                         </ExternalLink>
                     )}
                     <DeleteButton {...{ event }} />
