@@ -29,10 +29,9 @@ pub(crate) struct GeneralConfig {
     /// Example:
     /// 
     /// ```
-    /// [general.initial_consent]
-    /// title.en = "Terms & Conditions"
-    /// button.en = "Agree"
-    /// text.en = """
+    /// initial_consent.title.en = "Terms & Conditions"
+    /// initial_consent.button.en = "Agree"
+    /// initial_consent.text.en = """
     /// To use Tobira, you need to agree to our terms and conditions:
     /// - [Terms](https://www.our-terms.de)
     /// - [Conditions](https://www.our-conditions.de)
