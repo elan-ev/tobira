@@ -230,13 +230,11 @@ impl AuthorizedEvent {
                 where realm = realms.id \
                 and ( \
                     type = 'video' and video = $1 \
-                    or type = 'series' and series = ( \
-                        select series from events where id = $1 \
-                    ) \
+                    or type = 'series' and series = $2 \
                 ) \
             ) \
         ");
-        context.db.query_mapped(&query, dbargs![&self.key], |row| Realm::from_row_start(&row))
+        context.db.query_mapped(&query, dbargs![&self.key, &self.series], |row| Realm::from_row_start(&row))
             .await?
             .pipe(Ok)
     }
@@ -261,11 +259,11 @@ impl AuthorizedEvent {
             where realms.full_path = $1 \
                 and ( \
                     blocks.video = $2 or \
-                    blocks.series = (select series from events where id = $2) \
+                    blocks.series = $3 \
                 )\
             )\
         ";
-        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key])
+        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key, &self.series])
             .await?
             .get::<_, bool>(0)
             .pipe(Ok)
