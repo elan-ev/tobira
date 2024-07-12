@@ -505,6 +505,7 @@ const PAELLA_CONFIG = {
             order: 6,
             tabIndex: 6,
             parentContainer: "optionsContainer",
+            showForSingleQuality: true,
         },
         "es.upv.paella.layoutSelector": {
             enabled: true,
