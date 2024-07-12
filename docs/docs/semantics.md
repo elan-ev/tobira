@@ -89,16 +89,23 @@ The values `in this style` are the URL paths, e.g. what the browser will show af
 
 ## "Listed" and being findable via search
 
-User pages *cannot* be found via search.
-Non-user content pages *can* be found via search.
-For videos and series, it gets more complicated.
+Entities like pages, videos and series are either "listed" or "unlisted".
+This is a derived property and not something that can be toggled individually.
+Only listed entities can be found via search.
+Of course, for videos, the ACLs determine whether someone can see the video at all.
+So if the ACLs don't allow someone to see a video, they won't be able to find it via search, even if it's "listed".
+A video must be readable *and* listed to be found via search.
 
-The findability for both depends on whether they are included in a *content page*.
-Included means that a content block (the things you can put on a *content page*) refers to them.
-A video is "included in a content page" if that content page has a video block with that video, or a series block with that video's series.
-Similarly, a series is included in a content page, if a series block refers to it or if a video block refers to any of its videos.
+User pages can never be found via search.
+Non-user content pages can always be found via search.
 
-If and only if a video/series is included in any non-user content page, it is findable via search.
+A series is considered "listed", if a series-block of that series exists on at least one non-user page.
+
+A video is considered "listed", if *any* of the following blocks exists on at least one non-user page:
+- a video-block of that video, or
+- a series-block of that video's series, or
+- a playlist-block of a playlist containing that video.
+
 
 ## Permissions in Tobira
 

@@ -360,8 +360,7 @@ manage:
     unlisted:
         note: Dieses Video ist ungelistet.
         explanation: >
-          Ungelistete Videos sind nur über ihren direkten Link aufrufbar.
-          Dies ist equivalent zu einem Passwortschutz.
+          Ein ungelistetes Video ist nur über seinen direkten Link oder seine Serie aufrufbar.
     reset-modal:
       label: Zurücksetzen
       title: Änderungen zurücksetzen?
