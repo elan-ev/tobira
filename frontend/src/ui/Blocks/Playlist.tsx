@@ -1,40 +1,87 @@
 import { graphql, readInlineData, useFragment } from "react-relay";
-import { PlaylistBlockData$key } from "./__generated__/PlaylistBlockData.graphql";
+import { Fields } from "../../relay";
 import { useTranslation } from "react-i18next";
+import {
+    PlaylistBlockData$data,
+    PlaylistBlockData$key,
+} from "./__generated__/PlaylistBlockData.graphql";
 import { VideoListEventData$key } from "./__generated__/VideoListEventData.graphql";
 import { VideoListBlock, VideoListBlockContainer, videoListEventFragment } from "./VideoList";
-import { unreachable } from "@opencast/appkit";
+import {
+    PlaylistBlockPlaylistData$data,
+    PlaylistBlockPlaylistData$key,
+} from "./__generated__/PlaylistBlockPlaylistData.graphql";
+import { Card, unreachable } from "@opencast/appkit";
 
 
-type PlaylistProps = {
-    fragRef: PlaylistBlockData$key;
+type SharedProps = {
     basePath: string;
+    moreOfTitle?: boolean;
+};
+
+const blockFragment = graphql`
+    fragment PlaylistBlockData on PlaylistBlock {
+        playlist { ...PlaylistBlockPlaylistData }
+        showTitle
+        showMetadata
+        order
+        layout
+    }
+`;
+
+const playlistFragment = graphql`
+    fragment PlaylistBlockPlaylistData on Playlist {
+        __typename
+        ... on NotAllowed { dummy } # workaround
+        ... on AuthorizedPlaylist {
+            id
+            title
+            description
+            entries {
+                __typename
+                ... on AuthorizedEvent { id, ...VideoListEventData }
+                ... on Missing { dummy }
+                ... on NotAllowed { dummy }
+            }
+        }
+    }
+`;
+
+type FromBlockProps = SharedProps & {
+    fragRef: PlaylistBlockData$key;
 }
 
-export const PlaylistBlock: React.FC<PlaylistProps> = ({ fragRef, basePath }) => {
+export const PlaylistBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
     const { t } = useTranslation();
-    const { playlist, showTitle, showMetadata, layout, order } = useFragment(graphql`
-        fragment PlaylistBlockData on PlaylistBlock {
-            playlist {
-                __typename
-                ... on NotAllowed { dummy } # workaround
-                ... on AuthorizedPlaylist {
-                    title
-                    description
-                    entries {
-                        __typename
-                        ... on AuthorizedEvent { id, ...VideoListEventData }
-                        ... on Missing { dummy }
-                        ... on NotAllowed { dummy }
-                    }
-                }
-            }
-            showTitle
-            showMetadata
-            order
-            layout
-        }
-    `, fragRef);
+    const { playlist, ...block } = useFragment(blockFragment, fragRef);
+    return playlist == null
+        ? <Card kind="error">{t("playlist.deleted-playlist-block")}</Card>
+        : <PlaylistBlockFromPlaylist fragRef={playlist} {...rest} {...block} />;
+};
+
+type BlockProps = Partial<Omit<Fields<PlaylistBlockData$data>, "playlist">>;
+
+type SharedFromPlaylistProps = SharedProps & BlockProps & {
+    title?: string;
+};
+
+type FromPlaylistProps = SharedFromPlaylistProps & {
+    fragRef: PlaylistBlockPlaylistData$key;
+};
+
+export const PlaylistBlockFromPlaylist: React.FC<FromPlaylistProps> = (
+    { fragRef, ...rest },
+) => {
+    const playlist = useFragment(playlistFragment, fragRef);
+    return <PlaylistBlock playlist={playlist} {...rest} />;
+};
+
+type Props = SharedFromPlaylistProps & {
+    playlist: PlaylistBlockPlaylistData$data;
+};
+
+export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
+    const { t } = useTranslation();
 
     if (!playlist) {
         return <VideoListBlockContainer showViewOptions={false}>
@@ -64,14 +111,22 @@ export const PlaylistBlock: React.FC<PlaylistProps> = ({ fragRef, basePath }) =>
         }
     });
 
+    const title = props.showTitle
+        ? (props.moreOfTitle ? t("video.more-from-playlist", { playlist: playlist.title })
+            : playlist.title)
+        : undefined;
+
     return <VideoListBlock
-        initialLayout={layout}
-        initialOrder={(order === "%future added value" ? undefined : order) ?? "ORIGINAL"}
+        initialLayout={props.layout}
+        initialOrder={
+            (props.order === "%future added value" ? undefined : props.order) ?? "ORIGINAL"
+        }
         allowOriginalOrder
-        title={playlist.title ?? (showTitle ? playlist.title : undefined)}
-        description={(showMetadata && playlist.description) || undefined}
-        basePath={basePath}
+        {...{ title, items }}
+        description={(props.showMetadata && playlist.description) || undefined}
+        basePath={props.basePath}
         items={items}
         isPlaylist
+        listId={playlist.id}
     />;
 };

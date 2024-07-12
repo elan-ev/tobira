@@ -10,7 +10,7 @@ import { TextBlockByQuery } from "./Text";
 import { SeriesBlockFromBlock } from "./Series";
 import { VideoBlock } from "./Video";
 import { PlayerGroupProvider } from "../player/PlayerGroupContext";
-import { PlaylistBlock } from "./Playlist";
+import { PlaylistBlockFromBlock } from "./Playlist";
 
 
 type BlocksProps = {
@@ -76,7 +76,7 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
             "TextBlock": () => <TextBlockByQuery fragRef={block} />,
             "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} basePath={basePath} />,
             "VideoBlock": () => <VideoBlock fragRef={block} basePath={basePath} />,
-            "PlaylistBlock": () => <PlaylistBlock fragRef={block} basePath={basePath} />,
+            "PlaylistBlock": () => <PlaylistBlockFromBlock fragRef={block} basePath={basePath} />,
         })}
     </div>;
 };

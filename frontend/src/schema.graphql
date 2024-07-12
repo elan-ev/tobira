@@ -310,7 +310,7 @@ type AuthorizedEvent implements Node {
   acl: [AclItem!]!
   """
     Returns `true` if the realm has a video block with this video
-    OR if the realm has a series block with this event's series.
+    OR if the realm has a series or playlist block including this video.
     Otherwise, `false` is returned.
   """
   isReferencedByRealm(path: String!): Boolean!

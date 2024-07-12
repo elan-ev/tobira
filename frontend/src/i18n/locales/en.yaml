@@ -127,6 +127,7 @@ video:
   link: Go to video page
   part-of-series: Part of series
   more-from-series: More from “{{series}}”
+  more-from-playlist: More from “{{playlist}}”
   deleted-video-block: The video referenced here was deleted.
   not-allowed-video-block: You are not allowed to view the video embedded here.
   not-ready:
