@@ -6,7 +6,7 @@ create type playlist_entry_type as enum ('event');
 -- All fields should never be null.
 create type playlist_entry as (
     -- The Opencast ID of this entry. Not a UUID.
-    opencast_id bigint,
+    entry_id bigint,
 
     type playlist_entry_type,
 

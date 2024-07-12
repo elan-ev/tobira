@@ -109,7 +109,7 @@ pub enum PlaylistEntryType {
 #[derive(Debug, FromSql, ToSql, Clone)]
 #[postgres(name = "playlist_entry")]
 pub struct PlaylistEntry {
-    pub opencast_id: i64,
+    pub entry_id: i64,
     #[postgres(name = "type")]
     pub ty: PlaylistEntryType,
     pub content_id: String,
