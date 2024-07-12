@@ -345,7 +345,7 @@ manage:
     unlisted:
       note: This video is unlisted.
       explanation: >
-        Unlisted videos can only be found by sharing its direct link. This is equivalent to a password protection.
+        An unlisted video can only be found by sharing its direct link or via its series.
     reset-modal:
       label: Reset
       title: Reset changes?
