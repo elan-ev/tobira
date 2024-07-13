@@ -63,6 +63,7 @@ type BlockProps = Partial<Omit<Fields<PlaylistBlockData$data>, "playlist">>;
 
 type SharedFromPlaylistProps = SharedProps & BlockProps & {
     title?: string;
+    activeEventId?: string;
 };
 
 type FromPlaylistProps = SharedFromPlaylistProps & {
@@ -124,6 +125,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         allowOriginalOrder
         {...{ title, items }}
         description={(props.showMetadata && playlist.description) || undefined}
+        activeEventId={props.activeEventId}
         basePath={props.basePath}
         items={items}
         isPlaylist

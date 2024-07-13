@@ -460,6 +460,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
                 moreOfTitle
                 basePath={basePath}
                 fragRef={playlistRef}
+                activeEventId={event.id}
             />
             : event.series && <SeriesBlockFromSeries
                 basePath={basePath}
