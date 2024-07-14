@@ -39,8 +39,11 @@ create table playlists (
 -- to list all playlists that a user has write access to.
 create index idx_playlists_write_roles on playlists using gin (write_roles);
 
--- Extend enum types to allow for playlist blocks and playlist items in search index queue.
+-- Extend enum types to allow for playlist blocks, playlist items in search index queue
+-- and to remember deleted playlists.
 -- This needs to be done prior to their usage in the next migration since they can't be used
 -- in the same migration they were added.
 alter type block_type add value 'playlist';
 alter type search_index_item_kind add value 'playlist';
+alter type opencast_item_kind add value 'playlist';
+

@@ -106,3 +106,16 @@ as $$
         )
     select * from the_events union all select * from the_series union all select * from the_playlists
 $$;
+
+-- Triggers to remember and reuse deleted playlists.
+create trigger remember_deleted_opencast_playlists
+after delete
+on playlists
+for each row
+execute procedure remember_deleted_opencast_items('playlist');
+
+create trigger reuse_existing_id_on_playlist_insert
+before insert
+on playlists
+for each row
+execute procedure reuse_existing_id_on_insert('playlist');
