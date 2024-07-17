@@ -17,6 +17,8 @@ use crate::{
     prelude::*,
 };
 
+use super::playlist::VideoListEntry;
+
 
 pub(crate) struct Series {
     pub(crate) key: Key,
@@ -145,7 +147,7 @@ impl Series {
             .pipe(Ok)
     }
 
-    async fn events(&self, context: &Context) -> ApiResult<Vec<AuthorizedEvent>> {
+    async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
         AuthorizedEvent::load_for_series(self.key, context).await
     }
 

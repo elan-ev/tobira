@@ -1,4 +1,5 @@
 import React, {
+    PropsWithChildren,
     ReactNode,
     createContext,
     useContext,
@@ -18,11 +19,16 @@ import { IconType } from "react-icons";
 import {
     LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuAlertCircle, LuInfo,
 } from "react-icons/lu";
-import { graphql } from "react-relay";
+import { graphql, readInlineData } from "react-relay";
 
+import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
+import {
+    VideoListEventData$data,
+    VideoListEventData$key,
+} from "./__generated__/VideoListEventData.graphql";
+import { PlaylistBlockPlaylistData$data } from "./__generated__/PlaylistBlockPlaylistData.graphql";
 import { keyOfId } from "../../util";
 import { Link } from "../../router";
-import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
 import {
     BaseThumbnailReplacement, isPastLiveEvent, isUpcomingLiveEvent, Thumbnail,
     ThumbnailOverlayContainer,
@@ -32,8 +38,6 @@ import { CollapsibleDescription, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { COLORS } from "../../color";
 import { FloatingBaseMenu } from "../FloatingBaseMenu";
-import { VideoListEventData$data } from "./__generated__/VideoListEventData.graphql";
-
 
 
 
@@ -78,6 +82,11 @@ type VideoListItem = Event | "missing" | "unauthorized";
 
 type Order = "ORIGINAL" | "AZ" | "ZA" | "NEW_TO_OLD" | "OLD_TO_NEW";
 
+type Entries = Extract<
+    PlaylistBlockPlaylistData$data,
+    { __typename: "AuthorizedPlaylist" }
+>["entries"];
+
 export type VideoListBlockProps = {
     listId?: string;
     basePath: string;
@@ -87,8 +96,8 @@ export type VideoListBlockProps = {
     initialLayout?: VideoListLayout;
     title?: string;
     description?: string;
-    items: ReadonlyArray<VideoListItem>;
     isPlaylist?: boolean;
+    listEntries: Entries;
 }
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
@@ -100,12 +109,31 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     initialLayout = "GALLERY",
     title,
     description,
-    items,
     isPlaylist = false,
+    listEntries,
 }) => {
     const { t, i18n } = useTranslation();
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
-    const { mainItems, upcomingLiveEvents, hiddenItems } = orderItems(items, eventOrder, i18n);
+
+    const items = listEntries.map(entry => {
+        if (entry.__typename === "AuthorizedEvent") {
+            const out = readInlineData<VideoListEventData$key>(videoListEventFragment, entry);
+            return out;
+        } else if (entry.__typename === "Missing") {
+            return "missing";
+        } else if (entry.__typename === "NotAllowed") {
+            return "unauthorized";
+        } else {
+            return unreachable();
+        }
+    });
+
+    const {
+        mainItems,
+        upcomingLiveEvents,
+        missingItems,
+        unauthorizedItems,
+    } = orderItems(items, eventOrder, i18n);
 
     const renderEvents = (events: readonly VideoListItem[]) => (
         <Items
@@ -139,29 +167,37 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                     {renderEvents(mainItems)}
                 </>
             }
-            {hiddenItems > 0 && (
-                <div css={{
-                    fontSize: 14,
-                    marginTop: 24,
-                    backgroundColor: COLORS.neutral15,
-                    padding: "8px 16px",
-                    borderRadius: 4,
-                    display: "flex",
-                    gap: 16,
-                    alignItems: "center",
-                }}>
-                    <LuInfo size={18} />
-                    {t("videolist-block.hidden-items", { count: hiddenItems })}
-                </div>
-            )}
+            {missingItems + unauthorizedItems > 0 && <div css={{ marginTop: 16 }}>
+                {missingItems > 0 && <HiddenItemsInfo>
+                    {t("videolist-block.hidden-items.missing", { count: missingItems })}
+                </HiddenItemsInfo>}
+                {unauthorizedItems > 0 && <HiddenItemsInfo>
+                    {t("videolist-block.hidden-items.unauthorized", { count: unauthorizedItems })}
+                </HiddenItemsInfo>}
+            </div>}
         </VideoListBlockContainer>
     </OrderContext.Provider>;
 };
 
+const HiddenItemsInfo: React.FC<PropsWithChildren> = ({ children }) => <div css={{
+    fontSize: 14,
+    marginTop: 8,
+    backgroundColor: COLORS.neutral15,
+    padding: "8px 16px",
+    borderRadius: 4,
+    display: "flex",
+    gap: 16,
+    alignItems: "center",
+}}>
+    <LuInfo size={18} />
+    {children}
+</div>;
+
 type OrderedItems = {
     mainItems: readonly VideoListItem[];
     upcomingLiveEvents: Event[];
-    hiddenItems: number;
+    missingItems: number;
+    unauthorizedItems: number;
 };
 
 const orderItems = (
@@ -173,18 +209,24 @@ const orderItems = (
         return {
             mainItems: items,
             upcomingLiveEvents: [],
-            hiddenItems: 0,
+            missingItems: 0,
+            unauthorizedItems: 0,
         };
     }
 
     const upcomingLiveEvents: Event[] = [];
     const mainItems: VideoListItem[] = [];
-    let hiddenItems = 0;
+    let missingItems = 0;
+    let unauthorizedItems = 0;
     for (const event of items) {
         // When the order isn't "original", then we don't show special items
         // inline, but as a separate note at the bottom.
-        if (event === "missing" || event === "unauthorized") {
-            hiddenItems += 1;
+        if (event === "missing") {
+            missingItems += 1;
+            continue;
+        }
+        if (event === "unauthorized") {
+            unauthorizedItems += 1;
             continue;
         }
 
@@ -233,7 +275,7 @@ const orderItems = (
         upcomingLiveEvents.sort((a, b) => compareEvents(a, b, true));
     }
 
-    return { mainItems, upcomingLiveEvents, hiddenItems };
+    return { mainItems, upcomingLiveEvents, missingItems, unauthorizedItems };
 };
 
 

@@ -1,12 +1,11 @@
-import { graphql, readInlineData, useFragment } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { Fields } from "../../relay";
 import { useTranslation } from "react-i18next";
 import {
     PlaylistBlockData$data,
     PlaylistBlockData$key,
 } from "./__generated__/PlaylistBlockData.graphql";
-import { VideoListEventData$key } from "./__generated__/VideoListEventData.graphql";
-import { VideoListBlock, VideoListBlockContainer, videoListEventFragment } from "./VideoList";
+import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 import {
     PlaylistBlockPlaylistData$data,
     PlaylistBlockPlaylistData$key,
@@ -99,19 +98,6 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         return unreachable();
     }
 
-    const items = playlist.entries.map(entry => {
-        if (entry.__typename === "AuthorizedEvent") {
-            const out = readInlineData<VideoListEventData$key>(videoListEventFragment, entry);
-            return out;
-        } else if (entry.__typename === "Missing") {
-            return "missing";
-        } else if (entry.__typename === "NotAllowed") {
-            return "unauthorized";
-        } else {
-            return unreachable();
-        }
-    });
-
     const title = props.showTitle
         ? (props.moreOfTitle ? t("video.more-from-playlist", { playlist: playlist.title })
             : playlist.title)
@@ -123,12 +109,12 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
             (props.order === "%future added value" ? undefined : props.order) ?? "ORIGINAL"
         }
         allowOriginalOrder
-        {...{ title, items }}
+        {...{ title }}
         description={(props.showMetadata && playlist.description) || undefined}
         activeEventId={props.activeEventId}
         basePath={props.basePath}
-        items={items}
         isPlaylist
         listId={playlist.id}
+        listEntries={playlist.entries}
     />;
 };

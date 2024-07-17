@@ -193,10 +193,13 @@ series:
 videolist-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
   missing-video: Video not found
-  unauthorized: Missing permissions
-  hidden-items_one: 'One video is missing or requires additional permissions to view.'
-  hidden-items_other: '{{count}} videos are missing or require additional permissions to view.'
   no-videos: No videos
+  unauthorized: Missing permissions
+  hidden-items:
+    unauthorized_one: One video requires additional permissions to view. 
+    unauthorized_other: '{{count}} videos require additional permissions to view.'
+    missing_one: One video is missing.
+    missing_other: '{{count}} videos are missing.'
   videos:
     heading: Videos
   settings:

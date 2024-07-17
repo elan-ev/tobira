@@ -33,7 +33,7 @@ pub(crate) struct AuthorizedPlaylist {
 
 #[derive(juniper::GraphQLUnion)]
 #[graphql(Context = Context)]
-pub(crate) enum PlaylistEntry {
+pub(crate) enum VideoListEntry {
     Event(AuthorizedEvent),
     NotAllowed(NotAllowed),
     Missing(Missing),
@@ -119,7 +119,7 @@ impl AuthorizedPlaylist {
         self.description.as_deref()
     }
 
-    async fn entries(&self, context: &Context) -> ApiResult<Vec<PlaylistEntry>> {
+    async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
         let (selection, mapping) = select!(
             found: "events.id is not null",
             event: AuthorizedEvent,
@@ -141,15 +141,15 @@ impl AuthorizedPlaylist {
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {
                 if !mapping.found.of::<bool>(&row) {
-                    return PlaylistEntry::Missing(Missing);
+                    return VideoListEntry::Missing(Missing);
                 }
 
                 let event = AuthorizedEvent::from_row(&row, mapping.event);
                 if !context.auth.overlaps_roles(&event.read_roles) {
-                    return PlaylistEntry::NotAllowed(NotAllowed);
+                    return VideoListEntry::NotAllowed(NotAllowed);
                 }
 
-                PlaylistEntry::Event(event)
+                VideoListEntry::Event(event)
             })
             .await?
             .pipe(Ok)

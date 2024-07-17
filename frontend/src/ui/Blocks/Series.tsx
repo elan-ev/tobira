@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card } from "@opencast/appkit";
-import { graphql, readInlineData, useFragment } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 
 import { isSynced } from "../../util";
 import type { Fields } from "../../relay";
@@ -11,8 +11,7 @@ import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
-import { VideoListBlock, VideoListBlockContainer, videoListEventFragment } from "./VideoList";
-import { VideoListEventData$key } from "./__generated__/VideoListEventData.graphql";
+import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 
 
 // ==============================================================================================
@@ -40,7 +39,11 @@ const seriesFragment = graphql`
         title
         # description is only queried to get the sync status
         syncedData { description }
-        events { ...VideoListEventData }
+        entries {
+            __typename
+            ...on AuthorizedEvent { id, ...VideoListEventData }
+            ...on NotAllowed { dummy }
+        }
     }
 `;
 
@@ -80,9 +83,6 @@ type Props = SharedFromSeriesProps & {
 
 const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
-    const events = series.events.map(event => (
-        readInlineData<VideoListEventData$key>(videoListEventFragment, event)
-    ));
 
     if (!isSynced(series)) {
         const { title, layout } = props;
@@ -101,6 +101,6 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         description={(props.showMetadata && series.syncedData.description) || undefined}
         activeEventId={props.activeEventId}
         basePath={props.basePath}
-        items={events}
+        listEntries={series.entries}
     />;
 };
