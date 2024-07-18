@@ -19,7 +19,7 @@ export type UserId = keyof typeof USERS;
  */
 export const login = async (page: Page, username: UserId) => {
     const prevUrl = page.url();
-    await page.getByRole("link", { name: "Login" }).click({ });
+    await page.getByRole("link", { name: "Login", exact: true }).click({ });
     await expect(page).toHaveURL("~login");
     await page.getByLabel("User ID").fill(username);
     await page.getByLabel("Password").fill("tobira");
@@ -37,5 +37,5 @@ export const login = async (page: Page, username: UserId) => {
 export const logout = async (page: Page, username: UserId) => {
     await page.getByRole("button", { name: USERS[username] }).click();
     await page.getByRole("button", { name: "Log out" }).click();
-    await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Login", exact: true })).toBeVisible();
 };
