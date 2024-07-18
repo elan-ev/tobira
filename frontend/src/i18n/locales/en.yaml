@@ -44,6 +44,7 @@ errors:
   not-authorized: You are not authorized.
   not-authorized-to-view-page: You are not authorized to view this page.
   might-need-to-login: You might need to login.
+  might-need-to-login-link: You might need to <1>login</1>.
   invalid-input: Invalid input.
   opencast-unavailable: Opencast is currently not available.
   internal-server-error: Internal server error (something is wrong with the server).

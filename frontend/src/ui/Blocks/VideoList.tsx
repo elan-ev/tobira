@@ -8,7 +8,7 @@ import React, {
     useRef,
     useState,
 } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type { i18n } from "i18next";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
@@ -38,6 +38,9 @@ import { CollapsibleDescription, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { COLORS } from "../../color";
 import { FloatingBaseMenu } from "../FloatingBaseMenu";
+import { isRealUser, useUser } from "../../User";
+import { LoginLink } from "../../routes/util";
+
 
 
 
@@ -114,6 +117,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 }) => {
     const { t, i18n } = useTranslation();
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
+    const user = useUser();
 
     const items = listEntries.map(entry => {
         if (entry.__typename === "AuthorizedEvent") {
@@ -172,7 +176,17 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                     {t("videolist-block.hidden-items.missing", { count: missingItems })}
                 </HiddenItemsInfo>}
                 {unauthorizedItems > 0 && <HiddenItemsInfo>
-                    {t("videolist-block.hidden-items.unauthorized", { count: unauthorizedItems })}
+                    <span>
+                        {t("videolist-block.hidden-items.unauthorized", {
+                            count: unauthorizedItems,
+                        })}
+                        &nbsp;
+                        {!isRealUser(user) && <>
+                            <Trans i18nKey="errors.might-need-to-login-link">
+                                You might need to <LoginLink />
+                            </Trans>
+                        </>}
+                    </span>
                 </HiddenItemsInfo>}
             </div>}
         </VideoListBlockContainer>
