@@ -11,7 +11,15 @@ use crate::{
 };
 
 use super::{
-    Client, Event, IndexItemKind, Realm, IndexItem, SearchId, Series, User,
+    Client,
+    Event,
+    IndexItemKind,
+    Realm,
+    IndexItem,
+    SearchId,
+    Series,
+    User,
+    Playlist,
     writer::{self, MeiliWriter},
 };
 
@@ -52,6 +60,7 @@ pub(crate) async fn update_index(meili: &Client, db: &mut DbConnection) -> Resul
             let mut realm_ids = Vec::new();
             let mut series_ids = Vec::new();
             let mut user_ids = Vec::new();
+            let mut playlist_ids = Vec::new();
             futures::pin_mut!(row_stream);
             while let Some(row) = row_stream.try_next().await? {
                 let key: Key = mapping.item_id.of(&row);
@@ -61,10 +70,15 @@ pub(crate) async fn update_index(meili: &Client, db: &mut DbConnection) -> Resul
                     IndexItemKind::Event => event_ids.push(key),
                     IndexItemKind::Series => series_ids.push(key),
                     IndexItemKind::User => user_ids.push(key),
+                    IndexItemKind::Playlist => playlist_ids.push(key),
                 }
             }
 
-            let count = event_ids.len() + realm_ids.len() + series_ids.len() + user_ids.len();
+            let count = event_ids.len()
+                + realm_ids.len()
+                + series_ids.len()
+                + user_ids.len()
+                + playlist_ids.len();
             if count == 0 {
                 trace!("No index update queued -> doing nothing");
                 return Ok(true);
@@ -82,14 +96,24 @@ pub(crate) async fn update_index(meili: &Client, db: &mut DbConnection) -> Resul
                 .context("failed to send series to search index")?;
             meili.update(&user_ids, || User::load_by_ids(&**tx, &user_ids)).await
                 .context("failed to send users to search index")?;
+            meili.update(&playlist_ids, || Playlist::load_by_ids(&**tx, &playlist_ids))
+                .await
+                .context("failed to send playlists to search index")?;
 
             // Delete all items that we have sent to the search index already.
             let sql = "delete from search_index_queue \
                 where item_id = any($1) and kind = 'realm' \
                 or item_id = any($2) and kind = 'event' \
                 or item_id = any($3) and kind = 'series' \
-                or item_id = any($4) and kind = 'user'";
-            let affected = tx.execute(sql, &[&realm_ids, &event_ids, &series_ids, &user_ids]).await
+                or item_id = any($4) and kind = 'user' \
+                or item_id = any($5) and kind = 'playlist'";
+            let affected = tx.execute(sql, &[
+                &realm_ids,
+                &event_ids,
+                &series_ids,
+                &user_ids,
+                &playlist_ids,
+            ]).await
                 .context("failed to remove items from search index queue")?;
             debug!("Removed {affected} items from the search index queue");
 
@@ -149,6 +173,7 @@ impl MeiliWriter<'_> {
             IndexItemKind::Event => &self.event_index,
             IndexItemKind::Series => &self.series_index,
             IndexItemKind::User => &self.user_index,
+            IndexItemKind::Playlist => &self.playlist_index,
         };
 
         // Actually update documents in Meili.

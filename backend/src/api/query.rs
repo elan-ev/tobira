@@ -11,7 +11,14 @@ use super::{
         known_roles::{self, KnownGroup, KnownUsersSearchOutcome},
         playlist::Playlist,
         realm::Realm,
-        search::{self, EventSearchOutcome, Filters, SearchOutcome, SeriesSearchOutcome},
+        search::{
+            self,
+            EventSearchOutcome,
+            Filters,
+            SearchOutcome,
+            SeriesSearchOutcome,
+            PlaylistSearchOutcome
+        },
         series::Series,
     },
     Context,
@@ -133,6 +140,20 @@ impl Query {
         context: &Context,
     ) -> ApiResult<SeriesSearchOutcome> {
         search::all_series(&query, writable_only, context).await
+    }
+
+    /// Searches through playlists. Results may include:
+    ///
+    /// - Playlists that the user has write access to (listed & unlisted).
+    /// - If `writable_only` is false, this also searches through listed playlists.
+    ///   If the user has the privilege to find unlisted playlists, all playlists are
+    ///   searched.
+    async fn search_all_playlists(
+        query: String,
+        writable_only: bool,
+        context: &Context,
+    ) -> ApiResult<PlaylistSearchOutcome> {
+        search::all_playlists(&query, writable_only, context).await
     }
 
     /// Searches through all known users. The behavior of this depends on the

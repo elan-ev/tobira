@@ -1,4 +1,4 @@
-import { graphql, readInlineData, useFragment } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { useTranslation } from "react-i18next";
 import { unreachable } from "@opencast/appkit";
 
@@ -15,8 +15,7 @@ import { PlaylistByOpencastIdQuery } from "./__generated__/PlaylistByOpencastIdQ
 import { PlaylistRouteData$key } from "./__generated__/PlaylistRouteData.graphql";
 import { PlaylistByIdQuery } from "./__generated__/PlaylistByIdQuery.graphql";
 import { ErrorPage } from "../ui/error";
-import { VideoListBlock, videoListEventFragment } from "../ui/Blocks/VideoList";
-import { VideoListEventData$key } from "../ui/Blocks/__generated__/VideoListEventData.graphql";
+import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
 
 
 export const DirectPlaylistOCRoute = makeRoute({
@@ -92,6 +91,7 @@ const fragment = graphql`
         __typename
         ... on NotAllowed { dummy } # workaround
         ... on AuthorizedPlaylist {
+            id
             title
             description
             entries {
@@ -101,6 +101,7 @@ const fragment = graphql`
                 ...on NotAllowed { dummy }
             }
         }
+        ... PlaylistBlockPlaylistData
     }
 `;
 
@@ -123,30 +124,20 @@ const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag }) => {
         return unreachable();
     }
 
-    const items = playlist.entries.map(entry => {
-        if (entry.__typename === "AuthorizedEvent") {
-            const out = readInlineData<VideoListEventData$key>(videoListEventFragment, entry);
-            return out;
-        } else if (entry.__typename === "Missing") {
-            return "missing";
-        } else if (entry.__typename === "NotAllowed") {
-            return "unauthorized";
-        } else {
-            return unreachable();
-        }
-    });
-
     return <div css={{ display: "flex", flexDirection: "column" }}>
-        <Breadcrumbs path={[]} tail={playlist.title} />
-        <PageTitle title={playlist.title} />
+        {/*
+            `playlist.title` is actually never undefined,
+            but the following assertions are necessary to work around
+            some graphql weirdness.
+        */}
+        <Breadcrumbs path={[]} tail={playlist.title ?? ""} />
+        <PageTitle title={playlist.title ?? ""} />
         <p css={{ maxWidth: "90ch" }}>{playlist.description}</p>
         <div css={{ marginTop: 12 }}>
-            <VideoListBlock
-                allowOriginalOrder={true}
-                initialOrder="ORIGINAL"
-                title={t("series.videos.heading")}
+            <PlaylistBlockFromPlaylist
+                title={t("videolist-block.videos.heading")}
                 basePath="/!v"
-                items={items}
+                fragRef={playlist}
             />
         </div>
     </div>;

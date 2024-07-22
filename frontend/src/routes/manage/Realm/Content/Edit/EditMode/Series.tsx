@@ -1,10 +1,10 @@
-import React, { useId } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useController, useFormContext } from "react-hook-form";
 
 import { EditModeForm } from ".";
-import { Heading } from "./util";
+import { Heading, VideoListFormFields } from "./util";
 import type {
     VideoListOrder,
     VideoListLayout,
@@ -16,10 +16,8 @@ import {
 import {
     SeriesEditCreateMutation,
 } from "./__generated__/SeriesEditCreateMutation.graphql";
-import { SeriesSelector } from "../../../../../../ui/SearchableSelect";
-import { DisplayOptionGroup } from "../../../../../../ui/Input";
-import { Card, screenWidthAtMost } from "@opencast/appkit";
-import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";
+import { Card } from "@opencast/appkit";
+import { VideoListSelector } from "../../../../../../ui/SearchableSelect";
 import { InfoTooltip } from "../../../../../../ui";
 import { isRealUser, useUser } from "../../../../../../User";
 
@@ -84,8 +82,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         rules: { required: true },
     });
 
-    const headingId = useId();
-
     return <EditModeForm create={create} save={save} map={(data: SeriesFormData) => data}>
         <Heading>
             {t("manage.realm.content.series.series.heading")}
@@ -96,7 +92,8 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         {"series" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
         </div>}
-        <SeriesSelector
+        <VideoListSelector
+            type="series"
             defaultValue={series == null ? undefined : {
                 ...series,
                 description: series.syncedData?.description ?? null,
@@ -105,102 +102,6 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
             onBlur={seriesField.onBlur}
             autoFocus
         />
-        <div
-            css={{
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "wrap",
-                marginTop: 12,
-                justifyContent: "start",
-                rowGap: 24,
-                columnGap: 96,
-                [screenWidthAtMost(1000)]: {
-                    columnGap: 48,
-                },
-                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                    flexDirection: "column",
-                    gap: 12,
-                },
-            }}
-        >
-            <div
-                role="group"
-                aria-labelledby={headingId + "-order"}
-            >
-                <Heading id={headingId + "-order"}>{t("videolist-block.settings.order")}</Heading>
-                <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
-                    {
-                        option: "order",
-                        title: t("videolist-block.settings.new-to-old"),
-                        checked: order === "NEW_TO_OLD",
-                        value: "NEW_TO_OLD",
-                    },
-                    {
-                        option: "order",
-                        title: t("videolist-block.settings.old-to-new"),
-                        checked: order === "OLD_TO_NEW",
-                        value: "OLD_TO_NEW",
-                    },
-                    {
-                        option: "order",
-                        title: t("videolist-block.settings.a-z"),
-                        checked: order === "AZ",
-                        value: "AZ",
-                    },
-                    {
-                        option: "order",
-                        title: t("videolist-block.settings.z-a"),
-                        checked: order === "ZA",
-                        value: "ZA",
-                    },
-                ]} />
-            </div>
-            <div
-                role="group"
-                aria-labelledby={headingId + "-view"}
-            >
-                <Heading id={headingId + "-view"}>{t("videolist-block.settings.layout")}</Heading>
-                <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
-                    {
-                        option: "layout",
-                        title: t("videolist-block.settings.slider"),
-                        checked: layout === "SLIDER",
-                        value: "SLIDER",
-                    },
-                    {
-                        option: "layout",
-                        title: t("videolist-block.settings.gallery"),
-                        checked: layout === "GALLERY",
-                        value: "GALLERY",
-                    },
-                    {
-                        option: "layout",
-                        title: t("videolist-block.settings.list"),
-                        checked: layout === "LIST",
-                        value: "LIST",
-                    },
-                ]} />
-            </div>
-            <div
-                role="group"
-                aria-labelledby={headingId + "-metadata"}
-            >
-                <Heading id={headingId + "-metadata"}>
-                    {t("manage.realm.content.series.metadata.heading")}
-                </Heading>
-                <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
-                    {
-                        option: "showTitle",
-                        title: t("manage.realm.content.show-title"),
-                        checked: showTitle,
-                    },
-                    {
-                        option: "showMetadata",
-                        title: t("manage.realm.content.show-description"),
-                        checked: showMetadata,
-                    },
-                ]} />
-            </div>
-        </div>
+        <VideoListFormFields {...{ form, order, layout, showMetadata, showTitle }} />
     </EditModeForm>;
 };

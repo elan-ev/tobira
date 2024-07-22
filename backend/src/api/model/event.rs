@@ -249,7 +249,7 @@ impl AuthorizedEvent {
     }
 
     /// Returns `true` if the realm has a video block with this video
-    /// OR if the realm has a series block with this event's series.
+    /// OR if the realm has a series or playlist block including this video.
     /// Otherwise, `false` is returned.
     pub(crate) async fn is_referenced_by_realm(&self, path: String, context: &Context) -> ApiResult<bool> {
         let query = "select exists(\
@@ -259,11 +259,16 @@ impl AuthorizedEvent {
             where realms.full_path = $1 \
                 and ( \
                     blocks.video = $2 or \
-                    blocks.series = $3 \
+                    blocks.series = $3 or \
+                    blocks.playlist = any( \
+                        select id \
+                        from playlists \
+                        where $4 = any(array(select content_id from unnest(entries))) \
+                    ) \
                 )\
             )\
         ";
-        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key, &self.series])
+        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key, &self.series, &self.opencast_id])
             .await?
             .get::<_, bool>(0)
             .pipe(Ok)

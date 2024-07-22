@@ -32,6 +32,7 @@ import {
     secondsToTimeString,
     eventId,
     keyOfId,
+    playlistId,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { LinkButton } from "../ui/LinkButton";
@@ -54,6 +55,9 @@ import {
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { NavigationData$key } from "../layout/__generated__/NavigationData.graphql";
 import { VideoPageByOcIdInRealmQuery } from "./__generated__/VideoPageByOcIdInRealmQuery.graphql";
+import {
+    PlaylistBlockPlaylistData$key,
+} from "../ui/Blocks/__generated__/PlaylistBlockPlaylistData.graphql";
 import { getEventTimeInfo } from "../util/video";
 import { formatDuration } from "../ui/Video";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
@@ -67,6 +71,7 @@ import { CollapsibleDescription } from "../ui/metadata";
 import { DirectSeriesRoute } from "./Series";
 import { EmbedVideoRoute } from "./Embed";
 import { ManageVideoDetailsRoute } from "./manage/Video/Details";
+import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
 
 
 // ===========================================================================================
@@ -82,10 +87,10 @@ export const VideoRoute = makeRoute({
         if (params === null) {
             return null;
         }
-        const [realmPath, videoId] = params;
+        const { realmPath, videoId, listId } = params;
 
         const query = graphql`
-            query VideoPageInRealmQuery($id: ID!, $realmPath: String!) {
+            query VideoPageInRealmQuery($id: ID!, $realmPath: String!, $listId: ID!) {
                 ... UserData
                 event: eventById(id: $id) {
                     ... VideoPageEventData
@@ -97,19 +102,21 @@ export const VideoRoute = makeRoute({
                     ... VideoPageRealmData
                     ... NavigationData
                 }
+                playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
             }
         `;
 
         const queryRef = loadQuery<VideoPageInRealmQuery>(query, {
             id: eventId(videoId),
             realmPath,
+            listId,
         });
 
         return {
             render: () => <RootLoader
                 {... { query, queryRef }}
                 nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-                render={({ event, realm }) => {
+                render={({ event, realm, playlist }) => {
                     if (!event) {
                         return <NotFound kind="video" />;
                     }
@@ -121,6 +128,7 @@ export const VideoRoute = makeRoute({
                     return <VideoPage
                         eventRef={event}
                         realmRef={realm}
+                        playlistRef={playlist ?? null}
                         basePath={realmPath.replace(/\/$/u, "") + "/v"}
                     />;
                 }}
@@ -140,11 +148,11 @@ export const OpencastVideoRoute = makeRoute({
             return null;
         }
 
-        const [realmPath, id] = params;
-        const videoId = id.substring(1);
+        const { realmPath, videoId, listId } = params;
+        const id = videoId.substring(1);
 
         const query = graphql`
-            query VideoPageByOcIdInRealmQuery($id: String!, $realmPath: String!) {
+            query VideoPageByOcIdInRealmQuery($id: String!, $realmPath: String!, $listId: ID!) {
                 ... UserData
                 event: eventByOpencastId(id: $id) {
                     ... VideoPageEventData
@@ -156,30 +164,33 @@ export const OpencastVideoRoute = makeRoute({
                     ... VideoPageRealmData
                     ... NavigationData
                 }
+                playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
             }
         `;
 
         const queryRef = loadQuery<VideoPageByOcIdInRealmQuery>(query, {
-            id: videoId,
+            id,
             realmPath,
+            listId,
         });
 
         return {
             render: () => <RootLoader
                 {... { query, queryRef }}
                 nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-                render={({ event, realm }) => {
+                render={({ event, realm, playlist }) => {
                     if (!event) {
                         return <NotFound kind="video" />;
                     }
 
                     if (!realm || !event.isReferencedByRealm) {
-                        return <ForwardToDirectOcRoute ocID={videoId} />;
+                        return <ForwardToDirectOcRoute ocID={id} />;
                     }
 
                     return <VideoPage
                         eventRef={event}
                         realmRef={realm}
+                        playlistRef={playlist ?? null}
                         basePath={realmPath.replace(/\/$/u, "") + "/v"}
                     />;
                 }}
@@ -189,8 +200,15 @@ export const OpencastVideoRoute = makeRoute({
     },
 });
 
-const getVideoDetailsFromUrl = (url: URL, regEx: string) => {
+type VideoParams = {
+    realmPath: string;
+    videoId: string;
+    listId: string;
+} | null;
+
+const getVideoDetailsFromUrl = (url: URL, regEx: string): VideoParams => {
     const urlPath = url.pathname.replace(/^\/|\/$/g, "");
+    const listId = makeListId(url.searchParams.get("list"));
     const parts = urlPath.split("/").map(decodeURIComponent);
     if (parts.length < 2) {
         return null;
@@ -210,8 +228,10 @@ const getVideoDetailsFromUrl = (url: URL, regEx: string) => {
 
     const realmPath = "/" + realmPathParts.join("/");
 
-    return [realmPath, videoId];
+    return { realmPath, videoId, listId };
 };
+
+const makeListId = (id: string | null) => id ? playlistId(id) : "";
 
 const ForwardToDirectRoute: React.FC<{ videoId: string }> = ({ videoId }) => {
     const router = useRouter();
@@ -236,17 +256,21 @@ export const DirectVideoRoute = makeRoute({
         }
 
         const query = graphql`
-            query VideoPageDirectLinkQuery($id: ID!) {
+            query VideoPageDirectLinkQuery($id: ID!, $listId: ID!) {
                 ... UserData
                 event: eventById(id: $id) { ... VideoPageEventData }
                 realm: rootRealm {
                     ... VideoPageRealmData
                     ... NavigationData
                 }
+                playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
             }
         `;
         const videoId = decodeURIComponent(params[1]);
-        const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, { id: eventId(videoId) });
+        const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, {
+            id: eventId(videoId),
+            listId: makeListId(url.searchParams.get("list")),
+        });
 
         return matchedDirectRoute(query, queryRef);
     },
@@ -263,17 +287,21 @@ export const DirectOpencastVideoRoute = makeRoute({
         }
 
         const query = graphql`
-            query VideoPageDirectOpencastLinkQuery($id: String!) {
+            query VideoPageDirectOpencastLinkQuery($id: String!, $listId: ID!) {
                 ... UserData
                 event: eventByOpencastId(id: $id) { ... VideoPageEventData }
                 realm: rootRealm {
                     ... VideoPageRealmData
                     ... NavigationData
                 }
+                playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
             }
         `;
         const videoId = decodeURIComponent(matches[1]);
-        const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, { id: videoId });
+        const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, {
+            id: videoId,
+            listId: makeListId(url.searchParams.get("list")),
+        });
 
         return matchedDirectRoute(query, queryRef);
     },
@@ -284,6 +312,7 @@ interface DirectRouteQuery extends OperationType {
     response: UserData$key & {
         realm: VideoPageRealmData$key & NavigationData$key;
         event?: VideoPageEventData$key | null;
+        playlist?: PlaylistBlockPlaylistData$key | null;
     };
 }
 
@@ -296,11 +325,12 @@ const matchedDirectRoute = (
         {... { query, queryRef }}
         noindex
         nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-        render={({ event, realm }) => !event
+        render={({ event, realm, playlist }) => !event
             ? <NotFound kind="video" />
             : <VideoPage
                 eventRef={event}
                 realmRef={realm ?? unreachable("root realm doesn't exist")}
+                playlistRef={playlist ?? null}
                 basePath="/!v"
             />}
     />,
@@ -356,6 +386,7 @@ const eventFragment = graphql`
 `;
 
 
+
 // ===========================================================================================
 // ===== Components
 // ===========================================================================================
@@ -363,10 +394,11 @@ const eventFragment = graphql`
 type Props = {
     eventRef: NonNullable<VideoPageEventData$key>;
     realmRef: NonNullable<VideoPageRealmData$key>;
+    playlistRef: PlaylistBlockPlaylistData$key | null;
     basePath: string;
 };
 
-const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
+const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath }) => {
     const { t } = useTranslation();
     const rerender = useForceRerender();
     const event = useFragment(eventFragment, eventRef);
@@ -423,12 +455,20 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, basePath }) => {
 
         <div css={{ height: 80 }} />
 
-        {event.series && <SeriesBlockFromSeries
-            basePath={basePath}
-            fragRef={event.series}
-            title={t("video.more-from-series", { series: event.series.title })}
-            activeEventId={event.id}
-        />}
+        {playlistRef
+            ? <PlaylistBlockFromPlaylist
+                moreOfTitle
+                basePath={basePath}
+                fragRef={playlistRef}
+                activeEventId={event.id}
+            />
+            : event.series && <SeriesBlockFromSeries
+                basePath={basePath}
+                fragRef={event.series}
+                title={t("video.more-from-series", { series: event.series.title })}
+                activeEventId={event.id}
+            />
+        }
     </>;
 };
 

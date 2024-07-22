@@ -47,6 +47,7 @@ export const videoListEventFragment = graphql`
         creators
         isLive
         description
+        series { title id }
         syncedData {
             duration
             thumbnail
@@ -78,6 +79,7 @@ type VideoListItem = Event | "missing" | "unauthorized";
 type Order = "ORIGINAL" | "AZ" | "ZA" | "NEW_TO_OLD" | "OLD_TO_NEW";
 
 export type VideoListBlockProps = {
+    listId?: string;
     basePath: string;
     activeEventId?: string;
     allowOriginalOrder: boolean;
@@ -86,9 +88,11 @@ export type VideoListBlockProps = {
     title?: string;
     description?: string;
     items: ReadonlyArray<VideoListItem>;
+    isPlaylist?: boolean;
 }
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
+    listId,
     basePath,
     activeEventId,
     allowOriginalOrder,
@@ -97,6 +101,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     title,
     description,
     items,
+    isPlaylist = false,
 }) => {
     const { t, i18n } = useTranslation();
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
@@ -105,6 +110,8 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     const renderEvents = (events: readonly VideoListItem[]) => (
         <Items
             basePath={basePath}
+            showSeries={isPlaylist}
+            {...{ listId }}
             items={events.map(item => ({
                 item,
                 active: item !== "missing"
@@ -119,7 +126,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
-            {...{ title, description, initialLayout }}
+            {...{ title, description, initialLayout, isPlaylist }}
         >
             {(mainItems.length === 0 && upcomingLiveEvents.length === 0)
                 ? <div css={{ padding: 14 }}>{t("videolist-block.no-videos")}</div>
@@ -236,6 +243,7 @@ type VideoListBlockContainerProps = {
     children: ReactNode;
     showViewOptions: boolean;
     initialLayout?: VideoListLayout;
+    isPlaylist?: boolean;
 };
 
 type LayoutContext = {
@@ -533,18 +541,20 @@ const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
 
 type ViewProps = {
     basePath: string;
+    showSeries?: boolean;
+    listId?: string;
     items: {
         item: VideoListItem;
         active: boolean;
     }[];
 };
 
-const Items: React.FC<ViewProps> = ({ basePath, items }) => {
+const Items: React.FC<ViewProps> = ({ basePath, items, showSeries = false, listId }) => {
     const { layoutState } = useContext(LayoutContext);
     return match(layoutState, {
-        SLIDER: () => <SliderView {...{ basePath, items }} />,
-        GALLERY: () => <GalleryView {...{ basePath, items }} />,
-        LIST: () => <ListView {...{ basePath, items }} />,
+        SLIDER: () => <SliderView {...{ listId, basePath, items }} />,
+        GALLERY: () => <GalleryView {...{ listId, basePath, items }} />,
+        LIST: () => <ListView {...{ listId, basePath, items, showSeries }} />,
         "%future added value": () => unreachable(),
     });
 };
@@ -554,7 +564,7 @@ const ITEM_MIN_SIZE_SMALL_SCREENS = 240;
 const ITEM_MAX_SIZE = 330;
 const ITEM_MAX_SIZE_SMALL_SCREENS = 360;
 
-const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
+const GalleryView: React.FC<ViewProps> = ({ basePath, items, listId }) => (
     // The following is not exactly what we want, but CSS does not allow us to
     // do what we want. Let me elaborate. For the sake of this explanation,
     // let's assume we want the items to be at least 240px and at most 300px
@@ -630,7 +640,7 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
         {items.map(({ item, active }, idx) => (
             <Item
                 key={idx}
-                {...{ item, active, basePath }}
+                {...{ item, active, basePath, listId }}
                 css={{
                     width: "100%",
                     maxWidth: ITEM_MAX_SIZE,
@@ -651,7 +661,7 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items }) => (
     </div>
 );
 
-const ListView: React.FC<ViewProps> = ({ basePath, items }) => (
+const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) => (
     <div css={{
         display: "flex",
         flexDirection: "column",
@@ -660,7 +670,7 @@ const ListView: React.FC<ViewProps> = ({ basePath, items }) => (
         {items.map(({ item, active }, idx) => (
             <Item
                 key={idx}
-                {...{ item, active, basePath }}
+                {...{ item, active, basePath, showSeries, listId }}
                 showDescription
                 css={{
                     width: "100%",
@@ -671,7 +681,10 @@ const ListView: React.FC<ViewProps> = ({ basePath, items }) => (
                     [screenWidthAbove(VIDEO_GRID_BREAKPOINT)]: {
                         display: "flex",
                         gap: 16,
-                        "> :first-child": { flex: "0 0 240px" },
+                        "> div:nth-of-type(1)": { flex: "0 0 240px" },
+                        "> :last-child": {
+                            marginTop: 0,
+                        },
                     },
                 }}
             />
@@ -679,7 +692,7 @@ const ListView: React.FC<ViewProps> = ({ basePath, items }) => (
     </div>
 );
 
-const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
+const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const scrollDistance = 240;
@@ -711,6 +724,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
     useEffect(setVisibilities, []);
 
     const buttonCss = {
+        zIndex: 5,
         position: "absolute",
         alignSelf: "center",
         backgroundColor: COLORS.neutral40,
@@ -725,6 +739,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
         ":hover, :focus": {
             backgroundColor: COLORS.neutral60,
         },
+        // TODO: investigate hover style not disappearing correctly
         ...focusStyle({}),
     } as const;
 
@@ -742,7 +757,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items }) => {
             {items.map(({ item, active }, idx) => (
                 <Item
                     key={idx}
-                    {...{ item, active, basePath }}
+                    {...{ item, active, basePath, listId }}
                     css={{
                         scrollSnapAlign: "start",
                         flex: "0 0 270px",
@@ -809,16 +824,20 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
 type ItemProps = {
     basePath: string;
     item: VideoListItem;
+    listId?: string;
     active: boolean;
     showDescription?: boolean;
+    showSeries?: boolean;
     className?: string;
 };
 
 const Item: React.FC<ItemProps> = ({
     item,
     basePath,
+    listId,
     active,
     showDescription = false,
+    showSeries = false,
     className,
 }) => {
     const { t } = useTranslation();
@@ -874,7 +893,10 @@ const Item: React.FC<ItemProps> = ({
     })();
 
     const inner = <>
-        <div css={{ position: "relative" }}>{thumbnail}</div>
+        <div css={{
+            position: "relative",
+            borderRadius: 8,
+        }}>{thumbnail}</div>
         <div css={{
             margin: "0px 4px",
             marginTop: 12,
@@ -923,12 +945,18 @@ const Item: React.FC<ItemProps> = ({
                         // TODO: maybe find something better than `join`
                     }}>{item.creators.join(", ")}</span>}
                     {/* `new Date` is well defined for our ISO Date strings */}
-                    <RelativeDate
-                        date={new Date(item.syncedData?.startTime ?? item.created)}
-                        isLive={item.isLive}
-                    />
+                    <div css={{ zIndex: 6 }}>
+                        <RelativeDate
+                            date={new Date(item.syncedData?.startTime ?? item.created)}
+                            isLive={item.isLive}
+                        />
+                    </div>
                 </div>
                 {showDescription && <SmallDescription lines={3} text={item.description} />}
+                {showSeries && item.series?.id && item.series.title && <PartOfSeriesLink
+                    seriesId={item.series.id}
+                    seriesTitle={item.series.title}
+                />}
             </>}
         </div>
     </>;
@@ -942,12 +970,12 @@ const Item: React.FC<ItemProps> = ({
         "& a": { color: COLORS.neutral90, textDecoration: "none" },
         ...active && { backgroundColor: COLORS.neutral20 },
         ...!active && !isPlaceholder && {
-            "& > div:first-child": {
+            "& > div:nth-child(2)": {
                 transition: `transform ${TRANSITION_OUT_DURATION}, `
                     + `box-shadow ${TRANSITION_OUT_DURATION},`
                     + `filter ${TRANSITION_OUT_DURATION}`,
             },
-            "&:hover > div:first-child, &:focus-visible > div:first-child": {
+            "&:hover > div:nth-child(2), &:focus-visible > div:nth-child(2)": {
                 boxShadow: "0 6px 10px rgb(0 0 0 / 40%)",
                 transform: "perspective(500px) rotateX(7deg) scale(1.05)",
                 transitionDuration: TRANSITION_IN_DURATION,
@@ -964,11 +992,55 @@ const Item: React.FC<ItemProps> = ({
         },
     } as const;
 
-    return (active || isPlaceholder)
-        ? <div css={containerStyle} {...{ className }}>{inner}</div>
-        : <Link
-            to={`${basePath}/${keyOfId(item.id)}`}
-            css={containerStyle}
-            {...{ className }}
-        >{inner}</Link>;
+    const listIdParam = listId ? `?list=${keyOfId(listId)}` : "";
+
+    return <div css={containerStyle} {...{ className }}>
+        {(!active && !isPlaceholder) && <Link
+            to={`${basePath}/${keyOfId(item.id)}${listIdParam}`}
+            css={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 4,
+                borderRadius: 16,
+            }}
+        />}
+        {inner}
+    </div>;
+};
+
+type PartOfSeriesLinkProps = {
+    seriesTitle: string;
+    seriesId: string;
+}
+
+export const PartOfSeriesLink: React.FC<PartOfSeriesLinkProps> = ({ seriesTitle, seriesId }) => {
+    const { t } = useTranslation();
+    return <div css={{
+        fontSize: 14,
+        marginTop: "auto",
+        paddingTop: 8,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        padding: 3,
+    }}>
+        {t("video.part-of-series") + ": "}
+        <Link to={`/!s/${keyOfId(seriesId)}`} css={{
+            borderRadius: 4,
+            outlineOffset: 1,
+            position: "relative",
+            zIndex: 5,
+            // The next few rules are... unfortunate but necessary, as they will otherwise
+            // be overwritten by the parent's css. This is in part due to the wonky nature of
+            // having to workaround "nesting" links within other links.
+            "&&": {
+                color: COLORS.primary0,
+                textDecoration: "underline",
+                ":hover, :focus": {
+                    color: COLORS.primary1,
+                    textDecoration: "none",
+                },
+            },
+        }}>{seriesTitle}</Link>
+    </div>;
 };

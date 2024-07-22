@@ -26,6 +26,7 @@ pub(crate) mod writer;
 mod update;
 mod user;
 mod util;
+mod playlist;
 
 use self::writer::MeiliWriter;
 pub(crate) use self::{
@@ -35,6 +36,7 @@ pub(crate) use self::{
     series::Series,
     update::{update_index, update_index_daemon},
     user::User,
+    playlist::Playlist,
 };
 
 
@@ -99,6 +101,10 @@ impl MeiliConfig {
     fn user_index_name(&self) -> String {
         format!("{}{}", self.index_prefix, "users")
     }
+
+    fn playlist_index_name(&self) -> String {
+        format!("{}{}", self.index_prefix, "playlists")
+    }
 }
 
 
@@ -117,6 +123,7 @@ pub(crate) struct Client {
     pub(crate) series_index: Index,
     pub(crate) realm_index: Index,
     pub(crate) user_index: Index,
+    pub(crate) playlist_index: Index,
 }
 
 impl Client {
@@ -137,8 +144,18 @@ impl Client {
         let series_index = client.index(&config.series_index_name());
         let realm_index = client.index(&config.realm_index_name());
         let user_index = client.index(&config.user_index_name());
+        let playlist_index = client.index(&config.playlist_index_name());
 
-        Self { client, config, meta_index, event_index, series_index, realm_index, user_index }
+        Self {
+            client,
+            config,
+            meta_index,
+            event_index,
+            series_index,
+            realm_index,
+            user_index,
+            playlist_index,
+        }
     }
 
     /// Checks the connection to Meilisearch by accessing the `/health` endpoint.
@@ -182,6 +199,8 @@ pub(crate) enum IndexItemKind {
     Series,
     #[postgres(name = "user")]
     User,
+    #[postgres(name = "playlist")]
+    Playlist,
 }
 
 impl IndexItemKind {
@@ -191,6 +210,7 @@ impl IndexItemKind {
             IndexItemKind::Event => "events",
             IndexItemKind::Series => "series",
             IndexItemKind::User => "user",
+            IndexItemKind::Playlist => "playlist",
         }
     }
 }
@@ -245,7 +265,7 @@ impl fmt::Debug for SearchId {
 pub(crate) async fn prepare_indexes(meili: &MeiliWriter<'_>) -> Result<()> {
     /// Creates a new index with the given `name` if it does not exist yet.
     async fn create_index(client: &MeiliClient, name: &str) -> Result<Index> {
-        debug!("Trying to creating Meili index '{name}' if it doesn't exist yet");
+        debug!("Trying to create Meili index '{name}' if it doesn't exist yet");
         let task = client.create_index(name, Some("id"))
             .await?
             .wait_for_completion(&client, None, None)
@@ -285,6 +305,9 @@ pub(crate) async fn prepare_indexes(meili: &MeiliWriter<'_>) -> Result<()> {
 
     let user_index = create_index(&meili.client, &meili.config.user_index_name()).await?;
     user::prepare_index(&user_index).await?;
+
+    let playlist_index = create_index(&meili.client, &meili.config.playlist_index_name()).await?;
+    playlist::prepare_index(&playlist_index).await?;
 
     debug!("All Meili indexes exist and are ready");
 
@@ -348,6 +371,7 @@ pub(crate) async fn clear(meili: &MeiliWriter<'_>) -> Result<()> {
     ignore_missing_index(meili.series_index.clone().delete().await)?;
     ignore_missing_index(meili.realm_index.clone().delete().await)?;
     ignore_missing_index(meili.user_index.clone().delete().await)?;
+    ignore_missing_index(meili.playlist_index.clone().delete().await)?;
 
     info!("Deleted search indexes");
     Ok(())
@@ -382,6 +406,7 @@ pub(crate) async fn index_all_data(
     rebuild_index!("series", Series, meili.series_index);
     rebuild_index!("realms", Realm, meili.realm_index);
     rebuild_index!("users", User, meili.user_index);
+    rebuild_index!("playlists", Playlist, meili.playlist_index);
     info!("Sent all data to Meili in {:.1?}", before.elapsed());
 
     // We can clear the search index queue as we just sent all items to Meili.

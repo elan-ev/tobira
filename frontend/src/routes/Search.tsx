@@ -43,10 +43,11 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
-import { isExperimentalFlagSet, keyOfId } from "../util";
+import { isExperimentalFlagSet } from "../util";
 import { Button, Card } from "@opencast/appkit";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute } from "./Series";
+import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -474,8 +475,6 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     endTime,
     hostRealms,
 }) => {
-    const { t } = useTranslation();
-
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
     const link = hostRealms.length !== 1
@@ -514,23 +513,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                         text={description}
                         lines={3}
                     />}
-                    {seriesTitle && seriesId && <div css={{
-                        fontSize: 14,
-                        marginTop: "auto",
-                        paddingTop: 8,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        padding: 3,
-                    }}>
-                        {t("video.part-of-series") + ": "}
-                        <Link to={`/!s/${keyOfId(seriesId)}`} css={{
-                            borderRadius: 4,
-                            outlineOffset: 1,
-                            position: "relative",
-                            zIndex: 4,
-                        }}>{seriesTitle}</Link>
-                    </div>}
+                    {seriesTitle && seriesId && <PartOfSeriesLink {...{ seriesTitle, seriesId }} />}
                 </div>
             </WithIcon>
             <Thumbnail

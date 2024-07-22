@@ -2,7 +2,7 @@ import React, { RefObject, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, commitLocalUpdate, useRelayEnvironment } from "react-relay";
 import type { RecordProxy, RecordSourceProxy } from "relay-runtime";
-import { LuPlus, LuHash, LuType, LuFilm, LuLayoutGrid } from "react-icons/lu";
+import { LuPlus, LuHash, LuType, LuFilm, LuLayoutGrid, LuListVideo } from "react-icons/lu";
 import {
     ProtoButton, bug, useColorScheme, Floating, FloatingContainer,
     FloatingHandle, FloatingTrigger, WithTooltip, useFloatingItemProps,
@@ -110,7 +110,7 @@ const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}>
         });
     };
 
-    type Block = "title" | "text" | "series" | "video";
+    type Block = "title" | "text" | "series" | "video" | "playlist";
     const buttonProps: [IconType, Block, () => void][] = [
         [LuHash, "title", () => addBlock("Title")],
         [LuType, "text", () => addBlock("Text")],
@@ -123,6 +123,12 @@ const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}>
         [LuFilm, "video", () => addBlock("Video", (_store, block) => {
             block.setValue(true, "showTitle");
             block.setValue(true, "showLink");
+        })],
+        [LuListVideo, "playlist", () => addBlock("Playlist", (_store, block) => {
+            block.setValue("ORIGINAL", "order");
+            block.setValue("GALLERY", "layout");
+            block.setValue(true, "showTitle");
+            block.setValue(false, "showMetadata");
         })],
     ];
 

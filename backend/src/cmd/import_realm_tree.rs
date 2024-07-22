@@ -53,8 +53,9 @@ struct Realm {
 enum Block {
     Title(String),
     Text(String),
-    Series {
-        series: Series,
+    VideoList {
+        ty: ListType,
+        id: List,
         show_title: bool,
         show_description: bool,
     },
@@ -63,9 +64,32 @@ enum Block {
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
-enum Series {
+enum List {
     ByUuid(String),
     ByTitle(String),
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
+enum ListType {
+    Series,
+    Playlist,
+}
+
+impl ListType {
+    fn table_name(&self) -> &'static str {
+        match self {
+            ListType::Series => "series",
+            ListType::Playlist => "playlists",
+        }
+    }
+
+    fn block_type(&self) -> &'static str {
+        match self {
+            ListType::Series => "series",
+            ListType::Playlist => "playlist",
+        }
+    }
 }
 
 pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
@@ -109,23 +133,30 @@ fn for_all_empty_realms(realm: &mut Realm, mut f: impl FnMut(&mut Realm)) {
     for_all_realms_rec(realm, &mut f);
 }
 
+// Function to load video lists from the database and store them in a hashmap
+async fn load_entities_from_db(db: &impl GenericClient, list_type: ListType) -> Result<HashMap<String, Vec<String>>> {
+    let query = format!("select title, opencast_id from {}", list_type.table_name());
+    let rows = db.query(&query, &[]).await?;
+    let mut map = <HashMap<_, Vec<_>>>::new();
+    for row in rows {
+        if let Some(title) = row.get::<_, Option<String>>("title") {
+            let oc_id = row.get::<_, String>("opencast_id");
+            map.entry(title).or_default().push(oc_id);
+        }
+    }
+
+    Ok(map)
+}
+
 /// Adds different kinds of blocks to empty realms.
 async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<()> {
     let mut rng = thread_rng();
 
-    // Load all series from the DB and store them in a hashmap that maps from
-    // series title to a list of series UUIDS with that title. We need this data
-    // structure below.
-    let series_rows = db.query("select title, opencast_id from series", &[]).await?;
-    let mut series = <HashMap<_, Vec<_>>>::new();
+    // Load series
+    let mut series = load_entities_from_db(db, ListType::Series).await?;
 
-    for row in series_rows {
-        let Some(title) = row.get::<_, Option<String>>("title") else {
-            continue;
-        };
-        let oc_id = row.get::<_, String>("opencast_id");
-        series.entry(title).or_default().push(oc_id);
-    }
+    // Load playlists
+    let mut playlists = load_entities_from_db(db, ListType::Playlist).await?;
 
     // Load the IDs of all events to randomly select from them below.
     let event_rows = db.query("select id from events", &[]).await?;
@@ -133,25 +164,29 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
         .map(|row| row.get::<_,i64>("id"))
         .collect::<Vec<_>>();
 
-    // Insert series blocks into realms where a series with the same name as the
-    // realm can be found. Those (used) series are removed from the hashmap.
+    // Insert series and/or playlist blocks into realms where an entry with the same name as the
+    // realm can be found. Those (used) entries are removed from the hashmap.
     for_all_empty_realms(root, |realm| {
         // TODO: derive realm name from series block
         // TODO: Don't show title, but do show description
-        if let Some(uuids) = series.get_mut(&realm.name) {
-            // We can `unwrap` here because in the lines below,
-            // we make sure that there are no empty vectors in the hashmap.
-            let series_uuid = uuids.pop().unwrap();
-            if uuids.is_empty() {
-                series.remove(&realm.name);
+        let mut add_video_list_blocks = |map: &mut HashMap<String, Vec<String>>, list_type: ListType| {
+            if let Some(uuids) = map.get_mut(&realm.name) {
+                // We can `unwrap` here because we make sure that there are no empty vectors in the hashmap.
+                let uuid = uuids.pop().unwrap();
+                if uuids.is_empty() {
+                    map.remove(&realm.name);
+                }
+                realm.blocks.push(Block::VideoList {
+                    ty: list_type,
+                    id: List::ByUuid(uuid),
+                    show_title: false,
+                    show_description: true,
+                });
+                realm.name_from_block = Some(0);
             }
-            realm.blocks.push(Block::Series {
-                series: Series::ByUuid(series_uuid),
-                show_title: false,
-                show_description: true,
-            });
-            realm.name_from_block = Some(0);
-        }
+        };
+        add_video_list_blocks(&mut series, ListType::Series);
+        add_video_list_blocks(&mut playlists, ListType::Playlist);
     });
 
     // Determine number of remaining realms.
@@ -160,10 +195,18 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
         number_of_remaining_realms += 1;
     });
 
+    let list_prob = |map: HashMap<String, Vec<String>>| -> (Vec<String>, f32) {
+        let list = map.into_values().flatten().collect::<Vec<_>>();
+        let prob  = (list.len() as f32 / number_of_remaining_realms as f32).min(0.95);
+        (list, prob)
+    };
+
     // Store all remaining series IDs in a vector as this makes it easier
     // to randomly select one below.
-    let series = series.into_values().flatten().collect::<Vec<_>>();
-    let series_probability = (series.len() as f32 / number_of_remaining_realms as f32).min(0.95);
+    let (series, series_probability) = list_prob(series);
+
+    // Do the same for playlists
+    let (playlists, playlist_probability) = list_prob(playlists);
     
     // Insert blocks into remaining realms.
     for_all_empty_realms(root, |realm| {
@@ -178,17 +221,27 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
         // Add a number of text blocks according to the above distribution.
         realm.blocks.extend(std::iter::repeat(text_block).take(num_text_blocks));
 
+        let mut add_video_list = |prob: f32, list: &Vec<String>, list_type: ListType| {
+            if rand::random::<f32>() < prob {
+                let uuid = list.choose(&mut rng);
+                realm.blocks.extend(
+                    uuid.map(|uuid| Block::VideoList {
+                        ty: list_type,
+                        id: List::ByUuid(uuid.to_owned()),
+                        show_title: true,
+                        show_description: rand::random(),
+                    })
+                );
+            }
+        };
+        
+
         // Series blocks:
-        if rand::random::<f32>() < series_probability {
-            let uuid = series.choose(&mut rng);
-            realm.blocks.extend(
-                uuid.map(|uuid| Block::Series {
-                    series: Series::ByUuid(uuid.to_owned()),
-                    show_title: true,
-                    show_description: rand::random(),
-                })
-            );
-        }
+        add_video_list(series_probability, &series, ListType::Series);
+    
+        // Playlist blocks:
+        add_video_list(playlist_probability, &playlists, ListType::Playlist);
+       
         // Video blocks:
         let num_video_blocks = {
             let choices = [0, 1, 2, 3];
@@ -294,39 +347,39 @@ impl Block {
                 ";
                 db.query_one(query, &[&realm_id, &(index as i16), &event_id]).await?.get(0)
             }
-            Block::Series { series, show_title, show_description } => {
-                // Obtain the series ID
-                let series_id = match series {
-                    Series::ByTitle(title) => {
-                        let rows = db
-                            .query("select id from series where title = $1", &[title])
-                            .await?;
+            Block::VideoList { ty, id, show_title, show_description } => {
+                // Obtain the video list ID
+                let table = ty.table_name();
+                let list_id = match id {
+                    List::ByTitle(title) => {
+                        let query = format!("select id from {table} where title = $1");
+                        let rows = db.query(&query, &[title]).await?;
                         if rows.is_empty() {
-                            anyhow::bail!("Series with title '{}' not found!", title);
+                            anyhow::bail!("Video list with title '{}' not found!", title);
                         }
                         rows[0].get::<_, i64>(0)
                     }
-                    Series::ByUuid(uuid) => {
-                        let rows = db
-                            .query("select id from series where opencast_id = $1", &[uuid])
-                            .await?;
+                    List::ByUuid(uuid) => {
+                        let query = format!("select id from {table} where opencast_id = $1");
+                        let rows = db.query(&query, &[uuid]).await?;
                         if rows.is_empty() {
-                            anyhow::bail!("Series with UUID '{}' not found!", uuid);
+                            anyhow::bail!("Video list with UUID '{}' not found!", uuid);
                         }
                         rows[0].get::<_, i64>(0)
                     }
                 };
 
                 // Insert block
-                let query = "
+                let block = ty.block_type();
+                let query = format!("
                     insert into blocks
-                    (realm, type, index, series, videolist_order, videolist_layout, show_title, show_metadata)
-                    values ($1, 'series', $2, $3, 'new_to_old', 'gallery', $4, $5)
+                    (realm, type, index, {block}, videolist_order, videolist_layout, show_title, show_metadata)
+                    values ($1, '{block}', $2, $3, 'new_to_old', 'gallery', $4, $5)
                     returning id
-                ";
+                ");
                 db.query_one(
-                    query,
-                    &[&realm_id, &(index as i16), &series_id, &show_title, &show_description],
+                    &query,
+                    &[&realm_id, &(index as i16), &list_id, &show_title, &show_description],
                 ).await?.get(0)
             }
         };
@@ -362,7 +415,7 @@ fn dummy_text(title: &str) -> String {
         of this page. \n\
         Read on to learn more about this collection in no less than *{num}* sentences. \n\
         \n\
-        {text}
-        ")
+        {text} \
+    ")
 }
 

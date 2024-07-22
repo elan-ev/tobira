@@ -129,6 +129,7 @@ video:
   link: Zur Videoseite
   part-of-series: Teil der Serie
   more-from-series: Mehr von „{{series}}“
+  more-from-playlist: Mehr von “{{playlist}}”
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
   not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
   not-ready:
@@ -177,13 +178,15 @@ video:
     rss: RSS
     show-qr-code: QR Code anzeigen
 
+playlist:
+  deleted-playlist-block: Die hier referenzierte Playlist wurde gelöscht.
+  not-allowed-playlist-block: Sie sind nicht autorisiert, die hier eingebettete Playlist zu sehen.
+
 series:
   series: Serie
   deleted: Gelöschte Serie
   deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
   entry-of-series-thumbnail: "Vorschlaubild für Teil von „{{series}}“"
-  videos:
-    heading: Videos
   not-ready:
     title: Serie noch nicht synchronisiert
     text: >
@@ -196,6 +199,9 @@ videolist-block:
   unauthorized: Fehlende Berechtigung
   hidden-items_one: 'Ein Video wurde nicht gefunden oder Sie haben keinen Zugriff darauf.'
   hidden-items_other: '{{count}} Videos wurden nicht gefunden oder Sie haben keinen Zugriff darauf.'
+  no-videos: Keine videos
+  videos:
+    heading: Videos
   settings:
     order: Reihenfolge
     order-label: Video Reihenfolge auswählen
@@ -530,6 +536,7 @@ manage:
       add-text: Text
       add-series: Serie
       add-video: Video
+      add-playlist: Playlist
 
       move-down: Block nach unten verschieben
       move-up: Block nach oben verschieben
@@ -555,6 +562,16 @@ manage:
           invalid: Bitte eine Serie auswählen
           findable-series-note: >
             Sie können hier nur Serien wählen, die gelistet sind oder auf die
+            Sie Schreibzugriff haben.
+        metadata:
+          heading: Metadaten
+
+      playlist:
+        playlist:
+          heading: Playlist
+          invalid: Bitte eine Playlist auswählen
+          findable-playlist-note: >
+            Sie können hier nur Playlisten wählen, die gelistet sind oder auf die
             Sie Schreibzugriff haben.
         metadata:
           heading: Metadaten

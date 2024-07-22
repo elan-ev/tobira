@@ -5,13 +5,15 @@ use postgres_types::{FromSql, ToSql};
 
 use crate::{
     api::{
-        Context, Id,
         err::{ApiError, ApiResult},
         model::{
             event::{AuthorizedEvent, Event},
-            series::Series,
+            playlist::Playlist,
             realm::{Realm, RealmNameSourceBlockValue},
+            series::Series
         },
+        Context,
+        Id,
     },
     db::{types::Key, util::impl_from_db},
     prelude::*,
@@ -24,17 +26,22 @@ pub(crate) use mutations::{
     NewTitleBlock,
     NewTextBlock,
     NewSeriesBlock,
+    NewPlaylistBlock,
     NewVideoBlock,
     UpdateTitleBlock,
     UpdateTextBlock,
     UpdateSeriesBlock,
+    UpdatePlaylistBlock,
     UpdateVideoBlock,
     RemovedBlock,
 };
 
 
 /// A `Block`: a UI element that belongs to a realm.
-#[graphql_interface(Context = Context, for = [TitleBlock, TextBlock, SeriesBlock, VideoBlock])]
+#[graphql_interface(
+    Context = Context,
+    for = [TitleBlock, TextBlock, SeriesBlock, VideoBlock, PlaylistBlock]
+)]
 pub(crate) trait Block {
     // To avoid code duplication, all the shared data is stored in `SharedData`
     // and only a `shared` method is mandatory. All other method (in particular,
@@ -67,6 +74,8 @@ pub(crate) enum BlockType {
     Series,
     #[postgres(name = "video")]
     Video,
+    #[postgres(name = "playlist")]
+    Playlist,
 }
 
 #[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
@@ -80,6 +89,8 @@ pub(crate) enum VideoListOrder {
     AZ,
     #[postgres(name = "z_to_a")]
     ZA,
+    #[postgres(name = "original")]
+    ORIGINAL,
 }
 
 #[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
@@ -268,6 +279,62 @@ impl VideoBlock {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct PlaylistBlock {
+    pub(crate) shared: SharedData,
+    pub(crate) playlist: Option<Id>,
+    pub(crate) show_title: bool,
+    pub(crate) show_metadata: bool,
+    pub(crate) order: VideoListOrder,
+    pub(crate) layout: VideoListLayout,
+}
+
+impl Block for PlaylistBlock {
+    fn shared(&self) -> &SharedData {
+        &self.shared
+    }
+}
+
+/// A block just showing the list of videos in an Opencast playlist
+#[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
+impl PlaylistBlock {
+    async fn playlist(&self, context: &Context) -> ApiResult<Option<Playlist>> {
+        match self.playlist {
+            None => Ok(None),
+            // `unwrap` is okay here because of our foreign key constraint
+            Some(playlist_id) => Ok(Some(Playlist::load_by_id(playlist_id, context).await?.unwrap())),
+        }
+    }
+
+    fn show_title(&self) -> bool {
+        self.show_title
+    }
+
+    fn show_metadata(&self) -> bool {
+        self.show_metadata
+    }
+
+    fn order(&self) -> VideoListOrder {
+        self.order
+    }
+
+    fn layout(&self) -> VideoListLayout {
+        self.layout
+    }
+
+    fn id(&self) -> Id {
+        Block::id(self)
+    }
+
+    fn index(&self) -> i32 {
+        Block::index(self)
+    }
+
+    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+        Block::realm(self, context).await
+    }
+}
+
 impl_from_db!(
     BlockValue,
     select: {
@@ -284,6 +351,7 @@ impl_from_db!(
             show_link,
             show_metadata,
             realm,
+            playlist,
         },
     },
     |row| {
@@ -319,6 +387,15 @@ impl_from_db!(
                 event: row.video::<Option<Key>>().map(Id::event),
                 show_title: unwrap_type_dep(row.show_title(), "event", "show_title"),
                 show_link: unwrap_type_dep(row.show_link(), "event", "show_link"),
+            }.into(),
+
+            BlockType::Playlist => PlaylistBlock {
+                shared,
+                playlist: row.playlist::<Option<Key>>().map(Id::playlist),
+                order: unwrap_type_dep(row.videolist_order(), "playlist", "videolist_order"),
+                layout: unwrap_type_dep(row.videolist_layout(), "playlist", "videolist_layout"),
+                show_title: unwrap_type_dep(row.show_title(), "playlist", "show_title"),
+                show_metadata: unwrap_type_dep(row.show_metadata(), "playlist", "show_metadata"),
             }.into(),
         }
     }
@@ -370,6 +447,7 @@ impl BlockValue {
             BlockValue::TextBlock(block) => block.shared.id,
             BlockValue::VideoBlock(block) => block.shared.id,
             BlockValue::SeriesBlock(block) => block.shared.id,
+            BlockValue::PlaylistBlock(block) => block.shared.id,
         }
     }
 }

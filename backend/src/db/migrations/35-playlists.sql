@@ -6,7 +6,7 @@ create type playlist_entry_type as enum ('event');
 -- All fields should never be null.
 create type playlist_entry as (
     -- The Opencast ID of this entry. Not a UUID.
-    opencast_id bigint,
+    entry_id bigint,
 
     type playlist_entry_type,
 
@@ -39,7 +39,11 @@ create table playlists (
 -- to list all playlists that a user has write access to.
 create index idx_playlists_write_roles on playlists using gin (write_roles);
 
+-- Extend enum types to allow for playlist blocks, playlist items in search index queue
+-- and to remember deleted playlists.
+-- This needs to be done prior to their usage in the next migration since they can't be used
+-- in the same migration they were added.
+alter type block_type add value 'playlist';
+alter type search_index_item_kind add value 'playlist';
+alter type opencast_item_kind add value 'playlist';
 
--- Search index ---------------------------------------------------------------
-
--- TODO

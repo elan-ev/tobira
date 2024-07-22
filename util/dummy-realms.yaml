@@ -16,18 +16,20 @@ blocks:
       containing a bunch of dummy data. All text and videos you can see here are just for
       testing.
 
-  - series:
-      series: { by_title: "Cats" }
+  - video_list:
+      ty: playlist
+      id: { by_uuid: ee39bb7b-7022-458b-ab54-570e81f4730d }
       show_title: true
-      show_description: false
+      show_description: true
 
 children:
   - path: campus
     name: Campus
     blocks:
       - text: Videos about life on the campus, the canteen and more.
-      - series:
-          series: { by_title: "SciFi Chicken" }
+      - video_list:
+          ty: series
+          id: { by_title: "SciFi Chicken" }
           show_title: true
           show_description: false
 

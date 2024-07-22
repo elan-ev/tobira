@@ -303,7 +303,7 @@ async fn store_in_db(
                     };
 
                     Some(db::types::PlaylistEntry {
-                        opencast_id: e.id,
+                        entry_id: e.id,
                         ty,
                         content_id: e.content_id,
                     })
