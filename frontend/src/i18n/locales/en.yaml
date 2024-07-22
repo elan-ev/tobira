@@ -44,6 +44,7 @@ errors:
   not-authorized: You are not authorized.
   not-authorized-to-view-page: You are not authorized to view this page.
   might-need-to-login: You might need to login.
+  might-need-to-login-link: You might need to <1>login</1>.
   invalid-input: Invalid input.
   opencast-unavailable: Opencast is currently not available.
   internal-server-error: Internal server error (something is wrong with the server).
@@ -193,10 +194,13 @@ series:
 videolist-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
   missing-video: Video not found
-  unauthorized: Missing permissions
-  hidden-items_one: 'One video is missing or requires additional permissions to view.'
-  hidden-items_other: '{{count}} videos are missing or require additional permissions to view.'
   no-videos: No videos
+  unauthorized: Missing permissions
+  hidden-items:
+    unauthorized_one: One video requires additional permissions to view. 
+    unauthorized_other: '{{count}} videos require additional permissions to view.'
+    missing_one: One video is missing.
+    missing_other: '{{count}} videos are missing.'
   videos:
     heading: Videos
   settings:

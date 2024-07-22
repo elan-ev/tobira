@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { PropsWithChildren, useEffect } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { useTranslation } from "react-i18next";
 import { match } from "@opencast/appkit";
 
-import { useRouter } from "../router";
+import { Link, useRouter } from "../router";
+import CONFIG from "../config";
+import { LoginRoute, REDIRECT_STORAGE_KEY } from "./Login";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -77,3 +79,19 @@ export const useNavBlocker = (shouldBlock: boolean | (() => boolean)) => {
         ))
     ));
 };
+
+type LoginLinkProps = PropsWithChildren & {
+    className?: string;
+}
+
+export const LoginLink: React.FC<LoginLinkProps> = ({ className, children }) => (
+    <Link
+        to={CONFIG.auth.loginLink ?? LoginRoute.url}
+        onClick={() => {
+            // Store a redirect link in session storage.
+            window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
+        }}
+        htmlLink={!!CONFIG.auth.loginLink}
+        {...{ className }}
+    >{children}</Link>
+);

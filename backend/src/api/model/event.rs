@@ -19,6 +19,8 @@ use crate::{
     prelude::*,
 };
 
+use super::playlist::VideoListEntry;
+
 
 #[derive(Debug)]
 pub(crate) struct AuthorizedEvent {
@@ -330,18 +332,21 @@ impl AuthorizedEvent {
     pub(crate) async fn load_for_series(
         series_key: Key,
         context: &Context,
-    ) -> ApiResult<Vec<Self>> {
+    ) -> ApiResult<Vec<VideoListEntry>> {
         let selection = Self::select();
         let query = format!(
             "select {selection} from events \
-                where series = $2 and (read_roles || 'ROLE_ADMIN'::text) && $1",
+                where series = $1",
         );
         context.db
-            .query_mapped(
-                &query,
-                dbargs![&context.auth.roles_vec(), &series_key],
-                |row| Self::from_row_start(&row),
-            )
+            .query_mapped(&query, dbargs![&series_key], |row| {
+                let event = Self::from_row_start(&row);
+                if !context.auth.overlaps_roles(&event.read_roles) {
+                    return VideoListEntry::NotAllowed(NotAllowed);
+                }
+
+                VideoListEntry::Event(event)
+            })
             .await?
             .pipe(Ok)
     }

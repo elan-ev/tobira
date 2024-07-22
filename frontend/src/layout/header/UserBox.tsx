@@ -17,7 +17,6 @@ import { User, useUser } from "../../User";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
 import { Spinner } from "@opencast/appkit";
-import { LoginRoute, REDIRECT_STORAGE_KEY } from "../../routes/Login";
 import { focusStyle } from "../../ui";
 import { ExternalLink } from "../../relay/auth";
 import { COLORS } from "../../color";
@@ -25,6 +24,7 @@ import { translatedConfig } from "../../util";
 import { UploadRoute } from "../../routes/Upload";
 import { ManageRoute } from "../../routes/manage";
 import { ManageVideosRoute } from "../../routes/manage/Video";
+import { LoginLink } from "../../routes/util";
 
 
 
@@ -65,13 +65,7 @@ const LoggedOut: React.FC = () => {
     const { t } = useTranslation();
 
     return (
-        <Link
-            to={CONFIG.auth.loginLink ?? LoginRoute.url}
-            onClick={() => {
-                // Store a redirect link in session storage.
-                window.sessionStorage.setItem(REDIRECT_STORAGE_KEY, window.location.href);
-            }}
-            htmlLink={!!CONFIG.auth.loginLink}
+        <LoginLink
             css={{
                 /* Show labelled button on larger screens. */
                 [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
@@ -101,7 +95,7 @@ const LoggedOut: React.FC = () => {
         >
             <LuLogIn />
             <span>{t("user.login")}</span>
-        </Link>
+        </LoginLink>
     );
 };
 

@@ -45,6 +45,7 @@ errors:
   not-authorized: Sie sind nicht autorisiert.
   not-authorized-to-view-page: Sie sind nicht dazu autorisiert, diese Seite aufzurufen.
   might-need-to-login: Sie müssen sich möglicherweise einloggen.
+  might-need-to-login-link: Sie müssen sich möglicherweise <1>einloggen</1>.
   invalid-input: Ungültige Eingabe.
   opencast-unavailable: Opencast ist momentan nicht erreichbar.
   internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
@@ -196,10 +197,13 @@ series:
 videolist-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
   missing-video: Video nicht gefunden
+  no-videos: Keine Videos
   unauthorized: Fehlende Berechtigung
-  hidden-items_one: 'Ein Video wurde nicht gefunden oder Sie haben keinen Zugriff darauf.'
-  hidden-items_other: '{{count}} Videos wurden nicht gefunden oder Sie haben keinen Zugriff darauf.'
-  no-videos: Keine videos
+  hidden-items:
+    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte. 
+    unauthorized_other: 'Für {{count}} Videos fehlen Ihnen die Zugriffsrechte.'
+    missing_one: Ein Video wurde nicht gefunden.
+    missing_other: '{{count}} Videos wurden nicht gefunden.'
   videos:
     heading: Videos
   settings:
