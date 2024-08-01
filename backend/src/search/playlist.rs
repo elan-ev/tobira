@@ -17,7 +17,7 @@ pub(crate) struct Playlist {
     pub(crate) opencast_id: String,
     pub(crate) title: String,
     pub(crate) description: Option<String>,
-    pub(crate) creator: String,
+    pub(crate) creator: Option<String>,
 
     // See `search::Event::*_roles` for notes that also apply here.
     pub(crate) read_roles: Vec<String>,
