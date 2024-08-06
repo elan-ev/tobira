@@ -92,7 +92,7 @@ create view search_series as
     select
         series.id, series.state, series.opencast_id,
         series.read_roles, series.write_roles,
-        series.title, series.description,
+        series.title, series.description, series.updated, series.created, series.metadata,
         coalesce(
             array_agg((
                 -- Using a nested query here improves the overall performance
