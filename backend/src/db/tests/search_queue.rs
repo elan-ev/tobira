@@ -27,6 +27,9 @@ struct Setup {
     video_b1: Key,
     video_b2: Key,
     video_c0: Key,
+    playlist_a: Key,
+    playlist_b: Key,
+    playlist_empty: Key,
 }
 
 /// Create a test DB with a few test objects in it. The search queue is cleared
@@ -61,11 +64,16 @@ async fn setup() -> Result<(TestDb, Setup)> {
     let video_b2 = db.add_event("Video B2", 102, "video-b2", Some(series_b)).await?;
     let video_c0 = db.add_event("Video C0", 200, "video-c0", Some(series_c)).await?;
 
+    let playlist_a = db.add_playlist("Playlist A", "pl-a", &[video_free0, video_a0]).await?;
+    let playlist_b = db.add_playlist("Playlist B", "pl-b", &[video_free0, video_a1, video_b2]).await?;
+    let playlist_empty = db.add_playlist("Empty Playlist", "pl-empty", &[]).await?;
+
     db.clear_search_queue().await?;
     Ok((db, Setup {
         animals, people, cat, dog, momo,
         series_a, series_b, series_c, series_empty,
-        video_free0, video_free1, video_a0, video_a1, video_b0, video_b1, video_b2, video_c0
+        video_free0, video_free1, video_a0, video_a1, video_b0, video_b1, video_b2, video_c0,
+        playlist_a, playlist_b, playlist_empty,
     }))
 }
 
@@ -81,12 +89,14 @@ async fn on_realm_add() -> Result<()> {
 #[tokio::test(flavor = "multi_thread")]
 async fn on_realm_change() -> Result<()> {
     let (db, Setup {
-        cat, animals, people, momo, dog, video_free0, video_a0, video_a1, series_a, series_empty, ..
+        cat, animals, people, momo, dog,
+        video_free0, video_a0, video_a1, video_b2, series_a, series_empty, playlist_b, ..
     }) = setup().await?;
 
     // Mount series and videos into some realms.
     db.add_video_block(animals, video_free0, 0).await?;
     let cat_series_block = db.add_series_block(cat, series_a, 0).await?;
+    db.add_playlist_block(cat, playlist_b, 1).await?;
     db.add_series_block(people, series_empty, 0).await?;
     db.add_series_block(dog, series_empty, 0).await?;
     assert_eq!(db.search_queue().await?, set![
@@ -95,6 +105,9 @@ async fn on_realm_change() -> Result<()> {
         (video_a0, IndexItemKind::Event),
         (video_a1, IndexItemKind::Event),
         (video_free0, IndexItemKind::Event),
+        (playlist_b, IndexItemKind::Playlist),
+        (video_b2, IndexItemKind::Event),
+
         (animals, IndexItemKind::Realm),
         (cat, IndexItemKind::Realm),
         (people, IndexItemKind::Realm),
@@ -116,6 +129,9 @@ async fn on_realm_change() -> Result<()> {
         (series_a, IndexItemKind::Series),
         (video_a0, IndexItemKind::Event),
         (video_a1, IndexItemKind::Event),
+        (playlist_b, IndexItemKind::Playlist),
+        (video_free0, IndexItemKind::Event),
+        (video_b2, IndexItemKind::Event),
     ]);
 
     // Change name of realm with block and children with blocks
@@ -131,6 +147,8 @@ async fn on_realm_change() -> Result<()> {
         (video_a0, IndexItemKind::Event),        // bc in series_a which is mounted in cat
         (video_a1, IndexItemKind::Event),        // bc in series_a which is mounted in cat
         (video_free0, IndexItemKind::Event),     // bc mounted in animals
+        (playlist_b, IndexItemKind::Playlist),
+        (video_b2, IndexItemKind::Event),
     ]);
 
     // Change name of `people`.
@@ -154,10 +172,13 @@ async fn on_realm_change() -> Result<()> {
         (series_a, IndexItemKind::Series),
         (video_a0, IndexItemKind::Event),
         (video_a1, IndexItemKind::Event),
+        (playlist_b, IndexItemKind::Playlist),
+        (video_free0, IndexItemKind::Event),
+        (video_b2, IndexItemKind::Event),
     ]);
 
     // Change `name_from_block`
-    let second_block = db.add_video_block(cat, video_a0, 1).await?;
+    let second_block = db.add_video_block(cat, video_a0, 2).await?;
     db.clear_search_queue().await?;
     db.execute(
         "update realms set name_from_block = $2 where id = $1",
@@ -169,6 +190,9 @@ async fn on_realm_change() -> Result<()> {
         (series_a, IndexItemKind::Series),
         (video_a0, IndexItemKind::Event),
         (video_a1, IndexItemKind::Event),
+        (playlist_b, IndexItemKind::Playlist),
+        (video_free0, IndexItemKind::Event),
+        (video_b2, IndexItemKind::Event),
     ]);
 
 
@@ -178,7 +202,7 @@ async fn on_realm_change() -> Result<()> {
     db.execute("update realms set path_segment = 'different' where id = $1", &[&momo]).await?;
     assert_eq!(db.search_queue().await?, set![(momo, IndexItemKind::Realm)]);
 
-    // Change name of realm with series block.
+    // Change path segment
     db.clear_search_queue().await?;
     db.execute("update realms set path_segment = 'different' where id = $1", &[&cat]).await?;
     assert_eq!(db.search_queue().await?, set![
@@ -187,6 +211,9 @@ async fn on_realm_change() -> Result<()> {
         (series_a, IndexItemKind::Series),
         (video_a0, IndexItemKind::Event),
         (video_a1, IndexItemKind::Event),
+        (playlist_b, IndexItemKind::Playlist),
+        (video_free0, IndexItemKind::Event),
+        (video_b2, IndexItemKind::Event),
     ]);
 
     // Change name of realm with block and children with blocks
@@ -202,6 +229,8 @@ async fn on_realm_change() -> Result<()> {
         (video_a0, IndexItemKind::Event),        // bc in series_a which is mounted in cat
         (video_a1, IndexItemKind::Event),        // bc in series_a which is mounted in cat
         (video_free0, IndexItemKind::Event),     // bc mounted in animals
+        (playlist_b, IndexItemKind::Playlist),
+        (video_b2, IndexItemKind::Event),
     ]);
 
     Ok(())
@@ -232,13 +261,14 @@ async fn on_event_add() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn on_event_change() -> Result<()> {
-    let (db, Setup { video_a0, series_a, animals, cat, dog, momo, .. }) = setup().await?;
+    let (db, Setup { video_a0, series_a, playlist_a, animals, cat, dog, momo, .. }) = setup().await?;
 
     // Change title without being inside a block.
     db.execute("update events set title = 'different' where id = $1", &[&video_a0]).await?;
     assert_eq!(db.search_queue().await?, set![
         (video_a0, IndexItemKind::Event),
         (series_a, IndexItemKind::Series),
+        (playlist_a, IndexItemKind::Playlist),
     ]);
 
     // Change title while not a name source.
@@ -248,6 +278,7 @@ async fn on_event_change() -> Result<()> {
     assert_eq!(db.search_queue().await?, set![
         (video_a0, IndexItemKind::Event),
         (series_a, IndexItemKind::Series),
+        (playlist_a, IndexItemKind::Playlist),
     ]);
 
     // Change title while a name source.
@@ -260,6 +291,7 @@ async fn on_event_change() -> Result<()> {
     assert_eq!(db.search_queue().await?, set![
         (video_a0, IndexItemKind::Event),
         (series_a, IndexItemKind::Series),
+        (playlist_a, IndexItemKind::Playlist),
         (animals, IndexItemKind::Realm),
         (cat, IndexItemKind::Realm),
         (dog, IndexItemKind::Realm),
@@ -272,23 +304,28 @@ async fn on_event_change() -> Result<()> {
     assert_eq!(db.search_queue().await?, set![
         (video_a0, IndexItemKind::Event),
         (series_a, IndexItemKind::Series),
+        (playlist_a, IndexItemKind::Playlist),
     ]);
 
     // Changing duration.
     db.clear_search_queue().await?;
     db.execute("update events set duration = 987 where id = $1", &[&video_a0]).await?;
-    assert_eq!(db.search_queue().await?, set![(video_a0, IndexItemKind::Event)]);
+    assert_eq!(db.search_queue().await?, set![
+        (video_a0, IndexItemKind::Event),
+        (playlist_a, IndexItemKind::Playlist),
+    ]);
 
     Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn on_event_remove() -> Result<()> {
-    let (db, Setup { video_a0, series_a, .. }) = setup().await?;
+    let (db, Setup { video_a0, series_a, playlist_a, .. }) = setup().await?;
     db.execute("delete from events where id = $1", &[&video_a0]).await?;
     assert_eq!(db.search_queue().await?, set![
         (video_a0, IndexItemKind::Event),
         (series_a, IndexItemKind::Series),
+        (playlist_a, IndexItemKind::Playlist),
     ]);
     Ok(())
 }
@@ -355,7 +392,9 @@ async fn on_series_change() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn on_series_remove() -> Result<()> {
-    let (db, Setup { series_a, series_empty, video_a0, video_a1, .. }) = setup().await?;
+    let (db, Setup {
+        series_a, series_empty, video_a0, video_a1, playlist_a, playlist_b, ..
+    }) = setup().await?;
     db.execute("delete from series where id = $1", &[&series_empty]).await?;
     assert_eq!(db.search_queue().await?, set![(series_empty, IndexItemKind::Series)]);
 
@@ -365,15 +404,127 @@ async fn on_series_remove() -> Result<()> {
         (series_a, IndexItemKind::Series),
         (video_a0, IndexItemKind::Event),
         (video_a1, IndexItemKind::Event),
+        (playlist_a, IndexItemKind::Playlist),
+        (playlist_b, IndexItemKind::Playlist),
     ]);
     Ok(())
 }
+
+
+#[tokio::test(flavor = "multi_thread")]
+async fn on_playlist_add() -> Result<()> {
+    let (db, Setup { video_free1, .. }) = setup().await?;
+    let playlist = db.add_playlist("foo", "foo", &[video_free1]).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (playlist, IndexItemKind::Playlist),
+        (video_free1, IndexItemKind::Event),
+    ]);
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn on_playlist_change() -> Result<()> {
+    let (db, Setup {
+        playlist_a, video_a0, video_free0, video_c0, animals, ..
+    }) = setup().await?;
+
+    // Change title without being inside a block.
+    db.execute("update playlists set title = 'different' where id = $1", &[&playlist_a]).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
+        (video_free0, IndexItemKind::Event),
+    ]);
+
+    // Change title while not a name source.
+    let _block = db.add_playlist_block(animals, playlist_a, 0).await?;
+    db.clear_search_queue().await?;
+    db.execute("update playlists set title = 'different2' where id = $1", &[&playlist_a]).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
+        (video_free0, IndexItemKind::Event),
+    ]);
+
+    // TODO: add once possible
+    // // Change title while a name source.
+    // db.execute(
+    //     "update realms set name = null, name_from_block = $1 where id = $2",
+    //     &[&block, &animals],
+    // ).await?;
+    // db.clear_search_queue().await?;
+    // db.execute("update playlists set title = 'bonanza' where id = $1", &[&playlist_a]).await?;
+    // assert_eq!(db.search_queue().await?, set![
+    //     (playlist_a, IndexItemKind::Playlist),
+    //     (video_a0, IndexItemKind::Event),
+    //     (video_free0, IndexItemKind::Event),
+    //     (animals, IndexItemKind::Realm),
+    //     (cat, IndexItemKind::Realm),
+    //     (dog, IndexItemKind::Realm),
+    //     (momo, IndexItemKind::Realm),
+    // ]);
+
+    // As does changing other fields.
+    db.clear_search_queue().await?;
+    db.execute("update playlists set description = 'henlo' where id = $1", &[&playlist_a]).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
+        (video_free0, IndexItemKind::Event),
+    ]);
+
+    // Add video to playlist
+    db.clear_search_queue().await?;
+    db.execute("update playlists set entries = array_append(entries, '(123,event,video-c0)') where id = $1", &[&playlist_a]).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
+        (video_free0, IndexItemKind::Event),
+        (video_c0, IndexItemKind::Event),
+    ]);
+
+    // Remove video from playlist
+    db.clear_search_queue().await?;
+    db.execute("update playlists
+        set entries = array['(123,event,video-c0)','(125,event,video-free0)']::playlist_entry[]
+        where id = $1",
+        &[&playlist_a],
+    ).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
+        (video_free0, IndexItemKind::Event),
+        (video_c0, IndexItemKind::Event),
+    ]);
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn on_playlist_remove() -> Result<()> {
+    let (db, Setup {
+        playlist_a, playlist_empty, video_a0, video_free0, ..
+    }) = setup().await?;
+    db.execute("delete from playlists where id = $1", &[&playlist_empty]).await?;
+    assert_eq!(db.search_queue().await?, set![(playlist_empty, IndexItemKind::Playlist)]);
+
+    db.clear_search_queue().await?;
+    db.execute("delete from playlists where id = $1", &[&playlist_a]).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
+        (video_free0, IndexItemKind::Event),
+    ]);
+    Ok(())
+}
+
 
 #[tokio::test(flavor = "multi_thread")]
 async fn on_video_block_add_modify_delete() -> Result<()> {
     let (db, Setup {
         cat, momo,
         series_b, series_c,
+        playlist_a, playlist_empty,
         video_a0, video_b0, video_b1, video_b2, video_c0, video_free0, video_free1, ..
     }) = setup().await?;
 
@@ -386,8 +537,10 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
 
     // Add a few more blocks
     db.add_series_block(cat, series_c, 1).await?;
+    db.add_playlist_block(cat, playlist_empty, 2).await?;
     db.add_video_block(momo, video_free0, 0).await?;
     db.add_series_block(momo, series_b, 1).await?;
+    db.add_playlist_block(momo, playlist_a, 2).await?;
 
     // Change `video` field
     db.clear_search_queue().await?;
@@ -400,6 +553,7 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
         (cat, IndexItemKind::Realm),
         (series_c, IndexItemKind::Series),
         (video_c0, IndexItemKind::Event),
+        (playlist_empty, IndexItemKind::Playlist),
     ]);
 
     // Use the block as name source and update title of event.
@@ -416,6 +570,7 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
         (cat, IndexItemKind::Realm),
         (series_c, IndexItemKind::Series),
         (video_c0, IndexItemKind::Event),
+        (playlist_empty, IndexItemKind::Playlist),
 
         // Child realm and all hosted items
         (momo, IndexItemKind::Realm),
@@ -424,6 +579,8 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
         (video_b0, IndexItemKind::Event),
         (video_b1, IndexItemKind::Event),
         (video_b2, IndexItemKind::Event),
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
     ]);
 
     // Changing the video of the block used as name source.
@@ -437,6 +594,7 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
         (cat, IndexItemKind::Realm),
         (series_c, IndexItemKind::Series),
         (video_c0, IndexItemKind::Event),
+        (playlist_empty, IndexItemKind::Playlist),
 
         // Child realm and all hosted items
         (momo, IndexItemKind::Realm),
@@ -445,6 +603,8 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
         (video_b0, IndexItemKind::Event),
         (video_b1, IndexItemKind::Event),
         (video_b2, IndexItemKind::Event),
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
     ]);
 
 
@@ -465,6 +625,7 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
         (video_a0, IndexItemKind::Event),
         (series_c, IndexItemKind::Series),
         (video_c0, IndexItemKind::Event),
+        (playlist_empty, IndexItemKind::Playlist),
 
         // Child realm and all hosted items
         (momo, IndexItemKind::Realm),
@@ -473,6 +634,8 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
         (video_b0, IndexItemKind::Event),
         (video_b1, IndexItemKind::Event),
         (video_b2, IndexItemKind::Event),
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
     ]);
 
     // Delete block
@@ -485,6 +648,7 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
         (cat, IndexItemKind::Realm),
         (series_c, IndexItemKind::Series),
         (video_c0, IndexItemKind::Event),
+        (playlist_empty, IndexItemKind::Playlist),
     ]);
 
     Ok(())
@@ -495,6 +659,7 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
     let (db, Setup {
         cat, momo,
         series_a, series_b, series_empty,
+        playlist_a, playlist_empty,
         video_a0, video_a1, video_b0, video_b1, video_b2, video_c0, video_free0, ..
     }) = setup().await?;
 
@@ -509,8 +674,10 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
 
     // Add a few more blocks
     db.add_video_block(cat, video_c0, 1).await?;
+    db.add_playlist_block(cat, playlist_empty, 2).await?;
     db.add_video_block(momo, video_free0, 0).await?;
     db.add_series_block(momo, series_b, 1).await?;
+    db.add_playlist_block(momo, playlist_a, 2).await?;
 
 
     // Change `series` field
@@ -528,6 +695,7 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
         // Realm and all hosted items
         (cat, IndexItemKind::Realm),
         (video_c0, IndexItemKind::Event), // Also mounted on realm
+        (playlist_empty, IndexItemKind::Playlist),
     ]);
 
     // Use block as name source & update title of series.
@@ -543,6 +711,7 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
         // Host realm of that series and all mounted items
         (cat, IndexItemKind::Realm),
         (video_c0, IndexItemKind::Event),
+        (playlist_empty, IndexItemKind::Playlist),
 
         // Child realm and all hosted items
         (momo, IndexItemKind::Realm),
@@ -551,6 +720,8 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
         (video_b0, IndexItemKind::Event),
         (video_b1, IndexItemKind::Event),
         (video_b2, IndexItemKind::Event),
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
     ]);
 
     // Changing the series of the name source block.
@@ -567,6 +738,7 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
         // Host realm of that series and all mounted items
         (cat, IndexItemKind::Realm),
         (video_c0, IndexItemKind::Event),
+        (playlist_empty, IndexItemKind::Playlist),
 
         // Child realm and all hosted items
         (momo, IndexItemKind::Realm),
@@ -575,6 +747,8 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
         (video_b0, IndexItemKind::Event),
         (video_b1, IndexItemKind::Event),
         (video_b2, IndexItemKind::Event),
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
     ]);
 
 
@@ -596,6 +770,7 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
         (series_a, IndexItemKind::Series),
         (video_a0, IndexItemKind::Event),
         (video_a1, IndexItemKind::Event),
+        (playlist_empty, IndexItemKind::Playlist),
 
         // Child realm and all hosted items
         (momo, IndexItemKind::Realm),
@@ -604,6 +779,8 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
         (video_b0, IndexItemKind::Event),
         (video_b1, IndexItemKind::Event),
         (video_b2, IndexItemKind::Event),
+        (playlist_a, IndexItemKind::Playlist),
+        (video_a0, IndexItemKind::Event),
     ]);
 
     // Delete block
@@ -615,6 +792,78 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
         (video_a0, IndexItemKind::Event),
         (video_a1, IndexItemKind::Event),
         (series_a, IndexItemKind::Series),
+        (playlist_empty, IndexItemKind::Playlist),
+    ]);
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn on_playlist_block_add_modify_delete() -> Result<()> {
+    let (db, Setup {
+        cat, momo,
+        series_b, series_empty,
+        playlist_a, playlist_b, playlist_empty,
+        video_a0, video_a1, video_b2, video_c0, video_free0, ..
+    }) = setup().await?;
+
+    // Add a playlist block -> the playlist, all its videos and the realm are now listed.
+    let block = db.add_playlist_block(cat, playlist_b, 0).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (video_free0, IndexItemKind::Event),
+        (video_a1, IndexItemKind::Event),
+        (video_b2, IndexItemKind::Event),
+        (playlist_b, IndexItemKind::Playlist),
+        (cat, IndexItemKind::Realm),
+    ]);
+
+    // Add a few more blocks
+    db.add_video_block(cat, video_c0, 1).await?;
+    db.add_series_block(cat, series_empty, 2).await?;
+    db.add_video_block(momo, video_free0, 0).await?;
+    db.add_series_block(momo, series_b, 1).await?;
+    db.add_playlist_block(momo, playlist_empty, 2).await?;
+
+
+    // Change `playlist` field
+    db.clear_search_queue().await?;
+    db.execute("update blocks set playlist = $1 where id = $2", &[&playlist_a, &block]).await?;
+    assert_eq!(db.search_queue().await?, set![
+        // Old playlist & videos
+        (video_free0, IndexItemKind::Event),
+        (video_a1, IndexItemKind::Event),
+        (video_b2, IndexItemKind::Event),
+        (playlist_b, IndexItemKind::Playlist),
+
+        // New playlist and videos
+        (playlist_a, IndexItemKind::Playlist),
+        (video_free0, IndexItemKind::Event),
+        (video_a0, IndexItemKind::Event),
+
+        // Realm and all hosted items
+        (cat, IndexItemKind::Realm),
+        (video_c0, IndexItemKind::Event), // Also mounted on realm
+        (series_empty, IndexItemKind::Series),
+    ]);
+
+    // TODO: use playlist as name source
+
+    // Changing display settings of the block won't queue anything.
+    db.clear_search_queue().await?;
+    db.execute("update blocks set show_title = false where id = $1", &[&block]).await?;
+    assert_eq!(db.search_queue().await?, set![]);
+
+    // Delete block
+    db.clear_search_queue().await?;
+    db.execute("delete from blocks where id = $1", &[&block]).await?;
+    assert_eq!(db.search_queue().await?, set![
+        (cat, IndexItemKind::Realm),
+        (playlist_a, IndexItemKind::Playlist),
+        (video_free0, IndexItemKind::Event),
+        (video_a0, IndexItemKind::Event),
+
+        (video_c0, IndexItemKind::Event),
+        (series_empty, IndexItemKind::Series),
     ]);
 
     Ok(())

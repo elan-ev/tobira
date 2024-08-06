@@ -124,6 +124,36 @@ impl TestDb {
         Ok(row.get::<_, Key>(0))
     }
 
+    pub(super) async fn add_playlist(
+        &self,
+        title: &str,
+        opencast_id: &str,
+        entry_keys: &[Key],
+    ) -> Result<Key> {
+        let opencast_ids = self.query(
+            "select opencast_id from events where id = any($1)",
+            &[&entry_keys],
+        ).await?;
+
+        let entries = opencast_ids.into_iter()
+            .enumerate()
+            .map(|(i, row)| crate::db::types::PlaylistEntry {
+                entry_id: i as i64,
+                ty: crate::db::types::PlaylistEntryType::Event,
+                content_id: row.get::<_, String>(0),
+            })
+            .collect::<Vec<_>>();
+        let row = self.query_one(
+            "insert into playlists
+                (opencast_id, title, entries, read_roles, write_roles, updated)
+                values
+                ($1, $2, $3, '{}', '{}', now())
+                returning id",
+            &[&opencast_id, &title, &entries],
+        ).await?;
+        Ok(row.get::<_, Key>(0))
+    }
+
     pub(super) async fn add_video_block(&self, realm: Key, video: Key, index: u8) -> Result<Key> {
         let row = self.query_one(
             "insert into blocks (realm, index, type, video, show_title)
@@ -140,6 +170,16 @@ impl TestDb {
                 values ($1, $2, 'series', $3, true, 'new_to_old', 'gallery')
                 returning id",
             &[&realm, &(index as i16), &series],
+        ).await?;
+        Ok(row.get::<_, Key>(0))
+    }
+
+    pub(super) async fn add_playlist_block(&self, realm: Key, playlist: Key, index: u8) -> Result<Key> {
+        let row = self.query_one(
+            "insert into blocks (realm, index, type, playlist, show_title, videolist_order, videolist_layout)
+                values ($1, $2, 'playlist', $3, true, 'new_to_old', 'gallery')
+                returning id",
+            &[&realm, &(index as i16), &playlist],
         ).await?;
         Ok(row.get::<_, Key>(0))
     }
