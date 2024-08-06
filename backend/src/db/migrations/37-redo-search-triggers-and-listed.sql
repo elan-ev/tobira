@@ -87,6 +87,28 @@ create view search_events as
     group by events.id, series.id;
 
 
+drop view search_series;
+create view search_series as
+    select
+        series.id, series.state, series.opencast_id,
+        series.read_roles, series.write_roles,
+        series.title, series.description,
+        coalesce(
+            array_agg((
+                -- Using a nested query here improves the overall performance
+                -- for the main use case: 'where id = any(...)'. If we would
+                -- use a join instead, the runtime would be the same with or
+                -- without the 'where id' (roughly 300ms on my machine).
+                select row(search_realms.*)::search_realms
+                from search_realms
+                where search_realms.id = blocks.realm
+            )) filter(where blocks.realm is not null),
+            '{}'
+        ) as host_realms
+    from series
+    left join blocks on type = 'series' and blocks.series = series.id
+    group by series.id;
+
 
 
 ---------- Utility functions ---------------------------------------------------------------------

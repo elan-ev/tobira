@@ -40,13 +40,12 @@ impl_from_db!(
     select: {
         search_series.{
             id, opencast_id, title, description, read_roles, write_roles,
-            listed_via_events, host_realms,
+            host_realms,
         },
     },
     |row| {
         let host_realms = row.host_realms::<Vec<Realm>>();
-        let listed = host_realms.iter().any(|realm| !realm.is_user_realm())
-            || row.listed_via_events();
+        let listed = host_realms.iter().any(|realm| !realm.is_user_realm());
         Self {
             id: row.id(),
             opencast_id: row.opencast_id(),
