@@ -91,6 +91,23 @@ create view search_events as
 
 ---------- Utility functions ---------------------------------------------------------------------
 
+-- Returns whether the given block causes the given event to be listed.
+--
+-- Note: works well if you already have a specific event at hand, but is likely
+-- slow in other cases.
+create function does_block_make_event_listed(b blocks, event_id bigint, event_series bigint, event_oc_id text)
+    returns boolean language 'sql' immutable
+as $$
+    select (
+        b.type = 'video' and b.video = event_id
+        or b.type = 'series' and b.series = event_series
+        or b.type = 'playlist' and b.playlist in (
+            select id from playlists
+                where array[event_oc_id] <@ event_entry_ids(entries)
+        )
+    )
+$$;
+
 -- Returns all series, events and playlists that are hosted by the given realm.
 -- They are returned in the form that can be directly inserted into
 -- `search_index_queue`.
