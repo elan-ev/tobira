@@ -35,9 +35,26 @@ create table playlists (
 );
 
 
+-- Utility function: returns the Opencast events IDs from playlist entries,
+-- ignoring all entries that are not events.
+create or replace function event_entry_ids(entries playlist_entry[])
+    returns text[]
+    language 'sql'
+    immutable
+as $$
+    select array(
+        select content_id
+        from unnest(entries)
+        where type = 'event'
+    )
+$$;
+
+
 -- To perform queries like `write_roles && $1` on the whole table. Probably just
--- to list all playlists that a user has write access to.
+-- to list all playlists that a user has write access to. Also a query to
+-- quickly find all playlists containing a specific event.
 create index idx_playlists_write_roles on playlists using gin (write_roles);
+create index idx_playlist_event_entries on playlists using gin (event_entry_ids(entries));
 
 -- Extend enum types to allow for playlist blocks, playlist items in search index queue
 -- and to remember deleted playlists.
