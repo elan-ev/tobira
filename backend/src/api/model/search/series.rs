@@ -1,7 +1,9 @@
 use crate::{
-    api::{Context, Node, Id, NodeValue},
-    search,
+    api::{Context, Id, Node, NodeValue},
+    search, HasRoles,
 };
+
+use super::ThumbnailInfo;
 
 
 impl Node for search::Series {
@@ -30,5 +32,17 @@ impl search::Series {
 
     fn host_realms(&self) -> &[search::Realm] {
         &self.host_realms
+    }
+
+    fn thumbnails(&self, context: &Context) -> Vec<ThumbnailInfo> {
+        self.thumbnails.iter()
+            .filter(|info| context.auth.overlaps_roles(&info.read_roles))
+            .map(|info| ThumbnailInfo {
+                thumbnail: info.url.clone(),
+                audio_only: info.audio_only,
+                is_live: info.live,
+            })
+            .take(3)
+            .collect()
     }
 }

@@ -45,6 +45,28 @@ drop function queue_series_for_reindex;
 
 ---------- Adjust views --------------------------------------------------------------------------
 
+-- All information to render a thumbnail (without duration)
+create type search_thumbnail_info as (
+    url text, -- URL to thumbnail or null.
+    live boolean,
+    audio_only boolean,
+    read_roles text[]
+);
+
+create function is_audio_only(tracks event_track[])
+    returns boolean language 'sql' immutable
+as $$
+    select not exists (
+        select from unnest(tracks) as t where t.resolution is not null
+    )
+$$;
+
+create function search_thumbnail_info_for_event(e events)
+    returns search_thumbnail_info language 'sql' immutable
+as $$
+    select row(e.thumbnail, e.is_live, is_audio_only(e.tracks), e.read_roles)::search_thumbnail_info
+$$;
+
 -- Adjust `search_events` to also include realms as host realms that include an
 -- event via playlist. Last version in 26-more-event-search-data.sql. It also
 -- adds `opencast_id` (because why not, we might want that in the future) and
@@ -65,9 +87,7 @@ create view search_events as
             ) filter(where search_realms.id is not null),
             '{}'
         ) as host_realms,
-        not exists (
-            select from unnest(events.tracks) as t where t.resolution is not null
-        ) as audio_only,
+        is_audio_only(events.tracks) as audio_only,
         coalesce(
             array_agg(playlists.id)
                 filter(where playlists.id is not null),
@@ -87,12 +107,20 @@ create view search_events as
     group by events.id, series.id;
 
 
+-- Adjust view for series to add `thumbnails` and remove `listed_via_events`.
+-- The latter is not a thing anymore, the former is required to show some event
+-- thumbnails on the search page. This also adds `created` and `metadata`,
+-- columns which were added in migration 31.
 drop view search_series;
 create view search_series as
     select
         series.id, series.state, series.opencast_id,
         series.read_roles, series.write_roles,
         series.title, series.description, series.updated, series.created, series.metadata,
+        array(
+            select search_thumbnail_info_for_event(events.*) from events
+                where series = series.id
+        ) as thumbnails,
         coalesce(
             array_agg((
                 -- Using a nested query here improves the overall performance

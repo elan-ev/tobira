@@ -143,10 +143,10 @@ const query = graphql`
                         created
                         hostRealms { path }
                     }
-                    ... on SearchSeriesExtended {
+                    ... on SearchSeries {
                         title
                         description
-                        thumbnailInfo { thumbnail isLive audioOnly }
+                        thumbnails { thumbnail isLive audioOnly }
                     }
                     ... on SearchRealm { name path ancestorNames }
                 }
@@ -382,12 +382,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
                 }} />;
-            } else if (item.__typename === "SearchSeriesExtended") {
+            } else if (item.__typename === "SearchSeries") {
                 return <SearchSeries key={item.id} {...{
                     id: item.id,
                     title: unwrapUndefined(item.title),
                     description: unwrapUndefined(item.description),
-                    thumbnailInfo: unwrapUndefined(item.thumbnailInfo),
+                    thumbnails: unwrapUndefined(item.thumbnails),
                 }} />;
             } else if (item.__typename === "SearchRealm") {
                 return <SearchRealm key={item.id} {...{
@@ -560,10 +560,10 @@ type SearchSeriesProps = {
     id: string;
     title: string;
     description: string | null;
-    thumbnailInfo: readonly ThumbnailInfo[] | undefined;
+    thumbnails: readonly ThumbnailInfo[] | undefined;
 }
 
-const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thumbnailInfo }) =>
+const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thumbnails }) =>
     <Item key={id} link={DirectSeriesRoute.url({ seriesId: id })}>
         <WithIcon Icon={LuLibrary} iconSize={28} hideIconOnMobile>
             <div css={{
@@ -586,13 +586,13 @@ const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thu
                 />}
             </div>
         </WithIcon>
-        <ThumbnailStack {...{ thumbnailInfo, title }} />
+        <ThumbnailStack {...{ thumbnails, title }} />
     </Item>
 ;
 
-type ThumbnailStackProps = Pick<SearchSeriesProps, "title" | "thumbnailInfo">
+type ThumbnailStackProps = Pick<SearchSeriesProps, "title" | "thumbnails">
 
-const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnailInfo, title }) => (
+const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => (
     <div css={{
         ...thumbnailCss,
         outline: 0,
@@ -621,7 +621,7 @@ const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnailInfo, title })
             gridRow: "1 / span 10",
         },
     }}>
-        {thumbnailInfo?.map((info, idx) => <div key={idx}>
+        {thumbnails?.map((info, idx) => <div key={idx}>
             <SeriesThumbnail {...{ info, title }} />
         </div>)}
     </div>
