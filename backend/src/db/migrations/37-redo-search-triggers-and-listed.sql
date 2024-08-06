@@ -138,6 +138,31 @@ create view search_series as
     group by series.id;
 
 
+-- Create search view for playlists. This is new and very similar to series.
+create view search_playlists as
+    select
+        playlists.id, playlists.opencast_id,
+        playlists.read_roles, playlists.write_roles,
+        playlists.title, playlists.description, playlists.creator,
+        playlists.entries, playlists.updated,
+        array(
+            select search_thumbnail_info_for_event(events.*) from events
+                where opencast_id = any(event_entry_ids(playlists.entries))
+        ) as thumbnails,
+        coalesce(
+            array_agg((
+                -- See search_series above
+                select row(search_realms.*)::search_realms
+                from search_realms
+                where search_realms.id = blocks.realm
+            )) filter(where blocks.realm is not null),
+            '{}'
+        ) as host_realms
+    from playlists
+    left join blocks on type = 'playlist' and blocks.playlist = playlists.id
+    group by playlists.id;
+
+
 
 ---------- Utility functions ---------------------------------------------------------------------
 
