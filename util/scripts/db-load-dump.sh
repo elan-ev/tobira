@@ -7,8 +7,8 @@ if ! command -v xz &> /dev/null; then
     >&2 echo "'xz' is not installed!"
     exit 1
 fi
-if ! command -v docker-compose &> /dev/null; then
-    >&2 echo "'docker-compose' is not installed! (Also see './x.sh check-system')"
+if ! (command -v docker &> /dev/null && docker compose &> /dev/null); then
+    >&2 echo "'docker compose' is not installed! (Also see './x.sh check-system')"
     exit 1
 fi
 
@@ -27,7 +27,7 @@ echo "To cancel, ctrl+c! To continue, press enter."
 read -r
 
 set -x
-docker-compose -f "$basedir/../containers/docker-compose.yml" \
+docker compose -f "$basedir/../containers/docker-compose.yml" \
     exec -T tobira-dev-database \
     pg_restore \
     --dbname 'postgresql://tobira:tobira@localhost/postgres' \

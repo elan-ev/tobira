@@ -213,7 +213,7 @@ jobs:
     - name: Start docker containers
       working-directory: util/containers
       run: |
-        docker-compose -f docker-compose.yml up -d \
+        docker compose -f docker-compose.yml up -d \
           tobira-login-handler \
           tobira-meilisearch \
           tobira-ui-test-files
