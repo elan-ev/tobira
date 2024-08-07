@@ -10,23 +10,33 @@ use crate::{
 use super::Client;
 
 
+pub(super) struct FieldAbilities<'a> {
+    pub(super) searchable: &'a [&'a str],
+    pub(super) filterable: &'a [&'a str],
+    pub(super) sortable: &'a [&'a str],
+}
+
 // Helper function to only set special attributes when they are not correctly
 // set yet. Unfortunately Meili seems to perform lots of work when setting
 // them, even if the special attribute set was the same before.
 pub(super) async fn lazy_set_special_attributes(
     index: &Index,
     index_name: &str,
-    searchable_attrs: &[&str],
-    filterable_attrs: &[&str],
+    fields: FieldAbilities<'_>,
 ) -> Result<()> {
-    if index.get_searchable_attributes().await? != searchable_attrs {
+    if index.get_searchable_attributes().await? != fields.searchable {
         debug!("Updating `searchable_attributes` of {index_name} index");
-        index.set_searchable_attributes(searchable_attrs).await?;
+        index.set_searchable_attributes(fields.searchable).await?;
     }
 
-    if index.get_filterable_attributes().await? != filterable_attrs {
+    if index.get_filterable_attributes().await? != fields.filterable {
         debug!("Updating `filterable_attributes` of {index_name} index");
-        index.set_filterable_attributes(filterable_attrs).await?;
+        index.set_filterable_attributes(fields.filterable).await?;
+    }
+
+    if index.get_sortable_attributes().await? != fields.sortable {
+        debug!("Updating `sortable_attributes` of {index_name} index");
+        index.set_sortable_attributes(fields.sortable).await?;
     }
 
     Ok(())
