@@ -67,8 +67,8 @@ fi
 echo
 echo "Checking additional/optional tools for Tobira development..."
 
-printf "▸ docker-compose installed?"
-if has_command docker-compose; then
+printf "▸ docker compose installed?"
+if has_command docker && docker compose &> /dev/null; then
     print_yes
 else
     print_no

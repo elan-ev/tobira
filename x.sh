@@ -32,7 +32,7 @@ if [[ $# -lt 1 ]]; then
     >&2 echo
     >&2 echo "  - ./x.sh containers [start|stop|run]"
     >&2 echo "        Manages all dev containers. To only start/stop some of them, use"
-    >&2 echo "        docker-compose manually in 'util/containers'"
+    >&2 echo "        docker compose manually in 'util/containers'"
     >&2 echo
     >&2 echo "  - ./x.sh db load-dump"
     >&2 echo "        Loads a public DB dump with lots of data."
@@ -41,12 +41,12 @@ fi
 
 # Manage the dev containers
 containers() {
-    if ! command -v docker-compose &> /dev/null; then
-        >&2 echo "'docker-compose' is not installed! (Also see './x.sh check-system')"
+    if ! (command -v docker &> /dev/null && docker compose &> /dev/null); then
+        >&2 echo "'docker compose' is not installed! (Also see './x.sh check-system')"
         exit 1
     fi
 
-    docker_command="docker-compose -f $basedir/util/containers/docker-compose.yml"
+    docker_command="docker compose -f $basedir/util/containers/docker-compose.yml"
     case "$1" in
         "start")
             (set -x; $docker_command up -d)
