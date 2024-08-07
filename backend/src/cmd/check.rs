@@ -30,6 +30,7 @@ pub(crate) async fn run(shared: &args::Shared, args: &Args) -> Result<()> {
     };
     let meili = check_meili(&config).await;
     let opencast_sync = check_opencast_sync(&config).await;
+    let oc_external_api = check_external_api(&config).await;
     info!("Done verifing various things");
 
 
@@ -61,6 +62,7 @@ pub(crate) async fn run(shared: &args::Shared, args: &Args) -> Result<()> {
         _ => {},
     }
     print_outcome(&mut any_errors, "Connection to Opencast harvesting API", &opencast_sync);
+    print_outcome(&mut any_errors, "Connection to Opencast external API", &oc_external_api);
 
     println!();
     if any_errors {
@@ -152,6 +154,15 @@ async fn check_opencast_sync(config: &Config) -> Result<()> {
     let client = OcClient::new(config)?;
     crate::sync::check_compatibility(&client).await?;
     client.test_harvest().await?;
+    Ok(())
+}
+
+async fn check_external_api(config: &Config) -> Result<()> {
+    let client = OcClient::new(config)?;
+    let versions = client.external_api_versions().await?;
+    info!("External API version: {}", versions.default);
+    debug!("External API supported versions: {:?}", versions.versions);
+    // TODO: actually check the version against our requirements maybe?
     Ok(())
 }
 

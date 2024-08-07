@@ -407,6 +407,10 @@
 # the ingest API.
 #upload_node =
 
+# Explicitly set Opencast node for "external API" use (used to modify
+# Opencast data from Tobira).
+#external_api_node =
+
 # Explicitly set base-URL to Opencast Studio.
 #
 # Example: "https://admin.oc.my-uni.edu/studio".

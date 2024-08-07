@@ -6,15 +6,16 @@ use chrono::{DateTime, Utc, TimeZone};
 use hyper::{
     Response, Request, StatusCode,
     body::Incoming,
-    http::{self, request, uri::{Authority, Scheme, Uri}},
+    http::{self, request, uri::Uri},
 };
 use hyper_rustls::HttpsConnector;
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
 use secrecy::{ExposeSecret, Secret};
+use serde::Deserialize;
 use tap::TapFallible;
 
 use crate::{
-    config::Config,
+    config::{Config, HttpHost},
     prelude::*,
     sync::harvest::HarvestResponse,
     util::download_body,
@@ -29,8 +30,8 @@ type RequestBody = http_body_util::Full<Bytes>;
 /// Used to send request to the harvesting API.
 pub(crate) struct OcClient {
     http_client: Client<HttpsConnector<HttpConnector>, RequestBody>,
-    scheme: Scheme,
-    authority: Authority,
+    sync_node: HttpHost,
+    external_api_node: HttpHost,
     auth_header: Secret<String>,
     username: String,
 }
@@ -54,16 +55,16 @@ impl OcClient {
 
         Ok(Self {
             http_client,
-            scheme: config.opencast.sync_node().scheme.clone(),
-            authority: config.opencast.sync_node().authority.clone(),
+            sync_node: config.opencast.sync_node().clone(),
+            external_api_node: config.opencast.external_api_node().clone(),
             auth_header: Secret::new(auth_header),
             username: config.sync.user.clone(),
         })
     }
 
-    pub(crate) async fn get_version(&self) -> Result<VersionResponse> {
+    pub(crate) async fn get_tobira_api_version(&self) -> Result<VersionResponse> {
         trace!("Sending request to '{}'", Self::VERSION_PATH);
-        let (uri, req) = self.build_req(Self::VERSION_PATH);
+        let (uri, req) = self.build_authed_req(&self.sync_node, Self::VERSION_PATH);
 
         let response = self.http_client.request(req)
             .await
@@ -95,7 +96,7 @@ impl OcClient {
             since.timestamp_millis(),
             preferred_amount,
         );
-        let (uri, req) = self.build_req(&pq);
+        let (uri, req) = self.build_authed_req(&self.sync_node, &pq);
 
         trace!("Sending harvest request (since = {:?}): GET {}", since, uri);
 
@@ -127,7 +128,8 @@ impl OcClient {
 
     /// Sends the given serialized JSON to the `/stats` endpoint in Opencast.
     pub async fn send_stats(&self, stats: String) -> Result<Response<Incoming>> {
-        let req = self.req_builder(Self::STATS_PATH)
+        // TODO: maybe introduce configurable node for this
+        let req = self.authed_req_builder(&self.external_api_node, Self::STATS_PATH)
             .method(http::Method::POST)
             .header(http::header::CONTENT_TYPE, "application/json")
             .body(stats.into())
@@ -136,9 +138,22 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
+    pub async fn external_api_versions(&self) -> Result<ExternalApiVersions> {
+        let req = self.authed_req_builder(&self.external_api_node, "/api/version")
+            .body(RequestBody::empty())
+            .expect("failed to build request");
+        let uri = req.uri().clone();
+        let response = self.http_client.request(req)
+            .await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
+
+        let (out, _) = self.deserialize_response(response, &uri).await?;
+        Ok(out)
+    }
+
     pub async fn delete_event(&self, oc_id: &String) -> Result<Response<Incoming>> {
         let pq = format!("/api/events/{}", oc_id);
-        let req = self.req_builder(&pq)
+        let req = self.authed_req_builder(&self.external_api_node, &pq)
             .method(http::Method::DELETE)
             .body(RequestBody::empty())
             .expect("failed to build request");
@@ -146,25 +161,28 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
-    fn build_req(&self, path_and_query: &str) -> (Uri, Request<RequestBody>) {
-        let req = self.req_builder(path_and_query)
+    fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
+        let req = self.authed_req_builder(node, path_and_query)
             .body(RequestBody::empty())
             .expect("bug: failed to build request");
 
         (req.uri().clone(), req)
     }
 
-    fn req_builder(&self, path_and_query: &str) -> request::Builder {
+    fn authed_req_builder(&self, node: &HttpHost, path_and_query: &str) -> request::Builder {
+        self.req_builder(node, path_and_query)
+            .header("Authorization", self.auth_header.expose_secret())
+    }
+
+    fn req_builder(&self, node: &HttpHost, path_and_query: &str) -> request::Builder {
         let uri = Uri::builder()
-            .scheme(self.scheme.clone())
-            .authority(self.authority.clone())
+            .scheme(node.scheme.clone())
+            .authority(node.authority.clone())
             .path_and_query(path_and_query)
             .build()
             .expect("bug: failed build URI");
 
-        Request::builder()
-            .uri(&uri)
-            .header("Authorization", self.auth_header.expose_secret())
+        Request::builder().uri(&uri)
     }
 
     async fn deserialize_response<T: for<'de> serde::Deserialize<'de>>(
@@ -198,4 +216,10 @@ impl OcClient {
 
         Ok((out, body.len()))
     }
+}
+
+#[derive(Deserialize)]
+pub struct ExternalApiVersions {
+    pub default: String,
+    pub versions: Vec<String>,
 }

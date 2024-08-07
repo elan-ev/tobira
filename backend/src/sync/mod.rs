@@ -25,7 +25,7 @@ pub(crate) async fn run(daemon: bool, db: DbConnection, config: &Config) -> Resu
 }
 
 pub(crate) async fn check_compatibility(client: &OcClient) -> Result<()> {
-    let response = client.get_version().await.context("failed to fetch API version")?;
+    let response = client.get_tobira_api_version().await.context("failed to fetch API version")?;
     let version = response.version();
     if !version.is_compatible() {
         bail!("Tobira-module API version incompatible! Required: \
