@@ -31,6 +31,10 @@ pub(crate) struct OpencastConfig {
     /// the ingest API.
     pub(crate) upload_node: Option<HttpHost>,
 
+    /// Explicitly set Opencast node for "external API" use (used to modify
+    /// Opencast data from Tobira).
+    pub(crate) external_api_node: Option<HttpHost>,
+
     /// Explicitly set base-URL to Opencast Studio.
     ///
     /// Example: "https://admin.oc.my-uni.edu/studio".
@@ -66,6 +70,10 @@ impl OpencastConfig {
 
     pub(crate) fn upload_node(&self) -> &HttpHost {
         self.upload_node.as_ref().unwrap_or_else(|| self.unwrap_host())
+    }
+
+    pub(crate) fn external_api_node(&self) -> &HttpHost {
+        self.external_api_node.as_ref().unwrap_or_else(|| self.unwrap_host())
     }
 
     pub(crate) fn studio_url(&self) -> ToolBaseUri {
