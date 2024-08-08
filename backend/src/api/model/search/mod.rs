@@ -22,7 +22,7 @@ mod realm;
 mod series;
 mod playlist;
 
-pub(crate) use self::event::{SearchEvent, TimeSpan};
+pub(crate) use self::event::{SearchEvent, TextMatch};
 
 
 /// Marker type to signal that the search functionality is unavailable for some
