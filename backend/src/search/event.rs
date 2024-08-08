@@ -8,7 +8,7 @@ use crate::{
     db::{types::Key, util::{collect_rows_mapped, impl_from_db}},
 };
 
-use super::{realm::Realm, SearchId, IndexItem, IndexItemKind, util};
+use super::{realm::Realm, util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
 
 
 
@@ -115,10 +115,9 @@ impl Event {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(
-        index,
-        "event",
-        &["title", "creators", "description", "series_title"],
-        &["listed", "read_roles", "write_roles", "is_live", "end_time_timestamp", "created_timestamp"],
-    ).await
+    util::lazy_set_special_attributes(index, "event", FieldAbilities {
+        searchable: &["title", "creators", "description", "series_title"],
+        filterable: &["listed", "read_roles", "write_roles", "is_live", "end_time_timestamp", "created_timestamp"],
+        sortable: &["created_timestamp"],
+    }).await
 }

@@ -94,11 +94,20 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
 });
 
 const runTobiraCommand = async (tobira: TobiraProcess, args: string[]) => {
-    await new Promise(resolve => {
+    await new Promise((resolve, reject) => {
         args.push("-c");
         args.push(tobira.configPath);
         const p = childProcess.spawn(tobira.binaryPath, args);
-        p.on("close", resolve);
+        p.on("close", code => {
+            if (code === 0) {
+                resolve(undefined);
+            } else {
+                const cmd = "tobira " + args.slice(0, -2)
+                    .map(arg => arg.includes(" ") ? `"${arg}"` : arg)
+                    .join(" ");
+                reject(new Error(`Tobira process (${cmd}) ended with failure, code = ${code}`));
+            }
+        });
     });
 };
 

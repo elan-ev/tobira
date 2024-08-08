@@ -5,7 +5,7 @@ use tokio_postgres::GenericClient;
 
 use crate::{prelude::*, db::{types::Key, util::{collect_rows_mapped, impl_from_db}}};
 
-use super::{SearchId, IndexItem, IndexItemKind, util};
+use super::{util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
 
 
 /// Representation of realms in the search index.
@@ -71,10 +71,9 @@ impl Realm {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(
-        index,
-        "realm",
-        &["name"],
-        &["is_root", "is_user_realm"],
-    ).await
+    util::lazy_set_special_attributes(index, "realm", FieldAbilities {
+        searchable: &["name"],
+        filterable: &["is_root", "is_user_realm"],
+        sortable: &[],
+    }).await
 }
