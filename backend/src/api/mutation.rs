@@ -1,7 +1,7 @@
 use juniper::graphql_object;
 
 use crate::{
-    api::model::event::RemovedEvent,
+    api::{err::map_db_err, model::event::RemovedEvent},
     auth::AuthContext,
 };
 use super::{
@@ -21,6 +21,8 @@ use super::{
             UpdatedRealmName,
             UpdateRealm,
             RealmSpecifier,
+            RealmLineageComponent,
+            CreateRealmLineageOutcome,
         },
         block::{
             BlockValue,
@@ -230,6 +232,47 @@ impl Mutation {
     /// Remove a block from a realm.
     async fn remove_block(id: Id, context: &Context) -> ApiResult<RemovedBlock> {
         BlockValue::remove(id, context).await
+    }
+
+    /// Basically `mkdir -p` for realms: makes sure the given realm lineage
+    /// exists, creating the missing realms. Existing realms are *not* updated.
+    /// Each realm in the given list is the sub-realm of the previous item in
+    /// the list. The first item is sub-realm of the root realm.
+    async fn create_realm_lineage(
+        realms: Vec<RealmLineageComponent>,
+        context: &Context,
+    ) -> ApiResult<CreateRealmLineageOutcome> {
+        if context.auth != AuthContext::TrustedExternal {
+            return Err(not_authorized!("only trusted external applications can use this mutation"));
+        }
+
+        if realms.len() == 0 {
+            return Ok(CreateRealmLineageOutcome { num_created: 0 });
+        }
+
+        if context.config.general.reserved_paths().any(|r| realms[0].path_segment == r) {
+            return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
+        }
+
+        let mut parent_path = String::new();
+        let mut num_created = 0;
+        for realm in realms {
+            let sql = "\
+                insert into realms (parent, name, path_segment) \
+                values ((select id from realms where full_path = $1), $2, $3) \
+                on conflict do nothing";
+            let res = context.db.execute(sql, &[&parent_path, &realm.name, &realm.path_segment])
+                .await;
+            let affected = map_db_err!(res, {
+                if constraint == "valid_path" => invalid_input!("path invalid"),
+            })?;
+            num_created += affected as i32;
+
+            parent_path.push('/');
+            parent_path.push_str(&realm.path_segment);
+        }
+
+        Ok(CreateRealmLineageOutcome { num_created })
     }
 
     /// Atomically mount a series into an (empty) realm.
