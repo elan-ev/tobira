@@ -6,7 +6,11 @@ use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
 use crate::{
-    db::{types::{Key, TimespanText}, util::{collect_rows_mapped, impl_from_db}}, prelude::*, util::BASE64_DIGITS
+    api::model::search::TimeSpan,
+    db::{types::{Key, TimespanText},
+    util::{collect_rows_mapped, impl_from_db}},
+    prelude::*,
+    util::{base64_decode, BASE64_DIGITS},
 };
 
 use super::{realm::Realm, util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
@@ -164,13 +168,13 @@ pub(crate) struct TextSearchIndex {
 }
 
 impl TextSearchIndex {
-    fn build(db_texts: Option<Vec<TimespanText>>) -> Self {
-        // We reduce the precision of our timestamps to 100ms, as more is really
-        // not needed for search.
-        const PRECISION: u64 = 100;
+    /// We reduce the precision of our timestamps to 100ms, as more is really
+    /// not needed for search.
+    const PRECISION: u64 = 100;
 
+    fn build(db_texts: Option<Vec<TimespanText>>) -> Self {
         fn duration(ts: &TimespanText) -> u64 {
-            (ts.span_end as u64).saturating_sub(ts.span_start as u64) / PRECISION
+            (ts.span_end as u64).saturating_sub(ts.span_start as u64) / TextSearchIndex::PRECISION
         }
 
         let mut texts = db_texts.unwrap_or_default();
@@ -196,7 +200,7 @@ impl TextSearchIndex {
             }
 
             max_duration = max(max_duration, duration(ts));
-            max_start = max(max_start, ts.span_start as u64 / PRECISION);
+            max_start = max(max_start, ts.span_start as u64 / Self::PRECISION);
             needed_main_capacity += ts.t.len();
             true
         });
@@ -256,10 +260,97 @@ impl TextSearchIndex {
             let offset = out.texts.len() as u64;
             out.texts.push_str(&ts.t);
             encode_index_int(offset, offset_digits);
-            encode_index_int(ts.span_start as u64 / PRECISION, start_digits);
+            encode_index_int(ts.span_start as u64 / Self::PRECISION, start_digits);
             encode_index_int(duration(&ts), duration_digits);
         }
 
         out
+    }
+
+    /// Looks up a match position (byte offset inside `texts`) and returns the
+    /// corresponding time span. Panics if `texts` is empty, i.e. if there is
+    /// no way there is a match inside that field.
+    pub(crate) fn lookup(&self, match_pos: usize) -> TimeSpan {
+        let index = &self.text_timespan_index.as_bytes();
+
+        assert!(match_pos < self.texts.len());
+        assert!(index.len() >= 3);
+
+        let offset_digits = index[0] - b'0' + 1;
+        let start_digits = index[1] - b'0' + 1;
+        let duration_digits = index[2] - b'0' + 1;
+        let entry_len = (offset_digits + start_digits + duration_digits) as usize;
+
+
+        let index = &index[3..];
+        assert!(index.len() % entry_len == 0, "broken index: incorrect length");
+
+
+        // Decodes a base64 encoded integer with `digits` many digits from the index.
+        let decode_index_int = |start_idx: usize, digits: u8| -> u64 {
+            // Least significant digits comes first, so we iterate in reverse
+            // and multiply by 64 each time.
+            let mut out = 0;
+            for offset in (0..digits).rev() {
+                let digit = base64_decode(index[start_idx + offset as usize])
+                    .expect("invalid base64 digit in index");
+                out = out * 64 + digit as u64;
+            }
+            out
+        };
+
+        // Perform binary search over the index. We treat `entry_len` bytes in
+        // the index as one item here.
+        let entry_idx = (|| {
+            let needle = match_pos as u64;
+
+            let num_entries = index.len() / entry_len;
+            let mut size = num_entries;
+            let mut left = 0;
+            let mut right = size;
+            while left < right {
+                let mid = left + size / 2;
+                let v = decode_index_int(mid * entry_len, offset_digits);
+
+                // This binary search isn't for an exact value but for a range.
+                // We want to find the entry with a "offset" value of <= needle,
+                // and where the next entry has an "offset" value > needle.
+                if needle < v {
+                    // Needle is smaller than the offset value -> we have to
+                    // look in the left half.
+                    right = mid;
+                } else if needle == v || mid + 1 == num_entries {
+                    // Either the needle matches the offset value
+                    // (obvious success) or it is larger and we are looking at
+                    // the last entry. In that case, we also return the last
+                    // entry.
+                    return mid;
+                } else {
+                    // In this case, the needle is larger than the offset value,
+                    // so we check if it is smaller than the next entry's
+                    // offset value. If so, we found the correct entry,
+                    // otherwise recurse on right half.
+                    let next_v = decode_index_int((mid + 1) * entry_len, offset_digits);
+                    if needle < next_v {
+                        return mid;
+                    }
+                    left = mid + 1;
+                }
+
+                size = right - left;
+            }
+
+            // By construction, the first entry in the index always has the
+            // offset 0, and we just return the last entry if the needle is
+            // larger than the largest offset value.
+            unreachable!()
+        })();
+
+        let start_idx = entry_idx * entry_len + offset_digits as usize;
+        let duration_idx = entry_idx * entry_len + offset_digits as usize + start_digits as usize;
+        TimeSpan {
+            start: (decode_index_int(start_idx, start_digits) * Self::PRECISION) as f64,
+            duration: (decode_index_int(duration_idx, duration_digits) * Self::PRECISION) as f64,
+        }
     }
 }
