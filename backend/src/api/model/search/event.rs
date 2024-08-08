@@ -25,17 +25,27 @@ pub(crate) struct SearchEvent {
     pub is_live: bool,
     pub audio_only: bool,
     pub host_realms: Vec<search::Realm>,
-    pub timespan_matches: Vec<TimeSpan>,
+    pub text_matches: Vec<TextMatch>,
 }
 
+/// A match inside an event's texts while searching.
 #[derive(Debug, GraphQLObject)]
-pub struct TimeSpan {
+pub struct TextMatch {
     /// Start of this timespan in number of milliseconds from the beginning of
     /// the video.
     pub start: f64,
 
     /// Duration of this timespan in number of milliseconds.
     pub duration: f64,
+
+    /// The text containing the match, with some context
+    pub text: String,
+
+    /// Byte offset inside `text` where the match starts.
+    pub highlight_start: i32,
+
+    /// How many bytes of `text` should be highlighted.
+    pub highlight_length: i32,
 }
 
 impl Node for SearchEvent {
@@ -46,8 +56,8 @@ impl Node for SearchEvent {
 
 impl SearchEvent {
     pub(crate) fn new(src: search::Event, text_matches: &[MatchRange]) -> Self {
-        let timespan_matches = text_matches.iter()
-            .map(|m| src.text_index.lookup(m.start))
+        let text_matches = text_matches.iter()
+            .map(|m| src.text_index.lookup(m))
             .collect();
         Self {
             id: Id::search_event(src.id.0),
@@ -64,7 +74,7 @@ impl SearchEvent {
             is_live: src.is_live,
             audio_only: src.audio_only,
             host_realms: src.host_realms,
-            timespan_matches,
+            text_matches,
         }
     }
 }

@@ -2,13 +2,13 @@ use std::{cmp::max, collections::BTreeMap};
 
 use chrono::{DateTime, Utc};
 use fallible_iterator::FallibleIterator;
-use meilisearch_sdk::indexes::Index;
+use meilisearch_sdk::{indexes::Index, MatchRange};
 use postgres_types::FromSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
 use crate::{
-    api::model::search::TimeSpan,
+    api::model::search::TextMatch,
     db::{types::{Key, TimespanText},
     util::{collect_rows_mapped, impl_from_db}},
     prelude::*,
@@ -157,11 +157,12 @@ impl SearchTimespan {
         }
     }
 
-    fn to_api(self) -> TimeSpan {
-        TimeSpan {
-            start: (self.start * Self::PRECISION) as f64,
-            duration: (self.duration * Self::PRECISION) as f64,
-        }
+    fn api_start(&self) -> f64 {
+        (self.start * Self::PRECISION) as f64
+    }
+
+    fn api_duration(&self) -> f64 {
+        (self.duration * Self::PRECISION) as f64
     }
 }
 
@@ -210,10 +211,10 @@ impl TextSearchIndex {
     /// Looks up a match position (byte offset inside `texts`) and returns the
     /// corresponding time span. Panics if `texts` is empty, i.e. if there is
     /// no way there is a match inside that field.
-    pub(crate) fn lookup(&self, match_pos: usize) -> TimeSpan {
+    pub(crate) fn lookup(&self, match_range: &MatchRange) -> TextMatch {
         let index = &self.text_timespan_index.as_bytes();
 
-        assert!(match_pos < self.texts.len());
+        assert!(match_range.start  < self.texts.len());
         assert!(index.len() >= 3);
 
         let offset_digits = index[0] - b'0' + 1;
@@ -242,7 +243,7 @@ impl TextSearchIndex {
         // Perform binary search over the index. We treat `entry_len` bytes in
         // the index as one item here.
         let entry_idx = (|| {
-            let needle = match_pos as u64;
+            let needle = match_range.start as u64;
 
             let num_entries = index.len() / entry_len;
             let mut size = num_entries;
@@ -286,12 +287,54 @@ impl TextSearchIndex {
             unreachable!()
         })();
 
+        // Find the original line in which the match is found
+        let (actual_text, highlight_start) = {
+            let max_distance = 100;
+            let separators = &[';', '\n'];
+
+            // First just add a fixed margin around the match
+            let mut margin_start = match_range.start.saturating_sub(max_distance);
+            let mut margin_end = std::cmp::min(
+                match_range.start + match_range.length + max_distance,
+                self.texts.len(),
+            );
+            for _ in 0..3 {
+                if !self.texts.is_char_boundary(margin_start) {
+                    margin_start += 1;
+                }
+                if !self.texts.is_char_boundary(margin_end) {
+                    margin_end -= 1;
+                }
+            }
+
+            let match_start = match_range.start - margin_start;
+            let with_margin = &self.texts[margin_start..margin_end];
+
+            // Search forwards and backwards from the match point.
+            let start = with_margin[..match_start].rfind(separators).map(|p| p + 1).unwrap_or(0);
+            let end = with_margin[match_start..].find(separators)
+                .map(|p| p + match_start)
+                .unwrap_or(with_margin.len());
+            (
+                &with_margin[start..end],
+                match_start - start,
+            )
+        };
+
         let start_idx = entry_idx * entry_len + offset_digits as usize;
         let duration_idx = entry_idx * entry_len + offset_digits as usize + start_digits as usize;
-        SearchTimespan {
+        let span = SearchTimespan {
             start: decode_index_int(start_idx, start_digits),
             duration: decode_index_int(duration_idx, duration_digits),
-        }.to_api()
+        };
+
+        TextMatch {
+            start: span.api_start(),
+            duration: span.api_duration(),
+            text: actual_text.to_owned(),
+            highlight_start: highlight_start as i32,
+            highlight_length: match_range.length as i32,
+        }
     }
 }
 

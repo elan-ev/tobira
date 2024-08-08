@@ -97,7 +97,7 @@ type SearchEvent implements Node {
   isLive: Boolean!
   audioOnly: Boolean!
   hostRealms: [SearchRealm!]!
-  timespanMatches: [TimeSpan!]!
+  textMatches: [TextMatch!]!
 }
 
 input ChildIndex {
@@ -122,14 +122,10 @@ type SyncedSeriesData {
   description: String
 }
 
-type TimeSpan {
-  """
-    Start of this timespan in number of milliseconds from the beginning of
-    the video.
-  """
-  start: Float!
-  "Duration of this timespan in number of milliseconds."
-  duration: Float!
+type EventConnection {
+  pageInfo: EventPageInfo!
+  items: [AuthorizedEvent!]!
+  totalCount: Int!
 }
 
 "A simple realm name: a fixed string."
@@ -189,12 +185,6 @@ type SeriesBlock implements Block & RealmNameSourceBlock {
   realm: Realm!
 }
 
-type EventConnection {
-  pageInfo: EventPageInfo!
-  items: [AuthorizedEvent!]!
-  totalCount: Int!
-}
-
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
 """
@@ -208,6 +198,14 @@ type KnownGroup {
   large: Boolean!
 }
 
+input NewPlaylistBlock {
+  playlist: ID!
+  showTitle: Boolean!
+  showMetadata: Boolean!
+  order: VideoListOrder!
+  layout: VideoListLayout!
+}
+
 type SyncedEventData implements Node {
   updated: DateTimeUtc!
   startTime: DateTimeUtc
@@ -218,14 +216,6 @@ type SyncedEventData implements Node {
   thumbnail: String
   captions: [Caption!]!
   segments: [Segment!]!
-}
-
-input NewPlaylistBlock {
-  playlist: ID!
-  showTitle: Boolean!
-  showMetadata: Boolean!
-  order: VideoListOrder!
-  layout: VideoListLayout!
 }
 
 input NewVideoBlock {
@@ -345,6 +335,23 @@ interface Node {
 
 type SeriesSearchResults {
   items: [SearchSeries!]!
+}
+
+"A match inside an event's texts while searching."
+type TextMatch {
+  """
+    Start of this timespan in number of milliseconds from the beginning of
+    the video.
+  """
+  start: Float!
+  "Duration of this timespan in number of milliseconds."
+  duration: Float!
+  "The text containing the match, with some context"
+  text: String!
+  "Byte offset inside `text` where the match starts."
+  highlightStart: Int!
+  "How many bytes of `text` should be highlighted."
+  highlightLength: Int!
 }
 
 type Track {

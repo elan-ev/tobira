@@ -124,6 +124,8 @@ impl User {
 
         if let Some(user) = &mut out {
             user.add_default_roles();
+            // TODO: consider not awaiting here. The result is not important and
+            // we can finish the rest of the API in the meantime.
             ctx.auth_caches.user.upsert_user_info(user, db).await;
         }
 
