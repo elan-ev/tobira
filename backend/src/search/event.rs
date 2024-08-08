@@ -1,4 +1,4 @@
-use std::{cmp::{max, min}, collections::BTreeMap};
+use std::{cmp::{max, min}, collections::{BTreeMap, HashMap}};
 
 use chrono::{DateTime, Utc};
 use fallible_iterator::FallibleIterator;
@@ -8,7 +8,7 @@ use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
 use crate::{
-    api::model::search::TextMatch,
+    api::model::search::{ByteSpan, TextMatch},
     db::{types::{Key, TimespanText},
     util::{collect_rows_mapped, impl_from_db}},
     prelude::*,
@@ -209,40 +209,24 @@ impl TextSearchIndex {
     }
 
     /// Looks up a match position (byte offset inside `texts`) and returns the
-    /// corresponding time span. Panics if `texts` is empty, i.e. if there is
-    /// no way there is a match inside that field.
-    pub(crate) fn lookup(&self, match_range: &MatchRange) -> TextMatch {
-        let index = &self.text_timespan_index.as_bytes();
+    /// index of the entry in this index. Panics if `texts` is empty, i.e. if
+    /// there is no way there is a match inside that field.
+    fn lookup(&self, match_range: &MatchRange) -> usize {
+        let lens = self.index_lengths();
+        let index = self.index_entries();
+        let entry_len = lens.entry_len;
 
-        assert!(match_range.start  < self.texts.len());
-        assert!(index.len() >= 3);
-
-        let offset_digits = index[0] - b'0' + 1;
-        let start_digits = index[1] - b'0' + 1;
-        let duration_digits = index[2] - b'0' + 1;
-        let entry_len = (offset_digits + start_digits + duration_digits) as usize;
-
-
-        let index = &index[3..];
+        assert!(match_range.start < self.texts.len());
         assert!(index.len() % entry_len == 0, "broken index: incorrect length");
 
-
-        // Decodes a base64 encoded integer with `digits` many digits from the index.
-        let decode_index_int = |start_idx: usize, digits: u8| -> u64 {
-            // Least significant digits comes first, so we iterate in reverse
-            // and multiply by 64 each time.
-            let mut out = 0;
-            for offset in (0..digits).rev() {
-                let digit = base64_decode(index[start_idx + offset as usize])
-                    .expect("invalid base64 digit in index");
-                out = out * 64 + digit as u64;
-            }
-            out
+        let decode_byte_offset = |slot: usize| -> u64 {
+            Self::decode_index_int(&index[slot * entry_len..][..lens.offset_digits as usize])
         };
+
 
         // Perform binary search over the index. We treat `entry_len` bytes in
         // the index as one item here.
-        let entry_idx = (|| {
+        (|| {
             let needle = match_range.start as u64;
 
             let num_entries = index.len() / entry_len;
@@ -251,7 +235,7 @@ impl TextSearchIndex {
             let mut right = size;
             while left < right {
                 let mid = left + size / 2;
-                let v = decode_index_int(mid * entry_len, offset_digits);
+                let v = decode_byte_offset(mid);
 
                 // This binary search isn't for an exact value but for a range.
                 // We want to find the entry with a "offset" value of <= needle,
@@ -271,7 +255,7 @@ impl TextSearchIndex {
                     // so we check if it is smaller than the next entry's
                     // offset value. If so, we found the correct entry,
                     // otherwise recurse on right half.
-                    let next_v = decode_index_int((mid + 1) * entry_len, offset_digits);
+                    let next_v = decode_byte_offset(mid + 1);
                     if needle < next_v {
                         return mid;
                     }
@@ -285,57 +269,170 @@ impl TextSearchIndex {
             // offset 0, and we just return the last entry if the needle is
             // larger than the largest offset value.
             unreachable!()
-        })();
+        })()
+    }
 
-        // Find the original line in which the match is found
-        let (actual_text, highlight_start) = {
-            let max_distance = 100;
-            let separators = &[';', '\n'];
+    /// Returns the timespan of the given slot.
+    fn timespan_of_slot(&self, slot: usize) -> SearchTimespan {
+        let lens = self.index_lengths();
+        let start_idx = slot * lens.entry_len as usize + lens.offset_digits as usize;
+        let duration_idx = start_idx + lens.start_digits as usize;
 
-            // First just add a fixed margin around the match
-            let mut margin_start = match_range.start.saturating_sub(max_distance);
-            let mut margin_end = std::cmp::min(
-                match_range.start + match_range.length + max_distance,
-                self.texts.len(),
-            );
-            for _ in 0..3 {
-                if !self.texts.is_char_boundary(margin_start) {
-                    margin_start += 1;
-                }
-                if !self.texts.is_char_boundary(margin_end) {
-                    margin_end -= 1;
-                }
-            }
+        let start_bytes = &self.index_entries()[start_idx..][..lens.start_digits as usize];
+        let duration_bytes = &self.index_entries()[duration_idx..][..lens.duration_digits as usize];
 
-            let match_start = match_range.start - margin_start;
-            let with_margin = &self.texts[margin_start..margin_end];
-
-            // Search forwards and backwards from the match point.
-            let start = with_margin[..match_start].rfind(separators).map(|p| p + 1).unwrap_or(0);
-            let end = with_margin[match_start..].find(separators)
-                .map(|p| p + match_start)
-                .unwrap_or(with_margin.len());
-            (
-                &with_margin[start..end],
-                match_start - start,
-            )
-        };
-
-        let start_idx = entry_idx * entry_len + offset_digits as usize;
-        let duration_idx = entry_idx * entry_len + offset_digits as usize + start_digits as usize;
-        let span = SearchTimespan {
-            start: decode_index_int(start_idx, start_digits),
-            duration: decode_index_int(duration_idx, duration_digits),
-        };
-
-        TextMatch {
-            start: span.api_start(),
-            duration: span.api_duration(),
-            text: actual_text.to_owned(),
-            highlight_start: highlight_start as i32,
-            highlight_length: match_range.length as i32,
+        SearchTimespan {
+            start: Self::decode_index_int(start_bytes),
+            duration: Self::decode_index_int(duration_bytes),
         }
     }
+
+    /// Reads the index header and returns the lengths of all fields.
+    fn index_lengths(&self) -> IndexLengths {
+        let index = &self.text_timespan_index.as_bytes();
+
+        let offset_digits = index[0] - b'0' + 1;
+        let start_digits = index[1] - b'0' + 1;
+        let duration_digits = index[2] - b'0' + 1;
+        IndexLengths {
+            offset_digits,
+            start_digits,
+            duration_digits,
+            entry_len: (offset_digits + start_digits + duration_digits) as usize,
+        }
+    }
+
+    /// Returns the main part of the index, the array of entries. Strips the
+    /// header specifying the lengths.
+    fn index_entries(&self) -> &[u8] {
+        &self.text_timespan_index.as_bytes()[3..]
+    }
+
+    /// Decodes a base64 encoded integer.
+    fn decode_index_int(src: &[u8]) -> u64 {
+        // Least significant digits comes first, so we iterate in reverse
+        // and multiply by 64 each time.
+        let mut out = 0;
+        for byte in src.iter().rev() {
+            let digit = base64_decode(*byte).expect("invalid base64 digit in index");
+            out = out * 64 + digit as u64;
+        }
+        out
+    }
+
+    pub(crate) fn resolve_matches(&self, matches: &[MatchRange]) -> Vec<TextMatch> {
+        if matches.is_empty() || self.texts.is_empty() {
+            return Vec::new();
+        }
+
+        // Resolve all matches and then bucket them by the individual text they
+        // belong to.
+        let mut entries = HashMap::new();
+        for match_range in matches {
+            // We ignore super short matches. For example, including `a`
+            // anywhere in the query would result in tons of matches
+            // otherwise.
+            if match_range.length <= 1 {
+                continue;
+            }
+
+            let slot = self.lookup(match_range);
+            let matches = entries.entry(slot as u32).or_insert_with(Vec::new);
+
+            // We only consider a limited number of matches inside the same text
+            // to avoid getting way too large API responses. The frontend cuts
+            // off the text anyway at some point.
+            if matches.len() < 10 {
+                matches.push(match_range);
+            }
+        }
+
+        let mut out = Vec::new();
+
+        for (slot, matches) in entries {
+            let timespan = self.timespan_of_slot(slot as usize);
+
+            // Get the range that includes all matches
+            let full_range = {
+                let mut it = matches.iter();
+                let first = it.next().unwrap();
+                let init = first.start..first.start + first.length;
+                let combined = it.fold(init, |acc, m| {
+                    min(acc.start, m.start)..max(acc.end, m.start + m.length)
+                });
+
+                // Unfortunately, Meili can sometimes return invalid ranges,
+                // slicing into UTF-8 chars, so we also ceil here.
+                let start = ceil_char_boundary(&self.texts, combined.start);
+                let end = ceil_char_boundary(&self.texts, combined.end);
+                start..end
+            };
+
+            // Add a bit of margin to include more context in the text. We only
+            // include context from the same text though, meaning we only go to
+            // the next `;` or `\n`.
+            let range_with_context = {
+                let max_distance = 100;
+                let separators = &[';', '\n'];
+
+                // First just add a fixed margin around the match, as a limit.
+                let margin_start = full_range.start.saturating_sub(max_distance);
+                let margin_end = std::cmp::min(
+                    full_range.end + max_distance,
+                    self.texts.len(),
+                );
+
+                let margin_start = ceil_char_boundary(&self.texts, margin_start);
+                let margin_end = ceil_char_boundary(&self.texts, margin_end);
+
+                // Search forwards and backwards from the match point to find
+                // boundaries of the text.
+                let start = self.texts[margin_start..full_range.start]
+                    .rfind(separators)
+                    .map(|p| margin_start + p + 1)
+                    .unwrap_or(margin_start);
+                let end = self.texts[full_range.end..margin_end]
+                    .find(separators)
+                    .map(|p| full_range.end + p)
+                    .unwrap_or(margin_end);
+                start..end
+            };
+
+            let highlights = matches.iter().map(|m| {
+                ByteSpan {
+                    start: (m.start - range_with_context.start) as i32,
+                    len: m.length as i32,
+                }
+            }).collect();
+
+
+            out.push(TextMatch {
+                start: timespan.api_start(),
+                duration: timespan.api_duration(),
+                text: self.texts[range_with_context].to_owned(),
+                highlights,
+            });
+        }
+
+        out
+    }
+}
+
+fn ceil_char_boundary(s: &str, idx: usize) -> usize {
+    if idx > s.len() {
+        s.len()
+    } else {
+        (0..3).map(|offset| idx + offset)
+            .find(|idx| s.is_char_boundary(*idx))
+            .unwrap()
+    }
+}
+
+struct IndexLengths {
+    offset_digits: u8,
+    start_digits: u8,
+    duration_digits: u8,
+    entry_len: usize,
 }
 
 impl<'a> FromSql<'a> for TextSearchIndex {

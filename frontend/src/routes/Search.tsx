@@ -145,7 +145,12 @@ const query = graphql`
                         endTime
                         created
                         hostRealms { path }
-                        textMatches { start duration text highlightStart highlightLength }
+                        textMatches {
+                            start
+                            duration
+                            text
+                            highlights { start len }
+                        }
                     }
                     ... on SearchSeries {
                         title
@@ -600,26 +605,41 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
                 <WithTooltip
                     key={i}
                     tooltip={(() => {
-                        // Slice the string to highlight the matched text.
-                        const [prefix, highlight, suffix]
-                            = byteSlice(m.text, m.highlightStart, m.highlightLength);
                         const startDuration = formatDuration(m.start);
                         const endDuration = formatDuration(m.start + m.duration);
+
+                        // Slice the string to highlight the matched text.
+                        const textParts = [];
+                        let remainingText = m.text;
+                        let offset = 0;
+                        for (const highlight of m.highlights) {
+                            const highlightStart = highlight.start - offset;
+                            const [prefix, middle, rest]
+                                = byteSlice(remainingText, highlightStart, highlight.len);
+
+                            textParts.push(<span key={offset + 1}>{prefix}</span>);
+                            textParts.push(
+                                <span key={offset} css={{
+                                    color: COLORS.neutral90,
+                                    backgroundColor: COLORS.neutral15,
+                                    borderBottom: "2px solid var(--highlight-color)",
+                                    borderRadius: 2,
+                                }}>{middle}</span>
+                            );
+                            remainingText = rest;
+                            offset = highlight.start + highlight.len;
+                        }
+                        textParts.push(remainingText);
 
                         return <>
                             <div css={{
                                 maxWidth: "min(85vw, 460px)",
                                 paddingLeft: 13,
                                 textIndent: -13,
+                                padding: 1,
+                                ...ellipsisOverflowCss(3),
                             }}>
-                                …{prefix}
-                                <span css={{
-                                    color: COLORS.neutral90,
-                                    backgroundColor: COLORS.neutral15,
-                                    borderBottom: "2px solid var(--highlight-color)",
-                                    borderRadius: 2,
-                                }}>{highlight}</span>
-                                {suffix}…
+                                …{textParts}…
                             </div>
                             <div css={{ textAlign: "center" }}>
                                 {`(${startDuration} – ${endDuration})`}

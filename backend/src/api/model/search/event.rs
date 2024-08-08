@@ -28,6 +28,12 @@ pub(crate) struct SearchEvent {
     pub text_matches: Vec<TextMatch>,
 }
 
+#[derive(Debug, GraphQLObject)]
+pub struct ByteSpan {
+    pub start: i32,
+    pub len: i32,
+}
+
 /// A match inside an event's texts while searching.
 #[derive(Debug, GraphQLObject)]
 pub struct TextMatch {
@@ -41,11 +47,8 @@ pub struct TextMatch {
     /// The text containing the match, with some context
     pub text: String,
 
-    /// Byte offset inside `text` where the match starts.
-    pub highlight_start: i32,
-
-    /// How many bytes of `text` should be highlighted.
-    pub highlight_length: i32,
+    /// Parts of `text` that should be highlighted.
+    pub highlights: Vec<ByteSpan>,
 }
 
 impl Node for SearchEvent {
@@ -56,9 +59,6 @@ impl Node for SearchEvent {
 
 impl SearchEvent {
     pub(crate) fn new(src: search::Event, text_matches: &[MatchRange]) -> Self {
-        let text_matches = text_matches.iter()
-            .map(|m| src.text_index.lookup(m))
-            .collect();
         Self {
             id: Id::search_event(src.id.0),
             series_id: src.series_id.map(|id| Id::search_series(id.0)),
@@ -74,7 +74,7 @@ impl SearchEvent {
             is_live: src.is_live,
             audio_only: src.audio_only,
             host_realms: src.host_realms,
-            text_matches,
+            text_matches: src.text_index.resolve_matches(text_matches),
         }
     }
 }
