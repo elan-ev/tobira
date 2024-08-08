@@ -2,19 +2,16 @@ use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::{borrow::Cow, collections::HashMap, fmt, future};
+use std::{borrow::Cow, fmt};
 
 use crate::{
     api::{
         err::ApiResult,
         util::impl_object_with_dummy_field,
         Context,
-        Id,
-        Node,
         NodeValue
     },
     auth::HasRoles,
-    db::{types::Key, util::select},
     prelude::*,
     search,
 };
@@ -103,21 +100,6 @@ pub(crate) struct ThumbnailInfo {
     pub(crate) thumbnail: Option<String>,
     pub(crate) is_live: bool,
     pub(crate) audio_only: bool,
-}
-
-#[derive(Debug, GraphQLObject)]
-#[graphql(context = Context, impl = NodeValue)]
-pub(crate) struct SearchSeriesExtended {
-    pub(crate) id: Id,
-    pub(crate) title: String,
-    pub(crate) description: Option<String>,
-    pub(crate) thumbnail_info: Vec<ThumbnailInfo>,
-}
-
-impl Node for SearchSeriesExtended {
-    fn id(&self) -> Id {
-        self.id
-    }
 }
 
 
@@ -238,44 +220,6 @@ pub(crate) async fn perform(
     );
     let (event_results, series_results, realm_results) = handle_search_result!(res, SearchOutcome);
 
-    // Get thumbnails for series
-    let ids = series_results.hits.iter()
-        .map(|r| r.result.id.0)
-        .collect::<Vec<_>>();
-
-    let (selection, mapping) = select!(series, is_live, audio_only, thumbnail);
-    let thumbnail_info_query = format!("\
-        select {selection} \
-        from ( \
-            select e.series, e.is_live, e.thumbnail, \
-                not exists ( \
-                    select 1 from unnest(e.tracks) as t where t.resolution is not null \
-                ) as audio_only, \
-                row_number() over ( \
-                    partition by e.series order by e.created desc \
-                ) as row_num \
-            from events e \
-            where e.series = any($1) and (read_roles || 'ROLE_ADMIN'::text) && $2 \
-            and (e.start_time <= current_timestamp or e.start_time is null) \
-        ) as ranked \
-        where row_num <= 3");
-
-    let mut thumbnail_info = HashMap::new();
-    context.db
-        .query_raw(&thumbnail_info_query, dbargs![&ids, &context.auth.roles_vec()])
-        .await?
-        .try_for_each(|row| {
-            let value = ThumbnailInfo {
-                thumbnail: mapping.thumbnail.of(&row),
-                is_live: mapping.is_live.of(&row),
-                audio_only: mapping.audio_only.of(&row),
-            };
-            let key = mapping.series.of::<Key>(&row);
-            thumbnail_info.entry(key).or_insert(vec![]).push(value);
-            future::ready(Ok(()))
-        })
-        .await?;
-
     // Merge results according to Meilis score.
     //
     // TODO: Comparing scores of different indices is not well defined right now.
@@ -285,16 +229,7 @@ pub(crate) async fn perform(
     let events = event_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
     let series = series_results.hits.into_iter()
-        .map(|result| {
-            let series = SearchSeriesExtended {
-                id: Id::search_series(result.result.id.0),
-                title: result.result.title,
-                description: result.result.description,
-                thumbnail_info: thumbnail_info.remove(&result.result.id.0).unwrap_or_default(),
-            };
-            (NodeValue::from(series), result.ranking_score)
-        } 
-    );
+        .map(|result| (NodeValue::from(result.result), result.ranking_score));
     let realms = realm_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
 

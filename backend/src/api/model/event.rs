@@ -227,18 +227,15 @@ impl AuthorizedEvent {
             select {selection} \
             from realms \
             where exists ( \
-                select 1 as contains \
-                from blocks \
-                where realm = realms.id \
-                and ( \
-                    type = 'video' and video = $1 \
-                    or type = 'series' and series = $2 \
-                ) \
+                select from blocks \
+                where realm = realms.id and does_block_make_event_listed(blocks, $1, $2, $3) \
             ) \
         ");
-        context.db.query_mapped(&query, dbargs![&self.key, &self.series], |row| Realm::from_row_start(&row))
-            .await?
-            .pipe(Ok)
+        context.db.query_mapped(
+            &query,
+            dbargs![&self.key, &self.series, &self.opencast_id],
+            |row| Realm::from_row_start(&row)
+        ).await?.pipe(Ok)
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
@@ -255,21 +252,10 @@ impl AuthorizedEvent {
     /// Otherwise, `false` is returned.
     pub(crate) async fn is_referenced_by_realm(&self, path: String, context: &Context) -> ApiResult<bool> {
         let query = "select exists(\
-            select 1 \
-            from blocks \
+            select from blocks \
             join realms on blocks.realm = realms.id \
-            where realms.full_path = $1 \
-                and ( \
-                    blocks.video = $2 or \
-                    blocks.series = $3 or \
-                    blocks.playlist = any( \
-                        select id \
-                        from playlists \
-                        where $4 = any(array(select content_id from unnest(entries))) \
-                    ) \
-                )\
-            )\
-        ";
+            where realms.full_path = $1 and does_block_make_event_listed(blocks, $2, $3, $4) \
+        )";
         context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key, &self.series, &self.opencast_id])
             .await?
             .get::<_, bool>(0)

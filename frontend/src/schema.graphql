@@ -757,19 +757,13 @@ type SearchSeries implements Node {
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
+  thumbnails: [ThumbnailInfo!]!
 }
 
 type ThumbnailInfo {
   thumbnail: String
   isLive: Boolean!
   audioOnly: Boolean!
-}
-
-type SearchSeriesExtended implements Node {
-  id: ID!
-  title: String!
-  description: String
-  thumbnailInfo: [ThumbnailInfo!]!
 }
 
 type User {

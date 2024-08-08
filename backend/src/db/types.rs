@@ -115,6 +115,16 @@ pub struct PlaylistEntry {
     pub content_id: String,
 }
 
+/// Represents the `playlist_entry` type defined in `31-playlists.sql`.
+#[derive(Debug, FromSql, ToSql, Clone, Serialize, Deserialize)]
+#[postgres(name = "search_thumbnail_info")]
+pub struct SearchThumbnailInfo {
+    pub url: Option<String>,
+    pub live: bool,
+    pub audio_only: bool,
+    pub read_roles: Vec<String>,
+}
+
 /// Represents extra metadata in the DB. Is a map from "namespace" to a
 /// `string -> string array` map.
 ///

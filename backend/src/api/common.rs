@@ -10,7 +10,6 @@ use crate::{
             event::AuthorizedEvent, 
             series::Series, 
             realm::Realm, 
-            search::SearchSeriesExtended,
             playlist::AuthorizedPlaylist,
         },
     },
@@ -34,7 +33,6 @@ use crate::{
         SearchEvent,
         SearchRealm,
         SearchSeries,
-        SearchSeriesExtended,
         SearchPlaylist,
     ]
 )]

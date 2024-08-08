@@ -4,7 +4,7 @@ use tokio_postgres::GenericClient;
 
 use crate::{
     prelude::*,
-    db::{types::Key, util::{collect_rows_mapped, impl_from_db}},
+    db::{types::{Key, SearchThumbnailInfo}, util::{collect_rows_mapped, impl_from_db}},
 };
 
 use super::{realm::Realm, SearchId, IndexItem, IndexItemKind, util};
@@ -26,6 +26,7 @@ pub(crate) struct Series {
     // store it explicitly to filter for this condition in Meili.
     pub(crate) listed: bool,
     pub(crate) host_realms: Vec<Realm>,
+    pub(crate) thumbnails: Vec<SearchThumbnailInfo>,
 }
 
 impl IndexItem for Series {
@@ -40,13 +41,12 @@ impl_from_db!(
     select: {
         search_series.{
             id, opencast_id, title, description, read_roles, write_roles,
-            listed_via_events, host_realms,
+            host_realms, thumbnails
         },
     },
     |row| {
         let host_realms = row.host_realms::<Vec<Realm>>();
-        let listed = host_realms.iter().any(|realm| !realm.is_user_realm())
-            || row.listed_via_events();
+        let listed = host_realms.iter().any(|realm| !realm.is_user_realm());
         Self {
             id: row.id(),
             opencast_id: row.opencast_id(),
@@ -56,6 +56,7 @@ impl_from_db!(
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed,
             host_realms,
+            thumbnails: row.thumbnails(),
         }
     }
 );
