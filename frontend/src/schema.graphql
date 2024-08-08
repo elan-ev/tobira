@@ -348,10 +348,8 @@ type TextMatch {
   duration: Float!
   "The text containing the match, with some context"
   text: String!
-  "Byte offset inside `text` where the match starts."
-  highlightStart: Int!
-  "How many bytes of `text` should be highlighted."
-  highlightLength: Int!
+  "Parts of `text` that should be highlighted."
+  highlights: [ByteSpan!]!
 }
 
 type Track {
@@ -369,6 +367,11 @@ type SearchResults {
 
 input UpdateTextBlock {
   content: String
+}
+
+type ByteSpan {
+  start: Int!
+  len: Int!
 }
 
 union Playlist = AuthorizedPlaylist | NotAllowed
@@ -828,14 +831,14 @@ input NewRealm {
   pathSegment: String!
 }
 
-type Segment {
-  uri: String!
-  startTime: Float!
-}
-
 enum SortDirection {
   ASCENDING
   DESCENDING
+}
+
+type Segment {
+  uri: String!
+  startTime: Float!
 }
 
 "Services a user can be pre-authenticated for using a JWT"
