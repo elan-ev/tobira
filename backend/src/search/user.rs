@@ -7,7 +7,7 @@ use crate::{
     db::{types::Key, util::{collect_rows_mapped, impl_from_db}},
 };
 
-use super::{SearchId, IndexItem, IndexItemKind, util};
+use super::{util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
 
 
 
@@ -64,10 +64,9 @@ impl User {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(
-        index,
-        "user",
-        &["display_name"],
-        &[],
-    ).await
+    util::lazy_set_special_attributes(index, "user", FieldAbilities {
+        searchable: &["display_name"],
+        filterable: &[],
+        sortable: &[],
+    }).await
 }

@@ -310,13 +310,15 @@ pub(crate) async fn all_events(
         }
     }).to_string();
 
-    let res = context.search.event_index.search()
-        .with_query(user_query)
-        .with_limit(50)
-        .with_show_matches_position(true)
-        .with_filter(&filter)
-        .execute::<search::Event>()
-        .await;
+    let mut query = context.search.event_index.search();
+    query.with_query(user_query);
+    query.with_limit(50);
+    query.with_show_matches_position(true);
+    query.with_filter(&filter);
+    if user_query.is_empty() {
+        query.with_sort(&["updated_timestamp:desc"]);
+    }
+    let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
     let items = results.hits.into_iter().map(|h| h.result).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
@@ -359,13 +361,15 @@ pub(crate) async fn all_series(
         }
     }).to_string();
 
-    let res = context.search.series_index.search()
-        .with_query(user_query)
-        .with_show_matches_position(true)
-        .with_filter(&filter)
-        .with_limit(50)
-        .execute::<search::Series>()
-        .await;
+    let mut query = context.search.series_index.search();
+    query.with_query(user_query);
+    query.with_show_matches_position(true);
+    query.with_filter(&filter);
+    query.with_limit(50);
+    if user_query.is_empty() {
+        query.with_sort(&["updated_timestamp:desc"]);
+    }
+    let res = query.execute::<search::Series>().await;
     let results = handle_search_result!(res, SeriesSearchOutcome);
     let items = results.hits.into_iter().map(|h| h.result).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
@@ -401,13 +405,15 @@ pub(crate) async fn all_playlists(
         }
     }).to_string();
 
-    let res = context.search.playlist_index.search()
-        .with_query(user_query)
-        .with_show_matches_position(true)
-        .with_filter(&filter)
-        .with_limit(50)
-        .execute::<search::Playlist>()
-        .await;
+    let mut query = context.search.playlist_index.search();
+    query.with_query(user_query);
+    query.with_show_matches_position(true);
+    query.with_filter(&filter);
+    query.with_limit(50);
+    if user_query.is_empty() {
+        query.with_sort(&["updated_timestamp:desc"]);
+    }
+    let res = query.execute::<search::Playlist>().await;
     let results = handle_search_result!(res, PlaylistSearchOutcome);
     let items = results.hits.into_iter().map(|h| h.result).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);

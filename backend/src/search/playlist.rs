@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use meilisearch_sdk::indexes::Index;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
@@ -7,7 +8,7 @@ use crate::{
     db::{types::Key, util::{collect_rows_mapped, impl_from_db}},
 };
 
-use super::{realm::Realm, SearchId, IndexItem, IndexItemKind, util};
+use super::{realm::Realm, util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
 
 
 
@@ -18,6 +19,8 @@ pub(crate) struct Playlist {
     pub(crate) title: String,
     pub(crate) description: Option<String>,
     pub(crate) creator: Option<String>,
+    pub(crate) updated: DateTime<Utc>,
+    pub(crate) updated_timestamp: i64,
 
     // See `search::Event::*_roles` for notes that also apply here.
     pub(crate) read_roles: Vec<String>,
@@ -43,17 +46,20 @@ impl_from_db!(
             id, opencast_id,
             title, description, creator,
             read_roles, write_roles,
-            host_realms,
+            host_realms, updated,
         },
     },
     |row| {
         let host_realms = row.host_realms::<Vec<Realm>>();
+        let updated = row.updated();
         Self {
             id: row.id(),
             opencast_id: row.opencast_id(),
             title: row.title(),
             description: row.description(),
             creator: row.creator(),
+            updated,
+            updated_timestamp: updated.timestamp(),
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed: host_realms.iter().any(|realm| !realm.is_user_realm()),
@@ -84,10 +90,9 @@ impl Playlist {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(
-        index,
-        "playlist",
-        &["title", "description"],
-        &["read_roles", "write_roles"],
-    ).await
+    util::lazy_set_special_attributes(index, "playlist", FieldAbilities {
+        searchable: &["title", "description"],
+        filterable: &["read_roles", "write_roles"],
+        sortable: &["updated_timestamp"],
+    }).await
 }
