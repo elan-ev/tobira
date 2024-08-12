@@ -316,7 +316,7 @@ pub(crate) async fn all_events(
     query.with_show_matches_position(true);
     query.with_filter(&filter);
     if user_query.is_empty() {
-        query.with_sort(&["created_timestamp:desc"]);
+        query.with_sort(&["updated_timestamp:desc"]);
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
@@ -367,7 +367,7 @@ pub(crate) async fn all_series(
     query.with_filter(&filter);
     query.with_limit(50);
     if user_query.is_empty() {
-        query.with_sort(&["created_timestamp:desc"]);
+        query.with_sort(&["updated_timestamp:desc"]);
     }
     let res = query.execute::<search::Series>().await;
     let results = handle_search_result!(res, SeriesSearchOutcome);

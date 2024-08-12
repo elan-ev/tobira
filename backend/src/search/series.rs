@@ -18,6 +18,8 @@ pub(crate) struct Series {
     pub(crate) opencast_id: String,
     pub(crate) title: String,
     pub(crate) description: Option<String>,
+    pub(crate) updated: DateTime<Utc>,
+    pub(crate) updated_timestamp: i64,
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) created_timestamp: Option<i64>,
 
@@ -44,18 +46,21 @@ impl_from_db!(
     select: {
         search_series.{
             id, opencast_id, title, description, read_roles, write_roles,
-            host_realms, thumbnails, created,
+            host_realms, thumbnails, created, updated,
         },
     },
     |row| {
         let host_realms = row.host_realms::<Vec<Realm>>();
         let listed = host_realms.iter().any(|realm| !realm.is_user_realm());
+        let updated = row.updated();
         let created = row.created();
         Self {
             id: row.id(),
             opencast_id: row.opencast_id(),
             title: row.title(),
             description: row.description(),
+            updated,
+            updated_timestamp: updated.timestamp(),
             created,
             created_timestamp: created.map(|dt| dt.timestamp()),
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
@@ -92,6 +97,6 @@ pub(super) async fn prepare_index(index: &Index) -> Result<()> {
     util::lazy_set_special_attributes(index, "series", FieldAbilities {
         searchable: &["title", "description"],
         filterable: &["listed", "read_roles", "write_roles"],
-        sortable: &["created_timestamp"],
+        sortable: &["updated_timestamp"],
     }).await
 }

@@ -78,7 +78,7 @@ create view search_events as
         events.series, series.title as series_title,
         events.title, events.description, events.creators,
         events.thumbnail, events.duration,
-        events.is_live, events.created, events.start_time, events.end_time,
+        events.is_live, events.updated, events.created, events.start_time, events.end_time,
         events.read_roles, events.write_roles,
         coalesce(
             array_agg(
