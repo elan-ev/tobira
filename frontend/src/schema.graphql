@@ -597,6 +597,19 @@ type Mutation {
     the list. The first item is sub-realm of the root realm.
   """
   createRealmLineage(realms: [RealmLineageComponent!]!): CreateRealmLineageOutcome!
+  "Stores series information in Tobira's DB, so it can be mounted without having to be harvested first."
+  announceSeries(series: NewSeries!): Series!
+  "Adds a series block to an empty realm and makes that realm derive its name from said series."
+  addSeriesMountPoint(seriesOcId: String!, targetPath: String!): Realm!
+  """
+    Removes the series block of given series from the given realm.
+    If the realm has sub-realms and used to derive its name from the block,
+    it is renamed to its path segment. If the realm has no sub-realms,
+    it is removed completely.
+    Errors if the given realm does not have exactly one series block referring to the
+    specified series.
+  """
+  removeSeriesMountPoint(seriesOcId: String!, path: String!): RemoveMountedSeriesOutcome!
   """
     Atomically mount a series into an (empty) realm.
     Creates all the necessary realms on the path to the target
@@ -726,6 +739,8 @@ type EmptyQuery {
   """
   dummy: Boolean
 }
+
+union RemoveMountedSeriesOutcome = RemovedRealm | RemovedBlock
 
 union PlaylistSearchOutcome = SearchUnavailable | PlaylistSearchResults
 

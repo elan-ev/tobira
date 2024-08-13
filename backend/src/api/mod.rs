@@ -6,12 +6,12 @@ use self::{
     subscription::Subscription,
 };
 
+pub(crate) mod err;
 pub(crate) mod util;
 pub(crate) mod model;
 
 mod common;
 mod context;
-mod err;
 mod id;
 mod jwt;
 mod mutation;
