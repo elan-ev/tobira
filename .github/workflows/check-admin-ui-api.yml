@@ -1,6 +1,6 @@
 name: Admin UI API Check
 on:
-  pull_request:
+  pull_request_target:
     paths:
     - "backend/**"
     - ".github/workflows/check-admin-ui-api.yml"
