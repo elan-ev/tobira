@@ -8,11 +8,15 @@ on:
 jobs:
   main:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
     steps:
       - name: Check out the code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 2
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
 
       - name: Install GraphQL Inspector
         run: |
