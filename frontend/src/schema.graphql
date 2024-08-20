@@ -317,6 +317,11 @@ type AuthorizedEvent implements Node {
   readRoles: [String!]!
   "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
   writeRoles: [String!]!
+  """
+    This includes all read roles (and by extension write roles,
+    as they are a subset of read roles).
+  """
+  previewRoles: [String!]!
   syncedData: SyncedEventData
   "Whether the current user has write access to this event."
   canWrite: Boolean!
@@ -703,7 +708,7 @@ type Query {
 
     - Events that the user has write access to (listed & unlisted).
     - If `writable_only` is false, this also searches through videos that
-      the user has read access to. However, unless the user has the
+      the user has preview access to. However, unless the user has the
       privilege to find unlisted events, only listed ones are searched.
   """
   searchAllEvents(query: String!, writableOnly: Boolean!): EventSearchOutcome!
