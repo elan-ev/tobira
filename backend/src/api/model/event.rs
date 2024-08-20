@@ -37,6 +37,7 @@ pub(crate) struct AuthorizedEvent {
     pub(crate) metadata: ExtraMetadata,
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
+    pub(crate) preview_roles: Vec<String>,
 
     pub(crate) synced_data: Option<SyncedEventData>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
@@ -64,7 +65,7 @@ impl_from_db!(
             title, description, duration, creators, thumbnail, metadata,
             created, updated, start_time, end_time,
             tracks, captions, segments,
-            read_roles, write_roles,
+            read_roles, write_roles, preview_roles,
             tobira_deletion_timestamp,
         },
     },
@@ -81,6 +82,7 @@ impl_from_db!(
             metadata: row.metadata(),
             read_roles: row.read_roles::<Vec<String>>(),
             write_roles: row.write_roles::<Vec<String>>(),
+            preview_roles: row.preview_roles::<Vec<String>>(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             synced_data: match row.state::<EventState>() {
                 EventState::Ready => Some(SyncedEventData {
@@ -198,6 +200,11 @@ impl AuthorizedEvent {
     fn write_roles(&self) -> &[String] {
         &self.write_roles
     }
+    /// This includes all read roles (and by extension write roles,
+    /// as they are a subset of read roles).
+    fn preview_roles(&self) -> &[String] {
+        &self.preview_roles
+    }
 
     fn synced_data(&self) -> &Option<SyncedEventData> {
         &self.synced_data
@@ -306,7 +313,7 @@ impl AuthorizedEvent {
             .await?
             .map(|row| {
                 let event = Self::from_row_start(&row);
-                if context.auth.overlaps_roles(&event.read_roles) {
+                if context.auth.overlaps_roles(&event.preview_roles) {
                     Event::Event(event)
                 } else {
                     Event::NotAllowed(NotAllowed)
@@ -327,7 +334,7 @@ impl AuthorizedEvent {
         context.db
             .query_mapped(&query, dbargs![&series_key], |row| {
                 let event = Self::from_row_start(&row);
-                if !context.auth.overlaps_roles(&event.read_roles) {
+                if !context.auth.overlaps_roles(&event.preview_roles) {
                     return VideoListEntry::NotAllowed(NotAllowed);
                 }
 
