@@ -78,7 +78,10 @@ const query = graphql`
                 items {
                     id title created description isLive tobiraDeletionTimestamp
                     syncedData {
-                        duration thumbnail updated startTime endTime
+                        duration updated startTime endTime
+                    }
+                    authorizedData {
+                        thumbnail
                         tracks { resolution }
                     }
                 }

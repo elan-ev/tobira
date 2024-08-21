@@ -47,7 +47,8 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                     created
                     isLive
                     creators
-                    syncedData { thumbnail duration startTime endTime }
+                    syncedData { duration startTime endTime }
+                    authorizedData { thumbnail }
                 }
             }
             showTitle
@@ -166,6 +167,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                     // starting with `ev`.
                     id: item.id.replace(/^es/, "ev"),
                     syncedData: item,
+                    authorizedData: item,
                     series: item.seriesTitle == null ? null : { title: item.seriesTitle },
                 })));
             },
@@ -197,6 +199,9 @@ const formatOption = (event: Option, t: TFunction) => (
                     ...event,
                     syncedData: event.syncedData && {
                         ...event.syncedData,
+                    },
+                    authorizedData: event.authorizedData && {
+                        ...event.authorizedData,
                         audioOnly: false, // TODO
                     },
                 }}

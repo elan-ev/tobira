@@ -103,6 +103,8 @@ const embedEventFragment = graphql`
                 startTime
                 endTime
                 duration
+            }
+            authorizedData {
                 thumbnail
                 tracks { uri flavor mimetype resolution isMaster }
                 captions { uri lang }
@@ -151,7 +153,14 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
         </PlayerPlaceholder>;
     }
 
-    return <Player event={event} />;
+    if (!event.authorizedData) {
+        return <>nop</>; // TODO
+    }
+
+    return <Player event={{
+        ...event,
+        authorizedData: event.authorizedData,
+    }} />;
 };
 
 export const BlockEmbedRoute = makeRoute({

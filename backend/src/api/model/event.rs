@@ -40,6 +40,7 @@ pub(crate) struct AuthorizedEvent {
     pub(crate) preview_roles: Vec<String>,
 
     pub(crate) synced_data: Option<SyncedEventData>,
+    pub(crate) authorized_data: Option<AuthorizedEventData>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
@@ -51,6 +52,10 @@ pub(crate) struct SyncedEventData {
 
     /// Duration in milliseconds
     duration: i64,
+}
+
+#[derive(Debug)]
+pub(crate) struct AuthorizedEventData {
     tracks: Vec<Track>,
     thumbnail: Option<String>,
     captions: Vec<Caption>,
@@ -90,6 +95,11 @@ impl_from_db!(
                     start_time: row.start_time(),
                     end_time: row.end_time(),
                     duration: row.duration(),
+                }),
+                EventState::Waiting => None,
+            },
+            authorized_data: match row.state::<EventState>() {
+                EventState::Ready => Some(AuthorizedEventData {
                     thumbnail: row.thumbnail(),
                     tracks: row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect(),
                     captions: row.captions::<Vec<EventCaption>>()
@@ -152,6 +162,11 @@ impl SyncedEventData {
     fn duration(&self) -> f64 {
         self.duration as f64
     }
+}
+
+/// Represents event data that is only accessible for users with read access.
+#[graphql_object(Context = Context, impl = NodeValue)]
+impl AuthorizedEventData {
     fn tracks(&self) -> &[Track] {
         &self.tracks
     }
@@ -208,6 +223,15 @@ impl AuthorizedEvent {
 
     fn synced_data(&self) -> &Option<SyncedEventData> {
         &self.synced_data
+    }
+
+    /// Returns the authorized event data if the user has read access.
+    fn authorized_data(&self, context: &Context) -> Option<&AuthorizedEventData> {
+        if context.auth.overlaps_roles(&self.read_roles) {
+            self.authorized_data.as_ref()
+        } else {
+            None
+        }
     }
 
     /// Whether the current user has write access to this event.
