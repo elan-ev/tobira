@@ -531,10 +531,12 @@ const SearchEvent: React.FC<EventItem> = ({
                         isLive,
                         created,
                         syncedData: {
-                            thumbnail,
                             duration,
                             startTime,
                             endTime,
+                        },
+                        authorizedData: {
+                            thumbnail,
                             audioOnly,
                         },
                     }}
@@ -631,7 +633,7 @@ const slidePreviewQuery = graphql`
         eventById(id: $id) {
             ...on AuthorizedEvent {
                 id
-                syncedData {
+                authorizedData {
                     segments { startTime uri }
                 }
             }
@@ -750,7 +752,7 @@ const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImagePro
     textMatch,
 }) => {
     const data = usePreloadedQuery(slidePreviewQuery, queryRef);
-    const segments = data.eventById?.syncedData?.segments ?? [];
+    const segments = data.eventById?.authorizedData?.segments ?? [];
 
     // Find the segment with its start time closest to the `start` of the text
     // match, while still being smaller.

@@ -56,11 +56,9 @@ export const videoListEventFragment = graphql`
         isLive
         description
         series { title id }
-        syncedData {
-            duration
+        syncedData { duration startTime endTime }
+        authorizedData {
             thumbnail
-            startTime
-            endTime
             tracks { resolution }
         }
     }

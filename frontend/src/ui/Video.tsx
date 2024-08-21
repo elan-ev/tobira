@@ -14,9 +14,11 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
         created: string;
         syncedData?: {
             duration: number;
-            thumbnail?: string | null;
             startTime?: string | null;
             endTime?: string | null;
+        } | null;
+        authorizedData?: {
+            thumbnail?: string | null;
         } & (
             {
                 tracks: readonly { resolution?: readonly number[] | null }[];
@@ -42,19 +44,19 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
-    const audioOnly = event.syncedData
+    const audioOnly = event.authorizedData
         ? (
-            "audioOnly" in event.syncedData
-                ? event.syncedData.audioOnly
-                : event.syncedData.tracks.every(t => t.resolution == null)
+            "audioOnly" in event.authorizedData
+                ? event.authorizedData.audioOnly
+                : event.authorizedData.tracks.every(t => t.resolution == null)
         )
         : false;
 
     let inner;
-    if (event.syncedData?.thumbnail != null && !deletionIsPending) {
+    if (event.authorizedData?.thumbnail != null && !deletionIsPending) {
         // We have a proper thumbnail.
         inner = <ThumbnailImg
-            src={event.syncedData.thumbnail}
+            src={event.authorizedData.thumbnail}
             alt={t("video.thumbnail-for", { video: event.title })}
         />;
     } else {

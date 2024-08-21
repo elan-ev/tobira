@@ -213,10 +213,6 @@ type SyncedEventData implements Node {
   endTime: DateTimeUtc
   "Duration in ms."
   duration: Float!
-  tracks: [Track!]!
-  thumbnail: String
-  captions: [Caption!]!
-  segments: [Segment!]!
 }
 
 input NewPlaylistBlock {
@@ -323,6 +319,8 @@ type AuthorizedEvent implements Node {
   """
   previewRoles: [String!]!
   syncedData: SyncedEventData
+  "Returns the authorized event data if the user has read access."
+  authorizedData: AuthorizedEventData
   "Whether the current user has write access to this event."
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTimeUtc
@@ -397,11 +395,6 @@ type SearchResults {
 
 input UpdateTextBlock {
   content: String
-}
-
-type ByteSpan {
-  start: Int!
-  len: Int!
 }
 
 union Playlist = AuthorizedPlaylist | NotAllowed
@@ -495,6 +488,11 @@ type Realm implements Node {
     and non-critical settings.
   """
   canCurrentUserModerate: Boolean!
+}
+
+type ByteSpan {
+  start: Int!
+  len: Int!
 }
 
 "A block just showing the list of videos in an Opencast playlist"
@@ -760,6 +758,14 @@ type EmptyQuery {
 }
 
 union RemoveMountedSeriesOutcome = RemovedRealm | RemovedBlock
+
+"Represents event data that is only accessible for users with read access."
+type AuthorizedEventData implements Node {
+  tracks: [Track!]!
+  thumbnail: String
+  captions: [Caption!]!
+  segments: [Segment!]!
+}
 
 union PlaylistSearchOutcome = SearchUnavailable | PlaylistSearchResults
 

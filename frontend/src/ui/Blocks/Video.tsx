@@ -38,6 +38,8 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                         updated
                         startTime
                         endTime
+                    }
+                    authorizedData {
                         thumbnail
                         tracks { uri flavor mimetype resolution isMaster }
                         captions { uri lang }
@@ -61,11 +63,21 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         return unreachable();
     }
 
+    if (!event.authorizedData) {
+        return <>nop</>; // TODO
+    }
+
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
         {isSynced(event)
             ? <PlayerContextProvider>
-                <InlinePlayer event={event} css={{ maxWidth: 800 }} />
+                <InlinePlayer
+                    event={{
+                        ...event,
+                        authorizedData: event.authorizedData,
+                    }}
+                    css={{ maxWidth: 800 }}
+                />
             </PlayerContextProvider>
             : <Card kind="info">{t("video.not-ready.title")}</Card>}
         {showLink && <Link

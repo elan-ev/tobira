@@ -368,12 +368,14 @@ const eventFragment = graphql`
             syncedData {
                 updated
                 duration
-                thumbnail
                 startTime
                 endTime
+            }
+            authorizedData {
                 tracks { uri flavor mimetype resolution isMaster }
                 captions { uri lang }
                 segments { uri startTime }
+                thumbnail
             }
             series {
                 id
@@ -425,7 +427,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
         "@type": "VideoObject",
         name: event.title,
         description: event.description ?? undefined,
-        thumbnailUrl: event.syncedData.thumbnail ?? undefined,
+        thumbnailUrl: event.authorizedData?.thumbnail ?? undefined,
         uploadDate: event.created,
         duration: toIsoDuration(event.syncedData.duration),
         ...event.isLive && event.syncedData.startTime && event.syncedData.endTime && {
@@ -440,13 +442,20 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
         // but it's not clear what for.
     };
 
+    if (!event.authorizedData) {
+        return <>nop</>; // TODO
+    }
+
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         <PlayerContextProvider>
             <InlinePlayer
-                event={event}
+                event={{
+                    ...event,
+                    authorizedData: event.authorizedData,
+                }}
                 css={{ margin: "-4px auto 0" }}
                 onEventStateChange={rerender}
             />
@@ -740,9 +749,9 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             </>;
         },
         "embed": () => {
-            const ar = event.syncedData == null
+            const ar = event.authorizedData == null
                 ? [16, 9]
-                : getPlayerAspectRatio(event.syncedData.tracks);
+                : getPlayerAspectRatio(event.authorizedData.tracks);
 
             const url = new URL(location.href.replace(timeStringPattern, ""));
             url.search = addEmbedTimestamp && timestamp
