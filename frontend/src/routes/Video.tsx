@@ -2,7 +2,9 @@ import React, { ReactElement, ReactNode, useEffect, useRef, useState } from "rea
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
-import { LuCode, LuDownload, LuLink, LuQrCode, LuRss, LuSettings, LuShare2 } from "react-icons/lu";
+import {
+    LuCode, LuDownload, LuInfo, LuLink, LuQrCode, LuRss, LuSettings, LuShare2,
+} from "react-icons/lu";
 import { QRCodeCanvas } from "qrcode.react";
 import {
     match, unreachable, ProtoButton,
@@ -16,7 +18,7 @@ import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { getPlayerAspectRatio, InlinePlayer } from "../ui/player";
+import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidRealmPath } from "./Realm";
@@ -442,23 +444,23 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
         // but it's not clear what for.
     };
 
-    if (!event.authorizedData) {
-        return <>nop</>; // TODO
-    }
 
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         <PlayerContextProvider>
-            <InlinePlayer
-                event={{
-                    ...event,
-                    authorizedData: event.authorizedData,
-                }}
-                css={{ margin: "-4px auto 0" }}
-                onEventStateChange={rerender}
-            />
+            {event.authorizedData
+                ? <InlinePlayer
+                    event={{
+                        ...event,
+                        authorizedData: event.authorizedData,
+                    }}
+                    css={{ margin: "-4px auto 0" }}
+                    onEventStateChange={rerender}
+                />
+                : <PreviewPlayerPlaceholder />
+            }
             <Metadata id={event.id} event={event} />
         </PlayerContextProvider>
 
@@ -479,6 +481,21 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
             />
         }
     </>;
+};
+
+const PreviewPlayerPlaceholder: React.FC = () => {
+    const { t } = useTranslation();
+
+    return <div css={{
+        maxHeight: "calc(100vh - var(--header-height) - 18px - ${MAIN_PADDING}px - 38px - 60px)",
+        aspectRatio: "16 / 9",
+        width: "100%",
+    }}>
+        <PlayerPlaceholder>
+            <LuInfo />
+            <div>{t("video.preview-only")}</div>
+        </PlayerPlaceholder>
+    </div>;
 };
 
 
@@ -530,7 +547,9 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                         {t("video.manage")}
                     </LinkButton>
                 )}
-                {CONFIG.showDownloadButton && <DownloadButton event={event} />}
+                {CONFIG.showDownloadButton && event.authorizedData && (
+                    <DownloadButton event={event} />
+                )}
                 <ShareButton {...{ event }} />
             </div>
         </div>

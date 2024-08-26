@@ -130,9 +130,11 @@ video:
   link: Zur Videoseite
   part-of-series: Teil der Serie
   more-from-series: Mehr von „{{series}}“
-  more-from-playlist: Mehr von “{{playlist}}”
+  more-from-playlist: Mehr von „{{playlist}}”
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
   not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
+  preview: Vorschau
+  preview-only: Sie brauchen zusätzliche Berichtigungen, um dieses Video anzuschauen.
   not-ready:
     title: Video noch nicht verarbeitet
     text: >

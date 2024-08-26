@@ -131,6 +131,8 @@ video:
   more-from-playlist: More from “{{playlist}}”
   deleted-video-block: The video referenced here was deleted.
   not-allowed-video-block: You are not allowed to view the video embedded here.
+  preview: Preview
+  preview-only: You need additional permissions to watch this video.
   not-ready:
     title: Video not processed yet
     text: >
