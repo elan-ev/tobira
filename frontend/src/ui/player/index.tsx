@@ -171,9 +171,11 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             flexDirection: "column",
             // We want to be able to see the full header, the video title and some metadata.
             // So: full height minus header, minus separation line (18px), minus main
-            // padding (16px), minus breadcrumbs (roughly 42px), minus the amount of space
-            // we want to see below the video (roughly 120px).
-            maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 38px - 60px)",
+            // padding (16px), minus breadcrumbs (roughly 38px), minus the amount of space
+            // we want to see below the video (roughly 60px).
+            maxHeight: `
+                calc(100vh - var(--header-height) - 18px - ${MAIN_PADDING}px - 38px - 60px)
+            `,
             minHeight: `min(320px, (100vw - 32px) / (${aspectRatio[0]} / ${aspectRatio[1]}))`,
             width: controlsFit ? "unset" : "100%",
             maxWidth: "100%",

@@ -1,6 +1,14 @@
 import { PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuAlertTriangle, LuFilm, LuRadio, LuTrash, LuUserCircle, LuVolume2 } from "react-icons/lu";
+import {
+    LuAlertTriangle,
+    LuFilm,
+    LuLock,
+    LuRadio,
+    LuTrash,
+    LuUserCircle,
+    LuVolume2,
+} from "react-icons/lu";
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
@@ -60,10 +68,15 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
             alt={t("video.thumbnail-for", { video: event.title })}
         />;
     } else {
-        inner = <ThumbnailReplacement {...{ audioOnly, isUpcoming, isDark, deletionIsPending }} />;
+        inner = <ThumbnailReplacement
+            {...{ audioOnly, isUpcoming, isDark, deletionIsPending }}
+            previewOnly={!event.authorizedData}
+        />;
     }
 
     let overlay;
+    let innerOverlay;
+    let backgroundColor = "hsla(0, 0%, 0%, 0.75)";
     if (deletionIsPending) {
         overlay = null;
     } else if (event.isLive) {
@@ -73,9 +86,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         const endTime = event.syncedData?.endTime;
         const hasEnded = endTime == null ? null : new Date(endTime) < now;
         const hasStarted = startTime < now;
-        const currentlyLive = hasStarted && !hasEnded;
 
-        let innerOverlay;
         if (hasEnded) {
             innerOverlay = t("video.ended");
         } else if (hasStarted) {
@@ -83,18 +94,17 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
                 <LuRadio css={{ fontSize: 19, strokeWidth: 1.4 }} />
                 {t("video.live")}
             </>;
+            backgroundColor = "rgba(200, 0, 0, 0.9)";
         } else {
             innerOverlay = t("video.upcoming");
         }
+    } else if (event.syncedData) {
+        innerOverlay = formatDuration(event.syncedData.duration);
+    }
 
-        const backgroundColor = currentlyLive ? "rgba(200, 0, 0, 0.9)" : "hsla(0, 0%, 0%, 0.75)";
-
+    if (innerOverlay) {
         overlay = <ThumbnailOverlay {...{ backgroundColor }}>
             {innerOverlay}
-        </ThumbnailOverlay>;
-    } else if (event.syncedData) {
-        overlay = <ThumbnailOverlay backgroundColor="hsla(0, 0%, 0%, 0.75)">
-            {formatDuration(event.syncedData.duration)}
         </ThumbnailOverlay>;
     }
 
@@ -110,9 +120,10 @@ type ThumbnailReplacementProps = {
     isDark: boolean;
     isUpcoming?: boolean;
     deletionIsPending?: boolean;
+    previewOnly?: boolean;
 }
 export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
-    { audioOnly, isDark, isUpcoming, deletionIsPending }
+    { audioOnly, isDark, isUpcoming, deletionIsPending, previewOnly }
 ) => {
     // We have no thumbnail. If the resolution is `null` as well, we are
     // dealing with an audio-only event and show an appropriate icon.
@@ -122,6 +133,9 @@ export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
     let icon = <LuFilm />;
     if (audioOnly) {
         icon = <LuVolume2 />;
+    }
+    if (previewOnly) {
+        icon = <LuLock />;
     }
     if (deletionIsPending) {
         icon = <LuTrash />;
