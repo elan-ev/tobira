@@ -182,6 +182,7 @@ async fn store_in_db(
 
                 // We always handle the admin role in a special way, so no need
                 // to store it for every single event.
+                acl.preview.retain(|role| role != ROLE_ADMIN);
                 acl.read.retain(|role| role != ROLE_ADMIN);
                 acl.write.retain(|role| role != ROLE_ADMIN);
 
@@ -210,6 +211,7 @@ async fn store_in_db(
                     ("creators", &creators),
                     ("thumbnail", &thumbnail),
                     ("metadata", &metadata),
+                    ("preview_roles", &acl.preview),
                     ("read_roles", &acl.read),
                     ("write_roles", &acl.write),
                     ("custom_action_roles", &acl.custom_actions),
