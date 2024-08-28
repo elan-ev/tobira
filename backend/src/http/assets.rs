@@ -286,6 +286,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
             "uploadNode": config.opencast.upload_node().to_string(),
             "studioUrl": config.opencast.studio_url().to_string(),
             "editorUrl": config.opencast.editor_url().to_string(),
+            "editorReturnLabel": config.opencast.editor_return_label,
         },
         "logo": {
             "large": logo_obj(&config.theme.logo.large),

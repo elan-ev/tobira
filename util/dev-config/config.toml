@@ -37,6 +37,8 @@ secret_key = "jwt-key.pem"
 
 [opencast]
 host = "http://localhost:8081"
+editor_return_label.en = "Video"
+editor_return_label.de = "dem Video"
 
 [sync]
 user = "admin"

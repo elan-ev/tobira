@@ -427,6 +427,21 @@
 # Default value: []
 #other_hosts = []
 
+# Set the return label for Editor.
+# This is for text on a button that will take you back to Tobira
+# after editing is done.
+# Part of that text ("Return to" / "Zurück zu") is fixed in Editor and
+# cannot be configured here.
+# The label can be configured in english and german.
+#
+# Example: 
+#     editor_return_label.en = "Tobira"
+#     editor_return_label.de = "Aribot"
+# 
+# Results in "Return to Tobira" / "Zurück zu Aribot".
+# If not set, "Video" is used for both languages.
+#editor_return_label =
+
 
 [sync]
 # Username of the user used to communicate with Opencast for data syncing.

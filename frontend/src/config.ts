@@ -83,6 +83,7 @@ type OpencastConfig = {
     uploadNode: string;
     studioUrl: string;
     editorUrl: string;
+    editorReturnLabel: TranslatedString | null;
 };
 
 type VersionInfo = {

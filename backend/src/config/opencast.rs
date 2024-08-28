@@ -8,6 +8,8 @@ use crate::{
     config::HttpHost,
 };
 
+use super::TranslatedString;
+
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct OpencastConfig {
@@ -49,6 +51,21 @@ pub(crate) struct OpencastConfig {
     /// be trusted.
     #[config(default = [])]
     pub(crate) other_hosts: Vec<HttpHost>,
+
+    /// Set the return label for Editor.
+    /// This is for text on a button that will take you back to Tobira
+    /// after editing is done.
+    /// Part of that text ("Return to" / "Zurück zu") is fixed in Editor and
+    /// cannot be configured here.
+    /// The label can be configured in english and german.
+    ///
+    /// Example: 
+    ///     editor_return_label.en = "Tobira"
+    ///     editor_return_label.de = "Aribot"
+    /// 
+    /// Results in "Return to Tobira" / "Zurück zu Aribot".
+    /// If not set, "Video" is used for both languages.
+    pub(crate) editor_return_label: Option<TranslatedString>,
 }
 
 impl OpencastConfig {

@@ -71,7 +71,9 @@ const Page: React.FC<Props> = ({ event }) => {
                             params={{
                                 id: event.opencastId,
                                 callbackUrl: document.location.href,
-                                callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
+                                callbackSystem: CONFIG.opencast.editorReturnLabel
+                                    ? translatedConfig(CONFIG.opencast.editorReturnLabel, i18n)
+                                    : t("video.video"),
                             }}
                             fallback="button"
                             css={buttonStyle(config, "normal", isHighContrast)}
