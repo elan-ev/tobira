@@ -177,6 +177,17 @@ video:
     embed: Embed
     rss: RSS
     show-qr-code: Show QR code
+  password:
+    heading: Protected Video
+    sub-heading: Access to this video is restricted.
+    body: >
+      Please enter the username and the password you have received to access this video;
+      please note that these are not your login credentials.
+    label:
+      id: Identifier
+      password: Password
+      submit: Verify
+    invalid-credentials: Invalid credentials.
 
 playlist:
   deleted-playlist-block: The playlist referenced here was deleted.

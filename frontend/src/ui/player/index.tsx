@@ -277,8 +277,8 @@ export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => 
             strokeWidth: 1.5,
             ...isDark && { color: COLORS.neutral80 },
         },
-        div: {
-            ...isDark && { color: COLORS.neutral80 },
+        p: {
+            color: isDark ? COLORS.neutral80 : COLORS.neutral15,
         },
         [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
             "& > *": {

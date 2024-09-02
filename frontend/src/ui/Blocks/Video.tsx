@@ -1,15 +1,22 @@
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useQueryLoader } from "react-relay";
 import { Card, unreachable } from "@opencast/appkit";
 
 import { InlinePlayer } from "../player";
-import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
+import { VideoBlockData$data, VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { useTranslation } from "react-i18next";
 import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
 import { LuArrowRightCircle } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
+import {
+    VideoAuthorizedDataQuery,
+} from "../../routes/__generated__/VideoAuthorizedDataQuery.graphql";
+import { authorizedDataQuery, ProtectedPlayer } from "../../routes/Video";
 
+
+export type BlockEvent = VideoBlockData$data["event"];
+export type AuthorizedBlockEvent = Extract<BlockEvent, { __typename: "AuthorizedEvent" }>;
 
 type Props = {
     fragRef: VideoBlockData$key;
@@ -18,6 +25,8 @@ type Props = {
 
 export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     const { t } = useTranslation();
+    const [queryReference, loadQuery]
+        = useQueryLoader<VideoAuthorizedDataQuery>(authorizedDataQuery);
     const { event, showTitle, showLink } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
@@ -32,6 +41,8 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                     creators
                     metadata
                     description
+                    canWrite
+                    hasPassword
                     series { title opencastId }
                     syncedData {
                         duration
@@ -63,23 +74,25 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         return unreachable();
     }
 
-    if (!event.authorizedData) {
-        return <>nop</>; // TODO
-    }
-
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
-        {isSynced(event)
-            ? <PlayerContextProvider>
-                <InlinePlayer
+        <PlayerContextProvider>
+            {event.authorizedData && isSynced(event)
+                ? <InlinePlayer
                     event={{
                         ...event,
                         authorizedData: event.authorizedData,
                     }}
-                    css={{ maxWidth: 800 }}
+                    css={{ margin: "-4px auto 0" }}
                 />
-            </PlayerContextProvider>
-            : <Card kind="info">{t("video.not-ready.title")}</Card>}
+                : <ProtectedPlayer {...{
+                    queryReference,
+                    event,
+                    loadQuery,
+                }} />
+            }
+        </PlayerContextProvider>
+
         {showLink && <Link
             to={`${basePath}/${keyOfId(event.id)}`}
             css={{

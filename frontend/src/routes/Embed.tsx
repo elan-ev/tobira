@@ -2,7 +2,8 @@ import { ReactNode, Suspense } from "react";
 import { LuFrown, LuAlertTriangle } from "react-icons/lu";
 import { Translation, useTranslation } from "react-i18next";
 import {
-    graphql, GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery,
+    graphql, useFragment, usePreloadedQuery, useQueryLoader,
+    GraphQLTaggedNode, PreloadedQuery,
 } from "react-relay";
 import { unreachable } from "@opencast/appkit";
 
@@ -18,6 +19,8 @@ import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
 import { EmbedDirectOpencastQuery } from "./__generated__/EmbedDirectOpencastQuery.graphql";
 import { EmbedEventData$key } from "./__generated__/EmbedEventData.graphql";
 import { PlayerContextProvider } from "../ui/player/PlayerContext";
+import { authorizedDataQuery, ProtectedPlayer } from "./Video";
+import { VideoAuthorizedDataQuery } from "./__generated__/VideoAuthorizedDataQuery.graphql";
 
 export const EmbedVideoRoute = makeRoute({
     url: ({ videoId }: { videoId: string }) => `/~embed/!v/${keyOfId(videoId)}`,
@@ -90,6 +93,7 @@ const embedEventFragment = graphql`
         __typename
         ... on NotAllowed { dummy }
         ... on AuthorizedEvent {
+            id
             title
             created
             isLive
@@ -97,6 +101,8 @@ const embedEventFragment = graphql`
             creators
             metadata
             description
+            canWrite
+            hasPassword
             series { title opencastId }
             syncedData {
                 updated
@@ -127,6 +133,8 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
         fragmentRef.event,
     );
     const { t } = useTranslation();
+    const [queryReference, loadQuery]
+        = useQueryLoader<VideoAuthorizedDataQuery>(authorizedDataQuery);
 
     if (!event) {
         return <PlayerPlaceholder>
@@ -153,14 +161,16 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
         </PlayerPlaceholder>;
     }
 
-    if (!event.authorizedData) {
-        return <>nop</>; // TODO
-    }
-
-    return <Player event={{
-        ...event,
-        authorizedData: event.authorizedData,
-    }} />;
+    return event.authorizedData
+        ? <Player event={{
+            ...event,
+            authorizedData: event.authorizedData,
+        }} />
+        : <ProtectedPlayer embedded {...{
+            queryReference,
+            event,
+            loadQuery,
+        }}/>;
 };
 
 export const BlockEmbedRoute = makeRoute({
