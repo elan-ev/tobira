@@ -180,6 +180,17 @@ video:
     embed: Einbetten
     rss: RSS
     show-qr-code: QR Code anzeigen
+  password:
+    heading: Geschütztes Video
+    sub-heading: Zugriff zu diesem Video ist beschränkt.
+    body: >
+      Bitte geben Sie die Zugangsdaten ein, die Sie für dieses Videos erhalten haben.
+      Beachten Sie, dass diese nicht Ihren Logindaten für dieses Portal entsprechen.
+    label:
+      id: Kennung
+      password: Passwort
+      submit: Freischalten
+    invalid-credentials: Ungültige Zugangsdaten.
 
 playlist:
   deleted-playlist-block: Die hier referenzierte Playlist wurde gelöscht.

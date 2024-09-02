@@ -1,15 +1,22 @@
 import React, { ReactElement, ReactNode, useEffect, useRef, useState } from "react";
-import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
+import {
+    graphql,
+    GraphQLTaggedNode,
+    PreloadedQuery,
+    useFragment,
+    usePreloadedQuery,
+    useQueryLoader,
+    UseQueryLoaderLoadQueryOptions,
+} from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { OperationType } from "relay-runtime";
 import {
-    LuCode, LuDownload, LuInfo, LuLink, LuQrCode, LuRss, LuSettings, LuShare2,
+    LuCode, LuDownload, LuInfo, LuLink, LuQrCode, LuRss, LuSettings, LuShare2, LuUnlock,
 } from "react-icons/lu";
 import { QRCodeCanvas } from "qrcode.react";
 import {
-    match, unreachable, ProtoButton,
-    useColorScheme, Floating, FloatingContainer, FloatingTrigger, WithTooltip, screenWidthAtMost,
-    Card, Button,
+    match, unreachable, screenWidthAtMost, screenWidthAbove, useColorScheme,
+    Floating, FloatingContainer, FloatingTrigger, WithTooltip, Card, Button, ProtoButton,
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
 
@@ -18,7 +25,7 @@ import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder } from "../ui/player";
+import { getPlayerAspectRatio, InlinePlayer, Player, PlayerPlaceholder } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidRealmPath } from "./Realm";
@@ -74,6 +81,12 @@ import { DirectSeriesRoute } from "./Series";
 import { EmbedVideoRoute } from "./Embed";
 import { ManageVideoDetailsRoute } from "./manage/Video/Details";
 import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
+import { AuthenticationFormState, FormData, AuthenticationForm } from "./Login";
+import {
+    VideoAuthorizedDataQuery,
+    VideoAuthorizedDataQuery$variables,
+} from "./__generated__/VideoAuthorizedDataQuery.graphql";
+import { AuthorizedBlockEvent } from "../ui/Blocks/Video";
 
 
 // ===========================================================================================
@@ -367,6 +380,7 @@ const eventFragment = graphql`
             opencastId
             metadata
             canWrite
+            hasPassword
             syncedData {
                 updated
                 duration
@@ -389,6 +403,25 @@ const eventFragment = graphql`
     }
 `;
 
+export const authorizedDataQuery = graphql`
+    query VideoAuthorizedDataQuery(
+        $eventId: ID!,
+        $seriesUser: String,
+        $seriesPassword: String,
+    ) {
+        event: eventById(id: $eventId) {
+            ...on AuthorizedEvent {
+                id
+                authorizedData(user: $seriesUser, password: $seriesPassword) {
+                    tracks { uri flavor mimetype resolution isMaster }
+                    captions { uri lang }
+                    segments { uri startTime }
+                    thumbnail
+                }
+            }
+        }
+    }
+`;
 
 
 // ===========================================================================================
@@ -407,6 +440,8 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     const rerender = useForceRerender();
     const event = useFragment(eventFragment, eventRef);
     const realm = useFragment(realmFragment, realmRef);
+    const [queryReference, loadQuery]
+        = useQueryLoader<VideoAuthorizedDataQuery>(authorizedDataQuery);
 
     if (event.__typename === "NotAllowed") {
         return <ErrorPage title={t("api-remote-errors.view.event")} />;
@@ -459,7 +494,11 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
                     css={{ margin: "-4px auto 0" }}
                     onEventStateChange={rerender}
                 />
-                : <PreviewPlayerPlaceholder />
+                : <ProtectedPlayer {...{
+                    queryReference,
+                    event,
+                    loadQuery,
+                }}/>
             }
             <Metadata id={event.id} event={event} />
         </PlayerContextProvider>
@@ -483,21 +522,217 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     </>;
 };
 
-const PreviewPlayerPlaceholder: React.FC = () => {
-    const { t } = useTranslation();
+type ProtectedPlayerProps = {
+    queryReference?: PreloadedQuery<VideoAuthorizedDataQuery> | null;
+    loadQuery: (
+        variables: VideoAuthorizedDataQuery$variables,
+        options?: UseQueryLoaderLoadQueryOptions,
+    ) => void;
+    event: Event | AuthorizedBlockEvent;
+    embedded?: boolean;
+}
 
-    return <div css={{
-        maxHeight: "calc(100vh - var(--header-height) - 18px - ${MAIN_PADDING}px - 38px - 60px)",
-        aspectRatio: "16 / 9",
-        width: "100%",
-    }}>
-        <PlayerPlaceholder>
-            <LuInfo />
-            <div>{t("video.preview-only")}</div>
-        </PlayerPlaceholder>
-    </div>;
+export const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({
+    queryReference,
+    event,
+    loadQuery,
+    embedded,
+}) => queryReference
+    ? <PlayerOrPreview {...{
+        queryReference,
+        event,
+        loadQuery,
+        embedded,
+    }} />
+    : <PreviewPlaceholder {...{ event, loadQuery, embedded }} />;
+
+const PlayerOrPreview: React.FC<ProtectedPlayerProps> = ({
+    queryReference,
+    event,
+    loadQuery,
+    embedded,
+}) => {
+    if (!queryReference) {
+        return null;
+    }
+    const data = usePreloadedQuery(authorizedDataQuery, queryReference);
+    const rerender = useForceRerender();
+
+    return data.event?.authorizedData && event.syncedData
+        ? (embedded
+            ? <Player event={{
+                ...event,
+                syncedData: event.syncedData,
+                authorizedData: data.event.authorizedData,
+            }} />
+            : <InlinePlayer
+                event={{
+                    ...event,
+                    syncedData: event.syncedData,
+                    authorizedData: data.event.authorizedData,
+                }}
+                css={{ margin: "-4px auto 0" }}
+                onEventStateChange={rerender}
+            />
+        )
+        : <PreviewPlaceholder
+            invalid={data.event?.authorizedData == null}
+            {...{ event, loadQuery, embedded }}
+        />;
+
 };
 
+type PlaceholderProps = ProtectedPlayerProps & {
+    invalid?: boolean;
+}
+
+const PreviewPlaceholder: React.FC<PlaceholderProps> = ({
+    event,
+    loadQuery,
+    invalid,
+    embedded,
+}) => {
+    const { t } = useTranslation();
+
+    return event.hasPassword
+        ? <ProtectedVideoPlaceholder {...{ event, loadQuery, invalid, embedded }} />
+        : <div css={{ height: "unset" }}>
+            <PlayerPlaceholder>
+                <p css={{
+                    maxWidth: "80ch",
+                    textWrap: "balance",
+                    padding: 32,
+                }}>
+                    <LuInfo />
+                    <div>{t("video.preview-only")}</div>
+                </p>
+            </PlayerPlaceholder>
+        </div>;
+};
+
+const ProtectedVideoPlaceholder: React.FC<PlaceholderProps> = ({
+    event,
+    loadQuery,
+    invalid,
+    embedded,
+}) => {
+    const { t } = useTranslation(undefined, { keyPrefix: "video.password" });
+    const isDark = useColorScheme().scheme === "dark";
+    const [state, setState] = useState<AuthenticationFormState>("idle");
+
+    const embeddedStyles = {
+        height: "100%",
+        alignItems: "center",
+        justifyContent: "center",
+    };
+
+    const onSubmit = (data: FormData) => {
+        setState("pending");
+        loadQuery({ eventId: event.id, seriesUser: data.userid, seriesPassword: data.password });
+    };
+
+    return (
+        <div css={{
+            display: "flex",
+            flexDirection: "column",
+            color: isDark ? COLORS.neutral80 : COLORS.neutral15,
+            backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral80,
+            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                alignItems: "center",
+            },
+            ...embedded && embeddedStyles,
+        }}>
+            <h2 css={{
+                margin: 32,
+                marginBottom: 0,
+                [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
+                    textAlign: "left",
+                },
+            }}>{t("heading")}</h2>
+            <div css={{
+                display: "flex",
+                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                    flexDirection: "column-reverse",
+                },
+            }}>
+                <div css={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                }}>
+                    <AuthenticationForm
+                        {...{ onSubmit, state }}
+                        error={null}
+                        SubmitIcon={LuUnlock}
+                        labels={{
+                            user: t("label.id"),
+                            password: t("label.password"),
+                            submit: t("label.submit"),
+                        }}
+                        css={{
+                            "&": { backgroundColor: "transparent" },
+                            margin: 0,
+                            border: 0,
+                            width: "unset",
+                            minWidth: 300,
+                            "div > label, div > input": {
+                                ...!isDark && {
+                                    backgroundColor: COLORS.neutral15,
+                                },
+                            },
+                        }}
+                    />
+                    {invalid && (
+                        <Card
+                            kind="error"
+                            iconPos="left"
+                            css={{
+                                width: "fit-content",
+                                marginBottom: 32,
+                            }}
+                        >
+                            {t("invalid-credentials")}
+                        </Card>
+                    )}
+                </div>
+                <AuthenticationFormText />
+            </div>
+        </div>
+    );
+};
+
+const AuthenticationFormText: React.FC = () => {
+    const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+
+    return <div css={{
+        textAlign: "left",
+        maxWidth: "60ch",
+        padding: 32,
+        paddingLeft: 8,
+        fontSize: 14,
+        "&& p": {
+            color: isDark ? COLORS.neutral80 : COLORS.neutral15,
+        },
+        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+            padding: "6px 18px 0px",
+            textAlign: "center",
+            textWrap: "balance",
+        },
+    }}>
+        <p>
+            <span css={{
+                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                    display: "none",
+                },
+            }}>
+                <b>{t("video.password.sub-heading")}</b>
+                <br/>
+            </span>
+            {t("video.password.body")}
+        </p>
+    </div>;
+};
 
 type Event = Extract<NonNullable<VideoPageEventData$data>, { __typename: "AuthorizedEvent" }>;
 type SyncedEvent = SyncedOpencastEntity<Event>;
