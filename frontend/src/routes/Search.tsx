@@ -18,10 +18,12 @@ import {
     FloatingTrigger,
     ProtoButton,
     WithTooltip,
+    match,
     screenWidthAtMost,
     unreachable,
     useColorScheme,
 } from "@opencast/appkit";
+import { CSSObject } from "@emotion/react";
 
 import { RootLoader } from "../layout/Root";
 import {
@@ -149,6 +151,7 @@ const query = graphql`
                             start
                             duration
                             text
+                            ty
                             highlights { start len }
                         }
                     }
@@ -585,20 +588,20 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
         <div css={{
             width: "100%",
             position: "relative",
-            height: 10,
+            height: 10.5,
             margin: "16px 0",
+            border: `1.5px solid ${COLORS.neutral50}`,
+            borderTop: "none",
+            borderBottom: "none",
         }}>
-            {/* The timeline frame */}
+            {/* The timeline line */}
             <div css={{
                 position: "absolute",
-                left: -3,
-                right: -2,
-                bottom: -3,
-                height: 6,
-                border: `1.5px solid ${COLORS.neutral50}`,
-                borderTop: "none",
-                borderBottomLeftRadius: 1,
-                borderBottomRightRadius: 1,
+                left: 0,
+                right: 0,
+                bottom: "calc(50% - 0.75px)",
+                height: 0,
+                borderTop: `1.5px solid ${COLORS.neutral50}`,
             }} />
 
             {textMatches.map((m, i) => (
@@ -611,8 +614,6 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
                         return <>
                             <div css={{
                                 maxWidth: "min(85vw, 460px)",
-                                paddingLeft: 13,
-                                textIndent: -13,
                                 padding: 1,
                                 fontSize: 13,
                                 ...ellipsisOverflowCss(2),
@@ -626,18 +627,27 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
                         </>;
                     })()}
                     css={{
-                        height: "100%",
                         position: "absolute",
-                        bottom: 0,
+                        ...match(m.ty, {
+                            CAPTION: () => ({
+                                height: "100%",
+                                bottom: "0",
+                                backgroundColor: COLORS.primary1,
+                            }) as CSSObject,
+                            SLIDE_TEXT: () => ({
+                                height: "70%",
+                                bottom: "15%",
+                                backgroundColor: COLORS.primary0,
+                            }),
+                            "%future added value": () => unreachable(),
+                        }),
                         width: `calc(${m.duration / duration * 100}% - 1px)`,
-                        minWidth: 4, // To make the sections not too small to click
+                        minWidth: 6, // To make the sections not too small to click
                         left: `${m.start / duration * 100}%`,
-                        backgroundColor: COLORS.primary0,
                         zIndex: 8,
-                        borderTop: "none",
-                        borderBottom: "none",
+                        borderRadius: 1,
                         "&:hover": {
-                            backgroundColor: COLORS.primary1,
+                            backgroundColor: COLORS.primary2,
                         },
                     }}
                 >
