@@ -166,7 +166,7 @@ pub(crate) async fn perform(
             .await?
             .map(|row| {
                 let e = search::Event::from_row_start(&row);
-                SearchEvent::new(e, &[]).into()
+                SearchEvent::new(e, &[], &[]).into()
             })
             .into_iter()
             .collect();
@@ -536,9 +536,10 @@ impl fmt::Display for Filter {
 fn hit_to_search_event(
     hit: meilisearch_sdk::SearchResult<search::Event>,
 ) -> SearchEvent {
-    let matches = hit.matches_position.as_ref()
-        .and_then(|matches| matches.get("texts"))
+    let get_matches = |key: &str| hit.matches_position.as_ref()
+        .and_then(|matches| matches.get(key))
         .map(|v| v.as_slice())
         .unwrap_or_default();
-    SearchEvent::new(hit.result, matches)
+
+    SearchEvent::new(hit.result, get_matches("slide_texts.texts"), get_matches("caption_texts.texts"))
 }

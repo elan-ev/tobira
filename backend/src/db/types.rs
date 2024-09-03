@@ -143,6 +143,15 @@ pub struct TimespanText {
     pub t: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
+#[postgres(name = "text_asset_type")]
+pub enum TextAssetType {
+    #[postgres(name = "caption")]
+    Caption,
+    #[postgres(name = "slide-text")]
+    SlideText,
+}
+
 
 /// Represents extra metadata in the DB. Is a map from "namespace" to a
 /// `string -> string array` map.

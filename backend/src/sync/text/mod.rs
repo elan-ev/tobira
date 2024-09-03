@@ -10,7 +10,7 @@ use crate::{
     config::Config,
     db::{
         self,
-        types::{EventCaption, EventTextsQueueRecord, Key, TimespanText},
+        types::{EventCaption, EventTextsQueueRecord, Key, TextAssetType, TimespanText},
         util::{collect_rows_mapped, select},
         DbConnection,
     },
@@ -167,8 +167,8 @@ async fn fetch_update_chunk(
         let ctx = ctx.clone();
         async move {
             let uris = entry.captions.into_iter()
-                .map(|caption| (caption.uri, AssetType::Caption))
-                .chain(entry.slide_text.map(|s| (s, AssetType::SlideText)));
+                .map(|caption| (caption.uri, TextAssetType::Caption))
+                .chain(entry.slide_text.map(|s| (s, TextAssetType::SlideText)));
 
             let mut texts = Vec::new();
             for (uri, ty) in uris {
@@ -185,6 +185,7 @@ async fn fetch_update_chunk(
                             uri,
                             event_id: entry.queue.event_id,
                             texts: t,
+                            ty,
                             fetch_time: Utc::now(),
                         });
                     },
@@ -247,12 +248,12 @@ async fn fetch_update_chunk(
     let event_ids = texts_to_be_inserted.iter().map(|t| t.event_id).collect::<Vec<_>>();
     tx.execute("delete from event_texts where event_id = any($1)", &[&event_ids]).await
         .context("failed to delete from event_texts")?;
-    let columns = ["uri", "event_id", "texts", "fetch_time"];
+    let columns = ["uri", "event_id", "ty", "texts", "fetch_time"];
     let writer = db::util::bulk_insert("event_texts", &columns, &tx).await?;
     pin_mut!(writer);
     for t in &texts_to_be_inserted {
         writer.as_mut()
-            .write_raw(dbargs![&t.uri, &t.event_id, &t.texts, &t.fetch_time])
+            .write_raw(dbargs![&t.uri, &t.event_id, &t.ty, &t.texts, &t.fetch_time])
             .await?;
     }
     writer.finish().await?;
@@ -287,6 +288,7 @@ struct EventTextEntry {
     uri: String,
     event_id: Key,
     texts: Vec<TimespanText>,
+    ty: TextAssetType,
     fetch_time: DateTime<Utc>,
 }
 
@@ -380,16 +382,12 @@ enum Outcome<T> {
     Success(T),
 }
 
-#[derive(Debug, PartialEq)]
-enum AssetType {
-    Caption,
-    SlideText,
-}
+
 
 /// Downloads & parses a single text asset.
 #[tracing::instrument(level = "trace", skip(ctx))]
 async fn process_asset(
-    ty: AssetType,
+    ty: TextAssetType,
     uri: &str,
     oc_event_id: &str,
     ctx: &Context,
@@ -401,9 +399,9 @@ async fn process_asset(
         Outcome::Success(text) => text,
     };
 
-    let texts = if uri.ends_with(".vtt") || ty == AssetType::Caption {
+    let texts = if uri.ends_with(".vtt") || ty == TextAssetType::Caption {
         parse_vtt(text)
-    } else if uri.ends_with(".xml") || ty == AssetType::SlideText {
+    } else if uri.ends_with(".xml") || ty == TextAssetType::SlideText {
         mpeg7::parse(&text)
     } else {
         warn!(oc_event_id, uri, "unknown file type of text -> ignoring");

@@ -4,6 +4,7 @@ use meilisearch_sdk::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
+    db::types::TextAssetType,
     search,
 };
 
@@ -47,6 +48,9 @@ pub struct TextMatch {
     /// The text containing the match, with some context
     pub text: String,
 
+    /// Source of this text.
+    pub ty: TextAssetType,
+
     /// Parts of `text` that should be highlighted.
     pub highlights: Vec<ByteSpan>,
 }
@@ -58,7 +62,15 @@ impl Node for SearchEvent {
 }
 
 impl SearchEvent {
-    pub(crate) fn new(src: search::Event, text_matches: &[MatchRange]) -> Self {
+    pub(crate) fn new(
+        src: search::Event,
+        slide_matches: &[MatchRange],
+        caption_matches: &[MatchRange],
+    ) -> Self {
+        let mut text_matches = Vec::new();
+        src.slide_texts.resolve_matches(slide_matches, &mut text_matches, TextAssetType::SlideText);
+        src.caption_texts.resolve_matches(caption_matches, &mut text_matches, TextAssetType::Caption);
+
         Self {
             id: Id::search_event(src.id.0),
             series_id: src.series_id.map(|id| Id::search_series(id.0)),
@@ -74,7 +86,7 @@ impl SearchEvent {
             is_live: src.is_live,
             audio_only: src.audio_only,
             host_realms: src.host_realms,
-            text_matches: src.text_index.resolve_matches(text_matches),
+            text_matches,
         }
     }
 }

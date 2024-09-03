@@ -10,12 +10,15 @@ create type timespan_text as (
     t text
 );
 
+create type text_asset_type as enum ('caption', 'slide-text');
+
 
 -- This table stores the parsed texts we fetched from Opencast.
 create table event_texts (
     uri text not null,
     event_id bigint not null
         references all_events on delete cascade,
+    ty text_asset_type not null,
     texts timespan_text[] not null,
 
     -- When the file was fetched & parsed.
@@ -110,9 +113,17 @@ create or replace view search_events as
             from (
                 select unnest(texts) as t
                 from event_texts
-                where event_id = events.id
+                where event_id = events.id and ty = 'slide-text'
             ) as subquery
-        ) as texts
+        ) as slide_texts,
+        (
+            select array_agg(t)
+            from (
+                select unnest(texts) as t
+                from event_texts
+                where event_id = events.id and ty = 'caption'
+            ) as subquery
+        ) as caption_texts
     from all_events as events
     left join series on events.series = series.id
     -- This syntax instead of `foo = any(...)` to use the index, which is not

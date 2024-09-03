@@ -9,7 +9,7 @@ use tokio_postgres::GenericClient;
 
 use crate::{
     api::model::search::{ByteSpan, TextMatch},
-    db::{types::{Key, TimespanText},
+    db::{types::{Key, TextAssetType, TimespanText},
     util::{collect_rows_mapped, impl_from_db}},
     prelude::*,
     util::{base64_decode, BASE64_DIGITS},
@@ -57,8 +57,8 @@ pub(crate) struct Event {
     pub(crate) listed: bool,
     pub(crate) host_realms: Vec<Realm>,
 
-    #[serde(flatten)]
-    pub(crate) text_index: TextSearchIndex,
+    pub(crate) caption_texts: TextSearchIndex,
+    pub(crate) slide_texts: TextSearchIndex,
 }
 
 impl IndexItem for Event {
@@ -74,7 +74,7 @@ impl_from_db!(
         search_events.{
             id, series, series_title, title, description, creators, thumbnail,
             duration, is_live, updated, created, start_time, end_time, audio_only,
-            read_roles, write_roles, host_realms, texts,
+            read_roles, write_roles, host_realms, slide_texts, caption_texts,
         },
     },
     |row| {
@@ -104,7 +104,9 @@ impl_from_db!(
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed: host_realms.iter().any(|realm| !realm.is_user_realm()),
             host_realms,
-            text_index: row.texts::<Option<TextSearchIndex>>()
+            slide_texts: row.slide_texts::<Option<TextSearchIndex>>()
+                .unwrap_or_else(TextSearchIndex::empty),
+            caption_texts: row.caption_texts::<Option<TextSearchIndex>>()
                 .unwrap_or_else(TextSearchIndex::empty),
         }
     }
@@ -133,7 +135,7 @@ impl Event {
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
     util::lazy_set_special_attributes(index, "event", FieldAbilities {
-        searchable: &["title", "creators", "description", "series_title", "texts"],
+        searchable: &["title", "creators", "description", "series_title", "slide_texts.texts", "caption_texts.texts"],
         filterable: &["listed", "read_roles", "write_roles", "is_live", "end_time_timestamp", "created_timestamp"],
         sortable: &["updated_timestamp"],
     }).await
@@ -197,14 +199,14 @@ pub(crate) struct TextSearchIndex {
     /// these three fields (in that order), i.e. each item is 7 bytes in total
     /// in the example above. Each field is base64 encoded. This array allows
     /// random access, useful for binary search.
-    text_timespan_index: String,
+    timespan_index: String,
 }
 
 impl TextSearchIndex {
     fn empty() -> Self {
         Self {
             texts: String::new(),
-            text_timespan_index: String::new(),
+            timespan_index: String::new(),
         }
     }
 
@@ -289,7 +291,7 @@ impl TextSearchIndex {
 
     /// Reads the index header and returns the lengths of all fields.
     fn index_lengths(&self) -> IndexLengths {
-        let index = &self.text_timespan_index.as_bytes();
+        let index = &self.timespan_index.as_bytes();
 
         let offset_digits = index[0] - b'0' + 1;
         let start_digits = index[1] - b'0' + 1;
@@ -305,7 +307,7 @@ impl TextSearchIndex {
     /// Returns the main part of the index, the array of entries. Strips the
     /// header specifying the lengths.
     fn index_entries(&self) -> &[u8] {
-        &self.text_timespan_index.as_bytes()[3..]
+        &self.timespan_index.as_bytes()[3..]
     }
 
     /// Decodes a base64 encoded integer.
@@ -320,9 +322,14 @@ impl TextSearchIndex {
         out
     }
 
-    pub(crate) fn resolve_matches(&self, matches: &[MatchRange]) -> Vec<TextMatch> {
+    pub(crate) fn resolve_matches(
+        &self,
+        matches: &[MatchRange],
+        out: &mut Vec<TextMatch>,
+        ty: TextAssetType,
+    ) {
         if matches.is_empty() || self.texts.is_empty() {
-            return Vec::new();
+            return;
         }
 
         // Resolve all matches and then bucket them by the individual text they
@@ -346,8 +353,6 @@ impl TextSearchIndex {
                 matches.push(match_range);
             }
         }
-
-        let mut out = Vec::new();
 
         for (slot, matches) in entries {
             let timespan = self.timespan_of_slot(slot as usize);
@@ -410,11 +415,10 @@ impl TextSearchIndex {
                 start: timespan.api_start(),
                 duration: timespan.api_duration(),
                 text: self.texts[range_with_context].to_owned(),
+                ty,
                 highlights,
             });
         }
-
-        out
     }
 }
 
@@ -532,13 +536,13 @@ impl<'a> FromSql<'a> for TextSearchIndex {
         let index_len = 3 + (offset_digits + start_digits + duration_digits) as usize * texts.len();
         let mut out = Self {
             texts: String::with_capacity(needed_main_capacity),
-            text_timespan_index: String::with_capacity(index_len),
+            timespan_index: String::with_capacity(index_len),
         };
 
         // Write index header, specifying how each field is encoded. We subtract
         // by 1 to make sure we always use exactly one digit.
         write!(
-            out.text_timespan_index,
+            out.timespan_index,
             "{}{}{}",
             offset_digits - 1,
             start_digits - 1,
@@ -550,7 +554,7 @@ impl<'a> FromSql<'a> for TextSearchIndex {
             // Least significant digit is leftmost.
             for _ in 0..digits {
                 let digit = BASE64_DIGITS[value as usize % 64].into();
-                out.text_timespan_index.push(digit);
+                out.timespan_index.push(digit);
                 value /= 64;
             }
             debug_assert!(value == 0);

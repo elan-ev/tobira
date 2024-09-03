@@ -185,6 +185,11 @@ type SeriesBlock implements Block & RealmNameSourceBlock {
   realm: Realm!
 }
 
+enum TextAssetType {
+  CAPTION
+  SLIDE_TEXT
+}
+
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
 """
@@ -198,14 +203,6 @@ type KnownGroup {
   large: Boolean!
 }
 
-input NewPlaylistBlock {
-  playlist: ID!
-  showTitle: Boolean!
-  showMetadata: Boolean!
-  order: VideoListOrder!
-  layout: VideoListLayout!
-}
-
 type SyncedEventData implements Node {
   updated: DateTimeUtc!
   startTime: DateTimeUtc
@@ -216,6 +213,14 @@ type SyncedEventData implements Node {
   thumbnail: String
   captions: [Caption!]!
   segments: [Segment!]!
+}
+
+input NewPlaylistBlock {
+  playlist: ID!
+  showTitle: Boolean!
+  showMetadata: Boolean!
+  order: VideoListOrder!
+  layout: VideoListLayout!
 }
 
 input NewVideoBlock {
@@ -348,6 +353,8 @@ type TextMatch {
   duration: Float!
   "The text containing the match, with some context"
   text: String!
+  "Source of this text."
+  ty: TextAssetType!
   "Parts of `text` that should be highlighted."
   highlights: [ByteSpan!]!
 }
