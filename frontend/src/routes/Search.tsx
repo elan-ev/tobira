@@ -1,5 +1,5 @@
 import { Trans, useTranslation } from "react-i18next";
-import { graphql } from "react-relay";
+import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import {
     LuCalendarRange,
     LuLayout,
@@ -49,10 +49,11 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
-import { isExperimentalFlagSet, secondsToTimeString } from "../util";
+import { eventId, isExperimentalFlagSet, keyOfId, secondsToTimeString } from "../util";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute } from "./Series";
 import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
+import { SearchSlidePreviewQuery } from "./__generated__/SearchSlidePreviewQuery.graphql";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -539,7 +540,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
 
                     {/* Show timeline with matches if there are any */}
                     {textMatches.length > 0 && (
-                        <TextMatchTimeline {...{ duration, link, textMatches }} />
+                        <TextMatchTimeline {...{ id, duration, link, textMatches }} />
                     )}
                 </div>
             </WithIcon>
@@ -577,15 +578,34 @@ const thumbnailCss = {
     },
 };
 
-type TextMatchTimelineProps = Pick<SearchEventProps, "duration" | "textMatches"> & {
+type TextMatchTimelineProps = Pick<SearchEventProps, "id" | "duration" | "textMatches"> & {
     link: string;
 };
 
-const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMatches, link }) => {
-    const sectionLink = (startMs: number) => `${link}?t=${secondsToTimeString(startMs / 1000)}`;
+const slidePreviewQuery = graphql`
+    query SearchSlidePreviewQuery($id: ID!) {
+        eventById(id: $id) {
+            ...on AuthorizedEvent {
+                syncedData {
+                    segments { startTime uri }
+                }
+            }
+        }
+    }
+`;
 
+const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
+    id, duration, textMatches, link,
+}) => {
+    const sectionLink = (startMs: number) => `${link}?t=${secondsToTimeString(startMs / 1000)}`;
+    const [queryRef, loadQuery]
+        = useQueryLoader<SearchSlidePreviewQuery>(slidePreviewQuery);
+
+    // We load the query once the user hovers over the parent container. This
+    // seems like it would send a query every time the mouse enters, but relay
+    // caches the results, so it is only sent once.
     return (
-        <div css={{
+        <div onMouseEnter={() => { loadQuery({ id: eventId(keyOfId(id)) }); }} css={{
             width: "100%",
             position: "relative",
             height: 10.5,
@@ -607,11 +627,15 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
             {textMatches.map((m, i) => (
                 <WithTooltip
                     key={i}
+                    tooltipCss={{ textAlign: "center", paddingTop: 8 }}
                     tooltip={(() => {
                         const startDuration = formatDuration(m.start);
                         const endDuration = formatDuration(m.start + m.duration);
 
                         return <>
+                            {queryRef && (
+                                <SectionPreviewImage queryRef={queryRef} start={m.start}/>
+                            )}
                             <div css={{
                                 maxWidth: "min(85vw, 460px)",
                                 padding: 1,
@@ -621,9 +645,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
                             }}>
                                 …{highlightText(m.text, m.highlights)}…
                             </div>
-                            <div css={{ textAlign: "center" }}>
-                                {`(${startDuration} – ${endDuration})`}
-                            </div>
+                            {`(${startDuration} – ${endDuration})`}
                         </>;
                     })()}
                     css={{
@@ -659,6 +681,43 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({ duration, textMat
             ))}
         </div>
     );
+};
+
+type SectionPreviewImageProps = {
+    queryRef: PreloadedQuery<SearchSlidePreviewQuery>;
+    start: number;
+};
+
+const SectionPreviewImage: React.FC<SectionPreviewImageProps> = ({ queryRef, start }) => {
+    const data = usePreloadedQuery(slidePreviewQuery, queryRef);
+    const segments = data.eventById?.syncedData?.segments;
+    if (!segments) {
+        return null;
+    }
+
+    // Find the segment with its start time closest to the `start` of the text
+    // match, while still being smaller.
+    let currBestDiff = Infinity;
+    let currBest = undefined;
+    for (const segment of segments) {
+        // Relax the comparison a bit to be able to deal with rounding errors
+        // somewhere in the pipeline. Note that we still use the closest and
+        // segments are usually fairly long, so this is unlikely to result in
+        // any negative effects.
+        if (segment.startTime <= start + 500) {
+            const diff = start - segment.startTime;
+            if (diff < currBestDiff) {
+                currBestDiff = diff;
+                currBest = segment;
+            }
+        }
+    }
+
+    return currBest && <img src={currBest.uri} css={{
+        width: 230,
+        maxHeight: 150,
+        borderRadius: 4,
+    }}/>;
 };
 
 
