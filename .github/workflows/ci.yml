@@ -112,6 +112,7 @@ jobs:
       with:
         name: test-deployment-files
         retention-days: 1
+        include-hidden-files: true
         path: |
           tobira
           util/dev-config/logo-large.svg
