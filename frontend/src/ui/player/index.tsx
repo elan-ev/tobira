@@ -165,6 +165,9 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
                     width: "unset !important",
                 },
             },
+            "div.player-container": {
+                borderRadius: 8,
+            },
             display: "flex",
             flexDirection: "column",
             // We want to be able to see the full header, the video title and some metadata.
