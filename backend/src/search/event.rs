@@ -377,7 +377,7 @@ impl TextSearchIndex {
             // include context from the same text though, meaning we only go to
             // the next `;` or `\n`.
             let range_with_context = {
-                let max_distance = 100;
+                let max_distance = 80;
                 let separators = &[';', '\n'];
 
                 // First just add a fixed margin around the match, as a limit.

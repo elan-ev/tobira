@@ -627,27 +627,16 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
             {textMatches.map((m, i) => (
                 <WithTooltip
                     key={i}
-                    tooltipCss={{ textAlign: "center", paddingTop: 8 }}
-                    tooltip={(() => {
-                        const startDuration = formatDuration(m.start);
-                        const endDuration = formatDuration(m.start + m.duration);
-
-                        return <>
-                            {queryRef && (
-                                <SectionPreviewImage queryRef={queryRef} start={m.start}/>
-                            )}
-                            <div css={{
-                                maxWidth: "min(85vw, 460px)",
-                                padding: 1,
-                                fontSize: 13,
-                                ...ellipsisOverflowCss(2),
-                                mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
-                            }}>
-                                …{highlightText(m.text, m.highlights)}…
-                            </div>
-                            {`(${startDuration} – ${endDuration})`}
-                        </>;
-                    })()}
+                    distance={m.ty === "CAPTION" ? 4 : 5.5}
+                    tooltipCss={{
+                        textAlign: "center",
+                        paddingTop: 8,
+                        maxWidth: "min(85vw, 420px)",
+                    }}
+                    tooltip={queryRef
+                        ? <TextMatchTooltipWithMaybeImage queryRef={queryRef} textMatch={m} />
+                        : <TextMatchTooltip textMatch={m} />
+                    }
                     css={{
                         position: "absolute",
                         ...match(m.ty, {
@@ -683,17 +672,17 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
     );
 };
 
-type SectionPreviewImageProps = {
+type TextMatchTooltipWithMaybeImageProps = {
     queryRef: PreloadedQuery<SearchSlidePreviewQuery>;
-    start: number;
+    textMatch: SearchEventProps["textMatches"][number];
 };
 
-const SectionPreviewImage: React.FC<SectionPreviewImageProps> = ({ queryRef, start }) => {
+const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImageProps> = ({
+    queryRef,
+    textMatch,
+}) => {
     const data = usePreloadedQuery(slidePreviewQuery, queryRef);
-    const segments = data.eventById?.syncedData?.segments;
-    if (!segments) {
-        return null;
-    }
+    const segments = data.eventById?.syncedData?.segments ?? [];
 
     // Find the segment with its start time closest to the `start` of the text
     // match, while still being smaller.
@@ -704,8 +693,8 @@ const SectionPreviewImage: React.FC<SectionPreviewImageProps> = ({ queryRef, sta
         // somewhere in the pipeline. Note that we still use the closest and
         // segments are usually fairly long, so this is unlikely to result in
         // any negative effects.
-        if (segment.startTime <= start + 500) {
-            const diff = start - segment.startTime;
+        if (segment.startTime <= textMatch.start + 500) {
+            const diff = textMatch.start - segment.startTime;
             if (diff < currBestDiff) {
                 currBestDiff = diff;
                 currBest = segment;
@@ -713,11 +702,46 @@ const SectionPreviewImage: React.FC<SectionPreviewImageProps> = ({ queryRef, sta
         }
     }
 
-    return currBest && <img src={currBest.uri} css={{
-        width: 230,
-        maxHeight: 150,
-        borderRadius: 4,
-    }}/>;
+    return <TextMatchTooltip previewImage={currBest?.uri} textMatch={textMatch} />;
+};
+
+type TextMatchTooltipProps = {
+    previewImage?: string;
+    textMatch: SearchEventProps["textMatches"][number];
+};
+
+const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textMatch }) => {
+    const startDuration = formatDuration(textMatch.start);
+    const endDuration = formatDuration(textMatch.start + textMatch.duration);
+
+    return <>
+        {previewImage && (
+            <img src={previewImage} css={{
+                maxWidth: "100%",
+                height: 160,
+                borderRadius: 4,
+            }}/>
+        )}
+        <div css={{
+            height: previewImage ? 38 : "auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        }}>
+            <div css={{
+                padding: 1,
+                fontSize: 13,
+                lineHeight: 1.3,
+                ...ellipsisOverflowCss(2),
+                mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
+            }}>
+                …{highlightText(textMatch.text, textMatch.highlights)}…
+            </div>
+        </div>
+        <div css={{ marginTop: 2 }}>
+            {`(${startDuration} – ${endDuration})`}
+        </div>
+    </>;
 };
 
 
