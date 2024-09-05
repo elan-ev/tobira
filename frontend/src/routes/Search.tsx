@@ -2,10 +2,12 @@ import { Trans, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import {
     LuCalendarRange,
+    LuImage,
     LuLayout,
     LuLibrary,
     LuPlayCircle,
     LuRadio,
+    LuVolume2,
     LuX,
 } from "react-icons/lu";
 import { IconType } from "react-icons";
@@ -631,6 +633,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
                     tooltipCss={{
                         textAlign: "center",
                         paddingTop: 8,
+                        minWidth: 160,
                         maxWidth: "min(85vw, 420px)",
                     }}
                     tooltip={queryRef
@@ -715,6 +718,22 @@ const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textM
     const endDuration = formatDuration(textMatch.start + textMatch.duration);
 
     return <>
+        {/* Icon to show what kind of textMatch this is */}
+        <div css={{
+            position: "absolute",
+            fontSize: 20,
+            lineHeight: 1,
+            opacity: 0.2,
+            bottom: 0,
+            left: 4,
+        }}>
+            {match(textMatch.ty, {
+                CAPTION: () => <LuVolume2 />,
+                SLIDE_TEXT: () => <LuImage />,
+                "%future added value": unreachable,
+            })}
+        </div>
+
         {previewImage && (
             <img src={previewImage} css={{
                 maxWidth: "100%",
