@@ -2,7 +2,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import {
     LuCalendarRange,
-    LuImage,
     LuLayout,
     LuLibrary,
     LuPlayCircle,
@@ -10,6 +9,7 @@ import {
     LuVolume2,
     LuX,
 } from "react-icons/lu";
+import { LetterText } from "lucide-react";
 import { IconType } from "react-icons";
 import { ReactNode, RefObject, useEffect, useRef } from "react";
 import {
@@ -730,7 +730,7 @@ const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textM
         }}>
             {match(textMatch.ty, {
                 CAPTION: () => <LuVolume2 />,
-                SLIDE_TEXT: () => <LuImage />,
+                SLIDE_TEXT: () => <LetterText />,
                 "%future added value": unreachable,
             })}
         </div>
