@@ -546,21 +546,23 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     )}
                 </div>
             </WithIcon>
-            <Thumbnail
-                event={{
-                    title,
-                    isLive,
-                    created,
-                    syncedData: {
-                        thumbnail,
-                        duration,
-                        startTime,
-                        endTime,
-                        audioOnly,
-                    },
-                }}
-                css={thumbnailCss}
-            />
+            <Link to={link}>
+                <Thumbnail
+                    event={{
+                        title,
+                        isLive,
+                        created,
+                        syncedData: {
+                            thumbnail,
+                            duration,
+                            startTime,
+                            endTime,
+                            audioOnly,
+                        },
+                    }}
+                    css={thumbnailCss}
+                />
+            </Link>
         </Item>
     );
 };
@@ -658,7 +660,6 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
                         width: `calc(${m.duration / duration * 100}% - 1px)`,
                         minWidth: 6, // To make the sections not too small to click
                         left: `${m.start / duration * 100}%`,
-                        zIndex: 8,
                         borderRadius: 1,
                         "&:hover": {
                             backgroundColor: COLORS.primary2,
@@ -799,7 +800,9 @@ const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thu
                 />}
             </div>
         </WithIcon>
-        <ThumbnailStack {...{ thumbnails, title }} />
+        <Link to={DirectSeriesRoute.url({ seriesId: id })}>
+            <ThumbnailStack {...{ thumbnails, title }} />
+        </Link>
     </Item>
 ;
 
@@ -924,7 +927,6 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
         <Link to={link} css={{
             position: "absolute",
             inset: 0,
-            zIndex: 4,
             borderRadius: 16,
         }}/>
         {children}
