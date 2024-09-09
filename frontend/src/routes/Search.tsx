@@ -590,6 +590,7 @@ const slidePreviewQuery = graphql`
     query SearchSlidePreviewQuery($id: ID!) {
         eventById(id: $id) {
             ...on AuthorizedEvent {
+                id
                 syncedData {
                     segments { startTime uri }
                 }
