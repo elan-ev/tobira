@@ -42,6 +42,7 @@ host = "http://localhost:8081"
 user = "admin"
 password = "opencast"
 preferred_harvest_size = 3
+interpret_eth_passwords = true
 
 [theme]
 logo.large.path = "logo-large.svg"

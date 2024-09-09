@@ -6,12 +6,12 @@ use std::{
 use tokio_postgres::types::ToSql;
 
 use crate::{
-    auth::ROLE_ADMIN,
+    auth::{ROLE_ADMIN, ROLE_ANONYMOUS, ETH_ROLE_CREDENTIALS_RE, ETH_ROLE_PASSWORD_RE},
     config::Config,
     db::{
         self,
         DbConnection,
-        types::{EventCaption, EventSegment, EventState, EventTrack, SeriesState},
+        types::{EventCaption, EventSegment, EventState, EventTrack, Credentials, SeriesState},
     },
     prelude::*,
 };
@@ -88,7 +88,7 @@ pub(crate) async fn run(
         // everything worked out alright.
         let last_updated = harvest_data.items.last().map(|item| item.updated());
         let mut transaction = db.transaction().await?;
-        store_in_db(harvest_data.items, &sync_status, &mut transaction).await?;
+        store_in_db(harvest_data.items, &sync_status, &mut transaction, config).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
         transaction.commit().await?;
 
@@ -132,6 +132,7 @@ async fn store_in_db(
     items: Vec<HarvestItem>,
     sync_status: &SyncStatus,
     db: &mut deadpool_postgres::Transaction<'_>,
+    config: &Config,
 ) -> Result<()> {
     let before = Instant::now();
     let mut upserted_events = 0;
@@ -180,11 +181,36 @@ async fn store_in_db(
                     },
                 };
 
+                // (**ETH SPECIAL FEATURE**)
+                let credentials = config.sync.interpret_eth_passwords
+                    .then(|| hashed_eth_credentials(&acl.read))
+                    .flatten();
+
+                // (**ETH SPECIAL FEATURE**)
+                // When an ETH event is password protected, read access doesn't suffice to view a video - everyone
+                // without write access needs to authenticate. So we need to shift all read roles down to preview, so
+                // users with what was previously read access are only allowed to preview and authenticate.
+                // `read_roles` now needs to be an exact copy of `write_roles`, and not a superset.
+                // With this, checks that allow actual read access will still succeed for users that also have write
+                // access.
+                // Additionally, since ETH requires that everyone with the link should be able to authenticate
+                // regardless of ACL inclusion, `ROLE_ANONYMOUS` is added to the preview roles.
+                if credentials.is_some() {
+                    (acl.preview, acl.read) = (acl.read, acl.write.clone());
+                    acl.preview.push(ROLE_ANONYMOUS.into());
+                }
+
+                let filter_role = |role: &String| -> bool {
+                    !(role == ROLE_ADMIN || (config.sync.interpret_eth_passwords
+                        && (ETH_ROLE_CREDENTIALS_RE.is_match(role) || ETH_ROLE_PASSWORD_RE.is_match(role))
+                    ))
+                };
+
                 // We always handle the admin role in a special way, so no need
                 // to store it for every single event.
-                acl.preview.retain(|role| role != ROLE_ADMIN);
-                acl.read.retain(|role| role != ROLE_ADMIN);
-                acl.write.retain(|role| role != ROLE_ADMIN);
+                acl.preview.retain(filter_role);
+                acl.read.retain(filter_role);
+                acl.write.retain(filter_role);
 
                 for (_, roles) in &mut acl.custom_actions.0 {
                     roles.retain(|role| role != ROLE_ADMIN);
@@ -219,6 +245,7 @@ async fn store_in_db(
                     ("captions", &captions),
                     ("segments", &segments),
                     ("slide_text", &slide_text),
+                    ("credentials", &credentials),
                 ]).await?;
 
                 trace!("Inserted or updated event {} ({})", opencast_id, title);
@@ -379,6 +406,15 @@ fn check_affected_rows_removed(rows_affected: u64, entity: &str, opencast_id: &s
         1 => trace!("Removed {} {}", entity, opencast_id),
         _ => unreachable!("DB unique constraints violation when removing a {}", entity),
     }
+}
+
+fn hashed_eth_credentials(read_roles: &[String]) -> Option<Credentials> {
+    read_roles.iter().find_map(|role| {
+        ETH_ROLE_CREDENTIALS_RE.captures(role).map(|captures| Credentials {
+            name: format!("sha1:{}", &captures[1]),
+            password: format!("sha1:{}", &captures[2]), 
+        })
+    })
 }
 
 /// Inserts a new row or updates an existing one if the value in `unique_col`

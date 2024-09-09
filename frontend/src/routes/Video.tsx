@@ -574,6 +574,8 @@ export const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({
     }} />
     : <PreviewPlaceholder {...{ event, loadQuery, embedded }} />;
 
+export const CREDENTIALS_STORAGE_KEY = "tobira-video-credentials-";
+
 const PlayerOrPreview: React.FC<ProtectedPlayerProps> = ({
     queryReference,
     event,
@@ -679,14 +681,14 @@ const ProtectedVideoPlaceholder: React.FC<PlaceholderProps> = ({
         // them is stored.
         if (isRealUser(user)) {
             window.localStorage
-                .setItem(`tobira-video-credentials-${keyOfId(event.id)}`, credentials);
+                .setItem(CREDENTIALS_STORAGE_KEY + keyOfId(event.id), credentials);
             window.localStorage
-                .setItem(`tobira-video-credentials-${event.opencastId}`, credentials);
+                .setItem(CREDENTIALS_STORAGE_KEY + event.opencastId, credentials);
         } else {
             window.sessionStorage
-                .setItem(`tobira-video-credentials-${keyOfId(event.id)}`, credentials);
+                .setItem(CREDENTIALS_STORAGE_KEY + keyOfId(event.id), credentials);
             window.sessionStorage
-                .setItem(`tobira-video-credentials-${event.opencastId}`, credentials);
+                .setItem(CREDENTIALS_STORAGE_KEY + event.opencastId, credentials);
         }
 
 
