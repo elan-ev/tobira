@@ -421,6 +421,12 @@
 # Example: "https://admin.oc.my-uni.edu/editor-ui/index.html".
 #editor_url =
 
+# Extra Opencast hosts not listed in any other value above, that can also
+# be trusted.
+#
+# Default value: []
+#other_hosts = []
+
 
 [sync]
 # Username of the user used to communicate with Opencast for data syncing.
@@ -459,6 +465,13 @@
 #
 # Default value: "30s"
 #poll_period = "30s"
+
+# Number of concurrent tasks with which Tobira downloads assets from
+# Opencast. The default should be a good sweet spot. Decrease to reduce
+# load on Opencast, increase to speed up download a bit.
+#
+# Default value: 8
+#concurrent_download_tasks = 8
 
 
 [meili]

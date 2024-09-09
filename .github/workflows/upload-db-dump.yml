@@ -42,6 +42,8 @@ jobs:
 
       - name: Sync with Opencast
         run: ./tobira sync run --config util/dev-config/config.toml
+      - name: Fetch text assets from Opencast
+        run: ./tobira sync texts fetch --config util/dev-config/config.toml
       - name: Import realm tree
         run: |
           ./tobira import-realm-tree \

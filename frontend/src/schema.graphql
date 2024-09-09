@@ -84,19 +84,20 @@ type RemovedRealm {
 
 type SearchEvent implements Node {
   id: ID!
-  title: String!
   seriesId: ID
   seriesTitle: String
+  title: String!
   description: String
   creators: [String!]!
   thumbnail: String
   duration: Float!
-  isLive: Boolean!
-  audioOnly: Boolean!
   created: DateTimeUtc!
   startTime: DateTimeUtc
   endTime: DateTimeUtc
+  isLive: Boolean!
+  audioOnly: Boolean!
   hostRealms: [SearchRealm!]!
+  textMatches: [TextMatch!]!
 }
 
 input ChildIndex {
@@ -184,6 +185,11 @@ type SeriesBlock implements Block & RealmNameSourceBlock {
   realm: Realm!
 }
 
+enum TextAssetType {
+  CAPTION
+  SLIDE_TEXT
+}
+
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
 """
@@ -197,14 +203,6 @@ type KnownGroup {
   large: Boolean!
 }
 
-input NewPlaylistBlock {
-  playlist: ID!
-  showTitle: Boolean!
-  showMetadata: Boolean!
-  order: VideoListOrder!
-  layout: VideoListLayout!
-}
-
 type SyncedEventData implements Node {
   updated: DateTimeUtc!
   startTime: DateTimeUtc
@@ -215,6 +213,14 @@ type SyncedEventData implements Node {
   thumbnail: String
   captions: [Caption!]!
   segments: [Segment!]!
+}
+
+input NewPlaylistBlock {
+  playlist: ID!
+  showTitle: Boolean!
+  showMetadata: Boolean!
+  order: VideoListOrder!
+  layout: VideoListLayout!
 }
 
 input NewVideoBlock {
@@ -336,6 +342,23 @@ type SeriesSearchResults {
   items: [SearchSeries!]!
 }
 
+"A match inside an event's texts while searching."
+type TextMatch {
+  """
+    Start of this timespan in number of milliseconds from the beginning of
+    the video.
+  """
+  start: Float!
+  "Duration of this timespan in number of milliseconds."
+  duration: Float!
+  "The text containing the match, with some context"
+  text: String!
+  "Source of this text."
+  ty: TextAssetType!
+  "Parts of `text` that should be highlighted."
+  highlights: [ByteSpan!]!
+}
+
 type Track {
   uri: String!
   flavor: String!
@@ -351,6 +374,11 @@ type SearchResults {
 
 input UpdateTextBlock {
   content: String
+}
+
+type ByteSpan {
+  start: Int!
+  len: Int!
 }
 
 union Playlist = AuthorizedPlaylist | NotAllowed
@@ -810,14 +838,14 @@ input NewRealm {
   pathSegment: String!
 }
 
-type Segment {
-  uri: String!
-  startTime: Float!
-}
-
 enum SortDirection {
   ASCENDING
   DESCENDING
+}
+
+type Segment {
+  uri: String!
+  startTime: Float!
 }
 
 "Services a user can be pre-authenticated for using a JWT"

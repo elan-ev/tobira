@@ -1,24 +1,31 @@
 import { Trans, useTranslation } from "react-i18next";
-import { graphql } from "react-relay";
+import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import {
     LuCalendarRange,
     LuLayout,
     LuLibrary,
     LuPlayCircle,
     LuRadio,
+    LuVolume2,
     LuX,
 } from "react-icons/lu";
+import { LetterText } from "lucide-react";
 import { IconType } from "react-icons";
 import { ReactNode, RefObject, useEffect, useRef } from "react";
 import {
+    Button,
+    Card,
     Floating,
     FloatingContainer,
     FloatingTrigger,
     ProtoButton,
+    WithTooltip,
+    match,
     screenWidthAtMost,
     unreachable,
     useColorScheme,
 } from "@opencast/appkit";
+import { CSSObject } from "@emotion/react";
 
 import { RootLoader } from "../layout/Root";
 import {
@@ -36,6 +43,7 @@ import {
     ThumbnailOverlay,
     ThumbnailOverlayContainer,
     ThumbnailReplacement,
+    formatDuration,
 } from "../ui/Video";
 import { SmallDescription } from "../ui/metadata";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
@@ -43,11 +51,11 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
-import { isExperimentalFlagSet } from "../util";
-import { Button, Card } from "@opencast/appkit";
+import { eventId, isExperimentalFlagSet, keyOfId, secondsToTimeString } from "../util";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute } from "./Series";
 import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
+import { SearchSlidePreviewQuery } from "./__generated__/SearchSlidePreviewQuery.graphql";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -142,6 +150,13 @@ const query = graphql`
                         endTime
                         created
                         hostRealms { path }
+                        textMatches {
+                            start
+                            duration
+                            text
+                            ty
+                            highlights { start len }
+                        }
                     }
                     ... on SearchSeries {
                         title
@@ -363,7 +378,12 @@ const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "unde
     : value;
 
 const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
-    <ul css={{ listStyle: "none", padding: 0 }}>
+    <ul css={{
+        listStyle: "none",
+        padding: 0,
+        // A yellow that looks good for dark and light mode.
+        "--highlight-color": "#ba9f14",
+    }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
                 return <SearchEvent key={item.id} {...{
@@ -381,6 +401,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     startTime: unwrapUndefined(item.startTime),
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
+                    textMatches: unwrapUndefined(item.textMatches),
                 }} />;
             } else if (item.__typename === "SearchSeries") {
                 return <SearchSeries key={item.id} {...{
@@ -415,6 +436,7 @@ const WithIcon: React.FC<WithIconProps> = ({ Icon, iconSize = 30, children, hide
     <div css={{
         display: "flex",
         flexDirection: "row",
+        flexGrow: "1",
         minWidth: 0,
         gap: 24,
         [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
@@ -457,6 +479,7 @@ type SearchEventProps = {
     startTime: string | null;
     endTime: string | null;
     hostRealms: readonly { readonly path: string }[];
+    textMatches: NonNullable<Results["items"][number]["textMatches"]>;
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
@@ -474,6 +497,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     startTime,
     endTime,
     hostRealms,
+    textMatches,
 }) => {
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
@@ -490,6 +514,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     display: "flex",
                     flexDirection: "column",
                     minWidth: 0,
+                    width: "100%",
                 }}>
                     <h3 css={{
                         color: COLORS.primary0,
@@ -514,23 +539,30 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                         lines={3}
                     />}
                     {seriesTitle && seriesId && <PartOfSeriesLink {...{ seriesTitle, seriesId }} />}
+
+                    {/* Show timeline with matches if there are any */}
+                    {textMatches.length > 0 && (
+                        <TextMatchTimeline {...{ id, duration, link, textMatches }} />
+                    )}
                 </div>
             </WithIcon>
-            <Thumbnail
-                event={{
-                    title,
-                    isLive,
-                    created,
-                    syncedData: {
-                        thumbnail,
-                        duration,
-                        startTime,
-                        endTime,
-                        audioOnly,
-                    },
-                }}
-                css={thumbnailCss}
-            />
+            <Link to={link}>
+                <Thumbnail
+                    event={{
+                        title,
+                        isLive,
+                        created,
+                        syncedData: {
+                            thumbnail,
+                            duration,
+                            startTime,
+                            endTime,
+                            audioOnly,
+                        },
+                    }}
+                    css={thumbnailCss}
+                />
+            </Link>
         </Item>
     );
 };
@@ -548,6 +580,189 @@ const thumbnailCss = {
         maxWidth: 400,
         margin: "0 auto",
     },
+};
+
+type TextMatchTimelineProps = Pick<SearchEventProps, "id" | "duration" | "textMatches"> & {
+    link: string;
+};
+
+const slidePreviewQuery = graphql`
+    query SearchSlidePreviewQuery($id: ID!) {
+        eventById(id: $id) {
+            ...on AuthorizedEvent {
+                id
+                syncedData {
+                    segments { startTime uri }
+                }
+            }
+        }
+    }
+`;
+
+const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
+    id, duration, textMatches, link,
+}) => {
+    const sectionLink = (startMs: number) => `${link}?t=${secondsToTimeString(startMs / 1000)}`;
+    const [queryRef, loadQuery]
+        = useQueryLoader<SearchSlidePreviewQuery>(slidePreviewQuery);
+
+    // We load the query once the user hovers over the parent container. This
+    // seems like it would send a query every time the mouse enters, but relay
+    // caches the results, so it is only sent once.
+    return (
+        <div onMouseEnter={() => { loadQuery({ id: eventId(keyOfId(id)) }); }} css={{
+            width: "100%",
+            position: "relative",
+            height: 10.5,
+            margin: "16px 0",
+            border: `1.5px solid ${COLORS.neutral50}`,
+            borderTop: "none",
+            borderBottom: "none",
+        }}>
+            {/* The timeline line */}
+            <div css={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: "calc(50% - 0.75px)",
+                height: 0,
+                borderTop: `1.5px solid ${COLORS.neutral50}`,
+            }} />
+
+            {textMatches.map((m, i) => (
+                <WithTooltip
+                    key={i}
+                    distance={m.ty === "CAPTION" ? 4 : 5.5}
+                    tooltipCss={{
+                        textAlign: "center",
+                        paddingTop: 8,
+                        minWidth: 160,
+                        maxWidth: "min(85vw, 420px)",
+                    }}
+                    tooltip={queryRef
+                        ? <TextMatchTooltipWithMaybeImage queryRef={queryRef} textMatch={m} />
+                        : <TextMatchTooltip textMatch={m} />
+                    }
+                    css={{
+                        position: "absolute",
+                        ...match(m.ty, {
+                            CAPTION: () => ({
+                                height: "100%",
+                                bottom: "0",
+                                backgroundColor: COLORS.primary1,
+                            }) as CSSObject,
+                            SLIDE_TEXT: () => ({
+                                height: "70%",
+                                bottom: "15%",
+                                backgroundColor: COLORS.primary0,
+                            }),
+                            "%future added value": () => unreachable(),
+                        }),
+                        width: `calc(${m.duration / duration * 100}% - 1px)`,
+                        minWidth: 6, // To make the sections not too small to click
+                        left: `${m.start / duration * 100}%`,
+                        borderRadius: 1,
+                        "&:hover": {
+                            backgroundColor: COLORS.primary2,
+                        },
+                    }}
+                >
+                    <Link
+                        to={sectionLink(m.start)}
+                        css={{ display: "block", height: "100%" }}
+                    />
+                </WithTooltip>
+            ))}
+        </div>
+    );
+};
+
+type TextMatchTooltipWithMaybeImageProps = {
+    queryRef: PreloadedQuery<SearchSlidePreviewQuery>;
+    textMatch: SearchEventProps["textMatches"][number];
+};
+
+const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImageProps> = ({
+    queryRef,
+    textMatch,
+}) => {
+    const data = usePreloadedQuery(slidePreviewQuery, queryRef);
+    const segments = data.eventById?.syncedData?.segments ?? [];
+
+    // Find the segment with its start time closest to the `start` of the text
+    // match, while still being smaller.
+    let currBestDiff = Infinity;
+    let currBest = undefined;
+    for (const segment of segments) {
+        // Relax the comparison a bit to be able to deal with rounding errors
+        // somewhere in the pipeline. Note that we still use the closest and
+        // segments are usually fairly long, so this is unlikely to result in
+        // any negative effects.
+        if (segment.startTime <= textMatch.start + 500) {
+            const diff = textMatch.start - segment.startTime;
+            if (diff < currBestDiff) {
+                currBestDiff = diff;
+                currBest = segment;
+            }
+        }
+    }
+
+    return <TextMatchTooltip previewImage={currBest?.uri} textMatch={textMatch} />;
+};
+
+type TextMatchTooltipProps = {
+    previewImage?: string;
+    textMatch: SearchEventProps["textMatches"][number];
+};
+
+const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textMatch }) => {
+    const startDuration = formatDuration(textMatch.start);
+    const endDuration = formatDuration(textMatch.start + textMatch.duration);
+
+    return <>
+        {/* Icon to show what kind of textMatch this is */}
+        <div css={{
+            position: "absolute",
+            fontSize: 20,
+            lineHeight: 1,
+            opacity: 0.2,
+            bottom: 0,
+            left: 4,
+        }}>
+            {match(textMatch.ty, {
+                CAPTION: () => <LuVolume2 />,
+                SLIDE_TEXT: () => <LetterText />,
+                "%future added value": unreachable,
+            })}
+        </div>
+
+        {previewImage && (
+            <img src={previewImage} css={{
+                maxWidth: "100%",
+                height: 160,
+                borderRadius: 4,
+            }}/>
+        )}
+        <div css={{
+            height: previewImage ? 38 : "auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        }}>
+            <div css={{
+                padding: 1,
+                fontSize: 13,
+                lineHeight: 1.3,
+                ...ellipsisOverflowCss(2),
+                mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
+            }}>
+                …{highlightText(textMatch.text, textMatch.highlights)}…
+            </div>
+        </div>
+        <div css={{ marginTop: 2 }}>
+            {`(${startDuration} – ${endDuration})`}
+        </div>
+    </>;
 };
 
 
@@ -586,7 +801,9 @@ const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thu
                 />}
             </div>
         </WithIcon>
-        <ThumbnailStack {...{ thumbnails, title }} />
+        <Link to={DirectSeriesRoute.url({ seriesId: id })}>
+            <ThumbnailStack {...{ thumbnails, title }} />
+        </Link>
     </Item>
 ;
 
@@ -711,7 +928,6 @@ const Item: React.FC<ItemProps> = ({ link, children }) => (
         <Link to={link} css={{
             position: "absolute",
             inset: 0,
-            zIndex: 4,
             borderRadius: 16,
         }}/>
         {children}
@@ -735,4 +951,72 @@ export const handleNavigation = ((router: RouterControl, ref?: RefObject<HTMLInp
     }
 });
 
+/**
+ * Slices a string with byte indices. Never cuts into UTF-8 chars, but
+ * arbitrarily decides in what output to place them.
+ */
+const byteSlice = (s: string, start: number, len: number): readonly [string, string, string] => {
+    const isCharBoundary = (b: Uint8Array, idx: number): boolean => {
+        if (idx === 0 || idx === b.byteLength) {
+            return true;
+        }
+        const v = b.at(idx);
+        if (v === undefined) {
+            return false;
+        }
 
+        // UTF-8 chars have either the first bit 0 or the first two bits 1.
+        return v < 0x80 || v >= 0xC0;
+    };
+
+    const bytes = new TextEncoder().encode(s);
+    const decoder = new TextDecoder("utf-8");
+
+    // Round indices to avoid cutting into UTF8 chars. The loop only needs to
+    // execute 3 times as every 4 bytes there is always a char boundary.
+    let end = start + len;
+    for (let i = 0; i < 3; i += 1) {
+        if (!isCharBoundary(bytes, start)) {
+            start += 1;
+        }
+        if (!isCharBoundary(bytes, end)) {
+            end += 1;
+        }
+    }
+
+    return [
+        decoder.decode(bytes.slice(0, start)),
+        decoder.decode(bytes.slice(start, end)),
+        decoder.decode(bytes.slice(end)),
+    ] as const;
+};
+
+const highlightText = (
+    s: string,
+    spans: readonly { start: number; len: number }[],
+) => {
+    const textParts = [];
+    let remainingText = s;
+    let offset = 0;
+    for (const span of spans) {
+        const highlightStart = span.start - offset;
+        const [prefix, middle, rest]
+            = byteSlice(remainingText, highlightStart, span.len);
+
+        textParts.push(<span key={offset + 1}>{prefix}</span>);
+        textParts.push(
+            <mark key={offset}>{middle}</mark>
+        );
+        remainingText = rest;
+        offset = span.start + span.len;
+    }
+    textParts.push(remainingText);
+    return textParts;
+};
+
+const highlightCss = (color: string, backgroundColor: string) => ({
+    color,
+    backgroundColor,
+    borderBottom: "2px solid var(--highlight-color)",
+    borderRadius: 2,
+});

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use static_assertions::const_assert;
 use std::fmt;
 
-use crate::db::types::Key;
+use crate::{db::types::Key, util::{base64_decode, BASE64_DIGITS}};
 
 
 /// An opaque, globally-unique identifier for all "nodes" that the GraphQL API
@@ -123,10 +123,6 @@ impl Id {
     }
 }
 
-/// The URL-safe base64 alphabet.
-const BASE64_DIGITS: &[u8; 64] =
-    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-
 impl Key {
     pub(crate) fn from_base64(s: &str) -> Option<Self> {
         if s.len() != 11 {
@@ -205,34 +201,6 @@ where
 }
 
 fn decode_base64(src: &[u8]) -> Option<Key> {
-    /// The reverse lookup table to `BASE64_DIGITS`. If you index by an ASCII value, you
-    /// either get the corresponding digit value OR `0xFF`, signalling that the
-    /// character is not a valid base64 character.
-    const DECODE_TABLE: [u8; 256] = create_decode_table();
-
-    const fn create_decode_table() -> [u8; 256] {
-        let mut out = [0xFF; 256];
-
-        // If you wonder why we are using `while` instead of a more idiomatic loop:
-        // const fns are still somewhat limited and do not allow `for`.
-        let mut i = 0;
-        while i < BASE64_DIGITS.len() {
-            out[BASE64_DIGITS[i] as usize] = i as u8;
-            i += 1;
-        }
-
-        out
-    }
-
-    fn lookup(ascii: u8) -> Option<u64> {
-        let raw = DECODE_TABLE[ascii as usize];
-        if raw == 0xFF {
-            return None;
-        }
-
-        Some(raw as u64)
-    }
-
     let src: [u8; 11] = src.try_into().ok()?;
 
     // Make sure the string doesn't decode to a number > `u64::MAX`. Luckily,
@@ -246,7 +214,7 @@ fn decode_base64(src: &[u8]) -> Option<Key> {
     src.iter()
         .rev()
         .enumerate()
-        .map(|(i, &d)| lookup(d).map(|n| n * 64u64.pow(i as u32)))
+        .map(|(i, &d)| base64_decode(d).map(|n| n as u64 * 64u64.pow(i as u32)))
         .sum::<Option<u64>>()
         .map(Key)
 }

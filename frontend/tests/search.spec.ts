@@ -37,7 +37,7 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
 
     await test.step("Series links should work", async () => {
         const eventSeriesLink = page.getByRole("link", { name: "Fabulous Cats" });
-        await expect(eventSeriesLink).toHaveCount(2);
+        await expect(eventSeriesLink).toHaveCount(3);
         await eventSeriesLink.first().click();
         expect(page.url().startsWith("/!s/"));
         await page.goBack();

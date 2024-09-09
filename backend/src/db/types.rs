@@ -1,6 +1,7 @@
 use std::{fmt, collections::HashMap};
 
 use bytes::BytesMut;
+use chrono::{DateTime, Utc};
 use juniper::GraphQLEnum;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
@@ -75,6 +76,14 @@ pub struct EventCaption {
     pub lang: Option<String>,
 }
 
+#[derive(Debug, ToSql)]
+#[postgres(name = "event_texts_queue")]
+pub struct EventTextsQueueRecord {
+    pub event_id: Key,
+    pub fetch_after: DateTime<Utc>,
+    pub retry_count: i32,
+}
+
 /// Represents the `event_state` type defined in `05-events.sql`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql)]
 #[postgres(name = "event_state")]
@@ -124,6 +133,25 @@ pub struct SearchThumbnailInfo {
     pub audio_only: bool,
     pub read_roles: Vec<String>,
 }
+
+/// Represents the `timespan_text` type.
+#[derive(Debug, FromSql, ToSql)]
+#[postgres(name = "timespan_text")]
+pub struct TimespanText {
+    pub span_start: i64,
+    pub span_end: i64,
+    pub t: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
+#[postgres(name = "text_asset_type")]
+pub enum TextAssetType {
+    #[postgres(name = "caption")]
+    Caption,
+    #[postgres(name = "slide-text")]
+    SlideText,
+}
+
 
 /// Represents extra metadata in the DB. Is a map from "namespace" to a
 /// `string -> string array` map.
