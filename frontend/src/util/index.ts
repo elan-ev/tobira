@@ -7,7 +7,7 @@ import { useLazyLoadQuery } from "react-relay";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
-import { authorizedDataQuery } from "../routes/Video";
+import { authorizedDataQuery, CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import {
     VideoAuthorizedDataQuery$data,
 } from "../routes/__generated__/VideoAuthorizedDataQuery.graphql";
@@ -222,7 +222,7 @@ export const secondsToTimeString = (seconds: number): string => {
 
 export type ExtraMetadata = Record<string, Record<string, string[]>>;
 
-export type SeriesCredentials = {
+export type Credentials = {
     user: string;
     password: string;
 } | null;
@@ -259,9 +259,9 @@ export const useAuthenticatedDataQuery = (id: string) => {
  * In order to have a successful check when visiting a video page with either Tobira ID
  * or Opencast ID in the url, this check accepts both ID kinds.
  */
-export const getCredentials = (eventId: string): SeriesCredentials => {
-    const credentials = window.localStorage.getItem(`tobira-video-credentials-${eventId}`)
-        ?? window.sessionStorage.getItem(`tobira-video-credentials-${eventId}`);
+export const getCredentials = (eventId: string): Credentials => {
+    const credentials = window.localStorage.getItem(CREDENTIALS_STORAGE_KEY + eventId)
+        ?? window.sessionStorage.getItem(CREDENTIALS_STORAGE_KEY + eventId);
 
     return credentials && JSON.parse(credentials);
 };

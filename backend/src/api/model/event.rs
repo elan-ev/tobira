@@ -4,6 +4,7 @@ use postgres_types::ToSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::Row;
 use juniper::{GraphQLObject, graphql_object};
+use sha1::{Sha1, Digest};
 
 use crate::{
     api::{
@@ -13,7 +14,7 @@ use crate::{
         model::{acl::{self, Acl}, realm::Realm, series::Series},
     },
     db::{
-        types::{EventCaption, EventSegment, EventState, EventTrack, ExtraMetadata, Key},
+        types::{EventCaption, EventSegment, EventState, EventTrack, ExtraMetadata, Key, Credentials},
         util::{impl_from_db, select},
     },
     prelude::*,
@@ -38,6 +39,7 @@ pub(crate) struct AuthorizedEvent {
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
     pub(crate) preview_roles: Vec<String>,
+    pub(crate) credentials: Option<Credentials>,
 
     pub(crate) synced_data: Option<SyncedEventData>,
     pub(crate) authorized_data: Option<AuthorizedEventData>,
@@ -70,7 +72,7 @@ impl_from_db!(
             title, description, duration, creators, thumbnail, metadata,
             created, updated, start_time, end_time,
             tracks, captions, segments,
-            read_roles, write_roles, preview_roles,
+            read_roles, write_roles, preview_roles, credentials,
             tobira_deletion_timestamp,
         },
     },
@@ -88,6 +90,7 @@ impl_from_db!(
             read_roles: row.read_roles::<Vec<String>>(),
             write_roles: row.write_roles::<Vec<String>>(),
             preview_roles: row.preview_roles::<Vec<String>>(),
+            credentials: row.credentials(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             synced_data: match row.state::<EventState>() {
                 EventState::Ready => Some(SyncedEventData {
@@ -227,16 +230,26 @@ impl AuthorizedEvent {
     }
 
     /// Returns the authorized event data if the user has read access or is authenticated for the event.
-    async fn authorized_data(&self, context: &Context, user: Option<String>, password: Option<String>) -> Option<&AuthorizedEventData> {
-        // TODO: replace with hashed credentials from db, add actual comparison check with hashed user inputs
-        let expected_user = "plane";
-        let expected_pw = "bird";
+    async fn authorized_data(
+        &self,
+        context: &Context, 
+        user: Option<String>, 
+        password: Option<String>,
+    ) -> Option<&AuthorizedEventData> {
+        let sha1_matches = |input: &str, encoded: &str| {
+            let (algo, hash) = encoded.split_once(':').expect("invalid credentials in DB");
+            match algo {
+                "sha1" => hash == hex::encode_upper(Sha1::digest(input)),
+                _ => unreachable!("unsupported hash algo"),
+            }
+        };
 
-        let matches = self.has_password(context).await.unwrap_or(false)
-            && user.map_or(false, |u| u == expected_user)
-            && password.map_or(false, |p| p == expected_pw);
+        let credentials_match = self.credentials.as_ref().map_or(false, |credentials| {
+            user.map_or(false, |u| sha1_matches(&u, &credentials.name))
+                && password.map_or(false, |p| sha1_matches(&p, &credentials.password))
+        });
 
-        if context.auth.overlaps_roles(&self.read_roles) || matches {
+        if context.auth.overlaps_roles(&self.read_roles) || credentials_match {
             self.authorized_data.as_ref()
         } else {
             None
@@ -280,8 +293,8 @@ impl AuthorizedEvent {
 
 
     /// Whether this event is password protected.
-    async fn has_password(&self, context: &Context) -> ApiResult<bool> {
-        self.has_password(context).await
+    async fn has_password(&self) -> bool {
+        self.credentials.is_some()
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
@@ -338,15 +351,6 @@ impl AuthorizedEvent {
 
     pub(crate) async fn load_by_opencast_id(oc_id: String, context: &Context) -> ApiResult<Option<Event>> {
         Self::load_by_any_id_impl("opencast_id", &oc_id, context).await
-    }
-
-    /// Whether this event is password protected.
-    async fn has_password(&self, context: &Context) -> ApiResult<bool> {
-        let query = format!("select credentials is not null from all_events where id = $1");
-        context.db.query_one(&query, &[&self.key])
-            .await?
-            .get::<_, bool>(0)
-            .pipe(Ok)
     }
 
     pub(crate) async fn load_by_any_id_impl(

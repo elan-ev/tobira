@@ -72,6 +72,11 @@ pub(crate) struct SyncConfig {
     #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
     pub(crate) poll_period: Duration,
 
+    /// Whether SHA1-hashed series passwords (as assignable by ETH's admin UI
+    /// build) are interpreted in Tobira.
+    #[config(default = false)]
+    pub(crate) interpret_eth_passwords: bool,
+
     /// Number of concurrent tasks with which Tobira downloads assets from
     /// Opencast. The default should be a good sweet spot. Decrease to reduce
     /// load on Opencast, increase to speed up download a bit.
