@@ -22,10 +22,7 @@
           34313337343261363739653632663736613763613763636561363633653362613238333638313733
           3265616634663435390a306566656530373362623562333232373364393261353864636665316339
           36303161333735313639333735613132626364346536613133626534633063376139
-    # The latest grafana ansible role does not support grafana version 11 (or later) for now
-    # due to braking configuration changes. Please update the grafana ansible collection
-    # and remove this setting to upgrade to the newest grafana version.
-    grafana_version: 10.4.3
+    grafana_version: 11.2.0
 
   tasks:
     - name: deploy nginx vhosts
