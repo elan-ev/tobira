@@ -166,7 +166,7 @@ pub(crate) async fn perform(
             .await?
             .map(|row| {
                 let e = search::Event::from_row_start(&row);
-                SearchEvent::new(e, &[], &[]).into()
+                SearchEvent::new(e, &[], &[], &context).into()
             })
             .into_iter()
             .collect();
@@ -233,7 +233,7 @@ pub(crate) async fn perform(
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
     let events = event_results.hits.into_iter().map(|result| {
         let score = result.ranking_score;
-        (NodeValue::from(hit_to_search_event(result)), score)
+        (NodeValue::from(hit_to_search_event(result, &context)), score)
     });
     let series = series_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
@@ -327,7 +327,7 @@ pub(crate) async fn all_events(
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| hit_to_search_event(h)).collect();
+    let items = results.hits.into_iter().map(|h| hit_to_search_event(h, &context)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
@@ -537,11 +537,17 @@ impl fmt::Display for Filter {
 
 fn hit_to_search_event(
     hit: meilisearch_sdk::SearchResult<search::Event>,
+    context: &Context,
 ) -> SearchEvent {
     let get_matches = |key: &str| hit.matches_position.as_ref()
         .and_then(|matches| matches.get(key))
         .map(|v| v.as_slice())
         .unwrap_or_default();
 
-    SearchEvent::new(hit.result, get_matches("slide_texts.texts"), get_matches("caption_texts.texts"))
+    SearchEvent::new(
+        hit.result,
+        get_matches("slide_texts.texts"),
+        get_matches("caption_texts.texts"),
+        &context
+    )
 }

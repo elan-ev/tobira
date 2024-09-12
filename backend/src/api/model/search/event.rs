@@ -4,8 +4,9 @@ use meilisearch_sdk::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
+    auth::HasRoles,
     db::types::TextAssetType,
-    search,
+    search::{self, util::decode_acl},
 };
 
 
@@ -66,10 +67,21 @@ impl SearchEvent {
         src: search::Event,
         slide_matches: &[MatchRange],
         caption_matches: &[MatchRange],
+        context: &Context,
     ) -> Self {
         let mut text_matches = Vec::new();
         src.slide_texts.resolve_matches(slide_matches, &mut text_matches, TextAssetType::SlideText);
         src.caption_texts.resolve_matches(caption_matches, &mut text_matches, TextAssetType::Caption);
+
+        let thumbnail = {
+            let read_roles = decode_acl(&src.read_roles);
+
+            if context.auth.overlaps_roles(read_roles) {
+                src.thumbnail
+            } else {
+                None
+            }
+        };
 
         Self {
             id: Id::search_event(src.id.0),
@@ -78,7 +90,7 @@ impl SearchEvent {
             title: src.title,
             description: src.description,
             creators: src.creators,
-            thumbnail: src.thumbnail,
+            thumbnail,
             duration: src.duration as f64,
             created: src.created,
             start_time: src.start_time,

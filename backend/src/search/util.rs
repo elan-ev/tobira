@@ -54,6 +54,17 @@ pub(super) fn encode_acl(roles: &[String]) -> Vec<String> {
         .collect()
 }
 
+/// Decodes hex encoded ACL roles.
+pub(crate) fn decode_acl(roles: &[String]) -> Vec<String> {
+    roles.iter()
+        .map(|role| {
+            let bytes = hex::decode(role).expect("Failed to decode role");
+
+            String::from_utf8(bytes).expect("Failed to convert bytes to string")
+        })
+        .collect()
+}
+
 /// Returns `true` if the given error has the error code `IndexNotFound`
 pub(super) fn is_index_not_found(err: &Error) -> bool {
     matches!(err, Error::Meilisearch(e) if e.error_code == ErrorCode::IndexNotFound)
