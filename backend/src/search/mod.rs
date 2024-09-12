@@ -25,7 +25,7 @@ mod series;
 pub(crate) mod writer;
 mod update;
 mod user;
-mod util;
+pub(crate) mod util;
 mod playlist;
 
 use self::writer::MeiliWriter;

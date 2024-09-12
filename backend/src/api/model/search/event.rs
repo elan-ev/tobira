@@ -3,8 +3,9 @@ use juniper::GraphQLObject;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
+    auth::HasRoles,
     db::types::TextAssetType,
-    search,
+    search::{self, util::decode_acl},
 };
 use super::{field_matches_for, match_ranges_for, ByteSpan, SearchRealm};
 
@@ -65,11 +66,11 @@ impl Node for SearchEvent {
 }
 
 impl SearchEvent {
-    pub(crate) fn without_matches(src: search::Event) -> Self {
-        Self::new_inner(src, vec![], SearchEventMatches::default())
+    pub(crate) fn without_matches(src: search::Event, context: &Context) -> Self {
+        Self::new_inner(src, vec![], SearchEventMatches::default(), context)
     }
 
-    pub(crate) fn new(hit: meilisearch_sdk::SearchResult<search::Event>) -> Self {
+    pub(crate) fn new(hit: meilisearch_sdk::SearchResult<search::Event>, context: &Context) -> Self {
         let match_positions = hit.matches_position.as_ref();
         let src = hit.result;
 
@@ -91,14 +92,25 @@ impl SearchEvent {
             series_title: field_matches_for(match_positions, "series_title"),
         };
 
-        Self::new_inner(src, text_matches, matches)
+        Self::new_inner(src, text_matches, matches, context)
     }
 
     fn new_inner(
         src: search::Event,
         text_matches: Vec<TextMatch>,
         matches: SearchEventMatches,
+        context: &Context,
     ) -> Self {
+        let thumbnail = {
+            let read_roles = decode_acl(&src.read_roles);
+
+            if context.auth.overlaps_roles(read_roles) {
+                src.thumbnail
+            } else {
+                None
+            }
+        };
+
         Self {
             id: Id::search_event(src.id.0),
             series_id: src.series_id.map(|id| Id::search_series(id.0)),
@@ -106,7 +118,7 @@ impl SearchEvent {
             title: src.title,
             description: src.description,
             creators: src.creators,
-            thumbnail: src.thumbnail,
+            thumbnail,
             duration: src.duration as f64,
             created: src.created,
             start_time: src.start_time,

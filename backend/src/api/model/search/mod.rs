@@ -172,7 +172,7 @@ pub(crate) async fn perform(
             .await?
             .map(|row| {
                 let e = search::Event::from_row_start(&row);
-                SearchEvent::without_matches(e).into()
+                SearchEvent::without_matches(e, &context).into()
             })
             .into_iter()
             .collect();
@@ -243,7 +243,7 @@ pub(crate) async fn perform(
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
     let events = event_results.hits.into_iter().map(|result| {
         let score = result.ranking_score;
-        (NodeValue::from(SearchEvent::new(result)), score)
+        (NodeValue::from(SearchEvent::new(result, &context)), score)
     });
     let series = series_results.hits.into_iter().map(|result| {
         let score = result.ranking_score;
@@ -346,7 +346,7 @@ pub(crate) async fn all_events(
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| SearchEvent::new(h)).collect();
+    let items = results.hits.into_iter().map(|h| SearchEvent::new(h, &context)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(EventSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
