@@ -38,6 +38,7 @@ pub(crate) struct Event {
     pub(crate) end_time_timestamp: Option<i64>,
     pub(crate) is_live: bool,
     pub(crate) audio_only: bool,
+    pub(crate) has_password: bool,
 
     // These are filterable. All roles are hex encoded to work around Meilis
     // inability to filter case-sensitively. For roles, we have to compare
@@ -75,7 +76,8 @@ impl_from_db!(
         search_events.{
             id, series, series_title, title, description, creators, thumbnail,
             duration, is_live, updated, created, start_time, end_time, audio_only,
-            read_roles, write_roles, preview_roles, host_realms, slide_texts, caption_texts,
+            read_roles, write_roles, preview_roles, has_password,
+            host_realms, slide_texts, caption_texts,
         },
     },
     |row| {
@@ -110,6 +112,7 @@ impl_from_db!(
                 .unwrap_or_else(TextSearchIndex::empty),
             caption_texts: row.caption_texts::<Option<TextSearchIndex>>()
                 .unwrap_or_else(TextSearchIndex::empty),
+            has_password: row.has_password(),
         }
     }
 );

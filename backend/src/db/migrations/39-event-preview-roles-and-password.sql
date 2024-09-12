@@ -1,7 +1,18 @@
+-- Adds columns `preview_roles` and `credentials`.
+
 -- Users with a preview role may only view text metadata of an event.
 -- Any other action will require read or write roles (these imply preview rights).
 
-alter table all_events add column preview_roles text[] not null default '{}';
+-- `credentials` is an optional column which holds a user/group name and a corresponding
+-- password. If set, users need these credentials to gain read access to an event.
+create type credentials as (
+    name text, -- as `<hash-type>:<hashed-username>`
+    password text -- as `<hash-type>:<hashed-pw>`
+);
+
+alter table all_events
+    add column credentials credentials,
+    add column preview_roles text[] not null default '{}';
 
 -- For convenience, all read roles are also copied over to preview roles.
 -- Removing any roles from read will however _not_ remove them from preview, as they
@@ -64,7 +75,8 @@ create view search_events as
                 from event_texts
                 where event_id = events.id and ty = 'caption'
             ) as subquery
-        ) as caption_texts
+        ) as caption_texts,
+        (events.credentials is not null) as has_password
     from all_events as events
     left join series on events.series = series.id
     -- This syntax instead of `foo = any(...)` to use the index, which is not

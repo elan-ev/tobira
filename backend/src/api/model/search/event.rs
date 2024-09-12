@@ -28,6 +28,7 @@ pub(crate) struct SearchEvent {
     pub audio_only: bool,
     pub host_realms: Vec<search::Realm>,
     pub text_matches: Vec<TextMatch>,
+    pub has_password: bool,
 }
 
 #[derive(Debug, GraphQLObject)]
@@ -99,6 +100,7 @@ impl SearchEvent {
             audio_only: src.audio_only,
             host_realms: src.host_realms,
             text_matches,
+            has_password: src.has_password,
         }
     }
 }
