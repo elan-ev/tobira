@@ -42,12 +42,13 @@ import {
     eventId,
     keyOfId,
     playlistId,
+    getCredentials,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { LinkButton } from "../ui/LinkButton";
 import CONFIG from "../config";
 import { Link, useRouter } from "../router";
-import { useUser } from "../User";
+import { isRealUser, useUser } from "../User";
 import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
 import { CopyableInput, InputWithCheckbox, TimeInput } from "../ui/Input";
@@ -103,9 +104,16 @@ export const VideoRoute = makeRoute({
             return null;
         }
         const { realmPath, videoId, listId } = params;
+        const id = eventId(videoId);
 
         const query = graphql`
-            query VideoPageInRealmQuery($id: ID!, $realmPath: String!, $listId: ID!) {
+            query VideoPageInRealmQuery(
+                $id: ID!,
+                $realmPath: String!,
+                $listId: ID!,
+                $eventUser: String,
+                $eventPassword: String,
+            ) {
                 ... UserData
                 event: eventById(id: $id) {
                     ... VideoPageEventData
@@ -122,9 +130,10 @@ export const VideoRoute = makeRoute({
         `;
 
         const queryRef = loadQuery<VideoPageInRealmQuery>(query, {
-            id: eventId(videoId),
+            id,
             realmPath,
             listId,
+            ...getCredentials(videoId),
         });
 
         return {
@@ -167,7 +176,13 @@ export const OpencastVideoRoute = makeRoute({
         const id = videoId.substring(1);
 
         const query = graphql`
-            query VideoPageByOcIdInRealmQuery($id: String!, $realmPath: String!, $listId: ID!) {
+            query VideoPageByOcIdInRealmQuery(
+                $id: String!,
+                $realmPath: String!,
+                $listId: ID!,
+                $eventUser: String,
+                $eventPassword: String,
+            ) {
                 ... UserData
                 event: eventByOpencastId(id: $id) {
                     ... VideoPageEventData
@@ -187,6 +202,7 @@ export const OpencastVideoRoute = makeRoute({
             id,
             realmPath,
             listId,
+            ...getCredentials(id),
         });
 
         return {
@@ -214,6 +230,98 @@ export const OpencastVideoRoute = makeRoute({
         };
     },
 });
+
+const ForwardToDirectRoute: React.FC<{ videoId: string }> = ({ videoId }) => {
+    const router = useRouter();
+    useEffect(() => router.goto(DirectVideoRoute.url({ videoId }), true));
+    return <InitialLoading />;
+};
+
+const ForwardToDirectOcRoute: React.FC<{ ocID: string }> = ({ ocID }) => {
+    const router = useRouter();
+    useEffect(() => router.goto(DirectOpencastVideoRoute.url({ ocID }), true));
+    return <InitialLoading />;
+};
+
+/** Direct link to video with our ID: `/!v/<videoid>` */
+export const DirectVideoRoute = makeRoute({
+    url: (args: { videoId: string }) => `/!v/${keyOfId(args.videoId)}`,
+    match: url => {
+        const regex = new RegExp(`^/!v/(${b64regex}+)/?$`, "u");
+        const params = regex.exec(url.pathname);
+        if (params === null) {
+            return null;
+        }
+
+        const query = graphql`
+            query VideoPageDirectLinkQuery(
+                $id: ID!,
+                $listId: ID!,
+                $eventUser: String,
+                $eventPassword: String
+            ) {
+                ... UserData
+                event: eventById(id: $id) { ... VideoPageEventData }
+                realm: rootRealm {
+                    ... VideoPageRealmData
+                    ... NavigationData
+                }
+                playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
+            }
+        `;
+        const videoId = decodeURIComponent(params[1]);
+        const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, {
+            id: eventId(videoId),
+            listId: makeListId(url.searchParams.get("list")),
+            ...getCredentials(videoId),
+        });
+
+        return matchedDirectRoute(query, queryRef);
+    },
+});
+
+/** Direct link to video with Opencast ID: `/!v/:<ocid>` */
+export const DirectOpencastVideoRoute = makeRoute({
+    url: (args: { ocID: string }) => `/!v/:${args.ocID}`,
+    match: url => {
+        const regex = new RegExp("^/!v/:([^/]+)$", "u");
+        const matches = regex.exec(url.pathname);
+        if (!matches) {
+            return null;
+        }
+
+        const query = graphql`
+            query VideoPageDirectOpencastLinkQuery(
+                $id: String!, 
+                $listId: ID!,
+                $eventUser: String,
+                $eventPassword: String
+            ) {
+                ... UserData
+                event: eventByOpencastId(id: $id) { ... VideoPageEventData }
+                realm: rootRealm {
+                    ... VideoPageRealmData
+                    ... NavigationData
+                }
+                playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
+            }
+        `;
+        const id = decodeURIComponent(matches[1]);
+        const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, {
+            id,
+            listId: makeListId(url.searchParams.get("list")),
+            ...getCredentials(id),
+        });
+
+        return matchedDirectRoute(query, queryRef);
+    },
+});
+
+// ===========================================================================================
+// ===== Helper functions
+// ===========================================================================================
+
+const makeListId = (id: string | null) => id ? playlistId(id) : "";
 
 type VideoParams = {
     realmPath: string;
@@ -245,83 +353,6 @@ const getVideoDetailsFromUrl = (url: URL, regEx: string): VideoParams => {
 
     return { realmPath, videoId, listId };
 };
-
-const makeListId = (id: string | null) => id ? playlistId(id) : "";
-
-const ForwardToDirectRoute: React.FC<{ videoId: string }> = ({ videoId }) => {
-    const router = useRouter();
-    useEffect(() => router.goto(DirectVideoRoute.url({ videoId }), true));
-    return <InitialLoading />;
-};
-
-const ForwardToDirectOcRoute: React.FC<{ ocID: string }> = ({ ocID }) => {
-    const router = useRouter();
-    useEffect(() => router.goto(DirectOpencastVideoRoute.url({ ocID }), true));
-    return <InitialLoading />;
-};
-
-/** Direct link to video with our ID: `/!v/<videoid>` */
-export const DirectVideoRoute = makeRoute({
-    url: (args: { videoId: string }) => `/!v/${keyOfId(args.videoId)}`,
-    match: url => {
-        const regex = new RegExp(`^/!v/(${b64regex}+)/?$`, "u");
-        const params = regex.exec(url.pathname);
-        if (params === null) {
-            return null;
-        }
-
-        const query = graphql`
-            query VideoPageDirectLinkQuery($id: ID!, $listId: ID!) {
-                ... UserData
-                event: eventById(id: $id) { ... VideoPageEventData }
-                realm: rootRealm {
-                    ... VideoPageRealmData
-                    ... NavigationData
-                }
-                playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
-            }
-        `;
-        const videoId = decodeURIComponent(params[1]);
-        const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, {
-            id: eventId(videoId),
-            listId: makeListId(url.searchParams.get("list")),
-        });
-
-        return matchedDirectRoute(query, queryRef);
-    },
-});
-
-/** Direct link to video with Opencast ID: `/!v/:<ocid>` */
-export const DirectOpencastVideoRoute = makeRoute({
-    url: (args: { ocID: string }) => `/!v/:${args.ocID}`,
-    match: url => {
-        const regex = new RegExp("^/!v/:([^/]+)$", "u");
-        const matches = regex.exec(url.pathname);
-        if (!matches) {
-            return null;
-        }
-
-        const query = graphql`
-            query VideoPageDirectOpencastLinkQuery($id: String!, $listId: ID!) {
-                ... UserData
-                event: eventByOpencastId(id: $id) { ... VideoPageEventData }
-                realm: rootRealm {
-                    ... VideoPageRealmData
-                    ... NavigationData
-                }
-                playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
-            }
-        `;
-        const videoId = decodeURIComponent(matches[1]);
-        const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, {
-            id: videoId,
-            listId: makeListId(url.searchParams.get("list")),
-        });
-
-        return matchedDirectRoute(query, queryRef);
-    },
-});
-
 
 interface DirectRouteQuery extends OperationType {
     response: UserData$key & {
@@ -387,7 +418,7 @@ const eventFragment = graphql`
                 startTime
                 endTime
             }
-            authorizedData {
+            authorizedData(user: $eventUser, password: $eventPassword) {
                 tracks { uri flavor mimetype resolution isMaster }
                 captions { uri lang }
                 segments { uri startTime }
@@ -406,13 +437,13 @@ const eventFragment = graphql`
 export const authorizedDataQuery = graphql`
     query VideoAuthorizedDataQuery(
         $eventId: ID!,
-        $seriesUser: String,
-        $seriesPassword: String,
+        $eventUser: String,
+        $eventPassword: String,
     ) {
         event: eventById(id: $eventId) {
             ...on AuthorizedEvent {
                 id
-                authorizedData(user: $seriesUser, password: $seriesPassword) {
+                authorizedData(user: $eventUser, password: $eventPassword) {
                     tracks { uri flavor mimetype resolution isMaster }
                     captions { uri lang }
                     segments { uri startTime }
@@ -455,7 +486,6 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     }
 
     const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
-
     const { hasStarted, hasEnded } = getEventTimeInfo(event);
     const isCurrentlyLive = hasStarted === true && hasEnded === false;
 
@@ -478,8 +508,6 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
         // TODO: Provide `contentUrl` or `embedUrl`? Google docs say one should,
         // but it's not clear what for.
     };
-
-
 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
@@ -618,6 +646,7 @@ const ProtectedVideoPlaceholder: React.FC<PlaceholderProps> = ({
 }) => {
     const { t } = useTranslation(undefined, { keyPrefix: "video.password" });
     const isDark = useColorScheme().scheme === "dark";
+    const user = useUser();
     const [state, setState] = useState<AuthenticationFormState>("idle");
 
     const embeddedStyles = {
@@ -628,7 +657,40 @@ const ProtectedVideoPlaceholder: React.FC<PlaceholderProps> = ({
 
     const onSubmit = (data: FormData) => {
         setState("pending");
-        loadQuery({ eventId: event.id, seriesUser: data.userid, seriesPassword: data.password });
+
+        const credentials = JSON.stringify({
+            eventUser: data.userid,
+            eventPassword: data.password,
+        });
+
+        // To make the authentication "sticky", the credentials are stored in browser storage.
+        //
+        // If the user is logged in, local storage is used so the browser remembers them as long
+        // as the user stays logged in.
+        // If the user is not logged in however, the session storage is used, which is reset when
+        // the current tab or window is closed. This way we can be relatively sure that the next
+        // user will need to enter the credentials again in order to access a protected video.
+        //
+        // Furthermore, since the video route can be accessed via both kinds, this needs to store
+        // both Tobira ID and Opencast ID. Both are queried when a video route is accessed, but the
+        // check for already stored credentials is done in the same query, when only the single ID
+        // from the url is known.
+        // The check will return a result for either ID regardless of its kind, as long as one of
+        // them is stored.
+        if (isRealUser(user)) {
+            window.localStorage
+                .setItem(`tobira-video-credentials-${keyOfId(event.id)}`, credentials);
+            window.localStorage
+                .setItem(`tobira-video-credentials-${event.opencastId}`, credentials);
+        } else {
+            window.sessionStorage
+                .setItem(`tobira-video-credentials-${keyOfId(event.id)}`, credentials);
+            window.sessionStorage
+                .setItem(`tobira-video-credentials-${event.opencastId}`, credentials);
+        }
+
+
+        loadQuery({ eventId: event.id, eventUser: data.userid, eventPassword: data.password });
     };
 
     return (

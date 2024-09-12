@@ -527,6 +527,7 @@ const SearchEvent: React.FC<EventItem> = ({
             image: <Link to={link} tabIndex={-1}>
                 <Thumbnail
                     event={{
+                        id,
                         title,
                         isLive,
                         created,

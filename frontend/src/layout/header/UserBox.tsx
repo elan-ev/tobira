@@ -175,6 +175,10 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             return;
         }
 
+        Object.keys(window.localStorage)
+            .filter(item => item.startsWith("tobira-video-credentials-"))
+            .forEach(item => window.localStorage.removeItem(item));
+
         setLogoutState("pending");
         fetch("/~session", { method: "DELETE", keepalive: true })
             .then(() => {

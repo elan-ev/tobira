@@ -2,9 +2,15 @@ import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bug, match } from "@opencast/appkit";
+import { OperationType } from "relay-runtime";
+import { useLazyLoadQuery } from "react-relay";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
+import { authorizedDataQuery } from "../routes/Video";
+import {
+    VideoAuthorizedDataQuery$data,
+} from "../routes/__generated__/VideoAuthorizedDataQuery.graphql";
 
 
 /**
@@ -215,3 +221,48 @@ export const secondsToTimeString = (seconds: number): string => {
 };
 
 export type ExtraMetadata = Record<string, Record<string, string[]>>;
+
+export type SeriesCredentials = {
+    user: string;
+    password: string;
+} | null;
+
+interface AuthenticatedData extends OperationType {
+    response: VideoAuthorizedDataQuery$data;
+}
+
+/**
+ * Returns `authorizedData` of password protected events by fetching it from the API,
+ * if the correct credentials were supplied.
+ * This will not send a request when there are no credentials.
+ */
+export const useAuthenticatedDataQuery = (id: string) => {
+    const credentials = getCredentials(keyOfId(id));
+    return useLazyLoadQuery<AuthenticatedData>(
+        authorizedDataQuery,
+        // If `id` is coming from a search event, the prefix might be `es`, but
+        // the query needs it to be an event id (i.e. with prefix `ev`).
+        { eventId: eventId(keyOfId(id)), ...credentials },
+        // This will only query the data for events with credentials.
+        // Unnecessary queries are prevented.
+        { fetchPolicy: !credentials ? "store-only" : "store-or-network" }
+    );
+};
+
+/**
+ * Returns stored credentials of events.
+ *
+ * We need to store both Tobira ID and Opencast ID, since the video route can be accessed
+ * via both kinds. For this, both IDs are queried from the DB.
+ * The check for already stored credentials however happens in the same query,
+ * so we only have access to the single event ID from the url.
+ * In order to have a successful check when visiting a video page with either Tobira ID
+ * or Opencast ID in the url, this check accepts both ID kinds.
+ */
+export const getCredentials = (eventId: string): SeriesCredentials => {
+    const credentials = window.localStorage.getItem(`tobira-video-credentials-${eventId}`)
+        ?? window.sessionStorage.getItem(`tobira-video-credentials-${eventId}`);
+
+    return credentials && JSON.parse(credentials);
+};
+
