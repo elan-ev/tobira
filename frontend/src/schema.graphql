@@ -99,6 +99,7 @@ type SearchEvent implements Node {
   hostRealms: [SearchRealm!]!
   textMatches: [TextMatch!]!
   hasPassword: Boolean!
+  userIsAuthorized: Boolean!
 }
 
 input ChildIndex {

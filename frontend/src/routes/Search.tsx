@@ -51,7 +51,13 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
-import { eventId, isExperimentalFlagSet, keyOfId, secondsToTimeString } from "../util";
+import {
+    eventId,
+    getCredentials,
+    isExperimentalFlagSet,
+    keyOfId,
+    secondsToTimeString,
+} from "../util";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute } from "./Series";
 import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
@@ -149,6 +155,8 @@ const query = graphql`
                         startTime
                         endTime
                         created
+                        hasPassword
+                        userIsAuthorized
                         hostRealms { path }
                         textMatches {
                             start
@@ -402,6 +410,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
                     textMatches: unwrapUndefined(item.textMatches),
+                    hasPassword: unwrapUndefined(item.hasPassword),
+                    userIsAuthorized: unwrapUndefined(item.userIsAuthorized),
                 }} />;
             } else if (item.__typename === "SearchSeries") {
                 return <SearchSeries key={item.id} {...{
@@ -480,6 +490,8 @@ type SearchEventProps = {
     endTime: string | null;
     hostRealms: readonly { readonly path: string }[];
     textMatches: NonNullable<Results["items"][number]["textMatches"]>;
+    hasPassword: boolean;
+    userIsAuthorized: boolean;
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
@@ -498,12 +510,17 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     endTime,
     hostRealms,
     textMatches,
+    hasPassword,
+    userIsAuthorized,
 }) => {
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
     const link = hostRealms.length !== 1
         ? DirectVideoRoute.url({ videoId: id })
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
+
+    // TODO: This check should be done in backend.
+    const showMatches = userIsAuthorized || (hasPassword && getCredentials(keyOfId(id)));
 
     return (
         <Item key={id} link={link}>
@@ -541,7 +558,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                     {seriesTitle && seriesId && <PartOfSeriesLink {...{ seriesTitle, seriesId }} />}
 
                     {/* Show timeline with matches if there are any */}
-                    {textMatches.length > 0 && (
+                    {textMatches.length > 0 && showMatches && (
                         <TextMatchTimeline {...{ id, duration, link, textMatches }} />
                     )}
                 </div>
@@ -590,11 +607,11 @@ type TextMatchTimelineProps = Pick<SearchEventProps, "id" | "duration" | "textMa
 };
 
 const slidePreviewQuery = graphql`
-    query SearchSlidePreviewQuery($id: ID!) {
+    query SearchSlidePreviewQuery($id: ID!, $user: String, $password: String) {
         eventById(id: $id) {
             ...on AuthorizedEvent {
                 id
-                authorizedData {
+                authorizedData(user: $user, password: $password) {
                     segments { startTime uri }
                 }
             }
