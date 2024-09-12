@@ -394,8 +394,19 @@ pub(crate) struct RealmSpecifier {
     pub(crate) path_segment: String,
 }
 
+#[derive(Clone, juniper::GraphQLInputObject)]
+pub(crate) struct RealmLineageComponent {
+    pub(crate) name: String,
+    pub(crate) path_segment: String,
+}
+
 #[derive(juniper::GraphQLObject)]
 #[graphql(Context = Context)]
 pub(crate) struct RemovedRealm {
     parent: Option<Realm>,
+}
+
+#[derive(juniper::GraphQLObject)]
+pub struct CreateRealmLineageOutcome {
+    pub num_created: i32,
 }

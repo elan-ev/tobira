@@ -229,6 +229,10 @@ input NewVideoBlock {
   showLink: Boolean!
 }
 
+type CreateRealmLineageOutcome {
+  numCreated: Int!
+}
+
 "A `Block`: a UI element that belongs to a realm."
 interface Block {
   id: ID!
@@ -587,6 +591,13 @@ type Mutation {
   "Remove a block from a realm."
   removeBlock(id: ID!): RemovedBlock!
   """
+    Basically `mkdir -p` for realms: makes sure the given realm lineage
+    exists, creating the missing realms. Existing realms are *not* updated.
+    Each realm in the given list is the sub-realm of the previous item in
+    the list. The first item is sub-realm of the root realm.
+  """
+  createRealmLineage(realms: [RealmLineageComponent!]!): CreateRealmLineageOutcome!
+  """
     Atomically mount a series into an (empty) realm.
     Creates all the necessary realms on the path to the target
     and adds a block with the given series at the leaf.
@@ -763,6 +774,11 @@ enum ItemType {
   EVENT
   SERIES
   REALM
+}
+
+input RealmLineageComponent {
+  name: String!
+  pathSegment: String!
 }
 
 enum EventSortColumn {
