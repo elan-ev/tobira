@@ -7,7 +7,7 @@ import {
 } from "react-relay";
 import { unreachable } from "@opencast/appkit";
 
-import { eventId, isSynced, keyOfId } from "../util";
+import { eventId, getCredentials, isSynced, keyOfId } from "../util";
 import { GlobalErrorBoundary } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute, MatchedRoute } from "../rauta";
@@ -30,15 +30,19 @@ export const EmbedVideoRoute = makeRoute({
         if (params === null) {
             return null;
         }
-        const videoId = decodeURIComponent(params[1]);
+        const id = eventId(decodeURIComponent(params[1]));
 
         const query = graphql`
-            query EmbedQuery($id: ID!) {
+            query EmbedQuery($id: ID!, $eventUser: String, $eventPassword: String) {
                 event: eventById(id: $id) { ... EmbedEventData }
             }
-            `;
+        `;
 
-        const queryRef = loadQuery<EmbedQuery>(query, { id: eventId(videoId) });
+        const queryRef = loadQuery<EmbedQuery>(query, {
+            id,
+            ...getCredentials("event" + id),
+        });
+
 
         return matchedEmbedRoute(query, queryRef);
     },
@@ -54,13 +58,20 @@ export const EmbedOpencastVideoRoute = makeRoute({
         }
 
         const query = graphql`
-            query EmbedDirectOpencastQuery($id: String!) {
+            query EmbedDirectOpencastQuery(
+                $id: String!,
+                $eventUser: String,
+                $eventPassword: String)
+            {
                 event: eventByOpencastId(id: $id)  { ... EmbedEventData }
             }
         `;
 
         const videoId = decodeURIComponent(matches[1]);
-        const queryRef = loadQuery<EmbedDirectOpencastQuery>(query, { id: videoId });
+        const queryRef = loadQuery<EmbedDirectOpencastQuery>(query, {
+            id: videoId,
+            ...getCredentials(videoId),
+        });
 
         return matchedEmbedRoute(query, queryRef);
     },
@@ -110,7 +121,7 @@ const embedEventFragment = graphql`
                 endTime
                 duration
             }
-            authorizedData {
+            authorizedData(user: $eventUser, password: $eventPassword) {
                 thumbnail
                 tracks { uri flavor mimetype resolution isMaster }
                 captions { uri lang }

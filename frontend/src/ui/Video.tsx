@@ -12,11 +12,13 @@ import {
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
+import { keyOfId, useAuthenticatedDataQuery } from "../util";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
     /** The event of which a thumbnail should be shown */
     event: {
+        id: string;
         title: string;
         isLive: boolean;
         created: string;
@@ -51,6 +53,9 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
 }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
+    const authenticatedData = useAuthenticatedDataQuery(keyOfId(event.id));
+    const authorizedThumbnail = event.authorizedData?.thumbnail
+        ?? authenticatedData.event?.authorizedData?.thumbnail;
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
     const audioOnly = event.authorizedData
         ? (
@@ -61,16 +66,16 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         : false;
 
     let inner;
-    if (event.authorizedData?.thumbnail != null && !deletionIsPending) {
+    if (authorizedThumbnail && !deletionIsPending) {
         // We have a proper thumbnail.
         inner = <ThumbnailImg
-            src={event.authorizedData.thumbnail}
+            src={authorizedThumbnail}
             alt={t("video.thumbnail-for", { video: event.title })}
         />;
     } else {
         inner = <ThumbnailReplacement
             {...{ audioOnly, isUpcoming, isDark, deletionIsPending }}
-            previewOnly={!event.authorizedData}
+            previewOnly={!(event.authorizedData && "tracks" in event.authorizedData)}
         />;
     }
 

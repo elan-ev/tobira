@@ -549,6 +549,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
             <Link to={link}>
                 <Thumbnail
                     event={{
+                        id,
                         title,
                         isLive,
                         created,

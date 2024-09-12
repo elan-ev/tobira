@@ -5,7 +5,7 @@ import { InlinePlayer } from "../player";
 import { VideoBlockData$data, VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { useTranslation } from "react-i18next";
-import { isSynced, keyOfId } from "../../util";
+import { isSynced, keyOfId, useAuthenticatedDataQuery } from "../../util";
 import { Link } from "../../router";
 import { LuArrowRightCircle } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
@@ -74,14 +74,18 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         return unreachable();
     }
 
+    const authenticatedData = useAuthenticatedDataQuery(keyOfId(event.id));
+    const authorizedData = event.authorizedData ?? authenticatedData.event?.authorizedData;
+
+
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
         <PlayerContextProvider>
-            {event.authorizedData && isSynced(event)
+            {authorizedData && isSynced(event)
                 ? <InlinePlayer
                     event={{
                         ...event,
-                        authorizedData: event.authorizedData,
+                        authorizedData,
                     }}
                     css={{ margin: "-4px auto 0" }}
                 />
