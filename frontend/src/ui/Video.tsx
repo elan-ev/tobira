@@ -75,7 +75,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     } else {
         inner = <ThumbnailReplacement
             {...{ audioOnly, isUpcoming, isDark, deletionIsPending }}
-            previewOnly={!(event.authorizedData && "tracks" in event.authorizedData)}
+            previewOnly={!event.authorizedData}
         />;
     }
 

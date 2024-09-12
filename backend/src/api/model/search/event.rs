@@ -30,6 +30,7 @@ pub(crate) struct SearchEvent {
     pub text_matches: Vec<TextMatch>,
     pub matches: SearchEventMatches,
     pub has_password: bool,
+    pub user_is_authorized: bool,
 }
 
 #[derive(Debug, GraphQLObject, Default)]
@@ -102,10 +103,10 @@ impl SearchEvent {
         matches: SearchEventMatches,
         context: &Context,
     ) -> Self {
+        let read_roles = decode_acl(&src.read_roles);
+        let user_is_authorized = context.auth.overlaps_roles(read_roles);
         let thumbnail = {
-            let read_roles = decode_acl(&src.read_roles);
-
-            if context.auth.overlaps_roles(read_roles) {
+            if user_is_authorized {
                 src.thumbnail
             } else {
                 None
@@ -132,6 +133,7 @@ impl SearchEvent {
             text_matches,
             matches,
             has_password: src.has_password,
+            user_is_authorized,
         }
     }
 }

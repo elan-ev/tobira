@@ -103,6 +103,7 @@ type SearchEvent implements Node {
   textMatches: [TextMatch!]!
   matches: SearchEventMatches!
   hasPassword: Boolean!
+  userIsAuthorized: Boolean!
 }
 
 input ChildIndex {

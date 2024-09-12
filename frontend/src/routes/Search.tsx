@@ -49,7 +49,13 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
-import { eventId, isExperimentalFlagSet, keyOfId, secondsToTimeString } from "../util";
+import {
+    eventId,
+    getCredentials,
+    isExperimentalFlagSet,
+    keyOfId,
+    secondsToTimeString,
+} from "../util";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
@@ -156,6 +162,8 @@ const query = graphql`
                         startTime
                         endTime
                         created
+                        hasPassword
+                        userIsAuthorized
                         hostRealms { path ancestorNames }
                         textMatches {
                             start
@@ -515,12 +523,17 @@ const SearchEvent: React.FC<EventItem> = ({
     hostRealms,
     textMatches,
     matches,
+    hasPassword,
+    userIsAuthorized,
 }) => {
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
     const link = hostRealms.length !== 1
         ? DirectVideoRoute.url({ videoId: id })
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
+
+    // TODO: This check should be done in backend.
+    const showMatches = userIsAuthorized || (hasPassword && getCredentials(keyOfId(id)));
 
     return (
         <Item key={id} breakpoint={BREAKPOINT_MEDIUM} link={link}>{{
@@ -617,7 +630,7 @@ const SearchEvent: React.FC<EventItem> = ({
                     {...{ seriesId }}
                 />}
                 {/* Show timeline with matches if there are any */}
-                {textMatches.length > 0 && (
+                {textMatches.length > 0 && showMatches && (
                     <TextMatchTimeline {...{ id, duration, link, textMatches }} />
                 )}
             </div>,
@@ -630,11 +643,11 @@ type TextMatchTimelineProps = Pick<EventItem, "id" | "duration" | "textMatches">
 };
 
 const slidePreviewQuery = graphql`
-    query SearchSlidePreviewQuery($id: ID!) {
+    query SearchSlidePreviewQuery($id: ID!, $user: String, $password: String) {
         eventById(id: $id) {
             ...on AuthorizedEvent {
                 id
-                authorizedData {
+                authorizedData(user: $user, password: $password) {
                     segments { startTime uri }
                 }
             }
