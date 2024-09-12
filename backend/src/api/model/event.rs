@@ -164,7 +164,8 @@ impl SyncedEventData {
     }
 }
 
-/// Represents event data that is only accessible for users with read access.
+/// Represents event data that is only accessible for users with read access
+/// and event-specific authenticated users.
 #[graphql_object(Context = Context, impl = NodeValue)]
 impl AuthorizedEventData {
     fn tracks(&self) -> &[Track] {
@@ -225,9 +226,17 @@ impl AuthorizedEvent {
         &self.synced_data
     }
 
-    /// Returns the authorized event data if the user has read access.
-    fn authorized_data(&self, context: &Context) -> Option<&AuthorizedEventData> {
-        if context.auth.overlaps_roles(&self.read_roles) {
+    /// Returns the authorized event data if the user has read access or is authenticated for the event.
+    async fn authorized_data(&self, context: &Context, user: Option<String>, password: Option<String>) -> Option<&AuthorizedEventData> {
+        // TODO: replace with hashed credentials from db, add actual comparison check with hashed user inputs
+        let expected_user = "plane";
+        let expected_pw = "bird";
+
+        let matches = self.has_password(context).await.unwrap_or(false)
+            && user.map_or(false, |u| u == expected_user)
+            && password.map_or(false, |p| p == expected_pw);
+
+        if context.auth.overlaps_roles(&self.read_roles) || matches {
             self.authorized_data.as_ref()
         } else {
             None
@@ -267,6 +276,12 @@ impl AuthorizedEvent {
             dbargs![&self.key, &self.series, &self.opencast_id],
             |row| Realm::from_row_start(&row)
         ).await?.pipe(Ok)
+    }
+
+
+    /// Whether this event is password protected.
+    async fn has_password(&self, context: &Context) -> ApiResult<bool> {
+        self.has_password(context).await
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
@@ -323,6 +338,15 @@ impl AuthorizedEvent {
 
     pub(crate) async fn load_by_opencast_id(oc_id: String, context: &Context) -> ApiResult<Option<Event>> {
         Self::load_by_any_id_impl("opencast_id", &oc_id, context).await
+    }
+
+    /// Whether this event is password protected.
+    async fn has_password(&self, context: &Context) -> ApiResult<bool> {
+        let query = format!("select credentials is not null from all_events where id = $1");
+        context.db.query_one(&query, &[&self.key])
+            .await?
+            .get::<_, bool>(0)
+            .pipe(Ok)
     }
 
     pub(crate) async fn load_by_any_id_impl(

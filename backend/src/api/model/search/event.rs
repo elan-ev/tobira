@@ -29,6 +29,7 @@ pub(crate) struct SearchEvent {
     pub host_realms: Vec<SearchRealm>,
     pub text_matches: Vec<TextMatch>,
     pub matches: SearchEventMatches,
+    pub has_password: bool,
 }
 
 #[derive(Debug, GraphQLObject, Default)]
@@ -130,6 +131,7 @@ impl SearchEvent {
                 .collect(),
             text_matches,
             matches,
+            has_password: src.has_password,
         }
     }
 }
