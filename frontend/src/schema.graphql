@@ -109,7 +109,7 @@ input NewTextBlock {
   content: String!
 }
 
-"Represents an Opencast series."
+"Represents an Opencast playlist."
 type AuthorizedPlaylist {
   id: ID!
   opencastId: String!

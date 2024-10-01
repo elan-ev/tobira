@@ -100,7 +100,7 @@ impl Playlist {
     }
 }
 
-/// Represents an Opencast series.
+/// Represents an Opencast playlist.
 #[graphql_object(Context = Context)]
 impl AuthorizedPlaylist {
     fn id(&self) -> Id {
