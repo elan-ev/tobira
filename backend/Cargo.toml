@@ -1,6 +1,6 @@
 [package]
 name = "tobira"
-version = "2.11.0"
+version = "2.12.0"
 authors = [
     "The Opencast project",
     "Lukas Kalbertodt <kalbertodt@elan-ev.de>",
@@ -108,7 +108,7 @@ debug = false
 # This is a profile for building Tobira in CI for the main branch. Our normal
 # release build takes forever. So here we only reset two options that are
 # responsible for the long compile times. Using this mode over the dev mode for
-# the master branch is still worth it as this is almost release mode.
+# the main branch is still worth it as this is almost release mode.
 [profile.release-ci]
 inherits = "release"
 lto = false

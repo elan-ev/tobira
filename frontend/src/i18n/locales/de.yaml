@@ -346,9 +346,9 @@ manage:
         read-description_other: Können das Video anschauen und Metadaten sehen.
         write: Lesen und schreiben
         write-description_one: >
-          Kann außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
+          Kann außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
         write-description_other: >
-          Können außerdem das Video editieren und Metadaten sowie andere Videodetails verändern.
+          Können außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
         moderate: Moderation
         moderate-description_one: >
           Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge

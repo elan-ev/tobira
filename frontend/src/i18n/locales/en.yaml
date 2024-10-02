@@ -340,7 +340,7 @@ manage:
         read: Read
         read-description: Can watch the video and view metadata.
         write: Read and write
-        write-description: Can also edit the video, metadata and other details.
+        write-description: Can also edit and delete the video, metadata and other details.
         moderate: Moderator
         moderate-description: Can edit content, add subpages and change the name and subpage order.
         admin: Page admin

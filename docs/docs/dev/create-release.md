@@ -14,7 +14,7 @@ This documentation is only relevant for maintainers of Tobira who are able to cr
   See: [All merged PRs without `changelog:*` label since the 1.0 release][prs-without-label].
   (If you miss some here, this is just a bit more work for you later. Don't worry!)
 
-- Make sure `master` has been successfully deployed and potentially do a quick test run with it.
+- Make sure `main` has been successfully deployed and potentially do a quick test run with it.
 
 [prs-without-label]: https://github.com/elan-ev/tobira/pulls?q=is%3Apr+-label%3Achangelog%3Auser%2Cchangelog%3Adev%2Cchangelog%3Aadmin%2Cchangelog%3Abreaking+is%3Amerged+closed%3A%3E2022-07-28+
 
