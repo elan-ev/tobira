@@ -151,27 +151,8 @@ async fn store_in_db(
         }
 
         match item {
-            HarvestItem::Event {
-                id: opencast_id,
-                title,
-                description,
-                part_of,
-                tracks,
-                captions,
-                created,
-                start_time,
-                end_time,
-                creators,
-                duration,
-                thumbnail,
-                mut acl,
-                is_live,
-                metadata,
-                updated,
-                segments,
-                slide_text,
-            } => {
-                let series_id = match &part_of {
+            HarvestItem::Event(mut event) => {
+                let series_id = match &event.part_of {
                     None => None,
                     Some(part_of) => {
                         db.query_opt("select id from series where opencast_id = $1", &[part_of])
@@ -182,44 +163,44 @@ async fn store_in_db(
 
                 // We always handle the admin role in a special way, so no need
                 // to store it for every single event.
-                acl.read.retain(|role| role != ROLE_ADMIN);
-                acl.write.retain(|role| role != ROLE_ADMIN);
+                event.acl.read.retain(|role| role != ROLE_ADMIN);
+                event.acl.write.retain(|role| role != ROLE_ADMIN);
 
-                for (_, roles) in &mut acl.custom_actions.0 {
+                for (_, roles) in &mut event.acl.custom_actions.0 {
                     roles.retain(|role| role != ROLE_ADMIN);
                 }
 
-                let tracks = tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>();
-                let captions = captions.into_iter().map(Into::into).collect::<Vec<EventCaption>>();
-                let segments = segments.into_iter().map(Into::into).collect::<Vec<EventSegment>>();
+                let tracks = event.tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>();
+                let captions = event.captions.into_iter().map(Into::into).collect::<Vec<EventCaption>>();
+                let segments = event.segments.into_iter().map(Into::into).collect::<Vec<EventSegment>>();
 
                 // We upsert the event data.
                 upsert(db, "all_events", "opencast_id", &[
-                    ("opencast_id", &opencast_id),
+                    ("opencast_id", &event.id),
                     ("state", &EventState::Ready),
                     ("series", &series_id),
-                    ("part_of", &part_of),
-                    ("is_live", &is_live),
-                    ("title", &title),
-                    ("description", &description),
-                    ("duration", &duration),
-                    ("created", &created),
-                    ("start_time", &start_time),
-                    ("end_time", &end_time),
-                    ("updated", &updated),
-                    ("creators", &creators),
-                    ("thumbnail", &thumbnail),
-                    ("metadata", &metadata),
-                    ("read_roles", &acl.read),
-                    ("write_roles", &acl.write),
-                    ("custom_action_roles", &acl.custom_actions),
+                    ("part_of", &event.part_of),
+                    ("is_live", &event.is_live),
+                    ("title", &event.title),
+                    ("description", &event.description),
+                    ("duration", &event.duration),
+                    ("created", &event.created),
+                    ("start_time", &event.start_time),
+                    ("end_time", &event.end_time),
+                    ("updated", &event.updated),
+                    ("creators", &event.creators),
+                    ("thumbnail", &event.thumbnail),
+                    ("metadata", &event.metadata),
+                    ("read_roles", &event.acl.read),
+                    ("write_roles", &event.acl.write),
+                    ("custom_action_roles", &event.acl.custom_actions),
                     ("tracks", &tracks),
                     ("captions", &captions),
                     ("segments", &segments),
-                    ("slide_text", &slide_text),
+                    ("slide_text", &event.slide_text),
                 ]).await?;
 
-                trace!("Inserted or updated event {} ({})", opencast_id, title);
+                trace!("Inserted or updated event {} ({})", event.id, event.title);
                 upserted_events += 1;
             }
 
@@ -231,41 +212,33 @@ async fn store_in_db(
                 removed_events += 1;
             }
 
-            HarvestItem::Series {
-                id: opencast_id,
-                title,
-                description,
-                updated,
-                acl,
-                created,
-                metadata
-            } => {
+            HarvestItem::Series(series) => {
                 // We first simply upsert the series.
                 let new_id = upsert(db, "series", "opencast_id", &[
-                    ("opencast_id", &opencast_id),
+                    ("opencast_id", &series.id),
                     ("state", &SeriesState::Ready),
-                    ("title", &title),
-                    ("description", &description),
-                    ("read_roles", &acl.read),
-                    ("write_roles", &acl.write),
-                    ("updated", &updated),
-                    ("created", &created),
-                    ("metadata", &metadata),
+                    ("title", &series.title),
+                    ("description", &series.description),
+                    ("read_roles", &series.acl.read),
+                    ("write_roles", &series.acl.write),
+                    ("updated", &series.updated),
+                    ("created", &series.created),
+                    ("metadata", &series.metadata),
                 ]).await?;
 
                 // But now we have to fix the foreign key for any events that
                 // previously referenced this series (via the Opencast UUID)
                 // but did not have the correct foreign key yet.
                 let query = "update events set series = $1 where part_of = $2 and series <> $1";
-                let updated_events = db.execute(query, &[&new_id, &opencast_id]).await?;
+                let updated_events = db.execute(query, &[&new_id, &series.id]).await?;
 
-                trace!("Inserted or updated series {} ({})", opencast_id, title);
+                trace!("Inserted or updated series {} ({})", series.id, series.title);
                 if updated_events != 0 {
                     debug!(
                         "Fixed foreign series key of {} event(s) after upserting series {} ({})",
                         updated_events,
-                        opencast_id,
-                        title,
+                        series.id,
+                        series.title,
                     );
                 }
                 upserted_series += 1;
@@ -283,16 +256,8 @@ async fn store_in_db(
                 removed_series += 1;
             }
 
-            HarvestItem::Playlist {
-                id: opencast_id,
-                title,
-                description,
-                creator,
-                acl,
-                entries,
-                updated,
-            } => {
-                let entries = entries.into_iter().filter_map(|e| {
+            HarvestItem::Playlist(playlist) => {
+                let entries = playlist.entries.into_iter().filter_map(|e| {
                     // We do not store entries that we don't know, meaning that
                     // a resync is required as soon as Tobira learns about
                     // these new entries. But that's fine as that's likely
@@ -310,17 +275,17 @@ async fn store_in_db(
                 }).collect::<Vec<_>>();
 
                 upsert(db, "playlists", "opencast_id", &[
-                    ("opencast_id", &opencast_id),
-                    ("title", &title),
-                    ("description", &description),
-                    ("creator", &creator),
-                    ("read_roles", &acl.read),
-                    ("write_roles", &acl.write),
+                    ("opencast_id", &playlist.id),
+                    ("title", &playlist.title),
+                    ("description", &playlist.description),
+                    ("creator", &playlist.creator),
+                    ("read_roles", &playlist.acl.read),
+                    ("write_roles", &playlist.acl.write),
                     ("entries", &entries),
-                    ("updated", &updated),
+                    ("updated", &playlist.updated),
                 ]).await?;
 
-                trace!(opencast_id, title, "Inserted or updated playlist");
+                trace!(playlist.id, playlist.title, "Inserted or updated playlist");
                 upserted_playlists += 1;
             }
 

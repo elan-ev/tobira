@@ -20,75 +20,21 @@ pub(crate) struct HarvestResponse {
 #[serde(tag = "kind")]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum HarvestItem {
-    #[serde(rename_all = "camelCase")]
-    Event {
-        id: String,
-        title: String,
-        description: Option<String>,
-        part_of: Option<String>,
-        #[serde(with = "chrono::serde::ts_milliseconds")]
-        created: DateTime<Utc>,
-        creators: Vec<String>,
-        duration: i64,
-        tracks: Vec<Track>,
-        #[serde(default)] // For backwards compatibility
-        captions: Vec<Caption>,
-        thumbnail: Option<String>,
-        acl: Acl,
-        is_live: bool,
-        metadata: ExtraMetadata,
-        #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
-        start_time: Option<DateTime<Utc>>,
-        #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
-        end_time: Option<DateTime<Utc>>,
-        #[serde(with = "chrono::serde::ts_milliseconds")]
-        updated: DateTime<Utc>,
-        #[serde(default)]
-        segments: Vec<Segment>,
-        slide_text: Option<String>,
-    },
-
-    #[serde(rename_all = "camelCase")]
+    Event(Event),
     EventDeleted {
         id: String,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
 
-    #[serde(rename_all = "camelCase")]
-    Series {
-        id: String,
-        title: String,
-        description: Option<String>,
-        acl: Acl,
-        #[serde(with = "chrono::serde::ts_milliseconds")]
-        updated: DateTime<Utc>,
-        #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
-        created: Option<DateTime<Utc>>,
-        #[serde(default)]
-        metadata: ExtraMetadata,
-    },
-
-    #[serde(rename_all = "camelCase")]
+    Series(Series),
     SeriesDeleted {
         id: String,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
     },
 
-    #[serde(rename_all = "camelCase")]
-    Playlist {
-        id: String,
-        title: String,
-        description: Option<String>,
-        creator: Option<String>,
-        acl: Acl,
-        entries: Vec<PlaylistEntry>,
-        #[serde(with = "chrono::serde::ts_milliseconds")]
-        updated: DateTime<Utc>,
-    },
-
-    #[serde(rename_all = "camelCase")]
+    Playlist(Playlist),
     PlaylistDeleted {
         id: String,
         #[serde(with = "chrono::serde::ts_milliseconds")]
@@ -103,16 +49,77 @@ pub(crate) enum HarvestItem {
     },
 }
 
+#[derive(Debug, Deserialize)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
+#[serde(rename_all = "camelCase")]
+pub struct Event {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub part_of: Option<String>,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub created: DateTime<Utc>,
+    pub creators: Vec<String>,
+    pub duration: i64,
+    pub tracks: Vec<Track>,
+    #[serde(default)] // For backwards compatibility
+    pub captions: Vec<Caption>,
+    pub thumbnail: Option<String>,
+    pub acl: Acl,
+    pub is_live: bool,
+    pub metadata: ExtraMetadata,
+    #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
+    pub start_time: Option<DateTime<Utc>>,
+    #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
+    pub end_time: Option<DateTime<Utc>>,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub updated: DateTime<Utc>,
+    #[serde(default)]
+    pub segments: Vec<Segment>,
+    pub slide_text: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
+#[serde(rename_all = "camelCase")]
+pub struct Series {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub acl: Acl,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub updated: DateTime<Utc>,
+    #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
+    pub created: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub metadata: ExtraMetadata,
+}
+
+#[derive(Debug, Deserialize)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
+#[serde(rename_all = "camelCase")]
+pub struct Playlist {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub creator: Option<String>,
+    pub acl: Acl,
+    pub entries: Vec<PlaylistEntry>,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub updated: DateTime<Utc>,
+}
+
+
 impl HarvestItem {
     pub(crate) fn updated(&self) -> DateTime<Utc> {
-        match *self {
-            Self::Event { updated, .. } => updated,
-            Self::EventDeleted { updated, .. } =>  updated,
-            Self::Series { updated, .. } => updated,
-            Self::SeriesDeleted { updated, .. } => updated,
-            Self::Playlist { updated, .. } => updated,
-            Self::PlaylistDeleted { updated, .. } => updated,
-            Self::Unknown { updated, .. } => updated,
+        match self {
+            Self::Event(event) => event.updated,
+            Self::EventDeleted { updated, .. } => *updated,
+            Self::Series(series) => series.updated,
+            Self::SeriesDeleted { updated, .. } => *updated,
+            Self::Playlist(playlist) => playlist.updated,
+            Self::PlaylistDeleted { updated, .. } => *updated,
+            Self::Unknown { updated, .. } => *updated,
         }
     }
 }
@@ -219,7 +226,7 @@ mod tests {
             includes_items_until: timestamp(1727867693398),
             has_more: false,
             items: vec![
-                HarvestItem::Series {
+                HarvestItem::Series(Series {
                     id: "4b9c6f57-e4af-43dd-ad6e-fee3644fbef4".into(),
                     title: "Cats".into(),
                     description: Some("Several videos of cats".into()),
@@ -231,8 +238,8 @@ mod tests {
                     updated: timestamp(1727866771932),
                     created: None,
                     metadata: ExtraMetadata::default(),
-                },
-                HarvestItem::Event {
+                }),
+                HarvestItem::Event(Event {
                     id: "002cff10-e0c2-4f0a-a06d-1e5c8dfef13c".into(),
                     title: "Video Of A Tabby Cat".into(),
                     description: None,
@@ -272,7 +279,7 @@ mod tests {
                     ],
                     captions: vec![],
                     segments: vec![],
-                },
+                }),
 
                 HarvestItem::SeriesDeleted {
                     id: "eec06048-703d-40b1-a058-478f8bfc13f4".into(),
@@ -297,7 +304,7 @@ mod tests {
             includes_items_until: timestamp(1727867693398),
             has_more: false,
             items: vec![
-                HarvestItem::Series {
+                HarvestItem::Series(Series {
                     id: "4b9c6f57-e4af-43dd-ad6e-fee3644fbef4".into(),
                     title: "Cats".into(),
                     description: None,
@@ -305,8 +312,8 @@ mod tests {
                     updated: timestamp(1727866771932),
                     created: None,
                     metadata: ExtraMetadata::default(),
-                },
-                HarvestItem::Event {
+                }),
+                HarvestItem::Event(Event {
                     id: "002cff10-e0c2-4f0a-a06d-1e5c8dfef13c".into(),
                     title: "Video Of A Tabby Cat".into(),
                     description: None,
@@ -325,7 +332,7 @@ mod tests {
                     tracks: vec![],
                     captions: vec![],
                     segments: vec![],
-                },
+                }),
 
                 HarvestItem::SeriesDeleted {
                     id: "eec06048-703d-40b1-a058-478f8bfc13f4".into(),
