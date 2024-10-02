@@ -141,7 +141,7 @@ begin
             'in its *early* stages of development! Everything you see here might still change. '
             'Tobira is fully open source and you can find its source '
             'code [here](https://github.com/elan-ev/tobira).\n\n'
-            'What you are seeing here is the most recent development build (the latest `master`) '
+            'What you are seeing here is the most recent development build (the latest `main`) '
             'containing a bunch of dummy data. All text and videos you can see here are just for '
             'testing.'
         );

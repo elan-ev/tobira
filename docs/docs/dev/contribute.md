@@ -23,6 +23,15 @@ This should get you started.
 If you have any more questions, feel free to ask and ping us devs [in the Opencast chat](https://opencast.org/communication/).
 
 
+## Branches
+
+Tobira uses `main` as main branch.
+Releases are created from that branch and most PRs should target it.
+`main` should always be in a releasable state.
+There is also `next`, which is sometimes used to prepare bigger releases.
+PRs that we cannot immediately release should target that branch (e.g. a big feature is split into multiple PRs, or we want to cluster breaking changes).
+
+
 ## Creating Pull Requests
 
 When creating a PR, please describe **what** the PR changes and **why** you think this change is useful.
@@ -41,7 +50,7 @@ For larger PRs, there are usually multiple rounds of review + you pushing the re
 
 ### License
 
-Tobira is licensed under [Apache 2.0](https://github.com/elan-ev/tobira/blob/master/LICENSE).
+Tobira is licensed under [Apache 2.0](https://github.com/elan-ev/tobira/blob/main/LICENSE).
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in this project by you, as defined in the Apache-2.0 license,

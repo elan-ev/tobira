@@ -15,7 +15,7 @@ The test data was kindly provided by the ETH only for the purpose of this test d
 
 ## Documentation
 
-[**Tobira's documentation**](https://elan-ev.github.io/tobira).
+[**Tobira's documentation**](https://elan-ev.github.io/tobira) (both, for people trying to install Tobira and devs trying to work on Tobira's code).
 
 ### Name
 

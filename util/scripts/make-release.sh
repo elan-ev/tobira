@@ -6,14 +6,14 @@ GIT_REMOTE="git@github.com:elan-ev/tobira.git"
 basedir=$(dirname "$0")
 cd "$basedir"/../.. || exit 1
 
-# Make sure the master branch is checked out and the workdir is clean.
+# Make sure the main branch is checked out and the workdir is clean.
 if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
     echo "The git working directory is not clean. Stopping."
     exit 1;
 fi
 
-if [[ $(git branch --show-current) != master ]]; then
-    echo "You are not on the 'master' branch. Stopping."
+if [[ $(git branch --show-current) != main ]]; then
+    echo "You are not on the 'main' branch. Stopping."
     exit 1
 fi
 
@@ -83,7 +83,7 @@ git add backend/Cargo.toml backend/Cargo.lock docs/versions.txt
 # Final prompt before committing and pushing.
 echo
 echo "Made and staged changes. Does everything look good?"
-echo "Will now commit change, create git tag, and push 'master' and the new tag. Ok?"
+echo "Will now commit change, create git tag, and push 'main' and the new tag. Ok?"
 echo "(Pushing to $GIT_REMOTE. Make sure you have push access.)"
 echo "To cancel, ctrl+c! To continue, press enter."
 read -r
@@ -99,6 +99,6 @@ git push $GIT_REMOTE "$tag_name"
 echo -e "\x1b[1;32m✔ Pushed tag\x1b[0m"
 echo
 
-git push $GIT_REMOTE master
-echo -e "\x1b[1;32m✔ Pushed to master\x1b[0m"
+git push $GIT_REMOTE main
+echo -e "\x1b[1;32m✔ Pushed to main\x1b[0m"
 echo

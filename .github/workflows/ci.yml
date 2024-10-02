@@ -42,7 +42,7 @@ jobs:
           printf "gnu" >> .cache-key
         fi
 
-        if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/master" ]; then
+        if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/main" ]; then
           printf -- "--profile=release-ci" >> .cargo-flags
           printf -- "-release" >> .cache-key
           echo "ci_targetdir=${target_dir}/release-ci" >> $GITHUB_ENV
