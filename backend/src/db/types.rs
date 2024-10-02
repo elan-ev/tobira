@@ -132,7 +132,8 @@ pub struct SearchThumbnailInfo {
 /// `"dcterms"` for the dc terms (most common namespace). The value for each
 /// namespace is a simple string-key map where each value is an array of string
 /// values.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub(crate) struct ExtraMetadata {
     /// Metadata of the dcterms
     #[serde(default)]
@@ -179,7 +180,8 @@ impl<'a> FromSql<'a> for ExtraMetadata {
 /// Represents the type for the `custom_action_roles` field from `32-custom-actions.sql`.
 /// This holds a mapping of actions to lists holding roles that are allowed
 /// to carry out the respective action.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub(crate) struct CustomActions(pub(crate) HashMap<String, Vec<String>>);
 
 impl ToSql for CustomActions {
