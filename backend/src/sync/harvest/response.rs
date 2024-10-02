@@ -62,8 +62,9 @@ pub(crate) enum HarvestItem {
         acl: Acl,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
-        #[serde(with = "chrono::serde::ts_milliseconds")]
-        created: DateTime<Utc>,
+        #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
+        created: Option<DateTime<Utc>>,
+        #[serde(default)]
         metadata: ExtraMetadata,
     },
 
