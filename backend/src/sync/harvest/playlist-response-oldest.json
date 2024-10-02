@@ -1,0 +1,39 @@
+{
+    "includesItemsUntil": 1727883891896,
+    "hasMore": false,
+    "items":
+    [
+        {
+          "creator": "Opencast",
+          "entries": [
+            {
+              "contentId": "ID-about-opencast",
+              "id": 1702,
+              "type": "E"
+            },
+            {
+              "contentId": "ID-3d-print",
+              "id": 1703,
+              "type": "E"
+            }
+          ],
+          "kind": "playlist",
+          "description": "This is a playlist about Opencast",
+          "id": "1494cd19-cc43-4a2b-af29-b41d98d4e0d9",
+          "acl": {
+            "read": [
+              "ROLE_USER_BOB"
+            ]
+          },
+          "title": "Opencast Playlist",
+          "updated": 1727884054447
+        },
+        {
+            "kind": "playlist-deleted",
+            "id": "eec06048-703d-40b1-a058-478f8bfc13f4",
+            "updated": 1727884054247
+        }
+    ]
+}
+
+

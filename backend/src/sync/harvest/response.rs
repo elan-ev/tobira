@@ -341,4 +341,46 @@ mod tests {
             ],
         });
     }
+
+    // Similar to the ones above, the first harvest output for a playlist.
+    const PLAYLIST_RESPONSE: &str = include_str!("playlist-response-oldest.json");
+
+    #[test]
+    fn can_deserialize_playlist_response() {
+        let deser = serde_json::from_str::<HarvestResponse>(PLAYLIST_RESPONSE).unwrap();
+        assert_eq!(deser, HarvestResponse {
+            includes_items_until: timestamp(1727883891896),
+            has_more: false,
+            items: vec![
+                HarvestItem::Playlist(Playlist {
+                    id: "1494cd19-cc43-4a2b-af29-b41d98d4e0d9".into(),
+                    title: "Opencast Playlist".into(),
+                    description: Some("This is a playlist about Opencast".into()),
+                    creator: Some("Opencast".into()),
+                    acl: Acl {
+                        read: vec!["ROLE_USER_BOB".into()],
+                        write: vec![],
+                        custom_actions: CustomActions::default(),
+                    },
+                    entries: vec![
+                        PlaylistEntry {
+                            id: 1702,
+                            ty: "E".into(),
+                            content_id: "ID-about-opencast".into(),
+                        },
+                        PlaylistEntry {
+                            id: 1703,
+                            ty: "E".into(),
+                            content_id: "ID-3d-print".into(),
+                        },
+                    ],
+                    updated: timestamp(1727884054447),
+                }),
+                HarvestItem::PlaylistDeleted {
+                    id: "eec06048-703d-40b1-a058-478f8bfc13f4".into(),
+                    updated: timestamp(1727884054247),
+                },
+            ],
+        });
+    }
 }
