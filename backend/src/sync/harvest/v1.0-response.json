@@ -1,0 +1,89 @@
+{
+    "includesItemsUntil": 1727867693398,
+    "hasMore": false,
+    "items":
+    [
+        {
+            "kind": "series",
+            "description": "Several videos of cats",
+            "id": "4b9c6f57-e4af-43dd-ad6e-fee3644fbef4",
+            "acl":
+            {
+                "read":
+                [
+                    "ROLE_ANONYMOUS"
+                ],
+                "write":
+                [
+                    "ROLE_ANONYMOUS"
+                ]
+            },
+            "title": "Cats",
+            "updated": 1727866771932
+        },
+        {
+            "partOf": "4b9c6f57-e4af-43dd-ad6e-fee3644fbef4",
+            "thumbnail": "http://localhost:8080/static/mh_default_org/engage-player/002cff10-e0c2-4f0a-a06d-1e5c8dfef13c/11566598-693b-4f94-9787-5d420be66a3d/cat-bokeh-x265-480p_1.000s-player.jpg",
+            "metadata":
+            {
+                "dcterms":
+                {
+                    "license":
+                    [
+                        "CC0"
+                    ]
+                }
+            },
+            "kind": "event",
+            "created": 1727866740000,
+            "creators":
+            [
+                "Pixabay"
+            ],
+            "description": null,
+            "acl":
+            {
+                "read":
+                [
+                    "ROLE_ADMIN",
+                    "ROLE_ANONYMOUS"
+                ],
+                "write":
+                [
+                    "ROLE_ADMIN"
+                ]
+            },
+            "title": "Video Of A Tabby Cat",
+            "tracks":
+            [
+                {
+                    "flavor": "presenter/preview",
+                    "mimetype": "video/mp4",
+                    "uri": "http://localhost:8080/static/mh_default_org/engage-player/002cff10-e0c2-4f0a-a06d-1e5c8dfef13c/7547400e-d872-4bd1-bd63-7af340865ae5/cat-bokeh-x265-480p.mp4",
+                    "resolution":
+                    [
+                        854,
+                        480
+                    ]
+                }
+            ],
+            "duration": 11440,
+            "isLive": false,
+            "timelinePreview": null,
+            "startTime": null,
+            "id": "002cff10-e0c2-4f0a-a06d-1e5c8dfef13c",
+            "endTime": null,
+            "updated": 1727866860840
+        },
+        {
+            "kind": "series-deleted",
+            "id": "eec06048-703d-40b1-a058-478f8bfc13f4",
+            "updated": 1727867627087
+        },
+        {
+            "kind": "event-deleted",
+            "id": "ef29ba59-2e8e-4949-acaf-8b8e42bed37e",
+            "updated": 1727867851377
+        }
+    ]
+}
