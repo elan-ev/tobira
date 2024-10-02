@@ -37,12 +37,13 @@ pub(crate) enum HarvestItem {
         acl: Acl,
         is_live: bool,
         metadata: ExtraMetadata,
-        #[serde(with = "chrono::serde::ts_milliseconds_option")]
+        #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
         start_time: Option<DateTime<Utc>>,
-        #[serde(with = "chrono::serde::ts_milliseconds_option")]
+        #[serde(default, with = "chrono::serde::ts_milliseconds_option")]
         end_time: Option<DateTime<Utc>>,
         #[serde(with = "chrono::serde::ts_milliseconds")]
         updated: DateTime<Utc>,
+        #[serde(default)]
         segments: Vec<Segment>,
         slide_text: Option<String>,
     },
