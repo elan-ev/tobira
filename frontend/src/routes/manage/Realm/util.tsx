@@ -1,17 +1,11 @@
 import { TFunction } from "i18next";
-import { RegisterOptions } from "react-hook-form";
 import { match } from "@opencast/appkit";
 
 import { ErrorDisplay } from "../../../util/err";
 import { checkPathSegment, ILLEGAL_CHARS, RESERVED_CHARS } from "../../Realm";
 
 
-type RealmValidations = {
-    name: RegisterOptions;
-    path: RegisterOptions;
-};
-
-export const realmValidations = (t: TFunction): RealmValidations => ({
+export const realmValidations = (t: TFunction) => ({
     name: {
         required: t("manage.realm.name-must-not-be-empty"),
     },
@@ -20,7 +14,7 @@ export const realmValidations = (t: TFunction): RealmValidations => ({
         // See the comment about path segments in the realm migration
         // for an explanation of these validations.
         // Note that these two places should be kept in sync!
-        validate: pathSegment => match(checkPathSegment(pathSegment), {
+        validate: (pathSegment: string) => match(checkPathSegment(pathSegment), {
             "valid": () => true as true | string,
             "too-short": () => t("manage.realm.path-too-short"),
             "control-char": () => t("manage.realm.no-control-in-path"),
