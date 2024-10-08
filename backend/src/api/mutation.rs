@@ -1,14 +1,10 @@
 use juniper::graphql_object;
 
-use crate::{
-    api::{err::map_db_err, model::event::RemovedEvent},
-    auth::AuthContext,
-};
+use crate::api::model::event::RemovedEvent;
 use super::{
     Context,
-    err::{ApiResult, invalid_input, not_authorized},
+    err::ApiResult,
     id::Id,
-    Node,
     model::{
         series::{Series, NewSeries},
         realm::{
@@ -23,6 +19,7 @@ use super::{
             RealmSpecifier,
             RealmLineageComponent,
             CreateRealmLineageOutcome,
+            RemoveMountedSeriesOutcome,
         },
         block::{
             BlockValue,
@@ -37,8 +34,6 @@ use super::{
             UpdatePlaylistBlock,
             UpdateVideoBlock,
             RemovedBlock,
-            VideoListOrder,
-            VideoListLayout,
         },
         event::AuthorizedEvent,
     },
@@ -242,37 +237,35 @@ impl Mutation {
         realms: Vec<RealmLineageComponent>,
         context: &Context,
     ) -> ApiResult<CreateRealmLineageOutcome> {
-        if context.auth != AuthContext::TrustedExternal {
-            return Err(not_authorized!("only trusted external applications can use this mutation"));
-        }
+        Realm::create_lineage(realms, context).await
+    }
 
-        if realms.len() == 0 {
-            return Ok(CreateRealmLineageOutcome { num_created: 0 });
-        }
+    /// Stores series information in Tobira's DB, so it can be mounted without having to be harvested first.
+    async fn announce_series(series: NewSeries, context: &Context) -> ApiResult<Series> {
+        Series::announce(series, context).await
+    }
 
-        if context.config.general.reserved_paths().any(|r| realms[0].path_segment == r) {
-            return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
-        }
+    /// Adds a series block to an empty realm and makes that realm derive its name from said series.
+    async fn add_series_mount_point(
+        series_oc_id: String,
+        target_path: String,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        Series::add_mount_point(series_oc_id, target_path, context).await
+    }
 
-        let mut parent_path = String::new();
-        let mut num_created = 0;
-        for realm in realms {
-            let sql = "\
-                insert into realms (parent, name, path_segment) \
-                values ((select id from realms where full_path = $1), $2, $3) \
-                on conflict do nothing";
-            let res = context.db.execute(sql, &[&parent_path, &realm.name, &realm.path_segment])
-                .await;
-            let affected = map_db_err!(res, {
-                if constraint == "valid_path" => invalid_input!("path invalid"),
-            })?;
-            num_created += affected as i32;
-
-            parent_path.push('/');
-            parent_path.push_str(&realm.path_segment);
-        }
-
-        Ok(CreateRealmLineageOutcome { num_created })
+    /// Removes the series block of given series from the given realm.
+    /// If the realm has sub-realms and used to derive its name from the block,
+    /// it is renamed to its path segment. If the realm has no sub-realms,
+    /// it is removed completely.
+    /// Errors if the given realm does not have exactly one series block referring to the
+    /// specified series. 
+    async fn remove_series_mount_point(
+        series_oc_id: String,
+        path: String,
+        context: &Context,
+    ) -> ApiResult<RemoveMountedSeriesOutcome> {
+        Series::remove_mount_point(series_oc_id, path, context).await
     }
 
     /// Atomically mount a series into an (empty) realm.
@@ -285,68 +278,6 @@ impl Mutation {
         new_realms: Vec<RealmSpecifier>,
         context: &Context,
     ) -> ApiResult<Realm> {
-        // Note: This is a rather ad hoc, use-case specific compound mutation.
-        // So for the sake of simplicity and being able to change it fast
-        // we just reuse all the mutations we already have.
-        // Once this code stabilizes, we might want to change that,
-        // because doing it like this duplicates some work
-        // like checking moderator rights, input validity, etc.
-
-        if context.auth != AuthContext::TrustedExternal {
-            return Err(not_authorized!("only trusted external applications can use this mutation"));
-        }
-
-        if new_realms.iter().rev().skip(1).any(|r| r.name.is_none()) {
-            return Err(invalid_input!("all new realms except the last need to have a name"));
-        }
-
-        let parent_realm = Realm::load_by_path(parent_realm_path, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`parentRealmPath` does not refer to a valid realm"))?;
-
-        if new_realms.is_empty() {
-            let blocks = BlockValue::load_for_realm(parent_realm.key, context).await?;
-            if !blocks.is_empty() {
-                return Err(invalid_input!("series can only be mounted in empty realms"));
-            }
-        }
-
-        let series = Series::create(series, context).await?;
-
-        let target_realm = {
-            let mut target_realm = parent_realm;
-            for RealmSpecifier { name, path_segment } in new_realms {
-                target_realm = Realm::add(NewRealm {
-                    // The `unwrap_or` case is only potentially used for the
-                    // last realm, which is renamed below anyway. See the check
-                    // above.
-                    name: name.unwrap_or_else(|| "temporary-dummy-name".into()),
-                    path_segment,
-                    parent: Id::realm(target_realm.key),
-                }, context).await?
-            }
-            target_realm
-        };
-
-        BlockValue::add_series(
-            Id::realm(target_realm.key),
-            0,
-            NewSeriesBlock {
-                series: series.id(),
-                show_title: false,
-                show_metadata: true,
-                order: VideoListOrder::NewToOld,
-                layout: VideoListLayout::Gallery,
-            },
-            context,
-        ).await?;
-
-        let block = &BlockValue::load_for_realm(target_realm.key, context).await?[0];
-
-        Realm::rename(
-            target_realm.id(),
-            UpdatedRealmName::from_block(block.id()),
-            context,
-        ).await
+        Series::mount(series, parent_realm_path, new_realms, context).await
     }
 }

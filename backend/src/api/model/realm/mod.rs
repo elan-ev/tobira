@@ -22,6 +22,7 @@ mod mutations;
 pub(crate) use mutations::{
     ChildIndex, NewRealm, RemovedRealm, UpdateRealm, UpdatedPermissions,
     UpdatedRealmName, RealmSpecifier, RealmLineageComponent, CreateRealmLineageOutcome,
+    RemoveMountedSeriesOutcome,
 };
 
 
@@ -231,6 +232,28 @@ impl Realm {
         self.is_user_realm() && self.parent_key.is_none()
     }
 
+    /// Returns all immediate children of this realm. The children are always
+    /// ordered by the internal index. If `childOrder` returns an ordering
+    /// different from `BY_INDEX`, the frontend is supposed to sort the
+    /// children.
+    pub(crate) async fn children(&self, context: &Context) -> ApiResult<Vec<Self>> {
+        let selection = Self::select();
+        let query = format!(
+            "select {selection} \
+                from realms \
+                where realms.parent = $1 \
+                order by index",
+        );
+        context.db
+            .query_mapped(
+                &query,
+                &[&self.key],
+                |row| Self::from_row_start(&row),
+            )
+            .await?
+            .pipe(Ok)
+    }
+
     /// Returns the username of the user owning this realm tree IF it is a user
     /// realm. Otherwise returns `None`.
     pub(crate) fn owning_user(&self) -> Option<&str> {
@@ -412,21 +435,7 @@ impl Realm {
     /// different from `BY_INDEX`, the frontend is supposed to sort the
     /// children.
     async fn children(&self, context: &Context) -> ApiResult<Vec<Self>> {
-        let selection = Self::select();
-        let query = format!(
-            "select {selection} \
-                from realms \
-                where realms.parent = $1 \
-                order by index",
-        );
-        context.db
-            .query_mapped(
-                &query,
-                &[&self.key],
-                |row| Self::from_row_start(&row),
-            )
-            .await?
-            .pipe(Ok)
+        self.children(context).await
     }
 
     /// Returns the (content) blocks of this realm.
