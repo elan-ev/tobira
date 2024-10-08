@@ -42,11 +42,7 @@ pub(crate) enum HarvestItem {
     },
 
     #[serde(untagged)]
-    Unknown {
-        kind: String,
-        #[serde(with = "chrono::serde::ts_milliseconds")]
-        updated: DateTime<Utc>,
-    },
+    Unknown(serde_json::Value),
 }
 
 #[derive(Debug, Deserialize)]
@@ -111,15 +107,15 @@ pub struct Playlist {
 
 
 impl HarvestItem {
-    pub(crate) fn updated(&self) -> DateTime<Utc> {
+    pub(crate) fn updated(&self) -> Option<DateTime<Utc>> {
         match self {
-            Self::Event(event) => event.updated,
-            Self::EventDeleted { updated, .. } => *updated,
-            Self::Series(series) => series.updated,
-            Self::SeriesDeleted { updated, .. } => *updated,
-            Self::Playlist(playlist) => playlist.updated,
-            Self::PlaylistDeleted { updated, .. } => *updated,
-            Self::Unknown { updated, .. } => *updated,
+            Self::Event(event) => Some(event.updated),
+            Self::EventDeleted { updated, .. } => Some(*updated),
+            Self::Series(series) => Some(series.updated),
+            Self::SeriesDeleted { updated, .. } => Some(*updated),
+            Self::Playlist(playlist) => Some(playlist.updated),
+            Self::PlaylistDeleted { updated, .. } => Some(*updated),
+            Self::Unknown(_) => None,
         }
     }
 }

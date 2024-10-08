@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use serde::de::DeserializeOwned;
 use tokio_postgres::types::ToSql;
 
 use crate::{
@@ -86,7 +87,7 @@ pub(crate) async fn run(
 
         // Write received data into the database, updating the sync status if
         // everything worked out alright.
-        let last_updated = harvest_data.items.last().map(|item| item.updated());
+        let last_updated = harvest_data.items.iter().rev().find_map(|item| item.updated());
         let mut transaction = db.transaction().await?;
         store_in_db(harvest_data.items, &sync_status, &mut transaction).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
@@ -145,7 +146,7 @@ async fn store_in_db(
         // Make sure we haven't received this update yet. The code below can
         // handle duplicate items alright, but this way we can save on some DB
         // accesses and the logged statistics are more correct.
-        if item.updated() < sync_status.harvested_until {
+        if item.updated().is_some_and(|updated| updated < sync_status.harvested_until) {
             debug!("Skipping item which `updated` value is earlier than `harvested_until`");
             continue;
         }
@@ -297,23 +298,57 @@ async fn store_in_db(
                 removed_playlists += 1;
             }
 
-            HarvestItem::Unknown { kind, updated } => {
-                let known = [
-                    "event",
-                    "event-deleted",
-                    "series",
-                    "series-deleted",
-                    "playlist",
-                    "playlist-deleted",
-                ];
+            HarvestItem::Unknown(raw) => {
+                (|| {
+                    let Some(obj) = raw.as_object() else {
+                        warn!(?raw, "Unexpected JSON value in harvest response -> ignoring");
+                        return;
+                    };
 
-                if known.contains(&&*kind) {
-                    warn!("Could not deserialize item in harvest response for \
-                        kind '{kind}' (updated {updated})");
-                } else {
-                    warn!("Unknown item of kind '{kind}' in harvest response. \
-                        You might need to update Tobira.");
-                }
+                    let Some(kind) = obj.get("kind") else {
+                        warn!(?obj, "Item without 'kind' field in harvest response -> ignoring");
+                        return;
+                    };
+
+                    let Some(kind) = kind.as_str() else {
+                        warn!(?kind, "'kind' field has unexpected non-string type in \
+                            harvest response -> ignoring");
+                        return;
+                    };
+
+                    // This tries to deserialize the item again from the `raw`
+                    // JSON in order to print a useful error message.
+                    fn log_deserialize_error<T: DeserializeOwned>(
+                        kind: &str,
+                        v: serde_json::Value,
+                    ) {
+                        let err = serde_json::from_value::<T>(v.clone())
+                            .err()
+                            .map(|e| e.to_string())
+                            // This shouldn't happen, at all. But I rather print
+                            // a stupid message than crashing the process.
+                            .unwrap_or("failed to fail deserializing... wat".into());
+
+                        error!("Could not deserialize '{kind}' harvest item -> ignoring. \
+                            Error: {err}");
+                        debug!("Raw value: {}", serde_json::to_string_pretty(&v).unwrap_or("ERR".into()));
+                    }
+
+                    match kind {
+                        "event" => log_deserialize_error::<response::Event>("event", raw),
+                        "series" => log_deserialize_error::<response::Series>("series", raw),
+                        "playlist" => log_deserialize_error::<response::Playlist>("playlist", raw),
+                        "event-deleted" | "series-deleted" | "playlist-deleted" => {
+                            warn!("Could not deserialize item in harvest response for \
+                                kind '{kind}'");
+                        }
+                        _ => {
+                            warn!("Unknown item of kind '{kind}' in harvest response. \
+                                You might need to update Tobira.");
+                        }
+                    }
+                })();
+
             }
         }
     }
