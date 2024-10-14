@@ -1065,13 +1065,18 @@ const Item: React.FC<ItemProps> = ({
 };
 
 type PartOfSeriesLinkProps = {
-    seriesTitle: string;
+    seriesTitle: React.ReactNode;
     seriesId: string;
+    className?: string;
 }
 
-export const PartOfSeriesLink: React.FC<PartOfSeriesLinkProps> = ({ seriesTitle, seriesId }) => {
+export const PartOfSeriesLink: React.FC<PartOfSeriesLinkProps> = ({
+    seriesTitle,
+    seriesId,
+    className,
+}) => {
     const { t } = useTranslation();
-    return <div css={{
+    return <div className={className} css={{
         fontSize: 14,
         marginTop: "auto",
         paddingTop: 8,

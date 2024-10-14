@@ -33,7 +33,7 @@ export const InputContainer: React.FC<{ children: ReactNode }> = ({ children }) 
 );
 
 type SmallDescriptionProps = {
-    text?: string | null;
+    text?: ReactNode | null;
     lines?: number;
     className?: string;
 };

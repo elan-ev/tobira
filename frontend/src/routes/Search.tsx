@@ -157,6 +157,11 @@ const query = graphql`
                             ty
                             highlights { start len }
                         }
+                        matches {
+                            title { start len }
+                            description { start len }
+                            seriesTitle { start len }
+                        }
                     }
                     ... on SearchSeries {
                         title
@@ -402,6 +407,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     endTime: unwrapUndefined(item.endTime),
                     hostRealms: unwrapUndefined(item.hostRealms),
                     textMatches: unwrapUndefined(item.textMatches),
+                    matches: unwrapUndefined(item.matches),
                 }} />;
             } else if (item.__typename === "SearchSeries") {
                 return <SearchSeries key={item.id} {...{
@@ -480,6 +486,7 @@ type SearchEventProps = {
     endTime: string | null;
     hostRealms: readonly { readonly path: string }[];
     textMatches: NonNullable<Results["items"][number]["textMatches"]>;
+    matches: NonNullable<Results["items"][number]["matches"]>;
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
@@ -498,6 +505,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     endTime,
     hostRealms,
     textMatches,
+    matches,
 }) => {
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
@@ -518,11 +526,13 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                 }}>
                     <h3 css={{
                         color: COLORS.primary0,
-                        marginBottom: 6,
+                        marginBottom: 3,
+                        paddingBottom: 3,
                         fontSize: 17,
                         lineHeight: 1.3,
                         ...ellipsisOverflowCss(2),
-                    }}>{title}</h3>
+                        mark: highlightCss(COLORS.primary2, COLORS.neutral15),
+                    }}>{highlightText(title, matches.title)}</h3>
                     <Creators creators={creators} css={{
                         ul: {
                             display: "inline-block",
@@ -535,10 +545,18 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                         },
                     }} />
                     {description && <SmallDescription
-                        text={description}
+                        css={{
+                            paddingBottom: 2,
+                            mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
+                        }}
+                        text={highlightText(description, matches.description, 180)}
                         lines={3}
                     />}
-                    {seriesTitle && seriesId && <PartOfSeriesLink {...{ seriesTitle, seriesId }} />}
+                    {seriesTitle && seriesId && <PartOfSeriesLink
+                        css={{ mark: highlightCss(COLORS.primary2, COLORS.neutral15) }}
+                        seriesTitle={highlightText(seriesTitle, matches.seriesTitle)}
+                        {...{ seriesId }}
+                    />}
 
                     {/* Show timeline with matches if there are any */}
                     {textMatches.length > 0 && (
@@ -991,17 +1009,39 @@ const byteSlice = (s: string, start: number, len: number): readonly [string, str
     ] as const;
 };
 
+/**
+ * Inserts `<mark>` elements inside `s` to highlight parts of text, as specified
+ * by `spans`. If `maxUnmarkedSectionLen` is specified, this function makes
+ * sure that all sections without any highlight (except the last one) is at
+ * most that many characters¹ long. If the a section is longer, its middle is
+ * replaced by " … " to stay within the limit.
+ *
+ * ¹ Well, technically UTF-16 code points, and this is important, but in our
+ * case it's a loosy goosy business anyway, since the number only approximates
+ * the available space for rendering anyway.
+ */
 const highlightText = (
     s: string,
     spans: readonly { start: number; len: number }[],
+    maxUnmarkedSectionLen = Infinity,
 ) => {
     const textParts = [];
     let remainingText = s;
     let offset = 0;
     for (const span of spans) {
         const highlightStart = span.start - offset;
-        const [prefix, middle, rest]
+        const [prefix_, middle, rest]
             = byteSlice(remainingText, highlightStart, span.len);
+        let prefix = prefix_;
+
+        // If the first part (without a match) is too long, we truncate its
+        // middle.
+        if (prefix.length > maxUnmarkedSectionLen) {
+            const halfLen = maxUnmarkedSectionLen / 2 - 2;
+            const start = prefix.substring(0, halfLen);
+            const end = prefix.substring(prefix.length - halfLen);
+            prefix = `${start} … ${end}`;
+        }
 
         textParts.push(<span key={offset + 1}>{prefix}</span>);
         textParts.push(
@@ -1011,6 +1051,7 @@ const highlightText = (
         offset = span.start + span.len;
     }
     textParts.push(remainingText);
+
     return textParts;
 };
 

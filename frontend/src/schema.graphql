@@ -98,6 +98,7 @@ type SearchEvent implements Node {
   audioOnly: Boolean!
   hostRealms: [SearchRealm!]!
   textMatches: [TextMatch!]!
+  matches: SearchEventMatches!
 }
 
 input ChildIndex {
@@ -862,6 +863,12 @@ enum SortDirection {
 type Segment {
   uri: String!
   startTime: Float!
+}
+
+type SearchEventMatches {
+  title: [ByteSpan!]!
+  description: [ByteSpan!]!
+  seriesTitle: [ByteSpan!]!
 }
 
 "Services a user can be pre-authenticated for using a JWT"

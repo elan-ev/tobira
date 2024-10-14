@@ -22,7 +22,7 @@ mod realm;
 mod series;
 mod playlist;
 
-pub(crate) use self::event::{SearchEvent, TextMatch, ByteSpan};
+pub(crate) use self::event::{SearchEvent, TextMatch};
 
 
 /// Marker type to signal that the search functionality is unavailable for some
@@ -81,6 +81,12 @@ impl SearchResults<search::Playlist> {
     fn items(&self) -> &[search::Playlist] {
         &self.items
     }
+}
+
+#[derive(Debug, GraphQLObject)]
+pub struct ByteSpan {
+    pub start: i32,
+    pub len: i32,
 }
 
 #[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
@@ -166,7 +172,7 @@ pub(crate) async fn perform(
             .await?
             .map(|row| {
                 let e = search::Event::from_row_start(&row);
-                SearchEvent::new(e, &[], &[]).into()
+                SearchEvent::without_matches(e).into()
             })
             .into_iter()
             .collect();
@@ -233,7 +239,7 @@ pub(crate) async fn perform(
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
     let events = event_results.hits.into_iter().map(|result| {
         let score = result.ranking_score;
-        (NodeValue::from(hit_to_search_event(result)), score)
+        (NodeValue::from(SearchEvent::new(result)), score)
     });
     let series = series_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
@@ -327,7 +333,7 @@ pub(crate) async fn all_events(
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| hit_to_search_event(h)).collect();
+    let items = results.hits.into_iter().map(|h| SearchEvent::new(h)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
@@ -531,15 +537,4 @@ impl fmt::Display for Filter {
             Self::None => Ok(()),
         }
     }
-}
-
-fn hit_to_search_event(
-    hit: meilisearch_sdk::SearchResult<search::Event>,
-) -> SearchEvent {
-    let get_matches = |key: &str| hit.matches_position.as_ref()
-        .and_then(|matches| matches.get(key))
-        .map(|v| v.as_slice())
-        .unwrap_or_default();
-
-    SearchEvent::new(hit.result, get_matches("slide_texts.texts"), get_matches("caption_texts.texts"))
 }
