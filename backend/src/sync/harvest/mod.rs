@@ -6,12 +6,10 @@ use std::{
 use tokio_postgres::types::ToSql;
 
 use crate::{
-    auth::{ROLE_ADMIN, ROLE_ANONYMOUS, ETH_ROLE_CREDENTIALS_RE, ETH_ROLE_PASSWORD_RE},
+    auth::{is_special_eth_role, ROLE_ADMIN, ROLE_ANONYMOUS, ETH_ROLE_CREDENTIALS_RE},
     config::Config,
     db::{
-        self,
-        DbConnection,
-        types::{EventCaption, EventSegment, EventState, EventTrack, Credentials, SeriesState},
+        self, types::{Credentials, EventCaption, EventSegment, EventState, EventTrack, SeriesState}, DbConnection
     },
     prelude::*,
 };
@@ -201,9 +199,7 @@ async fn store_in_db(
                 }
 
                 let filter_role = |role: &String| -> bool {
-                    !(role == ROLE_ADMIN || (config.sync.interpret_eth_passwords
-                        && (ETH_ROLE_CREDENTIALS_RE.is_match(role) || ETH_ROLE_PASSWORD_RE.is_match(role))
-                    ))
+                    role != ROLE_ADMIN && !is_special_eth_role(role, config)
                 };
 
                 // We always handle the admin role in a special way, so no need
@@ -265,10 +261,17 @@ async fn store_in_db(
                 title,
                 description,
                 updated,
-                acl,
+                mut acl,
                 created,
-                metadata
+                metadata,
             } => {
+                // (**ETH SPECIAL FEATURE**)
+                let series_credentials = config.sync.interpret_eth_passwords
+                    .then(|| hashed_eth_credentials(&acl.read))
+                    .flatten();
+                acl.read.retain(|role| !is_special_eth_role(role, config));
+                acl.write.retain(|role| !is_special_eth_role(role, config));
+
                 // We first simply upsert the series.
                 let new_id = upsert(db, "series", "opencast_id", &[
                     ("opencast_id", &opencast_id),
@@ -280,6 +283,7 @@ async fn store_in_db(
                     ("updated", &updated),
                     ("created", &created),
                     ("metadata", &metadata),
+                    ("credentials", &series_credentials),
                 ]).await?;
 
                 // But now we have to fix the foreign key for any events that
