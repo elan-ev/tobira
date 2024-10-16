@@ -12,6 +12,7 @@ use tokio_postgres::Error as PgError;
 
 use crate::{
     api::err::{not_authorized, ApiError},
+    config::Config,
     db::util::select,
     http::{response, Context, Response},
     prelude::*,
@@ -53,6 +54,12 @@ pub(crate) static ETH_ROLE_CREDENTIALS_RE: Lazy<Regex> = Lazy::new(|| Regex::new
 pub(crate) static ETH_ROLE_PASSWORD_RE: Lazy<Regex> = Lazy::new(|| Regex::new(
     r"^ROLE_PWD_[a-zA-Z0-9+/]*={0,2}$"
 ).unwrap());
+
+pub(crate) fn is_special_eth_role(role: &String, config: &Config) -> bool {
+    config.sync.interpret_eth_passwords && (
+        ETH_ROLE_CREDENTIALS_RE.is_match(role) || ETH_ROLE_PASSWORD_RE.is_match(role)
+    )
+}
 
 pub(crate) const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
 const ROLE_USER: &str = "ROLE_USER";
