@@ -1,4 +1,4 @@
-import { graphql, useFragment, useQueryLoader } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { Card, unreachable } from "@opencast/appkit";
 
 import { InlinePlayer } from "../player";
@@ -9,10 +9,7 @@ import { isSynced, keyOfId, useAuthenticatedDataQuery } from "../../util";
 import { Link } from "../../router";
 import { LuArrowRightCircle } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
-import {
-    VideoAuthorizedDataQuery,
-} from "../../routes/__generated__/VideoAuthorizedDataQuery.graphql";
-import { authorizedDataQuery, ProtectedPlayer } from "../../routes/Video";
+import { PreviewPlaceholder } from "../../routes/Video";
 
 
 export type BlockEvent = VideoBlockData$data["event"];
@@ -25,8 +22,6 @@ type Props = {
 
 export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     const { t } = useTranslation();
-    const [queryReference, loadQuery]
-        = useQueryLoader<VideoAuthorizedDataQuery>(authorizedDataQuery);
     const { event, showTitle, showLink } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
@@ -75,7 +70,8 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     }
 
     const authenticatedData = useAuthenticatedDataQuery(keyOfId(event.id));
-    const authorizedData = event.authorizedData ?? authenticatedData.event?.authorizedData;
+    const authorizedData = event.authorizedData
+        ?? authenticatedData.authorizedEvent?.authorizedData;
 
 
     return <div css={{ maxWidth: 800 }}>
@@ -89,11 +85,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                     }}
                     css={{ margin: "-4px auto 0" }}
                 />
-                : <ProtectedPlayer {...{
-                    queryReference,
-                    event,
-                    loadQuery,
-                }} />
+                : <PreviewPlaceholder {...{ event }} />
             }
         </PlayerContextProvider>
 

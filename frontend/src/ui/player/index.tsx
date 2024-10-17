@@ -127,6 +127,9 @@ const delayTill = (date: Date): number => {
  * in order to work correctly.
  */
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
+    if (!event.authorizedData) {
+        return null;
+    }
     const aspectRatio = getPlayerAspectRatio(event.authorizedData.tracks);
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<HTMLDivElement>(null);

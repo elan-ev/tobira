@@ -55,7 +55,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     const isDark = useColorScheme().scheme === "dark";
     const authenticatedData = useAuthenticatedDataQuery(keyOfId(event.id));
     const authorizedThumbnail = event.authorizedData?.thumbnail
-        ?? authenticatedData.event?.authorizedData?.thumbnail;
+        ?? authenticatedData.authorizedEvent?.authorizedData?.thumbnail;
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
     const audioOnly = event.authorizedData
         ? (
