@@ -1,15 +1,7 @@
 import React, { ReactElement, ReactNode, useEffect, useRef, useState } from "react";
-import {
-    graphql,
-    GraphQLTaggedNode,
-    PreloadedQuery,
-    useFragment,
-    usePreloadedQuery,
-    useQueryLoader,
-    UseQueryLoaderLoadQueryOptions,
-} from "react-relay/hooks";
+import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
-import { OperationType } from "relay-runtime";
+import { fetchQuery, OperationType } from "relay-runtime";
 import {
     LuCode, LuDownload, LuInfo, LuLink, LuQrCode, LuRss, LuSettings, LuShare2, LuUnlock,
 } from "react-icons/lu";
@@ -20,12 +12,12 @@ import {
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
 
-import { loadQuery } from "../relay";
+import { environment, loadQuery } from "../relay";
 import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { getPlayerAspectRatio, InlinePlayer, Player, PlayerPlaceholder } from "../ui/player";
+import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { isValidRealmPath } from "./Realm";
@@ -85,7 +77,7 @@ import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
 import { AuthenticationFormState, FormData, AuthenticationForm } from "./Login";
 import {
     VideoAuthorizedDataQuery,
-    VideoAuthorizedDataQuery$variables,
+    VideoAuthorizedDataQuery$data,
 } from "./__generated__/VideoAuthorizedDataQuery.graphql";
 import { AuthorizedBlockEvent } from "../ui/Blocks/Video";
 
@@ -440,7 +432,7 @@ export const authorizedDataQuery = graphql`
         $eventUser: String,
         $eventPassword: String,
     ) {
-        event: eventById(id: $eventId) {
+        authorizedEvent: eventById(id: $eventId) {
             ...on AuthorizedEvent {
                 id
                 authorizedData(user: $eventUser, password: $eventPassword) {
@@ -471,8 +463,6 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     const rerender = useForceRerender();
     const event = useFragment(eventFragment, eventRef);
     const realm = useFragment(realmFragment, realmRef);
-    const [queryReference, loadQuery]
-        = useQueryLoader<VideoAuthorizedDataQuery>(authorizedDataQuery);
 
     if (event.__typename === "NotAllowed") {
         return <ErrorPage title={t("api-remote-errors.view.event")} />;
@@ -522,11 +512,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
                     css={{ margin: "-4px auto 0" }}
                     onEventStateChange={rerender}
                 />
-                : <ProtectedPlayer {...{
-                    queryReference,
-                    event,
-                    loadQuery,
-                }}/>
+                : <PreviewPlaceholder {...{ event }}/>
             }
             <Metadata id={event.id} event={event} />
         </PlayerContextProvider>
@@ -551,81 +537,15 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
 };
 
 type ProtectedPlayerProps = {
-    queryReference?: PreloadedQuery<VideoAuthorizedDataQuery> | null;
-    loadQuery: (
-        variables: VideoAuthorizedDataQuery$variables,
-        options?: UseQueryLoaderLoadQueryOptions,
-    ) => void;
     event: Event | AuthorizedBlockEvent;
     embedded?: boolean;
 }
 
-export const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({
-    queryReference,
-    event,
-    loadQuery,
-    embedded,
-}) => queryReference
-    ? <PlayerOrPreview {...{
-        queryReference,
-        event,
-        loadQuery,
-        embedded,
-    }} />
-    : <PreviewPlaceholder {...{ event, loadQuery, embedded }} />;
-
-export const CREDENTIALS_STORAGE_KEY = "tobira-video-credentials-";
-
-const PlayerOrPreview: React.FC<ProtectedPlayerProps> = ({
-    queryReference,
-    event,
-    loadQuery,
-    embedded,
-}) => {
-    if (!queryReference) {
-        return null;
-    }
-    const data = usePreloadedQuery(authorizedDataQuery, queryReference);
-    const rerender = useForceRerender();
-
-    return data.event?.authorizedData && event.syncedData
-        ? (embedded
-            ? <Player event={{
-                ...event,
-                syncedData: event.syncedData,
-                authorizedData: data.event.authorizedData,
-            }} />
-            : <InlinePlayer
-                event={{
-                    ...event,
-                    syncedData: event.syncedData,
-                    authorizedData: data.event.authorizedData,
-                }}
-                css={{ margin: "-4px auto 0" }}
-                onEventStateChange={rerender}
-            />
-        )
-        : <PreviewPlaceholder
-            invalid={data.event?.authorizedData == null}
-            {...{ event, loadQuery, embedded }}
-        />;
-
-};
-
-type PlaceholderProps = ProtectedPlayerProps & {
-    invalid?: boolean;
-}
-
-const PreviewPlaceholder: React.FC<PlaceholderProps> = ({
-    event,
-    loadQuery,
-    invalid,
-    embedded,
-}) => {
+export const PreviewPlaceholder: React.FC<ProtectedPlayerProps> = ({ event, embedded }) => {
     const { t } = useTranslation();
 
     return event.hasPassword
-        ? <ProtectedVideoPlaceholder {...{ event, loadQuery, invalid, embedded }} />
+        ? <ProtectedPlayer {...{ event, embedded }} />
         : <div css={{ height: "unset" }}>
             <PlayerPlaceholder>
                 <p css={{
@@ -640,16 +560,16 @@ const PreviewPlaceholder: React.FC<PlaceholderProps> = ({
         </div>;
 };
 
-const ProtectedVideoPlaceholder: React.FC<PlaceholderProps> = ({
-    event,
-    loadQuery,
-    invalid,
-    embedded,
-}) => {
+export type AuthorizedData = VideoAuthorizedDataQuery$data["authorizedEvent"];
+export const CREDENTIALS_STORAGE_KEY = "tobira-video-credentials-";
+
+const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) => {
     const { t } = useTranslation(undefined, { keyPrefix: "video.password" });
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
-    const [state, setState] = useState<AuthenticationFormState>("idle");
+    const [authState, setAuthState] = useState<AuthenticationFormState>("idle");
+    const [authError, setAuthError] = useState<string | null>(null);
+    const [authData, setAuthData] = useState<AuthorizedData | null>(null);
 
     const embeddedStyles = {
         height: "100%",
@@ -658,111 +578,129 @@ const ProtectedVideoPlaceholder: React.FC<PlaceholderProps> = ({
     };
 
     const onSubmit = (data: FormData) => {
-        setState("pending");
-
         const credentials = JSON.stringify({
             eventUser: data.userid,
             eventPassword: data.password,
         });
 
-        // To make the authentication "sticky", the credentials are stored in browser storage.
-        //
-        // If the user is logged in, local storage is used so the browser remembers them as long
-        // as the user stays logged in.
-        // If the user is not logged in however, the session storage is used, which is reset when
-        // the current tab or window is closed. This way we can be relatively sure that the next
-        // user will need to enter the credentials again in order to access a protected video.
-        //
-        // Furthermore, since the video route can be accessed via both kinds, this needs to store
-        // both Tobira ID and Opencast ID. Both are queried when a video route is accessed, but the
-        // check for already stored credentials is done in the same query, when only the single ID
-        // from the url is known.
-        // The check will return a result for either ID regardless of its kind, as long as one of
-        // them is stored.
-        if (isRealUser(user)) {
-            window.localStorage
-                .setItem(CREDENTIALS_STORAGE_KEY + keyOfId(event.id), credentials);
-            window.localStorage
-                .setItem(CREDENTIALS_STORAGE_KEY + event.opencastId, credentials);
-        } else {
-            window.sessionStorage
-                .setItem(CREDENTIALS_STORAGE_KEY + keyOfId(event.id), credentials);
-            window.sessionStorage
-                .setItem(CREDENTIALS_STORAGE_KEY + event.opencastId, credentials);
-        }
+        fetchQuery<VideoAuthorizedDataQuery>(environment, authorizedDataQuery, {
+            eventId: event.id,
+            eventUser: data.userid,
+            eventPassword: data.password,
+        }).subscribe({
+            start: () => setAuthState("pending"),
+            next: ({ authorizedEvent }) => {
+                if (!authorizedEvent?.authorizedData) {
+                    setAuthError(t("invalid-credentials"));
+                    setAuthState("idle");
+                    return;
+                }
 
+                setAuthError(null);
+                setAuthData({ authorizedData: authorizedEvent.authorizedData });
+                setAuthState("success");
 
-        loadQuery({ eventId: event.id, eventUser: data.userid, eventPassword: data.password });
+                // To make the authentication "sticky", the credentials are stored in browser
+                // storage. If the user is logged in, local storage is used so the browser
+                // stores them as long as the user stays logged in.
+                // If the user is not logged in however, the session storage is used, which is
+                // reset when the current tab or window is closed. This way we can be relatively
+                // sure that the next user will need to enter the credentials again in order to
+                // access a protected video.
+                //
+                // Furthermore, since the video route can be accessed via both kinds, this needs to
+                // store both Tobira ID and Opencast ID. Both are queried when a video route is
+                // accessed, but the check for already stored credentials is done in the same
+                // query, when only the single ID from the url is known.
+                // The check will return a result for either ID regardless of its kind, as long as
+                // one of them is stored.
+                const storage = isRealUser(user) ? window.localStorage : window.sessionStorage;
+                storage.setItem(CREDENTIALS_STORAGE_KEY + keyOfId(event.id), credentials);
+                storage.setItem(CREDENTIALS_STORAGE_KEY + event.opencastId, credentials);
+
+            },
+            error: (error: Error) => {
+                setAuthError(error.message);
+                setAuthState("idle");
+            },
+        });
     };
 
-    return (
-        <div css={{
-            display: "flex",
-            flexDirection: "column",
-            color: isDark ? COLORS.neutral80 : COLORS.neutral15,
-            backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral80,
-            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                alignItems: "center",
-            },
-            ...embedded && embeddedStyles,
-        }}>
-            <h2 css={{
-                margin: 32,
-                marginBottom: 0,
-                [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
-                    textAlign: "left",
-                },
-            }}>{t("heading")}</h2>
+    return authData?.authorizedData && event.syncedData
+        ? <InlinePlayer event={{
+            ...event,
+            authorizedData: authData.authorizedData,
+            syncedData: event.syncedData,
+        }} />
+        : (
             <div css={{
                 display: "flex",
+                flexDirection: "column",
+                color: isDark ? COLORS.neutral80 : COLORS.neutral15,
+                backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral80,
                 [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                    flexDirection: "column-reverse",
+                    alignItems: "center",
                 },
+                ...embedded && embeddedStyles,
             }}>
+                <h2 css={{
+                    margin: 32,
+                    marginBottom: 0,
+                    [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
+                        textAlign: "left",
+                    },
+                }}>{t("heading")}</h2>
                 <div css={{
                     display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
+                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                        flexDirection: "column-reverse",
+                    },
                 }}>
-                    <AuthenticationForm
-                        {...{ onSubmit, state }}
-                        error={null}
-                        SubmitIcon={LuUnlock}
-                        labels={{
-                            user: t("label.id"),
-                            password: t("label.password"),
-                            submit: t("label.submit"),
-                        }}
-                        css={{
-                            "&": { backgroundColor: "transparent" },
-                            margin: 0,
-                            border: 0,
-                            width: "unset",
-                            minWidth: 300,
-                            "div > label, div > input": {
-                                ...!isDark && {
-                                    backgroundColor: COLORS.neutral15,
-                                },
-                            },
-                        }}
-                    />
-                    {invalid && (
-                        <Card
-                            kind="error"
-                            iconPos="left"
-                            css={{
-                                width: "fit-content",
-                                marginBottom: 32,
+                    <div css={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                    }}>
+                        <AuthenticationForm
+                            {...{ onSubmit }}
+                            state={authState}
+                            error={null}
+                            SubmitIcon={LuUnlock}
+                            labels={{
+                                user: t("label.id"),
+                                password: t("label.password"),
+                                submit: t("label.submit"),
                             }}
-                        >
-                            {t("invalid-credentials")}
-                        </Card>
-                    )}
+                            css={{
+                                "&": { backgroundColor: "transparent" },
+                                margin: 0,
+                                border: 0,
+                                width: "unset",
+                                minWidth: 300,
+                                "div > label, div > input": {
+                                    ...!isDark && {
+                                        backgroundColor: COLORS.neutral15,
+                                    },
+                                },
+                            }}
+                        />
+                        {authError && (
+                            <Card
+                                kind="error"
+                                iconPos="left"
+                                css={{
+                                    width: "fit-content",
+                                    marginBottom: 32,
+                                }}
+                            >
+                                {authError}
+                            </Card>
+                        )}
+                    </div>
+                    <AuthenticationFormText />
                 </div>
-                <AuthenticationFormText />
             </div>
-        </div>
-    );
+        );
 };
 
 const AuthenticationFormText: React.FC = () => {

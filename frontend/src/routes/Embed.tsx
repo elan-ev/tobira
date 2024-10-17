@@ -2,7 +2,7 @@ import { ReactNode, Suspense } from "react";
 import { LuFrown, LuAlertTriangle } from "react-icons/lu";
 import { Translation, useTranslation } from "react-i18next";
 import {
-    graphql, useFragment, usePreloadedQuery, useQueryLoader,
+    graphql, useFragment, usePreloadedQuery,
     GraphQLTaggedNode, PreloadedQuery,
 } from "react-relay";
 import { unreachable } from "@opencast/appkit";
@@ -19,8 +19,7 @@ import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
 import { EmbedDirectOpencastQuery } from "./__generated__/EmbedDirectOpencastQuery.graphql";
 import { EmbedEventData$key } from "./__generated__/EmbedEventData.graphql";
 import { PlayerContextProvider } from "../ui/player/PlayerContext";
-import { authorizedDataQuery, ProtectedPlayer } from "./Video";
-import { VideoAuthorizedDataQuery } from "./__generated__/VideoAuthorizedDataQuery.graphql";
+import { PreviewPlaceholder } from "./Video";
 
 export const EmbedVideoRoute = makeRoute({
     url: ({ videoId }: { videoId: string }) => `/~embed/!v/${keyOfId(videoId)}`,
@@ -144,8 +143,6 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
         fragmentRef.event,
     );
     const { t } = useTranslation();
-    const [queryReference, loadQuery]
-        = useQueryLoader<VideoAuthorizedDataQuery>(authorizedDataQuery);
 
     if (!event) {
         return <PlayerPlaceholder>
@@ -177,11 +174,7 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
             ...event,
             authorizedData: event.authorizedData,
         }} />
-        : <ProtectedPlayer embedded {...{
-            queryReference,
-            event,
-            loadQuery,
-        }}/>;
+        : <PreviewPlaceholder embedded {...{ event }}/>;
 };
 
 export const BlockEmbedRoute = makeRoute({
