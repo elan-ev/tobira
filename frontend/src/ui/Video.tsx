@@ -12,7 +12,7 @@ import {
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
-import { keyOfId, useAuthenticatedDataQuery } from "../util";
+import { useAuthenticatedDataQuery } from "../util";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
@@ -22,6 +22,9 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
         title: string;
         isLive: boolean;
         created: string;
+        series?: {
+            id: string;
+        } | null;
         syncedData?: {
             duration: number;
             startTime?: string | null;
@@ -53,9 +56,9 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
 }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
-    const authenticatedData = useAuthenticatedDataQuery(keyOfId(event.id));
+    const authenticatedData = useAuthenticatedDataQuery(event.id, event.series?.id);
     const authorizedThumbnail = event.authorizedData?.thumbnail
-        ?? authenticatedData.authorizedEvent?.authorizedData?.thumbnail;
+        ?? authenticatedData?.thumbnail;
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
     const audioOnly = event.authorizedData
         ? (

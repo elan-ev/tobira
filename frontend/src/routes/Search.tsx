@@ -520,7 +520,9 @@ const SearchEvent: React.FC<SearchEventProps> = ({
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
 
     // TODO: This check should be done in backend.
-    const showMatches = userIsAuthorized || (hasPassword && getCredentials(keyOfId(id)));
+    const showMatches = userIsAuthorized || (
+        hasPassword && getCredentials("event", eventId(keyOfId(id)))
+    );
 
     return (
         <Item key={id} link={link}>
@@ -570,6 +572,9 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                         title,
                         isLive,
                         created,
+                        series: seriesId ? {
+                            id: seriesId,
+                        } : null,
                         syncedData: {
                             duration,
                             startTime,

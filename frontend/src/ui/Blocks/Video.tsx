@@ -38,7 +38,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                     description
                     canWrite
                     hasPassword
-                    series { title opencastId }
+                    series { title id opencastId }
                     syncedData {
                         duration
                         updated
@@ -69,9 +69,11 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         return unreachable();
     }
 
-    const authenticatedData = useAuthenticatedDataQuery(keyOfId(event.id));
-    const authorizedData = event.authorizedData
-        ?? authenticatedData.authorizedEvent?.authorizedData;
+    const authorizedData = useAuthenticatedDataQuery(
+        event.id,
+        event.series?.id,
+        { authorizedData: event.authorizedData },
+    );
 
 
     return <div css={{ maxWidth: 800 }}>
@@ -79,10 +81,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         <PlayerContextProvider>
             {authorizedData && isSynced(event)
                 ? <InlinePlayer
-                    event={{
-                        ...event,
-                        authorizedData,
-                    }}
+                    event={{ ...event, authorizedData }}
                     css={{ margin: "-4px auto 0" }}
                 />
                 : <PreviewPlaceholder {...{ event }} />
