@@ -98,6 +98,7 @@ const query = graphql`
                     tracks { flavor resolution mimetype uri }
                 }
                 series {
+                    id
                     title
                     opencastId
                     ...SeriesBlockSeriesData

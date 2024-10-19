@@ -43,7 +43,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                 ... on AuthorizedEvent {
                     id
                     title
-                    series { title }
+                    series { id title }
                     created
                     isLive
                     creators
@@ -82,7 +82,12 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
     const { formState: { errors } } = form;
 
     const currentEvent = event?.__typename === "AuthorizedEvent"
-        ? { ...event, ...event.syncedData, seriesTitle: event.series?.title }
+        ? {
+            ...event,
+            ...event.syncedData,
+            seriesId: event.series?.id,
+            seriesTitle: event.series?.title,
+        }
         : undefined;
 
     return <EditModeForm create={create} save={save} map={(data: VideoFormData) => data}>
@@ -138,6 +143,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                     items {
                         id
                         title
+                        seriesId
                         seriesTitle
                         creators
                         thumbnail
@@ -168,7 +174,10 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                     id: item.id.replace(/^es/, "ev"),
                     syncedData: item,
                     authorizedData: item,
-                    series: item.seriesTitle == null ? null : { title: item.seriesTitle },
+                    series: (item.seriesTitle == null || item.seriesId == null) ? null : {
+                        id: item.seriesId,
+                        title: item.seriesTitle,
+                    },
                 })));
             },
             start: () => {},

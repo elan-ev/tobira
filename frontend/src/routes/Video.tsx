@@ -35,6 +35,8 @@ import {
     keyOfId,
     playlistId,
     getCredentials,
+    useAuthenticatedDataQuery,
+    credentialsStorageKey,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { LinkButton } from "../ui/LinkButton";
@@ -125,7 +127,7 @@ export const VideoRoute = makeRoute({
             id,
             realmPath,
             listId,
-            ...getCredentials(videoId),
+            ...getCredentials("event", id),
         });
 
         return {
@@ -194,7 +196,7 @@ export const OpencastVideoRoute = makeRoute({
             id,
             realmPath,
             listId,
-            ...getCredentials(id),
+            ...getCredentials("oc-event", id),
         });
 
         return {
@@ -261,11 +263,11 @@ export const DirectVideoRoute = makeRoute({
                 playlist: playlistById(id: $listId) { ...PlaylistBlockPlaylistData }
             }
         `;
-        const videoId = decodeURIComponent(params[1]);
+        const id = eventId(decodeURIComponent(params[1]));
         const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, {
-            id: eventId(videoId),
+            id,
             listId: makeListId(url.searchParams.get("list")),
-            ...getCredentials(videoId),
+            ...getCredentials("event", id),
         });
 
         return matchedDirectRoute(query, queryRef);
@@ -302,7 +304,7 @@ export const DirectOpencastVideoRoute = makeRoute({
         const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, {
             id,
             listId: makeListId(url.searchParams.get("list")),
-            ...getCredentials(id),
+            ...getCredentials("oc-event", id),
         });
 
         return matchedDirectRoute(query, queryRef);
@@ -470,10 +472,26 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
     }
-
     if (!isSynced(event)) {
         return <WaitingPage type="video" />;
     }
+
+    // If the event is password protected this will check if there are credentials for this event's
+    // series are stored, and if so, skip the authentication.
+    // Ideally this would happen at the top level in the `makeRoute` call, but at that point the
+    // series id isn't known. To prevent unnecessary queries, the hook is also passed the authorized
+    // data of this event. If that is neither null nor undefined, nothing is fetched.
+    //
+    // This extra check is particularly useful in this specific component, where we might run into a
+    // situation where an event has been previously authenticated and its credentials are stored
+    // with both its own ID (with which it is possible to already fetch the authenticated data in
+    // the initial video page query) and its series ID. So when the authenticated data is already
+    // present, it shouldn't be fetched a second time.
+    const authorizedData = useAuthenticatedDataQuery(
+        event.id,
+        event.series?.id,
+        { authorizedData: event.authorizedData },
+    );
 
     const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
     const { hasStarted, hasEnded } = getEventTimeInfo(event);
@@ -503,12 +521,9 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         <PlayerContextProvider>
-            {event.authorizedData
+            {authorizedData
                 ? <InlinePlayer
-                    event={{
-                        ...event,
-                        authorizedData: event.authorizedData,
-                    }}
+                    event={{ ...event, authorizedData }}
                     css={{ margin: "-4px auto 0" }}
                     onEventStateChange={rerender}
                 />
@@ -615,9 +630,14 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) =>
                 // The check will return a result for either ID regardless of its kind, as long as
                 // one of them is stored.
                 const storage = isRealUser(user) ? window.localStorage : window.sessionStorage;
-                storage.setItem(CREDENTIALS_STORAGE_KEY + keyOfId(event.id), credentials);
-                storage.setItem(CREDENTIALS_STORAGE_KEY + event.opencastId, credentials);
+                storage.setItem(credentialsStorageKey("event", event.id), credentials);
+                storage.setItem(credentialsStorageKey("oc-event", event.opencastId), credentials);
 
+                // We also store the series id of the event. If other events of that series use
+                // the same credentials, they will also be unlocked.
+                if (event.series?.id) {
+                    storage.setItem(credentialsStorageKey("series", event.series.id), credentials);
+                }
             },
             error: (error: Error) => {
                 setAuthError(error.message);
