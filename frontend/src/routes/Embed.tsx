@@ -1,4 +1,4 @@
-import { ReactNode, Suspense } from "react";
+import { ReactNode, Suspense, useState } from "react";
 import { LuFrown, LuAlertTriangle } from "react-icons/lu";
 import { Translation, useTranslation } from "react-i18next";
 import {
@@ -19,7 +19,7 @@ import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
 import { EmbedDirectOpencastQuery } from "./__generated__/EmbedDirectOpencastQuery.graphql";
 import { EmbedEventData$key } from "./__generated__/EmbedEventData.graphql";
 import { PlayerContextProvider } from "../ui/player/PlayerContext";
-import { PreviewPlaceholder } from "./Video";
+import { AuthenticatedDataContext, AuthorizedData, PreviewPlaceholder } from "./Video";
 
 export const EmbedVideoRoute = makeRoute({
     url: ({ videoId }: { videoId: string }) => `/~embed/!v/${keyOfId(videoId)}`,
@@ -143,6 +143,7 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
         fragmentRef.event,
     );
     const { t } = useTranslation();
+    const [authenticatedData, setAuthenticatedData] = useState<AuthorizedData | null>(null);
 
     if (!event) {
         return <PlayerPlaceholder>
@@ -177,7 +178,9 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
 
     return authorizedData
         ? <Player event={{ ...event, authorizedData }} />
-        : <PreviewPlaceholder embedded {...{ event }}/>;
+        : <AuthenticatedDataContext.Provider value={{ authenticatedData, setAuthenticatedData }}>
+            <PreviewPlaceholder embedded {...{ event }}/>;
+        </AuthenticatedDataContext.Provider>;
 };
 
 export const BlockEmbedRoute = makeRoute({

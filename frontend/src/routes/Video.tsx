@@ -1,4 +1,14 @@
-import React, { ReactElement, ReactNode, useEffect, useRef, useState } from "react";
+import React, {
+    createContext,
+    Dispatch,
+    ReactElement,
+    ReactNode,
+    SetStateAction,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, OperationType } from "relay-runtime";
@@ -9,6 +19,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import {
     match, unreachable, screenWidthAtMost, screenWidthAbove, useColorScheme,
     Floating, FloatingContainer, FloatingTrigger, WithTooltip, Card, Button, ProtoButton,
+    bug,
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
 
@@ -453,6 +464,13 @@ export const authorizedDataQuery = graphql`
 // ===== Components
 // ===========================================================================================
 
+export type AuthorizedData = VideoAuthorizedDataQuery$data["authorizedEvent"];
+type AuthenticatedDataContext = {
+    authenticatedData: AuthorizedData;
+    setAuthenticatedData: Dispatch<SetStateAction<AuthorizedData>>;
+}
+export const AuthenticatedDataContext = createContext<AuthenticatedDataContext | null>(null);
+
 type Props = {
     eventRef: NonNullable<VideoPageEventData$key>;
     realmRef: NonNullable<VideoPageRealmData$key>;
@@ -465,6 +483,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     const rerender = useForceRerender();
     const event = useFragment(eventFragment, eventRef);
     const realm = useFragment(realmFragment, realmRef);
+    const [authenticatedData, setAuthenticatedData] = useState<AuthorizedData | null>(null);
 
     if (event.__typename === "NotAllowed") {
         return <ErrorPage title={t("api-remote-errors.view.event")} />;
@@ -520,34 +539,36 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-        <PlayerContextProvider>
-            {authorizedData
-                ? <InlinePlayer
-                    event={{ ...event, authorizedData }}
-                    css={{ margin: "-4px auto 0" }}
-                    onEventStateChange={rerender}
+        <AuthenticatedDataContext.Provider value={{ authenticatedData, setAuthenticatedData }}>
+            <PlayerContextProvider>
+                {authorizedData
+                    ? <InlinePlayer
+                        event={{ ...event, authorizedData }}
+                        css={{ margin: "-4px auto 0" }}
+                        onEventStateChange={rerender}
+                    />
+                    : <PreviewPlaceholder {...{ event }}/>
+                }
+                <Metadata id={event.id} event={event} />
+            </PlayerContextProvider>
+
+            <div css={{ height: 80 }} />
+
+            {playlistRef
+                ? <PlaylistBlockFromPlaylist
+                    moreOfTitle
+                    basePath={basePath}
+                    fragRef={playlistRef}
+                    activeEventId={event.id}
                 />
-                : <PreviewPlaceholder {...{ event }}/>
+                : event.series && <SeriesBlockFromSeries
+                    basePath={basePath}
+                    fragRef={event.series}
+                    title={t("video.more-from-series", { series: event.series.title })}
+                    activeEventId={event.id}
+                />
             }
-            <Metadata id={event.id} event={event} />
-        </PlayerContextProvider>
-
-        <div css={{ height: 80 }} />
-
-        {playlistRef
-            ? <PlaylistBlockFromPlaylist
-                moreOfTitle
-                basePath={basePath}
-                fragRef={playlistRef}
-                activeEventId={event.id}
-            />
-            : event.series && <SeriesBlockFromSeries
-                basePath={basePath}
-                fragRef={event.series}
-                title={t("video.more-from-series", { series: event.series.title })}
-                activeEventId={event.id}
-            />
-        }
+        </AuthenticatedDataContext.Provider>
     </>;
 };
 
@@ -575,7 +596,6 @@ export const PreviewPlaceholder: React.FC<ProtectedPlayerProps> = ({ event, embe
         </div>;
 };
 
-export type AuthorizedData = VideoAuthorizedDataQuery$data["authorizedEvent"];
 export const CREDENTIALS_STORAGE_KEY = "tobira-video-credentials-";
 
 const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) => {
@@ -584,7 +604,7 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) =>
     const user = useUser();
     const [authState, setAuthState] = useState<AuthenticationFormState>("idle");
     const [authError, setAuthError] = useState<string | null>(null);
-    const [authData, setAuthData] = useState<AuthorizedData | null>(null);
+    const authenticatedDataContext = useContext(AuthenticatedDataContext);
 
     const embeddedStyles = {
         height: "100%",
@@ -611,8 +631,15 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) =>
                     return;
                 }
 
+                if (authenticatedDataContext) {
+                    authenticatedDataContext.setAuthenticatedData({
+                        authorizedData: authorizedEvent.authorizedData,
+                    });
+                } else {
+                    bug("Authenticated data context is not initialized");
+                }
+
                 setAuthError(null);
-                setAuthData({ authorizedData: authorizedEvent.authorizedData });
                 setAuthState("success");
 
                 // To make the authentication "sticky", the credentials are stored in browser
@@ -646,10 +673,10 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) =>
         });
     };
 
-    return authData?.authorizedData && event.syncedData
+    return authenticatedDataContext?.authenticatedData?.authorizedData && event.syncedData
         ? <InlinePlayer event={{
             ...event,
-            authorizedData: authData.authorizedData,
+            authorizedData: authenticatedDataContext.authenticatedData.authorizedData,
             syncedData: event.syncedData,
         }} />
         : (
