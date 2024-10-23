@@ -13,3 +13,5 @@ There is a container for a PostgreSQL DB and a container for MeiliSearch.
 These are straight forward.
 Then there is `opencast-cors-proxy` which is just an nginx in front of Opencast to set some CORS headers that are required for the uploader in Tobira to work.
 Finally, the container `tobira-login-handler` implements a login callback with dummy users for developers, which listens on port 3091.
+
+Note: for `opencast-cors-proxy` to work, you have to configure Opencast to listen on `0.0.0.0` by adjusting `etc/org.ops4j.pax.web.cfg`.
