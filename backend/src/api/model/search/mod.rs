@@ -160,13 +160,13 @@ pub(crate) async fn perform(
         let selection = search::Event::select();
         let query = format!("select {selection} from search_events \
             where id = (select id from events where opencast_id = $1) \
-            and (read_roles || 'ROLE_ADMIN'::text) && $2");
+            and (preview_roles || 'ROLE_ADMIN'::text) && $2");
         let items: Vec<NodeValue> = context.db
             .query_opt(&query, &[&uuid_query, &context.auth.roles_vec()])
             .await?
             .map(|row| {
                 let e = search::Event::from_row_start(&row);
-                SearchEvent::new(e, &[], &[]).into()
+                SearchEvent::new(e, &[], &[], &context).into()
             })
             .into_iter()
             .collect();
@@ -178,7 +178,7 @@ pub(crate) async fn perform(
     // Prepare the event search
     let filter = Filter::And(
         std::iter::once(Filter::Leaf("listed = true".into()))
-            .chain(acl_filter("read_roles", context))
+            .chain(acl_filter("preview_roles", context))
             // Filter out live events that are already over.
             .chain([Filter::Or([
                 Filter::Leaf("is_live = false ".into()),
@@ -233,7 +233,7 @@ pub(crate) async fn perform(
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
     let events = event_results.hits.into_iter().map(|result| {
         let score = result.ranking_score;
-        (NodeValue::from(hit_to_search_event(result)), score)
+        (NodeValue::from(hit_to_search_event(result, &context)), score)
     });
     let series = series_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
@@ -313,7 +313,7 @@ pub(crate) async fn all_events(
         if writable_only {
             writable
         } else {
-            Filter::or([Filter::listed_and_readable(context), writable])
+            Filter::or([Filter::listed_and_readable("preview_roles", context), writable])
         }
     }).to_string();
 
@@ -327,7 +327,7 @@ pub(crate) async fn all_events(
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| hit_to_search_event(h)).collect();
+    let items = results.hits.into_iter().map(|h| hit_to_search_event(h, &context)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
@@ -408,7 +408,7 @@ pub(crate) async fn all_playlists(
         if writable_only {
             writable
         } else {
-            Filter::or([Filter::listed_and_readable(context), writable])
+            Filter::or([Filter::listed_and_readable("read_roles", context), writable])
         }
     }).to_string();
 
@@ -471,8 +471,10 @@ impl Filter {
     /// Returns a filter checking that the current user has read access and that
     /// the item is listed. If the user has the privilege to find unlisted
     /// item, the second check is not performed.
-    fn listed_and_readable(context: &Context) -> Self {
-        let readable = Self::acl_access("read_roles", context);
+    /// "Readable" in this context can mean either "preview-able" in case of events
+    /// or actual "readable" in case of playlists, as they do not have preview roles.
+    fn listed_and_readable(roles_field: &str, context: &Context) -> Self {
+        let readable = Self::acl_access(roles_field, context);
         if context.auth.can_find_unlisted_items(&context.config.auth) {
             readable
         } else {
@@ -535,11 +537,17 @@ impl fmt::Display for Filter {
 
 fn hit_to_search_event(
     hit: meilisearch_sdk::SearchResult<search::Event>,
+    context: &Context,
 ) -> SearchEvent {
     let get_matches = |key: &str| hit.matches_position.as_ref()
         .and_then(|matches| matches.get(key))
         .map(|v| v.as_slice())
         .unwrap_or_default();
 
-    SearchEvent::new(hit.result, get_matches("slide_texts.texts"), get_matches("caption_texts.texts"))
+    SearchEvent::new(
+        hit.result,
+        get_matches("slide_texts.texts"),
+        get_matches("caption_texts.texts"),
+        &context
+    )
 }

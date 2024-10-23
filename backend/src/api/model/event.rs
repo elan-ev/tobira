@@ -4,6 +4,7 @@ use postgres_types::ToSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::Row;
 use juniper::{GraphQLObject, graphql_object};
+use sha1::{Sha1, Digest};
 
 use crate::{
     api::{
@@ -13,7 +14,7 @@ use crate::{
         model::{acl::{self, Acl}, realm::Realm, series::Series},
     },
     db::{
-        types::{EventCaption, EventSegment, EventState, EventTrack, ExtraMetadata, Key},
+        types::{EventCaption, EventSegment, EventState, EventTrack, ExtraMetadata, Key, Credentials},
         util::{impl_from_db, select},
     },
     prelude::*,
@@ -37,8 +38,11 @@ pub(crate) struct AuthorizedEvent {
     pub(crate) metadata: ExtraMetadata,
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
+    pub(crate) preview_roles: Vec<String>,
+    pub(crate) credentials: Option<Credentials>,
 
     pub(crate) synced_data: Option<SyncedEventData>,
+    pub(crate) authorized_data: Option<AuthorizedEventData>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
@@ -50,6 +54,10 @@ pub(crate) struct SyncedEventData {
 
     /// Duration in milliseconds
     duration: i64,
+}
+
+#[derive(Debug)]
+pub(crate) struct AuthorizedEventData {
     tracks: Vec<Track>,
     thumbnail: Option<String>,
     captions: Vec<Caption>,
@@ -64,7 +72,7 @@ impl_from_db!(
             title, description, duration, creators, thumbnail, metadata,
             created, updated, start_time, end_time,
             tracks, captions, segments,
-            read_roles, write_roles,
+            read_roles, write_roles, preview_roles, credentials,
             tobira_deletion_timestamp,
         },
     },
@@ -81,6 +89,8 @@ impl_from_db!(
             metadata: row.metadata(),
             read_roles: row.read_roles::<Vec<String>>(),
             write_roles: row.write_roles::<Vec<String>>(),
+            preview_roles: row.preview_roles::<Vec<String>>(),
+            credentials: row.credentials(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             synced_data: match row.state::<EventState>() {
                 EventState::Ready => Some(SyncedEventData {
@@ -88,6 +98,11 @@ impl_from_db!(
                     start_time: row.start_time(),
                     end_time: row.end_time(),
                     duration: row.duration(),
+                }),
+                EventState::Waiting => None,
+            },
+            authorized_data: match row.state::<EventState>() {
+                EventState::Ready => Some(AuthorizedEventData {
                     thumbnail: row.thumbnail(),
                     tracks: row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect(),
                     captions: row.captions::<Vec<EventCaption>>()
@@ -150,6 +165,12 @@ impl SyncedEventData {
     fn duration(&self) -> f64 {
         self.duration as f64
     }
+}
+
+/// Represents event data that is only accessible for users with read access
+/// and event-specific authenticated users.
+#[graphql_object(Context = Context, impl = NodeValue)]
+impl AuthorizedEventData {
     fn tracks(&self) -> &[Track] {
         &self.tracks
     }
@@ -198,9 +219,41 @@ impl AuthorizedEvent {
     fn write_roles(&self) -> &[String] {
         &self.write_roles
     }
+    /// This includes all read roles (and by extension write roles,
+    /// as they are a subset of read roles).
+    fn preview_roles(&self) -> &[String] {
+        &self.preview_roles
+    }
 
     fn synced_data(&self) -> &Option<SyncedEventData> {
         &self.synced_data
+    }
+
+    /// Returns the authorized event data if the user has read access or is authenticated for the event.
+    async fn authorized_data(
+        &self,
+        context: &Context, 
+        user: Option<String>, 
+        password: Option<String>,
+    ) -> Option<&AuthorizedEventData> {
+        let sha1_matches = |input: &str, encoded: &str| {
+            let (algo, hash) = encoded.split_once(':').expect("invalid credentials in DB");
+            match algo {
+                "sha1" => hash == hex::encode_upper(Sha1::digest(input)),
+                _ => unreachable!("unsupported hash algo"),
+            }
+        };
+
+        let credentials_match = self.credentials.as_ref().map_or(false, |credentials| {
+            user.map_or(false, |u| sha1_matches(&u, &credentials.name))
+                && password.map_or(false, |p| sha1_matches(&p, &credentials.password))
+        });
+
+        if context.auth.overlaps_roles(&self.read_roles) || credentials_match {
+            self.authorized_data.as_ref()
+        } else {
+            None
+        }
     }
 
     /// Whether the current user has write access to this event.
@@ -236,6 +289,12 @@ impl AuthorizedEvent {
             dbargs![&self.key, &self.series, &self.opencast_id],
             |row| Realm::from_row_start(&row)
         ).await?.pipe(Ok)
+    }
+
+
+    /// Whether this event is password protected.
+    async fn has_password(&self) -> bool {
+        self.credentials.is_some()
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
@@ -306,7 +365,7 @@ impl AuthorizedEvent {
             .await?
             .map(|row| {
                 let event = Self::from_row_start(&row);
-                if context.auth.overlaps_roles(&event.read_roles) {
+                if context.auth.overlaps_roles(&event.preview_roles) {
                     Event::Event(event)
                 } else {
                     Event::NotAllowed(NotAllowed)
@@ -327,7 +386,7 @@ impl AuthorizedEvent {
         context.db
             .query_mapped(&query, dbargs![&series_key], |row| {
                 let event = Self::from_row_start(&row);
-                if !context.auth.overlaps_roles(&event.read_roles) {
+                if !context.auth.overlaps_roles(&event.preview_roles) {
                     return VideoListEntry::NotAllowed(NotAllowed);
                 }
 

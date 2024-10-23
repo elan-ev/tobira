@@ -242,3 +242,10 @@ impl<'a> FromSql<'a> for CustomActions {
         <serde_json::Value as FromSql>::accepts(ty)
     }
 }
+
+#[derive(Debug, ToSql, FromSql)]
+#[postgres(name = "credentials")]
+pub(crate) struct Credentials {
+    pub(crate) name: String,
+    pub(crate) password: String,
+}

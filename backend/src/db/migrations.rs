@@ -371,4 +371,6 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     36: "playlist-blocks",
     37: "redo-search-triggers-and-listed",
     38: "event-texts",
+    39: "event-preview-roles-and-password",
+    40: "eth-series-credentials",
 ];

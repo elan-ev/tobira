@@ -38,6 +38,7 @@ pub(crate) struct Event {
     pub(crate) end_time_timestamp: Option<i64>,
     pub(crate) is_live: bool,
     pub(crate) audio_only: bool,
+    pub(crate) has_password: bool,
 
     // These are filterable. All roles are hex encoded to work around Meilis
     // inability to filter case-sensitively. For roles, we have to compare
@@ -49,6 +50,7 @@ pub(crate) struct Event {
     // we just assume that the cases where this matters are very rare. And in
     // those cases we just accept that our endpoint returns fewer than X
     // items.
+    pub(crate) preview_roles: Vec<String>,
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
 
@@ -74,7 +76,8 @@ impl_from_db!(
         search_events.{
             id, series, series_title, title, description, creators, thumbnail,
             duration, is_live, updated, created, start_time, end_time, audio_only,
-            read_roles, write_roles, host_realms, slide_texts, caption_texts,
+            read_roles, write_roles, preview_roles, has_password,
+            host_realms, slide_texts, caption_texts,
         },
     },
     |row| {
@@ -100,6 +103,7 @@ impl_from_db!(
             start_time: row.start_time(),
             end_time,
             end_time_timestamp: end_time.map(|date_time| date_time.timestamp()),
+            preview_roles: util::encode_acl(&row.preview_roles::<Vec<String>>()),
             read_roles: util::encode_acl(&row.read_roles::<Vec<String>>()),
             write_roles: util::encode_acl(&row.write_roles::<Vec<String>>()),
             listed: host_realms.iter().any(|realm| !realm.is_user_realm()),
@@ -108,6 +112,7 @@ impl_from_db!(
                 .unwrap_or_else(TextSearchIndex::empty),
             caption_texts: row.caption_texts::<Option<TextSearchIndex>>()
                 .unwrap_or_else(TextSearchIndex::empty),
+            has_password: row.has_password(),
         }
     }
 );
@@ -135,8 +140,23 @@ impl Event {
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
     util::lazy_set_special_attributes(index, "event", FieldAbilities {
-        searchable: &["title", "creators", "description", "series_title", "slide_texts.texts", "caption_texts.texts"],
-        filterable: &["listed", "read_roles", "write_roles", "is_live", "end_time_timestamp", "created_timestamp"],
+        searchable: &[
+            "title",
+            "creators",
+            "description",
+            "series_title",
+            "slide_texts.texts",
+            "caption_texts.texts",
+        ],
+        filterable: &[
+            "listed",
+            "preview_roles",
+            "read_roles",
+            "write_roles",
+            "is_live",
+            "end_time_timestamp",
+            "created_timestamp"
+        ],
         sortable: &["updated_timestamp"],
     }).await
 }

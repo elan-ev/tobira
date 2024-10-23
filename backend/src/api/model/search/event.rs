@@ -4,8 +4,9 @@ use meilisearch_sdk::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
+    auth::HasRoles,
     db::types::TextAssetType,
-    search,
+    search::{self, util::decode_acl},
 };
 
 
@@ -27,6 +28,8 @@ pub(crate) struct SearchEvent {
     pub audio_only: bool,
     pub host_realms: Vec<search::Realm>,
     pub text_matches: Vec<TextMatch>,
+    pub has_password: bool,
+    pub user_is_authorized: bool,
 }
 
 #[derive(Debug, GraphQLObject)]
@@ -66,10 +69,21 @@ impl SearchEvent {
         src: search::Event,
         slide_matches: &[MatchRange],
         caption_matches: &[MatchRange],
+        context: &Context,
     ) -> Self {
         let mut text_matches = Vec::new();
         src.slide_texts.resolve_matches(slide_matches, &mut text_matches, TextAssetType::SlideText);
         src.caption_texts.resolve_matches(caption_matches, &mut text_matches, TextAssetType::Caption);
+        
+        let read_roles = decode_acl(&src.read_roles);
+        let user_is_authorized = context.auth.overlaps_roles(read_roles);
+        let thumbnail = {
+            if user_is_authorized {
+                src.thumbnail
+            } else {
+                None
+            }
+        };
 
         Self {
             id: Id::search_event(src.id.0),
@@ -78,7 +92,7 @@ impl SearchEvent {
             title: src.title,
             description: src.description,
             creators: src.creators,
-            thumbnail: src.thumbnail,
+            thumbnail,
             duration: src.duration as f64,
             created: src.created,
             start_time: src.start_time,
@@ -87,6 +101,8 @@ impl SearchEvent {
             audio_only: src.audio_only,
             host_realms: src.host_realms,
             text_matches,
+            has_password: src.has_password,
+            user_is_authorized,
         }
     }
 }

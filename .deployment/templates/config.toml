@@ -50,6 +50,7 @@ host = "https://tobira-test-oc.ethz.ch"
 user = "admin"
 password = "{{ opencast_admin_password }}"
 poll_period = "1min"
+interpret_eth_passwords = true
 
 [theme]
 logo.large.path = "/opt/tobira/{{ id }}/logo-large.svg"

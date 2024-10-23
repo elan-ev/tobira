@@ -2,14 +2,18 @@ import { graphql, useFragment } from "react-relay";
 import { Card, unreachable } from "@opencast/appkit";
 
 import { InlinePlayer } from "../player";
-import { VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
+import { VideoBlockData$data, VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { useTranslation } from "react-i18next";
-import { isSynced, keyOfId } from "../../util";
+import { isSynced, keyOfId, useAuthenticatedDataQuery } from "../../util";
 import { Link } from "../../router";
 import { LuArrowRightCircle } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
+import { PreviewPlaceholder } from "../../routes/Video";
 
+
+export type BlockEvent = VideoBlockData$data["event"];
+export type AuthorizedBlockEvent = Extract<BlockEvent, { __typename: "AuthorizedEvent" }>;
 
 type Props = {
     fragRef: VideoBlockData$key;
@@ -32,12 +36,16 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                     creators
                     metadata
                     description
-                    series { title opencastId }
+                    canWrite
+                    hasPassword
+                    series { title id opencastId }
                     syncedData {
                         duration
                         updated
                         startTime
                         endTime
+                    }
+                    authorizedData {
                         thumbnail
                         tracks { uri flavor mimetype resolution isMaster }
                         captions { uri lang }
@@ -61,13 +69,25 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         return unreachable();
     }
 
+    const authorizedData = useAuthenticatedDataQuery(
+        event.id,
+        event.series?.id,
+        { authorizedData: event.authorizedData },
+    );
+
+
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
-        {isSynced(event)
-            ? <PlayerContextProvider>
-                <InlinePlayer event={event} css={{ maxWidth: 800 }} />
-            </PlayerContextProvider>
-            : <Card kind="info">{t("video.not-ready.title")}</Card>}
+        <PlayerContextProvider>
+            {authorizedData && isSynced(event)
+                ? <InlinePlayer
+                    event={{ ...event, authorizedData }}
+                    css={{ margin: "-4px auto 0" }}
+                />
+                : <PreviewPlaceholder {...{ event }} />
+            }
+        </PlayerContextProvider>
+
         {showLink && <Link
             to={`${basePath}/${keyOfId(event.id)}`}
             css={{

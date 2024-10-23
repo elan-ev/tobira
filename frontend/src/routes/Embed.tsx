@@ -1,12 +1,13 @@
-import { ReactNode, Suspense } from "react";
+import { ReactNode, Suspense, useState } from "react";
 import { LuFrown, LuAlertTriangle } from "react-icons/lu";
 import { Translation, useTranslation } from "react-i18next";
 import {
-    graphql, GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery,
+    graphql, useFragment, usePreloadedQuery,
+    GraphQLTaggedNode, PreloadedQuery,
 } from "react-relay";
 import { unreachable } from "@opencast/appkit";
 
-import { eventId, isSynced, keyOfId } from "../util";
+import { eventId, getCredentials, isSynced, keyOfId, useAuthenticatedDataQuery } from "../util";
 import { GlobalErrorBoundary } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute, MatchedRoute } from "../rauta";
@@ -18,6 +19,7 @@ import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
 import { EmbedDirectOpencastQuery } from "./__generated__/EmbedDirectOpencastQuery.graphql";
 import { EmbedEventData$key } from "./__generated__/EmbedEventData.graphql";
 import { PlayerContextProvider } from "../ui/player/PlayerContext";
+import { AuthenticatedDataContext, AuthorizedData, PreviewPlaceholder } from "./Video";
 
 export const EmbedVideoRoute = makeRoute({
     url: ({ videoId }: { videoId: string }) => `/~embed/!v/${keyOfId(videoId)}`,
@@ -27,15 +29,19 @@ export const EmbedVideoRoute = makeRoute({
         if (params === null) {
             return null;
         }
-        const videoId = decodeURIComponent(params[1]);
+        const id = eventId(decodeURIComponent(params[1]));
 
         const query = graphql`
-            query EmbedQuery($id: ID!) {
+            query EmbedQuery($id: ID!, $eventUser: String, $eventPassword: String) {
                 event: eventById(id: $id) { ... EmbedEventData }
             }
-            `;
+        `;
 
-        const queryRef = loadQuery<EmbedQuery>(query, { id: eventId(videoId) });
+        const queryRef = loadQuery<EmbedQuery>(query, {
+            id,
+            ...getCredentials("event", id),
+        });
+
 
         return matchedEmbedRoute(query, queryRef);
     },
@@ -51,13 +57,20 @@ export const EmbedOpencastVideoRoute = makeRoute({
         }
 
         const query = graphql`
-            query EmbedDirectOpencastQuery($id: String!) {
+            query EmbedDirectOpencastQuery(
+                $id: String!,
+                $eventUser: String,
+                $eventPassword: String)
+            {
                 event: eventByOpencastId(id: $id)  { ... EmbedEventData }
             }
         `;
 
         const videoId = decodeURIComponent(matches[1]);
-        const queryRef = loadQuery<EmbedDirectOpencastQuery>(query, { id: videoId });
+        const queryRef = loadQuery<EmbedDirectOpencastQuery>(query, {
+            id: videoId,
+            ...getCredentials("oc-event", videoId),
+        });
 
         return matchedEmbedRoute(query, queryRef);
     },
@@ -90,6 +103,7 @@ const embedEventFragment = graphql`
         __typename
         ... on NotAllowed { dummy }
         ... on AuthorizedEvent {
+            id
             title
             created
             isLive
@@ -97,12 +111,16 @@ const embedEventFragment = graphql`
             creators
             metadata
             description
-            series { title opencastId }
+            canWrite
+            hasPassword
+            series { title id opencastId }
             syncedData {
                 updated
                 startTime
                 endTime
                 duration
+            }
+            authorizedData(user: $eventUser, password: $eventPassword) {
                 thumbnail
                 tracks { uri flavor mimetype resolution isMaster }
                 captions { uri lang }
@@ -125,6 +143,7 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
         fragmentRef.event,
     );
     const { t } = useTranslation();
+    const [authenticatedData, setAuthenticatedData] = useState<AuthorizedData | null>(null);
 
     if (!event) {
         return <PlayerPlaceholder>
@@ -151,7 +170,17 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
         </PlayerPlaceholder>;
     }
 
-    return <Player event={event} />;
+    const authorizedData = useAuthenticatedDataQuery(
+        event.id,
+        event.series?.id,
+        { authorizedData: event.authorizedData },
+    );
+
+    return authorizedData
+        ? <Player event={{ ...event, authorizedData }} />
+        : <AuthenticatedDataContext.Provider value={{ authenticatedData, setAuthenticatedData }}>
+            <PreviewPlaceholder embedded {...{ event }}/>;
+        </AuthenticatedDataContext.Provider>;
 };
 
 export const BlockEmbedRoute = makeRoute({

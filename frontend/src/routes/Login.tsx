@@ -1,4 +1,4 @@
-import React, { ReactNode, useId, useState } from "react";
+import React, { PropsWithChildren, ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePreloadedQuery } from "react-relay";
 import type { PreloadedQuery } from "react-relay";
@@ -22,6 +22,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { OUTER_CONTAINER_MARGIN } from "../layout";
 import { COLORS } from "../color";
 import { focusStyle } from "../ui";
+import { IconType } from "react-icons";
 
 
 export const REDIRECT_STORAGE_KEY = "tobira-redirect-after-login";
@@ -118,24 +119,16 @@ const BackButton: React.FC = () => {
     ><LuChevronLeft />{t("general.action.back")}</Link>;
 };
 
-type FormData = {
+export type FormData = {
     userid: string;
     password: string;
 };
 
+export type AuthenticationFormState = "idle" | "pending" | "success";
+
 const LoginBox: React.FC = () => {
     const { t, i18n } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
-    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
-    const userId = watch("userid", "");
-    const password = watch("password", "");
-    const userFieldId = useId();
-    const passwordFieldId = useId();
-
-    const validation = { required: t("general.form.this-field-is-required") };
-
-    type State = "idle" | "pending" | "success";
-    const [state, setState] = useState<State>("idle");
+    const [state, setState] = useState<AuthenticationFormState>("idle");
     const [loginError, setLoginError] = useState<string | null>(null);
 
     const onSubmit = async (data: FormData) => {
@@ -171,15 +164,20 @@ const LoginBox: React.FC = () => {
     };
 
     return (
-        <div css={{
-            width: 400,
-            maxWidth: "100%",
-            marginTop: 24,
-            padding: 32,
-            border: `1px solid ${COLORS.neutral25}`,
-            borderRadius: 8,
-            ...isDark && { backgroundColor: COLORS.neutral10 },
-        }}>
+        <AuthenticationForm
+            {...{ onSubmit, state }}
+            error={loginError}
+            SubmitIcon={LuLogIn}
+            labels={{
+                user: CONFIG.auth.userIdLabel
+                    ? translatedConfig(CONFIG.auth.userIdLabel, i18n)
+                    : t("login-page.user-id"),
+                password: CONFIG.auth.passwordLabel
+                    ? translatedConfig(CONFIG.auth.passwordLabel, i18n)
+                    : t("login-page.password"),
+                submit: t("user.login"),
+            }}
+        >
             {CONFIG.auth.loginPageNote && (
                 <div css={{
                     backgroundColor: COLORS.neutral10,
@@ -188,7 +186,53 @@ const LoginBox: React.FC = () => {
                     padding: "8px 16px",
                 }}>{translatedConfig(CONFIG.auth.loginPageNote, i18n)}</div>
             )}
+        </AuthenticationForm>
+    );
+};
 
+type AuthenticationFormProps = PropsWithChildren & {
+    onSubmit: (data: FormData) => Promise<void> | void;
+    state: AuthenticationFormState;
+    error: string | null;
+    className?: string;
+    SubmitIcon: IconType;
+    labels: {
+        user: string;
+        password: string;
+        submit: string;
+    };
+}
+
+export const AuthenticationForm: React.FC<AuthenticationFormProps> = ({
+    onSubmit,
+    state,
+    error,
+    className,
+    SubmitIcon,
+    labels,
+    children,
+}) => {
+    const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
+    const userId = watch("userid", "");
+    const password = watch("password", "");
+    const userFieldId = useId();
+    const passwordFieldId = useId();
+
+    const validation = { required: t("general.form.this-field-is-required") };
+
+    return (
+        <div {...{ className }} css={{
+            width: 400,
+            maxWidth: "100%",
+            marginTop: 24,
+            padding: 32,
+            border: `1px solid ${COLORS.neutral25}`,
+            borderRadius: 8,
+            ...isDark && { backgroundColor: COLORS.neutral10 },
+        }}>
+            {children}
             <form
                 onSubmit={handleSubmit(onSubmit)}
                 noValidate
@@ -200,9 +244,7 @@ const LoginBox: React.FC = () => {
                 <div>
                     <Field isEmpty={userId === ""}>
                         <label htmlFor={userFieldId}>
-                            {CONFIG.auth.userIdLabel
-                                ? translatedConfig(CONFIG.auth.userIdLabel, i18n)
-                                : t("login-page.user-id")}
+                            {labels.user}
                         </label>
                         <input
                             id={userFieldId}
@@ -219,9 +261,7 @@ const LoginBox: React.FC = () => {
                 <div>
                     <Field isEmpty={password === ""}>
                         <label htmlFor={passwordFieldId}>
-                            {CONFIG.auth.passwordLabel
-                                ? translatedConfig(CONFIG.auth.passwordLabel, i18n)
-                                : t("login-page.password")}
+                            {labels.password}
                         </label>
                         <input
                             id={passwordFieldId}
@@ -253,8 +293,8 @@ const LoginBox: React.FC = () => {
                         ...focusStyle({ offset: 1 }),
                     }}
                 >
-                    <LuLogIn size={20} />
-                    {t("user.login")}
+                    <SubmitIcon size={20} />
+                    {labels.submit}
                     {match(state, {
                         "idle": () => null,
                         "pending": () => <Spinner size={20} />,
@@ -262,7 +302,7 @@ const LoginBox: React.FC = () => {
                     })}
                 </ProtoButton>
 
-                {loginError && <div><Card kind="error" iconPos="top">{loginError}</Card></div>}
+                {error && <Card kind="error" iconPos="top">{error}</Card>}
             </form>
         </div>
     );
