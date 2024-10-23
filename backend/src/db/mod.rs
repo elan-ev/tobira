@@ -35,6 +35,7 @@ pub(crate) use self::{
 
 
 #[derive(Debug, confique::Config, Clone)]
+#[config(validate = Self::validate)]
 pub(crate) struct DbConfig {
     /// The username of the database user.
     #[config(default = "tobira")]

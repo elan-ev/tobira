@@ -128,22 +128,15 @@ impl Config {
         let mut config = Config::from_file(path)
             .context(format!("failed to read config file '{}'", path.display()))?;
 
-        config.validate().context("failed to validate configuration")?;
         config.fix_paths(path)?;
 
         Ok(config)
     }
 
-    /// Performs some validation of the configuration to find some
-    /// illegal or conflicting values.
-    pub(crate) fn validate(&self) -> Result<()> {
-        debug!("Validating configuration...");
-        self.auth.validate()?;
-        self.opencast.validate()?;
-        self.db.validate()?;
-        self.theme.validate()?;
-
-        Ok(())
+    /// Checks the config for problematic things that deserve a warning, but
+    /// should not bring down Tobira.
+    pub(crate) fn lint(&self) {
+        self.theme.color.lint();
     }
 
     /// Goes through all paths in the configuration and changes relative paths

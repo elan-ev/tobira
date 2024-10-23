@@ -189,8 +189,7 @@ fn load_config_and_init_logger(shared: &args::Shared, args: &Args, cmd: &str) ->
     info!(source_file = ?path.display(), "Loaded config");
     debug!(cmd, "Initialized logger");
 
-    // Call validate again, as some of the checks will only print warnings.
-    config.validate()?;
+    config.lint();
 
     Ok(config)
 }

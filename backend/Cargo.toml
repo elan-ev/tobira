@@ -25,7 +25,7 @@ bunt = "0.2.7"
 bytes = "1"
 chrono = { version = "0.4", default-features = false, features = ["serde", "std"] }
 clap = { version = "4.2.2", features = ["derive", "string"] }
-confique = { version = "0.2.0", default-features = false, features = ["toml"] }
+confique = { version = "0.3", features = ["toml"] }
 cookie = "0.18.0"
 deadpool = { version = "0.10.0", default-features = false, features = ["managed", "rt_tokio_1"] }
 deadpool-postgres = { version = "0.12.1", default-features = false, features = ["rt_tokio_1"] }

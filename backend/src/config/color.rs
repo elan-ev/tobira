@@ -82,7 +82,7 @@ impl TryFrom<String> for Color {
 type Vars = Vec<(String, String)>;
 
 impl ColorConfig {
-    pub(crate) fn validate(&self) -> Result<()> {
+    pub(crate) fn lint(&self) {
         // Make sure the primary color is in a good range.
         //
         // Regarding the minimum of 35: We have two variations, with one being
@@ -130,9 +130,6 @@ impl ColorConfig {
                 );
             }
         }
-
-
-        Ok(())
     }
 
     /// Returns the CSS variables for light and dark themes, respectively.
