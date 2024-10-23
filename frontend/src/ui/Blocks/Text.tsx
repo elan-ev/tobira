@@ -55,8 +55,8 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
         }}
         {...props}
     />,
-    code: ({ node, className, inline, ...props }) => <code
-        css={inline === true && {
+    code: ({ node, className, ...props }) => <code
+        css={{
             backgroundColor: CODE_BACKGROUND_COLOR,
             padding: "1px 3px",
             borderRadius: "4px",
