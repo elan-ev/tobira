@@ -93,7 +93,9 @@ const DefaultMode: React.FC<{ hideNavIcon: boolean }> = ({ hideNavIcon }) => {
 
     return <>
         <Logo />
+        <div css={{ flexGrow: 1 }} />
         <SearchField variant="desktop" />
+        <div css={{ width: 16 }} />
         <ButtonContainer>
             <ActionIcon
                 title={t("search.input-label")}
