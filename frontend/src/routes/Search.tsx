@@ -167,6 +167,10 @@ const query = graphql`
                         title
                         description
                         thumbnails { thumbnail isLive audioOnly }
+                        matches {
+                            title { start len }
+                            description { start len }
+                        }
                     }
                     ... on SearchRealm { name path ancestorNames }
                 }
@@ -415,6 +419,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     title: unwrapUndefined(item.title),
                     description: unwrapUndefined(item.description),
                     thumbnails: unwrapUndefined(item.thumbnails),
+                    matches: unwrapUndefined(item.matches),
                 }} />;
             } else if (item.__typename === "SearchRealm") {
                 return <SearchRealm key={item.id} {...{
@@ -794,9 +799,12 @@ type SearchSeriesProps = {
     title: string;
     description: string | null;
     thumbnails: readonly ThumbnailInfo[] | undefined;
+    matches: NonNullable<Results["items"][number]["matches"]>;
 }
 
-const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thumbnails }) =>
+const SearchSeries: React.FC<SearchSeriesProps> = ({
+    id, title, description, thumbnails, matches,
+}) =>
     <Item key={id} link={DirectSeriesRoute.url({ seriesId: id })}>
         <WithIcon Icon={LuLibrary} iconSize={28} hideIconOnMobile>
             <div css={{
@@ -808,13 +816,19 @@ const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thu
             }}>
                 <h3 css={{
                     color: COLORS.primary0,
-                    marginBottom: 6,
+                    marginBottom: 3,
+                    paddingBottom: 3,
                     fontSize: 17,
                     lineHeight: 1.3,
+                    mark: highlightCss(COLORS.primary2, COLORS.neutral15),
                     ...ellipsisOverflowCss(2),
-                }}>{title}</h3>
+                }}>{highlightText(title, matches.title)}</h3>
                 {description && <SmallDescription
-                    text={description}
+                    css={{
+                        paddingBottom: 2,
+                        mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
+                    }}
+                    text={highlightText(description, matches.description, 180)}
                     lines={3}
                 />}
             </div>

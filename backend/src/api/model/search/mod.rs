@@ -22,7 +22,10 @@ mod realm;
 mod series;
 mod playlist;
 
-pub(crate) use self::event::{SearchEvent, TextMatch};
+pub(crate) use self::{
+    event::{SearchEvent, TextMatch},
+    series::SearchSeries,
+};
 
 
 /// Marker type to signal that the search functionality is unavailable for some
@@ -70,8 +73,8 @@ impl SearchResults<SearchEvent> {
 }
 
 #[juniper::graphql_object(Context = Context, name = "SeriesSearchResults")]
-impl SearchResults<search::Series> {
-    fn items(&self) -> &[search::Series] {
+impl SearchResults<SearchSeries> {
+    fn items(&self) -> &[SearchSeries] {
         &self.items
     }
 }
@@ -241,8 +244,10 @@ pub(crate) async fn perform(
         let score = result.ranking_score;
         (NodeValue::from(SearchEvent::new(result)), score)
     });
-    let series = series_results.hits.into_iter()
-        .map(|result| (NodeValue::from(result.result), result.ranking_score));
+    let series = series_results.hits.into_iter().map(|result| {
+        let score = result.ranking_score;
+        (NodeValue::from(SearchSeries::new(result, context)), score)
+    });
     let realms = realm_results.hits.into_iter()
         .map(|result| (NodeValue::from(result.result), result.ranking_score));
 
@@ -344,7 +349,7 @@ pub(crate) async fn all_events(
 #[graphql(Context = Context)]
 pub(crate) enum SeriesSearchOutcome {
     SearchUnavailable(SearchUnavailable),
-    Results(SearchResults<search::Series>),
+    Results(SearchResults<SearchSeries>),
 }
 
 pub(crate) async fn all_series(
@@ -384,7 +389,7 @@ pub(crate) async fn all_series(
     }
     let res = query.execute::<search::Series>().await;
     let results = handle_search_result!(res, SeriesSearchOutcome);
-    let items = results.hits.into_iter().map(|h| h.result).collect();
+    let items = results.hits.into_iter().map(|h| SearchSeries::new(h, context)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits }))

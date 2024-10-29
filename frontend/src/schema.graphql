@@ -251,9 +251,9 @@ type SearchPlaylist implements Node {
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 
-input UpdatedPermissions {
-  moderatorRoles: [String!]
-  adminRoles: [String!]
+type SearchSeriesMatches {
+  title: [ByteSpan!]!
+  description: [ByteSpan!]!
 }
 
 type NotAllowed {
@@ -262,6 +262,11 @@ type NotAllowed {
     have at least one field. Always returns `null`.
   """
   dummy: Boolean
+}
+
+input UpdatedPermissions {
+  moderatorRoles: [String!]
+  adminRoles: [String!]
 }
 
 input UpdateVideoBlock {
@@ -803,6 +808,7 @@ type SearchSeries implements Node {
   description: String
   hostRealms: [SearchRealm!]!
   thumbnails: [ThumbnailInfo!]!
+  matches: SearchSeriesMatches!
 }
 
 type ThumbnailInfo {
