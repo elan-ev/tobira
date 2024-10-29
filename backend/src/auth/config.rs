@@ -11,6 +11,7 @@ use super::JwtConfig;
 
 /// Authentification and authorization
 #[derive(Debug, Clone, confique::Config)]
+#[config(validate = Self::validate)]
 pub(crate) struct AuthConfig {
     /// How incoming HTTP requests are authenticated. See the documentation!
     #[config(default = "none")]

@@ -1,6 +1,5 @@
 use std::{path::PathBuf, fmt};
 
-use crate::prelude::*;
 use super::color::ColorConfig;
 
 
@@ -87,10 +86,6 @@ pub(crate) struct FontConfig {
 }
 
 impl ThemeConfig {
-    pub(crate) fn validate(&self) -> Result<()> {
-        self.color.validate()
-    }
-
     /// Returns a string containing CSS that sets lots of variables on the
     /// `:root` element.
     pub(crate) fn to_css(&self) -> String {
