@@ -6,7 +6,7 @@ use crate::{
     db::types::TextAssetType,
     search,
 };
-use super::ByteSpan;
+use super::{field_matches_for, match_ranges_for, ByteSpan, SearchRealm};
 
 
 #[derive(Debug, GraphQLObject)]
@@ -25,7 +25,7 @@ pub(crate) struct SearchEvent {
     pub end_time: Option<DateTime<Utc>>,
     pub is_live: bool,
     pub audio_only: bool,
-    pub host_realms: Vec<search::Realm>,
+    pub host_realms: Vec<SearchRealm>,
     pub text_matches: Vec<TextMatch>,
     pub matches: SearchEventMatches,
 }
@@ -71,35 +71,24 @@ impl SearchEvent {
 
     pub(crate) fn new(hit: meilisearch_sdk::SearchResult<search::Event>) -> Self {
         let match_positions = hit.matches_position.as_ref();
-        let get_matches = |key: &str| match_positions
-            .and_then(|m| m.get(key))
-            .map(|v| v.as_slice())
-            .unwrap_or_default();
-
-        let field_matches = |key: &str| get_matches(key).iter()
-            .map(|m| ByteSpan { start: m.start as i32, len: m.length as i32 })
-            .take(8) // The frontend can only show a limited number anyway
-            .collect();
-
         let src = hit.result;
-
 
         let mut text_matches = Vec::new();
         src.slide_texts.resolve_matches(
-            &get_matches("slide_texts.texts"),
+            match_ranges_for(match_positions, "slide_texts.texts"),
             &mut text_matches,
             TextAssetType::SlideText,
         );
         src.caption_texts.resolve_matches(
-            &get_matches("caption_texts.texts"),
+            match_ranges_for(match_positions, "caption_texts.texts"),
             &mut text_matches,
             TextAssetType::Caption,
         );
 
         let matches = SearchEventMatches {
-            title: field_matches("title"),
-            description: field_matches("description"),
-            series_title: field_matches("series_title"),
+            title: field_matches_for(match_positions, "title"),
+            description: field_matches_for(match_positions, "description"),
+            series_title: field_matches_for(match_positions, "series_title"),
         };
 
         Self::new_inner(src, text_matches, matches)
@@ -124,7 +113,9 @@ impl SearchEvent {
             end_time: src.end_time,
             is_live: src.is_live,
             audio_only: src.audio_only,
-            host_realms: src.host_realms,
+            host_realms: src.host_realms.into_iter()
+                .map(|r| SearchRealm::without_matches(r))
+                .collect(),
             text_matches,
             matches,
         }

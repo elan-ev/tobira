@@ -1,8 +1,9 @@
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
+use meilisearch_sdk::MatchRange;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, collections::HashMap, fmt};
 
 use crate::{
     api::{
@@ -24,6 +25,7 @@ mod playlist;
 
 pub(crate) use self::{
     event::{SearchEvent, TextMatch},
+    realm::SearchRealm,
     series::SearchSeries,
 };
 
@@ -248,8 +250,10 @@ pub(crate) async fn perform(
         let score = result.ranking_score;
         (NodeValue::from(SearchSeries::new(result, context)), score)
     });
-    let realms = realm_results.hits.into_iter()
-        .map(|result| (NodeValue::from(result.result), result.ranking_score));
+    let realms = realm_results.hits.into_iter().map(|result| {
+        let score = result.ranking_score;
+        (NodeValue::from(SearchRealm::new(result)), score)
+    });
 
     let mut merged: Vec<(NodeValue, Option<f64>)> = Vec::new();
     let total_hits: usize;
@@ -542,4 +546,25 @@ impl fmt::Display for Filter {
             Self::None => Ok(()),
         }
     }
+}
+
+
+fn match_ranges_for<'a>(
+    match_positions: Option<&'a HashMap<String, Vec<MatchRange>>>,
+    field: &str,
+) -> &'a [MatchRange] {
+    match_positions
+        .and_then(|m| m.get(field))
+        .map(|v| v.as_slice())
+        .unwrap_or_default()
+}
+
+fn field_matches_for(
+    match_positions: Option<&HashMap<String, Vec<MatchRange>>>,
+    field: &str,
+) -> Vec<ByteSpan> {
+    match_ranges_for(match_positions, field).iter()
+        .map(|m| ByteSpan { start: m.start as i32, len: m.length as i32 })
+        .take(8) // The frontend can only show a limited number anyway
+        .collect()
 }

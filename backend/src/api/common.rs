@@ -11,11 +11,10 @@ use crate::{
             series::Series, 
             realm::Realm, 
             playlist::AuthorizedPlaylist,
-            search::{SearchEvent, SearchSeries},
+            search::{SearchEvent, SearchRealm, SearchSeries},
         },
     },
     prelude::*,
-    search::Realm as SearchRealm,
     search::Playlist as SearchPlaylist,
     db::types::ExtraMetadata,
 };

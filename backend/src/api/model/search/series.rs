@@ -5,7 +5,7 @@ use crate::{
     search, HasRoles,
 };
 
-use super::{ByteSpan, ThumbnailInfo};
+use super::{field_matches_for, ByteSpan, SearchRealm, ThumbnailInfo};
 
 
 #[derive(Debug, GraphQLObject)]
@@ -15,7 +15,7 @@ pub(crate) struct SearchSeries {
     opencast_id: String,
     title: String,
     description: Option<String>,
-    host_realms: Vec<search::Realm>,
+    host_realms: Vec<SearchRealm>,
     thumbnails: Vec<ThumbnailInfo>,
     matches: SearchSeriesMatches,
 }
@@ -39,19 +39,9 @@ impl SearchSeries {
         context: &Context,
     ) -> Self {
         let match_positions = hit.matches_position.as_ref();
-        let get_matches = |key: &str| match_positions
-            .and_then(|m| m.get(key))
-            .map(|v| v.as_slice())
-            .unwrap_or_default();
-
-        let field_matches = |key: &str| get_matches(key).iter()
-            .map(|m| ByteSpan { start: m.start as i32, len: m.length as i32 })
-            .take(8) // The frontend can only show a limited number anyway
-            .collect();
-
         let matches = SearchSeriesMatches {
-            title: field_matches("title"),
-            description: field_matches("description"),
+            title: field_matches_for(match_positions, "title"),
+            description: field_matches_for(match_positions, "description"),
         };
 
         let src = hit.result;
@@ -60,7 +50,9 @@ impl SearchSeries {
             opencast_id: src.opencast_id,
             title: src.title,
             description: src.description,
-            host_realms: src.host_realms,
+            host_realms: src.host_realms.into_iter()
+                .map(|r| SearchRealm::without_matches(r))
+                .collect(),
             thumbnails: src.thumbnails.iter()
                 .filter(|info| context.auth.overlaps_roles(&info.read_roles))
                 .map(|info| ThumbnailInfo {

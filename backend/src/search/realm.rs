@@ -9,7 +9,7 @@ use super::{util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
 
 
 /// Representation of realms in the search index.
-#[derive(Serialize, Deserialize, Debug, FromSql)]
+#[derive(Clone, Serialize, Deserialize, Debug, FromSql)]
 #[postgres(name = "search_realms")]
 pub(crate) struct Realm {
     pub(crate) id: SearchId,

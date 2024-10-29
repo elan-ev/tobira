@@ -1,5 +1,5 @@
 use crate::{
-    api::{Context, Node, Id, NodeValue},
+    api::{model::search::SearchRealm, Context, Id, Node, NodeValue},
     search,
 };
 
@@ -28,7 +28,9 @@ impl search::Playlist {
         self.description.as_deref()
     }
 
-    fn host_realms(&self) -> &[search::Realm] {
-        &self.host_realms
+    fn host_realms(&self) -> Vec<SearchRealm> {
+        self.host_realms.iter()
+            .map(|r| SearchRealm::without_matches(r.clone()))
+            .collect()
     }
 }

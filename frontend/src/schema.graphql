@@ -755,6 +755,7 @@ type SearchRealm implements Node {
   name: String
   path: String!
   ancestorNames: [String]!
+  matches: SearchRealmMatches!
 }
 
 "Defines the sort order for events."
@@ -861,14 +862,18 @@ input NewRealm {
   pathSegment: String!
 }
 
-enum SortDirection {
-  ASCENDING
-  DESCENDING
+type SearchRealmMatches {
+  name: [ByteSpan!]!
 }
 
 type Segment {
   uri: String!
   startTime: Float!
+}
+
+enum SortDirection {
+  ASCENDING
+  DESCENDING
 }
 
 type SearchEventMatches {

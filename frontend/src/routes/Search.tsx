@@ -172,7 +172,14 @@ const query = graphql`
                             description { start len }
                         }
                     }
-                    ... on SearchRealm { name path ancestorNames }
+                    ... on SearchRealm {
+                        name
+                        path
+                        ancestorNames
+                        matches {
+                            name { start len }
+                        }
+                    }
                 }
                 totalHits
             }
@@ -377,6 +384,8 @@ const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
 );
 
 type Results = Extract<SearchQuery$data["search"], { __typename: "SearchResults" }>;
+type RawMatches = NonNullable<Results["items"][number]["matches"]>;
+type Matches<F extends keyof RawMatches> = Required<Pick<RawMatches, F>>;
 
 type SearchResultsProps = {
     items: Results["items"];
@@ -427,6 +436,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
                     name: unwrapUndefined(item.name),
                     fullPath: unwrapUndefined(item.path),
                     ancestorNames: unwrapUndefined(item.ancestorNames),
+                    matches: {
+                        name: unwrapUndefined(item.matches?.name),
+                    },
                 }} />;
             } else {
                 // eslint-disable-next-line no-console
@@ -491,7 +503,7 @@ type SearchEventProps = {
     endTime: string | null;
     hostRealms: readonly { readonly path: string }[];
     textMatches: NonNullable<Results["items"][number]["textMatches"]>;
-    matches: NonNullable<Results["items"][number]["matches"]>;
+    matches: Matches<"title" | "description" | "seriesTitle">;
 };
 
 const SearchEvent: React.FC<SearchEventProps> = ({
@@ -799,7 +811,7 @@ type SearchSeriesProps = {
     title: string;
     description: string | null;
     thumbnails: readonly ThumbnailInfo[] | undefined;
-    matches: NonNullable<Results["items"][number]["matches"]>;
+    matches: Matches<"title" | "description">;
 }
 
 const SearchSeries: React.FC<SearchSeriesProps> = ({
@@ -912,9 +924,12 @@ type SearchRealmProps = {
     name: string | null;
     ancestorNames: readonly (string | null | undefined)[];
     fullPath: string;
+    matches: Matches<"name">;
 };
 
-const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, fullPath }) => (
+const SearchRealm: React.FC<SearchRealmProps> = ({
+    id, name, ancestorNames, fullPath, matches,
+}) => (
     <Item key={id} link={fullPath}>
         <WithIcon Icon={LuLayout}>
             <div>
@@ -924,7 +939,12 @@ const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, full
                         <BreadcrumbSeparator />
                     </li>)}
                 </BreadcrumbsContainer>
-                <h3 css={{ color: COLORS.primary0 }}>{name ?? <MissingRealmName />}</h3>
+                <h3 css={{
+                    color: COLORS.primary0,
+                    mark: highlightCss(COLORS.primary2, COLORS.neutral15),
+                }}>
+                    {name ? highlightText(name, matches.name) : <MissingRealmName />}
+                </h3>
             </div>
         </WithIcon>
     </Item>
