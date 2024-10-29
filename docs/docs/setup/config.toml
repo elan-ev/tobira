@@ -583,6 +583,10 @@
 # Default value: false
 #require_series = false
 
+# Specify workflow to start after ingesting. If unset, Tobira does not
+# send any workflow ID, meaning Opencast will choose its default.
+#workflow =
+
 
 # Matomo integration (optional). Currently only used by Paella if configured.
 [matomo]
