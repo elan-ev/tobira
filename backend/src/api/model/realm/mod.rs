@@ -381,7 +381,7 @@ impl Realm {
         self.owner_display_name.as_deref()
     }
 
-    /// Returns the acl of this realm, combining moderator and admin roles and assigns 
+    /// Returns the acl of this realm, combining moderator and admin roles and assigns
     /// the respective actions that are necessary for UI purposes.
     async fn own_acl(&self, context: &Context) -> ApiResult<Acl> {
         let raw_roles_sql = "

@@ -407,7 +407,7 @@ impl AuthorizedEvent {
 
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
         let event = Self::load_by_id(id, context)
-            .await? 
+            .await?
             .ok_or_else(|| err::invalid_input!(
                 key = "event.delete.not-found",
                 "event not found",

@@ -12,7 +12,7 @@ pub(crate) struct GeneralConfig {
 
     /// Public URL to Tobira (without path).
     /// Used for RSS feeds, as those require specifying absolute URLs to resources.
-    /// 
+    ///
     /// Example: "https://tobira.my-uni.edu".
     pub(crate) tobira_url: HttpHost,
 
@@ -22,12 +22,12 @@ pub(crate) struct GeneralConfig {
     /// These can be specified in multiple languages.
     /// Consent is prompted upon first use and only if this is configured. It is
     /// re-prompted when any of these values change.
-    /// 
+    ///
     /// We recommend not to configure this unless absolutely necessary,
     /// in order to not degrade the user experience needlessly.
-    /// 
+    ///
     /// Example:
-    /// 
+    ///
     /// ```
     /// initial_consent.title.en = "Terms & Conditions"
     /// initial_consent.button.en = "Agree"
@@ -49,7 +49,7 @@ pub(crate) struct GeneralConfig {
     /// add custom ones. Note that these two default links are special and can
     /// be specified with only the shown string. To add custom ones, you need
     /// to define a label and a link. The link is either the same for every language
-    /// or can be specified for each language in the same manner as the label. 
+    /// or can be specified for each language in the same manner as the label.
     /// Example:
     ///
     /// ```

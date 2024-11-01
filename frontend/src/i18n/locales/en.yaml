@@ -112,7 +112,7 @@ user:
   manage-content: Manage
 
 login-page:
-  heading: Login 
+  heading: Login
   user-id: User ID
   password: Password
   bad-credentials: 'Login failed: invalid credentials.'
@@ -163,7 +163,7 @@ video:
     title: Download
     presenter: Video (speaker)
     slides: Video (presentation)
-    info: > 
+    info: >
       Here you can download the video(s) in different formats/qualities (Right click - Save as).
   manage: Manage
   start: Start

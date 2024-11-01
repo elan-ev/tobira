@@ -58,7 +58,7 @@ impl Mutation {
     /// Deletes the given event. Meaning: a deletion request is sent to Opencast, the event
     /// is marked as "deletion pending" in Tobira, and fully removed once Opencast
     /// finished deleting the event.
-    /// 
+    ///
     /// Returns the deletion timestamp in case of success and errors otherwise.
     /// Note that "success" in this case only means the request was successfully sent
     /// and accepted, not that the deletion itself succeeded, which is instead checked
@@ -259,7 +259,7 @@ impl Mutation {
     /// it is renamed to its path segment. If the realm has no sub-realms,
     /// it is removed completely.
     /// Errors if the given realm does not have exactly one series block referring to the
-    /// specified series. 
+    /// specified series.
     async fn remove_series_mount_point(
         series_oc_id: String,
         path: String,

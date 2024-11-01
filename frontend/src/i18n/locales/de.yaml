@@ -350,8 +350,9 @@ manage:
       yourself: Sie
       subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
       inherited: 'Geerbte Berechtigungen:'
-      inherited-tooltip: > 
-        Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden auf alle Unterseiten vererbt.
+      inherited-tooltip: >
+        Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden auf alle Unterseiten
+        vererbt.
       actions:
         title: Berechtigung
         read: Lesen
