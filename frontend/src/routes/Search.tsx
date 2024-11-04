@@ -641,6 +641,10 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
     const [queryRef, loadQuery]
         = useQueryLoader<SearchSlidePreviewQuery>(slidePreviewQuery);
 
+    // For a more useful tab order.
+    const sortedMatches = [...textMatches];
+    sortedMatches.sort((a, b) => a.start - b.start);
+
     // We load the query once the user hovers over the parent container. This
     // seems like it would send a query every time the mouse enters, but relay
     // caches the results, so it is only sent once.
@@ -664,7 +668,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
                 borderTop: `1.5px solid ${COLORS.neutral50}`,
             }} />
 
-            {textMatches.map((m, i) => (
+            {sortedMatches.map((m, i) => (
                 <WithTooltip
                     key={i}
                     distance={m.ty === "CAPTION" ? 4 : 5.5}
