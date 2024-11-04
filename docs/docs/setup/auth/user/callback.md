@@ -168,8 +168,13 @@ The callback can read those headers, and build the user information Tobira expec
 It can of course also request additional information from external services, e.g. a list of courses the user is signed up for.
 
 ```toml
+[general]
+reserved_paths = ["Shibboleth.sso"]
+
 [auth]
 source = "callback:http://localhost:9090/"
+login_link = "/Shibboleth.sso/Login"
+logout_link = "/Shibboleth.sso/Logout"
 
 [auth.callback]
 relevant_headers = [
@@ -184,10 +189,10 @@ Here is an example for the callback daemon.
 
 ```ts
 Deno.serve({ port: 9090 }, request => {
-  const uniqueID = request.header.get("Variable-uniqueID");
-  const fullName = request.header.get("Variable-fullName");
-  const email = request.header.get("Variable-mail");
-  const affiliation = request.header.get("Variable-affiliation");
+  const uniqueID = request.headers.get("Variable-uniqueID");
+  const fullName = request.headers.get("Variable-fullName");
+  const email = request.headers.get("Variable-mail");
+  const affiliation = request.headers.get("Variable-affiliation");
 
   // If the headers are not set, the request is not authenticated
   if (!uniqueID || !fullName || !email) {
