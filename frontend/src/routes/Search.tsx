@@ -134,9 +134,9 @@ const query = graphql`
             ... on SearchUnavailable { dummy }
             ... on SearchResults {
                 items {
-                    id
                     __typename
                     ... on SearchEvent {
+                        id
                         title
                         description
                         thumbnail
@@ -164,6 +164,7 @@ const query = graphql`
                         }
                     }
                     ... on SearchSeries {
+                        id
                         title
                         description
                         thumbnails { thumbnail isLive audioOnly }
@@ -173,6 +174,7 @@ const query = graphql`
                         }
                     }
                     ... on SearchRealm {
+                        id
                         name
                         path
                         ancestorNames
@@ -384,16 +386,14 @@ const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
 );
 
 type Results = Extract<SearchQuery$data["search"], { __typename: "SearchResults" }>;
-type RawMatches = NonNullable<Results["items"][number]["matches"]>;
-type Matches<F extends keyof RawMatches> = Required<Pick<RawMatches, F>>;
+type Item = Results["items"][number];
+type EventItem = Omit<Extract<Item, { "__typename": "SearchEvent" }>, "__typename">;
+type SeriesItem = Omit<Extract<Item, { "__typename": "SearchSeries" }>, "__typename">;
+type RealmItem = Omit<Extract<Item, { "__typename": "SearchRealm" }>, "__typename">;
 
 type SearchResultsProps = {
     items: Results["items"];
 };
-
-const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "undefined"
-    ? unreachable("type dependent field for search item is not set")
-    : value;
 
 const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     <ul css={{
@@ -404,42 +404,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
-                return <SearchEvent key={item.id} {...{
-                    id: item.id,
-                    title: unwrapUndefined(item.title),
-                    description: unwrapUndefined(item.description),
-                    thumbnail: unwrapUndefined(item.thumbnail),
-                    duration: unwrapUndefined(item.duration),
-                    creators: unwrapUndefined(item.creators),
-                    seriesTitle: unwrapUndefined(item.seriesTitle),
-                    seriesId: unwrapUndefined(item.seriesId),
-                    isLive: unwrapUndefined(item.isLive),
-                    audioOnly: unwrapUndefined(item.audioOnly),
-                    created: unwrapUndefined(item.created),
-                    startTime: unwrapUndefined(item.startTime),
-                    endTime: unwrapUndefined(item.endTime),
-                    hostRealms: unwrapUndefined(item.hostRealms),
-                    textMatches: unwrapUndefined(item.textMatches),
-                    matches: unwrapUndefined(item.matches),
-                }} />;
+                return <SearchEvent key={item.id} {...item} />;
             } else if (item.__typename === "SearchSeries") {
-                return <SearchSeries key={item.id} {...{
-                    id: item.id,
-                    title: unwrapUndefined(item.title),
-                    description: unwrapUndefined(item.description),
-                    thumbnails: unwrapUndefined(item.thumbnails),
-                    matches: unwrapUndefined(item.matches),
-                }} />;
+                return <SearchSeries key={item.id} {...item} />;
             } else if (item.__typename === "SearchRealm") {
-                return <SearchRealm key={item.id} {...{
-                    id: item.id,
-                    name: unwrapUndefined(item.name),
-                    fullPath: unwrapUndefined(item.path),
-                    ancestorNames: unwrapUndefined(item.ancestorNames),
-                    matches: {
-                        name: unwrapUndefined(item.matches?.name),
-                    },
-                }} />;
+                return <SearchRealm key={item.id} {...item} />;
             } else {
                 // eslint-disable-next-line no-console
                 console.warn("Unknown search item type: ", item.__typename);
@@ -487,26 +456,7 @@ const WithIcon: React.FC<WithIconProps> = ({ Icon, iconSize = 30, children, hide
     </div>
 );
 
-type SearchEventProps = {
-    id: string;
-    title: string;
-    description: string | null;
-    thumbnail: string | null;
-    duration: number;
-    creators: readonly string[];
-    seriesTitle: string | null;
-    seriesId: string | null;
-    isLive: boolean;
-    audioOnly: boolean;
-    created: string;
-    startTime: string | null;
-    endTime: string | null;
-    hostRealms: readonly { readonly path: string }[];
-    textMatches: NonNullable<Results["items"][number]["textMatches"]>;
-    matches: Matches<"title" | "description" | "seriesTitle">;
-};
-
-const SearchEvent: React.FC<SearchEventProps> = ({
+const SearchEvent: React.FC<EventItem> = ({
     id,
     title,
     description,
@@ -617,7 +567,7 @@ const thumbnailCss = {
     },
 };
 
-type TextMatchTimelineProps = Pick<SearchEventProps, "id" | "duration" | "textMatches"> & {
+type TextMatchTimelineProps = Pick<EventItem, "id" | "duration" | "textMatches"> & {
     link: string;
 };
 
@@ -718,7 +668,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
 
 type TextMatchTooltipWithMaybeImageProps = {
     queryRef: PreloadedQuery<SearchSlidePreviewQuery>;
-    textMatch: SearchEventProps["textMatches"][number];
+    textMatch: EventItem["textMatches"][number];
 };
 
 const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImageProps> = ({
@@ -751,7 +701,7 @@ const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImagePro
 
 type TextMatchTooltipProps = {
     previewImage?: string;
-    textMatch: SearchEventProps["textMatches"][number];
+    textMatch: EventItem["textMatches"][number];
 };
 
 const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textMatch }) => {
@@ -810,15 +760,8 @@ type ThumbnailInfo = {
     readonly isLive: boolean;
     readonly thumbnail: string | null | undefined;
 }
-type SearchSeriesProps = {
-    id: string;
-    title: string;
-    description: string | null;
-    thumbnails: readonly ThumbnailInfo[] | undefined;
-    matches: Matches<"title" | "description">;
-}
 
-const SearchSeries: React.FC<SearchSeriesProps> = ({
+const SearchSeries: React.FC<SeriesItem> = ({
     id, title, description, thumbnails, matches,
 }) =>
     <Item key={id} link={DirectSeriesRoute.url({ seriesId: id })}>
@@ -855,7 +798,7 @@ const SearchSeries: React.FC<SearchSeriesProps> = ({
     </Item>
 ;
 
-type ThumbnailStackProps = Pick<SearchSeriesProps, "title" | "thumbnails">
+type ThumbnailStackProps = Pick<SeriesItem, "title" | "thumbnails">
 
 const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => (
     <div css={{
@@ -923,16 +866,9 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
     </ThumbnailOverlayContainer>;
 };
 
-type SearchRealmProps = {
-    id: string;
-    name: string | null;
-    ancestorNames: readonly (string | null | undefined)[];
-    fullPath: string;
-    matches: Matches<"name">;
-};
 
-const SearchRealm: React.FC<SearchRealmProps> = ({
-    id, name, ancestorNames, fullPath, matches,
+const SearchRealm: React.FC<RealmItem> = ({
+    id, name, ancestorNames, path: fullPath, matches,
 }) => (
     <Item key={id} link={fullPath}>
         <WithIcon Icon={LuLayout}>
