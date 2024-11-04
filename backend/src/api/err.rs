@@ -135,6 +135,10 @@ macro_rules! not_authorized {
     ($($t:tt)+) => { $crate::api::err::api_err!(NotAuthorized, $($t)*) };
 }
 
+macro_rules! internal_server_error {
+    ($($t:tt)+) => { $crate::api::err::api_err!(InternalServerError, $($t)*) };
+}
+
 macro_rules! opencast_unavailable {
     ($($t:tt)+) => { $crate::api::err::api_err!(OpencastUnavailable, $($t)*) };
 }
@@ -142,6 +146,7 @@ macro_rules! opencast_unavailable {
 pub(crate) use api_err;
 pub(crate) use invalid_input;
 pub(crate) use not_authorized;
+pub(crate) use internal_server_error;
 pub(crate) use opencast_unavailable;
 
 

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
 use postgres_types::ToSql;
@@ -8,10 +10,18 @@ use sha1::{Sha1, Digest};
 
 use crate::{
     api::{
-        Context, Cursor, Id, Node, NodeValue,
+        Context,
+        Cursor,
+        Id,
+        Node,
+        NodeValue,
         common::NotAllowed,
         err::{self, invalid_input, ApiResult},
-        model::{acl::{self, Acl}, realm::Realm, series::Series},
+        model::{
+            acl::{self, Acl},
+            realm::Realm,
+            series::Series,
+        },
     },
     db::{
         types::{EventCaption, EventSegment, EventState, EventTrack, ExtraMetadata, Key, Credentials},
@@ -19,6 +29,8 @@ use crate::{
     },
     prelude::*,
 };
+
+use self::{acl::AclInputEntry, err::ApiError};
 
 use super::playlist::VideoListEntry;
 
@@ -405,21 +417,37 @@ impl AuthorizedEvent {
             || context.auth.overlaps_roles(&self.read_roles)
     }
 
-    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+    async fn load_for_api(
+        id: Id,
+        context: &Context,
+        not_found_error: ApiError,
+        not_authorized_error: ApiError,
+    ) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_by_id(id, context)
             .await?
-            .ok_or_else(|| err::invalid_input!(
-                key = "event.delete.not-found",
-                "event not found",
-            ))?
+            .ok_or_else(|| not_found_error)?
             .into_result()?;
 
         if !context.auth.overlaps_roles(&event.write_roles) {
-            return Err(err::not_authorized!(
+            return Err(not_authorized_error);
+        }
+
+        Ok(event)
+    }
+
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+        let event = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "event.delete.not-found",
+                "event not found"
+            ),
+            err::not_authorized!(
                 key = "event.delete.not-allowed",
                 "you are not allowed to delete this event",
-            ));
-        }
+            )
+        ).await?;
 
         let response = context
             .oc_client
@@ -446,6 +474,58 @@ impl AuthorizedEvent {
                 response.status()
             );
             Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
+        }
+    }
+
+    pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
+        info!(event_id = %id, "Requesting ACL update of event");
+        let event = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "event.acl.not-found",
+                "event not found",
+            ),
+            err::not_authorized!(
+                key = "event.acl.not-allowed",
+                "you are not allowed to update this event's acl",
+            )
+        ).await?;
+
+        let response = context
+            .oc_client
+            .update_event_acl(&event.opencast_id, &acl, context)
+            .await
+            .map_err(|e| {
+                error!("Failed to send acl update request: {}", e);
+                err::opencast_unavailable!("Failed to send acl update request")
+            })?;
+
+        if response.status() == StatusCode::NO_CONTENT {
+            // 204: The access control list for the specified event is updated.
+            let db_acl = convert_acl_input(acl);
+
+            // Todo: also update custom and preview roles once frontend sends these
+            context.db.execute("\
+                update all_events \
+                set read_roles = $2, write_roles = $3 \
+                where id = $1 \
+            ", &[&event.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "event.acl.not-found",
+                    "event not found",
+                ))?
+                .into_result()
+        } else {
+            warn!(
+                event_id = %id,
+                "Failed to update event acl, OC returned status: {}",
+                response.status()
+            );
+            Err(err::internal_server_error!("Opencast API error: {}", response.status()))
         }
     }
 
@@ -796,4 +876,53 @@ pub(crate) struct EventPageInfo {
 #[graphql(Context = Context)]
 pub(crate) struct RemovedEvent {
     id: Id,
+}
+
+#[derive(Debug)]
+struct AclForDB {
+    // todo: add custom and preview roles when sent by frontend
+    // preview_roles: Vec<String>,
+    read_roles: Vec<String>,
+    write_roles: Vec<String>,
+    // custom_action_roles: CustomActions,
+}
+
+fn convert_acl_input(entries: Vec<AclInputEntry>) -> AclForDB {
+    // let mut preview_roles = HashSet::new();
+    let mut read_roles = HashSet::new();
+    let mut write_roles = HashSet::new();
+    // let mut custom_action_roles = CustomActions::default();
+
+    for entry in entries {
+        let role = entry.role;
+        for action in entry.actions {
+            match action.as_str() {
+                // "preview" => {
+                //     preview_roles.insert(role.clone());
+                // }
+                "read" => {
+                    read_roles.insert(role.clone());
+                }
+                "write" => {
+                    write_roles.insert(role.clone());
+                }
+                _ => {
+                    // custom_action_roles
+                    //     .0
+                    //     .entry(action)
+                    //     .or_insert_with(Vec::new)
+                    //     .push(role.clone());
+                    todo!();
+                }
+            };
+        }
+    }
+
+    AclForDB {
+        // todo: add custom and preview roles when sent by frontend
+        // preview_roles: preview_roles.into_iter().collect(),
+        read_roles: read_roles.into_iter().collect(),
+        write_roles: write_roles.into_iter().collect(),
+        // custom_action_roles,
+    }
 }

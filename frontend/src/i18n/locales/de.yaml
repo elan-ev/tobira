@@ -662,6 +662,9 @@ api-remote-errors:
     delete:
       not-found: Das zu löschende Video existiert nicht. Möglicherweise wurde es bereits entfernt.
       not-allowed: Sie haben nicht die Berechtigung, dieses Video zu löschen.
+    acl:
+      not-found: "Zugriffsrechte konnten nicht geändert werden: Video nicht gefunden."
+      not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieses Videos zu ändern.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.

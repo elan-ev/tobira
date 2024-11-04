@@ -637,6 +637,9 @@ api-remote-errors:
         The video you are trying to delete does not exist.
         It might have been removed already.
       not-allowed: You are not allowed to delete this video.
+    acl:
+      not-found: "Access policy update failed: video not found."
+      not-allowed: You are not allowed to update the access policies of this video.
 
 embed:
   not-supported: This page can't be embedded.
