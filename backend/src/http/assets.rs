@@ -273,6 +273,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         },
         "upload": {
             "requireSeries": config.upload.require_series,
+            "workflow": config.upload.workflow,
         },
         "siteTitle": config.general.site_title,
         "initialConsent": config.general.initial_consent,

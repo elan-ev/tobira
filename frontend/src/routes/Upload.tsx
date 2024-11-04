@@ -1056,6 +1056,9 @@ const finishUpload = async (
         {
             const body = new FormData();
             body.append("mediaPackage", mediaPackage);
+            if (CONFIG.upload.workflow) {
+                body.append("workflowDefinitionId", CONFIG.upload.workflow);
+            }
             await ocRequest("/ingest/ingest", { method: "post", body: body });
         }
 
