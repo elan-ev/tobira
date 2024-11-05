@@ -1,16 +1,14 @@
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import {
+    LuCalendar,
     LuCalendarRange,
     LuLayout,
-    LuLibrary,
-    LuPlayCircle,
     LuRadio,
     LuVolume2,
     LuX,
 } from "react-icons/lu";
 import { LetterText } from "lucide-react";
-import { IconType } from "react-icons";
 import { ReactNode, RefObject, useEffect, useRef } from "react";
 import {
     Button,
@@ -50,12 +48,13 @@ import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Br
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
-import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
+import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { eventId, isExperimentalFlagSet, keyOfId, secondsToTimeString } from "../util";
 import { DirectVideoRoute, VideoRoute } from "./Video";
-import { DirectSeriesRoute } from "./Series";
+import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
 import { SearchSlidePreviewQuery } from "./__generated__/SearchSlidePreviewQuery.graphql";
+import { RelativeDate } from "../ui/time";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -149,7 +148,7 @@ const query = graphql`
                         startTime
                         endTime
                         created
-                        hostRealms { path }
+                        hostRealms { path ancestorNames }
                         textMatches {
                             start
                             duration
@@ -168,6 +167,7 @@ const query = graphql`
                         title
                         description
                         thumbnails { thumbnail isLive audioOnly }
+                        hostRealms { path ancestorNames }
                         matches {
                             title { start len }
                             description { start len }
@@ -399,8 +399,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
     <ul css={{
         listStyle: "none",
         padding: 0,
-        // A yellow that looks good for dark and light mode.
-        "--highlight-color": "#ba9f14",
+        // A warm grey for highlighting matches.
+        "--highlight-color": useColorScheme().scheme === "dark" ? "#3f3e31" : "#f3f1e0",
     }}>
         {items.map(item => {
             if (item.__typename === "SearchEvent") {
@@ -416,44 +416,6 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
             }
         })}
     </ul>
-);
-
-type WithIconProps = React.PropsWithChildren<{
-    Icon: IconType;
-    iconSize?: number;
-    hideIconOnMobile?: boolean;
-}>;
-
-const WithIcon: React.FC<WithIconProps> = ({ Icon, iconSize = 30, children, hideIconOnMobile }) => (
-    <div css={{
-        display: "flex",
-        flexDirection: "row",
-        flexGrow: "1",
-        minWidth: 0,
-        gap: 24,
-        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-            flexDirection: "row-reverse",
-            justifyContent: "space-between",
-            paddingLeft: 4,
-        },
-        ...hideIconOnMobile && {
-            [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                justifyContent: "flex-end",
-            },
-        },
-    }}>
-        <Icon size={iconSize} css={{
-            flexShrink: 0,
-            color: COLORS.primary0,
-            strokeWidth: 1.5,
-            ...hideIconOnMobile && {
-                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                    display: "none",
-                },
-            },
-        }} />
-        {children}
-    </div>
 );
 
 const SearchEvent: React.FC<EventItem> = ({
@@ -481,57 +443,8 @@ const SearchEvent: React.FC<EventItem> = ({
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
 
     return (
-        <Item key={id} link={link}>
-            <WithIcon Icon={LuPlayCircle} hideIconOnMobile>
-                <div css={{
-                    color: COLORS.neutral90,
-                    marginRight: "clamp(12px, 4vw - 13px, 40px)",
-                    display: "flex",
-                    flexDirection: "column",
-                    minWidth: 0,
-                    width: "100%",
-                }}>
-                    <h3 css={{
-                        color: COLORS.primary0,
-                        marginBottom: 3,
-                        paddingBottom: 3,
-                        fontSize: 17,
-                        lineHeight: 1.3,
-                        ...ellipsisOverflowCss(2),
-                        mark: highlightCss(COLORS.primary2, COLORS.neutral15),
-                    }}>{highlightText(title, matches.title)}</h3>
-                    <Creators creators={creators} css={{
-                        ul: {
-                            display: "inline-block",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                        },
-                        li: {
-                            display: "inline",
-                        },
-                    }} />
-                    {description && <SmallDescription
-                        css={{
-                            paddingBottom: 2,
-                            mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
-                        }}
-                        text={highlightText(description, matches.description, 180)}
-                        lines={3}
-                    />}
-                    {seriesTitle && seriesId && <PartOfSeriesLink
-                        css={{ mark: highlightCss(COLORS.primary2, COLORS.neutral15) }}
-                        seriesTitle={highlightText(seriesTitle, matches.seriesTitle)}
-                        {...{ seriesId }}
-                    />}
-
-                    {/* Show timeline with matches if there are any */}
-                    {textMatches.length > 0 && (
-                        <TextMatchTimeline {...{ id, duration, link, textMatches }} />
-                    )}
-                </div>
-            </WithIcon>
-            <Link to={link}>
+        <Item key={id} breakpoint={BREAKPOINT_MEDIUM} link={link}>{{
+            image: <Link to={link} tabIndex={-1}>
                 <Thumbnail
                     event={{
                         title,
@@ -545,26 +458,83 @@ const SearchEvent: React.FC<EventItem> = ({
                             audioOnly,
                         },
                     }}
-                    css={thumbnailCss}
                 />
-            </Link>
-        </Item>
-    );
-};
+            </Link>,
+            info: <div css={{
+                color: COLORS.neutral90,
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+            }}>
+                {hostRealms.length === 1 && (
+                    <SearchBreadcrumbs ancestorNames={hostRealms[0].ancestorNames} />
+                )}
+                <h3 css={{
+                    color: COLORS.primary1,
+                    marginBottom: 3,
+                    paddingBottom: 3,
+                    fontSize: 17,
+                    lineHeight: 1.3,
+                    ...ellipsisOverflowCss(2),
+                    mark: highlightCss(COLORS.primary2),
+                }}>{highlightText(title, matches.title)}</h3>
+                <div css={{
+                    display: "flex",
+                    color: COLORS.neutral80,
+                    fontSize: 14,
+                    gap: 24,
+                    whiteSpace: "nowrap",
+                }}>
+                    <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <LuCalendar css={{ fontSize: 16, color: COLORS.neutral60 }} />
+                        <RelativeDate date={new Date(startTime ?? created)} isLive={isLive} />
+                    </div>
+                    <div css={{
+                        display: "none",
+                        borderRight: `1px solid ${COLORS.neutral30}`,
+                        margin: "2px 8px",
+                    }} />
+                    <Creators creators={creators} css={{
+                        minWidth: 0,
+                        ul: {
+                            display: "inline-block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                        },
+                        li: {
+                            display: "inline",
+                        },
+                    }} />
+                </div>
 
-const thumbnailCss = {
-    outline: `1px solid ${COLORS.neutral15}`,
-    minWidth: 270,
-    width: 270,
-    marginLeft: "auto",
-    [screenWidthAtMost(800)]: {
-        minWidth: 240,
-        width: 240,
-    },
-    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-        maxWidth: 400,
-        margin: "0 auto",
-    },
+                <div css={{ flexGrow: 1, maxHeight: 20 }} />
+
+                {description && <SmallDescription
+                    css={{
+                        paddingLeft: 2,
+                        mark: highlightCss(COLORS.neutral90),
+                        fontSize: 12,
+                        lineHeight: 1.4,
+                    }}
+                    text={highlightText(description, matches.description, 130)}
+                    lines={2}
+                />}
+
+                <div css={{ flexGrow: 2 }} />
+
+                {seriesTitle && seriesId && <PartOfSeriesLink
+                    css={{ mark: highlightCss(COLORS.primary2) }}
+                    seriesTitle={highlightText(seriesTitle, matches.seriesTitle)}
+                    {...{ seriesId }}
+                />}
+                {/* Show timeline with matches if there are any */}
+                {textMatches.length > 0 && (
+                    <TextMatchTimeline {...{ id, duration, link, textMatches }} />
+                )}
+            </div>,
+        }}</Item>
+    );
 };
 
 type TextMatchTimelineProps = Pick<EventItem, "id" | "duration" | "textMatches"> & {
@@ -600,10 +570,10 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
     // caches the results, so it is only sent once.
     return (
         <div onMouseEnter={() => { loadQuery({ id: eventId(keyOfId(id)) }); }} css={{
-            width: "100%",
+            width: "calc(100% - 8px)",
             position: "relative",
             height: 10.5,
-            margin: "16px 0",
+            margin: "12px 0 8px 0",
             border: `1.5px solid ${COLORS.neutral50}`,
             borderTop: "none",
             borderBottom: "none",
@@ -743,7 +713,7 @@ const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textM
                 fontSize: 13,
                 lineHeight: 1.3,
                 ...ellipsisOverflowCss(2),
-                mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
+                mark: highlightCss(COLORS.neutral90),
             }}>
                 …{highlightText(textMatch.text, textMatch.highlights)}…
             </div>
@@ -762,48 +732,54 @@ type ThumbnailInfo = {
 }
 
 const SearchSeries: React.FC<SeriesItem> = ({
-    id, title, description, thumbnails, matches,
-}) =>
-    <Item key={id} link={DirectSeriesRoute.url({ seriesId: id })}>
-        <WithIcon Icon={LuLibrary} iconSize={28} hideIconOnMobile>
-            <div css={{
-                color: COLORS.neutral90,
-                marginRight: "clamp(12px, 4vw - 13px, 40px)",
-                display: "flex",
-                flexDirection: "column",
-                minWidth: 0,
-            }}>
-                <h3 css={{
-                    color: COLORS.primary0,
-                    marginBottom: 3,
-                    paddingBottom: 3,
-                    fontSize: 17,
-                    lineHeight: 1.3,
-                    mark: highlightCss(COLORS.primary2, COLORS.neutral15),
-                    ...ellipsisOverflowCss(2),
-                }}>{highlightText(title, matches.title)}</h3>
-                {description && <SmallDescription
-                    css={{
-                        paddingBottom: 2,
-                        mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
-                    }}
-                    text={highlightText(description, matches.description, 180)}
-                    lines={3}
-                />}
-            </div>
-        </WithIcon>
-        <Link to={DirectSeriesRoute.url({ seriesId: id })}>
+    id, title, description, thumbnails, matches, hostRealms,
+}) => {
+    // TODO: decide what to do in the case of more than two host realms. Direct
+    // link should be avoided.
+    const link = hostRealms.length !== 1
+        ? DirectSeriesRoute.url({ seriesId: id })
+        : SeriesRoute.url({ realmPath: hostRealms[0].path, seriesId: id });
+
+    return <Item key={id} breakpoint={550} link={link}>{{
+        image: <Link to={link} tabIndex={-1}>
             <ThumbnailStack {...{ thumbnails, title }} />
-        </Link>
-    </Item>
-;
+        </Link>,
+        info: <div css={{
+            display: "flex",
+            flexDirection: "column",
+            minWidth: 0,
+        }}>
+            {hostRealms.length === 1 && (
+                <SearchBreadcrumbs ancestorNames={hostRealms[0].ancestorNames} />
+            )}
+            <h3 css={{
+                color: COLORS.primary0,
+                marginBottom: 3,
+                paddingBottom: 3,
+                fontSize: 17,
+                lineHeight: 1.3,
+                mark: highlightCss(COLORS.primary2),
+                ...ellipsisOverflowCss(2),
+            }}>{highlightText(title, matches.title)}</h3>
+            {description && <SmallDescription
+                css={{
+                    fontSize: 12,
+                    mark: highlightCss(COLORS.neutral90),
+                }}
+                text={highlightText(description, matches.description, 180)}
+                lines={3}
+            />}
+        </div>,
+    }}</Item>;
+};
 
 type ThumbnailStackProps = Pick<SeriesItem, "title" | "thumbnails">
 
 const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => (
     <div css={{
-        ...thumbnailCss,
-        outline: 0,
+        zIndex: 0,
+        margin: "0 auto",
+        width: "70%",
         display: "grid",
         gridAutoColumns: "1fr",
         "> div": {
@@ -895,63 +871,113 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
     </ThumbnailOverlayContainer>;
 };
 
+type SearchBreadcrumbsProps = {
+    ancestorNames: readonly (string | null | undefined)[];
+};
+
+const SearchBreadcrumbs: React.FC<SearchBreadcrumbsProps> = ({ ancestorNames }) => (
+    <BreadcrumbsContainer css={{ fontSize: 12, color: COLORS.neutral80 }}>
+        {ancestorNames.map((name, i) => <li key={i}>
+            {name ?? <MissingRealmName />}
+            <BreadcrumbSeparator />
+        </li>)}
+    </BreadcrumbsContainer>
+);
 
 const SearchRealm: React.FC<RealmItem> = ({
-    id, name, ancestorNames, path: fullPath, matches,
+    id, name, ancestorNames, path, matches,
 }) => (
-    <Item key={id} link={fullPath}>
-        <WithIcon Icon={LuLayout}>
-            <div>
-                <BreadcrumbsContainer>
-                    {ancestorNames.map((name, i) => <li key={i}>
-                        {name ?? <MissingRealmName />}
-                        <BreadcrumbSeparator />
-                    </li>)}
-                </BreadcrumbsContainer>
+    <Item key={id} link={path}>{{
+        image: <div css={{
+            background: COLORS.neutral25,
+            color: COLORS.neutral90,
+            borderRadius: "50%",
+            width: "min(80px, 20vw)",
+            height: "min(80px, 20vw)",
+            fontSize: "min(36px, 9vw)",
+            margin: "0 auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        }}><LuLayout /></div>,
+        info: (
+            <div css={{
+                padding: "6px 0",
+                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                    padding: 0,
+                },
+            }}>
+                <SearchBreadcrumbs ancestorNames={ancestorNames} />
                 <h3 css={{
-                    color: COLORS.primary0,
-                    mark: highlightCss(COLORS.primary2, COLORS.neutral15),
+                    marginTop: 4,
+                    color: COLORS.primary1,
+                    fontSize: 17,
+                    fontStyle: "italic",
+                    mark: highlightCss(COLORS.primary2),
                 }}>
                     {name ? highlightText(name, matches.name) : <MissingRealmName />}
                 </h3>
             </div>
-        </WithIcon>
-    </Item>
+        ),
+    }}</Item>
 );
 
 type ItemProps = {
     link: string;
-    children: ReactNode;
+    breakpoint?: number;
+    children: {
+        image: ReactNode;
+        info: ReactNode;
+    };
 };
 
-const Item: React.FC<ItemProps> = ({ link, children }) => (
+const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
     <li css={{
         position: "relative",
         display: "flex",
-        borderRadius: 16,
-        border: `1px solid ${COLORS.neutral15}`,
+        flexDirection: "row",
+        borderRadius: 12,
         margin: 16,
         padding: 8,
-        gap: 8,
+        gap: 24,
         textDecoration: "none",
-        "&:hover, &:focus": {
-            backgroundColor: COLORS.neutral10,
+        "&:hover, &:focus-within": {
+            backgroundColor: COLORS.neutral15,
+            outline: `1px solid ${COLORS.neutral20}`,
         },
-        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-            flexDirection: "column-reverse",
+        [screenWidthAtMost(800)]: {
             gap: 12,
             margin: "16px 0",
-            "& > *:last-child": {
-                width: "100%",
-            },
+        },
+        [screenWidthAtMost(breakpoint)]: {
+            flexDirection: "column",
+            gap: 12,
         },
     }}>
         <Link to={link} css={{
             position: "absolute",
             inset: 0,
-            borderRadius: 16,
+            borderRadius: 12,
         }}/>
-        {children}
+        <div css={{
+            flexShrink: 0,
+            width: "40%",
+            margin: "0 auto",
+            [screenWidthAtMost(550)]: {
+                width: "unset",
+                maxWidth: "35%",
+            },
+            [screenWidthAtMost(breakpoint)]: {
+                maxWidth: 400,
+                width: "100%",
+            },
+        }}>{children.image}</div>
+        <div css={{
+            minWidth: 0,
+            flex: "1",
+        }}>
+            {children.info}
+        </div>
     </li>
 );
 
@@ -1058,9 +1084,8 @@ const highlightText = (
     return textParts;
 };
 
-const highlightCss = (color: string, backgroundColor: string) => ({
+const highlightCss = (color: string) => ({
     color,
-    backgroundColor,
-    borderBottom: "2px solid var(--highlight-color)",
+    backgroundColor: "var(--highlight-color)",
     borderRadius: 2,
 });
