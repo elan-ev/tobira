@@ -503,6 +503,7 @@ impl AuthorizedEvent {
 
         if response.status() == StatusCode::NO_CONTENT {
             // 204: The access control list for the specified event is updated.
+            Self::start_workflow(&event.opencast_id, "republish-metadata", &context).await?;
             let db_acl = convert_acl_input(acl);
 
             // Todo: also update custom and preview roles once frontend sends these
@@ -523,7 +524,37 @@ impl AuthorizedEvent {
             warn!(
                 event_id = %id,
                 "Failed to update event acl, OC returned status: {}",
-                response.status()
+                response.status(),
+            );
+            Err(err::internal_server_error!("Opencast API error: {}", response.status()))
+        }
+    }
+
+    /// Starts a workflow on the event.
+    async fn start_workflow(oc_id: &str, workflow_id: &str, context: &Context) -> ApiResult<StatusCode> {
+        let response = context
+            .oc_client
+            .start_workflow(&oc_id, workflow_id)
+            .await
+            .map_err(|e| {
+                error!("Failed sending request to start workflow: {}", e);
+                err::opencast_unavailable!("Failed to communicate with Opencast")
+            })?;
+
+        if response.status() == StatusCode::CREATED {
+            // 201: A new workflow is created.
+            info!(%workflow_id, event_id = %oc_id, "Requested creation of workflow");
+            Ok(response.status())
+        } else if response.status() == StatusCode::NOT_FOUND {
+            // 404: The specified workflow instance does not exist.
+            warn!(%workflow_id, event_id = %oc_id, "The specified workflow instance does not exist.");
+            Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
+        } else {
+            warn!(
+                %workflow_id,
+                event_id = %oc_id,
+                "Failed to create workflow, OC returned status: {}",
+                response.status(),
             );
             Err(err::internal_server_error!("Opencast API error: {}", response.status()))
         }

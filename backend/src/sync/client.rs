@@ -206,6 +206,20 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
+    pub async fn start_workflow(&self, oc_id: &str, workflow_id: &str) -> Result<Response<Incoming>> {
+        let params = Serializer::new(String::new())
+            .append_pair("event_identifier", &oc_id)
+            .append_pair("workflow_definition_identifier", &workflow_id)
+            .finish();
+        let req = self.authed_req_builder(&self.external_api_node, "/api/workflows")
+            .method(http::Method::POST)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        self.http_client.request(req).await.map_err(Into::into)
+    }
+
     fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
         let req = self.authed_req_builder(node, path_and_query)
             .body(RequestBody::empty())
