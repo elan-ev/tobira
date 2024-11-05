@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { WithTooltip } from "@opencast/appkit";
+import { boxError, currentRef, WithTooltip } from "@opencast/appkit";
 import { useRef, useState } from "react";
 import { LuInfo } from "react-icons/lu";
-import { useFragment } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
@@ -20,6 +20,8 @@ import { ManageVideosRoute } from ".";
 import { ManageVideoDetailsRoute } from "./Details";
 import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
 import { ConfirmationModalHandle } from "../../../ui/Modal";
+import { displayCommitError } from "../Realm/util";
+import { AccessUpdateAclMutation } from "./__generated__/AccessUpdateAclMutation.graphql";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -83,6 +85,16 @@ const UnlistedNote: React.FC = () => {
     );
 };
 
+const updateVideoAcl = graphql`
+    mutation AccessUpdateAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
+        updateEventAcl(id: $id, acl: $acl) {
+            ...on AuthorizedEvent {
+                acl { role actions info { label implies large } }
+            }
+        }
+    }
+`;
+
 type AccessUIProps = {
     event: AuthorizedEvent;
     knownRoles: AccessKnownRolesData$data;
@@ -90,6 +102,8 @@ type AccessUIProps = {
 
 const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commit, inFlight] = useMutation<AccessUpdateAclMutation>(updateVideoAcl);
 
     const initialAcl: Acl = new Map(
         event.acl.map(item => [item.role, {
@@ -99,6 +113,23 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
     );
 
     const [selections, setSelections] = useState<Acl>(initialAcl);
+
+    const onSubmit = async () => {
+        commit({
+            variables: {
+                id: event.id,
+                acl: [...selections].map(
+                    ([role, { actions }]) => ({
+                        role,
+                        actions: [...actions],
+                    })
+                ),
+            },
+            onCompleted: () => currentRef(saveModalRef).done(),
+            onError: error => setCommitError(displayCommitError(error)),
+        });
+    };
+
 
     return (
         <div css={{ maxWidth: 1040 }}>
@@ -114,14 +145,17 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
                     permissionLevels={READ_WRITE_ACTIONS}
                 />
                 <AclEditButtons
-                    {...{ selections, setSelections, initialAcl, saveModalRef }}
-                    kind="write"
-                    onSubmit={async (acl: Acl) => {
-                        // TODO: Actually save new ACL.
-                        // eslint-disable-next-line no-console
-                        console.log(acl);
+                    {...{
+                        selections,
+                        setSelections,
+                        initialAcl,
+                        inFlight,
+                        saveModalRef,
+                        onSubmit,
                     }}
+                    kind="write"
                 />
+                {boxError(commitError)}
             </div>
         </div>
     );
