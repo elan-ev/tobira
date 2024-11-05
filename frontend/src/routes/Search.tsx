@@ -807,8 +807,18 @@ const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) =>
         display: "grid",
         gridAutoColumns: "1fr",
         "> div": {
-            outline: `1px solid ${COLORS.neutral10}`,
+            position: "relative",
             borderRadius: 8,
+            // The outline needs to be in a pseudo element as otherwise, it is
+            // hidden behind the img for some reason.
+            "::after": {
+                content: "''",
+                position: "absolute",
+                inset: 0,
+                borderRadius: 8,
+                outline: `2px solid ${COLORS.neutral70}`,
+                outlineOffset: -2,
+            },
         },
         "> div:not(:last-child)": {
             boxShadow: "3px -2px 6px rgba(0, 0, 0, 40%)",
@@ -829,8 +839,27 @@ const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) =>
             gridRow: "1 / span 10",
         },
     }}>
-        {thumbnails?.map((info, idx) => <div key={idx}>
+        {thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>
             <SeriesThumbnail {...{ info, title }} />
+        </div>)}
+        {/* Add fake thumbnails to always have 3. The visual image of 3 things behind each other
+            is more important than actually showing the correct number of thumbnails. */}
+        {[...Array(Math.max(0, 3 - thumbnails.length))].map((_, idx) => <div key={"dummy" + idx}>
+            <ThumbnailOverlayContainer css={{
+                // Pattern from https://css-pattern.com/lines-dots/, MIT licensed:
+                // https://github.com/Afif13/CSS-Pattern
+                "--s": "24px", // Size
+                "--c1": COLORS.neutral25,
+                "--c2": COLORS.neutral20,
+
+                "--c": "#0000 71%, var(--c1) 0 79%, #0000 0",
+                "--_s": "calc(var(--s)/2)/calc(2*var(--s)) calc(2*var(--s))",
+                background: `
+                    linear-gradient(45deg,var(--c)) calc(var(--s)/-2) var(--_s),
+                    linear-gradient(135deg,var(--c)) calc(var(--s)/2) var(--_s),
+                    radial-gradient(var(--c1) 35%,var(--c2) 37%) 0 0/var(--s) var(--s)
+                `,
+            }} />
         </div>)}
     </div>
 );
