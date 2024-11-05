@@ -13,7 +13,12 @@ import {
     OpencastVideoRoute,
     VideoRoute,
 } from "./routes/Video";
-import { DirectSeriesOCRoute, DirectSeriesRoute } from "./routes/Series";
+import {
+    DirectSeriesOCRoute,
+    DirectSeriesRoute,
+    OpencastSeriesRoute,
+    SeriesRoute,
+} from "./routes/Series";
 import { ManageVideosRoute } from "./routes/manage/Video";
 import { UploadRoute } from "./routes/Upload";
 import { SearchRoute } from "./routes/Search";
@@ -45,6 +50,8 @@ const {
         SearchRoute,
         OpencastVideoRoute,
         VideoRoute,
+        OpencastSeriesRoute,
+        SeriesRoute,
         DirectVideoRoute,
         DirectOpencastVideoRoute,
         DirectSeriesRoute,
