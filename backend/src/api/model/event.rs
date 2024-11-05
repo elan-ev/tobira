@@ -478,6 +478,10 @@ impl AuthorizedEvent {
     }
 
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
+        if !context.config.general.allow_acl_edit {
+            return Err(err::not_authorized!("editing ACLs is not allowed"));
+        }
+
         info!(event_id = %id, "Requesting ACL update of event");
         let event = Self::load_for_api(
             id,

@@ -251,12 +251,12 @@ impl Realm {
             admin_roles = coalesce($3, admin_roles) \
             where id = $1",
             &[&realm.key, &permissions.moderator_roles, &permissions.admin_roles],
-        )
-        .await?;
+        ).await?;
 
         Self::load_by_key(realm.key, context).await.map(Option::unwrap).inspect_(|new| {
             info!(
-                "Updated permissions of realm {:?} ({}) from moderators: '{:?}' to '{:?}' and from admins: '{:?}' to '{:?}'",
+                "Updated permissions of realm {:?} ({}) from moderators: '{:?}' to '{:?}' \
+                and from admins: '{:?}' to '{:?}'",
                 realm.key,
                 realm.full_path,
                 realm.moderator_roles,

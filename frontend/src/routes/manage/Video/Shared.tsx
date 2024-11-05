@@ -12,9 +12,10 @@ import { b64regex } from "../../util";
 import { Thumbnail } from "../../../ui/Video";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
 import { Link } from "../../../router";
-import { eventId, isExperimentalFlagSet, keyOfId } from "../../../util";
+import { eventId, keyOfId } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
+import CONFIG from "../../../config";
 
 
 export const PAGE_WIDTH = 1100;
@@ -155,7 +156,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         },
     ];
 
-    if (isExperimentalFlagSet()) {
+    if (CONFIG.allowAclEdit) {
         entries.splice(1, 0, {
             url: `/~manage/videos/${id}/access`,
             page: "acl",

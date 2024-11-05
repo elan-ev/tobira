@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { boxError, currentRef, WithTooltip } from "@opencast/appkit";
+import { boxError, Card, currentRef, WithTooltip } from "@opencast/appkit";
 import { useRef, useState } from "react";
 import { LuInfo } from "react-icons/lu";
 import { graphql, useFragment, useMutation } from "react-relay";
@@ -22,6 +22,7 @@ import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
 import { ConfirmationModalHandle } from "../../../ui/Modal";
 import { displayCommitError } from "../Realm/util";
 import { AccessUpdateAclMutation } from "./__generated__/AccessUpdateAclMutation.graphql";
+import CONFIG from "../../../config";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -55,7 +56,11 @@ const AclPage: React.FC<AclPageProps> = ({ event, data }) => {
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
         {event.hostRealms.length < 1 && <UnlistedNote />}
-        <AccessUI {...{ event, knownRoles }} />
+        <br />
+        {CONFIG.allowAclEdit
+            ? <AccessUI {...{ event, knownRoles }} />
+            : <Card kind="info">ACL editing is disabled.</Card>
+        }
     </>;
 };
 

@@ -110,6 +110,18 @@ pub(crate) struct GeneralConfig {
     /// (partial) name.
     #[config(default = false)]
     pub users_searchable: bool,
+
+    /// This allows users to edit the ACL of events they have write access for.
+    /// Doing so will update these in Opencast and start the `republish-metadata`
+    /// workflow to propagate the changes to other publications as well.
+    /// Instead of waiting for the workflow however, Tobira will also immediately
+    /// store the updated ACL in its database.
+    ///
+    /// Note that this might lead to situations where the event ACL in Tobira is different
+    /// from that in other publications, mainly if the afore mentioned workflow fails
+    /// or takes an unusually long time to complete.
+    #[config(default = true)]
+    pub allow_acl_edit: bool,
 }
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];
