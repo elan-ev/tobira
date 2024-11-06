@@ -395,28 +395,71 @@ type SearchResultsProps = {
     items: Results["items"];
 };
 
-const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
-    <ul css={{
-        listStyle: "none",
-        padding: 0,
-        // A warm grey for highlighting matches.
-        "--highlight-color": useColorScheme().scheme === "dark" ? "#3f3e31" : "#f3f1e0",
-    }}>
-        {items.map(item => {
-            if (item.__typename === "SearchEvent") {
-                return <SearchEvent key={item.id} {...item} />;
-            } else if (item.__typename === "SearchSeries") {
-                return <SearchSeries key={item.id} {...item} />;
-            } else if (item.__typename === "SearchRealm") {
-                return <SearchRealm key={item.id} {...item} />;
-            } else {
-                // eslint-disable-next-line no-console
-                console.warn("Unknown search item type: ", item.__typename);
-                return null;
+const SearchResults: React.FC<SearchResultsProps> = ({ items }) => {
+    // Make search results navigatable by arrow keys. For this we don't use any
+    // react state, but DOM methods directly. This is way easier in this case
+    // to properly deal with changing focus due to use of the tab-key for
+    // example. Using tab and arrow keys in hybrid works with this approach.
+    // For this to work we add marker class names to two nodes below.
+    useEffect(() => {
+        const focus = (e: Element | null) => {
+            const a = e?.querySelector("a.search-result-item-overlay-link");
+            if (a && a instanceof HTMLElement) {
+                a.focus();
             }
-        })}
-    </ul>
-);
+        };
+
+        const handler = (e: KeyboardEvent) => {
+            let dir: "up" | "down";
+            if (e.key === "ArrowDown") {
+                dir = "down";
+            } else if (e.key === "ArrowUp") {
+                dir = "up";
+            } else {
+                return;
+            }
+
+            e.preventDefault();
+
+            const selected = document.querySelector(".search-result-item:focus-within");
+            if (selected == null) {
+                if (dir === "down") {
+                    focus(document.querySelector(".search-result-item"));
+                }
+            } else {
+                focus(selected[match(dir, {
+                    down: () => "nextElementSibling" as const,
+                    up: () => "previousElementSibling" as const,
+                })]);
+            }
+        };
+        document.addEventListener("keydown", handler);
+        return () => document.removeEventListener("keydown", handler);
+    });
+
+    return (
+        <ul css={{
+            listStyle: "none",
+            padding: 0,
+            // A warm grey for highlighting matches.
+            "--highlight-color": useColorScheme().scheme === "dark" ? "#3f3e31" : "#f3f1e0",
+        }}>
+            {items.map(item => {
+                if (item.__typename === "SearchEvent") {
+                    return <SearchEvent key={item.id} {...item} />;
+                } else if (item.__typename === "SearchSeries") {
+                    return <SearchSeries key={item.id} {...item} />;
+                } else if (item.__typename === "SearchRealm") {
+                    return <SearchRealm key={item.id} {...item} />;
+                } else {
+                    // eslint-disable-next-line no-console
+                    console.warn("Unknown search item type: ", item.__typename);
+                    return null;
+                }
+            })}
+        </ul>
+    );
+};
 
 const SearchEvent: React.FC<EventItem> = ({
     id,
@@ -932,7 +975,7 @@ type ItemProps = {
 };
 
 const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
-    <li css={{
+    <li className="search-result-item" css={{
         position: "relative",
         display: "flex",
         flexDirection: "row",
@@ -954,7 +997,7 @@ const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
             gap: 12,
         },
     }}>
-        <Link to={link} css={{
+        <Link to={link} className="search-result-item-overlay-link" css={{
             position: "absolute",
             inset: 0,
             borderRadius: 12,
