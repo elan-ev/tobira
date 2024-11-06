@@ -213,7 +213,7 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
         body = <CenteredNote>{t("search.too-few-characters")}</CenteredNote>;
     } else if (outcome.__typename === "SearchUnavailable") {
         body = <div css={{ textAlign: "center" }}>
-            <Card kind="error">{t("search.unavailable")}</Card>
+            <Card kind="error" css={{ margin: 32 }}>{t("search.unavailable")}</Card>
         </div>;
     } else if (outcome.__typename === "SearchResults") {
         body = outcome.items.length === 0
