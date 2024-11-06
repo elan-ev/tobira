@@ -1072,10 +1072,10 @@ const highlightText = (
             prefix = `${start} … ${end}`;
         }
 
-        textParts.push(<span key={offset + 1}>{prefix}</span>);
-        textParts.push(
-            <mark key={offset}>{middle}</mark>
-        );
+        if (prefix) {
+            textParts.push(<span key={offset}>{prefix}</span>);
+        }
+        textParts.push(<mark key={offset + prefix.length}>{middle}</mark>);
         remainingText = rest;
         offset = span.start + span.len;
     }
