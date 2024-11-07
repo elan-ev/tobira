@@ -9,7 +9,7 @@ import {
     LuX,
 } from "react-icons/lu";
 import { LetterText } from "lucide-react";
-import { ReactNode, RefObject, useEffect, useRef } from "react";
+import { ReactNode, RefObject, useEffect, useRef, useState } from "react";
 import {
     Button,
     Card,
@@ -638,16 +638,35 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
     const sectionLink = (startMs: number) => `${link}?t=${secondsToTimeString(startMs / 1000)}`;
     const [queryRef, loadQuery]
         = useQueryLoader<SearchSlidePreviewQuery>(slidePreviewQuery);
+    const ref = useRef<HTMLDivElement>(null);
+
+    // We initially don't render the actual matches at all, since that costs
+    // quite a bit of time, especially when there are many many matches. So
+    // instead, we only render properly once the timeline is close to the
+    // viewport. This means that on the initial route render, only empty
+    // timelines are rendered. Then all matches inside the viewport are
+    // rendered, and only when scrolling down, further matches are rendered.
+    const [doRender, setDoRender] = useState(true);
+    useEffect(() => {
+        const handler = () => setDoRender(false);
+        const observer = new IntersectionObserver(handler, {
+            root: null,
+            rootMargin: "200px 0px 200px 0px",
+            threshold: 0,
+        });
+        observer.observe(ref.current!);
+        return () => observer.disconnect();
+    });
 
     // For a more useful tab order.
-    const sortedMatches = [...textMatches];
+    const sortedMatches = doRender ? [] : [...textMatches];
     sortedMatches.sort((a, b) => a.start - b.start);
 
     // We load the query once the user hovers over the parent container. This
     // seems like it would send a query every time the mouse enters, but relay
     // caches the results, so it is only sent once.
     return (
-        <div onMouseEnter={() => { loadQuery({ id: eventId(keyOfId(id)) }); }} css={{
+        <div ref={ref} onMouseEnter={() => { loadQuery({ id: eventId(keyOfId(id)) }); }} css={{
             width: "calc(100% - 8px)",
             position: "relative",
             height: 10.5,
