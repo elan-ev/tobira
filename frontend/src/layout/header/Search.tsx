@@ -10,6 +10,7 @@ import {
     SearchRoute,
     isSearchActive,
     isValidSearchItemType,
+    SEARCH_TIMINGS,
 } from "../../routes/Search";
 import { focusStyle } from "../../ui";
 import { Spinner } from "@opencast/appkit";
@@ -141,8 +142,15 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         // route.
                         autoFocus={variant === "mobile" || onSearchRoute}
                         onChange={e => {
+                            const q = e.target.value;
+                            if (!(q in SEARCH_TIMINGS)) {
+                                SEARCH_TIMINGS[q] = {};
+                            }
+                            SEARCH_TIMINGS[q].input = window.performance.now();
+
                             clearTimeout(lastTimeout.current);
                             lastTimeout.current = setTimeout(() => {
+                                SEARCH_TIMINGS[q].startSearch = window.performance.now();
                                 search(e.target.value);
                             }, 30);
                         }}

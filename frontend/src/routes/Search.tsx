@@ -89,8 +89,13 @@ export const SearchRoute = makeRoute({
         }
 
         const q = url.searchParams.get("q") ?? "";
-        const filters = prepareFilters(url);
 
+        if (!(q in SEARCH_TIMINGS)) {
+            SEARCH_TIMINGS[q] = {};
+        }
+        SEARCH_TIMINGS[q].routeMatch = window.performance.now();
+
+        const filters = prepareFilters(url);
         const queryRef = loadQuery<SearchQuery>(query, { q, filters });
 
         return {
@@ -98,7 +103,10 @@ export const SearchRoute = makeRoute({
                 {...{ query, queryRef }}
                 noindex
                 nav={() => []}
-                render={data => <SearchPage {...{ q }} outcome={data.search} />}
+                render={data => {
+                    SEARCH_TIMINGS[q].queryReturned = window.performance.now();
+                    return <SearchPage {...{ q }} outcome={data.search} />;
+                }}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -198,6 +206,26 @@ type Props = {
 const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     const { t } = useTranslation();
     const router = useRouter();
+
+    useEffect(() => {
+        if (!isExperimentalFlagSet() || LAST_PRINTED_TIMINGS_QUERY === q) {
+            return;
+        }
+
+        const info = SEARCH_TIMINGS[q];
+        info.rendered = window.performance.now();
+        const diff = (a?: number, b?: number) => !a || !b ? null : Math.round(b - a);
+        // eslint-disable-next-line no-console
+        console.table([{
+            q: q,
+            debounce: diff(info.input, info.startSearch),
+            routing: diff(info.startSearch, info.routeMatch),
+            query: diff(info.routeMatch, info.queryReturned),
+            backend: outcome.__typename === "SearchResults" ? outcome.duration : null,
+            render: diff(info.queryReturned, info.rendered),
+        }]);
+        LAST_PRINTED_TIMINGS_QUERY = q;
+    });
 
     useEffect(() => {
         const handleEscape = ((ev: KeyboardEvent) => {
@@ -1139,3 +1167,14 @@ const highlightCss = (color: string) => ({
     backgroundColor: "var(--highlight-color)",
     borderRadius: 2,
 });
+
+
+// This is for profiling search performance. We might remove this later again.
+export const SEARCH_TIMINGS: Record<string, {
+    input?: DOMHighResTimeStamp;
+    startSearch?: DOMHighResTimeStamp;
+    routeMatch?: DOMHighResTimeStamp;
+    queryReturned?: DOMHighResTimeStamp;
+    rendered?: DOMHighResTimeStamp;
+}> = {};
+let LAST_PRINTED_TIMINGS_QUERY: string | null = null;
