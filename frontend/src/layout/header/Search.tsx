@@ -72,7 +72,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
 
 
     const lastTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    useEffect(() => () => clearTimeout(lastTimeout.current));
 
     const onSearchRoute = isSearchActive();
     const getSearchParam = (searchParameter: string) => {
