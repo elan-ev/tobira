@@ -57,36 +57,25 @@ pub(crate) struct SearchResults<T> {
     pub(crate) total_hits: usize,
 }
 
-#[juniper::graphql_object(Context = Context)]
-impl SearchResults<NodeValue> {
-    fn items(&self) -> &[NodeValue] {
-        &self.items
-    }
-    fn total_hits(&self) -> i32 {
-        self.total_hits as i32
-    }
+macro_rules! make_search_results_object {
+    ($name:literal, $ty:ty) => {
+        #[juniper::graphql_object(Context = Context, name = $name)]
+        impl SearchResults<$ty> {
+            fn items(&self) -> &[$ty] {
+                &self.items
+            }
+            fn total_hits(&self) -> i32 {
+                self.total_hits as i32
+            }
+        }
+    };
 }
 
-#[juniper::graphql_object(Context = Context, name = "EventSearchResults")]
-impl SearchResults<SearchEvent> {
-    fn items(&self) -> &[SearchEvent] {
-        &self.items
-    }
-}
+make_search_results_object!("SearchResults", NodeValue);
+make_search_results_object!("EventSearchResults", SearchEvent);
+make_search_results_object!("SeriesSearchResults", SearchSeries);
+make_search_results_object!("PlaylistSearchResults", search::Playlist);
 
-#[juniper::graphql_object(Context = Context, name = "SeriesSearchResults")]
-impl SearchResults<SearchSeries> {
-    fn items(&self) -> &[SearchSeries] {
-        &self.items
-    }
-}
-
-#[juniper::graphql_object(Context = Context, name = "PlaylistSearchResults")]
-impl SearchResults<search::Playlist> {
-    fn items(&self) -> &[search::Playlist] {
-        &self.items
-    }
-}
 
 #[derive(Debug, GraphQLObject)]
 pub struct ByteSpan {

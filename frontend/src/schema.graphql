@@ -7,6 +7,7 @@ union Event = AuthorizedEvent | NotAllowed
 
 type EventSearchResults {
   items: [SearchEvent!]!
+  totalHits: Int!
 }
 
 input NewTitleBlock {
@@ -350,6 +351,7 @@ interface Node {
 
 type SeriesSearchResults {
   items: [SearchSeries!]!
+  totalHits: Int!
 }
 
 "A match inside an event's texts while searching."
@@ -740,6 +742,7 @@ scalar TranslatedString
 
 type PlaylistSearchResults {
   items: [SearchPlaylist!]!
+  totalHits: Int!
 }
 
 input UpdateSeriesBlock {
