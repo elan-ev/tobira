@@ -116,6 +116,17 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 event.preventDefault();
                 clearTimeout(lastTimeout.current);
                 search(currentRef(ref).value);
+
+                // Hide mobile keyboard on enter. The mobile keyboard hides lots
+                // of results and intuitively, pressing "enter" on it should
+                // close the keyboard. We don't want to remove focus for
+                // desktop users though, since that doesn't do any good. The
+                // check is not perfect but should actually detect virtual
+                // keyboard very reliably.
+                const visualHeight = window.visualViewport?.height;
+                if (visualHeight && visualHeight < window.innerHeight) {
+                    ref.current?.blur();
+                }
             }}>
                 <label css={{ display: "flex" }}>
                     <span css={{ display: "none" }}>{t("search.input-label")}</span>
