@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
@@ -14,7 +14,7 @@ import {
 } from "../../routes/Search";
 import { focusStyle } from "../../ui";
 import { Spinner } from "@opencast/appkit";
-import { currentRef, useDebounce } from "../../util";
+import { currentRef } from "../../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
 import { useUser } from "../../User";
@@ -28,7 +28,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
     const router = useRouter();
     const ref = useRef<HTMLInputElement>(null);
-    const { debounce } = useDebounce();
 
     // If the user is unknown, then we are still in the initial loading phase.
     // We don't want users to input anything into the search field in that
@@ -85,14 +84,14 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const defaultValue = getSearchParam("q");
 
 
-    const search = useCallback(debounce((expression: string) => {
+    const search = (expression: string) => {
         const filters = {
             itemType: isValidSearchItemType(getSearchParam("f")),
             start: getSearchParam("start"),
             end: getSearchParam("end"),
         };
         router.goto(SearchRoute.url({ query: expression, ...filters }), onSearchRoute);
-    }, 250), []);
+    };
 
     return (
         <div css={{
