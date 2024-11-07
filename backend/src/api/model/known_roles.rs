@@ -6,7 +6,7 @@ use crate::{
     prelude::*,
     db::util::{impl_from_db, select},
 };
-use super::search::{SearchUnavailable, SearchResults, handle_search_result};
+use super::search::{handle_search_result, measure_search_duration, SearchResults, SearchUnavailable};
 
 
 // ===== Groups ===============================================================
@@ -73,6 +73,7 @@ pub(crate) async fn search_known_users(
     query: String,
     context: &Context,
 ) -> ApiResult<KnownUsersSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
@@ -127,5 +128,5 @@ pub(crate) async fn search_known_users(
         items.extend(results.hits.into_iter().map(|h| h.result));
     }
 
-    Ok(KnownUsersSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(KnownUsersSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }

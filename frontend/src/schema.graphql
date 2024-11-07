@@ -8,6 +8,8 @@ union Event = AuthorizedEvent | NotAllowed
 type EventSearchResults {
   items: [SearchEvent!]!
   totalHits: Int!
+  "How long searching took in ms."
+  duration: Int!
 }
 
 input NewTitleBlock {
@@ -352,6 +354,8 @@ interface Node {
 type SeriesSearchResults {
   items: [SearchSeries!]!
   totalHits: Int!
+  "How long searching took in ms."
+  duration: Int!
 }
 
 "A match inside an event's texts while searching."
@@ -382,6 +386,8 @@ type Track {
 type SearchResults {
   items: [Node!]!
   totalHits: Int!
+  "How long searching took in ms."
+  duration: Int!
 }
 
 input UpdateTextBlock {
@@ -743,6 +749,8 @@ scalar TranslatedString
 type PlaylistSearchResults {
   items: [SearchPlaylist!]!
   totalHits: Int!
+  "How long searching took in ms."
+  duration: Int!
 }
 
 input UpdateSeriesBlock {

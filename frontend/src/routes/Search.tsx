@@ -184,6 +184,7 @@ const query = graphql`
                     }
                 }
                 totalHits
+                duration
             }
         }
     }
@@ -224,12 +225,18 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     }
 
     const hits = outcome.__typename === "SearchResults" ? outcome.totalHits : 0;
+    const timingInfo = isExperimentalFlagSet() && outcome.__typename === "SearchResults"
+        ? <>{` • ${outcome.duration}ms`}</>
+        : null;
 
     return <>
         <Breadcrumbs path={[]} tail={q
-            ? <Trans i18nKey={"search.title"} count={hits}>
-                {{ query: q }}
-            </Trans>
+            ? <>
+                <Trans i18nKey={"search.title"} count={hits}>
+                    {{ query: q }}
+                </Trans>
+                {timingInfo}
+            </>
             : t("search.no-query")
         } />
         <div css={{ maxWidth: 900, margin: "0 auto" }}>

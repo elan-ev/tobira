@@ -3,7 +3,7 @@ use juniper::GraphQLObject;
 use meilisearch_sdk::MatchRange;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::{borrow::Cow, collections::HashMap, fmt};
+use std::{borrow::Cow, collections::HashMap, fmt, time::Instant};
 
 use crate::{
     api::{
@@ -55,6 +55,7 @@ pub(crate) enum SearchOutcome {
 pub(crate) struct SearchResults<T> {
     pub(crate) items: Vec<T>,
     pub(crate) total_hits: usize,
+    pub(crate) duration: i32,
 }
 
 macro_rules! make_search_results_object {
@@ -66,6 +67,10 @@ macro_rules! make_search_results_object {
             }
             fn total_hits(&self) -> i32 {
                 self.total_hits as i32
+            }
+            /// How long searching took in ms.
+            fn duration(&self) -> i32 {
+                self.duration
             }
         }
     };
@@ -150,6 +155,7 @@ pub(crate) async fn perform(
     filters: Filters,
     context: &Context,
 ) -> ApiResult<SearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if user_query.is_empty() {
         return Ok(SearchOutcome::EmptyQuery(EmptyQuery));
     }
@@ -171,7 +177,11 @@ pub(crate) async fn perform(
             .into_iter()
             .collect();
         let total_hits = items.len();
-        return Ok(SearchOutcome::Results(SearchResults { items, total_hits }));
+        return Ok(SearchOutcome::Results(SearchResults {
+            items,
+            total_hits,
+            duration: elapsed_time(),
+        }));
     }
 
 
@@ -278,7 +288,11 @@ pub(crate) async fn perform(
     merged.sort_unstable_by(|(_, score0), (_, score1)| score1.unwrap().total_cmp(&score0.unwrap()));
 
     let items = merged.into_iter().map(|(node, _)| node).collect();
-    Ok(SearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(SearchOutcome::Results(SearchResults {
+        items,
+        total_hits,
+        duration: elapsed_time(),
+    }))
 }
 
 fn looks_like_opencast_uuid(query: &str) -> bool {
@@ -305,6 +319,7 @@ pub(crate) async fn all_events(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<EventSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
@@ -334,7 +349,7 @@ pub(crate) async fn all_events(
     let items = results.hits.into_iter().map(|h| SearchEvent::new(h)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
 // See `EventSearchOutcome` for additional information.
@@ -350,6 +365,7 @@ pub(crate) async fn all_series(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<SeriesSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
@@ -385,7 +401,7 @@ pub(crate) async fn all_series(
     let items = results.hits.into_iter().map(|h| SearchSeries::new(h, context)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
 #[derive(juniper::GraphQLUnion)]
@@ -400,6 +416,7 @@ pub(crate) async fn all_playlists(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<PlaylistSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
@@ -429,7 +446,7 @@ pub(crate) async fn all_playlists(
     let items = results.hits.into_iter().map(|h| h.result).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(PlaylistSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(PlaylistSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
 // TODO: replace usages of this and remove this.
@@ -556,4 +573,9 @@ fn field_matches_for(
         .map(|m| ByteSpan { start: m.start as i32, len: m.length as i32 })
         .take(8) // The frontend can only show a limited number anyway
         .collect()
+}
+
+pub(crate) fn measure_search_duration() -> impl FnOnce() -> i32 {
+    let start = Instant::now();
+    move || start.elapsed().as_millis() as i32
 }
