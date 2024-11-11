@@ -828,6 +828,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
         }}>
             {/* Reset button */}
             <Button
+                kind="danger"
                 disabled={buttonsDisabled}
                 onClick={() => currentRef(resetModalRef).open()}
                 css={{ ...!buttonsDisabled && { ":hover": { color: COLORS.danger0 } } }}
@@ -855,6 +856,8 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
 
             {/* Save button */}
             <Button
+                type="submit"
+                kind="call-to-action"
                 disabled={buttonsDisabled}
                 onClick={() => !containsUser(selections)
                     ? currentRef(saveModalRef).open()

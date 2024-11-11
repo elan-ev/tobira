@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { LuCornerLeftUp, LuInfo, LuShield, LuPlay, LuPenLine } from "react-icons/lu";
+import { LuCornerLeftUp, LuInfo, LuShieldCheck, LuPlay, LuPenLine } from "react-icons/lu";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
@@ -165,7 +165,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         entries.splice(1, 0, {
             url: `/~manage/videos/${id}/access`,
             page: "acl",
-            body: <><LuShield />{t("manage.my-videos.acl.title")}</>,
+            body: <><LuShieldCheck />{t("manage.my-videos.acl.title")}</>,
         });
     }
 
