@@ -105,6 +105,10 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
                         notOurFault = false;
                         return t("errors.opencast-unavailable");
                     },
+                    OPENCAST_ERROR: () => {
+                        notOurFault = false;
+                        return "errors.opencast-error";
+                    },
                 });
                 causes.add(msg);
             }

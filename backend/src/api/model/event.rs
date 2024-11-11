@@ -281,6 +281,11 @@ impl AuthorizedEvent {
         &self.tobira_deletion_timestamp
     }
 
+    /// Whether the event has active workflows.
+    async fn has_active_workflows(&self, context: &Context) -> ApiResult<bool> {
+        Self::has_active_workflows(&self, context).await
+    }
+
     async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
         if let Some(series) = self.series {
             Ok(Series::load_by_key(series, context).await?)
@@ -477,6 +482,26 @@ impl AuthorizedEvent {
         }
     }
 
+    async fn has_active_workflows(&self, context: &Context) -> ApiResult<bool> {
+        if !context.auth.overlaps_roles(&self.write_roles) {
+            return Err(err::not_authorized!(
+                key = "event.workflow.not-allowed",
+                "you are not allowed to inquire about this event's workflow activity",
+            ));
+        }
+
+        let response = context
+            .oc_client
+            .has_active_workflows(&self.opencast_id)
+            .await
+            .map_err(|e| {
+                error!("Failed to get workflow activity: {}", e);
+                err::opencast_error!("API returned unexpected response, event might be unknown")
+            })?;
+
+        Ok(response)
+    }
+
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
         if !context.config.general.allow_acl_edit {
             return Err(err::not_authorized!("editing ACLs is not allowed"));
@@ -495,6 +520,13 @@ impl AuthorizedEvent {
                 "you are not allowed to update this event's acl",
             )
         ).await?;
+
+        if Self::has_active_workflows(&event, context).await? {
+            return Err(err::opencast_error!(
+                key = "event.workflow.active",
+                "acl change blocked by another workflow",
+            ));
+        }
 
         let response = context
             .oc_client
@@ -530,7 +562,7 @@ impl AuthorizedEvent {
                 "Failed to update event acl, OC returned status: {}",
                 response.status(),
             );
-            Err(err::internal_server_error!("Opencast API error: {}", response.status()))
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
         }
     }
 
@@ -552,7 +584,7 @@ impl AuthorizedEvent {
         } else if response.status() == StatusCode::NOT_FOUND {
             // 404: The specified workflow instance does not exist.
             warn!(%workflow_id, event_id = %oc_id, "The specified workflow instance does not exist.");
-            Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
         } else {
             warn!(
                 %workflow_id,
@@ -560,7 +592,7 @@ impl AuthorizedEvent {
                 "Failed to create workflow, OC returned status: {}",
                 response.status(),
             );
-            Err(err::internal_server_error!("Opencast API error: {}", response.status()))
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
         }
     }
 

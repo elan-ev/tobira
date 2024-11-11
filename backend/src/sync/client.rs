@@ -220,6 +220,20 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
+    pub async fn has_active_workflows(&self, oc_id: &str) -> Result<bool> {
+        let pq = format!("/api/events/{oc_id}");
+        let req = self.authed_req_builder(&self.external_api_node, &pq)
+            .body(RequestBody::empty())
+            .expect("failed to build request");
+        let uri = req.uri().clone();
+        let response = self.http_client.request(req)
+            .await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
+
+        let (out, _) = self.deserialize_response::<EventStatus>(response, &uri).await?;
+        Ok(out.processing_state == "RUNNING")
+    }
+
     fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
         let req = self.authed_req_builder(node, path_and_query)
             .body(RequestBody::empty())
@@ -288,4 +302,9 @@ struct AclInput {
     allow: bool,
     action: String,
     role: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EventStatus {
+    pub processing_state: String,
 }

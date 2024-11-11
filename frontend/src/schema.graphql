@@ -322,6 +322,8 @@ type AuthorizedEvent implements Node {
   "Whether the current user has write access to this event."
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTimeUtc
+  "Whether the event has active workflows."
+  hasActiveWorkflows: Boolean!
   series: Series
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!

@@ -31,6 +31,7 @@ export const makeManageVideoRoute = (
     page: ManageVideoSubPageType,
     path: string,
     render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
+    options?: { fetchWorkflowState?: boolean },
 ): Route & { url: (args: { videoId: string }) => string } => (
     makeRoute({
         url: ({ videoId }: { videoId: string }) => `/~manage/videos/${keyOfId(videoId)}/${path}`,
@@ -42,7 +43,10 @@ export const makeManageVideoRoute = (
             }
 
             const videoId = decodeURIComponent(params[1]);
-            const queryRef = loadQuery<SharedVideoManageQuery>(query, { id: eventId(videoId) });
+            const queryRef = loadQuery<SharedVideoManageQuery>(query, {
+                id: eventId(videoId),
+                fetchWorkflowState: options?.fetchWorkflowState ?? false,
+            });
 
             return {
                 render: () => <RootLoader
@@ -74,7 +78,7 @@ export const makeManageVideoRoute = (
 // what they request. It just simplifies our code a lot and we only pay by
 // overfetching a bit.
 const query = graphql`
-    query SharedVideoManageQuery($id: ID!) {
+    query SharedVideoManageQuery($id: ID!, $fetchWorkflowState: Boolean!) {
         ...UserData
         ...AccessKnownRolesData
         event: eventById(id: $id) {
@@ -87,6 +91,7 @@ const query = graphql`
                 created
                 canWrite
                 isLive
+                hasActiveWorkflows @include(if: $fetchWorkflowState)
                 acl { role actions info { label implies large } }
                 syncedData {
                     duration

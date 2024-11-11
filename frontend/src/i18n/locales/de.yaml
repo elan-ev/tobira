@@ -48,6 +48,7 @@ errors:
   might-need-to-login-link: Sie müssen sich möglicherweise <1>einloggen</1>.
   invalid-input: Ungültige Eingabe.
   opencast-unavailable: Opencast ist momentan nicht erreichbar.
+  opencast-error: Unerwartete Opencast Antwort.
   internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
   unknown: Unbekannter Fehler.
@@ -335,6 +336,11 @@ manage:
   access:
     authorized-groups: Autorisierte Gruppen
     authorized-users: Autorisierte Personen
+    editing-disabled: Bearbeitung der Zugangsberechtigungen ist deaktiviert.
+    workflow-active: >
+      Änderung der Berechtigungen ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
+      <br />
+      Bitte versuchen Sie es später nochmal.
     users-no-options:
       initial-searchable: Nach Name suchen oder exakten Nutzernamen/exakte E-Mail angeben
       none-found-searchable: Keine Personen gefunden
@@ -665,6 +671,9 @@ api-remote-errors:
     acl:
       not-found: "Zugriffsrechte konnten nicht geändert werden: Video nicht gefunden."
       not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieses Videos zu ändern.
+    workflow:
+      not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
+      active: $t(manage.access.workflow-active)
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.
