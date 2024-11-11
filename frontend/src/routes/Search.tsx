@@ -477,7 +477,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => {
             listStyle: "none",
             padding: 0,
             // A warm grey for highlighting matches.
-            "--highlight-color": useColorScheme().scheme === "dark" ? "#3f3e31" : "#f3f1e0",
+            "--highlight-color": useColorScheme().scheme === "dark"
+                ? COLORS.neutral25
+                : COLORS.neutral20,
         }}>
             {items.map(item => {
                 if (item.__typename === "SearchEvent") {
