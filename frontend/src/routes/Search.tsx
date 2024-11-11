@@ -230,7 +230,7 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     useEffect(() => {
         const handleEscape = ((ev: KeyboardEvent) => {
             if (ev.key === "Escape") {
-                handleNavigation(router);
+                handleCancelSearch(router);
             }
         });
         document.addEventListener("keyup", handleEscape);
@@ -1103,7 +1103,7 @@ const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
 // If a user initiated the search in Tobira (i.e. neither coming from an
 // external link nor using the browser bar to manually visit the /~search route),
 // we can redirect to the previous page. Otherwise we redirect to Tobira's homepage.
-export const handleNavigation = ((router: RouterControl, ref?: RefObject<HTMLInputElement>) => {
+export const handleCancelSearch = ((router: RouterControl, ref?: RefObject<HTMLInputElement>) => {
     if (ref?.current) {
         // Why is this necessary? When a user reloads the search page and then navigates
         // away within Tobira, the search input isn't cleared like it would be usually.

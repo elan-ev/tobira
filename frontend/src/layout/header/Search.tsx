@@ -6,7 +6,7 @@ import { LuX } from "react-icons/lu";
 
 import { useRouter } from "../../router";
 import {
-    handleNavigation,
+    handleCancelSearch,
     SearchRoute,
     isSearchActive,
     isValidSearchItemType,
@@ -182,7 +182,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 css={iconStyle}
             />}
             {!router.isTransitioning && isSearchActive() && <ProtoButton
-                onClick={() => handleNavigation(router, ref)}
+                onClick={() => handleCancelSearch(router, ref)}
                 css={{
                     ":hover, :focus": {
                         color: COLORS.neutral90,
