@@ -30,6 +30,12 @@ export type MatchedRoute = {
     dispose?: () => void;
 };
 
+export type RouteMatchInfo = {
+    url: URL;
+    route: Route | FallbackRoute;
+    matchedRoute: MatchedRoute;
+}
+
 // /** Creates the internal representation of the given route. */
 // export const makeRoute = (match: (url: URL) => MatchedRoute | null): Route => ({ match });
 
@@ -55,7 +61,7 @@ type LinkProps = {
 
 /** Props of the `<Router>` component. */
 type RouterProps = {
-    initialRoute: MatchedRoute;
+    initialRoute: RouteMatchInfo;
     children: JSX.Element;
 };
 
@@ -64,13 +70,13 @@ export type RouterLib = {
      * Matches the given full href against all routes, returning the first
      * matched route or throwing an error if no route matches.
      */
-    matchRoute: (href: string) => MatchedRoute;
+    matchRoute: (href: string) => RouteMatchInfo;
 
     /**
      * Like `matchRoute(window.location.href)`. Intended to be called before
      * `React.render` to obtain the initial route for the application.
      */
-    matchInitialRoute: () => MatchedRoute;
+    matchInitialRoute: () => RouteMatchInfo;
 
     /** Hook to obtain a reference to the router. */
     useRouter: () => RouterControl;
@@ -96,7 +102,8 @@ export type RouterLib = {
 };
 
 /** Helper class: a list of listeners */
-class Listeners<F extends (...args: unknown[]) => unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+class Listeners<F extends (...args: any[]) => unknown> {
     private list: { listener: F }[] = [];
 
     /** Pass through the iterable protocol to the inner list */
@@ -118,12 +125,15 @@ class Listeners<F extends (...args: unknown[]) => unknown> {
     /** Call all listeners with the same arguments. */
     public callAll(args: Parameters<F>) {
         for (const { listener } of this.list) {
-            listener(args);
+            listener(...args);
         }
     }
 }
 
-export type AtNavListener = () => void;
+export type AtNavListener = (info: {
+    newRoute: Route | FallbackRoute;
+    newUrl: URL;
+}) => void;
 export type BeforeNavListener = () => "prevent-nav" | undefined;
 
 /** Obtained via `useRouter`, allowing you to perform some routing-related actions. */
@@ -294,23 +304,27 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         },
     );
 
-    const matchRoute = (href: string): MatchedRoute => {
+    const matchRoute = (href: string): RouteMatchInfo => {
         const url = new URL(href);
         for (const route of config.routes) {
-            const matched: MatchedRoute | null = route.match(url);
+            const matched = route.match(url);
 
             if (matched !== null) {
-                return matched;
+                return { url, route, matchedRoute: matched };
             }
         }
 
-        return config.fallback.prepare(url);
+        return {
+            url,
+            route: config.fallback,
+            matchedRoute: config.fallback.prepare(url),
+        };
     };
 
-    const matchInitialRoute = (): MatchedRoute => matchRoute(window.location.href);
+    const matchInitialRoute = (): RouteMatchInfo => matchRoute(window.location.href);
 
     type ActiveRoute = {
-        route: MatchedRoute;
+        route: RouteMatchInfo;
 
         /** A scroll position that should be restored when the route is first rendered */
         initialScroll: number | null;
@@ -351,7 +365,10 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             navigatedAway.current = true;
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
-                listeners.current.atNav.callAll([]);
+                listeners.current.atNav.callAll([{
+                    newUrl: newRoute.route.url,
+                    newRoute: newRoute.route.route,
+                }]);
             });
         };
 
@@ -440,9 +457,9 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
         // Dispose of routes when they are no longer needed.
         useEffect(() => () => {
-            if (navigatedAway.current && activeRoute.route.dispose) {
+            if (navigatedAway.current && activeRoute.route.matchedRoute.dispose) {
                 debugLog("Disposing of route: ", activeRoute);
-                activeRoute.route.dispose();
+                activeRoute.route.matchedRoute.dispose();
             }
         }, [activeRoute, navigatedAway]);
 

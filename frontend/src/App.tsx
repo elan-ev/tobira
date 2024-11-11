@@ -7,7 +7,7 @@ import { GlobalErrorBoundary } from "./util/err";
 import { environment } from "./relay";
 import { GlobalStyle } from "./GlobalStyle";
 import { ActiveRoute, Router } from "./router";
-import { MatchedRoute } from "./rauta";
+import { RouteMatchInfo } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
@@ -22,7 +22,7 @@ import { InitialConsent } from "./ui/InitialConsent";
 
 
 type Props = {
-    initialRoute: MatchedRoute;
+    initialRoute: RouteMatchInfo;
     consentGiven: boolean | null;
 };
 
