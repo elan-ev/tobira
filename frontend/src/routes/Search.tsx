@@ -267,7 +267,7 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
             </>
             : t("search.no-query")
         } />
-        <div css={{ maxWidth: 900, margin: "0 auto" }}>
+        <div css={{ maxWidth: 1000, margin: "0 auto" }}>
             {isExperimentalFlagSet() && <>
                 {/* Filters */}
                 <div>
@@ -559,12 +559,12 @@ const SearchEvent: React.FC<EventItem> = ({
                 <div css={{
                     display: "flex",
                     color: COLORS.neutral80,
-                    fontSize: 14,
+                    fontSize: 12,
                     gap: 24,
                     whiteSpace: "nowrap",
                 }}>
                     <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <LuCalendar css={{ fontSize: 16, color: COLORS.neutral60 }} />
+                        <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
                         <RelativeDate date={new Date(startTime ?? created)} isLive={isLive} />
                     </div>
                     <div css={{
@@ -574,6 +574,10 @@ const SearchEvent: React.FC<EventItem> = ({
                     }} />
                     <Creators creators={creators} css={{
                         minWidth: 0,
+                        fontSize: 12,
+                        svg: {
+                            fontSize: 15,
+                        },
                         ul: {
                             display: "inline-block",
                             overflow: "hidden",
@@ -599,10 +603,16 @@ const SearchEvent: React.FC<EventItem> = ({
                     lines={2}
                 />}
 
-                <div css={{ flexGrow: 2 }} />
+                <div css={{ flexGrow: 1 }} />
 
                 {seriesTitle && seriesId && <PartOfSeriesLink
-                    css={{ mark: highlightCss(COLORS.primary2) }}
+                    css={{
+                        mark: highlightCss(COLORS.primary2),
+                        fontSize: 12,
+                        svg: {
+                            fontSize: 15,
+                        },
+                    }}
                     seriesTitle={highlightText(seriesTitle, matches.seriesTitle)}
                     {...{ seriesId }}
                 />}
@@ -1034,19 +1044,23 @@ const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
         display: "flex",
         flexDirection: "row",
         borderRadius: 12,
-        margin: 16,
+        margin: 24,
         padding: 8,
         gap: 24,
         textDecoration: "none",
+        transition: "background 200ms, outline-color 200ms",
+        outline: "1px solid transparent",
         "&:hover, &:focus-within": {
             backgroundColor: COLORS.neutral15,
-            outline: `1px solid ${COLORS.neutral20}`,
+            outlineColor: COLORS.neutral20,
+            transition: "background 50ms, outline-color 50ms",
         },
         [screenWidthAtMost(800)]: {
             gap: 12,
-            margin: "16px 0",
+            margin: "24px 0",
         },
         [screenWidthAtMost(breakpoint)]: {
+            margin: "48px 0",
             flexDirection: "column",
             gap: 12,
         },
@@ -1059,6 +1073,7 @@ const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
         <div css={{
             flexShrink: 0,
             width: "40%",
+            maxWidth: 350,
             margin: "0 auto",
             [screenWidthAtMost(550)]: {
                 width: "unset",
@@ -1072,6 +1087,11 @@ const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
         <div css={{
             minWidth: 0,
             flex: "1",
+            [screenWidthAtMost(breakpoint)]: {
+                maxWidth: 400,
+                width: "100%",
+                margin: "0 auto",
+            },
         }}>
             {children.info}
         </div>
