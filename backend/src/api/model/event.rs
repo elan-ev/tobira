@@ -219,8 +219,7 @@ impl AuthorizedEvent {
     fn write_roles(&self) -> &[String] {
         &self.write_roles
     }
-    /// This includes all read roles (and by extension write roles,
-    /// as they are a subset of read roles).
+    /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
     fn preview_roles(&self) -> &[String] {
         &self.preview_roles
     }
@@ -365,7 +364,7 @@ impl AuthorizedEvent {
             .await?
             .map(|row| {
                 let event = Self::from_row_start(&row);
-                if context.auth.overlaps_roles(&event.preview_roles) {
+                if event.can_be_previewed(context) {
                     Event::Event(event)
                 } else {
                     Event::NotAllowed(NotAllowed)
@@ -386,7 +385,7 @@ impl AuthorizedEvent {
         context.db
             .query_mapped(&query, dbargs![&series_key], |row| {
                 let event = Self::from_row_start(&row);
-                if !context.auth.overlaps_roles(&event.preview_roles) {
+                if !event.can_be_previewed(context) {
                     return VideoListEntry::NotAllowed(NotAllowed);
                 }
 
@@ -394,6 +393,11 @@ impl AuthorizedEvent {
             })
             .await?
             .pipe(Ok)
+    }
+
+    fn can_be_previewed(&self, context: &Context) -> bool {
+        context.auth.overlaps_roles(&self.preview_roles)
+            || context.auth.overlaps_roles(&self.read_roles)
     }
 
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {

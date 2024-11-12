@@ -166,7 +166,7 @@ pub(crate) async fn perform(
         let selection = search::Event::select();
         let query = format!("select {selection} from search_events \
             where id = (select id from events where opencast_id = $1) \
-            and (preview_roles || 'ROLE_ADMIN'::text) && $2");
+            and (preview_roles || read_roles || 'ROLE_ADMIN'::text) && $2");
         let items: Vec<NodeValue> = context.db
             .query_opt(&query, &[&uuid_query, &context.auth.roles_vec()])
             .await?
@@ -188,7 +188,10 @@ pub(crate) async fn perform(
     // Prepare the event search
     let filter = Filter::And(
         std::iter::once(Filter::Leaf("listed = true".into()))
-            .chain(acl_filter("preview_roles", context))
+            .chain([Filter::Or([
+                acl_filter("preview_roles", context),
+                acl_filter("read_roles", context),
+            ].into_iter().flatten().collect())])
             // Filter out live events that are already over.
             .chain([Filter::Or([
                 Filter::Leaf("is_live = false ".into()),
@@ -332,7 +335,13 @@ pub(crate) async fn all_events(
         if writable_only {
             writable
         } else {
-            Filter::or([Filter::listed_and_readable("preview_roles", context), writable])
+            Filter::or([
+                Filter::or([
+                    Filter::acl_access("read_roles", context),
+                    Filter::acl_access("preview_roles", context),
+                ]).and_listed(context),
+                writable,
+            ])
         }
     }).to_string();
 
@@ -429,7 +438,10 @@ pub(crate) async fn all_playlists(
         if writable_only {
             writable
         } else {
-            Filter::or([Filter::listed_and_readable("read_roles", context), writable])
+            Filter::or([
+                Filter::acl_access("read_roles", context).and_listed(context),
+                writable,
+            ])
         }
     }).to_string();
 
@@ -489,17 +501,13 @@ impl Filter {
         Self::Leaf("listed = true".into())
     }
 
-    /// Returns a filter checking that the current user has read access and that
-    /// the item is listed. If the user has the privilege to find unlisted
-    /// item, the second check is not performed.
-    /// "Readable" in this context can mean either "preview-able" in case of events
-    /// or actual "readable" in case of playlists, as they do not have preview roles.
-    fn listed_and_readable(roles_field: &str, context: &Context) -> Self {
-        let readable = Self::acl_access(roles_field, context);
+    /// If the user can find unlisted items, just returns `self`. Otherweise,
+    /// `self` is ANDed with `Self::listed()`.
+    fn and_listed(self, context: &Context) -> Self {
         if context.auth.can_find_unlisted_items(&context.config.auth) {
-            readable
+            self
         } else {
-            Self::and([readable, Self::listed()])
+            Self::and([self, Self::listed()])
         }
     }
 

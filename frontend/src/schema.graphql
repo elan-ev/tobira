@@ -315,10 +315,7 @@ type AuthorizedEvent implements Node {
   readRoles: [String!]!
   "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
   writeRoles: [String!]!
-  """
-    This includes all read roles (and by extension write roles,
-    as they are a subset of read roles).
-  """
+  "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
   previewRoles: [String!]!
   syncedData: SyncedEventData
   "Returns the authorized event data if the user has read access or is authenticated for the event."

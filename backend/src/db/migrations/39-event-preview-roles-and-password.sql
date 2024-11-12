@@ -14,30 +14,11 @@ alter table all_events
     add column credentials credentials,
     add column preview_roles text[] not null default '{}';
 
--- For convenience, all read roles are also copied over to preview roles.
--- Removing any roles from read will however _not_ remove them from preview, as they
--- might also have been added separately and we can't really account for that.
-update all_events set preview_roles = read_roles;
 
-create function sync_preview_roles()
-returns trigger language plpgsql as $$
-begin
-    new.preview_roles := (
-        select array_agg(distinct role) from unnest(new.preview_roles || new.read_roles) as role
-    );
-    return new;
-end;
-$$;
-
-create trigger sync_preview_roles_on_change
-before insert or update of read_roles, preview_roles on all_events
-for each row
-execute function sync_preview_roles();
-
--- replace outdated view to include preview_roles
+-- replace outdated view to include new columnes
 create or replace view events as select * from all_events where tobira_deletion_timestamp is null;
 
--- add `preview_roles` to `search_events` view as well
+-- add `preview_roles` and `has_password` to `search_events` view
 drop view search_events;
 create view search_events as
     select
