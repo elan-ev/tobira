@@ -20,8 +20,10 @@ export const Footer: React.FC = () => {
                 listStyle: "none",
                 margin: 0,
                 padding: 0,
+                display: "flex",
+                justifyContent: "center",
+                flexWrap: "wrap",
                 "& > li": {
-                    display: "inline",
                     "&:not(:first-child):before": {
                         content: "\"•\"",
                         color: COLORS.neutral60,
