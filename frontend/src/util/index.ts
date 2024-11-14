@@ -2,14 +2,13 @@ import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bug, match } from "@opencast/appkit";
-import { OperationType } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { AuthorizedData, authorizedDataQuery, CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import {
-    VideoAuthorizedDataQuery$data,
+    VideoAuthorizedDataQuery,
 } from "../routes/__generated__/VideoAuthorizedDataQuery.graphql";
 
 
@@ -227,9 +226,6 @@ export type Credentials = {
     password: string;
 } | null;
 
-interface AuthenticatedData extends OperationType {
-    response: VideoAuthorizedDataQuery$data;
-}
 
 /**
  * Returns `authorizedData` of password protected events by fetching it from the API,
@@ -247,7 +243,7 @@ export const useAuthenticatedDataQuery = (
     const credentials = getCredentials("event", eventId(keyOfId(eventID))) ?? (
         seriesID && getCredentials("series", seriesId(keyOfId(seriesID)))
     );
-    const authenticatedData = useLazyLoadQuery<AuthenticatedData>(
+    const authenticatedData = useLazyLoadQuery<VideoAuthorizedDataQuery>(
         authorizedDataQuery,
         { eventId: eventId(keyOfId(eventID)), ...credentials },
         // This will only query the data for events with stored credentials and/or yet unknown
