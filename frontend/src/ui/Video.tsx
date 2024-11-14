@@ -12,7 +12,6 @@ import {
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
-import { useAuthenticatedDataQuery } from "../util";
 
 
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
@@ -56,9 +55,6 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
 }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
-    const authenticatedData = useAuthenticatedDataQuery(event.id, event.series?.id);
-    const authorizedThumbnail = event.authorizedData?.thumbnail
-        ?? authenticatedData?.thumbnail;
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
     const audioOnly = event.authorizedData
         ? (
@@ -69,10 +65,10 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
         : false;
 
     let inner;
-    if (authorizedThumbnail && !deletionIsPending) {
+    if (event.authorizedData?.thumbnail && !deletionIsPending) {
         // We have a proper thumbnail.
         inner = <ThumbnailImg
-            src={authorizedThumbnail}
+            src={event.authorizedData.thumbnail}
             alt={t("video.thumbnail-for", { video: event.title })}
         />;
     } else {
