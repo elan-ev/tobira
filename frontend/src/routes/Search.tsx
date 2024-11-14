@@ -51,7 +51,6 @@ import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import {
     eventId,
-    getCredentials,
     isExperimentalFlagSet,
     keyOfId,
     secondsToTimeString,
@@ -162,7 +161,6 @@ const query = graphql`
                         startTime
                         endTime
                         created
-                        hasPassword
                         userIsAuthorized
                         hostRealms { path ancestorNames }
                         textMatches {
@@ -523,7 +521,6 @@ const SearchEvent: React.FC<EventItem> = ({
     hostRealms,
     textMatches,
     matches,
-    hasPassword,
     userIsAuthorized,
 }) => {
     // TODO: decide what to do in the case of more than two host realms. Direct
@@ -531,11 +528,6 @@ const SearchEvent: React.FC<EventItem> = ({
     const link = hostRealms.length !== 1
         ? DirectVideoRoute.url({ videoId: id })
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
-
-    // TODO: This check should be done in backend.
-    const showMatches = userIsAuthorized || (
-        hasPassword && getCredentials("event", eventId(keyOfId(id)))
-    );
 
     return (
         <Item key={id} breakpoint={BREAKPOINT_MEDIUM} link={link}>{{
@@ -635,7 +627,7 @@ const SearchEvent: React.FC<EventItem> = ({
                     {...{ seriesId }}
                 />}
                 {/* Show timeline with matches if there are any */}
-                {textMatches.length > 0 && showMatches && (
+                {textMatches.length > 0 && (
                     <TextMatchTimeline {...{ id, duration, link, textMatches }} />
                 )}
             </div>,

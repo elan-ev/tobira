@@ -69,7 +69,9 @@ impl Node for SearchEvent {
 
 impl SearchEvent {
     pub(crate) fn without_matches(src: search::Event, context: &Context) -> Self {
-        Self::new_inner(src, vec![], SearchEventMatches::default(), context)
+        let read_roles = decode_acl(&src.read_roles);
+        let user_can_read = context.auth.overlaps_roles(read_roles);
+        Self::new_inner(src, vec![], SearchEventMatches::default(), user_can_read)
     }
 
     pub(crate) fn new(hit: meilisearch_sdk::SearchResult<search::Event>, context: &Context) -> Self {
@@ -77,16 +79,20 @@ impl SearchEvent {
         let src = hit.result;
 
         let mut text_matches = Vec::new();
-        src.slide_texts.resolve_matches(
-            match_ranges_for(match_positions, "slide_texts.texts"),
-            &mut text_matches,
-            TextAssetType::SlideText,
-        );
-        src.caption_texts.resolve_matches(
-            match_ranges_for(match_positions, "caption_texts.texts"),
-            &mut text_matches,
-            TextAssetType::Caption,
-        );
+        let read_roles = decode_acl(&src.read_roles);
+        let user_can_read = context.auth.overlaps_roles(read_roles);
+        if user_can_read {
+            src.slide_texts.resolve_matches(
+                match_ranges_for(match_positions, "slide_texts.texts"),
+                &mut text_matches,
+                TextAssetType::SlideText,
+            );
+            src.caption_texts.resolve_matches(
+                match_ranges_for(match_positions, "caption_texts.texts"),
+                &mut text_matches,
+                TextAssetType::Caption,
+            );
+        }
 
         let matches = SearchEventMatches {
             title: field_matches_for(match_positions, "title"),
@@ -94,25 +100,15 @@ impl SearchEvent {
             series_title: field_matches_for(match_positions, "series_title"),
         };
 
-        Self::new_inner(src, text_matches, matches, context)
+        Self::new_inner(src, text_matches, matches, user_can_read)
     }
 
     fn new_inner(
         src: search::Event,
         text_matches: Vec<TextMatch>,
         matches: SearchEventMatches,
-        context: &Context,
+        user_can_read: bool,
     ) -> Self {
-        let read_roles = decode_acl(&src.read_roles);
-        let user_is_authorized = context.auth.overlaps_roles(read_roles);
-        let thumbnail = {
-            if user_is_authorized {
-                src.thumbnail
-            } else {
-                None
-            }
-        };
-
         Self {
             id: Id::search_event(src.id.0),
             series_id: src.series_id.map(|id| Id::search_series(id.0)),
@@ -120,7 +116,7 @@ impl SearchEvent {
             title: src.title,
             description: src.description,
             creators: src.creators,
-            thumbnail,
+            thumbnail: if user_can_read { src.thumbnail } else { None },
             duration: src.duration as f64,
             created: src.created,
             start_time: src.start_time,
@@ -133,7 +129,7 @@ impl SearchEvent {
             text_matches,
             matches,
             has_password: src.has_password,
-            user_is_authorized,
+            user_is_authorized: user_can_read,
         }
     }
 }
