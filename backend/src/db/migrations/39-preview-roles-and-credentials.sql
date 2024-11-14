@@ -14,6 +14,9 @@ alter table all_events
     add column credentials credentials,
     add column preview_roles text[] not null default '{}';
 
+alter table series
+    add column credentials credentials;
+
 
 -- replace outdated view to include new columnes
 create or replace view events as select * from all_events where tobira_deletion_timestamp is null;
