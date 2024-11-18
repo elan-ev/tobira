@@ -1,4 +1,4 @@
-import { ReactNode, Suspense, useState } from "react";
+import { ReactNode, Suspense } from "react";
 import { LuFrown, LuAlertTriangle } from "react-icons/lu";
 import { Translation, useTranslation } from "react-i18next";
 import {
@@ -7,7 +7,7 @@ import {
 } from "react-relay";
 import { unreachable } from "@opencast/appkit";
 
-import { eventId, getCredentials, isSynced, keyOfId, useAuthenticatedDataQuery } from "../util";
+import { eventId, getCredentials, isSynced, keyOfId } from "../util";
 import { GlobalErrorBoundary } from "../util/err";
 import { loadQuery } from "../relay";
 import { makeRoute, MatchedRoute } from "../rauta";
@@ -19,7 +19,7 @@ import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
 import { EmbedDirectOpencastQuery } from "./__generated__/EmbedDirectOpencastQuery.graphql";
 import { EmbedEventData$key } from "./__generated__/EmbedEventData.graphql";
 import { PlayerContextProvider } from "../ui/player/PlayerContext";
-import { AuthenticatedDataContext, AuthorizedData, PreviewPlaceholder } from "./Video";
+import { PreviewPlaceholder, useEventWithAuthData } from "./Video";
 
 export const EmbedVideoRoute = makeRoute({
     url: ({ videoId }: { videoId: string }) => `/~embed/!v/${keyOfId(videoId)}`,
@@ -120,12 +120,8 @@ const embedEventFragment = graphql`
                 endTime
                 duration
             }
-            authorizedData(user: $eventUser, password: $eventPassword) {
-                thumbnail
-                tracks { uri flavor mimetype resolution isMaster }
-                captions { uri lang }
-                segments { uri startTime }
-            }
+            ... VideoPageAuthorizedData
+                @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
         }
     }
 `;
@@ -138,12 +134,12 @@ type EmbedProps = {
 
 const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
     const fragmentRef = usePreloadedQuery(query, queryRef);
-    const event = useFragment<EmbedEventData$key>(
+    const protoEvent = useFragment<EmbedEventData$key>(
         embedEventFragment,
         fragmentRef.event,
     );
+    const [event, refetch] = useEventWithAuthData(protoEvent);
     const { t } = useTranslation();
-    const [authenticatedData, setAuthenticatedData] = useState<AuthorizedData | null>(null);
 
     if (!event) {
         return <PlayerPlaceholder>
@@ -170,17 +166,9 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
         </PlayerPlaceholder>;
     }
 
-    const authorizedData = useAuthenticatedDataQuery(
-        event.id,
-        event.series?.id,
-        { authorizedData: event.authorizedData },
-    );
-
-    return authorizedData
-        ? <Player event={{ ...event, authorizedData }} />
-        : <AuthenticatedDataContext.Provider value={{ authenticatedData, setAuthenticatedData }}>
-            <PreviewPlaceholder embedded {...{ event }}/>;
-        </AuthenticatedDataContext.Provider>;
+    return event.authorizedData
+        ? <Player event={{ ...event, authorizedData: event.authorizedData }} />
+        : <PreviewPlaceholder embedded {...{ event, refetch }}/>;
 };
 
 export const BlockEmbedRoute = makeRoute({

@@ -180,6 +180,7 @@ video:
   password:
     heading: Protected Video
     sub-heading: Access to this video is restricted.
+    no-preview-permission: $t(api-remote-errors.view.event)
     body: >
       Please enter the username and the password you have received to access this video;
       please note that these are not your login credentials.

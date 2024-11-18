@@ -2,14 +2,10 @@ import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bug, match } from "@opencast/appkit";
-import { useLazyLoadQuery } from "react-relay";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
-import { AuthorizedData, authorizedDataQuery, CREDENTIALS_STORAGE_KEY } from "../routes/Video";
-import {
-    VideoAuthorizedDataQuery,
-} from "../routes/__generated__/VideoAuthorizedDataQuery.graphql";
+import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 
 
 /**
@@ -226,33 +222,6 @@ export type Credentials = {
     password: string;
 } | null;
 
-
-/**
- * Returns `authorizedData` of password protected events by fetching it from the API,
- * if the correct credentials were supplied.
- * This will not send a request when there are no credentials and instead return the
- * event's authorized data if that was already present and passed to this hook.
- */
-export const useAuthenticatedDataQuery = (
-    eventID: string,
-    seriesID?: string,
-    authData?: AuthorizedData | null,
-) => {
-    // If `id` is coming from a search event, the prefix might be `es` or `ss`, but
-    // the query and storage need it to be a regular event/series id (i.e. with prefix `ev`/`sr`).
-    const credentials = getCredentials("event", eventId(keyOfId(eventID))) ?? (
-        seriesID && getCredentials("series", seriesId(keyOfId(seriesID)))
-    );
-    const authenticatedData = useLazyLoadQuery<VideoAuthorizedDataQuery>(
-        authorizedDataQuery,
-        { eventId: eventId(keyOfId(eventID)), ...credentials },
-        // This will only query the data for events with stored credentials and/or yet unknown
-        // authorized data. This should help to prevent unnecessary queries.
-        { fetchPolicy: credentials && !authData ? "store-or-network" : "store-only" }
-    );
-
-    return authData?.authorizedData ?? authenticatedData?.authorizedEvent?.authorizedData;
-};
 
 /**
  * Returns stored credentials of events.

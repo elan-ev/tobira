@@ -1,15 +1,14 @@
 import React, {
-    createContext,
-    Dispatch,
     ReactElement,
     ReactNode,
-    SetStateAction,
-    useContext,
     useEffect,
     useRef,
     useState,
 } from "react";
-import { graphql, GraphQLTaggedNode, PreloadedQuery, useFragment } from "react-relay/hooks";
+import {
+    graphql, GraphQLTaggedNode, PreloadedQuery, RefetchFnDynamic, useFragment,
+    useRefetchableFragment,
+} from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, OperationType } from "relay-runtime";
 import {
@@ -19,7 +18,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import {
     match, unreachable, screenWidthAtMost, screenWidthAbove, useColorScheme,
     Floating, FloatingContainer, FloatingTrigger, WithTooltip, Card, Button, ProtoButton,
-    bug,
+    notNullish,
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
 
@@ -46,7 +45,6 @@ import {
     keyOfId,
     playlistId,
     getCredentials,
-    useAuthenticatedDataQuery,
     credentialsStorageKey,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
@@ -90,9 +88,11 @@ import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
 import { AuthenticationFormState, FormData, AuthenticationForm } from "./Login";
 import {
     VideoAuthorizedDataQuery,
-    VideoAuthorizedDataQuery$data,
 } from "./__generated__/VideoAuthorizedDataQuery.graphql";
 import { AuthorizedBlockEvent } from "../ui/Blocks/Video";
+import {
+    VideoPageAuthorizedData$data, VideoPageAuthorizedData$key,
+} from "./__generated__/VideoPageAuthorizedData.graphql";
 
 
 // ===========================================================================================
@@ -122,6 +122,7 @@ export const VideoRoute = makeRoute({
                 ... UserData
                 event: eventById(id: $id) {
                     ... VideoPageEventData
+                        @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
                     ... on AuthorizedEvent {
                         isReferencedByRealm(path: $realmPath)
                     }
@@ -146,11 +147,7 @@ export const VideoRoute = makeRoute({
                 {... { query, queryRef }}
                 nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
                 render={({ event, realm, playlist }) => {
-                    if (!event) {
-                        return <NotFound kind="video" />;
-                    }
-
-                    if (!realm || !event.isReferencedByRealm) {
+                    if (!realm || (event && !event.isReferencedByRealm)) {
                         return <ForwardToDirectRoute videoId={videoId} />;
                     }
 
@@ -191,6 +188,7 @@ export const OpencastVideoRoute = makeRoute({
                 ... UserData
                 event: eventByOpencastId(id: $id) {
                     ... VideoPageEventData
+                        @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
                     ... on AuthorizedEvent {
                         isReferencedByRealm(path: $realmPath)
                     }
@@ -215,11 +213,7 @@ export const OpencastVideoRoute = makeRoute({
                 {... { query, queryRef }}
                 nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
                 render={({ event, realm, playlist }) => {
-                    if (!event) {
-                        return <NotFound kind="video" />;
-                    }
-
-                    if (!realm || !event.isReferencedByRealm) {
+                    if (!realm || (event && !event.isReferencedByRealm)) {
                         return <ForwardToDirectOcRoute ocID={id} />;
                     }
 
@@ -266,7 +260,10 @@ export const DirectVideoRoute = makeRoute({
                 $eventPassword: String
             ) {
                 ... UserData
-                event: eventById(id: $id) { ... VideoPageEventData }
+                event: eventById(id: $id) {
+                    ... VideoPageEventData
+                        @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
+                }
                 realm: rootRealm {
                     ... VideoPageRealmData
                     ... NavigationData
@@ -303,7 +300,10 @@ export const DirectOpencastVideoRoute = makeRoute({
                 $eventPassword: String
             ) {
                 ... UserData
-                event: eventByOpencastId(id: $id) { ... VideoPageEventData }
+                event: eventByOpencastId(id: $id) {
+                    ... VideoPageEventData
+                        @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
+                }
                 realm: rootRealm {
                     ... VideoPageRealmData
                     ... NavigationData
@@ -376,17 +376,42 @@ const matchedDirectRoute = (
         {... { query, queryRef }}
         noindex
         nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
-        render={({ event, realm, playlist }) => !event
-            ? <NotFound kind="video" />
-            : <VideoPage
-                eventRef={event}
-                realmRef={realm ?? unreachable("root realm doesn't exist")}
-                playlistRef={playlist ?? null}
-                basePath="/!v"
-            />}
+        render={({ event, realm, playlist }) => <VideoPage
+            eventRef={event}
+            realmRef={realm ?? unreachable("root realm doesn't exist")}
+            playlistRef={playlist ?? null}
+            basePath="/!v"
+        />}
     />,
     dispose: () => queryRef.dispose(),
 });
+
+type RawEvent<T> =
+    | ({ __typename: "AuthorizedEvent"} & T)
+    | { __typename: "NotAllowed" }
+    | { __typename: "%other" };
+
+export const useEventWithAuthData = <T, >(
+    event?: RawEvent<T & VideoPageAuthorizedData$key> | null,
+): [
+    RawEvent<T & { authorizedData: VideoPageAuthorizedData$data["authorizedData"] }>
+        | undefined | null,
+    RefetchFnDynamic<VideoPageInRealmQuery, VideoPageAuthorizedData$key>,
+] => {
+    const [data, refetch] = useRefetchableFragment(
+        authorizedDataFragment,
+        !event || event.__typename !== "AuthorizedEvent"
+            ? null
+            : event as VideoPageAuthorizedData$key,
+    );
+
+    if (!event || event.__typename !== "AuthorizedEvent") {
+        return [event, refetch];
+    }
+
+    const patched = { ...event, authorizedData: notNullish(data).authorizedData };
+    return [patched, refetch];
+};
 
 
 // ===========================================================================================
@@ -403,7 +428,12 @@ const realmFragment = graphql`
 `;
 
 const eventFragment = graphql`
-    fragment VideoPageEventData on Event {
+    fragment VideoPageEventData on Event
+        @argumentDefinitions(
+          eventUser: { type: "String", defaultValue: null },
+          eventPassword: { type: "String", defaultValue: null },
+        )
+    {
         __typename
         ... on NotAllowed { dummy } # workaround
         ... on AuthorizedEvent {
@@ -423,12 +453,8 @@ const eventFragment = graphql`
                 startTime
                 endTime
             }
-            authorizedData(user: $eventUser, password: $eventPassword) {
-                tracks { uri flavor mimetype resolution isMaster }
-                captions { uri lang }
-                segments { uri startTime }
-                thumbnail
-            }
+            ... VideoPageAuthorizedData
+                @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
             series {
                 id
                 opencastId
@@ -439,19 +465,41 @@ const eventFragment = graphql`
     }
 `;
 
+const authorizedDataFragment = graphql`
+    fragment VideoPageAuthorizedData on AuthorizedEvent
+        @refetchable(queryName: "VideoAuthorizedDataRefetchQuery")
+        @argumentDefinitions(
+            eventUser: { type: "String", defaultValue: null },
+            eventPassword: { type: "String", defaultValue: null },
+        )
+    {
+        authorizedData(user: $eventUser, password: $eventPassword) {
+            tracks { uri flavor mimetype resolution isMaster }
+            captions { uri lang }
+            segments { uri startTime }
+            thumbnail
+        }
+    }
+`;
+
+// Custom query to refetch authorized event data manually. Unfortunately, using
+// the fragment here is not enough, we need to also selected `authorizedData`
+// manually. Without that, we could not access that field below to check if the
+// credentials were correct. Normally, adding `@relay(mask: false)` to the
+// fragment should also fix that, but that does not work for some reason.
 export const authorizedDataQuery = graphql`
     query VideoAuthorizedDataQuery(
-        $eventId: ID!,
+        $id: ID!,
         $eventUser: String,
         $eventPassword: String,
     ) {
-        authorizedEvent: eventById(id: $eventId) {
+        node(id: $id) {
+            __typename
+            id
+            ...VideoPageAuthorizedData
+                @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
             ...on AuthorizedEvent {
-                id
                 authorizedData(user: $eventUser, password: $eventPassword) {
-                    tracks { uri flavor mimetype resolution isMaster }
-                    captions { uri lang }
-                    segments { uri startTime }
                     thumbnail
                 }
             }
@@ -464,15 +512,8 @@ export const authorizedDataQuery = graphql`
 // ===== Components
 // ===========================================================================================
 
-export type AuthorizedData = VideoAuthorizedDataQuery$data["authorizedEvent"];
-type AuthenticatedDataContext = {
-    authenticatedData: AuthorizedData;
-    setAuthenticatedData: Dispatch<SetStateAction<AuthorizedData>>;
-}
-export const AuthenticatedDataContext = createContext<AuthenticatedDataContext | null>(null);
-
 type Props = {
-    eventRef: NonNullable<VideoPageEventData$key>;
+    eventRef: NonNullable<VideoPageEventData$key> | null | undefined;
     realmRef: NonNullable<VideoPageRealmData$key>;
     playlistRef: PlaylistBlockPlaylistData$key | null;
     basePath: string;
@@ -481,9 +522,13 @@ type Props = {
 const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath }) => {
     const { t } = useTranslation();
     const rerender = useForceRerender();
-    const event = useFragment(eventFragment, eventRef);
     const realm = useFragment(realmFragment, realmRef);
-    const [authenticatedData, setAuthenticatedData] = useState<AuthorizedData | null>(null);
+    const protoEvent = useFragment(eventFragment, eventRef);
+    const [event, refetch] = useEventWithAuthData(protoEvent);
+
+    if (!event) {
+        return <NotFound kind="video" />;
+    }
 
     if (event.__typename === "NotAllowed") {
         return <ErrorPage title={t("api-remote-errors.view.event")} />;
@@ -494,23 +539,6 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     if (!isSynced(event)) {
         return <WaitingPage type="video" />;
     }
-
-    // If the event is password protected this will check if there are credentials for this event's
-    // series are stored, and if so, skip the authentication.
-    // Ideally this would happen at the top level in the `makeRoute` call, but at that point the
-    // series id isn't known. To prevent unnecessary queries, the hook is also passed the authorized
-    // data of this event. If that is neither null nor undefined, nothing is fetched.
-    //
-    // This extra check is particularly useful in this specific component, where we might run into a
-    // situation where an event has been previously authenticated and its credentials are stored
-    // with both its own ID (with which it is possible to already fetch the authenticated data in
-    // the initial video page query) and its series ID. So when the authenticated data is already
-    // present, it shouldn't be fetched a second time.
-    const authorizedData = useAuthenticatedDataQuery(
-        event.id,
-        event.series?.id,
-        { authorizedData: event.authorizedData },
-    );
 
     const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
     const { hasStarted, hasEnded } = getEventTimeInfo(event);
@@ -539,49 +567,50 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-        <AuthenticatedDataContext.Provider value={{ authenticatedData, setAuthenticatedData }}>
-            <PlayerContextProvider>
-                {authorizedData
-                    ? <InlinePlayer
-                        event={{ ...event, authorizedData }}
-                        css={{ margin: "-4px auto 0" }}
-                        onEventStateChange={rerender}
-                    />
-                    : <PreviewPlaceholder {...{ event }}/>
-                }
-                <Metadata id={event.id} event={event} />
-            </PlayerContextProvider>
-
-            <div css={{ height: 80 }} />
-
-            {playlistRef
-                ? <PlaylistBlockFromPlaylist
-                    moreOfTitle
-                    basePath={basePath}
-                    fragRef={playlistRef}
-                    activeEventId={event.id}
+        <PlayerContextProvider>
+            {event.authorizedData
+                ? <InlinePlayer
+                    event={{ ...event, authorizedData: event.authorizedData }}
+                    css={{ margin: "-4px auto 0" }}
+                    onEventStateChange={rerender}
                 />
-                : event.series && <SeriesBlockFromSeries
-                    basePath={basePath}
-                    fragRef={event.series}
-                    title={t("video.more-from-series", { series: event.series.title })}
-                    activeEventId={event.id}
-                />
+                : <PreviewPlaceholder {...{ event, refetch }}/>
             }
-        </AuthenticatedDataContext.Provider>
+            <Metadata id={event.id} event={event} />
+        </PlayerContextProvider>
+
+        <div css={{ height: 80 }} />
+
+        {playlistRef
+            ? <PlaylistBlockFromPlaylist
+                moreOfTitle
+                basePath={basePath}
+                fragRef={playlistRef}
+                activeEventId={event.id}
+            />
+            : event.series && <SeriesBlockFromSeries
+                basePath={basePath}
+                fragRef={event.series}
+                title={t("video.more-from-series", { series: event.series.title })}
+                activeEventId={event.id}
+            />
+        }
     </>;
 };
 
 type ProtectedPlayerProps = {
     event: Event | AuthorizedBlockEvent;
     embedded?: boolean;
+    refetch: RefetchFnDynamic<VideoPageInRealmQuery, VideoPageAuthorizedData$key>;
 }
 
-export const PreviewPlaceholder: React.FC<ProtectedPlayerProps> = ({ event, embedded }) => {
+export const PreviewPlaceholder: React.FC<ProtectedPlayerProps> = ({
+    event, embedded, refetch,
+}) => {
     const { t } = useTranslation();
 
     return event.hasPassword
-        ? <ProtectedPlayer {...{ event, embedded }} />
+        ? <ProtectedPlayer {...{ event, embedded, refetch }} />
         : <div css={{ height: "unset" }}>
             <PlayerPlaceholder>
                 <p css={{
@@ -598,13 +627,12 @@ export const PreviewPlaceholder: React.FC<ProtectedPlayerProps> = ({ event, embe
 
 export const CREDENTIALS_STORAGE_KEY = "tobira-video-credentials-";
 
-const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) => {
+const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refetch }) => {
     const { t } = useTranslation(undefined, { keyPrefix: "video.password" });
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const [authState, setAuthState] = useState<AuthenticationFormState>("idle");
     const [authError, setAuthError] = useState<string | null>(null);
-    const authenticatedDataContext = useContext(AuthenticatedDataContext);
 
     const embeddedStyles = {
         height: "100%",
@@ -613,34 +641,34 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) =>
     };
 
     const onSubmit = (data: FormData) => {
-        const credentials = JSON.stringify({
+        const credentialVars = {
             eventUser: data.userid,
             eventPassword: data.password,
-        });
-
+        };
         fetchQuery<VideoAuthorizedDataQuery>(environment, authorizedDataQuery, {
-            eventId: event.id,
-            eventUser: data.userid,
-            eventPassword: data.password,
+            id: event.id,
+            ...credentialVars,
         }).subscribe({
             start: () => setAuthState("pending"),
-            next: ({ authorizedEvent }) => {
-                if (!authorizedEvent?.authorizedData) {
+            next: ({ node }) => {
+                if (node?.__typename !== "AuthorizedEvent") {
+                    setAuthError(t("no-preview-permission"));
+                    setAuthState("idle");
+                    return;
+                }
+
+                if (!node.authorizedData) {
                     setAuthError(t("invalid-credentials"));
                     setAuthState("idle");
                     return;
                 }
 
-                if (authenticatedDataContext) {
-                    authenticatedDataContext.setAuthenticatedData({
-                        authorizedData: authorizedEvent.authorizedData,
-                    });
-                } else {
-                    bug("Authenticated data context is not initialized");
-                }
+                // This refetches the fragment, which actually makes the
+                // components re-render with the new `authorizedData` value.
+                // This does not actually send a network request as all data is
+                // in the store (due to `fetchQuery` that was just executed).
+                refetch(credentialVars, { fetchPolicy: "store-only" });
 
-                setAuthError(null);
-                setAuthState("success");
 
                 // To make the authentication "sticky", the credentials are stored in browser
                 // storage. If the user is logged in, local storage is used so the browser
@@ -656,6 +684,10 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) =>
                 // query, when only the single ID from the url is known.
                 // The check will return a result for either ID regardless of its kind, as long as
                 // one of them is stored.
+                const credentials = JSON.stringify({
+                    eventUser: data.userid,
+                    eventPassword: data.password,
+                });
                 const storage = isRealUser(user) ? window.localStorage : window.sessionStorage;
                 storage.setItem(credentialsStorageKey("event", event.id), credentials);
                 storage.setItem(credentialsStorageKey("oc-event", event.opencastId), credentials);
@@ -673,81 +705,75 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded }) =>
         });
     };
 
-    return authenticatedDataContext?.authenticatedData?.authorizedData && event.syncedData
-        ? <InlinePlayer event={{
-            ...event,
-            authorizedData: authenticatedDataContext.authenticatedData.authorizedData,
-            syncedData: event.syncedData,
-        }} />
-        : (
+    return (
+        <div css={{
+            display: "flex",
+            flexDirection: "column",
+            color: isDark ? COLORS.neutral80 : COLORS.neutral15,
+            backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral80,
+            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                alignItems: "center",
+            },
+            ...embedded && embeddedStyles,
+        }}>
+            <h2 css={{
+                margin: 32,
+                marginBottom: 0,
+                [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
+                    textAlign: "left",
+                },
+            }}>{t("heading")}</h2>
             <div css={{
                 display: "flex",
-                flexDirection: "column",
-                color: isDark ? COLORS.neutral80 : COLORS.neutral15,
-                backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral80,
                 [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                    alignItems: "center",
+                    flexDirection: "column-reverse",
                 },
-                ...embedded && embeddedStyles,
             }}>
-                <h2 css={{
-                    margin: 32,
-                    marginBottom: 0,
-                    [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
-                        textAlign: "left",
-                    },
-                }}>{t("heading")}</h2>
                 <div css={{
                     display: "flex",
-                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                        flexDirection: "column-reverse",
-                    },
+                    flexDirection: "column",
+                    alignItems: "center",
                 }}>
-                    <div css={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                    }}>
-                        <AuthenticationForm
-                            {...{ onSubmit }}
-                            state={authState}
-                            error={null}
-                            SubmitIcon={LuUnlock}
-                            labels={{
-                                user: t("label.id"),
-                                password: t("label.password"),
-                                submit: t("label.submit"),
-                            }}
-                            css={{
-                                "&": { backgroundColor: "transparent" },
-                                margin: 0,
-                                border: 0,
-                                width: "unset",
-                                minWidth: 300,
-                                "div > label, div > input": {
-                                    ...!isDark && {
-                                        backgroundColor: COLORS.neutral15,
-                                    },
+                    <AuthenticationForm
+                        {...{ onSubmit }}
+                        state={authState}
+                        error={null}
+                        SubmitIcon={LuUnlock}
+                        labels={{
+                            user: t("label.id"),
+                            password: t("label.password"),
+                            submit: t("label.submit"),
+                        }}
+                        css={{
+                            "&": { backgroundColor: "transparent" },
+                            margin: 0,
+                            border: 0,
+                            width: "unset",
+                            minWidth: 300,
+                            "div > label, div > input": {
+                                ...!isDark && {
+                                    backgroundColor: COLORS.neutral15,
                                 },
+                            },
+                        }}
+                    />
+                    {authError && (
+                        <Card
+                            kind="error"
+                            iconPos="left"
+                            css={{
+                                width: "fit-content",
+                                marginBottom: 32,
                             }}
-                        />
-                        {authError && (
-                            <Card
-                                kind="error"
-                                iconPos="left"
-                                css={{
-                                    width: "fit-content",
-                                    marginBottom: 32,
-                                }}
-                            >
-                                {authError}
-                            </Card>
-                        )}
-                    </div>
-                    <AuthenticationFormText />
+                        >
+                            {authError}
+                        </Card>
+                    )}
                 </div>
+                <AuthenticationFormText />
             </div>
-        );
+        </div>
+    );
 };
 
 const AuthenticationFormText: React.FC = () => {
@@ -784,7 +810,9 @@ const AuthenticationFormText: React.FC = () => {
 };
 
 type Event = Extract<NonNullable<VideoPageEventData$data>, { __typename: "AuthorizedEvent" }>;
-type SyncedEvent = SyncedOpencastEntity<Event>;
+type SyncedEvent = SyncedOpencastEntity<Event> & {
+    authorizedData?: VideoPageAuthorizedData$data["authorizedData"];
+};
 
 type MetadataProps = {
     id: string;

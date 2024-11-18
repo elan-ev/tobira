@@ -5,11 +5,11 @@ import { InlinePlayer } from "../player";
 import { VideoBlockData$data, VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { useTranslation } from "react-i18next";
-import { isSynced, keyOfId, useAuthenticatedDataQuery } from "../../util";
+import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
 import { LuArrowRightCircle } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
-import { PreviewPlaceholder } from "../../routes/Video";
+import { PreviewPlaceholder, useEventWithAuthData } from "../../routes/Video";
 
 
 export type BlockEvent = VideoBlockData$data["event"];
@@ -22,7 +22,7 @@ type Props = {
 
 export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     const { t } = useTranslation();
-    const { event, showTitle, showLink } = useFragment(graphql`
+    const { event: protoEvent, showTitle, showLink } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
                 __typename
@@ -45,18 +45,14 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                         startTime
                         endTime
                     }
-                    authorizedData {
-                        thumbnail
-                        tracks { uri flavor mimetype resolution isMaster }
-                        captions { uri lang }
-                        segments { uri startTime }
-                    }
+                    ... VideoPageAuthorizedData
                 }
             }
             showTitle
             showLink
         }
     `, fragRef);
+    const [event, refetch] = useEventWithAuthData(protoEvent);
 
     if (event == null) {
         return <Card kind="error">{t("video.deleted-video-block")}</Card>;
@@ -69,22 +65,16 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
         return unreachable();
     }
 
-    const authorizedData = useAuthenticatedDataQuery(
-        event.id,
-        event.series?.id,
-        { authorizedData: event.authorizedData },
-    );
-
 
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
         <PlayerContextProvider>
-            {authorizedData && isSynced(event)
+            {event.authorizedData && isSynced(event)
                 ? <InlinePlayer
-                    event={{ ...event, authorizedData }}
+                    event={{ ...event, authorizedData: event.authorizedData }}
                     css={{ margin: "-4px auto 0" }}
                 />
-                : <PreviewPlaceholder {...{ event }} />
+                : <PreviewPlaceholder {...{ event, refetch }} />
             }
         </PlayerContextProvider>
 

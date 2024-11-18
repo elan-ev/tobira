@@ -27,7 +27,6 @@ import { COLORS } from "../color";
 import { useMenu } from "../layout/MenuState";
 import { ManageNav } from "./manage";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
-import { AuthorizedData, AuthenticatedDataContext } from "./Video";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -146,7 +145,6 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
     const { t } = useTranslation();
     const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
     const breadcrumbs = realmBreadcrumbs(t, realm.ancestors);
-    const [authenticatedData, setAuthenticatedData] = useState<AuthorizedData | null>(null);
 
     const title = realm.isMainRoot ? siteTitle : realm.name;
     useTitle(title, realm.isMainRoot);
@@ -168,11 +166,9 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
                 {realm.isUserRealm && <UserRealmNote realm={realm} />}
             </div>
         )}
-        <AuthenticatedDataContext.Provider value={{ authenticatedData, setAuthenticatedData }}>
-            {realm.blocks.length === 0 && realm.isMainRoot
-                ? <WelcomeMessage />
-                : <Blocks realm={realm} />}
-        </AuthenticatedDataContext.Provider>
+        {realm.blocks.length === 0 && realm.isMainRoot
+            ? <WelcomeMessage />
+            : <Blocks realm={realm} />}
     </>;
 };
 
