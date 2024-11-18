@@ -1,8 +1,9 @@
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
+use meilisearch_sdk::MatchRange;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, collections::HashMap, fmt, time::Instant};
 
 use crate::{
     api::{
@@ -22,7 +23,11 @@ mod realm;
 mod series;
 mod playlist;
 
-pub(crate) use self::event::{SearchEvent, TextMatch, ByteSpan};
+pub(crate) use self::{
+    event::{SearchEvent, TextMatch},
+    realm::SearchRealm,
+    series::SearchSeries,
+};
 
 
 /// Marker type to signal that the search functionality is unavailable for some
@@ -50,37 +55,37 @@ pub(crate) enum SearchOutcome {
 pub(crate) struct SearchResults<T> {
     pub(crate) items: Vec<T>,
     pub(crate) total_hits: usize,
+    pub(crate) duration: i32,
 }
 
-#[juniper::graphql_object(Context = Context)]
-impl SearchResults<NodeValue> {
-    fn items(&self) -> &[NodeValue] {
-        &self.items
-    }
-    fn total_hits(&self) -> i32 {
-        self.total_hits as i32
-    }
+macro_rules! make_search_results_object {
+    ($name:literal, $ty:ty) => {
+        #[juniper::graphql_object(Context = Context, name = $name)]
+        impl SearchResults<$ty> {
+            fn items(&self) -> &[$ty] {
+                &self.items
+            }
+            fn total_hits(&self) -> i32 {
+                self.total_hits as i32
+            }
+            /// How long searching took in ms.
+            fn duration(&self) -> i32 {
+                self.duration
+            }
+        }
+    };
 }
 
-#[juniper::graphql_object(Context = Context, name = "EventSearchResults")]
-impl SearchResults<SearchEvent> {
-    fn items(&self) -> &[SearchEvent] {
-        &self.items
-    }
-}
+make_search_results_object!("SearchResults", NodeValue);
+make_search_results_object!("EventSearchResults", SearchEvent);
+make_search_results_object!("SeriesSearchResults", SearchSeries);
+make_search_results_object!("PlaylistSearchResults", search::Playlist);
 
-#[juniper::graphql_object(Context = Context, name = "SeriesSearchResults")]
-impl SearchResults<search::Series> {
-    fn items(&self) -> &[search::Series] {
-        &self.items
-    }
-}
 
-#[juniper::graphql_object(Context = Context, name = "PlaylistSearchResults")]
-impl SearchResults<search::Playlist> {
-    fn items(&self) -> &[search::Playlist] {
-        &self.items
-    }
+#[derive(Debug, GraphQLObject)]
+pub struct ByteSpan {
+    pub start: i32,
+    pub len: i32,
 }
 
 #[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
@@ -150,6 +155,7 @@ pub(crate) async fn perform(
     filters: Filters,
     context: &Context,
 ) -> ApiResult<SearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if user_query.is_empty() {
         return Ok(SearchOutcome::EmptyQuery(EmptyQuery));
     }
@@ -166,12 +172,16 @@ pub(crate) async fn perform(
             .await?
             .map(|row| {
                 let e = search::Event::from_row_start(&row);
-                SearchEvent::new(e, &[], &[]).into()
+                SearchEvent::without_matches(e).into()
             })
             .into_iter()
             .collect();
         let total_hits = items.len();
-        return Ok(SearchOutcome::Results(SearchResults { items, total_hits }));
+        return Ok(SearchOutcome::Results(SearchResults {
+            items,
+            total_hits,
+            duration: elapsed_time(),
+        }));
     }
 
 
@@ -233,12 +243,16 @@ pub(crate) async fn perform(
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
     let events = event_results.hits.into_iter().map(|result| {
         let score = result.ranking_score;
-        (NodeValue::from(hit_to_search_event(result)), score)
+        (NodeValue::from(SearchEvent::new(result)), score)
     });
-    let series = series_results.hits.into_iter()
-        .map(|result| (NodeValue::from(result.result), result.ranking_score));
-    let realms = realm_results.hits.into_iter()
-        .map(|result| (NodeValue::from(result.result), result.ranking_score));
+    let series = series_results.hits.into_iter().map(|result| {
+        let score = result.ranking_score;
+        (NodeValue::from(SearchSeries::new(result, context)), score)
+    });
+    let realms = realm_results.hits.into_iter().map(|result| {
+        let score = result.ranking_score;
+        (NodeValue::from(SearchRealm::new(result)), score)
+    });
 
     let mut merged: Vec<(NodeValue, Option<f64>)> = Vec::new();
     let total_hits: usize;
@@ -274,7 +288,11 @@ pub(crate) async fn perform(
     merged.sort_unstable_by(|(_, score0), (_, score1)| score1.unwrap().total_cmp(&score0.unwrap()));
 
     let items = merged.into_iter().map(|(node, _)| node).collect();
-    Ok(SearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(SearchOutcome::Results(SearchResults {
+        items,
+        total_hits,
+        duration: elapsed_time(),
+    }))
 }
 
 fn looks_like_opencast_uuid(query: &str) -> bool {
@@ -301,6 +319,7 @@ pub(crate) async fn all_events(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<EventSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
@@ -327,10 +346,10 @@ pub(crate) async fn all_events(
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| hit_to_search_event(h)).collect();
+    let items = results.hits.into_iter().map(|h| SearchEvent::new(h)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
 // See `EventSearchOutcome` for additional information.
@@ -338,7 +357,7 @@ pub(crate) async fn all_events(
 #[graphql(Context = Context)]
 pub(crate) enum SeriesSearchOutcome {
     SearchUnavailable(SearchUnavailable),
-    Results(SearchResults<search::Series>),
+    Results(SearchResults<SearchSeries>),
 }
 
 pub(crate) async fn all_series(
@@ -346,6 +365,7 @@ pub(crate) async fn all_series(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<SeriesSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
@@ -378,10 +398,10 @@ pub(crate) async fn all_series(
     }
     let res = query.execute::<search::Series>().await;
     let results = handle_search_result!(res, SeriesSearchOutcome);
-    let items = results.hits.into_iter().map(|h| h.result).collect();
+    let items = results.hits.into_iter().map(|h| SearchSeries::new(h, context)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
 #[derive(juniper::GraphQLUnion)]
@@ -396,6 +416,7 @@ pub(crate) async fn all_playlists(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<PlaylistSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
@@ -425,7 +446,7 @@ pub(crate) async fn all_playlists(
     let items = results.hits.into_iter().map(|h| h.result).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(PlaylistSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(PlaylistSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
 // TODO: replace usages of this and remove this.
@@ -533,13 +554,28 @@ impl fmt::Display for Filter {
     }
 }
 
-fn hit_to_search_event(
-    hit: meilisearch_sdk::SearchResult<search::Event>,
-) -> SearchEvent {
-    let get_matches = |key: &str| hit.matches_position.as_ref()
-        .and_then(|matches| matches.get(key))
-        .map(|v| v.as_slice())
-        .unwrap_or_default();
 
-    SearchEvent::new(hit.result, get_matches("slide_texts.texts"), get_matches("caption_texts.texts"))
+fn match_ranges_for<'a>(
+    match_positions: Option<&'a HashMap<String, Vec<MatchRange>>>,
+    field: &str,
+) -> &'a [MatchRange] {
+    match_positions
+        .and_then(|m| m.get(field))
+        .map(|v| v.as_slice())
+        .unwrap_or_default()
+}
+
+fn field_matches_for(
+    match_positions: Option<&HashMap<String, Vec<MatchRange>>>,
+    field: &str,
+) -> Vec<ByteSpan> {
+    match_ranges_for(match_positions, field).iter()
+        .map(|m| ByteSpan { start: m.start as i32, len: m.length as i32 })
+        .take(8) // The frontend can only show a limited number anyway
+        .collect()
+}
+
+pub(crate) fn measure_search_duration() -> impl FnOnce() -> i32 {
+    let start = Instant::now();
+    move || start.elapsed().as_millis() as i32
 }

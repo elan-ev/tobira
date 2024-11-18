@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { LuArrowLeft, LuMenu, LuX } from "react-icons/lu";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,8 @@ import { SearchField } from "./Search";
 import { Logo } from "./Logo";
 import { ColorSchemeSettings, LanguageSettings, UserBox } from "./UserBox";
 import { COLORS } from "../../color";
+import { useRouter } from "../../router";
+import { handleCancelSearch, isSearchActive, SearchRoute } from "../../routes/Search";
 
 
 type Props = {
@@ -21,8 +23,18 @@ type Props = {
 
 export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false }) => {
     const menu = useMenu();
+    const router = useRouter();
+    const onNarrowScreen = window.matchMedia(`(max-width: ${NAV_BREAKPOINT}px)`).matches;
+    useEffect(() => (
+        router.listenAtNav(({ newRoute }) => {
+            if (onNarrowScreen && (menu.state === "search") !== (newRoute === SearchRoute)) {
+                menu.toggleMenu("search");
+            }
+        })
+    ));
 
-    const content = match(menu.state, {
+    const onSearchRoute = isSearchActive();
+    const content = match((onSearchRoute && onNarrowScreen) ? "search" : menu.state, {
         "closed": () => <DefaultMode hideNavIcon={hideNavIcon} />,
         "search": () => <SearchMode />,
         "burger": () => <OpenMenuMode />,
@@ -56,11 +68,13 @@ const LoginMode: React.FC = () => <>
 const SearchMode: React.FC = () => {
     const { t } = useTranslation();
     const menu = useMenu();
+    const onSearchRoute = isSearchActive();
+    const router = useRouter();
 
     return <>
         <ActionIcon
             title={t("general.action.back")}
-            onClick={() => menu.close()}
+            onClick={() => onSearchRoute ? handleCancelSearch(router) : menu.close()}
             css={{ marginLeft: 8 }}
         >
             <LuArrowLeft />

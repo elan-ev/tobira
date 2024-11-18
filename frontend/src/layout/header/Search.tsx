@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
@@ -6,14 +6,15 @@ import { LuX } from "react-icons/lu";
 
 import { useRouter } from "../../router";
 import {
-    handleNavigation,
+    handleCancelSearch,
     SearchRoute,
     isSearchActive,
     isValidSearchItemType,
+    SEARCH_TIMINGS,
 } from "../../routes/Search";
 import { focusStyle } from "../../ui";
 import { Spinner } from "@opencast/appkit";
-import { currentRef, useDebounce } from "../../util";
+import { currentRef } from "../../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
 import { useUser } from "../../User";
@@ -27,7 +28,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
     const router = useRouter();
     const ref = useRef<HTMLInputElement>(null);
-    const { debounce } = useDebounce();
 
     // If the user is unknown, then we are still in the initial loading phase.
     // We don't want users to input anything into the search field in that
@@ -72,7 +72,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
 
 
     const lastTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    useEffect(() => () => clearTimeout(lastTimeout.current));
 
     const onSearchRoute = isSearchActive();
     const getSearchParam = (searchParameter: string) => {
@@ -84,14 +83,14 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const defaultValue = getSearchParam("q");
 
 
-    const search = useCallback(debounce((expression: string) => {
+    const search = (expression: string) => {
         const filters = {
             itemType: isValidSearchItemType(getSearchParam("f")),
             start: getSearchParam("start"),
             end: getSearchParam("end"),
         };
         router.goto(SearchRoute.url({ query: expression, ...filters }), onSearchRoute);
-    }, 250), []);
+    };
 
     return (
         <div css={{
@@ -116,6 +115,17 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 event.preventDefault();
                 clearTimeout(lastTimeout.current);
                 search(currentRef(ref).value);
+
+                // Hide mobile keyboard on enter. The mobile keyboard hides lots
+                // of results and intuitively, pressing "enter" on it should
+                // close the keyboard. We don't want to remove focus for
+                // desktop users though, since that doesn't do any good. The
+                // check is not perfect but should actually detect virtual
+                // keyboard very reliably.
+                const visualHeight = window.visualViewport?.height;
+                if (visualHeight && visualHeight < window.innerHeight) {
+                    ref.current?.blur();
+                }
             }}>
                 <label css={{ display: "flex" }}>
                     <span css={{ display: "none" }}>{t("search.input-label")}</span>
@@ -125,13 +135,20 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         disabled={disabled}
                         placeholder={t("search.input-label")}
                         defaultValue={defaultValue}
-                        // The `onSearchRoute` part of this is a hacky fix to the search
-                        // losing focus when transitioning from any route to the search
-                        // route.
-                        autoFocus={variant === "mobile" || onSearchRoute}
+                        // We only want to autofocus if the user just pressed
+                        // the search button in the header (mobile only). This
+                        // only happens on non-search routes.
+                        autoFocus={variant === "mobile" && !onSearchRoute}
                         onChange={e => {
+                            const q = e.target.value;
+                            if (!(q in SEARCH_TIMINGS)) {
+                                SEARCH_TIMINGS[q] = {};
+                            }
+                            SEARCH_TIMINGS[q].input = window.performance.now();
+
                             clearTimeout(lastTimeout.current);
                             lastTimeout.current = setTimeout(() => {
+                                SEARCH_TIMINGS[q].startSearch = window.performance.now();
                                 search(e.target.value);
                             }, 30);
                         }}
@@ -165,7 +182,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 css={iconStyle}
             />}
             {!router.isTransitioning && isSearchActive() && <ProtoButton
-                onClick={() => handleNavigation(router, ref)}
+                onClick={() => handleCancelSearch(router, ref)}
                 css={{
                     ":hover, :focus": {
                         color: COLORS.neutral90,

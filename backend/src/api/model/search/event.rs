@@ -1,12 +1,12 @@
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
-use meilisearch_sdk::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
     db::types::TextAssetType,
     search,
 };
+use super::{field_matches_for, match_ranges_for, ByteSpan, SearchRealm};
 
 
 #[derive(Debug, GraphQLObject)]
@@ -25,14 +25,17 @@ pub(crate) struct SearchEvent {
     pub end_time: Option<DateTime<Utc>>,
     pub is_live: bool,
     pub audio_only: bool,
-    pub host_realms: Vec<search::Realm>,
+    pub host_realms: Vec<SearchRealm>,
     pub text_matches: Vec<TextMatch>,
+    pub matches: SearchEventMatches,
 }
 
-#[derive(Debug, GraphQLObject)]
-pub struct ByteSpan {
-    pub start: i32,
-    pub len: i32,
+#[derive(Debug, GraphQLObject, Default)]
+pub struct SearchEventMatches {
+    title: Vec<ByteSpan>,
+    description: Vec<ByteSpan>,
+    series_title: Vec<ByteSpan>,
+    // TODO: creators
 }
 
 /// A match inside an event's texts while searching.
@@ -62,15 +65,40 @@ impl Node for SearchEvent {
 }
 
 impl SearchEvent {
-    pub(crate) fn new(
-        src: search::Event,
-        slide_matches: &[MatchRange],
-        caption_matches: &[MatchRange],
-    ) -> Self {
-        let mut text_matches = Vec::new();
-        src.slide_texts.resolve_matches(slide_matches, &mut text_matches, TextAssetType::SlideText);
-        src.caption_texts.resolve_matches(caption_matches, &mut text_matches, TextAssetType::Caption);
+    pub(crate) fn without_matches(src: search::Event) -> Self {
+        Self::new_inner(src, vec![], SearchEventMatches::default())
+    }
 
+    pub(crate) fn new(hit: meilisearch_sdk::SearchResult<search::Event>) -> Self {
+        let match_positions = hit.matches_position.as_ref();
+        let src = hit.result;
+
+        let mut text_matches = Vec::new();
+        src.slide_texts.resolve_matches(
+            match_ranges_for(match_positions, "slide_texts.texts"),
+            &mut text_matches,
+            TextAssetType::SlideText,
+        );
+        src.caption_texts.resolve_matches(
+            match_ranges_for(match_positions, "caption_texts.texts"),
+            &mut text_matches,
+            TextAssetType::Caption,
+        );
+
+        let matches = SearchEventMatches {
+            title: field_matches_for(match_positions, "title"),
+            description: field_matches_for(match_positions, "description"),
+            series_title: field_matches_for(match_positions, "series_title"),
+        };
+
+        Self::new_inner(src, text_matches, matches)
+    }
+
+    fn new_inner(
+        src: search::Event,
+        text_matches: Vec<TextMatch>,
+        matches: SearchEventMatches,
+    ) -> Self {
         Self {
             id: Id::search_event(src.id.0),
             series_id: src.series_id.map(|id| Id::search_series(id.0)),
@@ -85,8 +113,11 @@ impl SearchEvent {
             end_time: src.end_time,
             is_live: src.is_live,
             audio_only: src.audio_only,
-            host_realms: src.host_realms,
+            host_realms: src.host_realms.into_iter()
+                .map(|r| SearchRealm::without_matches(r))
+                .collect(),
             text_matches,
+            matches,
         }
     }
 }

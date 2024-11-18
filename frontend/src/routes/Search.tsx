@@ -1,17 +1,15 @@
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import {
+    LuCalendar,
     LuCalendarRange,
     LuLayout,
-    LuLibrary,
-    LuPlayCircle,
     LuRadio,
     LuVolume2,
     LuX,
 } from "react-icons/lu";
 import { LetterText } from "lucide-react";
-import { IconType } from "react-icons";
-import { ReactNode, RefObject, useEffect, useRef } from "react";
+import { ReactNode, RefObject, useEffect, useRef, useState } from "react";
 import {
     Button,
     Card,
@@ -50,12 +48,13 @@ import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Br
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
-import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../GlobalStyle";
+import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { eventId, isExperimentalFlagSet, keyOfId, secondsToTimeString } from "../util";
 import { DirectVideoRoute, VideoRoute } from "./Video";
-import { DirectSeriesRoute } from "./Series";
+import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
 import { SearchSlidePreviewQuery } from "./__generated__/SearchSlidePreviewQuery.graphql";
+import { RelativeDate } from "../ui/time";
 
 
 export const isSearchActive = (): boolean => document.location.pathname === "/~search";
@@ -90,8 +89,13 @@ export const SearchRoute = makeRoute({
         }
 
         const q = url.searchParams.get("q") ?? "";
-        const filters = prepareFilters(url);
 
+        if (!(q in SEARCH_TIMINGS)) {
+            SEARCH_TIMINGS[q] = {};
+        }
+        SEARCH_TIMINGS[q].routeMatch = window.performance.now();
+
+        const filters = prepareFilters(url);
         const queryRef = loadQuery<SearchQuery>(query, { q, filters });
 
         return {
@@ -99,7 +103,10 @@ export const SearchRoute = makeRoute({
                 {...{ query, queryRef }}
                 noindex
                 nav={() => []}
-                render={data => <SearchPage {...{ q }} outcome={data.search} />}
+                render={data => {
+                    SEARCH_TIMINGS[q].queryReturned = window.performance.now();
+                    return <SearchPage {...{ q }} outcome={data.search} />;
+                }}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -134,9 +141,9 @@ const query = graphql`
             ... on SearchUnavailable { dummy }
             ... on SearchResults {
                 items {
-                    id
                     __typename
                     ... on SearchEvent {
+                        id
                         title
                         description
                         thumbnail
@@ -149,7 +156,7 @@ const query = graphql`
                         startTime
                         endTime
                         created
-                        hostRealms { path }
+                        hostRealms { path ancestorNames }
                         textMatches {
                             start
                             duration
@@ -157,15 +164,35 @@ const query = graphql`
                             ty
                             highlights { start len }
                         }
+                        matches {
+                            title { start len }
+                            description { start len }
+                            seriesTitle { start len }
+                        }
                     }
                     ... on SearchSeries {
+                        id
                         title
                         description
                         thumbnails { thumbnail isLive audioOnly }
+                        hostRealms { path ancestorNames }
+                        matches {
+                            title { start len }
+                            description { start len }
+                        }
                     }
-                    ... on SearchRealm { name path ancestorNames }
+                    ... on SearchRealm {
+                        id
+                        name
+                        path
+                        ancestorNames
+                        matches {
+                            name { start len }
+                        }
+                    }
                 }
                 totalHits
+                duration
             }
         }
     }
@@ -181,9 +208,29 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     const router = useRouter();
 
     useEffect(() => {
+        if (!isExperimentalFlagSet() || LAST_PRINTED_TIMINGS_QUERY === q) {
+            return;
+        }
+
+        const info = SEARCH_TIMINGS[q];
+        info.rendered = window.performance.now();
+        const diff = (a?: number, b?: number) => !a || !b ? null : Math.round(b - a);
+        // eslint-disable-next-line no-console
+        console.table([{
+            q: q,
+            debounce: diff(info.input, info.startSearch),
+            routing: diff(info.startSearch, info.routeMatch),
+            query: diff(info.routeMatch, info.queryReturned),
+            backend: outcome.__typename === "SearchResults" ? outcome.duration : null,
+            render: diff(info.queryReturned, info.rendered),
+        }]);
+        LAST_PRINTED_TIMINGS_QUERY = q;
+    });
+
+    useEffect(() => {
         const handleEscape = ((ev: KeyboardEvent) => {
             if (ev.key === "Escape") {
-                handleNavigation(router);
+                handleCancelSearch(router);
             }
         });
         document.addEventListener("keyup", handleEscape);
@@ -195,7 +242,7 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
         body = <CenteredNote>{t("search.too-few-characters")}</CenteredNote>;
     } else if (outcome.__typename === "SearchUnavailable") {
         body = <div css={{ textAlign: "center" }}>
-            <Card kind="error">{t("search.unavailable")}</Card>
+            <Card kind="error" css={{ margin: 32 }}>{t("search.unavailable")}</Card>
         </div>;
     } else if (outcome.__typename === "SearchResults") {
         body = outcome.items.length === 0
@@ -206,15 +253,21 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     }
 
     const hits = outcome.__typename === "SearchResults" ? outcome.totalHits : 0;
+    const timingInfo = isExperimentalFlagSet() && outcome.__typename === "SearchResults"
+        ? <>{` • ${outcome.duration}ms`}</>
+        : null;
 
     return <>
         <Breadcrumbs path={[]} tail={q
-            ? <Trans i18nKey={"search.title"} count={hits}>
-                {{ query: q }}
-            </Trans>
+            ? <>
+                <Trans i18nKey={"search.title"} count={hits}>
+                    {{ query: q }}
+                </Trans>
+                {timingInfo}
+            </>
             : t("search.no-query")
         } />
-        <div css={{ maxWidth: 900, margin: "0 auto" }}>
+        <div css={{ maxWidth: 1000, margin: "0 auto" }}>
             {isExperimentalFlagSet() && <>
                 {/* Filters */}
                 <div>
@@ -368,121 +421,84 @@ const CenteredNote: React.FC<{ children: ReactNode }> = ({ children }) => (
 );
 
 type Results = Extract<SearchQuery$data["search"], { __typename: "SearchResults" }>;
+type Item = Results["items"][number];
+type EventItem = Omit<Extract<Item, { "__typename": "SearchEvent" }>, "__typename">;
+type SeriesItem = Omit<Extract<Item, { "__typename": "SearchSeries" }>, "__typename">;
+type RealmItem = Omit<Extract<Item, { "__typename": "SearchRealm" }>, "__typename">;
 
 type SearchResultsProps = {
     items: Results["items"];
 };
 
-const unwrapUndefined = <T, >(value: T | undefined): T => typeof value === "undefined"
-    ? unreachable("type dependent field for search item is not set")
-    : value;
-
-const SearchResults: React.FC<SearchResultsProps> = ({ items }) => (
-    <ul css={{
-        listStyle: "none",
-        padding: 0,
-        // A yellow that looks good for dark and light mode.
-        "--highlight-color": "#ba9f14",
-    }}>
-        {items.map(item => {
-            if (item.__typename === "SearchEvent") {
-                return <SearchEvent key={item.id} {...{
-                    id: item.id,
-                    title: unwrapUndefined(item.title),
-                    description: unwrapUndefined(item.description),
-                    thumbnail: unwrapUndefined(item.thumbnail),
-                    duration: unwrapUndefined(item.duration),
-                    creators: unwrapUndefined(item.creators),
-                    seriesTitle: unwrapUndefined(item.seriesTitle),
-                    seriesId: unwrapUndefined(item.seriesId),
-                    isLive: unwrapUndefined(item.isLive),
-                    audioOnly: unwrapUndefined(item.audioOnly),
-                    created: unwrapUndefined(item.created),
-                    startTime: unwrapUndefined(item.startTime),
-                    endTime: unwrapUndefined(item.endTime),
-                    hostRealms: unwrapUndefined(item.hostRealms),
-                    textMatches: unwrapUndefined(item.textMatches),
-                }} />;
-            } else if (item.__typename === "SearchSeries") {
-                return <SearchSeries key={item.id} {...{
-                    id: item.id,
-                    title: unwrapUndefined(item.title),
-                    description: unwrapUndefined(item.description),
-                    thumbnails: unwrapUndefined(item.thumbnails),
-                }} />;
-            } else if (item.__typename === "SearchRealm") {
-                return <SearchRealm key={item.id} {...{
-                    id: item.id,
-                    name: unwrapUndefined(item.name),
-                    fullPath: unwrapUndefined(item.path),
-                    ancestorNames: unwrapUndefined(item.ancestorNames),
-                }} />;
-            } else {
-                // eslint-disable-next-line no-console
-                console.warn("Unknown search item type: ", item.__typename);
-                return null;
+const SearchResults: React.FC<SearchResultsProps> = ({ items }) => {
+    // Make search results navigatable by arrow keys. For this we don't use any
+    // react state, but DOM methods directly. This is way easier in this case
+    // to properly deal with changing focus due to use of the tab-key for
+    // example. Using tab and arrow keys in hybrid works with this approach.
+    // For this to work we add marker class names to two nodes below.
+    useEffect(() => {
+        const focus = (e: Element | null) => {
+            const a = e?.querySelector("a.search-result-item-overlay-link");
+            if (a && a instanceof HTMLElement) {
+                a.focus();
             }
-        })}
-    </ul>
-);
+        };
 
-type WithIconProps = React.PropsWithChildren<{
-    Icon: IconType;
-    iconSize?: number;
-    hideIconOnMobile?: boolean;
-}>;
+        const handler = (e: KeyboardEvent) => {
+            let dir: "up" | "down";
+            if (e.key === "ArrowDown") {
+                dir = "down";
+            } else if (e.key === "ArrowUp") {
+                dir = "up";
+            } else {
+                return;
+            }
 
-const WithIcon: React.FC<WithIconProps> = ({ Icon, iconSize = 30, children, hideIconOnMobile }) => (
-    <div css={{
-        display: "flex",
-        flexDirection: "row",
-        flexGrow: "1",
-        minWidth: 0,
-        gap: 24,
-        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-            flexDirection: "row-reverse",
-            justifyContent: "space-between",
-            paddingLeft: 4,
-        },
-        ...hideIconOnMobile && {
-            [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                justifyContent: "flex-end",
-            },
-        },
-    }}>
-        <Icon size={iconSize} css={{
-            flexShrink: 0,
-            color: COLORS.primary0,
-            strokeWidth: 1.5,
-            ...hideIconOnMobile && {
-                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                    display: "none",
-                },
-            },
-        }} />
-        {children}
-    </div>
-);
+            e.preventDefault();
 
-type SearchEventProps = {
-    id: string;
-    title: string;
-    description: string | null;
-    thumbnail: string | null;
-    duration: number;
-    creators: readonly string[];
-    seriesTitle: string | null;
-    seriesId: string | null;
-    isLive: boolean;
-    audioOnly: boolean;
-    created: string;
-    startTime: string | null;
-    endTime: string | null;
-    hostRealms: readonly { readonly path: string }[];
-    textMatches: NonNullable<Results["items"][number]["textMatches"]>;
+            const selected = document.querySelector(".search-result-item:focus-within");
+            if (selected == null) {
+                if (dir === "down") {
+                    focus(document.querySelector(".search-result-item"));
+                }
+            } else {
+                focus(selected[match(dir, {
+                    down: () => "nextElementSibling" as const,
+                    up: () => "previousElementSibling" as const,
+                })]);
+            }
+        };
+        document.addEventListener("keydown", handler);
+        return () => document.removeEventListener("keydown", handler);
+    });
+
+    return (
+        <ul css={{
+            listStyle: "none",
+            padding: 0,
+            // A warm grey for highlighting matches.
+            "--highlight-color": useColorScheme().scheme === "dark"
+                ? COLORS.neutral25
+                : COLORS.neutral20,
+        }}>
+            {items.map(item => {
+                if (item.__typename === "SearchEvent") {
+                    return <SearchEvent key={item.id} {...item} />;
+                } else if (item.__typename === "SearchSeries") {
+                    return <SearchSeries key={item.id} {...item} />;
+                } else if (item.__typename === "SearchRealm") {
+                    return <SearchRealm key={item.id} {...item} />;
+                } else {
+                    // eslint-disable-next-line no-console
+                    console.warn("Unknown search item type: ", item.__typename);
+                    return null;
+                }
+            })}
+        </ul>
+    );
 };
 
-const SearchEvent: React.FC<SearchEventProps> = ({
+const SearchEvent: React.FC<EventItem> = ({
     id,
     title,
     description,
@@ -498,6 +514,7 @@ const SearchEvent: React.FC<SearchEventProps> = ({
     endTime,
     hostRealms,
     textMatches,
+    matches,
 }) => {
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
@@ -506,47 +523,8 @@ const SearchEvent: React.FC<SearchEventProps> = ({
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
 
     return (
-        <Item key={id} link={link}>
-            <WithIcon Icon={LuPlayCircle} hideIconOnMobile>
-                <div css={{
-                    color: COLORS.neutral90,
-                    marginRight: "clamp(12px, 4vw - 13px, 40px)",
-                    display: "flex",
-                    flexDirection: "column",
-                    minWidth: 0,
-                    width: "100%",
-                }}>
-                    <h3 css={{
-                        color: COLORS.primary0,
-                        marginBottom: 6,
-                        fontSize: 17,
-                        lineHeight: 1.3,
-                        ...ellipsisOverflowCss(2),
-                    }}>{title}</h3>
-                    <Creators creators={creators} css={{
-                        ul: {
-                            display: "inline-block",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                        },
-                        li: {
-                            display: "inline",
-                        },
-                    }} />
-                    {description && <SmallDescription
-                        text={description}
-                        lines={3}
-                    />}
-                    {seriesTitle && seriesId && <PartOfSeriesLink {...{ seriesTitle, seriesId }} />}
-
-                    {/* Show timeline with matches if there are any */}
-                    {textMatches.length > 0 && (
-                        <TextMatchTimeline {...{ id, duration, link, textMatches }} />
-                    )}
-                </div>
-            </WithIcon>
-            <Link to={link}>
+        <Item key={id} breakpoint={BREAKPOINT_MEDIUM} link={link}>{{
+            image: <Link to={link} tabIndex={-1}>
                 <Thumbnail
                     event={{
                         title,
@@ -560,29 +538,91 @@ const SearchEvent: React.FC<SearchEventProps> = ({
                             audioOnly,
                         },
                     }}
-                    css={thumbnailCss}
                 />
-            </Link>
-        </Item>
+            </Link>,
+            info: <div css={{
+                color: COLORS.neutral90,
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+            }}>
+                {hostRealms.length === 1 && (
+                    <SearchBreadcrumbs ancestorNames={hostRealms[0].ancestorNames} />
+                )}
+                <h3 css={{
+                    color: COLORS.primary1,
+                    marginBottom: 3,
+                    paddingBottom: 3,
+                    fontSize: 17,
+                    lineHeight: 1.3,
+                    ...ellipsisOverflowCss(2),
+                    mark: highlightCss(COLORS.primary2),
+                }}>{highlightText(title, matches.title)}</h3>
+                <div css={{
+                    display: "flex",
+                    color: COLORS.neutral80,
+                    fontSize: 12,
+                    gap: 24,
+                    whiteSpace: "nowrap",
+                }}>
+                    <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
+                        <RelativeDate date={new Date(startTime ?? created)} isLive={isLive} />
+                    </div>
+                    <Creators creators={creators} css={{
+                        minWidth: 0,
+                        fontSize: 12,
+                        svg: {
+                            fontSize: 15,
+                        },
+                        ul: {
+                            display: "inline-block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                        },
+                        li: {
+                            display: "inline",
+                        },
+                    }} />
+                </div>
+
+                <div css={{ flexGrow: 1, maxHeight: 20 }} />
+
+                {description && <SmallDescription
+                    css={{
+                        paddingLeft: 2,
+                        mark: highlightCss(COLORS.neutral90),
+                        fontSize: 12,
+                        lineHeight: 1.4,
+                    }}
+                    text={highlightText(description, matches.description, 130)}
+                    lines={2}
+                />}
+
+                <div css={{ flexGrow: 1 }} />
+
+                {seriesTitle && seriesId && <PartOfSeriesLink
+                    css={{
+                        mark: highlightCss(COLORS.primary2),
+                        fontSize: 12,
+                        svg: {
+                            fontSize: 15,
+                        },
+                    }}
+                    seriesTitle={highlightText(seriesTitle, matches.seriesTitle)}
+                    {...{ seriesId }}
+                />}
+                {/* Show timeline with matches if there are any */}
+                {textMatches.length > 0 && (
+                    <TextMatchTimeline {...{ id, duration, link, textMatches }} />
+                )}
+            </div>,
+        }}</Item>
     );
 };
 
-const thumbnailCss = {
-    outline: `1px solid ${COLORS.neutral15}`,
-    minWidth: 270,
-    width: 270,
-    marginLeft: "auto",
-    [screenWidthAtMost(800)]: {
-        minWidth: 240,
-        width: 240,
-    },
-    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-        maxWidth: 400,
-        margin: "0 auto",
-    },
-};
-
-type TextMatchTimelineProps = Pick<SearchEventProps, "id" | "duration" | "textMatches"> & {
+type TextMatchTimelineProps = Pick<EventItem, "id" | "duration" | "textMatches"> & {
     link: string;
 };
 
@@ -605,16 +645,39 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
     const sectionLink = (startMs: number) => `${link}?t=${secondsToTimeString(startMs / 1000)}`;
     const [queryRef, loadQuery]
         = useQueryLoader<SearchSlidePreviewQuery>(slidePreviewQuery);
+    const ref = useRef<HTMLDivElement>(null);
+
+    // We initially don't render the actual matches at all, since that costs
+    // quite a bit of time, especially when there are many many matches. So
+    // instead, we only render properly once the timeline is close to the
+    // viewport. This means that on the initial route render, only empty
+    // timelines are rendered. Then all matches inside the viewport are
+    // rendered, and only when scrolling down, further matches are rendered.
+    const [doRender, setDoRender] = useState(true);
+    useEffect(() => {
+        const handler = () => setDoRender(false);
+        const observer = new IntersectionObserver(handler, {
+            root: null,
+            rootMargin: "200px 0px 200px 0px",
+            threshold: 0,
+        });
+        observer.observe(ref.current!);
+        return () => observer.disconnect();
+    });
+
+    // For a more useful tab order.
+    const sortedMatches = doRender ? [] : [...textMatches];
+    sortedMatches.sort((a, b) => a.start - b.start);
 
     // We load the query once the user hovers over the parent container. This
     // seems like it would send a query every time the mouse enters, but relay
     // caches the results, so it is only sent once.
     return (
-        <div onMouseEnter={() => { loadQuery({ id: eventId(keyOfId(id)) }); }} css={{
-            width: "100%",
+        <div ref={ref} onMouseEnter={() => { loadQuery({ id: eventId(keyOfId(id)) }); }} css={{
+            width: "calc(100% - 8px)",
             position: "relative",
             height: 10.5,
-            margin: "16px 0",
+            margin: "12px 0 8px 0",
             border: `1.5px solid ${COLORS.neutral50}`,
             borderTop: "none",
             borderBottom: "none",
@@ -629,7 +692,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
                 borderTop: `1.5px solid ${COLORS.neutral50}`,
             }} />
 
-            {textMatches.map((m, i) => (
+            {sortedMatches.map((m, i) => (
                 <WithTooltip
                     key={i}
                     distance={m.ty === "CAPTION" ? 4 : 5.5}
@@ -679,7 +742,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
 
 type TextMatchTooltipWithMaybeImageProps = {
     queryRef: PreloadedQuery<SearchSlidePreviewQuery>;
-    textMatch: SearchEventProps["textMatches"][number];
+    textMatch: EventItem["textMatches"][number];
 };
 
 const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImageProps> = ({
@@ -712,7 +775,7 @@ const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImagePro
 
 type TextMatchTooltipProps = {
     previewImage?: string;
-    textMatch: SearchEventProps["textMatches"][number];
+    textMatch: EventItem["textMatches"][number];
 };
 
 const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textMatch }) => {
@@ -754,7 +817,7 @@ const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textM
                 fontSize: 13,
                 lineHeight: 1.3,
                 ...ellipsisOverflowCss(2),
-                mark: highlightCss(COLORS.neutral90, COLORS.neutral15),
+                mark: highlightCss(COLORS.neutral90),
             }}>
                 …{highlightText(textMatch.text, textMatch.highlights)}…
             </div>
@@ -771,77 +834,142 @@ type ThumbnailInfo = {
     readonly isLive: boolean;
     readonly thumbnail: string | null | undefined;
 }
-type SearchSeriesProps = {
-    id: string;
-    title: string;
-    description: string | null;
-    thumbnails: readonly ThumbnailInfo[] | undefined;
-}
 
-const SearchSeries: React.FC<SearchSeriesProps> = ({ id, title, description, thumbnails }) =>
-    <Item key={id} link={DirectSeriesRoute.url({ seriesId: id })}>
-        <WithIcon Icon={LuLibrary} iconSize={28} hideIconOnMobile>
-            <div css={{
-                color: COLORS.neutral90,
-                marginRight: "clamp(12px, 4vw - 13px, 40px)",
-                display: "flex",
-                flexDirection: "column",
-                minWidth: 0,
-            }}>
-                <h3 css={{
-                    color: COLORS.primary0,
-                    marginBottom: 6,
-                    fontSize: 17,
-                    lineHeight: 1.3,
-                    ...ellipsisOverflowCss(2),
-                }}>{title}</h3>
-                {description && <SmallDescription
-                    text={description}
-                    lines={3}
-                />}
-            </div>
-        </WithIcon>
-        <Link to={DirectSeriesRoute.url({ seriesId: id })}>
+const SearchSeries: React.FC<SeriesItem> = ({
+    id, title, description, thumbnails, matches, hostRealms,
+}) => {
+    // TODO: decide what to do in the case of more than two host realms. Direct
+    // link should be avoided.
+    const link = hostRealms.length !== 1
+        ? DirectSeriesRoute.url({ seriesId: id })
+        : SeriesRoute.url({ realmPath: hostRealms[0].path, seriesId: id });
+
+    return <Item key={id} breakpoint={550} link={link}>{{
+        image: <Link to={link} tabIndex={-1}>
             <ThumbnailStack {...{ thumbnails, title }} />
-        </Link>
-    </Item>
-;
+        </Link>,
+        info: <div css={{
+            display: "flex",
+            flexDirection: "column",
+            minWidth: 0,
+        }}>
+            {hostRealms.length === 1 && (
+                <SearchBreadcrumbs ancestorNames={hostRealms[0].ancestorNames} />
+            )}
+            <h3 css={{
+                color: COLORS.primary0,
+                marginBottom: 3,
+                paddingBottom: 3,
+                fontSize: 17,
+                lineHeight: 1.3,
+                mark: highlightCss(COLORS.primary2),
+                ...ellipsisOverflowCss(2),
+            }}>{highlightText(title, matches.title)}</h3>
+            {description && <SmallDescription
+                css={{
+                    fontSize: 12,
+                    mark: highlightCss(COLORS.neutral90),
+                }}
+                text={highlightText(description, matches.description, 180)}
+                lines={3}
+            />}
+        </div>,
+    }}</Item>;
+};
 
-type ThumbnailStackProps = Pick<SearchSeriesProps, "title" | "thumbnails">
+type ThumbnailStackProps = Pick<SeriesItem, "title" | "thumbnails">
 
-const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => (
-    <div css={{
-        ...thumbnailCss,
-        outline: 0,
-        display: "grid",
-        gridAutoColumns: "1fr",
-        "> div": {
-            outline: `1px solid ${COLORS.neutral10}`,
-            borderRadius: 8,
+const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => {
+    const isDarkScheme = useColorScheme().scheme === "dark";
+
+    return (
+        <div css={{
+            zIndex: 0,
+            margin: "0 auto",
+            width: "70%",
+            display: "grid",
+            gridAutoColumns: "1fr",
+            "> div": {
+                position: "relative",
+                borderRadius: 8,
+                // The outline needs to be in a pseudo element as otherwise, it is
+                // hidden behind the img for some reason.
+                "::after": {
+                    content: "''",
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 8,
+                    outline: `2px solid ${COLORS.neutral70}`,
+                    outlineOffset: -2,
+                },
+            },
+            "> div:not(:last-child)": {
+                boxShadow: "3px -2px 6px rgba(0, 0, 0, 40%)",
+            },
+            "> div:nth-child(1)": {
+                zIndex: 3,
+                gridColumn: "1 / span 10",
+                gridRow: "3 / span 10",
+            },
+            "> div:nth-child(2)": {
+                zIndex: 2,
+                gridColumn: "2 / span 10",
+                gridRow: "2 / span 10",
+            },
+            "> div:nth-child(3)": {
+                zIndex: 1,
+                gridColumn: "3 / span 10",
+                gridRow: "1 / span 10",
+            },
+        }}>
+            {thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>
+                <SeriesThumbnail {...{ info, title }} />
+            </div>)}
+            {/* Add fake thumbnails to always have 3. The visual image of 3 things behind each other
+                is more important than actually showing the correct number of thumbnails. */}
+            {[...Array(Math.max(0, 3 - thumbnails.length))].map((_, idx) => (
+                <div key={"dummy" + idx}>
+                    <DummySeriesStackThumbnail isDark={isDarkScheme} />
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const DummySeriesStackThumbnail: React.FC<{ isDark: boolean }> = ({ isDark }) => (
+    <ThumbnailOverlayContainer css={{
+        // Pattern from https://css-pattern.com/overlapping-cubes/,
+        // MIT licensed: https://github.com/Afif13/CSS-Pattern
+        "--s": "40px",
+        ...isDark ? {
+            "--c1": "#2c2c2c",
+            "--c2": "#292929",
+            "--c3": "#262626",
+        } : {
+            "--c1": "#e8e8e8",
+            "--c2": "#e3e3e3",
+            "--c3": "#dddddd",
         },
-        "> div:not(:last-child)": {
-            boxShadow: "3px -2px 6px rgba(0, 0, 0, 40%)",
-        },
-        "> div:nth-child(1)": {
-            zIndex: 3,
-            gridColumn: "1 / span 10",
-            gridRow: "3 / span 10",
-        },
-        "> div:nth-child(2)": {
-            zIndex: 2,
-            gridColumn: "2 / span 10",
-            gridRow: "2 / span 10",
-        },
-        "> div:nth-child(3)": {
-            zIndex: 1,
-            gridColumn: "3 / span 10",
-            gridRow: "1 / span 10",
-        },
-    }}>
-        {thumbnails?.map((info, idx) => <div key={idx}>
-            <SeriesThumbnail {...{ info, title }} />
-        </div>)}
-    </div>
+
+        "--_g": "0 120deg,#0000 0",
+        background: `
+            conic-gradient(             at calc(250%/3) calc(100%/3),
+                var(--c3) var(--_g)),
+            conic-gradient(from -120deg at calc( 50%/3) calc(100%/3),
+                var(--c2) var(--_g)),
+            conic-gradient(from  120deg at calc(100%/3) calc(250%/3),
+                var(--c1) var(--_g)),
+            conic-gradient(from  120deg at calc(200%/3) calc(250%/3),
+                var(--c1) var(--_g)),
+            conic-gradient(from -180deg at calc(100%/3) 50%,
+                var(--c2)  60deg,var(--c1) var(--_g)),
+            conic-gradient(from   60deg at calc(200%/3) 50%,
+                var(--c1)  60deg,var(--c3) var(--_g)),
+            conic-gradient(from  -60deg at 50% calc(100%/3),
+                var(--c1) 120deg,var(--c2) 0 240deg,var(--c3) 0)
+        `,
+        backgroundSize: "calc(var(--s)*sqrt(3)) var(--s)",
+    }} />
 );
 
 type SeriesThumbnailProps = {
@@ -875,69 +1003,130 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
     </ThumbnailOverlayContainer>;
 };
 
-type SearchRealmProps = {
-    id: string;
-    name: string | null;
+type SearchBreadcrumbsProps = {
     ancestorNames: readonly (string | null | undefined)[];
-    fullPath: string;
 };
 
-const SearchRealm: React.FC<SearchRealmProps> = ({ id, name, ancestorNames, fullPath }) => (
-    <Item key={id} link={fullPath}>
-        <WithIcon Icon={LuLayout}>
-            <div>
-                <BreadcrumbsContainer>
-                    {ancestorNames.map((name, i) => <li key={i}>
-                        {name ?? <MissingRealmName />}
-                        <BreadcrumbSeparator />
-                    </li>)}
-                </BreadcrumbsContainer>
-                <h3 css={{ color: COLORS.primary0 }}>{name ?? <MissingRealmName />}</h3>
+const SearchBreadcrumbs: React.FC<SearchBreadcrumbsProps> = ({ ancestorNames }) => (
+    <BreadcrumbsContainer css={{ fontSize: 12, color: COLORS.neutral80 }}>
+        {ancestorNames.map((name, i) => <li key={i}>
+            {name ?? <MissingRealmName />}
+            <BreadcrumbSeparator />
+        </li>)}
+    </BreadcrumbsContainer>
+);
+
+const SearchRealm: React.FC<RealmItem> = ({
+    id, name, ancestorNames, path, matches,
+}) => (
+    <Item key={id} link={path}>{{
+        image: <div css={{
+            background: COLORS.neutral25,
+            color: COLORS.neutral90,
+            borderRadius: "50%",
+            width: "min(96px, 20vw)",
+            height: "min(96px, 20vw)",
+            fontSize: "min(42px, 9vw)",
+            margin: "0 auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        }}><LuLayout /></div>,
+        info: (
+            <div css={{
+                padding: "6px 0",
+                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                    padding: 0,
+                },
+            }}>
+                <SearchBreadcrumbs ancestorNames={ancestorNames} />
+                <h3 css={{
+                    marginTop: 4,
+                    color: COLORS.primary1,
+                    fontSize: 17,
+                    fontStyle: "italic",
+                    mark: highlightCss(COLORS.primary2),
+                }}>
+                    {name ? highlightText(name, matches.name) : <MissingRealmName />}
+                </h3>
             </div>
-        </WithIcon>
-    </Item>
+        ),
+    }}</Item>
 );
 
 type ItemProps = {
     link: string;
-    children: ReactNode;
+    breakpoint?: number;
+    children: {
+        image: ReactNode;
+        info: ReactNode;
+    };
 };
 
-const Item: React.FC<ItemProps> = ({ link, children }) => (
-    <li css={{
+const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
+    <li className="search-result-item" css={{
         position: "relative",
         display: "flex",
-        borderRadius: 16,
-        border: `1px solid ${COLORS.neutral15}`,
-        margin: 16,
+        flexDirection: "row",
+        borderRadius: 12,
+        margin: 24,
         padding: 8,
-        gap: 8,
+        gap: 24,
         textDecoration: "none",
-        "&:hover, &:focus": {
-            backgroundColor: COLORS.neutral10,
+        transition: "background 200ms, outline-color 200ms",
+        outline: "1px solid transparent",
+        "&:hover, &:focus-within": {
+            backgroundColor: COLORS.neutral15,
+            outlineColor: COLORS.neutral20,
+            transition: "background 50ms, outline-color 50ms",
         },
-        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-            flexDirection: "column-reverse",
+        [screenWidthAtMost(800)]: {
             gap: 12,
-            margin: "16px 0",
-            "& > *:last-child": {
-                width: "100%",
-            },
+            margin: "24px 0",
+        },
+        [screenWidthAtMost(breakpoint)]: {
+            margin: "48px 0",
+            flexDirection: "column",
+            gap: 12,
         },
     }}>
-        <Link to={link} css={{
+        <Link to={link} className="search-result-item-overlay-link" css={{
             position: "absolute",
             inset: 0,
-            borderRadius: 16,
+            borderRadius: 12,
         }}/>
-        {children}
+        <div css={{
+            flexShrink: 0,
+            width: "40%",
+            maxWidth: 350,
+            margin: "0 auto",
+            [screenWidthAtMost(550)]: {
+                width: "unset",
+                maxWidth: "35%",
+            },
+            [screenWidthAtMost(breakpoint)]: {
+                maxWidth: 400,
+                width: "100%",
+            },
+        }}>{children.image}</div>
+        <div css={{
+            minWidth: 0,
+            flex: "1",
+            [screenWidthAtMost(breakpoint)]: {
+                maxWidth: 400,
+                width: "100%",
+                margin: "0 auto",
+            },
+        }}>
+            {children.info}
+        </div>
     </li>
 );
 
 // If a user initiated the search in Tobira (i.e. neither coming from an
 // external link nor using the browser bar to manually visit the /~search route),
 // we can redirect to the previous page. Otherwise we redirect to Tobira's homepage.
-export const handleNavigation = ((router: RouterControl, ref?: RefObject<HTMLInputElement>) => {
+export const handleCancelSearch = ((router: RouterControl, ref?: RefObject<HTMLInputElement>) => {
     if (ref?.current) {
         // Why is this necessary? When a user reloads the search page and then navigates
         // away within Tobira, the search input isn't cleared like it would be usually.
@@ -991,32 +1180,65 @@ const byteSlice = (s: string, start: number, len: number): readonly [string, str
     ] as const;
 };
 
+/**
+ * Inserts `<mark>` elements inside `s` to highlight parts of text, as specified
+ * by `spans`. If `maxUnmarkedSectionLen` is specified, this function makes
+ * sure that all sections without any highlight (except the last one) is at
+ * most that many characters¹ long. If the a section is longer, its middle is
+ * replaced by " … " to stay within the limit.
+ *
+ * ¹ Well, technically UTF-16 code points, and this is important, but in our
+ * case it's a loosy goosy business anyway, since the number only approximates
+ * the available space for rendering anyway.
+ */
 const highlightText = (
     s: string,
     spans: readonly { start: number; len: number }[],
+    maxUnmarkedSectionLen = Infinity,
 ) => {
     const textParts = [];
     let remainingText = s;
     let offset = 0;
     for (const span of spans) {
         const highlightStart = span.start - offset;
-        const [prefix, middle, rest]
+        const [prefix_, middle, rest]
             = byteSlice(remainingText, highlightStart, span.len);
+        let prefix = prefix_;
 
-        textParts.push(<span key={offset + 1}>{prefix}</span>);
-        textParts.push(
-            <mark key={offset}>{middle}</mark>
-        );
+        // If the first part (without a match) is too long, we truncate its
+        // middle.
+        if (prefix.length > maxUnmarkedSectionLen) {
+            const halfLen = maxUnmarkedSectionLen / 2 - 2;
+            const start = prefix.substring(0, halfLen);
+            const end = prefix.substring(prefix.length - halfLen);
+            prefix = `${start} … ${end}`;
+        }
+
+        if (prefix) {
+            textParts.push(<span key={offset}>{prefix}</span>);
+        }
+        textParts.push(<mark key={offset + prefix.length}>{middle}</mark>);
         remainingText = rest;
         offset = span.start + span.len;
     }
     textParts.push(remainingText);
+
     return textParts;
 };
 
-const highlightCss = (color: string, backgroundColor: string) => ({
+const highlightCss = (color: string) => ({
     color,
-    backgroundColor,
-    borderBottom: "2px solid var(--highlight-color)",
+    backgroundColor: "var(--highlight-color)",
     borderRadius: 2,
 });
+
+
+// This is for profiling search performance. We might remove this later again.
+export const SEARCH_TIMINGS: Record<string, {
+    input?: DOMHighResTimeStamp;
+    startSearch?: DOMHighResTimeStamp;
+    routeMatch?: DOMHighResTimeStamp;
+    queryReturned?: DOMHighResTimeStamp;
+    rendered?: DOMHighResTimeStamp;
+}> = {};
+let LAST_PRINTED_TIMINGS_QUERY: string | null = null;

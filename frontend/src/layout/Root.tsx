@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense } from "react";
+import React, { ReactNode, Suspense, useEffect, useRef } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 import { screenWidthAtMost } from "@opencast/appkit";
@@ -15,6 +15,7 @@ import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } fro
 import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { useNoindexTag } from "../util";
+import { useRouter } from "../router";
 
 
 export const MAIN_PADDING = 16;
@@ -146,9 +147,23 @@ export const RootLoaderImpl = <Q extends QueryWithUserData>({
     const data = usePreloadedQuery(query, queryRef);
     const userData = useFragment(userDataFragment, data);
 
+    // We use a counter to force rerendering of the main part, whenever the user
+    // navigates. This is an unfortunate hack for some cases where routes are
+    // not rerendered. For example, the upload route, after uploading a video,
+    // clicking on "upload video" in the user menu again does nothing without
+    // this hack.
+    const counter = useRef(0);
+    const router = useRouter();
+    useEffect(() => router.listenBeforeNav(() => {
+        counter.current += 1;
+        return undefined;
+    }));
+
     return (
         <UserProvider data={userData?.currentUser}>
-            <Root nav={nav(data)}>{render(data)}</Root>
+            <Root nav={nav(data)}>
+                <React.Fragment key={counter.current}>{render(data)}</React.Fragment>
+            </Root>
         </UserProvider>
     );
 };

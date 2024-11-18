@@ -7,6 +7,9 @@ union Event = AuthorizedEvent | NotAllowed
 
 type EventSearchResults {
   items: [SearchEvent!]!
+  totalHits: Int!
+  "How long searching took in ms."
+  duration: Int!
 }
 
 input NewTitleBlock {
@@ -98,6 +101,7 @@ type SearchEvent implements Node {
   audioOnly: Boolean!
   hostRealms: [SearchRealm!]!
   textMatches: [TextMatch!]!
+  matches: SearchEventMatches!
 }
 
 input ChildIndex {
@@ -250,9 +254,9 @@ type SearchPlaylist implements Node {
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 
-input UpdatedPermissions {
-  moderatorRoles: [String!]
-  adminRoles: [String!]
+type SearchSeriesMatches {
+  title: [ByteSpan!]!
+  description: [ByteSpan!]!
 }
 
 type NotAllowed {
@@ -261,6 +265,11 @@ type NotAllowed {
     have at least one field. Always returns `null`.
   """
   dummy: Boolean
+}
+
+input UpdatedPermissions {
+  moderatorRoles: [String!]
+  adminRoles: [String!]
 }
 
 input UpdateVideoBlock {
@@ -344,6 +353,9 @@ interface Node {
 
 type SeriesSearchResults {
   items: [SearchSeries!]!
+  totalHits: Int!
+  "How long searching took in ms."
+  duration: Int!
 }
 
 "A match inside an event's texts while searching."
@@ -374,6 +386,8 @@ type Track {
 type SearchResults {
   items: [Node!]!
   totalHits: Int!
+  "How long searching took in ms."
+  duration: Int!
 }
 
 input UpdateTextBlock {
@@ -749,6 +763,9 @@ scalar TranslatedString
 
 type PlaylistSearchResults {
   items: [SearchPlaylist!]!
+  totalHits: Int!
+  "How long searching took in ms."
+  duration: Int!
 }
 
 input UpdateSeriesBlock {
@@ -764,6 +781,7 @@ type SearchRealm implements Node {
   name: String
   path: String!
   ancestorNames: [String]!
+  matches: SearchRealmMatches!
 }
 
 "Defines the sort order for events."
@@ -817,6 +835,7 @@ type SearchSeries implements Node {
   description: String
   hostRealms: [SearchRealm!]!
   thumbnails: [ThumbnailInfo!]!
+  matches: SearchSeriesMatches!
 }
 
 type ThumbnailInfo {
@@ -869,14 +888,24 @@ input NewRealm {
   pathSegment: String!
 }
 
-enum SortDirection {
-  ASCENDING
-  DESCENDING
+type SearchRealmMatches {
+  name: [ByteSpan!]!
 }
 
 type Segment {
   uri: String!
   startTime: Float!
+}
+
+enum SortDirection {
+  ASCENDING
+  DESCENDING
+}
+
+type SearchEventMatches {
+  title: [ByteSpan!]!
+  description: [ByteSpan!]!
+  seriesTitle: [ByteSpan!]!
 }
 
 "Services a user can be pre-authenticated for using a JWT"
