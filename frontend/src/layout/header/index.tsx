@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { LuArrowLeft, LuMenu, LuX } from "react-icons/lu";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
-import { match, screenWidthAbove, screenWidthAtMost } from "@opencast/appkit";
+import { match, screenWidthAbove } from "@opencast/appkit";
 
 import { useMenu } from "../MenuState";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
@@ -24,8 +24,7 @@ type Props = {
 export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false }) => {
     const menu = useMenu();
     const router = useRouter();
-    const q = screenWidthAtMost(NAV_BREAKPOINT).replace(/^@media /, "");
-    const onNarrowScreen = window.matchMedia(q).matches;
+    const onNarrowScreen = window.matchMedia(`(max-width: ${NAV_BREAKPOINT}px)`).matches;
     useEffect(() => (
         router.listenAtNav(({ newRoute }) => {
             if (onNarrowScreen && (menu.state === "search") !== (newRoute === SearchRoute)) {

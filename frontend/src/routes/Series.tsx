@@ -31,7 +31,7 @@ export const SeriesRoute = makeRoute({
     url: ({ realmPath, seriesId }: { realmPath: string; seriesId: string }) =>
         `${realmPath === "/" ? "" : realmPath}/s/${keyOfId(seriesId)}`,
     match: url => {
-        const params = checkSerieRealmPath(url, b64regex);
+        const params = checkSeriesRealmPath(url, b64regex);
         if (params == null) {
             return null;
         }
@@ -80,7 +80,7 @@ export const OpencastSeriesRoute = makeRoute({
     url: ({ realmPath, seriesOcId }: { realmPath: string; seriesOcId: string }) =>
         `${realmPath === "/" ? "" : realmPath}/s/:${seriesOcId}`,
     match: url => {
-        const params = checkSerieRealmPath(url, ":([^/]+)");
+        const params = checkSeriesRealmPath(url, ":([^/]+)");
         if (params == null) {
             return null;
         }
@@ -133,7 +133,7 @@ const ForwardToDirectRoute: React.FC<{ seriesId: string }> = ({ seriesId }) => {
     return <InitialLoading />;
 };
 
-const checkSerieRealmPath = (url: URL, idRegex: string) => {
+const checkSeriesRealmPath = (url: URL, idRegex: string) => {
     const urlPath = url.pathname.replace(/^\/|\/$/g, "");
     const parts = urlPath.split("/").map(decodeURIComponent);
     if (parts.length < 2) {

@@ -569,11 +569,6 @@ const SearchEvent: React.FC<EventItem> = ({
                         <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
                         <RelativeDate date={new Date(startTime ?? created)} isLive={isLive} />
                     </div>
-                    <div css={{
-                        display: "none",
-                        borderRight: `1px solid ${COLORS.neutral30}`,
-                        margin: "2px 8px",
-                    }} />
                     <Creators creators={creators} css={{
                         minWidth: 0,
                         fontSize: 12,

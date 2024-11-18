@@ -135,7 +135,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         disabled={disabled}
                         placeholder={t("search.input-label")}
                         defaultValue={defaultValue}
-                        // We only want to autofocus is the user just pressed
+                        // We only want to autofocus if the user just pressed
                         // the search button in the header (mobile only). This
                         // only happens on non-search routes.
                         autoFocus={variant === "mobile" && !onSearchRoute}

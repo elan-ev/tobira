@@ -171,25 +171,6 @@ export const useNoindexTag = (noindex = true) => {
     });
 };
 
-/** Can be used to debounce API calls or any other function */
-export const useDebounce = () => {
-    const timeout = useRef<NodeJS.Timeout>();
-
-    const debounce = (fn: (...args: string[]) => void, delay: number) =>
-        (...args: string[]) => {
-            clearTimeout(timeout.current);
-            timeout.current = setTimeout(() => fn(...args), delay);
-        };
-
-    useEffect(() => {
-        if (timeout.current) {
-            clearTimeout(timeout.current);
-        }
-    }, []);
-
-    return { debounce };
-};
-
 /** Formats the given number of milliseconds as ISO 8601 duration string, e.g. "PT3M47S" */
 export const toIsoDuration = (milliseconds: number): string => {
     let acc = Math.floor(milliseconds / 1000);
