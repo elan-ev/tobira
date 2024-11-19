@@ -37,9 +37,11 @@ export const EmbedVideoRoute = makeRoute({
             }
         `;
 
+        const creds = getCredentials("event", id);
         const queryRef = loadQuery<EmbedQuery>(query, {
             id,
-            ...getCredentials("event", id),
+            eventUser: creds?.user,
+            eventPassword: creds?.password,
         });
 
 
@@ -67,9 +69,11 @@ export const EmbedOpencastVideoRoute = makeRoute({
         `;
 
         const videoId = decodeURIComponent(matches[1]);
+        const creds = getCredentials("oc-event", videoId);
         const queryRef = loadQuery<EmbedDirectOpencastQuery>(query, {
             id: videoId,
-            ...getCredentials("oc-event", videoId),
+            eventUser: creds?.user,
+            eventPassword: creds?.password,
         });
 
         return matchedEmbedRoute(query, queryRef);

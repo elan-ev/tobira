@@ -242,7 +242,20 @@ export const getCredentials = (kind: IdKind, id: string): Credentials => {
     const credentials = window.localStorage.getItem(credentialsStorageKey(kind, id))
         ?? window.sessionStorage.getItem(credentialsStorageKey(kind, id));
 
-    return credentials && JSON.parse(credentials);
+    if (!credentials) {
+        return null;
+    }
+
+    const parsed = JSON.parse(credentials);
+    if ("user" in parsed && typeof parsed.user === "string"
+        && "password" in parsed && typeof parsed.password === "string") {
+        return {
+            user: parsed.user,
+            password: parsed.password,
+        };
+    } else {
+        return null;
+    }
 };
 
 export const credentialsStorageKey = (kind: IdKind, id: string) =>

@@ -46,6 +46,7 @@ import {
     playlistId,
     getCredentials,
     credentialsStorageKey,
+    Credentials,
 } from "../util";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { LinkButton } from "../ui/LinkButton";
@@ -135,11 +136,13 @@ export const VideoRoute = makeRoute({
             }
         `;
 
+        const creds = getCredentials("event", id);
         const queryRef = loadQuery<VideoPageInRealmQuery>(query, {
             id,
             realmPath,
             listId,
-            ...getCredentials("event", id),
+            eventUser: creds?.user,
+            eventPassword: creds?.password,
         });
 
         return {
@@ -201,11 +204,13 @@ export const OpencastVideoRoute = makeRoute({
             }
         `;
 
+        const creds = getCredentials("oc-event", id);
         const queryRef = loadQuery<VideoPageByOcIdInRealmQuery>(query, {
             id,
             realmPath,
             listId,
-            ...getCredentials("oc-event", id),
+            eventUser: creds?.user,
+            eventPassword: creds?.password,
         });
 
         return {
@@ -272,10 +277,12 @@ export const DirectVideoRoute = makeRoute({
             }
         `;
         const id = eventId(decodeURIComponent(params[1]));
+        const creds = getCredentials("event", id);
         const queryRef = loadQuery<VideoPageDirectLinkQuery>(query, {
             id,
             listId: makeListId(url.searchParams.get("list")),
-            ...getCredentials("event", id),
+            eventUser: creds?.user,
+            eventPassword: creds?.password,
         });
 
         return matchedDirectRoute(query, queryRef);
@@ -312,10 +319,12 @@ export const DirectOpencastVideoRoute = makeRoute({
             }
         `;
         const id = decodeURIComponent(matches[1]);
+        const creds = getCredentials("oc-event", id);
         const queryRef = loadQuery<VideoPageDirectOpencastLinkQuery>(query, {
             id,
             listId: makeListId(url.searchParams.get("list")),
-            ...getCredentials("oc-event", id),
+            eventUser: creds?.user,
+            eventPassword: creds?.password,
         });
 
         return matchedDirectRoute(query, queryRef);
@@ -633,6 +642,7 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
     const user = useUser();
     const [authState, setAuthState] = useState<AuthenticationFormState>("idle");
     const [authError, setAuthError] = useState<string | null>(null);
+    const [triedSeries, setTriedSeries] = useState(false);
 
     const embeddedStyles = {
         height: "100%",
@@ -640,26 +650,29 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
         justifyContent: "center",
     };
 
-    const onSubmit = (data: FormData) => {
+    const tryCredentials = (creds: NonNullable<Credentials>, callbacks: {
+        start?: () => void;
+        error?: (e: Error) => void;
+        eventAuthError?: () => void;
+        incorrectCredentials?: () => void;
+    }) => {
         const credentialVars = {
-            eventUser: data.userid,
-            eventPassword: data.password,
+            eventUser: creds.user,
+            eventPassword: creds.password,
         };
         fetchQuery<VideoAuthorizedDataQuery>(environment, authorizedDataQuery, {
             id: event.id,
             ...credentialVars,
         }).subscribe({
-            start: () => setAuthState("pending"),
+            start: callbacks.start,
             next: ({ node }) => {
                 if (node?.__typename !== "AuthorizedEvent") {
-                    setAuthError(t("no-preview-permission"));
-                    setAuthState("idle");
+                    callbacks.eventAuthError?.();
                     return;
                 }
 
                 if (!node.authorizedData) {
-                    setAuthError(t("invalid-credentials"));
-                    setAuthState("idle");
+                    callbacks.incorrectCredentials?.();
                     return;
                 }
 
@@ -685,8 +698,10 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
                 // The check will return a result for either ID regardless of its kind, as long as
                 // one of them is stored.
                 const credentials = JSON.stringify({
-                    eventUser: data.userid,
-                    eventPassword: data.password,
+                    // Explicitly listing fields here to keep storage format
+                    // explicit and avoid accidentally changing it.
+                    user: creds.user,
+                    password: creds.password,
                 });
                 const storage = isRealUser(user) ? window.localStorage : window.sessionStorage;
                 storage.setItem(credentialsStorageKey("event", event.id), credentials);
@@ -698,8 +713,34 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
                     storage.setItem(credentialsStorageKey("series", event.series.id), credentials);
                 }
             },
+            error: callbacks.error,
+        });
+    };
+
+    // We also try the credentials we have associated with the series.
+    // Unfortunately, we can only do that now and not in the beginning because
+    // we don't know the series ID from the start.
+    useEffect(() => {
+        const seriesCredentials = event.series && getCredentials("series", event.series.id);
+        if (!triedSeries && seriesCredentials) {
+            setTriedSeries(true);
+            tryCredentials(seriesCredentials, {});
+        }
+    });
+
+    const onSubmit = (data: FormData) => {
+        tryCredentials({ user: data.userid, password: data.password }, {
+            start: () => setAuthState("pending"),
             error: (error: Error) => {
                 setAuthError(error.message);
+                setAuthState("idle");
+            },
+            eventAuthError: () => {
+                setAuthError(t("no-preview-permission"));
+                setAuthState("idle");
+            },
+            incorrectCredentials: () => {
+                setAuthError(t("invalid-credentials"));
                 setAuthState("idle");
             },
         });
