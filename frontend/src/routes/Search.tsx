@@ -546,7 +546,7 @@ const SearchEvent: React.FC<EventItem> = ({
                             startTime,
                             endTime,
                         },
-                        authorizedData: {
+                        authorizedData: !userIsAuthorized ? null : {
                             thumbnail,
                             audioOnly,
                         },
