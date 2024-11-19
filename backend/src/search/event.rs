@@ -2,7 +2,7 @@ use std::{cmp::{max, min}, collections::{BTreeMap, HashMap}, fmt::Write};
 
 use chrono::{DateTime, Utc};
 use fallible_iterator::FallibleIterator;
-use meilisearch_sdk::{indexes::Index, MatchRange};
+use meilisearch_sdk::{indexes::Index, search::MatchRange};
 use postgres_types::FromSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;

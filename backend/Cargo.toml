@@ -40,11 +40,9 @@ hyperlocal = "0.9.1"
 http-body-util = "0.1"
 hyper-rustls = { version = "0.26.0", features = ["http2"] }
 hyper-util = { version = "0.1.3", features = ["client", "server", "http1", "http2"] }
-isahc = { version = "1", features = ["static-ssl"] }
 iso8601 = "0.6.1"
 juniper = { version = "0.16.1", default-features = false, features = ["chrono", "schema-language", "anyhow", "backtrace"] }
-libz-sys = { version = "1", features = ["static"] }
-meilisearch-sdk = "0.24.3"
+meilisearch-sdk = "0.27.1"
 mime_guess = { version = "2", default-features = false }
 nu-ansi-term = "0.50.1"
 ogrim = "0.1.1"

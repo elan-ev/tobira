@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
+use meilisearch_sdk::search::SearchResult;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
@@ -74,7 +75,7 @@ impl SearchEvent {
         Self::new_inner(src, vec![], SearchEventMatches::default(), user_can_read)
     }
 
-    pub(crate) fn new(hit: meilisearch_sdk::SearchResult<search::Event>, context: &Context) -> Self {
+    pub(crate) fn new(hit: SearchResult<search::Event>, context: &Context) -> Self {
         let match_positions = hit.matches_position.as_ref();
         let src = hit.result;
 

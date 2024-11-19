@@ -1,4 +1,4 @@
-use meilisearch_sdk::{Selectors, MatchingStrategies};
+use meilisearch_sdk::search::{Selectors, MatchingStrategies};
 use serde::Deserialize;
 
 use crate::{

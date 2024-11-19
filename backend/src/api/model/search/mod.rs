@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
-use meilisearch_sdk::MatchRange;
+use meilisearch_sdk::search::MatchRange;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{borrow::Cow, collections::HashMap, fmt, time::Instant};
@@ -125,7 +125,7 @@ macro_rules! handle_search_result {
             // to happen. In those cases, we just say that the search is currently
             // unavailable, instead of the general error.
             Err(e @ MsError::Meilisearch(MsRespError { error_code: MsErrorCode::IndexNotFound, .. }))
-            | Err(e @ MsError::UnreachableServer)
+            | Err(e @ MsError::HttpError(_))
             | Err(e @ MsError::Timeout) => {
                 error!("Meili search failed: {e} (=> replying 'search unavailable')");
                 return Ok(<$return_type>::SearchUnavailable(SearchUnavailable));

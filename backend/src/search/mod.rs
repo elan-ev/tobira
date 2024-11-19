@@ -73,7 +73,7 @@ impl MeiliConfig {
     /// Connects to Meili, erroring if Meili is not reachable. Does not check
     /// whether required indexes exist or whether they are in the correct shape!
     pub(crate) async fn connect(&self) -> Result<Client> {
-        let client = Client::new(self.clone());
+        let client = Client::new(self.clone())?;
         client.check_connection().await
             .with_context(|| format!("failed to connect to MeiliSearch at '{}'", self.host))?;
 
@@ -130,12 +130,12 @@ impl Client {
     /// Creates the search client, but without contacting Meili at all. Thus,
     /// neither the connection nor the existence of the indexes is checked.
     /// Also see [`Self::check_connection`] and [`Self::prepare`].
-    pub(crate) fn new(config: MeiliConfig) -> Self {
+    pub(crate) fn new(config: MeiliConfig) -> Result<Self> {
         // Create client (this does not connect to Meili).
         let client = MeiliClient::new(
             &config.host.to_string(),
             Some(config.key.expose_secret()),
-        );
+        ).context("failed to create Meili client")?;
 
         // Store some references to the indices (without checking whether they
         // actually exist!).
@@ -146,7 +146,7 @@ impl Client {
         let user_index = client.index(&config.user_index_name());
         let playlist_index = client.index(&config.playlist_index_name());
 
-        Self {
+        Ok(Self {
             client,
             config,
             meta_index,
@@ -155,7 +155,7 @@ impl Client {
             realm_index,
             user_index,
             playlist_index,
-        }
+        })
     }
 
     /// Checks the connection to Meilisearch by accessing the `/health` endpoint.
@@ -215,7 +215,7 @@ impl IndexItemKind {
     }
 }
 
-pub(crate) trait IndexItem: serde::Serialize {
+pub(crate) trait IndexItem: serde::Serialize + Send + Sync {
     const KIND: IndexItemKind;
     fn id(&self) -> SearchId;
 }

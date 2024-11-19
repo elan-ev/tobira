@@ -131,7 +131,7 @@ async fn start_server(config: Config) -> Result<()> {
     info!("Starting Tobira backend ...");
     trace!("Configuration: {:#?}", config);
     let db = connect_and_migrate_db(&config).await?;
-    let search = search::Client::new(config.meili.clone());
+    let search = search::Client::new(config.meili.clone())?;
     if let Err(e) = search.check_connection().await {
         warn!("Could not connect to Meili search index: {e:?}");
     }
