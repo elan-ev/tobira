@@ -44,6 +44,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
                         updated
                         startTime
                         endTime
+                        thumbnail
                     }
                     ... VideoPageAuthorizedData
                 }
@@ -64,7 +65,6 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
     }
-
 
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}

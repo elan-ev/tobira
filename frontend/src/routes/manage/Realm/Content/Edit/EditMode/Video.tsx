@@ -47,8 +47,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                     created
                     isLive
                     creators
-                    syncedData { duration startTime endTime }
-                    authorizedData { thumbnail }
+                    syncedData { duration startTime endTime audioOnly }
                 }
             }
             showTitle
@@ -152,6 +151,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                         duration
                         startTime
                         endTime
+                        audioOnly
                     }
                 }
             }
@@ -204,16 +204,7 @@ const formatOption = (event: Option, t: TFunction) => (
             ? <MovingTruck />
             : <Thumbnail
                 css={{ width: 120, minWidth: 120 }}
-                event={{
-                    ...event,
-                    syncedData: event.syncedData && {
-                        ...event.syncedData,
-                    },
-                    authorizedData: event.authorizedData && {
-                        ...event.authorizedData,
-                        audioOnly: false, // TODO
-                    },
-                }}
+                event={event}
             />}
         <div>
             <div>{event.title}</div>

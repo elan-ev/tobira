@@ -161,7 +161,6 @@ const query = graphql`
                         startTime
                         endTime
                         created
-                        userIsAuthorized
                         hostRealms { path ancestorNames }
                         textMatches {
                             start
@@ -521,7 +520,6 @@ const SearchEvent: React.FC<EventItem> = ({
     hostRealms,
     textMatches,
     matches,
-    userIsAuthorized,
 }) => {
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
@@ -534,19 +532,13 @@ const SearchEvent: React.FC<EventItem> = ({
             image: <Link to={link} tabIndex={-1}>
                 <Thumbnail
                     event={{
-                        id,
                         title,
                         isLive,
                         created,
-                        series: seriesId ? {
-                            id: seriesId,
-                        } : null,
                         syncedData: {
                             duration,
                             startTime,
                             endTime,
-                        },
-                        authorizedData: !userIsAuthorized ? null : {
                             thumbnail,
                             audioOnly,
                         },

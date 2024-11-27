@@ -69,7 +69,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 metadata: {
                     title: event.title,
                     duration: fixedDuration,
-                    preview: event.authorizedData.thumbnail,
+                    preview: event.syncedData.thumbnail,
 
                     // These are not strictly necessary for Paella to know, but can be used by
                     // plugins, like the Matomo plugin. It is not well defined what to pass how,

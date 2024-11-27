@@ -116,7 +116,7 @@ impl SearchEvent {
             title: src.title,
             description: src.description,
             creators: src.creators,
-            thumbnail: if user_can_read { src.thumbnail } else { None },
+            thumbnail: src.thumbnail,
             duration: src.duration as f64,
             created: src.created,
             start_time: src.start_time,

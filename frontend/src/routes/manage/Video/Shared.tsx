@@ -92,9 +92,10 @@ const query = graphql`
                     updated
                     startTime
                     endTime
+                    thumbnail
+                    audioOnly
                 }
                 authorizedData {
-                    thumbnail
                     tracks { flavor resolution mimetype uri }
                 }
                 series {

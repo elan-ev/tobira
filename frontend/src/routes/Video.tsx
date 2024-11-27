@@ -461,6 +461,7 @@ const eventFragment = graphql`
                 duration
                 startTime
                 endTime
+                thumbnail
             }
             ... VideoPageAuthorizedData
                 @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
@@ -486,13 +487,12 @@ const authorizedDataFragment = graphql`
             tracks { uri flavor mimetype resolution isMaster }
             captions { uri lang }
             segments { uri startTime }
-            thumbnail
         }
     }
 `;
 
 // Custom query to refetch authorized event data manually. Unfortunately, using
-// the fragment here is not enough, we need to also selected `authorizedData`
+// the fragment here is not enough, we need to also select `authorizedData`
 // manually. Without that, we could not access that field below to check if the
 // credentials were correct. Normally, adding `@relay(mask: false)` to the
 // fragment should also fix that, but that does not work for some reason.
@@ -509,7 +509,7 @@ export const authorizedDataQuery = graphql`
                 @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
             ...on AuthorizedEvent {
                 authorizedData(user: $eventUser, password: $eventPassword) {
-                    thumbnail
+                    __id
                 }
             }
         }
@@ -558,7 +558,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
         "@type": "VideoObject",
         name: event.title,
         description: event.description ?? undefined,
-        thumbnailUrl: event.authorizedData?.thumbnail ?? undefined,
+        thumbnailUrl: event.syncedData?.thumbnail ?? undefined,
         uploadDate: event.created,
         duration: toIsoDuration(event.syncedData.duration),
         ...event.isLive && event.syncedData.startTime && event.syncedData.endTime && {

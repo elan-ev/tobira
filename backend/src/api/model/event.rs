@@ -51,15 +51,15 @@ pub(crate) struct SyncedEventData {
     updated: DateTime<Utc>,
     start_time: Option<DateTime<Utc>>,
     end_time: Option<DateTime<Utc>>,
-
+    thumbnail: Option<String>,
     /// Duration in milliseconds
     duration: i64,
+    audio_only: bool,
 }
 
 #[derive(Debug)]
 pub(crate) struct AuthorizedEventData {
     tracks: Vec<Track>,
-    thumbnail: Option<String>,
     captions: Vec<Caption>,
     segments: Vec<Segment>,
 }
@@ -77,6 +77,7 @@ impl_from_db!(
         },
     },
     |row| {
+        let tracks: Vec<Track> = row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect();
         Self {
             key: row.id(),
             series: row.series(),
@@ -98,13 +99,14 @@ impl_from_db!(
                     start_time: row.start_time(),
                     end_time: row.end_time(),
                     duration: row.duration(),
+                    thumbnail: row.thumbnail(),
+                    audio_only: tracks.iter().all(|t| t.resolution.is_none()),
                 }),
                 EventState::Waiting => None,
             },
             authorized_data: match row.state::<EventState>() {
                 EventState::Ready => Some(AuthorizedEventData {
-                    thumbnail: row.thumbnail(),
-                    tracks: row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect(),
+                    tracks,
                     captions: row.captions::<Vec<EventCaption>>()
                         .into_iter()
                         .map(Caption::from)
@@ -165,6 +167,12 @@ impl SyncedEventData {
     fn duration(&self) -> f64 {
         self.duration as f64
     }
+    fn thumbnail(&self) -> Option<&str> {
+        self.thumbnail.as_deref()
+    }
+    fn audio_only(&self) -> bool {
+        self.audio_only
+    }
 }
 
 /// Represents event data that is only accessible for users with read access
@@ -173,9 +181,6 @@ impl SyncedEventData {
 impl AuthorizedEventData {
     fn tracks(&self) -> &[Track] {
         &self.tracks
-    }
-    fn thumbnail(&self) -> Option<&str> {
-        self.thumbnail.as_deref()
     }
     fn captions(&self) -> &[Caption] {
         &self.captions
@@ -231,8 +236,8 @@ impl AuthorizedEvent {
     /// Returns the authorized event data if the user has read access or is authenticated for the event.
     async fn authorized_data(
         &self,
-        context: &Context, 
-        user: Option<String>, 
+        context: &Context,
+        user: Option<String>,
         password: Option<String>,
     ) -> Option<&AuthorizedEventData> {
         let sha1_matches = |input: &str, encoded: &str| {

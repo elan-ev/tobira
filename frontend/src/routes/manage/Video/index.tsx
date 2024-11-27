@@ -76,13 +76,22 @@ const query = graphql`
                     startIndex endIndex
                 }
                 items {
-                    id title created description isLive tobiraDeletionTimestamp
+                    id
+                    title
+                    created
+                    description
+                    isLive
+                    tobiraDeletionTimestamp
                     series { id }
                     syncedData {
-                        duration updated startTime endTime
+                        duration
+                        thumbnail
+                        updated
+                        startTime
+                        endTime
+                        audioOnly
                     }
                     authorizedData {
-                        thumbnail
                         tracks { resolution }
                     }
                 }

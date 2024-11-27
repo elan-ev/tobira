@@ -39,11 +39,11 @@ export type PlayerEvent = {
         startTime?: string | null;
         endTime?: string | null;
         duration: number;
+        thumbnail?: string | null;
     };
     authorizedData: {
         tracks: readonly Track[];
         captions: readonly Caption[];
-        thumbnail?: string | null;
         segments: readonly Segment[];
     };
 };
@@ -98,7 +98,7 @@ export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange }) => 
     });
 
     return (
-        <Suspense fallback={<PlayerFallback image={event.authorizedData?.thumbnail} />}>
+        <Suspense fallback={<PlayerFallback image={event.syncedData?.thumbnail} />}>
             {event.isLive && (hasStarted === false || hasEnded === true)
                 ? <LiveEventPlaceholder {...{
                     ...hasStarted === false

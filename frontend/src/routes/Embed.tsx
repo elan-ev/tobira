@@ -123,6 +123,7 @@ const embedEventFragment = graphql`
                 startTime
                 endTime
                 duration
+                thumbnail
             }
             ... VideoPageAuthorizedData
                 @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
