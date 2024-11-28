@@ -476,11 +476,9 @@ manage:
       name-from-block: Derive name from video or series
       name-from-block-description: >
         Link a video/series-element from this page: the page name will always be the title of the linked element.
+      no-name: Omit name
       no-blocks: There are no linkable video/series on this page.
       rename-failed: Failed to change the name.
-      no-rename-root: >
-        The homepage cannot be renamed. The heading is controlled by the global
-        site title setting.
 
     children:
       heading: Order of subpages

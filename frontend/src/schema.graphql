@@ -412,8 +412,8 @@ type Realm implements Node {
   name: String
   """
     The raw information about the name of the realm, showing where the name
-    is coming from and if there is no name, why that is. Is `null` for the
-    root realm, non-null for all other realms.
+    is coming from and if there is no name, why that is. Can be `null` only for the
+    root realm, must be non-null for all other realms.
   """
   nameSource: RealmNameSource
   "Returns `true` if this is the root of the public realm tree (with path = \"/\")."

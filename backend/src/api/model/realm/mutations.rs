@@ -204,8 +204,11 @@ impl Realm {
         realm.require_moderator_rights(context)?;
 
         let db = &context.db;
-        if name.plain.is_some() == name.block.is_some() {
-            return Err(invalid_input!("exactly one of name.block and name.plain has to be set"));
+        if name.plain.is_some() && name.block.is_some() {
+            return Err(invalid_input!("both name.block and name.plain cannot be set"));
+        }
+        if !realm.is_main_root() && name.plain.is_none() && name.block.is_none() {
+            return Err(invalid_input!("exactly one of name.block and name.plain must be set for non-main-root realms"));
         }
         let block = name.block
             .map(|id| id.key_for(Id::BLOCK_KIND)

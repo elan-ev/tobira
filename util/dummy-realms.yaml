@@ -1,7 +1,7 @@
 # A realm tree definition for development. Can be imported with
 # `cargo run -- import-realm-tree dummy-realms.yaml`
 
-name: ""
+name: "Tobira Videoportal"
 path: ""
 blocks:
   - text: |
