@@ -44,7 +44,7 @@ jobs:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Download artifacts from build workflow
-      uses: dawidd6/action-download-artifact@v3
+      uses: dawidd6/action-download-artifact@v6
       with:
         name: test-deployment-files
         run_id: ${{ github.event.workflow_run.id }}
