@@ -147,8 +147,6 @@ const tobiraConfig = ({ index, port, dbName, rootPath }: {
 
     [opencast]
     host = "https://dummy.invalid" # Not used in UI tests
-
-    [sync]
     user = "admin"
     password = "opencast"
 
