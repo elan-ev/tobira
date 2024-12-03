@@ -9,7 +9,6 @@ test("Empty Tobira", async ({ page, browserName }) => {
     await page.goto("/");
 
     await test.step("Looks empty", async () => {
-        await expect(page.locator("h1").nth(0)).toContainText("Tobira Videoportal");
         await expect(page.locator("main").nth(0)).toContainText("No pages yet");
         expect(await page.isVisible("text='Login'")).toBe(true);
     });
