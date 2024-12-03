@@ -131,6 +131,8 @@ video:
   more-from-playlist: More from “{{playlist}}”
   deleted-video-block: The video referenced here was deleted.
   not-allowed-video-block: You are not allowed to view the video embedded here.
+  preview: Preview
+  preview-only: You need additional permissions to watch this video.
   not-ready:
     title: Video not processed yet
     text: >
@@ -175,6 +177,18 @@ video:
     embed: Embed
     rss: RSS
     show-qr-code: Show QR code
+  password:
+    heading: Protected Video
+    sub-heading: Access to this video is restricted.
+    no-preview-permission: $t(api-remote-errors.view.event)
+    body: >
+      Please enter the username and the password you have received to access this video;
+      please note that these are not your login credentials.
+    label:
+      id: Identifier
+      password: Password
+      submit: Verify
+    invalid-credentials: Invalid credentials.
 
 playlist:
   deleted-playlist-block: The playlist referenced here was deleted.

@@ -7,9 +7,9 @@ use crate::{
         Context,
         err::{self, ApiResult},
         model::{
-            event::AuthorizedEvent, 
-            series::Series, 
-            realm::Realm, 
+            event::AuthorizedEvent,
+            series::Series,
+            realm::Realm,
             playlist::AuthorizedPlaylist,
             search::{SearchEvent, SearchRealm, SearchSeries},
         },

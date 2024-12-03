@@ -166,13 +166,13 @@ pub(crate) async fn perform(
         let selection = search::Event::select();
         let query = format!("select {selection} from search_events \
             where id = (select id from events where opencast_id = $1) \
-            and (read_roles || 'ROLE_ADMIN'::text) && $2");
+            and (preview_roles || read_roles || 'ROLE_ADMIN'::text) && $2");
         let items: Vec<NodeValue> = context.db
             .query_opt(&query, &[&uuid_query, &context.auth.roles_vec()])
             .await?
             .map(|row| {
                 let e = search::Event::from_row_start(&row);
-                SearchEvent::without_matches(e).into()
+                SearchEvent::without_matches(e, &context).into()
             })
             .into_iter()
             .collect();
@@ -186,18 +186,22 @@ pub(crate) async fn perform(
 
 
     // Prepare the event search
-    let filter = Filter::And(
-        std::iter::once(Filter::Leaf("listed = true".into()))
-            .chain(acl_filter("read_roles", context))
-            // Filter out live events that are already over.
-            .chain([Filter::Or([
-                Filter::Leaf("is_live = false ".into()),
-                Filter::Leaf(format!("end_time_timestamp >= {}", Utc::now().timestamp()).into()),
-            ].into())])
-            .chain(filters.start.map(|start| Filter::Leaf(format!("created_timestamp >= {}", start.timestamp()).into())))
-            .chain(filters.end.map(|end| Filter::Leaf(format!("created_timestamp <= {}", end.timestamp()).into())))
-            .collect()
-    ).to_string();
+    let filter = Filter::and([
+        Filter::listed(),
+        Filter::preview_or_read_access(context),
+        // Filter out live events that already ended
+        Filter::or([
+            Filter::Leaf("is_live = false ".into()),
+            Filter::Leaf(format!("end_time_timestamp >= {}", Utc::now().timestamp()).into()),
+        ]),
+        // Apply user selected date filters
+        filters.start
+            .map(|start| Filter::Leaf(format!("created_timestamp >= {}", start.timestamp()).into()))
+            .unwrap_or(Filter::True),
+        filters.end
+            .map(|end| Filter::Leaf(format!("created_timestamp <= {}", end.timestamp()).into()))
+            .unwrap_or(Filter::True),
+    ]).to_string();
     let event_query = context.search.event_index.search()
         .with_query(user_query)
         .with_limit(15)
@@ -243,7 +247,7 @@ pub(crate) async fn perform(
     // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
     let events = event_results.hits.into_iter().map(|result| {
         let score = result.ranking_score;
-        (NodeValue::from(SearchEvent::new(result)), score)
+        (NodeValue::from(SearchEvent::new(result, &context)), score)
     });
     let series = series_results.hits.into_iter().map(|result| {
         let score = result.ranking_score;
@@ -324,15 +328,18 @@ pub(crate) async fn all_events(
         return Err(context.not_logged_in_error());
     }
 
-    let filter = Filter::make_or_none_for_admins(context, || {
+    let filter = Filter::make_or_true_for_admins(context, || {
         // All users can always find all events they have write access to. If
         // `writable_only` is false, this API also returns events that are
         // listed and that the user can read.
-        let writable = Filter::acl_access("write_roles", context);
+        let writable = Filter::write_access(context);
         if writable_only {
             writable
         } else {
-            Filter::or([Filter::listed_and_readable(context), writable])
+            Filter::or([
+                Filter::preview_or_read_access(context).and_listed(context),
+                writable,
+            ])
         }
     }).to_string();
 
@@ -346,7 +353,7 @@ pub(crate) async fn all_events(
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| SearchEvent::new(h)).collect();
+    let items = results.hits.into_iter().map(|h| SearchEvent::new(h, &context)).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(EventSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
@@ -370,8 +377,8 @@ pub(crate) async fn all_series(
         return Err(context.not_logged_in_error());
     }
 
-    let filter = Filter::make_or_none_for_admins(context, || {
-        let writable = Filter::acl_access("write_roles", context);
+    let filter = Filter::make_or_true_for_admins(context, || {
+        let writable = Filter::write_access(context);
 
         // All users can always find all items they have write access to,
         // regardless whether they are listed or not.
@@ -382,7 +389,7 @@ pub(crate) async fn all_series(
         // Since series read_roles are not used for access control, we only need
         // to check whether we can return unlisted videos.
         if context.auth.can_find_unlisted_items(&context.config.auth) {
-            Filter::None
+            Filter::True
         } else {
             Filter::or([writable, Filter::listed()])
         }
@@ -421,15 +428,18 @@ pub(crate) async fn all_playlists(
         return Err(context.not_logged_in_error());
     }
 
-    let filter = Filter::make_or_none_for_admins(context, || {
+    let filter = Filter::make_or_true_for_admins(context, || {
         // All users can always find all playlists they have write access to. If
         // `writable_only` is false, this API also returns playlists that are
         // listed and that the user can read.
-        let writable = Filter::acl_access("write_roles", context);
+        let writable = Filter::write_access(context);
         if writable_only {
             writable
         } else {
-            Filter::or([Filter::listed_and_readable(context), writable])
+            Filter::or([
+                Filter::read_access(context).and_listed(context),
+                writable,
+            ])
         }
     }).to_string();
 
@@ -449,39 +459,46 @@ pub(crate) async fn all_playlists(
     Ok(PlaylistSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
-// TODO: replace usages of this and remove this.
-fn acl_filter(action: &str, context: &Context) -> Option<Filter> {
-    // If the user is admin, we just skip the filter alltogether as the admin
-    // can see anything anyway.
-    if context.auth.is_admin() {
-        return None;
-    }
-
-    Some(Filter::acl_access(action, context))
-}
 
 enum Filter {
     // TODO: try to avoid Vec if not necessary. Oftentimes there are only two operands.
+
+    /// Must not contain `Filter::None`, which is handled by `Filter::and`.
     And(Vec<Filter>),
+
+    /// Must not contain `Filter::None`, which is handled by `Filter::or`.
     Or(Vec<Filter>),
     Leaf(Cow<'static, str>),
 
-    /// No filter. Formats to empty string and is filtered out if inside the
-    /// `And` or `Or` operands.
-    None,
+    /// A constant `true`. Inside `Or`, results in the whole `Or` expression
+    /// being replaced by `True`. Inside `And`, this is just filtered out and
+    /// the remaining operands are evaluated. If formated on its own, empty
+    /// string is emitted.
+    True,
 }
 
 impl Filter {
-    fn make_or_none_for_admins(context: &Context, f: impl FnOnce() -> Self) -> Self {
-        if context.auth.is_admin() { Self::None } else { f() }
+    fn make_or_true_for_admins(context: &Context, f: impl FnOnce() -> Self) -> Self {
+        if context.auth.is_admin() { Self::True } else { f() }
     }
 
     fn or(operands: impl IntoIterator<Item = Self>) -> Self {
-        Self::Or(operands.into_iter().collect())
+        let mut v = Vec::new();
+        for op in operands {
+            if matches!(op, Self::True) {
+                return Self::True;
+            }
+            v.push(op);
+        }
+        Self::Or(v)
     }
 
     fn and(operands: impl IntoIterator<Item = Self>) -> Self {
-        Self::And(operands.into_iter().collect())
+        Self::And(
+            operands.into_iter()
+                .filter(|op| !matches!(op, Self::True))
+                .collect(),
+        )
     }
 
     /// Returns the filter "listed = true".
@@ -489,22 +506,35 @@ impl Filter {
         Self::Leaf("listed = true".into())
     }
 
-    /// Returns a filter checking that the current user has read access and that
-    /// the item is listed. If the user has the privilege to find unlisted
-    /// item, the second check is not performed.
-    fn listed_and_readable(context: &Context) -> Self {
-        let readable = Self::acl_access("read_roles", context);
+    /// If the user can find unlisted items, just returns `self`. Otherweise,
+    /// `self` is ANDed with `Self::listed()`.
+    fn and_listed(self, context: &Context) -> Self {
         if context.auth.can_find_unlisted_items(&context.config.auth) {
-            readable
+            self
         } else {
-            Self::and([readable, Self::listed()])
+            Self::and([self, Self::listed()])
         }
+    }
+
+    fn read_access(context: &Context) -> Self {
+        Self::make_or_true_for_admins(context, || Self::acl_access_raw("read_roles", context))
+    }
+
+    fn write_access(context: &Context) -> Self {
+        Self::make_or_true_for_admins(context, || Self::acl_access_raw("write_roles", context))
+    }
+
+    fn preview_or_read_access(context: &Context) -> Self {
+        Self::make_or_true_for_admins(context, || Self::or([
+            Self::acl_access_raw("read_roles", context),
+            Self::acl_access_raw("preview_roles", context),
+        ]))
     }
 
     /// Returns a filter checking if `roles_field` has any overlap with the
     /// current user roles. Encodes all roles as hex to work around Meili's
-    /// lack of case-sensitive comparison.
-    fn acl_access(roles_field: &str, context: &Context) -> Self {
+    /// lack of case-sensitive comparison. Does not handle the ROLE_ADMIN case.
+    fn acl_access_raw(roles_field: &str, context: &Context) -> Self {
         use std::io::Write;
         const HEX_DIGITS: &[u8; 16] = b"0123456789abcdef";
 
@@ -531,10 +561,8 @@ impl Filter {
 impl fmt::Display for Filter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fn join(f: &mut fmt::Formatter, operands: &[Filter], sep: &str) -> fmt::Result {
-            if operands.iter().all(|op| matches!(op, Filter::None)) {
-                return Ok(());
-            }
-
+            // We are guaranteed by `and` and `or` methods that there are no
+            // `Self::True`s in here.
             write!(f, "(")?;
             for (i, operand) in operands.iter().enumerate() {
                 if i > 0 {
@@ -549,7 +577,7 @@ impl fmt::Display for Filter {
             Self::And(operands) => join(f, operands, "AND"),
             Self::Or(operands) =>  join(f, operands, "OR"),
             Self::Leaf(s) => write!(f, "{s}"),
-            Self::None => Ok(()),
+            Self::True => Ok(()),
         }
     }
 }

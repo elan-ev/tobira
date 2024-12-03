@@ -130,9 +130,11 @@ video:
   link: Zur Videoseite
   part-of-series: Teil der Serie
   more-from-series: Mehr von „{{series}}“
-  more-from-playlist: Mehr von “{{playlist}}”
+  more-from-playlist: Mehr von „{{playlist}}”
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
   not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
+  preview: Vorschau
+  preview-only: Sie brauchen zusätzliche Berichtigungen, um dieses Video anzuschauen.
   not-ready:
     title: Video noch nicht verarbeitet
     text: >
@@ -178,6 +180,17 @@ video:
     embed: Einbetten
     rss: RSS
     show-qr-code: QR Code anzeigen
+  password:
+    heading: Geschütztes Video
+    sub-heading: Zugriff zu diesem Video ist beschränkt.
+    body: >
+      Bitte geben Sie die Zugangsdaten ein, die Sie für dieses Videos erhalten haben.
+      Beachten Sie, dass diese nicht Ihren Logindaten für dieses Portal entsprechen.
+    label:
+      id: Kennung
+      password: Passwort
+      submit: Freischalten
+    invalid-credentials: Ungültige Zugangsdaten.
 
 playlist:
   deleted-playlist-block: Die hier referenzierte Playlist wurde gelöscht.

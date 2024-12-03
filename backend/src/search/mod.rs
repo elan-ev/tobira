@@ -25,7 +25,7 @@ mod series;
 pub(crate) mod writer;
 mod update;
 mod user;
-mod util;
+pub(crate) mod util;
 mod playlist;
 
 use self::writer::MeiliWriter;
@@ -42,7 +42,7 @@ pub(crate) use self::{
 
 /// The version of search index schema. Increase whenever there is a change that
 /// requires an index rebuild.
-const VERSION: u32 = 6;
+const VERSION: u32 = 7;
 
 
 // ===== Configuration ============================================================================

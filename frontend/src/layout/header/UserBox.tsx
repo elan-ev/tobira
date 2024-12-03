@@ -25,6 +25,7 @@ import { UploadRoute } from "../../routes/Upload";
 import { ManageRoute } from "../../routes/manage";
 import { ManageVideosRoute } from "../../routes/manage/Video";
 import { LoginLink } from "../../routes/util";
+import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
 
 
 
@@ -174,6 +175,10 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         if (logoutState === "pending") {
             return;
         }
+
+        Object.keys(window.localStorage)
+            .filter(item => item.startsWith(CREDENTIALS_STORAGE_KEY))
+            .forEach(item => window.localStorage.removeItem(item));
 
         setLogoutState("pending");
         fetch("/~session", { method: "DELETE", keepalive: true })

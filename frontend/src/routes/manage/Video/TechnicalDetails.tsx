@@ -24,8 +24,8 @@ type Props = {
 
 type TrackInfoProps = {
     event: {
-        syncedData?: null | {
-            tracks: NonNullable<AuthorizedEvent["syncedData"]>["tracks"];
+        authorizedData?: null | {
+            tracks: NonNullable<AuthorizedEvent["authorizedData"]>["tracks"];
         };
     };
     className?: string;
@@ -90,7 +90,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
 ) => {
     const { t } = useTranslation();
 
-    if (event.syncedData == null) {
+    if (event.authorizedData == null) {
         return null;
     }
 
@@ -106,7 +106,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
     };
 
     const flavors: Map<string, SingleTrackInfo[]> = new Map();
-    for (const { flavor, resolution, mimetype, uri } of event.syncedData.tracks) {
+    for (const { flavor, resolution, mimetype, uri } of event.authorizedData.tracks) {
         let tracks = flavors.get(flavor);
         if (tracks === undefined) {
             tracks = [];

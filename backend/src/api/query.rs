@@ -118,7 +118,7 @@ impl Query {
     ///
     /// - Events that the user has write access to (listed & unlisted).
     /// - If `writable_only` is false, this also searches through videos that
-    ///   the user has read access to. However, unless the user has the
+    ///   the user has preview access to. However, unless the user has the
     ///   privilege to find unlisted events, only listed ones are searched.
     async fn search_all_events(
         query: String,

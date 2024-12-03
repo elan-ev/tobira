@@ -49,7 +49,12 @@ import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { BREAKPOINT_MEDIUM } from "../GlobalStyle";
-import { eventId, isExperimentalFlagSet, keyOfId, secondsToTimeString } from "../util";
+import {
+    eventId,
+    isExperimentalFlagSet,
+    keyOfId,
+    secondsToTimeString,
+} from "../util";
 import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
@@ -531,10 +536,10 @@ const SearchEvent: React.FC<EventItem> = ({
                         isLive,
                         created,
                         syncedData: {
-                            thumbnail,
                             duration,
                             startTime,
                             endTime,
+                            thumbnail,
                             audioOnly,
                         },
                     }}
@@ -627,11 +632,11 @@ type TextMatchTimelineProps = Pick<EventItem, "id" | "duration" | "textMatches">
 };
 
 const slidePreviewQuery = graphql`
-    query SearchSlidePreviewQuery($id: ID!) {
+    query SearchSlidePreviewQuery($id: ID!, $user: String, $password: String) {
         eventById(id: $id) {
             ...on AuthorizedEvent {
                 id
-                syncedData {
+                authorizedData(user: $user, password: $password) {
                     segments { startTime uri }
                 }
             }
@@ -750,7 +755,7 @@ const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImagePro
     textMatch,
 }) => {
     const data = usePreloadedQuery(slidePreviewQuery, queryRef);
-    const segments = data.eventById?.syncedData?.segments ?? [];
+    const segments = data.eventById?.authorizedData?.segments ?? [];
 
     // Find the segment with its start time closest to the `start` of the text
     // match, while still being smaller.

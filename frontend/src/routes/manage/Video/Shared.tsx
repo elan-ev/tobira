@@ -89,13 +89,17 @@ const query = graphql`
                 acl { role actions info { label implies large } }
                 syncedData {
                     duration
-                    thumbnail
                     updated
                     startTime
                     endTime
+                    thumbnail
+                    audioOnly
+                }
+                authorizedData {
                     tracks { flavor resolution mimetype uri }
                 }
                 series {
+                    id
                     title
                     opencastId
                     ...SeriesBlockSeriesData

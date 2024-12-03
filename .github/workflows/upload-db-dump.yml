@@ -35,6 +35,7 @@ jobs:
         run: |
           sed --in-place \
             -e 's/host = "http:\/\/localhost:8081"/host = "https:\/\/tobira-test-oc.ethz.ch"/g' \
+            -e '/password = "opencast"/a\interpret_eth_passwords = true' \
             -e 's/password = "opencast"/password = "${{ secrets.TOBIRA_OPENCAST_ADMIN_PASSWORD }}"/g' \
             -e 's/level = "trace"/level = "debug"/g' \
             -e '/preferred_harvest_size/d' \

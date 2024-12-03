@@ -5,6 +5,7 @@ import { bug, match } from "@opencast/appkit";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
+import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 
 
 /**
@@ -215,3 +216,47 @@ export const secondsToTimeString = (seconds: number): string => {
 };
 
 export type ExtraMetadata = Record<string, Record<string, string[]>>;
+
+export type Credentials = {
+    user: string;
+    password: string;
+} | null;
+
+
+/**
+ * Returns stored credentials of events.
+ *
+ * Three kinds of IDs are stored when a user authenticates for an event:
+ * We need to store both Tobira ID and Opencast ID, since the video route can be accessed
+ * via both kinds. For this, both IDs are queried from the DB.
+ * The check for already stored credentials however happens in the same query,
+ * so we only have access to the single event ID from the url.
+ * In order to have a successful check when visiting a video page with either Tobira ID
+ * or Opencast ID in the url, this check accepts both ID kinds.
+ * Lastly, we also store the series ID of an event. If other events of that series use
+ * the same credentials, authenticating for the current event will also unlock
+ * these other events.
+ */
+type IdKind = "event" | "oc-event" | "series";
+export const getCredentials = (kind: IdKind, id: string): Credentials => {
+    const credentials = window.localStorage.getItem(credentialsStorageKey(kind, id))
+        ?? window.sessionStorage.getItem(credentialsStorageKey(kind, id));
+
+    if (!credentials) {
+        return null;
+    }
+
+    const parsed = JSON.parse(credentials);
+    if ("user" in parsed && typeof parsed.user === "string"
+        && "password" in parsed && typeof parsed.password === "string") {
+        return {
+            user: parsed.user,
+            password: parsed.password,
+        };
+    } else {
+        return null;
+    }
+};
+
+export const credentialsStorageKey = (kind: IdKind, id: string) =>
+    CREDENTIALS_STORAGE_KEY + kind + "-" + id;
