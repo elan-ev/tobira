@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { LuCornerLeftUp, LuInfo, LuShield, LuPlay, LuPenLine } from "react-icons/lu";
+import { LuCornerLeftUp, LuInfo, LuShieldCheck, LuPlay, LuPenLine } from "react-icons/lu";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
@@ -12,9 +12,10 @@ import { b64regex } from "../../util";
 import { Thumbnail } from "../../../ui/Video";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
 import { Link } from "../../../router";
-import { eventId, isExperimentalFlagSet, keyOfId } from "../../../util";
+import { eventId, keyOfId } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
+import CONFIG from "../../../config";
 
 
 export const PAGE_WIDTH = 1100;
@@ -30,6 +31,7 @@ export const makeManageVideoRoute = (
     page: ManageVideoSubPageType,
     path: string,
     render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
+    options?: { fetchWorkflowState?: boolean },
 ): Route & { url: (args: { videoId: string }) => string } => (
     makeRoute({
         url: ({ videoId }: { videoId: string }) => `/~manage/videos/${keyOfId(videoId)}/${path}`,
@@ -41,7 +43,10 @@ export const makeManageVideoRoute = (
             }
 
             const videoId = decodeURIComponent(params[1]);
-            const queryRef = loadQuery<SharedVideoManageQuery>(query, { id: eventId(videoId) });
+            const queryRef = loadQuery<SharedVideoManageQuery>(query, {
+                id: eventId(videoId),
+                fetchWorkflowState: options?.fetchWorkflowState ?? false,
+            });
 
             return {
                 render: () => <RootLoader
@@ -73,7 +78,7 @@ export const makeManageVideoRoute = (
 // what they request. It just simplifies our code a lot and we only pay by
 // overfetching a bit.
 const query = graphql`
-    query SharedVideoManageQuery($id: ID!) {
+    query SharedVideoManageQuery($id: ID!, $fetchWorkflowState: Boolean!) {
         ...UserData
         ...AccessKnownRolesData
         event: eventById(id: $id) {
@@ -86,6 +91,7 @@ const query = graphql`
                 created
                 canWrite
                 isLive
+                hasActiveWorkflows @include(if: $fetchWorkflowState)
                 acl { role actions info { label implies large } }
                 syncedData {
                     duration
@@ -155,11 +161,11 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         },
     ];
 
-    if (isExperimentalFlagSet()) {
+    if (CONFIG.allowAclEdit) {
         entries.splice(1, 0, {
             url: `/~manage/videos/${id}/access`,
             page: "acl",
-            body: <><LuShield />{t("manage.my-videos.acl.title")}</>,
+            body: <><LuShieldCheck />{t("manage.my-videos.acl.title")}</>,
         });
     }
 

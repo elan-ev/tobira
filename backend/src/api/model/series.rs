@@ -182,7 +182,7 @@ impl Series {
 
             return Ok(RemoveMountedSeriesOutcome::RemovedRealm(removed_realm));
         }
-        
+
         if old_realm.name_from_block.map(Id::block) == Some(blocks[0].id()) {
             // The realm has its name derived from the series block that is being removed - so the name
             // shouldn't be used anymore. Ideally this would restore the previous title,

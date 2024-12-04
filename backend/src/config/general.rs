@@ -12,7 +12,7 @@ pub(crate) struct GeneralConfig {
 
     /// Public URL to Tobira (without path).
     /// Used for RSS feeds, as those require specifying absolute URLs to resources.
-    /// 
+    ///
     /// Example: "https://tobira.my-uni.edu".
     pub(crate) tobira_url: HttpHost,
 
@@ -22,12 +22,12 @@ pub(crate) struct GeneralConfig {
     /// These can be specified in multiple languages.
     /// Consent is prompted upon first use and only if this is configured. It is
     /// re-prompted when any of these values change.
-    /// 
+    ///
     /// We recommend not to configure this unless absolutely necessary,
     /// in order to not degrade the user experience needlessly.
-    /// 
+    ///
     /// Example:
-    /// 
+    ///
     /// ```
     /// initial_consent.title.en = "Terms & Conditions"
     /// initial_consent.button.en = "Agree"
@@ -49,7 +49,7 @@ pub(crate) struct GeneralConfig {
     /// add custom ones. Note that these two default links are special and can
     /// be specified with only the shown string. To add custom ones, you need
     /// to define a label and a link. The link is either the same for every language
-    /// or can be specified for each language in the same manner as the label. 
+    /// or can be specified for each language in the same manner as the label.
     /// Example:
     ///
     /// ```
@@ -110,6 +110,18 @@ pub(crate) struct GeneralConfig {
     /// (partial) name.
     #[config(default = false)]
     pub users_searchable: bool,
+
+    /// This allows users to edit the ACL of events they have write access for.
+    /// Doing so will update these in Opencast and start the `republish-metadata`
+    /// workflow to propagate the changes to other publications as well.
+    /// Instead of waiting for the workflow however, Tobira will also immediately
+    /// store the updated ACL in its database.
+    ///
+    /// Note that this might lead to situations where the event ACL in Tobira is different
+    /// from that in other publications, mainly if the afore mentioned workflow fails
+    /// or takes an unusually long time to complete.
+    #[config(default = true)]
+    pub allow_acl_edit: bool,
 }
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];

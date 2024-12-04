@@ -1,5 +1,6 @@
-use juniper::GraphQLObject;
+use juniper::{GraphQLInputObject, GraphQLObject};
 use postgres_types::BorrowToSql;
+use serde::Serialize;
 
 use crate::{api::{util::TranslatedString, Context, err::ApiResult}, db::util::select};
 
@@ -93,4 +94,10 @@ where
             }),
         }
     }).await.map_err(Into::into)
+}
+
+#[derive(Debug, GraphQLInputObject, Serialize)]
+pub(crate) struct AclInputEntry {
+    pub role: String,
+    pub actions: Vec<String>,
 }

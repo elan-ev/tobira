@@ -27,6 +27,7 @@ type Config = {
     initialConsent: InitialConsent | null;
     showDownloadButton: boolean;
     usersSearchable: boolean;
+    allowAclEdit: boolean;
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
