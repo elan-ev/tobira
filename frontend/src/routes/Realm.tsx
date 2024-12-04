@@ -13,7 +13,6 @@ import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
-import CONFIG from "../config";
 import { characterClass, useTitle, useTranslatedConfig } from "../util";
 import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
@@ -27,6 +26,7 @@ import { COLORS } from "../color";
 import { useMenu } from "../layout/MenuState";
 import { ManageNav } from "./manage";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
+import CONFIG from "../config";
 
 
 // eslint-disable-next-line @typescript-eslint/quotes
@@ -143,17 +143,16 @@ type Props = {
 
 const RealmPage: React.FC<Props> = ({ realm }) => {
     const { t } = useTranslation();
-    const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
     const breadcrumbs = realmBreadcrumbs(t, realm.ancestors);
+    const siteTitle = useTranslatedConfig(CONFIG.siteTitle);
 
-    const title = realm.isMainRoot ? siteTitle : realm.name;
-    useTitle(title, realm.isMainRoot);
+    useTitle(realm.name);
 
     return <>
         {!realm.isMainRoot && (
             <Breadcrumbs path={breadcrumbs} tail={realm.name ?? <MissingRealmName />} />
         )}
-        {title && (
+        {realm.name ? (
             <div css={{
                 marginBottom: 20,
                 display: "flex",
@@ -162,9 +161,19 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
                 columnGap: 12,
                 rowGap: 6,
             }}>
-                <h1 css={{ display: "inline-block", marginBottom: 0 }}>{title}</h1>
+                <h1 css={{ display: "inline-block", marginBottom: 0 }}>{realm.name}</h1>
                 {realm.isUserRealm && <UserRealmNote realm={realm} />}
             </div>
+        ) : (
+            // If there is no heading, this visually hidden <h1> is added for screen readers.
+            realm.isMainRoot && <h1 css={{
+                clipPath: "inset(50%)",
+                height: 1,
+                overflow: "hidden",
+                position: "absolute",
+                whiteSpace: "nowrap",
+                width: 1,
+            }}>{siteTitle}</h1>
         )}
         {realm.blocks.length === 0 && realm.isMainRoot
             ? <WelcomeMessage />

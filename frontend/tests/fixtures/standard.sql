@@ -273,6 +273,8 @@ values ('ready', '06a71e43-94cd-472d-a345-952979489e88', 'Unlisted video in seri
 
 
 -- ----- Realms ---------------------------------------------------------------
+-- Title for homepage:
+update realms set name = 'Tobira Videoportal' where id = 0;
 insert into realms (parent, path_segment, name, child_order)
 values (0, 'animals', 'Animal videos', 'by_index');
 insert into realms (parent, path_segment, name, child_order)
@@ -302,7 +304,7 @@ insert into realms (parent, path_segment, name, child_order)
 values ((select id from realms where full_path = '/love'), 'turtles', 'Turtles', 'alphabetic:desc');
 
 insert into realms (parent, path_segment, name)
-values ((select id from realms where full_path = '/moon'), 'finanzamt', 'Finanzamt'); 
+values ((select id from realms where full_path = '/moon'), 'finanzamt', 'Finanzamt');
 
 insert into realms (parent, path_segment, name)
 values ((select id from realms where full_path = '/@morgan'), 'apple', 'Apple');

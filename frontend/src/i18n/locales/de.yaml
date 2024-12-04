@@ -496,11 +496,9 @@ manage:
       name-from-block-description: >
         Video/Serie-Element von dieser Seite verknüpfen, sodass der Seitenname
         immer dem Titel des verknüpften Elements entspricht.
+      no-name: Keinen Namen anzeigen
       no-blocks: Auf dieser Seite befinden sich keine verknüpfbaren Videos/Serien.
       rename-failed: Änderung des Namen fehlgeschlagen.
-      no-rename-root: >
-        Der Name der Startseite kann nicht geändert werden. Die Überschrift wird
-        von der globalen Seitentitel-Einstellung kontrolliert.
 
     children:
       heading: Reihenfolge Unterseiten

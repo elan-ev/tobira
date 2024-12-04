@@ -155,7 +155,14 @@ impl_from_db!(
 
 impl Realm {
     pub(crate) async fn root(context: &Context) -> ApiResult<Self> {
-        let (selection, mapping) = select!(child_order, moderator_roles, admin_roles);
+        let (selection, mapping) = select!(
+            child_order,
+            moderator_roles,
+            admin_roles,
+            name,
+            name_from_block,
+            resolved_name: "realms.resolved_name",
+        );
         let row = context.db
             .query_one(&format!("select {selection} from realms where id = 0"), &[])
             .await?;
@@ -163,9 +170,9 @@ impl Realm {
         Ok(Self {
             key: Key(0),
             parent_key: None,
-            plain_name: None,
-            resolved_name: None,
-            name_from_block: None,
+            plain_name: mapping.name.of(&row),
+            resolved_name: mapping.resolved_name.of(&row),
+            name_from_block: mapping.name_from_block.of(&row),
             path_segment: String::new(),
             full_path: String::new(),
             index: 0,
@@ -322,8 +329,8 @@ impl Realm {
     }
 
     /// The raw information about the name of the realm, showing where the name
-    /// is coming from and if there is no name, why that is. Is `null` for the
-    /// root realm, non-null for all other realms.
+    /// is coming from and if there is no name, why that is. Can be `null` only for the
+    /// root realm, must be non-null for all other realms.
     fn name_source(&self) -> Option<RealmNameSource> {
         if let Some(name) = &self.plain_name {
             Some(RealmNameSource::Plain(PlainRealmName {
