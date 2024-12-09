@@ -1,7 +1,7 @@
-import { i18n, ParseKeys } from "i18next";
+import { i18n } from "i18next";
 import React from "react";
 import { ReactNode } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { match } from "@opencast/appkit";
 
 import { APIError, NotJson, ServerError } from "../relay";
@@ -24,7 +24,7 @@ type ErrorDisplayInfo = {
      * A list of causes: human readable strings (already translated). Usually
      * contains a single element.
      */
-    causes: Set<string>;
+    causes: Set<ReactNode>;
 
     /**
      * If `true`, this error is likely caused by a programming bug or server
@@ -67,13 +67,16 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
     } else if (error instanceof APIError) {
         // OK response, but it contained GraphQL errors.
         const kinds = new Set();
-        const causes = new Set<string>();
+        const causes = new Set<ReactNode>();
         let notOurFault = true;
         for (const err of error.errors) {
             // Use a message fitting to the exact error key, if it is present.
             const translationKey = err.key ? `api-remote-errors.${err.key}` : null;
             if (translationKey && i18n.exists(translationKey)) {
-                const msg = t(translationKey as ParseKeys);
+                // @ts-expect-error: Dynamically passed i18next keys need to be typed
+                // more strictly than just `string` or `ParseKeys` for the `<Trans>`
+                // component.
+                const msg = <Trans i18nKey={translationKey} />;
                 causes.add(msg);
                 continue;
             }
@@ -104,6 +107,10 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
                     OPENCAST_UNAVAILABLE: () => {
                         notOurFault = false;
                         return t("errors.opencast-unavailable");
+                    },
+                    OPENCAST_ERROR: () => {
+                        notOurFault = false;
+                        return t("errors.opencast-error");
                     },
                 });
                 causes.add(msg);
@@ -150,8 +157,8 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ failedAction, ...pro
         <p css={textColor}>
             {failedAction && failedAction + " "}
             {causes.length === 1
-                ? causes[0] + " "
-                : <ul>{causes.map(cause => <li key={cause}>{cause}</li>)}</ul>
+                ? <>{causes[0]}{" "}</>
+                : <ul>{causes.map(cause => <li key={cause?.toString()}>{cause}</li>)}</ul>
             }
             {info.potentiallyInternetProblem && t("errors.are-you-connected-to-internet")}
         </p>

@@ -115,4 +115,5 @@ export type ErrorKind = "INVALID_INPUT"
     | "NOT_AUTHORIZED"
     | "INTERNAL_SERVER_ERROR"
     | "OPENCAST_UNAVAILABLE"
+    | "OPENCAST_ERROR"
 ;

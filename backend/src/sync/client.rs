@@ -2,6 +2,7 @@ use std::time::{Duration, Instant};
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc, TimeZone};
+use form_urlencoded::Serializer;
 use hyper::{
     Response, Request, StatusCode,
     body::Incoming,
@@ -10,10 +11,11 @@ use hyper::{
 use hyper_rustls::HttpsConnector;
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
 use secrecy::{ExposeSecret, Secret};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tap::TapFallible;
 
 use crate::{
+    api::{model::acl::AclInputEntry, Context},
     config::{Config, HttpHost},
     prelude::*,
     sync::harvest::HarvestResponse,
@@ -139,14 +141,97 @@ impl OcClient {
         Ok(out)
     }
 
-    pub async fn delete_event(&self, oc_id: &String) -> Result<Response<Incoming>> {
-        let pq = format!("/api/events/{}", oc_id);
+    pub async fn delete_event(&self, oc_id: &str) -> Result<Response<Incoming>> {
+        let pq = format!("/api/events/{oc_id}");
         let req = self.authed_req_builder(&self.external_api_node, &pq)
             .method(http::Method::DELETE)
             .body(RequestBody::empty())
             .expect("failed to build request");
 
         self.http_client.request(req).await.map_err(Into::into)
+    }
+
+    pub async fn update_event_acl(
+        &self,
+        oc_id: &str,
+        acl: &[AclInputEntry],
+        context: &Context,
+    ) -> Result<Response<Incoming>> {
+        let pq = format!("/api/events/{oc_id}/acl");
+
+        // Temporary solution to add custom and preview roles
+        // Todo: remove again once frontend sends these roles.
+        let extra_roles_sql = "\
+            select unnest(preview_roles) as role, 'preview' as action from events where opencast_id = $1
+            union
+            select role, key as action
+            from jsonb_each_text(
+                (select custom_action_roles from events where opencast_id = $1)
+            ) as actions(key, value)
+            cross join lateral jsonb_array_elements_text(value::jsonb) as role(role)
+        ";
+
+        let extra_roles = context.db.query_mapped(&extra_roles_sql, dbargs![&oc_id], |row| {
+            let role: String = row.get("role");
+            let action: String = row.get("action");
+            AclInput {
+                allow: true,
+                action,
+                role,
+            }
+        }).await?;
+
+        let mut access_policy = Vec::new();
+        access_policy.extend(extra_roles);
+
+        for entry in acl {
+            access_policy.extend(
+                entry.actions.iter().map(|action| AclInput {
+                    allow: true,
+                    action: action.clone(),
+                    role: entry.role.clone(),
+                }),
+            );
+        }
+
+        let params = Serializer::new(String::new())
+            .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
+            .finish();
+        let req = self.authed_req_builder(&self.external_api_node, &pq)
+            .method(http::Method::PUT)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        self.http_client.request(req).await.map_err(Into::into)
+    }
+
+    pub async fn start_workflow(&self, oc_id: &str, workflow_id: &str) -> Result<Response<Incoming>> {
+        let params = Serializer::new(String::new())
+            .append_pair("event_identifier", &oc_id)
+            .append_pair("workflow_definition_identifier", &workflow_id)
+            .finish();
+        let req = self.authed_req_builder(&self.external_api_node, "/api/workflows")
+            .method(http::Method::POST)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        self.http_client.request(req).await.map_err(Into::into)
+    }
+
+    pub async fn has_active_workflows(&self, oc_id: &str) -> Result<bool> {
+        let pq = format!("/api/events/{oc_id}");
+        let req = self.authed_req_builder(&self.external_api_node, &pq)
+            .body(RequestBody::empty())
+            .expect("failed to build request");
+        let uri = req.uri().clone();
+        let response = self.http_client.request(req)
+            .await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
+
+        let (out, _) = self.deserialize_response::<EventStatus>(response, &uri).await?;
+        Ok(out.processing_state == "RUNNING")
     }
 
     fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
@@ -210,4 +295,16 @@ impl OcClient {
 pub struct ExternalApiVersions {
     pub default: String,
     pub versions: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct AclInput {
+    allow: bool,
+    action: String,
+    role: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EventStatus {
+    pub processing_state: String,
 }

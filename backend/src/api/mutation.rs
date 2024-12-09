@@ -6,6 +6,7 @@ use super::{
     err::ApiResult,
     id::Id,
     model::{
+        acl::AclInputEntry,
         series::{Series, NewSeries},
         realm::{
             ChildIndex,
@@ -58,13 +59,24 @@ impl Mutation {
     /// Deletes the given event. Meaning: a deletion request is sent to Opencast, the event
     /// is marked as "deletion pending" in Tobira, and fully removed once Opencast
     /// finished deleting the event.
-    /// 
+    ///
     /// Returns the deletion timestamp in case of success and errors otherwise.
     /// Note that "success" in this case only means the request was successfully sent
     /// and accepted, not that the deletion itself succeeded, which is instead checked
     /// in subsequent harvesting results.
     async fn delete_video(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
         AuthorizedEvent::delete(id, context).await
+    }
+
+    /// Updates the acl of a given event by sending the changes to Opencast.
+    /// The `acl` parameter can include `read` and `write` roles, as these are the
+    /// only roles that can be assigned in frontend for now. `preview` and
+    /// `custom_actions` will be added in the future.
+    /// If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
+    /// this means it might get overwritten again if the update in Opencast failed for some reason.
+    /// This solution should be improved in the future.
+    async fn update_event_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
+        AuthorizedEvent::update_acl(id, acl, context).await
     }
 
     /// Sets the order of all children of a specific realm.
@@ -259,7 +271,7 @@ impl Mutation {
     /// it is renamed to its path segment. If the realm has no sub-realms,
     /// it is removed completely.
     /// Errors if the given realm does not have exactly one series block referring to the
-    /// specified series. 
+    /// specified series.
     async fn remove_series_mount_point(
         series_oc_id: String,
         path: String,

@@ -296,12 +296,9 @@ type SearchUnavailable {
   dummy: Boolean
 }
 
-input UpdatePlaylistBlock {
-  playlist: ID
-  showTitle: Boolean
-  showMetadata: Boolean
-  order: VideoListOrder
-  layout: VideoListLayout
+input AclInputEntry {
+  role: String!
+  actions: [String!]!
 }
 
 type AuthorizedEvent implements Node {
@@ -325,6 +322,8 @@ type AuthorizedEvent implements Node {
   "Whether the current user has write access to this event."
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTimeUtc
+  "Whether the event has active workflows."
+  hasActiveWorkflows: Boolean!
   series: Series
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!
@@ -337,6 +336,14 @@ type AuthorizedEvent implements Node {
     Otherwise, `false` is returned.
   """
   isReferencedByRealm(path: String!): Boolean!
+}
+
+input UpdatePlaylistBlock {
+  playlist: ID
+  showTitle: Boolean
+  showMetadata: Boolean
+  order: VideoListOrder
+  layout: VideoListLayout
 }
 
 "A block just showing some title."
@@ -547,6 +554,16 @@ type Mutation {
     in subsequent harvesting results.
   """
   deleteVideo(id: ID!): RemovedEvent!
+  """
+    Updates the acl of a given event by sending the changes to Opencast.
+    The `acl` parameter can include `read` and `write` roles, as these are the
+    only roles that can be assigned in frontend for now. `preview` and
+    `custom_actions` will be added in the future.
+    If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
+    this means it might get overwritten again if the update in Opencast failed for some reason.
+    This solution should be improved in the future.
+  """
+  updateEventAcl(id: ID!, acl: [AclInputEntry!]!): AuthorizedEvent!
   """
     Sets the order of all children of a specific realm.
 

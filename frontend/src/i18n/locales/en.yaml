@@ -47,6 +47,7 @@ errors:
   might-need-to-login-link: You might need to <1>login</1>.
   invalid-input: Invalid input.
   opencast-unavailable: Opencast is currently not available.
+  opencast-error: Opencast returned an unexpected response.
   internal-server-error: Internal server error (something is wrong with the server).
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
@@ -112,7 +113,7 @@ user:
   manage-content: Manage
 
 login-page:
-  heading: Login 
+  heading: Login
   user-id: User ID
   password: Password
   bad-credentials: 'Login failed: invalid credentials.'
@@ -163,7 +164,7 @@ video:
     title: Download
     presenter: Video (speaker)
     slides: Video (presentation)
-    info: > 
+    info: >
       Here you can download the video(s) in different formats/qualities (Right click - Save as).
   manage: Manage
   start: Start
@@ -332,6 +333,11 @@ manage:
   access:
     authorized-groups: Authorized groups
     authorized-users: Authorized users
+    editing-disabled: Access policy editing is disabled.
+    workflow-active: >
+      Changing the access policy is not possible at this time, since the video is being processed in the background.
+      <br />
+      Please try again later.
     users-no-options:
       initial-searchable: Type to search for users by name (or enter exact email/username)
       none-found-searchable: No user found
@@ -635,6 +641,12 @@ api-remote-errors:
         The video you are trying to delete does not exist.
         It might have been removed already.
       not-allowed: You are not allowed to delete this video.
+    acl:
+      not-found: "Access policy update failed: video not found."
+      not-allowed: You are not allowed to update the access policies of this video.
+    workflow:
+      not-allowed: You are not allowed to inquire about workflow activity of this video.
+      active: $t(manage.access.workflow-active)
 
 embed:
   not-supported: This page can't be embedded.

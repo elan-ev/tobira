@@ -134,7 +134,6 @@ impl AuthContext {
         }
         Ok(())
     }
-    
 }
 
 impl User {
