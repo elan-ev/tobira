@@ -42,7 +42,7 @@
     "i18next-browser-languagedetector": "^8.0.0",
     "lucide-react": "^0.439.0",
     "paella-basic-plugins": "1.44.10",
-    "paella-core": "1.49.6",
+    "paella-core": "1.50.2",
     "paella-mp4multiquality-plugin": "1.47.1",
     "paella-skins": "1.48.0",
     "paella-slide-plugins": "1.48.1",
