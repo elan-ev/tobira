@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fmt};
+use std::{fmt, path::PathBuf};
 
 use crate::prelude::*;
 use super::color::ColorConfig;
@@ -12,9 +12,20 @@ pub(crate) struct ThemeConfig {
     pub(crate) header_height: u32,
 
     /// Logo used in the top left corner of the page. Using SVG logos is recommended.
-    /// See the documentation on theming/logos for more info!
-    #[config(nested)]
-    pub(crate) logo: LogoConfig,
+    /// You can configure specific logos for small and large screens, dark and light mode,
+    /// and any number of languages. Example:
+    ///
+    /// ```
+    /// logos = [
+    ///     { path = "logo-large.svg", resolution = [425, 182] },
+    ///     { path = "logo-large-en.svg", lang = "en", resolution = [425, 182] },
+    ///     { path = "logo-large-dark.svg", mode = "dark", resolution = [425, 182] },
+    ///     { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
+    /// ]
+    /// ```
+    ///
+    /// See the documentation on theming/logos for more info and additional examples!
+    pub(crate) logos: Vec<LogoDef>,
 
     /// Path to an SVG file that is used as favicon.
     pub(crate) favicon: PathBuf,
@@ -27,33 +38,47 @@ pub(crate) struct ThemeConfig {
     pub(crate) font: FontConfig,
 }
 
-
-#[derive(Debug, confique::Config)]
-pub(crate) struct LogoConfig {
-    /// The normal, usually wide logo that is shown on desktop screens. The
-    /// value is a map with a `path` and `resolution` key:
-    ///
-    ///     large = { path = "logo.svg", resolution = [20, 8] }
-    ///
-    /// The resolution is only an aspect ratio. It is used to avoid layout
-    /// shifts in the frontend by allocating the correct size for the logo
-    /// before the browser loaded the file.
-    pub(crate) large: LogoDef,
-
-    /// A less wide logo used for narrow screens.
-    pub(crate) small: Option<LogoDef>,
-    
-    /// Large logo for dark mode usage.
-    pub(crate) large_dark: Option<LogoDef>,
-
-    /// Small logo for dark mode usage.
-    pub(crate) small_dark: Option<LogoDef>,
-}
-
 #[derive(Debug, Clone, serde::Deserialize)]
 pub(crate) struct LogoDef {
+    pub(crate) size: Option<LogoSize>,
+    pub(crate) mode: Option<LogoMode>,
+    pub(crate) lang: Option<String>,
     pub(crate) path: PathBuf,
     pub(crate) resolution: LogoResolution,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum LogoSize {
+    Wide,
+    Narrow,
+}
+
+impl fmt::Display for LogoSize {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let size = match self {
+            LogoSize::Wide => "wide",
+            LogoSize::Narrow => "narrow",
+        };
+        write!(f, "{}", size)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum LogoMode {
+    Light,
+    Dark,
+}
+
+impl fmt::Display for LogoMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mode = match self {
+            LogoMode::Light => "light",
+            LogoMode::Dark => "dark",
+        };
+        write!(f, "{}", mode)
+    }
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
