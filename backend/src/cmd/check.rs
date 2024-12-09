@@ -103,13 +103,8 @@ fn print_outcome<T>(any_errors: &mut bool, label: &str, result: &Result<T>) {
 async fn check_referenced_files(config: &Config) -> Result<()> {
     // TODO: log file & unix socket?
 
-    let mut files = vec![
-        &config.theme.favicon,
-        &config.theme.logo.large.path,
-    ];
-    files.extend(config.theme.logo.small.as_ref().map(|l| &l.path));
-    files.extend(config.theme.logo.large_dark.as_ref().map(|l| &l.path));
-    files.extend(config.theme.logo.small_dark.as_ref().map(|l| &l.path));
+    let mut files = vec![&config.theme.favicon];
+    files.extend(config.theme.logos.iter().map(|logo| &logo.path));
     files.extend(&config.theme.font.files);
     files.extend(&config.theme.font.extra_css);
     files.extend(config.auth.jwt.secret_key.as_ref());
