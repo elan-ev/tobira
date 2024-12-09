@@ -112,6 +112,7 @@ const runTobiraCommand = async (tobira: TobiraProcess, args: string[]) =>
 
 
 // TODO: DB
+/* eslint-disable max-len */
 const tobiraConfig = ({ index, port, dbName, rootPath }: {
     index: number;
     port: number;
@@ -151,13 +152,10 @@ const tobiraConfig = ({ index, port, dbName, rootPath }: {
     password = "opencast"
 
     [theme]
-    logo.large.path = "${rootPath}/util/dev-config/logo-large.svg"
-    logo.large.resolution = [425, 182]
-    logo.large_dark.path = "${rootPath}/util/dev-config/logo-large-dark.svg"
-    logo.large_dark.resolution = [425, 182]
-    logo.small.path = "${rootPath}/util/dev-config/logo-small.svg"
-    logo.small.resolution = [212, 182]
-    logo.small_dark.path = "${rootPath}/util/dev-config/logo-small.svg"
-    logo.small_dark.resolution = [212, 182]
     favicon = "${rootPath}/util/dev-config/favicon.svg"
+    logos = [
+        { path = "${rootPath}/util/dev-config/logo-large.svg", mode = "light", size = "wide", resolution = [425, 182] },
+        { path = "${rootPath}/util/dev-config/logo-large-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
+        { path = "${rootPath}/util/dev-config/logo-small.svg", size = "narrow", resolution = [212, 182] }
+    ]
 `;

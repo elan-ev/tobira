@@ -53,12 +53,9 @@ poll_period = "1min"
 interpret_eth_passwords = true
 
 [theme]
-logo.large.path = "/opt/tobira/{{ id }}/logo-large.svg"
-logo.large.resolution = [643, 217]
-logo.large_dark.path = "/opt/tobira/{{ id }}/logo-large-dark.svg"
-logo.large_dark.resolution = [643, 217]
-logo.small.path = "/opt/tobira/{{ id }}/logo-small.svg"
-logo.small.resolution = [102, 115]
-logo.small_dark.path = "/opt/tobira/{{ id }}/logo-small.svg"
-logo.small_dark.resolution = [212, 182]
 favicon = "/opt/tobira/{{ id }}/favicon.svg"
+logos = [
+    { path = "/opt/tobira/{{ id }}/logo-large.svg",  mode = "light", size = "wide", resolution = [425, 182] },
+    { path = "/opt/tobira/{{ id }}/logo-large-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
+    { path = "/opt/tobira/{{ id }}/logo-small.svg", size = "narrow", resolution = [212, 182] },
+]
