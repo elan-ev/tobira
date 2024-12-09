@@ -31,7 +31,7 @@ type Config = {
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
-    logo: LogoConfig;
+    logos: LogoConfig;
     plyr: PlyrConfig;
     upload: UploadConfig;
     paellaPluginConfig: object;
@@ -63,16 +63,12 @@ type AuthConfig = {
 };
 
 type LogoConfig = {
-    large: SingleLogoConfig;
-    small: SingleLogoConfig | null;
-    largeDark: SingleLogoConfig | null;
-    smallDark: SingleLogoConfig | null;
-};
-
-type SingleLogoConfig = {
+    size: "wide" | "narrow"| null;
+    mode: "light" | "dark"| null;
+    lang: string | null;
     path: string;
     resolution: number[];
-};
+}[];
 
 type PlyrConfig = {
     blankVideo: string;

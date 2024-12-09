@@ -1,18 +1,20 @@
 import { useTranslation } from "react-i18next";
-import { screenWidthAbove, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
+import { screenWidthAbove, screenWidthAtMost } from "@opencast/appkit";
 
 import CONFIG from "../../config";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 import { Link } from "../../router";
 import { focusStyle } from "../../ui";
-import { translatedConfig } from "../../util";
+import { translatedConfig, useLogoConfig } from "../../util";
 import { HEADER_BASE_PADDING } from "./ui";
 import { COLORS } from "../../color";
 
 
 export const Logo: React.FC = () => {
     const { t, i18n } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const logos = useLogoConfig();
+
+    const alt = t("general.logo-alt", { title: translatedConfig(CONFIG.siteTitle, i18n) });
 
     // This is a bit tricky: we want to specify the `width` and `height`
     // attributes on the `img` elements in order to avoid layout shift. That
@@ -32,24 +34,6 @@ export const Logo: React.FC = () => {
     // The solution is to calculate the correct `flex-basis` for the `<a>`
     // element manually.
 
-    const large = CONFIG.logo.large;
-    const small = CONFIG.logo.small ?? CONFIG.logo.large;
-    const largeDark = CONFIG.logo.largeDark ?? CONFIG.logo.large;
-    const smallDark = CONFIG.logo.smallDark
-        ?? CONFIG.logo.largeDark
-        ?? CONFIG.logo.small
-        ?? CONFIG.logo.large;
-
-    // If the dark logos are not specified, we default to the white ones but
-    // inverting them.
-    const invertLargeDark = CONFIG.logo.largeDark === null;
-    const invertSmallDark = CONFIG.logo.smallDark === null && CONFIG.logo.largeDark === null;
-
-    const alt = t("general.logo-alt", { title: translatedConfig(CONFIG.siteTitle, i18n) });
-    const invertCss = {
-        filter: "invert(100%) hue-rotate(180deg)",
-    };
-
     return (
         <Link to="/" css={{
             height: `calc(100% + ${HEADER_BASE_PADDING * 2}px)`,
@@ -66,24 +50,22 @@ export const Logo: React.FC = () => {
             },
         }}>
             <img
-                width={(isDark ? largeDark : large).resolution[0]}
-                height={(isDark ? largeDark : large).resolution[1]}
-                src={(isDark ? largeDark : large).path}
+                width={logos.wide.resolution[0]}
+                height={logos.wide.resolution[1]}
+                src={logos.wide.path}
                 alt={alt}
                 css={{
-                    ...isDark && invertLargeDark && invertCss,
                     [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                         display: "none",
                     },
                 }}
             />
             <img
-                width={(isDark ? smallDark : small).resolution[0]}
-                height={(isDark ? smallDark : small).resolution[1]}
-                src={(isDark ? smallDark : small).path}
+                width={logos.narrow.resolution[0]}
+                height={logos.narrow.resolution[1]}
+                src={logos.narrow.path}
                 alt={alt}
                 css={{
-                    ...isDark && invertSmallDark && invertCss,
                     [screenWidthAbove(BREAKPOINT_SMALL)]: {
                         display: "none",
                     },
