@@ -1,10 +1,17 @@
+use std::collections::HashMap;
+
 use bstr::ByteSlice;
 use hyper::StatusCode;
 use reinda::Embeds;
 use secrecy::ExposeSecret;
 use serde_json::json;
 
-use crate::{auth::AuthSource, config::{Config, LogoDef}, prelude::*, util::ByteBody};
+use crate::{
+    auth::AuthSource,
+    config::{Config,LogoDef},
+    prelude::*,
+    util::ByteBody,
+};
 use super::{handlers::CommonHeadersExt, Response};
 
 
@@ -43,50 +50,67 @@ impl Assets {
         //
         // TODO: adjust file extension according to actual file path, to avoid
         // PNG files being served as `.svg`.
-        let logo_files = || [
-            ("large", "logo-large.svg", Some(&config.theme.logo.large)),
-            ("small", "logo-small.svg", config.theme.logo.small.as_ref()),
-            ("largeDark", "logo-large-dark.svg", config.theme.logo.large_dark.as_ref()),
-            ("smallDark", "logo-small-dark.svg", config.theme.logo.small_dark.as_ref()),
-        ].into_iter().filter_map(|(config_field, http_path, logo)| {
-            logo.map(|logo| (config_field, http_path, &logo.path))
-        });
 
+        // Map of `(size, mode, lang)` to `(http_path, logo_path)`.
+        //
+        // Can be used to look up the HTTP and filesystem paths for a logo based on its attributes.
+        // This avoids iterating through all logos repeatedly when matching the frontend configuration
+        // to the backend paths.
+        let mut logo_map = HashMap::new();
+        for logo in &config.theme.logos {
+            let (size, mode, lang) = get_logo_key(logo);
+
+            let http_path = generate_http_path(logo);
+            let key = (size, mode, lang);
+
+            if logo_map.insert(key.clone(), (http_path, logo.path.clone())).is_some() {
+                bail!("Duplicate logo definition for {:?}. Each (size, mode, lang) combination must be unique.", key);
+            }
+        }
 
         let mut builder = reinda::Assets::builder();
 
         // Add logo & favicon files
         builder.add_file(FAVICON_FILE, &config.theme.favicon).with_hash();
-        for (_, http_path, logo_path) in logo_files() {
-            builder.add_file(http_path, logo_path).with_hash();
+        for (http_path, logo_path) in logo_map.values() {
+            builder.add_file(http_path.clone(), logo_path.clone()).with_hash();
         }
-
 
         // ----- Main HTML file -----------------------------------------------------
         //
         // We use a "modifier" to adjust the file, including the frontend
         // config, and in particular: refer to the correct paths (which are
         // potentially hashed). We also insert other variables and code.
+        let deps_paths: Vec<String> = logo_map.values().map(|(http_path, _)| http_path.clone()).collect();
         let deps = [FAVICON_FILE, FONTS_CSS_FILE]
-            .into_iter()
-            .chain(logo_files().map(|(_, http_path, _)| http_path));
+            .iter()
+            .map(|&s| s.to_string())
+            .chain(deps_paths.into_iter());
 
         builder.add_embedded(INDEX_FILE, &EMBEDS[INDEX_FILE]).with_modifier(deps, {
             let frontend_config = frontend_config(config);
             let html_title = config.general.site_title.en().to_owned();
             let global_style = config.theme.to_css();
             let matomo_code = config.matomo.js_code().unwrap_or_default();
-            let logo_paths = logo_files()
-                .map(|(config_field, http_path, _)| (config_field, http_path))
-                .collect::<Vec<_>>();
 
             move |original, ctx| {
-                // Fill logo path in frontend config and convert it to string.
                 let mut frontend_config = frontend_config.clone();
-                for (config_field, http_path) in &logo_paths {
-                    let actual_path = format!("/~assets/{}", ctx.resolve_path(http_path));
-                    frontend_config["logo"][config_field]["path"] = json!(actual_path);
+                fn get_str_field<'a>(obj: &'a serde_json::Value, field: &str) -> &'a str {
+                    obj[field].as_str().expect(&format!("{} must be a string", field))
                 }
+                for logo in frontend_config["logos"].as_array_mut().expect("logos is not an array") {
+                    let size = get_str_field(logo, "size");
+                    let mode = get_str_field(logo, "mode");
+                    let lang = get_str_field(logo, "lang");
+
+                    if let Some((http_path, _logo_path)) = logo_map.get(
+                        &(size.to_string(), mode.to_string(), lang.to_string())
+                    ) {
+                        let actual_path = format!("/~assets/{}", ctx.resolve_path(http_path));
+                        logo["path"] = json!(actual_path);
+                    }
+                }
+
                 let frontend_config = if cfg!(debug_assertions) {
                     serde_json::to_string_pretty(&frontend_config).unwrap()
                 } else {
@@ -245,11 +269,7 @@ impl Assets {
 }
 
 fn frontend_config(config: &Config) -> serde_json::Value {
-    let logo_obj = |logo_def: &LogoDef| json!({
-        // The path will be added later in the modifier
-        "path": "",
-        "resolution": logo_def.resolution,
-    });
+    let logo_entries = config.theme.logos.iter().map(logo_to_json).collect::<Vec<_>>();
 
     json!({
         "version": {
@@ -288,14 +308,47 @@ fn frontend_config(config: &Config) -> serde_json::Value {
             "studioUrl": config.opencast.studio_url().to_string(),
             "editorUrl": config.opencast.editor_url().to_string(),
         },
-        "logo": {
-            "large": logo_obj(&config.theme.logo.large),
-            "small": config.theme.logo.small.as_ref().map(logo_obj),
-            "largeDark": config.theme.logo.large_dark.as_ref().map(logo_obj),
-            "smallDark": config.theme.logo.small_dark.as_ref().map(logo_obj),
-        },
+        "logos": logo_entries,
         "sync": {
             "pollPeriod": config.sync.poll_period.as_secs_f64(),
         },
     })
+}
+
+/// Generates HTTP path for a logo based on its `size`, `mode` and `lang` attributes.
+/// These are joined with `-`.
+/// Defaults to `"default-logo"` if all attributes are wildcards (`"*"`).
+fn generate_http_path(logo: &LogoDef) -> String {
+    let (size, mode, lang) = get_logo_key(logo);
+    let path_parts = [size, mode, lang]
+        .into_iter()
+        .filter(|part| part != "*")
+        .collect::<Vec<_>>();
+
+    if path_parts.is_empty() {
+        "logo-default.svg".to_string()
+    } else {
+        format!("logo-{}.svg", path_parts.join("-"))
+    }
+}
+
+fn logo_to_json(logo: &LogoDef) -> serde_json::Value {
+    let (size, mode, lang) = get_logo_key(logo);
+    json!({
+        "size": size,
+        "mode": mode,
+        "lang": lang,
+        "path": "", // The path will be added later in the modifier
+        "resolution": logo.resolution,
+    })
+}
+
+/// Extracts the (size, mode, lang) key for a given logo.
+///
+/// If any of these fields are absent, they are substituted with a default value of `"*"`.
+fn get_logo_key(logo: &LogoDef) -> (String, String, String) {
+    let size = logo.size.as_ref().map(ToString::to_string).unwrap_or("*".to_string());
+    let mode = logo.mode.as_ref().map(ToString::to_string).unwrap_or("*".to_string());
+    let lang = logo.lang.clone().unwrap_or("*".to_string());
+    (size, mode, lang)
 }
