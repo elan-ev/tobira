@@ -30,7 +30,8 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
             const title = page.getByRole("heading", { name: videoTitle });
             // We need `force` to allow clicking the overlay.
             await title.click({ force: true });
-            expect(page.url().startsWith("/!v/"));
+            await expect(page).toHaveURL(new RegExp("/!v/[0-9a-zA-Z_\\-]{11}$"));
+            await expect(page.getByRole("heading", { level: 1, name: videoTitle })).toBeVisible();
             await page.goBack();
         });
     }
@@ -39,7 +40,8 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
         const eventSeriesLink = page.getByRole("link", { name: "Fabulous Cats" });
         await expect(eventSeriesLink).toHaveCount(3);
         await eventSeriesLink.first().click();
-        expect(page.url().startsWith("/!s/"));
+        await expect(page).toHaveURL(new RegExp("/!s/[0-9a-zA-Z_\\-]{11}$"));
+        await expect(page.getByRole("heading", { level: 1, name: "Fabulous Cats" })).toBeVisible();
         await page.goBack();
     });
 
