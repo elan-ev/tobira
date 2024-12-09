@@ -533,30 +533,23 @@
 # Required! This value must be specified.
 #favicon =
 
-
 # Logo used in the top left corner of the page. Using SVG logos is recommended.
-# See the documentation on theming/logos for more info!
-[theme.logo]
-# The normal, usually wide logo that is shown on desktop screens. The
-# value is a map with a `path` and `resolution` key:
+# You can configure specific logos for small and large screens, dark and light mode,
+# and any number of languages. Example:
 #
-#     large = { path = "logo.svg", resolution = [20, 8] }
+# ```
+# logos = [
+#     { path = "logo-large.svg", resolution = [425, 182] },
+#     { path = "logo-large-en.svg", lang = "en", resolution = [425, 182] },
+#     { path = "logo-large-dark.svg", mode = "dark", resolution = [425, 182] },
+#     { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
+# ]
+# ```
 #
-# The resolution is only an aspect ratio. It is used to avoid layout
-# shifts in the frontend by allocating the correct size for the logo
-# before the browser loaded the file.
+# See the documentation on theming/logos for more info and additional examples!
 #
 # Required! This value must be specified.
-#large =
-
-# A less wide logo used for narrow screens.
-#small =
-
-# Large logo for dark mode usage.
-#large_dark =
-
-# Small logo for dark mode usage.
-#small_dark =
+#logos =
 
 
 # Colors used in the UI. Specified in sRGB.

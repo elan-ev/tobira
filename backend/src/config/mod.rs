@@ -161,14 +161,7 @@ impl Config {
             fix_path(&base, p);
         }
 
-        fix_path(&base, &mut self.theme.logo.large.path);
-        if let Some(logo) = &mut self.theme.logo.small {
-            fix_path(&base, &mut logo.path);
-        }
-        if let Some(logo) = &mut self.theme.logo.large_dark {
-            fix_path(&base, &mut logo.path);
-        }
-        if let Some(logo) = &mut self.theme.logo.small_dark {
+        for logo in &mut self.theme.logos {
             fix_path(&base, &mut logo.path);
         }
         fix_path(&base, &mut self.theme.favicon);
