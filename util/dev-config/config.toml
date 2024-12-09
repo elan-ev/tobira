@@ -37,10 +37,10 @@ secret_key = "jwt-key.pem"
 
 [opencast]
 host = "http://localhost:8081"
-
-[sync]
 user = "admin"
 password = "opencast"
+
+[sync]
 preferred_harvest_size = 3
 interpret_eth_passwords = true
 

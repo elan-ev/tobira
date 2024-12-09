@@ -45,10 +45,10 @@ file = "/var/log/tobira/{{ id }}-${cmd}.log"
 
 [opencast]
 host = "https://tobira-test-oc.ethz.ch"
-
-[sync]
 user = "admin"
 password = "{{ opencast_admin_password }}"
+
+[sync]
 poll_period = "1min"
 interpret_eth_passwords = true
 

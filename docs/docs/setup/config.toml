@@ -440,9 +440,8 @@
 # Default value: []
 #other_hosts = []
 
-
-[sync]
-# Username of the user used to communicate with Opencast for data syncing.
+# Username of the user used to communicate with Opencast for data syncing
+# and external API authentication.
 # This user has to have access to all events and series. Currently, that
 # user has to be admin.
 #
@@ -454,6 +453,8 @@
 # Required! This value must be specified.
 #password =
 
+
+[sync]
 # A rough estimate of how many items (events & series) are transferred in
 # each HTTP request while harvesting (syncing) with the Opencast
 # instance.

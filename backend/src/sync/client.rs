@@ -47,8 +47,8 @@ impl OcClient {
             http_client: crate::util::http_client()?,
             sync_node: config.opencast.sync_node().clone(),
             external_api_node: config.opencast.external_api_node().clone(),
-            auth_header: config.sync.basic_auth_header(),
-            username: config.sync.user.clone(),
+            auth_header: config.opencast.basic_auth_header(),
+            username: config.opencast.user.clone(),
         })
     }
 
