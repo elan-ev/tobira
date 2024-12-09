@@ -9,7 +9,7 @@ import {
     LuX,
 } from "react-icons/lu";
 import { LetterText } from "lucide-react";
-import { ReactNode, RefObject, useEffect, useRef, useState } from "react";
+import { ReactNode, RefObject, Suspense, useEffect, useRef, useState } from "react";
 import {
     Button,
     Card,
@@ -17,6 +17,7 @@ import {
     FloatingContainer,
     FloatingTrigger,
     ProtoButton,
+    Spinner,
     WithTooltip,
     match,
     screenWidthAtMost,
@@ -707,10 +708,11 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
                         minWidth: 160,
                         maxWidth: "min(85vw, 420px)",
                     }}
-                    tooltip={queryRef
-                        ? <TextMatchTooltipWithMaybeImage queryRef={queryRef} textMatch={m} />
-                        : <TextMatchTooltip textMatch={m} />
-                    }
+                    tooltip={<Suspense fallback={<Spinner size={24} />}>
+                        {queryRef
+                            ? <TextMatchTooltipWithMaybeImage queryRef={queryRef} textMatch={m} />
+                            : <TextMatchTooltip textMatch={m} />}
+                    </Suspense>}
                     css={{
                         position: "absolute",
                         ...match(m.ty, {
