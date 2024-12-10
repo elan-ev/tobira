@@ -321,7 +321,7 @@ impl Context {
 
             let mut headers = header::HeaderMap::new();
             let mut header_value = header::HeaderValue::try_from(
-                config.sync.basic_auth_header().expose_secret()
+                config.opencast.basic_auth_header().expose_secret()
             ).unwrap();
             header_value.set_sensitive(true);
             headers.insert(header::AUTHORIZATION, header_value);
