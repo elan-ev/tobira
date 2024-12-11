@@ -42,21 +42,21 @@ impl User {
 
     /// `True` if the user has the permission to upload videos.
     fn can_upload(&self, context: &Context) -> bool {
-        self.can_upload(&context.config.auth)
+        HasRoles::can_upload(self, &context.config.auth)
     }
 
     /// `True` if the user has the permission to use Opencast Studio.
     fn can_use_studio(&self, context: &Context) -> bool {
-        self.can_use_studio(&context.config.auth)
+        HasRoles::can_use_studio(self, &context.config.auth)
     }
 
     /// `True` if the user has the permission to use Opencast Studio.
     fn can_use_editor(&self, context: &Context) -> bool {
-        self.can_use_editor(&context.config.auth)
+        HasRoles::can_use_editor(self, &context.config.auth)
     }
 
     fn can_create_user_realm(&self, context: &Context) -> bool {
-        self.can_create_user_realm(&context.config.auth)
+        HasRoles::can_create_user_realm(self, &context.config.auth)
     }
 
     /// `True` if the user is allowed to find unlisted items when editing page content.
@@ -70,9 +70,9 @@ impl User {
     /// are not yet removed from Tobira's database).
     ///
     /// Exactly one of `first` and `last` must be set!
-    #[graphql(arguments(order(default = Default::default())))]
     async fn my_videos(
         &self,
+        #[graphql(default)]
         order: EventSortOrder,
         first: Option<i32>,
         after: Option<Cursor>,

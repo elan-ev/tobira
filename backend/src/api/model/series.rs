@@ -4,14 +4,9 @@ use postgres_types::ToSql;
 
 use crate::{
     api::{
-        Context,
+        Context, Id, Node, NodeValue,
         err::{invalid_input, ApiResult},
-        Id,
-        model::{
-            realm::Realm,
-            event::AuthorizedEvent,
-        },
-        Node,
+        model::{event::AuthorizedEvent, realm::Realm},
     },
     db::{types::{ExtraMetadata, Key, SeriesState as State}, util::impl_from_db},
     prelude::*,
@@ -248,7 +243,7 @@ impl Series {
 }
 
 /// Represents an Opencast series.
-#[graphql_object(Context = Context)]
+#[graphql_object(Context = Context, impl = NodeValue)]
 impl Series {
     fn id(&self) -> Id {
         Node::id(self)

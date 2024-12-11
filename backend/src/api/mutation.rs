@@ -83,14 +83,10 @@ impl Mutation {
     ///
     /// `childIndices` must contain at least one element, i.e. do not call this
     /// for realms without children.
-    #[graphql(
-        arguments(
-            child_indices(default = None),
-        )
-    )]
     async fn set_child_order(
         parent: Id,
         child_order: RealmOrder,
+        #[graphql(default = None)]
         child_indices: Option<Vec<ChildIndex>>,
         context: &Context,
     ) -> ApiResult<Realm> {

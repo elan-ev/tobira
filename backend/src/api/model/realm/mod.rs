@@ -1,4 +1,4 @@
-use juniper::{graphql_object, GraphQLEnum, GraphQLObject, GraphQLUnion, graphql_interface};
+use juniper::{graphql_object, GraphQLEnum, GraphQLObject, GraphQLUnion};
 use postgres_types::{FromSql, ToSql};
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     db::{types::Key, util::{impl_from_db, select}},
     prelude::*,
 };
-use super::block::{Block, BlockValue, PlaylistBlock, SeriesBlock, VideoBlock};
+use super::block::BlockValue;
 
 
 mod mutations;
@@ -59,53 +59,10 @@ pub(crate) struct RealmNameFromBlock {
 /// A realm name that is derived from a block of that realm.
 #[graphql_object(Context = Context)]
 impl RealmNameFromBlock {
-    async fn block(&self, context: &Context) -> ApiResult<RealmNameSourceBlockValue> {
-        match BlockValue::load_by_key(self.block, context).await? {
-            BlockValue::VideoBlock(b) => Ok(RealmNameSourceBlockValue::VideoBlock(b)),
-            BlockValue::SeriesBlock(b) => Ok(RealmNameSourceBlockValue::SeriesBlock(b)),
-            BlockValue::PlaylistBlock(b) => Ok(RealmNameSourceBlockValue::PlaylistBlock(b)),
-            _ => unreachable!("block {:?} has invalid type for name source", self.block),
-        }
+    async fn block(&self, context: &Context) -> ApiResult<BlockValue> {
+        BlockValue::load_by_key(self.block, context).await
     }
 }
-
-#[graphql_interface(Context = Context, for = [SeriesBlock, VideoBlock, PlaylistBlock])]
-pub(crate) trait RealmNameSourceBlock: Block {
-    // TODO: we repeat the `id` method here from the `Block` and `Node` trait.
-    // This should be done in a better way. Since the Octobor 2021 spec,
-    // interfaces can implement other interfaces. Juniper will support this in
-    // the future.
-    fn id(&self) -> Id;
-}
-
-impl RealmNameSourceBlock for SeriesBlock {
-    fn id(&self) -> Id {
-        self.shared.id
-    }
-}
-
-impl RealmNameSourceBlock for VideoBlock {
-    fn id(&self) -> Id {
-        self.shared.id
-    }
-}
-
-impl RealmNameSourceBlock for PlaylistBlock {
-    fn id(&self) -> Id {
-        self.shared.id
-    }
-}
-
-impl Block for RealmNameSourceBlockValue {
-    fn shared(&self) -> &super::block::SharedData {
-        match self {
-            Self::SeriesBlock(b) => b.shared(),
-            Self::VideoBlock(b) => b.shared(),
-            Self::PlaylistBlock(b) => b.shared(),
-        }
-    }
-}
-
 
 pub(crate) struct Realm {
     pub(crate) key: Key,
@@ -227,40 +184,6 @@ impl Realm {
             .pipe(Ok)
     }
 
-    pub(crate) fn is_main_root(&self) -> bool {
-        self.key.0 == 0
-    }
-
-    pub(crate) fn is_user_realm(&self) -> bool {
-        self.full_path.starts_with("/@")
-    }
-
-    pub(crate) fn is_user_root(&self) -> bool {
-        self.is_user_realm() && self.parent_key.is_none()
-    }
-
-    /// Returns all immediate children of this realm. The children are always
-    /// ordered by the internal index. If `childOrder` returns an ordering
-    /// different from `BY_INDEX`, the frontend is supposed to sort the
-    /// children.
-    pub(crate) async fn children(&self, context: &Context) -> ApiResult<Vec<Self>> {
-        let selection = Self::select();
-        let query = format!(
-            "select {selection} \
-                from realms \
-                where realms.parent = $1 \
-                order by index",
-        );
-        context.db
-            .query_mapped(
-                &query,
-                &[&self.key],
-                |row| Self::from_row_start(&row),
-            )
-            .await?
-            .pipe(Ok)
-    }
-
     /// Returns the username of the user owning this realm tree IF it is a user
     /// realm. Otherwise returns `None`.
     pub(crate) fn owning_user(&self) -> Option<&str> {
@@ -272,18 +195,6 @@ impl Realm {
         self.owning_user().is_some_and(|owning_user| {
             matches!(&context.auth, AuthContext::User(u) if u.username == owning_user)
         })
-    }
-
-    fn is_current_user_page_admin(&self, context: &Context) -> bool {
-        context.auth.is_global_page_admin(&context.config.auth)
-            || self.is_current_user_owner(context)
-            || context.auth.overlaps_roles(&self.flattened_admin_roles)
-    }
-
-    fn can_current_user_moderate(&self, context: &Context) -> bool {
-        context.auth.is_global_page_moderator(&context.config.auth)
-            || self.is_current_user_owner(context)
-            || context.auth.overlaps_roles(&self.flattened_moderator_roles)
     }
 
     pub(crate) fn require_moderator_rights(&self, context: &Context) -> ApiResult<()> {
@@ -345,17 +256,17 @@ impl Realm {
 
     /// Returns `true` if this is the root of the public realm tree (with path = "/").
     fn is_main_root(&self) -> bool {
-        self.is_main_root()
+        self.key.0 == 0
     }
 
     /// Returns true if this is the root of a user realm tree.
     fn is_user_root(&self) -> bool {
-        self.is_user_root()
+        self.is_user_realm() && self.parent_key.is_none()
     }
 
     /// Returns `true` if this realm is managed by a user (path starting with `/@`).
     fn is_user_realm(&self) -> bool {
-        self.is_user_realm()
+        self.full_path.starts_with("/@")
     }
 
     fn index(&self) -> i32 {
@@ -441,8 +352,22 @@ impl Realm {
     /// ordered by the internal index. If `childOrder` returns an ordering
     /// different from `BY_INDEX`, the frontend is supposed to sort the
     /// children.
-    async fn children(&self, context: &Context) -> ApiResult<Vec<Self>> {
-        self.children(context).await
+    pub(crate) async fn children(&self, context: &Context) -> ApiResult<Vec<Self>> {
+        let selection = Self::select();
+        let query = format!(
+            "select {selection} \
+                from realms \
+                where realms.parent = $1 \
+                order by index",
+        );
+        context.db
+            .query_mapped(
+                &query,
+                &[&self.key],
+                |row| Self::from_row_start(&row),
+            )
+            .await?
+            .pipe(Ok)
     }
 
     /// Returns the (content) blocks of this realm.
@@ -472,12 +397,16 @@ impl Realm {
     /// and edit settings including changing the realm path, deleting the realm and editing
     /// the realm's acl.
     fn is_current_user_page_admin(&self, context: &Context) -> bool {
-        self.is_current_user_page_admin(context)
+        context.auth.is_global_page_admin(&context.config.auth)
+            || self.is_current_user_owner(context)
+            || context.auth.overlaps_roles(&self.flattened_admin_roles)
     }
 
     /// Returns whether the current user has the rights to add sub-pages and edit realm content
     /// and non-critical settings.
     fn can_current_user_moderate(&self, context: &Context) -> bool {
-        self.can_current_user_moderate(context)
+        context.auth.is_global_page_moderator(&context.config.auth)
+            || self.is_current_user_owner(context)
+            || context.auth.overlaps_roles(&self.flattened_moderator_roles)
     }
 }

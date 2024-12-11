@@ -1,3 +1,4 @@
+use juniper::{GraphQLScalar, InputValue, ScalarValue};
 use paste::paste;
 use serde::{Deserialize, Serialize};
 use static_assertions::const_assert;
@@ -14,7 +15,12 @@ use crate::{db::types::Key, util::{base64_decode, BASE64_DIGITS}};
 /// sure we can easily convert the ID to a database primary key.
 ///
 /// Each key is encoded as 12 byte ASCII string.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, GraphQLScalar)]
+#[graphql(
+    name = "ID",
+    description = "An opaque, globally-unique identifier",
+    parse_token(String),
+)]
 pub(crate) struct Id {
     /// The kind of node. Each different "thing" in our API has a different
     /// static prefix. For example, realms have the prefix `b"re"`. All IDs
@@ -121,6 +127,15 @@ impl Id {
     pub(crate) fn kind(&self) -> [u8; 2] {
         self.kind
     }
+
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
+        juniper::Value::scalar(self.to_string())
+    }
+
+    fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
+        let s = input.as_string_value().ok_or("expected string")?;
+        Ok(s.parse().unwrap_or(Self::invalid()))
+    }
 }
 
 impl Key {
@@ -148,18 +163,16 @@ impl Key {
 }
 
 impl std::str::FromStr for Id {
-    // TODO: we might want to have more information about the error later, but
-    // the GraphQL API doesn't currently use it anyway.
-    type Err = ();
+    type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() != 13 {
-            return Err(());
+            return Err("invalid length");
         }
 
         let bytes = s.as_bytes();
         let kind = [bytes[0], bytes[1]];
-        let key = Key::from_base64(&s[2..]).ok_or(())?;
+        let key = Key::from_base64(&s[2..]).ok_or("invalid base64")?;
 
         Ok(Self { kind, key })
     }
@@ -178,27 +191,6 @@ impl fmt::Display for Id {
     }
 }
 
-#[juniper::graphql_scalar(
-    name = "ID",
-    description = "An opaque, globally-unique identifier",
-)]
-impl<S> GraphQLScalar for Id
-where
-    S: juniper::ScalarValue
-{
-    fn resolve(&self) -> juniper::Value {
-        juniper::Value::scalar(self.to_string())
-    }
-
-    fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
-        let s = value.as_string_value()?;
-        Some(s.parse().unwrap_or(Self::invalid()))
-    }
-
-    fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
-        <String as juniper::ParseScalarValue<S>>::from_str(value)
-    }
-}
 
 fn decode_base64(src: &[u8]) -> Option<Key> {
     let src: [u8; 11] = src.try_into().ok()?;
@@ -248,18 +240,18 @@ mod tests {
     #[test]
     fn invalid_decode() {
         // Wrong length
-        assert_eq!(Id::from_str(""), Err(()));
-        assert_eq!(Id::from_str("re"), Err(()));
-        assert_eq!(Id::from_str("reAAAAAAAAAAAA"), Err(()));
+        assert_eq!(Id::from_str(""), Err("invalid length"));
+        assert_eq!(Id::from_str("re"), Err("invalid length"));
+        assert_eq!(Id::from_str("reAAAAAAAAAAAA"), Err("invalid length"));
 
         // Invalid characters
-        assert_eq!(Id::from_str("re0000000000*"), Err(()));
-        assert_eq!(Id::from_str("re0000000000?"), Err(()));
-        assert_eq!(Id::from_str("re0000000000/"), Err(()));
+        assert_eq!(Id::from_str("re0000000000*"), Err("invalid base64"));
+        assert_eq!(Id::from_str("re0000000000?"), Err("invalid base64"));
+        assert_eq!(Id::from_str("re0000000000/"), Err("invalid base64"));
 
         // Encoded value > u64::MAX
-        assert_eq!(Id::from_str("srQAAAAAAAAAA"), Err(()));
-        assert_eq!(Id::from_str("sr___________"), Err(()));
+        assert_eq!(Id::from_str("srQAAAAAAAAAA"), Err("invalid base64"));
+        assert_eq!(Id::from_str("sr___________"), Err("invalid base64"));
     }
 
     #[test]

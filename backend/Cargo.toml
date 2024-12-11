@@ -42,7 +42,7 @@ hyper-rustls = { version = "0.26.0", features = ["http2"] }
 hyper-util = { version = "0.1.3", features = ["client", "server", "http1", "http2"] }
 isahc = { version = "1", features = ["static-ssl"] }
 iso8601 = "0.6.1"
-juniper = { version = "0.15.10", default-features = false, features = ["chrono", "schema-language"] }
+juniper = { version = "0.16.1", default-features = false, features = ["chrono", "schema-language", "anyhow", "backtrace"] }
 libz-sys = { version = "1", features = ["static"] }
 meilisearch-sdk = "0.24.3"
 mime_guess = { version = "2", default-features = false }
