@@ -922,8 +922,6 @@ pub(crate) struct EventPageInfo {
     pub(crate) has_next_page: bool,
     pub(crate) has_previous_page: bool,
 
-    // TODO: the spec says these shouldn't be optional, but that makes no sense.
-    // See: https://stackoverflow.com/q/70448483/2408867
     pub(crate) start_cursor: Option<Cursor>,
     pub(crate) end_cursor: Option<Cursor>,
 
