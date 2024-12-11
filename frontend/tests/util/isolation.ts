@@ -61,6 +61,12 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
             ["serve", "--config", configPath],
             // { stdio: "inherit" }
         );
+        tobiraProcess.addListener("exit", code => {
+            if (code != null) {
+                throw new Error(`Failed to start Tobira process (exit code ${code}). `
+                    + 'Invalid config? (Hint: try setting stdio: "inherit" in isolation.ts)');
+            }
+        });
         await waitPort({ port, interval: 10, output: "silent" });
 
 
