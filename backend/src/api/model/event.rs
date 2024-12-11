@@ -140,9 +140,7 @@ pub(crate) struct Track {
     uri: String,
     flavor: String,
     mimetype: Option<String>,
-    // TODO: this should be `[i32; 2]` but the relevant patch is not released
-    // yet: https://github.com/graphql-rust/juniper/pull/966
-    resolution: Option<Vec<i32>>,
+    resolution: Option<[i32; 2]>,
     is_master: Option<bool>,
 }
 
@@ -164,7 +162,7 @@ impl Node for AuthorizedEvent {
     }
 }
 
-#[graphql_object(Context = Context, impl = NodeValue)]
+#[graphql_object(Context = Context)]
 impl SyncedEventData {
     fn updated(&self) -> DateTime<Utc> {
         self.updated
@@ -189,7 +187,7 @@ impl SyncedEventData {
 
 /// Represents event data that is only accessible for users with read access
 /// and event-specific authenticated users.
-#[graphql_object(Context = Context, impl = NodeValue)]
+#[graphql_object(Context = Context)]
 impl AuthorizedEventData {
     fn tracks(&self) -> &[Track] {
         &self.tracks
@@ -283,7 +281,23 @@ impl AuthorizedEvent {
 
     /// Whether the event has active workflows.
     async fn has_active_workflows(&self, context: &Context) -> ApiResult<bool> {
-        Self::has_active_workflows(&self, context).await
+        if !context.auth.overlaps_roles(&self.write_roles) {
+            return Err(err::not_authorized!(
+                key = "event.workflow.not-allowed",
+                "you are not allowed to inquire about this event's workflow activity",
+            ));
+        }
+
+        let response = context
+            .oc_client
+            .has_active_workflows(&self.opencast_id)
+            .await
+            .map_err(|e| {
+                error!("Failed to get workflow activity: {}", e);
+                err::opencast_error!("API returned unexpected response, event might be unknown")
+            })?;
+
+        Ok(response)
     }
 
     async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
@@ -480,26 +494,6 @@ impl AuthorizedEvent {
             );
             Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
         }
-    }
-
-    async fn has_active_workflows(&self, context: &Context) -> ApiResult<bool> {
-        if !context.auth.overlaps_roles(&self.write_roles) {
-            return Err(err::not_authorized!(
-                key = "event.workflow.not-allowed",
-                "you are not allowed to inquire about this event's workflow activity",
-            ));
-        }
-
-        let response = context
-            .oc_client
-            .has_active_workflows(&self.opencast_id)
-            .await
-            .map_err(|e| {
-                error!("Failed to get workflow activity: {}", e);
-                err::opencast_error!("API returned unexpected response, event might be unknown")
-            })?;
-
-        Ok(response)
     }
 
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
@@ -781,7 +775,7 @@ impl From<EventTrack> for Track {
             uri: src.uri,
             flavor: src.flavor,
             mimetype: src.mimetype,
-            resolution: src.resolution.map(Into::into),
+            resolution: src.resolution,
             is_master: src.is_master,
         }
     }

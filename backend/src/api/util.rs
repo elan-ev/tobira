@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt};
 
 use bytes::BytesMut;
 use fallible_iterator::FallibleIterator;
+use juniper::{GraphQLScalar, InputValue, ScalarValue};
 use postgres_types::{FromSql, ToSql};
 
 use crate::prelude::*;
@@ -26,7 +27,12 @@ pub(crate) use impl_object_with_dummy_field;
 
 
 
-#[derive(Debug)]
+/// A string in different languages.
+#[derive(Debug, GraphQLScalar)]
+#[graphql(
+    where(T: AsRef<str>),
+    parse_token(String),
+)]
 pub struct TranslatedString<T>(pub(crate) HashMap<T, String>);
 
 impl<T: AsRef<str> + fmt::Debug> ToSql for TranslatedString<T> {
@@ -66,34 +72,18 @@ impl<'a> FromSql<'a> for TranslatedString<String> {
     }
 }
 
-
-#[juniper::graphql_scalar(
-    name = "TranslatedString",
-    description = "A string in different languages",
-)]
-impl<S> GraphQLScalar for TranslatedString<String>
-where
-    S: juniper::ScalarValue + From<&str>
-{
-    fn resolve(&self) -> juniper::Value {
-        use juniper::Value;
-
+impl<T: AsRef<str>> TranslatedString<T> {
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
         self.0.iter()
-            .map(|(k, v)| (k, juniper::Value::scalar(v.clone())))
+            .map(|(k, v)| (k.as_ref(), juniper::Value::scalar(v.to_owned())))
             .collect::<juniper::Object<S>>()
-            .pipe(Value::Object)
+            .pipe(juniper::Value::Object)
     }
 
-    fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
+    fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
         // I did not want to waste time implementing this now, given that we
         // likely never use it.
-        let _ = value;
+        let _ = input;
         todo!("TranslatedString cannot be used as input value yet")
-    }
-
-    fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
-        // See `from_input_value`
-        let _ = value;
-        todo!()
     }
 }

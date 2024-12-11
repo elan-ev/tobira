@@ -1,4 +1,5 @@
 use bincode::Options;
+use juniper::{GraphQLScalar, InputValue, ScalarValue};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -59,7 +60,11 @@ super::util::impl_object_with_dummy_field!(NotAllowed);
 /// serialization format from `bincode`, a compact binary serializer. Of course
 /// we could also have serialized it as JSON and base64 encoded it then, but
 /// that would be a waste of network bandwidth.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, GraphQLScalar)]
+#[graphql(
+    description = "An opaque cursor used for pagination",
+    parse_token(String),
+)]
 pub(crate) struct Cursor(String);
 
 impl Cursor {
@@ -85,39 +90,32 @@ impl Cursor {
             .deserialize_from(b64reader)
             .map_err(|e| err::invalid_input!("given cursor is invalid: {}", e))
     }
-}
 
-#[juniper::graphql_scalar(
-    name = "Cursor",
-    description = "An opaque cursor used for pagination",
-)]
-impl<S> GraphQLScalar for Cursor
-where
-    S: juniper::ScalarValue,
-{
-    fn resolve(&self) -> juniper::Value {
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
         juniper::Value::scalar(self.0.clone())
     }
 
-    fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
-        value.as_string_value().map(|s| Self(s.into()))
-    }
-
-    fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
-        <String as juniper::ParseScalarValue<S>>::from_str(value)
+    fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
+        let s = input.as_string_value().ok_or("expected string")?;
+        Ok(Self(s.into()))
     }
 }
 
-
+// TODO: This uses `graphql_scalar` instead of `derive(GraphQLScalar)` because
+// the type `ExtraMetadata` is defined in the `db` module and adding GraphQL
+// code there seems wrong. However, I feel like we should move some types
+// around anyway since we encountered problems like this before.
 #[juniper::graphql_scalar(
     name = "ExtraMetadata",
     description = "Arbitrary metadata for events/series. Serialized as JSON object.",
+    with = Self,
+    parse_token(String),
 )]
-impl<S> GraphQLScalar for ExtraMetadata
-where
-    S: juniper::ScalarValue
-{
-    fn resolve(&self) -> juniper::Value {
+#[allow(dead_code)]
+pub type ApiExtraMetadata = ExtraMetadata;
+
+impl ExtraMetadata {
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
         use juniper::Value;
 
         std::iter::once(("dcterms", &self.dcterms))
@@ -138,16 +136,10 @@ where
             .pipe(Value::Object)
     }
 
-    fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
+    fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
         // I did not want to waste time implementing this now, given that we
         // likely never use it.
-        let _ = value;
+        let _ = input;
         todo!("ExtraMetadata cannot be used as input value yet")
-    }
-
-    fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
-        // See `from_input_value`
-        let _ = value;
-        todo!()
     }
 }
