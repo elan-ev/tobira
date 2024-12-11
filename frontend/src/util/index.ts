@@ -1,7 +1,7 @@
 import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { bug, match } from "@opencast/appkit";
+import { bug, match, useColorScheme } from "@opencast/appkit";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
@@ -260,3 +260,37 @@ export const getCredentials = (kind: IdKind, id: string): Credentials => {
 
 export const credentialsStorageKey = (kind: IdKind, id: string) =>
     CREDENTIALS_STORAGE_KEY + kind + "-" + id;
+
+export const useLogoConfig = () => {
+    const { i18n } = useTranslation();
+    const mode = useColorScheme().scheme;
+    const lang = i18n.resolvedLanguage;
+    const logos = CONFIG.logos;
+
+    const patterns = [
+        [lang, mode],
+        [lang, "*"],
+        ["*", mode],
+        ["*", "*"],
+    ];
+
+    const findLogo = (size: "wide" | "narrow") => {
+        for (const [lang, mode] of patterns) {
+            let match = logos.find(l => l.size === size && l.mode === mode && l.lang === lang);
+            if (match) {
+                return { path: match.path, resolution: match.resolution };
+            }
+
+            match = logos.find(l => l.size === "*" && l.mode === mode && l.lang === lang);
+            if (match) {
+                return { path: match.path, resolution: match.resolution };
+            }
+        }
+        return null;
+    };
+
+    return {
+        wide: findLogo("wide"),
+        narrow: findLogo("narrow"),
+    };
+};
