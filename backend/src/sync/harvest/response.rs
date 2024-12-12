@@ -364,6 +364,7 @@ mod tests {
                     acl: Acl {
                         read: vec!["ROLE_USER_BOB".into()],
                         write: vec![],
+                        preview: vec![],
                         custom_actions: CustomActions::default(),
                     },
                     entries: vec![
