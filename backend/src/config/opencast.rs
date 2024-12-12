@@ -12,6 +12,7 @@ use crate::{
 
 
 #[derive(Debug, confique::Config)]
+#[config(validate = Self::validate)]
 pub(crate) struct OpencastConfig {
     /// URL to Opencast. Currently used for all purposes (syncing, Studio,
     /// upload, ...) unless overwritten below. In the future, Tobira might use

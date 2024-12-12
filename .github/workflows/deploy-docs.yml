@@ -8,6 +8,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: deploy-docs
@@ -17,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # We need to fetch all tags to build versioned docs
           fetch-depth: 0
@@ -32,7 +33,7 @@ jobs:
       - name: Disable Jykell
         run: touch docs/build/.nojekyll
       - name: Upload built documentation as artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: docs/build/
 
@@ -45,4 +46,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4

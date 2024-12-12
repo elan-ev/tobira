@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use serde::de::DeserializeOwned;
 use tokio_postgres::types::ToSql;
 
 use crate::{
@@ -84,7 +85,7 @@ pub(crate) async fn run(
 
         // Write received data into the database, updating the sync status if
         // everything worked out alright.
-        let last_updated = harvest_data.items.last().map(|item| item.updated());
+        let last_updated = harvest_data.items.iter().rev().find_map(|item| item.updated());
         let mut transaction = db.transaction().await?;
         store_in_db(harvest_data.items, &sync_status, &mut transaction, config).await?;
         SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
@@ -144,33 +145,14 @@ async fn store_in_db(
         // Make sure we haven't received this update yet. The code below can
         // handle duplicate items alright, but this way we can save on some DB
         // accesses and the logged statistics are more correct.
-        if item.updated() < sync_status.harvested_until {
+        if item.updated().is_some_and(|updated| updated < sync_status.harvested_until) {
             debug!("Skipping item which `updated` value is earlier than `harvested_until`");
             continue;
         }
 
         match item {
-            HarvestItem::Event {
-                id: opencast_id,
-                title,
-                description,
-                part_of,
-                tracks,
-                captions,
-                created,
-                start_time,
-                end_time,
-                creators,
-                duration,
-                thumbnail,
-                mut acl,
-                is_live,
-                metadata,
-                updated,
-                segments,
-                slide_text,
-            } => {
-                let series_id = match &part_of {
+            HarvestItem::Event(mut event) => {
+                let series_id = match &event.part_of {
                     None => None,
                     Some(part_of) => {
                         db.query_opt("select id from series where opencast_id = $1", &[part_of])
@@ -181,7 +163,7 @@ async fn store_in_db(
 
                 // (**ETH SPECIAL FEATURE**)
                 let credentials = config.sync.interpret_eth_passwords
-                    .then(|| hashed_eth_credentials(&acl.read))
+                    .then(|| hashed_eth_credentials(&event.acl.read))
                     .flatten();
 
                 // (**ETH SPECIAL FEATURE**)
@@ -194,8 +176,8 @@ async fn store_in_db(
                 // Additionally, since ETH requires that everyone with the link should be able to authenticate
                 // regardless of ACL inclusion, `ROLE_ANONYMOUS` is added to the preview roles.
                 if credentials.is_some() {
-                    (acl.preview, acl.read) = (acl.read, acl.write.clone());
-                    acl.preview.push(ROLE_ANONYMOUS.into());
+                    (event.acl.preview, event.acl.read) = (event.acl.read, event.acl.write.clone());
+                    event.acl.preview.push(ROLE_ANONYMOUS.into());
                 }
 
                 let filter_role = |role: &String| -> bool {
@@ -204,47 +186,47 @@ async fn store_in_db(
 
                 // We always handle the admin role in a special way, so no need
                 // to store it for every single event.
-                acl.preview.retain(filter_role);
-                acl.read.retain(filter_role);
-                acl.write.retain(filter_role);
+                event.acl.preview.retain(filter_role);
+                event.acl.read.retain(filter_role);
+                event.acl.write.retain(filter_role);
 
-                for (_, roles) in &mut acl.custom_actions.0 {
+                for (_, roles) in &mut event.acl.custom_actions.0 {
                     roles.retain(|role| role != ROLE_ADMIN);
                 }
 
-                let tracks = tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>();
-                let captions = captions.into_iter().map(Into::into).collect::<Vec<EventCaption>>();
-                let segments = segments.into_iter().map(Into::into).collect::<Vec<EventSegment>>();
+                let tracks = event.tracks.into_iter().map(Into::into).collect::<Vec<EventTrack>>();
+                let captions = event.captions.into_iter().map(Into::into).collect::<Vec<EventCaption>>();
+                let segments = event.segments.into_iter().map(Into::into).collect::<Vec<EventSegment>>();
 
                 // We upsert the event data.
                 upsert(db, "all_events", "opencast_id", &[
-                    ("opencast_id", &opencast_id),
+                    ("opencast_id", &event.id),
                     ("state", &EventState::Ready),
                     ("series", &series_id),
-                    ("part_of", &part_of),
-                    ("is_live", &is_live),
-                    ("title", &title),
-                    ("description", &description),
-                    ("duration", &duration),
-                    ("created", &created),
-                    ("start_time", &start_time),
-                    ("end_time", &end_time),
-                    ("updated", &updated),
-                    ("creators", &creators),
-                    ("thumbnail", &thumbnail),
-                    ("metadata", &metadata),
-                    ("preview_roles", &acl.preview),
-                    ("read_roles", &acl.read),
-                    ("write_roles", &acl.write),
-                    ("custom_action_roles", &acl.custom_actions),
+                    ("part_of", &event.part_of),
+                    ("is_live", &event.is_live),
+                    ("title", &event.title),
+                    ("description", &event.description),
+                    ("duration", &event.duration),
+                    ("created", &event.created),
+                    ("start_time", &event.start_time),
+                    ("end_time", &event.end_time),
+                    ("updated", &event.updated),
+                    ("creators", &event.creators),
+                    ("thumbnail", &event.thumbnail),
+                    ("metadata", &event.metadata),
+                    ("preview_roles", &event.acl.preview),
+                    ("read_roles", &event.acl.read),
+                    ("write_roles", &event.acl.write),
+                    ("custom_action_roles", &event.acl.custom_actions),
                     ("tracks", &tracks),
                     ("captions", &captions),
                     ("segments", &segments),
-                    ("slide_text", &slide_text),
+                    ("slide_text", &event.slide_text),
                     ("credentials", &credentials),
                 ]).await?;
 
-                trace!("Inserted or updated event {} ({})", opencast_id, title);
+                trace!("Inserted or updated event {} ({})", event.id, event.title);
                 upserted_events += 1;
             }
 
@@ -256,33 +238,25 @@ async fn store_in_db(
                 removed_events += 1;
             }
 
-            HarvestItem::Series {
-                id: opencast_id,
-                title,
-                description,
-                updated,
-                mut acl,
-                created,
-                metadata,
-            } => {
+            HarvestItem::Series(mut series) => {
                 // (**ETH SPECIAL FEATURE**)
                 let series_credentials = config.sync.interpret_eth_passwords
-                    .then(|| hashed_eth_credentials(&acl.read))
+                    .then(|| hashed_eth_credentials(&series.acl.read))
                     .flatten();
-                acl.read.retain(|role| !is_special_eth_role(role, config));
-                acl.write.retain(|role| !is_special_eth_role(role, config));
+                series.acl.read.retain(|role| !is_special_eth_role(role, config));
+                series.acl.write.retain(|role| !is_special_eth_role(role, config));
 
                 // We first simply upsert the series.
                 let new_id = upsert(db, "series", "opencast_id", &[
-                    ("opencast_id", &opencast_id),
+                    ("opencast_id", &series.id),
                     ("state", &SeriesState::Ready),
-                    ("title", &title),
-                    ("description", &description),
-                    ("read_roles", &acl.read),
-                    ("write_roles", &acl.write),
-                    ("updated", &updated),
-                    ("created", &created),
-                    ("metadata", &metadata),
+                    ("title", &series.title),
+                    ("description", &series.description),
+                    ("read_roles", &series.acl.read),
+                    ("write_roles", &series.acl.write),
+                    ("updated", &series.updated),
+                    ("created", &series.created),
+                    ("metadata", &series.metadata),
                     ("credentials", &series_credentials),
                 ]).await?;
 
@@ -290,15 +264,15 @@ async fn store_in_db(
                 // previously referenced this series (via the Opencast UUID)
                 // but did not have the correct foreign key yet.
                 let query = "update events set series = $1 where part_of = $2 and series <> $1";
-                let updated_events = db.execute(query, &[&new_id, &opencast_id]).await?;
+                let updated_events = db.execute(query, &[&new_id, &series.id]).await?;
 
-                trace!("Inserted or updated series {} ({})", opencast_id, title);
+                trace!("Inserted or updated series {} ({})", series.id, series.title);
                 if updated_events != 0 {
                     debug!(
                         "Fixed foreign series key of {} event(s) after upserting series {} ({})",
                         updated_events,
-                        opencast_id,
-                        title,
+                        series.id,
+                        series.title,
                     );
                 }
                 upserted_series += 1;
@@ -316,16 +290,8 @@ async fn store_in_db(
                 removed_series += 1;
             }
 
-            HarvestItem::Playlist {
-                id: opencast_id,
-                title,
-                description,
-                creator,
-                acl,
-                entries,
-                updated,
-            } => {
-                let entries = entries.into_iter().filter_map(|e| {
+            HarvestItem::Playlist(playlist) => {
+                let entries = playlist.entries.into_iter().filter_map(|e| {
                     // We do not store entries that we don't know, meaning that
                     // a resync is required as soon as Tobira learns about
                     // these new entries. But that's fine as that's likely
@@ -343,17 +309,17 @@ async fn store_in_db(
                 }).collect::<Vec<_>>();
 
                 upsert(db, "playlists", "opencast_id", &[
-                    ("opencast_id", &opencast_id),
-                    ("title", &title),
-                    ("description", &description),
-                    ("creator", &creator),
-                    ("read_roles", &acl.read),
-                    ("write_roles", &acl.write),
+                    ("opencast_id", &playlist.id),
+                    ("title", &playlist.title),
+                    ("description", &playlist.description),
+                    ("creator", &playlist.creator),
+                    ("read_roles", &playlist.acl.read),
+                    ("write_roles", &playlist.acl.write),
                     ("entries", &entries),
-                    ("updated", &updated),
+                    ("updated", &playlist.updated),
                 ]).await?;
 
-                trace!(opencast_id, title, "Inserted or updated playlist");
+                trace!(playlist.id, playlist.title, "Inserted or updated playlist");
                 upserted_playlists += 1;
             }
 
@@ -365,23 +331,57 @@ async fn store_in_db(
                 removed_playlists += 1;
             }
 
-            HarvestItem::Unknown { kind, updated } => {
-                let known = [
-                    "event",
-                    "event-deleted",
-                    "series",
-                    "series-deleted",
-                    "playlist",
-                    "playlist-deleted",
-                ];
+            HarvestItem::Unknown(raw) => {
+                (|| {
+                    let Some(obj) = raw.as_object() else {
+                        warn!(?raw, "Unexpected JSON value in harvest response -> ignoring");
+                        return;
+                    };
 
-                if known.contains(&&*kind) {
-                    warn!("Could not deserialize item in harvest response for \
-                        kind '{kind}' (updated {updated})");
-                } else {
-                    warn!("Unknown item of kind '{kind}' in harvest response. \
-                        You might need to update Tobira.");
-                }
+                    let Some(kind) = obj.get("kind") else {
+                        warn!(?obj, "Item without 'kind' field in harvest response -> ignoring");
+                        return;
+                    };
+
+                    let Some(kind) = kind.as_str() else {
+                        warn!(?kind, "'kind' field has unexpected non-string type in \
+                            harvest response -> ignoring");
+                        return;
+                    };
+
+                    // This tries to deserialize the item again from the `raw`
+                    // JSON in order to print a useful error message.
+                    fn log_deserialize_error<T: DeserializeOwned>(
+                        kind: &str,
+                        v: serde_json::Value,
+                    ) {
+                        let err = serde_json::from_value::<T>(v.clone())
+                            .err()
+                            .map(|e| e.to_string())
+                            // This shouldn't happen, at all. But I rather print
+                            // a stupid message than crashing the process.
+                            .unwrap_or("failed to fail deserializing... wat".into());
+
+                        error!("Could not deserialize '{kind}' harvest item -> ignoring. \
+                            Error: {err}");
+                        debug!("Raw value: {}", serde_json::to_string_pretty(&v).unwrap_or("ERR".into()));
+                    }
+
+                    match kind {
+                        "event" => log_deserialize_error::<response::Event>("event", raw),
+                        "series" => log_deserialize_error::<response::Series>("series", raw),
+                        "playlist" => log_deserialize_error::<response::Playlist>("playlist", raw),
+                        "event-deleted" | "series-deleted" | "playlist-deleted" => {
+                            warn!("Could not deserialize item in harvest response for \
+                                kind '{kind}'");
+                        }
+                        _ => {
+                            warn!("Unknown item of kind '{kind}' in harvest response. \
+                                You might need to update Tobira.");
+                        }
+                    }
+                })();
+
             }
         }
     }

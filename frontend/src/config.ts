@@ -96,6 +96,7 @@ type VersionInfo = {
 
 type UploadConfig = {
     requireSeries: boolean;
+    workflow: string | null;
 };
 
 type SyncConfig = {
