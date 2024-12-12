@@ -142,9 +142,12 @@ pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
         // just empty. Otherwise we load system-wide root CAs.
         let mut root_certs = rustls::RootCertStore::empty();
         if config.tls_mode == TlsMode::On {
-            let system_certs = rustls_native_certs::load_native_certs()
-                .context("failed to load all system-wide certificates")?;
+            let system_cert_res = rustls_native_certs::load_native_certs();
+            for e in &system_cert_res.errors {
+                warn!("Error while loading system certificates: {e}");
+            }
 
+            let system_certs = system_cert_res.certs;
             let system_count = system_certs.len();
             for cert in system_certs {
                 root_certs.add(cert)

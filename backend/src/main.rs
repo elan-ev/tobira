@@ -83,6 +83,9 @@ async fn run() -> Result<()> {
     bunt::set_stdout_color_choice(args.stdout_color());
     bunt::set_stderr_color_choice(args.stderr_color());
 
+    rustls::crypto::ring::default_provider().install_default()
+        .map_err(|_| anyhow!("failed to install crypto provider"))?;
+
     // Dispatch subcommand.
     match &args.cmd {
         Command::Serve { shared } => {
