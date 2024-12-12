@@ -8,7 +8,7 @@ use meilisearch_sdk::{
     errors::ErrorCode, task_info::TaskInfo,
 };
 use postgres_types::{FromSql, ToSql};
-use secrecy::{Secret, ExposeSecret};
+use secrecy::{SecretString, ExposeSecret};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -51,7 +51,7 @@ const VERSION: u32 = 7;
 pub(crate) struct MeiliConfig {
     /// The access key. This can be the master key, but ideally should be an API
     /// key that only has the priviliges it needs.
-    key: Secret<String>,
+    key: SecretString,
 
     /// The host MeiliSearch is running on. As requests include the `key`, you
     /// should use HTTPS if Meili is running on another machine. In fact, HTTP

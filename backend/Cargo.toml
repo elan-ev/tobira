@@ -64,7 +64,7 @@ rustls = { version = "0.23.20", default-features = false, features = ["ring"] }
 rustls-native-certs = "0.8.1"
 rustls-pemfile = "2.1.0"
 scc = "2.0.17"
-secrecy = { version = "0.8", features = ["serde"] }
+secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9.21"

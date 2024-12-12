@@ -1,7 +1,7 @@
 //! Database related things.
 
 use deadpool_postgres::{Config as PoolConfig, Pool, Runtime};
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 use rustls::{
     Error, DigitallySignedStruct,
     client::danger::{ServerCertVerifier, ServerCertVerified, HandshakeSignatureValid},
@@ -42,7 +42,7 @@ pub(crate) struct DbConfig {
     user: String,
 
     /// The password of the database user.
-    password: Secret<String>,
+    password: SecretString,
 
     /// The host the database server is running on.
     #[config(default = "127.0.0.1")]
@@ -116,7 +116,7 @@ pub(crate) type DbConnection = deadpool::managed::Object<deadpool_postgres::Mana
 pub(crate) async fn create_pool(config: &DbConfig) -> Result<Pool> {
     let pool_config = PoolConfig {
         user: Some(config.user.clone()),
-        password: Some(config.password.expose_secret().clone()),
+        password: Some(config.password.expose_secret().to_owned()),
         host: Some(config.host.clone()),
         port: Some(config.port),
         dbname: Some(config.database.clone()),

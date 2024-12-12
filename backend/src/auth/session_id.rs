@@ -5,7 +5,7 @@ use bstr::ByteSlice;
 use cookie::Cookie;
 use hyper::{HeaderMap, header};
 use postgres_types::ToSql;
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretBox};
 use std::time::Duration;
 use tokio_postgres::Error as PgError;
 
@@ -19,7 +19,7 @@ use super::{SESSION_COOKIE, base64encode};
 const LENGTH: usize = 18;
 
 /// A session ID (random bytes).
-pub(crate) struct SessionId(pub(crate) Secret<[u8; LENGTH]>);
+pub(crate) struct SessionId(pub(crate) SecretBox<[u8; LENGTH]>);
 
 impl SessionId {
     /// Creates a new, random session ID.
@@ -49,7 +49,7 @@ impl SessionId {
 
                 let mut bytes = [0; LENGTH];
                 base64::engine::general_purpose::URL_SAFE.decode_slice(v, &mut bytes).ok()?;
-                Some(Self(Secret::new(bytes)))
+                Some(Self(SecretBox::new(Box::new(bytes))))
             })
     }
 
