@@ -9,7 +9,7 @@ use crate::{
         model::{
             event::{AuthorizedEvent, Event},
             playlist::Playlist,
-            realm::{Realm, RealmNameSourceBlockValue},
+            realm::Realm,
             series::Series
         },
         Context,
@@ -43,25 +43,30 @@ pub(crate) use mutations::{
     for = [TitleBlock, TextBlock, SeriesBlock, VideoBlock, PlaylistBlock]
 )]
 pub(crate) trait Block {
-    // To avoid code duplication, all the shared data is stored in `SharedData`
-    // and only a `shared` method is mandatory. All other method (in particular,
-    // all that are visible to GraphQL) are defined in the trait already.
-    #[graphql(skip)]
-    fn shared(&self) -> &SharedData;
-
-    fn id(&self) -> Id {
-        self.shared().id
-    }
-    fn index(&self) -> i32 {
-        self.shared().index
-    }
-    async fn realm(&self, context: &Context) -> ApiResult<Realm> {
-        Realm::load_by_key(self.shared().realm_key, context)
-            .await
-            // Foreign key constraints guarantee the realm exists
-            .map(Option::unwrap)
-    }
+    fn id(&self) -> Id;
+    fn index(&self) -> i32;
+    async fn realm(&self, context: &Context) -> ApiResult<Realm>;
 }
+
+macro_rules! impl_block {
+    ($ty:ty) => {
+        impl Block for $ty {
+            fn id(&self) -> Id {
+                self.shared.id
+            }
+            fn index(&self) -> i32 {
+                self.shared.index
+            }
+            async fn realm(&self, context: &Context) -> ApiResult<Realm> {
+                Realm::load_by_key(self.shared.realm_key, context)
+                    .await
+                    // Foreign key constraints guarantee the realm exists
+                    .map(Option::unwrap)
+            }
+        }
+    };
+}
+
 
 #[derive(Debug, Clone, Copy, FromSql)]
 #[postgres(name = "block_type")]
@@ -118,11 +123,7 @@ pub(crate) struct TitleBlock {
     pub(crate) content: String,
 }
 
-impl Block for TitleBlock {
-    fn shared(&self) -> &SharedData {
-        &self.shared
-    }
-}
+impl_block!(TitleBlock);
 
 /// A block just showing some title.
 #[graphql_object(Context = Context, impl = BlockValue)]
@@ -150,11 +151,7 @@ pub(crate) struct TextBlock {
     pub(crate) content: String,
 }
 
-impl Block for TextBlock {
-    fn shared(&self) -> &SharedData {
-        &self.shared
-    }
-}
+impl_block!(TextBlock);
 
 /// A block just showing some text.
 #[graphql_object(Context = Context, impl = BlockValue)]
@@ -186,14 +183,10 @@ pub(crate) struct SeriesBlock {
     pub(crate) layout: VideoListLayout,
 }
 
-impl Block for SeriesBlock {
-    fn shared(&self) -> &SharedData {
-        &self.shared
-    }
-}
+impl_block!(SeriesBlock);
 
 /// A block just showing the list of videos in an Opencast series
-#[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
+#[graphql_object(Context = Context, impl = [BlockValue])]
 impl SeriesBlock {
     async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
         match self.series {
@@ -241,14 +234,10 @@ pub(crate) struct VideoBlock {
     pub(crate) show_link: bool,
 }
 
-impl Block for VideoBlock {
-    fn shared(&self) -> &SharedData {
-        &self.shared
-    }
-}
+impl_block!(VideoBlock);
 
 /// A block for presenting a single Opencast event
-#[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
+#[graphql_object(Context = Context, impl = [BlockValue])]
 impl VideoBlock {
     async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
         match self.event {
@@ -289,14 +278,10 @@ pub(crate) struct PlaylistBlock {
     pub(crate) layout: VideoListLayout,
 }
 
-impl Block for PlaylistBlock {
-    fn shared(&self) -> &SharedData {
-        &self.shared
-    }
-}
+impl_block!(PlaylistBlock);
 
 /// A block just showing the list of videos in an Opencast playlist
-#[graphql_object(Context = Context, impl = [BlockValue, RealmNameSourceBlockValue])]
+#[graphql_object(Context = Context, impl = [BlockValue])]
 impl PlaylistBlock {
     async fn playlist(&self, context: &Context) -> ApiResult<Option<Playlist>> {
         match self.playlist {

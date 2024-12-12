@@ -3,7 +3,7 @@ use postgres_types::ToSql;
 
 use crate::{
     api::{
-        common::NotAllowed, err::ApiResult, Context, Id, Node
+        common::NotAllowed, err::ApiResult, Context, Id, Node, NodeValue
     },
     db::{types::Key, util::{impl_from_db, select}},
     prelude::*,
@@ -101,7 +101,7 @@ impl Playlist {
 }
 
 /// Represents an Opencast playlist.
-#[graphql_object(Context = Context)]
+#[graphql_object(Context = Context, impl = NodeValue)]
 impl AuthorizedPlaylist {
     fn id(&self) -> Id {
         Node::id(self)
