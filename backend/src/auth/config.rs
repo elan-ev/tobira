@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use hyper::{http::HeaderName, Uri};
-use secrecy::Secret;
+use secrecy::SecretString;
 use serde::{Deserialize, Deserializer, de::Error};
 
 use crate::{config::{parse_normal_http_uri, TranslatedString}, prelude::*};
@@ -29,7 +29,7 @@ pub(crate) struct AuthConfig {
     /// without having to invent a user. Note that this should be hard to
     /// guess, and kept secret. Specifically, you are going to want to encrypt
     /// every channel this is sent over.
-    pub(crate) trusted_external_key: Option<Secret<String>>,
+    pub(crate) trusted_external_key: Option<SecretString>,
 
     /// Determines whether or not Tobira users are getting pre-authenticated against
     /// Opencast when they visit external links like the ones to Opencast Studio

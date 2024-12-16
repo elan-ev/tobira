@@ -10,7 +10,7 @@ use hyper::{
 };
 use hyper_rustls::HttpsConnector;
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use tap::TapFallible;
 
@@ -33,7 +33,7 @@ pub(crate) struct OcClient {
     http_client: Client<HttpsConnector<HttpConnector>, RequestBody>,
     sync_node: HttpHost,
     external_api_node: HttpHost,
-    auth_header: Secret<String>,
+    auth_header: SecretString,
     username: String,
 }
 

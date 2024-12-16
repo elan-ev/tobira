@@ -1,4 +1,5 @@
 use juniper::GraphQLObject;
+use meilisearch_sdk::search::SearchResult;
 
 use crate::{
     api::{Context, Node, Id, NodeValue},
@@ -35,7 +36,7 @@ impl SearchRealm {
         Self::new_inner(src, SearchRealmMatches::default())
     }
 
-    pub(crate) fn new(hit: meilisearch_sdk::SearchResult<search::Realm>) -> Self {
+    pub(crate) fn new(hit: SearchResult<search::Realm>) -> Self {
         let match_positions = hit.matches_position.as_ref();
         let matches = SearchRealmMatches {
             name: field_matches_for(match_positions, "name"),

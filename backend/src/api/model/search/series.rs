@@ -1,4 +1,5 @@
 use juniper::GraphQLObject;
+use meilisearch_sdk::search::SearchResult;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
@@ -35,7 +36,7 @@ impl Node for SearchSeries {
 
 impl SearchSeries {
     pub(crate) fn new(
-        hit: meilisearch_sdk::SearchResult<search::Series>,
+        hit: SearchResult<search::Series>,
         context: &Context,
     ) -> Self {
         let match_positions = hit.matches_position.as_ref();

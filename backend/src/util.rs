@@ -4,7 +4,7 @@ use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
 use hyperlocal::UnixConnector;
 use rand::{RngCore, CryptoRng};
-use secrecy::Secret;
+use secrecy::SecretBox;
 
 use crate::{http::Response, prelude::*};
 
@@ -48,7 +48,7 @@ pub(crate) fn base64_decode(ascii: u8) -> Option<u8> {
 pub(crate) enum Never {}
 
 /// Generate random bytes with a crypotgraphically secure RNG.
-pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> Secret<[u8; N]> {
+pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> SecretBox<[u8; N]> {
     // We use this extra function here to make sure we use a
     // cryptographically secure RNG, even after updating to newer `rand`
     // versions. Right now, we use `thread_rng` and it is cryptographically
@@ -64,7 +64,7 @@ pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> Secret<[u8; N]> {
         bytes
     }
 
-    Secret::new(imp(rand::thread_rng()))
+    SecretBox::new(Box::new(imp(rand::thread_rng())))
 }
 
 pub(crate) type HttpsClient<B> = Client<HttpsConnector<HttpConnector>, B>;

@@ -2,7 +2,7 @@ use std::{str::FromStr, fmt};
 
 use hyper::Uri;
 use base64::Engine as _;
-use secrecy::{ExposeSecret as _, Secret};
+use secrecy::{ExposeSecret as _, SecretString};
 use serde::Deserialize;
 
 use crate::{
@@ -60,7 +60,7 @@ pub(crate) struct OpencastConfig {
     pub user: String,
 
     /// Password of the user used to communicate with Opencast.
-    password: Secret<String>,
+    password: SecretString,
 }
 
 impl OpencastConfig {
@@ -123,11 +123,11 @@ impl OpencastConfig {
         })
     }
 
-    pub(crate) fn basic_auth_header(&self) -> Secret<String> {
+    pub(crate) fn basic_auth_header(&self) -> SecretString {
         let credentials = format!("{}:{}", self.user, self.password.expose_secret());
         let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
         let auth_header = format!("Basic {}", encoded_credentials);
-        Secret::new(auth_header)
+        SecretString::new(auth_header.into())
     }
 
     fn unwrap_host(&self) -> &HttpHost {
