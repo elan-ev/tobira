@@ -805,6 +805,7 @@ type Series implements Node {
   created: DateTime
   metadata: ExtraMetadata
   syncedData: SyncedSeriesData
+  acl: [AclItem!]!
   hostRealms: [Realm!]!
   entries: [VideoListEntry!]!
   """
