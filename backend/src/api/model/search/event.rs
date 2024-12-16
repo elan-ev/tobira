@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
-use meilisearch_sdk::search::SearchResult;
+use meilisearch_sdk::search::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
@@ -75,10 +77,11 @@ impl SearchEvent {
         Self::new_inner(src, vec![], SearchEventMatches::default(), user_can_read)
     }
 
-    pub(crate) fn new(hit: SearchResult<search::Event>, context: &Context) -> Self {
-        let match_positions = hit.matches_position.as_ref();
-        let src = hit.result;
-
+    pub(crate) fn new(
+        src: search::Event,
+        match_positions: Option<&HashMap<String, Vec<MatchRange>>>,
+        context: &Context,
+    ) -> Self {
         let mut text_matches = Vec::new();
         let read_roles = decode_acl(&src.read_roles);
         let user_can_read = context.auth.overlaps_roles(read_roles);

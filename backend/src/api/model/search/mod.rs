@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
-use meilisearch_sdk::search::MatchRange;
+use meilisearch_sdk::search::{FederationOptions, MatchRange};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{borrow::Cow, collections::HashMap, fmt, time::Instant};
@@ -204,97 +204,69 @@ pub(crate) async fn perform(
     ]).to_string();
     let event_query = context.search.event_index.search()
         .with_query(user_query)
-        .with_limit(15)
         .with_show_matches_position(true)
         .with_filter(&filter)
-        .with_show_ranking_score(true)
         .build();
-
 
     // Prepare the series search
     let series_query = context.search.series_index.search()
         .with_query(user_query)
         .with_show_matches_position(true)
         .with_filter("listed = true")
-        .with_limit(15)
-        .with_show_ranking_score(true)
         .build();
-
 
     // Prepare the realm search
     let realm_query = context.search.realm_index.search()
         .with_query(user_query)
-        .with_limit(10)
         .with_filter("is_user_realm = false")
         .with_show_matches_position(true)
-        .with_show_ranking_score(true)
         .build();
 
-
-    // Perform the searches
-    let res = tokio::try_join!(
-        event_query.execute::<search::Event>(),
-        series_query.execute::<search::Series>(),
-        realm_query.execute::<search::Realm>(),
-    );
-    let (event_results, series_results, realm_results) = handle_search_result!(res, SearchOutcome);
-
-    // Merge results according to Meilis score.
-    //
-    // TODO: Comparing scores of different indices is not well defined right now.
-    // We can either use score details or adding dummy searchable fields to the
-    // realm index. See this discussion for more info:
-    // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
-    let events = event_results.hits.into_iter().map(|result| {
-        let score = result.ranking_score;
-        (NodeValue::from(SearchEvent::new(result, &context)), score)
-    });
-    let series = series_results.hits.into_iter().map(|result| {
-        let score = result.ranking_score;
-        (NodeValue::from(SearchSeries::new(result, context)), score)
-    });
-    let realms = realm_results.hits.into_iter().map(|result| {
-        let score = result.ranking_score;
-        (NodeValue::from(SearchRealm::new(result)), score)
+    let mut multi_search = context.search.client.multi_search();
+    if matches!(filters.item_type, None | Some(ItemType::Event)) {
+        multi_search.with_search_query(event_query);
+    }
+    if matches!(filters.item_type, None | Some(ItemType::Series)) {
+        multi_search.with_search_query(series_query);
+    }
+    if matches!(filters.item_type, None | Some(ItemType::Realm)) {
+        multi_search.with_search_query(realm_query);
+    }
+    let multi_search = multi_search.with_federation(FederationOptions {
+        limit: Some(30),
+        offset: Some(0), // TODO: pagination
+        ..Default::default()
     });
 
-    let mut merged: Vec<(NodeValue, Option<f64>)> = Vec::new();
-    let total_hits: usize;
 
-    match filters.item_type {
-        Some(ItemType::Event) => {
-            merged.extend(events);
-            total_hits = event_results.estimated_total_hits.unwrap_or(0);
-        },
-        Some(ItemType::Series) => {
-            merged.extend(series);
-            total_hits = series_results.estimated_total_hits.unwrap_or(0);
-        },
-        Some(ItemType::Realm) => {
-            merged.extend(realms);
-            total_hits = realm_results.estimated_total_hits.unwrap_or(0);
-        },
-        None => {
-            merged.extend(events);
-            merged.extend(series);
-            merged.extend(realms);
-            total_hits = [
-                event_results.estimated_total_hits,
-                series_results.estimated_total_hits,
-                realm_results.estimated_total_hits,
-            ]
-                .iter()
-                .filter_map(|&x| x)
-                .sum();
-        },
+    #[derive(serde::Deserialize)]
+    #[serde(untagged)]
+    enum MultiSearchItem {
+        Event(search::Event),
+        Series(search::Series),
+        Realm(search::Realm),
     }
 
-    merged.sort_unstable_by(|(_, score0), (_, score1)| score1.unwrap().total_cmp(&score0.unwrap()));
+    // TODO: Check if sort order makes sense. That's because comparing scores of
+    // different indices is not well defined right now. We can either use score
+    // details or adding dummy searchable fields to the realm index. See this
+    // discussion for more info:
+    // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
+    let res = handle_search_result!(multi_search.execute::<MultiSearchItem>().await, SearchOutcome);
 
-    let items = merged.into_iter().map(|(node, _)| node).collect();
+    let items = res.hits.into_iter()
+        .map(|res| {
+            let mp = res.matches_position.as_ref();
+            match res.result {
+                MultiSearchItem::Event(event) => NodeValue::from(SearchEvent::new(event, mp, &context)),
+                MultiSearchItem::Series(series) => NodeValue::from(SearchSeries::new(series, mp, context)),
+                MultiSearchItem::Realm(realm) => NodeValue::from(SearchRealm::new(realm, mp)),
+            }
+        })
+        .collect();
     Ok(SearchOutcome::Results(SearchResults {
         items,
-        total_hits,
+        total_hits: res.estimated_total_hits,
         duration: elapsed_time(),
     }))
 }
@@ -353,7 +325,9 @@ pub(crate) async fn all_events(
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| SearchEvent::new(h, &context)).collect();
+    let items = results.hits.into_iter()
+        .map(|h| SearchEvent::new(h.result, h.matches_position.as_ref(), &context))
+        .collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(EventSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
@@ -405,7 +379,9 @@ pub(crate) async fn all_series(
     }
     let res = query.execute::<search::Series>().await;
     let results = handle_search_result!(res, SeriesSearchOutcome);
-    let items = results.hits.into_iter().map(|h| SearchSeries::new(h, context)).collect();
+    let items = results.hits.into_iter()
+        .map(|h| SearchSeries::new(h.result, h.matches_position.as_ref(), context))
+        .collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
     Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
