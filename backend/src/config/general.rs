@@ -122,6 +122,13 @@ pub(crate) struct GeneralConfig {
     /// or takes an unusually long time to complete.
     #[config(default = true)]
     pub allow_acl_edit: bool,
+
+    /// Activating this will disable any ACL editing of events in the uploader and ACL editor
+    /// for that event.
+    /// Prerequisite for this is that the event is uploaded as part of a series, of which the ACL
+    /// will then also be used for the event.
+    #[config(default = false)]
+    pub lock_acl_to_series: bool,
 }
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];
