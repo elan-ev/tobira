@@ -111,7 +111,10 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [commit, inFlight] = useMutation<AccessUpdateAclMutation>(updateVideoAcl);
-    const [editingBlocked, setEditingBlocked] = useState(event.hasActiveWorkflows);
+    const aclLockedToSeries = CONFIG.lockAclToSeries && event.series;
+    const [editingBlocked, setEditingBlocked] = useState(
+        event.hasActiveWorkflows || aclLockedToSeries
+    );
 
     const initialAcl: Acl = mapAcl(event.acl);
 
