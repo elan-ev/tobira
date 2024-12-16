@@ -798,6 +798,15 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     marginBottom: 12,
                     fontSize: 22,
                 }}>{t("manage.my-videos.acl.title")}</h2>
+                {lockedAcl.size > 0 && (
+                    <Card kind="info" iconPos="left" css={{
+                        maxWidth: 700,
+                        fontSize: 14,
+                        marginBottom: 10,
+                    }}>
+                        {t("manage.access.locked-to-series")}
+                    </Card>
+                )}
                 <div {...lockedAcl.size > 0 && { inert: "true" }} css={{
                     ...lockedAcl.size > 0 && { opacity: .7 },
                 }}>

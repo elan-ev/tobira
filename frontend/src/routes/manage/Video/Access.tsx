@@ -108,6 +108,7 @@ type AccessUIProps = {
 }
 
 const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
+    const { t } = useTranslation();
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [commit, inFlight] = useMutation<AccessUpdateAclMutation>(updateVideoAcl);
@@ -144,6 +145,11 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
         {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
             <Trans i18nKey="manage.access.workflow-active" />
         </Card>}
+        {aclLockedToSeries && (
+            <Card kind="info" iconPos="left" css={{ fontSize: 14, marginBottom: 10 }}>
+                {t("manage.access.locked-to-series")}
+            </Card>
+        )}
         <div css={{ maxWidth: 1040 }}>
             <div css={{
                 display: "flex",
