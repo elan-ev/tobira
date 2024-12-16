@@ -23,6 +23,7 @@ import { ConfirmationModalHandle } from "../../../ui/Modal";
 import { displayCommitError } from "../Realm/util";
 import { AccessUpdateAclMutation } from "./__generated__/AccessUpdateAclMutation.graphql";
 import CONFIG from "../../../config";
+import { mapAcl } from "../../util";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -112,12 +113,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
     const [commit, inFlight] = useMutation<AccessUpdateAclMutation>(updateVideoAcl);
     const [editingBlocked, setEditingBlocked] = useState(event.hasActiveWorkflows);
 
-    const initialAcl: Acl = new Map(
-        event.acl.map(item => [item.role, {
-            actions: new Set(item.actions),
-            info: item.info,
-        }])
-    );
+    const initialAcl: Acl = mapAcl(event.acl);
 
     const [selections, setSelections] = useState<Acl>(initialAcl);
 
