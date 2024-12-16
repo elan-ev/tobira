@@ -777,6 +777,7 @@ type SearchSeries implements Node {
   hostRealms: [SearchRealm!]!
   thumbnails: [ThumbnailInfo!]!
   matches: SearchSeriesMatches!
+  acl: [AclItem!]!
 }
 
 type SearchSeriesMatches {

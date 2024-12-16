@@ -15,6 +15,7 @@ import {
 } from "./__generated__/SearchableSelectPlaylistsQuery.graphql";
 import {
     SearchableSelectSeriesQuery,
+    SearchableSelectSeriesQuery$data,
 } from "./__generated__/SearchableSelectSeriesQuery.graphql";
 
 
@@ -127,11 +128,15 @@ type VideoListSelectorProps = DerivedProps<VideoListOption> & {
     type: "playlist" | "series";
 };
 
+type SeriesItems = NonNullable<SearchableSelectSeriesQuery$data["series"]["items"]>;
+export type AclArray = SeriesItems[number]["acl"];
+
 export type VideoListOption = {
     readonly id: string;
     readonly opencastId: string;
     readonly title: string;
     readonly description?: string | null;
+    readonly acl?: AclArray;
 };
 
 export const VideoListSelector: React.FC<VideoListSelectorProps> = ({
@@ -144,7 +149,13 @@ export const VideoListSelector: React.FC<VideoListSelectorProps> = ({
         query SearchableSelectSeriesQuery($q: String!, $writableOnly: Boolean!) {
             series: searchAllSeries(query: $q, writableOnly: $writableOnly) {
                 ... on SeriesSearchResults {
-                    items { id opencastId title description }
+                    items {
+                        id
+                        opencastId
+                        title
+                        description
+                        acl { role actions info { label implies large } }
+                    }
                 }
             }
         }
