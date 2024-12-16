@@ -11,7 +11,7 @@ import { loadQuery } from "../relay";
 import { UploadQuery } from "./__generated__/UploadQuery.graphql";
 import { makeRoute } from "../rauta";
 import { ErrorDisplay, errorDisplayInfo } from "../util/err";
-import { useNavBlocker } from "./util";
+import { mapAcl, useNavBlocker } from "./util";
 import CONFIG from "../config";
 import { Button, boxError, ErrorBox, Card } from "@opencast/appkit";
 import { LinkButton } from "../ui/LinkButton";
@@ -23,7 +23,7 @@ import { FieldIsRequiredNote, InputContainer, TitleLabel } from "../ui/metadata"
 import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
-import { VideoListSelector } from "../ui/SearchableSelect";
+import { AclArray, VideoListSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
@@ -68,7 +68,10 @@ const query = graphql`
 type Metadata = {
     title: string;
     description: string;
-    series?: string;
+    series?: {
+        id: string;
+        acl: AclArray;
+    };
     acl: Acl;
 };
 
@@ -680,6 +683,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
     const titleFieldId = useId();
     const descriptionFieldId = useId();
     const seriesFieldId = useId();
+    const [lockedAcl, setLockedAcl] = useState<Acl>(new Map());
 
     const defaultAcl: Acl = new Map([
         [user.userRole, {
@@ -708,6 +712,13 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
             required: CONFIG.upload.requireSeries ? t("upload.errors.field-required") : false,
         },
     });
+
+    useEffect(() => {
+        if (CONFIG.lockAclToSeries) {
+            const seriesAcl = mapAcl(seriesField.value?.acl);
+            setLockedAcl(seriesAcl);
+        }
+    }, [seriesField.value]);
 
     const onSubmit = handleSubmit(data => onSave(data));
 
@@ -770,7 +781,10 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     inputId={seriesFieldId}
                     writableOnly
                     menuPlacement="top"
-                    onChange={data => seriesField.onChange(data?.opencastId)}
+                    onChange={data => seriesField.onChange({
+                        id: data?.opencastId,
+                        acl: data?.acl,
+                    })}
                     onBlur={seriesField.onBlur}
                     required={CONFIG.upload.requireSeries}
                 />
@@ -784,17 +798,21 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     marginBottom: 12,
                     fontSize: 22,
                 }}>{t("manage.my-videos.acl.title")}</h2>
-                <Controller
-                    name="acl"
-                    control={control}
-                    render={({ field }) => <AclSelector
-                        userIsRequired
-                        onChange={field.onChange}
-                        acl={field.value}
-                        knownRoles={knownRoles}
-                        permissionLevels={READ_WRITE_ACTIONS}
-                    />}
-                />
+                <div {...lockedAcl.size > 0 && { inert: "true" }} css={{
+                    ...lockedAcl.size > 0 && { opacity: .7 },
+                }}>
+                    <Controller
+                        name="acl"
+                        control={control}
+                        render={({ field }) => <AclSelector
+                            userIsRequired
+                            onChange={field.onChange}
+                            acl={lockedAcl.size > 0 ? lockedAcl : field.value}
+                            knownRoles={knownRoles}
+                            permissionLevels={READ_WRITE_ACTIONS}
+                        />}
+                    />
+                </div>
             </InputContainer>
 
             {/* Submit button */}
@@ -1039,7 +1057,7 @@ const finishUpload = async (
         }
 
         // Add ACL
-        {
+        if (!CONFIG.lockAclToSeries || !metadata.series?.acl) {
             const acl = constructAcl(metadata.acl);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
@@ -1088,7 +1106,7 @@ const constructDcc = (metadata: Metadata, user: User): string => {
             </dcterms:created>
             ${tag("dcterms:title", metadata.title)}
             ${tag("dcterms:description", metadata.description)}
-            ${tag("dcterms:isPartOf", metadata.series)}
+            ${tag("dcterms:isPartOf", metadata.series?.id)}
             ${tag("dcterms:creator", user.displayName)}
             ${tag("dcterms:spatial", "Tobira Upload")}
         </dublincore>
