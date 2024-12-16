@@ -33,7 +33,7 @@ jobs:
           npx graphql-inspector diff \
             --rule .github/workflows/check-admin-ui-api/rule.js \
             --onComplete .github/workflows/check-admin-ui-api/onComplete.js \
-            git:${{ github.event.pull_request.base.sha }}:frontend/src/schema.graphql \
+            git:${{ github.event.pull_request.base.ref }}:frontend/src/schema.graphql \
             git:${{ github.event.pull_request.head.sha }}:frontend/src/schema.graphql \
             | tee >( \
               grep -v ^::set-output \
