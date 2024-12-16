@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
-use meilisearch_sdk::search::{FederationOptions, MatchRange};
+use meilisearch_sdk::search::{FederationOptions, MatchRange, QueryFederationOptions};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{borrow::Cow, collections::HashMap, fmt, time::Instant};
@@ -213,6 +213,9 @@ pub(crate) async fn perform(
         .with_query(user_query)
         .with_show_matches_position(true)
         .with_filter("listed = true")
+        .with_federation_options(QueryFederationOptions {
+            weight: Some(1.1),
+        })
         .build();
 
     // Prepare the realm search
