@@ -1,13 +1,14 @@
 use crate::{
     api::{
         Context,
-        common::Cursor,
         err::ApiResult,
-        model::event::{AuthorizedEvent, EventConnection, EventSortOrder},
+        model::event::{AuthorizedEvent,EventConnection},
     },
     auth::User,
     prelude::*,
 };
+
+use super::shared::SortOrder;
 
 
 #[juniper::graphql_object(context = Context)]
@@ -68,18 +69,14 @@ impl User {
     /// on the "my videos" page. This also returns events that have been marked
     /// as deleted (meaning their deletion in Opencast has been requested but they
     /// are not yet removed from Tobira's database).
-    ///
-    /// Exactly one of `first` and `last` must be set!
     async fn my_videos(
         &self,
-        #[graphql(default)]
-        order: EventSortOrder,
-        first: Option<i32>,
-        after: Option<Cursor>,
-        last: Option<i32>,
-        before: Option<Cursor>,
         context: &Context,
+        #[graphql(default)]
+        order: SortOrder,
+        offset: i32,
+        limit: i32,
     ) -> ApiResult<EventConnection> {
-        AuthorizedEvent::load_writable_for_user(context, order, first, after, last, before).await
+        AuthorizedEvent::load_writable_for_user(context, order, offset, limit).await
     }
 }

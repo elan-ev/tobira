@@ -3,25 +3,22 @@ use std::collections::HashSet;
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
 use postgres_types::ToSql;
-use serde::{Serialize, Deserialize};
-use tokio_postgres::Row;
 use juniper::{graphql_object, Executor, GraphQLObject, ScalarValue};
 use sha1::{Sha1, Digest};
 
 use crate::{
     api::{
-        Context,
-        Cursor,
-        Id,
-        Node,
-        NodeValue,
         common::NotAllowed,
-        err::{self, invalid_input, ApiResult},
+        err::{self, ApiResult},
         model::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
         },
+        Context,
+        Id,
+        Node,
+        NodeValue,
     },
     db::{
         types::{EventCaption, EventSegment, EventState, EventTrack, Credentials},
@@ -33,7 +30,17 @@ use crate::{
 
 use self::{acl::AclInputEntry, err::ApiError};
 
-use super::playlist::VideoListEntry;
+use super::{
+    playlist::VideoListEntry,
+    shared::{
+        load_writable_for_user,
+        AssetMapping,
+        Connection,
+        LoadableAsset,
+        PageInfo,
+        SortOrder,
+    },
+};
 
 
 #[derive(Debug)]
@@ -638,179 +645,28 @@ impl AuthorizedEvent {
 
     pub(crate) async fn load_writable_for_user(
         context: &Context,
-        order: EventSortOrder,
-        first: Option<i32>,
-        after: Option<Cursor>,
-        last: Option<i32>,
-        before: Option<Cursor>,
+        order: SortOrder,
+        offset: i32,
+        limit: i32,
     ) -> ApiResult<EventConnection> {
-        const MAX_COUNT: i32 = 100;
+        let conn: Connection<AuthorizedEvent> = load_writable_for_user::<AuthorizedEvent>(
+            context, order, offset, limit,
+        ).await?;
 
-        // Argument validation
-        let after = after.map(|c| c.deserialize::<EventCursor>()).transpose()?;
-        let before = before.map(|c| c.deserialize::<EventCursor>()).transpose()?;
-        if first.map_or(false, |first| first <= 0) {
-            return Err(invalid_input!("argument 'first' has to be > 0, but is {:?}", first));
-        }
-        if last.map_or(false, |last| last <= 0) {
-            return Err(invalid_input!("argument 'last' has to be > 0, but is {:?}", last));
-        }
+        Ok(EventConnection { inner: conn })
+    }
+}
 
-        // Make sure only one of `first` and `last` is set and figure out the
-        // limit and SQL sort order. If `last` is set, we reverse the order in
-        // the SQL query in order to use `limit` effectively. We reverse it
-        // again in Rust further below.
-        let (limit, sql_sort_order) = match (first, last) {
-            (Some(first), None) => (first, order.direction),
-            (None, Some(last)) => (last, order.direction.reversed()),
-            _ => return Err(invalid_input!("exactly one of 'first' and 'last' must be given")),
-        };
-        let limit = std::cmp::min(limit, MAX_COUNT);
-
-
-        // Assemble argument list and the "where" part of the query. This
-        // depends on `after` and `before`.
-        let mut args = vec![];
-        let col = order.column.to_sql();
-        let op_after = if order.direction.is_ascending() { '>' } else { '<' };
-        let op_before = if order.direction.is_ascending() { '<' } else { '>' };
-        let filter = match (&after, &before) {
-            (None, None) => String::new(),
-            (Some(after), None) => {
-                args.extend_from_slice(&[after.to_sql_arg(&order)?, &after.key]);
-                format!("where (events.{}, events.id) {} ($1, $2)", col, op_after)
-            }
-            (None, Some(before)) => {
-                args.extend_from_slice(&[before.to_sql_arg(&order)?, &before.key]);
-                format!("where (events.{}, events.id) {} ($1, $2)", col, op_before)
-            }
-            (Some(after), Some(before)) => {
-                args.extend_from_slice(&[
-                    after.to_sql_arg(&order)?,
-                    &after.key,
-                    before.to_sql_arg(&order)?,
-                    &before.key,
-                ]);
-                format!(
-                    "where (events.{}, events.id) {} ($1, $2) and (events.{}, events.id) {} ($3, $4)",
-                    col, op_after, col, op_before,
-                )
-            },
-        };
-
-        // Assemble full query. This query is a bit involved but allows us to
-        // retrieve the total count, the absolute offsets of our window and all
-        // the event data in one go. The "over(...)" things are window
-        // functions.
-        let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
-        let acl_filter = if context.auth.is_admin() {
-            String::new()
-        } else {
-            args.push(arg_user_roles);
-            let arg_index = args.len();
-
-            format!("where write_roles && ${arg_index} and read_roles && ${arg_index}")
-        };
+impl LoadableAsset for AuthorizedEvent {
+    fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
         let (selection, mapping) = select!(
-            event: AuthorizedEvent,
-            row_num,
-            total_count,
+            resource: AuthorizedEvent from AuthorizedEvent::select().with_omitted_table_prefix("events"),
         );
-        let query = format!(
-            "select {selection} \
-                from (\
-                    select events.*, \
-                        row_number() over(order by ({sort_col}, id) {sort_order}) as row_num, \
-                        count(*) over() as total_count \
-                    from all_events as events \
-                    {acl_filter} \
-                ) as events \
-                left join series on series.id = events.series \
-                {filter} \
-                order by (events.{sort_col}, events.id) {sort_order} \
-                limit {limit}",
-            sort_col = order.column.to_sql(),
-            sort_order = sql_sort_order.to_sql(),
-            limit = limit,
-            acl_filter = acl_filter,
-            filter = filter,
-        );
+        (selection, mapping.resource)
+    }
 
-        // `first_num` and `last_num` are 1-based!
-        let mut total_count = None;
-        let mut first_num = None;
-        let mut last_num = None;
-
-        // Execute query
-        let mut events = context.db.query_mapped(&query, args, |row: Row| {
-            // Retrieve total count once
-            if total_count.is_none() {
-                total_count = Some(mapping.total_count.of(&row));
-            }
-
-            // Handle row numbers
-            let row_num = mapping.row_num.of(&row);
-            last_num = Some(row_num);
-            if first_num.is_none() {
-                first_num = Some(row_num);
-            }
-
-            // Retrieve actual event data
-            Self::from_row(&row, mapping.event)
-        }).await?;
-
-        // If total count is `None`, there are no events. We really do want to
-        // know the total count, so we do another query.
-        let total_count = match total_count {
-            Some(c) => c,
-            None => {
-                let query = format!("select count(*) from all_events {}", acl_filter);
-                context.db
-                    .query_one(&query, &[&context.auth.roles_vec()])
-                    .await?
-                    .get::<_, i64>(0)
-            }
-        };
-
-        // If `last` was given, we had to query in reverse order to make `limit`
-        // work. So now we need to reverse the result here. We also need to
-        // adjust the last and first "num".
-        if sql_sort_order != order.direction {
-            events.reverse();
-            let tmp = first_num;
-            first_num = last_num.map(|n| total_count - n + 1);
-            last_num = tmp.map(|n| total_count - n + 1);
-        }
-
-        // Figure out whether there is a next and/or previous page.
-        let (has_next_page, has_previous_page) = match Option::zip(first_num, last_num) {
-            Some((first, last)) => (last < total_count, first > 1),
-            None => {
-                // The DB returned 0 events. That means there are either actually 0 writable
-                // events for that user, or all of them were filtered by `after` or `before`.
-                if total_count == 0 {
-                    (false, false)
-                } else if after.is_some() {
-                    (false, true)
-                } else {
-                    (true, false)
-                }
-            }
-        };
-
-        let cast_i32 = |x: i64| x.try_into().expect("more then 2^31 events");
-        Ok(EventConnection {
-            total_count: cast_i32(total_count),
-            page_info: EventPageInfo {
-                has_next_page,
-                has_previous_page,
-                start_cursor: events.first().map(|e| Cursor::new(EventCursor::new(e, &order))),
-                end_cursor: events.last().map(|e| Cursor::new(EventCursor::new(e, &order))),
-                start_index: first_num.map(cast_i32),
-                end_index: last_num.map(cast_i32),
-            },
-            items: events,
-        })
+    fn table_name() -> &'static str {
+        "all_events"
     }
 }
 
@@ -844,136 +700,21 @@ impl From<EventSegment> for Segment {
     }
 }
 
-/// Defines the sort order for events.
-#[derive(Debug, Clone, Copy, juniper::GraphQLInputObject)]
-pub(crate) struct EventSortOrder {
-    column: EventSortColumn,
-    direction: SortDirection,
-}
-
-#[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
-enum EventSortColumn {
-    Title,
-    Created,
-    Updated,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, juniper::GraphQLEnum)]
-enum SortDirection {
-    Ascending,
-    Descending,
-}
-
-impl Default for EventSortOrder {
-    fn default() -> Self {
-        Self {
-            column: EventSortColumn::Created,
-            direction: SortDirection::Descending,
-        }
-    }
-}
-
-impl EventSortColumn {
-    fn to_sql(self) -> &'static str {
-        match self {
-            EventSortColumn::Title => "title",
-            EventSortColumn::Created => "created",
-            EventSortColumn::Updated => "updated",
-        }
-    }
-}
-
-impl SortDirection {
-    fn to_sql(self) -> &'static str {
-        match self {
-            SortDirection::Ascending => "asc",
-            SortDirection::Descending => "desc",
-        }
-    }
-
-    fn is_ascending(&self) -> bool {
-        matches!(self, Self::Ascending)
-    }
-
-    fn reversed(self) -> Self {
-        match self {
-            SortDirection::Ascending => SortDirection::Descending,
-            SortDirection::Descending => SortDirection::Ascending,
-        }
-    }
-}
-
-
-#[derive(Debug, juniper::GraphQLObject)]
-#[graphql(Context = Context)]
 pub(crate) struct EventConnection {
-    page_info: EventPageInfo,
-    items: Vec<AuthorizedEvent>,
-    total_count: i32,
+    inner: Connection<AuthorizedEvent>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct EventCursor {
-    key: Key,
-    sort_filter: CursorSortFilter,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-enum CursorSortFilter {
-    Title(String),
-    Duration(Option<i64>),
-    Created(DateTime<Utc>),
-    Updated(Option<DateTime<Utc>>),
-}
-
-impl EventCursor {
-    fn new(event: &AuthorizedEvent, order: &EventSortOrder) -> Self {
-        let sort_filter = match order.column {
-            EventSortColumn::Title => CursorSortFilter::Title(event.title.clone()),
-            EventSortColumn::Created => CursorSortFilter::Created(event.created),
-            EventSortColumn::Updated => CursorSortFilter::Updated(
-                event.synced_data.as_ref().map(|s| s.updated)
-            ),
-        };
-
-        Self {
-            sort_filter,
-            key: event.key,
-        }
+#[graphql_object(context = Context)]
+impl EventConnection {
+    fn page_info(&self) -> &PageInfo {
+        &self.inner.page_info
     }
-
-    /// Returns the actual filter value as trait object if `self.sort_filter`
-    /// matches `order.column` (both about the same column). Returns an error
-    /// otherwise.
-    fn to_sql_arg(&self, order: &EventSortOrder) -> ApiResult<&(dyn ToSql + Sync + '_)> {
-        match (&self.sort_filter, order.column) {
-            (CursorSortFilter::Title(title), EventSortColumn::Title) => Ok(title),
-            (CursorSortFilter::Created(created), EventSortColumn::Created) => Ok(created),
-            (CursorSortFilter::Updated(updated), EventSortColumn::Updated) => {
-                match updated {
-                    Some(updated) => Ok(updated),
-                    None => Ok(&postgres_types::Timestamp::<DateTime<Utc>>::NegInfinity),
-                }
-            },
-            _ => Err(invalid_input!("sort order does not match 'before'/'after' argument")),
-        }
+    fn items(&self) -> &Vec<AuthorizedEvent> {
+        &self.inner.items
     }
-}
-
-// TODO: when we add more `PageInfo` structs it might make sense to extract the
-// common fields somehow.
-#[derive(Debug, Clone, juniper::GraphQLObject)]
-pub(crate) struct EventPageInfo {
-    pub(crate) has_next_page: bool,
-    pub(crate) has_previous_page: bool,
-
-    pub(crate) start_cursor: Option<Cursor>,
-    pub(crate) end_cursor: Option<Cursor>,
-
-    /// The index of the first returned event.
-    pub(crate) start_index: Option<i32>,
-    /// The index of the last returned event.
-    pub(crate) end_index: Option<i32>,
+    fn total_count(&self) -> i32 {
+        self.inner.total_count
+    }
 }
 
 #[derive(juniper::GraphQLObject)]
