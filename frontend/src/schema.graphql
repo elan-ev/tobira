@@ -8,12 +8,6 @@ schema {
   mutation: Mutation
 }
 
-enum EventSortColumn {
-  TITLE
-  CREATED
-  UPDATED
-}
-
 enum ItemType {
   EVENT
   SERIES
@@ -31,6 +25,12 @@ enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
   ALPHABETIC_DESC
+}
+
+enum SortColumn {
+  TITLE
+  CREATED
+  UPDATED
 }
 
 enum SortDirection {
@@ -65,12 +65,6 @@ input AclInputEntry {
 input ChildIndex {
   id: ID!
   index: Int!
-}
-
-"Defines the sort order for events."
-input EventSortOrder {
-  column: EventSortColumn!
-  direction: SortDirection!
 }
 
 input Filters {
@@ -128,6 +122,11 @@ input RealmLineageComponent {
 input RealmSpecifier {
   name: String
   pathSegment: String!
+}
+
+input SortOrder {
+  column: SortColumn!
+  direction: SortDirection!
 }
 
 input UpdatePlaylistBlock {
@@ -190,9 +189,6 @@ interface Node {
 
 "A byte range, encoded as two hex numbers separated by `-`."
 scalar ByteSpan
-
-"An opaque cursor used for pagination"
-scalar Cursor
 
 """
   Combined date and time (with time zone) in [RFC 3339][0] format.
@@ -312,20 +308,9 @@ type EmptyQuery {
 }
 
 type EventConnection {
-  pageInfo: EventPageInfo!
+  pageInfo: PageInfo!
   items: [AuthorizedEvent!]!
   totalCount: Int!
-}
-
-type EventPageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: Cursor
-  endCursor: Cursor
-  "The index of the first returned event."
-  startIndex: Int
-  "The index of the last returned event."
-  endIndex: Int
 }
 
 type EventSearchResults {
@@ -486,6 +471,13 @@ type NotAllowed {
     have at least one field. Always returns `null`.
   """
   dummy: Boolean
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startIndex: Int
+  endIndex: Int
 }
 
 "A simple realm name: a fixed string."
@@ -931,10 +923,8 @@ type User {
     on the "my videos" page. This also returns events that have been marked
     as deleted (meaning their deletion in Opencast has been requested but they
     are not yet removed from Tobira's database).
-
-    Exactly one of `first` and `last` must be set!
   """
-  myVideos(order: EventSortOrder! = {column: "CREATED", direction: "DESCENDING"}, first: Int, after: Cursor, last: Int, before: Cursor): EventConnection!
+  myVideos(order: SortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): EventConnection!
 }
 
 "A block for presenting a single Opencast event"
