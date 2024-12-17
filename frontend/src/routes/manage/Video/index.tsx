@@ -9,7 +9,7 @@ import { match, useColorScheme, Card } from "@opencast/appkit";
 import { ManageNav, ManageRoute } from "..";
 import { RootLoader } from "../../../layout/Root";
 import {
-    EventSortColumn,
+    SortColumn,
     SortDirection,
     VideoManageQuery,
     VideoManageQuery$data,
@@ -60,19 +60,17 @@ export const ManageVideosRoute = makeRoute({
 
 const query = graphql`
     query VideoManageQuery(
-        $order: EventSortOrder!,
-        $after: Cursor,
-        $before: Cursor,
-        $first: Int,
-        $last: Int,
+        $order: SortOrder!,
+        $offset: Int!,
+        $limit: Int!,
     ) {
         ...UserData
         currentUser {
-            myVideos(order: $order, after: $after, before: $before, first: $first, last: $last) {
+            myVideos(order: $order, offset: $offset, limit: $limit) {
+                __typename
                 totalCount
                 pageInfo {
                     hasNextPage hasPreviousPage
-                    startCursor endCursor
                     startIndex endIndex
                 }
                 items {
@@ -100,8 +98,8 @@ const query = graphql`
     }
 `;
 
-type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
-type Events = EventConnection["items"];
+export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
+export type Events = EventConnection["items"];
 
 type Props = {
     connection: EventConnection;
@@ -113,6 +111,19 @@ const LIMIT = 15;
 /** Main part of this page */
 const ManageVideos: React.FC<Props> = ({ connection, vars }) => {
     const { t } = useTranslation();
+
+    const totalCount = connection.totalCount;
+    const limit = vars.limit ?? 15;
+    const offset = vars.offset ?? 0;
+    const page = Math.floor(offset / limit) + 1;
+
+    useEffect(() => {
+        const maxPage = Math.ceil(totalCount / limit);
+        if (page > maxPage) {
+            window.location.href = `?page=${maxPage}`;
+        }
+        // Checking for page < 1 is done in `queryParamsToVars`.
+    }, [page, totalCount, limit]);
 
     let inner;
     if (connection.items.length === 0 && connection.totalCount === 0) {
@@ -240,7 +251,7 @@ const EventTable: React.FC<EventTableProps> = ({ events, vars }) => {
 
 type ColumnHeaderProps = {
     label: string;
-    sortKey: EventSortColumn;
+    sortKey: SortColumn;
     vars: VariablesOf<VideoManageQuery>;
 };
 
@@ -261,6 +272,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                     column: sortKey,
                     direction,
                 },
+                limit: vars.limit,
+                offset: vars.offset,
             })}
             css={{
                 display: "inline-flex",
@@ -419,6 +432,16 @@ type PageNavigationProps = {
 const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => {
     const { t } = useTranslation();
     const pageInfo = connection.pageInfo;
+    const total = connection.totalCount;
+
+    const limit = vars.limit ?? LIMIT;
+    const offset = vars.offset ?? 0;
+
+    const prevOffset = Math.max(0, offset - limit);
+    const nextOffset = offset + limit;
+    const lastOffset = total > 0
+        ? Math.floor((total - 1) / limit) * limit
+        : 0;
 
     return (
         <div css={{
@@ -431,27 +454,31 @@ const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => 
                 {t("manage.my-videos.page-showing-video-ids", {
                     start: connection.pageInfo.startIndex ?? "?",
                     end: connection.pageInfo.endIndex ?? "?",
-                    total: connection.totalCount,
+                    total,
                 })}
             </div>
             <div css={{ display: "flex", alignItems: "center" }}>
+                {/* First page */}
                 <PageLink
-                    vars={{ order: vars.order, first: LIMIT }}
-                    disabled={!pageInfo.hasPreviousPage && connection.items.length === LIMIT}
+                    vars={{ ...vars, offset: 0 }}
+                    disabled={!pageInfo.hasPreviousPage && connection.items.length === limit}
                     label={t("manage.my-videos.navigation.first")}
                 ><FirstPage /></PageLink>
+                {/* Previous page */}
                 <PageLink
-                    vars={{ order: vars.order, before: pageInfo.startCursor, last: LIMIT }}
+                    vars={{ ...vars, offset: prevOffset }}
                     disabled={!pageInfo.hasPreviousPage}
                     label={t("manage.my-videos.navigation.previous")}
                 ><LuChevronLeft /></PageLink>
+                {/* Next page */}
                 <PageLink
-                    vars={{ order: vars.order, after: pageInfo.endCursor, first: LIMIT }}
+                    vars={{ ...vars, offset: nextOffset }}
                     disabled={!pageInfo.hasNextPage}
                     label={t("manage.my-videos.navigation.next")}
                 ><LuChevronRight /></PageLink>
+                {/* Last page */}
                 <PageLink
-                    vars={{ order: vars.order, last: LIMIT }}
+                    vars={{ ...vars, offset: lastOffset }}
                     disabled={!pageInfo.hasNextPage}
                     label={t("manage.my-videos.navigation.last")}
                 ><LastPage /></PageLink>
@@ -497,14 +524,14 @@ const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled, label }) 
     >{children}</Link>
 );
 
-const DEFAULT_SORT_COLUMN: EventSortColumn = "CREATED";
+const DEFAULT_SORT_COLUMN: SortColumn = "CREATED";
 const DEFAULT_SORT_DIRECTION: SortDirection = "DESCENDING";
 
 /** Reads URL query parameters and converts them into query variables */
 const queryParamsToVars = (queryParams: URLSearchParams): VariablesOf<VideoManageQuery> => {
     // Sort order
     const sortBy = queryParams.get("sortBy");
-    const column = sortBy !== null && match<string, EventSortColumn>(sortBy, {
+    const column = sortBy !== null && match<string, SortColumn>(sortBy, {
         "title": () => "TITLE",
         "created": () => "CREATED",
         "updated": () => "UPDATED",
@@ -521,17 +548,18 @@ const queryParamsToVars = (queryParams: URLSearchParams): VariablesOf<VideoManag
         : { column, direction };
 
     // Pagination
-    if (queryParams.has("lastPage")) {
-        return { order, last: LIMIT };
-    }
-    if (queryParams.has("before")) {
-        return { order, before: queryParams.get("before"), last: LIMIT };
-    }
-    if (queryParams.has("after")) {
-        return { order, after: queryParams.get("after"), first: LIMIT };
+    const pageParam = queryParams.get("page");
+    const page = pageParam ? parseInt(pageParam, 10) : 1;
+    if (page < 1) {
+        window.location.href = "?page=1";
     }
 
-    return { order, first: LIMIT };
+    const limitParam = queryParams.get("limit");
+    const limit = limitParam ? parseInt(limitParam, 10) : LIMIT;
+
+    const offset = Math.max(0, (page - 1) * limit);
+
+    return { order, limit, offset };
 };
 
 /** Converts query variables to URL query parameters */
@@ -550,14 +578,15 @@ const varsToQueryParams = (vars: VariablesOf<VideoManageQuery>): URLSearchParams
     }
 
     // Pagination
-    if (vars.last !== undefined) {
-        if (!vars.before) {
-            searchParams.set("lastPage", "");
-        } else {
-            searchParams.set("before", vars.before);
-        }
-    } else if (vars.after) {
-        searchParams.set("after", vars.after);
+    const limit = vars.limit ?? LIMIT;
+    const offset = vars.offset ?? 0;
+    const page = Math.floor(offset / limit) + 1;
+
+    if (page !== 1) {
+        searchParams.set("page", String(page));
+    }
+    if (limit !== LIMIT) {
+        searchParams.set("limit", String(limit));
     }
 
     return searchParams;
