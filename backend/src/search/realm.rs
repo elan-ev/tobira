@@ -71,7 +71,7 @@ impl Realm {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(index, "realm", FieldAbilities {
+    util::lazy_set_special_attributes(index, "realm", false, FieldAbilities {
         searchable: &["name"],
         filterable: &["is_root", "is_user_realm"],
         sortable: &[],
