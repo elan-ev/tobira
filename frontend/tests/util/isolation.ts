@@ -126,7 +126,7 @@ const tobiraConfig = ({ index, port, dbName, rootPath }: {
     rootPath: string;
 }) => `
     [general]
-    site_title.en = "Tobira Videoportal"
+    site_title.default = "Tobira Videoportal"
     tobira_url = "http://localhost:${port}"
     users_searchable = true
 

@@ -5,11 +5,12 @@
 # units: 'ms', 's', 'min', 'h' and 'd'.
 #
 # All user-facing texts you can configure here have to be specified per
-# language, with two letter language key. Only English ('en') is required.
-# Take `general.site_title` for example:
+# language, with two letter language key. The special key 'default' is
+# required and used as fallback for languages that are not specified
+# explicitly. Take `general.site_title` for example:
 #
 #     [general]
-#     site_title.en = "My university"
+#     site_title.default = "My university"
 #     site_title.de = "Meine Universität"
 #
 
@@ -539,9 +540,8 @@
 #
 # ```
 # logos = [
-#     { path = "logo-large.svg", resolution = [425, 182] },
-#     { path = "logo-large-en.svg", lang = "en", resolution = [425, 182] },
-#     { path = "logo-large-dark.svg", mode = "dark", resolution = [425, 182] },
+#     { path = "logo-wide-light.svg", mode = "light", size = "wide", resolution = [425, 182] },
+#     { path = "logo-wide-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
 #     { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
 # ]
 # ```

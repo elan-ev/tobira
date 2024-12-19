@@ -2,7 +2,7 @@
 # developer, you are not interested in this file.
 
 [general]
-site_title.en = "Tobira Videoportal"
+site_title.default = "Tobira Videoportal"
 tobira_url = "http://localhost:8030"
 users_searchable = true
 

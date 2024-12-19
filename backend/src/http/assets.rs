@@ -73,7 +73,7 @@ impl Assets {
 
         builder.add_embedded(INDEX_FILE, &EMBEDS[INDEX_FILE]).with_modifier(deps, {
             let frontend_config = frontend_config(config);
-            let html_title = config.general.site_title.en().to_owned();
+            let html_title = config.general.site_title.default().to_owned();
             let global_style = config.theme.to_css();
             let matomo_code = config.matomo.js_code().unwrap_or_default();
 
