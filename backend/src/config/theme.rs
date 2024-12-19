@@ -1,4 +1,4 @@
-use std::{fmt, path::PathBuf};
+use std::{collections::HashMap, fmt, path::PathBuf};
 use serde::{Deserialize, Serialize};
 
 use super::{color::ColorConfig, translated_string::LangKey};
@@ -20,9 +20,8 @@ pub(crate) struct ThemeConfig {
     ///
     /// ```
     /// logos = [
-    ///     { path = "logo-large.svg", resolution = [425, 182] },
-    ///     { path = "logo-large-en.svg", lang = "en", resolution = [425, 182] },
-    ///     { path = "logo-large-dark.svg", mode = "dark", resolution = [425, 182] },
+    ///     { path = "logo-wide-light.svg", mode = "light", size = "wide", resolution = [425, 182] },
+    ///     { path = "logo-wide-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
     ///     { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
     /// ]
     /// ```
@@ -48,7 +47,7 @@ pub(crate) struct LogoDef {
     pub(crate) resolution: LogoResolution,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum LogoSize {
     Wide,
@@ -61,7 +60,7 @@ impl fmt::Display for LogoSize {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum LogoMode {
     Light,
@@ -149,24 +148,72 @@ impl ThemeConfig {
 }
 
 fn validate_logos(logos: &Vec<LogoDef>) -> Result<(), String> {
-    let mut cases = HashMap::new();
-    for logo in logos {
-        let modes = logo.mode.map(|m| [m]).unwrap_or([LogoMode::Light, LogoMode::Dark]);
-        let sizes = logo.size.map(|s| [s]).unwrap_or([LogoSize::Wide, LogoSize::Narrow]);
+    #[derive()]
+    enum LangLogo {
+        Universal(usize),
+        LangSpecific(HashMap<LangKey, usize>),
+    }
 
-        for mode in modes {
-            for size in sizes {
+    let all_modes = [LogoMode::Light, LogoMode::Dark];
+    let all_sizes = [LogoSize::Wide, LogoSize::Narrow];
+
+    let mut cases = HashMap::new();
+    for (i, logo) in logos.iter().enumerate() {
+        let modes = logo.mode.map(|m| vec![m]).unwrap_or(all_modes.to_vec());
+        let sizes = logo.size.map(|s| vec![s]).unwrap_or(all_sizes.to_vec());
+
+        for &mode in &modes {
+            for &size in &sizes {
                 let key = (mode, size);
-                let prev = cases.insert(key, &logo.path);
-                if let Some(prev) = prev {
-                    return Err(format!(
-                        "ambiguous logo definition: "
-                    ));
+
+                if let Some(entry) = cases.get_mut(&key) {
+                    let conflicting = match (entry, &logo.lang) {
+                        (LangLogo::LangSpecific(m), Some(lang)) => m.insert(lang.clone(), i),
+                        (LangLogo::LangSpecific(m), None) => m.values().next().copied(),
+                        (LangLogo::Universal(c), _) => Some(*c),
+                    };
+
+                    if let Some(conflicting) = conflicting {
+                        return Err(format!(
+                            "ambiguous logo definition: \
+                                entry {i} (path: '{curr_path}') conflicts with \
+                                entry {prev_index} (path: '{prev_path}'). \
+                                Both define a {mode} {size} logo, which is only allowed \
+                                if both have different 'lang' keys! Consider adding 'mode' \
+                                or 'size' fields to make entries more specific.",
+                            i = i + 1,
+                            prev_index = conflicting + 1,
+                            curr_path = logo.path.display(),
+                            prev_path = logos[conflicting].path.display(),
+                        ));
+                    }
+                } else {
+                    cases.insert(key, match &logo.lang {
+                        Some(lang) => LangLogo::LangSpecific(HashMap::from([(lang.clone(), i)])),
+                        None => LangLogo::Universal(i),
+                    });
                 }
             }
         }
     }
 
+    // Check that all cases are defined
+    for mode in all_modes {
+        for size in all_sizes {
+            match cases.get(&(mode, size)) {
+                None => return Err(format!(
+                    "incomplete logo configuration: no {mode} {size} logo defined",
+                )),
+                Some(LangLogo::LangSpecific(m)) if !m.contains_key(&LangKey::Default) => {
+                    return Err(format!(
+                        "incomplete logo configuration: {mode} {size} logo is \
+                            missing `lang = '*'` entry",
+                    ));
+                }
+                _ => {}
+            }
+        }
+    }
 
     Ok(())
 }

@@ -540,9 +540,8 @@
 #
 # ```
 # logos = [
-#     { path = "logo-large.svg", resolution = [425, 182] },
-#     { path = "logo-large-en.svg", lang = "en", resolution = [425, 182] },
-#     { path = "logo-large-dark.svg", mode = "dark", resolution = [425, 182] },
+#     { path = "logo-wide-light.svg", mode = "light", size = "wide", resolution = [425, 182] },
+#     { path = "logo-wide-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
 #     { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
 # ]
 # ```
