@@ -1,7 +1,7 @@
 import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { bug, match } from "@opencast/appkit";
+import { bug, match, useColorScheme } from "@opencast/appkit";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
@@ -85,8 +85,8 @@ export const translatedConfig = (s: TranslatedString, i18n: i18n): string =>
     getTranslatedString(s, i18n.resolvedLanguage);
 
 export const getTranslatedString = (s: TranslatedString, lang: string | undefined): string => {
-    const l = lang ?? "en";
-    return (l in s ? s[l as keyof TranslatedString] : undefined) ?? s.en;
+    const l = lang ?? "default";
+    return (l in s ? s[l as keyof TranslatedString] : undefined) ?? s.default;
 };
 
 export const useOnOutsideClick = (
@@ -260,3 +260,25 @@ export const getCredentials = (kind: IdKind, id: string): Credentials => {
 
 export const credentialsStorageKey = (kind: IdKind, id: string) =>
     CREDENTIALS_STORAGE_KEY + kind + "-" + id;
+
+export const useLogoConfig = () => {
+    const { i18n } = useTranslation();
+    const mode = useColorScheme().scheme;
+    const lang = i18n.resolvedLanguage;
+    const logos = CONFIG.logos;
+
+    const findLogo = (size: "wide" | "narrow") => logos
+        .filter(l => l.size === size || !l.size)
+        .filter(l => l.mode === mode || !l.mode)
+        .find(l => l.lang === lang || !l.lang);
+
+    const wide = findLogo("wide");
+    const narrow = findLogo("narrow");
+
+    if (!wide || !narrow) {
+        // Shouldn't happen™, but helps with type safety.
+        bug("missing logos in configuration");
+    }
+
+    return { wide, narrow };
+};

@@ -26,7 +26,7 @@ export const InitialConsent: React.FC<Props> = ({ consentGiven: initialConsentGi
         const currentLanguage = i18n.resolvedLanguage ?? "en";
         const usedLang = currentLanguage in notNullish(CONFIG.initialConsent).text
             ? currentLanguage
-            : "en";
+            : "default";
 
         const hash = await calcHash(usedLang);
         localStorage.setItem(LOCAL_STORAGE_KEY, `${usedLang}:${hash}`);

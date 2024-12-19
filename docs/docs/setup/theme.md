@@ -21,14 +21,57 @@ Once the logo file is created and configured, adjust `header_height` to your lik
 This is the height of the header (and thus also your logo) in pixels.
 Only the logo is stretched, all other elements are vertically centered within the header.
 
-You can also configure a second logo file as `logo.small` which is used for narrow screens (e.g. phones).
-This is usually roughly square.
-We strongly recommend setting this smaller logo, as otherwise, the main logo (especially if it is very wide) might get shrunk on narrow screens in order to still show the other elements in the header.
 
-You should also test if the logo is  properly configured for dark mode:
-- To use a different image for dark mode, set `logo.large_dark` and `logo.small_dark` appropriately.
-- If your normal logo already works well for dark mode, set `logo.large_dark` and `logo.small_dark` to the same values as `large` and `small`, respectively.
-- If `logo.large_dark` and `logo.small_dark` are not set, `large` and `small` are used, but with all colors inverted. This might work for you in special cases, e.g. if your logo is fully black or transparent.
+You can configure different logo files for different cases, depending on device-size (mobile vs desktop), color scheme (light vs dark) and language. In the simplest case of using a single logo for all cases, your config looks like this:
+
+```toml title=config.toml
+[theme]
+logos = [
+    { path = "logo.svg", resolution = [20, 8] },
+]
+```
+
+Note that the resolution is only an aspect ratio that is used to prevent layout shifts.
+
+Most likely, you want to configure different logos for desktop and mobile, for example.
+You can do that by duplicating the line and adding `size = "narrow"` and `size = "wide"` to the entries:
+
+```toml title=config.toml
+[theme]
+logos = [
+    { size = "wide", path = "logo-desktop.svg", resolution = [20, 8] },
+    { size = "narrow", path = "logo-mobile.svg", resolution = [1, 1] },
+]
+```
+
+You can split these entries further by adding `mode = "light"` and `mode = "dark"`.
+Let's say you only need to configure a dark version of your large logo, as your small one works well in dark mode already:
+
+```toml title=config.toml
+[theme]
+logos = [
+    { size = "wide", mode = "light", path = "logo-desktop-light.svg", resolution = [20, 8] },
+    { size = "wide", mode = "dark", path = "logo-desktop-dark.svg", resolution = [20, 8] },
+    { size = "narrow", path = "logo-mobile.svg", resolution = [1, 1] },
+]
+```
+
+Finally, you can add the `lang = ".."` field to specify different logos for different languages (e.g. `"en"` and `"de"`).
+Here, `"*"` can be specified as the default logo when there is no logo specified for a specific language.
+Continuing the example, lets say the wide logos are language specific in that we have a specific logo for German and want to use another one for all other languages.
+
+```toml title=config.toml
+[theme]
+logos = [
+    { size = "wide", mode = "light", lang = "*", path = "logo-desktop-light.svg", resolution = [20, 8] },
+    { size = "wide", mode = "light", lang = "de", path = "logo-desktop-light-de.svg", resolution = [20, 8] },
+    { size = "wide", mode = "dark", lang = "*", path = "logo-desktop-dark.svg", resolution = [20, 8] },
+    { size = "wide", mode = "dark", lang = "de", path = "logo-desktop-dark-de.svg", resolution = [20, 8] },
+    { size = "narrow", path = "logo-mobile.svg", resolution = [1, 1] },
+]
+```
+
+The order in which these distinguishing fields (`size`, `mode`, `lang`) are added is up to you, and you can can split and merge these entries however you like, as long as for each specific case (i.e. tuple of `(size, mode, lang)`), there is exactly one applicable logo definition.
 
 
 ## Favicon

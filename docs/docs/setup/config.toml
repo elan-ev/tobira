@@ -5,11 +5,12 @@
 # units: 'ms', 's', 'min', 'h' and 'd'.
 #
 # All user-facing texts you can configure here have to be specified per
-# language, with two letter language key. Only English ('en') is required.
-# Take `general.site_title` for example:
+# language, with two letter language key. The special key 'default' is
+# required and used as fallback for languages that are not specified
+# explicitly. Take `general.site_title` for example:
 #
 #     [general]
-#     site_title.en = "My university"
+#     site_title.default = "My university"
 #     site_title.de = "Meine Universität"
 #
 
@@ -527,30 +528,22 @@
 # Required! This value must be specified.
 #favicon =
 
-
 # Logo used in the top left corner of the page. Using SVG logos is recommended.
-# See the documentation on theming/logos for more info!
-[theme.logo]
-# The normal, usually wide logo that is shown on desktop screens. The
-# value is a map with a `path` and `resolution` key:
+# You can configure specific logos for small and large screens, dark and light mode,
+# and any number of languages. Example:
 #
-#     large = { path = "logo.svg", resolution = [20, 8] }
+# ```
+# logos = [
+#     { path = "logo-wide-light.svg", mode = "light", size = "wide", resolution = [425, 182] },
+#     { path = "logo-wide-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
+#     { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
+# ]
+# ```
 #
-# The resolution is only an aspect ratio. It is used to avoid layout
-# shifts in the frontend by allocating the correct size for the logo
-# before the browser loaded the file.
+# See the documentation on theming/logos for more info and additional examples!
 #
 # Required! This value must be specified.
-#large =
-
-# A less wide logo used for narrow screens.
-#small =
-
-# Large logo for dark mode usage.
-#large_dark =
-
-# Small logo for dark mode usage.
-#small_dark =
+#logos =
 
 
 # Colors used in the UI. Specified in sRGB.
