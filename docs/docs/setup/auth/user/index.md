@@ -40,6 +40,15 @@ Tobira only gets new data about a user at login, and it's impossible to implemen
 If you can't use the built-in session management, use `"callback:..."`, which gives you full flexibility.
 `"trust-auth-headers"` should be avoided as it has some disadvantages compared to `"callback:..."` (header length limits, easier to configure, ...), but you can still use it if it works well within your system.
 
+:::tip
+
+For debugging your integration, configure the following log filter:
+
+```toml
+[log]
+filters."tobira::http" = "trace"
+```
+:::
 
 ## User information Tobira needs
 
