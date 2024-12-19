@@ -28,6 +28,7 @@ pub(crate) struct ThemeConfig {
     /// ```
     ///
     /// See the documentation on theming/logos for more info and additional examples!
+    #[config(validate = validate_logos)]
     pub(crate) logos: Vec<LogoDef>,
 
     /// Colors used in the UI. Specified in sRGB.
@@ -145,4 +146,27 @@ impl ThemeConfig {
 
         out
     }
+}
+
+fn validate_logos(logos: &Vec<LogoDef>) -> Result<(), String> {
+    let mut cases = HashMap::new();
+    for logo in logos {
+        let modes = logo.mode.map(|m| [m]).unwrap_or([LogoMode::Light, LogoMode::Dark]);
+        let sizes = logo.size.map(|s| [s]).unwrap_or([LogoSize::Wide, LogoSize::Narrow]);
+
+        for mode in modes {
+            for size in sizes {
+                let key = (mode, size);
+                let prev = cases.insert(key, &logo.path);
+                if let Some(prev) = prev {
+                    return Err(format!(
+                        "ambiguous logo definition: "
+                    ));
+                }
+            }
+        }
+    }
+
+
+    Ok(())
 }

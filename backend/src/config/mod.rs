@@ -50,11 +50,12 @@ const TOBIRA_CONFIG_PATH_ENV: &str = "TOBIRA_CONFIG_PATH";
 /// units: 'ms', 's', 'min', 'h' and 'd'.
 ///
 /// All user-facing texts you can configure here have to be specified per
-/// language, with two letter language key. Only English ('en') is required.
-/// Take `general.site_title` for example:
+/// language, with two letter language key. The special key 'default' is
+/// required and used as fallback for languages that are not specified
+/// explicitly. Take `general.site_title` for example:
 ///
 ///     [general]
-///     site_title.en = "My university"
+///     site_title.default = "My university"
 ///     site_title.de = "Meine Universität"
 ///
 #[derive(Debug, confique::Config)]

@@ -101,7 +101,7 @@ type SyncConfig = {
 
 type MetadataLabel = "builtin:license" | "builtin:source" | TranslatedString;
 
-export type TranslatedString = { en: string } & Record<"de", string | undefined>;
+export type TranslatedString = { default: string } & Record<"en" | "de", string | undefined>;
 
 const CONFIG: Config = parseConfig();
 export default CONFIG;

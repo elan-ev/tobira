@@ -9,8 +9,8 @@ use anyhow::{anyhow, Error};
 pub(crate) struct TranslatedString(HashMap<LangKey, String>);
 
 impl TranslatedString {
-    pub(crate) fn en(&self) -> &str {
-        &self.0[&LangKey::En]
+    pub(crate) fn default(&self) -> &str {
+        &self.0[&LangKey::Default]
     }
 }
 
@@ -18,8 +18,8 @@ impl TryFrom<HashMap<LangKey, String>> for TranslatedString {
     type Error = Error;
 
     fn try_from(map: HashMap<LangKey, String>) -> Result<Self, Self::Error> {
-        if !map.contains_key(&LangKey::En) {
-            return Err(anyhow!("Translated string must include 'en' as a language."));
+        if !map.contains_key(&LangKey::Default) {
+            return Err(anyhow!("Translated string must include 'default' entry."));
         }
 
         Ok(Self(map))
@@ -36,6 +36,8 @@ impl fmt::Debug for TranslatedString {
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum LangKey {
+    #[serde(alias = "*")]
+    Default,
     En,
     De,
 }
