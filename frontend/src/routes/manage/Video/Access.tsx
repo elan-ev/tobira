@@ -23,6 +23,7 @@ import { ConfirmationModalHandle } from "../../../ui/Modal";
 import { displayCommitError } from "../Realm/util";
 import { AccessUpdateAclMutation } from "./__generated__/AccessUpdateAclMutation.graphql";
 import CONFIG from "../../../config";
+import { mapAcl } from "../../util";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -107,17 +108,16 @@ type AccessUIProps = {
 }
 
 const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
+    const { t } = useTranslation();
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [commit, inFlight] = useMutation<AccessUpdateAclMutation>(updateVideoAcl);
-    const [editingBlocked, setEditingBlocked] = useState(event.hasActiveWorkflows);
-
-    const initialAcl: Acl = new Map(
-        event.acl.map(item => [item.role, {
-            actions: new Set(item.actions),
-            info: item.info,
-        }])
+    const aclLockedToSeries = CONFIG.lockAclToSeries && event.series;
+    const [editingBlocked, setEditingBlocked] = useState(
+        event.hasActiveWorkflows || aclLockedToSeries
     );
+
+    const initialAcl: Acl = mapAcl(event.acl);
 
     const [selections, setSelections] = useState<Acl>(initialAcl);
 
@@ -145,6 +145,11 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
         {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
             <Trans i18nKey="manage.access.workflow-active" />
         </Card>}
+        {aclLockedToSeries && (
+            <Card kind="info" iconPos="left" css={{ fontSize: 14, marginBottom: 10 }}>
+                {t("manage.access.locked-to-series")}
+            </Card>
+        )}
         <div css={{ maxWidth: 1040 }}>
             <div css={{
                 display: "flex",

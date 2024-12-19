@@ -11,6 +11,7 @@ import { boxError } from "@opencast/appkit";
 import { displayCommitError } from "./util";
 import { currentRef } from "../../../util";
 import { MODERATE_ADMIN_ACTIONS } from "../../../util/permissionLevels";
+import { mapAcl } from "../../util";
 
 
 const fragment = graphql`
@@ -36,12 +37,8 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
     const ownerDisplayName = (realm.ancestors[0] ?? realm).ownerDisplayName;
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
 
-    const [initialAcl, inheritedAcl]: Acl[] = [realm.ownAcl, realm.inheritedAcl].map(acl => new Map(
-        acl.map(item => [item.role, {
-            actions: new Set(item.actions),
-            info: item.info,
-        }])
-    ));
+    const [initialAcl, inheritedAcl]: Acl[] = [realm.ownAcl, realm.inheritedAcl]
+        .map(acl => mapAcl(acl));
 
     const [selections, setSelections] = useState<Acl>(initialAcl);
 

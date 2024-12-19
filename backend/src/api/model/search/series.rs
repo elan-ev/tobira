@@ -1,16 +1,16 @@
-use juniper::GraphQLObject;
+use juniper::{graphql_object, GraphQLObject};
 use meilisearch_sdk::search::SearchResult;
 
 use crate::{
-    api::{Context, Id, Node, NodeValue},
-    search, HasRoles,
+    api::{model::acl::{self, Acl}, Context, Id, Node, NodeValue},
+    search::{self, util::decode_acl},
+    HasRoles,
 };
 
-use super::{field_matches_for, ByteSpan, SearchRealm, ThumbnailInfo};
+use super::{dbargs, field_matches_for, ApiResult, ByteSpan, SearchRealm, ThumbnailInfo};
 
 
-#[derive(Debug, GraphQLObject)]
-#[graphql(Context = Context, impl = NodeValue)]
+#[derive(Debug)]
 pub(crate) struct SearchSeries {
     id: Id,
     opencast_id: String,
@@ -19,6 +19,8 @@ pub(crate) struct SearchSeries {
     host_realms: Vec<SearchRealm>,
     thumbnails: Vec<ThumbnailInfo>,
     matches: SearchSeriesMatches,
+    read_roles: Vec<String>,
+    write_roles: Vec<String>,
 }
 
 
@@ -51,6 +53,8 @@ impl SearchSeries {
             opencast_id: src.opencast_id,
             title: src.title,
             description: src.description,
+            read_roles: src.read_roles,
+            write_roles: src.write_roles,
             host_realms: src.host_realms.into_iter()
                 .map(|r| SearchRealm::without_matches(r))
                 .collect(),
@@ -65,5 +69,46 @@ impl SearchSeries {
                 .collect(),
             matches,
         }
+    }
+
+    async fn load_acl(&self, context: &Context) -> ApiResult<Acl> {
+        let raw_roles_sql = "\
+            select unnest($1::text[]) as role, 'read' as action
+            union
+            select unnest($2::text[]) as role, 'write' as action
+        ";
+
+        acl::load_for(context, raw_roles_sql, dbargs![
+            &decode_acl(&self.read_roles),
+            &decode_acl(&self.write_roles)
+        ]).await
+    }
+}
+
+#[graphql_object(Context = Context, impl = NodeValue)]
+impl SearchSeries {
+    fn id(&self) -> Id {
+        Node::id(self)
+    }
+    fn opencast_id(&self) -> &str {
+        &self.opencast_id
+    }
+    fn title(&self) -> &str {
+        &self.title
+    }
+    fn description(&self) -> Option<&String> {
+        self.description.as_ref()
+    }
+    fn host_realms(&self) -> &[SearchRealm] {
+        &self.host_realms
+    }
+    fn thumbnails(&self) -> &[ThumbnailInfo] {
+        &self.thumbnails
+    }
+    fn matches(&self) -> &SearchSeriesMatches {
+        &self.matches
+    }
+    async fn acl(&self, context: &Context) -> ApiResult<Acl> {
+        self.load_acl(context).await
     }
 }
