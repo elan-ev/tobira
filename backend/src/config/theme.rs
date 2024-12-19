@@ -1,7 +1,7 @@
 use std::{fmt, path::PathBuf};
 use serde::{Deserialize, Serialize};
 
-use super::color::ColorConfig;
+use super::{color::ColorConfig, translated_string::LangKey};
 
 
 #[derive(Debug, confique::Config)]
@@ -42,7 +42,7 @@ pub(crate) struct ThemeConfig {
 pub(crate) struct LogoDef {
     pub(crate) size: Option<LogoSize>,
     pub(crate) mode: Option<LogoMode>,
-    pub(crate) lang: Option<String>,
+    pub(crate) lang: Option<LangKey>,
     pub(crate) path: PathBuf,
     pub(crate) resolution: LogoResolution,
 }

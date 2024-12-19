@@ -247,7 +247,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         .map(|logo| json!({
             "size": logo.size.as_ref().map(ToString::to_string),
             "mode": logo.mode.as_ref().map(ToString::to_string),
-            "lang": logo.lang.clone(),
+            "lang": logo.lang.as_ref().map(ToString::to_string),
             "path": generate_http_path(logo),
             "resolution": logo.resolution,
         }))

@@ -1,47 +1,25 @@
 use std::{collections::HashMap, fmt};
-use serde::Deserialize;
-
+use serde::{Deserialize, Serialize};
+use anyhow::{anyhow, Error};
 
 /// A configurable string specified in different languages. Language 'en' always
 /// has to be specified.
-#[derive(serde::Serialize, Clone)]
-pub(crate) struct TranslatedString(HashMap<String, String>);
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(try_from = "HashMap<LangKey, String>")]
+pub(crate) struct TranslatedString(HashMap<LangKey, String>);
 
 impl TranslatedString {
-    pub(crate) const LANGUAGES: &'static [&'static str] = &["en", "de"];
-
     pub(crate) fn en(&self) -> &str {
-        &self.0["en"]
+        &self.0[&LangKey::En]
     }
 }
 
-impl<'de> Deserialize<'de> for TranslatedString {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use serde::de::Error;
+impl TryFrom<HashMap<LangKey, String>> for TranslatedString {
+    type Error = Error;
 
-        let map = <HashMap<String, String>>::deserialize(deserializer).map_err(|e| {
-            D::Error::custom(format!(
-                "invalid translated string, expected object with keys 'en', 'de', ... ({})",
-                e,
-            ))
-        })?;
-
-        // Make sure only valid languages are specified
-        if let Some(invalid) = map.keys().find(|key| !Self::LANGUAGES.contains(&key.as_str())) {
-            return Err(D::Error::custom(format!(
-                "'{}' is not a valid language key for translated string (valid keys: {:?})",
-                invalid,
-                Self::LANGUAGES,
-            )));
-        }
-
-        if !map.contains_key("en") {
-            return Err(D::Error::custom(
-                "translated string not specified for language 'en', but it has to be"
-            ));
+    fn try_from(map: HashMap<LangKey, String>) -> Result<Self, Self::Error> {
+        if !map.contains_key(&LangKey::En) {
+            return Err(anyhow!("Translated string must include 'en' as a language."));
         }
 
         Ok(Self(map))
@@ -52,5 +30,18 @@ impl fmt::Debug for TranslatedString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("TranslatedString ")?;
         f.debug_map().entries(self.0.iter()).finish()
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum LangKey {
+    En,
+    De,
+}
+
+impl fmt::Display for LangKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.serialize(f)
     }
 }
