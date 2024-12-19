@@ -139,7 +139,7 @@ impl Event {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(index, "event", FieldAbilities {
+    util::lazy_set_special_attributes(index, "event", true, FieldAbilities {
         searchable: &[
             "title",
             "creators",

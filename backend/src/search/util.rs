@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::LazyLock, time::Duration};
 
 use meilisearch_sdk::{errors::{Error, ErrorCode}, indexes::Index, tasks::Task, task_info::TaskInfo};
 
@@ -22,6 +22,7 @@ pub(super) struct FieldAbilities<'a> {
 pub(super) async fn lazy_set_special_attributes(
     index: &Index,
     index_name: &str,
+    stop_words: bool,
     fields: FieldAbilities<'_>,
 ) -> Result<()> {
     if index.get_searchable_attributes().await? != fields.searchable {
@@ -39,8 +40,21 @@ pub(super) async fn lazy_set_special_attributes(
         index.set_sortable_attributes(fields.sortable).await?;
     }
 
+    if stop_words && index.get_stop_words().await?.iter().ne(&*STOP_WORDS) {
+        debug!("Updating stop words of {index_name} index");
+        index.set_stop_words(&*STOP_WORDS).await?;
+    }
+
     Ok(())
 }
+
+static STOP_WORDS: LazyLock<Vec<&str>> = LazyLock::new(|| {
+    const RAW: &str = include_str!("stop-words.txt");
+    RAW.lines()
+        .map(|l| l.split('#').next().unwrap().trim())
+        .filter(|s| !s.is_empty())
+        .collect()
+});
 
 /// Encodes roles inside an ACL (e.g. for an event) to be stored in the index.
 /// The roles are hex encoded to be filterable properly with Meili's

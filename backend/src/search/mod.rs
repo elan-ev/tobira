@@ -336,7 +336,7 @@ pub(crate) async fn rebuild_if_necessary(
         for task in tasks {
             util::wait_on_task(task, meili).await?;
         }
-        info!("Completely rebuild search index");
+        info!("Completely rebuilt search index");
 
         meili.meta_index.add_or_replace(&[meta::Meta::current_clean()], None).await
             .context("failed to update index version document (clean)")?;

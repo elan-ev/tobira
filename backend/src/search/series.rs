@@ -94,7 +94,7 @@ impl Series {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(index, "series", FieldAbilities {
+    util::lazy_set_special_attributes(index, "series", true, FieldAbilities {
         searchable: &["title", "description"],
         filterable: &["listed", "read_roles", "write_roles"],
         sortable: &["updated_timestamp"],

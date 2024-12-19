@@ -64,7 +64,7 @@ impl User {
 }
 
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
-    util::lazy_set_special_attributes(index, "user", FieldAbilities {
+    util::lazy_set_special_attributes(index, "user", false, FieldAbilities {
         searchable: &["display_name"],
         filterable: &[],
         sortable: &[],
