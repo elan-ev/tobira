@@ -515,13 +515,6 @@ const PAELLA_CONFIG = {
             tabIndex: 7,
             parentContainer: "optionsContainer",
         },
-        "es.upv.paella.frameControlButtonPlugin": {
-            enabled: true,
-            side: "right",
-            order: 8,
-            tabIndex: 8,
-            parentContainer: "optionsContainer",
-        },
 
         // Buttons on the right side outside of settings menu
         "es.upv.paella.captionsSelectorPlugin": {
