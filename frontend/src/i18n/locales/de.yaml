@@ -28,6 +28,7 @@ general:
     select:
       no-options: Keine Optionen
       select-option: Option auswählen
+  no-description: Keine Beschreibung
 
 welcome:
   title: Willkommen zu Tobira!
@@ -152,7 +153,7 @@ video:
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
   started: Gestartet
   started-when: Gestartet {{duration}}
-  starts: Startet 
+  starts: Startet
   starts-in: Startet {{duration}}
   description:
     show-more: ...mehr anzeigen
@@ -214,7 +215,7 @@ videolist-block:
   no-videos: Keine Videos
   unauthorized: Fehlende Berechtigung
   hidden-items:
-    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte. 
+    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte.
     unauthorized_other: 'Für {{count}} Videos fehlen Ihnen die Zugriffsrechte.'
     missing_one: Ein Video wurde nicht gefunden.
     missing_other: '{{count}} Videos wurden nicht gefunden.'
@@ -423,8 +424,8 @@ manage:
       Seite. Solange Sie angemeldet sind und die benötigten Rechte haben, gibt es dort entsprechende
       Seitenverwaltungs-Buttons in der Seitenleiste bzw. im Menu.
 
-  my-videos:
-    title: Meine Videos
+  asset-table:
+    page-showing-ids: '{{start}}–{{end}} von {{total}}'
     navigation:
       first: Erste Seite
       previous: Vorherige Seite
@@ -436,9 +437,10 @@ manage:
       descending: absteigend
       title: Titel
       created: Erstellt
-    no-description: Keine Beschreibung
-    page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
-    no-videos-found: Keine Videos gefunden.
+    no-entries-found: Keine Einträge gefunden.
+
+  my-videos:
+    title: Meine Videos
     details:
       title: Videodetails
       share-direct-link: Via Direktlink teilen

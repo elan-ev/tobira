@@ -27,6 +27,7 @@ general:
     select:
       no-options: No options
       select-option: Select option
+  no-description: No description
 
 welcome:
   title: Welcome to Tobira!
@@ -212,7 +213,7 @@ videolist-block:
   no-videos: No videos
   unauthorized: Missing permissions
   hidden-items:
-    unauthorized_one: One video requires additional permissions to view. 
+    unauthorized_one: One video requires additional permissions to view.
     unauthorized_other: '{{count}} videos require additional permissions to view.'
     missing_one: One video is missing.
     missing_other: '{{count}} videos are missing.'
@@ -404,8 +405,8 @@ manage:
       To rename, modify, and delete pages, navigate to the page in question. If you
       are logged in and have the necessary permissions, page management buttons will appear.
 
-  my-videos:
-    title: My videos
+  asset-table:
+    page-showing-ids: '{{start}}–{{end}} of {{total}}'
     navigation:
       first: First page
       previous: Previous page
@@ -417,9 +418,10 @@ manage:
       descending: descending
       title: Title
       created: Created
-    no-description: No description
-    page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
-    no-videos-found: No videos found.
+    no-entries-found: No entries found.
+
+  my-videos:
+    title: My videos
     details:
       title: Video details
       share-direct-link: Share via direct link
