@@ -60,7 +60,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
             ...sharedStyle,
             fontStyle: "italic",
             color: isDark ? COLORS.neutral60 : COLORS.neutral50,
-        }}>{t("manage.my-videos.no-description")}</div>;
+        }}>{t("general.no-description")}</div>;
     } else {
         return <div {...{ className }} css={{
             ...sharedStyle,
@@ -88,7 +88,7 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
         const stripped = text?.trim();
         if (!stripped) {
             return <div {...{ className }} css={{ fontStyle: "italic" }}>
-                {t("manage.my-videos.no-description")}
+                {t("general.no-description")}
             </div>;
         }
 
