@@ -1,5 +1,5 @@
-import { Card, match } from "@opencast/appkit";
-import { useState, useRef, useEffect, ReactNode } from "react";
+import { Card, match, useColorScheme } from "@opencast/appkit";
+import { useState, useRef, useEffect, ReactNode, PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
 import { VariablesOf } from "react-relay";
 import {
@@ -8,7 +8,6 @@ import {
     LuChevronLeft,
     LuChevronRight,
 } from "react-icons/lu";
-
 
 import FirstPage from "../../icons/first-page.svg";
 import LastPage from "../../icons/last-page.svg";
@@ -21,26 +20,28 @@ import {
     SortDirection,
     SortColumn,
 } from "./Video/__generated__/VideoManageQuery.graphql";
-import { EventConnection, Events } from "./Video";
+import { EventConnection, EventRow } from "./Video";
 import { Link } from "../../router";
 import { ParseKeys } from "i18next";
+import { SeriesConnection, SeriesRow } from "./Series";
+import { SeriesManageQuery } from "./Series/__generated__/SeriesManageQuery.graphql";
 
 
-type Assets = Events;
-type AssetConnection = EventConnection;
-type AssetVars = VariablesOf<VideoManageQuery>;
-type TableRow = React.FC<{ asset: Events[number] }>;
+type Connection = EventConnection | SeriesConnection;
+type AssetVars = VariablesOf<VideoManageQuery> | VariablesOf<SeriesManageQuery>;
 
-type Props = {
-    connection: AssetConnection;
+type SharedProps = {
+    connection: Connection;
     vars: AssetVars;
-    Row: TableRow;
-    titleKey: ParseKeys;
 };
+
+type ManageAssetsProps = SharedProps & {
+    titleKey: ParseKeys;
+}
 
 const LIMIT = 15;
 
-export const ManageAssets: React.FC<Props> = ({ connection, vars, Row, titleKey }) => {
+export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, titleKey }) => {
     const { t } = useTranslation();
 
     const totalCount = connection.totalCount;
@@ -65,7 +66,7 @@ export const ManageAssets: React.FC<Props> = ({ connection, vars, Row, titleKey 
         inner = <>
             <PageNavigation {...{ vars, connection }} />
             <div css={{ flex: "1 0 0", margin: "16px 0" }}>
-                <AssetTable assets={connection.items} vars={vars} Row={Row} />
+                <AssetTable {...{ vars, connection }} />
             </div>
             <PageNavigation {...{ vars, connection }} />
         </>;
@@ -91,13 +92,7 @@ export const ManageAssets: React.FC<Props> = ({ connection, vars, Row, titleKey 
 
 const THUMBNAIL_WIDTH = 16 * 8;
 
-type AssetTableProps = {
-    assets: Assets;
-    vars: AssetVars;
-    Row: TableRow;
-};
-
-const AssetTable: React.FC<AssetTableProps> = ({ assets, vars, Row }) => {
+const AssetTable: React.FC<SharedProps> = ({ connection, vars }) => {
     const { t } = useTranslation();
 
     // We need to know whether the table header is in its "sticky" position to apply a box
@@ -119,6 +114,11 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, vars, Row }) => {
         return () => {};
     });
 
+    // TODO: Replace hardcoded columns. Even though each asset has a thumbnail,
+    // title, and description (some of which might be optional), this might change in the future.
+    // Also, playlists do not have a `created` field.
+    // So this should keep the overall structure and style but allow for custom columns.
+    // This also needs to be considered in the backend, where the `SortColumn` enum is defined.
     return <div css={{ position: "relative" }}>
         <table css={{
             width: "100%",
@@ -177,11 +177,109 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, vars, Row }) => {
                 </tr>
             </thead>
             <tbody>
-                {assets.map(asset => <Row key={asset.id} asset={asset} />)}
+                {connection.__typename === "EventConnection" && connection.items.map(event =>
+                    <EventRow key={event.id} event={event} />)
+                }
+                {connection.__typename === "SeriesConnection" && connection.items.map(series =>
+                    <SeriesRow key={series.id} series={series} />)
+                }
             </tbody>
         </table>
     </div>;
 };
+
+// Some styles used by both `EventRow` and `SeriesRow`.
+// Declaring these here helps with keeping them in sync.
+export const thumbnailLinkStyle = {
+    ":focus-visible": { outline: "none" },
+    ":focus-within div:first-child": {
+        outline: `2.5px solid ${COLORS.focus}`,
+        outlineOffset: 1,
+    },
+} as const;
+
+export const titleLinkStyle = {
+    ":focus, :focus-visible": {
+        outline: "none",
+    },
+    textDecoration: "none",
+} as const;
+
+export const descriptionStyle = {
+    padding: "0 4px",
+} as const;
+
+export const CreatedColumn: React.FC<{ created: Date }> = ({ created }) => {
+    const { i18n } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+
+    return <td css={{ fontSize: 14 }}>
+        {created.toLocaleDateString(i18n.language)}
+        <br />
+        <span css={{ color: isDark ? COLORS.neutral60 : COLORS.neutral50 }}>
+            {created.toLocaleTimeString(i18n.language)}
+        </span>
+    </td>;
+};
+
+type TableRowProps = PropsWithChildren & {
+    thumbnail: ReactNode;
+    title: ReactNode;
+    syncInfo?: {
+        isSynced: boolean;
+        notReadyLabel: ParseKeys;
+    };
+    description: ReactNode;
+};
+
+/**
+ * A row in the asset table
+ * This is assuming that each asset (video, series, playlist) has a thumbnail, title,
+ * and description. These can still be somewhat customized.
+ * TODO: Allow adding custom columns (also needs adjusting `AssetTable`).
+ */
+export const TableRow: React.FC<TableRowProps> = ({
+    thumbnail,
+    title,
+    syncInfo,
+    description,
+    children,
+}) => {
+    const { t } = useTranslation();
+
+    return <tr>
+        <td>{thumbnail}</td>
+        <td>
+            <div css={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 8,
+            }}>
+                <div css={{
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                    padding: "0 4px",
+                    ":focus-within": {
+                        borderRadius: 4,
+                        outline: `2.5px solid ${COLORS.focus}`,
+                    },
+                }}>{title}</div>
+                {syncInfo && !syncInfo.isSynced && (
+                    <span css={{
+                        padding: "0 8px",
+                        fontSize: "small",
+                        borderRadius: 10,
+                        backgroundColor: COLORS.neutral10,
+                    }}>{t(syncInfo.notReadyLabel)}</span>)
+                }
+            </div>
+            {description}
+        </td>
+        {children}
+    </tr>;
+};
+
 
 type ColumnHeaderProps = {
     label: string;
@@ -234,12 +332,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
     </th>;
 };
 
-type PageNavigationProps = {
-    connection: AssetConnection;
-    vars: AssetVars;
-};
-
-const PageNavigation: React.FC<PageNavigationProps> = ({ connection, vars }) => {
+const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
     const { t } = useTranslation();
     const pageInfo = connection.pageInfo;
     const total = connection.totalCount;

@@ -823,6 +823,12 @@ type SeriesBlock implements Block {
   realm: Realm!
 }
 
+type SeriesConnection {
+  pageInfo: PageInfo!
+  items: [Series!]!
+  totalCount: Int!
+}
+
 type SeriesSearchResults {
   items: [SearchSeries!]!
   totalHits: Int!
@@ -925,6 +931,11 @@ type User {
     are not yet removed from Tobira's database).
   """
   myVideos(order: SortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): EventConnection!
+  """
+    Returns all series that somehow "belong" to the user, i.e. that appear
+    on the "my series" page.
+  """
+  mySeries(order: SortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): SeriesConnection!
 }
 
 "A block for presenting a single Opencast event"

@@ -18,6 +18,8 @@ pub struct SortOrder {
     pub direction: SortDirection,
 }
 
+// TODO: Get rid of this. We need to support custom column names in the future.
+// E.g. playlists do not have a `created` column.
 #[derive(Debug, Clone, Copy, GraphQLEnum)]
 pub enum SortColumn {
     Title,

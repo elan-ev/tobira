@@ -206,6 +206,7 @@ series:
     text: >
       The data of the requested series has not been fully transferred yet. This should
       happen automatically soon. Try again in a few minutes.
+    label: not synchronized
 
 videolist-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
@@ -419,6 +420,10 @@ manage:
       title: Title
       created: Created
     no-entries-found: No entries found.
+
+  my-series:
+    title: My series
+    missing-date: Unknown
 
   my-videos:
     title: My videos
