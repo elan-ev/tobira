@@ -12,7 +12,10 @@ use crate::{
             acl::{self, Acl},
         },
     },
-    db::{types::SeriesState as State, util::impl_from_db},
+    db::{
+        types::SeriesState as State,
+        util::{impl_from_db, select},
+    },
     model::{Key, ExtraMetadata},
     prelude::*,
 };
@@ -21,6 +24,7 @@ use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
+    shared::{load_writable_for_user, AssetMapping, Connection, LoadableAsset, PageInfo, SortOrder},
 };
 
 
@@ -270,6 +274,32 @@ impl Series {
         // Create mount point
         Self::add_mount_point(series.opencast_id, target_realm.full_path, context).await
     }
+
+    pub(crate) async fn load_writable_for_user(
+        context: &Context,
+        order: SortOrder,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<SeriesConnection> {
+        let conn: Connection<Series> = load_writable_for_user::<Series>(
+            context, order, offset, limit,
+        ).await?;
+
+        Ok(SeriesConnection { inner: conn })
+    }
+}
+
+impl LoadableAsset for Series {
+    fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
+        let (selection, mapping) = select!(
+            resource: Series from Series::select().with_omitted_table_prefix("series"),
+        );
+        (selection, mapping.resource)
+    }
+
+    fn table_name() -> &'static str {
+        "series"
+    }
 }
 
 /// Represents an Opencast series.
@@ -358,4 +388,22 @@ pub(crate) struct NewSeries {
     // Since `mountSeries` feels even more like a private API
     // in some way, and since passing stuff like metadata isn't trivial either
     // I think it's okay to leave it at that for now.
+}
+
+// Todo: Make this generic. It's basically the same code that's used for `EventConnection`.
+pub(crate) struct SeriesConnection {
+    inner: Connection<Series>,
+}
+
+#[graphql_object(context = Context)]
+impl SeriesConnection {
+    fn page_info(&self) -> &PageInfo {
+        &self.inner.page_info
+    }
+    fn items(&self) -> &Vec<Series> {
+        &self.inner.items
+    }
+    fn total_count(&self) -> i32 {
+        self.inner.total_count
+    }
 }

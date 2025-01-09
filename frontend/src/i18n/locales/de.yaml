@@ -208,6 +208,7 @@ series:
     text: >
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
       in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
+    label: nicht synchronisiert
 
 videolist-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
@@ -438,6 +439,10 @@ manage:
       title: Titel
       created: Erstellt
     no-entries-found: Keine Einträge gefunden.
+
+  my-series:
+    title: Meine Serien
+    missing-date: Unbekannt
 
   my-videos:
     title: Meine Videos

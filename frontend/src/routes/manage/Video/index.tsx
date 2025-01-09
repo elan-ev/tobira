@@ -19,7 +19,15 @@ import { COLORS } from "../../../color";
 import { InfoWithTooltip } from "../../../ui";
 import { relativeDate } from "../../../ui/time";
 import CONFIG from "../../../config";
-import { ManageAssets, queryParamsToVars } from "../shared";
+import {
+    CreatedColumn,
+    descriptionStyle,
+    ManageAssets,
+    queryParamsToVars,
+    TableRow,
+    thumbnailLinkStyle,
+    titleLinkStyle,
+} from "../shared";
 
 
 const PATH = "/~manage/videos" as const;
@@ -45,7 +53,6 @@ export const ManageVideosRoute = makeRoute({
                         vars={vars}
                         connection={data.currentUser.myVideos}
                         titleKey="manage.my-videos.title"
-                        Row={Row}
                     />
                 }
             />,
@@ -97,11 +104,9 @@ const query = graphql`
 export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
 export type Events = EventConnection["items"];
 
-const Row: React.FC<{ asset: Events[number] }> = ({ asset: event }) => {
-    const isDark = useColorScheme().scheme === "dark";
+export const EventRow: React.FC<{ event: Events[number] }> = ({ event }) => {
     const created = new Date(event.created);
     const link = `${PATH}/${keyOfId(event.id)}`;
-    const { t, i18n } = useTranslation();
 
     const deletionIsPending = Boolean(event.tobiraDeletionTimestamp);
     const deletionDate = new Date(event.tobiraDeletionTimestamp ?? "");
@@ -114,74 +119,28 @@ const Row: React.FC<{ asset: Events[number] }> = ({ asset: event }) => {
     const deletionFailed = Boolean(event.tobiraDeletionTimestamp
         && Date.parse(event.tobiraDeletionTimestamp) + pollPeriod * 2 + 60000 < Date.now());
 
-    return (
-        <tr>
-            <td>
-                {deletionIsPending
-                    ? <Thumbnail {...{ event, deletionIsPending }} />
-                    : <Link to={link} css={{
-                        ":focus-visible": { outline: "none" },
-                        ":focus-within div:first-child": {
-                            outline: `2.5px solid ${COLORS.focus}`,
-                            outlineOffset: 1,
-                        },
-                    }}>
-                        <Thumbnail {...{ event }} />
-                    </Link>
-                }
-            </td>
-            <td>
-                <div css={{
-                    display: "flex",
-                    alignItems: "baseline",
-                    gap: 8,
-                }}>
-                    <div css={{
-                        whiteSpace: "nowrap",
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        padding: "0 4px",
-                        ":focus-within": {
-                            borderRadius: 4,
-                            outline: `2.5px solid ${COLORS.focus}`,
-                        },
-                    }}>
-                        {deletionIsPending
-                            ? <span css={{ color: COLORS.neutral60 }}>
-                                {event.title}
-                            </span>
-                            : <Link
-                                to={link}
-                                css={{
-                                    ":focus, :focus-visible": {
-                                        outline: "none",
-                                    },
-                                    textDecoration: "none",
-                                }}
-                            >{event.title}</Link>
-                        }
-                    </div>
-                    {!event.syncedData && <span css={{
-                        padding: "0 8px",
-                        fontSize: "small",
-                        borderRadius: 10,
-                        backgroundColor: COLORS.neutral10,
-                    }}>{t("video.not-ready.label")}</span>}
-                </div>
-                {deletionIsPending
-                    ? <PendingDeletionBody {...{ deletionFailed, deletionDate, event }} />
-                    : <SmallDescription css={{ padding: "0 4px" }} text={event.description} />
-                }
-            </td>
-            <td css={{ fontSize: 14 }}>
-                {created.toLocaleDateString(i18n.language)}
-                <br />
-                <span css={{ color: isDark ? COLORS.neutral60 : COLORS.neutral50 }}>
-                    {created.toLocaleTimeString(i18n.language)}
-                </span>
-            </td>
-        </tr>
-    );
+    return <TableRow
+        thumbnail={deletionIsPending
+            ? <Thumbnail {...{ event, deletionIsPending }} />
+            : <Link to={link} css={{ ...thumbnailLinkStyle }}>
+                <Thumbnail {...{ event }} />
+            </Link>
+        }
+        title={deletionIsPending
+            ? <span css={{ color: COLORS.neutral60 }}>{event.title}</span>
+            : <Link to={link} css={{ ...titleLinkStyle }}>{event.title}</Link>
+        }
+        description={deletionIsPending
+            ? <PendingDeletionBody {...{ deletionFailed, deletionDate, event }} />
+            : <SmallDescription css={{ ...descriptionStyle }} text={event.description} />
+        }
+        syncInfo={{
+            isSynced: !!event.syncedData,
+            notReadyLabel: "video.not-ready.label",
+        }}
+    >
+        <CreatedColumn {...{ created }} />
+    </TableRow>;
 };
 
 type PendingDeleteBodyProps = {

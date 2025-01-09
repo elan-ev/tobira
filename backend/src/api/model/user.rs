@@ -8,7 +8,10 @@ use crate::{
     prelude::*,
 };
 
-use super::shared::SortOrder;
+use super::{
+    series::{Series, SeriesConnection},
+    shared::SortOrder
+};
 
 
 #[juniper::graphql_object(context = Context)]
@@ -78,5 +81,18 @@ impl User {
         limit: i32,
     ) -> ApiResult<EventConnection> {
         AuthorizedEvent::load_writable_for_user(context, order, offset, limit).await
+    }
+
+    /// Returns all series that somehow "belong" to the user, i.e. that appear
+    /// on the "my series" page.
+    async fn my_series(
+        &self,
+        context: &Context,
+        #[graphql(default)]
+        order: SortOrder,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<SeriesConnection> {
+        Series::load_writable_for_user(context, order, offset, limit).await
     }
 }
