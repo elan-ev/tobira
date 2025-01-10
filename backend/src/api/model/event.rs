@@ -39,6 +39,7 @@ use super::{
         LoadableAsset,
         PageInfo,
         SortOrder,
+        VideosSortColumn,
     },
 };
 
@@ -645,11 +646,11 @@ impl AuthorizedEvent {
 
     pub(crate) async fn load_writable_for_user(
         context: &Context,
-        order: SortOrder,
+        order: SortOrder<VideosSortColumn>,
         offset: i32,
         limit: i32,
     ) -> ApiResult<EventConnection> {
-        let conn: Connection<AuthorizedEvent> = load_writable_for_user::<AuthorizedEvent>(
+        let conn = load_writable_for_user::<AuthorizedEvent, VideosSortColumn>(
             context, order, offset, limit,
         ).await?;
 
