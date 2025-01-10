@@ -18,17 +18,20 @@ import { Breadcrumbs } from "../../ui/Breadcrumbs";
 import {
     VideoManageQuery,
     SortDirection,
-    SortColumn,
+    VideosSortColumn,
 } from "./Video/__generated__/VideoManageQuery.graphql";
 import { EventConnection, EventRow } from "./Video";
 import { Link } from "../../router";
 import { ParseKeys } from "i18next";
 import { SeriesConnection, SeriesRow } from "./Series";
-import { SeriesManageQuery } from "./Series/__generated__/SeriesManageQuery.graphql";
+import {
+    SeriesManageQuery,
+    SeriesSortColumn,
+} from "./Series/__generated__/SeriesManageQuery.graphql";
 
 
 type Connection = EventConnection | SeriesConnection;
-type AssetVars = VariablesOf<VideoManageQuery> | VariablesOf<SeriesManageQuery>;
+export type AssetVars = VariablesOf<VideoManageQuery> | VariablesOf<SeriesManageQuery>;
 
 type SharedProps = {
     connection: Connection;
@@ -280,7 +283,7 @@ export const TableRow: React.FC<TableRowProps> = ({
     </tr>;
 };
 
-
+type SortColumn = VideosSortColumn | SeriesSortColumn;
 type ColumnHeaderProps = {
     label: string;
     sortKey: SortColumn;
@@ -427,40 +430,58 @@ const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled, label }) 
     >{children}</Link>
 );
 
-const DEFAULT_SORT_COLUMN: SortColumn = "CREATED";
-const DEFAULT_SORT_DIRECTION: SortDirection = "DESCENDING";
+// TODO: add default sort column of playlists
+const DEFAULT_SORT_COLUMN = "CREATED";
+const DEFAULT_SORT_DIRECTION = "DESCENDING";
 
-/** Reads URL query parameters and converts them into query variables */
-export const queryParamsToVars = (queryParams: URLSearchParams): AssetVars => {
-    // Sort order
-    const sortBy = queryParams.get("sortBy");
-    const column = sortBy !== null && match<string, SortColumn>(sortBy, {
-        "title": () => "TITLE",
-        "created": () => "CREATED",
-        "updated": () => "UPDATED",
-    });
-
-    const sortOrder = queryParams.get("sortOrder");
-    const direction = sortOrder !== null && match<string, SortDirection>(sortOrder, {
-        "desc": () => "DESCENDING",
-        "asc": () => "ASCENDING",
-    });
-
-    const order = !column || !direction
-        ? { column: DEFAULT_SORT_COLUMN, direction: DEFAULT_SORT_DIRECTION }
-        : { column, direction };
-
-    // Pagination
-    const pageParam = queryParams.get("page");
-    const page = pageParam ? parseInt(pageParam, 10) : 1;
-
+/** Helper functions to read URL query parameters and convert them into query variables */
+type QueryVars = {
+    limit: number;
+    offset: number;
+    direction: SortDirection;
+}
+export const parsePaginationAndDirection = (
+    queryParams: URLSearchParams,
+    defaultDirection: SortDirection = "DESCENDING",
+): QueryVars => {
     const limitParam = queryParams.get("limit");
     const limit = limitParam ? parseInt(limitParam, 10) : LIMIT;
 
+    const pageParam = queryParams.get("page");
+    const page = pageParam ? parseInt(pageParam, 10) : 1;
     const offset = Math.max(0, (page - 1) * limit);
 
-    return { order, limit, offset };
+    const sortOrder = queryParams.get("sortOrder");
+    const direction = sortOrder !== null
+        ? match<string, SortDirection>(sortOrder, {
+            desc: () => "DESCENDING",
+            asc: () => "ASCENDING",
+        })
+        : defaultDirection;
+
+    return { limit, offset, direction };
 };
+
+/**
+ * Creates a parser function that extracts query variables for a specific resource
+ * (i.e. series, videos or playlists) from URL query parameters.
+ * This abstracts the shared logic for parsing pagination and sort direction
+ * but still allows specific handling of sort columns.
+ */
+export function createQueryParamsParser<ColumnType extends string>(
+    parseColumnFn: (sortBy: string | null) => ColumnType,
+) {
+    return (queryParams: URLSearchParams) => {
+        const { limit, offset, direction } = parsePaginationAndDirection(queryParams);
+        const sortBy = queryParams.get("sortBy");
+        const column = parseColumnFn(sortBy);
+        return {
+            order: { column, direction },
+            limit,
+            offset,
+        };
+    };
+}
 
 /** Converts query variables to URL query parameters */
 const varsToQueryParams = (vars: AssetVars): URLSearchParams => {

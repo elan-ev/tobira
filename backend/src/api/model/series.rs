@@ -24,7 +24,7 @@ use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
-    shared::{load_writable_for_user, AssetMapping, Connection, LoadableAsset, PageInfo, SortOrder},
+    shared::{load_writable_for_user, AssetMapping, Connection, LoadableAsset, PageInfo, SeriesSortColumn, SortOrder},
 };
 
 
@@ -277,28 +277,15 @@ impl Series {
 
     pub(crate) async fn load_writable_for_user(
         context: &Context,
-        order: SortOrder,
+        order: SortOrder<SeriesSortColumn>,
         offset: i32,
         limit: i32,
     ) -> ApiResult<SeriesConnection> {
-        let conn: Connection<Series> = load_writable_for_user::<Series>(
+        let conn = load_writable_for_user::<Series, SeriesSortColumn>(
             context, order, offset, limit,
         ).await?;
 
         Ok(SeriesConnection { inner: conn })
-    }
-}
-
-impl LoadableAsset for Series {
-    fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
-        let (selection, mapping) = select!(
-            resource: Series from Series::select().with_omitted_table_prefix("series"),
-        );
-        (selection, mapping.resource)
-    }
-
-    fn table_name() -> &'static str {
-        "series"
     }
 }
 
@@ -388,6 +375,19 @@ pub(crate) struct NewSeries {
     // Since `mountSeries` feels even more like a private API
     // in some way, and since passing stuff like metadata isn't trivial either
     // I think it's okay to leave it at that for now.
+}
+
+impl LoadableAsset for Series {
+    fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
+        let (selection, mapping) = select!(
+            resource: Series from Series::select().with_omitted_table_prefix("series"),
+        );
+        (selection, mapping.resource)
+    }
+
+    fn table_name() -> &'static str {
+        "series"
+    }
 }
 
 // Todo: Make this generic. It's basically the same code that's used for `EventConnection`.

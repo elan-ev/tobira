@@ -1,12 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { useColorScheme } from "@opencast/appkit";
+import { match, useColorScheme } from "@opencast/appkit";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
 import {
     VideoManageQuery,
     VideoManageQuery$data,
+    VideosSortColumn,
 } from "./__generated__/VideoManageQuery.graphql";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
@@ -21,9 +22,9 @@ import { relativeDate } from "../../../ui/time";
 import CONFIG from "../../../config";
 import {
     CreatedColumn,
+    createQueryParamsParser,
     descriptionStyle,
     ManageAssets,
-    queryParamsToVars,
     TableRow,
     thumbnailLinkStyle,
     titleLinkStyle,
@@ -39,7 +40,7 @@ export const ManageVideosRoute = makeRoute({
             return null;
         }
 
-        const vars = queryParamsToVars(url.searchParams);
+        const vars = queryParamsToVideosVars(url.searchParams);
         const queryRef = loadQuery<VideoManageQuery>(query, vars);
 
         return {
@@ -63,7 +64,7 @@ export const ManageVideosRoute = makeRoute({
 
 const query = graphql`
     query VideoManageQuery(
-        $order: SortOrder!,
+        $order: VideosSortOrder!,
         $offset: Int!,
         $limit: Int!,
     ) {
@@ -179,3 +180,12 @@ const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
         </div>
     );
 };
+
+const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>
+    sortBy !== null ? match<string, VideosSortColumn>(sortBy, {
+        "title": () => "TITLE",
+        "created": () => "CREATED",
+        "updated": () => "UPDATED",
+    }) : "CREATED";
+
+const queryParamsToVideosVars = createQueryParamsParser<VideosSortColumn>(parseVideosColumn);

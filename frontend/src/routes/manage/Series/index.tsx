@@ -8,19 +8,20 @@ import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import {
     CreatedColumn,
+    createQueryParamsParser,
     descriptionStyle,
     ManageAssets,
-    queryParamsToVars,
     TableRow,
     thumbnailLinkStyle,
     titleLinkStyle,
 } from "../shared";
-import { useColorScheme } from "@opencast/appkit";
+import { match, useColorScheme } from "@opencast/appkit";
 import { useTranslation } from "react-i18next";
 import { COLORS } from "../../../color";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
+    SeriesSortColumn,
 } from "./__generated__/SeriesManageQuery.graphql";
 import { Link } from "../../../router";
 import { ThumbnailStack } from "../../Search";
@@ -37,7 +38,7 @@ export const ManageSeriesRoute = makeRoute({
             return null;
         }
 
-        const vars = queryParamsToVars(url.searchParams);
+        const vars = queryParamsToSeriesVars(url.searchParams);
         const queryRef = loadQuery<SeriesManageQuery>(query, vars);
 
         return {
@@ -61,7 +62,7 @@ export const ManageSeriesRoute = makeRoute({
 
 const query = graphql`
     query SeriesManageQuery(
-        $order: SortOrder!,
+        $order: SeriesSortOrder!,
         $offset: Int!,
         $limit: Int!,
     ) {
@@ -106,9 +107,9 @@ export const SeriesRow: React.FC<{ series: Series[number] }> = ({ series }) => {
     // Seems odd, but simply checking `e => e.__typename === "AuthorizedEvent"` will produce
     // TS2339 errors when compiling.
     type Entry = Series[number]["entries"][number];
-    const isAuthorizedEvent = (e: Entry): e is Extract<
-        Entry, { __typename: "AuthorizedEvent" }
-    > => e.__typename === "AuthorizedEvent";
+    type AuthorizedEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
+    const isAuthorizedEvent = (e: Entry): e is AuthorizedEvent =>
+        e.__typename === "AuthorizedEvent";
 
     const thumbnails = series.entries
         .filter(isAuthorizedEvent)
@@ -145,3 +146,11 @@ export const SeriesRow: React.FC<{ series: Series[number] }> = ({ series }) => {
     );
 };
 
+const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
+    sortBy !== null ? match<string, SeriesSortColumn>(sortBy, {
+        "title": () => "TITLE",
+        "created": () => "CREATED",
+        "updated": () => "UPDATED",
+    }) : "CREATED";
+
+const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);

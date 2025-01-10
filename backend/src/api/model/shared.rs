@@ -12,44 +12,131 @@ use crate::{
 };
 
 
-#[derive(Debug, Clone, Copy, GraphQLInputObject)]
-pub struct SortOrder {
-    pub column: SortColumn,
+
+#[derive(Debug, Clone, Copy)]
+pub struct SortOrder<C> {
+    pub column: C,
     pub direction: SortDirection,
 }
 
-// TODO: Get rid of this. We need to support custom column names in the future.
-// E.g. playlists do not have a `created` column.
-#[derive(Debug, Clone, Copy, GraphQLEnum)]
-pub enum SortColumn {
-    Title,
-    Created,
-    Updated,
+pub trait ToSqlColumn {
+    fn to_sql(&self) -> &'static str;
 }
+
+/// Generates an enum for custom table sort columns and a sort order struct.
+/// The enum holds all sort columns that are possible for a specific table and also includes
+/// a default value.
+/// The order struct holds the actual sort column as an enum variant, and the sort direction,
+/// which is always either `Ascending` or `Descending`.
+/// Also includes implementations for the `ToSqlColumn` and `Default` traits of the enum.
+///
+/// Example usage:
+/// ```
+/// define_sort_column_and_order!(
+///     pub enum SeriesSortColumn {
+///         default = Created,
+///         Title    => "title",
+///         Created  => "created",
+///         Updated  => "updated",
+///     };
+///     pub struct SeriesSortOrder
+/// );
+/// ```
+///
+/// This will generate the following code:
+/// ```
+/// #[derive(Debug, Clone, Copy, GraphQLEnum)]
+/// pub enum SeriesSortColumn {
+///     Title,
+///     Created,
+///     Updated,
+/// }
+/// #[derive(Debug, Clone, Copy, GraphQLInputObject)]
+/// pub struct SeriesSortOrder {
+///     pub column: SeriesSortColumn,
+///     pub direction: SortDirection,
+/// }
+/// impl ToSqlColumn for SeriesSortColumn {
+///     fn to_sql_column(&self) -> &'static str {
+///         match self {
+///             Self::Title => "title",
+///             Self::Created => "created",
+///             Self::Updated => "updated",
+///         }
+///     }
+/// }
+/// impl Default for SeriesSortColumn {
+///     fn default() -> Self {
+///         Self::Created
+///     }
+/// }
+/// ```
+macro_rules! define_sort_column_and_order {
+    (
+        // Default and enum definition
+        $vis_enum:vis enum $enum_name:ident {
+            default = $default:ident,
+            $($variant:ident => $sql:expr),+ $(,)?
+        };
+        // Struct definition
+        $vis_order:vis struct $order_name:ident
+    ) => {
+        // Generate enum
+        #[derive(Debug, Clone, Copy, GraphQLEnum)]
+        $vis_enum enum $enum_name {
+            $($variant),+
+        }
+
+        // Generate order struct
+        #[derive(Debug, Clone, Copy, GraphQLInputObject)]
+        $vis_order struct $order_name {
+            pub column: $enum_name,
+            pub direction: SortDirection,
+        }
+
+        impl ToSqlColumn for $enum_name {
+            fn to_sql(&self) -> &'static str {
+                match self {
+                    $(Self::$variant => $sql),+
+                }
+            }
+        }
+
+        impl Default for $enum_name {
+            fn default() -> Self {
+                Self::$default
+            }
+        }
+    };
+}
+
+
+define_sort_column_and_order!(
+    pub enum SeriesSortColumn {
+        default = Created,
+        Title    => "title",
+        Created  => "created",
+        Updated  => "updated",
+    };
+    pub struct SeriesSortOrder
+);
+
+define_sort_column_and_order!(
+    pub enum VideosSortColumn {
+        default = Created,
+        Title    => "title",
+        Created  => "created",
+        Updated  => "updated",
+        Series   => "series",
+    };
+    pub struct VideosSortOrder
+);
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, GraphQLEnum)]
 pub enum SortDirection {
     Ascending,
     Descending,
-}
-
-impl Default for SortOrder {
-    fn default() -> Self {
-        Self {
-            column: SortColumn::Created,
-            direction: SortDirection::Descending,
-        }
-    }
-}
-
-impl SortColumn {
-    pub fn to_sql(self) -> &'static str {
-        match self {
-            SortColumn::Title => "title",
-            SortColumn::Created => "created",
-            SortColumn::Updated => "updated",
-        }
-    }
 }
 
 impl SortDirection {
@@ -83,14 +170,15 @@ pub trait LoadableAsset: FromDb<RowMapping: Copy> {
     fn table_name() -> &'static str;
 }
 
-pub(crate) async fn load_writable_for_user<T>(
+pub(crate) async fn load_writable_for_user<T, C>(
     context: &Context,
-    order: SortOrder,
+    order: SortOrder<C>,
     offset: i32,
     limit: i32,
 ) -> ApiResult<Connection<T>>
 where
     T: LoadableAsset + db::util::FromDb,
+    C: ToSqlColumn,
 {
     const MAX_COUNT: i32 = 100;
 

@@ -10,7 +10,7 @@ use crate::{
 
 use super::{
     series::{Series, SeriesConnection},
-    shared::SortOrder
+    shared::{SeriesSortColumn, SeriesSortOrder, SortDirection, SortOrder, VideosSortColumn, VideosSortOrder}
 };
 
 
@@ -76,11 +76,18 @@ impl User {
         &self,
         context: &Context,
         #[graphql(default)]
-        order: SortOrder,
+        order: Option<VideosSortOrder>,
         offset: i32,
         limit: i32,
     ) -> ApiResult<EventConnection> {
-        AuthorizedEvent::load_writable_for_user(context, order, offset, limit).await
+        let order = order.unwrap_or(VideosSortOrder {
+            column: VideosSortColumn::Created,
+            direction: SortDirection::Descending,
+        });
+        AuthorizedEvent::load_writable_for_user(context, SortOrder {
+            column: order.column,
+            direction: order.direction
+        }, offset, limit).await
     }
 
     /// Returns all series that somehow "belong" to the user, i.e. that appear
@@ -89,10 +96,17 @@ impl User {
         &self,
         context: &Context,
         #[graphql(default)]
-        order: SortOrder,
+        order: Option<SeriesSortOrder>,
         offset: i32,
         limit: i32,
     ) -> ApiResult<SeriesConnection> {
-        Series::load_writable_for_user(context, order, offset, limit).await
+        let order = order.unwrap_or(SeriesSortOrder {
+            column: SeriesSortColumn::Created,
+            direction: SortDirection::Descending,
+        });
+        Series::load_writable_for_user(context, SortOrder {
+            column: order.column,
+            direction: order.direction
+        }, offset, limit).await
     }
 }
