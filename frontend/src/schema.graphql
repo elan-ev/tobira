@@ -27,7 +27,7 @@ enum RealmOrder {
   ALPHABETIC_DESC
 }
 
-enum SortColumn {
+enum SeriesSortColumn {
   TITLE
   CREATED
   UPDATED
@@ -55,6 +55,13 @@ enum VideoListOrder {
   AZ
   ZA
   ORIGINAL
+}
+
+enum VideosSortColumn {
+  TITLE
+  CREATED
+  UPDATED
+  SERIES
 }
 
 input AclInputEntry {
@@ -124,8 +131,8 @@ input RealmSpecifier {
   pathSegment: String!
 }
 
-input SortOrder {
-  column: SortColumn!
+input SeriesSortOrder {
+  column: SeriesSortColumn!
   direction: SortDirection!
 }
 
@@ -173,6 +180,11 @@ input UpdatedPermissions {
 input UpdatedRealmName {
   plain: String
   block: ID
+}
+
+input VideosSortOrder {
+  column: VideosSortColumn!
+  direction: SortDirection!
 }
 
 "A `Block`: a UI element that belongs to a realm."
@@ -930,12 +942,12 @@ type User {
     as deleted (meaning their deletion in Opencast has been requested but they
     are not yet removed from Tobira's database).
   """
-  myVideos(order: SortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): EventConnection!
+  myVideos(order: VideosSortOrder = null, offset: Int!, limit: Int!): EventConnection!
   """
     Returns all series that somehow "belong" to the user, i.e. that appear
     on the "my series" page.
   """
-  mySeries(order: SortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): SeriesConnection!
+  mySeries(order: SeriesSortOrder = null, offset: Int!, limit: Int!): SeriesConnection!
 }
 
 "A block for presenting a single Opencast event"
