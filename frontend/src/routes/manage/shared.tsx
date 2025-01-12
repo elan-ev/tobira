@@ -1,7 +1,7 @@
 import { Card, match, useColorScheme } from "@opencast/appkit";
-import { useState, useRef, useEffect, ReactNode, PropsWithChildren } from "react";
+import { useState, useRef, useEffect, ReactNode } from "react";
+import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
-import { VariablesOf } from "react-relay";
 import {
     LuArrowDownNarrowWide,
     LuArrowUpWideNarrow,
@@ -16,22 +16,24 @@ import { COLORS } from "../../color";
 import { PageTitle } from "../../layout/header/ui";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
 import {
-    VideoManageQuery,
     SortDirection,
     VideosSortColumn,
 } from "./Video/__generated__/VideoManageQuery.graphql";
-import { EventConnection, EventRow } from "./Video";
+import { Event, EventConnection, EventRow, videoColumns } from "./Video";
 import { Link } from "../../router";
-import { ParseKeys } from "i18next";
-import { SeriesConnection, SeriesRow } from "./Series";
-import {
-    SeriesManageQuery,
-    SeriesSortColumn,
-} from "./Series/__generated__/SeriesManageQuery.graphql";
+import { SeriesConnection, SeriesRow, seriesColumns, SingleSeries } from "./Series";
+import { SeriesSortColumn } from "./Series/__generated__/SeriesManageQuery.graphql";
 
 
 type Connection = EventConnection | SeriesConnection;
-export type AssetVars = VariablesOf<VideoManageQuery> | VariablesOf<SeriesManageQuery>;
+type AssetVars = {
+    order: {
+        column: SortColumn;
+        direction: SortDirection;
+    };
+    limit: number;
+    offset: number;
+};
 
 type SharedProps = {
     connection: Connection;
@@ -95,7 +97,25 @@ export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, ti
 
 const THUMBNAIL_WIDTH = 16 * 8;
 
-const AssetTable: React.FC<SharedProps> = ({ connection, vars }) => {
+type Asset = Event | SingleSeries;
+type SortColumn = VideosSortColumn | SeriesSortColumn;
+
+export type ColumnProps = {
+    key: SortColumn;
+    label: ParseKeys;
+    headerWidth?: number;
+    column: (item: Asset) => ReactNode;
+};
+
+type GenericTableProps = SharedProps & {
+    thumbnailWidth?: number;
+}
+
+const AssetTable: React.FC<GenericTableProps> = ({
+    connection,
+    vars,
+    thumbnailWidth,
+}) => {
     const { t } = useTranslation();
 
     // We need to know whether the table header is in its "sticky" position to apply a box
@@ -117,11 +137,11 @@ const AssetTable: React.FC<SharedProps> = ({ connection, vars }) => {
         return () => {};
     });
 
-    // TODO: Replace hardcoded columns. Even though each asset has a thumbnail,
-    // title, and description (some of which might be optional), this might change in the future.
-    // Also, playlists do not have a `created` field.
-    // So this should keep the overall structure and style but allow for custom columns.
-    // This also needs to be considered in the backend, where the `SortColumn` enum is defined.
+    const additionalColumns = match(connection.__typename, {
+        "EventConnection": () => videoColumns,
+        "SeriesConnection": () => seriesColumns,
+    });
+
     return <div css={{ position: "relative" }}>
         <table css={{
             width: "100%",
@@ -159,24 +179,37 @@ const AssetTable: React.FC<SharedProps> = ({ connection, vars }) => {
             },
         }}>
             <colgroup>
-                <col span={1} css={{ width: THUMBNAIL_WIDTH + 2 * 6 }} />
+                {/* Each table has thumbnails, but their width might vary */}
+                <col span={1} css={{ width: (thumbnailWidth ?? THUMBNAIL_WIDTH) + 2 * 6 }} />
+                {/* Each table has a title and description */}
                 <col span={1} />
-                <col span={1} css={{ width: 135 }} />
+                {/*
+                    Additional columns can be declared in the specific column array.
+                */}
+                {additionalColumns?.map(col =>
+                    <col key={col.key} span={1} css={{ width: col.headerWidth ?? 135 }} />)
+                }
             </colgroup>
 
             <thead ref={tableHeaderRef}>
                 <tr>
+                    {/* Thumbnail */}
                     <th></th>
+                    {/* Title */}
                     <ColumnHeader
                         label={t("manage.asset-table.columns.title")}
                         sortKey="TITLE"
                         {...{ vars }}
                     />
-                    <ColumnHeader
-                        label={t("manage.asset-table.columns.created")}
-                        sortKey="CREATED"
-                        {...{ vars }}
-                    />
+                    {/* Sort columns */}
+                    {additionalColumns?.map(col => (
+                        <ColumnHeader
+                            key={col.key}
+                            label={t(col.label)}
+                            sortKey={col.key}
+                            {...{ vars }}
+                        />
+                    ))}
                 </tr>
             </thead>
             <tbody>
@@ -191,7 +224,7 @@ const AssetTable: React.FC<SharedProps> = ({ connection, vars }) => {
     </div>;
 };
 
-// Some styles used by both `EventRow` and `SeriesRow`.
+// Some styles are used by more than one row component.
 // Declaring these here helps with keeping them in sync.
 export const thumbnailLinkStyle = {
     ":focus-visible": { outline: "none" },
@@ -212,46 +245,59 @@ export const descriptionStyle = {
     padding: "0 4px",
 } as const;
 
-export const CreatedColumn: React.FC<{ created: Date }> = ({ created }) => {
-    const { i18n } = useTranslation();
+// Used for both `EventRow` and `SeriesRow`.
+export const CreatedColumn: React.FC<{ created?: string }> = ({ created }) => {
+    const { t, i18n } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
+    const createdDate = created && new Date(created);
+    const greyColor = { color: isDark ? COLORS.neutral60 : COLORS.neutral50 };
 
     return <td css={{ fontSize: 14 }}>
-        {created.toLocaleDateString(i18n.language)}
-        <br />
-        <span css={{ color: isDark ? COLORS.neutral60 : COLORS.neutral50 }}>
-            {created.toLocaleTimeString(i18n.language)}
-        </span>
+        {createdDate
+            ? <>
+                {createdDate.toLocaleDateString(i18n.language)}
+                <br />
+                <span css={greyColor}>
+                    {createdDate.toLocaleTimeString(i18n.language)}
+                </span>
+            </>
+            : <i css={greyColor}>
+                {t("manage.asset-table.missing-date")}
+            </i>
+        }
     </td>;
 };
 
-type TableRowProps = PropsWithChildren & {
+type TableRowProps = {
     thumbnail: ReactNode;
     title: ReactNode;
+    description: ReactNode;
+    customColumns?: ReactNode[];
     syncInfo?: {
         isSynced: boolean;
         notReadyLabel: ParseKeys;
     };
-    description: ReactNode;
 };
 
 /**
  * A row in the asset table
  * This is assuming that each asset (video, series, playlist) has a thumbnail, title,
  * and description. These can still be somewhat customized.
- * TODO: Allow adding custom columns (also needs adjusting `AssetTable`).
+ * Additional columns can be declared in the respective asset column arrays.
  */
 export const TableRow: React.FC<TableRowProps> = ({
     thumbnail,
     title,
-    syncInfo,
     description,
-    children,
+    customColumns,
+    syncInfo,
 }) => {
     const { t } = useTranslation();
 
     return <tr>
+        {/* Thumbnail */}
         <td>{thumbnail}</td>
+        {/* Title & description */}
         <td>
             <div css={{
                 display: "flex",
@@ -274,16 +320,17 @@ export const TableRow: React.FC<TableRowProps> = ({
                         fontSize: "small",
                         borderRadius: 10,
                         backgroundColor: COLORS.neutral10,
-                    }}>{t(syncInfo.notReadyLabel)}</span>)
-                }
+                    }}>
+                        {t(syncInfo.notReadyLabel)}
+                    </span>
+                )}
             </div>
             {description}
         </td>
-        {children}
+        {customColumns}
     </tr>;
 };
 
-type SortColumn = VideosSortColumn | SeriesSortColumn;
 type ColumnHeaderProps = {
     label: string;
     sortKey: SortColumn;
@@ -307,8 +354,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                     column: sortKey,
                     direction,
                 },
-                limit: vars.limit,
-                offset: vars.offset,
+                limit: vars.limit ?? LIMIT,
+                offset: vars.offset ?? 0,
             })}
             css={{
                 display: "inline-flex",

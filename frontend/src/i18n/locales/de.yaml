@@ -439,10 +439,10 @@ manage:
       title: Titel
       created: Erstellt
     no-entries-found: Keine Einträge gefunden.
+    missing-date: Unbekannt
 
   my-series:
     title: Meine Serien
-    missing-date: Unbekannt
 
   my-videos:
     title: Meine Videos

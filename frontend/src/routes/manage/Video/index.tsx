@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { match, useColorScheme } from "@opencast/appkit";
@@ -21,6 +22,7 @@ import { InfoWithTooltip } from "../../../ui";
 import { relativeDate } from "../../../ui/time";
 import CONFIG from "../../../config";
 import {
+    ColumnProps,
     CreatedColumn,
     createQueryParamsParser,
     descriptionStyle,
@@ -104,9 +106,18 @@ const query = graphql`
 
 export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
 export type Events = EventConnection["items"];
+export type Event = Events[number];
 
-export const EventRow: React.FC<{ event: Events[number] }> = ({ event }) => {
-    const created = new Date(event.created);
+// Todo: add series column
+export const videoColumns: ColumnProps[] = [
+    {
+        key: "CREATED",
+        label: "manage.asset-table.columns.created",
+        column: event => <CreatedColumn created={event.created ?? undefined} />,
+    },
+];
+
+export const EventRow: React.FC<{ event: Event }> = ({ event }) => {
     const link = `${PATH}/${keyOfId(event.id)}`;
 
     const deletionIsPending = Boolean(event.tobiraDeletionTimestamp);
@@ -139,9 +150,10 @@ export const EventRow: React.FC<{ event: Events[number] }> = ({ event }) => {
             isSynced: !!event.syncedData,
             notReadyLabel: "video.not-ready.label",
         }}
-    >
-        <CreatedColumn {...{ created }} />
-    </TableRow>;
+        customColumns={videoColumns.map(col => <Fragment key={col.key}>
+            {col.column(event)}
+        </Fragment>)}
+    />;
 };
 
 type PendingDeleteBodyProps = {

@@ -420,10 +420,10 @@ manage:
       title: Title
       created: Created
     no-entries-found: No entries found.
+    missing-date: Unknown
 
   my-series:
     title: My series
-    missing-date: Unknown
 
   my-videos:
     title: My videos

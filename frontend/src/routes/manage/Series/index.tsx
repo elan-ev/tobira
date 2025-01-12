@@ -7,6 +7,7 @@ import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import {
+    ColumnProps,
     CreatedColumn,
     createQueryParamsParser,
     descriptionStyle,
@@ -15,9 +16,7 @@ import {
     thumbnailLinkStyle,
     titleLinkStyle,
 } from "../shared";
-import { match, useColorScheme } from "@opencast/appkit";
-import { useTranslation } from "react-i18next";
-import { COLORS } from "../../../color";
+import { match } from "@opencast/appkit";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
@@ -27,6 +26,7 @@ import { Link } from "../../../router";
 import { ThumbnailStack } from "../../Search";
 import { DirectSeriesRoute } from "../../Series";
 import { SmallDescription } from "../../../ui/metadata";
+import { Fragment } from "react";
 
 
 const PATH = "/~manage/series" as const;
@@ -95,18 +95,24 @@ const query = graphql`
 
 export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
 export type Series = SeriesConnection["items"];
+export type SingleSeries = Series[number];
 
-export const SeriesRow: React.FC<{ series: Series[number] }> = ({ series }) => {
-    const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
-    const created = series.created && new Date(series.created);
+export const seriesColumns: ColumnProps[] = [
+    {
+        key: "CREATED",
+        label: "manage.asset-table.columns.created",
+        column: series => <CreatedColumn created={series.created ?? undefined} />,
+    },
+];
 
+
+export const SeriesRow: React.FC<{ series: SingleSeries }> = ({ series }) => {
     // Todo: change to "series details" route when available
     const link = DirectSeriesRoute.url({ seriesId: series.id });
 
     // Seems odd, but simply checking `e => e.__typename === "AuthorizedEvent"` will produce
     // TS2339 errors when compiling.
-    type Entry = Series[number]["entries"][number];
+    type Entry = SingleSeries["entries"][number];
     type AuthorizedEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
     const isAuthorizedEvent = (e: Entry): e is AuthorizedEvent =>
         e.__typename === "AuthorizedEvent";
@@ -135,14 +141,10 @@ export const SeriesRow: React.FC<{ series: Series[number] }> = ({ series }) => {
                 isSynced: !!series.syncedData,
                 notReadyLabel: "series.not-ready.label",
             }}
-        >
-            {created
-                ? <CreatedColumn {...{ created }} />
-                : <i css={{ color: isDark ? COLORS.neutral60 : COLORS.neutral50 }}>
-                    {t("manage.my-series.missing-date")}
-                </i>
-            }
-        </TableRow>
+            customColumns={seriesColumns.map(col => (
+                <Fragment key={col.key}>{col.column(series)}</Fragment>
+            ))}
+        />
     );
 };
 
