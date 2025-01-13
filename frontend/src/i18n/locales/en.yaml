@@ -424,6 +424,8 @@ manage:
 
   my-series:
     title: My series
+    content: Content
+    no-of-videos: '{{count}} videos'
 
   my-videos:
     title: My videos
