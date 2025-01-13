@@ -380,7 +380,7 @@ pub(crate) struct NewSeries {
 impl LoadableAsset for Series {
     fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
         let (selection, mapping) = select!(
-            resource: Series from Series::select().with_omitted_table_prefix("series"),
+            resource: Series from Series::select(),
         );
         (selection, mapping.resource)
     }

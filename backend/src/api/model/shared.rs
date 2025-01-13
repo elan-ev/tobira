@@ -117,7 +117,7 @@ define_sort_column_and_order!(
         Title    => "title",
         Created  => "created",
         Updated  => "updated",
-        EventCount => "(select count(*) from events where events.series = resource.id)",
+        EventCount => "count(events.id)",
     };
     pub struct SeriesSortOrder
 );
@@ -212,18 +212,28 @@ where
     };
 
     let offset = ((offset as i64).clamp(0, (total_count - limit as i64).max(0))) as i32;
+    let sort_order = order.direction.to_sql();
 
     let (selection, mapping) = T::selection();
 
+    let (join_clause, group_by_clause, sort_column) = match order.column.to_sql() {
+        "count(events.id)" => (
+            "left join events on events.series = series.id",
+            "group by series.id",
+            "count(events.id)"
+        ),
+        _ => ("", "", order.column.to_sql()),
+    };
+
     let query = format!(
         "select {selection} \
-            from {table} as resource \
+            from {table} \
+            {join_clause} \
             {acl_filter} \
-            order by ({sort_col}, id) {sort_order} \
+            {group_by_clause} \
+            order by {sort_column} {sort_order}, {table}.id {sort_order} \
             limit {limit} offset {offset} \
         ",
-        sort_col = order.column.to_sql(),
-        sort_order = order.direction.to_sql(),
     );
 
     // Execute query
