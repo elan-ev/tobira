@@ -443,6 +443,8 @@ manage:
 
   my-series:
     title: Meine Serien
+    content: Inhalt
+    no-of-videos: '{{count}} Videos'
 
   my-videos:
     title: Meine Videos

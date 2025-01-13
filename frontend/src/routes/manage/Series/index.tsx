@@ -1,8 +1,10 @@
+import { Fragment } from "react";
 import { graphql } from "react-relay";
+import i18n from "../../../i18n";
+import { match } from "@opencast/appkit";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
-
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
@@ -16,7 +18,6 @@ import {
     thumbnailLinkStyle,
     titleLinkStyle,
 } from "../shared";
-import { match } from "@opencast/appkit";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
@@ -26,7 +27,6 @@ import { Link } from "../../../router";
 import { ThumbnailStack } from "../../Search";
 import { DirectSeriesRoute } from "../../Series";
 import { SmallDescription } from "../../../ui/metadata";
-import { Fragment } from "react";
 
 
 const PATH = "/~manage/series" as const;
@@ -99,6 +99,14 @@ export type SingleSeries = Series[number];
 
 export const seriesColumns: ColumnProps[] = [
     {
+        key: "EVENT_COUNT",
+        label: "manage.my-series.content",
+        headerWidth: 112,
+        column: series => "entries" in series && <td css={{ fontSize: 14 }}>
+            {i18n.t("manage.my-series.no-of-videos", { count: series.entries.length })}
+        </td>,
+    },
+    {
         key: "CREATED",
         label: "manage.asset-table.columns.created",
         column: series => <CreatedColumn created={series.created ?? undefined} />,
@@ -153,6 +161,7 @@ const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
         "title": () => "TITLE",
         "created": () => "CREATED",
         "updated": () => "UPDATED",
+        "event_count": () => "EVENT_COUNT",
     }) : "CREATED";
 
 const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);

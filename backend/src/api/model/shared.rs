@@ -117,6 +117,7 @@ define_sort_column_and_order!(
         Title    => "title",
         Created  => "created",
         Updated  => "updated",
+        EventCount => "(select count(*) from events where events.series = resource.id)",
     };
     pub struct SeriesSortOrder
 );

@@ -31,6 +31,7 @@ enum SeriesSortColumn {
   TITLE
   CREATED
   UPDATED
+  EVENT_COUNT
 }
 
 enum SortDirection {
