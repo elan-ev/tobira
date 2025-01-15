@@ -1103,7 +1103,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             return <>
                 <div>
                     <CopyableInput
-                        label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
+                        label={t("manage.shared.details.copy-direct-link-to-clipboard")}
                         css={{ fontSize: 14, width: 400, marginBottom: 6 }}
                         value={url}
                     />
@@ -1285,7 +1285,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             }
             {updatedFull && <>
                 <br/>
-                <i>{t("video.updated")}</i>: {updatedFull}
+                <i>{t("manage.shared.updated")}</i>: {updatedFull}
             </>}
         </>;
 
@@ -1307,11 +1307,11 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         tooltip = <>
             {startedDate
                 ? <><i>{t("video.started")}</i>: {startFull}</>
-                : <><i>{t("video.created")}</i>: {createdFull}</>
+                : <><i>{t("manage.shared.created")}</i>: {createdFull}</>
             }
             {updatedFull && <>
                 <br/>
-                <i>{t("video.updated")}</i>: {updatedFull}
+                <i>{t("manage.shared.updated")}</i>: {updatedFull}
             </>}
         </>;
 

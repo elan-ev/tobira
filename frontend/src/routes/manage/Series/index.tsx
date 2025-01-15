@@ -24,8 +24,8 @@ import {
 } from "./__generated__/SeriesManageQuery.graphql";
 import { Link } from "../../../router";
 import { ThumbnailStack } from "../../Search";
-import { DirectSeriesRoute } from "../../Series";
 import { SmallDescription } from "../../../ui/metadata";
+import { keyOfId } from "../../../util";
 
 
 const PATH = "/~manage/series" as const;
@@ -114,8 +114,7 @@ export const seriesColumns: ColumnProps<SingleSeries>[] = [
 
 
 export const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => {
-    // Todo: change to "series details" route when available
-    const link = DirectSeriesRoute.url({ seriesId: item.id });
+    const link = `${PATH}/${keyOfId(item.id)}`;
 
     return (
         <TableRow
@@ -149,3 +148,13 @@ const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
         : "CREATED";
 
 const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);
+
+type SeriesThumbnailProps = {
+    series: SingleSeries;
+}
+
+export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series }) => (
+    <div css={{ "> div": { width: "100%" } }}>
+        <ThumbnailStack title={series.title} thumbnailStack={series.thumbnailStack} />
+    </div>
+);

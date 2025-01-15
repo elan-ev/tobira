@@ -124,8 +124,6 @@ login-page:
 video:
   video: Video
   video-page: 'Video page: “{{video}}”'
-  created: Created
-  updated: Last updated
   duration: Duration
   link: Go to video page
   part-of-series: Part of series
@@ -198,6 +196,7 @@ playlist:
 
 series:
   series: Series
+  series-page: 'Series page: “{{series}}”'
   deleted: Deleted series
   deleted-series-block: The series referenced here was deleted.
   entry-of-series-thumbnail: "Thumbnail for entry of “{{series}}”"
@@ -423,18 +422,27 @@ manage:
     no-entries-found: No entries found.
     missing-date: Unknown
 
+  shared:
+    created: Created
+    updated: Last updated
+    details:
+      share-direct-link: Share via direct link
+      copy-direct-link-to-clipboard: Copy link to clipboard
+    acl:
+      title: Access policy
+
   my-series:
     title: My series
     content: Content
     no-of-videos: '{{count}} videos'
+    details:
+      title: Series details
 
   my-videos:
     title: My videos
     details:
       title: Video details
-      share-direct-link: Share via direct link
       set-time: 'Start at: '
-      copy-direct-link-to-clipboard: Copy video link to clipboard
       open-in-editor: Open in video editor
       referencing-pages: Referencing pages
       referencing-pages-explanation: 'This video is referenced on the following pages:'
