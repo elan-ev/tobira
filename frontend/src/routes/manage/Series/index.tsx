@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { graphql, VariablesOf } from "react-relay";
+import { graphql } from "react-relay";
 import i18n from "../../../i18n";
 import { match } from "@opencast/appkit";
 
@@ -17,7 +17,7 @@ import {
     TableRow,
     thumbnailLinkStyle,
     titleLinkStyle,
-} from "../shared";
+} from "../Shared/Table";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
@@ -170,14 +170,4 @@ const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
         "event_count": () => "EVENT_COUNT",
     }) : "CREATED";
 
-const queryParamsToSeriesVars = createQueryParamsParser<
-    SeriesSortColumn,
-    VariablesOf<SeriesManageQuery>
->(
-    parseSeriesColumn,
-    (column, { direction, limit, offset }) => ({
-        order: { column, direction },
-        limit,
-        offset,
-    })
-);
+const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);

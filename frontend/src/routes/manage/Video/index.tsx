@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, VariablesOf } from "react-relay";
+import { graphql } from "react-relay";
 import { match, useColorScheme } from "@opencast/appkit";
 
 import { ManageNav } from "..";
@@ -30,7 +30,7 @@ import {
     TableRow,
     thumbnailLinkStyle,
     titleLinkStyle,
-} from "../shared";
+} from "../Shared/Table";
 
 
 const PATH = "/~manage/videos" as const;
@@ -206,14 +206,4 @@ const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>
         "updated": () => "UPDATED",
     }) : "CREATED";
 
-const queryParamsToVideosVars = createQueryParamsParser<
-    VideosSortColumn,
-    VariablesOf<VideoManageQuery>
->(
-    parseVideosColumn,
-    (column, { direction, limit, offset }) => ({
-        order: { column, direction },
-        limit,
-        offset,
-    })
-);
+const queryParamsToVideosVars = createQueryParamsParser<VideosSortColumn>(parseVideosColumn);
