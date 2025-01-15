@@ -126,8 +126,6 @@ login-page:
 video:
   video: Video
   video-page: 'Video Seite: „{{video}}“'
-  created: Erstellt
-  updated: Zuletzt verändert
   duration: Abspielzeit
   link: Zur Videoseite
   part-of-series: Teil der Serie
@@ -442,6 +440,15 @@ manage:
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
 
+  shared:
+    created: Erstellt
+    updated: Zuletzt verändert
+    details:
+      share-direct-link: Via Direktlink teilen
+      copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
+    acl:
+      title: Access policy
+
   my-series:
     title: Meine Serien
     content: Inhalt
@@ -451,9 +458,7 @@ manage:
     title: Meine Videos
     details:
       title: Videodetails
-      share-direct-link: Via Direktlink teilen
       set-time: 'Starten bei: '
-      copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
       open-in-editor: Im Videoeditor öffnen
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'

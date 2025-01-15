@@ -25,8 +25,8 @@ import {
 } from "./__generated__/SeriesManageQuery.graphql";
 import { Link } from "../../../router";
 import { ThumbnailStack } from "../../Search";
-import { DirectSeriesRoute } from "../../Series";
 import { SmallDescription } from "../../../ui/metadata";
+import { keyOfId } from "../../../util";
 
 
 const PATH = "/~manage/series" as const;
@@ -122,29 +122,12 @@ export const seriesColumns: ColumnProps[] = [
 
 export const SeriesRow: React.FC<{ series: SingleSeries }> = ({ series }) => {
     // Todo: change to "series details" route when available
-    const link = DirectSeriesRoute.url({ seriesId: series.id });
-
-    // Seems odd, but simply checking `e => e.__typename === "AuthorizedEvent"` will produce
-    // TS2339 errors when compiling.
-    type Entry = SingleSeries["entries"][number];
-    type AuthorizedEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
-    const isAuthorizedEvent = (e: Entry): e is AuthorizedEvent =>
-        e.__typename === "AuthorizedEvent";
-
-    const thumbnails = series.entries
-        .filter(isAuthorizedEvent)
-        .map(e => ({
-            isLive: e.isLive,
-            audioOnly: e.syncedData ? e.syncedData.audioOnly : false,
-            thumbnail: e.syncedData?.thumbnail,
-        }));
+    const link = `${PATH}/${keyOfId(series.id)}`;
 
     return (
         <TableRow
             thumbnail={<Link to={link} css={{ ...thumbnailLinkStyle }}>
-                <span css={{ "> div": { width: "100%" } }}>
-                    <ThumbnailStack title={series.title} {...{ thumbnails }} />
-                </span>
+                <SeriesThumbnail {...{ series }} />
             </Link>}
             title={<Link to={link} css={{ ...titleLinkStyle }}>{series.title}</Link>}
             description={series.syncedData && <SmallDescription
@@ -171,3 +154,28 @@ const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
     }) : "CREATED";
 
 const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);
+
+type SeriesThumbnailProps = {
+    series: SingleSeries;
+}
+
+export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series }) => {
+    // Seems odd, but simply checking `e => e.__typename === "AuthorizedEvent"` will produce
+    // TS2339 errors when compiling.
+    type Entry = SingleSeries["entries"][number];
+    type AuthorizedEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
+    const isAuthorizedEvent = (e: Entry): e is AuthorizedEvent =>
+        e.__typename === "AuthorizedEvent";
+
+    const thumbnails = series.entries
+        .filter(isAuthorizedEvent)
+        .map(e => ({
+            isLive: e.isLive,
+            audioOnly: e.syncedData ? e.syncedData.audioOnly : false,
+            thumbnail: e.syncedData?.thumbnail,
+        }));
+
+    return <div css={{ "> div": { width: "100%" } }}>
+        <ThumbnailStack title={series.title} {...{ thumbnails }} />
+    </div>;
+};
