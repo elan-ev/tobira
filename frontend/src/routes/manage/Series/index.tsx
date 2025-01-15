@@ -16,7 +16,7 @@ import {
     TableRow,
     thumbnailLinkStyle,
     titleLinkStyle,
-} from "../shared";
+} from "../Shared/Table";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
