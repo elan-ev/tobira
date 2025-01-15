@@ -30,7 +30,7 @@ import {
     TableRow,
     thumbnailLinkStyle,
     titleLinkStyle,
-} from "../shared";
+} from "../Shared/Table";
 
 
 const PATH = "/~manage/videos" as const;
