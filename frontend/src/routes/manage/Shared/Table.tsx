@@ -1,28 +1,26 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { Card, match, useColorScheme } from "@opencast/appkit";
+import { useState, useRef, useEffect, ReactNode } from "react";
+import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
-    LuArrowDownNarrowWide,
-    LuArrowUpWideNarrow,
-    LuChevronLeft,
-    LuChevronRight,
+    LuArrowDownNarrowWide, LuArrowUpWideNarrow,
+    LuChevronLeft, LuChevronRight,
 } from "react-icons/lu";
-import { ParseKeys } from "i18next";
-import { Card, match, useColorScheme } from "@opencast/appkit";
 
-import { seriesColumns, SeriesConnection, SeriesRow, SingleSeries } from "../Series";
-import { EventConnection, EventRow, videoColumns, Event } from "../Video";
-import { SortDirection, VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
-import { Breadcrumbs } from "../../../ui/Breadcrumbs";
-import { PageTitle } from "../../../layout/header/ui";
-import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
-import { COLORS } from "../../../color";
-import { ManageRoute } from "..";
-import { Link } from "../../../router";
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
+import { ManageRoute } from "..";
+import { COLORS } from "../../../color";
+import { PageTitle } from "../../../layout/header/ui";
+import { Breadcrumbs } from "../../../ui/Breadcrumbs";
+import { Link } from "../../../router";
+import { EventConnection, EventRow } from "../Video";
+import { Entry, SeriesConnection, SeriesRow } from "../Series";
+import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
+import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 
 type Connection = EventConnection | SeriesConnection;
-type AssetVars = {
+type ItemVars = {
     order: {
         column: SortColumn;
         direction: SortDirection;
@@ -33,16 +31,22 @@ type AssetVars = {
 
 type SharedProps = {
     connection: Connection;
-    vars: AssetVars;
+    vars: ItemVars;
+    additionalColumns?: ColumnProps[];
 };
 
-type ManageAssetsProps = SharedProps & {
+type ManageItemProps = SharedProps & {
     titleKey: ParseKeys;
 }
 
 const LIMIT = 15;
 
-export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, titleKey }) => {
+export const ManageItems: React.FC<ManageItemProps> = ({
+    connection,
+    vars,
+    titleKey,
+    additionalColumns,
+}) => {
     const { t } = useTranslation();
 
     const totalCount = connection.totalCount;
@@ -62,12 +66,12 @@ export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, ti
 
     let inner;
     if (connection.items.length === 0 && connection.totalCount === 0) {
-        inner = <Card kind="info">{t("manage.asset-table.no-entries-found")}</Card>;
+        inner = <Card kind="info">{t("manage.item-table.no-entries-found")}</Card>;
     } else {
         inner = <>
             <PageNavigation {...{ vars, connection }} />
             <div css={{ flex: "1 0 0", margin: "16px 0" }}>
-                <AssetTable {...{ vars, connection }} />
+                <ItemTable {...{ vars, connection, additionalColumns }} />
             </div>
             <PageNavigation {...{ vars, connection }} />
         </>;
@@ -93,24 +97,33 @@ export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, ti
 
 const THUMBNAIL_WIDTH = 16 * 8;
 
-type Asset = Event | SingleSeries;
+type Item = {
+    id: string;
+    title: string;
+    description?: string | null;
+    created?: string | null;
+    updated?: string | null;
+    entries?: readonly Entry[];
+}
 type SortColumn = VideosSortColumn | SeriesSortColumn;
+type SortDirection = "ASCENDING" | "DESCENDING" | "%future added value";
 
 export type ColumnProps = {
     key: SortColumn;
     label: ParseKeys;
     headerWidth?: number;
-    column: (item: Asset) => ReactNode;
+    column: (item: Item) => ReactNode;
 };
 
-type GenericTableProps = SharedProps & {
+type ItemTableProps = SharedProps & {
     thumbnailWidth?: number;
 }
 
-const AssetTable: React.FC<GenericTableProps> = ({
+const ItemTable: React.FC<ItemTableProps> = ({
     connection,
     vars,
     thumbnailWidth,
+    additionalColumns,
 }) => {
     const { t } = useTranslation();
 
@@ -131,11 +144,6 @@ const AssetTable: React.FC<GenericTableProps> = ({
             return () => observer.unobserve(tableHeader);
         }
         return () => {};
-    });
-
-    const additionalColumns = match(connection.__typename, {
-        "EventConnection": () => videoColumns,
-        "SeriesConnection": () => seriesColumns,
     });
 
     return <div css={{ position: "relative" }}>
@@ -177,7 +185,7 @@ const AssetTable: React.FC<GenericTableProps> = ({
             <colgroup>
                 {/* Each table has thumbnails, but their width might vary */}
                 <col span={1} css={{ width: (thumbnailWidth ?? THUMBNAIL_WIDTH) + 2 * 6 }} />
-                {/* Each table has a title and description */}
+                {/* Each table has a column for title and description */}
                 <col span={1} />
                 {/*
                     Additional columns can be declared in the specific column array.
@@ -193,7 +201,7 @@ const AssetTable: React.FC<GenericTableProps> = ({
                     <th></th>
                     {/* Title */}
                     <ColumnHeader
-                        label={t("manage.asset-table.columns.title")}
+                        label={t("manage.item-table.columns.title")}
                         sortKey="TITLE"
                         {...{ vars }}
                     />
@@ -242,7 +250,7 @@ export const descriptionStyle = {
 } as const;
 
 // Used for both `EventRow` and `SeriesRow`.
-export const DateColumn: React.FC<{ date?: string }> = ({ date }) => {
+export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
     const { t, i18n } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const parsedDate = date && new Date(date);
@@ -258,7 +266,7 @@ export const DateColumn: React.FC<{ date?: string }> = ({ date }) => {
                 </span>
             </>
             : <i css={greyColor}>
-                {t("manage.asset-table.missing-date")}
+                {t("manage.item-table.missing-date")}
             </i>
         }
     </td>;
@@ -276,10 +284,10 @@ type TableRowProps = {
 };
 
 /**
- * A row in the asset table
- * This is assuming that each asset (video, series, playlist) has a thumbnail, title,
+ * A row in the item table
+ * This is assuming that each item (video, series, playlist) has a thumbnail, title,
  * and description. These can still be somewhat customized.
- * Additional columns can be declared in the respective asset column arrays.
+ * Additional columns can be declared in the respective item column arrays.
  */
 export const TableRow: React.FC<TableRowProps> = ({
     thumbnail,
@@ -330,20 +338,21 @@ export const TableRow: React.FC<TableRowProps> = ({
 type ColumnHeaderProps = {
     label: string;
     sortKey: SortColumn;
-    vars: AssetVars;
+    vars: ItemVars;
 };
 
 const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => {
     const { t } = useTranslation();
-    const direction = vars.order.column === sortKey && vars.order.direction === "ASCENDING"
-        ? "DESCENDING"
-        : "ASCENDING";
-    const directionTransKey = direction.toLowerCase() as Lowercase<typeof direction>;
+    const direction = vars.order.direction === "ASCENDING" ? "DESCENDING" : "ASCENDING";
+    const directionTransKey = direction === "ASCENDING" ? "ascending" : "descending";
 
     return <th>
         <Link
-            aria-label={t("manage.asset-table.columns.description",
-                { title: label, direction: t(`manage.asset-table.columns.${directionTransKey}`) })
+            aria-label={
+                t("manage.item-table.columns.description", {
+                    title: label,
+                    direction: t(`manage.item-table.columns.${directionTransKey}`),
+                })
             }
             to={varsToLink({
                 order: {
@@ -400,7 +409,7 @@ const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
             gap: 48,
         }}>
             <div>
-                {t("manage.asset-table.page-showing-ids", {
+                {t("manage.item-table.page-showing-ids", {
                     start: connection.pageInfo.startIndex ?? "?",
                     end: connection.pageInfo.endIndex ?? "?",
                     total,
@@ -411,25 +420,25 @@ const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
                 <PageLink
                     vars={{ ...vars, offset: 0 }}
                     disabled={!pageInfo.hasPreviousPage && connection.items.length === limit}
-                    label={t("manage.asset-table.navigation.first")}
+                    label={t("manage.item-table.navigation.first")}
                 ><FirstPage /></PageLink>
                 {/* Previous page */}
                 <PageLink
                     vars={{ ...vars, offset: prevOffset }}
                     disabled={!pageInfo.hasPreviousPage}
-                    label={t("manage.asset-table.navigation.previous")}
+                    label={t("manage.item-table.navigation.previous")}
                 ><LuChevronLeft /></PageLink>
                 {/* Next page */}
                 <PageLink
                     vars={{ ...vars, offset: nextOffset }}
                     disabled={!pageInfo.hasNextPage}
-                    label={t("manage.asset-table.navigation.next")}
+                    label={t("manage.item-table.navigation.next")}
                 ><LuChevronRight /></PageLink>
                 {/* Last page */}
                 <PageLink
                     vars={{ ...vars, offset: lastOffset }}
                     disabled={!pageInfo.hasNextPage}
-                    label={t("manage.asset-table.navigation.last")}
+                    label={t("manage.item-table.navigation.last")}
                 ><LastPage /></PageLink>
             </div>
         </div>
@@ -437,7 +446,7 @@ const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
 };
 
 type PageLinkProps = {
-    vars: AssetVars;
+    vars: ItemVars;
     disabled: boolean;
     children: ReactNode;
     label: string;
@@ -518,7 +527,6 @@ export function createQueryParamsParser<ColumnType extends string>(
         const { limit, offset, direction } = parsePaginationAndDirection(queryParams);
         const sortBy = queryParams.get("sortBy");
         const column = parseColumnFn(sortBy);
-
         return {
             order: { column, direction },
             limit,
@@ -528,7 +536,7 @@ export function createQueryParamsParser<ColumnType extends string>(
 }
 
 /** Converts query variables to URL query parameters */
-const varsToQueryParams = (vars: AssetVars): URLSearchParams => {
+const varsToQueryParams = (vars: ItemVars): URLSearchParams => {
     const searchParams = new URLSearchParams();
 
     // Sort order
@@ -557,7 +565,7 @@ const varsToQueryParams = (vars: AssetVars): URLSearchParams => {
     return searchParams;
 };
 
-const varsToLink = (vars: AssetVars): string => {
+const varsToLink = (vars: ItemVars): string => {
     const url = new URL(document.location.href);
     url.search = varsToQueryParams(vars).toString();
     return url.href;
