@@ -10,6 +10,7 @@ import type {
 
 import { hasErrors, APIError, ServerError, NotJson } from "./errors";
 import { NetworkError } from "../util/err";
+import { queryInfos } from "../util/DebugOverlay";
 
 
 export const environment = new Environment({
@@ -24,6 +25,18 @@ export const environment = new Environment({
 
             if (!response.ok) {
                 throw new ServerError(response);
+            }
+
+            const numQueries = response.headers.get("x-tobira-num-queries");
+            const duration = response.headers.get("x-tobira-duration");
+            if (numQueries !== null && duration !== null) {
+                if (queryInfos.length >= 5) {
+                    queryInfos.shift();
+                }
+                queryInfos.push({
+                    numQueries: Number(numQueries),
+                    duration: Number(duration),
+                });
             }
 
             // Download full response and parse as JSON.

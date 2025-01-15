@@ -16,6 +16,7 @@ import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { useNoindexTag } from "../util";
 import { useRouter } from "../router";
+import { DebugOverlay } from "../util/DebugOverlay";
 
 
 export const MAIN_PADDING = 16;
@@ -163,6 +164,7 @@ export const RootLoaderImpl = <Q extends QueryWithUserData>({
         <UserProvider data={userData?.currentUser}>
             <Root nav={nav(data)}>
                 <React.Fragment key={counter.current}>{render(data)}</React.Fragment>
+                <DebugOverlay key={"_" + counter.current} />
             </Root>
         </UserProvider>
     );
