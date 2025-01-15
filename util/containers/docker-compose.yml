@@ -34,7 +34,7 @@ services:
 
   # A MeiliSearch for Tobira.
   tobira-meilisearch:
-    image: getmeili/meilisearch:v1.4
+    image: getmeili/meilisearch:v1.12
     restart: unless-stopped
     ports:
       - 127.0.0.1:7700:7700
