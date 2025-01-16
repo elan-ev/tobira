@@ -11,7 +11,8 @@ use crate::{
         NodeValue,
     },
     auth::AuthContext,
-    db::{types::Key, util::{impl_from_db, select}},
+    db::util::{impl_from_db, select},
+    model::Key,
     prelude::*,
 };
 use super::block::BlockValue;

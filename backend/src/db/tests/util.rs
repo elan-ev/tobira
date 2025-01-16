@@ -2,7 +2,7 @@ use std::{ops::Deref, collections::HashSet};
 use secrecy::ExposeSecret;
 use tokio_postgres::{Client, NoTls};
 
-use crate::{prelude::*, db::types::Key, search::IndexItemKind};
+use crate::{prelude::*, model::Key, search::IndexItemKind};
 use super::DbConfig;
 
 

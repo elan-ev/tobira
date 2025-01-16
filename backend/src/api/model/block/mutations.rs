@@ -2,7 +2,8 @@ use juniper::{GraphQLInputObject, GraphQLObject};
 
 use crate::{
     api::{Context, Id, err::{ApiResult, invalid_input}, model::realm::Realm},
-    db::{types::Key, util::select},
+    db::util::select,
+    model::Key,
     prelude::*,
 };
 use super::{BlockValue, VideoListOrder, VideoListLayout};

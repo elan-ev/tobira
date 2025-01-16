@@ -1,4 +1,4 @@
-use crate::{prelude::*, db::types::Key};
+use crate::{prelude::*, model::Key};
 use super::DbConfig;
 use self::util::TestDb;
 

@@ -8,7 +8,7 @@ use crate::{
         model::block::RemovedBlock,
     },
     auth::AuthContext,
-    db::types::Key,
+    model::Key,
     prelude::*,
 };
 use super::{Realm, RealmOrder};

@@ -1,4 +1,4 @@
-use std::{fmt, collections::HashMap};
+use std::collections::HashMap;
 
 use bytes::BytesMut;
 use chrono::{DateTime, Utc};
@@ -6,48 +6,7 @@ use juniper::GraphQLEnum;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
-
-/// Our primary database ID type, which we call "key". In the database, it's a
-/// `bigint` (`i64`), but we have a separate Rust type for it for several
-/// reasons. Implements `ToSql` and `FromSql` by casting to/from `i64`.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub(crate) struct Key(pub(crate) u64);
-
-impl ToSql for Key {
-    fn to_sql(
-        &self,
-        ty: &postgres_types::Type,
-        out: &mut BytesMut,
-    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
-        (self.0 as i64).to_sql(ty, out)
-    }
-
-    fn accepts(ty: &postgres_types::Type) -> bool {
-        <i64 as ToSql>::accepts(ty)
-    }
-
-    postgres_types::to_sql_checked!();
-}
-
-impl<'a> FromSql<'a> for Key {
-    fn from_sql(
-        ty: &postgres_types::Type,
-        raw: &'a [u8],
-    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-        i64::from_sql(ty, raw).map(|i| Key(i as u64))
-    }
-
-    fn accepts(ty: &postgres_types::Type) -> bool {
-        <i64 as FromSql>::accepts(ty)
-    }
-}
-
-impl fmt::Debug for Key {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut buf = [0; 11];
-        write!(f, "Key({} :: {})", self.0 as i64, self.to_base64(&mut buf))
-    }
-}
+use crate::model::Key;
 
 
 /// Represents the `event_track` type defined in `5-events.sql`.

@@ -15,7 +15,8 @@ use crate::{
         Context,
         Id,
     },
-    db::{types::Key, util::impl_from_db},
+    model::Key,
+    db::util::impl_from_db,
     prelude::*,
 };
 

@@ -1,4 +1,4 @@
-use crate::{prelude::*, db::types::Key, search::IndexItemKind};
+use crate::{prelude::*, model::Key, search::IndexItemKind};
 use super::util::TestDb;
 
 
