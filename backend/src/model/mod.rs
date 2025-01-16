@@ -7,10 +7,12 @@
 //! either of `db`, `api` or any other submodule as they are used in multiple
 //! situations (loading from DB, exposing via API, ...).
 
+mod extra_metadata;
 mod key;
 mod translated_string;
 
 pub(crate) use self::{
+    extra_metadata::ExtraMetadata,
     key::Key,
     translated_string::{LangKey, TranslatedString},
 };

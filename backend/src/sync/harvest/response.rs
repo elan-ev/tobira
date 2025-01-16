@@ -1,7 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::db::types::{CustomActions, EventCaption, EventTrack, EventSegment, ExtraMetadata};
+use crate::{
+    db::types::{CustomActions, EventCaption, EventTrack, EventSegment},
+    model::ExtraMetadata,
+};
 
 
 /// What the harvesting API returns.

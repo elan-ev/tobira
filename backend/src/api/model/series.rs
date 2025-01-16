@@ -8,8 +8,8 @@ use crate::{
         err::{invalid_input, ApiResult},
         model::{event::AuthorizedEvent, realm::Realm},
     },
-    db::{types::{ExtraMetadata, SeriesState as State}, util::impl_from_db},
-    model::Key,
+    db::{types::{SeriesState as State}, util::impl_from_db},
+    model::{Key, ExtraMetadata},
     prelude::*,
 };
 
