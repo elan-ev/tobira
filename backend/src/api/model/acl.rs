@@ -2,7 +2,7 @@ use juniper::{GraphQLInputObject, GraphQLObject};
 use postgres_types::BorrowToSql;
 use serde::Serialize;
 
-use crate::{api::{err::ApiResult, Context}, config::TranslatedString, db::util::select};
+use crate::{api::{err::ApiResult, Context}, model::TranslatedString, db::util::select};
 
 
 

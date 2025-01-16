@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use crate::{
     api::{err::ApiResult, Context},
-    config::TranslatedString,
+    model::TranslatedString,
     db::util::{impl_from_db, select},
     prelude::*,
 };

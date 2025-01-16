@@ -1,7 +1,8 @@
 use std::{collections::HashMap, fmt, path::PathBuf};
 use serde::{Deserialize, Serialize};
 
-use super::{color::ColorConfig, translated_string::LangKey};
+use crate::model::LangKey;
+use super::{color::ColorConfig};
 
 
 #[derive(Debug, confique::Config)]

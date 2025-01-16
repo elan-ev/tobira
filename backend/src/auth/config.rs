@@ -4,7 +4,7 @@ use hyper::{http::HeaderName, Uri};
 use secrecy::SecretString;
 use serde::{Deserialize, Deserializer, de::Error};
 
-use crate::{config::{parse_normal_http_uri, TranslatedString}, prelude::*};
+use crate::{config::parse_normal_http_uri, model::TranslatedString, prelude::*};
 
 use super::JwtConfig;
 

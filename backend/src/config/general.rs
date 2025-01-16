@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use super::{HttpHost, TranslatedString};
+use crate::model::TranslatedString;
+use super::HttpHost;
 
 
 #[derive(Debug, confique::Config)]
