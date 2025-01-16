@@ -277,7 +277,7 @@ export const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt 
 };
 
 type CreatorsProps = {
-    creators: readonly string[] | null;
+    creators: readonly (JSX.Element | string)[] | null;
     className?: string;
 };
 

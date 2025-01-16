@@ -41,7 +41,13 @@ pub struct SearchEventMatches {
     title: Vec<ByteSpan>,
     description: Vec<ByteSpan>,
     series_title: Vec<ByteSpan>,
-    // TODO: creators
+    creators: Vec<ArrayMatch>,
+}
+
+#[derive(Debug, GraphQLObject)]
+pub struct ArrayMatch {
+    index: i32,
+    span: ByteSpan,
 }
 
 /// A match inside an event's texts while searching.
@@ -102,6 +108,16 @@ impl SearchEvent {
             title: field_matches_for(match_positions, "title"),
             description: field_matches_for(match_positions, "description"),
             series_title: field_matches_for(match_positions, "series_title"),
+            creators: match_ranges_for(match_positions, "creators")
+                .iter()
+                .filter_map(|m| {
+                    m.indices.as_ref().and_then(|v| v.get(0)).map(|index| ArrayMatch {
+                        span: ByteSpan { start: m.start as i32, len: m.length as i32 },
+                        index: *index as i32,
+                    })
+                })
+                .take(8)
+                .collect(),
         };
 
         Self::new_inner(src, text_matches, matches, user_can_read)

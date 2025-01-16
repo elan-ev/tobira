@@ -230,6 +230,11 @@ type AclItem {
   info: RoleInfo
 }
 
+type ArrayMatch {
+  index: Int!
+  span: ByteSpan!
+}
+
 type AuthorizedEvent implements Node {
   id: ID!
   opencastId: String!
@@ -740,6 +745,7 @@ type SearchEventMatches {
   title: [ByteSpan!]!
   description: [ByteSpan!]!
   seriesTitle: [ByteSpan!]!
+  creators: [ArrayMatch!]!
 }
 
 type SearchPlaylist implements Node {
