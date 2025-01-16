@@ -891,7 +891,7 @@ const getLabel = (role: string, label: TranslatedLabel | undefined, i18n: i18n) 
         return i18n.t("acl.admin-user");
     }
     if (label) {
-        return label[i18n.language] ?? label.en ?? label._;
+        return label[i18n.language] ?? label.default;
     }
     return role;
 };

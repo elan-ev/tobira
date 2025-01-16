@@ -42,9 +42,9 @@
 # Example:
 #
 # ```
-# initial_consent.title.en = "Terms & Conditions"
-# initial_consent.button.en = "Agree"
-# initial_consent.text.en = """
+# initial_consent.title.default = "Terms & Conditions"
+# initial_consent.button.default = "Agree"
+# initial_consent.text.default = """
 # To use Tobira, you need to agree to our terms and conditions:
 # - [Terms](https://www.our-terms.de)
 # - [Conditions](https://www.our-conditions.de)
@@ -68,8 +68,8 @@
 #
 # ```
 # footer_links = [
-#     { label = { en = "Example 1" }, link = "https://example.com" },
-#     { label = { en = "Example 2" }, link = { en = "https://example.com/en" } },
+#     { label = { default = "Example 1" }, link = "https://example.com" },
+#     { label = { default = "Example 2" }, link = { default = "https://example.com/en" } },
 #     "about",
 # ]
 # ```
@@ -80,8 +80,8 @@
 # Additional metadata that is shown below a video. Example:
 #
 #     [general.metadata]
-#     dcterms.spatial = { en = "Location", de = "Ort" }
-#     "http://my.domain/xml/namespace".courseLink = { en = "Course", de = "Kurs"}
+#     dcterms.spatial = { default = "Location", de = "Ort" }
+#     "http://my.domain/xml/namespace".courseLink = { default = "Course", de = "Kurs"}
 #
 # As you can see, this is a mapping of a metadata location (the XML
 # namespace and the name) to a translated label. For the XML namespace

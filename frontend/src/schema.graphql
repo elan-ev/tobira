@@ -210,7 +210,7 @@ scalar DateTime
 "Arbitrary metadata for events/series. Serialized as JSON object."
 scalar ExtraMetadata
 
-"A string in different languages."
+"A string specified in different languages. Entry 'default' is required."
 scalar TranslatedString
 
 "A role being granted permission to perform certain actions."
@@ -698,7 +698,7 @@ type RemovedRealm {
 type RoleInfo {
   """
     A user-facing label for this role (group or person). If the label does
-    not depend on the language (e.g. a name), `{ "_": "Peter" }` is
+    not depend on the language (e.g. a name), `{ "default": "Peter" }` is
     returned.
   """
   label: TranslatedString!

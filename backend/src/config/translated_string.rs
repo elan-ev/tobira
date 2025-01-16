@@ -1,16 +1,37 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, fmt, str::FromStr};
+use bytes::BytesMut;
+use fallible_iterator::FallibleIterator;
+use juniper::{GraphQLScalar, InputValue, ScalarValue};
+use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 use anyhow::{anyhow, Error};
 
-/// A configurable string specified in different languages. Language 'en' always
-/// has to be specified.
-#[derive(Serialize, Deserialize, Clone)]
+use crate::prelude::*;
+
+
+/// A string specified in different languages. Entry 'default' is required.
+#[derive(Serialize, Deserialize, Clone, GraphQLScalar)]
 #[serde(try_from = "HashMap<LangKey, String>")]
-pub(crate) struct TranslatedString(HashMap<LangKey, String>);
+#[graphql(parse_token(String))]
+pub(crate) struct TranslatedString(pub(crate) HashMap<LangKey, String>);
 
 impl TranslatedString {
     pub(crate) fn default(&self) -> &str {
         &self.0[&LangKey::Default]
+    }
+
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
+        self.0.iter()
+            .map(|(k, v)| (k.as_ref(), juniper::Value::scalar(v.to_owned())))
+            .collect::<juniper::Object<S>>()
+            .pipe(juniper::Value::Object)
+    }
+
+    fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
+        // I did not want to waste time implementing this now, given that we
+        // likely never use it.
+        let _ = input;
+        todo!("TranslatedString cannot be used as input value yet")
     }
 }
 
@@ -33,7 +54,7 @@ impl fmt::Debug for TranslatedString {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum LangKey {
     #[serde(alias = "*")]
@@ -45,5 +66,63 @@ pub(crate) enum LangKey {
 impl fmt::Display for LangKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.serialize(f)
+    }
+}
+
+impl AsRef<str> for LangKey {
+    fn as_ref(&self) -> &str {
+        match self {
+            LangKey::Default => "default",
+            LangKey::En => "en",
+            LangKey::De => "de",
+        }
+    }
+}
+
+impl FromStr for LangKey {
+    type Err = serde::de::value::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Self::deserialize(serde::de::value::BorrowedStrDeserializer::new(s))
+    }
+}
+
+impl ToSql for TranslatedString {
+    fn to_sql(
+        &self,
+        _: &postgres_types::Type,
+        out: &mut BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        let values = self.0.iter().map(|(k, v)| (k.as_ref(), Some(v.as_str())));
+        postgres_protocol::types::hstore_to_sql(values, out)?;
+        Ok(postgres_types::IsNull::No)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        ty.name() == "hstore"
+    }
+
+    postgres_types::to_sql_checked!();
+}
+
+
+
+impl<'a> FromSql<'a> for TranslatedString {
+    fn from_sql(
+        _: &postgres_types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        postgres_protocol::types::hstore_from_sql(raw)?
+            .map(|(k, v)| {
+                let v = v.ok_or("translated label contained null value in hstore")?;
+                let k = k.parse()?;
+                Ok((k, v.to_owned()))
+            })
+            .collect()
+            .map(Self)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        ty.name() == "hstore"
     }
 }
