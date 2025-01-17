@@ -2,9 +2,10 @@ use meilisearch_sdk::search::{Selectors, MatchingStrategies};
 use serde::Deserialize;
 
 use crate::{
-    api::{Context, err::ApiResult, util::TranslatedString},
-    prelude::*,
+    api::{err::ApiResult, Context},
+    config::TranslatedString,
     db::util::{impl_from_db, select},
+    prelude::*,
 };
 use super::search::{handle_search_result, measure_search_duration, SearchResults, SearchUnavailable};
 
@@ -16,7 +17,7 @@ use super::search::{handle_search_result, measure_search_duration, SearchResults
 #[derive(juniper::GraphQLObject)]
 pub struct KnownGroup {
     pub(crate) role: String,
-    pub(crate) label: TranslatedString<String>,
+    pub(crate) label: TranslatedString,
     pub(crate) implies: Vec<String>,
     pub(crate) large: bool,
 }

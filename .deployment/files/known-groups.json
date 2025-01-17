@@ -1,6 +1,6 @@
 {
-    "ROLE_STUDENT": { "label": { "en": "Students", "de": "Studierende" }, "implies": [], "large": true },
-    "ROLE_STAFF": { "label": { "en": "Staff", "de": "Angestellte" }, "implies": [], "large": true },
-    "ROLE_INSTRUCTOR": { "label": { "en": "Lecturers", "de": "Vortragende" }, "implies": ["ROLE_STAFF"], "large": true },
-    "ROLE_TOBIRA_MODERATOR": { "label": { "en": "Moderators", "de": "Moderierende" }, "implies": ["ROLE_STAFF"], "large": false }
+    "ROLE_STUDENT": { "label": { "default": "Students", "de": "Studierende" }, "implies": [], "large": true },
+    "ROLE_STAFF": { "label": { "default": "Staff", "de": "Angestellte" }, "implies": [], "large": true },
+    "ROLE_INSTRUCTOR": { "label": { "default": "Lecturers", "de": "Vortragende" }, "implies": ["ROLE_STAFF"], "large": true },
+    "ROLE_TOBIRA_MODERATOR": { "label": { "default": "Moderators", "de": "Moderierende" }, "implies": ["ROLE_STAFF"], "large": false }
 }
