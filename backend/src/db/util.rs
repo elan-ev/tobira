@@ -201,6 +201,7 @@ impl<'a> SqlSelection<'a> {
     /// For example, the column selection `${table:foo}.banana` would normally
     /// be emitted as `foo.banana`. To instead output just `banana`, call
     /// `.with_omitted_table_prefix("foo")`.
+    #[allow(dead_code)]
     pub(crate) fn with_omitted_table_prefix(mut self, table: &'a str) -> Self {
         self.table_renames.insert(table, None);
         self

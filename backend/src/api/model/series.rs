@@ -22,14 +22,14 @@ use super::{
 pub(crate) struct Series {
     pub(crate) key: Key,
     pub(crate) opencast_id: String,
-    synced_data: Option<SyncedSeriesData>,
-    title: String,
-    created: Option<DateTime<Utc>>,
-    metadata: Option<ExtraMetadata>,
+    pub(crate) synced_data: Option<SyncedSeriesData>,
+    pub(crate) title: String,
+    pub(crate) created: Option<DateTime<Utc>>,
+    pub(crate) metadata: Option<ExtraMetadata>,
 }
 
 #[derive(GraphQLObject)]
-struct SyncedSeriesData {
+pub(crate) struct SyncedSeriesData {
     description: Option<String>,
 }
 

@@ -136,7 +136,8 @@ impl AuthorizedPlaylist {
                 where (entry).type = 'event'\
             )
             select {selection} from event_ids \
-            left join events on events.opencast_id = event_ids.id\
+            left join events on events.opencast_id = event_ids.id \
+            left join series on series.id = events.series\
         ");
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {

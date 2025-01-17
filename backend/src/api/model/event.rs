@@ -5,7 +5,7 @@ use hyper::StatusCode;
 use postgres_types::ToSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::Row;
-use juniper::{GraphQLObject, graphql_object};
+use juniper::{graphql_object, Executor, GraphQLObject, ScalarValue};
 use sha1::{Sha1, Digest};
 
 use crate::{
@@ -38,7 +38,7 @@ use super::playlist::VideoListEntry;
 #[derive(Debug)]
 pub(crate) struct AuthorizedEvent {
     pub(crate) key: Key,
-    pub(crate) series: Option<Key>,
+    pub(crate) series: Option<PreloadedSeries>,
     pub(crate) opencast_id: String,
     pub(crate) is_live: bool,
 
@@ -56,6 +56,13 @@ pub(crate) struct AuthorizedEvent {
     pub(crate) synced_data: Option<SyncedEventData>,
     pub(crate) authorized_data: Option<AuthorizedEventData>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug)]
+pub(crate) struct PreloadedSeries {
+    key: Key,
+    opencast_id: String,
+    title: String,
 }
 
 #[derive(Debug)]
@@ -87,12 +94,18 @@ impl_from_db!(
             read_roles, write_roles, preview_roles, credentials,
             tobira_deletion_timestamp,
         },
+        series.{ series_title: "title", series_oc_id: "opencast_id" },
     },
     |row| {
         let tracks: Vec<Track> = row.tracks::<Vec<EventTrack>>().into_iter().map(Track::from).collect();
+        let series = row.series::<Option<Key>>().map(|key| PreloadedSeries {
+            key,
+            opencast_id: row.series_oc_id(),
+            title: row.series_title(),
+        });
         Self {
             key: row.id(),
-            series: row.series(),
+            series: series,
             opencast_id: row.opencast_id(),
             is_live: row.is_live(),
             title: row.title(),
@@ -300,9 +313,32 @@ impl AuthorizedEvent {
         Ok(response)
     }
 
-    async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
-        if let Some(series) = self.series {
-            Ok(Series::load_by_key(series, context).await?)
+    async fn series<S: ScalarValue>(
+        &self,
+        context: &Context,
+        executor: &Executor<'_, '_, Context, S>,
+    ) -> ApiResult<Option<Series>> {
+        if let Some(series) = &self.series {
+            let preloaded_fields = ["id", "title", "opencastId"];
+
+            if executor.look_ahead().children().names().all(|n| preloaded_fields.contains(&n)) {
+                // All requested fields are already preloaded. It would be nicer
+                // to have a separate type here and return
+                // `Either<PreloadedSeries, Series>` but in the case of the
+                // series, we can just use the normal type and pass `None` for
+                // other fields. We know those fields are never read.
+                Ok(Some(Series {
+                    key: series.key,
+                    opencast_id: series.opencast_id.clone(),
+                    title: series.title.clone(),
+                    synced_data: None,
+                    created: None,
+                    metadata: None,
+                }))
+            } else {
+                // We need to load the series as fields were requested that were not preloaded.
+                Ok(Series::load_by_key(series.key, context).await?)
+            }
         } else {
             Ok(None)
         }
@@ -321,7 +357,7 @@ impl AuthorizedEvent {
         ");
         context.db.query_mapped(
             &query,
-            dbargs![&self.key, &self.series, &self.opencast_id],
+            dbargs![&self.key, &self.series_key(), &self.opencast_id],
             |row| Realm::from_row_start(&row)
         ).await?.pipe(Ok)
     }
@@ -350,7 +386,7 @@ impl AuthorizedEvent {
             join realms on blocks.realm = realms.id \
             where realms.full_path = $1 and does_block_make_event_listed(blocks, $2, $3, $4) \
         )";
-        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key, &self.series, &self.opencast_id])
+        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key, &self.series_key(), &self.opencast_id])
             .await?
             .get::<_, bool>(0)
             .pipe(Ok)
@@ -394,7 +430,9 @@ impl AuthorizedEvent {
         context: &Context,
     ) -> ApiResult<Option<Event>> {
         let selection = Self::select();
-        let query = format!("select {selection} from events where {col} = $1");
+        let query = format!("select {selection} from events \
+            left join series on series.id = events.series \
+            where events.{col} = $1");
         context.db
             .query_opt(&query, &[id])
             .await?
@@ -415,8 +453,9 @@ impl AuthorizedEvent {
     ) -> ApiResult<Vec<VideoListEntry>> {
         let selection = Self::select();
         let query = format!(
-            "select {selection} from events \
-                where series = $1",
+            "select {selection} from series \
+                inner join events on events.series = series.id \
+                where series.id = $1",
         );
         context.db
             .query_mapped(&query, dbargs![&series_key], |row| {
@@ -434,6 +473,10 @@ impl AuthorizedEvent {
     fn can_be_previewed(&self, context: &Context) -> bool {
         context.auth.overlaps_roles(&self.preview_roles)
             || context.auth.overlaps_roles(&self.read_roles)
+    }
+
+    fn series_key(&self) -> Option<Key> {
+        self.series.as_ref().map(|s| s.key)
     }
 
     async fn load_for_api(
@@ -632,11 +675,11 @@ impl AuthorizedEvent {
             (None, None) => String::new(),
             (Some(after), None) => {
                 args.extend_from_slice(&[after.to_sql_arg(&order)?, &after.key]);
-                format!("where ({}, id) {} ($1, $2)", col, op_after)
+                format!("where (events.{}, events.id) {} ($1, $2)", col, op_after)
             }
             (None, Some(before)) => {
                 args.extend_from_slice(&[before.to_sql_arg(&order)?, &before.key]);
-                format!("where ({}, id) {} ($1, $2)", col, op_before)
+                format!("where (events.{}, events.id) {} ($1, $2)", col, op_before)
             }
             (Some(after), Some(before)) => {
                 args.extend_from_slice(&[
@@ -646,7 +689,7 @@ impl AuthorizedEvent {
                     &before.key,
                 ]);
                 format!(
-                    "where ({}, id) {} ($1, $2) and ({}, id) {} ($3, $4)",
+                    "where (events.{}, events.id) {} ($1, $2) and (events.{}, events.id) {} ($3, $4)",
                     col, op_after, col, op_before,
                 )
             },
@@ -666,24 +709,23 @@ impl AuthorizedEvent {
             format!("where write_roles && ${arg_index} and read_roles && ${arg_index}")
         };
         let (selection, mapping) = select!(
-            event: AuthorizedEvent from
-                AuthorizedEvent::select().with_omitted_table_prefix("events"),
+            event: AuthorizedEvent,
             row_num,
             total_count,
         );
         let query = format!(
             "select {selection} \
                 from (\
-                    select {event_cols}, \
+                    select events.*, \
                         row_number() over(order by ({sort_col}, id) {sort_order}) as row_num, \
                         count(*) over() as total_count \
                     from all_events as events \
                     {acl_filter} \
-                    order by ({sort_col}, id) {sort_order} \
-                ) as tmp \
+                ) as events \
+                left join series on series.id = events.series \
                 {filter} \
+                order by (events.{sort_col}, events.id) {sort_order} \
                 limit {limit}",
-            event_cols = Self::select(),
             sort_col = order.column.to_sql(),
             sort_order = sql_sort_order.to_sql(),
             limit = limit,
