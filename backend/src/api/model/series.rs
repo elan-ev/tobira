@@ -379,14 +379,22 @@ pub(crate) struct NewSeries {
 
 impl LoadableAsset for Series {
     fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
-        let (selection, mapping) = select!(
-            resource: Series from Series::select(),
-        );
+        let (selection, mapping) = select!(resource: Series);
         (selection, mapping.resource)
     }
 
     fn table_name() -> &'static str {
         "series"
+    }
+
+    fn sort_clauses(column: &str) -> (&str, &str) {
+        match column {
+            "count(events.id)" => (
+                "left join events on events.series = series.id",
+                "group by series.id",
+            ),
+            _ => ("", ""),
+        }
     }
 }
 
