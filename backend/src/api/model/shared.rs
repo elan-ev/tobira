@@ -30,6 +30,9 @@ pub trait ToSqlColumn {
 /// which is always either `Ascending` or `Descending`.
 /// Also includes implementations for the `ToSqlColumn` and `Default` traits of the enum.
 ///
+/// Note that some sort columns might require special join and/or group by clauses in the query.
+/// These must be defined in the `sort_clauses` method of the `LoadableAsset` trait.
+///
 /// Example usage:
 /// ```
 /// define_sort_column_and_order!(
@@ -125,7 +128,7 @@ define_sort_column_and_order!(
 define_sort_column_and_order!(
     pub enum VideosSortColumn {
         default = Created,
-        Title    => "title",
+        Title    => "events.title",
         Created  => "created",
         Updated  => "updated",
         Series   => "series",
@@ -169,6 +172,9 @@ pub type AssetMapping<ResourceMapping> = ResourceMapping;
 pub trait LoadableAsset: FromDb<RowMapping: Copy> {
     fn selection() -> (String, <Self as FromDb>::RowMapping);
     fn table_name() -> &'static str;
+    /// Returns custom `join` and `group by` clauses that might be required
+    /// for ordering by certain columns.
+    fn sort_clauses(column: &str) -> (&str, &str);
 }
 
 pub(crate) async fn load_writable_for_user<T, C>(
@@ -213,21 +219,13 @@ where
 
     let offset = ((offset as i64).clamp(0, (total_count - limit as i64).max(0))) as i32;
     let sort_order = order.direction.to_sql();
+    let sort_column = order.column.to_sql();
 
     let (selection, mapping) = T::selection();
-
-    let (join_clause, group_by_clause, sort_column) = match order.column.to_sql() {
-        "count(events.id)" => (
-            "left join events on events.series = series.id",
-            "group by series.id",
-            "count(events.id)"
-        ),
-        _ => ("", "", order.column.to_sql()),
-    };
+    let (join_clause, group_by_clause) = T::sort_clauses(&sort_column);
 
     let query = format!(
-        "select {selection} \
-            from {table} \
+        "select {selection} from {table} \
             {join_clause} \
             {acl_filter} \
             {group_by_clause} \
