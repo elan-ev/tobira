@@ -660,14 +660,16 @@ impl AuthorizedEvent {
 
 impl LoadableAsset for AuthorizedEvent {
     fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
-        let (selection, mapping) = select!(
-            resource: AuthorizedEvent from AuthorizedEvent::select().with_omitted_table_prefix("events"),
-        );
+        let (selection, mapping) = select!(resource: AuthorizedEvent);
         (selection, mapping.resource)
     }
 
     fn table_name() -> &'static str {
-        "all_events"
+        "events"
+    }
+
+    fn sort_clauses(_column: &str) -> (&str, &str) {
+        ("left join series on series.id = events.series", "")
     }
 }
 
