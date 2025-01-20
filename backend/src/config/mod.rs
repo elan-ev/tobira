@@ -12,14 +12,12 @@ use crate::prelude::*;
 mod color;
 mod general;
 mod theme;
-mod translated_string;
 mod matomo;
 mod opencast;
 mod player;
 mod upload;
 
 pub(crate) use self::{
-    translated_string::TranslatedString,
     theme::{ThemeConfig, LogoDef},
     matomo::MatomoConfig,
     opencast::OpencastConfig,

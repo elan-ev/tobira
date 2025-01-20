@@ -3,7 +3,7 @@ use postgres_types::FromSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::GenericClient;
 
-use crate::{prelude::*, db::{types::Key, util::{collect_rows_mapped, impl_from_db}}};
+use crate::{prelude::*, model::Key, db::util::{collect_rows_mapped, impl_from_db}};
 
 use super::{util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
 

@@ -4,7 +4,8 @@ use tokio_postgres::GenericClient;
 
 use crate::{
     prelude::*,
-    db::{types::Key, util::{collect_rows_mapped, impl_from_db}},
+    db::util::{collect_rows_mapped, impl_from_db},
+    model::Key,
 };
 
 use super::{util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};

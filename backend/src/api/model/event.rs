@@ -24,9 +24,10 @@ use crate::{
         },
     },
     db::{
-        types::{EventCaption, EventSegment, EventState, EventTrack, ExtraMetadata, Key, Credentials},
+        types::{EventCaption, EventSegment, EventState, EventTrack, Credentials},
         util::{impl_from_db, select},
     },
+    model::{Key, ExtraMetadata},
     prelude::*,
 };
 

@@ -24,6 +24,7 @@ mod db;
 mod http;
 mod logger;
 mod metrics;
+mod model;
 mod prelude;
 mod search;
 mod sync;

@@ -17,7 +17,6 @@ use crate::{
     },
     prelude::*,
     search::Playlist as SearchPlaylist,
-    db::types::ExtraMetadata,
 };
 
 
@@ -98,48 +97,5 @@ impl Cursor {
     fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
         let s = input.as_string_value().ok_or("expected string")?;
         Ok(Self(s.into()))
-    }
-}
-
-// TODO: This uses `graphql_scalar` instead of `derive(GraphQLScalar)` because
-// the type `ExtraMetadata` is defined in the `db` module and adding GraphQL
-// code there seems wrong. However, I feel like we should move some types
-// around anyway since we encountered problems like this before.
-#[juniper::graphql_scalar(
-    name = "ExtraMetadata",
-    description = "Arbitrary metadata for events/series. Serialized as JSON object.",
-    with = Self,
-    parse_token(String),
-)]
-#[allow(dead_code)]
-pub type ApiExtraMetadata = ExtraMetadata;
-
-impl ExtraMetadata {
-    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
-        use juniper::Value;
-
-        std::iter::once(("dcterms", &self.dcterms))
-            .chain(self.extended.iter().map(|(k, v)| (&**k, v)))
-            .map(|(k, v)| {
-                let value = v.iter()
-                    .map(|(k, v)| {
-                        let elements = v.iter()
-                            .map(|s| Value::Scalar(S::from(s.clone())))
-                            .collect();
-                        (k, Value::List(elements))
-                    })
-                    .collect::<juniper::Object<S>>();
-
-                (k, Value::Object(value))
-            })
-            .collect::<juniper::Object<S>>()
-            .pipe(Value::Object)
-    }
-
-    fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
-        // I did not want to waste time implementing this now, given that we
-        // likely never use it.
-        let _ = input;
-        todo!("ExtraMetadata cannot be used as input value yet")
     }
 }

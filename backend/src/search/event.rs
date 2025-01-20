@@ -9,8 +9,11 @@ use tokio_postgres::GenericClient;
 
 use crate::{
     api::model::search::{ByteSpan, TextMatch},
-    db::{types::{Key, TextAssetType, TimespanText},
-    util::{collect_rows_mapped, impl_from_db}},
+    db::{
+        types::{TextAssetType, TimespanText},
+        util::{collect_rows_mapped, impl_from_db}
+    },
+    model::Key,
     prelude::*,
     util::{base64_decode, BASE64_DIGITS},
 };

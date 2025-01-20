@@ -10,10 +10,11 @@ use crate::{
     config::Config,
     db::{
         self,
-        types::{EventCaption, EventTextsQueueRecord, Key, TextAssetType, TimespanText},
+        types::{EventCaption, EventTextsQueueRecord, TextAssetType, TimespanText},
         util::{collect_rows_mapped, select},
         DbConnection,
     },
+    model::Key,
     dbargs,
     prelude::*,
 };

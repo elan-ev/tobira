@@ -12,7 +12,7 @@ use secrecy::{SecretString, ExposeSecret};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    db::types::Key,
+    model::Key,
     prelude::*,
     config::HttpHost,
 };

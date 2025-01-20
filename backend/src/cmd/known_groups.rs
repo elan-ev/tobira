@@ -6,7 +6,8 @@ use serde_json::json;
 
 use crate::{
     api::model::known_roles::KnownGroup,
-    config::{Config, TranslatedString},
+    config::Config,
+    model::TranslatedString,
     db,
     prelude::*,
 };

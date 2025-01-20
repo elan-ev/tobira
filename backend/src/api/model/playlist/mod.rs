@@ -5,7 +5,8 @@ use crate::{
     api::{
         common::NotAllowed, err::ApiResult, Context, Id, Node, NodeValue
     },
-    db::{types::Key, util::{impl_from_db, select}},
+    db::util::{impl_from_db, select},
+    model::Key,
     prelude::*,
 };
 
