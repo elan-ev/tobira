@@ -42,7 +42,7 @@ hyper-rustls = { version = "0.27.3", default-features = false, features = ["http
 hyper-util = { version = "0.1.3", features = ["client", "server", "http1", "http2"] }
 iso8601 = "0.6.1"
 juniper = { version = "0.16.1", default-features = false, features = ["chrono", "schema-language", "anyhow", "backtrace"] }
-meilisearch-sdk = "0.27.1"
+meilisearch-sdk = { path = "vendor/meilisearch-sdk" }
 mime_guess = { version = "2", default-features = false }
 nu-ansi-term = "0.50.1"
 ogrim = "0.1.1"
