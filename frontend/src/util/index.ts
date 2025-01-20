@@ -267,10 +267,13 @@ export const useLogoConfig = () => {
     const lang = i18n.resolvedLanguage;
     const logos = CONFIG.logos;
 
-    const findLogo = (size: "wide" | "narrow") => logos
-        .filter(l => l.size === size || !l.size)
-        .filter(l => l.mode === mode || !l.mode)
-        .find(l => l.lang === lang || !l.lang);
+    const findLogo = (size: "wide" | "narrow") => {
+        const list = logos
+            .filter(l => l.size === size || !l.size)
+            .filter(l => l.mode === mode || !l.mode);
+
+        return list.find(l => l.lang === lang) || list.find(l => !l.lang || l.lang === "default");
+    };
 
     const wide = findLogo("wide");
     const narrow = findLogo("narrow");
