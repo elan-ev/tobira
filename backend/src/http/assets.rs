@@ -282,6 +282,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         "showDownloadButton": config.general.show_download_button,
         "usersSearchable": config.general.users_searchable,
         "allowAclEdit": config.general.allow_acl_edit,
+        "lockAclToSeries": config.general.lock_acl_to_series,
         "footerLinks": config.general.footer_links,
         "metadataLabels": config.general.metadata,
         "paellaPluginConfig": config.player.paella_plugin_config,

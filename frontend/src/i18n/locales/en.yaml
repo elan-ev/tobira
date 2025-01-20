@@ -318,6 +318,7 @@ upload:
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
+    failed-fetching-series-acl: Failed to fetch series acl.
 
 acl:
   unknown-user-note: unknown
@@ -338,6 +339,8 @@ manage:
       Changing the access policy is not possible at this time, since the video is being processed in the background.
       <br />
       Please try again later.
+    locked-to-series: >
+      The access policy of this video is determined by its series and can't be edited.
     users-no-options:
       initial-searchable: Type to search for users by name (or enter exact email/username)
       none-found-searchable: No user found

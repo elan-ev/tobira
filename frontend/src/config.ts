@@ -28,6 +28,7 @@ type Config = {
     showDownloadButton: boolean;
     usersSearchable: boolean;
     allowAclEdit: boolean;
+    lockAclToSeries: boolean;
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;

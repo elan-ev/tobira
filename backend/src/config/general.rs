@@ -123,6 +123,11 @@ pub(crate) struct GeneralConfig {
     /// or takes an unusually long time to complete.
     #[config(default = true)]
     pub allow_acl_edit: bool,
+
+    /// Activating this will disable ACL editing for events that are part of a series.
+    /// For the uploader, this means that the ACL of the series will be used.
+    #[config(default = false)]
+    pub lock_acl_to_series: bool,
 }
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];

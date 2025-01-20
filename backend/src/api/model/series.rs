@@ -6,7 +6,11 @@ use crate::{
     api::{
         Context, Id, Node, NodeValue,
         err::{invalid_input, ApiResult},
-        model::{event::AuthorizedEvent, realm::Realm},
+        model::{
+            event::AuthorizedEvent,
+            realm::Realm,
+            acl::{self, Acl},
+        },
     },
     db::{types::{SeriesState as State}, util::impl_from_db},
     model::{Key, ExtraMetadata},
@@ -27,6 +31,8 @@ pub(crate) struct Series {
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
+    pub(crate) read_roles: Vec<String>,
+    pub(crate) write_roles: Vec<String>,
 }
 
 #[derive(GraphQLObject)]
@@ -37,7 +43,11 @@ pub(crate) struct SyncedSeriesData {
 impl_from_db!(
     Series,
     select: {
-        series.{ id, opencast_id, state, title, description, created, metadata },
+        series.{
+            id, opencast_id, state,
+            title, description, created,
+            metadata, read_roles, write_roles,
+        },
     },
     |row| {
         Series {
@@ -46,6 +56,8 @@ impl_from_db!(
             title: row.title(),
             created: row.created(),
             metadata: row.metadata(),
+            read_roles: row.read_roles(),
+            write_roles: row.write_roles(),
             synced_data: (State::Ready == row.state()).then(
                 || SyncedSeriesData {
                     description: row.description(),
@@ -84,6 +96,19 @@ impl Series {
             .await?
             .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
+    }
+
+     async fn load_acl(&self, context: &Context) -> ApiResult<Acl> {
+        let raw_roles_sql = "\
+            select unnest($1::text[]) as role, 'read' as action
+            union
+            select unnest($2::text[]) as role, 'write' as action
+        ";
+
+        acl::load_for(context, raw_roles_sql, dbargs![
+            &self.read_roles,
+            &self.write_roles,
+        ]).await
     }
 
     pub(crate) async fn create(series: NewSeries, context: &Context) -> ApiResult<Self> {
@@ -268,6 +293,10 @@ impl Series {
 
     fn synced_data(&self) -> &Option<SyncedSeriesData> {
         &self.synced_data
+    }
+
+    async fn acl(&self, context: &Context) -> ApiResult<Acl> {
+        self.load_acl(context).await
     }
 
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {

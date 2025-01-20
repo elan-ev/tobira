@@ -115,7 +115,7 @@ user:
   manage-content: Verwalten
 
 login-page:
-  heading: Anmeldung 
+  heading: Anmeldung
   user-id: Nutzerkennung
   password: Passwort
   bad-credentials: 'Anmeldung fehlgeschlagen: Falsche Anmeldedaten.'
@@ -321,6 +321,7 @@ upload:
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
+    failed-fetching-series-acl: Abruf der Serienzugangsberechtigungen fehlgeschlagen.
 
 acl:
   unknown-user-note: unbekannt
@@ -341,6 +342,8 @@ manage:
       Änderung der Berechtigungen ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
       <br />
       Bitte versuchen Sie es später nochmal.
+    locked-to-series: >
+      Die Berechtigungen dieses Videos werden durch seine Serie bestimmt und können daher nicht bearbeitet werden.
     users-no-options:
       initial-searchable: Nach Name suchen oder exakten Nutzernamen/exakte E-Mail angeben
       none-found-searchable: Keine Personen gefunden

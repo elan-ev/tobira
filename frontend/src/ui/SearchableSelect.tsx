@@ -144,7 +144,12 @@ export const VideoListSelector: React.FC<VideoListSelectorProps> = ({
         query SearchableSelectSeriesQuery($q: String!, $writableOnly: Boolean!) {
             series: searchAllSeries(query: $q, writableOnly: $writableOnly) {
                 ... on SeriesSearchResults {
-                    items { id opencastId title description }
+                    items {
+                        id
+                        opencastId
+                        title
+                        description
+                    }
                 }
             }
         }

@@ -137,6 +137,12 @@
 # Default value: true
 #allow_acl_edit = true
 
+# Activating this will disable ACL editing for events that are part of a series.
+# For the uploader, this means that the ACL of the series will be used.
+#
+# Default value: false
+#lock_acl_to_series = false
+
 
 [db]
 # The username of the database user.
