@@ -154,7 +154,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         navEntries.splice(1, 0, {
             url: `/~manage/videos/${id}/access`,
             page: "acl",
-            body: <><LuShieldCheck />{t("manage.my-videos.acl.title")}</>,
+            body: <><LuShieldCheck />{t("manage.shared.acl.title")}</>,
         });
     }
 

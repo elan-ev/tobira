@@ -460,9 +460,6 @@ manage:
           pending: >
             The deletion of this video was requested in Opencast
             and it will be removed from this list upon success.
-
-    acl:
-      title: Access policy
     technical-details:
       title: Technical details
       tracks: Video/audio tracks
@@ -668,6 +665,10 @@ api-remote-errors:
     workflow:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
       active: $t(manage.access.workflow-active)
+  series:
+    acl:
+      not-found: "Access policy update failed: series not found."
+      not-allowed: You are not allowed to update the access policies of this series.
 
 embed:
   not-supported: This page can't be embedded.

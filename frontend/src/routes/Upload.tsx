@@ -848,7 +848,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     marginTop: 32,
                     marginBottom: 12,
                     fontSize: 22,
-                }}>{t("manage.my-videos.acl.title")}</h2>
+                }}>{t("manage.shared.acl.title")}</h2>
                 {boxError(aclError)}
                 {aclLoading && <Spinner size={20} />}
                 {lockedAcl && (

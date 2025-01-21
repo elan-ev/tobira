@@ -447,12 +447,14 @@ manage:
       share-direct-link: Via Direktlink teilen
       copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
     acl:
-      title: Access policy
+      title: Zugriffsrechte
 
   my-series:
     title: Meine Serien
     content: Inhalt
     no-of-videos: '{{count}} Videos'
+    details:
+      title: Seriendetails
 
   my-videos:
     title: Meine Videos
@@ -477,9 +479,6 @@ manage:
           pending: >
             Der Löschvorgang dieses Videos in Opencast wurde angesetzt und es wird
             nach dessen Erfolg hier entfernt.
-
-    acl:
-      title: Zugriffsrechte
     technical-details:
       title: Technische Details
       tracks: Video-/Audiospuren
@@ -690,6 +689,10 @@ api-remote-errors:
     workflow:
       not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
       active: $t(manage.access.workflow-active)
+  series:
+    acl:
+      not-found: "Zugriffsrechte konnten nicht geändert werden: Serie nicht gefunden."
+      not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieser Serie zu ändern.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.

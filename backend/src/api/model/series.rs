@@ -1,26 +1,27 @@
 use chrono::{DateTime, Utc};
+use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use postgres_types::ToSql;
 
 use crate::{
     api::{
-        Context, Id, Node, NodeValue,
-        err::{invalid_input, ApiResult},
-        model::{
+        err::{self, invalid_input, ApiError, ApiResult}, model::{
+            acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            acl::{self, Acl},
-            shared::{ToSqlColumn, SortDirection}
-        },
-        util::LazyLoad,
+            shared::{convert_acl_input, SortDirection, ToSqlColumn},
+        }, util::LazyLoad, Context, Id, Node, NodeValue
     },
     db::{
         types::SeriesState as State,
         util::{impl_from_db, select},
     },
-    model::{Key, ExtraMetadata, SeriesThumbnailStack, ThumbnailInfo, SearchThumbnailInfo},
+    model::{ExtraMetadata, Key, SearchThumbnailInfo, SeriesThumbnailStack, ThumbnailInfo},
     prelude::*,
+    sync::client::{AclInput, OpencastItem},
 };
+
+use self::acl::AclInputEntry;
 
 use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
@@ -120,6 +121,23 @@ impl Series {
             .await?
             .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
+    }
+
+    async fn load_for_api(
+        id: Id,
+        context: &Context,
+        not_found_error: ApiError,
+        not_authorized_error: ApiError,
+    ) -> ApiResult<Series> {
+        let series = Self::load_by_id(id, context)
+            .await?
+            .ok_or_else(|| not_found_error)?;
+
+        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[])) {
+            return Err(not_authorized_error);
+        }
+
+        Ok(series)
     }
 
     async fn load_acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
@@ -327,6 +345,60 @@ impl Series {
             out
         }).await
     }
+
+    pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+        if !context.config.general.allow_acl_edit {
+            return Err(err::not_authorized!("editing ACLs is not allowed"));
+        }
+
+        info!(series_id = %id, "Requesting ACL update of series");
+        let series = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "series.acl.not-found",
+                "series not found",
+            ),
+            err::not_authorized!(
+                key = "series.acl.not-allowed",
+                "ACL update not allowed",
+            )
+        ).await?;
+
+        let response = context
+            .oc_client
+            .update_acl(&series, &acl, context)
+            .await
+            .map_err(|e| {
+                error!("Failed to send ACL update request: {}", e);
+                err::opencast_unavailable!("Failed to send ACL update request")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: The updated access control list is returned.
+            let db_acl = convert_acl_input(acl);
+
+            context.db.execute("\
+                update all_series \
+                set read_roles = $2, write_roles = $3 \
+                where id = $1 \
+            ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "series.acl.not-found",
+                    "series not found",
+                ))
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to update series ACL, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
 }
 
 /// Represents an Opencast series.
@@ -414,6 +486,20 @@ impl Series {
 impl Node for Series {
     fn id(&self) -> Id {
         Id::series(self.key)
+    }
+}
+
+impl OpencastItem for Series {
+    fn endpoint_path(&self) -> &'static str {
+        "series"
+    }
+    fn id(&self) -> &str {
+        &self.opencast_id
+    }
+
+    async fn extra_roles(&self, _context: &Context, _oc_id: &str) -> Result<Vec<AclInput>> {
+        // Series do not have custom or preview roles.
+        Ok(vec![])
     }
 }
 
