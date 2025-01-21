@@ -1,24 +1,28 @@
 use chrono::{DateTime, Utc};
+use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLObject, GraphQLInputObject};
 use postgres_types::ToSql;
 
 use crate::{
     api::{
         Context, Id, Node, NodeValue,
-        err::{invalid_input, ApiResult},
+        err::{self, invalid_input, ApiResult},
         model::{
+            acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            acl::{self, Acl},
+            shared::convert_acl_input
         },
     },
     db::{
         types::SeriesState as State,
         util::{impl_from_db, select},
     },
-    model::{Key, ExtraMetadata},
-    prelude::*,
+    model::{ExtraMetadata, Key},
+    prelude::*, sync::client::{AclInput, OcEndpoint},
 };
+
+use self::acl::AclInputEntry;
 
 use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
@@ -302,6 +306,60 @@ impl Series {
 
         Ok(SeriesConnection { inner: conn })
     }
+
+    pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+        if !context.config.general.allow_acl_edit {
+            return Err(err::not_authorized!("editing ACLs is not allowed"));
+        }
+
+        let series = Self::load_by_id(id, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))?;
+
+        info!(series_id = %id, "Requesting ACL update of series");
+
+        let response = context
+            .oc_client
+            .update_acl(&series, &series.opencast_id, &acl, context)
+            .await
+            .map_err(|e| {
+                error!("Failed to send acl update request: {}", e);
+                err::opencast_unavailable!("Failed to send acl update request")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: The updated access control list is returned.
+            let db_acl = convert_acl_input(acl);
+
+            context.db.execute("\
+                update series \
+                set read_roles = $2, write_roles = $3 \
+                where id = $1 \
+            ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+
+            if context.config.general.lock_acl_to_series {
+                context.db.execute("\
+                    update events \
+                    set read_roles = $2, write_roles = $3 \
+                    where series = $1 \
+                ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+            }
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "series.acl.not-found",
+                    "series not found",
+                ))
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to update series acl, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
 }
 
 /// Represents an Opencast series.
@@ -381,6 +439,17 @@ impl Series {
 impl Node for Series {
     fn id(&self) -> Id {
         Id::series(self.key)
+    }
+}
+
+impl OcEndpoint for Series {
+    fn endpoint_name(&self) -> &'static str {
+        "series"
+    }
+
+    async fn extra_roles(&self, _context: &Context, _oc_id: &str) -> Result<Vec<AclInput>> {
+        // Series do not have custom or preview roles.
+        Ok(vec![])
     }
 }
 
