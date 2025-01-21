@@ -17,6 +17,7 @@ embed-in-debug = ["reinda/always-prod"]
 
 
 [dependencies]
+ahash = "0.8"
 anyhow = { version = "1.0.71", features = ["backtrace"] }
 base64 = "0.22.1"
 bincode = "1.3.3"

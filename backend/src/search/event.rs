@@ -18,7 +18,11 @@ use crate::{
     util::{base64_decode, BASE64_DIGITS},
 };
 
-use super::{realm::Realm, util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
+use super::{
+    realm::Realm,
+    util::{self, is_stop_word, FieldAbilities},
+    IndexItem, IndexItemKind, SearchId,
+};
 
 
 
@@ -363,6 +367,18 @@ impl TextSearchIndex {
             // anywhere in the query would result in tons of matches
             // otherwise.
             if match_range.length <= 1 {
+                continue;
+            }
+
+            // Get correct indices and the actual text snippet. Unfortunately,
+            // Meilisearch might sometimes return invalid indices that slice
+            // UTF-8 codepoints in half, so we need to protect against that.
+            let start = ceil_char_boundary(&self.texts, match_range.start);
+            let end = ceil_char_boundary(&self.texts, match_range.start + match_range.length);
+            let snippet = &self.texts[start..end];
+
+            // If the match is a single stop word, we ignore it.
+            if is_stop_word(snippet) {
                 continue;
             }
 
