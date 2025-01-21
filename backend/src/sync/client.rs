@@ -151,37 +151,19 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
-    pub async fn update_event_acl(
+    pub async fn update_acl<T: OcEndpoint>(
         &self,
-        oc_id: &str,
+        endpoint: &T,
         acl: &[AclInputEntry],
         context: &Context,
     ) -> Result<Response<Incoming>> {
-        let pq = format!("/api/events/{oc_id}/acl");
+        let oc_id = endpoint.opencast_id();
+        let pq = format!("/api/{}/{oc_id}/acl", endpoint.endpoint_name());
+        let mut access_policy = Vec::new();
 
         // Temporary solution to add custom and preview roles
         // Todo: remove again once frontend sends these roles.
-        let extra_roles_sql = "\
-            select unnest(preview_roles) as role, 'preview' as action from events where opencast_id = $1
-            union
-            select role, key as action
-            from jsonb_each_text(
-                (select custom_action_roles from events where opencast_id = $1)
-            ) as actions(key, value)
-            cross join lateral jsonb_array_elements_text(value::jsonb) as role(role)
-        ";
-
-        let extra_roles = context.db.query_mapped(&extra_roles_sql, dbargs![&oc_id], |row| {
-            let role: String = row.get("role");
-            let action: String = row.get("action");
-            AclInput {
-                allow: true,
-                action,
-                role,
-            }
-        }).await?;
-
-        let mut access_policy = Vec::new();
+        let extra_roles = endpoint.extra_roles(context, oc_id).await?;
         access_policy.extend(extra_roles);
 
         for entry in acl {
@@ -298,13 +280,19 @@ pub struct ExternalApiVersions {
 }
 
 #[derive(Debug, Serialize)]
-struct AclInput {
-    allow: bool,
-    action: String,
-    role: String,
+pub(crate) struct AclInput {
+    pub allow: bool,
+    pub action: String,
+    pub role: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct EventStatus {
     pub processing_state: String,
+}
+
+pub(crate) trait OcEndpoint {
+    fn endpoint_name(&self) -> &'static str;
+    fn opencast_id(&self) -> &str;
+    async fn extra_roles(&self, context: &Context, oc_id: &str) -> Result<Vec<AclInput>>;
 }
