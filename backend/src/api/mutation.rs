@@ -79,6 +79,14 @@ impl Mutation {
         AuthorizedEvent::update_acl(id, acl, context).await
     }
 
+    /// Updates the acl of a given series by sending the changes to Opencast.
+    /// The `acl` parameter can include `read` and `write` roles.
+    /// If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
+    /// this means it might get overwritten again if the update in Opencast failed for some reason.
+    async fn update_series_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+        Series::update_acl(id, acl, context).await
+    }
+
     /// Sets the order of all children of a specific realm.
     ///
     /// `childIndices` must contain at least one element, i.e. do not call this
