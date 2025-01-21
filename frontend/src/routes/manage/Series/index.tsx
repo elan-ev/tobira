@@ -121,7 +121,6 @@ export const seriesColumns: ColumnProps[] = [
 
 
 export const SeriesRow: React.FC<{ series: SingleSeries }> = ({ series }) => {
-    // Todo: change to "series details" route when available
     const link = `${PATH}/${keyOfId(series.id)}`;
 
     return (

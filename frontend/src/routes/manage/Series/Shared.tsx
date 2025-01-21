@@ -78,6 +78,7 @@ const query = graphql`
             title
             created
             updated
+            acl { role actions info { label implies large } }
             syncedData { description }
             entries {
                 __typename
