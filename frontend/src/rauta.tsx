@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useTransition } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { bug } from "@opencast/appkit";
 
 
@@ -380,7 +380,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         // `StrictMode` work, as with that, this component might be unmounted
         // for reasons other than a route change.
         const navigatedAway = useRef(false);
-        const setActiveRoute = (newRoute: ActiveRoute) => {
+        const setActiveRoute = useCallback((newRoute: ActiveRoute) => {
             navigatedAway.current = true;
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
@@ -389,7 +389,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
                     newRoute: newRoute.route.route,
                 }]);
             });
-        };
+        }, [navigatedAway, setActiveRouteRaw, listeners]);
 
         // Register some event listeners and set global values.
         useEffect(() => {
@@ -482,11 +482,11 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             }
         }, [activeRoute, navigatedAway]);
 
-        const contextData = {
+        const contextData = useMemo(() => ({
             setActiveRoute,
             activeRoute,
             listeners: listeners.current,
-        };
+        }), [activeRoute, setActiveRoute, listeners]);
 
         return <Context.Provider value={contextData}>
             <StateContext.Provider value={{ isTransitioning: isPending }}>
