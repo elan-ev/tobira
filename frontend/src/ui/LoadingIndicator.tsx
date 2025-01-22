@@ -2,14 +2,14 @@ import { useRef } from "react";
 import { Transition } from "react-transition-group";
 import { match } from "@opencast/appkit";
 
-import { useRouter } from "../router";
 import { isSearchActive } from "../routes/Search";
+import { useRouterState } from "../router";
 import { COLORS } from "../color";
 
 
 /** A thin colored line at the top of the page indicating a page load */
 export const LoadingIndicator: React.FC = () => {
-    const router = useRouter();
+    const { isTransitioning } = useRouterState();
     const ref = useRef<HTMLDivElement>(null);
 
     // If search is active, there is a loading indicator next to the search input.
@@ -21,7 +21,7 @@ export const LoadingIndicator: React.FC = () => {
     const EXIT_DURATION = 150;
 
     // TODO: maybe disable this for `prefers-reduced-motion: reduce`
-    return <Transition nodeRef={ref} in={router.isTransitioning} timeout={EXIT_DURATION}>{state => (
+    return <Transition nodeRef={ref} in={isTransitioning} timeout={EXIT_DURATION}>{state => (
         <div ref={ref} css={{
             position: "fixed",
             zIndex: 2000,

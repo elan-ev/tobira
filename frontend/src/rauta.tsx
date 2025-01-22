@@ -81,6 +81,9 @@ export type RouterLib = {
     /** Hook to obtain a reference to the router. */
     useRouter: () => RouterControl;
 
+    /** Hook to obtain the router state. */
+    useRouterState: () => RouterState;
+
     /**
      * An internal link, using the defined routes. Should be used instead of
      * `<a>`. Has to be mounted below a `<Router>`!
@@ -178,16 +181,18 @@ export interface RouterControl {
     listenBeforeNav(listener: BeforeNavListener): () => void;
 
     /**
-     * Indicates whether we are currently transitioning to a new route. Intended
-     * to show a loading indicator.
-     */
-    isTransitioning: boolean;
-
-    /**
      * Indicates whether a user navigated to the current route from outside Tobira.
      */
     internalOrigin: boolean;
 }
+
+export type RouterState = {
+    /**
+     * Indicates whether we are currently transitioning to a new route. Intended
+     * to show a loading indicator.
+     */
+    isTransitioning: boolean;
+};
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     // Helper to log debug messages if `config.debug` is true.
@@ -254,7 +259,6 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         }
 
         return {
-            isTransitioning: context.isTransitioning,
             push,
             replace,
             listenAtNav: (listener: AtNavListener) =>
@@ -340,12 +344,24 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             atNav: Listeners<AtNavListener>;
             beforeNav: Listeners<BeforeNavListener>;
         };
-        isTransitioning: boolean;
     };
 
     const Context = React.createContext<ContextData | null>(null);
 
+    type StateContextData = {
+        isTransitioning: boolean;
+    };
+    const StateContext = React.createContext<StateContextData | null>(null);
+
     const useRouter = (): RouterControl => useRouterImpl("`useRouter`");
+    const useRouterState = (): RouterState => {
+        const context = React.useContext(StateContext);
+        if (context === null) {
+            return bug("useRouterState used without a parent <Router>! That's not allowed.");
+        }
+
+        return context;
+    };
 
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
     const Router = ({ initialRoute, children }: RouterProps) => {
@@ -470,10 +486,13 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             setActiveRoute,
             activeRoute,
             listeners: listeners.current,
-            isTransitioning: isPending,
         };
 
-        return <Context.Provider value={contextData}>{children}</Context.Provider>;
+        return <Context.Provider value={contextData}>
+            <StateContext.Provider value={{ isTransitioning: isPending }}>
+                {children}
+            </StateContext.Provider>
+        </Context.Provider>;
     };
 
     const ActiveRoute = () => {
@@ -498,6 +517,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         matchRoute,
         matchInitialRoute,
         useRouter,
+        useRouterState,
         ActiveRoute,
         Router,
     };
