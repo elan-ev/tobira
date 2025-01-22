@@ -1,4 +1,4 @@
-import React, { ReactNode, StrictMode } from "react";
+import React, { ReactNode, StrictMode, Suspense } from "react";
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
@@ -19,6 +19,7 @@ import {
 } from "@opencast/appkit";
 import { COLORS } from "./color";
 import { InitialConsent } from "./ui/InitialConsent";
+import { InitialLoading } from "./layout/Root";
 
 
 type Props = {
@@ -39,7 +40,9 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
                                     <MenuProvider>
                                         <LoadingIndicator />
                                         <InitialConsent {...{ consentGiven }} />
-                                        <ActiveRoute />
+                                        <Suspense fallback={<InitialLoading />}>
+                                            <ActiveRoute />
+                                        </Suspense>
                                     </MenuProvider>
                                 </GraphQLErrorBoundary>
                             </Router>

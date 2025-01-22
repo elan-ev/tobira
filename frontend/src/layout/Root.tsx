@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense, useEffect, useRef } from "react";
+import React, { ReactNode, useEffect, useRef } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 import { screenWidthAtMost } from "@opencast/appkit";
@@ -130,13 +130,7 @@ type RootLoaderProps<Q extends QueryWithUserData> = {
 };
 
 /** Entry point for almost all routes: loads the GraphQL query and renders the main page layout */
-export const RootLoader = <Q extends QueryWithUserData>(props: RootLoaderProps<Q>) => (
-    <Suspense fallback={<InitialLoading />}>
-        <RootLoaderImpl {...props} />
-    </Suspense>
-);
-
-export const RootLoaderImpl = <Q extends QueryWithUserData>({
+export const RootLoader = <Q extends QueryWithUserData>({
     query,
     queryRef,
     nav,

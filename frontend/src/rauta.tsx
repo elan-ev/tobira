@@ -509,7 +509,8 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             }
         }, [context.activeRoute]);
 
-        return context.activeRoute.route.matchedRoute.render();
+        // Rendered via JSX, as just calling `render()` causes unnecessary rerenders
+        return <context.activeRoute.route.matchedRoute.render />;
     };
 
     return {
