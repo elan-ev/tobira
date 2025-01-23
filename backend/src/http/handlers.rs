@@ -377,16 +377,19 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
 
     // Create an appropriate HTTP response.
     let body = serde_json::to_string(&gql_response).unwrap();
+    let duration = before.elapsed();
     let out = Response::builder()
         .status(if gql_response.is_ok() { StatusCode::OK } else { StatusCode::BAD_REQUEST })
         .header(header::CONTENT_TYPE, "application/json")
+        .header("x-tobira-num-queries", num_queries.to_string())
+        .header("x-tobira-duration", duration.as_millis().to_string())
         .body(body.into())
         .unwrap();
 
     trace!(
         "Finished /graphql query with {} SQL queries in {:.2?} (user: {})",
         num_queries,
-        before.elapsed(),
+        duration,
         username,
     );
 
