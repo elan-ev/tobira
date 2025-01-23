@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useRef } from "react";
+import React, { ReactNode, useEffect, useMemo, useRef } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 import { screenWidthAtMost } from "@opencast/appkit";
@@ -153,11 +153,19 @@ export const RootLoader = <Q extends QueryWithUserData>({
         return undefined;
     }));
 
+    // Unfortunately, `<ActiveRoute />` and `<RootLoader />` are still rendered
+    // more than they need to on router navigation. I could not figure out how
+    // to fix that. So here, we at least memoize the rendering of the whole
+    // page, so that we don't rerun expensive rendering.
+    const content = useMemo(() => (
+        <Root nav={nav(data)}>
+            <React.Fragment key={counter.current}>{render(data)}</React.Fragment>
+        </Root>
+    ), [render, nav, data]);
+
     return (
         <UserProvider data={userData?.currentUser}>
-            <Root nav={nav(data)}>
-                <React.Fragment key={counter.current}>{render(data)}</React.Fragment>
-            </Root>
+            {content}
         </UserProvider>
     );
 };
