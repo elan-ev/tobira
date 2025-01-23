@@ -759,7 +759,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         }],
     ]);
 
-    const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
+    const { register, handleSubmit, control, formState: { isValid, errors } } = useForm<Metadata>({
         mode: "onChange",
         defaultValues: { acl: defaultAcl },
     });
@@ -880,7 +880,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
             {/* Submit button */}
             <Button
                 kind="call-to-action"
-                disabled={disabled}
+                disabled={!isValid || disabled}
                 css={{ marginTop: 32, marginBottom: 160 }}
                 onClick={onSubmit}>
                 {t("upload.metadata.save")}
