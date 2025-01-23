@@ -174,6 +174,7 @@ const query = graphql`
                             title { start len }
                             description { start len }
                             seriesTitle { start len }
+                            creators { index span { start len }}
                         }
                     }
                     ... on SearchSeries {
@@ -528,6 +529,11 @@ const SearchEvent: React.FC<EventItem> = ({
         ? DirectVideoRoute.url({ videoId: id })
         : VideoRoute.url({ realmPath: hostRealms[0].path, videoID: id });
 
+    const highlightedCreators = creators.map((c, i) => {
+        const relevantMatches = matches.creators.filter(m => m.index === i).map(m => m.span);
+        return <>{highlightText(c, relevantMatches)}</>;
+    });
+
     return (
         <Item key={id} breakpoint={BREAKPOINT_MEDIUM} link={link}>{{
             image: <Link to={link} tabIndex={-1}>
@@ -575,7 +581,7 @@ const SearchEvent: React.FC<EventItem> = ({
                         <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
                         <RelativeDate date={new Date(startTime ?? created)} isLive={isLive} />
                     </div>
-                    <Creators creators={creators} css={{
+                    <Creators creators={highlightedCreators} css={{
                         minWidth: 0,
                         fontSize: 12,
                         svg: {
@@ -590,6 +596,7 @@ const SearchEvent: React.FC<EventItem> = ({
                         li: {
                             display: "inline",
                         },
+                        mark: highlightCss(COLORS.neutral90),
                     }} />
                 </div>
 

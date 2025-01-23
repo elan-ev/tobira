@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
-use meilisearch_sdk::search::SearchResult;
+use meilisearch_sdk::search::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
@@ -39,7 +41,13 @@ pub struct SearchEventMatches {
     title: Vec<ByteSpan>,
     description: Vec<ByteSpan>,
     series_title: Vec<ByteSpan>,
-    // TODO: creators
+    creators: Vec<ArrayMatch>,
+}
+
+#[derive(Debug, GraphQLObject)]
+pub struct ArrayMatch {
+    index: i32,
+    span: ByteSpan,
 }
 
 /// A match inside an event's texts while searching.
@@ -75,10 +83,11 @@ impl SearchEvent {
         Self::new_inner(src, vec![], SearchEventMatches::default(), user_can_read)
     }
 
-    pub(crate) fn new(hit: SearchResult<search::Event>, context: &Context) -> Self {
-        let match_positions = hit.matches_position.as_ref();
-        let src = hit.result;
-
+    pub(crate) fn new(
+        src: search::Event,
+        match_positions: Option<&HashMap<String, Vec<MatchRange>>>,
+        context: &Context,
+    ) -> Self {
         let mut text_matches = Vec::new();
         let read_roles = decode_acl(&src.read_roles);
         let user_can_read = context.auth.overlaps_roles(read_roles);
@@ -99,6 +108,16 @@ impl SearchEvent {
             title: field_matches_for(match_positions, "title"),
             description: field_matches_for(match_positions, "description"),
             series_title: field_matches_for(match_positions, "series_title"),
+            creators: match_ranges_for(match_positions, "creators")
+                .iter()
+                .filter_map(|m| {
+                    m.indices.as_ref().and_then(|v| v.get(0)).map(|index| ArrayMatch {
+                        span: ByteSpan { start: m.start as i32, len: m.length as i32 },
+                        index: *index as i32,
+                    })
+                })
+                .take(8)
+                .collect(),
         };
 
         Self::new_inner(src, text_matches, matches, user_can_read)

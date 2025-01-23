@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use juniper::GraphQLObject;
-use meilisearch_sdk::search::SearchResult;
+use meilisearch_sdk::search::MatchRange;
 
 use crate::{
     api::{Context, Node, Id, NodeValue},
@@ -36,12 +38,14 @@ impl SearchRealm {
         Self::new_inner(src, SearchRealmMatches::default())
     }
 
-    pub(crate) fn new(hit: SearchResult<search::Realm>) -> Self {
-        let match_positions = hit.matches_position.as_ref();
+    pub(crate) fn new(
+        src: search::Realm,
+        match_positions: Option<&HashMap<String, Vec<MatchRange>>>,
+    ) -> Self {
         let matches = SearchRealmMatches {
             name: field_matches_for(match_positions, "name"),
         };
-        Self::new_inner(hit.result, matches)
+        Self::new_inner(src, matches)
     }
 
     fn new_inner(src: search::Realm, matches: SearchRealmMatches) -> Self {

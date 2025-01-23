@@ -1,0 +1,61 @@
+[package]
+name = "meilisearch-sdk"
+version = "0.27.1"
+authors = ["Mubelotix <mubelotix@gmail.com>"]
+edition = "2018"
+description = "Rust wrapper for the Meilisearch API. Meilisearch is a powerful, fast, open-source, easy to use and deploy search engine."
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/meilisearch/meilisearch-sdk"
+resolver = "2"
+
+[workspace]
+members = ["examples/*"]
+
+[dependencies]
+async-trait = "0.1.51"
+iso8601 = "0.6.1"
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+time = { version = "0.3.7", features = ["serde-well-known", "formatting", "parsing"] }
+yaup = "0.3.1"
+either = { version = "1.8.0", features = ["serde"] }
+thiserror = "1.0.37"
+meilisearch-index-setting-macro = { path = "meilisearch-index-setting-macro", version = "0.27.1" }
+pin-project-lite = { version = "0.2.13", optional = true }
+reqwest = { version = "0.12.3", optional = true, default-features = false, features = ["rustls-tls", "http2", "stream"] }
+bytes = { version = "1.6", optional = true }
+uuid = { version = "1.1.2", features = ["v4"] }
+futures-io = "0.3.30"
+futures = "0.3"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+jsonwebtoken = { version = "9", default-features = false }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+uuid = { version = "1.8.0", default-features = false, features = ["v4", "js"] }
+web-sys = "0.3"
+wasm-bindgen-futures = "0.4"
+
+[features]
+default = ["reqwest"]
+reqwest = ["dep:reqwest", "pin-project-lite", "bytes"]
+futures-unsend = []
+
+[dev-dependencies]
+futures-await-test = "0.3"
+futures = "0.3"
+mockito = "1.0.0"
+meilisearch-test-macro = { path = "meilisearch-test-macro" }
+tokio = { version = "1", features = ["rt", "macros"] }
+
+# The following dependencies are required for examples
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+yew = "0.21"
+lazy_static = "1.4"
+web-sys = "0.3"
+console_error_panic_hook = "0.1"
+big_s = "1.0.2"
+insta = "1.38.0"
