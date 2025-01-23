@@ -89,7 +89,6 @@ const Upload: React.FC<Props> = ({ knownRolesRef }) => {
 
     return (
         <div css={{
-            margin: "0 auto",
             height: "100%",
             display: "flex",
             flexDirection: "column",
@@ -232,8 +231,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
                 alignItems: "stretch",
                 gap: 32,
                 width: "100%",
-                maxWidth: 800,
-                margin: "0 auto",
+                maxWidth: 900,
             }}>
                 <UploadState state={uploadState.current} />
                 <div>
@@ -353,7 +351,7 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
 
 
     return (
-        <div css={{ margin: "0 auto" }}>
+        <div css={{ maxWidth: 750 }}>
             <Card kind="error">
                 <ErrorDisplay info={info} failedAction={t("upload.errors.failed-to-upload")} />
             </Card>
@@ -806,41 +804,43 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                 {boxError(errors.title?.message)}
             </InputContainer>
 
-            {/* Description */}
-            <InputContainer>
-                <label htmlFor={descriptionFieldId}>{t("upload.metadata.description")}</label>
-                <TextArea id={descriptionFieldId} {...register("description")} />
-            </InputContainer>
+            <div css={{ maxWidth: 750 }}>
+                {/* Description */}
+                <InputContainer>
+                    <label htmlFor={descriptionFieldId}>{t("upload.metadata.description")}</label>
+                    <TextArea id={descriptionFieldId} {...register("description")} />
+                </InputContainer>
 
-            {/* Series */}
-            <InputContainer>
-                <label htmlFor={seriesFieldId}>
-                    {t("series.series")}
-                    {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
-                    <WithTooltip
-                        tooltip={t("upload.metadata.note-writable-series")}
-                        tooltipCss={{ width: 400 }}
-                        css={{
-                            display: "inline-block",
-                            verticalAlign: "middle",
-                            fontWeight: "normal",
-                            marginLeft: 8,
-                        }}
-                    >
-                        <span><LuInfo tabIndex={0} /></span>
-                    </WithTooltip>
-                </label>
-                <VideoListSelector
-                    type="series"
-                    inputId={seriesFieldId}
-                    writableOnly
-                    menuPlacement="top"
-                    onChange={data => onSeriesChange({ opencastId: data?.opencastId })}
-                    onBlur={seriesField.onBlur}
-                    required={CONFIG.upload.requireSeries}
-                />
-                {boxError(errors.series?.message)}
-            </InputContainer>
+                {/* Series */}
+                <InputContainer>
+                    <label htmlFor={seriesFieldId}>
+                        {t("series.series")}
+                        {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
+                        <WithTooltip
+                            tooltip={t("upload.metadata.note-writable-series")}
+                            tooltipCss={{ width: 400 }}
+                            css={{
+                                display: "inline-block",
+                                verticalAlign: "middle",
+                                fontWeight: "normal",
+                                marginLeft: 8,
+                            }}
+                        >
+                            <span><LuInfo tabIndex={0} /></span>
+                        </WithTooltip>
+                    </label>
+                    <VideoListSelector
+                        type="series"
+                        inputId={seriesFieldId}
+                        writableOnly
+                        menuPlacement="top"
+                        onChange={data => onSeriesChange({ opencastId: data?.opencastId })}
+                        onBlur={seriesField.onBlur}
+                        required={CONFIG.upload.requireSeries}
+                    />
+                    {boxError(errors.series?.message)}
+                </InputContainer>
+            </div>
 
             {/* ACL */}
             <InputContainer>
