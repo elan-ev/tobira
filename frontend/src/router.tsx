@@ -39,6 +39,7 @@ const {
     matchRoute,
     Router,
     useRouter,
+    useRouterState,
 } = makeRouter({
     fallback: NotFoundRoute,
     routes: [
@@ -72,7 +73,7 @@ const {
     ],
 });
 
-export { ActiveRoute, Link, matchInitialRoute, matchRoute, Router, useRouter };
+export { ActiveRoute, Link, matchInitialRoute, matchRoute, Router, useRouter, useRouterState };
 
 type LinkProps = {
     to: string;

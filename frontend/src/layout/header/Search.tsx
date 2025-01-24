@@ -4,7 +4,7 @@ import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
 import { LuX } from "react-icons/lu";
 
-import { useRouter } from "../../router";
+import { useRouter, useRouterState } from "../../router";
 import {
     handleCancelSearch,
     SearchRoute,
@@ -27,6 +27,7 @@ type SearchFieldProps = {
 export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const { isTransitioning } = useRouterState();
     const ref = useRef<HTMLInputElement>(null);
 
     // If the user is unknown, then we are still in the initial loading phase.
@@ -177,11 +178,11 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     />
                 </label>
             </form>
-            {router.isTransitioning && isSearchActive() && <Spinner
+            {isTransitioning && isSearchActive() && <Spinner
                 size={spinnerSize}
                 css={iconStyle}
             />}
-            {!router.isTransitioning && isSearchActive() && <ProtoButton
+            {!isTransitioning && isSearchActive() && <ProtoButton
                 onClick={() => handleCancelSearch(router, ref)}
                 css={{
                     ":hover, :focus": {
