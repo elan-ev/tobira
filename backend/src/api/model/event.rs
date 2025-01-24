@@ -335,8 +335,8 @@ impl AuthorizedEvent {
                     synced_data: None,
                     created: None,
                     metadata: None,
-                    read_roles: vec![],
-                    write_roles: vec![],
+                    read_roles: None,
+                    write_roles: None,
                 }))
             } else {
                 // We need to load the series as fields were requested that were not preloaded.

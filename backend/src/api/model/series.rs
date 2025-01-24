@@ -12,7 +12,7 @@ use crate::{
             acl::{self, Acl},
         },
     },
-    db::{types::{SeriesState as State}, util::impl_from_db},
+    db::{types::SeriesState as State, util::impl_from_db},
     model::{Key, ExtraMetadata},
     prelude::*,
 };
@@ -31,8 +31,8 @@ pub(crate) struct Series {
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
-    pub(crate) read_roles: Vec<String>,
-    pub(crate) write_roles: Vec<String>,
+    pub(crate) read_roles: Option<Vec<String>>,
+    pub(crate) write_roles: Option<Vec<String>>,
 }
 
 #[derive(GraphQLObject)]
@@ -98,17 +98,21 @@ impl Series {
             .pipe(Ok)
     }
 
-     async fn load_acl(&self, context: &Context) -> ApiResult<Acl> {
-        let raw_roles_sql = "\
-            select unnest($1::text[]) as role, 'read' as action
-            union
-            select unnest($2::text[]) as role, 'write' as action
-        ";
+    async fn load_acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
+        match (self.read_roles.as_ref(), self.write_roles.as_ref()) {
+            (None, None) => Ok(None),
+            (read_roles, write_roles) => {
+                let raw_roles_sql = "\
+                    select unnest($1::text[]) as role, 'read' as action
+                    union
+                    select unnest($2::text[]) as role, 'write' as action
+                ";
 
-        acl::load_for(context, raw_roles_sql, dbargs![
-            &self.read_roles,
-            &self.write_roles,
-        ]).await
+                acl::load_for(context, raw_roles_sql, dbargs![&read_roles, &write_roles])
+                    .await
+                    .map(Some)
+            }
+        }
     }
 
     pub(crate) async fn create(series: NewSeries, context: &Context) -> ApiResult<Self> {
@@ -295,7 +299,7 @@ impl Series {
         &self.synced_data
     }
 
-    async fn acl(&self, context: &Context) -> ApiResult<Acl> {
+    async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
         self.load_acl(context).await
     }
 
