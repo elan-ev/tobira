@@ -419,6 +419,7 @@ manage:
       descending: descending
       title: Title
       created: Created
+      updated: Updated
     no-entries-found: No entries found.
     missing-date: Unknown
 

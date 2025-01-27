@@ -438,6 +438,7 @@ manage:
       descending: absteigend
       title: Titel
       created: Erstellt
+      updated: Aktualisiert
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
 

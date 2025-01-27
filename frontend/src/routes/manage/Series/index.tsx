@@ -10,8 +10,8 @@ import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import {
     ColumnProps,
-    CreatedColumn,
     createQueryParamsParser,
+    DateColumn,
     descriptionStyle,
     ManageAssets,
     TableRow,
@@ -79,6 +79,7 @@ const query = graphql`
                     id
                     title
                     created
+                    updated
                     syncedData { description }
                     entries {
                         __typename
@@ -107,9 +108,14 @@ export const seriesColumns: ColumnProps[] = [
         </td>,
     },
     {
+        key: "UPDATED",
+        label: "manage.asset-table.columns.updated",
+        column: series => "updated" in series && <DateColumn date={series.updated ?? undefined} />,
+    },
+    {
         key: "CREATED",
         label: "manage.asset-table.columns.created",
-        column: series => <CreatedColumn created={series.created ?? undefined} />,
+        column: series => <DateColumn date={series.created ?? undefined} />,
     },
 ];
 

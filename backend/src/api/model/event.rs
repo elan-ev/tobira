@@ -342,6 +342,7 @@ impl AuthorizedEvent {
                     title: series.title.clone(),
                     synced_data: None,
                     created: None,
+                    updated: None,
                     metadata: None,
                     read_roles: None,
                     write_roles: None,
