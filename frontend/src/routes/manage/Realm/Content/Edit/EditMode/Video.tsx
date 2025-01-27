@@ -199,7 +199,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
 };
 
 const formatOption = (event: Option, t: TFunction) => (
-    <div css={{ display: "flex", gap: 16, padding: "4px 0" }}>
+    <div key={event.id} css={{ display: "flex", gap: 16, padding: "4px 0" }}>
         {event.syncedData === null
             ? <MovingTruck />
             : <Thumbnail
