@@ -9,7 +9,16 @@ import {
     LuX,
 } from "react-icons/lu";
 import { LetterText } from "lucide-react";
-import { ReactNode, RefObject, startTransition, Suspense, useEffect, useRef, useState } from "react";
+import {
+    ReactNode,
+    RefObject,
+    startTransition,
+    Suspense,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import {
     Button,
     Card,
@@ -687,11 +696,19 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
     const sortedMatches = doRender ? [...textMatches] : [];
     sortedMatches.sort((a, b) => a.start - b.start);
 
+    const loadSegmentImages = useCallback(() => {
+        // Just calling `loadQuery` unconditionally would not send the query
+        // again, but would cause a useless rerender.
+        if (queryRef == null) {
+            loadQuery({ id: eventId(keyOfId(id)) });
+        }
+    }, [queryRef, loadQuery, id]);
+
     // We load the query once the user hovers over the parent container. This
     // seems like it would send a query every time the mouse enters, but relay
     // caches the results, so it is only sent once.
     return (
-        <div ref={ref} onMouseEnter={() => { loadQuery({ id: eventId(keyOfId(id)) }); }} css={{
+        <div ref={ref} onMouseEnter={loadSegmentImages} css={{
             width: "calc(100% - 8px)",
             position: "relative",
             height: 10.5,
