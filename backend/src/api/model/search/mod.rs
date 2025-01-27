@@ -322,6 +322,8 @@ pub(crate) async fn all_events(
     query.with_query(user_query);
     query.with_limit(50);
     query.with_show_matches_position(true);
+    // We don't want to search through, nor retrieve the event texts.
+    query.with_attributes_to_search_on(&["title", "creators", "series_title"]);
     query.with_filter(&filter);
     if user_query.is_empty() {
         query.with_sort(&["updated_timestamp:desc"]);
