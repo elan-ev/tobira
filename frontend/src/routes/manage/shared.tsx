@@ -246,19 +246,19 @@ export const descriptionStyle = {
 } as const;
 
 // Used for both `EventRow` and `SeriesRow`.
-export const CreatedColumn: React.FC<{ created?: string }> = ({ created }) => {
+export const DateColumn: React.FC<{ date?: string }> = ({ date }) => {
     const { t, i18n } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
-    const createdDate = created && new Date(created);
+    const parsedDate = date && new Date(date);
     const greyColor = { color: isDark ? COLORS.neutral60 : COLORS.neutral50 };
 
     return <td css={{ fontSize: 14 }}>
-        {createdDate
+        {parsedDate
             ? <>
-                {createdDate.toLocaleDateString(i18n.language)}
+                {parsedDate.toLocaleDateString(i18n.language)}
                 <br />
                 <span css={greyColor}>
-                    {createdDate.toLocaleTimeString(i18n.language)}
+                    {parsedDate.toLocaleTimeString(i18n.language)}
                 </span>
             </>
             : <i css={greyColor}>

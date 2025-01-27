@@ -24,7 +24,15 @@ use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
-    shared::{load_writable_for_user, AssetMapping, Connection, LoadableAsset, PageInfo, SeriesSortColumn, SortOrder},
+    shared::{
+        load_writable_for_user,
+        AssetMapping,
+        Connection,
+        LoadableAsset,
+        PageInfo,
+        SeriesSortColumn,
+        SortOrder,
+    },
 };
 
 
@@ -34,6 +42,7 @@ pub(crate) struct Series {
     pub(crate) synced_data: Option<SyncedSeriesData>,
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
+    pub(crate) updated: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
@@ -49,9 +58,14 @@ impl_from_db!(
     select: {
         series.{
             id, opencast_id, state,
-            title, description, created,
-            metadata, read_roles, write_roles,
+            title, description,
+            metadata, created,
+            read_roles, write_roles,
         },
+        updated: "case \
+            when ${table:series}.updated = '-infinity' then null \
+            else ${table:series}.updated \
+        end",
     },
     |row| {
         Series {
@@ -59,6 +73,7 @@ impl_from_db!(
             opencast_id: row.opencast_id(),
             title: row.title(),
             created: row.created(),
+            updated: row.updated(),
             metadata: row.metadata(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
@@ -306,6 +321,10 @@ impl Series {
 
     fn created(&self) -> &Option<DateTime<Utc>> {
         &self.created
+    }
+
+    fn updated(&self) -> &Option<DateTime<Utc>> {
+        &self.updated
     }
 
     fn metadata(&self) -> &Option<ExtraMetadata> {

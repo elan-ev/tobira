@@ -23,8 +23,8 @@ import { relativeDate } from "../../../ui/time";
 import CONFIG from "../../../config";
 import {
     ColumnProps,
-    CreatedColumn,
     createQueryParamsParser,
+    DateColumn,
     descriptionStyle,
     ManageAssets,
     TableRow,
@@ -111,9 +111,15 @@ export type Event = Events[number];
 // Todo: add series column
 export const videoColumns: ColumnProps[] = [
     {
+        key: "UPDATED",
+        label: "manage.asset-table.columns.updated",
+        column: event => (event.syncedData && "updated" in event.syncedData)
+            && <DateColumn date={event.syncedData.updated} />,
+    },
+    {
         key: "CREATED",
         label: "manage.asset-table.columns.created",
-        column: event => <CreatedColumn created={event.created ?? undefined} />,
+        column: event => <DateColumn date={event.created ?? undefined} />,
     },
 ];
 
