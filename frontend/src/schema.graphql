@@ -812,6 +812,7 @@ type Series implements Node {
   opencastId: String!
   title: String!
   created: DateTime
+  updated: DateTime
   metadata: ExtraMetadata
   syncedData: SyncedSeriesData
   acl: [AclItem!]
