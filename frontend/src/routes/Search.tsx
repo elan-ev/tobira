@@ -708,7 +708,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
     // seems like it would send a query every time the mouse enters, but relay
     // caches the results, so it is only sent once.
     return (
-        <div ref={ref} onMouseEnter={loadSegmentImages} css={{
+        <div ref={ref} onMouseEnter={loadSegmentImages} onFocus={loadSegmentImages} css={{
             width: "calc(100% - 8px)",
             position: "relative",
             height: 10.5,
