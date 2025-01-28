@@ -31,6 +31,7 @@ use super::{
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
     shared::{
         load_writable_for_user,
+        AclForDB,
         ItemMapping,
         Connection,
         LoadableItem,
@@ -142,23 +143,64 @@ impl Series {
         }
     }
 
-    pub(crate) async fn create(series: NewSeries, context: &Context) -> ApiResult<Self> {
+    pub(crate) async fn create(
+        series: NewSeries,
+        context: &Context,
+        acl: Option<AclForDB>,
+    ) -> ApiResult<Self> {
+        let (read_roles, write_roles) = match &acl {
+            Some(roles) => (Some(&roles.read_roles), Some(&roles.write_roles)),
+            None => (None, None),
+        };
+
         let selection = Self::select();
         let query = format!(
-            "insert into series (opencast_id, title, state, updated) \
-                values ($1, $2, 'waiting', '-infinity') \
+            "insert into series (opencast_id, title, state, updated, read_roles, write_roles) \
+                values ($1, $2, 'waiting', '-infinity', $3, $4) \
                 returning {selection}",
         );
         context.db(context.require_tobira_admin()?)
-            .query_one(&query, &[&series.opencast_id, &series.title])
+            .query_one(&query, &[&series.opencast_id, &series.title, &read_roles, &write_roles])
             .await?
             .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 
+    pub(crate) async fn create_in_oc(
+        title: &str,
+        description: Option<&str>,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<Self> {
+        let response = context
+            .oc_client
+            .create_series(&acl, &title, description)
+            .await
+            .map_err(|e| {
+                error!("Failed to send series creation request: {}", e);
+                err::opencast_unavailable!("Failed to send series creation request")
+            })?;
+
+        let db_acl = Some(convert_acl_input(acl));
+
+        // If the request returned an Opencast identifier, the series was created successfully.
+        // The series is created in the database, so the user doesn't have to wait for sync to see
+        // the new series in the "My series" overview.
+        let series = Self::create(
+            NewSeries {
+                opencast_id: response.identifier,
+                title: title.to_owned(),
+            },
+            context,
+            db_acl,
+        ).await?;
+
+        Ok(series)
+    }
+
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
         context.auth.required_trusted_external()?;
-        Self::create(series, context).await
+        Self::create(series, context, None).await
     }
 
     pub(crate) async fn add_mount_point(
@@ -276,7 +318,7 @@ impl Series {
         }
 
         // Create series
-        let series = Series::create(series, context).await?;
+        let series = Series::create(series, context, None).await?;
 
         // Create realms
         let target_realm = {
