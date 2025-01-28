@@ -1,8 +1,10 @@
 import { Fragment } from "react";
+import { useTranslation } from "react-i18next";
+import { LuPlusCircle } from "react-icons/lu";
 import { graphql } from "react-relay";
-import i18n from "../../../i18n";
 import { match } from "@opencast/appkit";
 
+import i18n from "../../../i18n";
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
@@ -13,6 +15,7 @@ import {
     createQueryParamsParser,
     DateColumn,
     ManageItems,
+    SharedManageProps,
     TableRow,
 } from "../Shared/Table";
 import {
@@ -22,6 +25,8 @@ import {
 } from "./__generated__/SeriesManageQuery.graphql";
 import { isSynced, keyOfId } from "../../../util";
 import { ThumbnailStack } from "../../../ui/Series";
+import { CREATE_SERIES_PATH } from "./Create";
+import { LinkButton } from "../../../ui/LinkButton";
 
 
 const PATH = "/~manage/series" as const;
@@ -43,12 +48,7 @@ export const ManageSeriesRoute = makeRoute({
                 nav={() => <ManageNav active={PATH} />}
                 render={data => !data.currentUser
                     ? <NotAuthorized />
-                    : <ManageItems
-                        vars={vars}
-                        connection={data.currentUser.mySeries}
-                        titleKey="manage.my-series.title"
-                        additionalColumns={seriesColumns}
-                    />
+                    : <ManageSeries connection={data.currentUser.mySeries} vars={vars} />
                 }
             />,
             dispose: () => queryRef.dispose(),
@@ -90,6 +90,26 @@ const query = graphql`
         }
     }
 `;
+
+const ManageSeries: React.FC<SharedManageProps> = ({ vars, connection }) => {
+    const { t } = useTranslation();
+
+    return (
+        <ManageItems
+            titleKey="manage.my-series.title"
+            additionalColumns={seriesColumns}
+            {...{ vars, connection }}
+        >
+            <div css={{ display: "flex" }}>
+                <LinkButton to={CREATE_SERIES_PATH}>
+                    {t("manage.my-series.create.title")}
+                    <LuPlusCircle />
+                </LinkButton>
+            </div>
+        </ManageItems>
+    );
+};
+
 
 export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
 export type Series = SeriesConnection["items"];

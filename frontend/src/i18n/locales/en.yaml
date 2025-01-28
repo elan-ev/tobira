@@ -456,6 +456,8 @@ manage:
     no-of-videos: '{{count}} videos'
     details:
       title: Series details
+    create:
+      title: Create series
 
   my-videos:
     title: My videos

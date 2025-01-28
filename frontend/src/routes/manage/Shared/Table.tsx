@@ -1,5 +1,5 @@
 import { Card, match, useColorScheme } from "@opencast/appkit";
-import { useState, useRef, useEffect, ReactNode } from "react";
+import { useState, useRef, useEffect, ReactNode, PropsWithChildren } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -33,13 +33,13 @@ type ItemVars = {
     offset: number;
 };
 
-type SharedProps = {
+export type SharedManageProps = {
     connection: Connection;
     vars: ItemVars;
     additionalColumns?: ColumnProps[];
 };
 
-type ManageItemProps = SharedProps & {
+type ManageItemProps = PropsWithChildren & SharedManageProps & {
     titleKey: ParseKeys;
 }
 
@@ -50,6 +50,7 @@ export const ManageItems: React.FC<ManageItemProps> = ({
     vars,
     titleKey,
     additionalColumns,
+    children,
 }) => {
     const { t } = useTranslation();
 
@@ -93,7 +94,8 @@ export const ManageItems: React.FC<ManageItemProps> = ({
                 path={[{ label: t("user.manage-content"), link: ManageRoute.url }]}
                 tail={title}
             />
-            <PageTitle title={title} css={{ marginBottom: 32 }}/>
+            <PageTitle title={title} css={{ marginBottom: 32 }} />
+            {children}
             {inner}
         </div>
     );
@@ -121,7 +123,7 @@ export type ColumnProps = {
     column: (item: Item) => ReactNode;
 };
 
-type ItemTableProps = SharedProps & {
+type ItemTableProps = SharedManageProps & {
     thumbnailWidth?: number;
 }
 
@@ -453,7 +455,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
     </th>;
 };
 
-const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
+const PageNavigation: React.FC<SharedManageProps> = ({ connection, vars }) => {
     const { t } = useTranslation();
     const pageInfo = connection.pageInfo;
     const total = connection.totalCount;

@@ -403,15 +403,15 @@ type Mutation {
   """
   updateSeriesAcl(id: ID!, acl: [AclInputEntry!]!): Series!
   """
-    Sends an http request to Opencast to create a new series,
-    and stores the series in Tobira's DB.
-  """
-  createSeries(title: String!, description: String, acl: [AclInputEntry!]!): Series!
-  """
     Updates the title and description of a series. A request for this is sent to Opencast,
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, title: String!, description: String): Series!
+  """
+    Sends an http request to Opencast to create a new series,
+    and stores the series in Tobira's DB.
+  """
+  createSeries(title: String!, description: String, acl: [AclInputEntry!]!): Series!
   """
     Sets the order of all children of a specific realm.
 
