@@ -75,9 +75,10 @@ const SeriesAclEditor: React.FC<SeriesAclPageProps> = ({ series, data }) => {
     };
 
     return <AccessEditor
+        editingBlocked={!isSynced(series)}
         {...{ onSubmit, inFlight, data }}
         rawAcl={series.acl}
-        editingBlocked={!isSynced(series)}
+        itemType="series"
     />;
 };
 

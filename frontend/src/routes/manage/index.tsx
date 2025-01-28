@@ -1,7 +1,7 @@
 import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineFire } from "react-icons/hi";
-import { LuFilm, LuLayoutTemplate, LuUpload, LuVideo } from "react-icons/lu";
+import { LuFilm, LuLayoutTemplate, LuCirclePlus, LuUpload, LuVideo } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
 
@@ -26,6 +26,7 @@ import { UploadRoute } from "../Upload";
 import { ManageVideosRoute } from "./Video";
 import SeriesIcon from "../../icons/series.svg";
 import { ManageSeriesRoute } from "./Series";
+import { CreateSeriesRoute } from "./Series/Create";
 
 
 const PATH = "/~manage" as const;
@@ -79,6 +80,7 @@ type ManageNavProps = {
         | typeof ManageVideosRoute.url
         | typeof UploadRoute.url
         | typeof ManageSeriesRoute.url
+        | typeof CreateSeriesRoute.url
         | `/@${string}`;
 };
 
@@ -93,6 +95,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
         [PATH, t("manage.dashboard.title"), <LuLayoutTemplate />],
         [ManageVideosRoute.url, t("manage.my-videos.title"), <LuFilm />],
         [ManageSeriesRoute.url, t("manage.my-series.title"), <SeriesIcon />],
+        [CreateSeriesRoute.url, t("manage.my-series.create.title"), <LuCirclePlus />],
     ];
     if (isRealUser(user) && user.canCreateUserRealm) {
         entries.splice(

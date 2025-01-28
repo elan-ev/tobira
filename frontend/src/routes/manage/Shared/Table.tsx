@@ -1,5 +1,5 @@
 import { Card, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { useState, useRef, useEffect, ReactNode, ComponentType } from "react";
+import { useState, useRef, useEffect, ReactNode, ComponentType, PropsWithChildren } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +23,7 @@ import { Link } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
+import { OcEntity } from "../../../util";
 
 
 type ItemVars = {
@@ -33,7 +34,7 @@ type ItemVars = {
     page: number;
 };
 
-type SharedProps<T> = {
+export type SharedManageProps<T> = {
     connection: {
         items: readonly T[];
         totalCount: number;
@@ -45,12 +46,12 @@ type SharedProps<T> = {
     vars: ItemVars;
 };
 
-type SharedTableProps<T> = SharedProps<T> & {
+type SharedTableProps<T> = SharedManageProps<T> & {
     RenderRow: ComponentType<{ item: T }>;
     additionalColumns?: ColumnProps<T>[];
 }
 
-type ManageItemProps<T> = SharedTableProps<T> & {
+type ManageItemProps<T> = PropsWithChildren & SharedTableProps<T> & {
     titleKey: ParseKeys;
 }
 
@@ -61,6 +62,7 @@ export const ManageItems = <T extends Item>({
     vars,
     titleKey,
     additionalColumns,
+    children,
     RenderRow,
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
@@ -105,8 +107,9 @@ export const ManageItems = <T extends Item>({
             <Breadcrumbs tail={title} path={[{
                 label: t("user.manage-content"),
                 link: ManageRoute.url,
-            }]}/>
-            <PageTitle title={title} css={{ marginBottom: 32 }}/>
+            }]} />
+            <PageTitle title={title} css={{ marginBottom: 32 }} />
+            {children}
             {inner}
         </div>
     );
@@ -276,7 +279,7 @@ type TableRowItem = {
 }
 
 type TableRowProps<T extends TableRowItem> = {
-    itemType: "video" | "series";
+    itemType: OcEntity;
     thumbnail: (isPending?: boolean) => ReactNode;
     link: string;
     item: T;
@@ -363,7 +366,7 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
 type PendingDeleteBodyProps = {
     deletionFailed: boolean;
     deletionDate: Date;
-    itemType: "video" | "series";
+    itemType: OcEntity;
 }
 
 const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
@@ -449,7 +452,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
     </th>;
 };
 
-const PageNavigation = <T, >({ connection, vars }: SharedProps<T>) => {
+const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
     const { t } = useTranslation();
     const pageInfo = connection.pageInfo;
     const total = connection.totalCount;

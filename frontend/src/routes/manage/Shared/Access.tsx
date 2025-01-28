@@ -4,7 +4,13 @@ import { useFragment } from "react-relay";
 import { Card, ConfirmationModalHandle, boxError } from "@opencast/appkit";
 
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
-import { Acl, AclSelector, AclEditButtons, knownRolesFragment } from "../../../ui/Access";
+import {
+    Acl,
+    AclSelector,
+    AclEditButtons,
+    knownRolesFragment,
+    AclSubject,
+} from "../../../ui/Access";
 import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
 import { AclArray } from "../../Upload";
 import { mapAcl } from "../../util";
@@ -62,6 +68,7 @@ type AccessEditorProps = {
   inFlight: boolean;
   data: AccessKnownRolesData$key;
   editingBlocked?: boolean;
+  itemType: AclSubject;
 };
 
 export const AccessEditor: React.FC<AccessEditorProps> = ({
@@ -70,6 +77,7 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
     inFlight,
     data,
     editingBlocked = false,
+    itemType,
 }) => {
     const knownRoles = useFragment(knownRolesFragment, data);
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
@@ -80,6 +88,7 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
     return <div css={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: 1040 }}>
         <Inertable isInert={editingBlocked}>
             <AclSelector
+                itemType={itemType}
                 acl={selections}
                 onChange={setSelections}
                 knownRoles={knownRoles}

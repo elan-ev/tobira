@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import {
     LuTriangleAlert, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
+    LuFilePlus,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
@@ -28,6 +29,7 @@ import { LoginLink } from "../../routes/util";
 import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
 import { ManageSeriesRoute } from "../../routes/manage/Series";
 import SeriesIcon from "../../icons/series.svg";
+import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 
 
 
@@ -236,6 +238,12 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             children: t("upload.title"),
             css: indent,
         }] : [],
+        {
+            icon: <LuFilePlus />,
+            wrapper: <Link to={CreateSeriesRoute.url} />,
+            children: t("manage.my-series.create.title"),
+            css: indent,
+        },
         ...user.canUseStudio ? [{
             icon: <LuVideo />,
             wrapper: <ExternalLink

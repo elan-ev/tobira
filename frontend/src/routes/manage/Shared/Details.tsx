@@ -14,7 +14,7 @@ import { NotAuthorized } from "../../../ui/error";
 import { CopyableInput, InputWithCheckbox, TimeInput } from "../../../ui/Input";
 import { MetadataFields, MetadataForm, SubmitButtonWithStatus } from "../../../ui/metadata";
 import { useUser, isRealUser } from "../../../User";
-import { secondsToTimeString } from "../../../util";
+import { OcEntity, secondsToTimeString } from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
@@ -224,7 +224,7 @@ type DeleteMutationParams = MutationParameters & { variables: { id: string } }
 type DeleteButtonProps<TMutation extends DeleteMutationParams> = PropsWithChildren<{
     itemId: string;
     itemTitle: string;
-    itemType: "video" | "series";
+    itemType: OcEntity;
     commit: (config: UseMutationConfig<TMutation>) => Disposable;
     returnPath: string;
 }>;

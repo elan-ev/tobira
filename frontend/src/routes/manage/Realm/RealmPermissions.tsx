@@ -84,6 +84,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
     return <>
         <h2>{t("manage.realm.permissions.heading")}</h2>
         <AclSelector
+            itemType="realm"
             acl={selections}
             onChange={setSelections}
             addAnonymous={false}

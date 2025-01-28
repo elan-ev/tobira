@@ -297,3 +297,4 @@ export const Inertable: React.FC<InertableProps> = ({ children, isInert }) => (
     </div>
 );
 
+export type OcEntity = "series" | "video";

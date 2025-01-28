@@ -92,7 +92,12 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
                 {t("manage.access.locked-to-series")}
             </Card>
         )}
-        <AccessEditor {...{ onSubmit, inFlight, data, editingBlocked }} rawAcl={event.acl} />
+        <AccessEditor itemType="video" rawAcl={event.acl} {...{
+            onSubmit,
+            inFlight,
+            data,
+            editingBlocked,
+        }} />
     </>;
 };
 
