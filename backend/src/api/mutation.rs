@@ -105,6 +105,17 @@ impl Mutation {
         Series::update_metadata(id, metadata, context).await
     }
 
+    /// Sends an http request to Opencast to create a new series,
+    /// and stores the series in Tobira's DB.
+    async fn create_series(
+        title: String,
+        description: Option<String>,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        Series::create_in_oc(&title, description.as_deref(), acl, context).await
+    }
+
     /// Sets the order of all children of a specific realm.
     ///
     /// `childIndices` must contain at least one element, i.e. do not call this
