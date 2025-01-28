@@ -463,6 +463,8 @@ manage:
     delete-note: >
       Videos in this series will not be deleted.
       They will remain in the system and can be added to another series.
+    create:
+      title: Create series
 
   my-videos:
     title: My videos

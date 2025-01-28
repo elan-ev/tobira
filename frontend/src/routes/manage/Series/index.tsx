@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
+import { LuCirclePlus } from "react-icons/lu";
 import { graphql } from "react-relay";
-import i18n from "../../../i18n";
 import { match } from "@opencast/appkit";
 
+import i18n from "../../../i18n";
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
@@ -21,6 +23,8 @@ import {
 } from "./__generated__/SeriesManageQuery.graphql";
 import { keyOfId } from "../../../util";
 import { SeriesThumbnail } from "./Shared";
+import { CREATE_SERIES_PATH } from "./Create";
+import { LinkButton } from "../../../ui/LinkButton";
 
 
 const PATH = "/~manage/series" as const;
@@ -48,7 +52,9 @@ export const ManageSeriesRoute = makeRoute({
                         titleKey="manage.my-series.title"
                         additionalColumns={seriesColumns}
                         RenderRow={SeriesRow}
-                    />
+                    >
+                        <CreateSeriesLink />
+                    </ManageItems>
                 }
             />,
             dispose: () => queryRef.dispose(),
@@ -82,6 +88,15 @@ const query = graphql`
         }
     }
 `;
+
+const CreateSeriesLink: React.FC = () => {
+    const { t } = useTranslation();
+    return <LinkButton to={CREATE_SERIES_PATH} css={{ width: "fit-content" }}>
+        {t("manage.my-series.create.title")}
+        <LuCirclePlus />
+    </LinkButton>;
+};
+
 
 export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
 export type Series = SeriesConnection["items"];

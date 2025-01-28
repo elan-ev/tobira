@@ -483,6 +483,8 @@ manage:
     delete-note: >
       In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
       zugeordnet werden.
+    create:
+      title: Serie erstellen
 
   my-videos:
     title: Meine Videos
