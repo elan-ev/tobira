@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { PropsWithChildren, ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     LuArrowDownNarrowWide,
@@ -31,18 +31,23 @@ type AssetVars = {
     offset: number;
 };
 
-type SharedProps = {
+export type SharedManageProps = {
     connection: Connection;
     vars: AssetVars;
 };
 
-type ManageAssetsProps = SharedProps & {
+type ManageAssetsProps = PropsWithChildren & SharedManageProps & {
     titleKey: ParseKeys;
 }
 
 const LIMIT = 15;
 
-export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, titleKey }) => {
+export const ManageAssets: React.FC<ManageAssetsProps> = ({
+    connection,
+    vars,
+    titleKey,
+    children,
+}) => {
     const { t } = useTranslation();
 
     const totalCount = connection.totalCount;
@@ -85,7 +90,8 @@ export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, ti
                 path={[{ label: t("user.manage-content"), link: ManageRoute.url }]}
                 tail={title}
             />
-            <PageTitle title={title} css={{ marginBottom: 32 }}/>
+            <PageTitle title={title} css={{ marginBottom: 32 }} />
+            {children}
             {inner}
         </div>
     );
@@ -103,7 +109,7 @@ export type ColumnProps = {
     column: (item: Asset) => ReactNode;
 };
 
-type GenericTableProps = SharedProps & {
+type GenericTableProps = SharedManageProps & {
     thumbnailWidth?: number;
 }
 
@@ -378,7 +384,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
     </th>;
 };
 
-const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
+const PageNavigation: React.FC<SharedManageProps> = ({ connection, vars }) => {
     const { t } = useTranslation();
     const pageInfo = connection.pageInfo;
     const total = connection.totalCount;

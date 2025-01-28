@@ -145,7 +145,7 @@ export const MetadataSection: React.FC<SharedDetailsProps> = ({ asset }) => {
 
             <InputContainer>
                 <label htmlFor={descriptionFieldId}>
-                    {t("upload.metadata.description")}
+                    {t("metadata-form.description")}
                 </label>
                 <TextArea id={descriptionFieldId} disabled value={asset.description ?? ""} />
             </InputContainer>

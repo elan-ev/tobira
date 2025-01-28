@@ -1,4 +1,4 @@
-import { ReactNode, forwardRef, useEffect, useRef, useState } from "react";
+import { PropsWithChildren, ReactNode, forwardRef, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ProtoButton, useColorScheme } from "@opencast/appkit";
 
@@ -11,7 +11,7 @@ export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
     const { t } = useTranslation();
     return (
         <label {...{ htmlFor }}>
-            {t("upload.metadata.title")}
+            {t("metadata-form.title")}
             <FieldIsRequiredNote />
         </label>
     );
@@ -22,14 +22,18 @@ export const FieldIsRequiredNote: React.FC = () => {
 
     return <span css={{ fontWeight: "normal" }}>
         {" ("}
-        <em>{t("upload.metadata.required")}</em>
+        <em>{t("metadata-form.required")}</em>
         {")"}
     </span>;
 };
 
+type InputContainerProps = PropsWithChildren & {
+    className?: string;
+};
+
 /** Separates different inputs in the metadata form */
-export const InputContainer: React.FC<{ children: ReactNode }> = ({ children }) => (
-    <div css={{ margin: "16px 0 " }}>{children}</div>
+export const InputContainer: React.FC<InputContainerProps> = ({ children, className }) => (
+    <div {...{ className }} css={{ margin: "16px 0 " }}>{children}</div>
 );
 
 type SmallDescriptionProps = {
