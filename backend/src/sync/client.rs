@@ -217,6 +217,57 @@ impl OcClient {
         Ok(out.processing_state == "RUNNING")
     }
 
+    pub async fn create_series(
+        &self,
+        acl: &[AclInputEntry],
+        title: &str,
+        description: Option<&str>,
+    ) -> Result<CreateSeriesResponse> {
+        let access_policy: Vec<AclInput> = acl.iter()
+            .flat_map(|entry| entry.actions.iter()
+                .map(|action| AclInput {
+                    allow: true,
+                    action: action.clone(),
+                    role: entry.role.clone(),
+                }))
+            .collect();
+
+        let metadata = serde_json::json!([{
+            "label": "Opencast Series DublinCore",
+            "flavor": "dublincore/series",
+            "fields": [
+                {
+                    "id": "title",
+                    "value": title
+                },
+                {
+                    "id": "description",
+                    "value": description
+                },
+            ]
+        }]);
+
+        let params = Serializer::new(String::new())
+            .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
+            .append_pair("metadata", &serde_json::to_string(&metadata).expect("Failed to serialize"))
+            .finish();
+
+        let req = self.authed_req_builder(&self.external_api_node, "/api/series")
+            .method(http::Method::POST)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        let uri = req.uri().clone();
+        let response = self.http_client.request(req).await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
+
+        let (out, _) = self.deserialize_response::<CreateSeriesResponse>(response, &uri).await?;
+
+        Ok(out)
+    }
+
+
     fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
         let req = self.authed_req_builder(node, path_and_query)
             .body(RequestBody::empty())
@@ -250,7 +301,7 @@ impl OcClient {
         let body = download_body(body).await
             .with_context(|| format!("failed to download body from '{uri}'"))?;
 
-        if parts.status != StatusCode::OK {
+        if parts.status != StatusCode::OK && parts.status != StatusCode::CREATED {
             trace!("HTTP response: {:#?}", parts);
             if parts.status == StatusCode::UNAUTHORIZED {
                 bail!(
@@ -285,6 +336,11 @@ pub(crate) struct AclInput {
     pub allow: bool,
     pub action: String,
     pub role: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct CreateSeriesResponse {
+    pub identifier: String,
 }
 
 #[derive(Debug, Deserialize)]
