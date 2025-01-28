@@ -98,6 +98,7 @@ input NewRealm {
 input NewSeries {
   opencastId: String!
   title: String!
+  description: String
 }
 
 input NewSeriesBlock {
@@ -413,6 +414,11 @@ type Mutation {
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, metadata: SeriesMetadata!): Series!
+  """
+    Sends an http request to Opencast to create a new series,
+    and stores the series in Tobira's DB.
+  """
+  createSeries(metadata: SeriesMetadata!, acl: [AclInputEntry!]!): Series!
   """
     Sets the order of all children of a specific realm.
 

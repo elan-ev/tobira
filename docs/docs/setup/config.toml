@@ -329,6 +329,11 @@
 # Default value: "ROLE_TOBIRA_UPLOAD"
 #upload = "ROLE_TOBIRA_UPLOAD"
 
+# The role granting permission to create new series through Tobira.
+#
+# Default value: "ROLE_TOBIRA_CAN_CREATE_SERIES"
+#can_create_series = "ROLE_TOBIRA_CAN_CREATE_SERIES"
+
 # The role granting permission to use Opencast Studio from Tobira.
 #
 # Default value: "ROLE_TOBIRA_STUDIO"

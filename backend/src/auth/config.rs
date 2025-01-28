@@ -332,6 +332,10 @@ pub(crate) struct RoleConfig {
     #[config(default = "ROLE_TOBIRA_UPLOAD")]
     pub(crate) upload: String,
 
+    /// The role granting permission to create new series through Tobira.
+    #[config(default = "ROLE_TOBIRA_CAN_CREATE_SERIES")]
+    pub(crate) can_create_series: String,
+
     /// The role granting permission to use Opencast Studio from Tobira.
     #[config(default = "ROLE_TOBIRA_STUDIO")]
     pub(crate) studio: String,
