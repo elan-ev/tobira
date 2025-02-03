@@ -683,6 +683,10 @@ impl OpencastItem for AuthorizedEvent {
         &self.opencast_id
     }
 
+    fn metadata_flavor(&self) -> &'static str {
+        "dublincore/episode"
+    }
+
     async fn extra_roles(&self, context: &Context, oc_id: &str) -> Result<Vec<AclInput>> {
         let query = "\
             select unnest(preview_roles) as role, 'preview' as action from events where opencast_id = $1

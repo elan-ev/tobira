@@ -7,7 +7,7 @@ use super::{
     id::Id,
     model::{
         acl::AclInputEntry,
-        series::{Series, NewSeries},
+        series::{Series, NewSeries, SeriesMetadata},
         realm::{
             ChildIndex,
             NewRealm,
@@ -85,6 +85,16 @@ impl Mutation {
     /// this means it might get overwritten again if the update in Opencast failed for some reason.
     async fn update_series_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
         Series::update_acl(id, acl, context).await
+    }
+
+    /// Updates the title and description of a series. A request for this is sent to Opencast,
+    /// and the series is preliminarily updated in Tobira's DB.
+    async fn update_series_metadata(
+        id: Id,
+        metadata: SeriesMetadata,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        Series::update_metadata(id, metadata, context).await
     }
 
     /// Sets the order of all children of a specific realm.

@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use bytes::Bytes;
-use chrono::{DateTime, Utc, TimeZone};
+use chrono::{DateTime, TimeZone, Utc};
 use form_urlencoded::Serializer;
 use hyper::{
     Response, Request, StatusCode,
@@ -179,13 +179,27 @@ impl OcClient {
         let params = Serializer::new(String::new())
             .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
             .finish();
-        let req = self.authed_req_builder(&self.external_api_node, &pq)
-            .method(http::Method::PUT)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
 
-        self.http_client.request(req).await.map_err(Into::into)
+        self.send_put_request(&pq, params).await
+    }
+
+   pub async fn update_metadata<T: OpencastItem>(
+        &self,
+        endpoint: &T,
+        metadata: serde_json::Value,
+    ) -> Result<Response<Incoming>> {
+        let pq = format!(
+            "/api/{endpoint}/{id}/metadata?type={flavor}",
+            endpoint = endpoint.endpoint_path(),
+            id = endpoint.id(),
+            flavor = endpoint.metadata_flavor(),
+        );
+
+        let params = Serializer::new(String::new())
+            .append_pair("metadata", &serde_json::to_string(&metadata).expect("Failed to serialize"))
+            .finish();
+
+        self.send_put_request(&pq, params).await
     }
 
     pub async fn start_workflow(&self, oc_id: &str, workflow_id: &str) -> Result<Response<Incoming>> {
@@ -214,6 +228,16 @@ impl OcClient {
 
         let (out, _) = self.deserialize_response::<EventStatus>(response, &uri).await?;
         Ok(out.processing_state == "RUNNING")
+    }
+
+    async fn send_put_request(&self, path_and_query: &str, params: String) -> Result<Response<Incoming>> {
+        let req = self.authed_req_builder(&self.external_api_node, &path_and_query)
+            .method(http::Method::PUT)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        self.http_client.request(req).await.map_err(Into::into)
     }
 
     fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
@@ -301,7 +325,9 @@ pub(crate) trait OpencastItem {
     fn endpoint_path(&self) -> &'static str;
     /// Opencast ID of the item.
     fn id(&self) -> &str;
-
+    /// Metadata flavor needed for the `update_metadata` endpoint of the item
+    /// (i.e. `dublincore/series` or `dublincore/episode`).
+    fn metadata_flavor(&self) -> &'static str;
     /// Preview and custom roles of an item. Only used for the acl endpoint of events.
     /// Frontend doesn't send these roles yet, so they need to be queried and added manually.
     /// This technically doesn't belong and maybe shouldn't be here.

@@ -132,6 +132,11 @@ input RealmSpecifier {
   pathSegment: String!
 }
 
+input SeriesMetadata {
+  title: String!
+  description: String
+}
+
 input SeriesSortOrder {
   column: SeriesSortColumn!
   direction: SortDirection!
@@ -394,6 +399,11 @@ type Mutation {
     this means it might get overwritten again if the update in Opencast failed for some reason.
   """
   updateSeriesAcl(id: ID!, acl: [AclInputEntry!]!): Series!
+  """
+    Updates the title and description of a series. A request for this is sent to Opencast,
+    and the series is preliminarily updated in Tobira's DB.
+  """
+  updateSeriesMetadata(id: ID!, metadata: SeriesMetadata!): Series!
   """
     Sets the order of all children of a specific realm.
 
