@@ -84,7 +84,7 @@ import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerCont
 import { CollapsibleDescription } from "../ui/metadata";
 import { DirectSeriesRoute } from "./Series";
 import { EmbedVideoRoute } from "./Embed";
-import { ManageVideoDetailsRoute } from "./manage/Video/Details";
+import { ManageVideoDetailsRoute } from "./manage/Video/VideoDetails";
 import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
 import { AuthenticationFormState, FormData, AuthenticationForm } from "./Login";
 import {

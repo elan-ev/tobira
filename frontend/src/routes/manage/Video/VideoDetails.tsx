@@ -42,7 +42,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             <DirectLink key="direct-link" withTimestamp url={
                 new URL(DirectVideoRoute.url({ videoId: authEvent.id }), document.baseURI)
             } />,
-            <MetadataSection key="metadata" title={event.title} description={event.description} />,
+            <MetadataSection key="metadata" item={event} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms event={authEvent} />
             </div>,
@@ -51,7 +51,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
 );
 
 const deleteVideoMutation = graphql`
-    mutation DetailsDeleteVideoMutation($id: ID!) {
+    mutation VideoDetailsDeleteMutation($id: ID!) {
         deleteVideo(id: $id) { id }
     }
 `;

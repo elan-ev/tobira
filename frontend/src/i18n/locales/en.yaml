@@ -305,9 +305,6 @@ upload:
     Your video was uploaded successfully and is now being processed. It can be
     watched as soon as processing is done. You may close this page now.
   metadata:
-    title: Video title
-    description: Description
-    required: required
     save: Save and finish
     note-writable-series: >
       Videos can only be uploaded into series for which you have write-access.
@@ -315,11 +312,18 @@ upload:
   errors:
     failed-to-upload: Failed to upload video.
     unknown: Unknown error occurred during video upload.
-    field-required: This field is required (cannot be empty).
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
     failed-fetching-series-acl: Failed to fetch series acl.
+
+metadata-form:
+  title: Title
+  description: Description
+  required: required
+  save: Save changes
+  errors:
+    field-required: This field is required (cannot be empty).
 
 acl:
   unknown-user-note: unknown
