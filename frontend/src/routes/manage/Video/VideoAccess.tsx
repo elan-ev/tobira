@@ -8,12 +8,12 @@ import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { COLORS } from "../../../color";
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { ManageVideosRoute } from ".";
-import { ManageVideoDetailsRoute } from "./Details";
+import { ManageVideoDetailsRoute } from "./VideoDetails";
 import { displayCommitError } from "../Realm/util";
-import { AccessUpdateEventAclMutation } from "./__generated__/AccessUpdateEventAclMutation.graphql";
 import CONFIG from "../../../config";
-import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/AccessUI";
+import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/Access";
 import i18n from "../../../i18n";
+import { VideoAccessAclMutation } from "./__generated__/VideoAccessAclMutation.graphql";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -58,7 +58,7 @@ const UnlistedNote: React.FC = () => {
 
 
 const updateVideoAcl = graphql`
-    mutation AccessUpdateEventAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
+    mutation VideoAccessAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
         updateEventAcl(id: $id, acl: $acl) {
             ...on AuthorizedEvent {
                 acl { role actions info { label implies large } }
@@ -75,7 +75,7 @@ type EventAclPageProps = {
 
 const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     const { t } = useTranslation();
-    const [commit, inFlight] = useMutation<AccessUpdateEventAclMutation>(updateVideoAcl);
+    const [commit, inFlight] = useMutation<VideoAccessAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && !!event.series;
     const [editingBlocked, setEditingBlocked] = useState(
         event.hasActiveWorkflows || aclLockedToSeries
@@ -109,15 +109,7 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
                 {t("manage.access.locked-to-series")}
             </Card>
         )}
-        <AccessEditor
-            rawAcl={event.acl}
-            {...{
-                onSubmit,
-                inFlight,
-                data,
-                editingBlocked,
-            }}
-        />
+        <AccessEditor {...{ onSubmit, inFlight, data, editingBlocked }} rawAcl={event.acl} />
     </>;
 };
 
