@@ -15,7 +15,12 @@ import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
-import { DetailsPage, UpdatedCreatedInfo, DirectLink, MetadataSection } from "../Shared/Details";
+import {
+    DetailsPage,
+    UpdatedCreatedInfo,
+    DirectLink,
+    DetailsMetadataSection,
+} from "../Shared/Details";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -40,7 +45,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             <ButtonSection key="button-section" event={authEvent} />,
             <DirectLink key="direct-link" asset={event} />,
             <div key="metadata" css={{ marginBottom: 32 }}>
-                <MetadataSection asset={event} />
+                <DetailsMetadataSection asset={event} />
             </div>,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms event={authEvent} />
@@ -50,7 +55,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
 );
 
 const deleteVideoMutation = graphql`
-    mutation DetailsDeleteVideoMutation($id: ID!) {
+    mutation VideoDetailsDeleteMutation($id: ID!) {
         deleteVideo(id: $id) { id }
     }
 `;

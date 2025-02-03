@@ -307,9 +307,6 @@ upload:
     angeschaut werden, sobald die Verarbeitung abgeschlossen ist. Sie können diese
     Seite jetzt schließen.
   metadata:
-    title: Videotitel
-    description: Beschreibung
-    required: Pflichtfeld
     save: Speichern und fertigstellen
     note-writable-series: >
       Sie können Videos nur in Serien hochladen, auf die Sie Schreibzugriff haben.
@@ -317,11 +314,18 @@ upload:
   errors:
     failed-to-upload: Hochladen fehlgeschlagen.
     unknown: Während des Dateiuploads ist ein unbekannter Fehler aufgetreten.
-    field-required: Dieses Feld darf nicht leer sein.
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
     failed-fetching-series-acl: Abruf der Serienzugangsberechtigungen fehlgeschlagen.
+
+metadata-form:
+  title: Titel
+  description: Beschreibung
+  required: Pflichtfeld
+  save: Änderungen speichern
+  errors:
+    field-required: Dieses Feld darf nicht leer sein.
 
 acl:
   unknown-user-note: unbekannt
