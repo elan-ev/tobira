@@ -395,6 +395,11 @@ type Mutation {
   """
   updateSeriesAcl(id: ID!, acl: [AclInputEntry!]!): Series!
   """
+    Updates the title and description of a series. A request for this is sent to Opencast,
+    and the series is preliminarily updated in Tobira's DB.
+  """
+  updateSeriesMetadata(id: ID!, title: String!, description: String): Series!
+  """
     Sets the order of all children of a specific realm.
 
     `childIndices` must contain at least one element, i.e. do not call this

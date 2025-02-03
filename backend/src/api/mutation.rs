@@ -87,6 +87,17 @@ impl Mutation {
         Series::update_acl(id, acl, context).await
     }
 
+    /// Updates the title and description of a series. A request for this is sent to Opencast,
+    /// and the series is preliminarily updated in Tobira's DB.
+    async fn update_series_metadata(
+        id: Id,
+        title: String,
+        description: Option<String>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        Series::update_metadata(id, &title, description.as_deref(), context).await
+    }
+
     /// Sets the order of all children of a specific realm.
     ///
     /// `childIndices` must contain at least one element, i.e. do not call this
