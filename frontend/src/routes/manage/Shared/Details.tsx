@@ -1,18 +1,28 @@
 import { ParseKeys } from "i18next";
-import { ReactNode, PropsWithChildren, useState, useId } from "react";
+import { ReactNode, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FormProvider } from "react-hook-form";
+import { UseMutationConfig } from "react-relay";
+import { MutationParameters } from "relay-runtime";
+import { boxError } from "@opencast/appkit";
 
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
 import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { NotAuthorized } from "../../../ui/error";
-import { CopyableInput, InputWithCheckbox, TimeInput, Input, TextArea } from "../../../ui/Input";
-import { InputContainer, TitleLabel } from "../../../ui/metadata";
+import { CopyableInput, InputWithCheckbox, TimeInput } from "../../../ui/Input";
+import {
+    MetadataFields,
+    MetadataForm,
+    SubmitButtonWithStatus,
+    useMetadataForm,
+} from "../../../ui/metadata";
 import { useUser, isRealUser } from "../../../User";
 import { secondsToTimeString } from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
-import { Form } from "../../../ui/Form";
+import { displayCommitError } from "../Realm/util";
+
 
 type NarrowedAssetType = {
     id: string;
@@ -26,7 +36,7 @@ type NarrowedAssetType = {
     };
 }
 
-type SharedDetailsProps = {
+export type SharedDetailsProps = {
     asset: NarrowedAssetType;
 }
 type PageProps = SharedDetailsProps & {
@@ -107,48 +117,79 @@ export const DirectLink: React.FC<SharedDetailsProps> = ({ asset }) => {
         ? new URL(asset.urlProps.url + `?t=${secondsToTimeString(timestamp)}`)
         : asset.urlProps.url;
 
-    return (
-        <div css={{ marginBottom: 40 }}>
-            <div css={{ marginBottom: 4 }}>
-                {t("manage.shared.details.share-direct-link") + ":"}
-            </div>
-            <CopyableInput
-                label={t("manage.shared.details.copy-direct-link-to-clipboard")}
-                value={url.href}
-                css={{ width: "100%", fontSize: 14, marginBottom: 6 }}
-            />
-            {asset.urlProps.withTimestamp && <InputWithCheckbox
-                {...{ checkboxChecked, setCheckboxChecked }}
-                label={t("manage.my-videos.details.set-time")}
-                input={<TimeInput {...{ timestamp, setTimestamp }} disabled={!checkboxChecked} />}
-            />}
+    return <div css={{ marginBottom: 40, maxWidth: 750 }}>
+        <div css={{ marginBottom: 4 }}>
+            {t("manage.shared.details.share-direct-link") + ":"}
         </div>
-    );
+        <CopyableInput
+            label={t("manage.shared.details.copy-direct-link-to-clipboard")}
+            value={url.href}
+            css={{ width: "100%", fontSize: 14, marginBottom: 6 }}
+        />
+        {asset.urlProps.withTimestamp && <InputWithCheckbox
+            {...{ checkboxChecked, setCheckboxChecked }}
+            label={t("manage.my-videos.details.set-time")}
+            input={<TimeInput {...{ timestamp, setTimestamp }} disabled={!checkboxChecked} />}
+        />}
+    </div>;
 };
 
-export const MetadataSection: React.FC<SharedDetailsProps> = ({ asset }) => {
+
+type MetadataInput = {
+    title: string;
+    description: string;
+};
+
+type DetailsMetadataSectionProps<TMutation extends MutationParameters> = SharedDetailsProps & {
+    commit?: (config: UseMutationConfig<TMutation>) => Disposable;
+    inFlight?: boolean;
+}
+
+export const DetailsMetadataSection = <TMutation extends MutationParameters>({
+    asset,
+    commit,
+    inFlight,
+}: DetailsMetadataSectionProps<TMutation>) => {
     const { t } = useTranslation();
-    const titleFieldId = useId();
-    const descriptionFieldId = useId();
+    const {
+        formMethods,
+        success,
+        setSuccess,
+        commitError,
+        setCommitError,
+    } = useMetadataForm<MetadataInput>({
+        title: asset.title,
+        description: asset.description ?? "",
+    });
 
-    return (
-        <Form noValidate>
-            <InputContainer>
-                <TitleLabel htmlFor={titleFieldId} />
-                <Input
-                    id={titleFieldId}
-                    value={asset.title}
-                    disabled
-                    css={{ width: "100%" }}
-                />
-            </InputContainer>
+    const { handleSubmit, reset, formState: { isValid, isDirty } } = formMethods;
 
-            <InputContainer>
-                <label htmlFor={descriptionFieldId}>
-                    {t("upload.metadata.description")}
-                </label>
-                <TextArea id={descriptionFieldId} disabled value={asset.description ?? ""} />
-            </InputContainer>
-        </Form>
-    );
+    const onSubmit = commit && handleSubmit(({ title, description }) => {
+        commit({
+            variables: { id: asset.id, title, description },
+            onCompleted: () => {
+                setSuccess(true);
+                reset({ title, description });
+            },
+            onError: error => setCommitError(displayCommitError(error)),
+        });
+    });
+
+    return <>
+        <FormProvider {...formMethods}>
+            <MetadataForm hasError={!!commitError}>
+                {/* Title & Description */}
+                <MetadataFields disabled={!commit} />
+                {/* Submit */}
+                {onSubmit && <SubmitButtonWithStatus
+                    label={t("metadata-form.save")}
+                    onClick={onSubmit}
+                    disabled={!!commitError || !isValid || !isDirty || inFlight}
+                    inFlight={inFlight}
+                    success={success && !isDirty}
+                />}
+            </MetadataForm>
+        </FormProvider>
+        {boxError(commitError)}
+    </>;
 };
