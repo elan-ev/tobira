@@ -693,6 +693,9 @@ api-remote-errors:
     acl:
       not-found: "Zugriffsrechte konnten nicht geändert werden: Serie nicht gefunden."
       not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieser Serie zu ändern.
+    metadata:
+      not-found: "Metadaten konnten nicht geändert werden: Serie nicht gefunden."
+      not-allowed: Sie haben nicht die Berechtigung, die Metadaten dieser Serie zu ändern.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.

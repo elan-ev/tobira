@@ -669,6 +669,9 @@ api-remote-errors:
     acl:
       not-found: "Access policy update failed: series not found."
       not-allowed: You are not allowed to update the access policies of this series.
+    metadata:
+      not-found: "Metadata update failed: series not found."
+      not-allowed: You are not allowed to update the metadata of this series.
 
 embed:
   not-supported: This page can't be embedded.

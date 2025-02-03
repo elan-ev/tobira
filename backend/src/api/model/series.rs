@@ -408,6 +408,71 @@ impl Series {
             Err(err::opencast_error!("Opencast API error: {}", response.status()))
         }
     }
+
+    pub(crate) async fn update_metadata(
+        id: Id,
+        title: &str,
+        description: Option<&str>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        let series = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "series.metadata.not-found",
+                "series not found",
+            ),
+            err::not_authorized!(
+                key = "series.metadata.not-allowed",
+                "metadata update not allowed",
+            )
+        ).await?;
+
+        info!(series_id = %id, "Requesting metadata update of series");
+
+        let metadata = serde_json::json!([
+            {
+                "id": "title",
+                "value": title
+            },
+            {
+                "id": "description",
+                "value": description
+            },
+        ]);
+
+        let response = context
+            .oc_client
+            .update_metadata(&series, metadata)
+            .await
+            .map_err(|e| {
+                error!("Failed to send metadata update request: {}", e);
+                err::opencast_unavailable!("Failed to send metadata update request")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: The series' metadata has been updated.
+            context.db.execute("\
+                update series \
+                set title = $2, description = $3 \
+                where id = $1 \
+            ", &[&series.key, &title, &description]).await?;
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "series.metadata.not-found",
+                    "series not found",
+                ))
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to update series metadata, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
 }
 
 /// Represents an Opencast series.
@@ -504,6 +569,10 @@ impl OcEndpoint for Series {
     }
     fn opencast_id(&self) -> &str {
         &self.opencast_id
+    }
+
+    fn metadata_flavor(&self) -> &'static str {
+        "dublincore/series"
     }
 
     async fn extra_roles(&self, _context: &Context, _oc_id: &str) -> Result<Vec<AclInput>> {
