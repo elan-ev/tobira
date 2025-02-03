@@ -2,15 +2,13 @@ import { graphql, useMutation } from "react-relay";
 import { currentRef } from "@opencast/appkit";
 
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
-import {
-    AccessUpdateSeriesAclMutation,
-} from "./__generated__/AccessUpdateSeriesAclMutation.graphql";
 import { makeManageSeriesRoute, Series } from "./Shared";
 import { ManageSeriesRoute } from ".";
-import { ManageSeriesDetailsRoute } from "./Details";
+import { ManageSeriesDetailsRoute } from "./SeriesDetails";
 import { displayCommitError } from "../Realm/util";
-import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/AccessUI";
+import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/Access";
 import i18n from "../../../i18n";
+import { SeriesAccessAclMutation } from "./__generated__/SeriesAccessAclMutation.graphql";
 
 
 export const ManageSeriesAccessRoute = makeManageSeriesRoute(
@@ -28,7 +26,7 @@ export const ManageSeriesAccessRoute = makeManageSeriesRoute(
 
 
 const updateSeriesAcl = graphql`
-    mutation AccessUpdateSeriesAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
+    mutation SeriesAccessAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
         updateSeriesAcl(id: $id, acl: $acl) {
             ...on Series {
                 acl { role actions info { label implies large } }
@@ -44,7 +42,7 @@ type SeriesAclPageProps = {
 };
 
 const SeriesAclEditor: React.FC<SeriesAclPageProps> = ({ series, data }) => {
-    const [commit, inFlight] = useMutation<AccessUpdateSeriesAclMutation>(updateSeriesAcl);
+    const [commit, inFlight] = useMutation<SeriesAccessAclMutation>(updateSeriesAcl);
 
     const onSubmit = async ({ selections, saveModalRef, setCommitError }: SubmitAclProps) => {
         commit({
@@ -64,16 +62,6 @@ const SeriesAclEditor: React.FC<SeriesAclPageProps> = ({ series, data }) => {
         });
     };
 
-
-    return <>
-        <AccessEditor
-            rawAcl={series.acl}
-            {...{
-                onSubmit,
-                inFlight,
-                data,
-            }}
-        />
-    </>;
+    return <AccessEditor {...{ onSubmit, inFlight, data }} rawAcl={series.acl} />;
 };
 

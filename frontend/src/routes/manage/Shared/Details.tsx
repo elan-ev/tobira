@@ -1,19 +1,28 @@
 import { ParseKeys } from "i18next";
-import { ReactNode, PropsWithChildren, useState, useId } from "react";
+import { ReactNode, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FormProvider } from "react-hook-form";
+import { UseMutationConfig } from "react-relay";
+import { MutationParameters } from "relay-runtime";
+import { boxError } from "@opencast/appkit";
 
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
 import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { NotAuthorized } from "../../../ui/error";
-import { CopyableInput, InputWithCheckbox, TimeInput, Input, TextArea } from "../../../ui/Input";
-import { InputContainer, TitleLabel } from "../../../ui/metadata";
+import { CopyableInput, InputWithCheckbox, TimeInput } from "../../../ui/Input";
+import {
+    MetadataFields,
+    MetadataForm,
+    SubmitButtonWithStatus,
+    useMetadataForm,
+} from "../../../ui/metadata";
 import { useUser, isRealUser } from "../../../User";
 import { secondsToTimeString } from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
-import { Form } from "../../../ui/Form";
 import { Item } from "./Table";
+import { displayCommitError } from "../Realm/util";
 
 
 type UrlProps = {
@@ -101,48 +110,80 @@ export const DirectLink: React.FC<UrlProps> = ({ url, withTimestamp }) => {
         ? new URL(url + `?t=${secondsToTimeString(timestamp)}`)
         : url;
 
-    return (
-        <div css={{ marginBottom: 40 }}>
-            <div css={{ marginBottom: 4 }}>
-                {t("manage.shared.details.share-direct-link") + ":"}
-            </div>
-            <CopyableInput
-                label={t("manage.shared.details.copy-direct-link-to-clipboard")}
-                value={linkUrl.href}
-                css={{ width: "100%", fontSize: 14, marginBottom: 6 }}
-            />
-            {withTimestamp && <InputWithCheckbox
-                {...{ checkboxChecked, setCheckboxChecked }}
-                label={t("manage.my-videos.details.set-time")}
-                input={<TimeInput {...{ timestamp, setTimestamp }} disabled={!checkboxChecked} />}
-            />}
+    return <div css={{ marginBottom: 40, maxWidth: 750 }}>
+        <div css={{ marginBottom: 4 }}>
+            {t("manage.shared.details.share-direct-link") + ":"}
         </div>
-    );
+        <CopyableInput
+            label={t("manage.shared.details.copy-direct-link-to-clipboard")}
+            value={linkUrl.href}
+            css={{ width: "100%", fontSize: 14, marginBottom: 6 }}
+        />
+        {withTimestamp && <InputWithCheckbox
+            {...{ checkboxChecked, setCheckboxChecked }}
+            label={t("manage.my-videos.details.set-time")}
+            input={<TimeInput {...{ timestamp, setTimestamp }} disabled={!checkboxChecked} />}
+        />}
+    </div>;
 };
 
-export const MetadataSection: React.FC<{ item: Item }> = ({ item }) => {
+
+type MetadataInput = {
+    title: string;
+    description: string;
+};
+
+type DetailsMetadataSectionProps<TMutation extends MutationParameters> = {
+    item: Item;
+    commit?: (config: UseMutationConfig<TMutation>) => Disposable;
+    inFlight?: boolean;
+}
+
+export const DetailsMetadataSection = <TMutation extends MutationParameters>({
+    item,
+    commit,
+    inFlight,
+}: DetailsMetadataSectionProps<TMutation>) => {
     const { t } = useTranslation();
-    const titleFieldId = useId();
-    const descriptionFieldId = useId();
+    const {
+        formMethods,
+        success,
+        setSuccess,
+        commitError,
+        setCommitError,
+    } = useMetadataForm<MetadataInput>({
+        title: item.title,
+        description: item.description ?? "",
+    });
 
-    return (
-        <Form noValidate>
-            <InputContainer>
-                <TitleLabel htmlFor={titleFieldId} />
-                <Input
-                    id={titleFieldId}
-                    value={item.title}
-                    disabled
-                    css={{ width: "100%" }}
-                />
-            </InputContainer>
+    const { handleSubmit, reset, formState: { isValid, isDirty } } = formMethods;
 
-            <InputContainer>
-                <label htmlFor={descriptionFieldId}>
-                    {t("upload.metadata.description")}
-                </label>
-                <TextArea id={descriptionFieldId} disabled value={item.description ?? ""} />
-            </InputContainer>
-        </Form>
-    );
+    const onSubmit = commit && handleSubmit(({ title, description }) => {
+        commit({
+            variables: { id: item.id, title, description },
+            onCompleted: () => {
+                setSuccess(true);
+                reset({ title, description });
+            },
+            onError: error => setCommitError(displayCommitError(error)),
+        });
+    });
+
+    return <>
+        <FormProvider {...formMethods}>
+            <MetadataForm hasError={!!commitError}>
+                {/* Title & Description */}
+                <MetadataFields disabled={!commit} />
+                {/* Submit */}
+                {onSubmit && <SubmitButtonWithStatus
+                    label={t("metadata-form.save")}
+                    onClick={onSubmit}
+                    disabled={!!commitError || !isValid || !isDirty || inFlight}
+                    inFlight={inFlight}
+                    success={success && !isDirty}
+                />}
+            </MetadataForm>
+        </FormProvider>
+        {boxError(commitError)}
+    </>;
 };
