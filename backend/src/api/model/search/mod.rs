@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use juniper::GraphQLObject;
+use juniper::{GraphQLObject, GraphQLScalar, InputValue, ScalarValue};
 use meilisearch_sdk::search::{FederationOptions, MatchRange, QueryFederationOptions};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -81,11 +81,22 @@ make_search_results_object!("EventSearchResults", SearchEvent);
 make_search_results_object!("SeriesSearchResults", SearchSeries);
 make_search_results_object!("PlaylistSearchResults", search::Playlist);
 
-
-#[derive(Debug, GraphQLObject)]
+/// A byte range, encoded as two hex numbers separated by `-`.
+#[derive(Debug, Clone, Copy, GraphQLScalar)]
+#[graphql(parse_token(String))]
 pub struct ByteSpan {
-    pub start: i32,
-    pub len: i32,
+    pub start: u32,
+    pub len: u32,
+}
+
+impl ByteSpan {
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
+        juniper::Value::scalar(format!("{:x}-{:x}", self.start, self.len))
+    }
+
+    fn from_input<S: ScalarValue>(_input: &InputValue<S>) -> Result<Self, String> {
+        unimplemented!("not used right now")
+    }
 }
 
 #[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
@@ -579,7 +590,7 @@ fn field_matches_for(
     field: &str,
 ) -> Vec<ByteSpan> {
     match_ranges_for(match_positions, field).iter()
-        .map(|m| ByteSpan { start: m.start as i32, len: m.length as i32 })
+        .map(|m| ByteSpan { start: m.start as u32, len: m.length as u32 })
         .take(8) // The frontend can only show a limited number anyway
         .collect()
 }

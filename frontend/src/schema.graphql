@@ -188,6 +188,9 @@ interface Node {
   id: ID!
 }
 
+"A byte range, encoded as two hex numbers separated by `-`."
+scalar ByteSpan
+
 "An opaque cursor used for pagination"
 scalar Cursor
 
@@ -289,11 +292,6 @@ type AuthorizedPlaylist implements Node {
   title: String!
   description: String
   entries: [VideoListEntry!]!
-}
-
-type ByteSpan {
-  start: Int!
-  len: Int!
 }
 
 type Caption {

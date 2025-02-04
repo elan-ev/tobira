@@ -10,6 +10,7 @@ module.exports = {
     customScalarTypes: {
         "DateTime": "string",
         "Cursor": "string",
+        "ByteSpan": "string",
         "ExtraMetadata": "Record<string, Record<string, string[]>>",
         "TranslatedString": "Record<string, string>",
     },

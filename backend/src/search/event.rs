@@ -451,8 +451,8 @@ impl TextSearchIndex {
 
             let highlights = matches.iter().map(|m| {
                 ByteSpan {
-                    start: (m.start - range_with_context.start) as i32,
-                    len: m.length as i32,
+                    start: (m.start - range_with_context.start) as u32,
+                    len: m.length as u32,
                 }
             }).collect();
 
