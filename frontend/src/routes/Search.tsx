@@ -176,13 +176,13 @@ const query = graphql`
                             duration
                             text
                             ty
-                            highlights { start len }
+                            highlights
                         }
                         matches {
-                            title { start len }
-                            description { start len }
-                            seriesTitle { start len }
-                            creators { index span { start len }}
+                            title
+                            description
+                            seriesTitle
+                            creators { index span }
                         }
                     }
                     ... on SearchSeries {
@@ -191,19 +191,14 @@ const query = graphql`
                         description
                         thumbnails { thumbnail isLive audioOnly }
                         hostRealms { path ancestorNames }
-                        matches {
-                            title { start len }
-                            description { start len }
-                        }
+                        matches { title description }
                     }
                     ... on SearchRealm {
                         id
                         name
                         path
                         ancestorNames
-                        matches {
-                            name { start len }
-                        }
+                        matches { name }
                     }
                 }
                 totalHits
@@ -681,9 +676,6 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
         return () => observer.disconnect();
     }, [setDoRender]);
 
-    // For a more useful tab order.
-    const sortedMatches = doRender ? [...textMatches] : [];
-    sortedMatches.sort((a, b) => a.start - b.start);
 
     const loadSegmentImages = useCallback(() => {
         // Just calling `loadQuery` unconditionally would not send the query
@@ -716,7 +708,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
                 borderTop: `1.5px solid ${COLORS.neutral50}`,
             }} />
 
-            {sortedMatches.map((m, i) => (
+            {doRender && textMatches.map((m, i) => (
                 <WithTooltip
                     key={i}
                     distance={m.ty === "CAPTION" ? 4 : 5.5}
@@ -1201,13 +1193,16 @@ const byteSlice = (s: string, start: number, len: number): readonly [string, str
  */
 const highlightText = (
     s: string,
-    spans: readonly { start: number; len: number }[],
+    spans: readonly string[],
     maxUnmarkedSectionLen = Infinity,
 ) => {
     const textParts = [];
     let remainingText = s;
     let offset = 0;
-    for (const span of spans) {
+    for (const encodedSpan of spans) {
+        const [start, len] = encodedSpan.split("-").map(v => parseInt(v, 16));
+        const span = { start, len };
+
         const highlightStart = span.start - offset;
         const [prefix_, middle, rest]
             = byteSlice(remainingText, highlightStart, span.len);

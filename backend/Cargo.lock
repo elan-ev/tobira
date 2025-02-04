@@ -2790,6 +2790,7 @@ dependencies = [
  "cookie",
  "deadpool",
  "deadpool-postgres",
+ "either",
  "elliptic-curve",
  "fallible-iterator",
  "form_urlencoded",

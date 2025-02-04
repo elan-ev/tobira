@@ -1,4 +1,4 @@
-use std::{cmp::{max, min}, collections::{BTreeMap, HashMap}, fmt::Write};
+use std::{cmp::{max, min}, collections::{BTreeMap, BinaryHeap, HashMap}, fmt::Write};
 
 use chrono::{DateTime, Utc};
 use fallible_iterator::FallibleIterator;
@@ -393,8 +393,15 @@ impl TextSearchIndex {
             }
         }
 
-        for (slot, matches) in entries {
-            let timespan = self.timespan_of_slot(slot as usize);
+        // We reduce the number of matches if necessary.
+        const LIMIT: usize = 20;
+        let simplified = simplify_matches(
+            LIMIT,
+            entries.keys().map(|&slot| (slot, self.timespan_of_slot(slot as usize)))
+        );
+
+        for (slot, timespan) in simplified {
+            let matches = entries.get(&slot).unwrap();
 
             // Get the range that includes all matches
             let full_range = {
@@ -444,8 +451,8 @@ impl TextSearchIndex {
 
             let highlights = matches.iter().map(|m| {
                 ByteSpan {
-                    start: (m.start - range_with_context.start) as i32,
-                    len: m.length as i32,
+                    start: (m.start - range_with_context.start) as u32,
+                    len: m.length as u32,
                 }
             }).collect();
 
@@ -459,6 +466,281 @@ impl TextSearchIndex {
             });
         }
     }
+}
+
+
+/// Reduces the number of `matches` to `target_count` by successively merging
+/// two matches. Merging results in a timespan covering both matches, and an
+/// arbitrary slot from one of the inputs.
+///
+/// The metric which two matches to merge next is the crux of this function.
+/// Currently, it's simply "size of resulting interval", i.e. the two matches
+/// are merged which will result in the smallest interval. This metric is
+/// probably not ideal and we would rather also consider how much intervals
+/// overlap or how far they are apart. But the algorithm currently depends on
+/// some properties offered by the "size" metric, specifically:
+/// - When searching for the best rightward partner, we can stop searching once
+///   the next candidate has `start > best.end`.
+/// - The merge of a+b is never a better rightward partner for any interval than
+///   `a` or `b` would have been.
+///
+/// Both of these properties are not strictly necessary for the algorithm to
+/// work, but when implementing this, there were more important things to do,
+/// so the simpler metric was kept.
+///
+/// This function runs in O(n log n). The basic idea is to have list of
+/// interval, sorted by start time, plus a heap to extract the best merge. The
+/// main loop just loops as long as we still have too many intervals, extracts
+/// the best merge and performs the merge. There are of course O(n²) many
+/// possible merges, but for each interval, there is a clear best partner
+/// (called BRP, best rightward partner), so our heap only needs to hold O(n)
+/// items, as long as we update everything correctly.
+///
+/// When merging, we would need to remove two intervals and add a new one. Doing
+/// that naively in `intervals`, while keeping its order, would be O(n). What
+/// we do instead is to replace the input interval with the lower `start` with
+/// the merged one (this maintains the order), and to soft-delete the other
+/// input interval. Soft-delete just means using a sentinal value in the list
+/// to denote a deleted element. This slows down the BRP search, unfortunately,
+/// and it's possible that some fringe cases will cause a quadratic runtime,
+/// but that is very unlikely to happen with real world data.
+///
+/// The BRP search is not ideal anyway: we limit the search artificially to
+/// prevent quadratic blowup. When there are no overlapping intervals, that's
+/// not a problem at all. But one might imagine optimizing the BRP search with
+/// stricter runtime guarantees in the future. But it's not important for our
+/// use case.
+fn simplify_matches(
+    target_count: usize,
+    matches: impl Iterator<Item = (u32, SearchTimespan)> + ExactSizeIterator,
+) -> impl Iterator<Item = (u32, SearchTimespan)> {
+    #[derive(Clone, Copy)]
+    struct Interval {
+        start: u64,
+        end: u64,
+        slot: u32,
+    }
+
+    impl Interval {
+        fn invalid() -> Self {
+            Self {
+                start: u64::MAX,
+                end: 0,
+                slot: 0,
+            }
+        }
+
+        fn is_invalid(&self) -> bool {
+            self.start > self.end
+        }
+
+        fn size(&self) -> u64 {
+            self.end - self.start
+        }
+    }
+
+    fn merge(a: Interval, b: Interval) -> Interval {
+        Interval {
+            start: min(a.start, b.start),
+            end: max(a.end, b.end),
+            slot: a.slot, // Just arbitrarily pick one
+        }
+    }
+
+
+    /// Condition: `intervals[base_idx].start <= intervals[brp_idx].start`.
+    #[derive(Copy, Clone, PartialEq, Eq)]
+    struct HeapEntry {
+        merged_size: u64,
+        /// The interval with the smaller `start`. For each interval (except the
+        /// last one), there will be exactly one heap entry with the `base_idx`
+        /// pointing to that interval.
+        base_idx: usize,
+        /// The BRP of the base.
+        brp_idx: usize,
+    }
+
+    impl PartialOrd for HeapEntry {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl Ord for HeapEntry {
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            self.merged_size.cmp(&other.merged_size)
+                .reverse()
+                // We include the indices only to match the `Eq` impl. The order of
+                // two entries with same `size` does not matter to the algorithm.
+                .then_with(|| (self.base_idx, self.brp_idx).cmp(&(other.base_idx, other.brp_idx)))
+        }
+    }
+
+
+    /// Returns the "best rightward partner" (BRP) for the interval at `idx`.
+    ///
+    /// This is the interval P with the minimum `end` value among all intervals that
+    /// have a `start` >= the `start` of the given interval. The latter condition
+    /// is equal to "all elements right of `idx`", since the slice is sorted by
+    /// `start`. Hence the name "rightward".
+    fn best_rightward_partner(intervals: &[Interval], idx: usize) -> Option<usize> {
+        const LIMIT: u32 = 8;
+
+        let mut min_end = u64::MAX;
+        let mut best_candidate = None;
+        let mut checked = 0;
+        for (rel_candidate_idx, candidate) in intervals[idx + 1..].iter().enumerate() {
+            let candidate_idx = rel_candidate_idx + idx + 1;
+            if candidate.is_invalid() {
+                // Just skip invalid ones and don't consider them in the limit.
+                continue;
+            } else if candidate.start >= min_end {
+                // At this point, there cannot be any more better candidates.
+                break;
+            }
+
+            if candidate.end < min_end {
+                min_end = candidate.end;
+                best_candidate = Some(candidate_idx);
+            }
+
+            // Stop after some attempts. This is just here to avoid quadratic blowup
+            // of the algorithm. This will rarely be needed. For example, if there
+            // is no overlap between intervals (which is true for most events), the
+            // above `break` will be reached in the 2nd loop iteration every time.
+            // This limit will only be reached if there is a lot of overlap. And if
+            // the limit triggers, we just end up with a potential suboptimal
+            // merge. This just slightly decreases the output quality but does not
+            // break the algorithm or lead to any bad problems, as far as I can tell.
+            checked += 1;
+            if checked > LIMIT {
+                break;
+            }
+        }
+        best_candidate
+    }
+
+    fn push_entry_for_base(
+        base_idx: usize,
+        intervals: &[Interval],
+        heap: &mut BinaryHeap<HeapEntry>,
+    ) {
+        if let Some(partner_idx) = best_rightward_partner(&intervals, base_idx) {
+            let merged = merge(intervals[base_idx], intervals[partner_idx]);
+            heap.push(HeapEntry {
+                merged_size: merged.size(),
+                base_idx,
+                brp_idx: partner_idx,
+            });
+        }
+    }
+
+
+    // Early exit if there is nothing to do.
+    if matches.len() <= target_count {
+        return either::Left(matches);
+    }
+
+    // Convert to internal representation and sort by start point.
+    let mut intervals = matches.map(|(slot, ts)| Interval {
+        start: ts.start,
+        end: ts.start + ts.duration,
+        slot,
+    }).collect::<Vec<_>>();
+    intervals.sort_by_key(|i| i.start);
+
+    // Built initial heap
+    let mut heap = BinaryHeap::with_capacity(intervals.len());
+    for (idx, _) in intervals.iter().enumerate() {
+        push_entry_for_base(idx, &intervals, &mut heap);
+    }
+
+    // Main loop
+    let mut soft_deleted = 0;
+    while intervals.len() - soft_deleted > target_count {
+        // Heap has at least as many entries as `intervals`, so we can unwrap.
+        let entry = heap.pop().unwrap();
+        let HeapEntry { base_idx, brp_idx, .. } = entry;
+        let base = intervals[base_idx];
+        let brp = intervals[brp_idx];
+
+
+        // If the base is invalid, we caught case (2) below: delayed deletion.
+        // We just ignore this entry as it's no longer valid.
+        if base.is_invalid() {
+            continue;
+        }
+
+
+        let merged = merge(base, brp);
+
+        // Catch case (3) and (4).
+        //
+        // Case 4 (entries that used a now soft-deleted interval as BRP) is
+        // caught by `brp.is_invalid()`. Case 3 (entries that use an interval
+        // replaced by a merge) as BRP is caught by the size mismatch. Well,
+        // kind of. If the size is correct, the interval might still have been
+        // replaced by a merge, but the merge didn't change its `end`, so the
+        // heap entry was still valid and we can continue as normal.
+        if brp.is_invalid() || entry.merged_size != merged.size() {
+            // But in this case, we need to find the new BRP for `base` and push
+            // a new entry for it. Again, this new entry will have a size of >=
+            // the entry we just popped.
+            push_entry_for_base(base_idx, &intervals, &mut heap);
+            continue;
+        }
+
+
+        // Replace `base` with `merged`. This maintains the ordering by `start`.
+        // Also soft-delete `brp`.
+        intervals[base_idx] = merged;
+        let merged_idx = base_idx;
+        intervals[brp_idx] = Interval::invalid();
+        soft_deleted += 1;
+
+
+        // Update heap.
+        //
+        // Some entries in the heap might reference `a` or `b`. Those are not
+        // valid anymore and need to be replaced. Replacing or removing things
+        // in the binary heap from `std` is impossible, it would require a
+        // secondary data structure. There are crates offering this, but we
+        // don't need it. Instead, we can use "delayed invalidation", meaning
+        // that we detect invalid entries after popping them from the heap and
+        // then just ignoring or replace them.
+        //
+        // Of course, this means that the heap is larger, as it contains dummy
+        // values. But the heap is still O(n) at all times: it starts with n-1
+        // elements and each loop iteration, one element is popped and either 0
+        // or 1 element is pushed, so it never grows in size.
+        //
+        // We care about heap entries `e` with:
+        // - (1) ... `e.base = base`: there was only one and it was just popped.
+        // - (2) ... `e.base = brp`: there exists one in the heap that should be
+        //   deleted, but since we cannot easily delete it now, we do delayed
+        //   deletion.
+        // - (3) ... `e.brp = base`
+        // - (4) ... `e.brp = brp`
+        //
+        // For cases (3) and (4), we need to find their base's new BRP. Instead
+        // of doing that now, we just do it when the entry is popped. The
+        // important property here is that the new BRP never results in a merge
+        // smaller than the previous BRP. That means the invalid entry will be
+        // popped from the heap not after the corrected one would.
+        //
+        // Finally, there is missing an entry with the new merged interval as
+        // `base`, which we push now.
+        push_entry_for_base(merged_idx, &intervals, &mut heap);
+    }
+
+    either::Right(
+        intervals.into_iter()
+            .filter(|i| !i.is_invalid())
+            .map(|i| (i.slot, SearchTimespan {
+                start: i.start,
+                duration: i.end - i.start,
+            }))
+    )
 }
 
 fn ceil_char_boundary(s: &str, idx: usize) -> usize {

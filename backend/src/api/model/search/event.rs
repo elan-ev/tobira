@@ -112,7 +112,7 @@ impl SearchEvent {
                 .iter()
                 .filter_map(|m| {
                     m.indices.as_ref().and_then(|v| v.get(0)).map(|index| ArrayMatch {
-                        span: ByteSpan { start: m.start as i32, len: m.length as i32 },
+                        span: ByteSpan { start: m.start as u32, len: m.length as u32 },
                         index: *index as i32,
                     })
                 })
