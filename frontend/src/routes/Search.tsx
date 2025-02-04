@@ -692,9 +692,6 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
         return () => observer.disconnect();
     }, [setDoRender]);
 
-    // For a more useful tab order.
-    const sortedMatches = doRender ? [...textMatches] : [];
-    sortedMatches.sort((a, b) => a.start - b.start);
 
     const loadSegmentImages = useCallback(() => {
         // Just calling `loadQuery` unconditionally would not send the query
@@ -727,7 +724,7 @@ const TextMatchTimeline: React.FC<TextMatchTimelineProps> = ({
                 borderTop: `1.5px solid ${COLORS.neutral50}`,
             }} />
 
-            {sortedMatches.map((m, i) => (
+            {doRender && textMatches.map((m, i) => (
                 <WithTooltip
                     key={i}
                     distance={m.ty === "CAPTION" ? 4 : 5.5}
