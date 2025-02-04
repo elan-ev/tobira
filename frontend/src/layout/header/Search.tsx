@@ -4,16 +4,14 @@ import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
 import { LuX } from "react-icons/lu";
 
-import { useRouter, useRouterState } from "../../router";
+import { useRouter } from "../../router";
 import {
-    handleCancelSearch,
     SearchRoute,
     isSearchActive,
     isValidSearchItemType,
     SEARCH_TIMINGS,
 } from "../../routes/Search";
 import { focusStyle } from "../../ui";
-import { Spinner } from "@opencast/appkit";
 import { currentRef } from "../../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
@@ -27,7 +25,6 @@ type SearchFieldProps = {
 export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
     const router = useRouter();
-    const { isTransitioning } = useRouterState();
     const ref = useRef<HTMLInputElement>(null);
 
     // If the user is unknown, then we are still in the initial loading phase.
@@ -72,8 +69,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const iconStyle = { position: "absolute", right: paddingSpinner, top: paddingSpinner } as const;
 
 
-    const lastTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
     const onSearchRoute = isSearchActive();
     const getSearchParam = (searchParameter: string) => {
         const searchParams = new URLSearchParams(document.location.search);
@@ -84,13 +79,17 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const defaultValue = getSearchParam("q");
 
 
-    const search = (expression: string) => {
+    const search = (q: string) => {
+        if (!(q in SEARCH_TIMINGS)) {
+            SEARCH_TIMINGS[q] = {};
+        }
+        SEARCH_TIMINGS[q].startSearch = window.performance.now();
         const filters = {
             itemType: isValidSearchItemType(getSearchParam("f")),
             start: getSearchParam("start"),
             end: getSearchParam("end"),
         };
-        router.goto(SearchRoute.url({ query: expression, ...filters }), onSearchRoute);
+        router.goto(SearchRoute.url({ query: q, ...filters }));
     };
 
     return (
@@ -114,7 +113,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             }} />
             <form onSubmit={event => {
                 event.preventDefault();
-                clearTimeout(lastTimeout.current);
                 search(currentRef(ref).value);
 
                 // Hide mobile keyboard on enter. The mobile keyboard hides lots
@@ -140,19 +138,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         // the search button in the header (mobile only). This
                         // only happens on non-search routes.
                         autoFocus={variant === "mobile" && !onSearchRoute}
-                        onChange={e => {
-                            const q = e.target.value;
-                            if (!(q in SEARCH_TIMINGS)) {
-                                SEARCH_TIMINGS[q] = {};
-                            }
-                            SEARCH_TIMINGS[q].input = window.performance.now();
-
-                            clearTimeout(lastTimeout.current);
-                            lastTimeout.current = setTimeout(() => {
-                                SEARCH_TIMINGS[q].startSearch = window.performance.now();
-                                search(e.target.value);
-                            }, 30);
-                        }}
                         css={{
                             flex: 1,
                             color: COLORS.neutral60,
@@ -178,12 +163,13 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     />
                 </label>
             </form>
-            {isTransitioning && isSearchActive() && <Spinner
-                size={spinnerSize}
-                css={iconStyle}
-            />}
-            {!isTransitioning && isSearchActive() && <ProtoButton
-                onClick={() => handleCancelSearch(router, ref)}
+            <ProtoButton
+                // Just clear the search input
+                onClick={() => {
+                    const input = currentRef(ref);
+                    input.value = "";
+                    input.focus();
+                }}
                 css={{
                     ":hover, :focus": {
                         color: COLORS.neutral90,
@@ -195,7 +181,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     color: COLORS.neutral60,
                     ...iconStyle,
                 }}
-            ><LuX size={spinnerSize} css={{ display: "block" }} /></ProtoButton>}
+            ><LuX size={spinnerSize} css={{ display: "block" }} /></ProtoButton>
         </div>
     );
 };

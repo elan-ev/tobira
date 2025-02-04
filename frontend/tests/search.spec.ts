@@ -18,6 +18,7 @@ test("Search", async ({ page, browserName, standardData, activeSearchIndex }) =>
 
     await test.step("Should allow search queries to be executed", async () => {
         await searchField.fill(query);
+        await searchField.press("Enter");
         await expect(page).toHaveURL(`~search?q=${query}`);
     });
 
@@ -71,6 +72,7 @@ const startSearch = async (page: Page, query: string, startUrl?: string) => {
     const searchField = page.getByPlaceholder("Search");
     await searchField.click();
     await searchField.fill(query);
+    await searchField.press("Enter");
     await expect(page).toHaveURL(`~search?${new URLSearchParams({ q: query })}`);
 };
 

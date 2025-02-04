@@ -11,7 +11,6 @@ import {
 import { LetterText } from "lucide-react";
 import {
     ReactNode,
-    RefObject,
     startTransition,
     Suspense,
     useCallback,
@@ -234,7 +233,6 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
         // eslint-disable-next-line no-console
         console.table([{
             q: q,
-            debounce: diff(info.input, info.startSearch),
             routing: diff(info.startSearch, info.routeMatch),
             query: diff(info.routeMatch, info.queryReturned),
             backend: outcome.__typename === "SearchResults" ? outcome.duration : null,
@@ -243,15 +241,6 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
         LAST_PRINTED_TIMINGS_QUERY = q;
     });
 
-    useEffect(() => {
-        const handleEscape = ((ev: KeyboardEvent) => {
-            if (ev.key === "Escape") {
-                handleCancelSearch(router);
-            }
-        });
-        document.addEventListener("keyup", handleEscape);
-        return () => document.removeEventListener("keyup", handleEscape);
-    });
 
     let body;
     if (outcome.__typename === "EmptyQuery") {
@@ -1159,23 +1148,6 @@ const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
     </li>
 );
 
-// If a user initiated the search in Tobira (i.e. neither coming from an
-// external link nor using the browser bar to manually visit the /~search route),
-// we can redirect to the previous page. Otherwise we redirect to Tobira's homepage.
-export const handleCancelSearch = ((router: RouterControl, ref?: RefObject<HTMLInputElement>) => {
-    if (ref?.current) {
-        // Why is this necessary? When a user reloads the search page and then navigates
-        // away within Tobira, the search input isn't cleared like it would be usually.
-        // So it needs to be done manually.
-        ref.current.value = "";
-    }
-    if (router.internalOrigin) {
-        window.history.back();
-    } else {
-        router.goto("/");
-    }
-});
-
 /**
  * Slices a string with byte indices. Never cuts into UTF-8 chars, but
  * arbitrarily decides in what output to place them.
@@ -1271,7 +1243,6 @@ const highlightCss = (color: string) => ({
 
 // This is for profiling search performance. We might remove this later again.
 export const SEARCH_TIMINGS: Record<string, {
-    input?: DOMHighResTimeStamp;
     startSearch?: DOMHighResTimeStamp;
     routeMatch?: DOMHighResTimeStamp;
     queryReturned?: DOMHighResTimeStamp;

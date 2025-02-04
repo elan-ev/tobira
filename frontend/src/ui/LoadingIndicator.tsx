@@ -2,7 +2,6 @@ import { useRef } from "react";
 import { Transition } from "react-transition-group";
 import { match } from "@opencast/appkit";
 
-import { isSearchActive } from "../routes/Search";
 import { useRouterState } from "../router";
 import { COLORS } from "../color";
 
@@ -11,11 +10,6 @@ import { COLORS } from "../color";
 export const LoadingIndicator: React.FC = () => {
     const { isTransitioning } = useRouterState();
     const ref = useRef<HTMLDivElement>(null);
-
-    // If search is active, there is a loading indicator next to the search input.
-    if (isSearchActive()) {
-        return null;
-    }
 
     const START_DURATION = 1200;
     const EXIT_DURATION = 150;
