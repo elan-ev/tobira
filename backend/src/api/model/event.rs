@@ -666,7 +666,11 @@ impl LoadableAsset for AuthorizedEvent {
     }
 
     fn table_name() -> &'static str {
-        "events"
+        "all_events"
+    }
+
+    fn alias() -> Option<&'static str> {
+        Some("events")
     }
 
     fn sort_clauses(_column: &str) -> (&str, &str) {

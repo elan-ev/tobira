@@ -406,10 +406,14 @@ impl LoadableAsset for Series {
         "series"
     }
 
+    fn alias() -> Option<&'static str> {
+        None
+    }
+
     fn sort_clauses(column: &str) -> (&str, &str) {
         match column {
-            "count(events.id)" => (
-                "left join events on events.series = series.id",
+            "count(all_events.id)" => (
+                "left join all_events on all_events.series = series.id",
                 "group by series.id",
             ),
             _ => ("", ""),
