@@ -3,10 +3,11 @@ import { useTranslation } from "react-i18next";
 import {
     LuAlertTriangle, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
+    LuPlusCircle,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
-    match, ProtoButton, screenWidthAbove, screenWidthAtMost,
+    match, ProtoButton, screenWidthAbove, screenWidthAtMost, Spinner,
     HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
 } from "@opencast/appkit";
 
@@ -16,7 +17,6 @@ import { Link } from "../../router";
 import { User, useUser } from "../../User";
 import { ActionIcon, ICON_STYLE } from "./ui";
 import CONFIG from "../../config";
-import { Spinner } from "@opencast/appkit";
 import { focusStyle } from "../../ui";
 import { ExternalLink } from "../../relay/auth";
 import { COLORS } from "../../color";
@@ -26,6 +26,9 @@ import { ManageRoute } from "../../routes/manage";
 import { ManageVideosRoute } from "../../routes/manage/Video";
 import { LoginLink } from "../../routes/util";
 import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
+import { ManageSeriesRoute } from "../../routes/manage/Series";
+import SeriesIcon from "../../icons/series.svg";
+import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 
 
 
@@ -242,6 +245,18 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             children: t("manage.dashboard.studio-tile-title"),
             css: { ...indent, width: "100%" },
         }] : [],
+        {
+            icon: <SeriesIcon />,
+            wrapper: <Link to={ManageSeriesRoute.url} />,
+            children: t("manage.my-series.title"),
+            css: indent,
+        },
+        {
+            icon: <LuPlusCircle />,
+            wrapper: <Link to={CreateSeriesRoute.url} />,
+            children: t("manage.my-series.create.title"),
+            css: indent,
+        },
 
         // Logout button
         {

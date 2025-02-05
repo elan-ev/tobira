@@ -1,26 +1,44 @@
 use chrono::{DateTime, Utc};
+use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLObject, GraphQLInputObject};
 use postgres_types::ToSql;
 
 use crate::{
     api::{
         Context, Id, Node, NodeValue,
-        err::{invalid_input, ApiResult},
+        err::{self, invalid_input, ApiResult},
         model::{
+            acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            acl::{self, Acl},
+            shared::convert_acl_input
         },
     },
-    db::{types::SeriesState as State, util::impl_from_db},
-    model::{Key, ExtraMetadata},
+    db::{
+        types::SeriesState as State,
+        util::{impl_from_db, select},
+    },
+    model::{ExtraMetadata, Key},
     prelude::*,
+    sync::client::{AclInput, OcEndpoint},
 };
+
+use self::acl::AclInputEntry;
 
 use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
+    shared::{
+        load_writable_for_user,
+        AclForDB,
+        AssetMapping,
+        Connection,
+        LoadableAsset,
+        PageInfo,
+        SeriesSortColumn,
+        SortOrder,
+    },
 };
 
 
@@ -30,6 +48,7 @@ pub(crate) struct Series {
     pub(crate) synced_data: Option<SyncedSeriesData>,
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
+    pub(crate) updated: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
@@ -45,9 +64,14 @@ impl_from_db!(
     select: {
         series.{
             id, opencast_id, state,
-            title, description, created,
-            metadata, read_roles, write_roles,
+            title, description,
+            metadata, created,
+            read_roles, write_roles,
         },
+        updated: "case \
+            when ${table:series}.updated = '-infinity' then null \
+            else ${table:series}.updated \
+        end",
     },
     |row| {
         Series {
@@ -55,6 +79,7 @@ impl_from_db!(
             opencast_id: row.opencast_id(),
             title: row.title(),
             created: row.created(),
+            updated: row.updated(),
             metadata: row.metadata(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
@@ -115,23 +140,64 @@ impl Series {
         }
     }
 
-    pub(crate) async fn create(series: NewSeries, context: &Context) -> ApiResult<Self> {
+    pub(crate) async fn create(
+        series: NewSeries,
+        context: &Context,
+        acl: Option<AclForDB>,
+    ) -> ApiResult<Self> {
+        let (read_roles, write_roles) = match &acl {
+            Some(roles) => (Some(&roles.read_roles), Some(&roles.write_roles)),
+            None => (None, None),
+        };
+
         let selection = Self::select();
         let query = format!(
-            "insert into series (opencast_id, title, state, updated) \
-                values ($1, $2, 'waiting', '-infinity') \
+            "insert into series (opencast_id, title, state, updated, read_roles, write_roles) \
+                values ($1, $2, 'waiting', '-infinity', $3, $4) \
                 returning {selection}",
         );
         context.db(context.require_tobira_admin()?)
-            .query_one(&query, &[&series.opencast_id, &series.title])
+            .query_one(&query, &[&series.opencast_id, &series.title, &read_roles, &write_roles])
             .await?
             .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 
+    pub(crate) async fn create_in_oc(
+        title: &str,
+        description: Option<&str>,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<Self> {
+        let response = context
+            .oc_client
+            .create_series(&acl, &title, description)
+            .await
+            .map_err(|e| {
+                error!("Failed to send series creation request: {}", e);
+                err::opencast_unavailable!("Failed to send series creation request")
+            })?;
+
+        let db_acl = Some(convert_acl_input(acl));
+
+        // If the request returned an Opencast identifier, the series was created successfully.
+        // The series is created in the database, so the user doesn't have to wait for sync to see
+        // the new series in the "My series" overview.
+        let series = Self::create(
+            NewSeries {
+                opencast_id: response.identifier,
+                title: title.to_owned(),
+            },
+            context,
+            db_acl,
+        ).await?;
+
+        Ok(series)
+    }
+
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
         context.auth.required_trusted_external()?;
-        Self::create(series, context).await
+        Self::create(series, context, None).await
     }
 
     pub(crate) async fn add_mount_point(
@@ -249,7 +315,7 @@ impl Series {
         }
 
         // Create series
-        let series = Series::create(series, context).await?;
+        let series = Series::create(series, context, None).await?;
 
         // Create realms
         let target_realm = {
@@ -270,6 +336,73 @@ impl Series {
         // Create mount point
         Self::add_mount_point(series.opencast_id, target_realm.full_path, context).await
     }
+
+    pub(crate) async fn load_writable_for_user(
+        context: &Context,
+        order: SortOrder<SeriesSortColumn>,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<SeriesConnection> {
+        let conn = load_writable_for_user::<Series, SeriesSortColumn>(
+            context, order, offset, limit,
+        ).await?;
+
+        Ok(SeriesConnection { inner: conn })
+    }
+
+    pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+        if !context.config.general.allow_acl_edit {
+            return Err(err::not_authorized!("editing ACLs is not allowed"));
+        }
+
+        let series = Self::load_by_id(id, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))?;
+
+        info!(series_id = %id, "Requesting ACL update of series");
+
+        let response = context
+            .oc_client
+            .update_acl(&series, &series.opencast_id, &acl, context)
+            .await
+            .map_err(|e| {
+                error!("Failed to send acl update request: {}", e);
+                err::opencast_unavailable!("Failed to send acl update request")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: The updated access control list is returned.
+            let db_acl = convert_acl_input(acl);
+
+            context.db.execute("\
+                update series \
+                set read_roles = $2, write_roles = $3 \
+                where id = $1 \
+            ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+
+            if context.config.general.lock_acl_to_series {
+                context.db.execute("\
+                    update events \
+                    set read_roles = $2, write_roles = $3 \
+                    where series = $1 \
+                ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+            }
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "series.acl.not-found",
+                    "series not found",
+                ))
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to update series acl, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
 }
 
 /// Represents an Opencast series.
@@ -289,6 +422,10 @@ impl Series {
 
     fn created(&self) -> &Option<DateTime<Utc>> {
         &self.created
+    }
+
+    fn updated(&self) -> &Option<DateTime<Utc>> {
+        &self.updated
     }
 
     fn metadata(&self) -> &Option<ExtraMetadata> {
@@ -348,6 +485,17 @@ impl Node for Series {
     }
 }
 
+impl OcEndpoint for Series {
+    fn endpoint_name(&self) -> &'static str {
+        "series"
+    }
+
+    async fn extra_roles(&self, _context: &Context, _oc_id: &str) -> Result<Vec<AclInput>> {
+        // Series do not have custom or preview roles.
+        Ok(vec![])
+    }
+}
+
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeries {
@@ -358,4 +506,43 @@ pub(crate) struct NewSeries {
     // Since `mountSeries` feels even more like a private API
     // in some way, and since passing stuff like metadata isn't trivial either
     // I think it's okay to leave it at that for now.
+}
+
+impl LoadableAsset for Series {
+    fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
+        let (selection, mapping) = select!(resource: Series);
+        (selection, mapping.resource)
+    }
+
+    fn table_name() -> &'static str {
+        "series"
+    }
+
+    fn sort_clauses(column: &str) -> (&str, &str) {
+        match column {
+            "count(events.id)" => (
+                "left join events on events.series = series.id",
+                "group by series.id",
+            ),
+            _ => ("", ""),
+        }
+    }
+}
+
+// Todo: Make this generic. It's basically the same code that's used for `EventConnection`.
+pub(crate) struct SeriesConnection {
+    inner: Connection<Series>,
+}
+
+#[graphql_object(context = Context)]
+impl SeriesConnection {
+    fn page_info(&self) -> &PageInfo {
+        &self.inner.page_info
+    }
+    fn items(&self) -> &Vec<Series> {
+        &self.inner.items
+    }
+    fn total_count(&self) -> i32 {
+        self.inner.total_count
+    }
 }

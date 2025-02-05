@@ -27,7 +27,7 @@ import { VideoListSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
-import { COMMON_ROLES } from "../util/roles";
+import { defaultAclMap } from "../util/roles";
 import { Acl, AclSelector, knownRolesFragment } from "../ui/Access";
 import {
     AccessKnownRolesData$data,
@@ -744,20 +744,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         }
     };
 
-    const defaultAcl: Acl = new Map([
-        [user.userRole, {
-            actions: new Set(["read", "write"]),
-            info: {
-                label: { "default": user.displayName },
-                implies: null,
-                large: false,
-            },
-        }],
-        [COMMON_ROLES.ANONYMOUS, {
-            actions: new Set(["read"]),
-            info: null,
-        }],
-    ]);
+    const defaultAcl = defaultAclMap(user);
 
     const { register, handleSubmit, control, formState: { isValid, errors } } = useForm<Metadata>({
         mode: "onChange",
@@ -768,7 +755,9 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         name: "series",
         control,
         rules: {
-            required: CONFIG.upload.requireSeries ? t("upload.errors.field-required") : false,
+            required: CONFIG.upload.requireSeries
+                ? t("metadata-form.errors.field-required")
+                : false,
         },
     });
 
@@ -798,7 +787,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     css={{ width: 400, maxWidth: "100%" }}
                     autoFocus
                     {...register("title", {
-                        required: t("upload.errors.field-required") as string,
+                        required: t("metadata-form.errors.field-required") as string,
                     })}
                 />
                 {boxError(errors.title?.message)}
@@ -807,7 +796,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
             <div css={{ maxWidth: 750 }}>
                 {/* Description */}
                 <InputContainer>
-                    <label htmlFor={descriptionFieldId}>{t("upload.metadata.description")}</label>
+                    <label htmlFor={descriptionFieldId}>{t("metadata-form.description")}</label>
                     <TextArea id={descriptionFieldId} {...register("description")} />
                 </InputContainer>
 
@@ -848,7 +837,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     marginTop: 32,
                     marginBottom: 12,
                     fontSize: 22,
-                }}>{t("manage.my-videos.acl.title")}</h2>
+                }}>{t("manage.shared.acl.title")}</h2>
                 {boxError(aclError)}
                 {aclLoading && <Spinner size={20} />}
                 {lockedAcl && (
