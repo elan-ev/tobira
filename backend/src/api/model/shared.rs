@@ -120,7 +120,7 @@ define_sort_column_and_order!(
         Title    => "title",
         Created  => "created",
         Updated  => "updated",
-        EventCount => "count(events.id)",
+        EventCount => "count(all_events.id)",
     };
     pub struct SeriesSortOrder
 );
@@ -172,6 +172,7 @@ pub type AssetMapping<ResourceMapping> = ResourceMapping;
 pub trait LoadableAsset: FromDb<RowMapping: Copy> {
     fn selection() -> (String, <Self as FromDb>::RowMapping);
     fn table_name() -> &'static str;
+    fn alias() -> Option<&'static str>;
     /// Returns custom `join` and `group by` clauses that might be required
     /// for ordering by certain columns.
     fn sort_clauses(column: &str) -> (&str, &str);
@@ -209,6 +210,13 @@ where
     };
 
     let table = T::table_name();
+    let alias = T::alias();
+
+    let table_alias = match alias {
+        Some(a) => format!("{table} as {a}"),
+        None => table.to_string(),
+    };
+    let table = alias.unwrap_or(table);
 
     // We need to know the item count before querying the actual items,
     // to check if the offset is too high. If it is, it's set to the maximum.
@@ -225,7 +233,7 @@ where
     let (join_clause, group_by_clause) = T::sort_clauses(&sort_column);
 
     let query = format!(
-        "select {selection} from {table} \
+        "select {selection} from {table_alias} \
             {join_clause} \
             {acl_filter} \
             {group_by_clause} \
@@ -236,7 +244,7 @@ where
 
     // Execute query
     let items = context.db.query_mapped(&query, args, |row| {
-        // Retrieve actual event data
+        // Retrieve actual row data
         T::from_row(&row, mapping)
     }).await?;
 
