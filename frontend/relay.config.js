@@ -12,7 +12,7 @@ module.exports = {
         "Cursor": "string",
         "ByteSpan": "string",
         "ExtraMetadata": "Record<string, Record<string, string[]>>",
-        "TranslatedString": "Record<string, string>",
+        "TranslatedString": "{ default: string } & Record<string, string | undefined>",
     },
     schemaExtensions: [APP_PATH],
 };

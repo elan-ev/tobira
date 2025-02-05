@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt, str::FromStr};
+use std::{collections::HashMap, fmt, ops::Deref, str::FromStr};
 use bytes::BytesMut;
 use fallible_iterator::FallibleIterator;
 use juniper::{GraphQLScalar, InputValue, ScalarValue};
@@ -13,7 +13,7 @@ use crate::prelude::*;
 #[derive(Serialize, Deserialize, Clone, GraphQLScalar)]
 #[serde(try_from = "HashMap<LangKey, String>")]
 #[graphql(parse_token(String))]
-pub(crate) struct TranslatedString(pub(crate) HashMap<LangKey, String>);
+pub(crate) struct TranslatedString(HashMap<LangKey, String>);
 
 impl TranslatedString {
     pub(crate) fn default(&self) -> &str {
@@ -32,6 +32,13 @@ impl TranslatedString {
         // likely never use it.
         let _ = input;
         todo!("TranslatedString cannot be used as input value yet")
+    }
+}
+
+impl Deref for TranslatedString {
+    type Target = HashMap<LangKey, String>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -112,14 +119,15 @@ impl<'a> FromSql<'a> for TranslatedString {
         _: &postgres_types::Type,
         raw: &'a [u8],
     ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-        postgres_protocol::types::hstore_from_sql(raw)?
+        let map: HashMap<LangKey, String> = postgres_protocol::types::hstore_from_sql(raw)?
             .map(|(k, v)| {
                 let v = v.ok_or("translated label contained null value in hstore")?;
                 let k = k.parse()?;
                 Ok((k, v.to_owned()))
             })
-            .collect()
-            .map(Self)
+            .collect()?;
+
+        Ok(map.try_into()?)
     }
 
     fn accepts(ty: &postgres_types::Type) -> bool {
